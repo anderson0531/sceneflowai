@@ -1,0 +1,6 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="192" height="192" fill="#2196F3"/>
+  <circle cx="96" cy="96" r="60" fill="white"/>
+  <path d="M76 76 L116 96 L76 116 Z" fill="#2196F3"/>
+  <text x="96" y="140" font-family="Arial" font-size="12" fill="white" text-anchor="middle">SceneFlowAI</text>
+</svg>

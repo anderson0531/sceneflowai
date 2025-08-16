@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SceneFlow AI - AI-powered video creation platform with intelligent scene management">
+    <meta name="theme-color" content="#2196F3">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Last-Modified" content="2024-01-01T00:00:00Z">
+            <title>SceneFlow AI - AI Video Creation Platform</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <link rel="stylesheet" href="styles.css?v=3.0">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Loading Screen -->
+        <div id="loadingScreen" class="loading-screen">
+            <div class="loading-content">
+                <div class="loading-logo">
+                    <i class="fas fa-film"></i>
+                                            <h1>SceneFlow AI</h1>
+                </div>
+                <div class="loading-spinner"></div>
+                <p>Initializing AI-powered video creation...</p>
+            </div>
+        </div>
+
+        <!-- Authentication Screens -->
+        <div id="authScreens" class="auth-screens">
+            <!-- Landing Page -->
+            <div id="landingPage" class="landing-page">
+                <!-- Landing Header -->
+                <header class="landing-header">
+                    <div class="container">
+                        <div class="header-content">
+                            <div class="logo">
+                                <i class="fas fa-film"></i>
+                                <h1>SceneFlow AI</h1>
+                            </div>
+                            <nav class="landing-nav">
+                                <button class="btn-secondary" onclick="showAuth('login')">Sign In</button>
+                                <button class="btn-primary" onclick="showAuth('signup')">Get Started</button>
+                                <button class="btn-secondary" onclick="syncCredits()" style="font-size: 12px; padding: 8px 12px;">🔧 Sync Credits</button>
+                            </nav>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Hero Section -->
+                <section class="hero-section">
+                    <div class="container">
+                        <div class="hero-content">
+                            <div class="hero-text">
+                                <div class="hero-badge">
+                                    <i class="fas fa-magic"></i>
+                                    <span>AI-Powered Video Creation Workflow</span>
+                                </div>
+                                
+                                <h1 class="hero-title">
+                                    From Idea to Video in <span class="gradient-text">4 Powerful Steps</span>
+                                </h1>
+                                
+                                <p class="hero-subtitle">
+                                    Experience the future of video production with our intelligent workflow automation. 
+                                    Create real, usable videos in just 4 steps. Start your journey for just $5.
+                                </p>
+                                
+                                <div class="hero-cta">
+                                    <button class="btn-primary btn-hero" onclick="showAuth('signup')">
+                                        <i class="fas fa-play"></i>
+                                        Start Trial Today
+                                        <span class="cta-subtitle">Create real videos • Cancel anytime</span>
+                                    </button>
+                                    <button class="btn-secondary btn-hero" onclick="scrollToWorkflow()">
+                                        <i class="fas fa-arrow-down"></i>
+                                        See How It Works
+                                    </button>
+                                </div>
+                                
+                                <div class="hero-trust">
+                                    <p>Create real videos • Professional quality • Cancel anytime</p>
+                                    <div class="trust-badges">
+                                        <span class="badge">
+                                            <i class="fas fa-play"></i>
+                                            $5 Trial
+                                        </span>
+                                        <span class="badge">
+                                            <i class="fas fa-video"></i>
+                                            Real Videos
+                                        </span>
+                                        <span class="badge">
+                                            <i class="fas fa-robot"></i>
+                                            AI-Powered
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="hero-visual">
+                                <div class="hero-simple-visual">
+                                    <div class="hero-icon">
+                                        <i class="fas fa-magic"></i>
+                                    </div>
+                                    <h3>AI-Powered Video Creation</h3>
+                                    <p>Transform your ideas into professional videos</p>
+                                </div>
+                                    <div class="workflow-preview">
+                                        <div class="workflow-steps-preview">
+                                            <div class="workflow-step-preview active" data-step="1">
+                                                <div class="step-icon">
+                                                    <i class="fas fa-lightbulb"></i>
+                                                </div>
+                                                <span>Ideation</span>
+                                            </div>
+                                            <div class="workflow-arrow">
+                                                <i class="fas fa-arrow-right"></i>
+                                            </div>
+                                            <div class="workflow-step-preview" data-step="2">
+                                                <div class="step-icon">
+                                                    <i class="fas fa-th-large"></i>
+                                                </div>
+                                                <span>Storyboard</span>
+                                            </div>
+                                            <div class="workflow-arrow">
+                                                <i class="fas fa-arrow-right"></i>
+                                            </div>
+                                            <div class="workflow-step-preview" data-step="3">
+                                                <div class="step-icon">
+                                                    <i class="fas fa-video"></i>
+                                                </div>
+                                                <span>Scene Direction</span>
+                                            </div>
+                                            <div class="workflow-arrow">
+                                                <i class="fas fa-arrow-right"></i>
+                                            </div>
+                                            <div class="workflow-step-preview" data-step="4">
+                                                <div class="step-icon">
+                                                    <i class="fas fa-film"></i>
+                                                </div>
+                                                <span>Video Generation</span>
+                                            </div>
+                                        </div>
+                                        <div class="workflow-preview-text">
+                                            <h3>Intelligent Workflow Automation</h3>
+                                            <p>AI guides you through each step, ensuring professional results every time</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Workflow Showcase Section -->
+                <section class="workflow-showcase-section" id="workflowShowcase">
+                    <div class="container">
+                        <div class="section-header">
+                            <h2>The SceneFlow AI Workflow</h2>
+                            <p>Experience the power of intelligent video production automation</p>
+                        </div>
+                        
+                        <div class="workflow-steps">
+                            <div class="workflow-step" data-step="1">
+                                <div class="step-number">01</div>
+                                <div class="step-content">
+                                    <div class="step-icon">
+                                        <i class="fas fa-lightbulb"></i>
+                                    </div>
+                                    <h3>The Spark Studio</h3>
+                                    <p class="step-description">Where the initial spark of an idea is nurtured and expanded. Our AI helps you brainstorm, refine concepts, and discover creative possibilities you never imagined.</p>
+                                    <div class="step-features">
+                                        <span class="feature-tag">AI Brainstorming</span>
+                                        <span class="feature-tag">Concept Refinement</span>
+                                        <span class="feature-tag">Creative Exploration</span>
+                                    </div>
+                                </div>
+                                <div class="step-visual">
+                                    <div class="step-preview">
+                                        <i class="fas fa-magic"></i>
+                                        <span>AI-Powered Ideation</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="workflow-step" data-step="2">
+                                <div class="step-number">02</div>
+                                <div class="step-content">
+                                    <div class="step-icon">
+                                        <i class="fas fa-th-large"></i>
+                                    </div>
+                                    <h3>Vision Board</h3>
+                                    <p class="step-description">A familiar term for visualizing the flow and sequence. Transform your ideas into visual storyboards with AI-generated layouts, scenes, and transitions.</p>
+                                    <div class="step-features">
+                                        <span class="feature-tag">Visual Storyboarding</span>
+                                        <span class="feature-tag">Scene Layouts</span>
+                                        <span class="feature-tag">Flow Visualization</span>
+                                    </div>
+                                </div>
+                                <div class="step-visual">
+                                    <div class="step-preview">
+                                        <i class="fas fa-eye"></i>
+                                        <span>Visual Planning</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="workflow-step" data-step="3">
+                                <div class="step-number">03</div>
+                                <div class="step-content">
+                                    <div class="step-icon">
+                                        <i class="fas fa-video"></i>
+                                    </div>
+                                    <h3>The Director's Chair</h3>
+                                    <p class="step-description">Emphasizing professional guidance and control. Take command of every aspect with AI-powered scene direction, camera angles, and production insights.</p>
+                                    <div class="step-features">
+                                        <span class="feature-tag">Scene Direction</span>
+                                        <span class="feature-tag">Camera Guidance</span>
+                                        <span class="feature-tag">Production Control</span>
+                                    </div>
+                                </div>
+                                <div class="step-visual">
+                                    <div class="step-preview">
+                                        <i class="fas fa-crown"></i>
+                                        <span>Directorial Control</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="workflow-step" data-step="4">
+                                <div class="step-number">04</div>
+                                <div class="step-content">
+                                    <div class="step-icon">
+                                        <i class="fas fa-film"></i>
+                                    </div>
+                                    <h3>The Screening Room</h3>
+                                    <p class="step-description">Focusing on the final product, review, and collaboration. Generate your video with AI assistance and collaborate with your team for the perfect final cut.</p>
+                                    <div class="step-features">
+                                        <span class="feature-tag">AI Generation</span>
+                                        <span class="feature-tag">Team Collaboration</span>
+                                        <span class="feature-tag">Final Review</span>
+                                    </div>
+                                </div>
+                                <div class="step-visual">
+                                    <div class="step-preview">
+                                        <i class="fas fa-star"></i>
+                                        <span>Final Production</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="workflow-cta">
+                            <h3>Ready to Experience the Future of Video Production?</h3>
+                            <p>Join thousands of creators who've transformed their workflow with AI</p>
+                            <div class="cta-buttons">
+                                <button class="btn-primary btn-large" onclick="showAuth('signup')">
+                                    <i class="fas fa-rocket"></i>
+                                    Start Your Free Trial
+                                </button>
+                                <button class="btn-secondary btn-large" onclick="showAuth('login')">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                    Sign In
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Social Proof Section -->
+                <section class="social-proof-section">
+                    <div class="container">
+                        <div class="social-proof-content">
+                            <div class="testimonial-card featured">
+                                <div class="testimonial-content">
+                                    <div class="quote-icon">
+                                        <i class="fas fa-quote-left"></i>
+                                    </div>
+                                    <p>"SceneFlow AI cut our video production time from weeks to days. The AI suggestions are incredibly creative!"</p>
+                                </div>
+                                <div class="testimonial-author">
+                                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyNSIgcj0iMjUiIGZpbGw9IiMyMTk2RjMiLz4KPHN2ZyB4PSIxMi41IiB5PSIxMi41IiB3aWR0aD0iMjUiIGhlaWdodD0iMjUiIHZpZXdCb3g9IjAgMCAyNSAyNSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHN2ZyB4PSI2LjI1IiB5PSI2LjI1IiB3aWR0aD0iMTIuNSIgaGVpZ2h0PSIxMi41IiB2aWV3Qm94PSIwIDAgMTIuNSAxMi41IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMTIuNSAwSDBWMTIuNUgxMi41VjBaIiBmaWxsPSIjRkZGRkZGIi8+CjxwYXRoIGQ9Ik0xMi41IDYuMjVIMFYxMi41SDEyLjVWNi4yNVoiIGZpbGw9IiMyMTk2RjMiLz4KPC9zdmc+Cjwvc3ZnPgo8L3N2Zz4K" alt="Sarah M.">
+                                    <div class="author-info">
+                                        <strong>Sarah Mitchell</strong>
+                                        <span>Creative Director, TechFlow</span>
+                                    </div>
+                                    <div class="rating">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="social-proof-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number">50K+</div>
+                                    <div class="stat-label">Active Users</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">4.9/5</div>
+                                    <div class="stat-label">Rating</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">90%</div>
+                                    <div class="stat-label">Time Saved</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Features Section -->
+                <section class="features-section">
+                    <div class="container">
+                        <div class="section-header">
+                            <h2>Everything You Need to Create Amazing Videos</h2>
+                            <p>Professional tools that work for everyone</p>
+                        </div>
+                        
+                        <div class="features-grid">
+                            <div class="feature-card">
+                                <div class="feature-icon">
+                                    <i class="fas fa-lightbulb"></i>
+                                </div>
+                                <h3>AI Ideation</h3>
+                                <p>Get creative ideas and YouTube references for your video concepts</p>
+                            </div>
+                            
+                            <div class="feature-card">
+                                <div class="feature-icon">
+                                    <i class="fas fa-images"></i>
+                                </div>
+                                <h3>Smart Storyboards</h3>
+                                <p>AI-generated storyboards with visual panels and technical specs</p>
+                            </div>
+                            
+                            <div class="feature-card">
+                                <div class="feature-icon">
+                                    <i class="fas fa-video"></i>
+                                </div>
+                                <h3>Scene Direction</h3>
+                                <p>Detailed production blueprints with camera angles and lighting</p>
+                            </div>
+                            
+                            <div class="feature-card">
+                                <div class="feature-icon">
+                                    <i class="fas fa-film"></i>
+                                </div>
+                                <h3>Video Generation</h3>
+                                <p>Create AI-powered video clips with custom prompts and styles</p>
+                            </div>
+                            
+                            <div class="feature-card">
+                                <div class="feature-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <h3>Performance Analysis</h3>
+                                <p>AI analysis to optimize engagement and audience retention</p>
+                            </div>
+                            
+                            <div class="feature-card">
+                                <div class="feature-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <h3>Team Collaboration</h3>
+                                <p>Share projects, get feedback, and manage your team workflow</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+
+
+                <!-- Pricing Section -->
+                <section class="pricing-section">
+                    <div class="container">
+                        <div class="section-header">
+                            <h2>Simple, Transparent Pricing</h2>
+                            <p>Start with a trial, upgrade as you grow</p>
+                        </div>
+                        
+                        <div class="pricing-grid">
+                            <div class="pricing-card trial-card">
+                                <div class="trial-badge">New</div>
+                                <div class="pricing-header">
+                                    <h3>Trial</h3>
+                                    <div class="price">
+                                        <span class="currency">$</span>
+                                        <span class="amount">5</span>
+                                        <span class="period">One-Time</span>
+                                    </div>
+                                    <p class="pricing-subtitle">Test drive the full experience</p>
+                                </div>
+                                
+                                <ul class="pricing-features">
+                                    <li><i class="fas fa-check"></i> 50 Credits (One-Time)</li>
+                                    <li><i class="fas fa-check"></i> 7-Day Creator Access</li>
+                                    <li><i class="fas fa-check"></i> 1080p Max Rendering</li>
+                                    <li><i class="fas fa-check"></i> Requires Payment Info</li>
+                                    <li><i class="fas fa-check"></i> Converts to Creator if not canceled</li>
+                                </ul>
+                                
+                                <button class="btn-primary btn-pricing" onclick="showAuth('signup')">
+                                    <i class="fas fa-play"></i>
+                                    Start $5 Trial
+                                </button>
+                            </div>
+                            
+                            <div class="pricing-card featured">
+                                <div class="popular-badge">Most Popular</div>
+                                <div class="pricing-header">
+                                    <h3>Creator</h3>
+                                    <div class="price">
+                                        <span class="currency">$</span>
+                                        <span class="amount">29</span>
+                                        <span class="period">/month</span>
+                                    </div>
+                                    <p class="pricing-subtitle">For solo creators & novices</p>
+                                </div>
+                                
+                                <ul class="pricing-features">
+                                    <li><i class="fas fa-check"></i> 150 Credits/month</li>
+                                    <li><i class="fas fa-check"></i> 1080p Rendering</li>
+                                    <li><i class="fas fa-check"></i> Standard Analysis</li>
+                                    <li><i class="fas fa-check"></i> BYOK Generation</li>
+                                    <li><i class="fas fa-check"></i> Multilingual Support</li>
+                                </ul>
+                                
+                                <button class="btn-primary btn-pricing" onclick="showAuth('signup')">
+                                    <i class="fas fa-rocket"></i>
+                                    Start Creator Plan
+                                </button>
+                            </div>
+                            
+                            <div class="pricing-card">
+                                <div class="pricing-header">
+                                    <h3>Pro</h3>
+                                    <div class="price">
+                                        <span class="currency">$</span>
+                                        <span class="amount">79</span>
+                                        <span class="period">/month</span>
+                                    </div>
+                                    <p class="pricing-subtitle">For freelancers & pro creators</p>
+                                </div>
+                                
+                                <ul class="pricing-features">
+                                    <li><i class="fas fa-check"></i> 500 Credits/month</li>
+                                    <li><i class="fas fa-check"></i> 4K Rendering</li>
+                                    <li><i class="fas fa-check"></i> Advanced Multimodal Analysis</li>
+                                    <li><i class="fas fa-check"></i> 5 Team Members</li>
+                                    <li><i class="fas fa-check"></i> Downloadable Direction Packages</li>
+                                </ul>
+                                
+                                <button class="btn-secondary btn-pricing" onclick="showAuth('signup')">
+                                    <i class="fas fa-crown"></i>
+                                    Start Pro Plan
+                                </button>
+                            </div>
+                            
+                            <div class="pricing-card studio-card">
+                                <div class="studio-badge">Enterprise</div>
+                                <div class="pricing-header">
+                                    <h3>Studio</h3>
+                                    <div class="price">
+                                        <span class="currency">$</span>
+                                        <span class="amount">249</span>
+                                        <span class="period">/month</span>
+                                    </div>
+                                    <p class="pricing-subtitle">For agencies & teams</p>
+                                </div>
+                                
+                                <ul class="pricing-features">
+                                    <li><i class="fas fa-check"></i> 1600 Credits/month</li>
+                                    <li><i class="fas fa-check"></i> All Pro Features</li>
+                                    <li><i class="fas fa-check"></i> Priority Rendering</li>
+                                    <li><i class="fas fa-check"></i> Queue Management</li>
+                                    <li><i class="fas fa-check"></i> Team Management Dashboard</li>
+                                </ul>
+                                
+                                <button class="btn-secondary btn-pricing" onclick="showAuth('signup')">
+                                    <i class="fas fa-building"></i>
+                                    Start Studio Plan
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="pricing-note">
+                            <p><i class="fas fa-info-circle"></i> Users can purchase additional credit packs (e.g., $10 for 100 credits)</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Final CTA Section -->
+                <section class="final-cta-section">
+                    <div class="container">
+                        <div class="cta-content">
+                            <h2>Ready to Transform Your Video Creation?</h2>
+                            <p>Join thousands of creators who are already saving time and money</p>
+                            <div class="cta-buttons">
+                                <button class="btn-primary btn-large" onclick="showAuth('signup')">
+                                    <i class="fas fa-rocket"></i>
+                                    Start $5 Trial
+                                </button>
+                                <button class="btn-secondary btn-large" onclick="showDemo()">
+                                    <i class="fas fa-play-circle"></i>
+                                    Watch Demo
+                                </button>
+                            </div>
+                            <p class="cta-note">Test drive for just $5 • Create real videos • Cancel anytime</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Floating Action Button for Mobile -->
+                <div class="floating-action-button" onclick="showAuth('signup')">
+                    <i class="fas fa-rocket"></i>
+                    <span>Start $5 Trial</span>
+                </div>
+            </div>
+
+            <!-- Login Screen -->
+            <div id="loginScreen" class="auth-screen" style="display: none;">
+                <div class="auth-container">
+                    <div class="auth-header">
+                        <button class="back-btn" onclick="showAuth('landing')"><i class="fas fa-arrow-left"></i></button>
+                        <h2>Welcome Back</h2>
+                        <p>Sign in to continue creating</p>
+                    </div>
+                    
+                    <form id="loginForm" class="auth-form">
+                        <div class="form-group">
+                            <label for="loginEmail">Email</label>
+                            <input type="email" id="loginEmail" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">Password</label>
+                            <input type="password" id="loginPassword" name="password" required>
+                        </div>
+                        <button type="submit" class="btn-primary btn-full">Sign In</button>
+                    </form>
+                    
+                    <div class="auth-footer">
+                        <p>Don't have an account? <a href="#" onclick="showAuth('signup')">Sign up</a></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signup Screen -->
+            <div id="signupScreen" class="auth-screen" style="display: none;">
+                <div class="auth-container">
+                    <div class="auth-header">
+                        <button class="back-btn" onclick="showAuth('landing')"><i class="fas fa-arrow-left"></i></button>
+                        <h2>Create Your Account</h2>
+                        <p>Start your video creation journey</p>
+                    </div>
+                    
+                    <form id="signupForm" class="auth-form">
+                        <div class="form-group">
+                            <label for="signupName">Full Name</label>
+                            <input type="text" id="signupName" name="name" placeholder="Enter your full name" required>
+                            <div class="input-validation" id="nameValidation"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="signupEmail">Email Address</label>
+                            <input type="email" id="signupEmail" name="email" placeholder="your@email.com" required>
+                            <div class="input-validation" id="emailValidation"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="signupPassword">Password</label>
+                            <div class="password-input-wrapper">
+                                <input type="password" id="signupPassword" name="password" placeholder="Create a strong password" required>
+                                <button type="button" class="password-toggle" onclick="togglePassword('signupPassword')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="password-strength" id="passwordStrength">
+                                <div class="strength-bar">
+                                    <div class="strength-fill" id="strengthFill"></div>
+                                </div>
+                                <span class="strength-text" id="strengthText">Password strength</span>
+                            </div>
+                            <div class="input-validation" id="passwordValidation"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="signupPasswordConfirm">Confirm Password</label>
+                            <div class="password-input-wrapper">
+                                <input type="password" id="signupPasswordConfirm" name="passwordConfirm" placeholder="Confirm your password" required>
+                                <button type="button" class="password-toggle" onclick="togglePassword('signupPasswordConfirm')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="input-validation" id="passwordConfirmValidation"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="userType">I am a...</label>
+                            <select id="userType" name="userType" required>
+                                <option value="">Select your role</option>
+                                <option value="filmmaker">🎬 Filmmaker</option>
+                                <option value="marketer">📈 Marketer</option>
+                                <option value="student">🎓 Student</option>
+                                <option value="content-creator">📱 Content Creator</option>
+                                <option value="business-owner">💼 Business Owner</option>
+                                <option value="educator">👨‍🏫 Educator</option>
+                                <option value="entrepreneur">🚀 Entrepreneur</option>
+                                <option value="other">✨ Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="signupCompany">Company/Organization (Optional)</label>
+                            <input type="text" id="signupCompany" name="company" placeholder="Where you work or study">
+                        </div>
+                        
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="termsAccept" name="termsAccept" required>
+                                <span class="checkmark"></span>
+                                I agree to the <a href="#" onclick="showTerms()">Terms of Service</a> and <a href="#" onclick="showPrivacy()">Privacy Policy</a>
+                            </label>
+                        </div>
+                        
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="marketingAccept" name="marketingAccept">
+                                <span class="checkmark"></span>
+                                I'd like to receive updates about new features and tips (optional)
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary btn-full" id="signupSubmitBtn">
+                            <i class="fas fa-user-plus"></i>
+                            Create Account
+                        </button>
+                    </form>
+                    
+                    <div class="auth-footer">
+                        <p>Already have an account? <a href="#" onclick="showAuth('login')">Sign in</a></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Terms of Service Modal -->
+            <div id="termsModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Terms of Service</h3>
+                        <button class="close-btn" onclick="closeModal('termsModal')">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <h4>SceneFlow AI Terms of Service</h4>
+                        <p>By using SceneFlow AI, you agree to these terms:</p>
+                        <ul>
+                            <li>You will use the service responsibly and legally</li>
+                            <li>You own or have rights to all content you create</li>
+                            <li>We may use your content to improve our AI models</li>
+                            <li>You can cancel your subscription at any time</li>
+                            <li>We reserve the right to modify these terms</li>
+                        </ul>
+                        <p><strong>Last updated:</strong> December 2024</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Privacy Policy Modal -->
+            <div id="privacyModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Privacy Policy</h3>
+                        <button class="close-btn" onclick="closeModal('privacyModal')">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <h4>SceneFlow AI Privacy Policy</h4>
+                        <p>We respect your privacy and protect your data:</p>
+                        <ul>
+                            <li>We collect only necessary information to provide our service</li>
+                            <li>Your content and API keys are encrypted and secure</li>
+                            <li>We never sell your personal information</li>
+                            <li>You control your data and can delete it anytime</li>
+                            <li>We use cookies to improve your experience</li>
+                        </ul>
+                        <p><strong>Last updated:</strong> December 2024</p>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+        <!-- Main Application -->
+        <div id="mainApp" class="main-app" style="display: none;">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="header-left">
+                                            <div class="logo">
+                            <i class="fas fa-film"></i>
+                            <h1>SceneFlow AI</h1>
+                        </div>
+                </div>
+                
+                <div class="header-center">
+                    <nav class="main-nav">
+                        <button class="nav-btn active" data-section="home">
+                            <i class="fas fa-home"></i>
+                            <span>Home</span>
+                        </button>
+                        <button class="nav-btn" data-section="projects">
+                            <i class="fas fa-project-diagram"></i>
+                            <span>Projects</span>
+                        </button>
+                        <button class="nav-btn" data-section="ideas">
+                            <i class="fas fa-lightbulb"></i>
+                            <span>Ideas</span>
+                        </button>
+                    </nav>
+                </div>
+                
+                <div class="header-right">
+                    <div class="credits-display">
+                        <div class="credits-info">
+                            <span class="credits-count" id="creditsCount">0 Credits</span>
+                            <button class="btn-secondary btn-small" onclick="showCreditsModal()">
+                                <i class="fas fa-coins"></i>
+                                Manage Credits
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Debug button for testing -->
+                    <button class="btn-secondary btn-small" onclick="testSignIn()" style="margin-right: 10px;">
+                        <i class="fas fa-bug"></i>
+                        Test Sign-In
+                    </button>
+                    
+                    <!-- App Status Indicator -->
+                    <div id="appStatus" style="margin-right: 10px; padding: 5px 10px; background: #f0f0f0; border-radius: 4px; font-size: 12px;">
+                        <span id="statusText">Loading...</span>
+                    </div>
+                    
+                    <div class="user-menu">
+                        <button class="user-btn" onclick="toggleUserMenu()">
+                            <i class="fas fa-user-circle"></i>
+                            <span id="userName">User</span>
+                        </button>
+                        <div class="user-dropdown" id="userDropdown">
+                            <a href="#" onclick="showProfile()"><i class="fas fa-user"></i> Profile</a>
+                            <a href="#" onclick="showCreditsModal()"><i class="fas fa-coins"></i> Manage Credits</a>
+                            <a href="#" onclick="showSettings()"><i class="fas fa-cog"></i> Settings</a>
+                            <a href="#" onclick="showBilling()"><i class="fas fa-credit-card"></i> Billing</a>
+                            <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="app-main">
+                <!-- Home Screen -->
+                <section id="homeSection" class="content-section active">
+                    <div class="dashboard-container">
+                        <!-- Hero Banner -->
+                        <div class="hero-banner">
+                            <div class="hero-content">
+                                <h1 class="hero-title">Welcome back, <span class="gradient-text" id="userDisplayName">Creator</span>! 🎬</h1>
+                                <p class="hero-subtitle">Ready to bring your next video idea to life? Let's create something amazing together.</p>
+                                
+                                    <!-- Cue AI Assistant Integration - DISABLED -->
+    <div class="cue-integration" style="opacity: 0.5; pointer-events: none;">
+        <div class="cue-content">
+            <div class="cue-info">
+                <div class="cue-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="cue-text">
+                    <h3>Cue AI Assistant (Disabled)</h3>
+                    <p>Temporarily disabled to resolve connection issues. Please try again later.</p>
+                </div>
+            </div>
+            <button class="cue-cta" disabled>
+                <i class="fas fa-ban"></i>
+                Temporarily Unavailable
+            </button>
+        </div>
+    </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Launchpad -->
+                        <div class="launchpad">
+                            <div class="launchpad-grid">
+                                <button class="launch-card primary" onclick="startNewProject()">
+                                    <div class="launch-icon">
+                                        <i class="fas fa-plus-circle"></i>
+                                    </div>
+                                    <div class="launch-content">
+                                        <h3>Create New Project</h3>
+                                        <p>Start brainstorming in the Spark Studio or upload an existing script</p>
+                                    </div>
+                                    <div class="launch-arrow">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </div>
+                                </button>
+                                
+                                <button class="launch-card secondary" id="continueProjectBtn" onclick="continueProject()">
+                                    <div class="launch-icon">
+                                        <i class="fas fa-play-circle"></i>
+                                    </div>
+                                    <div class="launch-content">
+                                        <h3>Continue Project</h3>
+                                        <p id="continueProjectDesc">No active projects</p>
+                                    </div>
+                                    <div class="launch-arrow">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Studio Utilities -->
+                        <div class="studio-utilities">
+                            <div class="utilities-grid">
+                                <button class="utility-card" onclick="browseIdeas()">
+                                    <div class="utility-icon">
+                                        <i class="fas fa-lightbulb"></i>
+                                    </div>
+                                    <div class="utility-content">
+                                        <h3>Browse Ideas</h3>
+                                        <p>Explore saved concepts and inspiration</p>
+                                    </div>
+                                </button>
+                                
+                                <button class="utility-card" onclick="showCreditsModal()">
+                                    <div class="utility-icon">
+                                        <i class="fas fa-database"></i>
+                                    </div>
+                                    <div class="utility-content">
+                                        <h3>Manage Credits</h3>
+                                        <p>Purchase credits or upgrade your plan</p>
+                                    </div>
+                                </button>
+                                
+                                <button class="utility-card" onclick="showSettings()">
+                                    <div class="utility-icon">
+                                        <i class="fas fa-cog"></i>
+                                    </div>
+                                    <div class="utility-content">
+                                        <h3>Settings</h3>
+                                        <p>Configure BYOK and customize your experience</p>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Credit Status -->
+                        <div class="credit-status">
+                            <div class="status-header">
+                                <h3>Credit Status</h3>
+                                <button class="btn-secondary btn-small" onclick="showCreditsModal()">
+                                    <i class="fas fa-plus"></i>
+                                    Get More Credits
+                                </button>
+                            </div>
+                            <div class="status-grid">
+                                <div class="status-card blue">
+                                    <div class="status-icon">
+                                        <i class="fas fa-coins"></i>
+                                    </div>
+                                    <div class="status-content">
+                                        <h4>Available Credits</h4>
+                                        <span class="status-value" id="dashboardCreditsCount">0</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="status-card orange">
+                                    <div class="status-icon">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <div class="status-content">
+                                        <h4>Monthly Credits</h4>
+                                        <span class="status-value" id="dashboardMonthlyCredits">0</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="status-card purple">
+                                    <div class="status-icon">
+                                        <i class="fas fa-video"></i>
+                                    </div>
+                                    <div class="status-content">
+                                        <h4>Usage Count</h4>
+                                        <span class="status-value" id="dashboardUsageCount">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Project Hub -->
+                        <div class="project-hub">
+                            <div class="hub-header">
+                                <h3>Recent Projects</h3>
+                                <a href="#" class="view-all-link">View All</a>
+                            </div>
+                            <div class="hub-content" id="projectHubContent">
+                                <!-- Projects will be dynamically loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Projects Screen -->
+                <section id="projectsSection" class="content-section">
+                    <div class="projects-header">
+                        <h2>Your Projects</h2>
+                        <button class="btn-primary" onclick="startNewProject()">
+                            <i class="fas fa-plus"></i> New Project
+                        </button>
+                    </div>
+                    
+                    <div class="projects-filters">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="draft">Drafts</button>
+                        <button class="filter-btn" data-filter="completed">Completed</button>
+                        <button class="filter-btn" data-filter="archived">Archived</button>
+                    </div>
+                    
+                    <div class="projects-grid" id="projectsGrid">
+                        <!-- Projects will be populated here -->
+                    </div>
+                </section>
+
+                <!-- Ideas Screen -->
+                <section id="ideasSection" class="content-section">
+                    <div class="ideas-header">
+                        <h2>Saved Ideas</h2>
+                        <button class="btn-primary" onclick="startNewProject()">
+                            <i class="fas fa-plus"></i> New Idea
+                        </button>
+                    </div>
+                    
+                    <div class="ideas-grid" id="ideasGrid">
+                        <!-- Ideas will be populated here -->
+                    </div>
+                </section>
+            </main>
+
+            <!-- Cue AI Assistant -->
+            <div id="cueAssistant" class="cue-assistant">
+                <div class="cue-header" onclick="toggleCue()">
+                    <div class="cue-avatar">
+                        <i class="fas fa-film"></i>
+                    </div>
+                    <div class="cue-info">
+                        <h4>Cue</h4>
+                        <p>AI Creative Partner</p>
+                    </div>
+                    <div class="cue-status">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Live</span>
+                    </div>
+                    <button class="cue-toggle">
+                        <i class="fas fa-chevron-up" id="cueToggleIcon"></i>
+                    </button>
+                </div>
+                
+                <div class="cue-content" id="cueContent">
+                    <div class="cue-welcome">
+                        <div class="cue-welcome-header">
+                            <div class="cue-avatar-large">
+                                <i class="fas fa-film"></i>
+                            </div>
+                            <div class="welcome-text">
+                                <h3>Cue AI Assistant</h3>
+                                <p>Your creative partner for video production</p>
+                            </div>
+                        </div>
+                        <div class="cue-quick-actions">
+                            <button class="cue-quick-btn" onclick="askCue('How do I start a new video project?')">
+                                <i class="fas fa-play"></i>
+                                Start Project
+                            </button>
+                            <button class="cue-quick-btn" onclick="askCue('What makes a great video story?')">
+                                <i class="fas fa-lightbulb"></i>
+                                Story Tips
+                            </button>
+                            <button class="cue-quick-btn" onclick="askCue('How can I optimize my video for social media?')">
+                                <i class="fas fa-share"></i>
+                                Social Tips
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="cue-messages" id="cueMessages">
+                        <div class="cue-message">
+                            <div class="cue-avatar-small">
+                                <i class="fas fa-film"></i>
+                            </div>
+                            <div class="message-content">
+                                <p>Hi! I'm Cue, your AI creative assistant. I'm here to help you create amazing videos!</p>
+                                <p>Ask me anything about video production, storytelling, or your project ideas.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="cue-input">
+                        <input type="text" id="cueInput" placeholder="Ask Cue about video production, storytelling, or your project...">
+                        <button onclick="sendCueMessage()" class="send-btn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workflow Screens -->
+        <div id="workflowScreens" class="workflow-screens" style="display: none;">
+            <!-- Global Workflow Navigation -->
+            <div class="workflow-navigation">
+                <div class="workflow-nav-content">
+                    <div class="workflow-logo">
+                        <i class="fas fa-film"></i>
+                                                        <span>SceneFlow AI</span>
+                    </div>
+                    
+                    <div class="workflow-steps-nav">
+                        <div class="workflow-step-nav active" data-step="1">
+                            <div class="workflow-step-circle active">1</div>
+                            <span class="workflow-step-label">Ideation</span>
+                        </div>
+                        <div class="workflow-step-nav" data-step="2">
+                            <div class="workflow-step-circle inactive">2</div>
+                            <span class="workflow-step-label">Storyboard</span>
+                        </div>
+                        <div class="workflow-step-nav" data-step="3">
+                            <div class="workflow-step-circle inactive">3</div>
+                            <span class="workflow-step-label">Scene Direction</span>
+                        </div>
+                        <div class="workflow-step-nav" data-step="4">
+                            <div class="workflow-step-circle inactive">4</div>
+                            <span class="workflow-step-label">Video Generation</span>
+                        </div>
+                        <div class="workflow-step-nav" data-step="5">
+                            <div class="workflow-step-circle inactive">5</div>
+                            <span class="workflow-step-label">Test Screening</span>
+                        </div>
+                    </div>
+                    
+                    <div class="workflow-actions">
+                        <button class="exit-workflow-btn" onclick="exitWorkflow()">
+                            <i class="fas fa-times"></i> Exit
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 1: Ideation -->
+            <div id="ideationScreen" class="workflow-screen" style="display: none;">
+                <div class="workflow-content">
+                    <div class="workflow-step-content">
+                        <h2 class="workflow-step-title">What's Your Video Idea?</h2>
+                        <p class="workflow-step-description">Describe your concept, theme, or brief. Be as specific or vague as you want!</p>
+                        
+                        <textarea id="ideaInput" class="workflow-input" placeholder="e.g., A cool drone video showcasing mountain landscapes, or A 30-second ad for a new coffee brand targeting young professionals..."></textarea>
+                        
+                        <button id="generateIdeasBtn" class="workflow-action-btn" onclick="generateIdeas()">
+                            <i class="fas fa-magic"></i> Generate Ideas
+                        </button>
+                    </div>
+                    
+                    <div class="generated-ideas" id="generatedIdeas" style="display: none;">
+                        <h3>AI-Generated Ideas</h3>
+                        <div class="ideas-container" id="ideasContainer">
+                            <!-- Generated ideas will appear here -->
+                        </div>
+                    </div>
+                    
+                    <div class="youtube-references" id="youtubeReferences" style="display: none;">
+                        <h3>YouTube References</h3>
+                        <div class="videos-container" id="videosContainer">
+                            <!-- YouTube videos will appear here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional workflow steps will be added here -->
+            
+            <!-- Step 2: Storyboard -->
+            <div id="storyboardScreen" class="workflow-screen" style="display: none;">
+                <div class="workflow-header">
+                    <div class="workflow-progress">
+                        <div class="progress-step completed" data-step="1">
+                            <span class="step-number">1</span>
+                            <span class="step-label">Ideation</span>
+                        </div>
+                        <div class="progress-step active" data-step="2">
+                            <span class="step-number">2</span>
+                            <span class="step-label">Storyboard</span>
+                        </div>
+                        <div class="progress-step" data-step="3">
+                            <span class="step-number">3</span>
+                            <span class="step-label">Scene Direction</span>
+                        </div>
+                        <div class="progress-step" data-step="4">
+                            <span class="step-number">4</span>
+                            <span class="step-label">Video Generation</span>
+                        </div>
+                        <div class="progress-step" data-step="5">
+                            <span class="step-number">5</span>
+                            <span class="step-label">Test Screening</span>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-secondary" onclick="exitWorkflow()">
+                        <i class="fas fa-times"></i> Exit
+                    </button>
+                </div>
+                
+                <div class="workflow-content">
+                    <div class="storyboard-header">
+                        <h2>Storyboard Generation</h2>
+                        <p>AI-powered storyboard creation with professional panel design</p>
+                    </div>
+                    
+                    <div class="storyboard-container" id="storyboardContainer">
+                        <div class="storyboard-loading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Generating your storyboard...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="storyboard-actions">
+                        <button class="btn-secondary" onclick="previousStep()">
+                            <i class="fas fa-arrow-left"></i> Back to Ideation
+                        </button>
+                        <button class="btn-primary" onclick="nextStep()" id="nextToSceneDirection">
+                            <i class="fas fa-arrow-right"></i> Continue to Scene Direction
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Scene Direction -->
+            <div id="sceneDirectionScreen" class="workflow-screen" style="display: none;">
+                <div class="workflow-header">
+                    <div class="workflow-progress">
+                        <div class="progress-step completed" data-step="1">
+                            <span class="step-number">1</span>
+                            <span class="step-label">Ideation</span>
+                        </div>
+                        <div class="progress-step completed" data-step="2">
+                            <span class="step-number">2</span>
+                            <span class="step-label">Storyboard</span>
+                        </div>
+                        <div class="progress-step active" data-step="3">
+                            <span class="step-number">3</span>
+                            <span class="step-label">Scene Direction</span>
+                        </div>
+                        <div class="progress-step" data-step="4">
+                            <span class="step-number">4</span>
+                            <span class="step-label">Video Generation</span>
+                        </div>
+                        <div class="progress-step" data-step="5">
+                            <span class="step-number">5</span>
+                            <span class="step-label">Test Screening</span>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-secondary" onclick="exitWorkflow()">
+                        <i class="fas fa-times"></i> Exit
+                    </button>
+                </div>
+                
+                <div class="workflow-content">
+                    <div class="scene-direction-header">
+                        <h2>Scene Direction Package</h2>
+                        <p>Professional production blueprint with detailed technical specifications</p>
+                    </div>
+                    
+                    <div class="scene-direction-container" id="sceneDirectionContainer">
+                        <div class="scene-direction-loading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Generating scene direction...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="scene-direction-actions">
+                        <button class="btn-secondary" onclick="previousStep()">
+                            <i class="fas fa-arrow-left"></i> Back to Storyboard
+                        </button>
+                        <button class="btn-primary" onclick="nextStep()" id="nextToVideoGeneration">
+                            <i class="fas fa-arrow-right"></i> Continue to Video Generation
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Video Generation -->
+            <div id="videoGenerationScreen" class="workflow-screen" style="display: none;">
+                <div class="workflow-header">
+                    <div class="workflow-progress">
+                        <div class="progress-step completed" data-step="1">
+                            <span class="step-number">1</span>
+                            <span class="step-label">Ideation</span>
+                        </div>
+                        <div class="progress-step completed" data-step="2">
+                            <span class="step-number">2</span>
+                            <span class="step-label">Storyboard</span>
+                        </div>
+                        <div class="progress-step completed" data-step="3">
+                            <span class="step-number">3</span>
+                            <span class="step-label">Scene Direction</span>
+                        </div>
+                        <div class="progress-step active" data-step="4">
+                            <span class="step-number">4</span>
+                            <span class="step-label">Video Generation</span>
+                        </div>
+                        <div class="progress-step" data-step="5">
+                            <span class="step-number">5</span>
+                            <span class="step-label">Test Screening</span>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-secondary" onclick="exitWorkflow()">
+                        <i class="fas fa-times"></i> Exit
+                    </button>
+                </div>
+                
+                <div class="workflow-content">
+                    <div class="video-generation-header">
+                        <h2>Video Clip Generation</h2>
+                        <p>AI-powered video synthesis using Gemini Veo technology</p>
+                    </div>
+                    
+                    <div class="video-generation-container" id="videoGenerationContainer">
+                        <div class="video-generation-loading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Generating video clips...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="video-generation-actions">
+                        <button class="btn-secondary" onclick="previousStep()">
+                            <i class="fas fa-arrow-left"></i> Back to Scene Direction
+                        </button>
+                        <button class="btn-primary" onclick="nextStep()" id="nextToTestScreening">
+                            <i class="fas fa-arrow-right"></i> Continue to Test Screening
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5: Test Screening -->
+            <div id="testScreeningScreen" class="workflow-screen" style="display: none;">
+                <div class="workflow-header">
+                    <div class="workflow-progress">
+                        <div class="progress-step completed" data-step="1">
+                            <span class="step-number">1</span>
+                            <span class="step-label">Ideation</span>
+                        </div>
+                        <div class="progress-step completed" data-step="2">
+                            <span class="step-number">2</span>
+                            <span class="step-label">Storyboard</span>
+                        </div>
+                        <div class="progress-step completed" data-step="3">
+                            <span class="step-number">3</span>
+                            <span class="step-label">Scene Direction</span>
+                        </div>
+                        <div class="progress-step completed" data-step="4">
+                            <span class="step-number">4</span>
+                            <span class="step-label">Video Generation</span>
+                        </div>
+                        <div class="progress-step active" data-step="5">
+                            <span class="step-number">5</span>
+                            <span class="step-label">Test Screening</span>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-secondary" onclick="exitWorkflow()">
+                        <i class="fas fa-times"></i> Exit
+                    </button>
+                </div>
+                
+                <div class="workflow-content">
+                    <div class="test-screening-header">
+                        <h2>AI-Powered Test Screening</h2>
+                        <p>Multi-agent analysis for video optimization and audience engagement</p>
+                    </div>
+                    
+                    <div class="test-screening-container" id="testScreeningContainer">
+                        <div class="test-screening-input">
+                            <h3>Upload Your Video</h3>
+                            <p>Upload your edited video or provide a YouTube link for AI analysis</p>
+                            
+                            <div class="upload-options">
+                                <div class="upload-option">
+                                    <h4>YouTube Link</h4>
+                                    <input type="url" id="youtubeLink" placeholder="https://youtube.com/watch?v=...">
+                                    <button class="btn-primary" onclick="analyzeYouTubeVideo()">
+                                        <i class="fas fa-play"></i> Analyze Video
+                                    </button>
+                                </div>
+                                
+                                <div class="upload-option">
+                                    <h4>File Upload</h4>
+                                    <input type="file" id="videoFile" accept="video/*">
+                                    <button class="btn-primary" onclick="analyzeUploadedVideo()">
+                                        <i class="fas fa-upload"></i> Upload & Analyze
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="analysis-results" id="analysisResults" style="display: none;">
+                            <!-- Analysis results will be displayed here -->
+                        </div>
+                    </div>
+                    
+                    <div class="test-screening-actions">
+                        <button class="btn-secondary" onclick="previousStep()">
+                            <i class="fas fa-arrow-left"></i> Back to Video Generation
+                        </button>
+                        <button class="btn-primary" onclick="completeProject()" id="completeProjectBtn">
+                            <i class="fas fa-check"></i> Complete Project
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="modalOverlay" class="modal-overlay" style="display: none;">
+        <div class="modal" id="modal">
+            <!-- Modal content will be dynamically inserted -->
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- JavaScript Modules -->
+    <script src="app.js?v=2.0"></script>
+    <script src="workflow.js?v=2.0"></script>
+    <script src="cue.js?v=2.0"></script>
+    <script src="auth.js?v=2.0"></script>
+    <script src="api.js?v=2.0"></script>
+    
+    <script>
+        // Simple test to verify page loads
+        console.log('SceneFlow AI HTML loaded successfully');
+        
+        // Show loading state
+        document.getElementById('loadingScreen').style.display = 'block';
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM fully loaded');
+            
+            // Hide loading screen
+            document.getElementById('loadingScreen').style.display = 'none';
+            
+            // Check if all required elements exist
+            const requiredElements = [
+                'authScreens',
+                'landingPage', 
+                'mainApp',
+                'workflowScreens'
+            ];
+            
+            requiredElements.forEach(id => {
+                const element = document.getElementById(id);
+                console.log(`Element ${id}:`, element ? 'Found' : 'Missing');
+            });
+            
+            // Ensure landing page is visible
+            const landingPage = document.getElementById('landingPage');
+            const authScreens = document.getElementById('authScreens');
+            
+            if (landingPage && authScreens) {
+                console.log('Landing page elements found, ensuring visibility...');
+                authScreens.style.display = 'block';
+                landingPage.style.display = 'block';
+            } else {
+                console.error('Critical elements missing!');
+            }
+        });
+        
+        // Error handling
+        window.addEventListener('error', (e) => {
+            console.error('JavaScript error:', e.error);
+            // Hide loading screen on error
+            document.getElementById('loadingScreen').style.display = 'none';
+        });
+
+        // Global utility functions
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const toggleBtn = input.nextElementSibling;
+            const icon = toggleBtn.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+
+        function showTerms() {
+            document.getElementById('termsModal').style.display = 'block';
+        }
+
+        function showPrivacy() {
+            document.getElementById('privacyModal').style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+            }
+        });
+    </script>
+
+    <!-- Global Cue Assistant Widget - DISABLED -->
+    <div id="cueAssistantWidget" class="cue-assistant-widget" style="display: none;">
+        <!-- Cue AI Assistant has been temporarily disabled to resolve connection issues -->
+        <div style="padding: 20px; text-align: center; color: #666;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 24px; color: #ff9800; margin-bottom: 10px;"></i>
+            <h4>Cue AI Assistant Temporarily Disabled</h4>
+            <p>This feature has been disabled to resolve connection issues.</p>
+            <p>Please try again later or contact support if the problem persists.</p>
+        </div>
+    </div>
+
+    <!-- Global Utility Functions -->
+    <script>
+        // Toggle Cue Widget - DISABLED
+        function toggleCueWidget() {
+            console.log('Cue Widget is disabled - cannot toggle');
+            return false;
+        }
+        
+        // Send Cue Message - DISABLED
+        function sendCueMessage(message = null) {
+            console.log('Cue Message is disabled - cannot send messages');
+            return 'Cue AI Assistant is temporarily disabled. Please try again later.';
+        }
+        
+        // Handle Enter key in Cue input - DISABLED
+        function handleCueKeyPress(event) {
+            console.log('Cue input is disabled - key press ignored');
+            event.preventDefault();
+            return false;
+        }
+        
+        // Add message to chat - DISABLED
+        function addCueMessage(message, sender) {
+            console.log('Cue message function is disabled');
+            return false;
+        }
+        
+        // Generate AI response - DISABLED
+        function generateCueResponse(userMessage) {
+            console.log('Cue AI response generation is disabled');
+            return 'Cue AI Assistant is temporarily disabled. Please try again later.';
+        }
+        
+        // Show notification badge - DISABLED
+        function showCueNotification() {
+            console.log('Cue notification is disabled');
+            return false;
+        }
+        
+        // Hide notification badge - DISABLED
+        function hideCueNotification() {
+            console.log('Cue notification is disabled');
+            return false;
+        }
+    </script>
+</body>
+</html> 

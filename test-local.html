@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SceneFlow AI - Local Test Environment</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: #f5f5f5;
+        }
+        .test-section { 
+            background: white; 
+            margin: 20px 0; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { padding: 10px; width: 300px; border: 1px solid #ddd; border-radius: 4px; }
+        button { 
+            padding: 10px 20px; 
+            margin: 5px; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+        }
+        button:hover { background: #0056b3; }
+        .error { color: red; margin: 10px 0; }
+        .success { color: green; margin: 10px 0; }
+        .info { color: blue; margin: 10px 0; }
+        .debug { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            margin: 15px 0; 
+            font-family: monospace; 
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status { 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 4px; 
+            font-weight: bold; 
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+        .workflow-step { 
+            background: #e9ecef; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 4px; 
+            border-left: 4px solid #007bff;
+        }
+        .credit-display {
+            background: #28a745;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 18px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎬 SceneFlow AI - Local Test Environment</h1>
+    
+    <!-- Status Display -->
+    <div id="statusDisplay" class="status info">Ready to test SceneFlow AI locally</div>
+    
+    <!-- Credit Display -->
+    <div id="creditDisplay" class="credit-display">
+        <strong>Credits:</strong> <span id="currentCredits">Loading...</span>
+    </div>
+
+    <!-- Authentication Test Section -->
+    <div class="test-section">
+        <h2>🔐 Authentication Test</h2>
+        <button onclick="testAuth()">Test Auth System</button>
+        <button onclick="testLogin()">Test Demo Login</button>
+        <button onclick="checkCurrentUser()">Check Current User</button>
+        <button onclick="logout()">Logout</button>
+        <div id="authStatus"></div>
+    </div>
+
+    <!-- Login Form -->
+    <div class="test-section">
+        <h2>📝 Login Form</h2>
+        <form id="loginForm" class="auth-form">
+            <div class="form-group">
+                <label for="loginEmail">Email</label>
+                <input type="email" id="loginEmail" name="email" value="demo@sceneflowai.com" required>
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Password</label>
+                <input type="password" id="loginPassword" name="password" value="demo123" required>
+            </div>
+            <button type="submit">Sign In</button>
+        </form>
+        <div id="loginMessage"></div>
+    </div>
+
+    <!-- BYOK Test Section -->
+    <div class="test-section">
+        <h2>🔑 BYOK (Bring Your Own Key) Test</h2>
+        <button onclick="testBYOK()">Test BYOK Setup</button>
+        <button onclick="checkBYOKStatus()">Check BYOK Status</button>
+        <div id="byokStatus"></div>
+    </div>
+
+    <!-- Workflow Test Section -->
+    <div class="test-section">
+        <h2>⚡ Workflow Test</h2>
+        <button onclick="testIdeationWithWait()">Test Ideation (5 credits)</button>
+        <button onclick="testStoryboardWithWait()">Test Storyboard (5 credits)</button>
+        <button onclick="testSceneDirectionWithWait()">Test Scene Direction (5 credits)</button>
+        <button onclick="testAutoEditorWithWait()">Test Auto-Editor (10 credits)</button>
+        <div id="workflowStatus"></div>
+    </div>
+
+    <!-- Credit System Test -->
+    <div class="test-section">
+        <h2>💰 Credit System Test</h2>
+        <button onclick="showCreditHistory()">Show Credit History</button>
+        <button onclick="testCreditDeduction()">Test Credit Deduction (1 credit)</button>
+        <button onclick="testCreditRefund()">Test Credit Refund (1 credit)</button>
+        <div id="creditStatus"></div>
+    </div>
+
+    <!-- Cue Assistant Test -->
+    <div class="test-section">
+        <h2>🤖 Cue Assistant Test</h2>
+        <button onclick="testCueAssistant()">Test Cue Assistant</button>
+        <button onclick="testVoiceInput()">Test Voice Input</button>
+        <div id="cueStatus"></div>
+    </div>
+
+    <!-- Debug Output -->
+    <div class="test-section">
+        <h2>🐛 Debug Output</h2>
+        <button onclick="clearDebug()">Clear Debug</button>
+        <button onclick="exportDebug()">Export Debug Log</button>
+        <div id="debugOutput" class="debug"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="auth.js"></script>
+    <script src="workflow.js"></script>
+    <script src="app.js"></script>
+    <script src="cue.js"></script>
+    
+    <script>
+        // Enhanced debugging and testing functions
+        let debugLog = [];
+        
+        // Override console methods to capture debug info
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        function addToDebug(type, ...args) {
+            const timestamp = new Date().toLocaleTimeString();
+            const message = `[${timestamp}] [${type}] ${args.join(' ')}`;
+            debugLog.push(message);
+            
+            const debugOutput = document.getElementById('debugOutput');
+            if (debugOutput) {
+                debugOutput.innerHTML += `<div style="color: ${type === 'ERROR' ? 'red' : type === 'WARN' ? 'orange' : 'blue'};">${message}</div>`;
+                debugOutput.scrollTop = debugOutput.scrollHeight;
+            }
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addToDebug('LOG', ...args);
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addToDebug('ERROR', ...args);
+        };
+        
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            addToDebug('WARN', ...args);
+        };
+        
+        // Test functions
+        function testAuth() {
+            addToDebug('TEST', 'Testing authentication system...');
+            if (window.authManager) {
+                addToDebug('SUCCESS', 'AuthManager is available');
+                document.getElementById('authStatus').innerHTML = '<div class="status success">✅ AuthManager loaded successfully</div>';
+            } else {
+                addToDebug('ERROR', 'AuthManager not available');
+                document.getElementById('authStatus').innerHTML = '<div class="status error">❌ AuthManager not loaded</div>';
+            }
+        }
+        
+        function testLogin() {
+            addToDebug('TEST', 'Testing demo login...');
+            if (window.authManager) {
+                window.authManager.authenticateUser('demo@sceneflowai.com', 'demo123')
+                    .then(result => {
+                        addToDebug('SUCCESS', 'Demo login successful:', result);
+                        window.authManager.handleLoginSuccess(result);
+                        document.getElementById('authStatus').innerHTML = '<div class="status success">✅ Demo login successful</div>';
+                        updateCreditDisplay();
+                    })
+                    .catch(error => {
+                        addToDebug('ERROR', 'Demo login failed:', error);
+                        document.getElementById('authStatus').innerHTML = '<div class="status error">❌ Demo login failed: ' + error.message + '</div>';
+                    });
+            } else {
+                addToDebug('ERROR', 'AuthManager not available for login test');
+            }
+        }
+        
+        function checkCurrentUser() {
+            if (window.authManager && window.authManager.currentUser) {
+                const user = window.authManager.currentUser;
+                addToDebug('INFO', 'Current user:', user);
+                document.getElementById('authStatus').innerHTML = `<div class="status success">✅ Logged in as: ${user.name} (${user.email}) - Credits: ${user.credits}</div>`;
+            } else {
+                addToDebug('INFO', 'No user currently logged in');
+                document.getElementById('authStatus').innerHTML = '<div class="status info">ℹ️ No user currently logged in</div>';
+            }
+        }
+        
+        function logout() {
+            if (window.authManager) {
+                window.authManager.logout();
+                addToDebug('INFO', 'User logged out');
+                document.getElementById('authStatus').innerHTML = '<div class="status info">ℹ️ User logged out</div>';
+                updateCreditDisplay();
+            }
+        }
+        
+        function testBYOK() {
+            addToDebug('TEST', 'Testing BYOK setup...');
+            if (window.workflowManager && window.workflowManager.byokManager) {
+                addToDebug('SUCCESS', 'BYOK Manager available');
+                document.getElementById('byokStatus').innerHTML = '<div class="status success">✅ BYOK Manager loaded</div>';
+            } else {
+                addToDebug('ERROR', 'BYOK Manager not available');
+                document.getElementById('byokStatus').innerHTML = '<div class="status error">❌ BYOK Manager not loaded</div>';
+            }
+        }
+        
+        function testIdeation() {
+            addToDebug('TEST', 'Testing ideation workflow...');
+            
+            // Check if workflowManager is available
+            if (!window.workflowManager) {
+                const error = 'WorkflowManager not available. Please wait for page to fully load.';
+                addToDebug('ERROR', error);
+                document.getElementById('workflowStatus').innerHTML = '<div class="status error">❌ ' + error + '</div>';
+                return;
+            }
+            
+            // Check if user is logged in
+            if (!window.authManager || !window.authManager.currentUser) {
+                const error = 'User not logged in. Please login first.';
+                addToDebug('ERROR', error);
+                document.getElementById('workflowStatus').innerHTML = '<div class="status error">❌ ' + error + '</div>';
+                return;
+            }
+            
+            // Check if generateIdeas method exists
+            if (typeof window.workflowManager.generateIdeas !== 'function') {
+                const error = 'generateIdeas method not found on WorkflowManager';
+                addToDebug('ERROR', error);
+                document.getElementById('workflowStatus').innerHTML = '<div class="status error">❌ ' + error + '</div>';
+                return;
+            }
+            
+            try {
+                addToDebug('INFO', 'Starting ideation workflow with test concept...');
+                window.workflowManager.generateIdeas('test concept')
+                    .then(() => {
+                        addToDebug('SUCCESS', 'Ideation workflow completed');
+                        document.getElementById('workflowStatus').innerHTML = '<div class="status success">✅ Ideation workflow completed</div>';
+                        updateCreditDisplay();
+                    })
+                    .catch(error => {
+                        addToDebug('ERROR', 'Ideation workflow failed:', error);
+                        document.getElementById('workflowStatus').innerHTML = '<div class="status error">❌ Ideation failed: ' + error.message + '</div>';
+                    });
+            } catch (error) {
+                addToDebug('ERROR', 'Error calling generateIdeas:', error);
+                document.getElementById('workflowStatus').innerHTML = '<div class="status error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+        
+        function updateCreditDisplay() {
+            if (window.authManager && window.authManager.currentUser) {
+                const credits = window.authManager.currentUser.credits;
+                document.getElementById('currentCredits').textContent = credits;
+                document.getElementById('statusDisplay').innerHTML = `<div class="status success">✅ Logged in with ${credits} credits available</div>`;
+            } else {
+                document.getElementById('currentCredits').textContent = 'Not logged in';
+                document.getElementById('statusDisplay').innerHTML = '<div class="status info">ℹ️ Please log in to see credits</div>';
+            }
+        }
+        
+        function clearDebug() {
+            document.getElementById('debugOutput').innerHTML = '';
+            debugLog = [];
+        }
+        
+        function exportDebug() {
+            const dataStr = debugLog.join('\n');
+            const dataBlob = new Blob([dataStr], {type: 'text/plain'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'sceneflow-debug-log.txt';
+            link.click();
+        }
+        
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            addToDebug('INFO', 'Local test environment loaded');
+            addToDebug('INFO', 'Testing system components...');
+            
+            // Check if all required components are loaded
+            setTimeout(() => {
+                testAuth();
+                testBYOK();
+                updateCreditDisplay();
+                
+                // Check workflow manager status
+                if (window.workflowManager) {
+                    addToDebug('SUCCESS', 'WorkflowManager loaded successfully');
+                } else {
+                    addToDebug('WARN', 'WorkflowManager not yet loaded, waiting...');
+                    // Wait a bit more and check again
+                    setTimeout(() => {
+                        if (window.workflowManager) {
+                            addToDebug('SUCCESS', 'WorkflowManager loaded after delay');
+                        } else {
+                            addToDebug('ERROR', 'WorkflowManager failed to load');
+                        }
+                    }, 2000);
+                }
+            }, 1000);
+        });
+        
+        // Function to wait for WorkflowManager to be ready
+        function waitForWorkflowManager(callback, maxWait = 10000) {
+            const startTime = Date.now();
+            
+            function check() {
+                if (window.workflowManager) {
+                    addToDebug('SUCCESS', 'WorkflowManager is now ready');
+                    callback();
+                } else if (Date.now() - startTime < maxWait) {
+                    addToDebug('INFO', 'Waiting for WorkflowManager...');
+                    setTimeout(check, 500);
+                } else {
+                    addToDebug('ERROR', 'WorkflowManager failed to load within timeout');
+                    callback(new Error('WorkflowManager timeout'));
+                }
+            }
+            
+            check();
+        }
+        
+        // Enhanced test functions that wait for WorkflowManager
+        function testIdeationWithWait() {
+            addToDebug('TEST', 'Testing ideation workflow (waiting for WorkflowManager)...');
+            
+            waitForWorkflowManager(() => {
+                testIdeation();
+            });
+        }
+        
+        function testStoryboardWithWait() {
+            addToDebug('TEST', 'Testing storyboard generation (waiting for WorkflowManager)...');
+            
+            waitForWorkflowManager(() => {
+                testStoryboard();
+            });
+        }
+        
+        function testSceneDirectionWithWait() {
+            addToDebug('TEST', 'Testing scene direction (waiting for WorkflowManager)...');
+            
+            waitForWorkflowManager(() => {
+                testSceneDirection();
+            });
+        }
+        
+        function testAutoEditorWithWait() {
+            addToDebug('TEST', 'Testing auto-editor (waiting for WorkflowManager)...');
+            
+            waitForWorkflowManager(() => {
+                testAutoEditor();
+            });
+        }
+        
+        // Add more test functions as needed
+        function testStoryboard() {
+            addToDebug('TEST', 'Testing storyboard generation...');
+            if (!window.workflowManager) {
+                document.getElementById('workflowStatus').innerHTML = '<div class="status error">❌ WorkflowManager not available</div>';
+                return;
+            }
+            // Implementation would go here
+            document.getElementById('workflowStatus').innerHTML = '<div class="status info">ℹ️ Storyboard test not yet implemented</div>';
+        }
+        
+        function testSceneDirection() {
+            addToDebug('TEST', 'Testing scene direction...');
+            if (!window.workflowManager) {
+                document.getElementById('workflowStatus').innerHTML = '<div class="status error">❌ WorkflowManager not available</div>';
+                return;
+            }
+            // Implementation would go here
+            document.getElementById('workflowStatus').innerHTML = '<div class="status info">ℹ️ Scene direction test not yet implemented</div>';
+        }
+        
+        function testAutoEditor() {
+            addToDebug('TEST', 'Testing auto-editor...');
+            if (!window.workflowManager) {
+                document.getElementById('workflowStatus').innerHTML = '<div class="status error">❌ WorkflowManager not available</div>';
+                return;
+            }
+            // Implementation would go here
+            document.getElementById('workflowStatus').innerHTML = '<div class="status info">ℹ️ Auto-editor test not yet implemented</div>';
+        }
+        
+        function testCreditDeduction() {
+            addToDebug('TEST', 'Testing credit deduction...');
+            if (!window.workflowManager) {
+                document.getElementById('creditStatus').innerHTML = '<div class="status error">❌ WorkflowManager not available</div>';
+                return;
+            }
+            // Implementation would go here
+            document.getElementById('creditStatus').innerHTML = '<div class="status info">ℹ️ Credit deduction test not yet implemented</div>';
+        }
+        
+        function testCreditRefund() {
+            addToDebug('TEST', 'Testing credit refund...');
+            if (!window.workflowManager) {
+                document.getElementById('creditStatus').innerHTML = '<div class="status error">❌ WorkflowManager not available</div>';
+                return;
+            }
+            // Implementation would go here
+            document.getElementById('creditStatus').innerHTML = '<div class="status info">ℹ️ Credit refund test not yet implemented</div>';
+        }
+        
+        function testCueAssistant() {
+            addToDebug('TEST', 'Testing Cue Assistant...');
+            
+            // Cue Assistant is disabled
+            document.getElementById('cueStatus').innerHTML = '<div class="status warning">⚠️ Cue AI Assistant is temporarily disabled to resolve connection issues</div>';
+            addToDebug('INFO', 'Cue AI Assistant has been disabled to resolve connection issues. All other features remain functional.');
+        }
+        
+        function testVoiceInput() {
+            addToDebug('TEST', 'Testing voice input...');
+            if (!window.workflowManager) {
+                document.getElementById('cueStatus').innerHTML = '<div class="status error">❌ WorkflowManager not available</div>';
+                return;
+            }
+            // Implementation would go here
+            document.getElementById('cueStatus').innerHTML = '<div class="status info">ℹ️ Voice input test not yet implemented</div>';
+        }
+        
+        function showCreditHistory() {
+            addToDebug('TEST', 'Showing credit history...');
+            if (window.workflowManager && window.workflowManager.creditManager) {
+                window.workflowManager.showCreditHistory();
+            } else {
+                addToDebug('ERROR', 'CreditManager not available');
+            }
+        }
+    </script>
+</body>
+</html>
