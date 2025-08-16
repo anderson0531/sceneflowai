@@ -1,14 +1,30 @@
 [build]
   command = "npm run build"
-  publish = "out"
+  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "18"
 
+# Next.js API routes - handled by Netlify's built-in Next.js support
+[[redirects]]
+  from = "/api/*"
+  to = "/api/:splat"
+  status = 200
+
+# Next.js app routes - handled by Netlify's built-in Next.js support
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Handle Next.js static assets
+[[redirects]]
+  from = "/_next/*"
+  to = "/_next/:splat"
+  status = 200
+
+[functions]
+  directory = ".netlify/functions"
 
 [build.processing]
   skip_processing = false

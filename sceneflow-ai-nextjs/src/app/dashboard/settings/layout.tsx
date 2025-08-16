@@ -14,7 +14,7 @@ import {
   Key,
   Zap
 } from 'lucide-react'
-import DashboardHeader from '../components/DashboardHeader'
+import { DashboardHeader } from '../components/DashboardHeader'
 
 const settingsNavItems = [
   {

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { AIProviderManager } from '@/services/ai-providers/AIProviderManager'
+import { AIProviderFactory } from '@/services/ai-providers/AIProviderFactory'
 import { UserProviderConfig } from '@/models/UserProviderConfig'
 import { EncryptionService } from '@/services/EncryptionService'
+
 
 export interface SceneDirection {
   scene_number: number
@@ -202,7 +203,7 @@ IMPORTANT:
 - Optimize for the target audience and platform`
 
     // Generate directions using LLM
-    const aiProvider = AIProviderManager.getProvider(llmProvider as any)
+    const aiProvider = AIProviderFactory.createProvider(llmProvider as any)
     if (!aiProvider) {
       return NextResponse.json({
         success: false,

@@ -25,7 +25,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CollaborationService } from '@/services/CollaborationService'
 import { ExportService } from '@/services/ExportService'
-import { ThumbnailGenerationService } from '@/services/ThumbnailGenerationService'
+
 
 export default function IdeationPage() {
   const router = useRouter()
@@ -70,33 +70,39 @@ export default function IdeationPage() {
     setGeneratedIdeas(ideas)
     setShowIdeas(true)
     
-    // Check if user has image generation provider
-    const hasProvider = await ThumbnailGenerationService.hasImageGenerationProvider('demo_user_001')
-    if (hasProvider.hasProvider) {
-      // Auto-generate thumbnails
-      handleGenerateThumbnails(ideas)
-    }
+    // Auto-generate thumbnails
+    handleGenerateThumbnails(ideas)
   }
 
   const handleGenerateThumbnails = async (ideas: any[]) => {
     setIsGeneratingThumbnails(true)
     
     try {
-      const results = await ThumbnailGenerationService.generateThumbnailsForIdeas(
-        'demo_user_001',
-        ideas.map(idea => ({ id: idea.id, thumbnail_prompt: idea.thumbnail_prompt }))
-      )
-      
-      // Update ideas with thumbnail URLs
-      const updatedIdeas = ideas.map(idea => {
-        const result = results.get(idea.id)
-        if (result?.success && result.imageUrl) {
-          return { ...idea, thumbnail_url: result.imageUrl }
-        }
-        return idea
+      const response = await fetch('/api/thumbnails/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: 'demo_user_001',
+          ideas: ideas.map(idea => ({ id: idea.id, thumbnail_prompt: idea.thumbnail_prompt }))
+        })
       })
       
-      setGeneratedIdeas(updatedIdeas)
+      const results = await response.json()
+      
+      if (results.success && results.thumbnails) {
+        // Update ideas with thumbnail URLs
+        const updatedIdeas = ideas.map(idea => {
+          const result = results.thumbnails[idea.id]
+          if (result?.success && result.imageUrl) {
+            return { ...idea, thumbnail_url: result.imageUrl }
+          }
+          return idea
+        })
+        
+        setGeneratedIdeas(updatedIdeas)
+      }
     } catch (error) {
       console.error('Error generating thumbnails:', error)
     } finally {

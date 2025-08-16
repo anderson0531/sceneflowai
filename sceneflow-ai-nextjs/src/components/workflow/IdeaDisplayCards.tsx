@@ -271,8 +271,10 @@ export function IdeaDisplayCards({
                 </div>
 
                 {/* Synopsis */}
-                <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                  {idea.synopsis}
+                <div className="mb-4">
+                  <p className="text-gray-600 text-sm line-clamp-3">
+                    {idea.synopsis}
+                  </p>
                 </div>
 
                 {/* Scene Outline Preview */}

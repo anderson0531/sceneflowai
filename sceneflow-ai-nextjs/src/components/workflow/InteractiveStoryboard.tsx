@@ -39,7 +39,7 @@ import {
   RotateCcw
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { ThumbnailGenerationService } from '@/services/ThumbnailGenerationService'
+
 
 export interface StoryboardScene {
   id: string
@@ -368,19 +368,26 @@ export function InteractiveStoryboard({
     setIsGeneratingImages(prev => new Set(prev).add(scene.id))
     
     try {
-      const result = await ThumbnailGenerationService.generateThumbnail(
-        userId,
-        scene.id,
-        {
-          prompt: scene.image_prompt,
-          aspectRatio,
-          style: 'cinematic'
-        }
-      )
+      const response = await fetch('/api/thumbnails/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          ideas: [{
+            id: scene.id,
+            thumbnail_prompt: scene.image_prompt
+          }]
+        })
+      })
       
-      if (result.success && result.imageUrl) {
+      const result = await response.json()
+      
+      if (result.success && result.thumbnails && result.thumbnails[scene.id]?.success) {
+        const imageUrl = result.thumbnails[scene.id].imageUrl
         const updatedScenes = scenes.map(s => 
-          s.id === scene.id ? { ...s, image_url: result.imageUrl } : s
+          s.id === scene.id ? { ...s, image_url: imageUrl } : s
         )
         onScenesUpdate(updatedScenes)
       }

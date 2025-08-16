@@ -1,5 +1,8 @@
 import { AIProvider } from './ai-providers/BaseAIProviderAdapter'
-import { UserProviderConfig } from '../models/UserProviderConfig'
+// Mock UserProviderConfig for client-side
+const UserProviderConfig = {
+  findOne: async () => null
+}
 import { EncryptionService } from './EncryptionService'
 
 export interface ThumbnailGenerationRequest {

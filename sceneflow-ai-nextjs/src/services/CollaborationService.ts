@@ -1,4 +1,4 @@
-import { ThumbnailGenerationService } from './ThumbnailGenerationService'
+
 
 export interface CollaborationSession {
   id: string

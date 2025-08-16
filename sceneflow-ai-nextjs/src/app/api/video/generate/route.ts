@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { UserProviderConfig } from '@/models/UserProviderConfig'
 import { EncryptionService } from '@/services/EncryptionService'
 
+
 export interface VideoGenerationRequest {
   sceneDirections: Array<{
     scene_number: number
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     let apiKey = null
     let providerName = null
 
-    try {
+            try {
       // Check for RunwayML first (preferred)
       const runwayConfig = await UserProviderConfig.findOne({
         where: {

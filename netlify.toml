@@ -1,45 +1,16 @@
 [build]
-  base = "."
+  base = "sceneflow-ai-nextjs"
   command = "npm run build"
-  publish = "dist"
+  publish = ".next"
+  functions = ".netlify/functions"
 
 [build.environment]
   NODE_VERSION = "18"
 
 # Serve static assets first, then fallback to SPA
 [[redirects]]
-  from = "/styles.css"
-  to = "/styles.css"
-  status = 200
-
-[[redirects]]
-  from = "/workflow.js"
-  to = "/workflow.js"
-  status = 200
-
-[[redirects]]
-  from = "/app.js"
-  to = "/app.js"
-  status = 200
-
-[[redirects]]
-  from = "/auth.js"
-  to = "/auth.js"
-  status = 200
-
-[[redirects]]
-  from = "/cue.js"
-  to = "/cue.js"
-  status = 200
-
-[[redirects]]
-  from = "/manifest.json"
-  to = "/manifest.json"
-  status = 200
-
-[[redirects]]
-  from = "/sw.js"
-  to = "/sw.js"
+  from = "/_next/*"
+  to = "/_next/:splat"
   status = 200
 
 [[redirects]]
@@ -48,14 +19,26 @@
   status = 200
 
 [[redirects]]
-  from = "/new-pwa/*"
-  to = "/new-pwa/:splat"
+  from = "/dashboard/*"
+  to = "/dashboard/:splat"
   status = 200
 
-# SPA fallback for all other routes
+# Next.js API routes
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/nextjs"
+  status = 200
+
+# Next.js app routes - all routes go through the function
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to = "/.netlify/functions/nextjs"
+  status = 200
+
+# Handle Next.js static assets
+[[redirects]]
+  from = "/_next/*"
+  to = "/_next/:splat"
   status = 200
 
 [build.processing]
@@ -82,3 +65,6 @@
     Cache-Control = "no-cache, no-store, must-revalidate, max-age=0"
     Pragma = "no-cache"
     Expires = "0"
+
+[functions]
+  directory = "sceneflow-ai-nextjs/.netlify/functions"
