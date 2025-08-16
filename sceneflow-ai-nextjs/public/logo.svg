@@ -1,0 +1,30 @@
+<svg width="120" height="60" xmlns="http://www.w3.org/2000/svg">
+  <!-- Gradient Definition -->
+  <defs>
+    <!-- Gradient for the AI 'Flow' Arrow -->
+    <linearGradient id="flowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#4285F4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#34A853;stop-opacity:1" />
+    </linearGradient>
+    <!-- Gradient for the Final Video Panel -->
+    <linearGradient id="panelGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1A73E8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0D47A1;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Logo Mark: The Flowing Storyboard -->
+  <g transform="translate(10, 15)">
+    <!-- Panel 1 (Idea/Draft Storyboard) -->
+    <rect x="0" y="5" width="20" height="20" rx="3" fill="#E8EAED" stroke="#B0B7C3" stroke-width="1.5"/>
+
+    <!-- Flow Arrow (AI Transformation/Generation) -->
+    <path d="M 25 15 L 35 15" stroke="url(#flowGradient)" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M 32 12 L 37 15 L 32 18" fill="url(#flowGradient)"/>
+
+    <!-- Panel 2 (Generated Video Clip) -->
+    <rect x="42" y="0" width="28" height="28" rx="5" fill="url(#panelGradient)"/>
+    <!-- Play icon symbolizing video output -->
+    <path d="M 52 8 L 62 15 L 52 22 Z" fill="#FFFFFF"/>
+  </g>
+</svg>
