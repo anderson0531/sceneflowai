@@ -1,11 +1,58 @@
 [build]
-  base = "sceneflow-ai-nextjs"
+  base = "."
   command = "npm run build"
-  publish = "sceneflow-ai-nextjs/.next"
+  publish = "dist"
 
 [build.environment]
   NODE_VERSION = "18"
 
+# Serve static assets first, then fallback to SPA
+[[redirects]]
+  from = "/styles.css"
+  to = "/styles.css"
+  status = 200
+
+[[redirects]]
+  from = "/workflow.js"
+  to = "/workflow.js"
+  status = 200
+
+[[redirects]]
+  from = "/app.js"
+  to = "/app.js"
+  status = 200
+
+[[redirects]]
+  from = "/auth.js"
+  to = "/auth.js"
+  status = 200
+
+[[redirects]]
+  from = "/cue.js"
+  to = "/cue.js"
+  status = 200
+
+[[redirects]]
+  from = "/manifest.json"
+  to = "/manifest.json"
+  status = 200
+
+[[redirects]]
+  from = "/sw.js"
+  to = "/sw.js"
+  status = 200
+
+[[redirects]]
+  from = "/icons/*"
+  to = "/icons/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/new-pwa/*"
+  to = "/new-pwa/:splat"
+  status = 200
+
+# SPA fallback for all other routes
 [[redirects]]
   from = "/*"
   to = "/index.html"
@@ -27,3 +74,11 @@
 
 [build.processing.images]
   compress = true
+
+# Force cache invalidation
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate, max-age=0"
+    Pragma = "no-cache"
+    Expires = "0"
