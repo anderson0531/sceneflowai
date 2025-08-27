@@ -10,7 +10,7 @@ import { TimelineView } from './TimelineView';
 import { BoneyardSidebar } from './BoneyardSidebar';
 import { StoryAnalysisPanel } from './StoryAnalysisPanel';
 import { Button } from '@/components/ui/Button';
-import { Plus, Sparkles, Layout } from 'lucide-react';
+import { Plus, Sparkles, Layout, Clapperboard } from 'lucide-react';
 import { groupBy } from 'lodash';
 import { useState } from 'react';
 import { getTemplateById, debateTemplate } from '@/types/beatTemplates';
@@ -282,7 +282,7 @@ export function BeatSheetTab() {
                       aria-label={`Add beat to ${column.label}`}
                     >
                       {isAddingBeat === column.id ? (
-                        <Sparkles className="w-4 h-4 animate-pulse" />
+                        <Clapperboard className="w-4 h-4 animate-pulse" />
                       ) : (
                         <Plus className="w-4 h-4" />
                       )}

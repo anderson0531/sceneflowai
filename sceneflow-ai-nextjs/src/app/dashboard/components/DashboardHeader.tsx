@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, LogOut, User, Sparkles } from 'lucide-react';
+import { Plus, LogOut, User, Clapperboard } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEnhancedStore } from '@/store/enhancedStore';
 import { useCue } from '@/store/useCueStore';
@@ -90,7 +90,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
           className="header-btn-primary px-3 sm:px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 font-emphasis bg-sf-primary hover:bg-sf-primary-dark text-white border-sf-primary hover:border-sf-primary-dark"
           aria-label="Ask Cue"
         >
-          <Sparkles className="w-4 h-4" />
+          <Clapperboard className="w-4 h-4" />
           <span className="hidden sm:inline">Ask Cue</span>
         </button>
 

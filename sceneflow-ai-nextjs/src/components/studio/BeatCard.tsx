@@ -11,7 +11,7 @@ import {
   HelpCircle, Swords, Zap, Eye, ArrowUp, ArrowDown, TrendingUp, TrendingDown,
   Target, RefreshCw, RotateCcw, ChevronDown, ChevronUp, Clock, MapPin, 
   Sun, Moon, Cloud, Palette, Camera, MoreHorizontal, Link, Split, Merge,
-  Trash2, Archive, MoreVertical
+  Trash2, Archive, MoreVertical, Clapperboard
 } from 'lucide-react';
 import { useCue } from '@/store/useCueStore';
 import { useGuideStore } from '@/store/useGuideStore';
@@ -237,7 +237,7 @@ export function BeatCard({ beat, isDragging = false }: BeatCardProps) {
                                 }}
                                 className="w-full px-3 py-1.5 text-left text-sm text-gray-200 hover:bg-gray-700 flex items-center gap-2"
                               >
-                                <Zap className="w-3 h-3" />
+                                <Clapperboard className="w-3 h-3" />
                                 Generate Alternatives
                               </button>
                             </div>
