@@ -70,11 +70,11 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
               <div className="w-5 h-5 bg-sf-background rounded-sm"></div>
             </div>
           </div>
-            {/* Small connector triangle in teal-green */}
-            <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-2 border-l-sf-primary border-t-2 border-t-transparent border-b-2 border-b-transparent"></div>
+            {/* Enhanced connector triangle in teal-green */}
+            <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-4 border-l-sf-primary border-t-4 border-t-transparent border-b-4 border-b-transparent opacity-90"></div>
           </div>
           <div className="flex flex-col justify-center min-w-0">
-            <h1 className="text-4xl sm:text-5xl font-bold text-heading leading-tight truncate">
+            <h1 className="text-5xl sm:text-6xl font-bold text-heading leading-tight truncate">
               <span>SceneFlow </span>
               <span className="text-sf-primary">AI</span>
             </h1>
