@@ -1,10 +1,19 @@
 'use client';
 
-import { Beat } from '@/types/productionGuide';
+import React, { useState } from 'react';
+import { Beat, BeatFunction, EmotionalCharge } from '@/types/productionGuide';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { GripVerticalIcon, LightbulbIcon, Settings, Users, Scale, CheckCircle, Tag } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { 
+  GripVerticalIcon, LightbulbIcon, Settings, Users, Scale, CheckCircle, Tag,
+  HelpCircle, Swords, Zap, Eye, ArrowUp, ArrowDown, TrendingUp, TrendingDown,
+  Target, RefreshCw, RotateCcw, ChevronDown, ChevronUp, Clock, MapPin, 
+  Sun, Moon, Cloud, Palette, Camera, MoreHorizontal, Link
+} from 'lucide-react';
 import { useCue } from '@/store/useCueStore';
+import { useGuideStore } from '@/store/useGuideStore';
 import { cn } from '@/lib/utils';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -14,7 +23,61 @@ interface BeatCardProps {
   isDragging?: boolean;
 }
 
-// Column icon configuration
+// Beat function icon mapping
+const getBeatFunctionIcon = (beatFunction?: BeatFunction) => {
+  const iconMap = {
+    'inciting_incident': { icon: HelpCircle, color: 'text-orange-500', label: 'Inciting Incident' },
+    'plot_point': { icon: Target, color: 'text-red-500', label: 'Plot Point' },
+    'conflict': { icon: Swords, color: 'text-red-600', label: 'Conflict' },
+    'revelation': { icon: Eye, color: 'text-purple-500', label: 'Revelation' },
+    'climax': { icon: Zap, color: 'text-yellow-500', label: 'Climax' },
+    'resolution': { icon: CheckCircle, color: 'text-green-500', label: 'Resolution' },
+    'setup': { icon: Settings, color: 'text-blue-500', label: 'Setup' },
+    'payoff': { icon: Target, color: 'text-green-600', label: 'Payoff' },
+    'transition': { icon: RefreshCw, color: 'text-gray-500', label: 'Transition' },
+    'character_development': { icon: Users, color: 'text-indigo-500', label: 'Character Development' },
+    'exposition': { icon: LightbulbIcon, color: 'text-yellow-400', label: 'Exposition' },
+    'rising_action': { icon: TrendingUp, color: 'text-orange-500', label: 'Rising Action' },
+    'falling_action': { icon: TrendingDown, color: 'text-blue-400', label: 'Falling Action' },
+    'complication': { icon: MoreHorizontal, color: 'text-red-400', label: 'Complication' },
+    'turning_point': { icon: RotateCcw, color: 'text-purple-600', label: 'Turning Point' }
+  };
+  return iconMap[beatFunction as keyof typeof iconMap] || { icon: MoreHorizontal, color: 'text-gray-400', label: 'Unknown' };
+};
+
+// Emotional charge indicator
+const getEmotionalChargeIndicator = (charge?: EmotionalCharge) => {
+  switch (charge) {
+    case 'very_negative': return { color: 'bg-red-600', symbol: '--', label: 'Very Negative' };
+    case 'negative': return { color: 'bg-red-400', symbol: '-', label: 'Negative' };
+    case 'neutral': return { color: 'bg-gray-400', symbol: '=', label: 'Neutral' };
+    case 'positive': return { color: 'bg-green-400', symbol: '+', label: 'Positive' };
+    case 'very_positive': return { color: 'bg-green-600', symbol: '++', label: 'Very Positive' };
+    default: return { color: 'bg-gray-400', symbol: '?', label: 'Unknown' };
+  }
+};
+
+// Generate character initials and colors
+const getCharacterAvatar = (characterId: string, characters: any[]) => {
+  const character = characters.find(c => c.id === characterId);
+  if (!character) return { initials: '?', color: 'bg-gray-500' };
+  
+  const initials = character.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2);
+  const colors = [
+    'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500', 
+    'bg-yellow-500', 'bg-indigo-500', 'bg-red-500', 'bg-teal-500'
+  ];
+  const colorIndex = characterId.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0) % colors.length;
+  
+  return { 
+    initials, 
+    color: colors[colorIndex], 
+    name: character.name,
+    archetype: character.archetype 
+  };
+};
+
+// Column icon configuration (keeping existing for backward compatibility)
 const getColumnIcon = (act: string) => {
   const iconConfig = {
     'ACT_I': { icon: LightbulbIcon, color: 'text-yellow-500', bgColor: 'bg-yellow-500/10', label: 'Setup' },
@@ -27,6 +90,8 @@ const getColumnIcon = (act: string) => {
 
 export function BeatCard({ beat, isDragging = false }: BeatCardProps) {
   const { activeContext, invokeCue } = useCue();
+  const { guide } = useGuideStore();
+  const [showProductionTags, setShowProductionTags] = useState(false);
   
   const {
     attributes,
@@ -46,12 +111,12 @@ export function BeatCard({ beat, isDragging = false }: BeatCardProps) {
   const isContextActive = activeContext?.type === 'beatCard' && activeContext?.id === beat.id;
   const isBeingDragged = isDragging || sortableIsDragging;
   
-  // Get column icon configuration
+  // Get visual metadata
+  const beatFunctionConfig = getBeatFunctionIcon(beat.beatFunction);
+  const BeatFunctionIcon = beatFunctionConfig.icon;
+  const emotionalCharge = getEmotionalChargeIndicator(beat.emotionalCharge);
   const columnConfig = getColumnIcon(beat.act);
   const ColumnIcon = columnConfig.icon;
-  
-  // Mock data for interactive labels (in real app, this would come from the beat data)
-  const keywordCount = Math.floor(Math.random() * 4); // 0-3 keywords
 
   const handleCardClick = () => {
     // Don't trigger Cue if we're dragging
@@ -83,61 +148,161 @@ export function BeatCard({ beat, isDragging = false }: BeatCardProps) {
         >
           <GripVerticalIcon className="text-gray-100 w-4 h-4" />
         </div>
-        <div className="flex-1 min-w-0" onClick={handleCardClick}>
-          <CardHeader className="pb-3 p-5">
-            {/* Column Icon and Label */}
-            <div className="flex items-center gap-2 mb-3">
-              <div className={cn("p-1.5 rounded-md", columnConfig.bgColor)}>
-                <ColumnIcon className={cn("w-4 h-4", columnConfig.color)} />
-              </div>
-              <span className={cn("text-xs font-medium uppercase tracking-wide", columnConfig.color)}>
-                {columnConfig.label}
-              </span>
-            </div>
-            
-            {/* Improved Title Typography */}
-            <CardTitle className="text-xl font-bold text-white leading-tight mb-2">{beat.title}</CardTitle>
-          </CardHeader>
+                        <div className="flex-1 min-w-0" onClick={handleCardClick}>
+                  <CardHeader className="pb-3 p-5">
+                    {/* Visual Metadata Header */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        {/* Beat Function Icon */}
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <div className="p-1.5 rounded-md bg-gray-700/50 border border-gray-600">
+                                <BeatFunctionIcon className={cn("w-4 h-4", beatFunctionConfig.color)} />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent className="bg-gray-700 text-white border border-gray-600">
+                              <p className="font-semibold">{beatFunctionConfig.label}</p>
+                              <p className="text-sm text-gray-200">Narrative function of this beat</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+
+                        {/* Column Context */}
+                        <div className={cn("p-1.5 rounded-md", columnConfig.bgColor)}>
+                          <ColumnIcon className={cn("w-4 h-4", columnConfig.color)} />
+                        </div>
+                      </div>
+
+                      {/* Emotional Charge Indicator */}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <div className={cn("w-8 h-3 rounded-full flex items-center justify-center", emotionalCharge.color)}>
+                              <span className="text-white text-xs font-bold">{emotionalCharge.symbol}</span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-700 text-white border border-gray-600">
+                            <p className="font-semibold">{emotionalCharge.label}</p>
+                            <p className="text-sm text-gray-200">Emotional trajectory</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    
+                    {/* Title with Character Avatars */}
+                    <div className="flex items-start justify-between mb-2">
+                      <CardTitle className="text-xl font-bold text-white leading-tight flex-1 mr-2">
+                        {beat.title}
+                      </CardTitle>
+                      
+                      {/* Character Avatars */}
+                      <div className="flex -space-x-1">
+                        {beat.charactersPresent.slice(0, 3).map((characterId, index) => {
+                          const avatar = getCharacterAvatar(characterId, guide.characters);
+                          return (
+                            <TooltipProvider key={characterId}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button 
+                                    className={cn(
+                                      "w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-gray-700 hover:scale-110 transition-transform",
+                                      avatar.color
+                                    )}
+                                    style={{ zIndex: 10 - index }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      // TODO: Navigate to character breakdown
+                                      invokeCue({
+                                        type: 'character',
+                                        content: avatar.name,
+                                        id: characterId
+                                      });
+                                    }}
+                                  >
+                                    {avatar.initials}
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent className="bg-gray-700 text-white border border-gray-600">
+                                  <p className="font-semibold">{avatar.name}</p>
+                                  <p className="text-sm text-gray-200">{avatar.archetype}</p>
+                                  <p className="text-xs text-gray-300 mt-1">Click to view character details</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          );
+                        })}
+                        {beat.charactersPresent.length > 3 && (
+                          <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-white text-xs font-bold border-2 border-gray-700">
+                            +{beat.charactersPresent.length - 3}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
           
           <CardContent className="p-5 pt-0">
-            {/* Improved Description Typography */}
-            <p className="text-base text-gray-100 font-normal mb-4 line-clamp-4 leading-relaxed break-words whitespace-normal">
+            {/* Description */}
+            <p className="text-base text-white font-normal mb-4 line-clamp-3 leading-relaxed break-words whitespace-normal">
               {beat.summary}
             </p>
             
-            {/* Interactive Labels and Actions */}
+            {/* Keywords (Visual Pills) */}
+            {beat.keywords && beat.keywords.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-4">
+                {beat.keywords.slice(0, 4).map((keyword, index) => (
+                  <Badge 
+                    key={index}
+                    className="text-xs bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 transition-colors"
+                  >
+                    {keyword}
+                  </Badge>
+                ))}
+                {beat.keywords.length > 4 && (
+                  <Badge className="text-xs bg-gray-500/20 text-gray-300 border border-gray-500/30">
+                    +{beat.keywords.length - 4} more
+                  </Badge>
+                )}
+              </div>
+            )}
+            
+            {/* Footer Actions */}
             <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-3">
-                {/* Characters Badge */}
-                <span className="text-sm text-white bg-gray-700 px-3 py-1.5 rounded-md font-semibold border border-gray-600">
-                  <Users className="w-3 h-3 inline mr-1" />
-                  {beat.charactersPresent.length} Characters
-                </span>
-                
-                {/* Interactive Keywords Label */}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button className="text-sm text-gray-300 hover:text-white bg-gray-700/50 hover:bg-gray-700 px-2 py-1 rounded transition-colors">
-                        <Tag className="w-3 h-3 inline mr-1" />
-                        {keywordCount} keywords
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-gray-700 text-white border border-gray-600">
-                      <p>{keywordCount > 0 ? `View ${keywordCount} keywords` : 'No keywords found'}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                
+              <div className="flex items-center gap-2">
+                {/* Production Tags Toggle (Expert Feature) */}
+                {beat.productionTags && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowProductionTags(!showProductionTags);
+                          }}
+                          className="p-1 h-6 w-6 text-gray-400 hover:text-white"
+                        >
+                          <Camera className="w-3 h-3" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-gray-700 text-white border border-gray-600">
+                        <p className="font-semibold">Production Tags</p>
+                        <p className="text-sm text-gray-200">Expert metadata for shot planning</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+
                 {/* Active in Cue Badge */}
                 {isContextActive && (
-                  <span className="text-sm text-blue-100 bg-blue-800/50 px-3 py-1.5 rounded-md font-semibold border border-blue-500/50">
+                  <Badge className="text-xs text-blue-100 bg-blue-800/50 border border-blue-500/50">
                     Active in Cue
-                  </span>
+                  </Badge>
                 )}
               </div>
               
-              {/* Structural Purpose Tooltip */}
+              {/* Structural Purpose */}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
@@ -150,6 +315,56 @@ export function BeatCard({ beat, isDragging = false }: BeatCardProps) {
                 </Tooltip>
               </TooltipProvider>
             </div>
+
+            {/* Production Tags (Progressive Disclosure) */}
+            {showProductionTags && beat.productionTags && (
+              <div className="mt-4 pt-3 border-t border-gray-600 space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-white flex items-center gap-1">
+                    <Camera className="w-3 h-3" />
+                    Production Tags
+                  </h4>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowProductionTags(false);
+                    }}
+                    className="p-1 h-5 w-5 text-gray-400 hover:text-white"
+                  >
+                    <ChevronUp className="w-3 h-3" />
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {beat.productionTags.location && (
+                    <div className="flex items-center gap-1 text-gray-300">
+                      <MapPin className="w-3 h-3" />
+                      <span>{beat.productionTags.locationType} - {beat.productionTags.location}</span>
+                    </div>
+                  )}
+                  {beat.productionTags.timeOfDay && (
+                    <div className="flex items-center gap-1 text-gray-300">
+                      {beat.productionTags.timeOfDay === 'DAY' ? <Sun className="w-3 h-3" /> : <Moon className="w-3 h-3" />}
+                      <span>{beat.productionTags.timeOfDay}</span>
+                    </div>
+                  )}
+                  {beat.productionTags.mood && (
+                    <div className="flex items-center gap-1 text-gray-300">
+                      <Palette className="w-3 h-3" />
+                      <span>{beat.productionTags.mood}</span>
+                    </div>
+                  )}
+                  {beat.productionTags.weatherCondition && (
+                    <div className="flex items-center gap-1 text-gray-300">
+                      <Cloud className="w-3 h-3" />
+                      <span>{beat.productionTags.weatherCondition}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </CardContent>
         </div>
       </div>

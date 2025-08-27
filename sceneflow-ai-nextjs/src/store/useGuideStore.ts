@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ProductionGuide, Beat, CharacterProfile, ViewMode } from '@/types/productionGuide';
+import { ProductionGuide, Beat, CharacterProfile, ViewMode, BeatFunction, EmotionalCharge } from '@/types/productionGuide';
 
 // Mock data initialization (replace with actual AI generation result)
 const initialGuide: ProductionGuide = {
@@ -59,7 +59,16 @@ const initialGuide: ProductionGuide = {
       estimatedDuration: 3,
       startTime: 0,
       pacing: 'medium',
-      importance: 'high'
+      importance: 'high',
+      beatFunction: 'setup',
+      emotionalCharge: 'neutral',
+      keywords: ['CRISPR', 'gene editing', 'technology', 'potential'],
+      productionTags: {
+        location: 'Modern Laboratory',
+        locationType: 'INT',
+        timeOfDay: 'DAY',
+        mood: 'Professional'
+      }
     },
     {
       id: 'beat-2',
@@ -71,7 +80,16 @@ const initialGuide: ProductionGuide = {
       estimatedDuration: 2,
       startTime: 3,
       pacing: 'fast',
-      importance: 'critical'
+      importance: 'critical',
+      beatFunction: 'inciting_incident',
+      emotionalCharge: 'negative',
+      keywords: ['conflict', 'debate', 'opposing views', 'tension'],
+      productionTags: {
+        location: 'Conference Room',
+        locationType: 'INT',
+        timeOfDay: 'DAY',
+        mood: 'Tense'
+      }
     },
     {
       id: 'beat-3',
@@ -83,7 +101,16 @@ const initialGuide: ProductionGuide = {
       estimatedDuration: 4,
       startTime: 5,
       pacing: 'medium',
-      importance: 'high'
+      importance: 'high',
+      beatFunction: 'rising_action',
+      emotionalCharge: 'positive',
+      keywords: ['innovation', 'benefits', 'progress', 'hope'],
+      productionTags: {
+        location: 'Research Facility',
+        locationType: 'INT',
+        timeOfDay: 'DAY',
+        mood: 'Inspiring'
+      }
     },
     {
       id: 'beat-4',
@@ -95,7 +122,16 @@ const initialGuide: ProductionGuide = {
       estimatedDuration: 4,
       startTime: 9,
       pacing: 'medium',
-      importance: 'high'
+      importance: 'high',
+      beatFunction: 'conflict',
+      emotionalCharge: 'negative',
+      keywords: ['ethics', 'caution', 'responsibility', 'regulation'],
+      productionTags: {
+        location: 'University Office',
+        locationType: 'INT',
+        timeOfDay: 'AFTERNOON',
+        mood: 'Serious'
+      }
     },
     {
       id: 'beat-5',
@@ -107,7 +143,16 @@ const initialGuide: ProductionGuide = {
       estimatedDuration: 3,
       startTime: 13,
       pacing: 'slow',
-      importance: 'critical'
+      importance: 'critical',
+      beatFunction: 'turning_point',
+      emotionalCharge: 'positive',
+      keywords: ['understanding', 'compromise', 'balance', 'wisdom'],
+      productionTags: {
+        location: 'Garden Patio',
+        locationType: 'EXT',
+        timeOfDay: 'EVENING',
+        mood: 'Peaceful'
+      }
     },
     {
       id: 'beat-6',
@@ -119,7 +164,16 @@ const initialGuide: ProductionGuide = {
       estimatedDuration: 2,
       startTime: 16,
       pacing: 'medium',
-      importance: 'high'
+      importance: 'high',
+      beatFunction: 'resolution',
+      emotionalCharge: 'positive',
+      keywords: ['synthesis', 'balance', 'responsibility', 'future'],
+      productionTags: {
+        location: 'Modern Laboratory',
+        locationType: 'INT',
+        timeOfDay: 'DAY',
+        mood: 'Hopeful'
+      }
     }
   ]
 };
