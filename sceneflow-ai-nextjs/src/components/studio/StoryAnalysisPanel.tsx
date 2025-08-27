@@ -171,8 +171,8 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
       <div className={cn("bg-gray-900 border-l border-gray-700 p-4", className)}>
         <div className="text-center py-8">
           <Brain className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-          <h3 className="text-sm font-medium text-gray-400 mb-2">Story Analysis</h3>
-          <p className="text-xs text-gray-500 mb-4">
+          <h3 className="text-base font-semibold text-gray-300 mb-2">Story Analysis</h3>
+          <p className="text-sm text-gray-400 mb-4">
             Add beats to your story to get proactive analysis and recommendations
           </p>
           <Button
@@ -195,8 +195,8 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
       <div className="p-4 border-b border-gray-700 bg-gray-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-green-400" />
-            <h3 className="font-semibold text-white">Story Guardrails</h3>
+            <Shield className="w-6 h-6 text-green-400" />
+            <h3 className="text-lg font-bold text-white">Story Guardrails</h3>
           </div>
           <div className="flex items-center gap-2">
             {isAnalyzing && (
@@ -225,7 +225,7 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
         </div>
         
         {lastAnalysisTime && (
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-sm text-gray-300 mt-1">
             Last updated: {lastAnalysisTime.toLocaleTimeString()}
           </p>
         )}
@@ -244,7 +244,7 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
             <Card className="bg-gray-800 border-gray-600">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium text-white">Overall Story Health</CardTitle>
+                  <CardTitle className="text-base font-semibold text-white">Overall Story Health</CardTitle>
                   <div className="flex items-center gap-2">
                     <Gauge className={cn("w-4 h-4", getScoreColor(analysis.overallScore))} />
                     <span className={cn("text-lg font-bold", getScoreColor(analysis.overallScore))}>
@@ -252,7 +252,7 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
                     </span>
                   </div>
                 </div>
-                <p className={cn("text-xs", getScoreColor(analysis.overallScore))}>
+                <p className={cn("text-sm font-medium", getScoreColor(analysis.overallScore))}>
                   {getScoreLabel(analysis.overallScore)}
                 </p>
               </CardHeader>
@@ -264,7 +264,7 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-2">
                     <AlertTriangle className="w-5 h-5 text-red-400" />
-                    <CardTitle className="text-sm font-medium text-red-400">
+                    <CardTitle className="text-base font-semibold text-red-400">
                       Critical Issues Detected
                     </CardTitle>
                   </div>
@@ -277,8 +277,8 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
                         className="p-2 bg-red-500/10 border border-red-500/20 rounded cursor-pointer hover:bg-red-500/20 transition-colors"
                         onClick={() => handleIssueClick(issue)}
                       >
-                        <p className="text-sm font-medium text-red-300">{issue.title}</p>
-                        <p className="text-xs text-red-200">{issue.description}</p>
+                        <p className="text-base font-semibold text-red-300">{issue.title}</p>
+                        <p className="text-sm text-red-200">{issue.description}</p>
                       </div>
                     ))}
                   </div>
@@ -295,7 +295,7 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <BarChart3 className="w-4 h-4 text-blue-400" />
-                    <CardTitle className="text-sm font-medium text-white">Pacing Analysis</CardTitle>
+                    <CardTitle className="text-base font-semibold text-white">Pacing Analysis</CardTitle>
                     <Badge className={cn(
                       "text-xs",
                       analysis.pacingAnalysis.overallPacing === 'good' 
@@ -317,8 +317,8 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
                     {analysis.pacingAnalysis.actDistribution.map(act => (
                       <div key={act.actId} className="flex items-center justify-between p-2 bg-gray-700 rounded">
                         <div>
-                          <p className="text-sm font-medium text-white">{act.actName}</p>
-                          <p className="text-xs text-gray-300">
+                          <p className="text-base font-semibold text-white">{act.actName}</p>
+                          <p className="text-sm text-gray-200">
                             {act.beatCount} beats ({act.percentage.toFixed(1)}%)
                           </p>
                         </div>
@@ -336,9 +336,9 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
                   
                   {analysis.pacingAnalysis.recommendedChanges.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-gray-600">
-                      <p className="text-xs font-medium text-gray-300 mb-2">Recommendations:</p>
+                      <p className="text-sm font-semibold text-gray-200 mb-2">Recommendations:</p>
                       {analysis.pacingAnalysis.recommendedChanges.slice(0, 2).map(change => (
-                        <div key={change.actId} className="text-xs text-gray-400 mb-1">
+                        <div key={change.actId} className="text-sm text-gray-300 mb-1">
                           • {change.description}
                         </div>
                       ))}
@@ -357,7 +357,7 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Zap className="w-4 h-4 text-orange-400" />
-                    <CardTitle className="text-sm font-medium text-white">Conflict Analysis</CardTitle>
+                    <CardTitle className="text-base font-semibold text-white">Conflict Analysis</CardTitle>
                     <Badge className={cn(
                       "text-xs",
                       analysis.conflictAnalysis.conflictClarity === 'strong' || analysis.conflictAnalysis.conflictClarity === 'clear'
@@ -377,7 +377,7 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
                 <CardContent className="pt-0">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-300">Inciting Incident</span>
+                      <span className="text-base text-gray-200">Inciting Incident</span>
                       {analysis.conflictAnalysis.hasIncitingIncident ? (
                         <CheckCircle className="w-4 h-4 text-green-400" />
                       ) : (
@@ -386,7 +386,7 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
                     </div>
                     
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-300">Stakes Progression</span>
+                      <span className="text-base text-gray-200">Stakes Progression</span>
                       <Badge className={cn(
                         "text-xs",
                         analysis.conflictAnalysis.stakesProgression === 'optimal' || analysis.conflictAnalysis.stakesProgression === 'rising'
@@ -399,9 +399,9 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
 
                     {analysis.conflictAnalysis.missingElements.length > 0 && (
                       <div className="mt-3 pt-3 border-t border-gray-600">
-                        <p className="text-xs font-medium text-gray-300 mb-2">Missing Elements:</p>
+                        <p className="text-sm font-semibold text-gray-200 mb-2">Missing Elements:</p>
                         {analysis.conflictAnalysis.missingElements.map((element, index) => (
-                          <div key={index} className="text-xs text-gray-400 mb-1">
+                          <div key={index} className="text-sm text-gray-300 mb-1">
                             • {element}
                           </div>
                         ))}
@@ -422,7 +422,7 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <AlertCircle className="w-4 h-4 text-yellow-400" />
-                      <CardTitle className="text-sm font-medium text-white">Active Issues</CardTitle>
+                      <CardTitle className="text-base font-semibold text-white">Active Issues</CardTitle>
                       <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30 text-xs">
                         {highIssues.length + mediumIssues.length}
                       </Badge>
@@ -448,11 +448,11 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
                           <div className="flex items-start gap-2">
                             {getSeverityIcon(issue.severity)}
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-white">{issue.title}</p>
-                              <p className="text-xs text-gray-300 mt-1">{issue.description}</p>
+                              <p className="text-base font-semibold text-white">{issue.title}</p>
+                              <p className="text-sm text-gray-200 mt-1">{issue.description}</p>
                               
                               {issue.affectedBeats.length > 0 && (
-                                <p className="text-xs text-gray-400 mt-1">
+                                <p className="text-sm text-gray-300 mt-1">
                                   Affects {issue.affectedBeats.length} beat{issue.affectedBeats.length !== 1 ? 's' : ''}
                                 </p>
                               )}
@@ -465,7 +465,7 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
                                     e.stopPropagation();
                                     handleAutoFix(issue);
                                   }}
-                                  className="mt-2 h-6 px-2 text-xs text-blue-400 hover:text-blue-300"
+                                  className="mt-2 h-6 px-2 text-sm text-blue-400 hover:text-blue-300"
                                 >
                                   <Zap className="w-3 h-3 mr-1" />
                                   Quick Fix
@@ -491,7 +491,7 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Lightbulb className="w-4 h-4 text-green-400" />
-                      <CardTitle className="text-sm font-medium text-white">Recommendations</CardTitle>
+                      <CardTitle className="text-base font-semibold text-white">Recommendations</CardTitle>
                       <Badge className="bg-green-500/20 text-green-300 border-green-500/30 text-xs">
                         {analysis.recommendations.length}
                       </Badge>
@@ -508,7 +508,7 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
                       {analysis.recommendations.slice(0, 3).map(rec => (
                         <div key={rec.id} className="p-3 bg-green-500/5 border border-green-500/20 rounded">
                           <div className="flex items-start justify-between mb-2">
-                            <h4 className="text-sm font-medium text-green-300">{rec.title}</h4>
+                            <h4 className="text-base font-semibold text-green-300">{rec.title}</h4>
                             <Badge className={cn(
                               "text-xs",
                               rec.impact === 'high' ? "bg-green-500/20 text-green-300 border-green-500/30" :
@@ -518,8 +518,8 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
                               {rec.impact} impact
                             </Badge>
                           </div>
-                          <p className="text-xs text-gray-300 mb-2">{rec.description}</p>
-                          <p className="text-xs text-gray-400">{rec.implementation}</p>
+                          <p className="text-sm text-gray-200 mb-2">{rec.description}</p>
+                          <p className="text-sm text-gray-300">{rec.implementation}</p>
                         </div>
                       ))}
                     </div>

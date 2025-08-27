@@ -216,10 +216,10 @@ export function BeatSheetTab() {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Layout className="w-5 h-5 text-blue-400" />
-            <h2 className="text-lg font-semibold text-white">Beat Structure</h2>
+            <h2 className="text-xl font-bold text-white">Beat Structure</h2>
           </div>
-          <div className="text-sm text-gray-300">
-            <span className="font-medium text-blue-400">{currentTemplate.name}</span>
+          <div className="text-base text-gray-200">
+            <span className="font-semibold text-blue-300">{currentTemplate.name}</span>
           </div>
           <ViewModeSwitcher />
         </div>
@@ -268,10 +268,10 @@ export function BeatSheetTab() {
                         <div className={`p-1.5 rounded bg-${column.color}-500/20`}>
                           <IconComponent className={`w-4 h-4 text-${column.color}-400`} />
                         </div>
-                        <h3 className="text-lg font-bold text-white">{column.label}</h3>
+                                                        <h3 className="text-xl font-bold text-white">{column.label}</h3>
                       </div>
-                      <p className="text-sm text-gray-50 mb-1 font-medium">{column.description}</p>
-                      <p className="text-sm text-gray-100 font-medium">{groupedBeats[column.id]?.length || 0} beats</p>
+                                                    <p className="text-base text-gray-100 mb-1 font-semibold">{column.description}</p>
+                                                    <p className="text-base text-gray-100 font-semibold">{groupedBeats[column.id]?.length || 0} beats</p>
                     </div>
                     <Button
                       onClick={() => handleAddBeat(column.id)}
@@ -314,10 +314,10 @@ export function BeatSheetTab() {
                         }`}>
                           <IconComponent className="w-6 h-6" />
                         </div>
-                        <p className="text-sm text-center font-medium">
+                                                        <p className="text-base text-center font-semibold">
                           {overId === column.id ? 'Drop beat here' : 'No beats yet'}
                         </p>
-                        <p className="text-sm text-center mt-1 font-medium">
+                                                        <p className="text-base text-center mt-1 font-semibold">
                           {overId === column.id ? '' : 'Click + to add a beat'}
                         </p>
                       </div>

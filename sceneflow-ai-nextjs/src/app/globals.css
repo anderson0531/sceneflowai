@@ -49,6 +49,7 @@
     @apply text-gray-100;
     font-weight: 400;
     line-height: 1.6;
+    font-size: 0.95rem; /* Slightly larger base font size */
   }
 
   /* Paragraphs with enhanced spacing */
@@ -175,6 +176,15 @@
     font-weight: 500;
     line-height: 1.5;
     @apply text-gray-100;
+  }
+  
+  /* Enhanced small text readability */
+  .text-sm {
+    font-size: 0.9rem; /* Slightly larger than default text-sm */
+  }
+  
+  .text-xs {
+    font-size: 0.8rem; /* Slightly larger than default text-xs */
   }
 
   /* Strong text with enhanced weight */

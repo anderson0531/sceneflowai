@@ -105,7 +105,7 @@ export function BoneyardSidebar({ className }: BoneyardSidebarProps) {
         {!isCollapsed && (
           <div className="flex items-center gap-2">
             <Archive className="w-5 h-5 text-orange-400" />
-            <h3 className="font-semibold text-white">Boneyard</h3>
+            <h3 className="text-lg font-bold text-white">Boneyard</h3>
             {boneyardItems.length > 0 && (
               <Badge className="bg-orange-500/20 text-orange-300 border border-orange-500/30">
                 {boneyardItems.length}
@@ -186,8 +186,8 @@ export function BoneyardSidebar({ className }: BoneyardSidebarProps) {
             {boneyardItems.length === 0 ? (
               <div className="text-center py-8">
                 <Archive className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                <h4 className="text-sm font-medium text-gray-400 mb-1">Empty Boneyard</h4>
-                <p className="text-xs text-gray-500 mb-4">
+                <h4 className="text-base font-semibold text-gray-300 mb-1">Empty Boneyard</h4>
+                <p className="text-sm text-gray-400 mb-4">
                   Drag beats here or use "Generate Ideas" to populate with alternatives
                 </p>
                 <Button
@@ -210,10 +210,10 @@ export function BoneyardSidebar({ className }: BoneyardSidebarProps) {
                     <CardHeader className="pb-2 p-3">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-sm font-medium text-white leading-tight mb-1">
+                          <CardTitle className="text-base font-semibold text-white leading-tight mb-1">
                             {item.beat.title}
                           </CardTitle>
-                          <div className="flex items-center gap-2 text-xs text-gray-400">
+                          <div className="flex items-center gap-2 text-sm text-gray-300">
                             <SourceIcon className={cn("w-3 h-3", sourceColor)} />
                             <span>{formatTimeAgo(item.addedAt)}</span>
                           </div>
@@ -260,12 +260,12 @@ export function BoneyardSidebar({ className }: BoneyardSidebarProps) {
                     </CardHeader>
                     
                     <CardContent className="p-3 pt-0">
-                      <p className="text-xs text-gray-300 line-clamp-3 leading-relaxed mb-2">
+                      <p className="text-sm text-gray-200 line-clamp-3 leading-relaxed mb-2">
                         {item.beat.summary}
                       </p>
                       
                       {item.reason && (
-                        <div className="flex items-center gap-1 text-xs text-amber-400">
+                        <div className="flex items-center gap-1 text-sm text-amber-300">
                           <AlertCircle className="w-3 h-3" />
                           <span>{item.reason}</span>
                         </div>
@@ -309,7 +309,7 @@ export function BoneyardSidebar({ className }: BoneyardSidebarProps) {
           {/* Footer Info */}
           {boneyardItems.length > 0 && (
             <div className="p-3 border-t border-gray-700 bg-gray-800">
-              <p className="text-xs text-gray-400 text-center">
+              <p className="text-sm text-gray-300 text-center">
                 {boneyardItems.length} item{boneyardItems.length !== 1 ? 's' : ''} in boneyard
               </p>
             </div>
