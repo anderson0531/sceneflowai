@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "template_id": "tpl-ugc-review-hvcta-30",
+  "template_name": "UGC Product Review (30s)",
+  "category": "short_form_social",
+  "use_case": "ugc_product_review",
+  "narrative_structure": "hv_cta",
+  "target_audience": "shoppers comparing options",
+  "estimated_duration": 30,
+  "tone": "friendly",
+  "cta_type": "shop_now",
+  "platform": "tiktok",
+  "orientation": "9:16",
+  "tags": ["ugc", "review", "authentic"],
+  "storyboard_readiness": {
+    "beats": "1) Hook: problem\n2) Value: 2–3 benefits\n3) CTA",
+    "act_structure": "three-act",
+    "runtime_sec": 30,
+    "scene_count": 5,
+    "characters": "Creator — casual, genuine",
+    "locations": "INT: home/desk",
+    "visual_style": "Handheld, natural light",
+    "cinematography": "Portrait, MS/CU, jump cuts",
+    "audio": "Direct-to-camera; light track",
+    "pacing": "Quick cuts, captions",
+    "platform_deliverables": "Auto-captions, link sticker",
+    "branding": "Minimal, authentic",
+    "props_continuity": "Product present",
+    "accessibility": "Readable large captions",
+    "hints": "Text overlays, b-roll inserts"
+  },
+  "scenes": [
+    {"scene_number":1,"scene_name":"Hook","scene_duration":5,"description":"Relatable pain point.","visual_notes":"Selfie start","character_details":"Creator","camera_details":"Handheld CU","on_screen_text":"Struggle?","audio_notes":"Direct voice","transition_notes":"Cut"},
+    {"scene_number":2,"scene_name":"Intro","scene_duration":6,"description":"Introduce product quickly.","visual_notes":"Hold up product","character_details":"Creator","camera_details":"CU","on_screen_text":"I tried...","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":3,"scene_name":"Value 1","scene_duration":7,"description":"Benefit/mini demo.","visual_notes":"B-roll insert","character_details":"","camera_details":"Insert","on_screen_text":"Saves time","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":4,"scene_name":"Value 2","scene_duration":7,"description":"Benefit/mini demo.","visual_notes":"B-roll insert","character_details":"","camera_details":"Insert","on_screen_text":"Easy","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":5,"scene_name":"CTA","scene_duration":5,"description":"Prompt action.","visual_notes":"Point to link","character_details":"","camera_details":"CU","on_screen_text":"Shop now","audio_notes":"","transition_notes":"End"}
+  ]
+}
+
+
+
+
+
+
+
+

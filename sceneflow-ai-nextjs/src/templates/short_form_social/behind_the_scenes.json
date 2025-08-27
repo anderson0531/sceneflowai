@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0",
+  "template_id": "tpl-bts-showcase-hvcta-30",
+  "template_name": "Behind-the-Scenes Showcase (30s)",
+  "category": "short_form_social",
+  "use_case": "behind_the_scenes",
+  "narrative_structure": "hv_cta",
+  "target_audience": "brand followers, prospective customers",
+  "estimated_duration": 30,
+  "tone": "friendly",
+  "cta_type": "follow",
+  "platform": "tiktok",
+  "orientation": "9:16",
+  "tags": ["social","authentic","bts"],
+  "storyboard_readiness": {
+    "beats": "1) Hook (0–3s)\n2) Value (what you'll see)\n3) Key moments\n4) CTA",
+    "act_structure": "n/a",
+    "runtime_sec": 30,
+    "scene_count": 4,
+    "characters": "Team members; candid interactions",
+    "locations": "Office/studio; handheld mobile shots",
+    "visual_style": "Raw, high-contrast captions; quick cuts",
+    "cinematography": "9:16; CU heavy; handheld; punch-in zooms",
+    "audio": "Diegetic sounds; trending track at ~120 BPM",
+    "pacing": "Very fast; 2–3s shots; hook by 0–1s",
+    "platform_deliverables": "Captions on; end caption CTA; cover image",
+    "branding": "Light-touch logo bug; on-brand colors for text",
+    "props_continuity": "Branded mugs/stickers occasional",
+    "accessibility": "Captions EN; emojis used sparingly",
+    "hints": "Primary: authenticity; include smiles, mistakes, laughter"
+  },
+  "scenes": [
+    {"scene_number":1,"scene_name":"Hook","scene_duration":3,"description":"Pattern interrupt: surprising or funny moment","visual_notes":"Freeze frame + bold caption","character_details":"Laughing teammate","camera_details":"Handheld CU","on_screen_text":"You won't believe what it took to make this shot","audio_notes":"Record scratch -> music","transition_notes":"Smash cut"},
+    {"scene_number":2,"scene_name":"Value","scene_duration":5,"description":"Set expectation: what you'll see behind the scenes","visual_notes":"Quick montage","character_details":"Multiple team members","camera_details":"Jump cuts","on_screen_text":"BTS: lights, camera, chaos","audio_notes":"Beat-aligned cuts","transition_notes":"Cut on beat"},
+    {"scene_number":3,"scene_name":"Key Content","scene_duration":18,"description":"Series of 2–3s moments: setup, retake, cheer","visual_notes":"Candid clips; captions for context","character_details":"Crew interactions","camera_details":"Punch-in zooms","on_screen_text":"Retake #3 • Nailed it!","audio_notes":"Diegetic + track","transition_notes":"Whip cuts"},
+    {"scene_number":4,"scene_name":"CTA","scene_duration":4,"description":"Simple branded end caption","visual_notes":"Brand color caption card","character_details":"N/A","camera_details":"Static","on_screen_text":"Follow for more BTS","audio_notes":"Sting","transition_notes":"End"}
+  ]
+}
+
+
+
+
+
+

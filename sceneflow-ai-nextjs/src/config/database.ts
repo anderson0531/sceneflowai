@@ -1,35 +1,52 @@
+import { sql } from '@vercel/postgres'
 import { Sequelize } from 'sequelize'
+import dotenv from 'dotenv'
+
+// Load environment variables from .env.local
+dotenv.config({ path: '.env.local' })
+
+// Also try to load from parent directory if .env.local doesn't exist
+if (!process.env.DB_DATABASE_URL && !process.env.DATABASE_URL) {
+  dotenv.config({ path: '../.env.local' })
+}
 
 // Database configuration
-const sequelize = new Sequelize({
-  dialect: 'postgres', // or 'mysql', 'sqlite', 'mariadb', 'mssql'
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  username: process.env.DB_USERNAME || 'postgres',
-  password: process.env.DB_PASSWORD || 'password',
-  database: process.env.DB_NAME || 'sceneflow_ai',
-  
-  // Connection pool settings
-  pool: {
-    max: 10,
-    min: 0,
-    acquire: 30000,
-    idle: 10000
-  },
-  
-  // Logging configuration
-  logging: process.env.NODE_ENV === 'development' ? console.log : false,
-  
-  // Timezone configuration
-  timezone: '+00:00',
-  
-  // Define options
-  define: {
-    timestamps: true,
-    underscored: true,
-    freezeTableName: true
-  }
-})
+console.log('🔍 Environment check:')
+console.log('DB_DATABASE_URL:', process.env.DB_DATABASE_URL ? 'Set' : 'Not set')
+console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'Set' : 'Not set')
+console.log('NODE_ENV:', process.env.NODE_ENV)
+
+let sequelize: Sequelize
+
+if (process.env.DB_DATABASE_URL) {
+  console.log('✅ Using DB_DATABASE_URL (Vercel Postgres) for connection')
+  // Use Vercel Postgres connection string with Sequelize
+  sequelize = new Sequelize(process.env.DB_DATABASE_URL, {
+    dialect: 'postgres',
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false
+      }
+    },
+    pool: { max: 10, min: 0, acquire: 30000, idle: 10000 },
+    logging: process.env.NODE_ENV === 'development' ? console.log : false,
+    timezone: '+00:00',
+    define: { timestamps: true, underscored: true, freezeTableName: true }
+  })
+} else if (process.env.DATABASE_URL) {
+  console.log('✅ Using DATABASE_URL (Supabase) for connection')
+  // Fallback to Supabase
+  sequelize = new Sequelize(process.env.DATABASE_URL, {
+    dialect: 'postgres',
+    pool: { max: 10, min: 0, acquire: 30000, idle: 10000 },
+    logging: process.env.NODE_ENV === 'development' ? console.log : false,
+    timezone: '+00:00',
+    define: { timestamps: true, underscored: true, freezeTableName: true }
+  })
+} else {
+  throw new Error('No database connection string found. Please set DB_DATABASE_URL or DATABASE_URL')
+}
 
 // Test database connection
 export const testConnection = async (): Promise<void> => {
@@ -53,4 +70,5 @@ export const syncDatabase = async (): Promise<void> => {
   }
 }
 
-export { sequelize }
+// Export both Sequelize instance and Vercel Postgres client
+export { sequelize, sql }

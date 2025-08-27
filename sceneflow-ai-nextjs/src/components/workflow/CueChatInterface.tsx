@@ -40,6 +40,7 @@ interface CueChatInterfaceProps {
   tone?: string
   isStoryboardMode?: boolean
   sceneContext?: any
+  compact?: boolean
 }
 
 const initialSuggestions = [
@@ -78,7 +79,7 @@ const workflowContext = {
   }
 }
 
-export function CueChatInterface({ onConceptUpdate, onGenerateIdeas, onSceneIteration, initialConcept, currentConcept, targetAudience, keyMessage, tone, isStoryboardMode, sceneContext }: CueChatInterfaceProps): React.JSX.Element {
+export function CueChatInterface({ onConceptUpdate, onGenerateIdeas, onSceneIteration, initialConcept, currentConcept, targetAudience, keyMessage, tone, isStoryboardMode, sceneContext, compact }: CueChatInterfaceProps): React.JSX.Element {
   const { addCueMessage } = useStore()
   const [messages, setMessages] = useState<CueMessage[]>([])
   const [inputValue, setInputValue] = useState('')
@@ -409,9 +410,7 @@ export function CueChatInterface({ onConceptUpdate, onGenerateIdeas, onSceneIter
   }
 
   const handleGenerateIdeas = async () => {
-    if (overallCompleteness < COMPLETENESS_THRESHOLD) {
-      return
-    }
+    // Allow triggering even if completeness is low; UI still communicates readiness
 
     setIsGenerating(true)
     
@@ -550,33 +549,33 @@ export function CueChatInterface({ onConceptUpdate, onGenerateIdeas, onSceneIter
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div className={`rounded-xl overflow-hidden ${compact ? 'bg-sf-surface border border-sf-border' : 'bg-white border border-gray-200'}`}>
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4">
+      <div className={compact ? 'p-3 border-b border-sf-border' : 'bg-gradient-to-r from-blue-600 to-purple-600 p-4'}>
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${compact ? 'bg-sf-gradient' : 'bg-white/20'}`}>
+            <Sparkles className={`w-4 h-4 ${compact ? 'text-sf-background' : 'text-white'}`} />
           </div>
           <div>
-            <h3 className="font-semibold text-white">Cue AI Assistant</h3>
-            <p className="text-xs text-blue-100">Your creative partner for ideation</p>
+            <h3 className={`font-semibold ${compact ? 'text-sf-text-primary' : 'text-white'}`}>Cue AI Assistant</h3>
+            <p className={`text-sm ${compact ? 'text-sf-text-secondary' : 'text-blue-100'}`}>Your creative partner for ideation</p>
           </div>
         </div>
         
         {/* Overall Progress */}
         <div className="mt-3">
-          <div className="flex items-center justify-between text-white text-xs mb-1">
+          <div className={`flex items-center justify-between text-sm mb-1 ${compact ? 'text-sf-text-secondary' : 'text-white'}`}>
             <span>Concept Completeness</span>
             <span>{Math.round(overallCompleteness * 100)}%</span>
           </div>
-          <div className="w-full bg-white/20 rounded-full h-2 mb-2">
+          <div className={`w-full rounded-full h-2 mb-2 ${compact ? 'bg-sf-surface-light' : 'bg-white/20'}`}>
             <div 
               className={`h-2 rounded-full transition-all duration-500 ${
                 overallCompleteness >= COMPLETENESS_THRESHOLD 
-                  ? 'bg-green-400' 
+                  ? (compact ? 'bg-sf-primary' : 'bg-green-400') 
                   : overallCompleteness >= 0.6 
-                    ? 'bg-yellow-400' 
-                    : 'bg-orange-400'
+                    ? (compact ? 'bg-sf-accent' : 'bg-yellow-400') 
+                    : (compact ? 'bg-sf-border' : 'bg-orange-400')
               }`}
               style={{ width: `${overallCompleteness * 100}%` }}
             />
@@ -584,7 +583,7 @@ export function CueChatInterface({ onConceptUpdate, onGenerateIdeas, onSceneIter
           
           {/* Generate Ideas Button */}
           <div className="flex items-center justify-between">
-            <div className="text-xs text-white/80">
+            <div className={`text-sm ${compact ? 'text-sf-text-secondary' : 'text-white/80'}`}>
               {overallCompleteness >= COMPLETENESS_THRESHOLD 
                 ? '✅ Concept ready for idea generation!' 
                 : `📝 ${Math.round((COMPLETENESS_THRESHOLD - overallCompleteness) * 100)}% more needed`
@@ -596,8 +595,8 @@ export function CueChatInterface({ onConceptUpdate, onGenerateIdeas, onSceneIter
               size="sm"
               className={`transition-all duration-200 ${
                 overallCompleteness >= COMPLETENESS_THRESHOLD
-                  ? 'bg-green-500 hover:bg-green-600 text-white'
-                  : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                  ? (compact ? 'bg-sf-primary hover:bg-sf-accent text-sf-background' : 'bg-sf-primary hover:bg-sf-accent text-sf-background')
+                  : (compact ? 'bg-sf-surface-light text-sf-text-secondary cursor-not-allowed' : 'bg-sf-surface-light text-sf-text-secondary cursor-not-allowed')
               }`}
             >
               {isGenerating ? (
@@ -617,7 +616,7 @@ export function CueChatInterface({ onConceptUpdate, onGenerateIdeas, onSceneIter
       </div>
 
       {/* Chat Messages */}
-      <div className="h-96 overflow-y-auto p-4 space-y-4">
+      <div className={`overflow-y-auto p-4 space-y-4 ${compact ? 'h-80' : 'h-96'}`}>
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`flex items-start space-x-2 max-w-[80%] ${message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
@@ -638,7 +637,7 @@ export function CueChatInterface({ onConceptUpdate, onGenerateIdeas, onSceneIter
                 
                 {/* Analysis Metrics */}
                 {message.analysis && message.type === 'assistant' && (
-                  <div className="mt-3 p-2 bg-white/10 rounded text-xs">
+                  <div className="mt-3 p-2 bg-white/10 rounded text-sm">
                     <div className="grid grid-cols-3 gap-2 mb-2">
                       <div>
                         <div className="text-white/80 mb-1">Narrative</div>
@@ -683,7 +682,7 @@ export function CueChatInterface({ onConceptUpdate, onGenerateIdeas, onSceneIter
                       <button
                         key={index}
                         onClick={() => handleSuggestionClick(suggestion)}
-                        className="block w-full text-left p-2 bg-white/20 hover:bg-white/30 rounded text-xs transition-colors"
+                        className="block w-full text-left p-2 bg-white/20 hover:bg-white/30 rounded text-sm transition-colors"
                       >
                         {suggestion}
                       </button>
@@ -694,9 +693,9 @@ export function CueChatInterface({ onConceptUpdate, onGenerateIdeas, onSceneIter
                 {/* Next Questions */}
                 {message.next_questions && message.type === 'assistant' && (
                   <div className="mt-3 p-2 bg-blue-500/20 rounded border border-blue-500/30">
-                    <div className="text-xs text-blue-200 mb-2 font-medium">Next Steps to Consider:</div>
+                    <div className="text-sm text-blue-200 mb-2 font-medium">Next Steps to Consider:</div>
                     {message.next_questions.map((question, index) => (
-                      <div key={index} className="text-xs text-blue-100 mb-1">
+                      <div key={index} className="text-sm text-blue-100 mb-1">
                         • {question}
                       </div>
                     ))}
@@ -729,7 +728,7 @@ export function CueChatInterface({ onConceptUpdate, onGenerateIdeas, onSceneIter
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-gray-200 p-4">
+      <div className={`p-4 ${compact ? 'border-t border-sf-border' : 'border-t border-gray-200'}`}>
         <div className="flex space-x-2">
           <Input
             value={inputValue}
@@ -740,7 +739,7 @@ export function CueChatInterface({ onConceptUpdate, onGenerateIdeas, onSceneIter
           />
           <Button
             onClick={toggleVoiceInput}
-            variant="outline"
+            variant="secondary"
             size="sm"
             className={isListening ? 'bg-red-100 border-red-300 text-red-600' : ''}
           >
@@ -762,7 +761,7 @@ export function CueChatInterface({ onConceptUpdate, onGenerateIdeas, onSceneIter
             <button
               key={index}
               onClick={() => handleSuggestionClick(suggestion)}
-              className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs rounded-full transition-colors"
+                              className={`px-3 py-1 text-sm rounded-full transition-colors ${compact ? 'bg-sf-surface-light hover:bg-sf-border text-sf-text-secondary' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
             >
               {suggestion}
             </button>

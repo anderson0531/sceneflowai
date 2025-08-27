@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useStore } from '@/store/useStore'
 import { Button } from '@/components/ui/Button'
 import ProviderSelector from '@/app/dashboard/components/ProviderSelector'
 import { AIProvider } from '@/services/ai-providers/BaseAIProviderAdapter'
+import { AsyncJobManager } from '@/services/AsyncJobManager'
+import { SparkStudioService, VideoClip, GenerationSettings } from '@/services/SparkStudioService'
 import { 
   Film, 
   Play, 
@@ -38,46 +40,124 @@ export default function VideoGenerationPage() {
   const router = useRouter()
   const { currentProject, updateProject, updateStepProgress, stepProgress } = useStore()
   const [selectedProvider, setSelectedProvider] = useState<AIProvider | null>(null)
-  const [videoVersions, setVideoVersions] = useState<VideoVersion[]>([
-    {
-      id: '1',
-      name: 'Final Cut - v1.0',
-      status: 'completed',
-      progress: 100,
-      duration: 60,
-      quality: '4K',
-      createdAt: '2 hours ago'
-    }
-  ])
+  const [videoVersions, setVideoVersions] = useState<VideoVersion[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
-  const [generationSettings, setGenerationSettings] = useState({
+  const [currentJobId, setCurrentJobId] = useState<string | null>(null)
+  const [generationSettings, setGenerationSettings] = useState<GenerationSettings>({
     quality: '4K',
-    format: 'MP4',
+    format: 'mp4',
     aspectRatio: '16:9',
-    frameRate: '30fps'
+    frameRate: '30'
   })
 
-  const startGeneration = () => {
-    if (!selectedProvider) {
-      alert('Please select a provider first')
+  // Real-time job monitoring
+  useEffect(() => {
+    if (!currentJobId) return
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/video/jobs?userId=demo-user&jobId=${currentJobId}`)
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success && data.job) {
+            const job = data.job
+            
+            // Update video versions based on job status
+            if (job.type === 'generation') {
+              // Update generation progress
+              if (job.status === 'completed') {
+                // Generation completed, check for assembly job
+                const assemblyResponse = await fetch(`/api/video/jobs?userId=demo-user&projectId=${currentProject?.id}`)
+                if (assemblyResponse.ok) {
+                  const assemblyData = await assemblyResponse.json()
+                  const assemblyJob = assemblyData.jobs?.find((j: any) => j.type === 'assembly')
+                  if (assemblyJob) {
+                    setCurrentJobId(assemblyJob.id)
+                  }
+                }
+              }
+            } else if (job.type === 'assembly') {
+              // Update assembly progress
+              if (job.status === 'completed') {
+                // Assembly completed, create final video version
+                const finalVersion: VideoVersion = {
+                  id: job.id,
+                  name: `Final Cut - v${videoVersions.length + 1}.0`,
+                  status: 'completed',
+                  progress: 100,
+                  duration: 60, // This would come from the actual video
+                  quality: generationSettings.quality,
+                  createdAt: 'Just now',
+                  thumbnail: job.metadata?.finalVideoUrl
+                }
+                setVideoVersions(prev => [...prev, finalVersion])
+                setCurrentJobId(null)
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error monitoring job:', error)
+      }
+    }, 5000) // Check every 5 seconds
+
+    return () => clearInterval(interval)
+  }, [currentJobId, currentProject?.id, videoVersions.length, generationSettings.quality])
+
+  const startGeneration = async () => {
+    if (!selectedProvider || !currentProject) {
+      alert('Please select a provider and ensure you have a current project')
       return
     }
     
     setIsGenerating(true)
-    // Simulate video generation
-    setTimeout(() => {
-      const newVersion: VideoVersion = {
-        id: Date.now().toString(),
-        name: `Final Cut - v${videoVersions.length + 1}.0`,
-        status: 'processing',
-        progress: 0,
-        duration: 60,
-        quality: generationSettings.quality,
-        createdAt: 'Just now'
+    
+    try {
+      // Create scene directions from current project
+      const sceneDirections = currentProject.metadata?.directions || []
+      if (sceneDirections.length === 0) {
+        alert('No scene directions found. Please complete the Scene Direction step first.')
+        setIsGenerating(false)
+        return
       }
-      setVideoVersions([...videoVersions, newVersion])
+
+      // Submit generation job
+      const response = await fetch('/api/video/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sceneDirections,
+          userId: 'demo-user', // In production, this would come from auth context
+          projectId: currentProject.id,
+          projectContext: {
+            title: currentProject.title || 'Untitled Project',
+            genre: currentProject.metadata?.genre || 'General',
+            tone: currentProject.metadata?.tone || 'Professional',
+            targetAudience: currentProject.metadata?.targetAudience || 'General'
+          },
+          generationSettings
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to start video generation')
+      }
+
+      const data = await response.json()
+      if (data.success) {
+        setCurrentJobId(data.jobId)
+        console.log('Video generation started:', data.jobId)
+      } else {
+        throw new Error(data.error || 'Generation failed')
+      }
+    } catch (error) {
+      console.error('Error starting generation:', error)
+      alert(`Failed to start generation: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
       setIsGenerating(false)
-    }, 2000)
+    }
   }
 
   const handleConfigureProvider = () => {
@@ -185,6 +265,58 @@ export default function VideoGenerationPage() {
         </div>
       </div>
 
+      {/* Current Job Status */}
+      {currentJobId && (
+        <div className="bg-blue-50 rounded-xl border border-blue-200 p-6">
+          <h2 className="text-xl font-semibold text-blue-900 mb-4 flex items-center">
+            <Clock className="w-5 h-5 mr-2 text-blue-600" />
+            Current Job Status
+          </h2>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-blue-700">Job ID:</span>
+              <span className="text-sm text-blue-600 font-mono">{currentJobId}</span>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-blue-700">Status:</span>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                <Clock className="w-3 h-3 mr-1 animate-spin" />
+                Processing...
+              </span>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm text-blue-600">
+                <span>Progress</span>
+                <span>0%</span>
+              </div>
+              <div className="w-full bg-blue-200 rounded-full h-2">
+                <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{ width: '0%' }}></div>
+              </div>
+            </div>
+            
+            <div className="flex space-x-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  fetch('/api/video/jobs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'cancel', jobId: currentJobId, userId: 'demo-user' })
+                  }).then(() => setCurrentJobId(null))
+                }}
+                className="text-red-600 border-red-300 hover:bg-red-50"
+              >
+                Cancel Job
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Generation Settings */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
@@ -197,7 +329,7 @@ export default function VideoGenerationPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Quality</label>
             <select
               value={generationSettings.quality}
-              onChange={(e) => setGenerationSettings({...generationSettings, quality: e.target.value})}
+              onChange={(e) => setGenerationSettings({...generationSettings, quality: e.target.value as '1080p' | '4K' | '8K'})}
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="1080p">1080p</option>
@@ -210,12 +342,12 @@ export default function VideoGenerationPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Format</label>
             <select
               value={generationSettings.format}
-              onChange={(e) => setGenerationSettings({...generationSettings, format: e.target.value})}
+              onChange={(e) => setGenerationSettings({...generationSettings, format: e.target.value as 'mp4' | 'mov' | 'webm'})}
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="MP4">MP4</option>
-              <option value="MOV">MOV</option>
-              <option value="AVI">AVI</option>
+              <option value="mp4">MP4</option>
+              <option value="mov">MOV</option>
+              <option value="webm">WebM</option>
             </select>
           </div>
           
@@ -223,7 +355,7 @@ export default function VideoGenerationPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Aspect Ratio</label>
             <select
               value={generationSettings.aspectRatio}
-              onChange={(e) => setGenerationSettings({...generationSettings, aspectRatio: e.target.value})}
+              onChange={(e) => setGenerationSettings({...generationSettings, aspectRatio: e.target.value as '16:9' | '9:16' | '1:1' | '4:3'})}
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="16:9">16:9 (Widescreen)</option>
@@ -237,12 +369,12 @@ export default function VideoGenerationPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Frame Rate</label>
             <select
               value={generationSettings.frameRate}
-              onChange={(e) => setGenerationSettings({...generationSettings, frameRate: e.target.value})}
+              onChange={(e) => setGenerationSettings({...generationSettings, frameRate: e.target.value as '24' | '30' | '60'})}
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="24fps">24fps (Film)</option>
-              <option value="30fps">30fps (Standard)</option>
-              <option value="60fps">60fps (Smooth)</option>
+              <option value="24">24fps (Film)</option>
+              <option value="30">30fps (Standard)</option>
+              <option value="60">60fps (Smooth)</option>
             </select>
           </div>
         </div>

@@ -1,0 +1,35 @@
+'use client';
+
+import { Act, Beat } from '@/types/productionGuide';
+import { useDroppable } from '@dnd-kit/core';
+import { BeatCard } from './BeatCard';
+import { cn } from '@/lib/utils';
+
+interface ActColumnProps {
+  act: Act;
+  beats: Beat[];
+}
+
+export function ActColumn({ act, beats }: ActColumnProps) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: act,
+    data: { type: 'ACT' },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+          "w-full lg:w-80 flex-shrink-0 bg-gray-900 p-3 sm:p-4 rounded-lg flex flex-col h-full transition-colors border-2 border-dashed",
+          isOver ? "border-teal-500 bg-gray-800/50" : "border-gray-900"
+        )}
+    >
+      <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-teal-400">{act} ({beats.length})</h3>
+      <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 pr-2">
+        {beats.map(beat => (
+            <BeatCard key={beat.id} beat={beat} />
+        ))}
+      </div>
+    </div>
+  );
+}

@@ -169,8 +169,21 @@ const nextConfig = {
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
-  // Enable server external packages for database support
-  serverExternalPackages: ['sequelize', 'pg', 'pg-hstore'],
+  // Force include database packages for Vercel
+  serverExternalPackages: ['pg', 'pg-hstore', 'sequelize'],
+  // Webpack configuration to force include packages
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Force include pg packages
+      config.externals = config.externals.filter(external => {
+        if (typeof external === 'string') {
+          return !external.includes('pg') && !external.includes('sequelize');
+        }
+        return true;
+      });
+    }
+    return config;
+  },
   // Temporarily disable TypeScript checking for deployment
   typescript: {
     ignoreBuildErrors: true,

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "template_id": "tpl-product-commercial-pscta-30",
+  "template_name": "Product Commercial (30s)",
+  "category": "marketing_promotional",
+  "use_case": "product_commercial",
+  "narrative_structure": "ps_cta",
+  "target_audience": "buyers",
+  "estimated_duration": 30,
+  "tone": "professional",
+  "cta_type": "shop_now",
+  "platform": "youtube",
+  "orientation": "16:9",
+  "tags": ["commercial", "product"],
+  "storyboard_readiness": {
+    "beats": "1) Hook\n2) Problem\n3) Solution\n4) Value\n5) CTA",
+    "act_structure": "three-act",
+    "runtime_sec": 30,
+    "scene_count": 5,
+    "characters": "Narrator",
+    "locations": "Studio",
+    "visual_style": "Polished",
+    "cinematography": "Gimbal + product shots",
+    "audio": "Upbeat track",
+    "pacing": "Fast",
+    "platform_deliverables": "Cutdowns",
+    "branding": "Strong",
+    "props_continuity": "Consistent props",
+    "accessibility": "Captions",
+    "hints": "Type + product macro"
+  },
+  "scenes": [
+    {"scene_number":1,"scene_name":"Hook","scene_duration":6,"description":"Bold opener.","visual_notes":"Macro shot","character_details":"","camera_details":"CU","on_screen_text":"Meet X","audio_notes":"Hit","transition_notes":"Cut"},
+    {"scene_number":2,"scene_name":"Problem","scene_duration":7,"description":"Pain point.","visual_notes":"Visual metaphor","character_details":"","camera_details":"","on_screen_text":"Too slow","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":3,"scene_name":"Solution","scene_duration":7,"description":"Product solves it.","visual_notes":"Hero shot","character_details":"","camera_details":"","on_screen_text":"Faster","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":4,"scene_name":"Value","scene_duration":6,"description":"Key feature.","visual_notes":"UI demo","character_details":"","camera_details":"","on_screen_text":"One-click","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":5,"scene_name":"CTA","scene_duration":4,"description":"Buy now.","visual_notes":"End card","character_details":"","camera_details":"","on_screen_text":"Shop now","audio_notes":"","transition_notes":"End"}
+  ]
+}
+
+
+
+
+
+
+
+

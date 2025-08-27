@@ -1,0 +1,58 @@
+'use client';
+
+import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/textarea";
+import { SendIcon, SparklesIcon, XIcon } from "lucide-react";
+import { useAIContextStore } from "@/store/useAIContextStore";
+
+export function AICoPilotPanel() {
+  const { context, clearContext, togglePanel } = useAIContextStore();
+
+  // State management for chat messages and AI interaction logic would go here
+
+  return (
+    <div className="w-full bg-gray-800 border-l border-gray-700 flex flex-col h-full">
+      <div className="p-4 border-b border-gray-700 flex justify-between items-center">
+        <div className="flex items-center">
+            <SparklesIcon className="text-teal-400 mr-2"/>
+            <h2 className="text-lg font-semibold">AI Co-Pilot</h2>
+        </div>
+        <Button variant="ghost" size="icon" onClick={() => togglePanel(false)}>
+            <XIcon className="h-5 w-5"/>
+        </Button>
+      </div>
+
+      {/* Context Display */}
+      {context && (
+        <div className="p-4 bg-gray-700 text-sm relative">
+            <p className="italic text-gray-300 line-clamp-3">Context: {context}</p>
+            <Button variant="ghost" size="sm" className="absolute top-2 right-2" onClick={clearContext}>
+                Clear Context
+            </Button>
+        </div>
+      )}
+
+      {/* Chat History (Mockup) */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="bg-gray-700 p-3 rounded-lg">
+          <p>Welcome! I've generated the first draft. You can highlight text in the treatment or open a beat card and ask me to refine it.</p>
+        </div>
+        {/* When AI suggests changes, implement a Diff View here (e.g., react-diff-viewer) with Accept/Reject buttons */}
+      </div>
+
+      {/* Input Area */}
+      <div className="p-4 border-t border-gray-700">
+        <div className="relative">
+          <Textarea 
+            placeholder="Ask the AI to refine..." 
+            className="bg-gray-900 pr-12 focus-visible:ring-teal-500" 
+            rows={3} 
+           />
+          <Button size="icon" className="absolute right-3 bottom-4 bg-teal-600 hover:bg-teal-700">
+            <SendIcon className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

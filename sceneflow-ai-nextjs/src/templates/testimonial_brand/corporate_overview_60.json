@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "template_id": "tpl-corporate-overview-threeact-60",
+  "template_name": "Corporate Overview (60s)",
+  "category": "testimonial_brand",
+  "use_case": "corporate_overview",
+  "narrative_structure": "three_act",
+  "target_audience": "prospects and partners",
+  "estimated_duration": 60,
+  "tone": "professional",
+  "cta_type": "learn_more",
+  "platform": "linkedin",
+  "orientation": "16:9",
+  "tags": ["brand", "about", "mission"],
+  "storyboard_readiness": {
+    "beats": "1) Who we are\n2) What we do\n3) Proof\n4) CTA",
+    "act_structure": "three-act",
+    "runtime_sec": 60,
+    "scene_count": 6,
+    "characters": "Leaders + team",
+    "locations": "Office, customer sites",
+    "visual_style": "Clean corporate",
+    "cinematography": "Tripod + slider",
+    "audio": "Warm VO + light music",
+    "pacing": "Measured",
+    "platform_deliverables": "16:9 hero + 1:1 cut",
+    "branding": "Brand standards",
+    "props_continuity": "Consistent wardrobe",
+    "accessibility": "Captions",
+    "hints": "Lower thirds names/titles"
+  },
+  "scenes": [
+    {"scene_number":1,"scene_name":"Intro","scene_duration":8,"description":"Mission statement over footage.","visual_notes":"Office montage","character_details":"","camera_details":"Slider","on_screen_text":"Our mission","audio_notes":"Warm track","transition_notes":"Cut"},
+    {"scene_number":2,"scene_name":"What we do","scene_duration":12,"description":"Core services/products.","visual_notes":"B-roll","character_details":"","camera_details":"MS","on_screen_text":"Solutions","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":3,"scene_name":"How we help","scene_duration":12,"description":"Outcomes for customers.","visual_notes":"Customer b-roll","character_details":"","camera_details":"","on_screen_text":"Outcomes","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":4,"scene_name":"Proof","scene_duration":12,"description":"Logos/metrics/testimonials.","visual_notes":"Graphics","character_details":"","camera_details":"","on_screen_text":"Trusted","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":5,"scene_name":"Culture","scene_duration":10,"description":"Team moments.","visual_notes":"People","character_details":"","camera_details":"","on_screen_text":"People first","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":6,"scene_name":"CTA","scene_duration":6,"description":"Visit site/contact.","visual_notes":"End card","character_details":"","camera_details":"","on_screen_text":"Learn more","audio_notes":"","transition_notes":"End"}
+  ]
+}
+
+
+
+
+
+
+
+

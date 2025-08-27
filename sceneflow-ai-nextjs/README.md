@@ -169,3 +169,30 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 Built with ❤️ by the SceneFlow AI Team
+
+## 🔧 **Environment Configuration**
+
+### **API Keys Setup**
+Configure your `.env.local` file with your API keys:
+
+```bash
+# Multi-provider AI setup for Cue
+ELEVENLABS_API_KEY=your_elevenlabs_key_here
+GEMINI_API_KEY=your_gemini_key_here
+# OPENAI_API_KEY=your_openai_key_here
+```
+
+### **Expected Behavior:**
+1. **Cue will try Gemini first** (primary provider)
+2. **Fall back to OpenAI** if Gemini fails
+3. **Use structured templates** as final fallback
+
+## 📝 **API Integration**
+
+The enhanced API route supports multiple AI providers with intelligent fallback logic. See `src/app/api/cue/respond/route.ts` for implementation details.
+
+**Features:**
+- Multi-provider AI support (Gemini, OpenAI)
+- Intelligent fallback system
+- Context-aware responses
+- Error handling and recovery

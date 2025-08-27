@@ -144,8 +144,8 @@ export function IdeaDisplayCards({
           <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full mx-auto mb-2 flex items-center justify-center">
             <Play className="w-6 h-6 text-white" />
           </div>
-          <p className="text-xs text-gray-600 font-medium">Thumbnail</p>
-          <p className="text-xs text-gray-500">Generate with AI</p>
+                          <p className="text-sm text-gray-600 font-medium">Thumbnail</p>
+                <p className="text-sm text-gray-500">Generate with AI</p>
         </div>
       </div>
     )
@@ -264,7 +264,7 @@ export function IdeaDisplayCards({
                     {getStrengthRatingLabel(idea.strength_rating)}
                   </div>
                   {idea.selected && (
-                    <div className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                    <div className="bg-green-100 text-green-800 text-sm px-2 py-1 rounded-full font-medium">
                       Selected
                     </div>
                   )}
@@ -296,7 +296,7 @@ export function IdeaDisplayCards({
                         className="mt-2 space-y-1"
                       >
                         {idea.scene_outline.map((scene, sceneIndex) => (
-                          <div key={sceneIndex} className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded">
+                          <div key={sceneIndex} className="text-sm text-gray-600 bg-gray-50 px-2 py-1 rounded">
                             {sceneIndex + 1}. {scene}
                           </div>
                         ))}
@@ -327,7 +327,7 @@ export function IdeaDisplayCards({
                 </div>
 
                 {/* Metadata */}
-                <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-500">
+                <div className="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-500">
                   Generated: {new Date(idea.generated_at).toLocaleDateString()}
                 </div>
               </div>

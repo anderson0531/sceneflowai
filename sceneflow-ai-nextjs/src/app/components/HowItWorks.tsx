@@ -1,130 +1,253 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Lightbulb, PanelsTopLeft, Clapperboard, Video } from 'lucide-react'
+import { Lightbulb, PanelsTopLeft, Clapperboard, Video, BookOpen, Film, Eye, Settings, ChevronDown, ChevronUp } from 'lucide-react'
+import { useState } from 'react'
 
 export function HowItWorks() {
+  const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({})
+
+  const toggleCard = (index: number) => {
+    setExpandedCards(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }))
+  }
+
   const workflowSteps = [
     {
       icon: Lightbulb,
       title: 'Ideation',
       subtitle: 'The Spark Studio',
-      description: 'Generate distinct video ideas, synopses, and analyze trending YouTube references.',
+      description: 'Generate distinct film ideas, synopses, and analyze trending references. Transform any concept into a compelling film premise.',
       color: 'from-blue-500 to-blue-600',
       bgColor: 'bg-blue-500/10',
       borderColor: 'border-blue-500/20'
     },
     {
+      icon: BookOpen,
+      title: 'AI Story Generation',
+      subtitle: 'Story Structure Studio',
+      description: 'Generate complete story structures with acts and chapters. Choose from industry-standard formats or create custom narratives.',
+      color: 'from-emerald-500 to-emerald-600',
+      bgColor: 'bg-emerald-500/10',
+      borderColor: 'border-emerald-500/20'
+    },
+    {
       icon: PanelsTopLeft,
       title: 'Storyboarding',
       subtitle: 'Vision Board',
-      description: 'Transform ideas into interactive storyboards with AI-generated images, technical specs (Spec 5.1), and audio cues.',
-      color: 'from-green-500 to-green-600',
-      bgColor: 'bg-green-500/10',
-      borderColor: 'border-green-500/20'
-    },
-    {
-      icon: Clapperboard,
-      title: 'Scene Direction',
-      subtitle: 'The Director\'s Chair',
-      description: 'Generate a comprehensive technical blueprint (Spec 5.2) for production.',
+      description: 'Transform story structures into interactive storyboards with AI-generated images, technical specs, and audio cues.',
       color: 'from-orange-500 to-orange-600',
       bgColor: 'bg-orange-500/10',
       borderColor: 'border-orange-500/20'
     },
     {
-      icon: Video,
-      title: 'Video Generation',
-      subtitle: 'The Screening Room',
-      description: 'Synthesize high-quality video clips using Google Veo based on precise prompts.',
+      icon: Clapperboard,
+      title: 'Scene Direction',
+      subtitle: 'The Director\'s Chair',
+      description: 'Generate comprehensive technical blueprints for production with professional filmmaking specifications.',
       color: 'from-purple-500 to-purple-600',
       bgColor: 'bg-purple-500/10',
       borderColor: 'border-purple-500/20'
+    },
+    {
+      icon: Video,
+      title: 'Video Generation',
+      subtitle: 'The Screening Room',
+      description: 'Synthesize high-quality video clips using Google Veo based on precise prompts and storyboard direction.',
+      color: 'from-pink-500 to-pink-600',
+      bgColor: 'bg-pink-500/10',
+      borderColor: 'border-pink-500/20'
+    },
+    {
+      icon: Eye,
+      title: 'Review & Feedback',
+      subtitle: 'Quality Control',
+      description: 'Review generated content, gather feedback, and iterate on your project with AI-powered analysis and suggestions.',
+      color: 'from-cyan-500 to-cyan-600',
+      bgColor: 'bg-cyan-500/10',
+      borderColor: 'border-cyan-500/20'
+    },
+    {
+      icon: Settings,
+      title: 'Optimization',
+      subtitle: 'Performance Tuning',
+      description: 'Fine-tune your project with advanced AI optimization, performance analytics, and continuous improvement tools.',
+      color: 'from-sf-primary to-sf-accent',
+      bgColor: 'bg-sf-primary/10',
+      borderColor: 'border-sf-primary/20'
     }
   ]
 
   return (
-    <section id="how-it-works" className="py-24 bg-gray-950">
+    <section className="py-20 bg-gradient-to-b from-gray-900 to-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div 
-          className="text-center mb-20"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-        >
-          <h2 className="text-5xl font-bold mb-6">The SceneFlow AI Workflow</h2>
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            The SceneFlow AI Filmmaking Workflow
+          </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            Our comprehensive workflow transforms your ideas into professional videos through four intelligent stages.
+            Our comprehensive workflow transforms your ideas into professional videos through six intelligent stages, from concept to final production and optimization.
           </p>
-        </motion.div>
-        
-        {/* Workflow Steps */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {workflowSteps.map((step, index) => {
-            const Icon = step.icon
-            
-            return (
-              <motion.div 
-                key={index}
-                className="group cursor-pointer"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <div className={`relative p-6 rounded-2xl border-2 transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl ${step.borderColor} ${step.bgColor}`}>
-                  {/* Step Number */}
-                  <div className="absolute -top-3 -left-3 w-8 h-8 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full flex items-center justify-center border-2 border-gray-700">
-                    <span className="text-white font-bold text-sm">{index + 1}</span>
-                  </div>
-                  
-                  {/* Icon */}
-                  <div className={`w-20 h-20 bg-gradient-to-r ${step.color} rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                    <Icon className="w-10 h-10 text-white" />
-                  </div>
-                  
-                  {/* Content */}
-                  <div className="text-center">
-                    <h3 className="text-xl font-bold mb-2">{step.title}</h3>
-                    <p className="text-blue-400 font-medium mb-3 text-sm">{step.subtitle}</p>
-                    <p className="text-gray-300 text-sm leading-relaxed">{step.description}</p>
-                  </div>
-                  
-                  {/* Connection Line */}
-                  {index < workflowSteps.length - 1 && (
-                    <div className="hidden lg:block absolute top-1/2 -right-3 w-6 h-0.5 bg-gradient-to-r from-gray-600 to-gray-400 transform -translate-y-1/2"></div>
-                  )}
-                </div>
-              </motion.div>
-            )
-          })}
         </div>
-        
-        {/* Bottom CTA */}
-        <motion.div 
-          className="text-center mt-16"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-        >
-          <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-8 border border-gray-700 max-w-2xl mx-auto">
-            <h3 className="text-2xl font-bold mb-4">Ready to Start Your First Project?</h3>
-            <p className="text-gray-300 mb-6">
-              Experience the complete workflow from concept to final video in minutes, not days.
-            </p>
-            <button 
-              onClick={() => {
-                const element = document.getElementById('pricing')
-                if (element) element.scrollIntoView({ behavior: 'smooth' })
-              }}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105"
-            >
-              Start Creating Now
-            </button>
+
+        {/* Workflow Steps - Two Row Layout */}
+        <div className="space-y-12">
+          {/* Row 1: Steps 1-4 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {workflowSteps.slice(0, 4).map((step, index) => {
+              const Icon = step.icon
+              const isExpanded = expandedCards[index]
+              
+              return (
+                <motion.div 
+                  key={index}
+                  className="group cursor-pointer"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                >
+                  <div className={`relative p-6 rounded-2xl border-2 transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl ${step.borderColor} ${step.bgColor} h-full flex flex-col`}>
+                    {/* Step Number */}
+                    <div className="absolute -top-3 -left-3 w-8 h-8 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full flex items-center justify-center border-2 border-gray-700 shadow-lg">
+                      <span className="text-white font-bold text-sm">{index + 1}</span>
+                    </div>
+                    
+                    {/* Icon */}
+                    <div className={`w-20 h-20 bg-gradient-to-r ${step.color} rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                      <Icon className="w-10 h-10 text-white" />
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="text-center flex-1">
+                      <h3 className="text-xl font-bold mb-2 text-white">{step.title}</h3>
+                      <p className="text-sf-primary font-medium mb-3 text-sm">{step.subtitle}</p>
+                      
+                      {/* Show/Hide Description */}
+                      <div className="mt-4">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleCard(index)
+                          }}
+                          className="flex items-center justify-center w-full text-sf-primary hover:text-sf-accent transition-colors duration-200 text-sm font-medium"
+                        >
+                          {isExpanded ? (
+                            <>
+                              <ChevronUp className="w-4 h-4 mr-1" />
+                              Hide Details
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="w-4 h-4 mr-1" />
+                              Show Details
+                            </>
+                          )}
+                        </button>
+                        
+                        {isExpanded && (
+                          <motion.p 
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="text-gray-300 text-sm leading-relaxed mt-3 text-left"
+                          >
+                            {step.description}
+                          </motion.p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )
+            })}
           </div>
-        </motion.div>
+
+          {/* Row 2: Steps 5-7 */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            {workflowSteps.slice(4, 7).map((step, index) => {
+              const Icon = step.icon
+              const actualIndex = index + 4
+              const isExpanded = expandedCards[actualIndex]
+              
+              return (
+                <motion.div 
+                  key={actualIndex}
+                  className="group cursor-pointer"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: actualIndex * 0.1 }}
+                >
+                  <div className={`relative p-6 rounded-2xl border-2 transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl ${step.borderColor} ${step.bgColor} h-full flex flex-col`}>
+                    {/* Step Number */}
+                    <div className="absolute -top-3 -left-3 w-8 h-8 bg-gradient-to-r from-gray-800 to-gray-900 rounded-full flex items-center justify-center border-2 border-gray-700 shadow-lg">
+                      <span className="text-white font-bold text-sm">{actualIndex + 1}</span>
+                    </div>
+                    
+                    {/* Icon */}
+                    <div className={`w-20 h-20 bg-gradient-to-r ${step.color} rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                      <Icon className="w-10 h-10 text-white" />
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="text-center flex-1">
+                      <h3 className="text-xl font-bold mb-2 text-white">{step.title}</h3>
+                      <p className="text-sf-primary font-medium mb-3 text-sm">{step.subtitle}</p>
+                      
+                      {/* Show/Hide Description */}
+                      <div className="mt-4">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleCard(actualIndex)
+                          }}
+                          className="flex items-center justify-center w-full text-sf-primary hover:text-sf-accent transition-colors duration-200 text-sm font-medium"
+                        >
+                          {isExpanded ? (
+                            <>
+                              <ChevronUp className="w-4 h-4 mr-1" />
+                              Hide Details
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="w-4 h-4 mr-1" />
+                              Show Details
+                            </>
+                          )}
+                        </button>
+                        
+                        {isExpanded && (
+                          <motion.p 
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="text-gray-300 text-sm leading-relaxed mt-3 text-left"
+                          >
+                            {step.description}
+                          </motion.p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* CTA Button */}
+        <div className="text-center mt-16">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="bg-gradient-to-r from-sf-primary to-sf-accent text-sf-background px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+          >
+            Start Filmmaking Now
+          </motion.button>
+        </div>
       </div>
     </section>
   )

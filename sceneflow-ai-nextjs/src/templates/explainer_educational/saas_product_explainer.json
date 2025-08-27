@@ -1,0 +1,112 @@
+{
+  "schemaVersion": "1.0",
+  "template_id": "tpl-saas-explainer-pscta-60",
+  "template_name": "SaaS Product Explainer (60s)",
+  "category": "explainer_educational",
+  "use_case": "saas_product_explainer",
+  "narrative_structure": "ps_cta",
+  "target_audience": "busy professionals evaluating software",
+  "estimated_duration": 60,
+  "tone": "professional",
+  "cta_type": "sign_up",
+  "platform": "youtube",
+  "orientation": "16:9",
+  "tags": ["b2b","product","explainer"],
+  "storyboard_readiness": {
+    "beats": "1) Hook: bold on-screen benefit\n2) Problem: current pain\n3) Solution: product value\n4) Demo: 3 steps\n5) CTA: sign up",
+    "act_structure": "three-act",
+    "runtime_sec": 60,
+    "scene_count": 6,
+    "characters": "Narrator — friendly, authoritative\nUser — curious, pragmatic",
+    "locations": "INT: studio; EXT: office exteriors",
+    "visual_style": "Modern minimal; white + brand accent; bold captions",
+    "cinematography": "16:9; MS/CU mix; smooth gimbal; match cuts",
+    "audio": "Conversational VO; upbeat track 110 BPM; light SFX",
+    "pacing": "12–16 cuts/min; hook in first 3s",
+    "platform_deliverables": "Captions on; end card 5s; variants 60/30/15s",
+    "branding": "Logo open/close; Inter type; avoid superlatives",
+    "props_continuity": "Product UI consistent; wardrobe consistent",
+    "accessibility": "Captions EN; on-screen text ≤12 words",
+    "hints": "Beat intents, coverage plan, B‑roll UI inserts, lower thirds"
+  },
+  "scenes": [
+    {
+      "scene_number": 1,
+      "scene_name": "Hook",
+      "scene_duration": 5,
+      "description": "Bold on-screen line promises key benefit to target audience.",
+      "visual_notes": "High-contrast title card; quick motion intro",
+      "character_details": "Narrator VO only",
+      "camera_details": "Static title, fast whip to next",
+      "on_screen_text": "Cut onboarding time by 50%",
+      "audio_notes": "Music starts; subtle whoosh",
+      "transition_notes": "Whip cut"
+    },
+    {
+      "scene_number": 2,
+      "scene_name": "Problem",
+      "scene_duration": 10,
+      "description": "Show current pain and friction",
+      "visual_notes": "Split-screen mistakes; frustrated user",
+      "character_details": "User looks overwhelmed",
+      "camera_details": "Handheld MS",
+      "on_screen_text": "Too many tools. Too much time.",
+      "audio_notes": "UI error beeps, music continues",
+      "transition_notes": "Match cut"
+    },
+    {
+      "scene_number": 3,
+      "scene_name": "Solution Intro",
+      "scene_duration": 10,
+      "description": "Introduce the product as the answer",
+      "visual_notes": "Clean UI hero shot",
+      "character_details": "Narrator VO",
+      "camera_details": "Push-in",
+      "on_screen_text": "Meet Acme Platform",
+      "audio_notes": "Positive tone",
+      "transition_notes": "Cut"
+    },
+    {
+      "scene_number": 4,
+      "scene_name": "Demo Steps",
+      "scene_duration": 20,
+      "description": "Three-step product demo showing value",
+      "visual_notes": "Screen recordings with highlights",
+      "character_details": "Cursor and subtle hand interactions",
+      "camera_details": "Screen capture + callouts",
+      "on_screen_text": "1) Connect\n2) Automate\n3) Report",
+      "audio_notes": "UI click SFX; VO explains",
+      "transition_notes": "Cut on beat"
+    },
+    {
+      "scene_number": 5,
+      "scene_name": "Proof",
+      "scene_duration": 10,
+      "description": "Metric or testimonial snippet",
+      "visual_notes": "Graph rising; customer logo wall",
+      "character_details": "Narrator VO",
+      "camera_details": "Parallax graph",
+      "on_screen_text": "Teams save 8 hrs/week",
+      "audio_notes": "Subtle swell",
+      "transition_notes": "Dissolve"
+    },
+    {
+      "scene_number": 6,
+      "scene_name": "CTA",
+      "scene_duration": 5,
+      "description": "Clear call-to-action",
+      "visual_notes": "End card with product + CTA button",
+      "character_details": "Narrator VO",
+      "camera_details": "Static",
+      "on_screen_text": "Start free trial",
+      "audio_notes": "Button click; sting",
+      "transition_notes": "End"
+    }
+  ]
+}
+
+
+
+
+
+

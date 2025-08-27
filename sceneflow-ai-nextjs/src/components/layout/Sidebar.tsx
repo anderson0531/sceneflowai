@@ -1,11 +1,11 @@
 'use client'
 
-import { useStore } from '@/store/useStore'
+import { useEnhancedStore } from '@/store/enhancedStore'
 import { 
   Home, 
   FolderOpen, 
   Plus, 
-  Lightbulb, 
+  FileText,
   Settings, 
   Key,
   User,
@@ -15,23 +15,24 @@ import {
   Camera,
   Film,
   Menu,
-  X
+  X,
+  BookOpen
 } from 'lucide-react'
+import { CheckCircle, Wrench } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const mainNav = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Projects', href: '/dashboard/projects', icon: FolderOpen },
-  { name: 'New Project', href: '/dashboard/projects/new', icon: Plus },
-  { name: 'Ideas', href: '/dashboard/ideas', icon: Lightbulb },
+  { name: 'Spark Studio', href: '/studio/crispr-debate-001', icon: Sparkles },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ]
 
 const workflowNav = [
   { 
     name: 'The Spark Studio', 
-    href: '/dashboard/workflow/ideation', 
+    href: '/studio/crispr-debate-001', 
     icon: Sparkles,
     description: 'Ideation & Brainstorming',
     step: 'ideation'
@@ -54,8 +55,22 @@ const workflowNav = [
     name: 'The Screening Room', 
     href: '/dashboard/workflow/video-generation', 
     icon: Film,
-    description: 'Video Generation & Review',
+    description: 'Video Generation',
     step: 'video-generation'
+  },
+  { 
+    name: 'Quality Review', 
+    href: '/dashboard/workflow/review', 
+    icon: CheckCircle,
+    description: 'Assess & validate quality',
+    step: 'review'
+  },
+  { 
+    name: 'Optimization', 
+    href: '/dashboard/workflow/optimization', 
+    icon: Wrench,
+    description: 'Improve & finalize',
+    step: 'optimization'
   },
 ]
 
@@ -66,7 +81,7 @@ const settingsNav = [
 ]
 
 export function Sidebar() {
-  const { sidebarOpen, setSidebarOpen, user, currentStep } = useStore()
+  const { sidebarOpen, setSidebarOpen, user, currentStep } = useEnhancedStore()
   const pathname = usePathname()
 
   const isActive = (href: string) => pathname === href
@@ -83,19 +98,14 @@ export function Sidebar() {
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-200 ease-in-out md:translate-x-0 md:static md:inset-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 navigation-bar transform transition-transform duration-200 ease-in-out md:translate-x-0 md:static md:inset-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">SF</span>
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">SceneFlow AI</h2>
-            </div>
+          <div className="flex items-center justify-between p-4 border-b border-sf-border">
+            <div className="flex-1"></div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="md:hidden p-1 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+              className="md:hidden p-1 rounded-md text-sf-text-secondary hover:text-sf-text-primary hover:bg-sf-surface-light"
             >
               <X className="w-5 h-5" />
             </button>
@@ -103,21 +113,21 @@ export function Sidebar() {
 
           {/* User Info & Credits */}
           {user && (
-            <div className="p-4 border-b border-gray-200">
+            <div className="p-4 border-b border-sf-border">
               <div className="flex items-center space-x-3 mb-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-medium text-sm">
+                <div className="w-10 h-10 bg-sf-primary rounded-full flex items-center justify-center">
+                  <span className="text-sf-background font-medium text-sm">
                     {user.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                  <p className="text-xs text-gray-500">{user.email}</p>
+                  <p className="text-sm font-medium text-heading">{user.name}</p>
+                  <p className="text-xs text-caption">{user.email}</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-2 px-3 py-2 bg-blue-50 rounded-lg">
-                <div className="w-4 h-4 bg-blue-600 rounded-full"></div>
-                <span className="text-sm font-medium text-blue-900">
+              <div className="flex items-center space-x-2 px-3 py-2 bg-sf-surface-light rounded-lg">
+                <div className="w-4 h-4 bg-sf-primary rounded-full"></div>
+                <span className="text-sm font-medium text-sf-primary font-emphasis">
                   {user.credits} Credits
                 </span>
               </div>
@@ -127,44 +137,56 @@ export function Sidebar() {
           {/* Main Navigation */}
           <div className="flex-1 overflow-y-auto">
             <div className="p-4">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+              <h3 className="nav-section-header mb-3">
                 Main
               </h3>
               <nav className="space-y-1 mb-6">
                 {mainNav.map((item) => {
                   const Icon = item.icon
+                  const isActiveItem = isActive(item.href)
                   return (
                     <Link
                       key={item.name}
                       href={item.href}
-                      className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive(item.href) ? 'bg-blue-100 text-blue-700 border-r-2 border-blue-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
+                      className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 font-emphasis ${
+                        isActiveItem 
+                          ? 'nav-link-active nav-active-indicator-right' 
+                          : 'nav-link nav-item-hover'
+                      }`}
                     >
-                      <Icon className="mr-3 h-5 w-5" />
-                      {item.name}
+                      <Icon className={`mr-3 h-5 w-5 ${isActiveItem ? 'text-sf-primary' : 'text-sf-text-secondary'}`} />
+                      <span className={isActiveItem ? 'text-sf-primary' : 'text-sf-text-secondary'}>
+                        {item.name}
+                      </span>
                     </Link>
                   )
                 })}
               </nav>
 
               {/* Workflow Navigation */}
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+              <h3 className="nav-section-header mb-3">
                 Workflow
               </h3>
               <nav className="space-y-1 mb-6">
                 {workflowNav.map((item) => {
                   const Icon = item.icon
+                  const isActiveItem = isActive(item.href) || isCurrentStep(item.step)
                   return (
                     <Link
                       key={item.name}
                       href={item.href}
-                      className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive(item.href) ? 'bg-blue-100 text-blue-700 border-r-2 border-blue-700' : isCurrentStep(item.step) ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-500' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
+                      className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 font-emphasis ${
+                        isActiveItem 
+                          ? 'nav-link-active nav-active-indicator-left' 
+                          : 'nav-link nav-item-hover'
+                      }`}
                     >
-                      <Icon className="mr-3 h-5 w-5" />
+                      <Icon className={`mr-3 h-5 w-5 ${isActiveItem ? 'text-sf-primary' : 'text-sf-text-secondary'}`} />
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium transition-colors">
+                        <div className={`text-sm font-medium transition-colors ${isActiveItem ? 'text-sf-primary' : 'text-sf-text-secondary'}`}>
                           {item.name}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className={`text-xs transition-colors mt-0.5 ${isActiveItem ? 'text-sf-accent' : 'text-caption'}`}>
                           {item.description}
                         </div>
                       </div>
@@ -174,20 +196,27 @@ export function Sidebar() {
               </nav>
 
               {/* Settings Navigation */}
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+              <h3 className="nav-section-header mb-3">
                 Settings
               </h3>
               <nav className="space-y-1">
                 {settingsNav.map((item) => {
                   const Icon = item.icon
+                  const isActiveItem = isActive(item.href)
                   return (
                     <Link
                       key={item.name}
                       href={item.href}
-                      className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive(item.href) ? 'bg-blue-100 text-blue-700 border-r-2 border-blue-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
+                      className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 font-emphasis ${
+                        isActiveItem 
+                          ? 'nav-link-active nav-active-indicator-right' 
+                          : 'nav-link nav-item-hover'
+                      }`}
                     >
-                      <Icon className="mr-3 h-5 w-5" />
-                      {item.name}
+                      <Icon className={`mr-3 h-5 w-5 ${isActiveItem ? 'text-sf-primary' : 'text-sf-text-secondary'}`} />
+                      <span className={isActiveItem ? 'text-sf-primary' : 'text-sf-text-secondary'}>
+                        {item.name}
+                      </span>
                     </Link>
                   )
                 })}
@@ -196,9 +225,9 @@ export function Sidebar() {
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-4 border-t border-sf-border">
             <div className="text-center">
-              <p className="text-xs text-gray-500">SceneFlow AI v1.0</p>
+              <p className="text-xs text-caption">SceneFlow AI v1.0</p>
             </div>
           </div>
         </div>

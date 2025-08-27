@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "template_id": "tpl-how-it-works-60",
+  "template_name": "How It Works (60s)",
+  "category": "explainer_educational",
+  "use_case": "how_it_works",
+  "narrative_structure": "ps_cta",
+  "target_audience": "evaluators",
+  "estimated_duration": 60,
+  "tone": "professional",
+  "cta_type": "learn_more",
+  "platform": "web",
+  "orientation": "16:9",
+  "tags": ["explainer", "how-to"],
+  "storyboard_readiness": {
+    "beats": "1) Problem\n2) How it works steps\n3) CTA",
+    "act_structure": "three-act",
+    "runtime_sec": 60,
+    "scene_count": 6,
+    "characters": "Narrator",
+    "locations": "UI overlays",
+    "visual_style": "Clean",
+    "cinematography": "Screen capture",
+    "audio": "VO + light track",
+    "pacing": "Clear",
+    "platform_deliverables": "Docs embed",
+    "branding": "Product",
+    "props_continuity": "UI",
+    "accessibility": "Captions",
+    "hints": "Numbered steps"
+  },
+  "scenes": [
+    {"scene_number":1,"scene_name":"Problem","scene_duration":10,"description":"Set context.","visual_notes":"Title","character_details":"","camera_details":"","on_screen_text":"Too complex","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":2,"scene_name":"Step 1","scene_duration":10,"description":"First step.","visual_notes":"UI","character_details":"","camera_details":"","on_screen_text":"Connect","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":3,"scene_name":"Step 2","scene_duration":10,"description":"Second step.","visual_notes":"UI","character_details":"","camera_details":"","on_screen_text":"Setup","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":4,"scene_name":"Step 3","scene_duration":10,"description":"Third step.","visual_notes":"UI","character_details":"","camera_details":"","on_screen_text":"Run","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":5,"scene_name":"Benefits","scene_duration":12,"description":"Outcomes.","visual_notes":"Checklist","character_details":"","camera_details":"","on_screen_text":"Save time","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":6,"scene_name":"CTA","scene_duration":8,"description":"Learn more.","visual_notes":"End card","character_details":"","camera_details":"","on_screen_text":"Learn more","audio_notes":"","transition_notes":"End"}
+  ]
+}
+
+
+
+
+
+
+
+

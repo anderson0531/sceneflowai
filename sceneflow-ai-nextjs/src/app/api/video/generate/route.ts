@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { UserProviderConfig } from '@/models/UserProviderConfig'
 import { EncryptionService } from '@/services/EncryptionService'
+import { AsyncJobManager } from '@/services/AsyncJobManager'
+import { SparkStudioService, VideoClip, GenerationSettings } from '@/services/SparkStudioService'
 
 
 export interface VideoGenerationRequest {
@@ -19,7 +21,7 @@ export interface VideoGenerationRequest {
     targetAudience: string
   }
   generationSettings: {
-    quality: 'standard' | 'high' | 'ultra'
+    quality: '1080p' | '4K' | '8K'
     format: 'mp4' | 'mov' | 'webm'
     aspectRatio: '16:9' | '9:16' | '1:1' | '4:3'
     frameRate: '24' | '30' | '60'
@@ -164,28 +166,34 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const totalClips = clips.length
     const estimatedTotalDuration = sceneDirections.reduce((sum, scene) => sum + scene.duration, 0)
 
-    // Start asynchronous video generation for each clip
-    // In production, this would be handled by a background job queue
-    clips.forEach(async (clip) => {
-      try {
-        await startVideoGeneration(
-          clip.clip_id,
-          sceneDirections.find(s => s.scene_number === clip.scene_number)!.video_clip_prompt,
-          videoProvider,
-          apiKey,
-          generationSettings
-        )
-      } catch (error) {
-        console.error(`Error starting generation for clip ${clip.clip_id}:`, error)
-        // Update clip status to failed
-        // In production, this would update the database
-      }
-    })
+    // Create video clips for the job manager
+    const videoClips: VideoClip[] = sceneDirections.map(scene => ({
+      id: `clip_${generationId}_${scene.scene_number}`,
+      sceneNumber: scene.scene_number,
+      prompt: scene.video_clip_prompt,
+      duration: scene.duration,
+      status: 'queued',
+      progress: 0
+    }))
+
+    // Submit job to async job manager
+    const jobManager = AsyncJobManager.getInstance()
+    const jobId = jobManager.submitGenerationJob(
+      userId,
+      projectId,
+      videoClips,
+      videoProvider,
+      apiKey,
+      generationSettings
+    )
+
+    console.log(`Video generation job ${jobId} submitted for project ${projectId}`)
 
     return NextResponse.json({
       success: true,
       generationId,
-      clips,
+      jobId,
+      clips: videoClips,
       metadata: {
         totalClips,
         estimatedTotalDuration,
@@ -204,27 +212,4 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 }
 
-// Simulated video generation function
-async function startVideoGeneration(
-  clipId: string,
-  prompt: string,
-  provider: string,
-  apiKey: string,
-  settings: any
-): Promise<void> {
-  // In production, this would:
-  // 1. Call the actual video generation API
-  // 2. Set up webhook endpoints or polling
-  // 3. Update database with status changes
-  // 4. Handle progress tracking
-  
-  console.log(`Starting video generation for clip ${clipId} with provider ${provider}`)
-  console.log(`Prompt: ${prompt}`)
-  console.log(`Settings:`, settings)
-  
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  
-  // For demo purposes, we'll simulate the generation process
-  // In production, this would be handled by the actual video generation service
-}
+

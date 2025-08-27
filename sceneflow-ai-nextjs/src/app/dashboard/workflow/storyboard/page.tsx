@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useStore } from '@/store/useStore'
+import { getCurrentTemplate, getCurrentStructuredTemplate } from '@/services/TemplateService'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Film, 
@@ -67,6 +68,9 @@ export default function StoryboardPage() {
     setIsGenerating(true)
     
     try {
+      // Get the structured template if available
+      const structuredTemplate = getCurrentStructuredTemplate()
+      
       const response = await fetch('/api/storyboard/generate', {
         method: 'POST',
         headers: {
@@ -78,7 +82,8 @@ export default function StoryboardPage() {
           projectId: currentProject.id,
           style: storyboardSettings.style,
           aspectRatio: storyboardSettings.aspectRatio,
-          targetDuration: storyboardSettings.targetDuration
+          targetDuration: storyboardSettings.targetDuration,
+          creatorTemplate: structuredTemplate ? JSON.stringify(structuredTemplate) : getCurrentTemplate()
         })
       })
 

@@ -4,8 +4,8 @@
   "description": "AI-powered video creation platform with intelligent scene management",
   "main": "index.html",
   "scripts": {
-    "start": "node start-local-server.js",
-    "dev": "http-server -p 8000 -c-1 --cors",
+    "start": "npm --prefix sceneflow-ai-nextjs run start",
+    "dev": "npm --prefix sceneflow-ai-nextjs run dev",
     "build": "node build-vercel.js",
     "vercel-build": "node build-vercel.js",
     "test": "echo 'Tests not configured yet'",

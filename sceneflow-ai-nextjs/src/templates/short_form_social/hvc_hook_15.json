@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "template_id": "tpl-hvc-hook-15",
+  "template_name": "Hook-Value-CTA (15s)",
+  "category": "short_form_social",
+  "use_case": "hook_value_cta_short",
+  "narrative_structure": "hv_cta",
+  "target_audience": "social scrollers",
+  "estimated_duration": 15,
+  "tone": "humorous",
+  "cta_type": "shop_now",
+  "platform": "tiktok",
+  "orientation": "9:16",
+  "tags": ["short", "snappy", "trend"],
+  "storyboard_readiness": {
+    "beats": "1) Hook\n2) Value\n3) CTA",
+    "act_structure": "three-act",
+    "runtime_sec": 15,
+    "scene_count": 3,
+    "characters": "Creator",
+    "locations": "Anywhere",
+    "visual_style": "Trendy",
+    "cinematography": "Portrait",
+    "audio": "Beat-driven",
+    "pacing": "Very fast",
+    "platform_deliverables": "Reel/TikTok",
+    "branding": "Light",
+    "props_continuity": "N/A",
+    "accessibility": "Captions",
+    "hints": "Text overlays"
+  },
+  "scenes": [
+    {"scene_number":1,"scene_name":"Hook","scene_duration":4,"description":"Attention grabber.","visual_notes":"Bold text","character_details":"","camera_details":"CU","on_screen_text":"Stop scrolling","audio_notes":"Hit","transition_notes":"Cut"},
+    {"scene_number":2,"scene_name":"Value","scene_duration":7,"description":"Show quick value.","visual_notes":"Mini demo","character_details":"","camera_details":"","on_screen_text":"Do X fast","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":3,"scene_name":"CTA","scene_duration":4,"description":"Call to action.","visual_notes":"Point to link","character_details":"","camera_details":"","on_screen_text":"Shop now","audio_notes":"","transition_notes":"End"}
+  ]
+}
+
+
+
+
+
+
+
+

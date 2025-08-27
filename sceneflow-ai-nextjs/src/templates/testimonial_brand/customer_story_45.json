@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "template_id": "tpl-customer-story-threeact-45",
+  "template_name": "Customer Story (45s)",
+  "category": "testimonial_brand",
+  "use_case": "customer_testimonial",
+  "narrative_structure": "three_act",
+  "target_audience": "prospects",
+  "estimated_duration": 45,
+  "tone": "inspirational",
+  "cta_type": "learn_more",
+  "platform": "linkedin",
+  "orientation": "16:9",
+  "tags": ["testimonial", "case study"],
+  "storyboard_readiness": {
+    "beats": "1) Before\n2) After\n3) Proof\n4) CTA",
+    "act_structure": "three-act",
+    "runtime_sec": 45,
+    "scene_count": 5,
+    "characters": "Customer spokesperson",
+    "locations": "Customer site",
+    "visual_style": "Clean interview + b-roll",
+    "cinematography": "Tripod + b-roll",
+    "audio": "Interview + light music",
+    "pacing": "Measured",
+    "platform_deliverables": "Full + cutdowns",
+    "branding": "Lower thirds",
+    "props_continuity": "Wardrobe/logos",
+    "accessibility": "Captions",
+    "hints": "Pull quotes"
+  },
+  "scenes": [
+    {"scene_number":1,"scene_name":"Before","scene_duration":10,"description":"Challenge.","visual_notes":"B-roll","character_details":"","camera_details":"","on_screen_text":"Before","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":2,"scene_name":"Solution","scene_duration":10,"description":"Adopted product/service.","visual_notes":"Product","character_details":"","camera_details":"","on_screen_text":"Solution","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":3,"scene_name":"After","scene_duration":12,"description":"Outcome/benefit.","visual_notes":"Customer success","character_details":"","camera_details":"","on_screen_text":"Results","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":4,"scene_name":"Proof","scene_duration":8,"description":"Metric/testimonial.","visual_notes":"Quote card","character_details":"","camera_details":"","on_screen_text":"+45%","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":5,"scene_name":"CTA","scene_duration":5,"description":"Learn more.","visual_notes":"End card","character_details":"","camera_details":"","on_screen_text":"Learn more","audio_notes":"","transition_notes":"End"}
+  ]
+}
+
+
+
+
+
+
+
+

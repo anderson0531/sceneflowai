@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "template_id": "tpl-bts-how-made-30",
+  "template_name": "How It's Made BTS (30s)",
+  "category": "short_form_social",
+  "use_case": "bts_how_made",
+  "narrative_structure": "hv_cta",
+  "target_audience": "fans/followers",
+  "estimated_duration": 30,
+  "tone": "friendly",
+  "cta_type": "follow",
+  "platform": "instagram",
+  "orientation": "9:16",
+  "tags": ["bts", "process"],
+  "storyboard_readiness": {
+    "beats": "1) Hook\n2) Process\n3) Result\n4) CTA",
+    "act_structure": "three-act",
+    "runtime_sec": 30,
+    "scene_count": 5,
+    "characters": "Creator/team",
+    "locations": "Studio",
+    "visual_style": "Handheld",
+    "cinematography": "Portrait",
+    "audio": "Upbeat",
+    "pacing": "Fast",
+    "platform_deliverables": "Reel/Story",
+    "branding": "Light",
+    "props_continuity": "Tools/gear",
+    "accessibility": "Captions",
+    "hints": "Text steps"
+  },
+  "scenes": [
+    {"scene_number":1,"scene_name":"Hook","scene_duration":5,"description":"Start with the end result.","visual_notes":"Finished shot","character_details":"","camera_details":"CU","on_screen_text":"We made this","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":2,"scene_name":"Step 1","scene_duration":6,"description":"First process step.","visual_notes":"Prep","character_details":"","camera_details":"","on_screen_text":"Step 1","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":3,"scene_name":"Step 2","scene_duration":6,"description":"Second process step.","visual_notes":"Action","character_details":"","camera_details":"","on_screen_text":"Step 2","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":4,"scene_name":"Step 3","scene_duration":6,"description":"Third process step.","visual_notes":"Action","character_details":"","camera_details":"","on_screen_text":"Step 3","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":5,"scene_name":"CTA","scene_duration":7,"description":"Reveal and follow.","visual_notes":"Result","character_details":"","camera_details":"","on_screen_text":"Follow for more","audio_notes":"","transition_notes":"End"}
+  ]
+}
+
+
+
+
+
+
+
+

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "template_id": "tpl-onboarding-walkthrough-pscta-45",
+  "template_name": "Onboarding Walkthrough (45s)",
+  "category": "explainer_educational",
+  "use_case": "onboarding_walkthrough",
+  "narrative_structure": "ps_cta",
+  "target_audience": "new users",
+  "estimated_duration": 45,
+  "tone": "professional",
+  "cta_type": "sign_up",
+  "platform": "web",
+  "orientation": "16:9",
+  "tags": ["onboarding", "how-to", "product"],
+  "storyboard_readiness": {
+    "beats": "1) Goal\n2) Step 1\n3) Step 2\n4) Step 3\n5) CTA",
+    "act_structure": "three-act",
+    "runtime_sec": 45,
+    "scene_count": 5,
+    "characters": "Narrator",
+    "locations": "UI overlays",
+    "visual_style": "Clean callouts",
+    "cinematography": "Screen capture",
+    "audio": "Helpful VO",
+    "pacing": "Steady",
+    "platform_deliverables": "Help center embed",
+    "branding": "Product UI",
+    "props_continuity": "Consistent UI",
+    "accessibility": "Captions",
+    "hints": "Hotspot highlights"
+  },
+  "scenes": [
+    {"scene_number":1,"scene_name":"Goal","scene_duration":8,"description":"Describe outcome.","visual_notes":"Title card","character_details":"","camera_details":"Static","on_screen_text":"Get set up fast","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":2,"scene_name":"Step 1","scene_duration":10,"description":"First step.","visual_notes":"UI highlight","character_details":"","camera_details":"","on_screen_text":"Create account","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":3,"scene_name":"Step 2","scene_duration":10,"description":"Second step.","visual_notes":"UI highlight","character_details":"","camera_details":"","on_screen_text":"Connect data","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":4,"scene_name":"Step 3","scene_duration":10,"description":"Third step.","visual_notes":"UI highlight","character_details":"","camera_details":"","on_screen_text":"Invite team","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":5,"scene_name":"CTA","scene_duration":7,"description":"Start now.","visual_notes":"End card","character_details":"","camera_details":"","on_screen_text":"Start now","audio_notes":"","transition_notes":"End"}
+  ]
+}
+
+
+
+
+
+
+
+

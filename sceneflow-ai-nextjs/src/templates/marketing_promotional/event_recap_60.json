@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "template_id": "tpl-event-recap-threeact-60",
+  "template_name": "Event Recap (60s)",
+  "category": "marketing_promotional",
+  "use_case": "event_recap",
+  "narrative_structure": "three_act",
+  "target_audience": "attendees and prospects",
+  "estimated_duration": 60,
+  "tone": "inspirational",
+  "cta_type": "learn_more",
+  "platform": "web",
+  "orientation": "16:9",
+  "tags": ["event", "recap", "hype"],
+  "storyboard_readiness": {
+    "beats": "1) Arrival\n2) Highlights\n3) Impact\n4) CTA",
+    "act_structure": "three-act",
+    "runtime_sec": 60,
+    "scene_count": 7,
+    "characters": "Attendees, speakers",
+    "locations": "Venue interior/exterior",
+    "visual_style": "Energetic montage",
+    "cinematography": "Handheld + gimbal",
+    "audio": "Music-driven, crowd",
+    "pacing": "Fast montage",
+    "platform_deliverables": "16:9 + 9:16 cutdowns",
+    "branding": "Event logo, sponsors",
+    "props_continuity": "Badges, signage",
+    "accessibility": "Captions",
+    "hints": "Lower thirds for speakers"
+  },
+  "scenes": [
+    {"scene_number":1,"scene_name":"Arrival","scene_duration":8,"description":"Crowds arriving.","visual_notes":"Exterior wide","character_details":"","camera_details":"WS","on_screen_text":"Welcome","audio_notes":"Music in","transition_notes":"Cut"},
+    {"scene_number":2,"scene_name":"Keynote","scene_duration":10,"description":"Speaker highlight.","visual_notes":"Stage shots","character_details":"","camera_details":"MS/CU","on_screen_text":"Ideas","audio_notes":"Applause","transition_notes":"Cut"},
+    {"scene_number":3,"scene_name":"Expo","scene_duration":10,"description":"Booth interactions.","visual_notes":"Hands-on","character_details":"","camera_details":"Gimbal","on_screen_text":"Innovation","audio_notes":"Ambient","transition_notes":"Cut"},
+    {"scene_number":4,"scene_name":"Networking","scene_duration":10,"description":"People connecting.","visual_notes":"Smiles","character_details":"","camera_details":"","on_screen_text":"Community","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":5,"scene_name":"Testimonials","scene_duration":10,"description":"Short vox pops.","visual_notes":"CU faces","character_details":"","camera_details":"","on_screen_text":"Impact","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":6,"scene_name":"Highlights","scene_duration":7,"description":"Rapid montage.","visual_notes":"Best moments","character_details":"","camera_details":"","on_screen_text":"Highlights","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":7,"scene_name":"CTA","scene_duration":5,"description":"Learn more/next event.","visual_notes":"End card","character_details":"","camera_details":"","on_screen_text":"See you next year","audio_notes":"","transition_notes":"End"}
+  ]
+}
+
+
+
+
+
+
+
+

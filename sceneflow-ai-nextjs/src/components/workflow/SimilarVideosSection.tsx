@@ -240,7 +240,7 @@ export function SimilarVideosSection({
                     
                     {/* Duration Badge */}
                     {video.duration && (
-                      <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
+                      <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-sm px-2 py-1 rounded">
                         {formatDuration(video.duration)}
                       </div>
                     )}
@@ -254,12 +254,12 @@ export function SimilarVideosSection({
                     </h4>
 
                     {/* Channel */}
-                    <p className="text-xs text-gray-600 mb-2">
+                    <p className="text-sm text-gray-600 mb-2">
                       {video.channelTitle}
                     </p>
 
                     {/* Stats */}
-                    <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
+                    <div className="flex items-center gap-3 text-sm text-gray-500 mb-2">
                       <div className="flex items-center gap-1">
                         <Eye className="w-3 h-3" />
                         {formatViewCount(video.viewCount)}
@@ -273,7 +273,7 @@ export function SimilarVideosSection({
                     {/* Relevance Score */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1">
-                        <div className={`text-xs font-medium ${getRelevanceColor(getRelevanceScore(video))}`}>
+                        <div className={`text-sm font-medium ${getRelevanceColor(getRelevanceScore(video))}`}>
                           {getRelevanceLabel(getRelevanceScore(video))}
                         </div>
                       </div>
@@ -281,7 +281,7 @@ export function SimilarVideosSection({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        className="h-6 px-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                         onClick={(e) => {
                           e.stopPropagation()
                           window.open(`https://www.youtube.com/watch?v=${video.id}`, '_blank')
@@ -376,7 +376,7 @@ export function SimilarVideosSection({
                 <div className="mt-4 space-y-2">
                   <h4 className="font-medium text-gray-900">{selectedVideo.title}</h4>
                   <p className="text-sm text-gray-600">{selectedVideo.description}</p>
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                  <div className="flex items-center gap-4 text-sm text-gray-500">
                     <span>{selectedVideo.channelTitle}</span>
                     <span>{formatViewCount(selectedVideo.viewCount)}</span>
                     <span>{formatPublishedDate(selectedVideo.publishedAt)}</span>

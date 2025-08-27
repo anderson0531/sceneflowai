@@ -73,11 +73,11 @@ export function BeatCard({ beat, isDragging = false }: BeatCardProps) {
             <p className="text-base text-gray-100 mb-3 line-clamp-4 leading-relaxed break-words whitespace-normal">{beat.summary}</p>
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-3">
-                <span className="text-xs text-gray-400 bg-gray-700 px-2 py-1 rounded">
+                <span className="text-sm text-gray-300 bg-gray-700 px-2 py-1 rounded">
                   {beat.charactersPresent.length} Characters
                 </span>
                 {isContextActive && (
-                  <span className="text-xs text-blue-400 bg-blue-900/30 px-2 py-1 rounded border border-blue-500/30">
+                  <span className="text-sm text-blue-300 bg-blue-900/30 px-2 py-1 rounded border border-blue-500/30">
                     Active in Cue
                   </span>
                 )}

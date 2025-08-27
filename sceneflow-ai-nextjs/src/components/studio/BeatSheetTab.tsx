@@ -206,15 +206,15 @@ export function BeatSheetTab() {
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <h3 className="text-lg font-bold text-white">{actLabels[act as keyof typeof actLabels]}</h3>
-                    <p className="text-xs text-gray-400 mb-1">{actDescriptions[act as keyof typeof actDescriptions]}</p>
-                    <p className="text-sm text-gray-500">{groupedBeats[act]?.length || 0} beats</p>
+                    <p className="text-sm text-gray-300 mb-1">{actDescriptions[act as keyof typeof actDescriptions]}</p>
+                    <p className="text-sm text-gray-400">{groupedBeats[act]?.length || 0} beats</p>
                   </div>
                   <Button
                     onClick={() => handleAddBeat(act)}
                     variant="ghost"
                     size="sm"
                     disabled={isAddingBeat === act}
-                    className="text-gray-400 hover:text-white hover:bg-gray-700 p-2 transition-all duration-200"
+                    className="text-white hover:text-white hover:bg-gray-700 p-2 transition-all duration-200"
                     aria-label={`Add beat to ${actLabels[act as keyof typeof actLabels]}`}
                   >
                     {isAddingBeat === act ? (

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "template_id": "tpl-founder-message-30",
+  "template_name": "Founder Message (30s)",
+  "category": "testimonial_brand",
+  "use_case": "founder_message",
+  "narrative_structure": "hv_cta",
+  "target_audience": "community",
+  "estimated_duration": 30,
+  "tone": "inspirational",
+  "cta_type": "subscribe",
+  "platform": "linkedin",
+  "orientation": "16:9",
+  "tags": ["message", "founder", "brand"],
+  "storyboard_readiness": {
+    "beats": "1) Hook\n2) Value\n3) Vision\n4) CTA",
+    "act_structure": "three-act",
+    "runtime_sec": 30,
+    "scene_count": 4,
+    "characters": "Founder",
+    "locations": "Office",
+    "visual_style": "Simple, authentic",
+    "cinematography": "Tripod, eye-level",
+    "audio": "Direct address",
+    "pacing": "Calm",
+    "platform_deliverables": "16:9 + 1:1",
+    "branding": "Lower third name/title",
+    "props_continuity": "Wardrobe",
+    "accessibility": "Captions",
+    "hints": "Sincere tone"
+  },
+  "scenes": [
+    {"scene_number":1,"scene_name":"Hook","scene_duration":6,"description":"Why we exist.","visual_notes":"Founder CU","character_details":"","camera_details":"Tripod","on_screen_text":"Why","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":2,"scene_name":"Value","scene_duration":9,"description":"How we help.","visual_notes":"B-roll inserts","character_details":"","camera_details":"","on_screen_text":"Help","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":3,"scene_name":"Vision","scene_duration":9,"description":"Where we are going.","visual_notes":"Vision statement","character_details":"","camera_details":"","on_screen_text":"Vision","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":4,"scene_name":"CTA","scene_duration":6,"description":"Subscribe/follow.","visual_notes":"End card","character_details":"","camera_details":"","on_screen_text":"Follow","audio_notes":"","transition_notes":"End"}
+  ]
+}
+
+
+
+
+
+
+
+

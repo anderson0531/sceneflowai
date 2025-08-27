@@ -72,41 +72,101 @@ ALTER DATABASE sceneflow_ai_prod SET ssl = on;
 ### **1. Production Database Settings**
 ```typescript
 // src/config/database.ts
-const sequelize = new Sequelize({
-  dialect: 'postgres',
-  host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT || '5432'),
-  username: process.env.DB_USERNAME,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  
-  // Production settings
-  logging: false, // Disable logging in production
-  timezone: '+00:00',
-  
-  // SSL configuration
-  dialectOptions: {
-    ssl: process.env.NODE_ENV === 'production' ? {
-      require: true,
-      rejectUnauthorized: true
-    } : false
-  },
-  
-  // Connection pooling
-  pool: {
-    max: 20, // Increase for production
-    min: 5,
-    acquire: 60000,
-    idle: 30000
-  },
-  
-  // Security
-  define: {
-    timestamps: true,
-    underscored: true,
-    freezeTableName: true
+import { Sequelize } from 'sequelize'
+import dotenv from 'dotenv'
+
+// Load environment variables from .env.local
+dotenv.config({ path: '.env.local' })
+
+// Database configuration
+console.log(' Environment check:')
+console.log('DB_DATABASE_URL:', process.env.DB_DATABASE_URL ? 'Set' : 'Not set')
+console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'Set' : 'Not set')
+console.log('NODE_ENV:', process.env.NODE_ENV)
+
+let sequelize: Sequelize
+
+if (process.env.DB_DATABASE_URL) {
+  console.log('✅ Using DB_DATABASE_URL (Vercel Postgres) for connection')
+  // Use Vercel Postgres connection
+  sequelize = new Sequelize(process.env.DB_DATABASE_URL, {
+    dialect: 'postgres',
+    
+    // Connection pool settings
+    pool: {
+      max: 10,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    },
+    
+    // Logging configuration
+    logging: process.env.NODE_ENV === 'development' ? console.log : false,
+    
+    // Timezone configuration
+    timezone: '+00:00',
+    
+    // Define options
+    define: {
+      timestamps: true,
+      underscored: true,
+      freezeTableName: true
+    }
+  })
+} else if (process.env.DATABASE_URL) {
+  console.log('✅ Using DATABASE_URL (Supabase) for connection')
+  // Fallback to Supabase
+  sequelize = new Sequelize(process.env.DATABASE_URL, {
+    dialect: 'postgres',
+    
+    // Connection pool settings
+    pool: {
+      max: 10,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    },
+    
+    // Logging configuration
+    logging: process.env.NODE_ENV === 'development' ? console.log : false,
+    
+    // Timezone configuration
+    timezone: '+00:00',
+    
+    // Define options
+    define: {
+      timestamps: true,
+      underscored: true,
+      freezeTableName: true
+    }
+  })
+} else {
+  throw new Error('No database connection string found. Please set DB_DATABASE_URL or DATABASE_URL')
+}
+
+// Test database connection
+export const testConnection = async (): Promise<void> => {
+  try {
+    await sequelize.authenticate()
+    console.log('✅ Database connection established successfully.')
+  } catch (error) {
+    console.error('❌ Unable to connect to the database:', error)
+    throw error
   }
-})
+}
+
+// Sync database models
+export const syncDatabase = async (): Promise<void> => {
+  try {
+    await sequelize.sync({ alter: true })
+    console.log('✅ Database models synchronized successfully.')
+  } catch (error) {
+    console.error('❌ Database synchronization failed:', error)
+    throw error
+  }
+}
+
+export { sequelize }
 ```
 
 ### **2. Database Migration Strategy**
@@ -563,3 +623,267 @@ curl https://yourdomain.com/api/health
 - Encrypted backup storage
 
 This production deployment guide ensures SceneFlow AI is deployed securely and reliably with proper monitoring, logging, and emergency procedures in place.
+
+## 🔧 **Enhanced next.config.js Configuration:**
+
+Update your `next.config.js` with this more comprehensive configuration:
+
+```javascript
+const withPWA = require('next-pwa')({
+  // ... existing PWA config
+});
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // Full Next.js app for Netlify deployment
+  trailingSlash: true,
+  images: {
+    unoptimized: true,
+    domains: ['localhost'],
+  },
+  env: {
+    CUSTOM_KEY: process.env.CUSTOM_KEY,
+  },
+  // Enable server external packages for database support
+  serverExternalPackages: ['sequelize', 'pg', 'pg-hstore'],
+  // Force include external packages for Vercel
+  experimental: {
+    serverComponentsExternalPackages: ['pg', 'pg-hstore', 'sequelize']
+  },
+  // Webpack configuration to force include packages
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Force include pg packages
+      config.externals = config.externals.filter(external => {
+        if (typeof external === 'string') {
+          return !external.includes('pg') && !external.includes('sequelize');
+        }
+        return true;
+      });
+    }
+    return config;
+  },
+  // Temporarily disable TypeScript checking for deployment
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+};
+
+```
+
+**What this adds:**
+1. **`experimental.serverComponentsExternalPackages`** - Forces Vercel to include the packages
+2. **`webpack` configuration** - Aggressively filters out external package exclusions for pg/sequelize
+
+After updating the file, redeploy with:
+```bash
+npx vercel --prod
+```
+
+This should resolve the "Please install pg package manually" error! 🚀
+
+## 🔧 **Alternative Solution - Force Package Inclusion:**
+
+Let's try a more direct approach by creating a custom build configuration. Create a new file called `vercel.json` in your project root:
+
+```json
+{
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "includeFiles": ["node_modules/pg/**/*", "node_modules/pg-hstore/**/*", "node_modules/sequelize/**/*"]
+    }
+  },
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  }
+}
+```
+
+## 🔄 **Or Try This Build Command Override:**
+
+In your Vercel dashboard:
+1. Go to Project Settings → Build & Development Settings
+2. Change the **Build Command** to:
+   ```bash
+   npm install && npm run build
+   ```
+
+## 🧹 **Or Force Clean Rebuild:**
+
+```bash
+cd sceneflow-ai-nextjs
+rm -rf .next node_modules package-lock.json
+npm install
+npx vercel --prod
+```
+
+## 🎯 **The Core Issue:**
+
+Vercel is treating `pg` as a native dependency that should be excluded from serverless functions. We need to either:
+1. Force include it with `vercel.json`
+2. Override the build process
+3. Use a different database approach
+
+**Try the `vercel.json` approach first** - this explicitly tells Vercel which files to include in your functions. Let me know which approach you'd like to try! 🚀
+
+## 🔧 **Fix the vercel.json Conflict:**
+
+You need to remove one of the conflicting properties. Let me help you fix this:
+
+**Option 1: Remove the `functions` property (Recommended)**
+```json
+{
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  }
+}
+```
+
+**Option 2: Remove the `builds` property**
+```json
+{
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "includeFiles": ["node_modules/pg/**/*", "node_modules/pg-hstore/**/*", "node_modules/sequelize/**/*"]
+    }
+  }
+}
+```
+
+## 🎯 **My Recommendation:**
+
+**Use Option 1** - Remove the `functions` property since the `build` property is simpler and should work for your needs.
+
+## ✅ **After Fixing vercel.json:**
+
+1. **Save the changes**
+2. **Redeploy**: `npx vercel --prod`
+3. **Test the database connection**
+
+**Can you update your `vercel.json` file to remove the conflict?** Once that's fixed, we can redeploy and test the Vercel Postgres connection! 🚀
+
+## 🔧 **Update Your Database Configuration:**
+
+You need to modify your `src/config/database.ts` file to prioritize the Vercel Postgres connection. Here's what to change:
+
+**Replace your current database configuration with this:**
+
+```typescript
+import { Sequelize } from 'sequelize'
+import dotenv from 'dotenv'
+
+// Load environment variables from .env.local
+dotenv.config({ path: '.env.local' })
+
+// Database configuration
+console.log(' Environment check:')
+console.log('DB_DATABASE_URL:', process.env.DB_DATABASE_URL ? 'Set' : 'Not set')
+console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'Set' : 'Not set')
+console.log('NODE_ENV:', process.env.NODE_ENV)
+
+let sequelize: Sequelize
+
+if (process.env.DB_DATABASE_URL) {
+  console.log('✅ Using DB_DATABASE_URL (Vercel Postgres) for connection')
+  // Use Vercel Postgres connection
+  sequelize = new Sequelize(process.env.DB_DATABASE_URL, {
+    dialect: 'postgres',
+    
+    // Connection pool settings
+    pool: {
+      max: 10,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    },
+    
+    // Logging configuration
+    logging: process.env.NODE_ENV === 'development' ? console.log : false,
+    
+    // Timezone configuration
+    timezone: '+00:00',
+    
+    // Define options
+    define: {
+      timestamps: true,
+      underscored: true,
+      freezeTableName: true
+    }
+  })
+} else if (process.env.DATABASE_URL) {
+  console.log('✅ Using DATABASE_URL (Supabase) for connection')
+  // Fallback to Supabase
+  sequelize = new Sequelize(process.env.DATABASE_URL, {
+    dialect: 'postgres',
+    
+    // Connection pool settings
+    pool: {
+      max: 10,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    },
+    
+    // Logging configuration
+    logging: process.env.NODE_ENV === 'development' ? console.log : false,
+    
+    // Timezone configuration
+    timezone: '+00:00',
+    
+    // Define options
+    define: {
+      timestamps: true,
+      underscored: true,
+      freezeTableName: true
+    }
+  })
+} else {
+  throw new Error('No database connection string found. Please set DB_DATABASE_URL or DATABASE_URL')
+}
+
+// Test database connection
+export const testConnection = async (): Promise<void> => {
+  try {
+    await sequelize.authenticate()
+    console.log('✅ Database connection established successfully.')
+  } catch (error) {
+    console.error('❌ Unable to connect to the database:', error)
+    throw error
+  }
+}
+
+// Sync database models
+export const syncDatabase = async (): Promise<void> => {
+  try {
+    await sequelize.sync({ alter: true })
+    console.log('✅ Database models synchronized successfully.')
+  } catch (error) {
+    console.error('❌ Database synchronization failed:', error)
+    throw error
+  }
+}
+
+export { sequelize }
+```
+
+## 🎯 **What This Does:**
+
+1. **Prioritizes `DB_DATABASE_URL`** (Vercel Postgres) over `DATABASE_URL` (Supabase)
+2. **Uses the same Sequelize configuration** for both connections
+3. **Provides clear logging** to show which connection is being used
+4. **Maintains fallback** to Supabase if Vercel Postgres isn't available
+
+## ✅ **After Updating:**
+
+1. **Save the file**
+2. **Redeploy**: `npx vercel --prod`
+3. **Test the database connection**
+
+This should resolve the `pg` package issue since Vercel Postgres works natively without requiring the `pg` package to be bundled! 🚀

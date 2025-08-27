@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "template_id": "tpl-launch-teaser-pscta-15",
+  "template_name": "Launch Teaser (15s)",
+  "category": "marketing_promotional",
+  "use_case": "launch_teaser",
+  "narrative_structure": "ps_cta",
+  "target_audience": "prospects and followers",
+  "estimated_duration": 15,
+  "tone": "inspirational",
+  "cta_type": "subscribe",
+  "platform": "instagram",
+  "orientation": "9:16",
+  "tags": ["teaser", "launch", "promo"],
+  "storyboard_readiness": {
+    "beats": "1) Hook\n2) Reveal\n3) CTA",
+    "act_structure": "three-act",
+    "runtime_sec": 15,
+    "scene_count": 4,
+    "characters": "None",
+    "locations": "Abstract",
+    "visual_style": "Bold kinetic type",
+    "cinematography": "Fast cuts, zooms",
+    "audio": "Hype sting",
+    "pacing": "Very fast",
+    "platform_deliverables": "Story + Reel",
+    "branding": "Logo end",
+    "props_continuity": "Brand palette",
+    "accessibility": "High-contrast captions",
+    "hints": "Type on-beat"
+  },
+  "scenes": [
+    {"scene_number":1,"scene_name":"Hook","scene_duration":4,"description":"Provocative question with motion.","visual_notes":"Kinetic type","character_details":"","camera_details":"Zoom","on_screen_text":"Ready?","audio_notes":"Hit","transition_notes":"Cut"},
+    {"scene_number":2,"scene_name":"Reveal","scene_duration":6,"description":"Product name + visual.","visual_notes":"Hero logo","character_details":"","camera_details":"Push","on_screen_text":"Coming soon","audio_notes":"Rise","transition_notes":"Cut"},
+    {"scene_number":3,"scene_name":"Value","scene_duration":3,"description":"One-line benefit.","visual_notes":"Type","character_details":"","camera_details":"","on_screen_text":"Create faster","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":4,"scene_name":"CTA","scene_duration":2,"description":"Subscribe/follow.","visual_notes":"CTA card","character_details":"","camera_details":"","on_screen_text":"Follow","audio_notes":"Click","transition_notes":"End"}
+  ]
+}
+
+
+
+
+
+
+
+

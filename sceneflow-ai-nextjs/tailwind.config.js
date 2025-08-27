@@ -1,83 +1,64 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  // Use 'class' strategy for dark mode, allowing us to force it in the layout
+  darkMode: 'class',
   content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
-  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
-        },
-        // Dark theme specific colors
-        dark: {
-          bg: "#0f0f23",
-          card: "#1a1a2e",
-          border: "#2d2d44",
-          text: "#ffffff",
-          "text-secondary": "#a0a0a0",
-          accent: "#3b82f6",
-          "accent-hover": "#2563eb",
-          success: "#10b981",
-          warning: "#f59e0b",
-          error: "#ef4444",
-        },
+        // Sophisticated Dark Theme Palette (WCAG AA Compliant)
+        // Backgrounds (The "Black" Style)
+        'sf-background': '#121212',        // Main application background
+        'sf-surface': '#1E1E1E',          // Base surface for cards, menus
+        'sf-surface-light': '#272727',    // Hover states, secondary surfaces
+        'sf-surface-elevated': '#2D2D2D', // Modals, drawers, elevated surfaces
+        
+        // Typography (High Contrast for WCAG AA)
+        'sf-text-primary': '#F5F5F5',     // High emphasis - titles, key info
+        'sf-text-secondary': '#B0B0B0',   // Medium emphasis - body text
+        'sf-text-disabled': '#616161',    // Disabled states, placeholders
+        
+        // Borders and Dividers
+        'sf-border': '#3A3A3A',           // Subtle borders, separators
+        'sf-border-strong': '#4A4A4A',    // Stronger borders when needed
+        
+        // Accent Colors (Professional Blue)
+        'sf-primary': '#3B82F6',          // Primary blue for CTAs, links
+        'sf-primary-dark': '#2563EB',     // Darker blue for hover states
+        'sf-primary-light': '#60A5FA',    // Lighter blue for highlights
+        'sf-accent': '#6366F1',           // Indigo for secondary actions
+        'sf-accent-light': '#A5B4FC',     // Light indigo for subtle accents
+        
+        // Control Elements
+        'sf-control': '#2A2A2A',          // Input backgrounds
+        'sf-control-hover': '#323232',    // Input hover states
+        
+        // Focus and Interactive States
+        'sf-focus-ring': 'rgba(0, 191, 165, 0.6)', // Primary focus ring
+        'sf-focus-ring-accent': 'rgba(29, 233, 182, 0.6)', // Accent focus ring
       },
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+      // Subtle shadows for elevation-based design
+      boxShadow: {
+        'sf-subtle': '0 1px 3px rgba(0, 0, 0, 0.12)',
+        'sf-elevated': '0 4px 12px rgba(0, 0, 0, 0.15)',
+        'sf-modal': '0 8px 32px rgba(0, 0, 0, 0.24)',
       },
-      animation: {
-        "fade-in": "fadeIn 0.5s ease-in-out",
-        "slide-up": "slideUp 0.3s ease-out",
-        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-      },
-      keyframes: {
-        fadeIn: {
-          "0%": { opacity: "0" },
-          "100%": { opacity: "1" },
-        },
-        slideUp: {
-          "0%": { transform: "translateY(10px)", opacity: "0" },
-          "100%": { transform: "translateY(0)", opacity: "1" },
-        },
+      // Background images for gradients and atmosphere
+      backgroundImage: {
+        // Primary CTA Gradient
+        'sf-gradient': 'linear-gradient(90deg, #00BFA5 0%, #1DE9B6 100%)',
+        // Subtle surface gradients
+        'sf-surface-gradient': 'linear-gradient(180deg, #272727 0%, #1E1E1E 100%)',
+        'sf-control-gradient': 'linear-gradient(180deg, #323232 0%, #2A2A2A 100%)',
+        // Atmospheric radial gradient
+        'sf-radial-atmosphere': 'radial-gradient(circle at center top, rgba(0, 191, 165, 0.08) 0%, rgba(18, 18, 18, 0) 60%)',
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
-};
+  plugins: [],
+}
 

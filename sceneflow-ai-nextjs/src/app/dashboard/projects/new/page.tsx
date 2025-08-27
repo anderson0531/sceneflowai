@@ -1,258 +1,113 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useStore } from '@/store/useStore'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { 
-  Lightbulb, 
-  Upload, 
-  Sparkles, 
+import {
+  Sparkles,
   ArrowLeft,
-  FileText,
-  Video,
-  Target,
-  Users
+  Play
 } from 'lucide-react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
+
+// Dynamically import CueChat to avoid SSR issues
+const CueChat = dynamic(() => import('@/components/chat/CueChat'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-96 bg-sf-surface-light border border-sf-border rounded-xl flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-8 h-8 border-2 border-sf-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+        <p className="text-sf-text-secondary">Loading Cue Assistant...</p>
+      </div>
+    </div>
+  )
+})
 
 export default function NewProjectPage() {
-  const router = useRouter()
-  const { addProject } = useStore()
-  const [projectData, setProjectData] = useState({
-    title: '',
-    description: '',
-    genre: '',
-    duration: '',
-    targetAudience: '',
-    style: ''
-  })
-  const [creationMethod, setCreationMethod] = useState<'spark' | 'upload' | null>(null)
+  const [selectedConcept, setSelectedConcept] = useState<any>(null)
+  const [showCueChat, setShowCueChat] = useState(true)
 
-  const handleCreateProject = () => {
-    if (!projectData.title.trim()) return
-
-    const newProject = {
-      id: `project-${Date.now()}`,
-      title: projectData.title,
-      description: projectData.description,
-      currentStep: 'ideation' as const,
-      progress: 0,
-      status: 'in-progress' as const,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      completedSteps: [],
-      metadata: {
-        genre: projectData.genre,
-        duration: parseInt(projectData.duration) || 60,
-        targetAudience: projectData.targetAudience,
-        style: projectData.style
-      }
-    }
-
-    addProject(newProject)
-    router.push('/dashboard/workflow/ideation')
+  const handleStartProject = () => {
+    if (!selectedConcept) return
+    
+    // Here you would typically create the project and navigate to the next step
+    console.log('Starting project with concept:', selectedConcept)
+    // For now, just show a success message
+    alert('Project created successfully! This would navigate to the next workflow step.')
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="min-h-screen bg-sf-background">
       {/* Header */}
-      <div className="flex items-center space-x-4">
-        <Link href="/dashboard/projects">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Projects
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Create New Project</h1>
-          <p className="text-gray-600">Start your video production journey</p>
-        </div>
-      </div>
-
-      {/* Creation Method Selection */}
-      <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900">Choose Your Creation Method</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Spark Studio Option */}
-          <div 
-            className={`p-6 border-2 rounded-xl cursor-pointer transition-all ${
-              creationMethod === 'spark' 
-                ? 'border-blue-500 bg-blue-50' 
-                : 'border-gray-200 hover:border-blue-300'
-            }`}
-            onClick={() => setCreationMethod('spark')}
-          >
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">The Spark Studio</h3>
-                <p className="text-sm text-gray-600">AI-powered ideation & brainstorming</p>
-              </div>
-            </div>
-            <p className="text-gray-700">
-              Start with a blank canvas and let AI help you develop your video concept from scratch.
-              Perfect for exploring new ideas and creative directions.
-            </p>
-          </div>
-
-          {/* Upload Script Option */}
-          <div 
-            className={`p-6 border-2 rounded-xl cursor-pointer transition-all ${
-              creationMethod === 'upload' 
-                ? 'border-blue-500 bg-blue-50' 
-                : 'border-gray-200 hover:border-blue-300'
-            }`}
-            onClick={() => setCreationMethod('upload')}
-          >
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
-                <Upload className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Upload Script</h3>
-                <p className="text-sm text-gray-600">Start with existing content</p>
-              </div>
-            </div>
-            <p className="text-gray-700">
-              Upload an existing script, treatment, or concept document to jump-start your project.
-              Great for adapting existing content or continuing previous work.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Project Details Form */}
-      {creationMethod && (
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900">Project Details</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Project Title *
-              </label>
-              <Input
-                value={projectData.title}
-                onChange={(e) => setProjectData(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="Enter project title"
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Genre
-              </label>
-              <select
-                value={projectData.genre}
-                onChange={(e) => setProjectData(prev => ({ ...prev, genre: e.target.value }))}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      <div className="border-b border-sf-border bg-sf-surface">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <Link
+                href="/dashboard/projects"
+                className="flex items-center text-sf-text-secondary hover:text-sf-text-primary transition-colors"
               >
-                <option value="">Select genre</option>
-                <option value="commercial">Commercial</option>
-                <option value="educational">Educational</option>
-                <option value="entertainment">Entertainment</option>
-                <option value="documentary">Documentary</option>
-                <option value="corporate">Corporate</option>
-                <option value="social">Social Media</option>
-              </select>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Projects
+              </Link>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-sf-text-secondary">
+                Let AI guide you through the creative process.
+              </p>
             </div>
           </div>
+        </div>
+      </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description
-            </label>
-            <textarea
-              value={projectData.description}
-              onChange={(e) => setProjectData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Describe your project concept..."
-              rows={4}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Page Title */}
+        <div className="text-center space-y-6 py-8">
+          <div className="flex items-center justify-center space-x-3 mb-8">
+            <Sparkles className="w-8 h-8 text-sf-primary" />
+            <h1 className="text-4xl font-bold text-sf-text-primary">The Spark Studio</h1>
+          </div>
+          <p className="text-xl text-sf-text-secondary max-w-3xl mx-auto">
+            Start a conversation with Cue to transform your ideas into compelling video projects.
+            From initial concept to final refinement, Cue guides you through every step.
+          </p>
+        </div>
+
+        {/* Cue AI Assistant - The Main Interface */}
+        <div className="space-y-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-sf-text-primary mb-3">Cue - AI Assistant</h2>
+            <p className="text-base text-sf-text-secondary leading-relaxed">
+              Begin by telling Cue about your video idea. Cue will help you develop concepts, refine your vision, and prepare to start your project.
+            </p>
+          </div>
+          
+          <div className="h-[600px] bg-sf-surface-light border border-sf-border rounded-xl p-6">
+            <CueChat
+              concept={selectedConcept}
+              onRefinementComplete={(refinedConcept: any) => {
+                console.log('Refined concept:', refinedConcept)
+                setSelectedConcept(refinedConcept)
+              }}
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Duration (seconds)
-              </label>
-              <Input
-                type="number"
-                value={projectData.duration}
-                onChange={(e) => setProjectData(prev => ({ ...prev, duration: e.target.value }))}
-                placeholder="60"
-                min="15"
-                max="600"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Target Audience
-              </label>
-              <select
-                value={projectData.targetAudience}
-                onChange={(e) => setProjectData(prev => ({ ...prev, targetAudience: e.target.value }))}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          {/* Start Project Button - Only show when concept is refined */}
+          {selectedConcept && (
+            <div className="text-center">
+              <Button
+                onClick={handleStartProject}
+                size="lg"
+                className="px-8 text-base"
               >
-                <option value="">Select audience</option>
-                <option value="general">General</option>
-                <option value="business">Business</option>
-                <option value="students">Students</option>
-                <option value="professionals">Professionals</option>
-                <option value="youth">Youth</option>
-              </select>
+                <Play className="w-4 h-4 mr-2" />
+                Start Project
+              </Button>
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Style
-              </label>
-              <select
-                value={projectData.style}
-                onChange={(e) => setProjectData(prev => ({ ...prev, style: e.target.value }))}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Select style</option>
-                <option value="modern">Modern</option>
-                <option value="classic">Classic</option>
-                <option value="minimalist">Minimalist</option>
-                <option value="dynamic">Dynamic</option>
-                <option value="friendly">Friendly</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="flex justify-end space-x-4 pt-6">
-            <Link href="/dashboard/projects">
-              <Button variant="outline">Cancel</Button>
-            </Link>
-            <Button 
-              onClick={handleCreateProject}
-              disabled={!projectData.title.trim()}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {creationMethod === 'spark' ? (
-                <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Start in Spark Studio
-                </>
-              ) : (
-                <>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload & Continue
-                </>
-              )}
-            </Button>
-          </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }

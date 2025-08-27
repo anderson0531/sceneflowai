@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "template_id": "tpl-film-threeact-drama-90",
+  "template_name": "Three-Act Film Scene (90s)",
+  "category": "film_scene",
+  "use_case": "drama_three_act",
+  "narrative_structure": "three_act",
+  "target_audience": "filmmakers",
+  "estimated_duration": 90,
+  "tone": "serious",
+  "cta_type": "learn_more",
+  "platform": "web",
+  "orientation": "16:9",
+  "tags": ["film", "narrative", "drama"],
+  "storyboard_readiness": {
+    "beats": "1) Setup\n2) Confrontation\n3) Resolution",
+    "act_structure": "three-act",
+    "runtime_sec": 90,
+    "scene_count": 6,
+    "characters": "Protagonist, antagonist",
+    "locations": "INT: apartment",
+    "visual_style": "Moody, soft light",
+    "cinematography": "Locked-off + motivated moves",
+    "audio": "Sparse score, dialogue",
+    "pacing": "Deliberate",
+    "platform_deliverables": "Script breakdown",
+    "branding": "N/A",
+    "props_continuity": "Consistent set dressing",
+    "accessibility": "Captions",
+    "hints": "Shot/reverse-shot, coverage"
+  },
+  "scenes": [
+    {"scene_number":1,"scene_name":"Setup","scene_duration":20,"description":"Introduce characters and objective.","visual_notes":"Wide establishing","character_details":"","camera_details":"WS to MS","on_screen_text":"","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":2,"scene_name":"Inciting","scene_duration":15,"description":"Catalyst moment.","visual_notes":"Close-ups","character_details":"","camera_details":"CU","on_screen_text":"","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":3,"scene_name":"Rising","scene_duration":15,"description":"Complications rise.","visual_notes":"MS/CU","character_details":"","camera_details":"","on_screen_text":"","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":4,"scene_name":"Confrontation","scene_duration":20,"description":"Peak conflict.","visual_notes":"Intense CUs","character_details":"","camera_details":"","on_screen_text":"","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":5,"scene_name":"Resolution","scene_duration":10,"description":"Resolution moment.","visual_notes":"Wide exhale","character_details":"","camera_details":"","on_screen_text":"","audio_notes":"","transition_notes":"Cut"},
+    {"scene_number":6,"scene_name":"Tag","scene_duration":10,"description":"Aftermath or hint.","visual_notes":"Insert","character_details":"","camera_details":"","on_screen_text":"","audio_notes":"","transition_notes":"End"}
+  ]
+}
+
+
+
+
+
+
+
+

@@ -26,10 +26,10 @@ export default function HomePage() {
   // Show loading or redirect if user is authenticated
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-sf-background text-sf-text-primary flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sf-primary mx-auto mb-4"></div>
+          <p className="text-sf-text-secondary">Loading...</p>
         </div>
       </div>
     )
@@ -41,7 +41,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-sf-background text-sf-text-primary">
       <Header />
       <HeroSection />
       <ProblemSolution />

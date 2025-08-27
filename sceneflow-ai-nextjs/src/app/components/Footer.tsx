@@ -51,10 +51,20 @@ export function Footer() {
           {/* Logo and Description */}
           <div className="col-span-1 lg:col-span-2">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold text-lg">SF</span>
+              {/* Updated Logo with teal-green accent matching dashboard */}
+              <div className="relative">
+                <div className="w-10 h-10 bg-sf-surface-light rounded-lg flex items-center justify-center">
+                  <div className="w-6 h-6 bg-sf-primary rounded-md flex items-center justify-center">
+                    <div className="w-3 h-3 bg-sf-background rounded-sm"></div>
+                  </div>
+                </div>
+                {/* Small connector triangle in teal-green */}
+                <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-2 border-l-sf-primary border-t-2 border-t-transparent border-b-2 border-b-transparent"></div>
               </div>
-              <span className="text-2xl font-bold">SceneFlow AI</span>
+              <span className="text-2xl font-bold text-white">
+                <span>SceneFlow </span>
+                <span className="text-sf-primary">AI</span>
+              </span>
             </div>
             <p className="text-gray-400 max-w-md mb-6">
               Transform your ideas into professional videos with AI-powered workflow automation. 

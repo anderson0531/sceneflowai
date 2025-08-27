@@ -1,0 +1,74 @@
+'use client';
+
+import { useEditor, EditorContent } from '@tiptap/react';
+import { BubbleMenu } from '@tiptap/extension-bubble-menu';
+import StarterKit from '@tiptap/starter-kit';
+import { useGuideStore } from '@/store/useGuideStore';
+import { useAIContextStore } from '@/store/useAIContextStore';
+import { Button } from '@/components/ui/Button';
+import { SparklesIcon } from 'lucide-react';
+import { useEffect, useCallback } from 'react';
+import { debounce } from 'lodash'; // Use lodash for debounce
+
+export function TreatmentTab() {
+  const { guide, updateTreatment } = useGuideStore();
+  const setAIContext = useAIContextStore((state) => state.setContext);
+
+  // Debounced update function
+  const debouncedUpdate = useCallback(
+    debounce((newTreatment) => {
+      updateTreatment(newTreatment);
+      console.log("Treatment Saved.");
+    }, 1000),
+    [updateTreatment]
+  );
+
+  const editor = useEditor({
+    extensions: [StarterKit],
+    content: guide.filmTreatment,
+    onUpdate: ({ editor }) => {
+      debouncedUpdate(editor.getHTML());
+    },
+    editorProps: {
+      attributes: {
+        // Style the editable area itself (the "paper")
+        class: 'prose prose-sm sm:prose-base lg:prose-lg m-2 sm:m-3 lg:m-5 focus:outline-none leading-relaxed text-gray-900',
+      },
+    },
+  });
+
+  // Handle external updates (e.g., if AI Co-Pilot changes the content)
+  useEffect(() => {
+    if (editor && editor.getHTML() !== guide.filmTreatment) {
+      editor.commands.setContent(guide.filmTreatment);
+    }
+  }, [guide.filmTreatment, editor]);
+
+  const handleAIRefine = () => {
+    if (!editor) return;
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to, ' ');
+    if (selectedText) {
+        // Set the context and open the AI panel
+        setAIContext(`Refine this section of the treatment: "${selectedText}"`, true);
+    }
+  };
+
+  return (
+    <div className="py-3 sm:py-6 flex justify-center">
+      {/* Contextual AI Bubble Menu */}
+      {editor && (
+        <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}>
+          <Button onClick={handleAIRefine} size="sm" variant="default" className="shadow-md">
+            <SparklesIcon className="w-4 h-4 mr-2"/> Refine with AI
+          </Button>
+        </BubbleMenu>
+      )}
+
+      {/* Document Container */}
+      <div className="w-full max-w-4xl bg-white p-4 sm:p-6 lg:p-10 shadow-2xl rounded-lg min-h-[60vh] sm:min-h-[80vh]">
+        <EditorContent editor={editor} />
+      </div>
+    </div>
+  );
+}

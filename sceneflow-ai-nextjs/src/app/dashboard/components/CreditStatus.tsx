@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { Plus, CreditCard, Clock, Image } from 'lucide-react'
-import { useStore } from '@/store/useStore'
+import { useEnhancedStore } from '@/store/enhancedStore'
 
 const creditStats = [
   {
@@ -29,7 +29,7 @@ const creditStats = [
 ]
 
 export function CreditStatus() {
-  const { user } = useStore()
+  const { user } = useEnhancedStore()
   
   // Use actual user credits if available, otherwise use default values
   const availableCredits = user?.credits || 1500
@@ -41,23 +41,23 @@ export function CreditStatus() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.3 }}
-      className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+      className="bg-sf-surface rounded-2xl p-6 shadow border border-sf-border"
     >
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">Credit Status</h2>
+        <h2 className="text-xl font-semibold text-sf-text-primary">Credit Status</h2>
         <button 
           onClick={() => window.location.href = '/dashboard/credits'}
-          className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+          className="flex items-center gap-2 text-sf-primary hover:text-sf-accent font-medium transition-colors"
         >
           <Plus className="w-4 h-4" />
           Get More Credits
         </button>
       </div>
       
-      {/* Credit Statistics Grid */}
+      {/* Credit Statistics Grid - Now all with dark gray backgrounds */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {/* Available Credits */}
+        {/* Available Credits - Dark gray with accent data highlights */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -65,26 +65,27 @@ export function CreditStatus() {
           className="group cursor-pointer"
           onClick={() => window.location.href = '/dashboard/credits'}
         >
-          <div className="bg-blue-500 text-white rounded-lg shadow-lg p-6 hover:shadow-xl transition duration-300 group-hover:scale-105 h-full">
+          <div className="bg-sf-surface-light text-sf-text-primary rounded-lg shadow-lg p-6 hover:shadow-sf-elevated transition duration-300 group-hover:scale-105 h-full border border-sf-border hover:border-sf-primary/30">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                <CreditCard className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 bg-sf-primary/10 rounded-lg flex items-center justify-center border border-sf-primary/30">
+                <CreditCard className="w-6 h-6 text-sf-primary" />
               </div>
             </div>
             
-            <div className="text-3xl font-bold mb-2">
+            {/* Data highlighted with accent color */}
+            <div className="text-3xl font-bold mb-2 text-sf-primary">
               {availableCredits.toLocaleString()}
             </div>
             
             <h3 className="text-lg font-semibold mb-2">Available Credits</h3>
             
-            <p className="text-blue-100 text-sm">
+            <p className="text-sf-text-secondary text-sm font-medium">
               Ready to use
             </p>
           </div>
         </motion.div>
 
-        {/* Pending Credits */}
+        {/* Pending Credits - Dark gray with neutral icon */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -92,10 +93,10 @@ export function CreditStatus() {
           className="group cursor-pointer"
           onClick={() => window.location.href = '/dashboard/credits'}
         >
-          <div className="bg-orange-500 text-white rounded-lg shadow-lg p-6 hover:shadow-xl transition duration-300 group-hover:scale-105 h-full">
+          <div className="bg-sf-surface-light text-sf-text-primary rounded-lg shadow p-6 border border-sf-border transition duration-300 group-hover:scale-105 hover:shadow-sf-elevated hover:border-sf-primary/30 h-full">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                <Clock className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 bg-sf-surface-elevated rounded-lg flex items-center justify-center border border-sf-border">
+                <Clock className="w-6 h-6 text-sf-text-secondary" />
               </div>
             </div>
             
@@ -105,13 +106,13 @@ export function CreditStatus() {
             
             <h3 className="text-lg font-semibold mb-2">Pending Credits</h3>
             
-            <p className="text-orange-100 text-sm">
+            <p className="text-sf-text-secondary text-sm">
               Processing
             </p>
           </div>
         </motion.div>
 
-        {/* Image/Video Generation Credits */}
+        {/* Image/Video Generation Credits - Dark gray with accent data */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -119,20 +120,21 @@ export function CreditStatus() {
           className="group cursor-pointer"
           onClick={() => window.location.href = '/dashboard/credits'}
         >
-          <div className="bg-purple-600 text-white rounded-lg shadow-lg p-6 hover:shadow-xl transition duration-300 group-hover:scale-105 h-full">
+          <div className="bg-sf-surface-light text-sf-text-primary rounded-lg shadow p-6 border border-sf-border transition duration-300 group-hover:scale-105 hover:shadow-sf-elevated hover:border-sf-primary/30 h-full">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                <Image className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 bg-sf-primary/10 rounded-lg flex items-center justify-center border border-sf-primary/30">
+                <Image className="w-6 h-6 text-sf-primary" />
               </div>
             </div>
             
-            <div className="text-3xl font-bold mb-2">
+            {/* Data highlighted with accent color */}
+            <div className="text-3xl font-bold mb-2 text-sf-primary">
               {generationCredits.toLocaleString()}
             </div>
             
             <h3 className="text-lg font-semibold mb-2">Image/Video Gen Credits</h3>
             
-            <p className="text-purple-100 text-sm">
+            <p className="text-sf-text-secondary text-sm">
               For generation
             </p>
           </div>

@@ -14,9 +14,9 @@ export function ProblemSolution() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-5xl font-bold mb-6">Two Audiences, One Solution</h2>
+          <h2 className="text-5xl font-bold mb-6">The Problems We Solve</h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            Whether you&apos;re a seasoned professional or just starting out, SceneFlow AI transforms your video creation process.
+            Traditional video production is slow, expensive, and requires years of experience. SceneFlow AI solves these challenges with our complete 6-step workflow.
           </p>
         </motion.div>
         
@@ -31,8 +31,8 @@ export function ProblemSolution() {
           >
             <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-8 border border-gray-700 h-full">
               <div className="flex items-center mb-6">
-                <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mr-4">
-                  <Rocket className="w-8 h-8 text-blue-400" />
+                <div className="w-16 h-16 bg-sf-primary/20 rounded-2xl flex items-center justify-center mr-4">
+                  <Rocket className="w-8 h-8 text-sf-primary" />
                 </div>
                 <h3 className="text-2xl font-bold">Stop Wasting Days on Pre-Production</h3>
               </div>
@@ -61,13 +61,13 @@ export function ProblemSolution() {
                 </div>
                 
                 <div>
-                  <h4 className="text-lg font-semibold mb-3 text-green-400">Solution:</h4>
-                  <p className="text-gray-300 leading-relaxed">
-                    Automate your workflow, generate entire storyboards and scene direction packages in minutes, and accelerate your creative process to focus on the final product.
+                  <h4 className="text-lg font-semibold mb-3 text-sf-accent">Solution:</h4>
+                  <p className="text-gray-300 mb-4">
+                    SceneFlow AI automates the entire pre-production process, turning your ideas into professional film packages in minutes.
                   </p>
-                  <div className="flex items-center mt-3">
-                    <Zap className="w-5 h-5 text-green-400 mr-2" />
-                    <span className="text-green-400 font-medium">10x faster pre-production</span>
+                  <div className="flex items-center text-sm">
+                    <Zap className="w-5 h-5 text-sf-accent mr-2" />
+                    <span className="text-sf-accent font-medium">10x faster pre-production</span>
                   </div>
                 </div>
               </div>
@@ -114,13 +114,13 @@ export function ProblemSolution() {
                 </div>
                 
                 <div>
-                  <h4 className="text-lg font-semibold mb-3 text-green-400">Solution:</h4>
-                  <p className="text-gray-300 leading-relaxed">
-                    Our guided workflow takes your idea and builds a professional blueprint. Get AI-powered creative suggestions, generate stunning visuals, and produce a high-quality video without years of experience.
+                  <h4 className="text-lg font-semibold mb-3 text-sf-accent">Solution:</h4>
+                  <p className="text-gray-300 mb-4">
+                    Our AI-powered tools provide professional-grade results regardless of your experience level, with built-in best practices and industry standards.
                   </p>
-                  <div className="flex items-center mt-3">
-                    <CheckCircle className="w-5 h-5 text-green-400 mr-2" />
-                    <span className="text-green-400 font-medium">Professional results, zero experience required</span>
+                  <div className="flex items-center text-sm">
+                    <CheckCircle className="w-5 h-5 text-sf-accent mr-2" />
+                    <span className="text-sf-accent font-medium">Professional results, zero experience required</span>
                   </div>
                 </div>
               </div>

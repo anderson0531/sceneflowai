@@ -1,0 +1,120 @@
+'use client';
+
+import { useGuideStore } from '@/store/useGuideStore';
+import { Act, Beat } from '@/types/productionGuide';
+import { ActColumn } from './ActColumn';
+import { BeatCard } from './BeatCard';
+import { useState, useEffect } from 'react';
+import { groupBy } from 'lodash';
+
+export function BeatSheetTab() {
+  const { guide, updateBeats } = useGuideStore();
+  const [activeBeat, setActiveBeat] = useState<Beat | null>(null);
+  const [isClient, setIsClient] = useState(false);
+  const [dndContext, setDndContext] = useState<any>(null);
+
+  // Ensure component is mounted before rendering drag and drop
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Only load drag and drop functionality on client side
+  useEffect(() => {
+    if (isClient) {
+      // Dynamically import all DnD components
+      Promise.all([
+        import('@dnd-kit/core').then(mod => ({
+          DndContext: mod.DndContext,
+          DragOverlay: mod.DragOverlay,
+          closestCorners: mod.closestCorners,
+          useSensor: mod.useSensor,
+          PointerSensor: mod.PointerSensor
+        }))
+      ]).then(([dndMod]) => {
+        const { DndContext, DragOverlay, closestCorners, useSensor, PointerSensor } = dndMod;
+        
+        // Create sensors
+        const sensors = useSensor(PointerSensor, {
+          activationConstraint: {
+            distance: 8,
+          },
+        });
+
+        setDndContext({
+          DndContext,
+          DragOverlay,
+          sensors,
+          handleDragStart: (event: {active: any}) => {
+            if (event.active.data.current?.type === 'BEAT') {
+              setActiveBeat(event.active.data.current.beat);
+            }
+          },
+          handleDragEnd: (event: any) => {
+            setActiveBeat(null);
+            const { active, over } = event;
+
+            if (!over) return;
+
+            const activeId = active.id;
+            const overId = over.id;
+
+            if (active.data.current?.type === 'BEAT' && (over.data.current?.type === 'ACT' || over.data.current?.type === 'BEAT')) {
+              const newAct = over.data.current?.type === 'ACT' ? overId : over.data.current?.beat.act;
+              
+              const updatedBeats = guide.beatSheet.map(beat => {
+                if (beat.id === activeId) {
+                  return { ...beat, act: newAct as Act };
+                }
+                return beat;
+              });
+
+              updateBeats(updatedBeats);
+            }
+          }
+        });
+      });
+    }
+  }, [isClient, guide.beatSheet, updateBeats]);
+
+  // Group beats by act
+  const groupedBeats = groupBy(guide.beatSheet, 'act');
+  const acts: Act[] = ['ACT_I', 'ACT_IIA', 'ACT_IIB', 'ACT_III'];
+
+  // Don't render drag and drop until client-side and loaded
+  if (!isClient || !dndContext) {
+    return (
+      <div className="py-3 sm:py-6 flex flex-col lg:flex-row gap-3 sm:gap-6 overflow-x-auto h-full items-start">
+        {acts.map(act => (
+          <div key={act} className="w-full lg:w-80 flex-shrink-0 bg-gray-900 p-3 sm:p-4 rounded-lg flex flex-col h-full transition-colors border-2 border-dashed border-gray-900">
+            <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-teal-400">{act} ({groupedBeats[act]?.length || 0})</h3>
+            <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 pr-2">
+              {groupedBeats[act]?.map(beat => (
+                <BeatCard key={beat.id} beat={beat} />
+              )) || []}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const { DndContext, DragOverlay, sensors, handleDragStart, handleDragEnd } = dndContext;
+
+  return (
+    <DndContext 
+      sensors={sensors} 
+      collisionDetection={closestCorners} 
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="py-3 sm:py-6 flex flex-col lg:flex-row gap-3 sm:gap-6 overflow-x-auto h-full items-start">
+        {acts.map(act => (
+          <ActColumn key={act} act={act} beats={groupedBeats[act] || []} />
+        ))}
+      </div>
+      <DragOverlay>
+        {activeBeat ? <BeatCard beat={activeBeat} /> : null}
+      </DragOverlay>
+    </DndContext>
+  );
+}

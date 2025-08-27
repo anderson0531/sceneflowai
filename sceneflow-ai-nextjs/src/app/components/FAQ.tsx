@@ -58,7 +58,7 @@ export function FAQ() {
         >
           <h2 className="text-5xl font-bold mb-6">Frequently Asked Questions</h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            Everything you need to know about SceneFlow AI and how it can transform your creative workflow.
+            Get answers to common questions about SceneFlow AI and our complete 6-step video production workflow.
           </p>
         </motion.div>
 
@@ -109,8 +109,8 @@ export function FAQ() {
           <p className="text-gray-400 mb-6">
             Still have questions? We&apos;re here to help you succeed.
           </p>
-          <button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105">
-            Contact Support
+          <button className="bg-sf-primary hover:bg-sf-accent text-sf-background px-8 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105">
+            Get Started Today
           </button>
         </motion.div>
       </div>

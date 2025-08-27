@@ -56,20 +56,23 @@ export function Header() {
           {/* Desktop Header */}
           <div className="hidden lg:flex justify-between items-center h-24">
             {/* Logo - Large and Prominent */}
-            <div className="flex items-center space-x-0">
-              <Image 
-                src="/logo.svg" 
-                alt="SceneFlow AI Logo" 
-                width={200} 
-                height={67}
-                className="h-20 w-auto drop-shadow-lg -mr-6"
-              />
+            <div className="flex items-center space-x-4">
+              {/* Updated Logo with teal-green accent matching dashboard */}
+              <div className="relative">
+                <div className="w-16 h-16 bg-sf-surface-light rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-sf-primary rounded-md flex items-center justify-center">
+                    <div className="w-5 h-5 bg-sf-background rounded-sm"></div>
+                  </div>
+                </div>
+                {/* Small connector triangle in teal-green */}
+                <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-2 border-l-sf-primary border-t-2 border-t-transparent border-b-2 border-b-transparent"></div>
+              </div>
               
               {/* App Name and Tagline */}
               <div className="flex flex-col space-y-1">
-                <h1 className="text-2xl font-bold">
+                <h1 className="text-3xl font-bold">
                   <span className="text-white">SceneFlow </span>
-                  <span className="text-blue-500">AI</span>
+                  <span className="text-sf-primary">AI</span>
                 </h1>
                 <p className="text-sm text-gray-400 font-medium tracking-wide">
                   Imagine. Generate. Flow.
@@ -90,21 +93,21 @@ export function Header() {
               {isAuthenticated ? (
                 <>
                   <div className="flex items-center space-x-3 text-white">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 bg-sf-primary rounded-full flex items-center justify-center">
                       <User className="w-4 h-4" />
                     </div>
                     <span className="text-sm font-medium">{user?.name}</span>
                   </div>
                   <Button 
                     onClick={() => window.location.href = '/dashboard/'}
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 px-4 py-2 text-sm font-medium"
+                    className="bg-sf-primary hover:bg-sf-accent text-sf-background shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 px-4 py-2 text-sm font-medium"
                   >
                     Go to Dashboard
                   </Button>
                   <Button 
-                    variant="outline" 
                     onClick={handleLogout}
-                    className="bg-gray-800/50 hover:bg-gray-700/50 border-gray-600 hover:border-gray-500 text-white hover:text-white transition-all duration-200 px-4 py-2 text-sm font-medium backdrop-blur-sm"
+                    variant="outline"
+                    className="border-sf-primary text-sf-primary hover:bg-sf-primary hover:text-sf-background transition-all duration-200"
                   >
                     <LogOut className="w-4 h-4 mr-2" />
                     Logout
@@ -113,15 +116,15 @@ export function Header() {
               ) : (
                 <>
                   <Button 
-                    variant="outline" 
                     onClick={() => openAuthModal('login')}
-                    className="bg-gray-800/50 hover:bg-gray-700/50 border-gray-600 hover:border-gray-500 text-white hover:text-white transition-all duration-200 px-6 py-3 text-base font-medium backdrop-blur-sm"
+                    variant="outline"
+                    className="border-sf-primary text-sf-primary hover:bg-sf-primary hover:text-sf-background transition-all duration-200"
                   >
-                    Log In
+                    Sign In
                   </Button>
                   <Button 
-                    onClick={() => openAuthModal('signup')} 
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 px-6 py-3 text-base font-medium"
+                    onClick={() => openAuthModal('signup')}
+                    className="bg-sf-primary hover:bg-sf-accent text-sf-background shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 px-4 py-2 text-sm font-medium"
                   >
                     Get Started
                   </Button>
@@ -135,20 +138,23 @@ export function Header() {
             {/* Top Line - Large Logo and Mobile Menu Button */}
             <div className="flex justify-between items-center h-20">
               {/* Large Mobile Logo */}
-              <div className="flex items-center space-x-2">
-                <Image 
-                  src="/logo.svg" 
-                  alt="SceneFlow AI Logo" 
-                  width={160} 
-                  height={54}
-                  className="h-16 w-auto drop-shadow-lg"
-                />
+              <div className="flex items-center space-x-3">
+                {/* Updated Mobile Logo with teal-green accent matching dashboard */}
+                <div className="relative">
+                  <div className="w-12 h-12 bg-sf-surface-light rounded-lg flex items-center justify-center">
+                    <div className="w-8 h-8 bg-sf-primary rounded-md flex items-center justify-center">
+                      <div className="w-4 h-4 bg-sf-background rounded-sm"></div>
+                    </div>
+                  </div>
+                  {/* Small connector triangle in teal-green */}
+                  <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-2 border-l-sf-primary border-t-2 border-t-transparent border-b-2 border-b-transparent"></div>
+                </div>
                 
                 {/* Mobile App Name and Tagline */}
                 <div className="flex flex-col space-y-1">
                   <h1 className="text-lg font-bold">
                     <span className="text-white">SceneFlow </span>
-                    <span className="text-blue-500">AI</span>
+                    <span className="text-sf-primary">AI</span>
                   </h1>
                   <p className="text-xs text-gray-400 font-medium tracking-wide">
                     Imagine. Generate. Flow.
@@ -178,21 +184,21 @@ export function Header() {
                     {isAuthenticated ? (
                       <>
                         <div className="flex items-center space-x-3 text-white py-2">
-                          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                          <div className="w-8 h-8 bg-sf-primary rounded-full flex items-center justify-center">
                             <User className="w-4 h-4" />
                           </div>
                           <span className="text-sm font-medium">{user?.name}</span>
                         </div>
                         <Button 
                           onClick={() => window.location.href = '/dashboard/'}
-                          className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-3 text-base font-medium"
+                          className="w-full bg-sf-primary hover:bg-sf-accent text-sf-background py-3 text-base font-medium"
                         >
                           Go to Dashboard
                         </Button>
                         <Button 
                           variant="outline" 
                           onClick={handleLogout}
-                          className="w-full bg-gray-800/50 hover:bg-gray-700/50 border-gray-600 hover:border-gray-500 text-white hover:text-white py-3 text-base font-medium"
+                          className="w-full bg-gray-800/50 hover:bg-gray-700/50 border-sf-primary text-sf-primary hover:bg-sf-primary hover:text-sf-background py-3 text-base font-medium"
                         >
                           <LogOut className="w-4 h-4 mr-2" />
                           Logout
@@ -203,13 +209,13 @@ export function Header() {
                         <Button 
                           variant="outline" 
                           onClick={() => openAuthModal('login')}
-                          className="w-full px-4 bg-gray-800/50 hover:bg-gray-700/50 border-gray-600 hover:border-gray-500 text-white hover:text-white py-3 text-base font-medium"
+                          className="w-full px-4 bg-gray-800/50 hover:bg-gray-700/50 border-sf-primary text-sf-primary hover:bg-sf-primary hover:text-sf-background py-3 text-base font-medium"
                         >
-                          Log In
+                          Sign In
                         </Button>
                         <Button 
                           onClick={() => openAuthModal('signup')} 
-                          className="w-full px-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-3 text-base font-medium"
+                          className="w-full px-4 bg-sf-primary hover:bg-sf-accent text-sf-background py-3 text-base font-medium"
                         >
                           Get Started
                         </Button>

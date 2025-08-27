@@ -1,0 +1,82 @@
+'use client';
+
+import { DndContext, DragEndEvent, DragOverlay, closestCorners, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import { useGuideStore } from '@/store/useGuideStore';
+import { Act, Beat } from '@/types/productionGuide';
+import { ActColumn } from './ActColumn';
+import { BeatCard } from './BeatCard';
+import { useState } from 'react';
+import { groupBy } from 'lodash';
+
+export function BeatSheetTab() {
+  const { guide, updateBeats } = useGuideStore();
+  const [activeBeat, setActiveBeat] = useState<Beat | null>(null);
+
+  // Optimized sensor activation
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Requires moving 8px before drag starts
+      },
+    })
+  );
+
+  // Group beats by act
+  const groupedBeats = groupBy(guide.beatSheet, 'act');
+  const acts: Act[] = ['ACT_I', 'ACT_IIA', 'ACT_IIB', 'ACT_III'];
+
+  const handleDragStart = (event: {active: any}) => {
+    if (event.active.data.current?.type === 'BEAT') {
+        setActiveBeat(event.active.data.current.beat);
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveBeat(null);
+    const { active, over } = event;
+
+    if (!over) return;
+
+    const activeId = active.id;
+    const overId = over.id; // This could be a Beat ID or an Act ID
+
+    // Scenario: Moving a Beat to a new Act Column
+    if (active.data.current?.type === 'BEAT' && (over.data.current?.type === 'ACT' || over.data.current?.type === 'BEAT')) {
+        
+        const newAct = over.data.current?.type === 'ACT' ? overId : over.data.current?.beat.act;
+
+        // Basic implementation: Update the act of the dragged beat and let the store handle the update.
+        // Note: This does not handle precise ordering within the column, which requires more complex logic (e.g., using @dnd-kit/sortable within each column).
+        
+        const updatedBeats = guide.beatSheet.map(beat => {
+            if (beat.id === activeId) {
+                return { ...beat, act: newAct as Act };
+            }
+            return beat;
+        });
+
+        // Simple approach to ordering: place the newly moved item at the end of the list for that act.
+        // A full sortable implementation requires significantly more complexity.
+        updateBeats(updatedBeats);
+    }
+  };
+
+  return (
+    <DndContext 
+        sensors={sensors} 
+        collisionDetection={closestCorners} 
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+    >
+      <div className="py-6 flex gap-6 overflow-x-auto h-full items-start">
+        {acts.map(act => (
+            <ActColumn key={act} act={act} beats={groupedBeats[act] || []} />
+        ))}
+      </div>
+      {/* DragOverlay provides a smooth visual representation of the dragged item */}
+      <DragOverlay>
+          {activeBeat ? <BeatCard beat={activeBeat} /> : null}
+      </DragOverlay>
+    </DndContext>
+  );
+}

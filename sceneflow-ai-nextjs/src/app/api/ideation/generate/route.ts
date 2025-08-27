@@ -72,12 +72,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!finalizedConcept || !finalizedConcept.targetAudience || !finalizedConcept.keyMessage) {
+    // Allow lightweight requests; fill sensible defaults if fields are missing
+    if (!finalizedConcept) {
       return NextResponse.json(
-        { error: 'Finalized concept must include target audience and key message' },
+        { error: 'Finalized concept is required' },
         { status: 400 }
       )
     }
+
+    finalizedConcept.targetAudience = finalizedConcept.targetAudience || 'General Audience'
+    finalizedConcept.keyMessage = finalizedConcept.keyMessage || (finalizedConcept.title || 'Core message')
 
     console.log(`🎬 Idea generation initiated for user: ${userId}`)
     console.log(`📝 Conversation length: ${conversationHistory.length} messages`)
@@ -167,27 +171,55 @@ async function generateVideoIdeas(
   isUsingUserProvider: boolean,
   providerCapabilities: any
 ): Promise<VideoIdea[]> {
-  
+
   // Construct the idea generation prompt
   const systemPrompt = constructIdeaGenerationPrompt(finalizedConcept, provider, providerCapabilities)
-  
   // Format conversation for LLM
   const formattedConversation = formatConversationForIdeaGeneration(systemPrompt, conversationHistory, finalizedConcept)
-  
-  // Generate ideas using LLM (or simulation for demo)
-  let llmResponse: string
-  
-  if (isUsingUserProvider) {
-    // In production, this would call the actual LLM API
-    // For now, we'll simulate the response
-    llmResponse = await simulateLLMIdeaGeneration(formattedConversation, finalizedConcept)
-  } else {
-    // Use simulation for demo purposes
-    llmResponse = await simulateLLMIdeaGeneration(formattedConversation, finalizedConcept)
+
+  // 1) Try OpenAI (if key present) for real generations
+  const apiKey = process.env.OPENAI_API_KEY
+  if (apiKey) {
+    try {
+      const openAIResponse = await callOpenAI([
+        { role: 'system', content: 'You are a senior creative strategist. Respond ONLY with valid JSON matching the requested schema. No prose.' },
+        { role: 'user', content: formattedConversation }
+      ], apiKey)
+      const parsedIdeas = parseGeneratedIdeas(openAIResponse, finalizedConcept)
+      if (parsedIdeas && parsedIdeas.length >= 1) return parsedIdeas
+    } catch (err) {
+      console.warn('OpenAI idea generation failed, falling back to simulation:', err)
+    }
   }
-  
-  // Parse and structure the response
+
+  // 2) Fallback: simulate
+  const llmResponse = await simulateLLMIdeaGeneration(formattedConversation, finalizedConcept)
   return parseGeneratedIdeas(llmResponse, finalizedConcept)
+}
+
+async function callOpenAI(
+  messages: { role: 'system' | 'user' | 'assistant'; content: string }[],
+  apiKey: string
+): Promise<string> {
+  const body = {
+    model: 'gpt-4o-mini',
+    messages,
+    temperature: 0.7,
+  }
+  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(body),
+    // 30s timeout safeguard
+  })
+  if (!resp.ok) throw new Error(`OpenAI error: ${await resp.text()}`)
+  const json = await resp.json()
+  const content: string | undefined = json?.choices?.[0]?.message?.content
+  if (!content) throw new Error('OpenAI returned no content')
+  return content
 }
 
 /**
@@ -339,6 +371,9 @@ async function simulateLLMIdeaGeneration(formattedConversation: string, finalize
  */
 function generateContextualVideoIdeas(finalizedConcept: any): VideoIdea[] {
   const { targetAudience, keyMessage, tone, genre, duration, platform } = finalizedConcept
+  const ta = (targetAudience || 'Audience') as string
+  const km = (keyMessage || 'Your key message') as string
+  const tn = (tone || 'Professional') as string
   
   // Generate ideas based on concept characteristics
   const ideas: VideoIdea[] = []
@@ -346,60 +381,60 @@ function generateContextualVideoIdeas(finalizedConcept: any): VideoIdea[] {
   // Idea 1: Story-driven approach
   ideas.push({
     id: generateUUID(),
-    title: `${targetAudience} Success Story: ${keyMessage.split(' ').slice(0, 3).join(' ')}`,
-    synopsis: `A compelling narrative following a relatable ${targetAudience.toLowerCase()} who discovers the solution to their problem. This ${tone.toLowerCase()} story showcases the transformation and results, making the ${keyMessage.toLowerCase()} tangible and inspiring.`,
+    title: `${ta} Success Story: ${km.split(' ').slice(0, 3).join(' ')}`,
+    synopsis: `A compelling narrative following a relatable ${ta.toLowerCase()} who discovers the solution to their problem. This ${tn.toLowerCase()} story showcases the transformation and results, making the ${km.toLowerCase()} tangible and inspiring.`,
     scene_outline: [
       "Scene 1: Introduce the protagonist and their initial struggle",
       "Scene 2: Show the moment of discovery and first steps",
       "Scene 3: Demonstrate the transformation and positive changes",
       "Scene 4: Call to action with social proof and next steps"
     ],
-    thumbnail_prompt: `A ${tone.toLowerCase()} scene showing a ${targetAudience.toLowerCase()} looking confident and successful, with visual elements representing transformation and achievement. Warm lighting, professional setting, inspiring composition.`,
+    thumbnail_prompt: `A ${tn.toLowerCase()} scene showing a ${ta.toLowerCase()} looking confident and successful, with visual elements representing transformation and achievement. Warm lighting, professional setting, inspiring composition.`,
     strength_rating: 4.7
   })
   
   // Idea 2: Educational/How-to approach
   ideas.push({
     id: generateUUID(),
-    title: `Master ${keyMessage.split(' ').slice(0, 2).join(' ')} in ${duration || 60} Seconds`,
-    synopsis: `A fast-paced, ${tone.toLowerCase()} tutorial that breaks down the ${keyMessage.toLowerCase()} into actionable steps. Perfect for ${platform || 'social media'} where viewers want quick, valuable insights they can implement immediately.`,
+    title: `Master ${km.split(' ').slice(0, 2).join(' ')} in ${duration || 60} Seconds`,
+    synopsis: `A fast-paced, ${tn.toLowerCase()} tutorial that breaks down the ${km.toLowerCase()} into actionable steps. Perfect for ${platform || 'social media'} where viewers want quick, valuable insights they can implement immediately.`,
     scene_outline: [
       "Scene 1: Hook with a surprising fact or statistic",
       "Scene 2: Present the problem and why it matters",
       "Scene 3: Show the solution with step-by-step demonstration",
       "Scene 4: Quick recap and call to action"
     ],
-    thumbnail_prompt: `A split-screen showing before/after states, with clear step indicators and a confident presenter. Clean, modern design with ${tone.toLowerCase()} color scheme and engaging typography.`,
+    thumbnail_prompt: `A split-screen showing before/after states, with clear step indicators and a confident presenter. Clean, modern design with ${tn.toLowerCase()} color scheme and engaging typography.`,
     strength_rating: 4.4
   })
   
   // Idea 3: Comparison/Contrast approach
   ideas.push({
     id: generateUUID(),
-    title: `${keyMessage.split(' ').slice(0, 2).join(' ')}: The Right Way vs. Wrong Way`,
-    synopsis: `An engaging comparison that clearly shows the difference between effective and ineffective approaches to ${keyMessage.toLowerCase()}. This ${tone.toLowerCase()} format helps ${targetAudience.toLowerCase()} understand best practices through visual examples.`,
+    title: `${km.split(' ').slice(0, 2).join(' ')}: The Right Way vs. Wrong Way`,
+    synopsis: `An engaging comparison that clearly shows the difference between effective and ineffective approaches to ${km.toLowerCase()}. This ${tn.toLowerCase()} format helps ${ta.toLowerCase()} understand best practices through visual examples.`,
     scene_outline: [
       "Scene 1: Set up the comparison scenario",
       "Scene 2: Show the wrong way with humorous consequences",
       "Scene 3: Demonstrate the right way with positive outcomes",
       "Scene 4: Key takeaways and call to action"
     ],
-    thumbnail_prompt: `Side-by-side comparison with clear visual contrast - left side showing frustration/confusion, right side showing success/confidence. Bold arrows and checkmarks, ${tone.toLowerCase()} color palette.`,
+    thumbnail_prompt: `Side-by-side comparison with clear visual contrast - left side showing frustration/confusion, right side showing success/confidence. Bold arrows and checkmarks, ${tn.toLowerCase()} color palette.`,
     strength_rating: 4.6
   })
   
   // Idea 4: Behind-the-scenes/Process approach
   ideas.push({
     id: generateUUID(),
-    title: `Behind the Scenes: How We ${keyMessage.split(' ').slice(0, 3).join(' ')}`,
-    synopsis: `A ${tone.toLowerCase()} behind-the-scenes look at the process, people, and passion behind ${keyMessage.toLowerCase()}. This approach builds trust and connection with ${targetAudience.toLowerCase()} by showing authenticity and expertise.`,
+    title: `Behind the Scenes: How We ${km.split(' ').slice(0, 3).join(' ')}`,
+    synopsis: `A ${tn.toLowerCase()} behind-the-scenes look at the process, people, and passion behind ${km.toLowerCase()}. This approach builds trust and connection with ${ta.toLowerCase()} by showing authenticity and expertise.`,
     scene_outline: [
       "Scene 1: Introduce the team and their mission",
       "Scene 2: Show the process and methodology in action",
       "Scene 3: Highlight the results and impact",
       "Scene 4: Invite viewers to join the journey"
     ],
-    thumbnail_prompt: `A candid behind-the-scenes moment showing passionate team members working together. Natural lighting, authentic expressions, workspace details, and subtle branding elements. ${tone.toLowerCase()} and inviting atmosphere.`,
+    thumbnail_prompt: `A candid behind-the-scenes moment showing passionate team members working together. Natural lighting, authentic expressions, workspace details, and subtle branding elements. ${tn.toLowerCase()} and inviting atmosphere.`,
     strength_rating: 4.3
   })
   

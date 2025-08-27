@@ -80,6 +80,24 @@ export interface Project {
     selectedIdea?: any;
     storyboard?: any[];
     storyboardMetadata?: any;
+    notes?: string[];
+    prompts?: string[];
+    changelog?: { id: string; timestamp: string; action: string; details?: string }[];
+    // Enhanced project structure
+    projectType?: 'short' | 'medium' | 'long';
+    storyStructure?: 'linear' | 'three-act' | 'hero-journey' | 'save-the-cat' | 'custom';
+    targetRuntime?: number;
+    budget?: number;
+    acts?: any[];
+    currentChapter?: string;
+    globalElements?: {
+      characters?: any[];
+      locations?: any[];
+      props?: any[];
+      visualStyle?: any;
+      tone?: string;
+      theme?: string;
+    };
   };
 }
 
@@ -164,6 +182,9 @@ interface AppState {
   
   updateBYOKSettings: (provider: keyof BYOKSettings, settings: Partial<BYOKSettings[keyof BYOKSettings]>) => void;
   setBYOKProvider: (provider: keyof BYOKSettings, name: string, apiKey: string) => void;
+  appendCurrentProjectNote: (note: string) => void;
+  applyCueSuggestion: (opts: { content: string; addNote?: boolean; addStoryboard?: boolean; addDirections?: boolean; addPrompts?: boolean; creditsCost?: number }) => void;
+  spendCredits: (amount: number) => void;
   
   setSidebarOpen: (open: boolean) => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
@@ -181,227 +202,140 @@ interface AppState {
   getNextStep: () => WorkflowStep | null;
 }
 
-const initialBYOKSettings: BYOKSettings = {
-  llmProvider: {
-    name: 'google-gemini',
-    apiKey: '',
-    isConfigured: false,
-  },
-  imageGenerationProvider: {
-    name: 'google-gemini',
-    apiKey: '',
-    isConfigured: false,
-  },
-  videoGenerationProvider: {
-    name: 'google-veo',
-    apiKey: '',
-    isConfigured: false,
-  },
-};
-
-// Sample data for development
-const sampleUser: User = {
-  id: '1',
-  email: 'demo@sceneflowai.com',
-  name: 'Demo Creator',
-  userType: 'content-creator',
-  credits: 150,
-  monthlyCredits: 100,
-  subscriptionTier: 'pro',
-  hasBYOK: true,
+export const useStore = create<AppState>((set, get) => ({
+  // Initial state
+  user: null,
+  isAuthenticated: false,
+  isLoading: false,
+  currentProject: null,
   projects: [],
-  ideas: [],
-  createdAt: new Date(),
-  updatedAt: new Date(),
-}
+  currentStep: 'ideation',
+  stepProgress: {
+    'ideation': 0,
+    'storyboard': 0,
+    'scene-direction': 0,
+    'video-generation': 0
+  },
+  byokSettings: {
+    llmProvider: { name: 'google-gemini', apiKey: '', isConfigured: false },
+    imageGenerationProvider: { name: 'google-gemini', apiKey: '', isConfigured: false },
+    videoGenerationProvider: { name: 'google-veo', apiKey: '', isConfigured: false }
+  },
+  sidebarOpen: true,
+  theme: 'system',
+  cueAssistantOpen: true,
+  cueConversation: {
+    messages: [],
+    hasUnreadNotifications: false,
+    lastProjectRatingChange: null
+  },
 
-const sampleProjects: Project[] = [
-  {
-    id: '1',
-    title: 'Product Launch Video',
-    description: 'A compelling product showcase video for our new software launch',
-    currentStep: 'ideation',
-    progress: 25,
-    status: 'in-progress',
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-20'),
-    completedSteps: [],
-    metadata: {
-      genre: 'commercial',
-      duration: 60,
-      targetAudience: 'business',
-      style: 'modern'
+  // Actions
+  setUser: (user) => set({ user }),
+  setAuthenticated: (status) => set({ isAuthenticated: status }),
+  setLoading: (loading) => set({ isLoading: loading }),
+  
+  setCurrentProject: (project) => set({ currentProject: project }),
+  addProject: (project) => set((state) => ({ 
+    projects: [...state.projects, project] 
+  })),
+  updateProject: (projectId, updates) => set((state) => ({
+    projects: state.projects.map(p => 
+      p.id === projectId ? { ...p, ...updates, updatedAt: new Date() } : p
+    ),
+    currentProject: state.currentProject?.id === projectId 
+      ? { ...state.currentProject, ...updates, updatedAt: new Date() }
+      : state.currentProject
+  })),
+  deleteProject: (projectId) => set((state) => ({
+    projects: state.projects.filter(p => p.id !== projectId),
+    currentProject: state.currentProject?.id === projectId ? null : state.currentProject
+  })),
+  
+  setCurrentStep: (step) => set({ currentStep: step }),
+  updateStepProgress: (step, progress) => set((state) => ({
+    stepProgress: { ...state.stepProgress, [step]: progress }
+  })),
+  advanceToNextStep: () => {
+    const steps: WorkflowStep[] = ['ideation', 'storyboard', 'scene-direction', 'video-generation']
+    const current = get().currentStep
+    const currentIndex = steps.indexOf(current)
+    if (currentIndex < steps.length - 1) {
+      set({ currentStep: steps[currentIndex + 1] })
     }
   },
-  {
-    id: '2',
-    title: 'Educational Series',
-    description: 'A series of educational videos explaining complex concepts',
-    currentStep: 'storyboard',
-    progress: 50,
-    status: 'in-progress',
-    createdAt: new Date('2024-01-10'),
-    updatedAt: new Date('2024-01-18'),
-    completedSteps: ['ideation'],
-    metadata: {
-      genre: 'educational',
-      duration: 120,
-      targetAudience: 'students',
-      style: 'friendly'
+  canAdvanceToStep: (step) => {
+    const steps: WorkflowStep[] = ['ideation', 'storyboard', 'scene-direction', 'video-generation']
+    const current = get().currentStep
+    const currentIndex = steps.indexOf(current)
+    const targetIndex = steps.indexOf(step)
+    return targetIndex <= currentIndex + 1
+  },
+  
+  updateBYOKSettings: (provider, settings) => set((state) => ({
+    byokSettings: {
+      ...state.byokSettings,
+      [provider]: { ...state.byokSettings[provider], ...settings }
     }
+  })),
+  setBYOKProvider: (provider, name, apiKey) => set((state) => ({
+    byokSettings: {
+      ...state.byokSettings,
+      [provider]: { name, apiKey, isConfigured: !!apiKey }
+    }
+  })),
+  appendCurrentProjectNote: (note) => set((state) => {
+    if (!state.currentProject) return state
+    const notes = [...(state.currentProject.metadata.notes || []), note]
+    return {
+      currentProject: {
+        ...state.currentProject,
+        metadata: { ...state.currentProject.metadata, notes }
+      }
+    }
+  }),
+  applyCueSuggestion: (opts) => {
+    // Implementation for applying Cue suggestions
+    console.log('Applying Cue suggestion:', opts)
+  },
+  spendCredits: (amount) => set((state) => ({
+    user: state.user ? { ...state.user, credits: Math.max(0, state.user.credits - amount) } : null
+  })),
+  
+  setSidebarOpen: (open) => set({ sidebarOpen: open }),
+  setTheme: (theme) => set({ theme }),
+  setCueAssistantOpen: (open) => set({ cueAssistantOpen: open }),
+  
+  addCueMessage: (message) => set((state) => ({
+    cueConversation: {
+      ...state.cueConversation,
+      messages: [...state.cueConversation.messages, {
+        ...message,
+        id: Date.now().toString(),
+        timestamp: new Date()
+      }]
+    }
+  })),
+  clearCueConversation: () => set((state) => ({
+    cueConversation: { ...state.cueConversation, messages: [] }
+  })),
+  setCueNotification: (hasNotifications) => set((state) => ({
+    cueConversation: { ...state.cueConversation, hasUnreadNotifications: hasNotifications }
+  })),
+  markNotificationsAsRead: () => set((state) => ({
+    cueConversation: { ...state.cueConversation, hasUnreadNotifications: false }
+  })),
+  
+  getCurrentStepProgress: () => get().stepProgress[get().currentStep],
+  getOverallProgress: () => {
+    const state = get()
+    const total = Object.values(state.stepProgress).reduce((sum, progress) => sum + progress, 0)
+    return total / Object.keys(state.stepProgress).length
+  },
+  getNextStep: () => {
+    const steps: WorkflowStep[] = ['ideation', 'storyboard', 'scene-direction', 'video-generation']
+    const current = get().currentStep
+    const currentIndex = steps.indexOf(current)
+    return currentIndex < steps.length - 1 ? steps[currentIndex + 1] : null
   }
-]
-
-const workflowSteps: WorkflowStep[] = ['ideation', 'storyboard', 'scene-direction', 'video-generation'];
-
-export const useStore = create<AppState>()(
-  persist(
-    (set, get) => ({
-      // Initial state
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-      
-      currentProject: null,
-      projects: [],
-      
-      currentStep: 'ideation',
-      stepProgress: {
-        'ideation': 0,
-        'storyboard': 0,
-        'scene-direction': 0,
-        'video-generation': 0
-      },
-      
-      byokSettings: initialBYOKSettings,
-      
-      sidebarOpen: false,
-      theme: 'dark',
-      cueAssistantOpen: false,
-      
-      // Cue Assistant state
-      cueConversation: {
-        messages: [],
-        hasUnreadNotifications: false,
-        lastProjectRatingChange: null,
-      },
-      
-      // Actions
-      setUser: (user) => set({ user, isAuthenticated: !!user }),
-      setAuthenticated: (status) => set({ isAuthenticated: status }),
-      setLoading: (loading) => set({ isLoading: loading }),
-      
-      setCurrentProject: (project) => set({ currentProject: project }),
-      addProject: (project) => set((state) => ({ 
-        projects: [...state.projects, project] 
-      })),
-      updateProject: (projectId, updates) => set((state) => ({
-        projects: state.projects.map(p => 
-          p.id === projectId ? { ...p, ...updates, updatedAt: new Date() } : p
-        ),
-        currentProject: state.currentProject?.id === projectId 
-          ? { ...state.currentProject, ...updates, updatedAt: new Date() }
-          : state.currentProject
-      })),
-      deleteProject: (projectId) => set((state) => ({
-        projects: state.projects.filter(p => p.id !== projectId),
-        currentProject: state.currentProject?.id === projectId ? null : state.currentProject
-      })),
-      
-      setCurrentStep: (step) => set({ currentStep: step }),
-      updateStepProgress: (step, progress) => set((state) => ({
-        stepProgress: { ...state.stepProgress, [step]: Math.min(100, Math.max(0, progress)) }
-      })),
-      advanceToNextStep: () => {
-        const { currentStep, stepProgress } = get();
-        const currentIndex = workflowSteps.indexOf(currentStep);
-        const nextStep = workflowSteps[currentIndex + 1];
-        
-        if (nextStep && get().canAdvanceToStep(nextStep)) {
-          set({ currentStep: nextStep });
-        }
-      },
-      canAdvanceToStep: (step) => {
-        const { stepProgress } = get();
-        const stepIndex = workflowSteps.indexOf(step);
-        
-        // Can always go to ideation
-        if (step === 'ideation') return true;
-        
-        // Check if previous step is completed
-        const previousStep = workflowSteps[stepIndex - 1];
-        if (previousStep) {
-          return stepProgress[previousStep] >= 100;
-        }
-        
-        return false;
-      },
-      
-      updateBYOKSettings: (provider, settings) => set((state) => ({
-        byokSettings: {
-          ...state.byokSettings,
-          [provider]: { ...state.byokSettings[provider], ...settings }
-        }
-      })),
-      setBYOKProvider: (provider, name, apiKey) => set((state) => ({
-        byokSettings: {
-          ...state.byokSettings,
-          [provider]: {
-            name: name as string,
-            apiKey,
-            isConfigured: !!apiKey
-          }
-        }
-      })),
-      
-      setSidebarOpen: (open) => set({ sidebarOpen: open }),
-      setTheme: (theme) => set({ theme }),
-      setCueAssistantOpen: (open) => set({ cueAssistantOpen: open }),
-      
-      // Cue Assistant actions
-      addCueMessage: (message) => set((state) => ({
-        cueConversation: {
-          ...state.cueConversation,
-          messages: [...state.cueConversation.messages, { 
-            id: Date.now().toString(),
-            ...message, 
-            timestamp: new Date() 
-          }]
-        }
-      })),
-      clearCueConversation: () => set({ cueConversation: { messages: [], hasUnreadNotifications: false, lastProjectRatingChange: null } }),
-      setCueNotification: (hasNotifications) => set({ cueConversation: { ...get().cueConversation, hasUnreadNotifications: hasNotifications } }),
-      markNotificationsAsRead: () => set({ cueConversation: { ...get().cueConversation, hasUnreadNotifications: false } }),
-      
-      // Computed values
-      getCurrentStepProgress: () => {
-        const { currentStep, stepProgress } = get();
-        return stepProgress[currentStep];
-      },
-      getOverallProgress: () => {
-        const { stepProgress } = get();
-        const totalProgress = Object.values(stepProgress).reduce((sum, progress) => sum + progress, 0);
-        return Math.round(totalProgress / Object.keys(stepProgress).length);
-      },
-      getNextStep: () => {
-        const { currentStep } = get();
-        const currentIndex = workflowSteps.indexOf(currentStep);
-        return workflowSteps[currentIndex + 1] || null;
-      },
-    }),
-    {
-      name: 'sceneflow-ai-store',
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        user: state.user,
-        isAuthenticated: state.isAuthenticated,
-        projects: state.projects,
-        currentStep: state.currentStep,
-        stepProgress: state.stepProgress, // Used in WorkflowNavigator component
-        byokSettings: state.byokSettings,
-        theme: state.theme,
-        cueConversation: state.cueConversation, // Add cueConversation to partialize
-      }),
-    }
-  )
-);
+}))

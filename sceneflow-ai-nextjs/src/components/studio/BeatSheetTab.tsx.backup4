@@ -1,0 +1,94 @@
+'use client';
+
+import dynamic from 'next/dynamic';
+import { useGuideStore } from '@/store/useGuideStore';
+import { Act, Beat } from '@/types/productionGuide';
+import { ActColumn } from './ActColumn';
+import { BeatCard } from './BeatCard';
+import { useState } from 'react';
+import { groupBy } from 'lodash';
+
+// Dynamically import DndContext to avoid SSR hydration issues
+const DndContext = dynamic(() => import('@dnd-kit/core').then(mod => ({ default: mod.DndContext })), { ssr: false });
+const DragOverlay = dynamic(() => import('@dnd-kit/core').then(mod => ({ default: mod.DragOverlay })), { ssr: false });
+const closestCorners = dynamic(() => import('@dnd-kit/core').then(mod => ({ default: mod.closestCorners })), { ssr: false });
+const useSensor = dynamic(() => import('@dnd-kit/core').then(mod => ({ default: mod.useSensor })), { ssr: false });
+const PointerSensor = dynamic(() => import('@dnd-kit/core').then(mod => ({ default: mod.PointerSensor })), { ssr: false });
+
+export function BeatSheetTab() {
+  const { guide, updateBeats } = useGuideStore();
+  const [activeBeat, setActiveBeat] = useState<Beat | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  // Ensure component is mounted before rendering drag and drop
+  useState(() => {
+    setIsClient(true);
+  });
+
+  // Group beats by act
+  const groupedBeats = groupBy(guide.beatSheet, 'act');
+  const acts: Act[] = ['ACT_I', 'ACT_IIA', 'ACT_IIB', 'ACT_III'];
+
+  const handleDragStart = (event: {active: any}) => {
+    if (event.active.data.current?.type === 'BEAT') {
+        setActiveBeat(event.active.data.current.beat);
+    }
+  };
+
+  const handleDragEnd = (event: any) => {
+    setActiveBeat(null);
+    const { active, over } = event;
+
+    if (!over) return;
+
+    const activeId = active.id;
+    const overId = over.id;
+
+    if (active.data.current?.type === 'BEAT' && (over.data.current?.type === 'ACT' || over.data.current?.type === 'BEAT')) {
+        const newAct = over.data.current?.type === 'ACT' ? overId : over.data.current?.beat.act;
+        
+        const updatedBeats = guide.beatSheet.map(beat => {
+            if (beat.id === activeId) {
+                return { ...beat, act: newAct as Act };
+            }
+            return beat;
+        });
+
+        updateBeats(updatedBeats);
+    }
+  };
+
+  // Don't render drag and drop until client-side
+  if (!isClient) {
+    return (
+      <div className="py-3 sm:py-6 flex flex-col lg:flex-row gap-3 sm:gap-6 overflow-x-auto h-full items-start">
+        {acts.map(act => (
+          <div key={act} className="w-full lg:w-80 flex-shrink-0 bg-gray-900 p-3 sm:p-4 rounded-lg flex flex-col h-full transition-colors border-2 border-dashed border-gray-900">
+            <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-teal-400">{act} ({groupedBeats[act]?.length || 0})</h3>
+            <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 pr-2">
+              {groupedBeats[act]?.map(beat => (
+                <BeatCard key={beat.id} beat={beat} />
+              )) || []}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <DndContext 
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+    >
+      <div className="py-3 sm:py-6 flex flex-col lg:flex-row gap-3 sm:gap-6 overflow-x-auto h-full items-start">
+        {acts.map(act => (
+            <ActColumn key={act} act={act} beats={groupedBeats[act] || []} />
+        ))}
+      </div>
+      <DragOverlay>
+          {activeBeat ? <BeatCard beat={activeBeat} /> : null}
+      </DragOverlay>
+    </DndContext>
+  );
+}

@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "1.0",
+  "template_id": "tpl-feature-update-pscta-30",
+  "template_name": "Feature Update Spotlight (30s)",
+  "category": "explainer_educational",
+  "use_case": "feature_update_spotlight",
+  "narrative_structure": "ps_cta",
+  "target_audience": "existing users and evaluators",
+  "estimated_duration": 30,
+  "tone": "professional",
+  "cta_type": "learn_more",
+  "platform": "youtube",
+  "orientation": "16:9",
+  "tags": ["product", "update", "announcement"],
+  "storyboard_readiness": {
+    "beats": "1) Problem/pain area\n2) New feature intro\n3) Value\n4) CTA",
+    "act_structure": "three-act",
+    "runtime_sec": 30,
+    "scene_count": 4,
+    "characters": "Narrator — concise and helpful",
+    "locations": "INT: product UI overlays",
+    "visual_style": "Clean UI, brand palette, bold callouts",
+    "cinematography": "Screen capture + macro UI animations",
+    "audio": "Confident VO, light tech track",
+    "pacing": "Fast, 7–8s per beat",
+    "platform_deliverables": "End card 3s, captions on",
+    "branding": "Logo lockup, brand typography",
+    "props_continuity": "Consistent UI theme",
+    "accessibility": "On-screen labels, readable contrast",
+    "hints": "Callout hotspots, before/after split"
+  },
+  "scenes": [
+    {
+      "scene_number": 1,
+      "scene_name": "Problem",
+      "scene_duration": 7,
+      "description": "Show previous workflow friction before the update.",
+      "visual_notes": "Split-screen with clunky steps",
+      "character_details": "Narrator VO",
+      "camera_details": "Screen capture",
+      "on_screen_text": "Too many steps",
+      "audio_notes": "Light ticks",
+      "transition_notes": "Swipe"
+    },
+    {
+      "scene_number": 2,
+      "scene_name": "Feature Intro",
+      "scene_duration": 8,
+      "description": "Introduce new feature with quick highlight.",
+      "visual_notes": "UI highlight glow, tooltip",
+      "character_details": "Cursor motion",
+      "camera_details": "Zoom-in on UI area",
+      "on_screen_text": "Introducing Smart Filters",
+      "audio_notes": "Subtle whoosh",
+      "transition_notes": "Cut"
+    },
+    {
+      "scene_number": 3,
+      "scene_name": "Value",
+      "scene_duration": 10,
+      "description": "Demonstrate 2–3 clicks to achieve result and benefit.",
+      "visual_notes": "Checklist of outcomes",
+      "character_details": "Narrator VO",
+      "camera_details": "Callouts + cursor",
+      "on_screen_text": "Faster. Clearer. Flexible.",
+      "audio_notes": "Music builds",
+      "transition_notes": "Match cut"
+    },
+    {
+      "scene_number": 4,
+      "scene_name": "CTA",
+      "scene_duration": 5,
+      "description": "Encourage learning more or trying it now.",
+      "visual_notes": "Brand end card",
+      "character_details": "Narrator VO",
+      "camera_details": "Static",
+      "on_screen_text": "Learn more",
+      "audio_notes": "Button click",
+      "transition_notes": "End"
+    }
+  ]
+}
+
+
+
+
+
+
+
+

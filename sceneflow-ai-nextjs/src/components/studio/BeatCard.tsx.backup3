@@ -1,0 +1,75 @@
+'use client';
+
+import dynamic from 'next/dynamic';
+import { Beat } from '@/types/productionGuide';
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { GripVerticalIcon, LightbulbIcon } from 'lucide-react';
+
+// Dynamically import useDraggable to avoid SSR hydration issues
+const useDraggable = dynamic(() => import('@dnd-kit/core').then(mod => ({ default: mod.useDraggable })), { ssr: false });
+const CSS = dynamic(() => import('@dnd-kit/utilities').then(mod => ({ default: mod.CSS })), { ssr: false });
+
+interface BeatCardProps {
+  beat: Beat;
+}
+
+export function BeatCard({ beat }: BeatCardProps) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: beat.id,
+    data: { type: 'BEAT', beat },
+  });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 'auto',
+  };
+
+  // Function to open detailed editing modal (omitted for brevity)
+  const openEditor = () => {
+    console.log("Open Beat Editor Modal for:", beat.id);
+  };
+
+  return (
+    <Card
+      ref={setNodeRef}
+      style={style}
+      className="bg-gray-800 border-gray-700 text-white shadow-lg mb-3 sm:mb-4 flex"
+      {...attributes}
+    >
+        {/* Drag Handle */}
+        <div
+            className="p-2 sm:p-3 cursor-grab touch-none border-r border-gray-700 flex items-center hover:bg-gray-700 transition-colors"
+            {...listeners}
+        >
+            <GripVerticalIcon className="text-gray-500 w-4 h-4 sm:w-5 sm:h-5" />
+        </div>
+
+        <div className="flex-1 cursor-pointer" onClick={openEditor}>
+            <CardHeader className="pb-2 p-3 sm:p-4">
+                <CardTitle className="text-sm sm:text-base">{beat.title}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-4 pt-0">
+                <p className="text-xs sm:text-sm text-gray-300 mb-2 sm:mb-3 line-clamp-3">{beat.summary}</p>
+                
+                <div className="flex justify-between items-center mt-2">
+                    <span className="text-xs text-gray-500">{beat.charactersPresent.length} Characters</span>
+                    
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <LightbulbIcon className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500"/>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs bg-gray-700 text-white border-none">
+                                <p className="font-semibold">Structural Purpose:</p>
+                                <p>{beat.structuralPurpose}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </div>
+            </CardContent>
+        </div>
+    </Card>
+  );
+}

@@ -32,6 +32,7 @@ export interface StoryboardGenerationRequest {
   style?: 'cinematic' | 'documentary' | 'commercial' | 'educational' | 'artistic'
   aspectRatio?: '16:9' | '9:16' | '1:1' | '4:3'
   targetDuration?: number
+  creatorTemplate?: string
 }
 
 export interface StoryboardGenerationResponse {
@@ -50,7 +51,7 @@ export interface StoryboardGenerationResponse {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body: StoryboardGenerationRequest = await request.json()
-    const { idea, userId, projectId, style = 'cinematic', aspectRatio = '16:9', targetDuration = 60 } = body
+    const { idea, userId, projectId, style = 'cinematic', aspectRatio = '16:9', targetDuration = 60, creatorTemplate } = body
 
     // Validate request
     if (!idea || !idea.scene_outline || idea.scene_outline.length === 0) {
@@ -65,6 +66,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         success: false,
         error: 'Missing user ID or project ID'
       }, { status: 400 })
+    }
+
+    // Check if we have a structured template with scenes
+    let templateScenes: any[] = []
+    let templateUsed = false
+    
+    if (creatorTemplate) {
+      try {
+        // Try to parse the template content to see if it contains structured data
+        const templateData = JSON.parse(creatorTemplate)
+        if (templateData.scenes && Array.isArray(templateData.scenes)) {
+          templateScenes = templateData.scenes
+          templateUsed = true
+          console.log(`Using template with ${templateScenes.length} scenes`)
+        }
+      } catch (e) {
+        // If parsing fails, it's just text content, not structured
+        console.log('Template is text content, not structured data')
+      }
     }
 
     // Get user's LLM provider configuration
@@ -140,68 +160,85 @@ IMPORTANT:
 - Maintain consistency with the overall style and tone
 - Focus on cinematic quality and visual storytelling`
 
-    // Generate storyboard using LLM
-    const aiProvider = AIProviderFactory.createProvider(llmProvider as any)
-    if (!aiProvider) {
-      return NextResponse.json({
-        success: false,
-        error: 'No AI provider available for storyboard generation'
-      }, { status: 500 })
-    }
-
-    const response = await aiProvider.generateContent(systemPrompt, {
-      maxTokens: 4000,
-      temperature: 0.7,
-      topP: 0.9
-    })
-
-    if (!response.success || !response.content) {
-      return NextResponse.json({
-        success: false,
-        error: 'Failed to generate storyboard content'
-      }, { status: 500 })
-    }
-
-    // Parse the LLM response
     let storyboard: StoryboardScene[]
-    try {
-      // Extract JSON from the response (handle markdown formatting)
-      const jsonMatch = response.content.match(/\[[\s\S]*\]/)
-      if (!jsonMatch) {
-        throw new Error('No JSON array found in response')
-      }
 
-      storyboard = JSON.parse(jsonMatch[0])
+    if (templateUsed && templateScenes.length > 0) {
+      // Use the structured template scenes directly
+      storyboard = templateScenes.map((scene: any) => ({
+        scene_number: scene.scene_number || 1,
+        description: scene.description || scene.scene_name || 'Scene description',
+        audio_cues: scene.audio_notes || scene.audio || 'Background music',
+        image_prompt: scene.visual_notes || scene.description || 'Visual scene',
+        duration: scene.scene_duration || Math.ceil(targetDuration / templateScenes.length),
+        camera_angle: scene.camera_details || scene.camera_angle || 'Medium shot',
+        lighting: scene.lighting || 'Natural lighting',
+        mood: scene.mood || 'Professional'
+      }))
       
-      // Validate storyboard structure
-      if (!Array.isArray(storyboard)) {
-        throw new Error('Response is not an array')
+      console.log(`Generated storyboard from template: ${storyboard.length} scenes`)
+    } else {
+      // Generate storyboard using LLM
+      const aiProvider = AIProviderFactory.createProvider(llmProvider as any)
+      if (!aiProvider) {
+        return NextResponse.json({
+          success: false,
+          error: 'No AI provider available for storyboard generation'
+        }, { status: 500 })
       }
 
-      // Validate each scene
-      storyboard.forEach((scene, index) => {
-        if (!scene.scene_number || !scene.description || !scene.audio_cues || !scene.image_prompt) {
-          throw new Error(`Invalid scene structure at index ${index}`)
-        }
-        
-        // Ensure scene numbers are sequential
-        scene.scene_number = index + 1
-        
-        // Set default values for optional fields
-        scene.duration = scene.duration || Math.ceil(targetDuration / storyboard.length)
-        scene.camera_angle = scene.camera_angle || 'Medium shot'
-        scene.lighting = scene.lighting || 'Natural lighting'
-        scene.mood = scene.mood || 'Professional'
+      const response = await aiProvider.generateContent(systemPrompt, {
+        maxTokens: 4000,
+        temperature: 0.7,
+        topP: 0.9
       })
 
-    } catch (parseError) {
-      console.error('Failed to parse LLM response:', parseError)
-      console.error('Raw response:', response.content)
-      
-      return NextResponse.json({
-        success: false,
-        error: 'Failed to parse storyboard response from AI provider'
-      }, { status: 500 })
+      if (!response.success || !response.content) {
+        return NextResponse.json({
+          success: false,
+          error: 'Failed to generate storyboard content'
+        }, { status: 500 })
+      }
+
+      // Parse the LLM response
+      try {
+        // Extract JSON from the response (handle markdown formatting)
+        const jsonMatch = response.content.match(/\[[\s\S]*\]/)
+        if (!jsonMatch) {
+          throw new Error('No JSON array found in response')
+        }
+
+        storyboard = JSON.parse(jsonMatch[0])
+        
+        // Validate storyboard structure
+        if (!Array.isArray(storyboard)) {
+          throw new Error('Response is not an array')
+        }
+
+        // Validate each scene
+        storyboard.forEach((scene, index) => {
+          if (!scene.scene_number || !scene.description || !scene.audio_cues || !scene.image_prompt) {
+            throw new Error(`Invalid scene structure at index ${index}`)
+          }
+          
+          // Ensure scene numbers are sequential
+          scene.scene_number = index + 1
+          
+          // Set default values for optional fields
+          scene.duration = scene.duration || Math.ceil(targetDuration / storyboard.length)
+          scene.camera_angle = scene.camera_angle || 'Medium shot'
+          scene.lighting = scene.lighting || 'Natural lighting'
+          scene.mood = scene.mood || 'Professional'
+        })
+
+      } catch (parseError) {
+        console.error('Failed to parse LLM response:', parseError)
+        console.error('Raw response:', response.content)
+        
+        return NextResponse.json({
+          success: false,
+          error: 'Failed to parse storyboard response from AI provider'
+        }, { status: 500 })
+      }
     }
 
     // Calculate metadata
@@ -216,7 +253,8 @@ IMPORTANT:
         estimatedDuration,
         generatedAt: new Date(),
         llmProvider,
-        style
+        style,
+        templateUsed
       }
     })
 

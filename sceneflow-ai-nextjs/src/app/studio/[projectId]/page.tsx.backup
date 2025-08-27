@@ -1,0 +1,57 @@
+'use client';
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/Button";
+import { DownloadIcon } from "lucide-react";
+import { useGuideStore } from "@/store/useGuideStore";
+import { useAIContextStore } from "@/store/useAIContextStore";
+// Import Tab Components (placeholders for now)
+import { TreatmentTab } from "@/components/studio/TreatmentTab";
+import { CharactersTab } from "@/components/studio/CharactersTab";
+import { BeatSheetTab } from "@/components/studio/BeatSheetTab";
+import { AICoPilotPanel } from "@/components/studio/AICoPilotPanel";
+import { cn } from "@/lib/utils";
+
+export default function SparkStudioPage() {
+  const { guide } = useGuideStore();
+  const isAIOpen = useAIContextStore((state) => state.isOpen);
+
+  const handleExport = () => {
+    console.log("Exporting PDF...");
+  };
+
+  return (
+    <div className="flex h-full bg-gray-950 text-white overflow-hidden">
+      <div className="flex-1 flex flex-col">
+        <header className="p-4 border-b border-gray-800 flex justify-between items-center shadow-md">
+          <h1 className="text-2xl font-bold">1. Spark Studio: {guide.title}</h1>
+          <Button onClick={handleExport} variant="secondary">
+            <DownloadIcon className="mr-2 h-4 w-4" /> Export Production Guide
+          </Button>
+        </header>
+
+        <main className="flex-1 overflow-hidden">
+          {/* The Tabs container needs to manage its own height/overflow */}
+          <Tabs defaultValue="beat-sheet" className="w-full h-full flex flex-col">
+            <TabsList className="grid w-full grid-cols-3 bg-gray-800 m-4 rounded-md">
+              <TabsTrigger value="treatment">Film Treatment</TabsTrigger>
+              <TabsTrigger value="characters">Character Breakdowns</TabsTrigger>
+              <TabsTrigger value="beat-sheet">Interactive Beat Sheet</TabsTrigger>
+            </TabsList>
+            
+            {/* TabContent needs overflow-auto to scroll if content is too long */}
+            <div className="flex-1 overflow-auto p-6 pt-0">
+                <TabsContent value="treatment"><TreatmentTab /></TabsContent>
+                <TabsContent value="characters"><CharactersTab /></TabsContent>
+                <TabsContent value="beat-sheet" className="h-full"><BeatSheetTab /></TabsContent>
+            </div>
+          </Tabs>
+        </main>
+      </div>
+
+      <div className={cn("transition-all duration-300", isAIOpen ? "w-[350px]" : "w-0")}>
+        {isAIOpen && <AICoPilotPanel />}
+      </div>
+    </div>
+  );
+}

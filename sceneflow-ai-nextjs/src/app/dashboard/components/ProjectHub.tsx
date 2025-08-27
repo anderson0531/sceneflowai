@@ -1,8 +1,9 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Plus, Play, Star, Calendar, Eye } from 'lucide-react'
-import { useStore } from '@/store/useStore'
+import { Plus, Play, Star, Calendar, Eye, Sparkles } from 'lucide-react'
+import { useEnhancedStore } from '@/store/enhancedStore'
+import Link from 'next/link'
 
 interface Project {
   id: string
@@ -26,7 +27,7 @@ interface Project {
 }
 
 export function ProjectHub() {
-  const { projects } = useStore()
+  const { projects } = useEnhancedStore()
   
   const getStageDisplayName = (step: string) => {
     const stageNames = {
@@ -67,40 +68,53 @@ export function ProjectHub() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.4 }}
-        className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+        className="bg-sf-surface rounded-2xl p-6 shadow border border-sf-border"
       >
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">Recent Projects</h2>
-          <button 
-            onClick={() => window.location.href = '/dashboard/projects'}
-            className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
-          >
-            View All
-          </button>
+          <h2 className="text-xl font-semibold text-sf-text-primary">Recent Projects</h2>
+          <Link href="/dashboard/projects">
+            <button 
+              className="text-sf-primary hover:text-sf-accent font-medium transition-colors"
+            >
+              View All
+            </button>
+          </Link>
         </div>
         
-        {/* Empty State */}
+        {/* Enhanced Empty State with Actionable Guidance */}
         <div className="text-center py-12">
-          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Eye className="w-12 h-12 text-gray-400" />
+          <div className="w-24 h-24 bg-sf-surface-light rounded-full flex items-center justify-center mx-auto mb-6 border border-sf-border">
+            <Sparkles className="w-12 h-12 text-sf-primary" />
           </div>
           
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            No projects yet
+          <h3 className="text-xl font-semibold text-sf-text-primary mb-3">
+            Ready to Create Your First Video?
           </h3>
           
-          <p className="text-gray-600 mb-6 max-w-md mx-auto">
-            Start your first video project! Create something amazing with our AI-powered workflow.
+          <p className="text-sf-text-secondary mb-6 max-w-md mx-auto leading-relaxed">
+            Start your creative journey with SceneFlow AI. Our guided workflow will help you transform your ideas into professional videos.
           </p>
           
-          <button
-            onClick={() => window.location.href = '/dashboard/projects/new'}
-            className="bg-blue-500 text-white px-6 py-3 rounded-lg mt-4 shadow-md hover:bg-blue-600 transition-colors font-medium"
-          >
-            <Plus className="w-4 h-4 inline mr-2" />
-            Create Project
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link href="/studio/crispr-debate-001">
+              <button className="bg-sf-primary text-white px-6 py-3 rounded-lg shadow-md hover:bg-sf-accent hover:shadow-sf-elevated transition-all duration-200 font-medium">
+                <Plus className="w-4 h-4 inline mr-2" />
+                Start New Project
+              </button>
+            </Link>
+            
+            <Link href="/dashboard/templates">
+              <button className="bg-sf-surface-light text-sf-text-primary px-6 py-3 rounded-lg border border-sf-border hover:border-sf-primary/30 hover:shadow-sf-elevated transition-all duration-200 font-medium">
+                <Eye className="w-4 h-4 inline mr-2" />
+                Browse Templates
+              </button>
+            </Link>
+          </div>
+          
+          <p className="text-xs text-sf-text-secondary mt-4 max-w-sm mx-auto">
+            💡 <strong>Pro tip:</strong> Use our AI-powered "The Spark Studio" to generate unique video concepts from any topic.
+          </p>
         </div>
       </motion.div>
     )
@@ -112,17 +126,18 @@ export function ProjectHub() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.4 }}
-      className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+      className="bg-sf-surface rounded-2xl p-6 shadow border border-sf-border"
     >
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">Recent Projects</h2>
-        <button 
-          onClick={() => window.location.href = '/dashboard/projects'}
-          className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
-        >
-          View All
-        </button>
+        <h2 className="text-xl font-semibold text-sf-text-primary">Recent Projects</h2>
+        <Link href="/dashboard/projects">
+          <button 
+            className="text-sf-primary hover:text-sf-accent font-medium transition-colors"
+          >
+            View All
+          </button>
+        </Link>
       </div>
       
       {/* Projects List */}
@@ -133,28 +148,28 @@ export function ProjectHub() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.4, delay: 0.5 + index * 0.1 }}
-            className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:shadow-sm transition-all duration-200"
+            className="border border-sf-border rounded-lg p-4 hover:border-sf-primary/40 hover:shadow-sf-elevated transition-all duration-200 bg-sf-surface-light"
           >
             <div className="flex items-center gap-4">
               {/* Thumbnail Placeholder */}
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Eye className="w-6 h-6 text-blue-600" />
+              <div className="w-16 h-16 bg-sf-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Eye className="w-6 h-6 text-sf-primary" />
               </div>
               
               {/* Project Info */}
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 mb-1 truncate">
+                <h3 className="font-semibold text-sf-text-primary mb-1 truncate">
                   {project.title}
                 </h3>
                 
-                <div className="flex items-center gap-4 text-sm text-gray-600">
+                <div className="flex items-center gap-4 text-sm text-sf-text-secondary">
                   <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    <span className="w-2 h-2 bg-sf-primary rounded-full"></span>
                     {getStageDisplayName(project.currentStep)} ({getStageNumber(project.currentStep, project.completedSteps)}/4)
                   </span>
                   
                   <span className="flex items-center gap-1">
-                    <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                    <Star className="w-3 h-3 text-sf-accent" />
                     {getCueStrengthRating(project)}/5.0
                   </span>
                   
@@ -166,13 +181,14 @@ export function ProjectHub() {
               </div>
               
               {/* Continue Button */}
-              <button
-                onClick={() => window.location.href = `/dashboard/workflow/${project.currentStep}`}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm flex items-center gap-2"
-              >
-                <Play className="w-3 h-3" />
-                Continue
-              </button>
+              <Link href={`/dashboard/workflow/${project.currentStep}`}>
+                <button
+                  className="bg-sf-primary text-white px-4 py-2 rounded-lg hover:bg-sf-accent hover:shadow-sf-elevated transition-all duration-200 font-medium text-sm flex items-center gap-2"
+                >
+                  <Play className="w-3 h-3" />
+                  Continue
+                </button>
+              </Link>
             </div>
           </motion.div>
         ))}
@@ -181,12 +197,13 @@ export function ProjectHub() {
       {/* Show More Projects Link */}
       {projects.length > 5 && (
         <div className="text-center mt-6">
-          <button
-            onClick={() => window.location.href = '/dashboard/projects'}
-            className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
-          >
-            View {projects.length - 5} more projects →
-          </button>
+          <Link href="/dashboard/projects">
+            <button
+              className="text-sf-primary hover:text-sf-accent font-medium transition-colors"
+            >
+              View {projects.length - 5} more projects →
+            </button>
+          </Link>
         </div>
       )}
     </motion.div>
