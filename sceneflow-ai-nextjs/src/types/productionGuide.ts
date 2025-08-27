@@ -14,12 +14,12 @@ export interface CharacterProfile {
   arc: CharacterArc;
 }
 
-// Define the structural Acts for the Kanban board
+// Define the structural Acts for the Kanban board (legacy - keeping for backward compatibility)
 export type Act = 'ACT_I' | 'ACT_IIA' | 'ACT_IIB' | 'ACT_III';
 
 export interface Beat {
   id: string;
-  act: Act; // The column the beat currently resides in
+  act: string; // The column ID the beat currently resides in (now supports any template column)
   title: string; // e.g., "Inciting Incident"
   summary: string;
   charactersPresent: string[]; // IDs referencing CharacterProfile
@@ -32,4 +32,5 @@ export interface ProductionGuide {
   filmTreatment: string; // HTML string from Tiptap
   characters: CharacterProfile[];
   beatSheet: Beat[];
+  beatTemplate?: string; // Template ID for the current structure
 }

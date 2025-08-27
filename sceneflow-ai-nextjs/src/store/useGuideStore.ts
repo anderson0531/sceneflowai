@@ -5,6 +5,7 @@ import { ProductionGuide, Beat, CharacterProfile } from '@/types/productionGuide
 const initialGuide: ProductionGuide = {
   projectId: 'crispr-debate-001',
   title: 'CRISPR Gene Editing Debate',
+  beatTemplate: 'debate-educational', // Default to current structure
   filmTreatment: `
     <h1>CRISPR Gene Editing Debate</h1>
     <p><strong>Logline:</strong> A compelling video that tackles the profound technological and ethical challenges of CRISPR gene editing through a debate between an optimistic technologist and his cautious, experienced father.</p>
@@ -106,6 +107,8 @@ interface GuideState {
   updateBeats: (newBeats: Beat[]) => void;
   updateBeat: (beatId: string, updates: Partial<Beat>) => void;
   addBeat: (beat: Beat) => void;
+  setBeatTemplate: (templateId: string) => void;
+  applyBeatTemplate: (templateId: string, preserveExistingBeats?: boolean) => void;
 }
 
 export const useGuideStore = create<GuideState>((set) => ({
@@ -138,4 +141,23 @@ export const useGuideStore = create<GuideState>((set) => ({
       beatSheet: [...state.guide.beatSheet, beat]
     }
   })),
+  setBeatTemplate: (templateId) => set((state) => ({
+    guide: {
+      ...state.guide,
+      beatTemplate: templateId
+    }
+  })),
+  applyBeatTemplate: (templateId, preserveExistingBeats = false) => set((state) => {
+    const newGuide = {
+      ...state.guide,
+      beatTemplate: templateId
+    };
+    
+    if (!preserveExistingBeats) {
+      // Clear existing beats when applying new template
+      newGuide.beatSheet = [];
+    }
+    
+    return { guide: newGuide };
+  }),
 }));

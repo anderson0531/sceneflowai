@@ -4,10 +4,12 @@ import { useGuideStore } from '@/store/useGuideStore';
 import { useCue } from '@/store/useCueStore';
 import { Act, Beat } from '@/types/productionGuide';
 import { BeatCard } from './BeatCard';
+import { BeatTemplateSelector } from './BeatTemplateSelector';
 import { Button } from '@/components/ui/Button';
-import { Plus, Sparkles } from 'lucide-react';
+import { Plus, Sparkles, Layout } from 'lucide-react';
 import { groupBy } from 'lodash';
 import { useState } from 'react';
+import { getTemplateById, debateTemplate } from '@/types/beatTemplates';
 import {
   DndContext,
   closestCenter,
@@ -28,6 +30,17 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable';
 
+// Icon mapping for dynamic icon rendering
+const iconMap = {
+  Layout, Plus, Sparkles, Play: Plus, Zap: Sparkles, CheckCircle: Plus, 
+  TrendingUp: Plus, TrendingDown: Plus, Camera: Plus, Settings: Plus, 
+  Scale: Plus, Home: Plus, MapPin: Plus, Compass: Plus, Skull: Plus, 
+  Award: Plus, RotateCcw: Plus, Eye: Plus, Search: Plus, 
+  AlertTriangle: Plus, Puzzle: Plus, MessageSquare: Plus, 
+  Gamepad2: Plus, Target: Plus, Shield: Plus, Moon: Plus, Crown: Plus,
+  BookOpen: Plus, Lightbulb: Plus
+};
+
 export function BeatSheetTab() {
   const { guide, updateBeats, addBeat } = useGuideStore();
   const { invokeCue } = useCue();
@@ -35,23 +48,26 @@ export function BeatSheetTab() {
   const [overId, setOverId] = useState<string | null>(null);
   const [isAddingBeat, setIsAddingBeat] = useState<string | null>(null);
 
+  // Get current template or fallback to debate template
+  const currentTemplate = getTemplateById(guide.beatTemplate || 'debate-educational') || debateTemplate;
+
   // Group beats by act
   const groupedBeats = groupBy(guide.beatSheet, 'act');
-  const acts: Act[] = ['ACT_I', 'ACT_IIA', 'ACT_IIB', 'ACT_III'];
+  
+  // Use template columns instead of hardcoded acts
+  const columns = currentTemplate.columns.sort((a, b) => a.order - b.order);
+  const columnIds = columns.map(col => col.id);
 
-  const actLabels = {
-    'ACT_I': 'Setup & Stakes',
-    'ACT_IIA': 'The Arguments', 
-    'ACT_IIB': 'Finding Balance',
-    'ACT_III': 'Resolution'
-  };
+  // Create dynamic labels and descriptions from template
+  const columnLabels = columns.reduce((acc, col) => {
+    acc[col.id] = col.label;
+    return acc;
+  }, {} as Record<string, string>);
 
-  const actDescriptions = {
-    'ACT_I': 'Introduce CRISPR and establish the debate',
-    'ACT_IIA': 'Present both sides of the argument', 
-    'ACT_IIB': 'Explore common ground and understanding',
-    'ACT_III': 'Synthesize and conclude the discussion'
-  };
+  const columnDescriptions = columns.reduce((acc, col) => {
+    acc[col.id] = col.description;
+    return acc;
+  }, {} as Record<string, string>);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -60,16 +76,22 @@ export function BeatSheetTab() {
     })
   );
 
-  const handleAddBeat = async (act: Act) => {
-    setIsAddingBeat(act);
+  const handleAddBeat = async (columnId: string) => {
+    setIsAddingBeat(columnId);
+    
+    // Get column info from template
+    const column = columns.find(col => col.id === columnId);
+    if (!column) return;
     
     // Create context for AI beat suggestion
-    const actContext = {
-      act,
-      actLabel: actLabels[act as keyof typeof actLabels],
-      existingBeats: groupedBeats[act] || [],
+    const columnContext = {
+      columnId,
+      columnLabel: column.label,
+      columnDescription: column.description,
+      existingBeats: groupedBeats[columnId] || [],
       storyContext: guide.title,
-      characters: guide.characters.map(c => c.name).join(', ')
+      characters: guide.characters.map(c => c.name).join(', '),
+      template: currentTemplate.name
     };
     
     // Generate a new beat ID
@@ -78,11 +100,11 @@ export function BeatSheetTab() {
     // Create a placeholder beat
     const newBeat: Beat = {
       id: beatId,
-      act,
+      act: columnId, // Now using dynamic column ID
       title: 'New Beat',
       summary: 'Click to get AI suggestions for this beat...',
       charactersPresent: [],
-      structuralPurpose: `Support the ${actLabels[act as keyof typeof actLabels]} narrative`
+      structuralPurpose: `Support the ${column.label} narrative`
     };
     
     // Add the beat immediately
@@ -92,7 +114,7 @@ export function BeatSheetTab() {
     invokeCue({
       type: 'beatCard',
       id: beatId,
-      content: `New beat for ${actLabels[act as keyof typeof actLabels]} - suggest title, summary, and structural purpose`
+      content: `New beat for ${column.label} - suggest title, summary, and structural purpose`
     });
     
     setIsAddingBeat(null);
@@ -129,13 +151,13 @@ export function BeatSheetTab() {
     const activeBeat = guide.beatSheet.find(beat => beat.id === activeId);
     if (!activeBeat) return;
 
-    // Determine if we're dropping on an act column or another beat
-    let targetAct: Act;
+    // Determine if we're dropping on a column or another beat
+    let targetAct: string;
     let targetIndex: number;
 
-    if (acts.includes(overId as Act)) {
-      // Dropping on an act column
-      targetAct = overId as Act;
+    if (columnIds.includes(overId)) {
+      // Dropping on a column
+      targetAct = overId;
       targetIndex = groupedBeats[targetAct]?.length || 0;
     } else {
       // Dropping on another beat
@@ -185,6 +207,27 @@ export function BeatSheetTab() {
 
   return (
     <div className="h-full flex flex-col">
+      {/* Template Selector Header */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Layout className="w-5 h-5 text-blue-400" />
+            <h2 className="text-lg font-semibold text-white">Beat Structure</h2>
+          </div>
+          <div className="text-sm text-gray-300">
+            Current: <span className="font-medium text-blue-400">{currentTemplate.name}</span>
+          </div>
+        </div>
+        <BeatTemplateSelector 
+          trigger={
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <Layout className="w-4 h-4" />
+              Change Template
+            </Button>
+          }
+        />
+      </div>
+      
       <DndContext
         sensors={sensors}
         collisionDetection={rectIntersection}
@@ -193,75 +236,85 @@ export function BeatSheetTab() {
         onDragEnd={handleDragEnd}
       >
         <div className="flex space-x-8 overflow-x-auto pb-6 px-4">
-          {acts.map(act => (
-            <div 
-              key={act} 
-              id={act}
-              className={`min-w-[340px] max-w-[420px] w-[360px] flex-shrink-0 bg-gray-900 rounded-lg flex flex-col h-[calc(100vh-200px)] border transition-colors ${
-                overId === act ? 'border-blue-500 bg-gray-800' : 'border-gray-700'
-              }`}
-            >
-              {/* Column Header */}
-              <div className="p-5 border-b border-gray-700 bg-gray-800 rounded-t-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-white">{actLabels[act as keyof typeof actLabels]}</h3>
-                    <p className="text-sm text-gray-50 mb-1 font-medium">{actDescriptions[act as keyof typeof actDescriptions]}</p>
-                    <p className="text-sm text-gray-100 font-medium">{groupedBeats[act]?.length || 0} beats</p>
-                  </div>
-                  <Button
-                    onClick={() => handleAddBeat(act)}
-                    variant="ghost"
-                    size="sm"
-                    disabled={isAddingBeat === act}
-                    className="text-white hover:text-white hover:bg-gray-700 p-2 transition-all duration-200"
-                    aria-label={`Add beat to ${actLabels[act as keyof typeof actLabels]}`}
-                  >
-                    {isAddingBeat === act ? (
-                      <Sparkles className="w-4 h-4 animate-pulse" />
-                    ) : (
-                      <Plus className="w-4 h-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-              
-              {/* Column Content */}
-              <SortableContext
-                items={groupedBeats[act]?.map(beat => beat.id) || []}
-                strategy={verticalListSortingStrategy}
+          {columns.map(column => {
+            // Get the icon component for this column
+            const IconComponent = column.icon ? (iconMap[column.icon as keyof typeof iconMap] || Layout) : Layout;
+            
+            return (
+              <div 
+                key={column.id} 
+                id={column.id}
+                className={`min-w-[340px] max-w-[420px] w-[360px] flex-shrink-0 bg-gray-900 rounded-lg flex flex-col h-[calc(100vh-240px)] border transition-colors ${
+                  overId === column.id ? 'border-blue-500 bg-gray-800' : 'border-gray-700'
+                }`}
               >
-                <div className="flex-1 overflow-y-auto p-5 space-y-4">
-                  {groupedBeats[act]?.map(beat => (
-                    <BeatCard 
-                      key={beat.id} 
-                      beat={beat} 
-                      isDragging={activeId === beat.id}
-                    />
-                  )) || []}
-                  
-                  {/* Empty state */}
-                  {(!groupedBeats[act] || groupedBeats[act].length === 0) && (
-                    <div className={`flex flex-col items-center justify-center py-12 transition-colors ${
-                      overId === act ? 'text-blue-200' : 'text-gray-100'
-                    }`}>
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors ${
-                        overId === act ? 'bg-blue-900 border-2 border-blue-500' : 'bg-gray-800'
-                      }`}>
-                        <Plus className="w-6 h-6" />
+                {/* Column Header */}
+                <div className="p-5 border-b border-gray-700 bg-gray-800 rounded-t-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`p-1.5 rounded bg-${column.color}-500/20`}>
+                          <IconComponent className={`w-4 h-4 text-${column.color}-400`} />
+                        </div>
+                        <h3 className="text-lg font-bold text-white">{column.label}</h3>
                       </div>
-                      <p className="text-sm text-center font-medium">
-                        {overId === act ? 'Drop beat here' : 'No beats yet'}
-                      </p>
-                      <p className="text-sm text-center mt-1 font-medium">
-                        {overId === act ? '' : 'Click + to add a beat'}
-                      </p>
+                      <p className="text-sm text-gray-50 mb-1 font-medium">{column.description}</p>
+                      <p className="text-sm text-gray-100 font-medium">{groupedBeats[column.id]?.length || 0} beats</p>
                     </div>
-                  )}
+                    <Button
+                      onClick={() => handleAddBeat(column.id)}
+                      variant="ghost"
+                      size="sm"
+                      disabled={isAddingBeat === column.id}
+                      className="text-white hover:text-white hover:bg-gray-700 p-2 transition-all duration-200"
+                      aria-label={`Add beat to ${column.label}`}
+                    >
+                      {isAddingBeat === column.id ? (
+                        <Sparkles className="w-4 h-4 animate-pulse" />
+                      ) : (
+                        <Plus className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
-              </SortableContext>
-            </div>
-          ))}
+              
+                              {/* Column Content */}
+                <SortableContext
+                  items={groupedBeats[column.id]?.map(beat => beat.id) || []}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                    {groupedBeats[column.id]?.map(beat => (
+                      <BeatCard 
+                        key={beat.id} 
+                        beat={beat} 
+                        isDragging={activeId === beat.id}
+                      />
+                    )) || []}
+                    
+                    {/* Empty state */}
+                    {(!groupedBeats[column.id] || groupedBeats[column.id].length === 0) && (
+                      <div className={`flex flex-col items-center justify-center py-12 transition-colors ${
+                        overId === column.id ? 'text-blue-200' : 'text-gray-100'
+                      }`}>
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors ${
+                          overId === column.id ? 'bg-blue-900 border-2 border-blue-500' : 'bg-gray-800'
+                        }`}>
+                          <IconComponent className="w-6 h-6" />
+                        </div>
+                        <p className="text-sm text-center font-medium">
+                          {overId === column.id ? 'Drop beat here' : 'No beats yet'}
+                        </p>
+                        <p className="text-sm text-center mt-1 font-medium">
+                          {overId === column.id ? '' : 'Click + to add a beat'}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </SortableContext>
+              </div>
+            );
+          })}
         </div>
 
         <DragOverlay>
