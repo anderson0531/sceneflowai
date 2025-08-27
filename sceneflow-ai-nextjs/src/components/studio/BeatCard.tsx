@@ -63,17 +63,17 @@ export function BeatCard({ beat, isDragging = false }: BeatCardProps) {
           {...listeners}
           className="p-3 cursor-grab active:cursor-grabbing touch-none border-r border-gray-600 flex items-center hover:bg-slate-700 transition-colors flex-shrink-0"
         >
-          <GripVerticalIcon className="text-gray-400 w-4 h-4" />
+          <GripVerticalIcon className="text-gray-300 w-4 h-4" />
         </div>
         <div className="flex-1 min-w-0" onClick={handleCardClick}>
           <CardHeader className="pb-2 p-4">
             <CardTitle className="text-lg font-bold text-white leading-tight">{beat.title}</CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <p className="text-base text-gray-100 mb-3 line-clamp-4 leading-relaxed break-words whitespace-normal">{beat.summary}</p>
+            <p className="text-base text-white mb-3 line-clamp-4 leading-relaxed break-words whitespace-normal">{beat.summary}</p>
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-3">
-                <span className="text-sm text-gray-300 bg-gray-700 px-2 py-1 rounded">
+                <span className="text-sm text-white bg-gray-600 px-2 py-1 rounded font-medium">
                   {beat.charactersPresent.length} Characters
                 </span>
                 {isContextActive && (
