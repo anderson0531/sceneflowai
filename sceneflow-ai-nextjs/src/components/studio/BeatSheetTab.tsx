@@ -192,17 +192,17 @@ export function BeatSheetTab() {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex space-x-6 overflow-x-auto pb-4 px-2">
+        <div className="flex space-x-8 overflow-x-auto pb-6 px-4">
           {acts.map(act => (
             <div 
               key={act} 
               id={act}
-              className={`min-w-[320px] max-w-[400px] w-[320px] flex-shrink-0 bg-gray-900 rounded-lg flex flex-col h-[calc(100vh-200px)] border transition-colors ${
+              className={`min-w-[340px] max-w-[420px] w-[360px] flex-shrink-0 bg-gray-900 rounded-lg flex flex-col h-[calc(100vh-200px)] border transition-colors ${
                 overId === act ? 'border-blue-500 bg-gray-800' : 'border-gray-700'
               }`}
             >
               {/* Column Header */}
-              <div className="p-4 border-b border-gray-700 bg-gray-800 rounded-t-lg">
+              <div className="p-5 border-b border-gray-700 bg-gray-800 rounded-t-lg">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <h3 className="text-lg font-bold text-white">{actLabels[act as keyof typeof actLabels]}</h3>
@@ -231,7 +231,7 @@ export function BeatSheetTab() {
                 items={groupedBeats[act]?.map(beat => beat.id) || []}
                 strategy={verticalListSortingStrategy}
               >
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                <div className="flex-1 overflow-y-auto p-5 space-y-4">
                   {groupedBeats[act]?.map(beat => (
                     <BeatCard 
                       key={beat.id} 
@@ -242,7 +242,7 @@ export function BeatSheetTab() {
                   
                   {/* Empty state */}
                   {(!groupedBeats[act] || groupedBeats[act].length === 0) && (
-                    <div className={`flex flex-col items-center justify-center py-8 transition-colors ${
+                    <div className={`flex flex-col items-center justify-center py-12 transition-colors ${
                       overId === act ? 'text-blue-200' : 'text-gray-100'
                     }`}>
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors ${
