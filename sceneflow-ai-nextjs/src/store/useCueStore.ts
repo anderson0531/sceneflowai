@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 export interface CueContext {
-  type: 'text' | 'beatCard' | 'character';
+  type: 'text' | 'beatCard' | 'character' | 'template' | 'analysis' | 'pacing' | 'conflict' | 'consistency';
   id?: string;
   content: string;
 }

@@ -8,6 +8,7 @@ import { BeatTemplateSelector } from './BeatTemplateSelector';
 import { ViewModeSwitcher } from './ViewModeSwitcher';
 import { TimelineView } from './TimelineView';
 import { BoneyardSidebar } from './BoneyardSidebar';
+import { StoryAnalysisPanel } from './StoryAnalysisPanel';
 import { Button } from '@/components/ui/Button';
 import { Plus, Sparkles, Layout } from 'lucide-react';
 import { groupBy } from 'lodash';
@@ -342,8 +343,11 @@ export function BeatSheetTab() {
           )}
         </div>
         
-        {/* Boneyard Sidebar */}
-        <BoneyardSidebar />
+        {/* Right Sidebars */}
+        <div className="flex">
+          <StoryAnalysisPanel className="w-80" />
+          <BoneyardSidebar />
+        </div>
       </div>
     </div>
   );
