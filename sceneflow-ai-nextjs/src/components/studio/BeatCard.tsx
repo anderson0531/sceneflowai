@@ -63,7 +63,7 @@ export function BeatCard({ beat, isDragging = false }: BeatCardProps) {
           {...listeners}
           className="p-3 cursor-grab active:cursor-grabbing touch-none border-r border-gray-600 flex items-center hover:bg-slate-700 transition-colors flex-shrink-0"
         >
-          <GripVerticalIcon className="text-gray-300 w-4 h-4" />
+          <GripVerticalIcon className="text-gray-100 w-4 h-4" />
         </div>
         <div className="flex-1 min-w-0" onClick={handleCardClick}>
           <CardHeader className="pb-2 p-4">
@@ -73,11 +73,11 @@ export function BeatCard({ beat, isDragging = false }: BeatCardProps) {
             <p className="text-base text-white mb-3 line-clamp-4 leading-relaxed break-words whitespace-normal">{beat.summary}</p>
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-3">
-                <span className="text-sm text-white bg-gray-600 px-2 py-1 rounded font-medium">
+                <span className="text-sm text-white bg-gray-700 px-3 py-1.5 rounded-md font-semibold border border-gray-600">
                   {beat.charactersPresent.length} Characters
                 </span>
                 {isContextActive && (
-                  <span className="text-sm text-blue-300 bg-blue-900/30 px-2 py-1 rounded border border-blue-500/30">
+                  <span className="text-sm text-blue-100 bg-blue-800/50 px-3 py-1.5 rounded-md font-semibold border border-blue-500/50">
                     Active in Cue
                   </span>
                 )}

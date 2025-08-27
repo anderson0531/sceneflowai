@@ -206,8 +206,8 @@ export function BeatSheetTab() {
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <h3 className="text-lg font-bold text-white">{actLabels[act as keyof typeof actLabels]}</h3>
-                    <p className="text-sm text-gray-100 mb-1">{actDescriptions[act as keyof typeof actDescriptions]}</p>
-                    <p className="text-sm text-gray-200">{groupedBeats[act]?.length || 0} beats</p>
+                    <p className="text-sm text-gray-50 mb-1 font-medium">{actDescriptions[act as keyof typeof actDescriptions]}</p>
+                    <p className="text-sm text-gray-100 font-medium">{groupedBeats[act]?.length || 0} beats</p>
                   </div>
                   <Button
                     onClick={() => handleAddBeat(act)}
@@ -243,17 +243,17 @@ export function BeatSheetTab() {
                   {/* Empty state */}
                   {(!groupedBeats[act] || groupedBeats[act].length === 0) && (
                     <div className={`flex flex-col items-center justify-center py-8 transition-colors ${
-                      overId === act ? 'text-blue-300' : 'text-gray-300'
+                      overId === act ? 'text-blue-200' : 'text-gray-100'
                     }`}>
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors ${
                         overId === act ? 'bg-blue-900 border-2 border-blue-500' : 'bg-gray-800'
                       }`}>
                         <Plus className="w-6 h-6" />
                       </div>
-                      <p className="text-sm text-center">
+                      <p className="text-sm text-center font-medium">
                         {overId === act ? 'Drop beat here' : 'No beats yet'}
                       </p>
-                      <p className="text-sm text-center mt-1">
+                      <p className="text-sm text-center mt-1 font-medium">
                         {overId === act ? '' : 'Click + to add a beat'}
                       </p>
                     </div>

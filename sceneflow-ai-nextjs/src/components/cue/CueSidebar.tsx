@@ -259,7 +259,7 @@ export function CueSidebar({ className }: CueSidebarProps) {
           variant="ghost"
           size="sm"
           onClick={() => setSidebarOpen(false)}
-          className="text-gray-300 hover:text-white hover:bg-gray-700"
+          className="text-gray-100 hover:text-white hover:bg-gray-700"
           aria-label="Close Cue Co-Pilot"
         >
           <X className="w-4 h-4" />
@@ -389,7 +389,7 @@ export function CueSidebar({ className }: CueSidebarProps) {
               "flex-shrink-0 p-2 rounded-lg transition-colors",
               isRecording 
                 ? "text-red-400 hover:text-red-300 bg-red-400/10 hover:bg-red-400/20" 
-                : "text-gray-300 hover:text-white hover:bg-gray-600"
+                : "text-gray-100 hover:text-white hover:bg-gray-600"
             )}
             aria-label={isRecording ? "Stop recording" : "Start voice input"}
           >
@@ -419,8 +419,8 @@ export function CueSidebar({ className }: CueSidebarProps) {
                 className={cn(
                   "p-1.5 rounded transition-colors",
                   isMuted 
-                    ? "text-gray-500 hover:text-gray-400" 
-                    : "text-gray-300 hover:text-white hover:bg-gray-600"
+                    ? "text-gray-400 hover:text-gray-300" 
+                    : "text-gray-100 hover:text-white hover:bg-gray-600"
                 )}
                 aria-label={isMuted ? "Unmute Cue" : "Mute Cue"}
               >
@@ -445,7 +445,7 @@ export function CueSidebar({ className }: CueSidebarProps) {
         </div>
 
         {/* Input hints */}
-        <div className="mt-2 text-sm text-gray-300">
+        <div className="mt-2 text-sm text-gray-100 font-medium">
           Press Enter to send • Shift+Enter for new line • Click mic for voice input
         </div>
       </div>
