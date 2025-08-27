@@ -65,16 +65,16 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
         <div className="flex items-center space-x-2">
           {/* Updated Logo with teal-green accent */}
           <div className="relative">
-            <div className="w-10 h-10 bg-sf-surface-light rounded-lg flex items-center justify-center">
-              <div className="w-6 h-6 bg-sf-primary rounded-md flex items-center justify-center">
-                <div className="w-3 h-3 bg-sf-background rounded-sm"></div>
-              </div>
+                      <div className="w-14 h-14 bg-sf-surface-light rounded-xl flex items-center justify-center">
+            <div className="w-8 h-8 bg-sf-primary rounded-lg flex items-center justify-center">
+              <div className="w-4 h-4 bg-sf-background rounded-sm"></div>
             </div>
+          </div>
             {/* Small connector triangle in teal-green */}
             <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-2 border-l-sf-primary border-t-2 border-t-transparent border-b-2 border-b-transparent"></div>
           </div>
           <div className="flex flex-col justify-center min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-heading leading-tight truncate">
+            <h1 className="text-3xl sm:text-4xl font-bold text-heading leading-tight truncate">
               <span>SceneFlow </span>
               <span className="text-sf-primary">AI</span>
             </h1>
@@ -84,19 +84,11 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
       
       {/* User Info and Actions */}
       <div className="flex items-center gap-2 sm:gap-4">
-        {/* Ask Cue Button */}
-        <button
-          onClick={toggleSidebar}
-          className="header-btn-primary px-3 sm:px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 font-emphasis bg-sf-primary hover:bg-sf-primary-dark text-white border-sf-primary hover:border-sf-primary-dark"
-          aria-label="Ask Cue"
-        >
-          <Clapperboard className="w-4 h-4" />
-          <span className="hidden sm:inline">Ask Cue</span>
-        </button>
+
 
         <div className="flex items-center gap-2 text-sf-text-primary min-w-0">
           <div className="w-9 h-9 sm:w-10 sm:h-10 bg-sf-primary rounded-full flex items-center justify-center flex-shrink-0">
-            <User className="w-5 h-5 text-sf-background" />
+            <User className="w-5 h-5 text-white" />
           </div>
           <span className="hidden sm:inline text-sm font-medium truncate max-w-[140px] font-emphasis">{user?.name || 'Demo User'}</span>
         </div>
