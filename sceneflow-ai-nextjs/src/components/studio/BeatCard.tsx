@@ -10,7 +10,8 @@ import {
   GripVerticalIcon, LightbulbIcon, Settings, Users, Scale, CheckCircle, Tag,
   HelpCircle, Swords, Zap, Eye, ArrowUp, ArrowDown, TrendingUp, TrendingDown,
   Target, RefreshCw, RotateCcw, ChevronDown, ChevronUp, Clock, MapPin, 
-  Sun, Moon, Cloud, Palette, Camera, MoreHorizontal, Link
+  Sun, Moon, Cloud, Palette, Camera, MoreHorizontal, Link, Split, Merge,
+  Trash2, Archive, MoreVertical
 } from 'lucide-react';
 import { useCue } from '@/store/useCueStore';
 import { useGuideStore } from '@/store/useGuideStore';
@@ -90,8 +91,9 @@ const getColumnIcon = (act: string) => {
 
 export function BeatCard({ beat, isDragging = false }: BeatCardProps) {
   const { activeContext, invokeCue } = useCue();
-  const { guide } = useGuideStore();
+  const { guide, splitBeat, moveToBoneyard } = useGuideStore();
   const [showProductionTags, setShowProductionTags] = useState(false);
+  const [showActions, setShowActions] = useState(false);
   
   const {
     attributes,
@@ -135,7 +137,7 @@ export function BeatCard({ beat, isDragging = false }: BeatCardProps) {
       ref={setNodeRef}
       style={style}
       className={cn(
-        "bg-slate-800 border-gray-600 text-white shadow-lg transition-all duration-200 hover:bg-slate-750 hover:border-gray-500 cursor-pointer w-full max-w-full",
+        "group bg-slate-800 border-gray-600 text-white shadow-lg transition-all duration-200 hover:bg-slate-750 hover:border-gray-500 cursor-pointer w-full max-w-full",
         isContextActive && "ring-2 ring-blue-500 bg-slate-750 border-blue-400",
         isBeingDragged && "opacity-50 scale-105 rotate-2 shadow-xl"
       )}
@@ -174,20 +176,89 @@ export function BeatCard({ beat, isDragging = false }: BeatCardProps) {
                         </div>
                       </div>
 
-                      {/* Emotional Charge Indicator */}
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <div className={cn("w-8 h-3 rounded-full flex items-center justify-center", emotionalCharge.color)}>
-                              <span className="text-white text-xs font-bold">{emotionalCharge.symbol}</span>
+                      <div className="flex items-center gap-1">
+                        {/* Beat Actions Menu */}
+                        <div className="relative">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowActions(!showActions);
+                                  }}
+                                  className="p-1 h-6 w-6 text-gray-400 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <MoreVertical className="w-3 h-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent className="bg-gray-700 text-white border border-gray-600">
+                                <p>Beat Actions</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+
+                          {/* Actions Dropdown */}
+                          {showActions && (
+                            <div className="absolute top-6 right-0 z-20 bg-gray-800 border border-gray-600 rounded-lg shadow-lg py-1 min-w-[140px]">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  splitBeat(beat.id);
+                                  setShowActions(false);
+                                }}
+                                className="w-full px-3 py-1.5 text-left text-sm text-gray-200 hover:bg-gray-700 flex items-center gap-2"
+                              >
+                                <Split className="w-3 h-3" />
+                                Split Beat
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  moveToBoneyard(beat.id, 'Moved by user');
+                                  setShowActions(false);
+                                }}
+                                className="w-full px-3 py-1.5 text-left text-sm text-gray-200 hover:bg-gray-700 flex items-center gap-2"
+                              >
+                                <Archive className="w-3 h-3" />
+                                Move to Boneyard
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  invokeCue({
+                                    type: 'beatCard',
+                                    content: `Generate alternative versions of "${beat.title}"`,
+                                    id: beat.id
+                                  });
+                                  setShowActions(false);
+                                }}
+                                className="w-full px-3 py-1.5 text-left text-sm text-gray-200 hover:bg-gray-700 flex items-center gap-2"
+                              >
+                                <Zap className="w-3 h-3" />
+                                Generate Alternatives
+                              </button>
                             </div>
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-gray-700 text-white border border-gray-600">
-                            <p className="font-semibold">{emotionalCharge.label}</p>
-                            <p className="text-sm text-gray-200">Emotional trajectory</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                          )}
+                        </div>
+
+                        {/* Emotional Charge Indicator */}
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <div className={cn("w-8 h-3 rounded-full flex items-center justify-center", emotionalCharge.color)}>
+                                <span className="text-white text-xs font-bold">{emotionalCharge.symbol}</span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent className="bg-gray-700 text-white border border-gray-600">
+                              <p className="font-semibold">{emotionalCharge.label}</p>
+                              <p className="text-sm text-gray-200">Emotional trajectory</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
                     </div>
                     
                     {/* Title with Character Avatars */}
@@ -238,8 +309,8 @@ export function BeatCard({ beat, isDragging = false }: BeatCardProps) {
                           </div>
                         )}
                       </div>
-                    </div>
-                  </CardHeader>
+      </div>
+        </CardHeader>
           
           <CardContent className="p-5 pt-0">
             {/* Description */}
@@ -303,18 +374,18 @@ export function BeatCard({ beat, isDragging = false }: BeatCardProps) {
               </div>
               
               {/* Structural Purpose */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
                     <LightbulbIcon className="w-4 h-4 text-yellow-500 hover:text-yellow-400 transition-colors"/>
-                  </TooltipTrigger>
+                </TooltipTrigger>
                   <TooltipContent className="max-w-xs bg-gray-700 text-white border border-gray-600">
                     <p className="font-semibold text-yellow-400">Structural Purpose:</p>
                     <p className="text-sm mt-1">{beat.structuralPurpose}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
 
             {/* Production Tags (Progressive Disclosure) */}
             {showProductionTags && beat.productionTags && (
@@ -365,7 +436,7 @@ export function BeatCard({ beat, isDragging = false }: BeatCardProps) {
                 </div>
               </div>
             )}
-          </CardContent>
+        </CardContent>
         </div>
       </div>
     </Card>

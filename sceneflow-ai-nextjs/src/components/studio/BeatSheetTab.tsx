@@ -7,6 +7,7 @@ import { BeatCard } from './BeatCard';
 import { BeatTemplateSelector } from './BeatTemplateSelector';
 import { ViewModeSwitcher } from './ViewModeSwitcher';
 import { TimelineView } from './TimelineView';
+import { BoneyardSidebar } from './BoneyardSidebar';
 import { Button } from '@/components/ui/Button';
 import { Plus, Sparkles, Layout } from 'lucide-react';
 import { groupBy } from 'lodash';
@@ -231,10 +232,13 @@ export function BeatSheetTab() {
         />
       </div>
       
-      {/* Conditional View Rendering */}
-      {guide.viewMode === 'timeline' ? (
-        <TimelineView />
-      ) : (
+      {/* Main Content Area with Boneyard */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Conditional View Rendering */}
+        <div className="flex-1 overflow-hidden">
+          {guide.viewMode === 'timeline' ? (
+            <TimelineView />
+          ) : (
         <DndContext
         sensors={sensors}
         collisionDetection={rectIntersection}
@@ -334,8 +338,13 @@ export function BeatSheetTab() {
             </div>
           ) : null}
         </DragOverlay>
-        </DndContext>
-      )}
+            </DndContext>
+          )}
+        </div>
+        
+        {/* Boneyard Sidebar */}
+        <BoneyardSidebar />
+      </div>
     </div>
   );
 }

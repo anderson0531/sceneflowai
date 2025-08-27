@@ -52,9 +52,24 @@ export interface Beat {
   emotionalCharge?: EmotionalCharge; // Emotional trajectory indicator
   keywords?: string[]; // Story/thematic keywords
   productionTags?: ProductionTags; // Hidden by default, expert-level metadata
+  // Beat relationships and management
+  parentBeatId?: string; // For beats created by splitting
+  childBeatIds?: string[]; // For beats that have been split
+  isInBoneyard?: boolean; // Whether beat is in the boneyard/parking lot
+  boneyardReason?: string; // Why it was moved to boneyard
+  createdAt?: Date; // Creation timestamp
+  modifiedAt?: Date; // Last modification timestamp
 }
 
 export type ViewMode = 'kanban' | 'timeline';
+
+export interface BoneyardItem {
+  id: string;
+  beat: Beat;
+  reason: string;
+  addedAt: Date;
+  source: 'user_moved' | 'cue_generated' | 'alternative_idea';
+}
 
 export interface ProductionGuide {
   projectId: string;
@@ -64,4 +79,6 @@ export interface ProductionGuide {
   beatSheet: Beat[];
   beatTemplate?: string; // Template ID for the current structure
   viewMode?: ViewMode; // Current visualization mode
+  boneyard?: BoneyardItem[]; // Unused beats and alternative ideas
+  boneyardCollapsed?: boolean; // Whether boneyard sidebar is collapsed
 }
