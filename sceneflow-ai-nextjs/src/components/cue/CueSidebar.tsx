@@ -33,23 +33,18 @@ interface CueSidebarProps {
 export function CueSidebar({ className }: CueSidebarProps) {
   const { activeContext, clearContext, setSidebarOpen } = useCue();
   const { guide, updateBeat } = useGuideStore();
-  const [messages, setMessages] = useState<Message[]>(() => {
-    const welcomeMessage = activeContext 
-      ? `I'm ready to help you with "${activeContext.content}". What would you like me to focus on?`
-      : "Welcome! To refine the draft, click a Beat Card or highlight text in the Film Treatment, then ask me here.";
-    
-    return [{
-      id: '1',
-      role: 'assistant',
-      content: welcomeMessage,
-      timestamp: new Date(),
-    }];
-  });
+  const [messages, setMessages] = useState<Message[]>([{
+    id: '1',
+    role: 'assistant',
+    content: "Welcome! To refine the draft, click a Beat Card or highlight text in the Film Treatment, then ask me here.",
+    timestamp: new Date(),
+  }]);
   const [inputValue, setInputValue] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [lastContextId, setLastContextId] = useState<string | null>(null);
+  const [hasInitialized, setHasInitialized] = useState(false);
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -85,20 +80,38 @@ export function CueSidebar({ className }: CueSidebarProps) {
 
   // Update welcome message only when context actually changes
   useEffect(() => {
+    // Skip the initial render to prevent duplicate messages
+    if (!hasInitialized) {
+      setHasInitialized(true);
+      if (activeContext) {
+        setLastContextId(activeContext.id || null);
+      }
+      return;
+    }
+
     if (activeContext && activeContext.id !== lastContextId) {
+      // Add a visual separator for new chat threads
+      const separatorMessage: Message = {
+        id: `separator-${Date.now()}`,
+        role: 'assistant',
+        content: `--- New Focus: ${activeContext.content} ---`,
+        timestamp: new Date(),
+      };
+      
       const contextMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
         content: `I'm ready to help you with "${activeContext.content}". What would you like me to focus on?`,
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, contextMessage]);
+      
+      setMessages(prev => [...prev, separatorMessage, contextMessage]);
       setLastContextId(activeContext.id || null);
     } else if (!activeContext && lastContextId) {
       // Context was cleared
       setLastContextId(null);
     }
-  }, [activeContext, lastContextId]);
+  }, [activeContext, lastContextId, hasInitialized]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -255,10 +268,15 @@ export function CueSidebar({ className }: CueSidebarProps) {
   return (
     <div className={cn("flex flex-col h-full bg-gray-800", className)}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-750">
-        <div className="flex items-center space-x-2">
-          <Clapperboard className="w-5 h-5 text-purple-400" />
-          <h2 className="text-lg font-semibold text-white">Cue Co-Pilot</h2>
+      <div className="flex items-center justify-between p-5 border-b border-gray-700 bg-gray-750">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-purple-500/20 rounded-lg border border-purple-500/30">
+            <Clapperboard className="w-6 h-6 text-purple-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white leading-tight">Cue Co-Pilot</h2>
+            <p className="text-xs text-purple-300 font-medium">AI Director Assistant</p>
+          </div>
         </div>
         <Button
           variant="ghost"
@@ -276,17 +294,33 @@ export function CueSidebar({ className }: CueSidebarProps) {
         ref={chatContainerRef}
         className="flex-1 overflow-y-auto p-4 space-y-4"
       >
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={cn(
-              "flex space-x-3",
-              message.role === 'user' ? 'justify-end' : 'justify-start'
-            )}
-          >
+        {messages.map((message) => {
+          // Check if this is a separator message
+          const isSeparator = message.id.startsWith('separator-');
+          
+          if (isSeparator) {
+            return (
+              <div key={message.id} className="flex justify-center my-6">
+                <div className="flex items-center space-x-3 px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-full">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium text-purple-300">{message.content}</span>
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                </div>
+              </div>
+            );
+          }
+          
+          return (
+            <div
+              key={message.id}
+              className={cn(
+                "flex space-x-3",
+                message.role === 'user' ? 'justify-end' : 'justify-start'
+              )}
+            >
             {message.role === 'assistant' && (
-              <div className="flex-shrink-0 w-8 h-8 bg-sf-primary rounded-full flex items-center justify-center">
-                <Bot className="w-4 h-4 text-gray-900" />
+              <div className="flex-shrink-0 w-10 h-10 bg-purple-500/20 rounded-lg border border-purple-500/30 flex items-center justify-center">
+                <Clapperboard className="w-5 h-5 text-purple-400" />
               </div>
             )}
             
@@ -351,8 +385,9 @@ export function CueSidebar({ className }: CueSidebarProps) {
                 <User className="w-4 h-4 text-white" />
               </div>
             )}
-          </div>
-        ))}
+            </div>
+          );
+        })}
         <div ref={messagesEndRef} />
       </div>
 
