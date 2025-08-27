@@ -5,6 +5,8 @@ import { useCue } from '@/store/useCueStore';
 import { Act, Beat } from '@/types/productionGuide';
 import { BeatCard } from './BeatCard';
 import { BeatTemplateSelector } from './BeatTemplateSelector';
+import { ViewModeSwitcher } from './ViewModeSwitcher';
+import { TimelineView } from './TimelineView';
 import { Button } from '@/components/ui/Button';
 import { Plus, Sparkles, Layout } from 'lucide-react';
 import { groupBy } from 'lodash';
@@ -207,16 +209,17 @@ export function BeatSheetTab() {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Template Selector Header */}
+      {/* Header with Template Selector and View Switcher */}
       <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Layout className="w-5 h-5 text-blue-400" />
             <h2 className="text-lg font-semibold text-white">Beat Structure</h2>
           </div>
           <div className="text-sm text-gray-300">
-            Current: <span className="font-medium text-blue-400">{currentTemplate.name}</span>
+            <span className="font-medium text-blue-400">{currentTemplate.name}</span>
           </div>
+          <ViewModeSwitcher />
         </div>
         <BeatTemplateSelector 
           trigger={
@@ -228,7 +231,11 @@ export function BeatSheetTab() {
         />
       </div>
       
-      <DndContext
+      {/* Conditional View Rendering */}
+      {guide.viewMode === 'timeline' ? (
+        <TimelineView />
+      ) : (
+        <DndContext
         sensors={sensors}
         collisionDetection={rectIntersection}
         onDragStart={handleDragStart}
@@ -327,7 +334,8 @@ export function BeatSheetTab() {
             </div>
           ) : null}
         </DragOverlay>
-      </DndContext>
+        </DndContext>
+      )}
     </div>
   );
 }

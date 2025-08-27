@@ -1,11 +1,12 @@
 import { create } from 'zustand';
-import { ProductionGuide, Beat, CharacterProfile } from '@/types/productionGuide';
+import { ProductionGuide, Beat, CharacterProfile, ViewMode } from '@/types/productionGuide';
 
 // Mock data initialization (replace with actual AI generation result)
 const initialGuide: ProductionGuide = {
   projectId: 'crispr-debate-001',
   title: 'CRISPR Gene Editing Debate',
   beatTemplate: 'debate-educational', // Default to current structure
+  viewMode: 'kanban', // Default view mode
   filmTreatment: `
     <h1>CRISPR Gene Editing Debate</h1>
     <p><strong>Logline:</strong> A compelling video that tackles the profound technological and ethical challenges of CRISPR gene editing through a debate between an optimistic technologist and his cautious, experienced father.</p>
@@ -54,7 +55,11 @@ const initialGuide: ProductionGuide = {
       summary: 'Establish the context of CRISPR gene editing technology and its potential impact on medicine, agriculture, and human evolution.',
       charactersPresent: ['alex-1', 'dr-anderson-1'],
       structuralPurpose: 'Set up the debate and establish stakes',
-      act: 'ACT_I'
+      act: 'ACT_I',
+      estimatedDuration: 3,
+      startTime: 0,
+      pacing: 'medium',
+      importance: 'high'
     },
     {
       id: 'beat-2',
@@ -62,7 +67,11 @@ const initialGuide: ProductionGuide = {
       summary: 'Alex presents his optimistic view of CRISPR\'s potential while Dr. Anderson expresses concerns about safety and ethics.',
       charactersPresent: ['alex-1', 'dr-anderson-1'],
       structuralPurpose: 'Establish the central conflict between progress and caution',
-      act: 'ACT_I'
+      act: 'ACT_I',
+      estimatedDuration: 2,
+      startTime: 3,
+      pacing: 'fast',
+      importance: 'critical'
     },
     {
       id: 'beat-3',
@@ -70,7 +79,11 @@ const initialGuide: ProductionGuide = {
       summary: 'Alex argues for the benefits: curing genetic diseases, improving agriculture, advancing scientific knowledge, and enhancing human capabilities.',
       charactersPresent: ['alex-1'],
       structuralPurpose: 'Present the case for progress and innovation',
-      act: 'ACT_IIA'
+      act: 'ACT_IIA',
+      estimatedDuration: 4,
+      startTime: 5,
+      pacing: 'medium',
+      importance: 'high'
     },
     {
       id: 'beat-4',
@@ -78,7 +91,11 @@ const initialGuide: ProductionGuide = {
       summary: 'Dr. Anderson raises concerns about safety, unintended consequences, ethical boundaries, and the need for careful regulation.',
       charactersPresent: ['dr-anderson-1'],
       structuralPurpose: 'Present the case for caution and responsibility',
-      act: 'ACT_IIA'
+      act: 'ACT_IIA',
+      estimatedDuration: 4,
+      startTime: 9,
+      pacing: 'medium',
+      importance: 'high'
     },
     {
       id: 'beat-5',
@@ -86,7 +103,11 @@ const initialGuide: ProductionGuide = {
       summary: 'Both characters work toward understanding each other\'s perspectives, recognizing the value of both innovation and caution.',
       charactersPresent: ['alex-1', 'dr-anderson-1'],
       structuralPurpose: 'Resolve the conflict through dialogue and mutual understanding',
-      act: 'ACT_IIB'
+      act: 'ACT_IIB',
+      estimatedDuration: 3,
+      startTime: 13,
+      pacing: 'slow',
+      importance: 'critical'
     },
     {
       id: 'beat-6',
@@ -94,7 +115,11 @@ const initialGuide: ProductionGuide = {
       summary: 'Synthesize the debate into a balanced view of responsible innovation, emphasizing the importance of both progress and ethical consideration.',
       charactersPresent: ['alex-1', 'dr-anderson-1'],
       structuralPurpose: 'Provide closure and key takeaways for viewers',
-      act: 'ACT_III'
+      act: 'ACT_III',
+      estimatedDuration: 2,
+      startTime: 16,
+      pacing: 'medium',
+      importance: 'high'
     }
   ]
 };
@@ -109,6 +134,9 @@ interface GuideState {
   addBeat: (beat: Beat) => void;
   setBeatTemplate: (templateId: string) => void;
   applyBeatTemplate: (templateId: string, preserveExistingBeats?: boolean) => void;
+  setViewMode: (mode: ViewMode) => void;
+  updateBeatTiming: (beatId: string, timing: { estimatedDuration?: number; startTime?: number; pacing?: Beat['pacing']; importance?: Beat['importance'] }) => void;
+  recalculateTimeline: () => void;
 }
 
 export const useGuideStore = create<GuideState>((set) => ({
@@ -159,5 +187,37 @@ export const useGuideStore = create<GuideState>((set) => ({
     }
     
     return { guide: newGuide };
+  }),
+  setViewMode: (mode) => set((state) => ({
+    guide: {
+      ...state.guide,
+      viewMode: mode
+    }
+  })),
+  updateBeatTiming: (beatId, timing) => set((state) => ({
+    guide: {
+      ...state.guide,
+      beatSheet: state.guide.beatSheet.map(beat =>
+        beat.id === beatId ? { ...beat, ...timing } : beat
+      )
+    }
+  })),
+  recalculateTimeline: () => set((state) => {
+    // Recalculate start times based on duration order
+    const sortedBeats = [...state.guide.beatSheet].sort((a, b) => (a.startTime || 0) - (b.startTime || 0));
+    let currentTime = 0;
+    
+    const updatedBeats = sortedBeats.map(beat => {
+      const updatedBeat = { ...beat, startTime: currentTime };
+      currentTime += beat.estimatedDuration || 0;
+      return updatedBeat;
+    });
+    
+    return {
+      guide: {
+        ...state.guide,
+        beatSheet: updatedBeats
+      }
+    };
   }),
 }));

@@ -24,7 +24,14 @@ export interface Beat {
   summary: string;
   charactersPresent: string[]; // IDs referencing CharacterProfile
   structuralPurpose: string;
+  // Timeline view properties
+  estimatedDuration?: number; // Duration in minutes
+  startTime?: number; // Start time in minutes from beginning
+  pacing?: 'slow' | 'medium' | 'fast'; // Pacing indicator
+  importance?: 'low' | 'medium' | 'high' | 'critical'; // Story importance
 }
+
+export type ViewMode = 'kanban' | 'timeline';
 
 export interface ProductionGuide {
   projectId: string;
@@ -33,4 +40,5 @@ export interface ProductionGuide {
   characters: CharacterProfile[];
   beatSheet: Beat[];
   beatTemplate?: string; // Template ID for the current structure
+  viewMode?: ViewMode; // Current visualization mode
 }
