@@ -3,7 +3,7 @@
 import { Beat } from '@/types/productionGuide';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { GripVerticalIcon, LightbulbIcon, Settings, Users, Scale, CheckCircle, MessageCircle, Tag } from 'lucide-react';
+import { GripVerticalIcon, LightbulbIcon, Settings, Users, Scale, CheckCircle, Tag } from 'lucide-react';
 import { useCue } from '@/store/useCueStore';
 import { cn } from '@/lib/utils';
 import { useSortable } from '@dnd-kit/sortable';
@@ -51,7 +51,6 @@ export function BeatCard({ beat, isDragging = false }: BeatCardProps) {
   const ColumnIcon = columnConfig.icon;
   
   // Mock data for interactive labels (in real app, this would come from the beat data)
-  const commentCount = Math.floor(Math.random() * 3); // 0-2 comments
   const keywordCount = Math.floor(Math.random() * 4); // 0-3 keywords
 
   const handleCardClick = () => {
@@ -115,21 +114,6 @@ export function BeatCard({ beat, isDragging = false }: BeatCardProps) {
                   {beat.charactersPresent.length} Characters
                 </span>
                 
-                {/* Interactive Comment Label */}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button className="text-sm text-gray-300 hover:text-white bg-gray-700/50 hover:bg-gray-700 px-2 py-1 rounded transition-colors">
-                        <MessageCircle className="w-3 h-3 inline mr-1" />
-                        {commentCount} {commentCount === 1 ? 'comment' : 'comments'}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-gray-700 text-white border border-gray-600">
-                      <p>{commentCount > 0 ? `View ${commentCount} ${commentCount === 1 ? 'comment' : 'comments'}` : 'No comments yet'}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
                 {/* Interactive Keywords Label */}
                 <TooltipProvider>
                   <Tooltip>

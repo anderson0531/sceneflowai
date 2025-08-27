@@ -49,6 +49,7 @@ export function CueSidebar({ className }: CueSidebarProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [lastContextId, setLastContextId] = useState<string | null>(null);
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -82,9 +83,9 @@ export function CueSidebar({ className }: CueSidebarProps) {
     }
   }, [activeContext]);
 
-  // Update welcome message when context changes
+  // Update welcome message only when context actually changes
   useEffect(() => {
-    if (activeContext) {
+    if (activeContext && activeContext.id !== lastContextId) {
       const contextMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
@@ -92,8 +93,12 @@ export function CueSidebar({ className }: CueSidebarProps) {
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, contextMessage]);
+      setLastContextId(activeContext.id || null);
+    } else if (!activeContext && lastContextId) {
+      // Context was cleared
+      setLastContextId(null);
     }
-  }, [activeContext]);
+  }, [activeContext, lastContextId]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -252,7 +257,7 @@ export function CueSidebar({ className }: CueSidebarProps) {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-750">
         <div className="flex items-center space-x-2">
-          <Clapperboard className="w-5 h-5 text-sf-primary" />
+          <Clapperboard className="w-5 h-5 text-purple-400" />
           <h2 className="text-lg font-semibold text-white">Cue Co-Pilot</h2>
         </div>
         <Button
