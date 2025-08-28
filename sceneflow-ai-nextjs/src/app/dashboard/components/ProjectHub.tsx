@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Plus, Sparkles, Eye, BookOpen } from 'lucide-react'
+import { Plus, Sparkles, Play, Eye } from 'lucide-react'
 import { useEnhancedStore } from '@/store/enhancedStore'
 import Link from 'next/link'
 import { ProjectCard } from './ProjectCard'
@@ -18,53 +18,53 @@ export function ProjectHub() {
         className="bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-gray-700/50 shadow-2xl p-8"
       >
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold text-white">My Projects</h2>
-          <div className="flex gap-3">
-            <Link href="/dashboard/projects/new">
-              <button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6 py-3 rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-200 font-semibold flex items-center gap-2">
-                <Plus className="w-5 h-5" />
-                + New Project
-              </button>
-            </Link>
-            
-            <Link href="/dashboard/project-bible">
-              <button className="bg-gray-700/50 hover:bg-gray-600/50 text-gray-200 px-6 py-3 rounded-xl border border-gray-600/50 transition-all duration-200 font-semibold flex items-center gap-2">
-                <BookOpen className="w-5 h-5" />
-                + New Series Bible
-              </button>
-            </Link>
-          </div>
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-white mb-2">My Projects</h2>
+          <p className="text-gray-400">Jump into your workflow</p>
         </div>
         
-        {/* Enhanced Empty State with Actionable Guidance */}
+        {/* Enhanced CTA for First-Time and Existing Users */}
         <div className="text-center py-20 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-blue-800/20 rounded-2xl border-2 border-blue-500/30 shadow-2xl">
           <div className="w-32 h-32 bg-gradient-to-br from-blue-500/30 to-purple-500/30 rounded-full flex items-center justify-center mx-auto mb-8 border-2 border-blue-400/40 shadow-2xl">
             <Sparkles className="w-20 h-20 text-blue-300" />
           </div>
           
           <h3 className="text-4xl font-bold text-white mb-6">
-            Ready to Create Your First Video?
+            Ready to Create Your Next Video?
           </h3>
           
           <p className="text-blue-100 mb-8 max-w-2xl mx-auto leading-relaxed text-xl">
-            Start your creative journey with SceneFlow AI. Our guided 6-step workflow will help you transform your ideas into professional videos, with the option to export assets for external filming or generate AI videos with BYOK.
+            Start your creative journey with SceneFlow AI. Our guided workflow will help you transform your ideas into professional videos.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-            <Link href="/studio/crispr-debate-001">
-              <button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-8 py-4 rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-200 font-semibold text-lg flex items-center gap-3">
-                <Plus className="w-6 h-6" />
-                Start New Project
-              </button>
-            </Link>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-8">
+            {/* Start New Project */}
+            <div className="text-center p-6 bg-gradient-to-br from-blue-900/20 to-blue-800/10 rounded-xl border border-blue-500/30">
+              <div className="w-16 h-16 bg-blue-500/20 rounded-xl flex items-center justify-center mx-auto mb-4 border border-blue-500/40">
+                <Plus className="w-8 h-8 text-blue-400" />
+              </div>
+              <h4 className="text-xl font-semibold text-white mb-3">Start New Project</h4>
+              <p className="text-blue-100 text-sm mb-4">Create from scratch, use a template, or import your script</p>
+              <Link href="/studio/crispr-debate-001">
+                <button className="w-full bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40">
+                  Start Creating
+                </button>
+              </Link>
+            </div>
             
-            <Link href="/dashboard/templates">
-              <button className="bg-gray-700/50 hover:bg-gray-600/50 text-gray-200 px-8 py-4 rounded-xl border-2 border-gray-600/50 transition-all duration-200 font-semibold text-lg flex items-center gap-3">
-                <Eye className="w-6 h-6" />
-                Browse Templates
-              </button>
-            </Link>
+            {/* Continue Existing Project */}
+            <div className="text-center p-6 bg-gradient-to-br from-purple-900/20 to-purple-800/10 rounded-xl border border-purple-500/30">
+              <div className="w-16 h-16 bg-purple-500/20 rounded-xl flex items-center justify-center mx-auto mb-4 border border-purple-500/40">
+                <Play className="w-8 h-8 text-purple-400" />
+              </div>
+              <h4 className="text-xl font-semibold text-white mb-3">Continue Project</h4>
+              <p className="text-purple-100 text-sm mb-4">Resume where you left off or check your project status</p>
+              <Link href="/dashboard/projects">
+                <button className="w-full bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40">
+                  View Projects
+                </button>
+              </Link>
+            </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
@@ -73,7 +73,7 @@ export function ProjectHub() {
                 <span className="text-2xl">🎬</span>
               </div>
               <h4 className="text-lg font-semibold text-white mb-2">Pre-Production Suite</h4>
-              <p className="text-blue-100 text-sm">Script analysis, storyboarding, and scene direction using analysis credits</p>
+              <p className="text-blue-100 text-sm">Script analysis, storyboarding, and scene direction</p>
             </div>
             
             <div className="text-center p-4">
@@ -81,7 +81,7 @@ export function ProjectHub() {
                 <span className="text-2xl">🎥</span>
               </div>
               <h4 className="text-lg font-semibold text-white mb-2">AI Generation</h4>
-              <p className="text-blue-100 text-sm">Video generation with BYOK (Bring Your Own Key) for cost control</p>
+              <p className="text-orange-100 text-sm">Video generation with BYOK for cost control</p>
             </div>
             
             <div className="text-center p-4">
@@ -89,7 +89,7 @@ export function ProjectHub() {
                 <span className="text-2xl">📁</span>
               </div>
               <h4 className="text-lg font-semibold text-white mb-2">Export Assets</h4>
-              <p className="text-blue-100 text-sm">Download pre-production materials for external filming teams</p>
+              <p className="text-green-100 text-sm">Download materials for external filming teams</p>
             </div>
           </div>
           
@@ -113,7 +113,7 @@ export function ProjectHub() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h2 className="text-2xl font-bold text-white mb-2">My Projects</h2>
-          <p className="text-gray-400">Manage your video projects and track workflow progress</p>
+          <p className="text-gray-400">Jump into your workflow</p>
         </div>
         
         <div className="flex gap-3">
@@ -126,7 +126,7 @@ export function ProjectHub() {
           
           <Link href="/dashboard/project-bible">
             <button className="bg-gray-700/50 hover:bg-gray-600/50 text-gray-200 px-6 py-3 rounded-xl border border-gray-600/50 transition-all duration-200 font-semibold flex items-center gap-2">
-              <BookOpen className="w-5 h-5" />
+              <Eye className="w-5 h-5" />
               + New Series Bible
             </button>
           </Link>
