@@ -35,7 +35,7 @@ export default function SparkStudioPage() {
             {/* Ask Cue Button */}
             <Button 
               onClick={toggleSidebar}
-              className="bg-sf-primary hover:bg-sf-primary-dark text-white border-sf-primary hover:border-sf-primary-dark px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2"
+              className="bg-sf-primary-dark hover:bg-blue-700 text-white border-sf-primary-dark hover:border-blue-700 px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2"
             >
               <Clapperboard className="w-4 h-4" />
               <span className="hidden sm:inline">Ask Cue</span>
@@ -43,7 +43,7 @@ export default function SparkStudioPage() {
             
             <Button 
               onClick={handleExport} 
-              className="bg-sf-primary hover:bg-sf-primary-dark text-white border-sf-primary hover:border-sf-primary-dark px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2"
+              className="bg-sf-primary-dark hover:bg-blue-700 text-white border-sf-primary-dark hover:border-blue-700 px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2"
             >
               <DownloadIcon className="w-4 h-4" /> 
               <span className="hidden sm:inline">Export Guide</span>

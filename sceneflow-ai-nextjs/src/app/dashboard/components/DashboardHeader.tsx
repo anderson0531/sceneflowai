@@ -87,7 +87,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
 
 
         <div className="flex items-center gap-2 text-sf-text-primary min-w-0">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-sf-primary rounded-full flex items-center justify-center flex-shrink-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-sf-primary-dark rounded-full flex items-center justify-center flex-shrink-0">
             <User className="w-5 h-5 text-white" />
           </div>
           <span className="hidden sm:inline text-sm font-medium truncate max-w-[140px] font-emphasis">{user?.name || 'Demo User'}</span>
@@ -101,9 +101,9 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
             borderRadius: '0.5rem',
             fontSize: '0.875rem',
             fontWeight: '700',
-            backgroundColor: '#3B82F6',
+            backgroundColor: '#2563EB',
             color: '#ffffff',
-            border: '1px solid #3B82F6',
+            border: '1px solid #2563EB',
             transition: 'all 0.2s ease',
             cursor: 'pointer'
           }}
