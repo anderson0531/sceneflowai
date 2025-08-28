@@ -8,7 +8,7 @@ import { BeatTemplateSelector } from './BeatTemplateSelector';
 import { ViewModeSwitcher } from './ViewModeSwitcher';
 import { TimelineView } from './TimelineView';
 import { BoneyardSidebar } from './BoneyardSidebar';
-import { StoryAnalysisPanel } from './StoryAnalysisPanel';
+import { StoryInsights } from '@/components/StoryInsights';
 import { Button } from '@/components/ui/Button';
 import { Plus, Sparkles, Layout, Clapperboard } from 'lucide-react';
 import { groupBy } from 'lodash';
@@ -345,7 +345,32 @@ export function BeatSheetTab() {
         
         {/* Right Sidebars */}
         <div className="flex">
-          <StoryAnalysisPanel className="w-80" />
+          <StoryInsights 
+            currentStoryData={{
+              title: guide.title,
+              acts: columns.map(col => ({
+                id: col.id,
+                name: col.label,
+                beats: (groupedBeats[col.id] || []).map(beat => ({
+                  id: beat.id,
+                  title: beat.title,
+                  duration: beat.estimatedDuration || 20,
+                  summary: beat.summary
+                }))
+              })),
+              characters: guide.characters.map(char => ({
+                id: char.id,
+                name: char.name,
+                motivation: char.motivation || 'Character motivation not specified'
+              })),
+              treatment: {
+                synopsis: guide.title,
+                themes: ['General'],
+                targetAudience: 'General audience'
+              }
+            }}
+            className="w-80" 
+          />
           <BoneyardSidebar />
         </div>
       </div>
