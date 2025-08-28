@@ -59,9 +59,9 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
   };
 
   return (
-    <header className="navigation-bar px-6 py-4 flex items-center justify-between">
+    <header className="navigation-bar px-6 py-8 flex items-center justify-between" style={{ minHeight: '120px' }}>
       {/* Logo and Brand */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-4" style={{ minHeight: '100px' }}>
         <div className="flex items-center space-x-2">
           {/* Updated Logo with teal-green accent */}
           <div className="relative">
@@ -73,8 +73,8 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
             {/* Enhanced connector triangle in teal-green */}
             <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-4 border-l-sf-primary border-t-4 border-t-transparent border-b-4 border-b-transparent opacity-90"></div>
           </div>
-          <div className="flex flex-col justify-center min-w-0">
-            <div className="font-bold text-heading leading-tight truncate text-8xl">
+          <div className="flex flex-col justify-center" style={{ minWidth: '400px' }}>
+            <div className="font-bold text-heading leading-tight text-8xl" style={{ fontSize: '8rem', lineHeight: '1.1', whiteSpace: 'nowrap' }}>
               <span>SceneFlow </span>
               <span className="text-sf-primary">AI</span>
             </div>
