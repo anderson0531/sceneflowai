@@ -369,7 +369,7 @@ export function BeatSheetTab() {
                               targetAudience: 'General audience'
                             }
                           }}
-                          className="w-[360px] min-w-[360px] max-w-[360px] flex-shrink-0"
+                          className="w-[420px] min-w-[420px] max-w-[420px] flex-shrink-0 lg:w-[420px] md:w-[380px] sm:w-full"
                         />
                         <BoneyardSidebar />
                       </div>

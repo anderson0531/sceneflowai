@@ -101,15 +101,15 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
   }
 
   return (
-    <div className={`bg-gray-900/95 backdrop-blur-sm rounded-xl border border-gray-700/50 shadow-2xl ${className}`}>
+    <div className={`bg-gray-900/95 backdrop-blur-sm rounded-xl border border-gray-700/50 shadow-2xl w-full ${className}`}>
       {/* Header */}
       <div className="p-6 border-b border-gray-700/50">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
+        <div className="mb-6">
+          <div className="flex items-center gap-4 mb-4">
             <div className="p-3 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl border border-blue-500/40 shadow-lg">
               <Shield className="w-7 h-7 text-blue-300" />
             </div>
-            <div>
+            <div className="flex-1">
               <h3 className="text-2xl font-bold text-white mb-1">Director's Notes</h3>
               <p className="text-base text-gray-300 font-medium">
                 AI-powered story analysis and recommendations
@@ -117,19 +117,21 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
             </div>
           </div>
           
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleInteractionMode}
-            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg font-semibold transition-all duration-200 ${
-              mode === 'CoPilot' 
-                ? 'border-green-500/60 text-green-300 hover:bg-green-500/15 hover:border-green-400/70 shadow-lg shadow-green-500/10' 
-                : 'border-blue-500/60 text-blue-300 hover:bg-blue-500/15 hover:border-blue-400/70 shadow-lg shadow-blue-500/10'
-            }`}
-          >
-            <Zap className="w-4 h-4" />
-            {mode === 'CoPilot' ? 'Co-Pilot Mode' : 'Guidance Mode'}
-          </Button>
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleInteractionMode}
+              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg font-semibold transition-all duration-200 ${
+                mode === 'CoPilot' 
+                  ? 'border-green-500/60 text-green-300 hover:bg-green-500/15 hover:border-green-400/70 shadow-lg shadow-green-500/10' 
+                  : 'border-blue-500/60 text-blue-300 hover:bg-blue-500/15 hover:border-blue-400/70 shadow-lg shadow-blue-500/10'
+              }`}
+            >
+              <Zap className="w-4 h-4" />
+              {mode === 'CoPilot' ? 'Co-Pilot Mode' : 'Guidance Mode'}
+            </Button>
+          </div>
         </div>
 
         {/* Mode Description */}
@@ -147,7 +149,7 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
         </div>
 
         {/* Status Summary */}
-        <div className="flex items-center gap-5 mt-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-5 mt-6">
           <div className="flex items-center gap-2.5">
             <Badge variant="outline" className="text-yellow-300 border-yellow-500/50 bg-yellow-900/20 px-3 py-1.5 text-sm font-semibold">
               {statusCounts.pending} Pending
@@ -168,8 +170,8 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
 
       {/* Controls */}
       <div className="p-5 border-b border-gray-700/50 bg-gradient-to-r from-gray-800/60 to-gray-700/40">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-5">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 w-full lg:w-auto">
             {/* Filter */}
             <div className="flex items-center gap-3">
               <div className="p-2 bg-gray-700/50 rounded-lg">
@@ -178,7 +180,7 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value as any)}
-                className="bg-gray-700/80 border border-gray-600/50 rounded-lg px-4 py-2 text-sm text-white font-medium focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 transition-all duration-200"
+                className="bg-gray-700/80 border border-gray-600/50 rounded-lg px-4 py-2 text-sm text-white font-medium focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 transition-all duration-200 min-w-[140px]"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending Review</option>
@@ -195,7 +197,7 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-gray-700/80 border border-gray-600/50 rounded-lg px-4 py-2 text-sm text-white font-medium focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 transition-all duration-200"
+                className="bg-gray-700/80 border border-gray-600/50 rounded-lg px-4 py-2 text-sm text-white font-medium focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 transition-all duration-200 min-w-[160px]"
               >
                 <option value="impact">Sort by Impact</option>
                 <option value="confidence">Sort by Confidence</option>
@@ -208,7 +210,7 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
             variant="ghost"
             size="sm"
             onClick={() => window.location.reload()}
-            className="text-gray-300 hover:text-white hover:bg-gray-700/50 px-4 py-2.5 rounded-lg font-medium transition-all duration-200"
+            className="text-gray-300 hover:text-white hover:bg-gray-700/50 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 w-full sm:w-auto"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh Analysis
