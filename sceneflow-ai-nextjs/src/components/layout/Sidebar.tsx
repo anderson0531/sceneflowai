@@ -98,7 +98,7 @@ export function Sidebar() {
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 navigation-bar transform transition-transform duration-200 ease-in-out md:translate-x-0 md:static md:inset-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className={`fixed inset-y-0 left-0 z-50 w-80 navigation-bar transform transition-transform duration-200 ease-in-out md:translate-x-0 md:static md:inset-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-700/50 bg-gray-800/30">
@@ -183,10 +183,10 @@ export function Sidebar() {
                     >
                       <Icon className={`mr-4 h-6 w-6 ${isActiveItem ? 'text-sf-primary' : 'text-gray-400'}`} />
                       <div className="flex-1 min-w-0">
-                        <div className={`text-base font-semibold transition-colors ${isActiveItem ? 'text-white' : 'text-gray-200'}`}>
+                        <div className={`text-base font-semibold transition-colors leading-tight ${isActiveItem ? 'text-white' : 'text-gray-200'}`}>
                           {item.name}
                         </div>
-                        <div className={`text-sm transition-colors mt-1 text-gray-400 ${isActiveItem ? 'text-sf-primary/80' : 'text-gray-400'}`}>
+                        <div className={`text-sm transition-colors mt-1 text-gray-400 leading-tight ${isActiveItem ? 'text-sf-primary/80' : 'text-gray-400'}`}>
                           {item.description}
                         </div>
                       </div>

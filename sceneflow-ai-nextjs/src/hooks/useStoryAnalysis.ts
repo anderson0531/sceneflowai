@@ -44,31 +44,33 @@ export const useStoryAnalysis = (currentStoryData: any) => {
     }
   }, [interactionMode]);
 
-  useEffect(() => {
-    // Fetch analysis when story data changes
-    const analyze = async () => {
-      if (!currentStoryData) return;
-      
-      setIsLoading(true);
-      try {
-        const request: StoryAnalysisRequest = {
-          storyData: currentStoryData,
-          analysisType: 'comprehensive'
-        };
-        
-        const response = await storyAnalysisService.analyzeStory(request);
-        processRecommendations(response.recommendations);
-      } catch (error) {
-        console.error('Failed to fetch analysis:', error);
-        // Set empty recommendations on error
-        setRecommendations([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Manual refresh function - only calls API when user explicitly requests it
+  const refreshAnalysis = useCallback(async () => {
+    if (!currentStoryData) return;
     
-    analyze();
+    setIsLoading(true);
+    try {
+      const request: StoryAnalysisRequest = {
+        storyData: currentStoryData,
+        analysisType: 'comprehensive'
+      };
+      
+      const response = await storyAnalysisService.analyzeStory(request);
+      processRecommendations(response.recommendations);
+    } catch (error) {
+      console.error('Failed to fetch analysis:', error);
+      // Set empty recommendations on error
+      setRecommendations([]);
+    } finally {
+      setIsLoading(false);
+    }
   }, [currentStoryData, processRecommendations]);
+
+  // No automatic API calls - only manual refresh
+  // useEffect(() => {
+  //   // Removed automatic analysis to conserve API calls
+  //   // Analysis will only happen when user clicks "Refresh Analysis"
+  // }, [currentStoryData, processRecommendations]);
 
   // Function for manual application (Expert mode or non-automated Novice items)
   const manuallyApplyRecommendation = async (recId: string) => {
@@ -122,6 +124,7 @@ export const useStoryAnalysis = (currentStoryData: any) => {
   return { 
     recommendations, 
     isLoading,
+    refreshAnalysis,
     manuallyApplyRecommendation, 
     undoRecommendation,
     dismissRecommendation,

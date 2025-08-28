@@ -30,6 +30,7 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
   const { 
     recommendations, 
     isLoading, 
+    refreshAnalysis,
     manuallyApplyRecommendation, 
     undoRecommendation,
     dismissRecommendation,
@@ -42,6 +43,7 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'applied' | 'dismissed'>('all');
   const [sortBy, setSortBy] = useState<'impact' | 'confidence' | 'title'>('impact');
+  const [isCardExpanded, setIsCardExpanded] = useState(true);
 
   const filteredRecommendations = recommendations
     .filter(rec => filterStatus === 'all' || rec.status === filterStatus)
@@ -119,7 +121,7 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
             </div>
           </div>
           
-          <div className="flex justify-start sm:justify-end">
+          <div className="flex justify-start sm:justify-end gap-3">
             <Button
               variant="outline"
               size="sm"
@@ -133,131 +135,160 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
               <Zap className="w-4 h-4" />
               {mode === 'CoPilot' ? 'Co-Pilot Mode' : 'Guidance Mode'}
             </Button>
+            
+            {/* Hide/Show Controls */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsCardExpanded(!isCardExpanded)}
+              className="text-gray-400 hover:text-white hover:bg-gray-700/50 px-3 py-2.5 rounded-lg transition-all duration-200"
+            >
+              {isCardExpanded ? (
+                <>
+                  <Eye className="w-4 h-4 mr-2" />
+                  Hide
+                </>
+              ) : (
+                <>
+                  <Settings className="w-4 h-4 mr-2" />
+                  Show
+                </>
+              )}
+            </Button>
           </div>
         </div>
 
         {/* Mode Description */}
-        <div className={`p-4 rounded-xl border-2 ${
-          mode === 'CoPilot' 
-            ? 'bg-gradient-to-r from-green-900/30 to-emerald-900/20 border-green-500/40 shadow-lg shadow-green-500/10' 
-            : 'bg-gradient-to-r from-blue-900/30 to-indigo-900/20 border-blue-500/40 shadow-lg shadow-blue-500/10'
-        }`}>
-          <p className="text-base text-gray-200 font-medium leading-relaxed">
-            {mode === 'CoPilot' 
-              ? '🤖 AI will automatically apply low-risk, high-confidence recommendations. You can review and undo changes.'
-              : '👁️ All recommendations require manual review before application. Full control over every change.'
-            }
-          </p>
-        </div>
-
-        {/* Status Summary */}
-        <div className="flex flex-wrap items-start gap-3 sm:gap-5 mt-6">
-          <div className="flex items-center gap-2.5">
-            <Badge variant="outline" className="text-yellow-300 border-yellow-500/50 bg-yellow-900/20 px-3 py-1.5 text-sm font-semibold whitespace-nowrap">
-              {statusCounts.pending} Pending
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <Badge className="text-green-300 border-green-500/50 bg-green-900/30 px-3 py-1.5 text-sm font-semibold shadow-lg shadow-green-500/20 whitespace-nowrap">
-              {statusCounts.applied} Applied
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <Badge variant="outline" className="text-gray-300 border-gray-500/50 bg-gray-800/30 px-3 py-1.5 text-sm font-semibold whitespace-nowrap">
-              {statusCounts.dismissed} Dismissed
-            </Badge>
-          </div>
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div className="p-5 border-b border-gray-700/50 bg-gradient-to-r from-gray-800/60 to-gray-700/40">
-        <div className="space-y-4">
-          {/* Filter and Sort Row */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5">
-            {/* Filter */}
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gray-700/50 rounded-lg">
-                <Filter className="w-4 h-4 text-gray-300" />
-              </div>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as any)}
-                className="bg-gray-700/80 border border-gray-600/50 rounded-lg px-4 py-2 text-sm text-white font-medium focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 transition-all duration-200 min-w-[140px]"
-              >
-                <option value="all">All Status</option>
-                <option value="pending">Pending Review</option>
-                <option value="applied">Applied</option>
-                <option value="dismissed">Dismissed</option>
-              </select>
-            </div>
-
-            {/* Sort */}
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gray-700/50 rounded-lg">
-                <SortAsc className="w-4 h-4 text-gray-300" />
-              </div>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-gray-700/80 border border-gray-600/50 rounded-lg px-4 py-2 text-sm text-white font-medium focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 transition-all duration-200 min-w-[160px]"
-              >
-                <option value="impact">Sort by Impact</option>
-                <option value="confidence">Sort by Confidence</option>
-                <option value="title">Sort by Title</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Refresh Button Row */}
-          <div className="flex justify-end">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => window.location.reload()}
-              className="text-gray-300 hover:text-white hover:bg-gray-700/50 px-4 py-2.5 rounded-lg font-medium transition-all duration-200"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh Analysis
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Recommendations List */}
-      <div className="p-6">
-        {filteredRecommendations.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-800/50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Shield className="w-8 h-8 text-gray-400" />
-            </div>
-            <h4 className="text-xl font-bold text-gray-300 mb-3">
-              {filterStatus === 'all' 
-                ? 'No recommendations yet' 
-                : `No ${filterStatus} recommendations`
-              }
-            </h4>
-            <p className="text-base text-gray-400 leading-relaxed max-w-sm mx-auto">
-              {filterStatus === 'all' 
-                ? 'Your story analysis will appear here once complete. The AI is analyzing your story structure and will provide actionable recommendations.'
-                : 'Try adjusting your filters or refresh the analysis to see more recommendations.'
+        {isCardExpanded && (
+          <div className={`p-4 rounded-xl border-2 ${
+            mode === 'CoPilot' 
+              ? 'bg-gradient-to-r from-green-900/30 to-emerald-900/20 border-green-500/40 shadow-lg shadow-green-500/10' 
+              : 'bg-gradient-to-r from-blue-900/30 to-indigo-900/20 border-blue-500/40 shadow-lg shadow-blue-500/10'
+          }`}>
+            <p className="text-base text-gray-200 font-medium leading-relaxed">
+              {mode === 'CoPilot' 
+                ? '🤖 AI will automatically apply low-risk, high-confidence recommendations. You can review and undo changes.'
+                : '👁️ All recommendations require manual review before application. Full control over every change.'
               }
             </p>
           </div>
-        ) : (
-          <div className="space-y-5">
-            {filteredRecommendations.map((recommendation) => (
-              <RecommendationCard
-                key={recommendation.id}
-                recommendation={recommendation}
-                onApply={manuallyApplyRecommendation}
-                onUndo={undoRecommendation}
-                onDismiss={dismissRecommendation}
-              />
-            ))}
+        )}
+
+        {/* Status Summary */}
+        {isCardExpanded && (
+          <div className="flex flex-wrap items-start gap-3 sm:gap-5 mt-6">
+            <div className="flex items-center gap-2.5">
+              <Badge variant="outline" className="text-yellow-300 border-yellow-500/50 bg-yellow-900/20 px-3 py-1.5 text-sm font-semibold whitespace-nowrap">
+                {statusCounts.pending} Pending
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <Badge className="text-green-300 border-green-500/50 bg-green-900/30 px-3 py-1.5 text-sm font-semibold shadow-lg shadow-green-500/20 whitespace-nowrap">
+                {statusCounts.applied} Applied
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <Badge variant="outline" className="text-gray-300 border-gray-500/50 bg-gray-800/30 px-3 py-1.5 text-sm font-semibold whitespace-nowrap">
+                {statusCounts.dismissed} Dismissed
+              </Badge>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Controls */}
+      {isCardExpanded && (
+        <div className="p-5 border-b border-gray-700/50 bg-gradient-to-r from-gray-800/60 to-gray-700/40">
+          <div className="space-y-4">
+            {/* Filter and Sort Row */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5">
+              {/* Filter */}
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gray-700/50 rounded-lg">
+                  <Filter className="w-4 h-4 text-gray-300" />
+                </div>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value as any)}
+                  className="bg-gray-700/80 border border-gray-600/50 rounded-lg px-4 py-2 text-sm text-white font-medium focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 transition-all duration-200 min-w-[140px]"
+                >
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending Review</option>
+                  <option value="applied">Applied</option>
+                  <option value="dismissed">Dismissed</option>
+                </select>
+              </div>
+
+              {/* Sort */}
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gray-700/50 rounded-lg">
+                  <SortAsc className="w-4 h-4 text-gray-300" />
+                </div>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="bg-gray-700/80 border border-gray-600/50 rounded-lg px-4 py-2 text-sm text-white font-medium focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 transition-all duration-200 min-w-[160px]"
+                >
+                  <option value="impact">Sort by Impact</option>
+                  <option value="confidence">Sort by Confidence</option>
+                  <option value="title">Sort by Title</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Refresh Button Row */}
+            <div className="flex justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={refreshAnalysis}
+                disabled={isLoading}
+                className="text-gray-300 hover:text-white hover:bg-gray-700/50 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                {isLoading ? 'Analyzing...' : 'Refresh Analysis'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Recommendations List */}
+      {isCardExpanded && (
+        <div className="p-6">
+          {filteredRecommendations.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-800/50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Shield className="w-8 h-8 text-gray-400" />
+              </div>
+              <h4 className="text-xl font-bold text-gray-300 mb-3">
+                {filterStatus === 'all' 
+                  ? 'No recommendations yet' 
+                  : `No ${filterStatus} recommendations`
+                }
+              </h4>
+              <p className="text-base text-gray-400 leading-relaxed max-w-sm mx-auto">
+                {filterStatus === 'all' 
+                  ? 'Your story analysis will appear here once complete. The AI is analyzing your story structure and will provide actionable recommendations.'
+                  : 'Try adjusting your filters or refresh the analysis to see more recommendations.'
+                }
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {filteredRecommendations.map((recommendation) => (
+                <RecommendationCard
+                  key={recommendation.id}
+                  recommendation={recommendation}
+                  onApply={manuallyApplyRecommendation}
+                  onUndo={undoRecommendation}
+                  onDismiss={dismissRecommendation}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Review Modal */}
       {selectedMutation && (
