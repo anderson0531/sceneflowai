@@ -43,7 +43,7 @@ export function Header() {
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-sm">SF</span>
                 </div>
-                <h1 className="ml-3 text-xl font-bold text-dark-text">
+                <h1 className="ml-3 text-lg font-bold text-dark-text">
                   SceneFlow AI
                 </h1>
               </div>

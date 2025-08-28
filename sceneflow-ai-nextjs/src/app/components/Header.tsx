@@ -70,7 +70,7 @@ export function Header() {
               
               {/* App Name and Tagline */}
               <div className="flex flex-col space-y-1">
-                <h1 className="text-3xl font-bold">
+                <h1 className="text-2xl font-bold">
                   <span className="text-white">SceneFlow </span>
                   <span className="text-sf-primary">AI</span>
                 </h1>
