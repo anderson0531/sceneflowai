@@ -57,7 +57,7 @@ export function CreditStatus() {
       
       {/* Credit Statistics Grid - Now all with dark gray backgrounds */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {/* Available Credits - Dark gray with accent data highlights */}
+        {/* Available Credits - Enhanced with green accent border and background */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -65,21 +65,21 @@ export function CreditStatus() {
           className="group cursor-pointer"
           onClick={() => window.location.href = '/dashboard/credits'}
         >
-          <div className="bg-sf-surface-light text-sf-text-primary rounded-lg shadow-lg p-6 hover:shadow-sf-elevated transition duration-300 group-hover:scale-105 h-full border border-sf-border hover:border-sf-primary/30">
+          <div className="bg-gradient-to-br from-green-900/30 to-green-800/20 text-white rounded-xl shadow-xl p-6 hover:shadow-2xl transition duration-300 group-hover:scale-105 h-full border-2 border-green-500/40 hover:border-green-400/60">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-sf-primary/10 rounded-lg flex items-center justify-center border border-sf-primary/30">
-                <CreditCard className="w-6 h-6 text-sf-primary" />
+              <div className="w-14 h-14 bg-green-500/30 rounded-xl flex items-center justify-center border-2 border-green-400/40 shadow-lg">
+                <CreditCard className="w-7 h-7 text-green-300" />
               </div>
             </div>
             
-            {/* Data highlighted with accent color */}
-            <div className="text-3xl font-bold mb-2 text-sf-primary">
+            {/* Data highlighted with green accent color */}
+            <div className="text-4xl font-bold mb-3 text-green-300">
               {availableCredits.toLocaleString()}
             </div>
             
-            <h3 className="text-lg font-semibold mb-2">Available Credits</h3>
+            <h3 className="text-xl font-bold mb-2 text-white">Available Credits</h3>
             
-            <p className="text-sf-text-secondary text-sm font-medium">
+            <p className="text-green-100 text-base font-medium">
               Ready to use
             </p>
           </div>

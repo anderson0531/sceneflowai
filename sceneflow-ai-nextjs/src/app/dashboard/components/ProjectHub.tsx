@@ -82,17 +82,17 @@ export function ProjectHub() {
           </Link>
         </div>
         
-        {/* Enhanced Empty State with Actionable Guidance */}
-        <div className="text-center py-12">
-          <div className="w-24 h-24 bg-sf-surface-light rounded-full flex items-center justify-center mx-auto mb-6 border border-sf-border">
-            <Sparkles className="w-12 h-12 text-sf-primary" />
+        {/* Enhanced Empty State with Actionable Guidance - Hero gradient background */}
+        <div className="text-center py-16 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-blue-800/20 rounded-2xl border-2 border-blue-500/30 shadow-2xl">
+          <div className="w-28 h-28 bg-gradient-to-br from-blue-500/30 to-purple-500/30 rounded-full flex items-center justify-center mx-auto mb-8 border-2 border-blue-400/40 shadow-2xl">
+            <Sparkles className="w-16 h-16 text-blue-300" />
           </div>
           
-          <h3 className="text-xl font-semibold text-sf-text-primary mb-3">
+          <h3 className="text-3xl font-bold text-white mb-4">
             Ready to Create Your First Video?
           </h3>
           
-          <p className="text-sf-text-secondary mb-6 max-w-md mx-auto leading-relaxed">
+          <p className="text-blue-100 mb-8 max-w-lg mx-auto leading-relaxed text-lg">
             Start your creative journey with SceneFlow AI. Our guided workflow will help you transform your ideas into professional videos.
           </p>
           

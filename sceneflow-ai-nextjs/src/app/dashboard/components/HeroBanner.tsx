@@ -31,28 +31,28 @@ export function HeroBanner({ userName }: HeroBannerProps) {
         Ready to bring your next video idea to life? Let&apos;s create something amazing together.
       </p>
 
-      {/* Cue AI Assistant Integration - Now with subtle accent border */}
-      <div className="bg-sf-surface-light p-4 rounded-lg mt-6 border border-sf-primary/20 shadow-sm">
+      {/* Cue AI Assistant Integration - Enhanced with blue accent border and background */}
+      <div className="bg-gradient-to-r from-blue-900/20 to-blue-800/10 p-6 rounded-xl mt-6 border-2 border-blue-500/40 shadow-lg backdrop-blur-sm">
         <div className="flex justify-between items-center">
           {/* Content (Left) */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-sf-primary/10 rounded-lg flex items-center justify-center border border-sf-primary/30">
-              <MessageCircle className="w-5 h-5 text-sf-primary" />
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center border-2 border-blue-400/40 shadow-lg">
+              <MessageCircle className="w-6 h-6 text-blue-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-sf-text-primary">Cue AI Assistant</h3>
-              <p className="text-sm text-sf-text-secondary font-medium">
+              <h3 className="text-lg font-bold text-white mb-1">Cue AI Assistant</h3>
+              <p className="text-base text-blue-100 font-medium">
                 Your creative partner for video production. Ask Cue anything about your project.
               </p>
             </div>
           </div>
           
-          {/* CTA (Right) - Now the ONLY solid accent color element */}
+          {/* CTA (Right) - Enhanced with blue accent */}
           <button
             onClick={handleCueChat}
-            className="bg-sf-primary hover:bg-sf-primary-dark text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-bold transition-all duration-200 hover:scale-105 shadow-xl hover:shadow-2xl border-2 border-blue-400/30"
           >
-            <MessageCircle className="w-5 h-5 mr-2" />
+            <MessageCircle className="w-6 h-6 mr-3" />
             Chat with Cue
           </button>
         </div>

@@ -38,7 +38,7 @@ export function Launchpad() {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Card 1: Start Project - Now with dark gray background and accent highlights */}
+        {/* Card 1: Start Project - Enhanced with blue accent background and border */}
         <Link href="/studio/crispr-debate-001">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -46,16 +46,16 @@ export function Launchpad() {
             transition={{ duration: 0.4, delay: 0.1 }}
             className="group cursor-pointer"
           >
-            <div className="bg-sf-surface-light text-sf-text-primary rounded-lg shadow-lg p-6 hover:shadow-sf-elevated transition duration-300 group-hover:scale-105 h-full border border-sf-border hover:border-sf-primary/30">
+            <div className="bg-gradient-to-br from-blue-900/30 to-blue-800/20 text-white rounded-xl shadow-xl p-6 hover:shadow-2xl transition duration-300 group-hover:scale-105 h-full border-2 border-blue-500/40 hover:border-blue-400/60">
               <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 bg-sf-primary/10 rounded-lg flex items-center justify-center border border-sf-primary/20">
-                  <Plus className="w-6 h-6 text-sf-primary" />
+                <div className="w-14 h-14 bg-blue-500/30 rounded-xl flex items-center justify-center border-2 border-blue-400/40 shadow-lg">
+                  <Plus className="w-7 h-7 text-blue-300" />
                 </div>
               </div>
 
-              <h3 className="text-xl font-bold mb-2">Start Project</h3>
+              <h3 className="text-2xl font-bold mb-3 text-white">Start Project</h3>
 
-              <p className="text-sf-text-secondary text-sm leading-relaxed font-medium">
+              <p className="text-blue-100 text-base leading-relaxed font-medium">
                 Start blank, from a Creator Template, from an idea, or import a script.
               </p>
             </div>

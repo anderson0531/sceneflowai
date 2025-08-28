@@ -61,16 +61,16 @@ export function StudioUtilities() {
             className="group cursor-pointer"
             onClick={() => window.location.href = widget.href}
           >
-            <div className="bg-sf-surface-light border border-sf-border rounded-lg p-5 hover:bg-sf-surface transition duration-200 group-hover:shadow-sf-glow h-full">
-              <div className={`w-12 h-12 ${widget.bgColor.replace('50', '20')} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200`}>
-                <widget.icon className={`w-6 h-6 ${widget.color.replace('text-', 'text-sf-').replace('blue-600', 'primary').replace('purple-600', 'primary').replace('yellow-600', 'accent').replace('gray-600', 'text-sf-text-secondary')}`} />
+            <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/30 border-2 border-gray-600/30 rounded-xl p-6 hover:bg-gray-700/50 transition duration-300 group-hover:shadow-xl h-full hover:scale-105 hover:border-gray-500/50">
+              <div className={`w-14 h-14 bg-gradient-to-br from-${widget.color.replace('text-', '').replace('-600', '-500')}/20 to-${widget.color.replace('text-', '').replace('-600', '-600')}/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200 border border-${widget.color.replace('text-', '').replace('-600', '-500')}/30`}>
+                <widget.icon className={`w-7 h-7 ${widget.color}`} />
               </div>
               
-              <h3 className="font-semibold text-sf-text-primary mb-2 group-hover:text-sf-primary transition-colors">
+              <h3 className="text-lg font-bold text-white mb-3 group-hover:text-sf-primary transition-colors">
                 {widget.title}
               </h3>
               
-              <p className="text-sm text-sf-text-secondary leading-relaxed">
+              <p className="text-base text-gray-300 leading-relaxed font-medium">
                 {widget.subtitle}
               </p>
             </div>
