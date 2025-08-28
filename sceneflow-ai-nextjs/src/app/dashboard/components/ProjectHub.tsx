@@ -15,87 +15,156 @@ export function ProjectHub() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.4 }}
-        className="bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-gray-700/50 shadow-2xl p-8"
+        className="bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-gray-700/50 shadow-2xl overflow-hidden"
       >
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-white mb-2">My Projects</h2>
-          <p className="text-gray-400">Jump into your workflow</p>
+        {/* Header - Balanced with top of page */}
+        <div className="p-6 border-b border-gray-700/50 bg-gradient-to-r from-gray-800/60 to-gray-700/40">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-white">My Projects</h2>
+              <p className="text-gray-400 mt-1">Manage your creative workflow</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-400">No projects yet</span>
+            </div>
+          </div>
         </div>
         
-        {/* Enhanced CTA for First-Time and Existing Users */}
-        <div className="text-center py-20 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-blue-800/20 rounded-2xl border-2 border-blue-500/30 shadow-2xl">
-          <div className="w-32 h-32 bg-gradient-to-br from-blue-500/30 to-purple-500/30 rounded-full flex items-center justify-center mx-auto mb-8 border-2 border-blue-400/40 shadow-2xl">
-            <Sparkles className="w-20 h-20 text-blue-300" />
-          </div>
-          
-          <h3 className="text-4xl font-bold text-white mb-6">
-            Ready to Create Your Next Video?
-          </h3>
-          
-          <p className="text-blue-100 mb-8 max-w-2xl mx-auto leading-relaxed text-xl">
-            Start your creative journey with SceneFlow AI. Our guided workflow will help you transform your ideas into professional videos.
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-8">
-            {/* Start New Project */}
-            <div className="text-center p-6 bg-gradient-to-br from-blue-900/20 to-blue-800/10 rounded-xl border border-blue-500/30">
-              <div className="w-16 h-16 bg-blue-500/20 rounded-xl flex items-center justify-center mx-auto mb-4 border border-blue-500/40">
-                <Plus className="w-8 h-8 text-blue-400" />
-              </div>
-              <h4 className="text-xl font-semibold text-white mb-3">Start New Project</h4>
-              <p className="text-blue-100 text-sm mb-4">Create from scratch, use a template, or import your script</p>
-              <Link href="/studio/crispr-debate-001">
-                <button className="w-full bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40">
-                  Start Creating
-                </button>
-              </Link>
-            </div>
+        {/* Focused CTAs - No marketing text */}
+        <div className="p-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* New Project */}
+            <Link href="/studio/crispr-debate-001">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+                className="group cursor-pointer"
+              >
+                <div className="bg-gradient-to-br from-blue-900/20 to-blue-800/10 p-6 rounded-xl border-2 border-blue-500/40 hover:border-blue-400/60 transition-all duration-200 h-full">
+                  <div className="w-16 h-16 bg-blue-500/20 rounded-xl flex items-center justify-center mx-auto mb-4 border border-blue-500/40">
+                    <Plus className="w-8 h-8 text-blue-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white text-center mb-3">New Project</h3>
+                  <div className="text-center">
+                    <button className="w-full bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40">
+                      Start Creating
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </Link>
             
             {/* Continue Existing Project */}
-            <div className="text-center p-6 bg-gradient-to-br from-purple-900/20 to-purple-800/10 rounded-xl border border-purple-500/30">
-              <div className="w-16 h-16 bg-purple-500/20 rounded-xl flex items-center justify-center mx-auto mb-4 border border-purple-500/40">
-                <Play className="w-8 h-8 text-purple-400" />
-              </div>
-              <h4 className="text-xl font-semibold text-white mb-3">Continue Project</h4>
-              <p className="text-purple-100 text-sm mb-4">Resume where you left off or check your project status</p>
-              <Link href="/dashboard/projects">
-                <button className="w-full bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40">
-                  View Projects
-                </button>
-              </Link>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            <div className="text-center p-4">
-              <div className="w-16 h-16 bg-blue-500/20 rounded-xl flex items-center justify-center mx-auto mb-3 border border-blue-500/40">
-                <span className="text-2xl">🎬</span>
-              </div>
-              <h4 className="text-lg font-semibold text-white mb-2">Pre-Production Suite</h4>
-              <p className="text-blue-100 text-sm">Script analysis, storyboarding, and scene direction</p>
-            </div>
+            <Link href="/dashboard/projects">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+                className="group cursor-pointer"
+              >
+                <div className="bg-gradient-to-br from-purple-900/20 to-purple-800/10 p-6 rounded-xl border-2 border-purple-500/40 hover:border-purple-400/60 transition-all duration-200 h-full">
+                  <div className="w-16 h-16 bg-purple-500/20 rounded-xl flex items-center justify-center mx-auto mb-4 border border-purple-500/40">
+                    <Play className="w-8 h-8 text-purple-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white text-center mb-3">Continue Existing Project</h3>
+                  <div className="text-center">
+                    <button className="w-full bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40">
+                      View Projects
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </Link>
             
-            <div className="text-center p-4">
-              <div className="w-16 h-16 bg-orange-500/20 rounded-xl flex items-center justify-center mx-auto mb-3 border border-orange-500/40">
-                <span className="text-2xl">🎥</span>
-              </div>
-              <h4 className="text-lg font-semibold text-white mb-2">AI Generation</h4>
-              <p className="text-orange-100 text-sm">Video generation with BYOK for cost control</p>
-            </div>
+            {/* Manage Projects */}
+            <Link href="/dashboard/projects">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.3 }}
+                className="group cursor-pointer"
+              >
+                <div className="bg-gradient-to-br from-green-900/20 to-green-800/10 p-6 rounded-xl border-2 border-green-500/40 hover:border-green-400/60 transition-all duration-200 h-full">
+                  <div className="w-16 h-16 bg-green-500/20 rounded-xl flex items-center justify-center mx-auto mb-4 border border-green-500/40">
+                    <Eye className="w-8 h-8 text-green-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white text-center mb-3">Manage Projects</h3>
+                  <div className="text-center">
+                    <button className="w-full bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-green-500/25 hover:shadow-green-500/40">
+                      Manage
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </Link>
             
-            <div className="text-center p-4">
-              <div className="w-16 h-16 bg-green-500/20 rounded-xl flex items-center justify-center mx-auto mb-3 border border-green-500/40">
-                <span className="text-2xl">📁</span>
-              </div>
-              <h4 className="text-lg font-semibold text-white mb-2">Export Assets</h4>
-              <p className="text-green-100 text-sm">Download materials for external filming teams</p>
-            </div>
+            {/* Manage Production Assets */}
+            <Link href="/dashboard/settings/integrations">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.4 }}
+                className="group cursor-pointer"
+              >
+                <div className="bg-gradient-to-br from-orange-900/20 to-orange-800/10 p-6 rounded-xl border-2 border-orange-500/40 hover:border-orange-400/60 transition-all duration-200 h-full">
+                  <div className="w-16 h-16 bg-orange-500/20 rounded-xl flex items-center justify-center mx-auto mb-4 border border-orange-500/40">
+                    <span className="text-2xl">🎬</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-white text-center mb-3">Manage Production Assets</h3>
+                  <div className="text-center">
+                    <button className="w-full bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40">
+                      Manage
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </Link>
+            
+            {/* Manage Series Bible */}
+            <Link href="/dashboard/project-bible">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.5 }}
+                className="group cursor-pointer"
+              >
+                <div className="bg-gradient-to-br from-indigo-900/20 to-indigo-800/10 p-6 rounded-xl border-2 border-indigo-500/40 hover:border-indigo-400/60 transition-all duration-200 h-full">
+                  <div className="w-16 h-16 bg-indigo-500/20 rounded-xl flex items-center justify-center mx-auto mb-4 border border-indigo-500/40">
+                    <span className="text-2xl">📚</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-white text-center mb-3">Manage Series Bible</h3>
+                  <div className="text-center">
+                    <button className="w-full bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40">
+                      Manage
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </Link>
+            
+            {/* Manage BYOK */}
+            <Link href="/dashboard/settings/byok">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.6 }}
+                className="group cursor-pointer"
+              >
+                <div className="bg-gradient-to-br from-red-900/20 to-red-800/10 p-6 rounded-xl border-2 border-red-500/40 hover:border-red-400/60 transition-all duration-200 h-full">
+                  <div className="w-16 h-16 bg-red-500/20 rounded-xl flex items-center justify-center mx-auto mb-4 border border-red-500/40">
+                    <span className="text-2xl">🔑</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-white text-center mb-3">Manage BYOK</h3>
+                  <div className="text-center">
+                    <button className="w-full bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-red-500/25 hover:shadow-red-500/40">
+                      Manage
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </Link>
           </div>
-          
-          <p className="text-xs text-blue-200 mt-6 max-w-md mx-auto">
-            💡 <strong>Pro tip:</strong> Use our AI-powered "The Spark Studio" to generate unique video concepts from any topic.
-          </p>
         </div>
       </motion.div>
     )
@@ -107,56 +176,60 @@ export function ProjectHub() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.4 }}
-      className="bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-gray-700/50 shadow-2xl p-8"
+      className="bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-gray-700/50 shadow-2xl overflow-hidden"
     >
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h2 className="text-2xl font-bold text-white mb-2">My Projects</h2>
-          <p className="text-gray-400">Jump into your workflow</p>
-        </div>
-        
-        <div className="flex gap-3">
-          <Link href="/dashboard/projects/new">
-            <button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6 py-3 rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-200 font-semibold flex items-center gap-2">
-              <Plus className="w-5 h-5" />
-              + New Project
-            </button>
-          </Link>
+      {/* Header - Balanced with top of page */}
+      <div className="p-6 border-b border-gray-700/50 bg-gradient-to-r from-gray-800/60 to-gray-700/40">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-white">My Projects</h2>
+            <p className="text-gray-400 mt-1">Jump into your workflow</p>
+          </div>
           
-          <Link href="/dashboard/project-bible">
-            <button className="bg-gray-700/50 hover:bg-gray-600/50 text-gray-200 px-6 py-3 rounded-xl border border-gray-600/50 transition-all duration-200 font-semibold flex items-center gap-2">
-              <Eye className="w-5 h-5" />
-              + New Series Bible
-            </button>
-          </Link>
+          <div className="flex gap-3">
+            <Link href="/dashboard/projects/new">
+              <button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6 py-3 rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-200 font-semibold flex items-center gap-2">
+                <Plus className="w-5 h-5" />
+                + New Project
+              </button>
+            </Link>
+            
+            <Link href="/dashboard/project-bible">
+              <button className="bg-gray-700/50 hover:bg-gray-600/50 text-gray-200 px-6 py-3 rounded-xl border border-gray-600/50 transition-all duration-200 font-semibold flex items-center gap-2">
+                <Eye className="w-5 h-5" />
+                + New Series Bible
+              </button>
+            </Link>
+          </div>
         </div>
       </div>
       
       {/* Projects Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {projects.slice(0, 6).map((project, index) => (
-          <motion.div
-            key={project.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 + index * 0.1 }}
-          >
-            <ProjectCard project={project} />
-          </motion.div>
-        ))}
-      </div>
-      
-      {/* Show More Projects Link */}
-      {projects.length > 6 && (
-        <div className="text-center mt-8">
-          <Link href="/dashboard/projects">
-            <button className="text-blue-400 hover:text-blue-300 font-semibold transition-colors text-lg">
-              View {projects.length - 6} more projects →
-            </button>
-          </Link>
+      <div className="p-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {projects.slice(0, 6).map((project, index) => (
+            <motion.div
+              key={project.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 + index * 0.1 }}
+            >
+              <ProjectCard project={project} />
+            </motion.div>
+          ))}
         </div>
-      )}
+        
+        {/* Show More Projects Link */}
+        {projects.length > 6 && (
+          <div className="text-center mt-8">
+            <Link href="/dashboard/projects">
+              <button className="text-blue-400 hover:text-blue-300 font-semibold transition-colors text-lg">
+                View {projects.length - 6} more projects →
+              </button>
+            </Link>
+          </div>
+        )}
+      </div>
     </motion.div>
   )
 }
