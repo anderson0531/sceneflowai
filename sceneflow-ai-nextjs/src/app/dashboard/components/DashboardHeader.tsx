@@ -65,16 +65,16 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
         <div className="flex items-center space-x-2">
           {/* Updated Logo with teal-green accent */}
           <div className="relative">
-            <div className="w-16 h-16 bg-sf-surface-light rounded-xl flex items-center justify-center">
-              <div className="w-10 h-10 bg-sf-primary rounded-lg flex items-center justify-center">
-                <div className="w-5 h-5 bg-sf-background rounded-sm"></div>
+            <div className="w-20 h-20 bg-sf-surface-light rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-sf-primary rounded-lg flex items-center justify-center">
+                <div className="w-6 h-6 bg-sf-background rounded-sm"></div>
               </div>
             </div>
             {/* Enhanced connector triangle in teal-green */}
             <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-4 border-l-sf-primary border-t-4 border-t-transparent border-b-4 border-b-transparent opacity-90"></div>
           </div>
           <div className="flex items-center">
-            <div className="font-bold" style={{ fontSize: '4rem !important', lineHeight: '1 !important', whiteSpace: 'nowrap', color: 'white' }}>
+            <div className="font-bold" style={{ fontSize: '5rem !important', lineHeight: '1 !important', whiteSpace: 'nowrap', color: 'white' }}>
               <span style={{ fontSize: 'inherit !important', lineHeight: 'inherit !important' }}>SceneFlow </span>
               <span className="text-sf-primary" style={{ fontSize: 'inherit !important', lineHeight: 'inherit !important' }}>AI</span>
             </div>
