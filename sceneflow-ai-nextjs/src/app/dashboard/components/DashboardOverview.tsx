@@ -15,7 +15,8 @@ import {
   BarChart3,
   Download,
   Settings,
-  Plus
+  Plus,
+  BookOpen
 } from 'lucide-react'
 import { useEnhancedStore } from '@/store/enhancedStore'
 import Link from 'next/link'
@@ -29,19 +30,13 @@ export function DashboardOverview() {
     projectCounts: {
       active: projects.filter(p => !p.completedSteps.includes('optimization')).length,
       completed: projects.filter(p => p.completedSteps.includes('optimization')).length,
-      canceled: 2 // Mock data
+      canceled: 2 // Mock data for series
     },
     currentPlan: {
       tier: user?.subscriptionTier || 'Pro',
       monthlyCredits: user?.monthlyCredits || 1000,
       availableCredits: user?.credits || 750,
       nextBilling: '2024-02-15'
-    },
-    exportedAssets: {
-      scripts: 12,
-      storyboards: 8,
-      sceneDirection: 6,
-      videos: 3
     }
   }
 
@@ -71,13 +66,6 @@ export function DashboardOverview() {
             >
               <Settings className="w-4 h-4 mr-2" />
               Customize
-            </Button>
-            <Button
-              size="sm"
-              className="bg-blue-500 hover:bg-blue-600 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Project
             </Button>
           </div>
         </div>
@@ -111,12 +99,21 @@ export function DashboardOverview() {
                 <div className="text-sm text-blue-200">Active</div>
               </div>
             </div>
-            <div className="text-xs text-blue-300">
+            <div className="text-xs text-blue-300 mb-3">
               Currently in progress
             </div>
+            <Link href="/studio/crispr-debate-001">
+              <Button
+                size="sm"
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white text-xs"
+              >
+                <Plus className="w-3 h-3 mr-1" />
+                Start Project
+              </Button>
+            </Link>
           </motion.div>
 
-          {/* Completed Projects */}
+          {/* Total Projects */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -128,34 +125,52 @@ export function DashboardOverview() {
                 <CheckCircle className="w-5 h-5 text-green-400" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-green-300">{mockData.projectCounts.completed}</div>
-                <div className="text-sm text-green-200">Completed</div>
+                <div className="text-2xl font-bold text-green-300">{totalProjects}</div>
+                <div className="text-sm text-green-200">Total</div>
               </div>
             </div>
-            <div className="text-xs text-green-300">
-              Successfully finished
+            <div className="text-xs text-green-300 mb-3">
+              All projects
             </div>
+            <Link href="/dashboard/projects">
+              <Button
+                size="sm"
+                className="w-full bg-green-500 hover:bg-green-600 text-white text-xs"
+              >
+                <Eye className="w-3 h-3 mr-1" />
+                Manage Projects
+              </Button>
+            </Link>
           </motion.div>
 
-          {/* Canceled Projects */}
+          {/* Series Projects */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 0.3 }}
-            className="bg-gradient-to-br from-red-900/20 to-red-800/10 p-4 rounded-xl border-2 border-red-500/40 hover:border-red-400/60 transition-all duration-200"
+            className="bg-gradient-to-br from-purple-900/20 to-purple-800/10 p-4 rounded-xl border-2 border-purple-500/40 hover:border-purple-400/60 transition-all duration-200"
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center border border-red-500/40">
-                <XCircle className="w-5 h-5 text-red-400" />
+              <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center border border-purple-500/40">
+                <BookOpen className="w-5 h-5 text-purple-400" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-red-300">{mockData.projectCounts.canceled}</div>
-                <div className="text-sm text-red-200">Canceled</div>
+                <div className="text-2xl font-bold text-purple-300">{mockData.projectCounts.canceled}</div>
+                <div className="text-sm text-purple-200">Series</div>
               </div>
             </div>
-            <div className="text-xs text-red-300">
-              Discontinued
+            <div className="text-xs text-purple-300 mb-3">
+              Series bibles
             </div>
+            <Link href="/dashboard/project-bible">
+              <Button
+                size="sm"
+                className="w-full bg-purple-500 hover:bg-purple-600 text-white text-xs"
+              >
+                <BookOpen className="w-3 h-3 mr-1" />
+                Manage Series
+              </Button>
+            </Link>
           </motion.div>
         </div>
       </div>
@@ -227,6 +242,15 @@ export function DashboardOverview() {
                 style={{ width: `${(mockData.currentPlan.availableCredits / mockData.currentPlan.monthlyCredits) * 100}%` }}
               ></div>
             </div>
+            <Link href="/dashboard/settings/billing">
+              <Button
+                size="sm"
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white text-xs"
+              >
+                <CreditCard className="w-3 h-3 mr-1" />
+                Manage Credits
+              </Button>
+            </Link>
           </motion.div>
 
           {/* Credit Management */}
@@ -261,42 +285,54 @@ export function DashboardOverview() {
         </div>
       </div>
 
-      {/* Row 3: Exported Assets */}
+      {/* Row 3: Video Generation Platforms */}
       <div className="p-6">
         <div className="flex items-center gap-3 mb-4">
-          <Download className="w-5 h-5 text-orange-400" />
-          <h3 className="text-lg font-semibold text-white">Exported Assets</h3>
+          <Film className="w-5 h-5 text-orange-400" />
+          <h3 className="text-lg font-semibold text-white">Video Generation Platforms</h3>
           <div className="ml-auto">
-            <span className="text-sm text-gray-400">Total Exports:</span>
-            <span className="ml-2 text-lg font-bold text-orange-300">
-              {mockData.exportedAssets.scripts + mockData.exportedAssets.storyboards + mockData.exportedAssets.sceneDirection + mockData.exportedAssets.videos}
-            </span>
+            <Link href="/dashboard/settings/byok">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-orange-500/50 text-orange-300 hover:text-white hover:border-orange-400/70"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Manage Platforms
+              </Button>
+            </Link>
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* Scripts */}
+        {/* Row 1: Runway, Pika Labs, Luma AI */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          {/* Runway */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 0.7 }}
-            className="bg-gradient-to-br from-indigo-900/20 to-indigo-800/10 p-4 rounded-xl border-2 border-indigo-500/40 hover:border-indigo-400/60 transition-all duration-200"
+            className="bg-gradient-to-br from-blue-900/20 to-blue-800/10 p-4 rounded-xl border-2 border-blue-500/40 hover:border-blue-400/60 transition-all duration-200"
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center border border-indigo-500/40">
-                <FileText className="w-5 h-5 text-indigo-400" />
+              <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center border border-blue-500/40">
+                <span className="text-2xl">🎬</span>
               </div>
               <div>
-                <div className="text-2xl font-bold text-indigo-300">{mockData.exportedAssets.scripts}</div>
-                <div className="text-sm text-indigo-200">Scripts</div>
+                <div className="text-lg font-bold text-blue-300">Runway</div>
+                <div className="text-sm text-blue-200">Creative AI Platform</div>
               </div>
             </div>
-            <div className="text-xs text-indigo-300">
-              Finalized scripts
+            <div className="text-xs text-blue-300 mb-2">
+              Advanced video generation
+            </div>
+            <div className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-semibold ${
+              true ? 'bg-green-500/20 text-green-300 border border-green-500/40' : 'bg-gray-500/20 text-gray-300 border border-gray-500/40'
+            }`}>
+              {true ? 'Active' : 'Inactive'}
             </div>
           </motion.div>
 
-          {/* Storyboards */}
+          {/* Pika Labs */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -305,19 +341,24 @@ export function DashboardOverview() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center border border-purple-500/40">
-                <Eye className="w-5 h-5 text-purple-400" />
+                <span className="text-2xl">✨</span>
               </div>
               <div>
-                <div className="text-2xl font-bold text-purple-300">{mockData.exportedAssets.storyboards}</div>
-                <div className="text-sm text-purple-200">Storyboards</div>
+                <div className="text-lg font-bold text-purple-300">Pika Labs</div>
+                <div className="text-sm text-purple-200">AI Video Creation</div>
               </div>
             </div>
-            <div className="text-xs text-purple-300">
-              Visual planning
+            <div className="text-xs text-purple-300 mb-2">
+              Text-to-video generation
+            </div>
+            <div className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-semibold ${
+              false ? 'bg-green-500/20 text-green-300 border border-green-500/40' : 'bg-gray-500/20 text-gray-300 border border-gray-500/40'
+            }`}>
+              {false ? 'Active' : 'Inactive'}
             </div>
           </motion.div>
 
-          {/* Scene Direction */}
+          {/* Luma AI */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -326,67 +367,268 @@ export function DashboardOverview() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center border border-green-500/40">
-                <Camera className="w-5 h-5 text-green-400" />
+                <span className="text-2xl">🌟</span>
               </div>
               <div>
-                <div className="text-2xl font-bold text-green-300">{mockData.exportedAssets.sceneDirection}</div>
-                <div className="text-sm text-green-200">Scene Direction</div>
+                <div className="text-lg font-bold text-green-300">Luma AI</div>
+                <div className="text-sm text-green-200">Dream Machine</div>
               </div>
             </div>
-            <div className="text-xs text-green-300">
-              Director's notes
+            <div className="text-xs text-green-300 mb-2">
+              High-quality video AI
             </div>
-          </motion.div>
-
-          {/* Videos */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: 1.0 }}
-            className="bg-gradient-to-br from-orange-900/20 to-orange-800/10 p-4 rounded-xl border-2 border-orange-500/40 hover:border-orange-400/60 transition-all duration-200"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center border border-orange-500/40">
-                <Film className="w-5 h-5 text-orange-400" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-orange-300">{mockData.exportedAssets.videos}</div>
-                <div className="text-sm text-orange-200">Videos</div>
-              </div>
-            </div>
-            <div className="text-xs text-orange-300">
-              Final videos
+            <div className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-semibold ${
+              true ? 'bg-green-500/20 text-green-300 border border-green-500/40' : 'bg-gray-500/20 text-gray-300 border border-gray-500/40'
+            }`}>
+              {true ? 'Active' : 'Inactive'}
             </div>
           </motion.div>
         </div>
 
-        {/* Export Actions */}
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Button
-            variant="outline"
-            className="border-gray-600/50 text-gray-300 hover:text-white hover:border-gray-500/70"
+        {/* Row 2: OpenAI (Sora), Google (Veo), Stability AI */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          {/* OpenAI Sora */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 1.0 }}
+            className="bg-gradient-to-br from-indigo-900/20 to-indigo-800/10 p-4 rounded-xl border-2 border-indigo-500/40 hover:border-indigo-400/60 transition-all duration-200"
           >
-            <Download className="w-4 h-4 mr-2" />
-            Export All Assets
-          </Button>
-          <Button
-            variant="outline"
-            className="border-gray-600/50 text-gray-300 hover:text-white hover:border-gray-500/70"
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center border border-indigo-500/40">
+                <span className="text-2xl">🤖</span>
+              </div>
+              <div>
+                <div className="text-lg font-bold text-indigo-300">OpenAI (Sora)</div>
+                <div className="text-sm text-indigo-200">Advanced Video AI</div>
+              </div>
+            </div>
+            <div className="text-xs text-indigo-300 mb-2">
+              State-of-the-art generation
+            </div>
+            <div className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-semibold ${
+              false ? 'bg-green-500/20 text-green-300 border border-green-500/40' : 'bg-gray-500/20 text-gray-300 border border-gray-500/40'
+            }`}>
+              {false ? 'Active' : 'Inactive'}
+            </div>
+          </motion.div>
+
+          {/* Google Veo */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 1.1 }}
+            className="bg-gradient-to-br from-red-900/20 to-red-800/10 p-4 rounded-xl border-2 border-red-500/40 hover:border-red-400/60 transition-all duration-200"
           >
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Export Analytics
-          </Button>
-          <Link href="/dashboard/settings/integrations">
-            <Button
-              variant="outline"
-              className="border-gray-600/50 text-gray-300 hover:text-white hover:border-gray-500/70"
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Export Settings
-            </Button>
-          </Link>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center border border-red-500/40">
+                <span className="text-2xl">🔍</span>
+              </div>
+              <div>
+                <div className="text-lg font-bold text-red-300">Google (Veo)</div>
+                <div className="text-sm text-red-200">Gemini Video</div>
+              </div>
+            </div>
+            <div className="text-xs text-red-300 mb-2">
+              Google's video AI
+            </div>
+            <div className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-semibold ${
+              true ? 'bg-green-500/20 text-green-300 border border-green-500/40' : 'bg-gray-500/20 text-gray-300 border border-gray-500/40'
+            }`}>
+              {true ? 'Active' : 'Inactive'}
+            </div>
+          </motion.div>
+
+          {/* Stability AI */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 1.2 }}
+            className="bg-gradient-to-br from-yellow-900/20 to-yellow-800/10 p-4 rounded-xl border-2 border-yellow-500/40 hover:border-yellow-400/60 transition-all duration-200"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center border border-yellow-500/40">
+                <span className="text-2xl">🎨</span>
+              </div>
+              <div>
+                <div className="text-lg font-bold text-yellow-300">Stability AI</div>
+                <div className="text-sm text-yellow-200">Creative AI Tools</div>
+              </div>
+            </div>
+            <div className="text-xs text-yellow-300 mb-2">
+              Stable Video Diffusion
+            </div>
+            <div className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-semibold ${
+              false ? 'bg-green-500/20 text-green-300 border border-green-500/40' : 'bg-gray-500/20 text-gray-300 border border-gray-500/40'
+            }`}>
+              {false ? 'Active' : 'Inactive'}
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Row 3: Replicate, Hugging Face, HeyGen */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          {/* Replicate */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 1.3 }}
+            className="bg-gradient-to-br from-cyan-900/20 to-cyan-800/10 p-4 rounded-xl border-2 border-cyan-500/40 hover:border-cyan-400/60 transition-all duration-200"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center border border-cyan-500/40">
+                <span className="text-2xl">⚡</span>
+              </div>
+              <div>
+                <div className="text-lg font-bold text-cyan-300">Replicate</div>
+                <div className="text-sm text-cyan-200">AI Model Hosting</div>
+              </div>
+            </div>
+            <div className="text-xs text-cyan-300 mb-2">
+              Open-source AI models
+            </div>
+            <div className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-semibold ${
+              true ? 'bg-green-500/20 text-green-300 border border-green-500/40' : 'bg-gray-500/20 text-gray-300 border border-gray-500/40'
+            }`}>
+              {true ? 'Active' : 'Inactive'}
+            </div>
+          </motion.div>
+
+          {/* Hugging Face */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 1.4 }}
+            className="bg-gradient-to-br from-pink-900/20 to-pink-800/10 p-4 rounded-xl border-2 border-pink-500/40 hover:border-pink-400/60 transition-all duration-200"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-pink-500/20 rounded-lg flex items-center justify-center border border-pink-500/40">
+                <span className="text-2xl">🤗</span>
+              </div>
+              <div>
+                <div className="text-lg font-bold text-pink-300">Hugging Face</div>
+                <div className="text-sm text-pink-200">AI Model Hub</div>
+              </div>
+            </div>
+            <div className="text-xs text-pink-300 mb-2">
+              Community AI models
+            </div>
+            <div className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-semibold ${
+              false ? 'bg-green-500/20 text-green-300 border border-green-500/40' : 'bg-gray-500/20 text-gray-300 border border-gray-500/40'
+            }`}>
+              {false ? 'Active' : 'Inactive'}
+            </div>
+          </motion.div>
+
+          {/* HeyGen */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 1.5 }}
+            className="bg-gradient-to-br from-emerald-900/20 to-emerald-800/10 p-4 rounded-xl border-2 border-emerald-500/40 hover:border-emerald-400/60 transition-all duration-200"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center border border-emerald-500/40">
+                <span className="text-2xl">🎭</span>
+              </div>
+              <div>
+                <div className="text-lg font-bold text-emerald-300">HeyGen</div>
+                <div className="text-sm text-emerald-200">Avatar Video AI</div>
+              </div>
+            </div>
+            <div className="text-xs text-emerald-300 mb-2">
+              Talking avatar videos
+            </div>
+            <div className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-semibold ${
+              true ? 'bg-green-500/20 text-green-300 border border-green-500/40' : 'bg-gray-500/20 text-gray-300 border border-gray-500/40'
+            }`}>
+              {true ? 'Active' : 'Inactive'}
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Row 4: Kaiber, HeyGen (duplicate), D-ID */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Kaiber */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 1.6 }}
+            className="bg-gradient-to-br from-violet-900/20 to-violet-800/10 p-4 rounded-xl border-2 border-violet-500/40 hover:border-violet-400/60 transition-all duration-200"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-violet-500/20 rounded-lg flex items-center justify-center border border-violet-500/40">
+                <span className="text-2xl">🎪</span>
+              </div>
+              <div>
+                <div className="text-lg font-bold text-violet-300">Kaiber</div>
+                <div className="text-sm text-violet-200">AI Video Creation</div>
+              </div>
+            </div>
+            <div className="text-xs text-violet-300 mb-2">
+              Creative video generation
+            </div>
+            <div className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-semibold ${
+              false ? 'bg-green-500/20 text-green-300 border border-green-500/40' : 'bg-gray-500/20 text-gray-300 border border-gray-500/40'
+            }`}>
+              {false ? 'Active' : 'Inactive'}
+            </div>
+          </motion.div>
+
+          {/* HeyGen (duplicate - keeping as requested) */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 1.7 }}
+            className="bg-gradient-to-br from-emerald-900/20 to-emerald-800/10 p-4 rounded-xl border-2 border-emerald-500/40 hover:border-emerald-400/60 transition-all duration-200"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center border border-emerald-500/40">
+                <span className="text-2xl">🎭</span>
+              </div>
+              <div>
+                <div className="text-lg font-bold text-emerald-300">HeyGen</div>
+                <div className="text-sm text-emerald-200">Avatar Video AI</div>
+              </div>
+            </div>
+            <div className="text-xs text-emerald-300 mb-2">
+              Talking avatar videos
+            </div>
+            <div className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-semibold ${
+              true ? 'bg-green-500/20 text-green-300 border border-green-500/40' : 'bg-gray-500/20 text-gray-300 border border-gray-500/40'
+            }`}>
+              {true ? 'Active' : 'Inactive'}
+            </div>
+          </motion.div>
+
+          {/* D-ID */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 1.8 }}
+            className="bg-gradient-to-br from-rose-900/20 to-rose-800/10 p-4 rounded-xl border-2 border-rose-500/40 hover:border-rose-400/60 transition-all duration-200"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-rose-500/20 rounded-lg flex items-center justify-center border border-rose-500/40">
+                <span className="text-2xl">👤</span>
+              </div>
+              <div>
+                <div className="text-lg font-bold text-rose-300">D-ID</div>
+                <div className="text-sm text-rose-200">Digital Human AI</div>
+              </div>
+            </div>
+            <div className="text-xs text-rose-300 mb-2">
+              Digital human creation
+            </div>
+            <div className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-semibold ${
+              false ? 'bg-green-500/20 text-green-300 border border-green-500/40' : 'bg-gray-500/20 text-gray-300 border border-gray-500/40'
+            }`}>
+              {false ? 'Active' : 'Inactive'}
+            </div>
+          </motion.div>
         </div>
       </div>
     </motion.div>
   )
 }
+
