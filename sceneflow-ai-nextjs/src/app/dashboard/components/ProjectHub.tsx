@@ -1,66 +1,13 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Plus, Play, Star, Calendar, Eye, Sparkles } from 'lucide-react'
+import { Plus, Sparkles, Eye, BookOpen } from 'lucide-react'
 import { useEnhancedStore } from '@/store/enhancedStore'
 import Link from 'next/link'
-
-interface Project {
-  id: string
-  title: string
-  description: string
-  currentStep: string
-  progress: number
-  status: string
-  createdAt: Date
-  updatedAt: Date
-  completedSteps: string[]
-  metadata?: {
-    genre?: string
-    duration?: number
-    targetAudience?: string
-    style?: string
-    concept?: string
-    keyMessage?: string
-    tone?: string
-  }
-}
+import { ProjectCard } from './ProjectCard'
 
 export function ProjectHub() {
   const { projects } = useEnhancedStore()
-  
-  const getStageDisplayName = (step: string) => {
-    const stageNames = {
-      'ideation': 'Vision Board',
-      'storyboard': 'Storyboard',
-      'scene-direction': "Director's Chair",
-      'video-generation': 'Video Lab'
-    }
-    return stageNames[step as keyof typeof stageNames] || step
-  }
-
-  const getStageNumber = (currentStep: string, completedSteps: string[]) => {
-    const allSteps = ['ideation', 'storyboard', 'scene-direction', 'video-generation']
-    const currentIndex = allSteps.indexOf(currentStep)
-    return currentIndex + 1
-  }
-
-  const getCueStrengthRating = (project: Project) => {
-    // Simulate AI rating based on project progress and metadata quality
-    const baseRating = 3.5
-    const progressBonus = (project.progress / 100) * 1.0
-    const metadataBonus = project.metadata?.concept && project.metadata?.keyMessage ? 0.5 : 0
-    const finalRating = Math.min(5.0, baseRating + progressBonus + metadataBonus)
-    return finalRating.toFixed(1)
-  }
-
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    }).format(new Date(date))
-  }
 
   if (projects.length === 0) {
     return (
@@ -68,51 +15,85 @@ export function ProjectHub() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.4 }}
-        className="bg-sf-surface rounded-2xl p-6 shadow border border-sf-border"
+        className="bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-gray-700/50 shadow-2xl p-8"
       >
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-sf-text-primary">Recent Projects</h2>
-          <Link href="/dashboard/projects">
-            <button 
-              className="text-sf-primary hover:text-sf-accent font-medium transition-colors"
-            >
-              View All
-            </button>
-          </Link>
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-bold text-white">My Projects</h2>
+          <div className="flex gap-3">
+            <Link href="/dashboard/projects/new">
+              <button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6 py-3 rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-200 font-semibold flex items-center gap-2">
+                <Plus className="w-5 h-5" />
+                + New Project
+              </button>
+            </Link>
+            
+            <Link href="/dashboard/project-bible">
+              <button className="bg-gray-700/50 hover:bg-gray-600/50 text-gray-200 px-6 py-3 rounded-xl border border-gray-600/50 transition-all duration-200 font-semibold flex items-center gap-2">
+                <BookOpen className="w-5 h-5" />
+                + New Series Bible
+              </button>
+            </Link>
+          </div>
         </div>
         
-        {/* Enhanced Empty State with Actionable Guidance - Hero gradient background */}
-        <div className="text-center py-16 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-blue-800/20 rounded-2xl border-2 border-blue-500/30 shadow-2xl">
-          <div className="w-28 h-28 bg-gradient-to-br from-blue-500/30 to-purple-500/30 rounded-full flex items-center justify-center mx-auto mb-8 border-2 border-blue-400/40 shadow-2xl">
-            <Sparkles className="w-16 h-16 text-blue-300" />
+        {/* Enhanced Empty State with Actionable Guidance */}
+        <div className="text-center py-20 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-blue-800/20 rounded-2xl border-2 border-blue-500/30 shadow-2xl">
+          <div className="w-32 h-32 bg-gradient-to-br from-blue-500/30 to-purple-500/30 rounded-full flex items-center justify-center mx-auto mb-8 border-2 border-blue-400/40 shadow-2xl">
+            <Sparkles className="w-20 h-20 text-blue-300" />
           </div>
           
-          <h3 className="text-3xl font-bold text-white mb-4">
+          <h3 className="text-4xl font-bold text-white mb-6">
             Ready to Create Your First Video?
           </h3>
           
-          <p className="text-blue-100 mb-8 max-w-lg mx-auto leading-relaxed text-lg">
-            Start your creative journey with SceneFlow AI. Our guided workflow will help you transform your ideas into professional videos.
+          <p className="text-blue-100 mb-8 max-w-2xl mx-auto leading-relaxed text-xl">
+            Start your creative journey with SceneFlow AI. Our guided 6-step workflow will help you transform your ideas into professional videos, with the option to export assets for external filming or generate AI videos with BYOK.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <Link href="/studio/crispr-debate-001">
-              <button className="bg-sf-primary text-white px-6 py-3 rounded-lg shadow-md hover:bg-sf-accent hover:shadow-sf-elevated transition-all duration-200 font-medium">
-                <Plus className="w-4 h-4 inline mr-2" />
+              <button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-8 py-4 rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-200 font-semibold text-lg flex items-center gap-3">
+                <Plus className="w-6 h-6" />
                 Start New Project
               </button>
             </Link>
             
             <Link href="/dashboard/templates">
-              <button className="bg-sf-surface-light text-sf-text-primary px-6 py-3 rounded-lg border border-sf-border hover:border-sf-primary/30 hover:shadow-sf-elevated transition-all duration-200 font-medium">
-                <Eye className="w-4 h-4 inline mr-2" />
+              <button className="bg-gray-700/50 hover:bg-gray-600/50 text-gray-200 px-8 py-4 rounded-xl border-2 border-gray-600/50 transition-all duration-200 font-semibold text-lg flex items-center gap-3">
+                <Eye className="w-6 h-6" />
                 Browse Templates
               </button>
             </Link>
           </div>
           
-          <p className="text-xs text-sf-text-secondary mt-4 max-w-sm mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <div className="text-center p-4">
+              <div className="w-16 h-16 bg-blue-500/20 rounded-xl flex items-center justify-center mx-auto mb-3 border border-blue-500/40">
+                <span className="text-2xl">🎬</span>
+              </div>
+              <h4 className="text-lg font-semibold text-white mb-2">Pre-Production Suite</h4>
+              <p className="text-blue-100 text-sm">Script analysis, storyboarding, and scene direction using analysis credits</p>
+            </div>
+            
+            <div className="text-center p-4">
+              <div className="w-16 h-16 bg-orange-500/20 rounded-xl flex items-center justify-center mx-auto mb-3 border border-orange-500/40">
+                <span className="text-2xl">🎥</span>
+              </div>
+              <h4 className="text-lg font-semibold text-white mb-2">AI Generation</h4>
+              <p className="text-blue-100 text-sm">Video generation with BYOK (Bring Your Own Key) for cost control</p>
+            </div>
+            
+            <div className="text-center p-4">
+              <div className="w-16 h-16 bg-green-500/20 rounded-xl flex items-center justify-center mx-auto mb-3 border border-green-500/40">
+                <span className="text-2xl">📁</span>
+              </div>
+              <h4 className="text-lg font-semibold text-white mb-2">Export Assets</h4>
+              <p className="text-blue-100 text-sm">Download pre-production materials for external filming teams</p>
+            </div>
+          </div>
+          
+          <p className="text-xs text-blue-200 mt-6 max-w-md mx-auto">
             💡 <strong>Pro tip:</strong> Use our AI-powered "The Spark Studio" to generate unique video concepts from any topic.
           </p>
         </div>
@@ -126,82 +107,52 @@ export function ProjectHub() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.4 }}
-      className="bg-sf-surface rounded-2xl p-6 shadow border border-sf-border"
+      className="bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-gray-700/50 shadow-2xl p-8"
     >
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-sf-text-primary">Recent Projects</h2>
-        <Link href="/dashboard/projects">
-          <button 
-            className="text-sf-primary hover:text-sf-accent font-medium transition-colors"
-          >
-            View All
-          </button>
-        </Link>
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h2 className="text-2xl font-bold text-white mb-2">My Projects</h2>
+          <p className="text-gray-400">Manage your video projects and track workflow progress</p>
+        </div>
+        
+        <div className="flex gap-3">
+          <Link href="/dashboard/projects/new">
+            <button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6 py-3 rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-200 font-semibold flex items-center gap-2">
+              <Plus className="w-5 h-5" />
+              + New Project
+            </button>
+          </Link>
+          
+          <Link href="/dashboard/project-bible">
+            <button className="bg-gray-700/50 hover:bg-gray-600/50 text-gray-200 px-6 py-3 rounded-xl border border-gray-600/50 transition-all duration-200 font-semibold flex items-center gap-2">
+              <BookOpen className="w-5 h-5" />
+              + New Series Bible
+            </button>
+          </Link>
+        </div>
       </div>
       
-      {/* Projects List */}
-      <div className="space-y-4">
-        {projects.slice(0, 5).map((project, index) => (
+      {/* Projects Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {projects.slice(0, 6).map((project, index) => (
           <motion.div
             key={project.id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4, delay: 0.5 + index * 0.1 }}
-            className="border border-sf-border rounded-lg p-4 hover:border-sf-primary/40 hover:shadow-sf-elevated transition-all duration-200 bg-sf-surface-light"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 + index * 0.1 }}
           >
-            <div className="flex items-center gap-4">
-              {/* Thumbnail Placeholder */}
-              <div className="w-16 h-16 bg-sf-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Eye className="w-6 h-6 text-sf-primary" />
-              </div>
-              
-              {/* Project Info */}
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-sf-text-primary mb-1 truncate">
-                  {project.title}
-                </h3>
-                
-                <div className="flex items-center gap-4 text-sm text-sf-text-secondary">
-                  <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 bg-sf-primary rounded-full"></span>
-                    {getStageDisplayName(project.currentStep)} ({getStageNumber(project.currentStep, project.completedSteps)}/4)
-                  </span>
-                  
-                  <span className="flex items-center gap-1">
-                    <Star className="w-3 h-3 text-sf-accent" />
-                    {getCueStrengthRating(project)}/5.0
-                  </span>
-                  
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {formatDate(project.updatedAt)}
-                  </span>
-                </div>
-              </div>
-              
-              {/* Continue Button */}
-              <Link href={`/dashboard/workflow/${project.currentStep}`}>
-                <button
-                  className="bg-sf-primary text-white px-4 py-2 rounded-lg hover:bg-sf-accent hover:shadow-sf-elevated transition-all duration-200 font-medium text-sm flex items-center gap-2"
-                >
-                  <Play className="w-3 h-3" />
-                  Continue
-                </button>
-              </Link>
-            </div>
+            <ProjectCard project={project} />
           </motion.div>
         ))}
       </div>
       
       {/* Show More Projects Link */}
-      {projects.length > 5 && (
-        <div className="text-center mt-6">
+      {projects.length > 6 && (
+        <div className="text-center mt-8">
           <Link href="/dashboard/projects">
-            <button
-              className="text-sf-primary hover:text-sf-accent font-medium transition-colors"
-            >
-              View {projects.length - 5} more projects →
+            <button className="text-blue-400 hover:text-blue-300 font-semibold transition-colors text-lg">
+              View {projects.length - 6} more projects →
             </button>
           </Link>
         </div>

@@ -16,9 +16,11 @@ import {
   Film,
   Menu,
   X,
-  BookOpen
+  BookOpen,
+  Download,
+  CheckCircle,
+  Wrench
 } from 'lucide-react'
-import { CheckCircle, Wrench } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -35,42 +37,54 @@ const workflowNav = [
     href: '/studio/crispr-debate-001', 
     icon: Sparkles,
     description: 'Ideation & Brainstorming',
-    step: 'ideation'
+    step: 'ideation',
+    phase: 1,
+    credits: 'Uses Analysis Credits'
   },
   { 
     name: 'Vision Board', 
     href: '/dashboard/workflow/storyboard', 
     icon: Layout,
     description: 'Storyboard & Planning',
-    step: 'storyboard'
+    step: 'storyboard',
+    phase: 1,
+    credits: 'Uses Analysis Credits'
   },
   { 
     name: 'The Director\'s Chair', 
     href: '/dashboard/workflow/scene-direction', 
     icon: Camera,
     description: 'Scene Direction & Control',
-    step: 'scene-direction'
+    step: 'scene-direction',
+    phase: 1,
+    credits: 'Uses Analysis Credits'
   },
   { 
-    name: 'The Screening Room', 
+    name: 'Video Generation', 
     href: '/dashboard/workflow/video-generation', 
     icon: Film,
-    description: 'Video Generation',
-    step: 'video-generation'
+    description: 'AI Video Generation',
+    step: 'video-generation',
+    phase: 2,
+    credits: '🔑 BYOK Required'
   },
   { 
     name: 'Quality Review', 
     href: '/dashboard/workflow/review', 
     icon: CheckCircle,
     description: 'Assess & validate quality',
-    step: 'review'
+    step: 'review',
+    phase: 2,
+    credits: '🔑 BYOK Required'
   },
   { 
     name: 'Optimization', 
     href: '/dashboard/workflow/optimization', 
     icon: Wrench,
     description: 'Improve & finalize',
-    step: 'optimization'
+    step: 'optimization',
+    phase: 2,
+    credits: '🔑 BYOK Required'
   },
 ]
 
@@ -86,6 +100,10 @@ export function Sidebar() {
 
   const isActive = (href: string) => pathname === href
   const isCurrentStep = (step: string) => currentStep === step
+
+  // Group workflow steps by phase
+  const phase1Steps = workflowNav.filter(item => item.phase === 1)
+  const phase2Steps = workflowNav.filter(item => item.phase === 2)
 
   return (
     <>
@@ -163,37 +181,90 @@ export function Sidebar() {
                 })}
               </nav>
 
-              {/* Workflow Navigation */}
-              <h3 className="nav-section-header mb-4 text-base font-bold text-gray-300 tracking-wide">
-                WORKFLOW
-              </h3>
-              <nav className="space-y-2 mb-8">
-                {workflowNav.map((item) => {
-                  const Icon = item.icon
-                  const isActiveItem = isActive(item.href) || isCurrentStep(item.step)
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={`flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-all duration-200 ${
-                        isActiveItem 
-                          ? 'bg-sf-primary/15 text-white border-l-4 border-sf-primary shadow-lg' 
-                          : 'text-gray-200 hover:text-white hover:bg-gray-800/50 hover:translate-x-1'
-                      }`}
-                    >
-                      <Icon className={`mr-4 h-6 w-6 ${isActiveItem ? 'text-sf-primary' : 'text-gray-400'}`} />
-                      <div className="flex-1 min-w-0">
-                        <div className={`text-base font-semibold transition-colors leading-tight ${isActiveItem ? 'text-white' : 'text-gray-200'}`}>
-                          {item.name}
+              {/* Phase 1: Pre-Production Suite */}
+              <div className="mb-8">
+                <h3 className="nav-section-header mb-4 text-base font-bold text-blue-300 tracking-wide">
+                  PHASE 1: PRE-PRODUCTION SUITE
+                </h3>
+                <p className="text-xs text-blue-200 mb-3 px-4">
+                  Uses Analysis Credits
+                </p>
+                <nav className="space-y-2 mb-4">
+                  {phase1Steps.map((item) => {
+                    const Icon = item.icon
+                    const isActiveItem = isActive(item.href) || isCurrentStep(item.step)
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={`flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-all duration-200 ${
+                          isActiveItem 
+                            ? 'bg-blue-500/15 text-white border-l-4 border-blue-500 shadow-lg' 
+                            : 'text-gray-200 hover:text-white hover:bg-gray-800/50 hover:translate-x-1'
+                        }`}
+                      >
+                        <Icon className={`mr-4 h-6 w-6 ${isActiveItem ? 'text-blue-400' : 'text-gray-400'}`} />
+                        <div className="flex-1 min-w-0">
+                          <div className={`text-base font-semibold transition-colors leading-tight ${isActiveItem ? 'text-white' : 'text-gray-200'}`}>
+                            {item.name}
+                          </div>
+                          <div className={`text-sm transition-colors mt-1 text-gray-400 leading-tight ${isActiveItem ? 'text-blue-400/80' : 'text-gray-400'}`}>
+                            {item.description}
+                          </div>
                         </div>
-                        <div className={`text-sm transition-colors mt-1 text-gray-400 leading-tight ${isActiveItem ? 'text-sf-primary/80' : 'text-gray-400'}`}>
-                          {item.description}
+                      </Link>
+                    )
+                  })}
+                </nav>
+                
+                {/* Export Assets Off-ramp */}
+                <div className="mx-4 mb-4 p-3 bg-green-500/10 rounded-lg border border-green-500/30">
+                  <div className="flex items-center gap-2 text-green-300 text-sm">
+                    <Download className="w-4 h-4" />
+                    <span className="font-medium">Export Assets for External Filming</span>
+                  </div>
+                  <p className="text-xs text-green-200 mt-1">
+                    Download pre-production materials to share with your team
+                  </p>
+                </div>
+              </div>
+
+              {/* Phase 2: Generation & Post */}
+              <div className="mb-8">
+                <h3 className="nav-section-header mb-4 text-base font-bold text-orange-300 tracking-wide">
+                  PHASE 2: GENERATION & POST
+                </h3>
+                <p className="text-xs text-orange-200 mb-3 px-4">
+                  🔑 BYOK Required
+                </p>
+                <nav className="space-y-2">
+                  {phase2Steps.map((item) => {
+                    const Icon = item.icon
+                    const isActiveItem = isActive(item.href) || isCurrentStep(item.step)
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={`flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-all duration-200 ${
+                          isActiveItem 
+                            ? 'bg-orange-500/15 text-white border-l-4 border-orange-500 shadow-lg' 
+                            : 'text-gray-200 hover:text-white hover:bg-gray-800/50 hover:translate-x-1'
+                        }`}
+                      >
+                        <Icon className={`mr-4 h-6 w-6 ${isActiveItem ? 'text-orange-400' : 'text-gray-400'}`} />
+                        <div className="flex-1 min-w-0">
+                          <div className={`text-base font-semibold transition-colors leading-tight ${isActiveItem ? 'text-white' : 'text-gray-200'}`}>
+                            {item.name}
+                          </div>
+                          <div className={`text-sm transition-colors mt-1 text-gray-400 leading-tight ${isActiveItem ? 'text-orange-400/80' : 'text-gray-400'}`}>
+                            {item.description}
+                          </div>
                         </div>
-                      </div>
-                    </Link>
-                  )
-                })}
-              </nav>
+                      </Link>
+                    )
+                  })}
+                </nav>
+              </div>
 
               {/* Settings Navigation */}
               <h3 className="nav-section-header mb-4 text-base font-bold text-gray-300 tracking-wide">
