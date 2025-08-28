@@ -16,20 +16,27 @@ import {
   Wrench
 } from 'lucide-react';
 
-// Mock utility functions - replace with actual implementations
+import { storyMutationService } from '@/services/storyMutationService';
+
+// Utility functions using live services
 const openReviewModal = (mutation: any) => {
   console.log('Opening review modal for:', mutation);
-  // Implement modal opening logic
+  // TODO: Implement modal opening logic
+  // This would typically trigger a state change in the parent component
 };
 
-const undoMutation = (mutation: any) => {
-  console.log('Undoing mutation:', mutation);
-  // Implement undo logic
+const undoMutation = async (mutation: any) => {
+  try {
+    await storyMutationService.undoLastMutation();
+  } catch (error) {
+    console.error('Failed to undo mutation:', error);
+  }
 };
 
 const discussWithCue = (recommendation: StoryRecommendation) => {
   console.log('Discussing with Cue:', recommendation);
-  // Implement Cue integration
+  // TODO: Implement Cue integration
+  // This would typically open the Cue sidebar with the recommendation context
 };
 
 interface Props {

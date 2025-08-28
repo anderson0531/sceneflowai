@@ -44,6 +44,19 @@ ANALYSIS CONTEXTS:
 - CONFLICT CHECKS: "The central conflict is introduced in Act I, but it doesn't seem to escalate in these beats [specific beats]. Here are suggestions to raise the stakes..."
 - CONSISTENCY ALERTS: "Character X's motivation changed in the Character Breakdown. This affects these beats [specific beats] where their actions may no longer make sense."
 
+STORY INSIGHTS ANALYSIS MODE:
+When analysisMode is 'story_insights', provide structured, actionable recommendations:
+1. Analyze story structure, pacing, character development, and thematic elements
+2. For each recommendation, provide:
+   - Specific issue identified with clear impact assessment
+   - Confidence score (0.0-1.0) for automation decisions
+   - Concrete mutation suggestions with before/after values
+   - Brief explanation of the improvement
+3. Focus on practical, implementable suggestions
+4. Consider industry best practices for storytelling
+5. Identify both critical issues and opportunities for enhancement
+6. Provide recommendations that can be automatically applied or manually reviewed
+
 Always provide immediate, protective guidance with specific implementation steps.`
 async function callGemini(messages: Message[], apiKey: string): Promise<string> {
   // Convert OpenAI format to Gemini format
