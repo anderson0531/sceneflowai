@@ -86,10 +86,15 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
 
   if (isLoading) {
     return (
-      <div className={`bg-gray-900 rounded-lg border border-gray-700 p-6 ${className}`}>
-        <div className="flex items-center justify-center py-8">
-          <RefreshCw className="w-6 h-6 text-blue-400 animate-spin mr-3" />
-          <span className="text-gray-300">Analyzing your story...</span>
+      <div className={`bg-gray-900/95 backdrop-blur-sm rounded-xl border border-gray-700/50 shadow-2xl p-6 ${className}`}>
+        <div className="text-center py-12">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-blue-500/30">
+            <RefreshCw className="w-8 h-8 text-blue-300 animate-spin" />
+          </div>
+          <h4 className="text-xl font-bold text-gray-200 mb-3">Analyzing Your Story</h4>
+          <p className="text-base text-gray-400 leading-relaxed max-w-sm mx-auto">
+            The AI is examining your story structure, characters, and pacing to provide personalized recommendations.
+          </p>
         </div>
       </div>
     );
@@ -162,16 +167,18 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
       </div>
 
       {/* Controls */}
-      <div className="p-4 border-b border-gray-700 bg-gray-800/50">
+      <div className="p-5 border-b border-gray-700/50 bg-gradient-to-r from-gray-800/60 to-gray-700/40">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-5">
             {/* Filter */}
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-400" />
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gray-700/50 rounded-lg">
+                <Filter className="w-4 h-4 text-gray-300" />
+              </div>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value as any)}
-                className="bg-gray-700 border border-gray-600 rounded px-3 py-1 text-sm text-white"
+                className="bg-gray-700/80 border border-gray-600/50 rounded-lg px-4 py-2 text-sm text-white font-medium focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 transition-all duration-200"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending Review</option>
@@ -181,12 +188,14 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
             </div>
 
             {/* Sort */}
-            <div className="flex items-center gap-2">
-              <SortAsc className="w-4 h-4 text-gray-400" />
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gray-700/50 rounded-lg">
+                <SortAsc className="w-4 h-4 text-gray-300" />
+              </div>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-gray-700 border border-gray-600 rounded px-3 py-1 text-sm text-white"
+                className="bg-gray-700/80 border border-gray-600/50 rounded-lg px-4 py-2 text-sm text-white font-medium focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 transition-all duration-200"
               >
                 <option value="impact">Sort by Impact</option>
                 <option value="confidence">Sort by Confidence</option>
@@ -199,7 +208,7 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
             variant="ghost"
             size="sm"
             onClick={() => window.location.reload()}
-            className="text-gray-400 hover:text-white"
+            className="text-gray-300 hover:text-white hover:bg-gray-700/50 px-4 py-2.5 rounded-lg font-medium transition-all duration-200"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh Analysis
@@ -210,23 +219,25 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
       {/* Recommendations List */}
       <div className="p-6">
         {filteredRecommendations.length === 0 ? (
-          <div className="text-center py-8">
-            <Shield className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-            <h4 className="text-lg font-semibold text-gray-400 mb-2">
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-800/50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Shield className="w-8 h-8 text-gray-400" />
+            </div>
+            <h4 className="text-xl font-bold text-gray-300 mb-3">
               {filterStatus === 'all' 
                 ? 'No recommendations yet' 
                 : `No ${filterStatus} recommendations`
               }
             </h4>
-            <p className="text-sm text-gray-500">
+            <p className="text-base text-gray-400 leading-relaxed max-w-sm mx-auto">
               {filterStatus === 'all' 
-                ? 'Your story analysis will appear here once complete.'
-                : 'Try adjusting your filters or refresh the analysis.'
+                ? 'Your story analysis will appear here once complete. The AI is analyzing your story structure and will provide actionable recommendations.'
+                : 'Try adjusting your filters or refresh the analysis to see more recommendations.'
               }
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-5">
             {filteredRecommendations.map((recommendation) => (
               <RecommendationCard
                 key={recommendation.id}
