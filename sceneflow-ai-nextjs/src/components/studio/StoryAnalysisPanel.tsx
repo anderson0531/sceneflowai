@@ -196,7 +196,7 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Shield className="w-6 h-6 text-green-400" />
-            <h3 className="text-lg font-bold text-white">Story Guardrails</h3>
+            <h3 className="text-lg font-bold text-white">Director's Notes</h3>
           </div>
           <div className="flex items-center gap-2">
             {isAnalyzing && (
