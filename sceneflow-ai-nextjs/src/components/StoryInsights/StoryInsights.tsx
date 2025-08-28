@@ -101,17 +101,17 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
   }
 
   return (
-    <div className={`bg-gray-900 rounded-lg border border-gray-700 ${className}`}>
+    <div className={`bg-gray-900/95 backdrop-blur-sm rounded-xl border border-gray-700/50 shadow-2xl ${className}`}>
       {/* Header */}
-      <div className="p-6 border-b border-gray-700">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/20 rounded-lg border border-blue-500/30">
-              <Shield className="w-6 h-6 text-blue-400" />
+      <div className="p-6 border-b border-gray-700/50">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl border border-blue-500/40 shadow-lg">
+              <Shield className="w-7 h-7 text-blue-300" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-white">Director's Notes</h3>
-              <p className="text-sm text-gray-400">
+              <h3 className="text-2xl font-bold text-white mb-1">Director's Notes</h3>
+              <p className="text-base text-gray-300 font-medium">
                 AI-powered story analysis and recommendations
               </p>
             </div>
@@ -121,10 +121,10 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
             variant="outline"
             size="sm"
             onClick={toggleInteractionMode}
-            className={`flex items-center gap-2 ${
+            className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg font-semibold transition-all duration-200 ${
               mode === 'CoPilot' 
-                ? 'border-green-500/50 text-green-400 hover:bg-green-500/10' 
-                : 'border-blue-500/50 text-blue-400 hover:bg-blue-500/10'
+                ? 'border-green-500/60 text-green-300 hover:bg-green-500/15 hover:border-green-400/70 shadow-lg shadow-green-500/10' 
+                : 'border-blue-500/60 text-blue-300 hover:bg-blue-500/15 hover:border-blue-400/70 shadow-lg shadow-blue-500/10'
             }`}
           >
             <Zap className="w-4 h-4" />
@@ -133,12 +133,12 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
         </div>
 
         {/* Mode Description */}
-        <div className={`p-3 rounded-lg ${
+        <div className={`p-4 rounded-xl border-2 ${
           mode === 'CoPilot' 
-            ? 'bg-green-900/20 border border-green-500/30' 
-            : 'bg-blue-900/20 border border-blue-500/30'
+            ? 'bg-gradient-to-r from-green-900/30 to-emerald-900/20 border-green-500/40 shadow-lg shadow-green-500/10' 
+            : 'bg-gradient-to-r from-blue-900/30 to-indigo-900/20 border-blue-500/40 shadow-lg shadow-blue-500/10'
         }`}>
-          <p className="text-sm text-gray-300">
+          <p className="text-base text-gray-200 font-medium leading-relaxed">
             {mode === 'CoPilot' 
               ? '🤖 AI will automatically apply low-risk, high-confidence recommendations. You can review and undo changes.'
               : '👁️ All recommendations require manual review before application. Full control over every change.'
@@ -147,19 +147,19 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
         </div>
 
         {/* Status Summary */}
-        <div className="flex items-center gap-4 mt-4">
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-yellow-400 border-yellow-500/30">
+        <div className="flex items-center gap-5 mt-6">
+          <div className="flex items-center gap-2.5">
+            <Badge variant="outline" className="text-yellow-300 border-yellow-500/50 bg-yellow-900/20 px-3 py-1.5 text-sm font-semibold">
               {statusCounts.pending} Pending
             </Badge>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-green-400 border-green-500/30">
+          <div className="flex items-center gap-2.5">
+            <Badge className="text-green-300 border-green-500/50 bg-green-900/30 px-3 py-1.5 text-sm font-semibold shadow-lg shadow-green-500/20">
               {statusCounts.applied} Applied
             </Badge>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-gray-400 border-gray-500/30">
+          <div className="flex items-center gap-2.5">
+            <Badge variant="outline" className="text-gray-300 border-gray-500/50 bg-gray-800/30 px-3 py-1.5 text-sm font-semibold">
               {statusCounts.dismissed} Dismissed
             </Badge>
           </div>
