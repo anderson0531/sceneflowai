@@ -628,6 +628,139 @@ export function DashboardOverview() {
           </motion.div>
         </div>
       </div>
+
+      {/* Row 4: Production Assets */}
+      <div className="p-6 border-t border-gray-700/50">
+        <div className="flex items-center gap-3 mb-4">
+          <Download className="w-5 h-5 text-emerald-400" />
+          <h3 className="text-lg font-semibold text-white">Production Assets</h3>
+          <div className="ml-auto">
+            <Link href="/dashboard/settings/integrations">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-emerald-500/50 text-emerald-300 hover:text-white hover:border-emerald-400/70"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Manage Assets
+              </Button>
+            </Link>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {/* Scripts */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 1.9 }}
+            className="bg-gradient-to-br from-indigo-900/20 to-indigo-800/10 p-4 rounded-xl border-2 border-indigo-500/40 hover:border-indigo-400/60 transition-all duration-200"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center border border-indigo-500/40">
+                <FileText className="w-5 h-5 text-indigo-400" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-indigo-300">24</div>
+                <div className="text-sm text-indigo-200">Scripts</div>
+              </div>
+            </div>
+            <div className="text-xs text-indigo-300">
+              Finalized scripts
+            </div>
+          </motion.div>
+
+          {/* Storyboards */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 2.0 }}
+            className="bg-gradient-to-br from-purple-900/20 to-purple-800/10 p-4 rounded-xl border-2 border-purple-500/40 hover:border-purple-400/60 transition-all duration-200"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center border border-purple-500/40">
+                <Eye className="w-5 h-5 text-purple-400" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-purple-300">18</div>
+                <div className="text-sm text-purple-200">Storyboards</div>
+              </div>
+            </div>
+            <div className="text-xs text-purple-300">
+              Visual planning
+            </div>
+          </motion.div>
+
+          {/* Scene Direction */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 2.1 }}
+            className="bg-gradient-to-br from-green-900/20 to-green-800/10 p-4 rounded-xl border-2 border-green-500/40 hover:border-green-400/60 transition-all duration-200"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center border border-green-500/40">
+                <Camera className="w-5 h-5 text-green-400" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-green-300">12</div>
+                <div className="text-sm text-green-200">Scene Direction</div>
+              </div>
+            </div>
+            <div className="text-xs text-green-300">
+              Director's notes
+            </div>
+          </motion.div>
+
+          {/* Videos */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 2.2 }}
+            className="bg-gradient-to-br from-orange-900/20 to-orange-800/10 p-4 rounded-xl border-2 border-orange-500/40 hover:border-orange-400/60 transition-all duration-200"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center border border-orange-500/40">
+                <Film className="w-5 h-5 text-orange-400" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-orange-300">8</div>
+                <div className="text-sm text-orange-200">Videos</div>
+              </div>
+            </div>
+            <div className="text-xs text-orange-300">
+              Final videos
+            </div>
+          </motion.div>
+
+          {/* Storage */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 2.3 }}
+            className="bg-gradient-to-br from-cyan-900/20 to-cyan-800/10 p-4 rounded-xl border-2 border-cyan-500/40 hover:border-cyan-400/60 transition-all duration-200"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center border border-cyan-500/40">
+                <span className="text-2xl">💾</span>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-cyan-300">2.4 GB</div>
+                <div className="text-sm text-cyan-200">Used</div>
+              </div>
+            </div>
+            <div className="text-xs text-cyan-300 mb-2">
+              of 10 GB available
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-2">
+              <div 
+                className="bg-cyan-500 h-2 rounded-full transition-all duration-300"
+                style={{ width: '24%' }}
+              ></div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
     </motion.div>
   )
 }
