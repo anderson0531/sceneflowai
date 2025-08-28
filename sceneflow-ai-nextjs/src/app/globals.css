@@ -658,4 +658,44 @@
   [data-panel-id] > * {
     transition: all 0.2s ease;
   }
+
+  /* Header App Name Text Size Overrides - Maximum Specificity */
+  header .app-name-text,
+  header .app-name-text *,
+  header [class*="app-name"] *,
+  header .font-bold[class*="text-"] {
+    font-size: inherit !important;
+    line-height: inherit !important;
+  }
+
+  /* Specific overrides for SceneFlow AI app name */
+  header .text-3xl,
+  header .text-2xl,
+  header .text-xl {
+    font-size: inherit !important;
+    line-height: inherit !important;
+  }
+
+  /* Force override for any global CSS that might be affecting headers */
+  header h1,
+  header h2,
+  header h3,
+  header .font-bold {
+    font-size: inherit !important;
+    line-height: inherit !important;
+  }
+
+  /* Dashboard header specific overrides */
+  .navigation-bar .font-bold.text-3xl,
+  .navigation-bar .font-bold.text-2xl {
+    font-size: inherit !important;
+    line-height: inherit !important;
+  }
+
+  /* Landing page header specific overrides */
+  header .text-2xl.font-bold,
+  header .text-3xl.font-bold {
+    font-size: inherit !important;
+    line-height: inherit !important;
+  }
 }
