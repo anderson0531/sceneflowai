@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { 
   FolderOpen, 
@@ -16,7 +17,9 @@ import {
   Download,
   Settings,
   Plus,
-  BookOpen
+  BookOpen,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react'
 import { useEnhancedStore } from '@/store/enhancedStore'
 import Link from 'next/link'
@@ -24,6 +27,12 @@ import { Button } from '@/components/ui/Button'
 
 export function DashboardOverview() {
   const { projects, user } = useEnhancedStore()
+  
+  // State for section visibility
+  const [isProjectStatusExpanded, setIsProjectStatusExpanded] = useState(true)
+  const [isPlanCreditsExpanded, setIsPlanCreditsExpanded] = useState(true)
+  const [isVideoPlatformsExpanded, setIsVideoPlatformsExpanded] = useState(true)
+  const [isProductionAssetsExpanded, setIsProductionAssetsExpanded] = useState(true)
 
   // Mock data for demonstration - replace with real backend data later
   const mockData = {
@@ -76,103 +85,113 @@ export function DashboardOverview() {
         <div className="flex items-center gap-3 mb-4">
           <BarChart3 className="w-5 h-5 text-blue-400" />
           <h3 className="text-lg font-semibold text-white">Project Status</h3>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-3">
             <span className="text-sm text-gray-400">Completion Rate:</span>
-            <span className="ml-2 text-lg font-bold text-green-400">{completionRate}%</span>
+            <span className="text-lg font-bold text-green-400">{completionRate}%</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsProjectStatusExpanded(!isProjectStatusExpanded)}
+              className="text-gray-400 hover:text-white"
+            >
+              {isProjectStatusExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </Button>
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Active Projects */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="bg-gradient-to-br from-blue-900/20 to-blue-800/10 p-4 rounded-xl border-2 border-blue-500/40 hover:border-blue-400/60 transition-all duration-200"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center border border-blue-500/40">
-                <FolderOpen className="w-5 h-5 text-blue-400" />
+        {isProjectStatusExpanded && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Active Projects */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="bg-gray-800 p-4 rounded-xl border border-gray-600 hover:border-gray-500 transition-all duration-200"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <FolderOpen className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">{mockData.projectCounts.active}</div>
+                  <div className="text-sm text-gray-300">Active</div>
+                </div>
               </div>
-              <div>
-                <div className="text-2xl font-bold text-blue-300">{mockData.projectCounts.active}</div>
-                <div className="text-sm text-blue-200">Active</div>
+              <div className="text-xs text-gray-400 mb-3">
+                Currently in progress
               </div>
-            </div>
-            <div className="text-xs text-blue-300 mb-3">
-              Currently in progress
-            </div>
-            <Link href="/studio/crispr-debate-001">
-              <Button
-                size="sm"
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white text-xs"
-              >
-                <Plus className="w-3 h-3 mr-1" />
-                Start Project
-              </Button>
-            </Link>
-          </motion.div>
+              <Link href="/studio/crispr-debate-001">
+                <Button
+                  size="sm"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs"
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Start Project
+                </Button>
+              </Link>
+            </motion.div>
 
-          {/* Total Projects */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-            className="bg-gradient-to-br from-green-900/20 to-green-800/10 p-4 rounded-xl border-2 border-green-500/40 hover:border-green-400/60 transition-all duration-200"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center border border-green-500/40">
-                <CheckCircle className="w-5 h-5 text-green-400" />
+            {/* Total Projects */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+              className="bg-gray-800 p-4 rounded-xl border border-gray-600 hover:border-gray-500 transition-all duration-200"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">{totalProjects}</div>
+                  <div className="text-sm text-gray-300">Total</div>
+                </div>
               </div>
-              <div>
-                <div className="text-2xl font-bold text-green-300">{totalProjects}</div>
-                <div className="text-sm text-green-200">Total</div>
+              <div className="text-xs text-gray-400 mb-3">
+                All projects
               </div>
-            </div>
-            <div className="text-xs text-green-300 mb-3">
-              All projects
-            </div>
-            <Link href="/dashboard/projects">
-              <Button
-                size="sm"
-                className="w-full bg-green-500 hover:bg-green-600 text-white text-xs"
-              >
-                <Eye className="w-3 h-3 mr-1" />
-                Manage Projects
-              </Button>
-            </Link>
-          </motion.div>
+              <Link href="/dashboard/projects">
+                <Button
+                  size="sm"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white text-xs"
+                >
+                  <Eye className="w-3 h-3 mr-1" />
+                  Manage Projects
+                </Button>
+              </Link>
+            </motion.div>
 
-          {/* Series Projects */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-            className="bg-gradient-to-br from-purple-900/20 to-purple-800/10 p-4 rounded-xl border-2 border-purple-500/40 hover:border-purple-400/60 transition-all duration-200"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center border border-purple-500/40">
-                <BookOpen className="w-5 h-5 text-purple-400" />
+            {/* Series Projects */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4, delay: 0.3 }}
+              className="bg-gray-800 p-4 rounded-xl border border-gray-600 hover:border-gray-500 transition-all duration-200"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                  <BookOpen className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">{mockData.projectCounts.canceled}</div>
+                  <div className="text-sm text-gray-300">Series</div>
+                </div>
               </div>
-              <div>
-                <div className="text-2xl font-bold text-purple-300">{mockData.projectCounts.canceled}</div>
-                <div className="text-sm text-purple-200">Series</div>
+              <div className="text-xs text-gray-400 mb-3">
+                Series bibles
               </div>
-            </div>
-            <div className="text-xs text-purple-300 mb-3">
-              Series bibles
-            </div>
-            <Link href="/dashboard/project-bible">
-              <Button
-                size="sm"
-                className="w-full bg-purple-500 hover:bg-purple-600 text-white text-xs"
-              >
-                <BookOpen className="w-3 h-3 mr-1" />
-                Manage Series
-              </Button>
-            </Link>
-          </motion.div>
-        </div>
+              <Link href="/dashboard/projects">
+                <Button
+                  size="sm"
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs"
+                >
+                  <BookOpen className="w-3 h-3 mr-1" />
+                  Manage Series
+                </Button>
+              </Link>
+            </motion.div>
+          </div>
+        )}
       </div>
 
       {/* Row 2: Current Plan & Credits */}
@@ -180,109 +199,119 @@ export function DashboardOverview() {
         <div className="flex items-center gap-3 mb-4">
           <CreditCard className="w-5 h-5 text-purple-400" />
           <h3 className="text-lg font-semibold text-white">Plan & Credits</h3>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-3">
             <span className="text-sm text-gray-400">Next Billing:</span>
-            <span className="ml-2 text-sm font-medium text-purple-300">{mockData.currentPlan.nextBilling}</span>
+            <span className="text-sm font-medium text-purple-300">{mockData.currentPlan.nextBilling}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsPlanCreditsExpanded(!isPlanCreditsExpanded)}
+              className="text-gray-400 hover:text-white"
+            >
+              {isPlanCreditsExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </Button>
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Current Plan */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: 0.4 }}
-            className="bg-gradient-to-br from-purple-900/20 to-purple-800/10 p-4 rounded-xl border-2 border-purple-500/40 hover:border-purple-400/60 transition-all duration-200"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center border border-purple-500/40">
-                <CreditCard className="w-5 h-5 text-purple-400" />
+        {isPlanCreditsExpanded && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Current Plan */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4, delay: 0.4 }}
+              className="bg-gray-800 p-4 rounded-xl border border-gray-600 hover:border-gray-500 transition-all duration-200"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                  <CreditCard className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-white capitalize">{mockData.currentPlan.tier}</div>
+                  <div className="text-sm text-gray-300">Current Plan</div>
+                </div>
               </div>
-              <div>
-                <div className="text-lg font-bold text-purple-300 capitalize">{mockData.currentPlan.tier}</div>
-                <div className="text-sm text-purple-200">Current Plan</div>
+              <div className="text-xs text-gray-400 mb-3">
+                {mockData.currentPlan.monthlyCredits} credits/month
               </div>
-            </div>
-            <div className="text-xs text-purple-300 mb-3">
-              {mockData.currentPlan.monthlyCredits} credits/month
-            </div>
-            <Link href="/dashboard/settings/billing">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full border-purple-500/50 text-purple-300 hover:text-white hover:border-purple-400/70 hover:bg-purple-500/20"
-              >
-                Manage Plan
-              </Button>
-            </Link>
-          </motion.div>
+              <Link href="/dashboard/settings/billing">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-purple-500/50 text-purple-300 hover:text-white hover:border-purple-400/70 hover:bg-purple-500/20"
+                >
+                  Manage Plan
+                </Button>
+              </Link>
+            </motion.div>
 
-          {/* Available Credits */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: 0.5 }}
-            className="bg-gradient-to-br from-blue-900/20 to-blue-800/10 p-4 rounded-xl border-2 border-blue-500/40 hover:border-blue-400/60 transition-all duration-200"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center border border-blue-500/40">
-                <Zap className="w-5 h-5 text-blue-400" />
+            {/* Available Credits */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4, delay: 0.5 }}
+              className="bg-gray-800 p-4 rounded-xl border border-gray-600 hover:border-gray-500 transition-all duration-200"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">{mockData.currentPlan.availableCredits}</div>
+                  <div className="text-sm text-gray-300">Available Credits</div>
+                </div>
               </div>
-              <div>
-                <div className="text-2xl font-bold text-blue-300">{mockData.currentPlan.availableCredits}</div>
-                <div className="text-sm text-blue-200">Available Credits</div>
+              <div className="text-xs text-gray-400 mb-3">
+                {Math.round((mockData.currentPlan.availableCredits / mockData.currentPlan.monthlyCredits) * 100)}% of monthly allocation
               </div>
-            </div>
-            <div className="text-xs text-blue-300 mb-3">
-              {Math.round((mockData.currentPlan.availableCredits / mockData.currentPlan.monthlyCredits) * 100)}% of monthly allocation
-            </div>
-            <div className="w-full bg-gray-700 rounded-full h-2 mb-3">
-              <div 
-                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(mockData.currentPlan.availableCredits / mockData.currentPlan.monthlyCredits) * 100}%` }}
-              ></div>
-            </div>
-            <Link href="/dashboard/settings/billing">
-              <Button
-                size="sm"
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white text-xs"
-              >
-                <CreditCard className="w-3 h-3 mr-1" />
-                Manage Credits
-              </Button>
-            </Link>
-          </motion.div>
+              <div className="w-full bg-gray-700 rounded-full h-2 mb-3">
+                <div 
+                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${(mockData.currentPlan.availableCredits / mockData.currentPlan.monthlyCredits) * 100}%` }}
+                ></div>
+              </div>
+              <Link href="/dashboard/settings/billing">
+                <Button
+                  size="sm"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs"
+                >
+                  <CreditCard className="w-3 h-3 mr-1" />
+                  Manage Credits
+                </Button>
+              </Link>
+            </motion.div>
 
-          {/* Credit Management */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: 0.6 }}
-            className="bg-gradient-to-br from-green-900/20 to-green-800/10 p-4 rounded-xl border-2 border-green-500/40 hover:border-green-400/60 transition-all duration-200"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center border border-green-500/40">
-                <TrendingUp className="w-5 h-5 text-green-400" />
+            {/* Credit Management */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4, delay: 0.6 }}
+              className="bg-gray-800 p-4 rounded-xl border border-gray-600 hover:border-gray-500 transition-all duration-200"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-white">Credit Usage</div>
+                  <div className="text-sm text-gray-300">Analytics</div>
+                </div>
               </div>
-              <div>
-                <div className="text-lg font-bold text-green-300">Credit Usage</div>
-                <div className="text-sm text-green-200">Analytics</div>
+              <div className="text-xs text-gray-400 mb-3">
+                Track your credit consumption
               </div>
-            </div>
-            <div className="text-xs text-green-300 mb-3">
-              Track your credit consumption
-            </div>
-            <Link href="/dashboard/settings/billing">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full border-green-500/50 text-green-300 hover:text-white hover:border-green-400/70 hover:bg-green-500/20"
-              >
-                View Analytics
-              </Button>
-            </Link>
-          </motion.div>
-        </div>
+              <Link href="/dashboard/settings/billing">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-green-500/50 text-green-300 hover:text-white hover:border-green-400/70 hover:bg-green-500/20"
+                >
+                  View Analytics
+                </Button>
+              </Link>
+            </motion.div>
+          </div>
+        )}
       </div>
 
       {/* Row 3: Video Generation Platforms */}
@@ -290,7 +319,15 @@ export function DashboardOverview() {
         <div className="flex items-center gap-3 mb-4">
           <Film className="w-5 h-5 text-orange-400" />
           <h3 className="text-lg font-semibold text-white">Video Generation Platforms</h3>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsVideoPlatformsExpanded(!isVideoPlatformsExpanded)}
+              className="text-gray-400 hover:text-white"
+            >
+              {isVideoPlatformsExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </Button>
             <Link href="/dashboard/settings/byok">
               <Button
                 variant="outline"
@@ -304,25 +341,27 @@ export function DashboardOverview() {
           </div>
         </div>
         
-        {/* Row 1: Runway, Pika Labs, Luma AI */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        {isVideoPlatformsExpanded && (
+          <>
+            {/* Row 1: Runway, Pika Labs, Luma AI */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           {/* Runway */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 0.7 }}
-            className="bg-gradient-to-br from-blue-900/20 to-blue-800/10 p-4 rounded-xl border-2 border-blue-500/40 hover:border-blue-400/60 transition-all duration-200"
+            className="bg-gray-800 p-4 rounded-xl border border-gray-600 hover:border-gray-500 transition-all duration-200"
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center border border-blue-500/40">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                 <img src="/logos/runway.svg" alt="Runway" className="w-6 h-6" />
               </div>
               <div>
-                <div className="text-lg font-bold text-blue-300">Runway</div>
-                <div className="text-sm text-blue-200">Creative AI Platform</div>
+                <div className="text-lg font-bold text-white">Runway</div>
+                <div className="text-sm text-gray-300">Creative AI Platform</div>
               </div>
             </div>
-            <div className="text-xs text-blue-300 mb-2">
+            <div className="text-xs text-gray-400 mb-2">
               Advanced video generation
             </div>
             <div className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-semibold ${
@@ -337,18 +376,18 @@ export function DashboardOverview() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 0.8 }}
-            className="bg-gradient-to-br from-purple-900/20 to-purple-800/10 p-4 rounded-xl border-2 border-purple-500/40 hover:border-purple-400/60 transition-all duration-200"
+            className="bg-gray-800 p-4 rounded-xl border border-gray-600 hover:border-gray-500 transition-all duration-200"
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center border border-purple-500/40">
+              <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
                 <img src="/logos/pika-labs.svg" alt="Pika Labs" className="w-6 h-6" />
               </div>
               <div>
-                <div className="text-lg font-bold text-purple-300">Pika Labs</div>
-                <div className="text-sm text-purple-200">AI Video Creation</div>
+                <div className="text-lg font-bold text-white">Pika Labs</div>
+                <div className="text-sm text-gray-300">AI Video Creation</div>
               </div>
             </div>
-            <div className="text-xs text-purple-300 mb-2">
+            <div className="text-xs text-gray-400 mb-2">
               Text-to-video generation
             </div>
             <div className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-semibold ${
@@ -363,18 +402,18 @@ export function DashboardOverview() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 0.9 }}
-            className="bg-gradient-to-br from-green-900/20 to-green-800/10 p-4 rounded-xl border-2 border-green-500/40 hover:border-green-400/60 transition-all duration-200"
+            className="bg-gray-800 p-4 rounded-xl border border-gray-600 hover:border-gray-500 transition-all duration-200"
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center border border-green-500/40">
+              <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
                 <img src="/logos/luma-ai.svg" alt="Luma AI" className="w-6 h-6" />
               </div>
               <div>
-                <div className="text-lg font-bold text-green-300">Luma AI</div>
-                <div className="text-sm text-green-200">Dream Machine</div>
+                <div className="text-lg font-bold text-white">Luma AI</div>
+                <div className="text-sm text-gray-300">Dream Machine</div>
               </div>
             </div>
-            <div className="text-xs text-green-300 mb-2">
+            <div className="text-xs text-gray-400 mb-2">
               High-quality video AI
             </div>
             <div className={`inline-flex items-center gap-2 px-2 py-1 rounded-lg text-xs font-semibold ${
@@ -627,6 +666,8 @@ export function DashboardOverview() {
             </div>
           </motion.div>
         </div>
+            </>
+          )}
       </div>
 
       {/* Row 4: Production Assets */}
@@ -634,7 +675,15 @@ export function DashboardOverview() {
         <div className="flex items-center gap-3 mb-4">
           <Download className="w-5 h-5 text-emerald-400" />
           <h3 className="text-lg font-semibold text-white">Production Assets</h3>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsProductionAssetsExpanded(!isProductionAssetsExpanded)}
+              className="text-gray-400 hover:text-white"
+            >
+              {isProductionAssetsExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </Button>
             <Link href="/dashboard/settings/integrations">
               <Button
                 variant="outline"
@@ -648,24 +697,25 @@ export function DashboardOverview() {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        {isProductionAssetsExpanded && (
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {/* Scripts */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 1.9 }}
-            className="bg-gradient-to-br from-indigo-900/20 to-indigo-800/10 p-4 rounded-xl border-2 border-indigo-500/40 hover:border-indigo-400/60 transition-all duration-200"
+            className="bg-gray-800 p-4 rounded-xl border border-gray-600 hover:border-gray-500 transition-all duration-200"
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center border border-indigo-500/40">
-                <FileText className="w-5 h-5 text-indigo-400" />
+              <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                <FileText className="w-5 h-5 text-white" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-indigo-300">24</div>
-                <div className="text-sm text-indigo-200">Scripts</div>
+                <div className="text-2xl font-bold text-white">24</div>
+                <div className="text-sm text-gray-300">Scripts</div>
               </div>
             </div>
-            <div className="text-xs text-indigo-300">
+            <div className="text-xs text-gray-400">
               Finalized scripts
             </div>
           </motion.div>
@@ -675,18 +725,18 @@ export function DashboardOverview() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 2.0 }}
-            className="bg-gradient-to-br from-purple-900/20 to-purple-800/10 p-4 rounded-xl border-2 border-purple-500/40 hover:border-purple-400/60 transition-all duration-200"
+            className="bg-gray-800 p-4 rounded-xl border border-gray-600 hover:border-gray-500 transition-all duration-200"
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center border border-purple-500/40">
-                <Eye className="w-5 h-5 text-purple-400" />
+              <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                <Eye className="w-5 h-5 text-white" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-purple-300">18</div>
-                <div className="text-sm text-purple-200">Storyboards</div>
+                <div className="text-2xl font-bold text-white">18</div>
+                <div className="text-sm text-gray-300">Storyboards</div>
               </div>
             </div>
-            <div className="text-xs text-purple-300">
+            <div className="text-xs text-gray-400">
               Visual planning
             </div>
           </motion.div>
@@ -696,18 +746,18 @@ export function DashboardOverview() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 2.1 }}
-            className="bg-gradient-to-br from-green-900/20 to-green-800/10 p-4 rounded-xl border-2 border-green-500/40 hover:border-green-400/60 transition-all duration-200"
+            className="bg-gray-800 p-4 rounded-xl border border-gray-600 hover:border-gray-500 transition-all duration-200"
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center border border-green-500/40">
-                <Camera className="w-5 h-5 text-green-400" />
+              <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                <Camera className="w-5 h-5 text-white" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-green-300">12</div>
-                <div className="text-sm text-green-200">Scene Direction</div>
+                <div className="text-2xl font-bold text-white">12</div>
+                <div className="text-sm text-gray-300">Scene Direction</div>
               </div>
             </div>
-            <div className="text-xs text-green-300">
+            <div className="text-xs text-gray-400">
               Director's notes
             </div>
           </motion.div>
@@ -717,18 +767,18 @@ export function DashboardOverview() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 2.2 }}
-            className="bg-gradient-to-br from-orange-900/20 to-orange-800/10 p-4 rounded-xl border-2 border-orange-500/40 hover:border-orange-400/60 transition-all duration-200"
+            className="bg-gray-800 p-4 rounded-xl border border-gray-600 hover:border-gray-500 transition-all duration-200"
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center border border-orange-500/40">
-                <Film className="w-5 h-5 text-orange-400" />
+              <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
+                <Film className="w-5 h-5 text-white" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-orange-300">8</div>
-                <div className="text-sm text-orange-200">Videos</div>
+                <div className="text-2xl font-bold text-white">8</div>
+                <div className="text-sm text-gray-300">Videos</div>
               </div>
             </div>
-            <div className="text-xs text-orange-300">
+            <div className="text-xs text-gray-400">
               Final videos
             </div>
           </motion.div>
@@ -738,18 +788,18 @@ export function DashboardOverview() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 2.3 }}
-            className="bg-gradient-to-br from-cyan-900/20 to-cyan-800/10 p-4 rounded-xl border-2 border-cyan-500/40 hover:border-cyan-400/60 transition-all duration-200"
+            className="bg-gray-800 p-4 rounded-xl border border-gray-600 hover:border-gray-500 transition-all duration-200"
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center border border-cyan-500/40">
+              <div className="w-10 h-10 bg-cyan-600 rounded-lg flex items-center justify-center">
                 <span className="text-2xl">💾</span>
               </div>
               <div>
-                <div className="text-2xl font-bold text-cyan-300">2.4 GB</div>
-                <div className="text-sm text-cyan-200">Used</div>
+                <div className="text-2xl font-bold text-white">2.4 GB</div>
+                <div className="text-sm text-gray-300">Used</div>
               </div>
             </div>
-            <div className="text-xs text-cyan-300 mb-2">
+            <div className="text-xs text-gray-400 mb-2">
               of 10 GB available
             </div>
             <div className="w-full bg-gray-700 rounded-full h-2">
@@ -760,6 +810,7 @@ export function DashboardOverview() {
             </div>
           </motion.div>
         </div>
+        )}
       </div>
     </motion.div>
   )
