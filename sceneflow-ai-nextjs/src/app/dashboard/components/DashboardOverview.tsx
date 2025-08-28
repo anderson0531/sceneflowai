@@ -315,7 +315,7 @@ export function DashboardOverview() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center border border-blue-500/40">
-                <span className="text-2xl">🎬</span>
+                <img src="/logos/runway.svg" alt="Runway" className="w-6 h-6" />
               </div>
               <div>
                 <div className="text-lg font-bold text-blue-300">Runway</div>
@@ -341,7 +341,7 @@ export function DashboardOverview() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center border border-purple-500/40">
-                <span className="text-2xl">✨</span>
+                <img src="/logos/pika-labs.svg" alt="Pika Labs" className="w-6 h-6" />
               </div>
               <div>
                 <div className="text-lg font-bold text-purple-300">Pika Labs</div>
@@ -367,7 +367,7 @@ export function DashboardOverview() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center border border-green-500/40">
-                <span className="text-2xl">🌟</span>
+                <img src="/logos/luma-ai.svg" alt="Luma AI" className="w-6 h-6" />
               </div>
               <div>
                 <div className="text-lg font-bold text-green-300">Luma AI</div>
@@ -396,7 +396,7 @@ export function DashboardOverview() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center border border-indigo-500/40">
-                <span className="text-2xl">🤖</span>
+                <img src="/logos/openai.svg" alt="OpenAI Sora" className="w-6 h-6" />
               </div>
               <div>
                 <div className="text-lg font-bold text-indigo-300">OpenAI (Sora)</div>
@@ -422,7 +422,7 @@ export function DashboardOverview() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center border border-red-500/40">
-                <span className="text-2xl">🔍</span>
+                <img src="/logos/google-veo.svg" alt="Google Veo" className="w-6 h-6" />
               </div>
               <div>
                 <div className="text-lg font-bold text-red-300">Google (Veo)</div>
@@ -448,7 +448,7 @@ export function DashboardOverview() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center border border-yellow-500/40">
-                <span className="text-2xl">🎨</span>
+                <img src="/logos/stability-ai.svg" alt="Stability AI" className="w-6 h-6" />
               </div>
               <div>
                 <div className="text-lg font-bold text-yellow-300">Stability AI</div>
@@ -477,7 +477,7 @@ export function DashboardOverview() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center border border-cyan-500/40">
-                <span className="text-2xl">⚡</span>
+                <img src="/logos/replicate.svg" alt="Replicate" className="w-6 h-6" />
               </div>
               <div>
                 <div className="text-lg font-bold text-cyan-300">Replicate</div>
@@ -503,7 +503,7 @@ export function DashboardOverview() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-pink-500/20 rounded-lg flex items-center justify-center border border-pink-500/40">
-                <span className="text-2xl">🤗</span>
+                <img src="/logos/hugging-face.svg" alt="Hugging Face" className="w-6 h-6" />
               </div>
               <div>
                 <div className="text-lg font-bold text-pink-300">Hugging Face</div>
@@ -529,7 +529,7 @@ export function DashboardOverview() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center border border-emerald-500/40">
-                <span className="text-2xl">🎭</span>
+                <img src="/logos/heygen.svg" alt="HeyGen" className="w-6 h-6" />
               </div>
               <div>
                 <div className="text-lg font-bold text-emerald-300">HeyGen</div>
@@ -558,7 +558,7 @@ export function DashboardOverview() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-violet-500/20 rounded-lg flex items-center justify-center border border-violet-500/40">
-                <span className="text-2xl">🎪</span>
+                <img src="/logos/kaiber.svg" alt="Kaiber" className="w-6 h-6" />
               </div>
               <div>
                 <div className="text-lg font-bold text-violet-300">Kaiber</div>
@@ -584,7 +584,7 @@ export function DashboardOverview() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center border border-emerald-500/40">
-                <span className="text-2xl">🎭</span>
+                <img src="/logos/heygen.svg" alt="HeyGen" className="w-6 h-6" />
               </div>
               <div>
                 <div className="text-lg font-bold text-emerald-300">HeyGen</div>
@@ -610,7 +610,7 @@ export function DashboardOverview() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-rose-500/20 rounded-lg flex items-center justify-center border border-rose-500/40">
-                <span className="text-2xl">👤</span>
+                <img src="/logos/d-id.svg" alt="D-ID" className="w-6 h-6" />
               </div>
               <div>
                 <div className="text-lg font-bold text-rose-300">D-ID</div>
