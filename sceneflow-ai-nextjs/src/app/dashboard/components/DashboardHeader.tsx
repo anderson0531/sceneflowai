@@ -74,7 +74,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
             <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-4 border-l-sf-primary border-t-4 border-t-transparent border-b-4 border-b-transparent opacity-90"></div>
           </div>
           <div className="flex items-center" style={{ minWidth: '400px', display: 'flex', alignItems: 'center' }}>
-            <div className="font-bold text-heading text-8xl" style={{ fontSize: '4rem', lineHeight: '1', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>
+            <div className="font-bold text-heading text-8xl" style={{ fontSize: '5rem', lineHeight: '1', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>
               <span>SceneFlow </span>
               <span className="text-sf-primary">AI</span>
             </div>
