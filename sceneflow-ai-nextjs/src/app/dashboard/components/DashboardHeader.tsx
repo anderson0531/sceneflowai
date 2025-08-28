@@ -74,10 +74,10 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
             <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-4 border-l-sf-primary border-t-4 border-t-transparent border-b-4 border-b-transparent opacity-90"></div>
           </div>
           <div className="flex flex-col justify-center min-w-0">
-            <h1 className="font-bold text-heading leading-tight truncate" style={{ fontSize: '4rem', lineHeight: '1.1' }}>
+            <div className="font-bold text-heading leading-tight truncate text-8xl">
               <span>SceneFlow </span>
               <span className="text-sf-primary">AI</span>
-            </h1>
+            </div>
           </div>
         </div>
       </div>
