@@ -343,36 +343,36 @@ export function BeatSheetTab() {
           )}
         </div>
         
-        {/* Right Sidebars */}
-        <div className="flex">
-          <StoryInsights 
-            currentStoryData={{
-              title: guide.title,
-              acts: columns.map(col => ({
-                id: col.id,
-                name: col.label,
-                beats: (groupedBeats[col.id] || []).map(beat => ({
-                  id: beat.id,
-                  title: beat.title,
-                  duration: beat.estimatedDuration || 20,
-                  summary: beat.summary
-                }))
-              })),
-              characters: guide.characters.map(char => ({
-                id: char.id,
-                name: char.name,
-                motivation: char.motivation || 'Character motivation not specified'
-              })),
-              treatment: {
-                synopsis: guide.title,
-                themes: ['General'],
-                targetAudience: 'General audience'
-              }
-            }}
-            className="w-80" 
-          />
-          <BoneyardSidebar />
-        </div>
+                              {/* Right Sidebars */}
+                      <div className="flex">
+                        <StoryInsights
+                          currentStoryData={{
+                            title: guide.title,
+                            acts: columns.map(col => ({
+                              id: col.id,
+                              name: col.label,
+                              beats: (groupedBeats[col.id] || []).map(beat => ({
+                                id: beat.id,
+                                title: beat.title,
+                                duration: beat.estimatedDuration || 20,
+                                summary: beat.summary
+                              }))
+                            })),
+                            characters: guide.characters.map(char => ({
+                              id: char.id,
+                              name: char.name,
+                              motivation: char.motivation || 'Character motivation not specified'
+                            })),
+                            treatment: {
+                              synopsis: guide.title,
+                              themes: ['General'],
+                              targetAudience: 'General audience'
+                            }
+                          }}
+                          className="w-[360px] min-w-[360px] max-w-[360px] flex-shrink-0"
+                        />
+                        <BoneyardSidebar />
+                      </div>
       </div>
     </div>
   );
