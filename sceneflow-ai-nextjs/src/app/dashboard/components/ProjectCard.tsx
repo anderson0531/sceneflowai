@@ -4,7 +4,6 @@ import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { 
   Play, 
-  Download, 
   Video, 
   FileText, 
   Camera, 
@@ -147,16 +146,7 @@ export function ProjectCard({ project, className = '' }: ProjectCardProps) {
     }
   }
 
-  // Handle Export Assets button click
-  const handleExportAssets = () => {
-    // Trigger Cue with export guidance
-    invokeCue({
-      context: 'EXPORT_ASSETS_GUIDANCE',
-      projectId: project.id,
-      projectTitle: project.title,
-      message: `I want to export the pre-production assets for "${project.title}" to share with my filming team. What formats and files should I prepare?`
-    })
-  }
+
 
   // Get workflow status display
   const getWorkflowStatus = () => {
@@ -274,15 +264,7 @@ export function ProjectCard({ project, className = '' }: ProjectCardProps) {
                 {hasValidBYOK ? 'Generate Video' : 'Setup BYOK & Generate'}
               </Button>
 
-              {/* Secondary: Export Assets */}
-              <Button
-                onClick={handleExportAssets}
-                variant="outline"
-                className="w-full h-12 text-base font-semibold border-2 border-gray-600/50 text-gray-300 hover:text-white hover:border-gray-500/70 hover:bg-gray-800/50"
-              >
-                <Download className="w-5 h-5 mr-2" />
-                Export Assets for External Filming
-              </Button>
+
             </>
           ) : (
             // Phase 1: Continue current step

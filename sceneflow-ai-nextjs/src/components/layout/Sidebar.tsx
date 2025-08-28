@@ -17,7 +17,6 @@ import {
   Menu,
   X,
   BookOpen,
-  Download,
   CheckCircle,
   Wrench
 } from 'lucide-react'
@@ -217,16 +216,7 @@ export function Sidebar() {
                   })}
                 </nav>
                 
-                {/* Export Assets Off-ramp */}
-                <div className="mx-4 mb-4 p-3 bg-green-500/10 rounded-lg border border-green-500/30">
-                  <div className="flex items-center gap-2 text-green-300 text-sm">
-                    <Download className="w-4 h-4" />
-                    <span className="font-medium">Export Assets for External Filming</span>
-                  </div>
-                  <p className="text-xs text-green-200 mt-1">
-                    Download pre-production materials to share with your team
-                  </p>
-                </div>
+
               </div>
 
               {/* Phase 2: Generation & Post */}
