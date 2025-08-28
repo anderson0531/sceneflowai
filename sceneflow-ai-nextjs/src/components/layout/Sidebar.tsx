@@ -101,33 +101,33 @@ export function Sidebar() {
       <div className={`fixed inset-y-0 left-0 z-50 w-64 navigation-bar transform transition-transform duration-200 ease-in-out md:translate-x-0 md:static md:inset-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-4 border-b border-sf-border">
+          <div className="flex items-center justify-between p-6 border-b border-gray-700/50 bg-gray-800/30">
             <div className="flex-1"></div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="md:hidden p-1 rounded-md text-sf-text-secondary hover:text-sf-text-primary hover:bg-sf-surface-light"
+              className="md:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700/50 transition-colors"
             >
-              <X className="w-5 h-5" />
+              <X className="w-6 h-6" />
             </button>
           </div>
 
           {/* User Info & Credits */}
           {user && (
-            <div className="p-4 border-b border-sf-border">
-              <div className="flex items-center space-x-3 mb-3">
-                <div className="w-10 h-10 bg-sf-primary rounded-full flex items-center justify-center">
-                  <span className="text-sf-background font-medium text-sm">
+            <div className="p-6 border-b border-gray-700/50 bg-gray-800/30">
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="w-12 h-12 bg-sf-primary rounded-full flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-lg">
                     {user.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-heading">{user.name}</p>
-                  <p className="text-xs text-caption">{user.email}</p>
+                  <p className="text-base font-bold text-white">{user.name}</p>
+                  <p className="text-sm text-gray-300">{user.email}</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-2 px-3 py-2 bg-sf-surface-light rounded-lg">
-                <div className="w-4 h-4 bg-sf-primary rounded-full"></div>
-                <span className="text-sm font-medium text-sf-primary font-emphasis">
+              <div className="flex items-center space-x-3 px-4 py-3 bg-sf-primary/10 rounded-xl border border-sf-primary/20">
+                <div className="w-5 h-5 bg-sf-primary rounded-full shadow-sm"></div>
+                <span className="text-base font-semibold text-sf-primary">
                   {user.credits} Credits
                 </span>
               </div>
@@ -137,10 +137,10 @@ export function Sidebar() {
           {/* Main Navigation */}
           <div className="flex-1 overflow-y-auto">
             <div className="p-4">
-              <h3 className="nav-section-header mb-3">
-                Main
+              <h3 className="nav-section-header mb-4 text-base font-bold text-gray-300 tracking-wide">
+                MAIN
               </h3>
-              <nav className="space-y-1 mb-6">
+              <nav className="space-y-2 mb-8">
                 {mainNav.map((item) => {
                   const Icon = item.icon
                   const isActiveItem = isActive(item.href)
@@ -148,14 +148,14 @@ export function Sidebar() {
                     <Link
                       key={item.name}
                       href={item.href}
-                      className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 font-emphasis ${
+                      className={`flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-all duration-200 ${
                         isActiveItem 
-                          ? 'nav-link-active nav-active-indicator-right' 
-                          : 'nav-link nav-item-hover'
+                          ? 'bg-sf-primary/15 text-white border-l-4 border-sf-primary shadow-lg' 
+                          : 'text-gray-200 hover:text-white hover:bg-gray-800/50 hover:translate-x-1'
                       }`}
                     >
-                      <Icon className={`mr-3 h-5 w-5 ${isActiveItem ? 'text-sf-primary' : 'text-sf-text-secondary'}`} />
-                      <span className={isActiveItem ? 'text-sf-primary' : 'text-sf-text-secondary'}>
+                      <Icon className={`mr-4 h-6 w-6 ${isActiveItem ? 'text-sf-primary' : 'text-gray-400'}`} />
+                      <span className={isActiveItem ? 'text-white' : 'text-gray-200'}>
                         {item.name}
                       </span>
                     </Link>
@@ -164,10 +164,10 @@ export function Sidebar() {
               </nav>
 
               {/* Workflow Navigation */}
-              <h3 className="nav-section-header mb-3">
-                Workflow
+              <h3 className="nav-section-header mb-4 text-base font-bold text-gray-300 tracking-wide">
+                WORKFLOW
               </h3>
-              <nav className="space-y-1 mb-6">
+              <nav className="space-y-2 mb-8">
                 {workflowNav.map((item) => {
                   const Icon = item.icon
                   const isActiveItem = isActive(item.href) || isCurrentStep(item.step)
@@ -175,18 +175,18 @@ export function Sidebar() {
                     <Link
                       key={item.name}
                       href={item.href}
-                      className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 font-emphasis ${
+                      className={`flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-all duration-200 ${
                         isActiveItem 
-                          ? 'nav-link-active nav-active-indicator-left' 
-                          : 'nav-link nav-item-hover'
+                          ? 'bg-sf-primary/15 text-white border-l-4 border-sf-primary shadow-lg' 
+                          : 'text-gray-200 hover:text-white hover:bg-gray-800/50 hover:translate-x-1'
                       }`}
                     >
-                      <Icon className={`mr-3 h-5 w-5 ${isActiveItem ? 'text-sf-primary' : 'text-sf-text-secondary'}`} />
+                      <Icon className={`mr-4 h-6 w-6 ${isActiveItem ? 'text-sf-primary' : 'text-gray-400'}`} />
                       <div className="flex-1 min-w-0">
-                        <div className={`text-sm font-medium transition-colors ${isActiveItem ? 'text-sf-primary' : 'text-sf-text-secondary'}`}>
+                        <div className={`text-base font-semibold transition-colors ${isActiveItem ? 'text-white' : 'text-gray-200'}`}>
                           {item.name}
                         </div>
-                        <div className={`text-xs transition-colors mt-0.5 ${isActiveItem ? 'text-sf-accent' : 'text-caption'}`}>
+                        <div className={`text-sm transition-colors mt-1 text-gray-400 ${isActiveItem ? 'text-sf-primary/80' : 'text-gray-400'}`}>
                           {item.description}
                         </div>
                       </div>
@@ -196,10 +196,10 @@ export function Sidebar() {
               </nav>
 
               {/* Settings Navigation */}
-              <h3 className="nav-section-header mb-3">
-                Settings
+              <h3 className="nav-section-header mb-4 text-base font-bold text-gray-300 tracking-wide">
+                SETTINGS
               </h3>
-              <nav className="space-y-1">
+              <nav className="space-y-2">
                 {settingsNav.map((item) => {
                   const Icon = item.icon
                   const isActiveItem = isActive(item.href)
@@ -207,14 +207,14 @@ export function Sidebar() {
                     <Link
                       key={item.name}
                       href={item.href}
-                      className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 font-emphasis ${
+                      className={`flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-all duration-200 ${
                         isActiveItem 
-                          ? 'nav-link-active nav-active-indicator-right' 
-                          : 'nav-link nav-item-hover'
+                          ? 'bg-sf-primary/15 text-white border-l-4 border-sf-primary shadow-lg' 
+                          : 'text-gray-200 hover:text-white hover:bg-gray-800/50 hover:translate-x-1'
                       }`}
                     >
-                      <Icon className={`mr-3 h-5 w-5 ${isActiveItem ? 'text-sf-primary' : 'text-sf-text-secondary'}`} />
-                      <span className={isActiveItem ? 'text-sf-primary' : 'text-sf-text-secondary'}>
+                      <Icon className={`mr-4 h-6 w-6 ${isActiveItem ? 'text-sf-primary' : 'text-gray-400'}`} />
+                      <span className={isActiveItem ? 'text-white' : 'text-gray-200'}>
                         {item.name}
                       </span>
                     </Link>
@@ -225,9 +225,9 @@ export function Sidebar() {
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-t border-sf-border">
+          <div className="p-6 border-t border-gray-700/50 bg-gray-800/30">
             <div className="text-center">
-              <p className="text-xs text-caption">SceneFlow AI v1.0</p>
+              <p className="text-sm text-gray-400 font-medium">SceneFlow AI v1.0</p>
             </div>
           </div>
         </div>
