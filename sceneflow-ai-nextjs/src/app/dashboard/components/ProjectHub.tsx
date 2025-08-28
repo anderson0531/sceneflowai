@@ -1,13 +1,26 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Plus, Sparkles, Play, Eye } from 'lucide-react'
+import { Plus, Sparkles, Play, Eye, FolderOpen } from 'lucide-react'
 import { useEnhancedStore } from '@/store/enhancedStore'
 import Link from 'next/link'
+import { Button } from '@/components/ui/Button'
 import { ProjectCard } from './ProjectCard'
 
 export function ProjectHub() {
   const { projects } = useEnhancedStore()
+
+  const getStageDisplayName = (step: string) => {
+    const stageNames = {
+      'ideation': 'Script Analysis',
+      'storyboard': 'Storyboarding',
+      'scene-direction': "Director's Chair",
+      'video-generation': 'Video Generation',
+      'review': 'Quality Review',
+      'optimization': 'Finalization'
+    }
+    return stageNames[step as keyof typeof stageNames] || step
+  }
 
   if (projects.length === 0) {
     return (
@@ -21,150 +34,39 @@ export function ProjectHub() {
         <div className="p-6 border-b border-gray-700/50 bg-gradient-to-r from-gray-800/60 to-gray-700/40">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-white">My Projects</h2>
+              <h2 className="text-2xl font-bold text-white">Production Projects</h2>
               <p className="text-gray-400 mt-1">Manage your creative workflow</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <span className="text-sm text-gray-400">No projects yet</span>
+              <Link href="/studio/crispr-debate-001">
+                <Button
+                  size="sm"
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Project
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
         
-        {/* Focused CTAs - No marketing text */}
-        <div className="p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* New Project */}
-            <Link href="/studio/crispr-debate-001">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: 0.1 }}
-                className="group cursor-pointer"
-              >
-                <div className="bg-gradient-to-br from-blue-900/20 to-blue-800/10 p-6 rounded-xl border-2 border-blue-500/40 hover:border-blue-400/60 transition-all duration-200 h-full">
-                  <div className="w-16 h-16 bg-blue-500/20 rounded-xl flex items-center justify-center mx-auto mb-4 border border-blue-500/40">
-                    <Plus className="w-8 h-8 text-blue-400" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white text-center mb-3">New Project</h3>
-                  <div className="text-center">
-                    <button className="w-full bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40">
-                      Start Creating
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            </Link>
-            
-            {/* Continue Existing Project */}
-            <Link href="/dashboard/projects">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-                className="group cursor-pointer"
-              >
-                <div className="bg-gradient-to-br from-purple-900/20 to-purple-800/10 p-6 rounded-xl border-2 border-purple-500/40 hover:border-purple-400/60 transition-all duration-200 h-full">
-                  <div className="w-16 h-16 bg-purple-500/20 rounded-xl flex items-center justify-center mx-auto mb-4 border border-purple-500/40">
-                    <Play className="w-8 h-8 text-purple-400" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white text-center mb-3">Continue Existing Project</h3>
-                  <div className="text-center">
-                    <button className="w-full bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40">
-                      View Projects
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            </Link>
-            
-            {/* Manage Projects */}
-            <Link href="/dashboard/projects">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: 0.3 }}
-                className="group cursor-pointer"
-              >
-                <div className="bg-gradient-to-br from-green-900/20 to-green-800/10 p-6 rounded-xl border-2 border-green-500/40 hover:border-green-400/60 transition-all duration-200 h-full">
-                  <div className="w-16 h-16 bg-green-500/20 rounded-xl flex items-center justify-center mx-auto mb-4 border border-green-500/40">
-                    <Eye className="w-8 h-8 text-green-400" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white text-center mb-3">Manage Projects</h3>
-                  <div className="text-center">
-                    <button className="w-full bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-green-500/25 hover:shadow-green-500/40">
-                      Manage
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            </Link>
-            
-            {/* Manage Production Assets */}
-            <Link href="/dashboard/settings/integrations">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: 0.4 }}
-                className="group cursor-pointer"
-              >
-                <div className="bg-gradient-to-br from-orange-900/20 to-orange-800/10 p-6 rounded-xl border-2 border-orange-500/40 hover:border-orange-400/60 transition-all duration-200 h-full">
-                  <div className="w-16 h-16 bg-orange-500/20 rounded-xl flex items-center justify-center mx-auto mb-4 border border-orange-500/40">
-                    <span className="text-2xl">🎬</span>
-                  </div>
-                  <h3 className="text-xl font-bold text-white text-center mb-3">Manage Production Assets</h3>
-                  <div className="text-center">
-                    <button className="w-full bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40">
-                      Manage
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            </Link>
-            
-            {/* Manage Series Bible */}
-            <Link href="/dashboard/project-bible">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: 0.5 }}
-                className="group cursor-pointer"
-              >
-                <div className="bg-gradient-to-br from-indigo-900/20 to-indigo-800/10 p-6 rounded-xl border-2 border-indigo-500/40 hover:border-indigo-400/60 transition-all duration-200 h-full">
-                  <div className="w-16 h-16 bg-indigo-500/20 rounded-xl flex items-center justify-center mx-auto mb-4 border border-indigo-500/40">
-                    <span className="text-2xl">📚</span>
-                  </div>
-                  <h3 className="text-xl font-bold text-white text-center mb-3">Manage Series Bible</h3>
-                  <div className="text-center">
-                    <button className="w-full bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40">
-                      Manage
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            </Link>
-            
-            {/* Manage BYOK */}
-            <Link href="/dashboard/settings/byok">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: 0.6 }}
-                className="group cursor-pointer"
-              >
-                <div className="bg-gradient-to-br from-red-900/20 to-red-800/10 p-6 rounded-xl border-2 border-red-500/40 hover:border-red-400/60 transition-all duration-200 h-full">
-                  <div className="w-16 h-16 bg-red-500/20 rounded-xl flex items-center justify-center mx-auto mb-4 border border-red-500/40">
-                    <span className="text-2xl">🔑</span>
-                  </div>
-                  <h3 className="text-xl font-bold text-white text-center mb-3">Manage BYOK</h3>
-                  <div className="text-center">
-                    <button className="w-full bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-red-500/25 hover:shadow-red-500/40">
-                      Manage
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            </Link>
+        {/* Empty State */}
+        <div className="p-8 text-center">
+          <div className="w-24 h-24 bg-gray-700/30 rounded-full flex items-center justify-center mx-auto mb-6 border border-gray-600/50">
+            <FolderOpen className="w-12 h-12 text-gray-400" />
           </div>
+          <h3 className="text-xl font-semibold text-white mb-3">No Production Projects Yet</h3>
+          <p className="text-gray-400 mb-6 max-w-md mx-auto">
+            Start your first video project to begin your creative journey with SceneFlow AI.
+          </p>
+          <Link href="/studio/crispr-debate-001">
+            <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+              <Plus className="w-4 h-4 mr-2" />
+              Create Your First Project
+            </Button>
+          </Link>
         </div>
       </motion.div>
     )
@@ -182,50 +84,95 @@ export function ProjectHub() {
       <div className="p-6 border-b border-gray-700/50 bg-gradient-to-r from-gray-800/60 to-gray-700/40">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-white">My Projects</h2>
-            <p className="text-gray-400 mt-1">Jump into your workflow</p>
+            <h2 className="text-2xl font-bold text-white">Production Projects</h2>
+            <p className="text-gray-400 mt-1">Manage your creative workflow</p>
           </div>
           
           <div className="flex gap-3">
             <Link href="/dashboard/projects/new">
-              <button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6 py-3 rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-200 font-semibold flex items-center gap-2">
-                <Plus className="w-5 h-5" />
+              <Button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6 py-3 shadow-lg shadow-blue-500/25 transition-all duration-200 font-semibold">
+                <Plus className="w-5 h-5 mr-2" />
                 + New Project
-              </button>
+              </Button>
             </Link>
             
-            <Link href="/dashboard/project-bible">
-              <button className="bg-gray-700/50 hover:bg-gray-600/50 text-gray-200 px-6 py-3 rounded-xl border border-gray-600/50 transition-all duration-200 font-semibold flex items-center gap-2">
-                <Eye className="w-5 h-5" />
-                + New Series Bible
-              </button>
+            <Link href="/dashboard/projects">
+              <Button variant="outline" className="border-gray-600/50 text-gray-200 hover:text-white hover:border-gray-500/70 px-6 py-3 transition-all duration-200 font-semibold">
+                <Eye className="w-5 h-5 mr-2" />
+                Manage Projects
+              </Button>
             </Link>
           </div>
         </div>
       </div>
       
-      {/* Projects Grid */}
+      {/* Recent Projects List */}
       <div className="p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {projects.slice(0, 6).map((project, index) => (
-            <motion.div
-              key={project.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.1 + index * 0.1 }}
-            >
-              <ProjectCard project={project} />
-            </motion.div>
-          ))}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Recent Projects</h3>
+          <div className="space-y-3">
+            {projects.slice(0, 5).map((project, index) => (
+              <motion.div
+                key={project.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 + index * 0.1 }}
+                className="bg-gray-800/50 rounded-lg border border-gray-700/50 p-4 hover:bg-gray-800/70 transition-all duration-200"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gray-700/50 rounded-lg flex items-center justify-center border border-gray-600/50">
+                      <FolderOpen className="w-6 h-6 text-gray-400" />
+                    </div>
+                    <div>
+                      <h4 className="text-white font-semibold">{project.title}</h4>
+                      <p className="text-gray-400 text-sm">{project.description}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-4">
+                    {/* Workflow Status */}
+                    <div className="text-right">
+                      <div className="text-sm text-gray-300 font-medium">
+                        {getStageDisplayName(project.currentStep)}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Step {project.completedSteps.length + 1}/6
+                      </div>
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="w-24 bg-gray-700 rounded-full h-2">
+                      <div 
+                        className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${project.progress}%` }}
+                      ></div>
+                    </div>
+                    
+                    {/* Action Button */}
+                    <Link href={`/dashboard/workflow/${project.currentStep}?project=${project.id}`}>
+                      <Button
+                        size="sm"
+                        className="bg-blue-500 hover:bg-blue-600 text-white"
+                      >
+                        <Play className="w-3 h-3 mr-1" />
+                        Continue
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
         
         {/* Show More Projects Link */}
-        {projects.length > 6 && (
-          <div className="text-center mt-8">
+        {projects.length > 5 && (
+          <div className="text-center">
             <Link href="/dashboard/projects">
-              <button className="text-blue-400 hover:text-blue-300 font-semibold transition-colors text-lg">
-                View {projects.length - 6} more projects →
-              </button>
+              <Button variant="outline" className="border-gray-600/50 text-gray-300 hover:text-white hover:border-gray-500/70">
+                View All {projects.length} Projects
+              </Button>
             </Link>
           </div>
         )}
