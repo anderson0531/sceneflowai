@@ -312,19 +312,73 @@ Generate comprehensive baseline content that is production-ready and follows pro
    * Parse text-based response from AI
    */
   private parseTextResponse(content: string, request: ProjectInitializationRequest): Partial<ProductionGuide> {
-    console.log('Parsing text response');
+    console.log('📝 Parsing text response');
+    
+    // Try to extract structured content from text
+    const extractedData = this.extractStructuredContentFromText(content);
     
     return {
       projectId: request.projectId,
-      title: this.extractTitle(content) || 'Untitled Project',
+      title: extractedData.title || this.extractTitle(content) || 'Untitled Project',
       beatTemplate: request.template || 'three-act',
       viewMode: 'kanban',
-      filmTreatment: this.extractFilmTreatment(content),
-      characters: this.extractCharacters(content),
-      beatSheet: this.extractBeatSheet(content),
+      filmTreatment: extractedData.filmTreatment || this.extractFilmTreatment(content),
+      characters: extractedData.characters || this.extractCharacters(content),
+      beatSheet: extractedData.beatSheet || this.extractBeatSheet(content),
       boneyard: [],
       boneyardCollapsed: true
     };
+  }
+
+  /**
+   * Extract structured content from text-based AI response
+   */
+  private extractStructuredContentFromText(content: string): {
+    title?: string;
+    filmTreatment?: string;
+    characters?: CharacterProfile[];
+    beatSheet?: Beat[];
+  } {
+    console.log('🔍 Extracting structured content from text');
+    
+    const result: any = {};
+    
+    // Extract title
+    const titleMatch = content.match(/(?:Title|Project):\s*([^\n]+)/i);
+    if (titleMatch) {
+      result.title = titleMatch[1].trim();
+    }
+    
+    // Extract film treatment sections
+    const treatmentSections = [
+      'Film Treatment',
+      'Treatment',
+      'Story Overview',
+      'Project Overview'
+    ];
+    
+    for (const section of treatmentSections) {
+      const match = content.match(new RegExp(`${section}[\\s\\S]*?(?=${treatmentSections.join('|')}|Character|Beat|$)`, 'i'));
+      if (match) {
+        result.filmTreatment = match[0].trim();
+        break;
+      }
+    }
+    
+    // Extract character information
+    const characterMatch = content.match(/Character[\s\S]*?(?=Beat|Interactive|$)/i);
+    if (characterMatch && characterMatch[0]) {
+      result.characters = this.extractCharacters(characterMatch[0]);
+    }
+    
+    // Extract beat sheet information
+    const beatMatch = content.match(/(?:Beat|Interactive)[\s\S]*$/i);
+    if (beatMatch) {
+      result.beatSheet = this.extractBeatSheet(beatMatch[0]);
+    }
+    
+    console.log('📊 Extracted structured content:', result);
+    return result;
   }
 
   /**
