@@ -104,8 +104,8 @@ export function ProductionProjectsTable() {
             <h2 className="text-2xl font-bold text-white">Recent Projects</h2>
             <p className="text-gray-400 mt-1">Manage your active video production workflow</p>
           </div>
-          <Link href="/dashboard/projects/new">
-            <Button className="bg-teal-600 hover:bg-teal-700 text-white">
+          <Link href="/dashboard/workflow/ideation">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
               <Plus className="w-4 h-4 mr-2" />
               + New Project
             </Button>
