@@ -41,9 +41,9 @@ export default function NewProjectPage() {
       // Complete progress
       setGenerationProgress(100)
       
-      // Wait a moment then redirect to Spark Studio
+      // Wait a moment then redirect to existing Spark Studio with new project
       setTimeout(() => {
-        router.push('/studio/new-project')
+        router.push('/studio/new-project-123')
       }, 1000)
 
     } catch (error) {

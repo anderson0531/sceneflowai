@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/Button";
 import { DownloadIcon, Sparkles, Clapperboard, User } from "lucide-react";
@@ -12,13 +13,34 @@ import { BeatSheetTab } from "@/components/studio/BeatSheetTab";
 import { SeriesBiblePanel } from "@/components/studio/SeriesBiblePanel";
 import { cn } from "@/lib/utils";
 
-export default function SparkStudioPage() {
+export default function SparkStudioPage({ params }: { params: { projectId: string } }) {
   const { guide } = useGuideStore();
-  const { toggleSidebar } = useCue();
+  const { toggleSidebar, invokeCue } = useCue();
+  const [isNewProject, setIsNewProject] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
 
   const handleExport = () => {
     console.log("Exporting PDF...");
   };
+
+  // Check if this is a new project and initialize with Cue
+  useEffect(() => {
+    if (params.projectId.startsWith('new-project') && !isNewProject) {
+      setIsNewProject(true);
+      setIsInitializing(true);
+      
+      // Trigger Cue to generate initial story content
+      invokeCue({
+        type: 'text',
+        content: 'Initialize new project with baseline Film Treatment, Character Breakdowns, and Interactive Beat Sheet following the No Blank Canvas principle. Generate comprehensive content for a new video project.'
+      });
+      
+      // Set initialization complete after a delay
+      setTimeout(() => {
+        setIsInitializing(false);
+      }, 2000);
+    }
+  }, [params.projectId, isNewProject, invokeCue]);
 
   return (
     <div className="flex flex-col h-full bg-gray-950 text-white overflow-hidden">
@@ -27,7 +49,14 @@ export default function SparkStudioPage() {
           {/* Page Title */}
           <div className="flex items-center space-x-3">
             <Sparkles className="w-6 h-6 text-sf-primary" />
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">The Spark Studio</h1>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">The Spark Studio</h1>
+              {isNewProject && (
+                <p className="text-sm text-blue-400 mt-1">
+                  {isInitializing ? '🔄 Cue is initializing your project...' : '✨ New project ready for development'}
+                </p>
+              )}
+            </div>
           </div>
           
           {/* Actions */}
