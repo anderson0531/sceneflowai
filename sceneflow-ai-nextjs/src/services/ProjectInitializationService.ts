@@ -74,33 +74,54 @@ export class ProjectInitializationService {
 
 PROJECT IDEA: ${request.projectIdea}
 
-Generate comprehensive baseline content:
+IMPORTANT: Return your response as VALID JSON that can be parsed directly into the application. Use this exact structure:
 
-1. FILM TREATMENT:
-   - Title and Logline
-   - Synopsis (2-3 paragraphs)
-   - Target Audience
-   - Genre and Tone
-   - Duration
-   - Key Themes and Messages
-   - Story Structure Overview
+{
+  "title": "Project Title",
+  "filmTreatment": {
+    "title": "Project Title",
+    "logline": "One sentence summary",
+    "synopsis": "2-3 paragraph detailed synopsis",
+    "targetAudience": "Specific audience description",
+    "genre": "Genre and tone description",
+    "duration": "Estimated duration",
+    "themes": "Key themes and messages",
+    "structure": "Story structure overview"
+  },
+  "characters": [
+    {
+      "name": "Character Name",
+      "archetype": "Character archetype",
+      "primaryMotivation": "Main motivation",
+      "internalConflict": "Internal struggle",
+      "externalConflict": "External obstacles",
+      "arc": {
+        "act1": "Act I development",
+        "act2": "Act II development", 
+        "act3": "Act III development"
+      }
+    }
+  ],
+  "beatSheet": [
+    {
+      "title": "Beat Title",
+      "summary": "Detailed beat description",
+      "act": "1",
+      "estimatedDuration": 3,
+      "pacing": "medium",
+      "importance": "high",
+      "structuralPurpose": "Purpose in story",
+      "emotionalCharge": "emotional tone",
+      "charactersPresent": ["character names"],
+      "productionTags": {
+        "location": "Scene location",
+        "mood": "Scene mood"
+      }
+    }
+  ]
+}
 
-2. CHARACTER BREAKDOWNS (2-4 main characters):
-   - Name and Role
-   - Archetype and Personality
-   - Primary Motivation
-   - Internal Conflict
-   - External Conflict
-   - Character Arc (Act I, II, III development)
-
-3. INTERACTIVE BEAT SHEET (following ${template} structure):
-   - 6-8 story beats organized by acts
-   - Each beat with title, summary, timing, actions
-   - Character interactions and dialogue cues
-   - Structural purpose and emotional charge
-   - Production notes (location, mood, pacing)
-
-Format as structured sections that can be parsed into the project system. Be comprehensive and production-ready.`
+Generate comprehensive baseline content that is production-ready and follows professional storytelling standards.`
             }
           ],
           context: {
@@ -166,20 +187,195 @@ Format as structured sections that can be parsed into the project system. Be com
    * Parse AI response into structured project data
    */
   private parseAIResponse(aiContent: string, request: ProjectInitializationRequest): Partial<ProductionGuide> {
-    // For now, return a basic structure - in production, this would parse the AI response
-    // and extract the specific sections (Film Treatment, Characters, Beat Sheet)
+    console.log('Parsing AI response:', aiContent);
     
-    return {
+    try {
+      // First, try to parse as JSON if the AI returned structured data
+      let parsedData: any = null;
+      try {
+        // Look for JSON-like content in the response
+        const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          parsedData = JSON.parse(jsonMatch[0]);
+        }
+      } catch (e) {
+        console.log('No valid JSON found, parsing as text');
+      }
+
+      if (parsedData) {
+        // Parse structured JSON response
+        return this.parseStructuredResponse(parsedData, request);
+      } else {
+        // Parse text-based response
+        return this.parseTextResponse(aiContent, request);
+      }
+    } catch (error) {
+      console.error('Error parsing AI response:', error);
+      // Return basic structure as fallback
+      return {
+        projectId: request.projectId,
+        title: this.extractTitle(aiContent) || 'Untitled Project',
+        beatTemplate: request.template || 'three-act',
+        viewMode: 'kanban',
+        filmTreatment: this.extractFilmTreatment(aiContent),
+        characters: this.extractCharacters(aiContent),
+        beatSheet: this.extractBeatSheet(aiContent),
+        boneyard: [],
+        boneyardCollapsed: true
+      };
+    }
+  }
+
+  /**
+   * Parse structured JSON response from AI
+   */
+  private parseStructuredResponse(data: any, request: ProjectInitializationRequest): Partial<ProductionGuide> {
+    console.log('Parsing structured response:', data);
+    
+    const project: Partial<ProductionGuide> = {
       projectId: request.projectId,
-      title: this.extractTitle(aiContent) || 'Untitled Project',
-      beatTemplate: request.template || 'debate-educational',
+      title: data.title || data.name || 'Untitled Project',
+      beatTemplate: request.template || 'three-act',
       viewMode: 'kanban',
-      filmTreatment: this.extractFilmTreatment(aiContent),
-      characters: this.extractCharacters(aiContent),
-      beatSheet: this.extractBeatSheet(aiContent),
       boneyard: [],
       boneyardCollapsed: true
     };
+
+    // Parse Film Treatment
+    if (data.filmTreatment) {
+      project.filmTreatment = this.formatFilmTreatment(data.filmTreatment);
+    } else if (data.treatment) {
+      project.filmTreatment = this.formatFilmTreatment(data.treatment);
+    }
+
+    // Parse Characters
+    if (data.characters && Array.isArray(data.characters)) {
+      project.characters = data.characters.map((char: any, index: number) => ({
+        id: char.id || `char-${index + 1}`,
+        name: char.name || 'Unknown Character',
+        archetype: char.archetype || char.role || 'Main Character',
+        motivation: char.primaryMotivation || char.motivation || 'To be determined',
+        internalConflict: char.internalConflict || char.conflict || 'To be determined',
+        externalConflict: char.externalConflict || 'To be determined',
+        arc: {
+          act1: char.arc?.act1 || char.arc?.actI || 'To be determined',
+          act2: char.arc?.act2 || char.arc?.actII || 'To be determined',
+          act3: char.arc?.act3 || char.arc?.actIII || 'To be determined'
+        }
+      }));
+    }
+
+    // Parse Beat Sheet
+    if (data.beatSheet && Array.isArray(data.beatSheet)) {
+      project.beatSheet = data.beatSheet.map((beat: any, index: number) => ({
+        id: beat.id || `beat-${index + 1}`,
+        title: beat.title || beat.name || `Beat ${index + 1}`,
+        summary: beat.summary || beat.description || beat.content || 'To be determined',
+        charactersPresent: beat.charactersPresent || beat.characters || [],
+        structuralPurpose: beat.structuralPurpose || beat.purpose || 'To be determined',
+        act: this.mapActString(beat.act) || 'ACT_I',
+        estimatedDuration: beat.estimatedDuration || beat.duration || 2,
+        startTime: beat.startTime || index * 2,
+        pacing: beat.pacing || 'medium',
+        importance: beat.importance || 'medium',
+        beatFunction: beat.beatFunction || 'setup',
+        emotionalCharge: beat.emotionalCharge || beat.emotionalImpact || 'neutral',
+        keywords: beat.keywords || [],
+        productionTags: {
+          location: beat.productionTags?.location || beat.location || 'To be determined',
+          locationType: beat.productionTags?.locationType || 'INT',
+          timeOfDay: beat.productionTags?.timeOfDay || 'DAY',
+          mood: beat.productionTags?.mood || beat.mood || 'Neutral'
+        }
+      }));
+    }
+
+    return project;
+  }
+
+  /**
+   * Parse text-based response from AI
+   */
+  private parseTextResponse(content: string, request: ProjectInitializationRequest): Partial<ProductionGuide> {
+    console.log('Parsing text response');
+    
+    return {
+      projectId: request.projectId,
+      title: this.extractTitle(content) || 'Untitled Project',
+      beatTemplate: request.template || 'three-act',
+      viewMode: 'kanban',
+      filmTreatment: this.extractFilmTreatment(content),
+      characters: this.extractCharacters(content),
+      beatSheet: this.extractBeatSheet(content),
+      boneyard: [],
+      boneyardCollapsed: true
+    };
+  }
+
+  /**
+   * Format film treatment content
+   */
+  private formatFilmTreatment(treatment: any): string {
+    if (typeof treatment === 'string') {
+      return treatment;
+    }
+    
+    if (typeof treatment === 'object') {
+      let formatted = '';
+      
+      if (treatment.title) {
+        formatted += `<h1>${treatment.title}</h1>\n\n`;
+      }
+      
+      if (treatment.logline) {
+        formatted += `<p><strong>Logline:</strong> ${treatment.logline}</p>\n\n`;
+      }
+      
+      if (treatment.synopsis) {
+        formatted += `<p><strong>Synopsis:</strong> ${treatment.synopsis}</p>\n\n`;
+      }
+      
+      if (treatment.targetAudience) {
+        formatted += `<p><strong>Target Audience:</strong> ${treatment.targetAudience}</p>\n\n`;
+      }
+      
+      if (treatment.genre) {
+        formatted += `<p><strong>Genre and Tone:</strong> ${treatment.genre}</p>\n\n`;
+      }
+      
+      if (treatment.duration) {
+        formatted += `<p><strong>Duration:</strong> ${treatment.duration}</p>\n\n`;
+      }
+      
+      if (treatment.themes) {
+        formatted += `<p><strong>Key Themes and Messages:</strong> ${treatment.themes}</p>\n\n`;
+      }
+      
+      if (treatment.structure) {
+        formatted += `<p><strong>Story Structure Overview:</strong> ${treatment.structure}</p>`;
+      }
+      
+      return formatted || JSON.stringify(treatment);
+    }
+    
+    return String(treatment);
+  }
+
+  /**
+   * Map act strings to proper enum values
+   */
+  private mapActString(act: any): string {
+    if (!act) return 'ACT_I';
+    
+    const actStr = String(act).toUpperCase();
+    
+    if (actStr.includes('1') || actStr.includes('I')) return 'ACT_I';
+    if (actStr.includes('2') || actStr.includes('II')) return 'ACT_II';
+    if (actStr.includes('3') || actStr.includes('III')) return 'ACT_III';
+    if (actStr.includes('4') || actStr.includes('IV')) return 'ACT_IV';
+    if (actStr.includes('5') || actStr.includes('V')) return 'ACT_V';
+    
+    return 'ACT_I';
   }
 
   private extractTitle(content: string): string {
@@ -211,19 +407,19 @@ Format as structured sections that can be parsed into the project system. Be com
       if (block.trim()) {
         const nameMatch = block.match(/^([A-Z][a-z]+)/);
         if (nameMatch) {
-          characters.push({
-            id: `char-${index + 1}`,
-            name: nameMatch[1],
-            archetype: 'Main Character',
-            primaryMotivation: 'To be determined',
-            internalConflict: 'To be determined',
-            externalConflict: 'To be determined',
-            arc: {
-              act1: 'To be determined',
-              act2: 'To be determined',
-              act3: 'To be determined'
-            }
-          });
+                      characters.push({
+              id: `char-${index + 1}`,
+              name: nameMatch[1],
+              archetype: 'Main Character',
+              motivation: 'To be determined',
+              internalConflict: 'To be determined',
+              externalConflict: 'To be determined',
+              arc: {
+                act1: 'To be determined',
+                act2: 'To be determined',
+                act3: 'To be determined'
+              }
+            });
         }
       }
     });
