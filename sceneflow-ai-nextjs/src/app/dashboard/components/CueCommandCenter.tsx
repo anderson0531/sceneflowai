@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Sparkles, MessageSquare, Zap, Settings, Send, Lightbulb, CreditCard, Menu } from 'lucide-react'
+import { Sparkles, MessageSquare, Zap, Settings, Send, Lightbulb, CreditCard, Menu, HelpCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -89,6 +89,16 @@ export function CueCommandCenter() {
               <Settings className="w-4 h-4 mr-2" />
               Configure
             </Button>
+            <Link href="/help" className="text-gray-300 hover:text-white transition-colors duration-200">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-gray-500/50 text-gray-300 hover:text-white hover:border-gray-400/70"
+              >
+                <HelpCircle className="w-4 h-4 mr-2" />
+                Help
+              </Button>
+            </Link>
             <Button
               variant="outline"
               size="sm"
