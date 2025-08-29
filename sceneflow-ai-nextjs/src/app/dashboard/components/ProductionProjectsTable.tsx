@@ -1,41 +1,79 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { FolderOpen, Play, Eye, MoreHorizontal, Plus } from 'lucide-react'
+import { FolderOpen, Play, Eye, MoreHorizontal, Plus, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 
 export function ProductionProjectsTable() {
-  // Mock data - replace with real backend data
+  // Mock Data with enhanced project information
   const projects = [
-    {
-      id: '1',
-      title: 'Crispr Debate Series',
-      description: 'Educational series on genetic engineering ethics',
-      status: 'In Progress',
-      progress: 75,
-      lastUpdated: '2 hours ago',
-      workflowStep: 'Scene Direction'
+    { 
+      id: 1, 
+      title: "Sci-Fi Pilot: The Arrival", 
+      lastActive: "1 hour ago", 
+      phase: 1, 
+      step: 2, 
+      stepName: "2. Vision Board", 
+      projectedCredits: 1500,
+      status: "In Progress",
+      description: "Space exploration series pilot episode"
     },
-    {
-      id: '2',
-      title: 'Climate Change Documentary',
-      description: 'Feature-length documentary on climate science',
-      status: 'Planning',
-      progress: 25,
-      lastUpdated: '1 day ago',
-      workflowStep: 'Storyboard'
+    { 
+      id: 2, 
+      title: "YouTube Promo Ad", 
+      lastActive: "Yesterday", 
+      phase: 2, 
+      step: 4, 
+      stepName: "4. Video Generation (BYOK)", 
+      projectedCredits: 450,
+      status: "Active",
+      description: "Product promotion video for social media"
     },
-    {
-      id: '3',
-      title: 'Tech Startup Pitch',
-      description: 'Video pitch for AI-powered startup',
-      status: 'Completed',
-      progress: 100,
-      lastUpdated: '3 days ago',
-      workflowStep: 'Video Generation'
+    { 
+      id: 3, 
+      title: "Series Bible: The Crew (Shared)", 
+      lastActive: "Aug 27", 
+      phase: 1, 
+      step: 3, 
+      stepName: "3. Director's Chair", 
+      projectedCredits: 800,
+      status: "Planning",
+      description: "Collaborative series development document"
+    },
+    { 
+      id: 4, 
+      title: "Documentary: Climate Impact", 
+      lastActive: "3 days ago", 
+      phase: 2, 
+      step: 5, 
+      stepName: "5. Post-Production", 
+      projectedCredits: 1200,
+      status: "In Progress",
+      description: "Environmental documentary feature"
+    },
+    { 
+      id: 5, 
+      title: "Corporate Training Series", 
+      lastActive: "1 week ago", 
+      phase: 1, 
+      step: 1, 
+      stepName: "1. Ideation", 
+      projectedCredits: 600,
+      status: "Planning",
+      description: "Employee onboarding video series"
     }
-  ]
+  ];
+
+  const getPhaseColor = (phase: number) => {
+    return phase === 1 
+      ? 'bg-purple-900 text-purple-300 border-purple-700' 
+      : 'bg-green-900 text-green-300 border-green-700'
+  }
+
+  const getPhaseLabel = (phase: number) => {
+    return phase === 1 ? 'Phase 1: Pre-Production' : 'Phase 2: Generation & Post'
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -43,17 +81,13 @@ export function ProductionProjectsTable() {
         return 'bg-green-500/20 text-green-300 border-green-500/40'
       case 'In Progress':
         return 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+      case 'Active':
+        return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
       case 'Planning':
         return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40'
       default:
         return 'bg-gray-500/20 text-gray-300 border-gray-500/40'
     }
-  }
-
-  const getProgressColor = (progress: number) => {
-    if (progress >= 80) return 'bg-green-500'
-    if (progress >= 50) return 'bg-blue-500'
-    return 'bg-yellow-500'
   }
 
   return (
@@ -67,41 +101,33 @@ export function ProductionProjectsTable() {
       <div className="p-6 border-b border-gray-700/50 bg-gradient-to-r from-gray-800/60 to-gray-700/40">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-white">Production Projects</h2>
+            <h2 className="text-2xl font-bold text-white">Recent Projects</h2>
             <p className="text-gray-400 mt-1">Manage your active video production workflow</p>
           </div>
           <Link href="/dashboard/projects/new">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button className="bg-teal-600 hover:bg-teal-700 text-white">
               <Plus className="w-4 h-4 mr-2" />
-              New Project
+              + New Project
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-800/50 border-b border-gray-700">
+      {/* Enhanced Table */}
+      <div className="bg-gray-800 shadow-xl rounded-lg overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-700">
+          <thead className="bg-gray-700/50">
             <tr>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                Project
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                Project Name
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                Status
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                Workflow Status (Step/6)
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                Progress
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                Est. Credits to Complete
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                Workflow Step
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                Last Updated
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                Actions
-              </th>
+              <th className="px-6 py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
@@ -111,50 +137,49 @@ export function ProductionProjectsTable() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.4, delay: 0.1 + index * 0.1 }}
-                className="hover:bg-gray-800/30 transition-colors duration-200"
+                className="hover:bg-gray-700/30 transition duration-150"
               >
-                <td className="px-6 py-4">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
                   <div className="flex items-center">
                     <div className="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center mr-3">
                       <FolderOpen className="w-5 h-5 text-blue-400" />
                     </div>
                     <div>
                       <div className="text-sm font-medium text-white">{project.title}</div>
-                      <div className="text-sm text-gray-400">{project.description}</div>
+                      <div className="text-xs text-gray-500">Last active: {project.lastActive}</div>
+                      <div className="text-xs text-gray-400 mt-1">{project.description}</div>
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(project.status)}`}>
-                    {project.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center">
-                    <div className="w-16 bg-gray-700 rounded-full h-2 mr-3">
-                      <div
-                        className={`h-2 rounded-full transition-all duration-300 ${getProgressColor(project.progress)}`}
-                        style={{ width: `${project.progress}%` }}
-                      ></div>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {/* Status Visualization: Differentiate Phase 1 (Pre-Prod) and Phase 2 (Generation/Post) */}
+                  <div className="space-y-2">
+                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border ${getPhaseColor(project.phase)}`}>
+                      {getPhaseLabel(project.phase)}
+                    </span>
+                    <div className="text-sm text-gray-300">
+                      {project.stepName}
                     </div>
-                    <span className="text-sm text-gray-300">{project.progress}%</span>
+                    <div className="text-xs text-gray-400">
+                      Step {project.step} of 6
+                    </div>
                   </div>
                 </td>
-                <td className="px-6 py-4">
-                  <span className="text-sm text-gray-300">{project.workflowStep}</span>
+                {/* Budget Estimation */}
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-semibold text-yellow-400">
+                  ~{project.projectedCredits.toLocaleString()}
+                  <div className="text-xs text-gray-400 mt-1">credits</div>
                 </td>
-                <td className="px-6 py-4">
-                  <span className="text-sm text-gray-400">{project.lastUpdated}</span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center space-x-2">
+                <td className="px-6 py-4 whitespace-nowrap text-right">
+                  <div className="flex items-center justify-end space-x-2">
                     <Link href={`/studio/${project.id}`}>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+                        className="text-indigo-500 hover:text-indigo-400 font-medium hover:bg-indigo-500/20"
                       >
-                        <Play className="w-4 h-4" />
+                        <Play className="w-4 h-4 mr-1" />
+                        Resume
                       </Button>
                     </Link>
                     <Link href={`/dashboard/projects/${project.id}`}>
@@ -179,6 +204,14 @@ export function ProductionProjectsTable() {
             ))}
           </tbody>
         </table>
+        
+        {/* Table Footer */}
+        <div className="p-4 bg-gray-700/50 text-center">
+          <Link href="/dashboard/projects" className="text-sm text-gray-400 hover:text-white flex items-center justify-center gap-2">
+            View All Projects
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
       </div>
 
       {/* Empty State */}
@@ -190,7 +223,7 @@ export function ProductionProjectsTable() {
           <h3 className="text-lg font-medium text-gray-300 mb-2">No projects yet</h3>
           <p className="text-gray-400 mb-6">Get started by creating your first video project</p>
           <Link href="/dashboard/projects/new">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button className="bg-teal-600 hover:bg-teal-700 text-white">
               <Plus className="w-4 h-4 mr-2" />
               Create First Project
             </Button>
