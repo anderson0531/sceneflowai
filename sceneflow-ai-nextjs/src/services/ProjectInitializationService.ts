@@ -245,7 +245,7 @@ Generate comprehensive baseline content that is production-ready and follows pro
    * Parse structured JSON response from AI
    */
   private parseStructuredResponse(data: any, request: ProjectInitializationRequest): Partial<ProductionGuide> {
-    console.log('Parsing structured response:', data);
+    console.log('🔍 Parsing structured response:', data);
     
     const project: Partial<ProductionGuide> = {
       projectId: request.projectId,
@@ -256,20 +256,49 @@ Generate comprehensive baseline content that is production-ready and follows pro
       boneyardCollapsed: true
     };
 
-    // Parse Film Treatment
+    // Parse Film Treatment - handle multiple possible formats and extract individual fields
     if (data.filmTreatment) {
-      project.filmTreatment = this.formatFilmTreatment(data.filmTreatment);
+      // Extract individual treatment fields and update title if needed
+      if (data.filmTreatment.title && !project.title) {
+        project.title = data.filmTreatment.title;
+      }
+      // Format the treatment with all the individual fields
+      project.filmTreatment = this.formatFilmTreatmentWithFields(data.filmTreatment);
     } else if (data.treatment) {
-      project.filmTreatment = this.formatFilmTreatment(data.treatment);
+      // Extract individual treatment fields and update title if needed
+      if (data.treatment.title && !project.title) {
+        project.title = data.treatment.title;
+      }
+      // Format the treatment with all the individual fields
+      project.filmTreatment = this.formatFilmTreatmentWithFields(data.treatment);
+    } else if (data.film_treatment) {
+      // Extract individual treatment fields and update title if needed
+      if (data.film_treatment.title && !project.title) {
+        project.title = data.film_treatment.title;
+      }
+      // Format the treatment with all the individual fields
+      project.filmTreatment = this.formatFilmTreatmentWithFields(data.film_treatment);
+    } else if (data.content) {
+      project.filmTreatment = this.formatFilmTreatment(data.content);
     }
 
-    // Parse Characters
+    // Also check for top-level treatment fields and update title if needed
+    if (data.logline && !project.title) {
+      // If we have a logline but no title, use a truncated version as title
+      project.title = data.logline.substring(0, 50) + (data.logline.length > 50 ? '...' : '');
+    }
+    if (data.synopsis && !project.title) {
+      // If we have a synopsis but no title, use a truncated version as title
+      project.title = data.synopsis.substring(0, 50) + (data.synopsis.length > 50 ? '...' : '');
+    }
+
+    // Parse Characters - handle multiple possible formats
     if (data.characters && Array.isArray(data.characters)) {
       project.characters = data.characters.map((char: any, index: number) => ({
         id: char.id || `char-${index + 1}`,
         name: char.name || 'Unknown Character',
         archetype: char.archetype || char.role || 'Main Character',
-        motivation: char.primaryMotivation || char.motivation || 'To be determined',
+        motivation: char.motivation || char.primaryMotivation || 'To be determined',
         internalConflict: char.internalConflict || char.conflict || 'To be determined',
         externalConflict: char.externalConflict || 'To be determined',
         arc: {
@@ -280,7 +309,7 @@ Generate comprehensive baseline content that is production-ready and follows pro
       }));
     }
 
-    // Parse Beat Sheet
+    // Parse Beat Sheet - handle multiple possible formats
     if (data.beatSheet && Array.isArray(data.beatSheet)) {
       project.beatSheet = data.beatSheet.map((beat: any, index: number) => ({
         id: beat.id || `beat-${index + 1}`,
@@ -305,6 +334,7 @@ Generate comprehensive baseline content that is production-ready and follows pro
       }));
     }
 
+    console.log('✅ Final parsed project:', project);
     return project;
   }
 
@@ -428,6 +458,47 @@ Generate comprehensive baseline content that is production-ready and follows pro
     }
     
     return String(treatment);
+  }
+
+  /**
+   * Format film treatment content with individual fields
+   */
+  private formatFilmTreatmentWithFields(treatment: any): string {
+    let formatted = '';
+
+    if (treatment.title) {
+      formatted += `<h1>${treatment.title}</h1>\n\n`;
+    }
+
+    if (treatment.logline) {
+      formatted += `<p><strong>Logline:</strong> ${treatment.logline}</p>\n\n`;
+    }
+
+    if (treatment.synopsis) {
+      formatted += `<p><strong>Synopsis:</strong> ${treatment.synopsis}</p>\n\n`;
+    }
+
+    if (treatment.targetAudience) {
+      formatted += `<p><strong>Target Audience:</strong> ${treatment.targetAudience}</p>\n\n`;
+    }
+
+    if (treatment.genre) {
+      formatted += `<p><strong>Genre and Tone:</strong> ${treatment.genre}</p>\n\n`;
+    }
+
+    if (treatment.duration) {
+      formatted += `<p><strong>Duration:</strong> ${treatment.duration}</p>\n\n`;
+    }
+
+    if (treatment.themes) {
+      formatted += `<p><strong>Key Themes and Messages:</strong> ${treatment.themes}</p>\n\n`;
+    }
+
+    if (treatment.structure) {
+      formatted += `<p><strong>Story Structure Overview:</strong> ${treatment.structure}</p>`;
+    }
+
+    return formatted;
   }
 
   /**
