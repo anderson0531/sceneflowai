@@ -58,6 +58,9 @@ export class ProjectInitializationService {
    */
   private async callCueAI(request: ProjectInitializationRequest): Promise<{ success: boolean; content: string; error?: string }> {
     try {
+      // Determine the best template if none selected
+      const template = request.template || this.selectBestTemplate(request.projectIdea)
+      
       const response = await fetch('/api/cue/respond', {
         method: 'POST',
         headers: {
@@ -67,21 +70,43 @@ export class ProjectInitializationService {
           messages: [
             {
               role: 'user',
-              content: `Create a new video project with the following idea: ${request.projectIdea}
+              content: `Create a COMPLETE video project following the No Blank Canvas principle. Use the ${template} template structure.
 
-Please generate comprehensive baseline content following the No Blank Canvas principle:
+PROJECT IDEA: ${request.projectIdea}
 
-1. Film Treatment: Complete project overview with logline, synopsis, target audience, genre, tone, duration, story structure, and key themes
-2. Character Breakdowns: 2-4 main characters with detailed profiles, motivations, conflicts, and character arcs
-3. Interactive Beat Sheet: 6-8 story beats organized by acts, with timing, actions, and dialogue cues
+Generate comprehensive baseline content:
 
-Format the response as structured data that can be parsed into the project structure.`
+1. FILM TREATMENT:
+   - Title and Logline
+   - Synopsis (2-3 paragraphs)
+   - Target Audience
+   - Genre and Tone
+   - Duration
+   - Key Themes and Messages
+   - Story Structure Overview
+
+2. CHARACTER BREAKDOWNS (2-4 main characters):
+   - Name and Role
+   - Archetype and Personality
+   - Primary Motivation
+   - Internal Conflict
+   - External Conflict
+   - Character Arc (Act I, II, III development)
+
+3. INTERACTIVE BEAT SHEET (following ${template} structure):
+   - 6-8 story beats organized by acts
+   - Each beat with title, summary, timing, actions
+   - Character interactions and dialogue cues
+   - Structural purpose and emotional charge
+   - Production notes (location, mood, pacing)
+
+Format as structured sections that can be parsed into the project system. Be comprehensive and production-ready.`
             }
           ],
           context: {
             type: 'project-creation',
             projectId: request.projectId,
-            template: request.template || 'debate-educational'
+            template: template
           }
         })
       });
@@ -104,6 +129,37 @@ Format the response as structured data that can be parsed into the project struc
         error: error instanceof Error ? error.message : 'Failed to call Cue AI'
       };
     }
+  }
+
+  /**
+   * Select the best template based on project idea content
+   */
+  private selectBestTemplate(projectIdea: string): string {
+    const idea = projectIdea.toLowerCase()
+    
+    // Check for specific indicators
+    if (idea.includes('debate') || idea.includes('argument') || idea.includes('perspective') || idea.includes('educational')) {
+      return 'debate-educational'
+    }
+    
+    if (idea.includes('documentary') || idea.includes('investigation') || idea.includes('real') || idea.includes('fact')) {
+      return 'documentary'
+    }
+    
+    if (idea.includes('hero') || idea.includes('journey') || idea.includes('quest') || idea.includes('adventure')) {
+      return 'hero-journey'
+    }
+    
+    if (idea.includes('save') || idea.includes('cat') || idea.includes('screenplay') || idea.includes('movie')) {
+      return 'save-cat'
+    }
+    
+    if (idea.includes('act') || idea.includes('drama') || idea.includes('theater') || idea.includes('classical')) {
+      return 'five-act'
+    }
+    
+    // Default to 3-act structure for most narrative content
+    return 'three-act'
   }
 
   /**
