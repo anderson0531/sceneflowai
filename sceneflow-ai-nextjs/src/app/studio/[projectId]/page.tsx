@@ -29,10 +29,13 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
       setIsNewProject(true);
       setIsInitializing(true);
       
+      // Generate a unique project ID
+      const projectId = `project-${Date.now()}`;
+      
       // Trigger Cue to generate initial story content
       invokeCue({
         type: 'text',
-        content: 'Initialize new project with baseline Film Treatment, Character Breakdowns, and Interactive Beat Sheet following the No Blank Canvas principle. Generate comprehensive content for a new video project.'
+        content: `Initialize new project "${params.projectId}" with baseline Film Treatment, Character Breakdowns, and Interactive Beat Sheet following the No Blank Canvas principle. Generate comprehensive content for a new video project.`
       });
       
       // Set initialization complete after a delay

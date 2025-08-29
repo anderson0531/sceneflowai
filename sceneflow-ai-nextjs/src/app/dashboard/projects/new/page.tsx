@@ -6,10 +6,13 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 import { Sparkles, Lightbulb, Upload, ArrowRight, MessageSquare } from 'lucide-react'
 import { useCue } from '@/store/useCueStore'
+import { useGuideStore } from '@/store/useGuideStore'
+import ProjectInitializationService from '@/services/ProjectInitializationService'
 
 export default function NewProjectPage() {
   const router = useRouter()
   const { invokeCue } = useCue()
+  const { initializeProject } = useGuideStore()
   const [projectIdea, setProjectIdea] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [generationProgress, setGenerationProgress] = useState(0)
@@ -32,19 +35,31 @@ export default function NewProjectPage() {
     }, 200)
 
     try {
-      // Invoke Cue to generate baseline content
-      await invokeCue({
-        type: 'text',
-        content: `Create a new project with the following idea: ${projectIdea}. Generate baseline Film Treatment, Character Breakdowns, and Interactive Beat Sheet following the No Blank Canvas principle.`
+      // Generate unique project ID
+      const projectId = `new-project-${Date.now()}`
+      
+      // Use ProjectInitializationService to generate content
+      const service = ProjectInitializationService.getInstance()
+      const result = await service.initializeProject({
+        projectIdea,
+        projectId,
+        template: 'debate-educational'
       })
 
-      // Complete progress
-      setGenerationProgress(100)
-      
-      // Wait a moment then redirect to existing Spark Studio with new project
-      setTimeout(() => {
-        router.push('/studio/new-project-123')
-      }, 1000)
+      if (result.success && result.project) {
+        // Initialize the project in the store
+        initializeProject(result.project)
+        
+        // Complete progress
+        setGenerationProgress(100)
+        
+        // Wait a moment then redirect to Spark Studio
+        setTimeout(() => {
+          router.push(`/studio/${projectId}`)
+        }, 1000)
+      } else {
+        throw new Error(result.error || 'Failed to generate project')
+      }
 
     } catch (error) {
       console.error('Error generating project:', error)
