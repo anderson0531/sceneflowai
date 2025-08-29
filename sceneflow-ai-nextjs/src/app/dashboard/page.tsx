@@ -1,17 +1,36 @@
 'use client'
 
-import { HeroBanner } from './components/HeroBanner'
-import { DashboardOverview } from './components/DashboardOverview'
-import { CurrentPlan } from './components/CurrentPlan'
-import { ProjectHub } from './components/ProjectHub'
+import { CueCommandCenter } from './components/CueCommandCenter'
+import { ProductionProjectsTable } from './components/ProductionProjectsTable'
+import { PlanAndCreditsWidget } from './components/PlanAndCreditsWidget'
+import { BYOKIntegrationStatus } from './components/BYOKIntegrationStatus'
+import { ResourcesOverviewWidget } from './components/ResourcesOverviewWidget'
 
 export default function DashboardPage() {
   return (
-    <section className="max-w-7xl mx-auto p-4 sm:p-8 space-y-8">
-      <HeroBanner userName="Demo User" />
-      <DashboardOverview />
-      <CurrentPlan />
-      <ProjectHub />
-    </section>
+    <div className="min-h-screen bg-gray-950 text-white p-4 md:p-8 font-sans">
+      <div className="max-w-7xl mx-auto">
+        
+        {/* Section 1: Cue Command Center (Full Width, Focal Point) */}
+        <CueCommandCenter />
+
+        {/* Section 2: Dashboard Grid (2-Column Layout) */}
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Primary Workflow Area (2/3 width) */}
+          <div className="lg:col-span-2">
+            <ProductionProjectsTable />
+          </div>
+
+          {/* Status Sidebar (1/3 width) */}
+          <div className="lg:col-span-1 space-y-8">
+            <PlanAndCreditsWidget />
+            <ResourcesOverviewWidget />
+            <BYOKIntegrationStatus />
+          </div>
+          
+        </div>
+      </div>
+    </div>
   )
 }
