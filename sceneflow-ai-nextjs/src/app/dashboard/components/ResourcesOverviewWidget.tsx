@@ -1,23 +1,48 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { HardDrive, FileText, Eye, Camera, Film, Download } from 'lucide-react'
+import { HardDrive, FileText, Eye, Camera, Film, Download, BarChart3, Database } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 
 export function ResourcesOverviewWidget() {
-  // Mock data - replace with real backend data
-  const resources = {
-    storage: {
-      used: '2.4 GB',
-      total: '10 GB',
-      percentage: 24
-    },
-    assets: {
-      scripts: 24,
-      storyboards: 18,
-      sceneDirection: 12,
-      videos: 8
+  // Mock data for resources overview
+  const storageData = {
+    used: 2.4, // GB
+    total: 10, // GB
+    percentage: 24
+  }
+
+  const assetsData = {
+    scripts: 12,
+    storyboards: 8,
+    sceneDirection: 15,
+    videos: 6
+  }
+
+  const recentActivity = [
+    { type: 'script', name: 'Scene 3 Dialogue', size: '45KB', time: '2 hours ago' },
+    { type: 'storyboard', name: 'Opening Sequence', size: '2.1MB', time: '1 day ago' },
+    { type: 'video', name: 'Final Cut v2', size: '156MB', time: '3 days ago' }
+  ]
+
+  const getAssetIcon = (type: string) => {
+    switch (type) {
+      case 'script': return <FileText className="w-4 h-4 text-blue-400" />
+      case 'storyboard': return <Eye className="w-4 h-4 text-green-400" />
+      case 'sceneDirection': return <Camera className="w-4 h-4 text-purple-400" />
+      case 'video': return <Film className="w-4 h-4 text-red-400" />
+      default: return <FileText className="w-4 h-4 text-gray-400" />
+    }
+  }
+
+  const getAssetColor = (type: string) => {
+    switch (type) {
+      case 'script': return 'bg-blue-600/20 text-blue-400'
+      case 'storyboard': return 'bg-green-600/20 text-green-400'
+      case 'sceneDirection': return 'bg-purple-600/20 text-purple-400'
+      case 'video': return 'bg-red-600/20 text-red-400'
+      default: return 'bg-gray-600/20 text-gray-400'
     }
   }
 
@@ -25,124 +50,109 @@ export function ResourcesOverviewWidget() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.5 }}
-      className="bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-gray-700/50 shadow-2xl overflow-hidden"
+      transition={{ duration: 0.6, delay: 0.4 }}
+      className="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700"
     >
-      {/* Header */}
-      <div className="p-6 border-b border-gray-700/50 bg-gradient-to-r from-gray-800/60 to-gray-700/40">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-cyan-600 rounded-lg flex items-center justify-center">
-            <HardDrive className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-white">Resources Overview</h3>
-            <p className="text-sm text-gray-400">Storage & Assets</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="p-6 space-y-6">
-        {/* Storage Usage */}
-        <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-          <div className="flex items-center gap-2 mb-3">
-            <HardDrive className="w-5 h-5 text-cyan-400" />
+      <h2 className="text-xl font-semibold mb-4 text-white">Resources Overview</h2>
+      
+      {/* Storage Usage */}
+      <div className="mb-6 p-4 bg-gray-900/50 rounded-lg">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <HardDrive className="w-5 h-5 text-blue-400" />
             <span className="text-sm font-medium text-gray-300">Storage Usage</span>
           </div>
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-xl font-bold text-white">{resources.storage.used}</div>
-            <div className="text-sm text-gray-400">of {resources.storage.total}</div>
+          <span className="text-sm text-gray-400">{storageData.percentage}%</span>
+        </div>
+        
+        <div className="flex items-baseline gap-2 mb-3">
+          <span className="text-2xl font-bold text-white">{storageData.used}GB</span>
+          <span className="text-sm text-gray-400">of {storageData.total}GB</span>
+        </div>
+        
+        {/* Storage Progress Bar */}
+        <div className="w-full bg-gray-700 rounded-full h-2 mb-3">
+          <div 
+            className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300" 
+            style={{ width: `${storageData.percentage}%` }}
+          ></div>
+        </div>
+        
+        <Link href="/dashboard/settings/storage">
+          <Button variant="outline" size="sm" className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-gray-500">
+            Manage Storage
+          </Button>
+        </Link>
+      </div>
+
+      {/* Production Assets Grid */}
+      <div className="mb-6">
+        <h3 className="text-sm font-medium text-gray-300 mb-3">Production Assets</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-gray-900/50 rounded-lg p-3 text-center">
+            <div className="w-8 h-8 bg-blue-600/20 rounded-lg flex items-center justify-center mx-auto mb-2">
+              <FileText className="w-4 h-4 text-blue-400" />
+            </div>
+            <div className="text-lg font-bold text-white">{assetsData.scripts}</div>
+            <div className="text-xs text-gray-400">Scripts</div>
           </div>
           
-          {/* Progress Bar */}
-          <div className="w-full bg-gray-700 rounded-full h-2 mb-3">
-            <div 
-              className="bg-cyan-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${resources.storage.percentage}%` }}
-            ></div>
+          <div className="bg-gray-900/50 rounded-lg p-3 text-center">
+            <div className="w-8 h-8 bg-green-600/20 rounded-lg flex items-center justify-center mx-auto mb-2">
+              <Eye className="w-4 h-4 text-green-400" />
+            </div>
+            <div className="text-lg font-bold text-white">{assetsData.storyboards}</div>
+            <div className="text-xs text-gray-400">Storyboards</div>
           </div>
           
-          <div className="text-sm text-gray-400 mb-3">{resources.storage.percentage}% used</div>
+          <div className="bg-gray-900/50 rounded-lg p-3 text-center">
+            <div className="w-8 h-8 bg-purple-600/20 rounded-lg flex items-center justify-center mx-auto mb-2">
+              <Camera className="w-4 h-4 text-purple-400" />
+            </div>
+            <div className="text-lg font-bold text-white">{assetsData.sceneDirection}</div>
+            <div className="text-xs text-gray-400">Scene Direction</div>
+          </div>
           
-          <div className="mt-3">
-            <Link href="/dashboard/settings/storage">
-              <Button variant="outline" size="sm" className="w-full border-cyan-500/50 text-cyan-300 hover:text-white hover:border-cyan-400/70">
-                Manage Storage
-              </Button>
-            </Link>
+          <div className="bg-gray-900/50 rounded-lg p-3 text-center">
+            <div className="w-8 h-8 bg-red-600/20 rounded-lg flex items-center justify-center mx-auto mb-2">
+              <Film className="w-4 h-4 text-red-400" />
+            </div>
+            <div className="text-lg font-bold text-white">{assetsData.videos}</div>
+            <div className="text-xs text-gray-400">Videos</div>
           </div>
         </div>
+        
+        <Link href="/dashboard/assets" className="block mt-3">
+          <Button variant="outline" size="sm" className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-gray-500">
+            Manage Assets
+          </Button>
+        </Link>
+      </div>
 
-        {/* Asset Counts */}
-        <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-          <h4 className="text-sm font-medium text-gray-300 mb-3">Production Assets</h4>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-indigo-600/20 rounded-lg flex items-center justify-center">
-                <FileText className="w-4 h-4 text-indigo-400" />
-              </div>
-              <div>
-                <div className="text-sm font-medium text-white">{resources.assets.scripts}</div>
-                <div className="text-xs text-gray-400">Scripts</div>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-purple-600/20 rounded-lg flex items-center justify-center">
-                <Eye className="w-4 h-4 text-purple-400" />
-              </div>
-              <div>
-                <div className="text-sm font-medium text-white">{resources.assets.storyboards}</div>
-                <div className="text-xs text-gray-400">Storyboards</div>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-green-600/20 rounded-lg flex items-center justify-center">
-                <Camera className="w-4 h-4 text-green-400" />
-              </div>
-              <div>
-                <div className="text-sm font-medium text-white">{resources.assets.sceneDirection}</div>
-                <div className="text-xs text-gray-400">Scene Direction</div>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-orange-600/20 rounded-lg flex items-center justify-center">
-                <Film className="w-4 h-4 text-orange-400" />
-              </div>
-              <div>
-                <div className="text-sm font-medium text-white">{resources.assets.videos}</div>
-                <div className="text-xs text-gray-400">Videos</div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="mt-4">
-            <Link href="/dashboard/settings/integrations">
-              <Button variant="outline" size="sm" className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-gray-500">
-                <Download className="w-4 h-4 mr-2" />
-                Manage Assets
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
+      {/* Recent Activity */}
+      <div>
+        <h3 className="text-sm font-medium text-gray-300 mb-3">Recent Activity</h3>
         <div className="space-y-2">
-          <Link href="/dashboard/settings/storage">
-            <Button variant="ghost" size="sm" className="w-full justify-start text-gray-400 hover:text-white hover:bg-gray-800/50">
-              <HardDrive className="w-4 h-4 mr-2" />
-              Storage Settings
-            </Button>
-          </Link>
-          <Link href="/dashboard/settings/integrations">
-            <Button variant="ghost" size="sm" className="w-full justify-start text-gray-400 hover:text-white hover:bg-gray-800/50">
-              <Download className="w-4 h-4 mr-2" />
-              Asset Management
-            </Button>
-          </Link>
+          {recentActivity.map((activity, index) => (
+            <div key={index} className="flex items-center gap-3 p-2 bg-gray-900/30 rounded-lg">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${getAssetColor(activity.type)}`}>
+                {getAssetIcon(activity.type)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-white truncate">{activity.name}</div>
+                <div className="text-xs text-gray-400">{activity.size} • {activity.time}</div>
+              </div>
+              <Download className="w-4 h-4 text-gray-400 hover:text-white cursor-pointer" />
+            </div>
+          ))}
         </div>
+        
+        <Link href="/dashboard/analytics" className="block mt-3">
+          <Button variant="outline" size="sm" className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-gray-500">
+            <BarChart3 className="w-4 h-4 mr-2" />
+            View Analytics
+          </Button>
+        </Link>
       </div>
     </motion.div>
   )
