@@ -115,95 +115,99 @@ export function ProductionProjectsTable() {
 
       {/* Enhanced Table */}
       <div className="bg-gray-800 shadow-xl rounded-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-700">
-          <thead className="bg-gray-700/50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Project Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Workflow Status (Step/6)
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Est. Credits to Complete
-              </th>
-              <th className="px-6 py-3"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-700">
-            {projects.map((project, index) => (
-              <motion.tr
-                key={project.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.4, delay: 0.1 + index * 0.1 }}
-                className="hover:bg-gray-700/30 transition duration-150"
-              >
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center mr-3">
-                      <FolderOpen className="w-5 h-5 text-blue-400" />
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-700">
+            <thead className="bg-gray-700/50">
+              <tr>
+                <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Project Name
+                </th>
+                <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Workflow Status
+                </th>
+                <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Est. Credits
+                </th>
+                <th className="px-4 md:px-6 py-3 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-700">
+              {projects.map((project, index) => (
+                <motion.tr
+                  key={project.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, delay: 0.1 + index * 0.1 }}
+                  className="hover:bg-gray-700/30 transition duration-150 cursor-pointer"
+                  onClick={() => window.open(`/studio/${project.id}`, '_blank')}
+                >
+                  <td className="px-4 md:px-6 py-4 text-sm font-medium text-white">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-600/20 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                        <FolderOpen className="w-4 h-4 md:w-5 md:h-5 text-blue-400" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-white truncate">{project.title}</div>
+                        <div className="text-xs text-gray-500 truncate">Last active: {project.lastActive}</div>
+                        <div className="text-xs text-gray-400 mt-1 truncate">{project.description}</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-sm font-medium text-white">{project.title}</div>
-                      <div className="text-xs text-gray-500">Last active: {project.lastActive}</div>
-                      <div className="text-xs text-gray-400 mt-1">{project.description}</div>
+                  </td>
+                  <td className="px-4 md:px-6 py-4">
+                    <div className="space-y-1">
+                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border ${getPhaseColor(project.phase)}`}>
+                        {getPhaseLabel(project.phase)}
+                      </span>
+                      <div className="text-sm text-gray-300 truncate">
+                        {project.stepName}
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        Step {project.step} of 6
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {/* Status Visualization: Differentiate Phase 1 (Pre-Prod) and Phase 2 (Generation/Post) */}
-                  <div className="space-y-2">
-                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border ${getPhaseColor(project.phase)}`}>
-                      {getPhaseLabel(project.phase)}
-                    </span>
-                    <div className="text-sm text-gray-300">
-                      {project.stepName}
-                    </div>
-                    <div className="text-xs text-gray-400">
-                      Step {project.step} of 6
-                    </div>
-                  </div>
-                </td>
-                {/* Budget Estimation */}
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-semibold text-yellow-400">
-                  ~{project.projectedCredits.toLocaleString()}
-                  <div className="text-xs text-gray-400 mt-1">credits</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right">
-                  <div className="flex items-center justify-end space-x-2">
-                    <Link href={`/studio/${project.id}`}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-indigo-500 hover:text-indigo-400 font-medium hover:bg-indigo-500/20"
-                      >
-                        <Play className="w-4 h-4 mr-1" />
-                        Resume
-                      </Button>
-                    </Link>
-                    <Link href={`/dashboard/projects/${project.id}`}>
+                  </td>
+                  {/* Budget Estimation */}
+                  <td className="px-4 md:px-6 py-4 text-right text-sm font-semibold text-yellow-400">
+                    <div className="text-sm">~{project.projectedCredits.toLocaleString()}</div>
+                    <div className="text-xs text-gray-400">credits</div>
+                  </td>
+                  <td className="px-4 md:px-6 py-4 text-center">
+                    <div className="flex items-center justify-center space-x-1">
+                      <Link href={`/studio/${project.id}`} onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-indigo-500 hover:text-indigo-400 font-medium hover:bg-indigo-500/20"
+                        >
+                          <Play className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                      <Link href={`/dashboard/projects/${project.id}`} onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-gray-400 hover:text-gray-300 hover:bg-gray-500/20"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </Link>
                       <Button
                         variant="ghost"
                         size="sm"
                         className="text-gray-400 hover:text-gray-300 hover:bg-gray-500/20"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <Eye className="w-4 h-4" />
+                        <MoreHorizontal className="w-4 h-4" />
                       </Button>
-                    </Link>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-gray-400 hover:text-gray-300 hover:bg-gray-500/20"
-                    >
-                      <MoreHorizontal className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
+                    </div>
+                  </td>
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         
         {/* Table Footer */}
         <div className="p-4 bg-gray-700/50 text-center">

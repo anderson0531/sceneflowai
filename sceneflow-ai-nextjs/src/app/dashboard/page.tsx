@@ -14,22 +14,22 @@ export default function DashboardPage() {
         {/* Section 1: Cue Command Center (Full Width, Focal Point) */}
         <CueCommandCenter />
 
-        {/* Section 2: Dashboard Grid (2-Column Layout) */}
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Primary Workflow Area (2/3 width) */}
-          <div className="lg:col-span-2">
-            <ProductionProjectsTable />
-          </div>
+               {/* Section 2: Dashboard Grid (2-Column Layout) */}
+       <div className="mt-6 md:mt-8 grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-8">
+         
+         {/* Primary Workflow Area (2/3 width) */}
+         <div className="xl:col-span-2">
+           <ProductionProjectsTable />
+         </div>
 
-          {/* Status Sidebar (1/3 width) */}
-          <div className="lg:col-span-1 space-y-8">
-            <PlanAndCreditsWidget />
-            <ResourcesOverviewWidget />
-            <BYOKIntegrationStatus />
-          </div>
-          
-        </div>
+         {/* Status Sidebar (1/3 width) */}
+         <div className="xl:col-span-1 space-y-6 md:space-y-8">
+           <PlanAndCreditsWidget />
+           <ResourcesOverviewWidget />
+           <BYOKIntegrationStatus />
+         </div>
+         
+       </div>
       </div>
     </div>
   )
