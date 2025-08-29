@@ -48,17 +48,22 @@ export const useGuideStore = create<GuideState>((set) => ({
   guide: initialGuide,
   
   // Project initialization
-  initializeProject: (projectData) => set((state) => ({
-    guide: {
-      ...state.guide,
-      ...projectData,
-      projectId: projectData.projectId || `project-${Date.now()}`,
-      title: projectData.title || 'Untitled Project',
-      filmTreatment: projectData.filmTreatment || '',
-      characters: projectData.characters || [],
-      beatSheet: projectData.beatSheet || []
-    }
-  })),
+  initializeProject: (projectData) => {
+    console.log('🏪 Store: Initializing project with data:', projectData);
+    return set((state) => {
+      const newGuide = {
+        ...state.guide,
+        ...projectData,
+        projectId: projectData.projectId || `project-${Date.now()}`,
+        title: projectData.title || 'Untitled Project',
+        filmTreatment: projectData.filmTreatment || '',
+        characters: projectData.characters || [],
+        beatSheet: projectData.beatSheet || []
+      };
+      console.log('🏪 Store: New guide state:', newGuide);
+      return { guide: newGuide };
+    });
+  },
   
   resetProject: () => set(() => ({
     guide: initialGuide

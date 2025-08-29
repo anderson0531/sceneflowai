@@ -112,6 +112,7 @@ export default function NewProjectPage() {
     try {
       // Generate unique project ID
       const projectId = `new-project-${Date.now()}`
+      console.log('🆔 Generated project ID:', projectId);
       
       // Use ProjectInitializationService to generate content
       const service = ProjectInitializationService.getInstance()
@@ -122,14 +123,20 @@ export default function NewProjectPage() {
       })
 
       if (result.success && result.project) {
+        console.log('✅ Project generated successfully, updating store...');
+        
         // Initialize the project in the store
         initializeProject(result.project)
+        
+        // Force a small delay to ensure store update is processed
+        await new Promise(resolve => setTimeout(resolve, 100));
         
         // Complete progress
         setGenerationProgress(100)
         
         // Wait a moment then redirect to Spark Studio
         setTimeout(() => {
+          console.log('🚀 Redirecting to Spark Studio...');
           router.push(`/studio/${projectId}`)
         }, 1000)
       } else {

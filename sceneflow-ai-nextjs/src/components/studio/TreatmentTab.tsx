@@ -17,6 +17,10 @@ interface FloatingToolbar {
 export function TreatmentTab() {
   const { guide, updateTreatment } = useGuideStore();
   const { invokeCue } = useCue();
+  
+  // Debug logging
+  console.log('🎬 TreatmentTab: Current guide state:', guide);
+  console.log('🎬 TreatmentTab: Film treatment content:', guide.filmTreatment);
   const [isClient, setIsClient] = useState(false);
   const [floatingToolbar, setFloatingToolbar] = useState<FloatingToolbar>({
     visible: false,
@@ -31,6 +35,11 @@ export function TreatmentTab() {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Monitor store changes
+  useEffect(() => {
+    console.log('🎬 TreatmentTab: Store updated, new film treatment:', guide.filmTreatment);
+  }, [guide.filmTreatment]);
 
   // Handle text selection
   useEffect(() => {

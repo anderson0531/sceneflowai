@@ -29,21 +29,25 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
       setIsNewProject(true);
       setIsInitializing(true);
       
-      // Generate a unique project ID
-      const projectId = `project-${Date.now()}`;
-      
-      // Trigger Cue to generate initial story content
-      invokeCue({
-        type: 'text',
-        content: `Initialize new project "${params.projectId}" with baseline Film Treatment, Character Breakdowns, and Interactive Beat Sheet following the No Blank Canvas principle. Generate comprehensive content for a new video project.`
-      });
-      
-      // Set initialization complete after a delay
-      setTimeout(() => {
+      // Check if we already have content in the store
+      if (guide.filmTreatment && guide.filmTreatment.trim() !== '') {
+        console.log('🎯 Studio: Found existing content in store, skipping re-initialization');
         setIsInitializing(false);
-      }, 2000);
+      } else {
+        console.log('🎯 Studio: No existing content, initializing with Cue');
+        // Trigger Cue to generate initial story content
+        invokeCue({
+          type: 'text',
+          content: `Initialize new project "${params.projectId}" with baseline Film Treatment, Character Breakdowns, and Interactive Beat Sheet following the No Blank Canvas principle. Generate comprehensive content for a new video project.`
+        });
+        
+        // Set initialization complete after a delay
+        setTimeout(() => {
+          setIsInitializing(false);
+        }, 2000);
+      }
     }
-  }, [params.projectId, isNewProject, invokeCue]);
+  }, [params.projectId, isNewProject, invokeCue, guide.filmTreatment]);
 
   return (
     <div className="flex flex-col h-full bg-gray-950 text-white overflow-hidden">

@@ -28,23 +28,31 @@ export class ProjectInitializationService {
    * Initialize a new project with Cue AI-generated content
    */
   public async initializeProject(request: ProjectInitializationRequest): Promise<ProjectInitializationResponse> {
+    console.log('🚀 Starting project initialization:', request);
+    
     try {
       // Call Cue AI to generate project content
+      console.log('📞 Calling Cue AI...');
       const cueResponse = await this.callCueAI(request);
+      
+      console.log('📥 Cue AI response:', cueResponse);
       
       if (!cueResponse.success) {
         throw new Error(cueResponse.error || 'Failed to generate project content');
       }
 
       // Parse and structure the AI response
+      console.log('🔍 Parsing AI response...');
       const projectData = this.parseAIResponse(cueResponse.content, request);
+      
+      console.log('✅ Parsed project data:', projectData);
       
       return {
         success: true,
         project: projectData
       };
     } catch (error) {
-      console.error('Project initialization failed:', error);
+      console.error('❌ Project initialization failed:', error);
       return {
         success: false,
         project: {},
@@ -60,6 +68,9 @@ export class ProjectInitializationService {
     try {
       // Determine the best template if none selected
       const template = request.template || this.selectBestTemplate(request.projectIdea)
+      
+      console.log('🎯 Using template:', template);
+      console.log('📝 Project idea:', request.projectIdea);
       
       const response = await fetch('/api/cue/respond', {
         method: 'POST',
@@ -92,7 +103,7 @@ IMPORTANT: Return your response as VALID JSON that can be parsed directly into t
     {
       "name": "Character Name",
       "archetype": "Character archetype",
-      "primaryMotivation": "Main motivation",
+      "motivation": "Main motivation",
       "internalConflict": "Internal struggle",
       "externalConflict": "External obstacles",
       "arc": {
@@ -137,10 +148,14 @@ Generate comprehensive baseline content that is production-ready and follows pro
       }
 
       const data = await response.json();
+      console.log('📊 Raw API response:', data);
+      
+      const content = data.reply || data.content || data.message || '';
+      console.log('📄 Extracted content:', content);
       
       return {
         success: true,
-        content: data.reply || data.content || data.message || ''
+        content: content
       };
     } catch (error) {
       console.error('Cue AI call failed:', error);
