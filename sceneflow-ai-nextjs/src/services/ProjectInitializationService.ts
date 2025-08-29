@@ -94,7 +94,7 @@ Format the response as structured data that can be parsed into the project struc
       
       return {
         success: true,
-        content: data.content || data.message || ''
+        content: data.reply || data.content || data.message || ''
       };
     } catch (error) {
       console.error('Cue AI call failed:', error);

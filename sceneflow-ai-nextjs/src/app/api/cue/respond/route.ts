@@ -10,6 +10,7 @@ interface CueContext {
   pathname?: string
   currentStep?: string
   stepProgress?: Record<string, number>
+  type?: 'project-creation' | 'text' | 'beatCard' | 'character' | 'template' | 'analysis' | 'pacing' | 'conflict' | 'consistency'
   project?: {
     id?: string
     title?: string
@@ -57,8 +58,15 @@ When analysisMode is 'story_insights', provide structured, actionable recommenda
 5. Identify both critical issues and opportunities for enhancement
 6. Provide recommendations that can be automatically applied or manually reviewed
 
-Always provide immediate, protective guidance with specific implementation steps.`
-async function callGemini(messages: Message[], apiKey: string): Promise<string> {
+Always provide immediate, protective guidance with specific implementation steps.
+
+PROJECT CREATION MODE:
+When context.type is 'project-creation', you are creating a COMPLETE NEW PROJECT from scratch:
+1. Analyze the user's project idea and select the most appropriate story template
+2. Generate comprehensive baseline content following the No Blank Canvas principle
+3. Provide structured output that can be parsed into the project system
+4. Use higher token limits and more detailed generation for complete story development`
+async function callGemini(messages: Message[], apiKey: string, context?: CueContext): Promise<string> {
   // Convert OpenAI format to Gemini format
   const contents = messages
     .filter(msg => msg.role !== 'system')
@@ -81,15 +89,20 @@ async function callGemini(messages: Message[], apiKey: string): Promise<string> 
     })
   }
 
+  // Use more powerful model and higher token limits for project creation
+  const isProjectCreation = context?.type === 'project-creation'
+  const model = isProjectCreation ? 'gemini-1.5-flash' : 'gemini-2.0-flash-exp'
+  const maxTokens = isProjectCreation ? 32768 : 1024
+
   const body = {
     contents,
     generationConfig: {
       temperature: 0.7,
-      maxOutputTokens: 1024,
+      maxOutputTokens: maxTokens,
     }
   }
 
-  const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`, {
+  const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -108,11 +121,17 @@ async function callGemini(messages: Message[], apiKey: string): Promise<string> 
   return content
 }
 
-async function callOpenAI(messages: Message[], apiKey: string): Promise<string> {
+async function callOpenAI(messages: Message[], apiKey: string, context?: CueContext): Promise<string> {
+  // Use more powerful model for project creation
+  const isProjectCreation = context?.type === 'project-creation'
+  const model = isProjectCreation ? 'gpt-4o' : 'gpt-4o-mini'
+  const maxTokens = isProjectCreation ? 4096 : undefined
+  
   const body = {
-    model: 'gpt-4o-mini',
+    model,
     messages,
     temperature: 0.7,
+    ...(maxTokens && { max_tokens: maxTokens })
   }
   const resp = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -199,7 +218,7 @@ export async function POST(req: NextRequest) {
       if (provider.key) {
         try {
           console.log(`🤖 Trying ${provider.name}...`)
-          const reply = await provider.call(finalMessages, provider.key)
+          const reply = await provider.call(finalMessages, provider.key, context)
           console.log(`✅ ${provider.name} success`)
           return new Response(JSON.stringify({ 
             reply, 
