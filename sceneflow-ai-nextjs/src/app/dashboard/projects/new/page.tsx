@@ -99,7 +99,7 @@ export default function NewProjectPage() {
             </div>
             <div>
               <h1 className="text-4xl md:text-5xl font-bold text-white">The Spark Studio</h1>
-              <p className="text-xl text-gray-400 mt-2">Create a CTA subtitle</p>
+              <p className="text-xl text-gray-400 mt-2">Ideation & Brainstorming</p>
             </div>
           </div>
         </motion.div>

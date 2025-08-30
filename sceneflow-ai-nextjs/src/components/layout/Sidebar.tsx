@@ -35,7 +35,7 @@ const workflowNav = [
     name: 'The Spark Studio', 
     href: '/dashboard/projects/new', 
     icon: Sparkles,
-    description: 'Create a CTA subtitle',
+    description: 'Ideation & Brainstorming',
     step: 'start',
     phase: 1,
     credits: 'Uses Analysis Credits'
