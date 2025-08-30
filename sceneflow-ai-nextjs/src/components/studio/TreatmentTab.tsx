@@ -99,10 +99,16 @@ export function TreatmentTab() {
   };
 
   const handleRefineSection = (section: string) => {
-    invokeCue({
-      type: 'text',
-      content: `Refine the ${section} section of the Film Treatment. Make it more compelling, clear, and production-ready.`
-    });
+    if (section === 'Billboard Image') {
+      // Generate billboard image directly
+      generateBillboardImage();
+    } else {
+      // Handle other sections with Cue
+      invokeCue({
+        type: 'text',
+        content: `Refine the ${section} section of the Film Treatment. Make it more compelling, clear, and production-ready.`
+      });
+    }
   };
 
   const handleRefineEntireTreatment = () => {
@@ -113,17 +119,43 @@ export function TreatmentTab() {
   };
 
   const handleExpandSection = (section: string) => {
-    invokeCue({
-      type: 'text',
-      content: `Expand the ${section} section of the Film Treatment with more detail, examples, and production considerations.`
-    });
+    if (section === 'Billboard Image') {
+      // Generate billboard image directly
+      generateBillboardImage();
+    } else {
+      // Handle other sections with Cue
+      invokeCue({
+        type: 'text',
+        content: `Expand the ${section} section of the Film Treatment with more detail, examples, and production considerations.`
+      });
+    }
   };
 
   const generateBillboardImage = async () => {
-    if (!imagePrompt.trim()) return;
-    
     setIsGeneratingImage(true);
     try {
+      // Generate a compelling image prompt based on the film treatment content
+      let imagePrompt = '';
+      
+      if (guide.filmTreatment) {
+        // Try to extract key elements for image generation
+        try {
+          const treatmentData = JSON.parse(guide.filmTreatment);
+          const treatment = treatmentData.Treatment || treatmentData.treatment || treatmentData;
+          
+          // Create a compelling image prompt from the treatment
+          imagePrompt = `A compelling billboard image for a film about "${treatment.title || 'genetic engineering'}" - ${treatment.logline || 'exploring the ethics of CRISPR technology'}. Style: cinematic, dramatic lighting, professional photography, high contrast, suitable for film marketing.`;
+        } catch (parseError) {
+          // Fallback prompt if JSON parsing fails
+          imagePrompt = 'A compelling billboard image for a documentary about genetic engineering and CRISPR technology. Style: cinematic, dramatic lighting, professional photography, high contrast, suitable for film marketing.';
+        }
+      } else {
+        // Default prompt if no treatment exists
+        imagePrompt = 'A compelling billboard image for a documentary about genetic engineering and CRISPR technology. Style: cinematic, dramatic lighting, professional photography, high contrast, suitable for film marketing.';
+      }
+      
+      console.log('🎬 TreatmentTab: Generated image prompt:', imagePrompt);
+      
       // Call the image generation API
       const response = await fetch('/api/generate-image', {
         method: 'POST',
@@ -134,14 +166,19 @@ export function TreatmentTab() {
       if (response.ok) {
         const data = await response.json();
         setBillboardImage(data.imageUrl);
+        console.log('🎬 TreatmentTab: Billboard image generated successfully:', data.imageUrl);
       } else {
         // Fallback to a placeholder image for demo purposes
-        setBillboardImage(`https://picsum.photos/800/400?random=${Date.now()}`);
+        const fallbackUrl = `https://picsum.photos/800/400?random=${Date.now()}`;
+        setBillboardImage(fallbackUrl);
+        console.log('🎬 TreatmentTab: Using fallback image:', fallbackUrl);
       }
     } catch (error) {
-      console.error('Error generating image:', error);
+      console.error('🎬 TreatmentTab: Error generating billboard image:', error);
       // Fallback to a placeholder image
-      setBillboardImage(`https://picsum.photos/800/400?random=${Date.now()}`);
+      const fallbackUrl = `https://picsum.photos/800/400?random=${Date.now()}`;
+      setBillboardImage(fallbackUrl);
+      console.log('🎬 TreatmentTab: Using fallback image after error:', fallbackUrl);
     } finally {
       setIsGeneratingImage(false);
     }
