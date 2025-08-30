@@ -31,7 +31,7 @@ export function TreatmentTab() {
     selectedText: ''
   });
   const [showRefinementOptions, setShowRefinementOptions] = useState(false);
-  const [billboardImage, setBillboardImage] = useState<string>('');
+  const [billboardImage, setBillboardImage] = useState<string | null>(null);
   const [imagePrompt, setImagePrompt] = useState<string>('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isGeneratingTreatment, setIsGeneratingTreatment] = useState(false);
@@ -47,6 +47,11 @@ export function TreatmentTab() {
     console.log('🎬 TreatmentTab: Store updated, new film treatment:', guide.filmTreatment);
     console.log('🎬 TreatmentTab: Full guide state after update:', guide);
   }, [guide.filmTreatment, guide]);
+
+  // Monitor billboard image state changes
+  useEffect(() => {
+    console.log('🎬 TreatmentTab: Billboard image state changed:', billboardImage);
+  }, [billboardImage]);
 
   // Handle text selection
   useEffect(() => {
@@ -132,6 +137,8 @@ export function TreatmentTab() {
   };
 
   const generateBillboardImage = async () => {
+    console.log('🎬 TreatmentTab: generateBillboardImage function called!');
+    console.log('🎬 TreatmentTab: Current billboardImage state:', billboardImage);
     setIsGeneratingImage(true);
     try {
       // Generate a compelling image prompt based on the film treatment content
@@ -144,34 +151,89 @@ export function TreatmentTab() {
           const treatment = treatmentData.Treatment || treatmentData.treatment || treatmentData;
           
           // Create a compelling image prompt from the treatment
-          imagePrompt = `A compelling billboard image for a film about "${treatment.title || 'genetic engineering'}" - ${treatment.logline || 'exploring the ethics of CRISPR technology'}. Style: cinematic, dramatic lighting, professional photography, high contrast, suitable for film marketing.`;
+          imagePrompt = `Create a cinematic billboard image for a documentary film titled "${treatment.title || 'The Designer Baby Dilemma'}". 
+          
+          Film Content: ${treatment.logline || 'A documentary exploring the ethics of CRISPR technology and genetic engineering'}
+          
+          Visual Requirements:
+          - Cinematic composition with dramatic lighting and high contrast
+          - Professional photography quality suitable for film marketing
+          - Visual elements that represent the film's themes: genetic engineering, CRISPR technology, ethical dilemmas
+          - Modern, sophisticated aesthetic that appeals to educated audiences
+          - Billboard-ready design with strong visual impact
+          - Color palette: deep blues, purples, and whites to represent DNA and technology
+          - Include subtle visual metaphors for genetic modification and human evolution
+          
+          Style: Professional documentary film poster, high-end cinematography, suitable for streaming platforms and educational content.`;
         } catch (parseError) {
           // Fallback prompt if JSON parsing fails
-          imagePrompt = 'A compelling billboard image for a documentary about genetic engineering and CRISPR technology. Style: cinematic, dramatic lighting, professional photography, high contrast, suitable for film marketing.';
+          imagePrompt = `Create a cinematic billboard image for a documentary film about genetic engineering and CRISPR technology.
+          
+          Visual Requirements:
+          - Cinematic composition with dramatic lighting and high contrast
+          - Professional photography quality suitable for film marketing
+          - Visual elements representing DNA, genetic modification, and ethical dilemmas
+          - Modern, sophisticated aesthetic for educated audiences
+          - Billboard-ready design with strong visual impact
+          - Color palette: deep blues, purples, and whites representing DNA and technology
+          - Include visual metaphors for genetic modification and human evolution
+          
+          Style: Professional documentary film poster, high-end cinematography, suitable for streaming platforms and educational content.`;
         }
       } else {
         // Default prompt if no treatment exists
-        imagePrompt = 'A compelling billboard image for a documentary about genetic engineering and CRISPR technology. Style: cinematic, dramatic lighting, professional photography, high contrast, suitable for film marketing.';
+        imagePrompt = `Create a cinematic billboard image for a documentary film about genetic engineering and CRISPR technology.
+          
+          Visual Requirements:
+          - Cinematic composition with dramatic lighting and high contrast
+          - Professional photography quality suitable for film marketing
+          - Visual elements representing DNA, genetic modification, and ethical dilemmas
+          - Modern, sophisticated aesthetic for educated audiences
+          - Billboard-ready design with strong visual impact
+          - Color palette: deep blues, purples, and whites representing DNA and technology
+          - Include visual metaphors for genetic modification and human evolution
+          
+          Style: Professional documentary film poster, high-end cinematography, suitable for streaming platforms and educational content.`;
       }
       
       console.log('🎬 TreatmentTab: Generated image prompt:', imagePrompt);
       
       // Call the image generation API
+      console.log('🎬 TreatmentTab: Calling image generation API with prompt:', imagePrompt);
+      
       const response = await fetch('/api/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: imagePrompt })
       });
       
+      console.log('🎬 TreatmentTab: API response status:', response.status);
+      console.log('🎬 TreatmentTab: API response ok:', response.ok);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('🎬 TreatmentTab: API response data:', data);
+        console.log('🎬 TreatmentTab: Setting billboard image to:', data.imageUrl);
+        
         setBillboardImage(data.imageUrl);
-        console.log('🎬 TreatmentTab: Billboard image generated successfully:', data.imageUrl);
+        
+        // Verify the state update
+        console.log('🎬 TreatmentTab: Billboard image state updated, current billboardImage:', billboardImage);
+        
+        // Show success message based on model used
+        if (data.model === 'gemini-2.0-flash-exp') {
+          console.log('🎬 TreatmentTab: Billboard image generated successfully using Gemini Imagen:', data.imageUrl);
+        } else {
+          console.log('🎬 TreatmentTab: Billboard image generated using fallback model:', data.imageUrl);
+        }
       } else {
+        const errorText = await response.text();
+        console.error('🎬 TreatmentTab: API error response:', errorText);
+        
         // Fallback to a placeholder image for demo purposes
         const fallbackUrl = `https://picsum.photos/800/400?random=${Date.now()}`;
+        console.log('🎬 TreatmentTab: Using fallback image due to API error:', fallbackUrl);
         setBillboardImage(fallbackUrl);
-        console.log('🎬 TreatmentTab: Using fallback image:', fallbackUrl);
       }
     } catch (error) {
       console.error('🎬 TreatmentTab: Error generating billboard image:', error);
@@ -262,6 +324,11 @@ export function TreatmentTab() {
           <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
             <label className="block text-sm font-medium text-gray-400 mb-3">Billboard Image</label>
             
+            {/* Debug Info */}
+            <div className="mb-3 text-xs text-gray-500">
+              Debug: billboardImage = {billboardImage ? `"${billboardImage}"` : 'null'}
+            </div>
+            
             {/* Image Display */}
             {billboardImage ? (
               <div className="mb-4">
@@ -276,6 +343,25 @@ export function TreatmentTab() {
                 <Image className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p>No billboard image generated yet</p>
                 <p className="text-sm mt-1">Use Cue to generate a compelling billboard image</p>
+                
+                {/* Test Button */}
+                <Button
+                  onClick={generateBillboardImage}
+                  disabled={isGeneratingImage}
+                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+                >
+                  {isGeneratingImage ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Image className="w-4 h-4" />
+                      Test Generate Image
+                    </>
+                  )}
+                </Button>
               </div>
             )}
           </div>
@@ -393,6 +479,11 @@ export function TreatmentTab() {
           <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
             <label className="block text-sm font-medium text-gray-400 mb-3">Billboard Image</label>
             
+            {/* Debug Info */}
+            <div className="mb-3 text-xs text-gray-500">
+              Debug: billboardImage = {billboardImage ? `"${billboardImage}"` : 'null'}
+            </div>
+            
             {/* Image Display */}
             {billboardImage ? (
               <div className="mb-4">
@@ -407,6 +498,25 @@ export function TreatmentTab() {
                 <Image className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p>No billboard image generated yet</p>
                 <p className="text-sm mt-1">Use Cue to generate a compelling billboard image</p>
+                
+                {/* Test Button */}
+                <Button
+                  onClick={generateBillboardImage}
+                  disabled={isGeneratingImage}
+                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+                >
+                  {isGeneratingImage ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Image className="w-4 h-4" />
+                      Test Generate Image
+                    </>
+                  )}
+                </Button>
               </div>
             )}
           </div>
