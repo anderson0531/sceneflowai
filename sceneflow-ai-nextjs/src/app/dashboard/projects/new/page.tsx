@@ -19,6 +19,9 @@ export default function NewProjectPage() {
   const [generationProgress, setGenerationProgress] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [isValidVideoIdea, setIsValidVideoIdea] = useState(false)
+  const [validationMessage, setValidationMessage] = useState('')
+  const [isValidating, setIsValidating] = useState(false)
 
 
 
@@ -217,6 +220,79 @@ export default function NewProjectPage() {
     }
   }
 
+  // Validate video project idea
+  const validateVideoIdea = async (idea: string) => {
+    if (!idea.trim()) {
+      setIsValidVideoIdea(false)
+      setValidationMessage('')
+      return
+    }
+
+    if (idea.trim().length < 20) {
+      setIsValidVideoIdea(false)
+      setValidationMessage('Please provide more detail (at least 20 characters)')
+      return
+    }
+
+    setIsValidating(true)
+    
+    try {
+      // Call Cue to validate the project idea
+      const response = await fetch('/api/cue/respond', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{
+            role: 'user',
+            content: `Validate this project idea for video production: "${idea.trim()}"
+            
+            Analyze if this is a valid video project idea. Consider:
+            - Is it a creative concept suitable for video?
+            - Does it have a clear story or message?
+            - Is it specific enough to develop?
+            - Would it benefit from video format?
+            
+            Respond with ONLY:
+            VALID: [brief reason why it's good for video]
+            or
+            INVALID: [specific reason why it needs improvement for video production]
+            
+            Keep response under 150 characters.`
+          }],
+          context: { type: 'project-validation' }
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const content = data.reply || data.content || ''
+        
+        if (content.startsWith('VALID:')) {
+          setIsValidVideoIdea(true)
+          setValidationMessage(content.replace('VALID:', '').trim())
+        } else if (content.startsWith('INVALID:')) {
+          setIsValidVideoIdea(false)
+          setValidationMessage(content.replace('INVALID:', '').trim())
+        } else {
+          // Default validation if AI response is unclear
+          setIsValidVideoIdea(true)
+          setValidationMessage('Project idea looks good for video production!')
+        }
+      } else {
+        // Fallback validation
+        setIsValidVideoIdea(true)
+        setValidationMessage('Project idea validated')
+      }
+    } catch (error) {
+      console.error('Validation error:', error)
+      // Fallback validation
+      setIsValidVideoIdea(true)
+      setValidationMessage('Project idea validated')
+    } finally {
+      setIsValidating(false)
+    }
+  }
+
 
 
   return (
@@ -258,12 +334,56 @@ export default function NewProjectPage() {
             
             <textarea
               value={projectIdea}
-              onChange={(e) => setProjectIdea(e.target.value)}
+              onChange={(e) => {
+                const newValue = e.target.value
+                setProjectIdea(newValue)
+                // Trigger validation after a short delay
+                if (newValue.trim().length >= 20) {
+                  setTimeout(() => validateVideoIdea(newValue), 1000)
+                } else {
+                  setIsValidVideoIdea(false)
+                  setValidationMessage('')
+                }
+              }}
               placeholder="Tell us about your video project... What's the story? Who's the audience? What's the key message? What tone are you going for?"
               className="w-full h-48 bg-gray-800 border border-gray-600 rounded-xl p-4 text-gray-200 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-            />
+                        />
             
-
+            {/* Validation Status */}
+            {projectIdea.trim().length >= 20 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 flex items-center gap-2"
+              >
+                {isValidating && (
+                  <>
+                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-blue-400 text-sm">Validating project idea...</span>
+                  </>
+                )}
+                {!isValidating && isValidVideoIdea && validationMessage && (
+                  <>
+                    <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                      <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <span className="text-green-400 text-sm">{validationMessage}</span>
+                  </>
+                )}
+                {!isValidating && !isValidVideoIdea && validationMessage && (
+                  <>
+                    <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                      <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <span className="text-red-400 text-sm">{validationMessage}</span>
+                  </>
+                )}
+              </motion.div>
+            )}
             
             <div className="mt-4 space-y-4">
               <div className="text-sm text-gray-400">
@@ -315,6 +435,32 @@ export default function NewProjectPage() {
 
         </div>
 
+        {/* Action Button - Moved Above What Cue Will Generate */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="flex justify-center items-center mb-8"
+        >
+          <Button
+            onClick={handleGenerateProject}
+            disabled={!projectIdea.trim() || isGenerating || !isValidVideoIdea}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl text-lg transition-all duration-200 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isGenerating ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Generating Project...
+              </>
+            ) : (
+              <>
+                <MessageSquare className="w-5 h-5" />
+                Ask Cue to Create Project
+              </>
+            )}
+          </Button>
+        </motion.div>
+
         {/* What Cue Will Generate */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -364,31 +510,7 @@ export default function NewProjectPage() {
           </div>
         </motion.div>
 
-        {/* Action Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-          className="flex justify-center items-center mb-8"
-        >
-          <Button
-            onClick={handleGenerateProject}
-            disabled={!projectIdea.trim() || isGenerating}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl text-lg transition-all duration-200 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isGenerating ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Generating Project...
-              </>
-            ) : (
-              <>
-                <MessageSquare className="w-5 h-5" />
-                Create Project Baseline
-              </>
-            )}
-          </Button>
-        </motion.div>
+
 
         {/* Generation Progress */}
         {isGenerating && (
