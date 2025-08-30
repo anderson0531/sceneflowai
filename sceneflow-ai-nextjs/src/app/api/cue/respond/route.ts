@@ -89,9 +89,9 @@ async function callGemini(messages: Message[], apiKey: string, context?: CueCont
     })
   }
 
-  // Use more powerful model and higher token limits for project creation
+  // Use maximum model capability for project creation
   const isProjectCreation = context?.type === 'project-creation'
-  const model = isProjectCreation ? 'gemini-1.5-flash' : 'gemini-2.0-flash-exp'
+  const model = isProjectCreation ? 'gemini-2.0-flash-exp' : 'gemini-2.0-flash-exp'
   const maxTokens = isProjectCreation ? 32768 : 1024
 
   const body = {
@@ -122,10 +122,10 @@ async function callGemini(messages: Message[], apiKey: string, context?: CueCont
 }
 
 async function callOpenAI(messages: Message[], apiKey: string, context?: CueContext): Promise<string> {
-  // Use more powerful model for project creation
+  // Use maximum model capability for project creation
   const isProjectCreation = context?.type === 'project-creation'
   const model = isProjectCreation ? 'gpt-4o' : 'gpt-4o-mini'
-  const maxTokens = isProjectCreation ? 4096 : undefined
+  const maxTokens = isProjectCreation ? 8192 : undefined
   
   const body = {
     model,

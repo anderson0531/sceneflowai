@@ -70,13 +70,33 @@ export class ProjectInitializationService {
           messages: [
             {
               role: 'system',
-              content: `You are creating a COMPLETE video project. You MUST return ONLY valid JSON with no additional text, explanations, or markdown formatting. Your response must be parseable by JSON.parse() without any preprocessing.`
+              content: `You are creating a COMPLETE video project using MAXIMUM model capability. You MUST analyze the ENTIRE user input completely and thoroughly. You MUST return ONLY valid JSON with no additional text, explanations, or markdown formatting. Your response must be parseable by JSON.parse() without any preprocessing.
+
+CRITICAL INSTRUCTIONS:
+1. Analyze the COMPLETE user input - do not summarize or condense
+2. Identify the CORRECT story structure from the input (not default to 3-act)
+3. Generate ALL beats mentioned in the input (not a reduced version)
+4. Use the EXACT structure and format specified in the input
+5. Maintain ALL details, character development, and narrative complexity
+6. Return ONLY valid JSON - no markdown, no explanations`
             },
             {
               role: 'user',
-              content: `Create a COMPLETE video project following the No Blank Canvas principle. Use the ${template} template structure.
+              content: `Create a COMPLETE video project following the No Blank Canvas principle.
 
 PROJECT IDEA: ${request.projectIdea}
+
+STRUCTURE ANALYSIS: 
+- CAREFULLY analyze the user's input to determine the CORRECT story structure
+- If the user specifies "5 acts" or "Debate & Educational" structure, use that
+- Do NOT default to "Classic 3-Act Structure" unless specifically mentioned
+- The structure should match what the user actually described, not a template
+
+CONTENT REQUIREMENTS:
+- Generate ALL beats mentioned in the user's input (approximately 15 beats for your case)
+- Maintain ALL character details, story complexity, and narrative depth
+- Do NOT condense or summarize - preserve the full richness of the input
+- Use the EXACT act structure and beat count specified by the user
 
 CRITICAL: You must return ONLY valid JSON. No markdown, no explanations, no additional text. Start with { and end with }. The response must be parseable by JSON.parse().
 
