@@ -349,7 +349,37 @@ export function TreatmentTab() {
         return null;
       };
       
-      return Array.from(tempDiv.childNodes).map(convertNode);
+      // Always include the billboard image section, even for HTML content
+      return (
+        <div className="space-y-6">
+          {/* Billboard Image Section - Always Visible */}
+          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+            <label className="block text-sm font-medium text-gray-400 mb-3">Billboard Image</label>
+            
+            {/* Image Display */}
+            {billboardImage ? (
+              <div className="mb-4">
+                <img 
+                  src={billboardImage} 
+                  alt="Billboard for film treatment"
+                  className="w-full h-48 object-cover rounded-lg border border-gray-600/50"
+                />
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-400">
+                <Image className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No billboard image generated yet</p>
+                <p className="text-sm mt-1">Use Cue to generate a compelling billboard image</p>
+              </div>
+            )}
+          </div>
+          
+          {/* HTML Content */}
+          <div className="space-y-4">
+            {Array.from(tempDiv.childNodes).map(convertNode)}
+          </div>
+        </div>
+      );
     }
   };
 
