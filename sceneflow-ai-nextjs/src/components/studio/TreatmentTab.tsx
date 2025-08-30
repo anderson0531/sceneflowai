@@ -112,55 +112,134 @@ export function TreatmentTab() {
     });
   };
 
-  // Parse HTML content and render it properly
-  const renderContent = (htmlContent: string) => {
+  // Parse and render Film Treatment content from JSON or HTML
+  const renderContent = (content: string) => {
     if (!isClient) return null;
     
-    // Create a temporary div to parse HTML
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlContent;
-    
-    // Convert to React elements
-    const convertNode = (node: Node): React.ReactNode => {
-      if (node.nodeType === Node.TEXT_NODE) {
-        return node.textContent;
-      }
+    try {
+      // First, try to parse as JSON
+      const jsonData = JSON.parse(content);
       
-      if (node.nodeType === Node.ELEMENT_NODE) {
-        const element = node as Element;
-        const tagName = element.tagName.toLowerCase();
-        const children = Array.from(element.childNodes).map(convertNode);
-        
-        switch (tagName) {
-          case 'h1':
-            return <h1 key={Math.random()} className="text-3xl font-bold text-white mb-6">{children}</h1>;
-          case 'h2':
-            return <h2 key={Math.random()} className="text-2xl font-semibold text-white mb-4 mt-8">{children}</h2>;
-          case 'h3':
-            return <h3 key={Math.random()} className="text-xl font-semibold text-white mb-3 mt-6">{children}</h3>;
-          case 'p':
-            return <p key={Math.random()} className="text-gray-300 mb-4 leading-relaxed text-base">{children}</p>;
-          case 'strong':
-            return <strong key={Math.random()} className="font-semibold text-white">{children}</strong>;
-          case 'em':
-            return <em key={Math.random()} className="italic text-gray-200">{children}</em>;
-          case 'ul':
-            return <ul key={Math.random()} className="list-disc list-inside text-gray-300 mb-4 space-y-2 ml-4">{children}</ul>;
-          case 'ol':
-            return <ol key={Math.random()} className="list-decimal list-inside text-gray-300 mb-4 space-y-2 ml-4">{children}</ol>;
-          case 'li':
-            return <li key={Math.random()} className="ml-2">{children}</li>;
-          case 'blockquote':
-            return <blockquote key={Math.random()} className="border-l-4 border-blue-500 pl-6 italic text-gray-200 mb-4 bg-gray-700/30 py-3 rounded-r-lg">{children}</blockquote>;
-          default:
-            return <span key={Math.random()}>{children}</span>;
+      // If it's JSON with a "Treatment" key, extract that
+      const treatment = jsonData.Treatment || jsonData.treatment || jsonData;
+      
+      // Render structured form fields
+      return (
+        <div className="space-y-6">
+          {/* Title */}
+          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+            <label className="block text-sm font-medium text-gray-400 mb-2">Title</label>
+            <div className="text-xl font-semibold text-white">{treatment.title || 'No title provided'}</div>
+          </div>
+          
+          {/* Logline */}
+          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+            <label className="block text-sm font-medium text-gray-400 mb-2">Logline</label>
+            <div className="text-gray-300 leading-relaxed">{treatment.logline || 'No logline provided'}</div>
+          </div>
+          
+          {/* Synopsis */}
+          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+            <label className="block text-sm font-medium text-gray-400 mb-2">Synopsis</label>
+            <div className="text-gray-300 leading-relaxed whitespace-pre-wrap">{treatment.synopsis || 'No synopsis provided'}</div>
+          </div>
+          
+          {/* Target Audience */}
+          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+            <label className="block text-sm font-medium text-gray-400 mb-2">Target Audience</label>
+            <div className="text-gray-300 leading-relaxed">{treatment.targetAudience || 'No target audience specified'}</div>
+          </div>
+          
+          {/* Genre */}
+          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+            <label className="block text-sm font-medium text-gray-400 mb-2">Genre</label>
+            <div className="text-gray-300 leading-relaxed">{treatment.genre || 'No genre specified'}</div>
+          </div>
+          
+          {/* Duration */}
+          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+            <label className="block text-sm font-medium text-gray-400 mb-2">Duration</label>
+            <div className="text-gray-300 leading-relaxed">{treatment.duration || 'No duration specified'}</div>
+          </div>
+          
+          {/* Themes */}
+          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+            <label className="block text-sm font-medium text-gray-400 mb-2">Themes</label>
+            <div className="text-gray-300 leading-relaxed">{treatment.themes || 'No themes specified'}</div>
+          </div>
+          
+          {/* Structure */}
+          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+            <label className="block text-sm font-medium text-gray-400 mb-2">Structure</label>
+            <div className="text-gray-300 leading-relaxed">{treatment.structure || 'No structure specified'}</div>
+          </div>
+          
+          {/* Additional fields - handle any other fields dynamically */}
+          {Object.entries(treatment).map(([key, value]) => {
+            // Skip fields we've already handled
+            const handledFields = ['title', 'logline', 'synopsis', 'targetAudience', 'genre', 'duration', 'themes', 'structure'];
+            if (handledFields.includes(key)) return null;
+            
+            return (
+              <div key={key} className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+                <label className="block text-sm font-medium text-gray-400 mb-2 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</label>
+                <div className="text-gray-300 leading-relaxed whitespace-pre-wrap">{String(value) || 'No content provided'}</div>
+              </div>
+            );
+          })}
+        </div>
+      );
+      
+    } catch (error) {
+      // If JSON parsing fails, try to render as HTML (fallback)
+      console.log('🎬 TreatmentTab: Content is not JSON, treating as HTML:', error);
+      
+      // Create a temporary div to parse HTML
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = content;
+      
+      // Convert to React elements
+      const convertNode = (node: Node): React.ReactNode => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          return node.textContent;
         }
-      }
+        
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const element = node as Element;
+          const tagName = element.tagName.toLowerCase();
+          const children = Array.from(element.childNodes).map(convertNode);
+          
+          switch (tagName) {
+            case 'h1':
+              return <h1 key={Math.random()} className="text-3xl font-bold text-white mb-6">{children}</h1>;
+            case 'h2':
+              return <h2 key={Math.random()} className="text-2xl font-semibold text-white mb-4 mt-8">{children}</h2>;
+            case 'h3':
+              return <h3 key={Math.random()} className="text-xl font-semibold text-white mb-3 mt-6">{children}</h3>;
+            case 'p':
+              return <p key={Math.random()} className="text-gray-300 mb-4 leading-relaxed text-base">{children}</p>;
+            case 'strong':
+              return <strong key={Math.random()} className="font-semibold text-white">{children}</strong>;
+            case 'em':
+              return <em key={Math.random()} className="italic text-gray-200">{children}</em>;
+            case 'ul':
+              return <ul key={Math.random()} className="list-disc list-inside text-gray-300 mb-4 space-y-2 ml-4">{children}</ul>;
+            case 'ol':
+              return <ol key={Math.random()} className="list-decimal list-inside text-gray-300 mb-4 space-y-2 ml-4">{children}</ol>;
+            case 'li':
+              return <li key={Math.random()} className="ml-2">{children}</li>;
+            case 'blockquote':
+              return <blockquote key={Math.random()} className="border-l-4 border-blue-500 pl-6 italic text-gray-200 mb-4 bg-gray-700/30 py-3 rounded-r-lg">{children}</blockquote>;
+            default:
+              return <span key={Math.random()}>{children}</span>;
+          }
+        }
+        
+        return null;
+      };
       
-      return null;
-    };
-    
-    return Array.from(tempDiv.childNodes).map(convertNode);
+      return Array.from(tempDiv.childNodes).map(convertNode);
+    }
   };
 
   if (!isClient) {
