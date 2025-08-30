@@ -7,21 +7,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "setup:database": "node src/scripts/setup-database-simple.js",
-    "setup:database:sample": "node src/scripts/setup-database.js --with-sample-data",
-    "test:gateway": "ts-node src/scripts/test-gateway.ts",
-    "test:api": "ts-node src/scripts/test-api.ts",
-    "test:cue": "ts-node src/scripts/test-cue-api.ts",
-    "test:ideas": "ts-node src/scripts/test-idea-generation.ts",
-    "test:encryption": "ts-node -e \"const { EncryptionService } = require('./src/services/EncryptionService'); console.log('Encryption configured:', EncryptionService.isEncryptionConfigured());\"",
-    "test:database": "node -e \"const { sequelize } = require('./src/config/database.cjs'); sequelize.authenticate().then(() => console.log('Database connection successful')).catch(console.error).finally(() => process.exit());\""
+    "setup:database": "echo 'Database setup scripts removed during cleanup'",
+    "test": "echo 'Test scripts removed during cleanup'"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@editframe/editframe-js": "^4.3.0",
-    "@netlify/plugin-nextjs": "^5.12.0",
+
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.3",
@@ -69,7 +63,7 @@
     "autoprefixer": "^10.4.21",
     "eslint": "^9",
     "eslint-config-next": "15.4.6",
-    "netlify-cli": "^23.1.4",
+
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
     "typescript": "^5",

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { AIProvider } from '../../../../services/ai-providers/BaseAIProviderAdapter'
-import { videoGenerationGateway } from '../../../../services/VideoGenerationGateway'
+import { AIProvider } from '@/services/ai-providers/BaseAIProviderAdapter'
+import { videoGenerationGateway } from '@/services/VideoGenerationGateway'
 
 interface ConversationMessage {
   role: 'user' | 'assistant' | 'system'

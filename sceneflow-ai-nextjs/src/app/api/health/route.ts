@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { EncryptionService } from '../../../services/EncryptionService'
+import { EncryptionService } from '@/services/EncryptionService'
 
 /**
  * GET /api/health

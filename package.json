@@ -2,44 +2,34 @@
   "name": "sceneflowai",
   "version": "1.0.0",
   "description": "AI-powered video creation platform with intelligent scene management",
-  "main": "index.html",
+  "main": "sceneflow-ai-nextjs",
   "scripts": {
-    "start": "npm --prefix sceneflow-ai-nextjs run start",
     "dev": "npm --prefix sceneflow-ai-nextjs run dev",
-    "build": "node build-vercel.js",
-    "vercel-build": "node build-vercel.js",
-    "test": "echo 'Tests not configured yet'",
-    "lint": "echo 'Linting not configured yet'",
-    "deploy": "npm run build && npx vercel --prod",
-    "deploy:preview": "npm run build && npx vercel",
-    "test:local": "node start-local-server.js"
+    "build": "npm --prefix sceneflow-ai-nextjs run build",
+    "start": "npm --prefix sceneflow-ai-nextjs run start",
+    "lint": "npm --prefix sceneflow-ai-nextjs run lint",
+    "deploy": "cd sceneflow-ai-nextjs && npx vercel --prod"
   },
   "keywords": [
-    "pwa",
     "ai",
     "video",
     "storyboard",
     "scene-direction",
     "gemini",
-    "youtube-api",
-    "stripe"
+    "nextjs",
+    "typescript"
   ],
   "author": "SceneFlow AI Team",
   "license": "MIT",
-  "devDependencies": {
-    "http-server": "^14.1.1",
-    "netlify-cli": "^23.1.4",
-    "vercel": "^32.0.0"
-  },
   "engines": {
     "node": ">=16.0.0"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/sceneflowai.git"
+    "url": "https://github.com/anderson0531/sceneflowai.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/sceneflowai/issues"
+    "url": "https://github.com/anderson0531/sceneflowai/issues"
   },
   "homepage": "https://sceneflowai.com"
 }

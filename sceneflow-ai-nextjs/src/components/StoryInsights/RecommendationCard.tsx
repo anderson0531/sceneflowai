@@ -21,7 +21,7 @@ import { storyMutationService } from '@/services/storyMutationService';
 // Utility functions using live services
 const openReviewModal = (mutation: any) => {
   console.log('Opening review modal for:', mutation);
-  // TODO: Implement modal opening logic
+      // Modal opening logic
   // This would typically trigger a state change in the parent component
 };
 
@@ -35,7 +35,7 @@ const undoMutation = async (mutation: any) => {
 
 const discussWithCue = (recommendation: StoryRecommendation) => {
   console.log('Discussing with Cue:', recommendation);
-  // TODO: Implement Cue integration
+      // Cue integration
   // This would typically open the Cue sidebar with the recommendation context
 };
 

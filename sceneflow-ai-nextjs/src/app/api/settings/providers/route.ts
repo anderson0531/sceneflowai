@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { videoGenerationGateway } from '../../../../services/VideoGenerationGateway'
-import { AIProvider } from '../../../../services/ai-providers/BaseAIProviderAdapter'
-import { UserProviderConfig } from '../../../../models/UserProviderConfig'
-import { EncryptionService } from '../../../../services/EncryptionService'
+import { videoGenerationGateway } from '@/services/VideoGenerationGateway'
+import { AIProvider } from '@/services/ai-providers/BaseAIProviderAdapter'
+import { UserProviderConfig } from '@/models/UserProviderConfig'
+import { EncryptionService } from '@/services/EncryptionService'
 
 /**
  * GET /api/settings/providers

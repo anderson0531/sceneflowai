@@ -11,15 +11,12 @@ if (!process.env.DB_DATABASE_URL && !process.env.DATABASE_URL) {
 }
 
 // Database configuration
-console.log('🔍 Environment check:')
-console.log('DB_DATABASE_URL:', process.env.DB_DATABASE_URL ? 'Set' : 'Not set')
-console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'Set' : 'Not set')
-console.log('NODE_ENV:', process.env.NODE_ENV)
+  // Environment check
 
 let sequelize: Sequelize
 
 if (process.env.DB_DATABASE_URL) {
-  console.log('✅ Using DB_DATABASE_URL (Vercel Postgres) for connection')
+      // Using DB_DATABASE_URL (Vercel Postgres) for connection
   // Use Vercel Postgres connection string with Sequelize
   sequelize = new Sequelize(process.env.DB_DATABASE_URL, {
     dialect: 'postgres',
@@ -35,7 +32,7 @@ if (process.env.DB_DATABASE_URL) {
     define: { timestamps: true, underscored: true, freezeTableName: true }
   })
 } else if (process.env.DATABASE_URL) {
-  console.log('✅ Using DATABASE_URL (Supabase) for connection')
+      // Using DATABASE_URL (Supabase) for connection
   // Fallback to Supabase
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
@@ -52,7 +49,7 @@ if (process.env.DB_DATABASE_URL) {
 export const testConnection = async (): Promise<void> => {
   try {
     await sequelize.authenticate()
-    console.log('✅ Database connection established successfully.')
+    // Database connection established successfully
   } catch (error) {
     console.error('❌ Unable to connect to the database:', error)
     throw error
@@ -63,7 +60,7 @@ export const testConnection = async (): Promise<void> => {
 export const syncDatabase = async (): Promise<void> => {
   try {
     await sequelize.sync({ alter: true })
-    console.log('✅ Database models synchronized successfully.')
+    // Database models synchronized successfully
   } catch (error) {
     console.error('❌ Database synchronization failed:', error)
     throw error

@@ -49,7 +49,7 @@ export const useGuideStore = create<GuideState>((set) => ({
   
   // Project initialization
   initializeProject: (projectData) => {
-    console.log('🏪 Store: Initializing project with data:', projectData);
+    // Store: Initializing project with data
     return set((state) => {
       const newGuide = {
         ...state.guide,
@@ -60,7 +60,7 @@ export const useGuideStore = create<GuideState>((set) => ({
         characters: projectData.characters || [],
         beatSheet: projectData.beatSheet || []
       };
-      console.log('🏪 Store: New guide state:', newGuide);
+      // Store: New guide state
       return { guide: newGuide };
     });
   },

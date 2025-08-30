@@ -28,31 +28,23 @@ export class ProjectInitializationService {
    * Initialize a new project with Cue AI-generated content
    */
   public async initializeProject(request: ProjectInitializationRequest): Promise<ProjectInitializationResponse> {
-    console.log('🚀 Starting project initialization:', request);
-    
     try {
       // Call Cue AI to generate project content
-      console.log('📞 Calling Cue AI...');
       const cueResponse = await this.callCueAI(request);
-      
-      console.log('📥 Cue AI response:', cueResponse);
       
       if (!cueResponse.success) {
         throw new Error(cueResponse.error || 'Failed to generate project content');
       }
 
       // Parse and structure the AI response
-      console.log('🔍 Parsing AI response...');
       const projectData = this.parseAIResponse(cueResponse.content, request);
-      
-      console.log('✅ Parsed project data:', projectData);
       
       return {
         success: true,
         project: projectData
       };
     } catch (error) {
-      console.error('❌ Project initialization failed:', error);
+      console.error('Project initialization failed:', error);
       return {
         success: false,
         project: {},
@@ -68,9 +60,6 @@ export class ProjectInitializationService {
     try {
       // Determine the best template if none selected
       const template = request.template || this.selectBestTemplate(request.projectIdea)
-      
-      console.log('🎯 Using template:', template);
-      console.log('📝 Project idea:', request.projectIdea);
       
       const response = await fetch('/api/cue/respond', {
         method: 'POST',
@@ -148,10 +137,8 @@ Generate comprehensive baseline content that is production-ready and follows pro
       }
 
       const data = await response.json();
-      console.log('📊 Raw API response:', data);
       
       const content = data.reply || data.content || data.message || '';
-      console.log('📄 Extracted content:', content);
       
       return {
         success: true,
@@ -202,7 +189,7 @@ Generate comprehensive baseline content that is production-ready and follows pro
    * Parse AI response into structured project data
    */
   private parseAIResponse(aiContent: string, request: ProjectInitializationRequest): Partial<ProductionGuide> {
-    console.log('Parsing AI response:', aiContent);
+    // Parsing AI response
     
     try {
       // First, try to parse as JSON if the AI returned structured data
@@ -214,7 +201,7 @@ Generate comprehensive baseline content that is production-ready and follows pro
           parsedData = JSON.parse(jsonMatch[0]);
         }
       } catch (e) {
-        console.log('No valid JSON found, parsing as text');
+        // No valid JSON found, parsing as text
       }
 
       if (parsedData) {
@@ -245,7 +232,7 @@ Generate comprehensive baseline content that is production-ready and follows pro
    * Parse structured JSON response from AI
    */
   private parseStructuredResponse(data: any, request: ProjectInitializationRequest): Partial<ProductionGuide> {
-    console.log('🔍 Parsing structured response:', data);
+    // Parsing structured response
     
     const project: Partial<ProductionGuide> = {
       projectId: request.projectId,
@@ -334,7 +321,7 @@ Generate comprehensive baseline content that is production-ready and follows pro
       }));
     }
 
-    console.log('✅ Final parsed project:', project);
+    // Final parsed project
     return project;
   }
 
@@ -342,7 +329,7 @@ Generate comprehensive baseline content that is production-ready and follows pro
    * Parse text-based response from AI
    */
   private parseTextResponse(content: string, request: ProjectInitializationRequest): Partial<ProductionGuide> {
-    console.log('📝 Parsing text response');
+    // Parsing text response
     
     // Try to extract structured content from text
     const extractedData = this.extractStructuredContentFromText(content);
@@ -369,7 +356,7 @@ Generate comprehensive baseline content that is production-ready and follows pro
     characters?: CharacterProfile[];
     beatSheet?: Beat[];
   } {
-    console.log('🔍 Extracting structured content from text');
+    // Extracting structured content from text
     
     const result: any = {};
     
@@ -407,7 +394,7 @@ Generate comprehensive baseline content that is production-ready and follows pro
       result.beatSheet = this.extractBeatSheet(beatMatch[0]);
     }
     
-    console.log('📊 Extracted structured content:', result);
+    // Extracted structured content
     return result;
   }
 
