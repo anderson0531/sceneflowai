@@ -26,16 +26,16 @@ import { usePathname } from 'next/navigation'
 const mainNav = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Projects', href: '/dashboard/projects', icon: FolderOpen },
-  { name: 'Start Project', href: '/dashboard/projects/new', icon: Plus },
+  { name: 'The Spark Studio', href: '/dashboard/projects/new', icon: Sparkles },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ]
 
 const workflowNav = [
   { 
-    name: 'Start Project', 
+    name: 'The Spark Studio', 
     href: '/dashboard/projects/new', 
-    icon: Plus,
-    description: 'Create New Project',
+    icon: Sparkles,
+    description: 'Create a CTA subtitle',
     step: 'start',
     phase: 1,
     credits: 'Uses Analysis Credits'

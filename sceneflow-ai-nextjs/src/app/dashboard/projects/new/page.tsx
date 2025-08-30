@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
-import { Lightbulb, Upload, MessageSquare, Clapperboard } from 'lucide-react'
+import { Lightbulb, Upload, MessageSquare, Sparkles } from 'lucide-react'
 import { useCue } from '@/store/useCueStore'
 import { useGuideStore } from '@/store/useGuideStore'
 import ProjectInitializationService from '@/services/ProjectInitializationService'
@@ -95,11 +95,11 @@ export default function NewProjectPage() {
         >
           <div className="flex items-center justify-center gap-3 mb-6">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center">
-              <Clapperboard className="w-8 h-8 text-white" />
+              <Sparkles className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-white">Start Project</h1>
-              <p className="text-xl text-gray-400 mt-2">Let Cue help you bring your vision to life</p>
+              <h1 className="text-4xl md:text-5xl font-bold text-white">The Spark Studio</h1>
+              <p className="text-xl text-gray-400 mt-2">Create a CTA subtitle</p>
             </div>
           </div>
         </motion.div>

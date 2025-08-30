@@ -188,7 +188,7 @@ export function CueCommandCenter() {
                      <div className="space-y-3">
                        <Link href="/dashboard/projects/new">
                          <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                           Start Project
+                           The Spark Studio
                          </Button>
                        </Link>
                        <Link href="/dashboard/projects">
