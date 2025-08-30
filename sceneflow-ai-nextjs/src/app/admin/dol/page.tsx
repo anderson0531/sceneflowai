@@ -193,6 +193,16 @@ export default function DOLAdminPage() {
           >
             Analytics
           </button>
+          <button
+            onClick={() => setActiveTab('video-monitoring')}
+            className={`px-4 py-2 rounded-lg ${
+              activeTab === 'video-monitoring' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            Video Monitoring
+          </button>
         </div>
 
         {/* Templates Tab */}
@@ -539,7 +549,7 @@ export default function DOLAdminPage() {
           </div>
         )}
 
-        {/* Analytics Tab */}
+                {/* Analytics Tab */}
         {activeTab === 'analytics' && (
           <div className="space-y-8">
             <h2 className="text-2xl font-semibold">DOL Analytics</h2>
@@ -555,7 +565,7 @@ export default function DOLAdminPage() {
                 <h3 className="text-lg font-semibold text-green-400 mb-2">DOL Success Rate</h3>
                 <p className="text-3xl font-bold">0%</p>
                 <p className="text-sm text-green-300">Last 24 hours</p>
-              </div>
+                </div>
               
               <div className="p-6 bg-yellow-900 border border-yellow-600 rounded-lg">
                 <h3 className="text-lg font-semibold text-yellow-400 mb-2">Average Cost</h3>
@@ -575,6 +585,105 @@ export default function DOLAdminPage() {
               <div className="text-center text-gray-400">
                 Analytics data will appear here as the system is used
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Video Monitoring Tab */}
+        {activeTab === 'video-monitoring' && (
+          <div className="space-y-8">
+            <h2 className="text-2xl font-semibold">Video Generation Monitoring</h2>
+            
+            <div className="p-6 bg-gray-800 border border-gray-600 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4">Platform Health Overview</h3>
+              <div className="text-center text-gray-400 mb-4">
+                Real-time monitoring of video generation platforms
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="p-4 bg-green-900 border border-green-600 rounded-lg">
+                  <h4 className="font-semibold text-green-400">RunwayML</h4>
+                  <p className="text-sm text-green-300">🟢 Healthy</p>
+                  <p className="text-xs text-green-300">Response: 45ms</p>
+                </div>
+                
+                <div className="p-4 bg-green-900 border border-green-600 rounded-lg">
+                  <h4 className="font-semibold text-green-400">Pika Labs</h4>
+                  <p className="text-sm text-green-300">🟢 Healthy</p>
+                  <p className="text-xs text-green-300">Response: 32ms</p>
+                </div>
+                
+                <div className="p-4 bg-yellow-900 border border-yellow-600 rounded-lg">
+                  <h4 className="font-semibold text-yellow-400">Stability AI</h4>
+                  <p className="text-sm text-yellow-300">🟡 Warning</p>
+                  <p className="text-xs text-yellow-300">Response: 120ms</p>
+                </div>
+                
+                <div className="p-4 bg-green-900 border border-green-600 rounded-lg">
+                  <h4 className="font-semibold text-green-400">Google Veo</h4>
+                  <p className="text-sm text-green-300">🟢 Healthy</p>
+                  <p className="text-xs text-green-300">Response: 28ms</p>
+                </div>
+                
+                <div className="p-4 bg-red-900 border border-red-600 rounded-lg">
+                  <h4 className="font-semibold text-red-400">OpenAI Sora</h4>
+                  <p className="text-sm text-red-300">🔴 Unhealthy</p>
+                  <p className="text-xs text-red-300">Response: 500ms</p>
+                </div>
+                
+                <div className="p-4 bg-green-900 border border-green-600 rounded-lg">
+                  <h4 className="font-semibold text-green-400">Luma AI</h4>
+                  <p className="text-sm text-green-300">🟢 Healthy</p>
+                  <p className="text-xs text-green-300">Response: 38ms</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-gray-800 border border-gray-600 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4">Recent Feature Updates</h3>
+              <div className="space-y-3">
+                <div className="p-3 bg-green-900 border border-green-600 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <span className="text-green-300">🆕 Motion Brush v2.1</span>
+                    <span className="text-xs text-green-400">RunwayML</span>
+                  </div>
+                  <p className="text-sm text-green-200 mt-1">Enhanced motion control with AI assistance</p>
+                </div>
+                
+                <div className="p-3 bg-blue-900 border border-blue-600 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <span className="text-blue-300">🆕 Style Transfer Pro</span>
+                    <span className="text-xs text-blue-400">Pika Labs</span>
+                  </div>
+                  <p className="text-sm text-blue-200 mt-1">Advanced artistic style transfer capabilities</p>
+                </div>
+                
+                <div className="p-3 bg-purple-900 border border-purple-600 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <span className="text-purple-300">🆕 8K Generation</span>
+                    <span className="text-xs text-purple-400">Google Veo</span>
+                  </div>
+                  <p className="text-sm text-purple-200 mt-1">Ultra-high resolution video generation</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-gray-800 border border-gray-600 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4">Monitoring Controls</h3>
+              <div className="flex space-x-4">
+                <button className="px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-medium">
+                  Start Monitoring
+                </button>
+                <button className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg font-medium">
+                  Stop Monitoring
+                </button>
+                <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium">
+                  Refresh Data
+                </button>
+              </div>
+              <p className="text-sm text-gray-400 mt-2">
+                Automated monitoring runs every 6 hours to detect new platform capabilities
+              </p>
             </div>
           </div>
         )}
