@@ -92,7 +92,7 @@ export function ProjectHub() {
             <Link href="/dashboard/projects/new">
               <Button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6 py-3 shadow-lg shadow-blue-500/25 transition-all duration-200 font-semibold">
                 <Plus className="w-5 h-5 mr-2" />
-                + New Project
+                Start Project
               </Button>
             </Link>
             

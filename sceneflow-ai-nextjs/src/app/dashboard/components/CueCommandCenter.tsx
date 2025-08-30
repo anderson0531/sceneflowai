@@ -186,9 +186,9 @@ export function CueCommandCenter() {
                        <h4 className="text-base md:text-lg font-semibold text-white">Project Management</h4>
                      </div>
                      <div className="space-y-3">
-                       <Link href="/dashboard/workflow/ideation">
+                       <Link href="/dashboard/projects/new">
                          <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                           Start New Project
+                           Start Project
                          </Button>
                        </Link>
                        <Link href="/dashboard/projects">

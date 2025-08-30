@@ -3,10 +3,11 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, LogOut, User, Clapperboard } from 'lucide-react';
+import { Plus, LogOut, User, Clapperboard, BookOpen } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEnhancedStore } from '@/store/enhancedStore';
 import { useCue } from '@/store/useCueStore';
+import { Button } from '@/components/ui/Button';
 
 interface DashboardHeaderProps {
   user?: {
@@ -92,45 +93,16 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
           </div>
           <span className="hidden sm:inline text-sm font-medium truncate max-w-[140px] font-emphasis">{user?.name || 'Demo User'}</span>
         </div>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.625rem 1.25rem',
-            borderRadius: '0.5rem',
-            fontSize: '0.875rem',
-            fontWeight: '700',
-            backgroundColor: '#2563EB',
-            color: '#ffffff',
-            border: '1px solid #2563EB',
-            transition: 'all 0.2s ease',
-            cursor: 'pointer'
-          }}
-          onClick={() => router.push('/studio/crispr-debate-001')}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              router.push('/studio/crispr-debate-001')
-            }
-          }}
-          role="button"
-          tabIndex={0}
-          aria-label="New Project"
-        >
-          <Plus style={{ color: '#ffffff', width: '16px', height: '16px' }} />
-          <span 
-            className="hidden sm:inline" 
-            style={{ 
-              color: '#ffffff',
-              fontWeight: '700',
-              fontStyle: 'normal',
-              textDecoration: 'none',
-              fontFamily: 'inherit'
-            }}
+        <Link href="/dashboard/help">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-gray-600/50 text-gray-200 hover:text-white hover:border-gray-500/70 px-4 py-2.5 transition-all duration-200 font-semibold"
           >
-            New Project
-          </span>
-        </div>
+            <BookOpen className="w-4 h-4 mr-2" />
+            Help
+          </Button>
+        </Link>
         
         <button
           onClick={handleLogout}

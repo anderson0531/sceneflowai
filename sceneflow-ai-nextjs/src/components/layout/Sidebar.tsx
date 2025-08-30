@@ -26,17 +26,17 @@ import { usePathname } from 'next/navigation'
 const mainNav = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Projects', href: '/dashboard/projects', icon: FolderOpen },
-  { name: 'Spark Studio', href: '/studio/crispr-debate-001', icon: Sparkles },
+  { name: 'Start Project', href: '/dashboard/projects/new', icon: Plus },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ]
 
 const workflowNav = [
   { 
-    name: 'The Spark Studio', 
-    href: '/studio/crispr-debate-001', 
-    icon: Sparkles,
-    description: 'Ideation & Brainstorming',
-    step: 'ideation',
+    name: 'Start Project', 
+    href: '/dashboard/projects/new', 
+    icon: Plus,
+    description: 'Create New Project',
+    step: 'start',
     phase: 1,
     credits: 'Uses Analysis Credits'
   },
@@ -94,11 +94,22 @@ const settingsNav = [
 ]
 
 export function Sidebar() {
-  const { sidebarOpen, setSidebarOpen, user, currentStep } = useEnhancedStore()
+  const { sidebarOpen, setSidebarOpen, user, currentStep, projects } = useEnhancedStore()
   const pathname = usePathname()
 
   const isActive = (href: string) => pathname === href
   const isCurrentStep = (step: string) => currentStep === step
+  
+  // Check if there's an active project
+  const hasActiveProject = projects && projects.length > 0 && projects.some(p => !p.completedSteps.includes('optimization'))
+  
+  // Check if a workflow step should be active
+  const isWorkflowStepActive = (step: string) => {
+    if (!hasActiveProject) return false
+    // For now, allow all steps if there's an active project
+    // In the future, this could check specific step completion status
+    return true
+  }
 
   // Group workflow steps by phase
   const phase1Steps = workflowNav.filter(item => item.phase === 1)
@@ -192,22 +203,32 @@ export function Sidebar() {
                   {phase1Steps.map((item) => {
                     const Icon = item.icon
                     const isActiveItem = isActive(item.href) || isCurrentStep(item.step)
+                    const isStepEnabled = isWorkflowStepActive(item.step)
+                    
                     return (
                       <Link
                         key={item.name}
-                        href={item.href}
+                        href={isStepEnabled ? item.href : '#'}
+                        onClick={(e) => {
+                          if (!isStepEnabled) {
+                            e.preventDefault()
+                            // Could show a tooltip or message here
+                          }
+                        }}
                         className={`flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-all duration-200 ${
                           isActiveItem 
                             ? 'bg-blue-500/15 text-white border-l-4 border-blue-500 shadow-lg' 
-                            : 'text-gray-200 hover:text-white hover:bg-gray-800/50 hover:translate-x-1'
+                            : isStepEnabled
+                            ? 'text-gray-200 hover:text-white hover:bg-gray-800/50 hover:translate-x-1'
+                            : 'text-gray-500 cursor-not-allowed opacity-50'
                         }`}
                       >
-                        <Icon className={`mr-4 h-6 w-6 ${isActiveItem ? 'text-blue-400' : 'text-gray-400'}`} />
+                        <Icon className={`mr-4 h-6 w-6 ${isActiveItem ? 'text-blue-400' : isStepEnabled ? 'text-gray-400' : 'text-gray-500'}`} />
                         <div className="flex-1 min-w-0">
-                          <div className={`text-base font-semibold transition-colors leading-tight ${isActiveItem ? 'text-white' : 'text-gray-200'}`}>
+                          <div className={`text-base font-semibold transition-colors leading-tight ${isActiveItem ? 'text-white' : isStepEnabled ? 'text-gray-200' : 'text-gray-500'}`}>
                             {item.name}
                           </div>
-                          <div className={`text-sm transition-colors mt-1 text-gray-400 leading-tight ${isActiveItem ? 'text-blue-400/80' : 'text-gray-400'}`}>
+                          <div className={`text-sm transition-colors mt-1 leading-tight ${isActiveItem ? 'text-blue-400/80' : isStepEnabled ? 'text-gray-400' : 'text-gray-500'}`}>
                             {item.description}
                           </div>
                         </div>
@@ -231,22 +252,32 @@ export function Sidebar() {
                   {phase2Steps.map((item) => {
                     const Icon = item.icon
                     const isActiveItem = isActive(item.href) || isCurrentStep(item.step)
+                    const isStepEnabled = isWorkflowStepActive(item.step)
+                    
                     return (
                       <Link
                         key={item.name}
-                        href={item.href}
+                        href={isStepEnabled ? item.href : '#'}
+                        onClick={(e) => {
+                          if (!isStepEnabled) {
+                            e.preventDefault()
+                            // Could show a tooltip or message here
+                          }
+                        }}
                         className={`flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-all duration-200 ${
                           isActiveItem 
                             ? 'bg-orange-500/15 text-white border-l-4 border-orange-500 shadow-lg' 
-                            : 'text-gray-200 hover:text-white hover:bg-gray-800/50 hover:translate-x-1'
+                            : isStepEnabled
+                            ? 'text-gray-200 hover:text-white hover:bg-gray-800/50 hover:translate-x-1'
+                            : 'text-gray-500 cursor-not-allowed opacity-50'
                         }`}
                       >
-                        <Icon className={`mr-4 h-6 w-6 ${isActiveItem ? 'text-orange-400' : 'text-gray-400'}`} />
+                        <Icon className={`mr-4 h-6 w-6 ${isActiveItem ? 'text-orange-400' : isStepEnabled ? 'text-gray-400' : 'text-gray-500'}`} />
                         <div className="flex-1 min-w-0">
-                          <div className={`text-base font-semibold transition-colors leading-tight ${isActiveItem ? 'text-white' : 'text-gray-200'}`}>
+                          <div className={`text-base font-semibold transition-colors leading-tight ${isActiveItem ? 'text-white' : isStepEnabled ? 'text-gray-200' : 'text-gray-500'}`}>
                             {item.name}
                           </div>
-                          <div className={`text-sm transition-colors mt-1 text-gray-400 leading-tight ${isActiveItem ? 'text-orange-400/80' : 'text-gray-400'}`}>
+                          <div className={`text-sm transition-colors mt-1 leading-tight ${isActiveItem ? 'text-orange-400/80' : isStepEnabled ? 'text-gray-400' : 'text-gray-500'}`}>
                             {item.description}
                           </div>
                         </div>
