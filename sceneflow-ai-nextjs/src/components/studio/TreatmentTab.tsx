@@ -21,6 +21,8 @@ export function TreatmentTab() {
   // Debug logging
   console.log('🎬 TreatmentTab: Current guide state:', guide);
   console.log('🎬 TreatmentTab: Film treatment content:', guide.filmTreatment);
+  console.log('🎬 TreatmentTab: Guide type:', typeof guide.filmTreatment);
+  console.log('🎬 TreatmentTab: Guide filmTreatment length:', guide.filmTreatment?.length || 0);
   const [isClient, setIsClient] = useState(false);
   const [floatingToolbar, setFloatingToolbar] = useState<FloatingToolbar>({
     visible: false,
@@ -120,8 +122,7 @@ export function TreatmentTab() {
     
     setIsGeneratingImage(true);
     try {
-      // For now, we'll use a placeholder image generation
-      // In production, this would call an actual image generation API
+      // Call the image generation API
       const response = await fetch('/api/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -141,6 +142,41 @@ export function TreatmentTab() {
       setBillboardImage(`https://picsum.photos/800/400?random=${Date.now()}`);
     } finally {
       setIsGeneratingImage(false);
+    }
+  };
+
+  const generateFilmTreatment = async () => {
+    try {
+      // Call the intelligence API to generate Film Treatment content
+      const response = await fetch('/api/cue/respond', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'user',
+              content: 'Generate a comprehensive Film Treatment for a video project. Include title, logline, synopsis, target audience, genre, duration, themes, and structure. Return ONLY valid JSON.'
+            }
+          ],
+          context: {
+            type: 'project-creation'
+          }
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('🎬 TreatmentTab: Generated Film Treatment:', data);
+        
+        // Update the guide store with the new treatment
+        if (data.reply) {
+          updateTreatment(data.reply);
+        }
+      } else {
+        console.error('Failed to generate Film Treatment');
+      }
+    } catch (error) {
+      console.error('Error generating Film Treatment:', error);
     }
   };
 
@@ -491,19 +527,71 @@ export function TreatmentTab() {
           {guide.filmTreatment ? (
             renderContent(guide.filmTreatment)
           ) : (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-700/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Eye className="w-8 h-8 text-gray-400" />
+            <div className="space-y-6">
+              {/* Billboard Image Section - Always Visible */}
+              <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+                <label className="block text-sm font-medium text-gray-400 mb-3">Billboard Image</label>
+                
+                {/* Image Display */}
+                {billboardImage && (
+                  <div className="mb-4">
+                    <img 
+                      src={billboardImage} 
+                      alt="Billboard for film treatment"
+                      className="w-full h-48 object-cover rounded-lg border border-gray-600/50"
+                    />
+                  </div>
+                )}
+                
+                {/* Image Prompt Input and Generate Button */}
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={imagePrompt}
+                    onChange={(e) => setImagePrompt(e.target.value)}
+                    placeholder="Describe the billboard image you want to generate..."
+                    className="flex-1 bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <Button
+                    onClick={generateBillboardImage}
+                    disabled={!imagePrompt.trim() || isGeneratingImage}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {isGeneratingImage ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Image className="w-4 h-4" />
+                        Generate
+                      </>
+                    )}
+                  </Button>
+                </div>
+                
+                {/* Pro tip for image generation */}
+                <div className="mt-3 text-xs text-gray-400">
+                  💡 <strong>Pro tip:</strong> Use descriptive prompts like "A dramatic close-up of DNA strands with glowing CRISPR elements, cinematic lighting, high contrast, professional photography style"
+                </div>
               </div>
-              <h3 className="text-xl font-semibold text-gray-300 mb-2">No Film Treatment Yet</h3>
-              <p className="text-gray-400 mb-6">Cue will generate a comprehensive Film Treatment based on your project idea.</p>
-              <Button
-                onClick={handleRefineEntireTreatment}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <SparklesIcon className="w-4 h-4 mr-2" />
-                Generate with Cue
-              </Button>
+              
+              {/* Film Treatment Generation Section */}
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-gray-700/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Eye className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-300 mb-2">No Film Treatment Yet</h3>
+                <p className="text-gray-400 mb-6">Cue will generate a comprehensive Film Treatment based on your project idea.</p>
+                <Button
+                  onClick={generateFilmTreatment}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <SparklesIcon className="w-4 h-4 mr-2" />
+                  Generate Film Treatment
+                </Button>
+              </div>
             </div>
           )}
           
