@@ -226,7 +226,7 @@ export function TreatmentTab() {
             <label className="block text-sm font-medium text-gray-400 mb-3">Billboard Image</label>
             
             {/* Image Display */}
-            {billboardImage && (
+            {billboardImage ? (
               <div className="mb-4">
                 <img 
                   src={billboardImage} 
@@ -234,40 +234,13 @@ export function TreatmentTab() {
                   className="w-full h-48 object-cover rounded-lg border border-gray-600/50"
                 />
               </div>
+            ) : (
+              <div className="text-center py-8 text-gray-400">
+                <Image className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No billboard image generated yet</p>
+                <p className="text-sm mt-1">Use Cue to generate a compelling billboard image</p>
+              </div>
             )}
-            
-            {/* Image Prompt Input and Generate Button */}
-            <div className="flex gap-3">
-              <input
-                type="text"
-                value={imagePrompt}
-                onChange={(e) => setImagePrompt(e.target.value)}
-                placeholder="Describe the billboard image you want to generate..."
-                className="flex-1 bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <Button
-                onClick={generateBillboardImage}
-                disabled={!imagePrompt.trim() || isGeneratingImage}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {isGeneratingImage ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Image className="w-4 h-4" />
-                    Generate
-                  </>
-                )}
-              </Button>
-            </div>
-            
-            {/* Pro tip for image generation */}
-            <div className="mt-3 text-xs text-gray-400">
-              💡 <strong>Pro tip:</strong> Use descriptive prompts like "A dramatic close-up of DNA strands with glowing CRISPR elements, cinematic lighting, high contrast, professional photography style"
-            </div>
           </div>
           
           {/* Logline */}
@@ -503,6 +476,18 @@ export function TreatmentTab() {
                   <div className="text-xs text-gray-400 mt-1">Optimize pacing</div>
                 </div>
               </Button>
+              
+              <Button
+                onClick={() => handleRefineSection('Billboard Image')}
+                variant="outline"
+                size="sm"
+                className="border-gray-600 text-gray-300 hover:bg-gray-600 hover:text-white text-left justify-start h-auto py-3 px-4"
+              >
+                <div>
+                  <div className="font-medium">Billboard Image</div>
+                  <div className="text-xs text-gray-400 mt-1">Generate compelling visual</div>
+                </div>
+              </Button>
             </div>
             
             <div className="mt-4 pt-4 border-t border-gray-600">
@@ -534,6 +519,16 @@ export function TreatmentTab() {
                   <Wand2 className="w-4 h-4 mr-2" />
                   Add Production Notes
                 </Button>
+                
+                <Button
+                  onClick={() => handleExpandSection('Billboard Image')}
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white"
+                >
+                  <Image className="w-4 h-4 mr-2" />
+                  Generate Billboard
+                </Button>
               </div>
             </div>
           </motion.div>
@@ -554,7 +549,7 @@ export function TreatmentTab() {
                 <label className="block text-sm font-medium text-gray-400 mb-3">Billboard Image</label>
                 
                 {/* Image Display */}
-                {billboardImage && (
+                {billboardImage ? (
                   <div className="mb-4">
                     <img 
                       src={billboardImage} 
@@ -562,40 +557,13 @@ export function TreatmentTab() {
                       className="w-full h-48 object-cover rounded-lg border border-gray-600/50"
                     />
                   </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-400">
+                    <Image className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>No billboard image generated yet</p>
+                    <p className="text-sm mt-1">Use Cue to generate a compelling billboard image</p>
+                  </div>
                 )}
-                
-                {/* Image Prompt Input and Generate Button */}
-                <div className="flex gap-3">
-                  <input
-                    type="text"
-                    value={imagePrompt}
-                    onChange={(e) => setImagePrompt(e.target.value)}
-                    placeholder="Describe the billboard image you want to generate..."
-                    className="flex-1 bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <Button
-                    onClick={generateBillboardImage}
-                    disabled={!imagePrompt.trim() || isGeneratingImage}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    {isGeneratingImage ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Image className="w-4 h-4" />
-                        Generate
-                      </>
-                    )}
-                  </Button>
-                </div>
-                
-                {/* Pro tip for image generation */}
-                <div className="mt-3 text-xs text-gray-400">
-                  💡 <strong>Pro tip:</strong> Use descriptive prompts like "A dramatic close-up of DNA strands with glowing CRISPR elements, cinematic lighting, high contrast, professional photography style"
-                </div>
               </div>
               
               {/* Film Treatment Generation Section */}
