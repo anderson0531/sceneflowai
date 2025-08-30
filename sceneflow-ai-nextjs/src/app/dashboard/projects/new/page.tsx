@@ -105,16 +105,33 @@ export default function NewProjectPage() {
           return
         }
         
-        // Validate file type
+        // Debug: Log file information for troubleshooting
+        console.log('File upload debug info:', {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          lastModified: file.lastModified
+        })
+        
+        // Validate file type with more flexible checking
         const validTypes = [
           'application/pdf',
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
           'application/msword',
           'text/plain',
-          'application/rtf'
+          'application/rtf',
+          'text/rtf'
         ]
         
-        if (!validTypes.includes(file.type)) {
+        // Check MIME type and file extension for better compatibility
+        const isValidType = validTypes.includes(file.type) || 
+                           file.name.toLowerCase().endsWith('.rtf') ||
+                           file.name.toLowerCase().endsWith('.pdf') ||
+                           file.name.toLowerCase().endsWith('.docx') ||
+                           file.name.toLowerCase().endsWith('.doc') ||
+                           file.name.toLowerCase().endsWith('.txt')
+        
+        if (!isValidType) {
           alert('Please select a valid document file (PDF, DOCX, DOC, TXT, or RTF)')
           setIsUploading(false)
           return
@@ -131,19 +148,19 @@ export default function NewProjectPage() {
           })
         }, 100)
         
-        // Convert document to text
+        // Convert document to text with improved file type detection
         let extractedText = ''
         
-        if (file.type === 'text/plain') {
+        if (file.type === 'text/plain' || file.name.toLowerCase().endsWith('.txt')) {
           // Handle plain text files
           extractedText = await file.text()
-        } else if (file.type === 'application/pdf') {
+        } else if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
           // Handle PDF files
           extractedText = await extractTextFromPDF(file)
-        } else if (file.type.includes('word')) {
+        } else if (file.type.includes('word') || file.name.toLowerCase().endsWith('.docx') || file.name.toLowerCase().endsWith('.doc')) {
           // Handle Word documents
           extractedText = await extractTextFromWord(file)
-        } else if (file.type === 'application/rtf') {
+        } else if (file.type === 'application/rtf' || file.type === 'text/rtf' || file.name.toLowerCase().endsWith('.rtf')) {
           // Handle RTF files
           extractedText = await extractTextFromRTF(file)
         }
