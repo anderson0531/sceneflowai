@@ -34,6 +34,7 @@ export function TreatmentTab() {
   const [billboardImage, setBillboardImage] = useState<string>('');
   const [imagePrompt, setImagePrompt] = useState<string>('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isGeneratingTreatment, setIsGeneratingTreatment] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Ensure component is mounted before rendering
@@ -44,7 +45,8 @@ export function TreatmentTab() {
   // Monitor store changes
   useEffect(() => {
     console.log('🎬 TreatmentTab: Store updated, new film treatment:', guide.filmTreatment);
-  }, [guide.filmTreatment]);
+    console.log('🎬 TreatmentTab: Full guide state after update:', guide);
+  }, [guide.filmTreatment, guide]);
 
   // Handle text selection
   useEffect(() => {
@@ -146,37 +148,56 @@ export function TreatmentTab() {
   };
 
   const generateFilmTreatment = async () => {
+    console.log('🎬 TreatmentTab: Starting Film Treatment generation...');
+    setIsGeneratingTreatment(true);
+    
     try {
       // Call the intelligence API to generate Film Treatment content
+      const requestBody = {
+        messages: [
+          {
+            role: 'user',
+            content: 'Generate a comprehensive Film Treatment for a video project. Include title, logline, synopsis, target audience, genre, duration, themes, and structure. Return ONLY valid JSON.'
+          }
+        ],
+        context: {
+          type: 'project-creation'
+        }
+      };
+      
+      console.log('🎬 TreatmentTab: API request body:', requestBody);
+      
       const response = await fetch('/api/cue/respond', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [
-            {
-              role: 'user',
-              content: 'Generate a comprehensive Film Treatment for a video project. Include title, logline, synopsis, target audience, genre, duration, themes, and structure. Return ONLY valid JSON.'
-            }
-          ],
-          context: {
-            type: 'project-creation'
-          }
-        })
+        body: JSON.stringify(requestBody)
       });
+      
+      console.log('🎬 TreatmentTab: API response status:', response.status);
+      console.log('🎬 TreatmentTab: API response ok:', response.ok);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('🎬 TreatmentTab: Generated Film Treatment:', data);
+        console.log('🎬 TreatmentTab: Generated Film Treatment response:', data);
         
         // Update the guide store with the new treatment
         if (data.reply) {
+          console.log('🎬 TreatmentTab: Updating treatment with:', data.reply);
           updateTreatment(data.reply);
+          
+          // Verify the update
+          console.log('🎬 TreatmentTab: Treatment updated, new guide state:', guide);
+        } else {
+          console.error('🎬 TreatmentTab: No reply in response data');
         }
       } else {
-        console.error('Failed to generate Film Treatment');
+        const errorText = await response.text();
+        console.error('🎬 TreatmentTab: Failed to generate Film Treatment:', response.status, errorText);
       }
     } catch (error) {
-      console.error('Error generating Film Treatment:', error);
+      console.error('🎬 TreatmentTab: Error generating Film Treatment:', error);
+    } finally {
+      setIsGeneratingTreatment(false);
     }
   };
 
@@ -586,10 +607,20 @@ export function TreatmentTab() {
                 <p className="text-gray-400 mb-6">Cue will generate a comprehensive Film Treatment based on your project idea.</p>
                 <Button
                   onClick={generateFilmTreatment}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={isGeneratingTreatment}
+                  className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <SparklesIcon className="w-4 h-4 mr-2" />
-                  Generate Film Treatment
+                  {isGeneratingTreatment ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Generating Treatment...
+                    </>
+                  ) : (
+                    <>
+                      <SparklesIcon className="w-4 h-4 mr-2" />
+                      Generate Film Treatment
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
