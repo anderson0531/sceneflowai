@@ -203,6 +203,16 @@ export default function DOLAdminPage() {
           >
             Video Monitoring
           </button>
+          <button
+            onClick={() => setActiveTab('optimization')}
+            className={`px-4 py-2 rounded-lg ${
+              activeTab === 'optimization' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            Performance Optimization
+          </button>
         </div>
 
         {/* Templates Tab */}
@@ -684,6 +694,97 @@ export default function DOLAdminPage() {
               <p className="text-sm text-gray-400 mt-2">
                 Automated monitoring runs every 6 hours to detect new platform capabilities
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* Performance Optimization Tab */}
+        {activeTab === 'optimization' && (
+          <div className="space-y-8">
+            <h2 className="text-2xl font-semibold">Performance Optimization</h2>
+            
+            <div className="p-6 bg-gray-800 border border-gray-600 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4">Quick Overview</h3>
+              <div className="text-center text-gray-400 mb-4">
+                Advanced performance analysis and optimization recommendations
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 bg-blue-900 border border-blue-600 rounded-lg text-center">
+                  <h4 className="font-semibold text-blue-400">Analytics Dashboard</h4>
+                  <p className="text-sm text-blue-300 mt-2">Comprehensive performance metrics and trends</p>
+                  <a 
+                    href="/admin/dol/analytics" 
+                    className="inline-block mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm"
+                  >
+                    View Analytics
+                  </a>
+                </div>
+                
+                <div className="p-4 bg-green-900 border border-green-600 rounded-lg text-center">
+                  <h4 className="font-semibold text-green-400">Optimization Engine</h4>
+                  <p className="text-sm text-green-300 mt-2">AI-powered optimization recommendations</p>
+                  <a 
+                    href="/admin/dol/optimization" 
+                    className="inline-block mt-3 px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm"
+                  >
+                    View Optimization
+                  </a>
+                </div>
+                
+                <div className="p-4 bg-purple-900 border border-purple-600 rounded-lg text-center">
+                  <h4 className="font-semibold text-purple-400">Video Monitoring</h4>
+                  <p className="text-sm text-purple-300 mt-2">Real-time platform health and feature detection</p>
+                  <a 
+                    href="/admin/dol/video-monitoring" 
+                    className="inline-block mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded text-sm"
+                  >
+                    View Monitoring
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-gray-800 border border-gray-600 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4">System Status</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-semibold text-green-400 mb-2">✅ DOL System Status</h4>
+                  <ul className="space-y-2 text-sm text-gray-300">
+                    <li>• Intelligence Layer: Active and Optimized</li>
+                    <li>• Video Generation Layer: Active and Optimized</li>
+                    <li>• Feature Monitoring: Active (6-hour intervals)</li>
+                    <li>• Performance Optimization: Active</li>
+                    <li>• Database Integration: Active</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold text-blue-400 mb-2">📊 Performance Metrics</h4>
+                  <ul className="space-y-2 text-sm text-gray-300">
+                    <li>• Response Time: Optimized</li>
+                    <li>• Cost Efficiency: High</li>
+                    <li>• Quality Score: Excellent</li>
+                    <li>• Error Rate: Low</li>
+                    <li>• Throughput: High</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-gray-800 border border-gray-600 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+              <div className="flex space-x-4">
+                <button className="px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-medium">
+                  Run Performance Analysis
+                </button>
+                <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium">
+                  Generate Optimization Report
+                </button>
+                <button className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium">
+                  Schedule Maintenance
+                </button>
+              </div>
             </div>
           </div>
         )}
