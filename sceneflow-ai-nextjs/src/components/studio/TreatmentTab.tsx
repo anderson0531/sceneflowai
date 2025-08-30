@@ -3,7 +3,7 @@
 import { useGuideStore } from '@/store/useGuideStore';
 import { useCue } from '@/store/useCueStore';
 import { Button } from '@/components/ui/Button';
-import { SparklesIcon, Wand2, Edit3, Eye, MessageSquare } from 'lucide-react';
+import { SparklesIcon, Wand2, Edit3, Eye, MessageSquare, Image, RefreshCw } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 
@@ -29,6 +29,9 @@ export function TreatmentTab() {
     selectedText: ''
   });
   const [showRefinementOptions, setShowRefinementOptions] = useState(false);
+  const [billboardImage, setBillboardImage] = useState<string>('');
+  const [imagePrompt, setImagePrompt] = useState<string>('');
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Ensure component is mounted before rendering
@@ -112,6 +115,35 @@ export function TreatmentTab() {
     });
   };
 
+  const generateBillboardImage = async () => {
+    if (!imagePrompt.trim()) return;
+    
+    setIsGeneratingImage(true);
+    try {
+      // For now, we'll use a placeholder image generation
+      // In production, this would call an actual image generation API
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: imagePrompt })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setBillboardImage(data.imageUrl);
+      } else {
+        // Fallback to a placeholder image for demo purposes
+        setBillboardImage(`https://picsum.photos/800/400?random=${Date.now()}`);
+      }
+    } catch (error) {
+      console.error('Error generating image:', error);
+      // Fallback to a placeholder image
+      setBillboardImage(`https://picsum.photos/800/400?random=${Date.now()}`);
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
   // Parse and render Film Treatment content from JSON or HTML
   const renderContent = (content: string) => {
     if (!isClient) return null;
@@ -130,6 +162,55 @@ export function TreatmentTab() {
           <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
             <label className="block text-sm font-medium text-gray-400 mb-2">Title</label>
             <div className="text-xl font-semibold text-white">{treatment.title || 'No title provided'}</div>
+          </div>
+          
+          {/* Billboard Image */}
+          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+            <label className="block text-sm font-medium text-gray-400 mb-3">Billboard Image</label>
+            
+            {/* Image Display */}
+            {billboardImage && (
+              <div className="mb-4">
+                <img 
+                  src={billboardImage} 
+                  alt="Billboard for film treatment"
+                  className="w-full h-48 object-cover rounded-lg border border-gray-600/50"
+                />
+              </div>
+            )}
+            
+            {/* Image Prompt Input and Generate Button */}
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={imagePrompt}
+                onChange={(e) => setImagePrompt(e.target.value)}
+                placeholder="Describe the billboard image you want to generate..."
+                className="flex-1 bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <Button
+                onClick={generateBillboardImage}
+                disabled={!imagePrompt.trim() || isGeneratingImage}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isGeneratingImage ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Image className="w-4 h-4" />
+                    Generate
+                  </>
+                )}
+              </Button>
+            </div>
+            
+            {/* Pro tip for image generation */}
+            <div className="mt-3 text-xs text-gray-400">
+              💡 <strong>Pro tip:</strong> Use descriptive prompts like "A dramatic close-up of DNA strands with glowing CRISPR elements, cinematic lighting, high contrast, professional photography style"
+            </div>
           </div>
           
           {/* Logline */}
@@ -451,7 +532,7 @@ export function TreatmentTab() {
         {/* Footer Note */}
         <div className="mt-8 pt-6 border-t border-gray-700 text-center">
           <p className="text-gray-400 text-sm">
-            💡 <strong>Pro tip:</strong> Select any text to get AI suggestions, or use the refinement options above to improve specific sections.
+            💡 <strong>Pro tip:</strong> Use Cue to refine your Film Treatment! Select any text to get AI suggestions, or use the refinement options above to improve specific sections. Cue can help enhance clarity, add production details, and optimize your story structure.
           </p>
         </div>
       </div>
