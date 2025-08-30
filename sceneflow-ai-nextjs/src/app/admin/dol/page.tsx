@@ -213,6 +213,16 @@ export default function DOLAdminPage() {
           >
             Performance Optimization
           </button>
+          <button
+            onClick={() => setActiveTab('production-health')}
+            className={`px-4 py-2 rounded-lg ${
+              activeTab === 'production-health' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            Production Health
+          </button>
         </div>
 
         {/* Templates Tab */}
@@ -783,6 +793,87 @@ export default function DOLAdminPage() {
                 </button>
                 <button className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium">
                   Schedule Maintenance
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Production Health Tab */}
+        {activeTab === 'production-health' && (
+          <div className="space-y-8">
+            <h2 className="text-2xl font-semibold">Production Health Monitoring</h2>
+            
+            <div className="p-6 bg-gray-800 border border-gray-600 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4">Quick Overview</h3>
+              <div className="text-center text-gray-400 mb-4">
+                Real-time production health monitoring and alerting
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 bg-green-900 border border-green-600 rounded-lg text-center">
+                  <h4 className="font-semibold text-green-400">Health Dashboard</h4>
+                  <p className="text-sm text-green-300 mt-2">Live system health and component status</p>
+                  <a 
+                    href="/admin/dol/production-health" 
+                    className="inline-block mt-3 px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm"
+                  >
+                    View Health
+                  </a>
+                </div>
+                
+                <div className="p-4 bg-blue-900 border border-blue-600 rounded-lg text-center">
+                  <h4 className="font-semibold text-blue-400">Alert Management</h4>
+                  <p className="text-sm text-blue-300 mt-2">Monitor and acknowledge system alerts</p>
+                  <p className="text-xs text-blue-400 mt-2">Real-time notifications</p>
+                </div>
+                
+                <div className="p-4 bg-purple-900 border border-purple-600 rounded-lg text-center">
+                  <h4 className="font-semibold text-purple-400">Performance Metrics</h4>
+                  <p className="text-sm text-purple-300 mt-2">Uptime, response times, and efficiency</p>
+                  <p className="text-xs text-purple-400 mt-2">Continuous monitoring</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-gray-800 border border-gray-600 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4">Production Status</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-semibold text-green-400 mb-2">✅ Production Systems</h4>
+                  <ul className="space-y-2 text-sm text-gray-300">
+                    <li>• Health Monitoring: Active</li>
+                    <li>• Alert System: Active</li>
+                    <li>• Performance Tracking: Active</li>
+                    <li>• Auto-Recovery: Enabled</li>
+                    <li>• Backup Systems: Active</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold text-blue-400 mb-2">📊 Monitoring Status</h4>
+                  <ul className="space-y-2 text-sm text-gray-300">
+                    <li>• Health Checks: Every 5 minutes</li>
+                    <li>• Alert Thresholds: Configured</li>
+                    <li>• Response Time: &lt; 3 seconds</li>
+                    <li>• Error Rate: &lt; 2%</li>
+                    <li>• Uptime: 99.9%+</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-gray-800 border border-gray-600 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+              <div className="flex space-x-4">
+                <button className="px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-medium">
+                  Run Health Check
+                </button>
+                <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium">
+                  View Alerts
+                </button>
+                <button className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium">
+                  Generate Report
                 </button>
               </div>
             </div>
