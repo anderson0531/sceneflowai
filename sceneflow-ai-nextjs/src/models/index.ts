@@ -2,6 +2,9 @@ import { sequelize } from '../config/database'
 import User from './User'
 import Project from './Project'
 import UserProviderConfig from './UserProviderConfig'
+import PlatformModel from './PlatformModel'
+import PromptTemplate from './PromptTemplate'
+import FeatureUpdate from './FeatureUpdate'
 
 // Define model associations
 User.hasMany(Project, {
@@ -26,12 +29,40 @@ UserProviderConfig.belongsTo(User, {
   as: 'user',
 })
 
+// DOL model associations
+PlatformModel.hasMany(PromptTemplate, {
+  foreignKey: 'modelId',
+  sourceKey: 'modelId',
+  as: 'templates',
+})
+
+PromptTemplate.belongsTo(PlatformModel, {
+  foreignKey: 'modelId',
+  targetKey: 'modelId',
+  as: 'model',
+})
+
+PlatformModel.hasMany(FeatureUpdate, {
+  foreignKey: 'modelId',
+  sourceKey: 'modelId',
+  as: 'featureUpdates',
+})
+
+FeatureUpdate.belongsTo(PlatformModel, {
+  foreignKey: 'modelId',
+  targetKey: 'modelId',
+  as: 'model',
+})
+
 // Export all models
 export {
   sequelize,
   User,
   Project,
   UserProviderConfig,
+  PlatformModel,
+  PromptTemplate,
+  FeatureUpdate,
 }
 
 // Export default for convenience
@@ -40,4 +71,7 @@ export default {
   User,
   Project,
   UserProviderConfig,
+  PlatformModel,
+  PromptTemplate,
+  FeatureUpdate,
 }
