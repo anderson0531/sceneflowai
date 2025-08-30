@@ -69,12 +69,18 @@ export class ProjectInitializationService {
         body: JSON.stringify({
           messages: [
             {
+              role: 'system',
+              content: `You are creating a COMPLETE video project. You MUST return ONLY valid JSON with no additional text, explanations, or markdown formatting. Your response must be parseable by JSON.parse() without any preprocessing.`
+            },
+            {
               role: 'user',
               content: `Create a COMPLETE video project following the No Blank Canvas principle. Use the ${template} template structure.
 
 PROJECT IDEA: ${request.projectIdea}
 
-IMPORTANT: Return your response as VALID JSON that can be parsed directly into the application. Use this exact structure:
+CRITICAL: You must return ONLY valid JSON. No markdown, no explanations, no additional text. Start with { and end with }. The response must be parseable by JSON.parse().
+
+Use this exact structure:
 
 {
   "title": "Project Title",
@@ -121,7 +127,7 @@ IMPORTANT: Return your response as VALID JSON that can be parsed directly into t
   ]
 }
 
-Generate comprehensive baseline content that is production-ready and follows professional storytelling standards.`
+Generate comprehensive baseline content that is production-ready and follows professional storytelling standards. Remember: ONLY JSON output, no other text.`
             }
           ],
           context: {
@@ -137,8 +143,19 @@ Generate comprehensive baseline content that is production-ready and follows pro
       }
 
       const data = await response.json();
+      console.log('🔍 ProjectInitializationService: Raw API response:', data);
       
       const content = data.reply || data.content || data.message || '';
+      console.log('🔍 ProjectInitializationService: Extracted content:', content);
+      
+      // Try to parse the content as JSON to validate it
+      try {
+        const parsedContent = JSON.parse(content);
+        console.log('✅ ProjectInitializationService: Content is valid JSON:', parsedContent);
+      } catch (parseError) {
+        console.error('❌ ProjectInitializationService: Content is not valid JSON:', parseError);
+        console.log('❌ Raw content that failed to parse:', content);
+      }
       
       return {
         success: true,

@@ -220,6 +220,37 @@ export async function POST(req: NextRequest) {
           console.log(`🤖 Trying ${provider.name}...`)
           const reply = await provider.call(finalMessages, provider.key, context)
           console.log(`✅ ${provider.name} success`)
+          
+          // For project creation, ensure we return structured JSON
+          if (context?.type === 'project-creation') {
+            try {
+              // Try to parse the reply as JSON to ensure it's valid
+              JSON.parse(reply)
+              console.log('✅ Project creation response is valid JSON')
+            } catch (parseError) {
+              console.warn('⚠️ Project creation response is not valid JSON, attempting to fix...')
+              // If the response isn't valid JSON, try to extract JSON from it
+              const jsonMatch = reply.match(/\{[\s\S]*\}/)
+              if (jsonMatch) {
+                const extractedJson = jsonMatch[0]
+                try {
+                  JSON.parse(extractedJson)
+                  console.log('✅ Extracted valid JSON from response')
+                  return new Response(JSON.stringify({ 
+                    reply: extractedJson, 
+                    provider: provider.name.toLowerCase(),
+                    model: provider.name === 'Gemini' ? 'gemini-1.5-flash' : 'gpt-4o-mini'
+                  }), { 
+                    status: 200, 
+                    headers: { 'Content-Type': 'application/json' } 
+                  })
+                } catch (extractError) {
+                  console.warn('❌ Could not extract valid JSON from response')
+                }
+              }
+            }
+          }
+          
           return new Response(JSON.stringify({ 
             reply, 
             provider: provider.name.toLowerCase(),
