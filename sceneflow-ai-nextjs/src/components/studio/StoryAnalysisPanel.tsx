@@ -19,6 +19,7 @@ import {
   Lightbulb,
   RefreshCw,
   Eye,
+  EyeOff,
   ThumbsUp,
   ThumbsDown,
   Activity,
@@ -49,6 +50,7 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['overview']));
   const [lastAnalysisTime, setLastAnalysisTime] = useState<Date | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const currentTemplate = getTemplateById(guide.beatTemplate || 'debate-educational') || debateTemplate;
 
@@ -87,6 +89,10 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
       newExpanded.add(sectionId);
     }
     setExpandedSections(newExpanded);
+  };
+
+  const togglePanel = () => {
+    setIsCollapsed(!isCollapsed);
   };
 
   const getSeverityIcon = (severity: AnalysisIssue['severity']) => {
@@ -190,56 +196,55 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
   }
 
   return (
-    <div className={cn("bg-gray-900 border-l border-gray-700 flex flex-col h-full", className)}>
+    <div 
+      className={cn(
+        "h-full bg-gray-900 border-l border-gray-700 flex flex-col transition-all duration-300",
+        isCollapsed ? "w-12" : "w-80",
+        className
+      )}
+    >
       {/* Header */}
-      <div className="p-4 border-b border-gray-700 bg-gray-800">
-        <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between p-3 border-b border-gray-700 bg-gray-800">
+        {!isCollapsed && (
           <div className="flex items-center gap-2">
-            <Shield className="w-6 h-6 text-green-400" />
+            <Shield className="w-5 h-5 text-green-400" />
             <h3 className="text-lg font-bold text-white">Director's Notes</h3>
           </div>
-          <div className="flex items-center gap-2">
-            {isAnalyzing && (
-              <RefreshCw className="w-4 h-4 text-blue-400 animate-spin" />
-            )}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={performAnalysis}
-                    disabled={isAnalyzing}
-                    className="p-2 text-gray-400 hover:text-white"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-700 text-white border border-gray-600">
-                  <p>Refresh Analysis</p>
-                  <p className="text-xs text-gray-300">Auto-updates when you edit beats</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        </div>
-        
-        {lastAnalysisTime && (
-          <p className="text-sm text-gray-300 mt-1">
-            Last updated: {lastAnalysisTime.toLocaleTimeString()}
-          </p>
         )}
+        
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={togglePanel}
+                className={cn(
+                  "p-2 text-gray-400 hover:text-white",
+                  isCollapsed && "mx-auto"
+                )}
+              >
+                {isCollapsed ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side={isCollapsed ? "left" : "bottom"} className="bg-gray-700 text-white border border-gray-600">
+              <p>{isCollapsed ? 'Expand Director\'s Notes' : 'Collapse Director\'s Notes'}</p>
+              <p className="text-xs text-gray-300">Toggle panel visibility for more workspace space</p>
+            </TooltipTrigger>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        {isAnalyzing ? (
-          <div className="p-4 text-center">
-            <RefreshCw className="w-8 h-8 text-blue-400 animate-spin mx-auto mb-3" />
-            <p className="text-sm text-gray-400">Analyzing your story...</p>
-          </div>
-        ) : analysis ? (
-          <div className="space-y-4 p-4">
+      {!isCollapsed && (
+        <div className="flex-1 overflow-y-auto">
+          {isAnalyzing ? (
+            <div className="p-4 text-center">
+              <RefreshCw className="w-8 h-8 text-blue-400 animate-spin mx-auto mb-3" />
+              <p className="text-sm text-gray-400">Analyzing your story...</p>
+            </div>
+          ) : analysis ? (
+            <div className="space-y-4 p-4">
             {/* Overall Score */}
             <Card className="bg-gray-800 border-gray-600">
               <CardHeader className="pb-3">
@@ -529,7 +534,8 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
             )}
           </div>
         ) : null}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

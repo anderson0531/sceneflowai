@@ -3,16 +3,43 @@
 import { useEffect, useState } from 'react'
 import { useStore } from '@/store/useStore'
 import { Button } from '@/components/ui/Button'
-import { Plus, Search, Filter, SortAsc, MoreVertical } from 'lucide-react'
+import { Plus, Search, Filter, SortAsc, Sparkles, Clapperboard, Video, Film } from 'lucide-react'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
 
 export default function ProjectsPage() {
   const [isClient, setIsClient] = useState(false)
-  const { projects } = useStore()
+  const { projects, setProjects } = useStore()
+  const [isLoading, setIsLoading] = useState(false)
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     setIsClient(true)
+  }, [])
+
+  // Hydrate from backend once on mount
+  useEffect(() => {
+    const hydrate = async () => {
+      try {
+        setIsLoading(true)
+        const userId = typeof window !== 'undefined' ? localStorage.getItem('authUserId') : null
+        const res = await fetch(`/api/projects${userId ? `?userId=${encodeURIComponent(userId)}` : ''}`, {
+          cache: 'no-store',
+          headers: userId ? { 'x-user-id': userId } as any : undefined
+        })
+        if (res.ok) {
+          const json = await res.json()
+          if (json?.projects && Array.isArray(json.projects)) setProjects(json.projects)
+        }
+      } catch (e) {
+        console.error('Hydrate projects failed:', e)
+      } finally {
+        setLoaded(true)
+        setIsLoading(false)
+      }
+    }
+    if (!loaded) hydrate()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Safe format date function with error handling
@@ -30,6 +57,44 @@ export default function ProjectsPage() {
       console.error('Error formatting date:', error)
       return 'Unknown'
     }
+  }
+
+  const stepLabel = (step?: string) => {
+    switch (step) {
+      case 'ideation':
+        return 'The Blueprint'
+      case 'storyboard':
+        return 'Storyboard'
+      case 'scene-direction':
+        return 'Scene Direction'
+      case 'video-generation':
+        return 'Video Generation'
+      default:
+        return 'The Blueprint'
+    }
+  }
+
+  const StepIcon = ({ step }: { step?: string }) => {
+    switch (step) {
+      case 'ideation':
+        return <Sparkles className="w-6 h-6" />
+      case 'storyboard':
+        return <Clapperboard className="w-6 h-6" />
+      case 'scene-direction':
+        return <Film className="w-6 h-6" />
+      case 'video-generation':
+        return <Video className="w-6 h-6" />
+      default:
+        return <Sparkles className="w-6 h-6" />
+    }
+  }
+
+  const continueUrl = (project: any) => {
+    const step = project.currentStep || 'ideation'
+    if (step === 'ideation') {
+      return `/dashboard/studio/${project.id || 'new-project'}`
+    }
+    return `/dashboard/workflow/${step}`
   }
 
   // Don't render until client-side
@@ -60,10 +125,10 @@ export default function ProjectsPage() {
           <h1 className="text-2xl font-bold text-sf-text-primary">Projects</h1>
           <p className="text-sf-text-secondary">Manage your video production projects</p>
         </div>
-        <Link href="/dashboard/workflow/ideation">
+        <Link href="/dashboard/studio/new-project/">
           <Button className="bg-sf-primary hover:bg-sf-primary/80">
             <Plus className="w-4 h-4 mr-2" />
-            New Project
+            Start Project
           </Button>
         </Link>
       </div>
@@ -89,17 +154,17 @@ export default function ProjectsPage() {
       </div>
 
       {/* Projects Grid */}
-      {!projects || projects.length === 0 ? (
+      {(!projects || projects.length === 0) ? (
         <div className="text-center py-12 bg-sf-surface rounded-xl border border-sf-border">
           <div className="w-16 h-16 bg-sf-surface-light rounded-full flex items-center justify-center mx-auto mb-4">
             <Plus className="w-8 h-8 text-sf-text-secondary" />
           </div>
-          <h3 className="text-lg font-medium text-sf-text-primary mb-2">No projects yet</h3>
-          <p className="text-sf-text-secondary mb-6">Create your first video project to get started</p>
-          <Link href="/dashboard/workflow/ideation">
+          <h3 className="text-lg font-medium text-sf-text-primary mb-2">{isLoading ? 'Loading projects…' : 'No projects yet'}</h3>
+          <p className="text-sf-text-secondary mb-6">Click Start Project to begin a new blueprint.</p>
+          <Link href="/dashboard/studio/new-project/">
             <Button className="bg-sf-primary hover:bg-sf-primary/80">
               <Plus className="w-4 h-4 mr-2" />
-              Create Your First Project
+              Start Project
             </Button>
           </Link>
         </div>
@@ -108,12 +173,9 @@ export default function ProjectsPage() {
           {projects.map((project) => (
             <div key={project.id} className="bg-sf-surface rounded-xl border border-sf-border p-6 hover:shadow-sf-glow transition-shadow">
               <div className="flex items-start justify-between mb-4">
-                <div className="w-12 h-12 bg-sf-gradient rounded-lg flex items-center justify-center">
-                  <span className="text-sf-background font-bold text-sm">P</span>
+                <div className="w-12 h-12 bg-sf-gradient rounded-lg flex items-center justify-center text-sf-background">
+                  <StepIcon step={project.currentStep} />
                 </div>
-                <Button variant="ghost" size="sm">
-                  <MoreVertical className="w-4 h-4" />
-                </Button>
               </div>
               
               <h3 className="text-lg font-semibold text-sf-text-primary mb-2">{project.title || 'Untitled Project'}</h3>
@@ -121,12 +183,12 @@ export default function ProjectsPage() {
               
               <div className="space-y-3 mb-6">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-sf-text-secondary">Current Stage</span>
-                  <span className="font-medium text-sf-text-primary">{project.currentStep || 'ideation'}</span>
+                  <span className="text-sf-text-secondary">Current Workflow Step</span>
+                  <span className="font-medium text-sf-text-primary">{stepLabel(project.currentStep)}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-sf-text-secondary">Progress</span>
-                  <span className="font-medium text-sf-text-primary">{project.progress || 0}%</span>
+                  <span className="font-medium text-sf-text-primary">{project.currentStep === 'ideation' ? 100 : (project.progress || 0)}%</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-sf-text-secondary">Last Modified</span>
@@ -137,14 +199,11 @@ export default function ProjectsPage() {
               </div>
               
               <div className="flex space-x-2">
-                <Link href={`/dashboard/workflow/${project.currentStep || 'ideation'}`} className="flex-1">
+                <Link href={continueUrl(project)} className="flex-1">
                   <Button className="w-full bg-sf-primary hover:bg-sf-primary/80">
                     Continue
                   </Button>
                 </Link>
-                <Button variant="outline" size="sm">
-                  <MoreVertical className="w-4 h-4" />
-                </Button>
               </div>
             </div>
           ))}

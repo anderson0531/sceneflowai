@@ -24,8 +24,6 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
 
-
-
   const handleLogout = () => {
     // Show confirmation dialog
     if (window.confirm('Are you sure you want to logout? Any unsaved work will be lost.')) {
@@ -85,7 +83,6 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
       
       {/* User Info and Actions */}
       <div className="flex items-center gap-2 sm:gap-4">
-
 
         <div className="flex items-center gap-2 text-sf-text-primary min-w-0">
           <div className="w-9 h-9 sm:w-10 sm:h-10 bg-sf-primary-dark rounded-full flex items-center justify-center flex-shrink-0">

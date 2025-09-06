@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock, User, CheckCircle } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface SignUpFormProps {
   onSuccess: () => void
@@ -12,6 +13,7 @@ interface SignUpFormProps {
 }
 
 export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
+  const { signup } = useAuth()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -63,31 +65,17 @@ export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
     }
 
     try {
-      // For demo purposes, create a new user
-      // In production, this would call your authentication API
-      console.log('Sign up attempt:', formData)
+      // Use the AuthContext signup method
+      const success = await signup(formData.name, formData.email, formData.password)
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Create user object
-      const user = {
-        id: 'user-' + Date.now(),
-        name: formData.name,
-        email: formData.email,
-        userType: formData.userType,
-        credits: 1500,
-        monthlyCredits: 1500,
-        createdAt: new Date().toISOString()
+      if (success) {
+        onSuccess()
+      } else {
+        setError('Sign up failed. Please try again.')
       }
-      
-      // Store user data in localStorage
-      localStorage.setItem('currentUser', JSON.stringify(user))
-      localStorage.setItem('isAuthenticated', 'true')
-      
-      onSuccess()
     } catch (err) {
-      setError('Sign up failed. Please try again.')
+      console.error('Registration error:', err)
+      setError(err instanceof Error ? err.message : 'Sign up failed. Please try again.')
     } finally {
       setIsLoading(false)
     }

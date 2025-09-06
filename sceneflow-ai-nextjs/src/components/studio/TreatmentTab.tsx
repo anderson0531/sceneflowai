@@ -15,7 +15,7 @@ interface FloatingToolbar {
 }
 
 export function TreatmentTab() {
-  const { guide, updateTreatment } = useGuideStore();
+  const { guide, updateTreatment, updateTitle, updateTreatmentDetails } = useGuideStore();
   const { invokeCue } = useCue();
   
   // Debug logging
@@ -36,17 +36,26 @@ export function TreatmentTab() {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isGeneratingTreatment, setIsGeneratingTreatment] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const imageRequestedRef = useRef<boolean>(false);
+  const [showImageDebug, setShowImageDebug] = useState(false);
+  const [imageDebug, setImageDebug] = useState<{ status?: number; ok?: boolean; model?: string; error?: string; prompt?: string; message?: string; } | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
 
   // Ensure component is mounted before rendering
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Monitor store changes
+  // Auto-generate billboard image only once per session when treatment arrives
   useEffect(() => {
-    console.log('🎬 TreatmentTab: Store updated, new film treatment:', guide.filmTreatment);
-    console.log('🎬 TreatmentTab: Full guide state after update:', guide);
-  }, [guide.filmTreatment, guide]);
+    console.log('🎬 TreatmentTab: Film treatment changed, considering auto image generation');
+    if (!guide.filmTreatment) return;
+    if (billboardImage || guide.treatmentDetails?.billboardImageUrl) return;
+    if (imageRequestedRef.current) return;
+    imageRequestedRef.current = true;
+    console.log('🎬 TreatmentTab: Auto-generating billboard image (first time)');
+    generateBillboardImage();
+  }, [guide.filmTreatment]);
 
   // Monitor billboard image state changes
   useEffect(() => {
@@ -140,6 +149,8 @@ export function TreatmentTab() {
     console.log('🎬 TreatmentTab: generateBillboardImage function called!');
     console.log('🎬 TreatmentTab: Current billboardImage state:', billboardImage);
     setIsGeneratingImage(true);
+    setShowImageDebug(true);
+    setImageError(null);
     try {
       // Generate a compelling image prompt based on the film treatment content
       let imagePrompt = '';
@@ -201,7 +212,7 @@ export function TreatmentTab() {
       // Call the image generation API
       console.log('🎬 TreatmentTab: Calling image generation API with prompt:', imagePrompt);
       
-      const response = await fetch('/api/generate-image', {
+      const response = await fetch('/api/generate-image/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: imagePrompt })
@@ -209,6 +220,7 @@ export function TreatmentTab() {
       
       console.log('🎬 TreatmentTab: API response status:', response.status);
       console.log('🎬 TreatmentTab: API response ok:', response.ok);
+      setImageDebug({ status: response.status, ok: response.ok, prompt: imagePrompt });
       
       if (response.ok) {
         const data = await response.json();
@@ -216,31 +228,50 @@ export function TreatmentTab() {
         console.log('🎬 TreatmentTab: Setting billboard image to:', data.imageUrl);
         
         setBillboardImage(data.imageUrl);
+        updateTreatmentDetails({ billboardImageUrl: data.imageUrl });
         
         // Verify the state update
         console.log('🎬 TreatmentTab: Billboard image state updated, current billboardImage:', billboardImage);
         
         // Show success message based on model used
-        if (data.model === 'gemini-2.0-flash-exp') {
-          console.log('🎬 TreatmentTab: Billboard image generated successfully using Gemini Imagen:', data.imageUrl);
+        if (data.model === 'imagen-4') {
+          console.log('🎬 TreatmentTab: Billboard image generated successfully using Google Imagen:', data.imageUrl);
         } else {
           console.log('🎬 TreatmentTab: Billboard image generated using fallback model:', data.imageUrl);
         }
+        setImageDebug(prev => ({ ...(prev || {}), model: data.model, message: data.message, error: undefined }));
       } else {
-        const errorText = await response.text();
+        // Read body once safely
+        let errorText = '';
+        let errJson: any = null;
+        const raw = await response.text();
+        try { errJson = JSON.parse(raw); } catch {}
+        if (errJson) {
+          const billingHint = errJson?.errorCode === 'BILLING_REQUIRED' ? ' (Enable billing for Google Imagen in AI Studio)' : '';
+          setImageDebug(prev => ({ ...(prev || {}), error: `${errJson?.error || errJson?.message || 'Error'}${billingHint} (trace: ${errJson?.traceId || 'n/a'})` }));
+          errorText = JSON.stringify(errJson);
+          if (errJson?.errorCode === 'BILLING_REQUIRED') {
+            setImageError('Imagen requires billing. Add a billing-enabled Google API key in Settings → BYOK, then retry.');
+          } else if (errJson?.errorCode === 'RATE_LIMITED') {
+            setImageError('Rate limit exceeded. Please wait a minute and retry the image generation.');
+          } else {
+            setImageError(`Image API error ${response.status}. Trace: ${errJson?.traceId || 'n/a'}. Primary: ${errJson?.primaryStatus ?? '—'} Fallback: ${errJson?.fallbackStatus ?? '—'}`);
+          }
+        } else {
+          errorText = raw;
+          setImageDebug(prev => ({ ...(prev || {}), error: errorText }));
+          setImageError(`Image API error ${response.status}. ${errorText}`);
+        }
         console.error('🎬 TreatmentTab: API error response:', errorText);
-        
-        // Fallback to a placeholder image for demo purposes
-        const fallbackUrl = `https://picsum.photos/800/400?random=${Date.now()}`;
-        console.log('🎬 TreatmentTab: Using fallback image due to API error:', fallbackUrl);
-        setBillboardImage(fallbackUrl);
+        // Do not throw further; we surface error in UI and allow retry
+        return;
       }
     } catch (error) {
       console.error('🎬 TreatmentTab: Error generating billboard image:', error);
-      // Fallback to a placeholder image
-      const fallbackUrl = `https://picsum.photos/800/400?random=${Date.now()}`;
-      setBillboardImage(fallbackUrl);
-      console.log('🎬 TreatmentTab: Using fallback image after error:', fallbackUrl);
+      setImageDebug(prev => ({ ...(prev || {}), error: (error as Error)?.message || 'Unknown error' }));
+      setImageError((error as Error)?.message || 'Unknown error');
+      // Don't set fallback image, let the user see the error state
+      return;
     } finally {
       setIsGeneratingImage(false);
     }
@@ -324,44 +355,55 @@ export function TreatmentTab() {
           <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
             <label className="block text-sm font-medium text-gray-400 mb-3">Billboard Image</label>
             
-            {/* Debug Info */}
-            <div className="mb-3 text-xs text-gray-500">
-              Debug: billboardImage = {billboardImage ? `"${billboardImage}"` : 'null'}
-            </div>
-            
             {/* Image Display */}
-            {billboardImage ? (
+            {billboardImage || guide.treatmentDetails?.billboardImageUrl ? (
               <div className="mb-4">
                 <img 
-                  src={billboardImage} 
+                  src={billboardImage || (guide.treatmentDetails?.billboardImageUrl as string)} 
                   alt="Billboard for film treatment"
                   className="w-full h-48 object-cover rounded-lg border border-gray-600/50"
                 />
               </div>
+            ) : isGeneratingImage ? (
+              <div className="text-center py-8 text-gray-400">
+                <RefreshCw className="w-12 h-12 mx-auto mb-3 animate-spin opacity-50" />
+                <p>Generating billboard image...</p>
+                <p className="text-sm mt-1">Creating a compelling visual for your film</p>
+              </div>
             ) : (
               <div className="text-center py-8 text-gray-400">
                 <Image className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No billboard image generated yet</p>
-                <p className="text-sm mt-1">Use Cue to generate a compelling billboard image</p>
-                
-                {/* Test Button */}
-                <Button
-                  onClick={generateBillboardImage}
-                  disabled={isGeneratingImage}
-                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
-                >
-                  {isGeneratingImage ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Image className="w-4 h-4" />
-                      Test Generate Image
-                    </>
-                  )}
-                </Button>
+                <p>Billboard image will be generated automatically</p>
+                <p className="text-sm mt-1">Based on your film treatment content</p>
+                {imageError && (
+                  <p className="text-xs text-red-400 mt-2">{imageError}</p>
+                )}
+              </div>
+            )}
+
+            {/* Debug toggle */}
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <button
+                onClick={() => generateBillboardImage()}
+                disabled={isGeneratingImage}
+                className="text-xs text-blue-400 hover:text-blue-200 underline disabled:opacity-50"
+              >
+                {isGeneratingImage ? 'Generating…' : 'Retry generation'}
+              </button>
+              <button
+                onClick={() => setShowImageDebug(!showImageDebug)}
+                className="text-xs text-gray-400 hover:text-gray-200 underline"
+              >
+                {showImageDebug ? 'Hide image debug' : 'Show image debug'}
+              </button>
+            </div>
+
+            {showImageDebug && (
+              <div className="mt-2 text-xs bg-gray-900/60 border border-gray-700 rounded p-3 text-gray-300 whitespace-pre-wrap">
+                <div><strong>Status:</strong> {imageDebug?.status ?? '—'} | <strong>OK:</strong> {String(imageDebug?.ok ?? false)} | <strong>Model:</strong> {imageDebug?.model ?? '—'}</div>
+                {imageDebug?.message && <div className="mt-1"><strong>Message:</strong> {imageDebug.message}</div>}
+                {imageDebug?.error && <div className="mt-1 text-red-400"><strong>Error:</strong> {imageDebug.error}</div>}
+                {imageDebug?.prompt && <div className="mt-1"><strong>Prompt:</strong> {imageDebug.prompt}</div>}
               </div>
             )}
           </div>
@@ -479,11 +521,6 @@ export function TreatmentTab() {
           <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
             <label className="block text-sm font-medium text-gray-400 mb-3">Billboard Image</label>
             
-            {/* Debug Info */}
-            <div className="mb-3 text-xs text-gray-500">
-              Debug: billboardImage = {billboardImage ? `"${billboardImage}"` : 'null'}
-            </div>
-            
             {/* Image Display */}
             {billboardImage ? (
               <div className="mb-4">
@@ -493,30 +530,46 @@ export function TreatmentTab() {
                   className="w-full h-48 object-cover rounded-lg border border-gray-600/50"
                 />
               </div>
+            ) : isGeneratingImage ? (
+              <div className="text-center py-8 text-gray-400">
+                <RefreshCw className="w-12 h-12 mx-auto mb-3 animate-spin opacity-50" />
+                <p>Generating billboard image...</p>
+                <p className="text-sm mt-1">Creating a compelling visual for your film</p>
+              </div>
             ) : (
               <div className="text-center py-8 text-gray-400">
                 <Image className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No billboard image generated yet</p>
-                <p className="text-sm mt-1">Use Cue to generate a compelling billboard image</p>
-                
-                {/* Test Button */}
-                <Button
-                  onClick={generateBillboardImage}
-                  disabled={isGeneratingImage}
-                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
-                >
-                  {isGeneratingImage ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Image className="w-4 h-4" />
-                      Test Generate Image
-                    </>
-                  )}
-                </Button>
+                <p>Billboard image will be generated automatically</p>
+                <p className="text-sm mt-1">Based on your film treatment content</p>
+                {imageError && (
+                  <p className="text-xs text-red-400 mt-2">{imageError}</p>
+                )}
+              </div>
+            )}
+
+            {/* Debug + retry controls */}
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <button
+                onClick={() => generateBillboardImage()}
+                disabled={isGeneratingImage}
+                className="text-xs text-blue-400 hover:text-blue-200 underline disabled:opacity-50"
+              >
+                {isGeneratingImage ? 'Generating…' : 'Retry generation'}
+              </button>
+              <button
+                onClick={() => setShowImageDebug(!showImageDebug)}
+                className="text-xs text-gray-400 hover:text-gray-200 underline"
+              >
+                {showImageDebug ? 'Hide image debug' : 'Show image debug'}
+              </button>
+            </div>
+
+            {showImageDebug && (
+              <div className="mt-2 text-xs bg-gray-900/60 border border-gray-700 rounded p-3 text-gray-300 whitespace-pre-wrap">
+                <div><strong>Status:</strong> {imageDebug?.status ?? '—'} | <strong>OK:</strong> {String(imageDebug?.ok ?? false)} | <strong>Model:</strong> {imageDebug?.model ?? '—'}</div>
+                {imageDebug?.message && <div className="mt-1"><strong>Message:</strong> {imageDebug.message}</div>}
+                {imageDebug?.error && <div className="mt-1 text-red-400"><strong>Error:</strong> {imageDebug.error}</div>}
+                {imageDebug?.prompt && <div className="mt-1"><strong>Prompt:</strong> {imageDebug.prompt}</div>}
               </div>
             )}
           </div>
@@ -717,6 +770,12 @@ export function TreatmentTab() {
           className="prose prose-invert max-w-none relative select-text bg-gray-900/30 rounded-xl p-8 border border-gray-700/50"
           style={{ userSelect: 'text' }}
         >
+          {/* Intro blurb */}
+          <div className="mb-6 text-gray-300 text-sm leading-6 bg-gray-800/40 border border-gray-700 rounded-lg p-4">
+            A film treatment is a prose document that provides an in-depth summary of a screenplay idea, presenting its story, characters, themes, and tone. Unlike a finished script, it is written in present tense and focuses on the narrative arc rather than technical details, allowing the writer to test an idea or pitch it to producers.
+          </div>
+
+          {/* Structured editor when treatment not yet converted to rich content */}
           {guide.filmTreatment ? (
             renderContent(guide.filmTreatment)
           ) : (
@@ -726,10 +785,10 @@ export function TreatmentTab() {
                 <label className="block text-sm font-medium text-gray-400 mb-3">Billboard Image</label>
                 
                 {/* Image Display */}
-                {billboardImage ? (
+                {billboardImage || guide.treatmentDetails?.billboardImageUrl ? (
                   <div className="mb-4">
                     <img 
-                      src={billboardImage} 
+                      src={billboardImage || (guide.treatmentDetails?.billboardImageUrl as string)} 
                       alt="Billboard for film treatment"
                       className="w-full h-48 object-cover rounded-lg border border-gray-600/50"
                     />
@@ -741,6 +800,86 @@ export function TreatmentTab() {
                     <p className="text-sm mt-1">Use Cue to generate a compelling billboard image</p>
                   </div>
                 )}
+              </div>
+
+              {/* Project Title */}
+              <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+                <label className="block text-sm font-medium text-gray-400 mb-2">Project Title</label>
+                <input
+                  className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  value={guide.treatmentDetails?.title || guide.title || ''}
+                  onChange={(e) => { updateTitle(e.target.value); updateTreatmentDetails({ title: e.target.value }); }}
+                  placeholder="Enter a clear, compelling title"
+                />
+                <p className="text-xs text-gray-400 mt-2">Refine with Flow for impact.</p>
+              </div>
+
+              {/* Logline */}
+              <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+                <label className="block text-sm font-medium text-gray-400 mb-2">Logline</label>
+                <textarea
+                  className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-gray-100 min-h-[84px] focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  placeholder="A concise one- to two-sentence summary that captures the premise and core conflict"
+                  value={guide.treatmentDetails?.logline || ''}
+                  onChange={(e) => updateTreatmentDetails({ logline: e.target.value })}
+                />
+                <p className="text-xs text-gray-400 mt-2">Use Flow to sharpen phrasing and hook.</p>
+              </div>
+
+              {/* Synopsis / Plot Summary */}
+              <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+                <label className="block text-sm font-medium text-gray-400 mb-2">Synopsis / Plot Summary</label>
+                <textarea
+                  className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-gray-100 min-h-[160px] focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  placeholder="Describe the story from beginning to end, focusing on main plot points, conflicts, climax, and resolution. Keep it brisk and engaging."
+                  value={guide.treatmentDetails?.synopsis || ''}
+                  onChange={(e) => updateTreatmentDetails({ synopsis: e.target.value })}
+                />
+              </div>
+
+              {/* Key Character Descriptions */}
+              <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+                <label className="block text-sm font-medium text-gray-400 mb-2">Key Character Descriptions</label>
+                <p className="text-xs text-gray-400 mb-3">Profiles should include traits, motivations, and emotional arcs.</p>
+                <textarea
+                  className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-gray-100 min-h-[140px] focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  placeholder="Summarize the primary characters and their arcs."
+                  value={guide.treatmentDetails?.keyCharacters || ''}
+                  onChange={(e) => updateTreatmentDetails({ keyCharacters: e.target.value })}
+                />
+              </div>
+
+              {/* Tone and Style */}
+              <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+                <label className="block text-sm font-medium text-gray-400 mb-2">Tone and Style</label>
+                <textarea
+                  className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-gray-100 min-h-[100px] focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  placeholder="Convey the intended mood and creative vision."
+                  value={guide.treatmentDetails?.toneAndStyle || ''}
+                  onChange={(e) => updateTreatmentDetails({ toneAndStyle: e.target.value })}
+                />
+              </div>
+
+              {/* Themes */}
+              <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+                <label className="block text-sm font-medium text-gray-400 mb-2">Themes</label>
+                <textarea
+                  className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-gray-100 min-h-[100px] focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  placeholder="What central ideas does the story explore?"
+                  value={guide.treatmentDetails?.themes || ''}
+                  onChange={(e) => updateTreatmentDetails({ themes: e.target.value })}
+                />
+              </div>
+
+              {/* Visual Language */}
+              <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+                <label className="block text-sm font-medium text-gray-400 mb-2">Visual Language</label>
+                <textarea
+                  className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-gray-100 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  placeholder="Use vivid, cinematic descriptions to help visualize key scenes and moments."
+                  value={guide.treatmentDetails?.visualLanguage || ''}
+                  onChange={(e) => updateTreatmentDetails({ visualLanguage: e.target.value })}
+                />
               </div>
               
               {/* Film Treatment Generation Section */}

@@ -22,65 +22,66 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect } from 'react'
 
 const mainNav = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Projects', href: '/dashboard/projects', icon: FolderOpen },
-  { name: 'The Spark Studio', href: '/dashboard/projects/new', icon: Sparkles },
+  { name: 'Start Project', href: '/dashboard/studio/new-project', icon: Sparkles },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ]
 
 const workflowNav = [
   { 
-    name: 'The Spark Studio', 
-    href: '/dashboard/projects/new', 
+    name: 'The Blueprint', 
+    href: '/dashboard/studio/new-project', 
     icon: Sparkles,
-    description: 'Ideation & Brainstorming',
+    description: 'Ideation & Scripting',
     step: 'start',
     phase: 1,
     credits: 'Uses Analysis Credits'
   },
   { 
-    name: 'Vision Board', 
+    name: 'Vision', 
     href: '/dashboard/workflow/storyboard', 
     icon: Layout,
-    description: 'Storyboard & Planning',
+    description: 'Interactive Storyboard',
     step: 'storyboard',
     phase: 1,
     credits: 'Uses Analysis Credits'
   },
   { 
-    name: 'The Director\'s Chair', 
+    name: 'Action Plan', 
     href: '/dashboard/workflow/scene-direction', 
     icon: Camera,
-    description: 'Scene Direction & Control',
+    description: 'Scene Direction',
     step: 'scene-direction',
     phase: 1,
     credits: 'Uses Analysis Credits'
   },
   { 
-    name: 'Video Generation', 
+    name: 'Creation Hub', 
     href: '/dashboard/workflow/video-generation', 
     icon: Film,
-    description: 'AI Video Generation',
+    description: 'Video Generation',
     step: 'video-generation',
     phase: 2,
     credits: '🔑 BYOK Required'
   },
   { 
-    name: 'Quality Review', 
+    name: 'Polish', 
     href: '/dashboard/workflow/review', 
     icon: CheckCircle,
-    description: 'Assess & validate quality',
+    description: 'Screening & Editing',
     step: 'review',
     phase: 2,
     credits: '🔑 BYOK Required'
   },
   { 
-    name: 'Optimization', 
+    name: 'Launchpad', 
     href: '/dashboard/workflow/optimization', 
     icon: Wrench,
-    description: 'Improve & finalize',
+    description: 'Optimization & Publishing',
     step: 'optimization',
     phase: 2,
     credits: '🔑 BYOK Required'
@@ -97,7 +98,12 @@ export function Sidebar() {
   const { sidebarOpen, setSidebarOpen, user, currentStep, projects } = useEnhancedStore()
   const pathname = usePathname()
 
-  const isActive = (href: string) => pathname === href
+  const isActive = (href: string) => {
+    if (href.startsWith('/dashboard/studio')) {
+      return pathname.startsWith('/dashboard/studio')
+    }
+    return pathname === href
+  }
   const isCurrentStep = (step: string) => currentStep === step
   
   // Check if there's an active project
@@ -105,15 +111,20 @@ export function Sidebar() {
   
   // Check if a workflow step should be active
   const isWorkflowStepActive = (step: string) => {
+    if (step === 'start') return true
     if (!hasActiveProject) return false
-    // For now, allow all steps if there's an active project
-    // In the future, this could check specific step completion status
-    return true
+    // Allow navigation to current and previous workflow steps
+    const order = ['start', 'storyboard', 'scene-direction', 'video-generation', 'review', 'optimization']
+    const currentIdx = order.indexOf(currentStep)
+    const stepIdx = order.indexOf(step as any)
+    return stepIdx !== -1 && stepIdx <= currentIdx
   }
 
   // Group workflow steps by phase
   const phase1Steps = workflowNav.filter(item => item.phase === 1)
   const phase2Steps = workflowNav.filter(item => item.phase === 2)
+
+  // Note: mobile/desktop initialization handled in GlobalSidebar
 
   return (
     <>
@@ -126,18 +137,24 @@ export function Sidebar() {
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-80 navigation-bar transform transition-transform duration-200 ease-in-out md:translate-x-0 md:static md:inset-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="flex flex-col h-full">
-          {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-700/50 bg-gray-800/30">
+      <div className={`fixed inset-y-0 left-0 z-50 w-80 navigation-bar transform transition-transform duration-300 ease-in-out ${
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        <div className="flex flex-col h-full bg-gray-900/95 border-r border-gray-700/50">
+          {/* Close button for mobile only */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-700/50 bg-gray-800/30 md:hidden">
             <div className="flex-1"></div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="md:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700/50 transition-colors"
+              className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700/50 transition-colors"
+              aria-label="Hide menu"
             >
-              <X className="w-6 h-6" />
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
             </button>
           </div>
+
 
           {/* User Info & Credits */}
           {user && (
@@ -236,8 +253,6 @@ export function Sidebar() {
                     )
                   })}
                 </nav>
-                
-
               </div>
 
               {/* Phase 2: Generation & Post */}
@@ -319,7 +334,9 @@ export function Sidebar() {
           {/* Footer */}
           <div className="p-6 border-t border-gray-700/50 bg-gray-800/30">
             <div className="text-center">
-              <p className="text-sm text-gray-400 font-medium">SceneFlow AI v1.0</p>
+              <p className="text-sm text-gray-400 font-medium">
+                {`SceneFlow AI${process.env.NEXT_PUBLIC_APP_VERSION ? ` v${process.env.NEXT_PUBLIC_APP_VERSION}` : ''}`}
+              </p>
             </div>
           </div>
         </div>

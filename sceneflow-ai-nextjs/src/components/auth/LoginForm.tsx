@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface LoginFormProps {
   onSuccess: () => void
@@ -12,6 +13,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProps) {
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -24,28 +26,16 @@ export function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProps) {
     setError('')
 
     try {
-      // For demo purposes, accept any email/password combination
-      // In production, this would call your authentication API
-      console.log('Login attempt:', { email, password })
+      // Use the AuthContext login method
+      const success = await login(email, password)
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Store user data in localStorage
-      const user = {
-        id: 'demo-user',
-        name: 'Demo User',
-        email: email,
-        credits: 1500,
-        monthlyCredits: 1500,
-        userType: 'demo'
+      if (success) {
+        onSuccess()
+      } else {
+        setError('Login failed. Please check your credentials.')
       }
-      
-      localStorage.setItem('currentUser', JSON.stringify(user))
-      localStorage.setItem('isAuthenticated', 'true')
-      
-      onSuccess()
     } catch (err) {
+      console.error('Login error:', err)
       setError('Login failed. Please try again.')
     } finally {
       setIsLoading(false)
@@ -138,7 +128,7 @@ export function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProps) {
 
         <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
           <p className="text-blue-400 text-sm text-center">
-            💡 <strong>Demo Mode:</strong> Use any email and password to sign in
+            🔐 <strong>Secure Login:</strong> Your credentials are encrypted and secure
           </p>
         </div>
       </div>

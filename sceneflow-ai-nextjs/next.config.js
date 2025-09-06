@@ -4,6 +4,22 @@ const withPWA = require('next-pwa')({
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
   runtimeCaching: [
+    // Always bypass API routes in the service worker (no cache)
+    {
+      urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
+      handler: 'NetworkOnly',
+      method: 'GET'
+    },
+    {
+      urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
+      handler: 'NetworkOnly',
+      method: 'POST'
+    },
+    // Bypass Next.js build assets to prevent stale UI after deploys
+    {
+      urlPattern: ({ url }) => url.pathname.startsWith('/_next/'),
+      handler: 'NetworkOnly'
+    },
     {
       urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
       handler: 'CacheFirst',
@@ -168,6 +184,7 @@ const nextConfig = {
   },
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
+    NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || require('./package.json').version,
   },
   // Force include database packages for Vercel
   serverExternalPackages: ['pg', 'pg-hstore', 'sequelize'],

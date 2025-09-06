@@ -4,6 +4,8 @@ export interface CueContext {
   type: 'text' | 'beatCard' | 'character' | 'template' | 'analysis' | 'pacing' | 'conflict' | 'consistency';
   id?: string;
   content: string;
+  // Optional payload for passing rich context (e.g., idea input, generated ideas)
+  payload?: any;
 }
 
 interface CueState {
@@ -12,6 +14,7 @@ interface CueState {
   // Actions
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
+  setSidebarVisibility: (isVisible: boolean) => void;
   invokeCue: (context: CueContext) => void;
   clearContext: () => void;
 }
@@ -26,6 +29,10 @@ export const useCueStore = create<CueState>((set, get) => ({
 
   setSidebarOpen: (open: boolean) => {
     set({ isSidebarOpen: open });
+  },
+
+  setSidebarVisibility: (isVisible: boolean) => {
+    set({ isSidebarOpen: isVisible });
   },
 
   invokeCue: (context: CueContext) => {
@@ -52,6 +59,7 @@ export const useCue = () => {
     // Actions
     toggleSidebar: store.toggleSidebar,
     setSidebarOpen: store.setSidebarOpen,
+    setSidebarVisibility: store.setSidebarVisibility,
     invokeCue: store.invokeCue,
     clearContext: store.clearContext,
   };

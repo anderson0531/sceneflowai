@@ -12,6 +12,7 @@ export function CharactersTab() {
   const [activeCharacterId, setActiveCharacterId] = useState(guide.characters[0]?.id);
 
   const activeCharacter = guide.characters.find(c => c.id === activeCharacterId);
+  const safeArc = activeCharacter?.arc || { act1: '', act2: '', act3: '' };
 
   // Generic handler for field updates
   const handleFieldChange = (field: string, value: string, subfield?: string) => {
@@ -92,15 +93,15 @@ export function CharactersTab() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                     <div>
                         <label className="block text-sm font-medium mb-2">Act I</label>
-                        <Textarea value={activeCharacter.arc.act1} onChange={(e) => handleFieldChange('arc', e.target.value, 'act1')} className={inputClass} rows={5} />
+                        <Textarea value={safeArc.act1} onChange={(e) => handleFieldChange('arc', e.target.value, 'act1')} className={inputClass} rows={5} />
                     </div>
                     <div>
                         <label className="block text-sm font-medium mb-2">Act II</label>
-                        <Textarea value={activeCharacter.arc.act2} onChange={(e) => handleFieldChange('arc', e.target.value, 'act2')} className={inputClass} rows={5} />
+                        <Textarea value={safeArc.act2} onChange={(e) => handleFieldChange('arc', e.target.value, 'act2')} className={inputClass} rows={5} />
                     </div>
                     <div>
                         <label className="block text-sm font-medium mb-2">Act III</label>
-                        <Textarea value={activeCharacter.arc.act3} onChange={(e) => handleFieldChange('arc', e.target.value, 'act3')} className={inputClass} rows={5} />
+                        <Textarea value={safeArc.act3} onChange={(e) => handleFieldChange('arc', e.target.value, 'act3')} className={inputClass} rows={5} />
                     </div>
                 </div>
             </div>

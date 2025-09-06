@@ -16,6 +16,9 @@ export function PlanAndCreditsWidget() {
   const availableCredits = (monthlyCredits - usedCredits) + topUpCreditsAvailable;
   // Percentage calculation based on monthly usage only
   const percentageUsed = (usedCredits / monthlyCredits) * 100;
+  
+  // Estimated credits required for active projects
+  const estimatedCreditsRequired = 3200; // Mock data for active projects
 
   return (
     <motion.div
@@ -41,17 +44,31 @@ export function PlanAndCreditsWidget() {
         <p className="text-xs text-gray-500 mt-1">{usedCredits.toLocaleString()} / {monthlyCredits.toLocaleString()} monthly credits used.</p>
       </div>
 
-      <div className="flex gap-4">
-        <Link href="/dashboard/settings/billing">
-          <Button className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white py-2 rounded-lg font-semibold w-full">
-            Buy Top-Up
-          </Button>
-        </Link>
-        <Link href="/dashboard/settings/billing">
-          <Button variant="outline" className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg border-gray-600 text-gray-300 hover:text-white hover:border-gray-500 w-full">
-            Manage Plan
-          </Button>
-        </Link>
+      {/* Estimated Credits Required for Active Projects with Action Buttons */}
+      <div className="mb-5 p-4 bg-orange-900/20 border border-orange-700/30 rounded-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-baseline">
+              <span className="text-2xl font-bold text-orange-400">{estimatedCreditsRequired.toLocaleString()}</span>
+              <span className="text-sm text-gray-400 ml-2">Estimated Credits Required</span>
+            </div>
+            <p className="text-xs text-orange-300 mt-1">Required to complete active projects</p>
+          </div>
+          
+          {/* Action Buttons - Same Row */}
+          <div className="flex gap-3">
+            <Link href="/dashboard/settings/billing">
+              <Button className="bg-yellow-600 hover:bg-yellow-700 text-white py-2 px-4 rounded-lg font-semibold">
+                Buy Top-Up
+              </Button>
+            </Link>
+            <Link href="/dashboard/settings/billing">
+              <Button variant="outline" className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg border-gray-600 text-gray-300 hover:text-white hover:border-gray-500">
+                Manage Plan
+              </Button>
+            </Link>
+          </div>
+        </div>
       </div>
     </motion.div>
   )

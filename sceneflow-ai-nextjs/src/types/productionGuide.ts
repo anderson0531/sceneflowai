@@ -71,12 +71,24 @@ export interface BoneyardItem {
   source: 'user_moved' | 'cue_generated' | 'alternative_idea';
 }
 
+export interface FilmTreatmentDetails {
+  title: string;
+  logline: string;
+  synopsis: string;
+  keyCharacters: string; // human-readable summary of principal characters
+  toneAndStyle: string;
+  themes: string;
+  visualLanguage: string;
+  billboardImageUrl?: string | null;
+}
+
 export interface ProductionGuide {
   projectId: string;
   title: string;
   filmTreatment: string; // HTML string from Tiptap
   characters: CharacterProfile[];
   beatSheet: Beat[];
+  treatmentDetails?: FilmTreatmentDetails; // structured, UX-optimized attributes
   beatTemplate?: string; // Template ID for the current structure
   viewMode?: ViewMode; // Current visualization mode
   boneyard?: BoneyardItem[]; // Unused beats and alternative ideas

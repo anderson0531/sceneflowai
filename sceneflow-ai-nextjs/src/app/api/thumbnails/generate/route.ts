@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { UserProviderConfig } from '@/models/UserProviderConfig'
-import { EncryptionService } from '@/services/EncryptionService'
 
 export interface ThumbnailGenerationRequest {
   userId: string
@@ -12,7 +10,7 @@ export interface ThumbnailGenerationRequest {
 
 export interface ThumbnailGenerationResponse {
   success: boolean
-  thumbnails?: Map<string, {
+  thumbnails?: Record<string, {
     success: boolean
     imageUrl?: string
     error?: string
@@ -31,34 +29,77 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }, { status: 400 })
     }
 
-    // Check if user has image generation provider
-    const userConfig = await UserProviderConfig.findOne({
-      where: { userId, providerType: 'image_generation' }
-    })
-
-    if (!userConfig) {
+    const googleApiKey = process.env.GOOGLE_API_KEY
+    if (!googleApiKey) {
       return NextResponse.json({
         success: false,
-        error: 'No image generation provider configured'
-      }, { status: 403 })
+        error: 'Google API key not configured'
+      }, { status: 500 })
     }
 
-    // Mock thumbnail generation for now
-    const thumbnails = new Map()
-    
+    const thumbnails: Record<string, { success: boolean; imageUrl?: string; error?: string }> = {}
+
+    // Generate sequentially to avoid rate limiting
     for (const idea of ideas) {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 100))
-      
-      thumbnails.set(idea.id, {
-        success: true,
-        imageUrl: `https://via.placeholder.com/400x300/6366f1/ffffff?text=${encodeURIComponent(idea.thumbnail_prompt)}`
-      })
+      const prompt = idea.thumbnail_prompt
+      try {
+        const enhancedPrompt = `Create a cinematic billboard image for a film with the following requirements: ${prompt}\n\nStyle: Professional film poster, cinematic lighting, high contrast, suitable for billboard display\nQuality: High-resolution, professional photography, visually striking\nComposition: Dramatic, eye-catching, film marketing quality\nCamera: Wide angle, cinematic framing\nLighting: Dramatic, high contrast, professional studio lighting\nAspect ratio: 16:9 landscape for billboard display`
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4:generateContent?key=${googleApiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: enhancedPrompt }] }],
+            generationConfig: {
+              temperature: 0.6,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 2048
+            },
+            safetySettings: [
+              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' }
+            ]
+          })
+        })
+
+        if (!response.ok) {
+          const errText = await response.text()
+          thumbnails[idea.id] = { success: false, error: `Imagen API error: ${response.status} ${errText}` }
+          continue
+        }
+
+        const data = await response.json()
+
+        let imageUrl = ''
+        if (data?.candidates?.[0]?.content?.parts?.length) {
+          for (const part of data.candidates[0].content.parts) {
+            if (part.inlineData?.mimeType?.startsWith('image/')) {
+              imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`
+              break
+            }
+          }
+        }
+
+        if (!imageUrl) {
+          thumbnails[idea.id] = { success: false, error: 'No image data received from Google Imagen' }
+          continue
+        }
+
+        thumbnails[idea.id] = { success: true, imageUrl }
+
+        // Small delay between requests
+        await new Promise(resolve => setTimeout(resolve, 150))
+      } catch (err) {
+        thumbnails[idea.id] = { success: false, error: err instanceof Error ? err.message : 'Unknown error' }
+      }
     }
 
     return NextResponse.json({
       success: true,
-      thumbnails: Object.fromEntries(thumbnails)
+      thumbnails
     })
 
   } catch (error) {

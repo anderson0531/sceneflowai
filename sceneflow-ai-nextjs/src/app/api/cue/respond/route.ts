@@ -91,7 +91,7 @@ async function callGemini(messages: Message[], apiKey: string, context?: CueCont
 
   // Use maximum model capability for project creation
   const isProjectCreation = context?.type === 'project-creation'
-  const model = isProjectCreation ? 'gemini-2.0-flash-exp' : 'gemini-2.0-flash-exp'
+  const model = isProjectCreation ? 'gemini-2.5-flash' : 'gemini-2.5-flash'
   const maxTokens = isProjectCreation ? 32768 : 1024
 
   const body = {
@@ -254,7 +254,7 @@ export async function POST(req: NextRequest) {
           return new Response(JSON.stringify({ 
             reply, 
             provider: provider.name.toLowerCase(),
-            model: provider.name === 'Gemini' ? 'gemini-2.0-flash-exp' : 'gpt-4o-mini'
+            model: provider.name === 'Gemini' ? 'gemini-2.5-flash' : 'gpt-4o-mini'
           }), { 
             status: 200, 
             headers: { 'Content-Type': 'application/json' } 

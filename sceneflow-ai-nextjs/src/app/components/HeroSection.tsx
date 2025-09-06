@@ -1,209 +1,147 @@
 'use client'
 
-import { Button } from '@/components/ui/Button'
 import { motion } from 'framer-motion'
-import { Clapperboard, Play, Target, Layout, Video, Film, Lightbulb, BookOpen, Settings, Eye } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { Play, ArrowRight, Sparkles, Zap, Target } from 'lucide-react'
 
 export function HeroSection() {
-  const scrollToPricing = () => {
-    const element = document.getElementById('pricing')
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' })
-    }
-  }
-
-  const openDemoModal = () => {
-    // TODO: Implement demo modal
-    alert('Demo modal would open here with embedded product demo video')
-  }
-
   return (
     <motion.section 
-      className="min-h-screen flex items-center justify-center relative overflow-hidden py-20"
+      className="relative py-32 overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 1 }}
+      transition={{ duration: 0.8 }}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-950 to-black"></div>
-      <div className="absolute inset-0 bg-gradient-to-r from-sf-primary/10 to-sf-accent/10"></div>
+      {/* Background Effects */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-950 to-black">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.1),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(147,51,234,0.1),transparent_50%)]" />
+      </div>
       
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
+      {/* Floating Elements */}
+      <div className="absolute inset-0 overflow-hidden">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          className="absolute top-20 left-10 w-2 h-2 bg-blue-400 rounded-full opacity-60"
+          animate={{ y: [0, -20, 0], opacity: [0.6, 1, 0.6] }}
+          transition={{ duration: 3, repeat: Infinity }}
+        />
+        <motion.div
+          className="absolute top-40 right-20 w-3 h-3 bg-purple-400 rounded-full opacity-40"
+          animate={{ y: [0, 30, 0], opacity: [0.4, 0.8, 0.4] }}
+          transition={{ duration: 4, repeat: Infinity, delay: 1 }}
+        />
+        <motion.div
+          className="absolute bottom-40 left-1/4 w-1 h-1 bg-cyan-400 rounded-full opacity-80"
+          animate={{ y: [0, -15, 0], opacity: [0.8, 0.4, 0.8] }}
+          transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
+        />
+      </div>
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div 
+          className="text-center"
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
         >
-          <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-sf-primary/20 to-sf-accent/20 text-sf-primary rounded-full text-sm font-medium mb-8 border border-sf-primary/30">
-            <Film className="w-5 h-5 mr-2" />
-            AI-Powered Video Production Studio
-          </div>
-          
-          <h1 className="text-6xl md:text-7xl font-bold mb-8 leading-tight">
-            Transform Ideas into Professional
-            <span className="block bg-gradient-to-r from-sf-primary via-sf-accent to-sf-primary/80 bg-clip-text text-transparent mt-2">
-              Videos in Minutes. Not Days.
+          {/* Badge */}
+          <motion.div 
+            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-full mb-8"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            <Sparkles className="w-4 h-4 text-blue-400 mr-2" />
+            <span className="text-blue-400 text-sm font-medium">AI-Powered Video Production Platform</span>
+          </motion.div>
+
+          {/* Main Headline */}
+          <motion.h1 
+            className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+          >
+            Transform Your Ideas Into
+            <span className="block bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+              Professional Videos
             </span>
-          </h1>
-          
-          {/* Optimized Content Section with Proper Hierarchy */}
-          <div className="max-w-4xl mx-auto mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
-              Democratize Professional Video Production with AI
-            </h2>
-            <p className="text-xl text-gray-300 leading-relaxed">
-              SceneFlow AI automates the entire video production process, turning a simple concept into a complete video package with AI Story Generation, professional storyboards, scene direction, video generation, review, and optimization. From short films to feature-length productions.
-            </p>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
-            <Button 
-              onClick={scrollToPricing}
-              size="lg" 
-              className="bg-sf-primary hover:bg-sf-accent text-sf-background text-lg px-10 py-5 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+          </motion.h1>
+
+          {/* Subheadline */}
+          <motion.p 
+            className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto mb-8 leading-relaxed"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+          >
+            SceneFlow AI automates the entire video production process from concept to final output, 
+            making professional-quality videos accessible to creators of all skill levels.
+          </motion.p>
+
+          {/* Key Benefits */}
+          <motion.div 
+            className="flex flex-wrap justify-center gap-6 mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1 }}
+          >
+            <div className="flex items-center space-x-2 text-gray-300">
+              <Zap className="w-5 h-5 text-blue-400" />
+              <span className="text-sm font-medium">10x Faster Production</span>
+            </div>
+            <div className="flex items-center space-x-2 text-gray-300">
+              <Target className="w-5 h-5 text-purple-400" />
+              <span className="text-sm font-medium">Professional Quality</span>
+            </div>
+            <div className="flex items-center space-x-2 text-gray-300">
+              <Sparkles className="w-5 h-5 text-cyan-400" />
+              <span className="text-sm font-medium">AI-Powered Automation</span>
+            </div>
+          </motion.div>
+
+          {/* CTA Buttons */}
+          <motion.div 
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.2 }}
+          >
+            <Button
+              size="lg"
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
             >
-              Start Video Production Now
+              Start Creating Now
+              <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
-            <Button 
-              onClick={openDemoModal}
-              size="lg" 
-              className="bg-gray-800/50 hover:bg-gray-700/50 border border-gray-600 hover:border-gray-500 text-white hover:text-white text-lg px-10 py-5 transition-all duration-300 backdrop-blur-sm"
+            
+            <Button
+              variant="outline"
+              size="lg"
+              className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white px-8 py-4 text-lg font-semibold transition-all duration-200"
             >
               <Play className="w-6 h-6 mr-3" />
               Watch the 1-minute demo
             </Button>
-          </div>
+          </motion.div>
           
-          {/* Hero Visual - Value Proposition Illustration */}
-          <div className="relative max-w-6xl mx-auto">
-            <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-2xl p-10 border border-gray-700">
-              <div className="text-center mb-8">
+          {/* Hero Visual - Simplified */}
+          <motion.div 
+            className="relative max-w-4xl mx-auto mt-16"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.4 }}
+          >
+            <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-2xl p-8 border border-gray-700">
+              <div className="text-center">
+                <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Play className="w-10 h-10 text-white" />
+                </div>
                 <h3 className="text-2xl font-bold text-white mb-4">
-                  Democratizing Professional Video Production
+                  Complete 6-Step AI Workflow
                 </h3>
-                <p className="text-lg text-gray-300 max-w-3xl mx-auto">
-                  Transform your ideas into professional videos without the complexity, time, and costs of traditional methods
-                </p>
-              </div>
-              
-              {/* Before vs After Comparison */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                {/* Before: Traditional Method */}
-                <div className="text-center">
-                  <div className="mb-6">
-                    <div className="inline-flex items-center px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-full mb-4">
-                      <span className="text-red-400 text-sm font-medium">❌ Traditional Method</span>
-                    </div>
-                    <h4 className="text-xl font-semibold text-white mb-2">Complex & Expensive</h4>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                      <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span className="text-red-400 text-lg">💸</span>
-                      </div>
-                      <div className="text-left">
-                        <p className="text-white font-medium">Multiple tool stack subscriptions</p>
-                        <p className="text-red-300 text-sm">$200+/month across platforms</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-3 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
-                      <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span className="text-orange-400 text-lg">⏰</span>
-                      </div>
-                      <div className="text-left">
-                        <p className="text-white font-medium">Weeks of planning</p>
-                        <p className="text-orange-300 text-sm">Complex production workflows</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                      <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span className="text-yellow-400 text-lg">🎓</span>
-                      </div>
-                      <div className="text-left">
-                        <p className="text-white font-medium">Years of training required</p>
-                        <p className="text-yellow-300 text-sm">Professional skills needed</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-3 p-3 bg-gray-500/10 border border-gray-500/20 rounded-lg">
-                      <div className="w-10 h-10 bg-gray-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span className="text-gray-400 text-lg">🚫</span>
-                      </div>
-                      <div className="text-left">
-                        <p className="text-white font-medium">Limited to professionals</p>
-                        <p className="text-gray-300 text-sm">High barrier to entry</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* After: SceneFlow AI Solution */}
-                <div className="text-center">
-                  <div className="mb-6">
-                    <div className="inline-flex items-center px-4 py-2 bg-green-500/20 border border-green-500/30 rounded-full mb-4">
-                      <span className="text-green-400 text-sm font-medium">✅ SceneFlow AI Solution</span>
-                    </div>
-                    <h4 className="text-xl font-semibold text-white mb-2">Simple & Accessible</h4>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                      <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span className="text-green-400 text-lg">💚</span>
-                      </div>
-                      <div className="text-left">
-                        <p className="text-white font-medium">One automated platform subscription</p>
-                        <p className="text-green-300 text-sm">$5-399/month all-inclusive</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                      <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span className="text-blue-400 text-lg">⚡</span>
-                      </div>
-                      <div className="text-left">
-                        <p className="text-white font-medium">Minutes, not weeks</p>
-                        <p className="text-blue-300 text-sm">AI-powered automation</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-3 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
-                      <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span className="text-purple-400 text-lg">🤖</span>
-                      </div>
-                      <div className="text-left">
-                        <p className="text-white font-medium">No technical skills needed</p>
-                        <p className="text-purple-300 text-sm">AI handles the complexity</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-3 p-3 bg-teal-500/10 border border-teal-500/20 rounded-lg">
-                      <div className="w-10 h-10 bg-teal-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span className="text-teal-400 text-lg">🌍</span>
-                      </div>
-                      <div className="text-left">
-                        <p className="text-white font-medium">Accessible to everyone</p>
-                        <p className="text-teal-300 text-sm">Democratized video creation</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Transformation Highlight */}
-              <div className="text-center p-6 bg-gradient-to-r from-sf-primary/20 to-sf-accent/20 border border-sf-primary/30 rounded-xl">
-                <div className="flex items-center justify-center space-x-3 mb-3">
-                  <div className="w-8 h-8 bg-sf-primary rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </div>
-                  <span className="text-sf-primary font-semibold text-lg">Transformation</span>
-                </div>
-                <p className="text-sf-text-primary text-sm">
-                  SceneFlow AI removes all traditional barriers, making professional video production accessible to creators of all skill levels
+                <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+                  From ideation to final video generation, SceneFlow AI handles every step of the production process
                 </p>
               </div>
             </div>
@@ -212,15 +150,15 @@ export function HeroSection() {
             <div className="mt-8 bg-black rounded-lg p-4">
               <div className="aspect-video bg-gray-800 rounded-lg flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-sf-primary to-sf-accent rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Play className="w-8 h-8 text-white" />
                   </div>
-                  <p className="text-gray-400 text-sm">Auto-playing transformation demonstration</p>
-                  <p className="text-gray-500 text-xs">See how SceneFlow AI removes barriers to professional video creation</p>
+                  <p className="text-gray-400 text-sm">Auto-playing workflow demonstration</p>
+                  <p className="text-gray-500 text-xs">See how SceneFlow AI transforms ideas into professional videos</p>
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
       </div>
     </motion.section>

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { Menu, X, User, LogOut } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { AuthModal } from '@/components/auth/AuthModal'
 
@@ -44,6 +44,20 @@ export function Header() {
     setIsMobileMenuOpen(false)
   }
 
+  // Auto-open modal if query contains ?login=1 or ?signup=1
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('login') === '1') {
+      setAuthMode('login')
+      setIsAuthModalOpen(true)
+    }
+    if (params.get('signup') === '1') {
+      setAuthMode('signup')
+      setIsAuthModalOpen(true)
+    }
+  }, [])
+
   return (
     <>
       <motion.header 
@@ -70,9 +84,8 @@ export function Header() {
               
               {/* App Name and Tagline */}
               <div className="flex flex-col space-y-1">
-                <h1 className="app-name-text text-2xl font-bold" style={{ fontSize: '1.5rem !important', lineHeight: '1.2 !important' }}>
-                  <span className="text-white">SceneFlow </span>
-                  <span className="text-sf-primary">AI</span>
+                <h1 className="app-name-text text-2xl font-bold">
+                  SceneFlow <span className="text-sf-primary">AI</span>
                 </h1>
                 <p className="text-sm text-gray-400 font-medium tracking-wide">
                   Imagine. Generate. Flow.

@@ -71,11 +71,11 @@ const workflowContext = {
       "How can we make this concept unique?",
       "What's your call-to-action?"
     ],
-    context: "You're in the Spark Studio - the ideation phase. Let's develop your video concept together."
+    context: "You're in The Blueprint — ideation & scripting. Let's develop your video concept together."
   },
   storyboard: {
     suggestions: storyboardSuggestions,
-    context: "You're in the Vision Board - the storyboard phase. Let's refine your scenes for maximum visual impact and storytelling effectiveness."
+    context: "You're in Vision — the interactive storyboard. Let's refine your scenes for maximum visual impact and storytelling effectiveness."
   }
 }
 
@@ -100,7 +100,7 @@ export function CueChatInterface({ onConceptUpdate, onGenerateIdeas, onSceneIter
       const welcomeMessage: CueMessage = {
         id: 'welcome',
         type: 'assistant',
-        content: `Welcome to ${isStoryboardMode ? 'the Vision Board' : 'the Spark Studio'}! I'm Cue, your AI creative partner. ${context.context}`,
+        content: `Welcome to ${isStoryboardMode ? 'Vision' : 'The Blueprint'}! I'm Cue, your AI creative partner. ${context.context}`,
         timestamp: new Date(),
         suggestions: suggestions,
         completeness_score: 0.1,
@@ -177,7 +177,9 @@ export function CueChatInterface({ onConceptUpdate, onGenerateIdeas, onSceneIter
       })
 
       if (response.ok) {
+        console.log('🧪 Headers → x-seq-api:', response.headers.get('x-seq-api'), 'provider:', response.headers.get('x-llm-provider'), 'model:', response.headers.get('x-llm-model'))
         const data = await response.json()
+        console.log('🧪 Debug payload:', (data as any).debug || (data as any).data?.debug)
         const aiResponse = data.data
 
         const assistantMessage: CueMessage = {
@@ -416,35 +418,47 @@ export function CueChatInterface({ onConceptUpdate, onGenerateIdeas, onSceneIter
     
     try {
       // Call the idea generation API
-      const response = await fetch('/api/ideation/generate', {
+      const response = await fetch('/api/ideation/generate-sequential', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: 'demo_user_001', // In production, get from auth context
-          conversationHistory: messages.map(msg => ({
-            role: msg.type === 'user' ? 'user' : 'assistant',
-            content: msg.content,
-            timestamp: msg.timestamp.toISOString()
-          })),
-          finalizedConcept: {
-            title: currentConcept,
-            description: concept,
-            targetAudience,
-            keyMessage,
-            tone,
-            genre: 'Educational', // Default genre
-            duration: 60, // Default duration
-            platform: 'Multi-platform', // Default platform
-            callToAction: 'Take action on this concept' // Default CTA
-          }
+          input: concept || currentConcept || '',
+          targetAudience: targetAudience || 'General Audience',
+          keyMessage: keyMessage || (concept || ''),
+          tone: tone || 'Professional',
+          genre: 'Educational',
+          duration: 60,
+          platform: 'Multi-platform',
+          provider: 'openai',
+          model: 'gpt-5'
         })
       })
 
       if (response.ok) {
         const data = await response.json()
-        const { ideas, conceptSummary, generationMetadata } = data.data
+        const { combined_result } = data.data
+        const ideas = combined_result.video_concepts
+        const conceptSummary = {
+          genre: 'Documentary',
+          estimatedDuration: 60,
+          targetAudience: 'General Audience',
+          keyMessage: combined_result.script_analysis.core_themes.join(', '),
+          tone: 'Professional'
+        }
+        const generationMetadata = {
+          provider: 'Google Gemini 2.0 Flash',
+          timestamp: new Date().toISOString(),
+          processingTime: 'Sequential processing',
+          totalIdeas: ideas.length,
+          averageStrengthRating: ideas.reduce((sum: number, idea: any) => sum + (idea.strength_rating || 4.0), 0) / ideas.length,
+          strongestIdea: ideas.reduce((strongest: any, current: any) => 
+            (current.strength_rating || 4.0) > (strongest.strength_rating || 4.0) ? current : strongest, 
+            ideas[0]
+          ),
+          generationTimestamp: new Date().toISOString()
+        }
         
         // Add a success message with generated ideas
         const successMessage: CueMessage = {

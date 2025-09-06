@@ -14,6 +14,7 @@ import {
   Bot,
   CheckCircle
 } from 'lucide-react';
+import FlowAvatar from './FlowAvatar';
 import { useCue } from '@/store/useCueStore';
 import { useGuideStore } from '@/store/useGuideStore';
 import { cn } from '@/lib/utils';
@@ -49,6 +50,19 @@ export function CueSidebar({ className }: CueSidebarProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Utility to extract improved idea text from Flow output
+  const extractImprovedIdea = (text: string): string | null => {
+    const tagMatch = text.match(/<<<IMPROVED_IDEA>>>[\s\S]*?<<<END>>>/);
+    if (tagMatch) {
+      const body = tagMatch[0].replace('<<<IMPROVED_IDEA>>>', '').replace('<<<END>>>', '').trim();
+      return body.length > 0 ? body : null;
+    }
+    // Fallback: use first paragraph up to 700 chars if it looks like a single-line summary
+    const firstPara = text.split('\n\n')[0]?.trim();
+    if (firstPara && firstPara.length >= 40 && firstPara.length <= 700) return firstPara;
+    return null;
+  };
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
@@ -221,6 +235,8 @@ export function CueSidebar({ className }: CueSidebarProps) {
         )
       );
 
+      // Avoid adding extra hint messages; Apply button will render inline once
+
     } catch (error) {
       console.error('Error calling Cue API:', error);
       
@@ -241,6 +257,89 @@ export function CueSidebar({ className }: CueSidebarProps) {
       setIsLoading(false);
     }
   };
+
+  // Auto-run idea optimization when requested from ProjectIdeaTab
+  useEffect(() => {
+    const handler = async (e: any) => {
+      const payload = e?.detail;
+      if (!payload) return;
+
+      const userPrompt = [
+        'Optimize the user\'s Project Idea input to produce a stronger, clearer prompt for generating compelling project ideas/blueprints.',
+        'Keep the creator\'s intent. Strengthen: audience, tone, hook, and clarity. Avoid templates.',
+        'Return ONLY the following format:',
+        '<<<IMPROVED_IDEA>>>',
+        '{single improved paragraph}',
+        '<<<END>>>',
+        '',
+        'Then include a short section titled "Why These Changes" with up to 4 bullets.'
+      ].join('\n');
+
+      const syntheticUserMessage: Message = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: `${userPrompt}\n\nContext: ${JSON.stringify(payload)}`,
+        timestamp: new Date(),
+      } as any;
+
+      setMessages(prev => [...prev, syntheticUserMessage]);
+      setIsLoading(true);
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+        streaming: true,
+      };
+      setMessages(prev => [...prev, assistantMessage]);
+
+      try {
+        const conversationHistory = messages.map(m => ({ role: m.role, content: m.content }));
+        conversationHistory.push({ role: 'user', content: syntheticUserMessage.content });
+
+        const context = {
+          pathname: window.location.pathname,
+          currentStep: 'spark-studio',
+          project: {
+            id: guide.projectId,
+            title: guide.title,
+            metadata: { activeContext: { type: 'text', payload } }
+          }
+        };
+
+        const response = await fetch('/api/cue/respond', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: conversationHistory, context })
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const data = await response.json();
+        const responseText = data.reply || '';
+
+        for (let i = 0; i <= responseText.length; i++) {
+          await new Promise(r => setTimeout(r, 12));
+          setMessages(prev => prev.map(msg => msg.id === assistantMessage.id ? { ...msg, content: responseText.slice(0, i) } : msg));
+        }
+
+        setMessages(prev => prev.map(msg => msg.id === assistantMessage.id ? { ...msg, streaming: false } : msg));
+
+        // Show apply button hint
+        const improved = extractImprovedIdea(responseText);
+        if (improved) {
+          setMessages(prev => [...prev, { id: `${Date.now()}-apply-hint`, role: 'assistant', content: 'Click “Apply to Idea Input” to use the improved text.', timestamp: new Date() }]);
+        }
+      } catch (err) {
+        console.error('Idea optimization failed', err);
+        setMessages(prev => prev.map(msg => msg.id === assistantMessage.id ? { ...msg, content: 'I hit a snag optimizing the text. Please try again.', streaming: false } : msg));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    window.addEventListener('flow.optimizeIdea', handler as EventListener);
+    return () => window.removeEventListener('flow.optimizeIdea', handler as EventListener);
+  }, [messages, guide]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -270,12 +369,12 @@ export function CueSidebar({ className }: CueSidebarProps) {
       {/* Header */}
       <div className="flex items-center justify-between p-5 border-b border-gray-700 bg-gray-750">
         <div className="flex items-center space-x-3">
-          <div className="p-2 bg-purple-500/20 rounded-lg border border-purple-500/30">
-            <Clapperboard className="w-6 h-6 text-purple-400" />
+          <div className="p-1 rounded-lg">
+            <FlowAvatar status={isLoading ? 'processing' : 'idle'} size={36} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white leading-tight">Cue Co-Pilot</h2>
-            <p className="text-xs text-purple-300 font-medium">AI Director Assistant</p>
+            <h2 className="text-xl font-bold text-white leading-tight">Flow Co‑Pilot</h2>
+            <p className="text-xs text-purple-300 font-medium">Context‑Aware Assistant</p>
           </div>
         </div>
         <Button
@@ -283,7 +382,7 @@ export function CueSidebar({ className }: CueSidebarProps) {
           size="sm"
           onClick={() => setSidebarOpen(false)}
           className="text-gray-100 hover:text-white hover:bg-gray-700"
-          aria-label="Close Cue Co-Pilot"
+          aria-label="Close Flow Co-Pilot"
         >
           <X className="w-4 h-4" />
         </Button>
@@ -371,6 +470,31 @@ export function CueSidebar({ className }: CueSidebarProps) {
                   </Button>
                 </div>
               )}
+
+              {/* Apply to Idea Input when context is idea optimization */}
+              {message.role === 'assistant' &&
+               activeContext?.payload?.input !== undefined &&
+               !message.streaming && !!extractImprovedIdea(message.content) && (
+                <div className="mt-3 pt-2 border-t border-gray-600">
+                  <Button
+                    onClick={() => {
+                      // Parse improved text
+                      const improved = extractImprovedIdea(message.content)!;
+                      window.dispatchEvent(new CustomEvent('flow.applyIdeaInput', { detail: { improved } }));
+                      setMessages(prev => ([...prev, {
+                        id: Date.now().toString(),
+                        role: 'assistant',
+                        content: '✅ Applied the improved input to your Project Idea field.',
+                        timestamp: new Date()
+                      }]));
+                    }}
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-md"
+                  >
+                    Apply to Idea Input
+                  </Button>
+                </div>
+              )}
               
               <div className={cn(
                 "text-sm mt-1 opacity-80",
@@ -443,7 +567,7 @@ export function CueSidebar({ className }: CueSidebarProps) {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask Cue to refine or brainstorm..."
+              placeholder="Ask Flow to refine or brainstorm..."
               className="min-h-[44px] max-h-32 resize-none bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-sf-primary focus:ring-sf-primary pr-20"
               disabled={isLoading}
               rows={1}
@@ -462,7 +586,7 @@ export function CueSidebar({ className }: CueSidebarProps) {
                     ? "text-gray-400 hover:text-gray-300" 
                     : "text-gray-100 hover:text-white hover:bg-gray-600"
                 )}
-                aria-label={isMuted ? "Unmute Cue" : "Mute Cue"}
+                aria-label={isMuted ? "Unmute Flow" : "Mute Flow"}
               >
                 {isMuted ? (
                   <VolumeX className="w-4 h-4" />

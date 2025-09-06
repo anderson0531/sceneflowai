@@ -659,43 +659,51 @@
     transition: all 0.2s ease;
   }
 
-  /* Header App Name Text Size Overrides - Maximum Specificity */
-  header .app-name-text,
-  header .app-name-text *,
-  header [class*="app-name"] *,
-  header .font-bold[class*="text-"] {
+  /* Studio Page Specific Overrides - allow branded header to control its own sizing */
+  header:not(.studio-header):not(.sf-brand) .app-name-text,
+  header:not(.studio-header):not(.sf-brand) .app-name-text *,
+  header:not(.studio-header):not(.sf-brand) [class*="app-name"] *,
+  header:not(.studio-header):not(.sf-brand) .font-bold[class*="text-"] {
     font-size: inherit !important;
     line-height: inherit !important;
   }
 
-  /* Specific overrides for SceneFlow AI app name */
-  header .text-3xl,
-  header .text-2xl,
-  header .text-xl {
+  /* Specific overrides for SceneFlow AI app name - exclude branded header */
+  header:not(.studio-header):not(.sf-brand) .text-3xl,
+  header:not(.studio-header):not(.sf-brand) .text-2xl,
+  header:not(.studio-header):not(.sf-brand) .text-xl {
     font-size: inherit !important;
     line-height: inherit !important;
   }
 
-  /* Force override for any global CSS that might be affecting headers */
-  header h1,
-  header h2,
-  header h3,
-  header .font-bold {
+  /* Force override for any global CSS that might be affecting main app headers - exclude branded header */
+  header:not(.studio-header):not(.sf-brand) h1,
+  header:not(.studio-header):not(.sf-brand) h2,
+  header:not(.studio-header):not(.sf-brand) h3,
+  header:not(.studio-header):not(.sf-brand) .font-bold {
     font-size: inherit !important;
     line-height: inherit !important;
   }
 
-  /* Dashboard header specific overrides */
+  /* Dashboard header specific overrides - Only for navigation bar */
   .navigation-bar .font-bold.text-3xl,
   .navigation-bar .font-bold.text-2xl {
     font-size: inherit !important;
     line-height: inherit !important;
   }
 
-  /* Landing page header specific overrides */
-  header .text-2xl.font-bold,
-  header .text-3xl.font-bold {
+  /* Landing page header specific overrides - Only for main app header */
+  header:not(.studio-header) .text-2xl.font-bold,
+  header:not(.studio-header) .text-3xl.font-bold {
     font-size: inherit !important;
     line-height: inherit !important;
+  }
+  /* Explicit brand rule to ensure header text scales */
+  header.sf-brand .app-name-text,
+  header.sf-brand .app-name-text *,
+  header.sf-brand .app-name-text span {
+    font-size: 3.5rem !important;
+    line-height: 1.03 !important;
+    font-weight: 800 !important;
   }
 }

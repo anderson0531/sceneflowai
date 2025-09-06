@@ -11,12 +11,19 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Shield, 
   Zap, 
-  Eye, 
-  Settings,
   RefreshCw,
   Filter,
-  SortAsc
+  SortAsc,
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface StoryInsightsProps {
   currentStoryData: any; // Replace with actual story data type
@@ -43,7 +50,7 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'applied' | 'dismissed'>('all');
   const [sortBy, setSortBy] = useState<'impact' | 'confidence' | 'title'>('impact');
-  const [isCardExpanded, setIsCardExpanded] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const filteredRecommendations = recommendations
     .filter(rec => filterStatus === 'all' || rec.status === filterStatus)
@@ -86,148 +93,171 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
 
   const statusCounts = getStatusCounts();
 
+  const togglePanel = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
   if (isLoading) {
     return (
-      <div className={`bg-gray-900/95 backdrop-blur-sm rounded-xl border border-gray-700/50 shadow-2xl p-6 ${className}`}>
-        <div className="text-center py-12">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-blue-500/30">
-            <RefreshCw className="w-8 h-8 text-blue-300 animate-spin" />
-          </div>
-          <h4 className="text-xl font-bold text-gray-200 mb-3">Analyzing Your Story</h4>
-          <p className="text-base text-gray-400 leading-relaxed max-w-sm mx-auto">
-            The AI is examining your story structure, characters, and pacing to provide personalized recommendations.
-          </p>
+      <div 
+        className={cn(
+          "h-full bg-gray-900 border-l border-gray-700 flex flex-col transition-all duration-300",
+          isCollapsed ? "w-12" : "w-80",
+          className
+        )}
+      >
+        <div className="flex items-center justify-between p-3 border-b border-gray-700 bg-gray-800">
+          {!isCollapsed && (
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-blue-400" />
+              <h3 className="text-lg font-bold text-white">Director's Notes</h3>
+            </div>
+          )}
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={togglePanel}
+                  className={cn(
+                    "p-2 text-gray-400 hover:text-white",
+                    isCollapsed && "mx-auto"
+                  )}
+                >
+                  {isCollapsed ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side={isCollapsed ? "left" : "bottom"} className="bg-gray-700 text-white border border-gray-600">
+                <p>{isCollapsed ? 'Expand Director\'s Notes' : 'Collapse Director\'s Notes'}</p>
+                <p className="text-xs text-gray-300">Toggle panel visibility for more workspace space</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
+        
+        {!isCollapsed && (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-blue-500/30">
+              <RefreshCw className="w-8 h-8 text-blue-300 animate-spin" />
+            </div>
+            <h4 className="text-xl font-bold text-gray-200 mb-3">Analyzing Your Story</h4>
+            <p className="text-base text-gray-400 leading-relaxed max-w-sm mx-auto">
+              The AI is examining your story structure, characters, and pacing to provide personalized recommendations.
+            </p>
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className={`bg-gray-900/95 backdrop-blur-sm rounded-xl border border-gray-700/50 shadow-2xl w-full overflow-hidden ${className}`}>
+    <div 
+      className={cn(
+        "h-full bg-gray-900 border-l border-gray-700 flex flex-col transition-all duration-300",
+        isCollapsed ? "w-12" : "w-80",
+        className
+      )}
+    >
       {/* Header */}
-      <div className="p-6 border-b border-gray-700/50">
-        <div className="mb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
-            <div className="flex items-center gap-4 flex-1 min-w-0">
-              <div className="p-3 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl border border-blue-500/40 shadow-lg flex-shrink-0">
-                <Shield className="w-7 h-7 text-blue-300" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="text-2xl font-bold text-white mb-1 break-words">Director's Notes</h3>
-                <p className="text-base text-gray-300 font-medium break-words">
-                  AI-powered story analysis and recommendations
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex justify-start sm:justify-end gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={toggleInteractionMode}
-              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg font-semibold transition-all duration-200 ${
-                mode === 'CoPilot' 
-                  ? 'border-green-500/60 text-green-300 hover:bg-green-500/15 hover:border-green-400/70 shadow-lg shadow-green-500/10' 
-                  : 'border-blue-500/60 text-blue-300 hover:bg-blue-500/15 hover:border-blue-400/70 shadow-lg shadow-blue-500/10'
-              }`}
-            >
-              <Zap className="w-4 h-4" />
-              {mode === 'CoPilot' ? 'Co-Pilot Mode' : 'Guidance Mode'}
-            </Button>
-            
-            {/* Hide/Show Controls */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsCardExpanded(!isCardExpanded)}
-              className="text-gray-400 hover:text-white hover:bg-gray-700/50 px-3 py-2.5 rounded-lg transition-all duration-200"
-            >
-              {isCardExpanded ? (
-                <>
-                  <Eye className="w-4 h-4 mr-2" />
-                  Hide
-                </>
-              ) : (
-                <>
-                  <Settings className="w-4 h-4 mr-2" />
-                  Show
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-
-        {/* Mode Description */}
-        {isCardExpanded && (
-          <div className={`p-4 rounded-xl border-2 ${
-            mode === 'CoPilot' 
-              ? 'bg-gradient-to-r from-green-900/30 to-emerald-900/20 border-green-500/40 shadow-lg shadow-green-500/10' 
-              : 'bg-gradient-to-r from-blue-900/30 to-indigo-900/20 border-blue-500/40 shadow-lg shadow-blue-500/10'
-          }`}>
-            <p className="text-base text-gray-200 font-medium leading-relaxed">
-              {mode === 'CoPilot' 
-                ? '🤖 AI will automatically apply low-risk, high-confidence recommendations. You can review and undo changes.'
-                : '👁️ All recommendations require manual review before application. Full control over every change.'
-              }
-            </p>
+      <div className="flex items-center justify-between p-3 border-b border-gray-700 bg-gray-800">
+        {!isCollapsed && (
+          <div className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-blue-400" />
+            <h3 className="text-lg font-bold text-white">Director's Notes</h3>
           </div>
         )}
+        
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={togglePanel}
+                className={cn(
+                  "p-2 text-gray-400 hover:text-white",
+                  isCollapsed && "mx-auto"
+                )}
+              >
+                {isCollapsed ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side={isCollapsed ? "left" : "bottom"} className="bg-gray-700 text-white border border-gray-600">
+              <p>{isCollapsed ? 'Expand Director\'s Notes' : 'Collapse Director\'s Notes'}</p>
+              <p className="text-xs text-gray-300">Toggle panel visibility for more workspace space</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
 
-        {/* Status Summary */}
-        {isCardExpanded && (
-          <div className="flex flex-wrap items-start gap-3 sm:gap-5 mt-6">
-            <div className="flex items-center gap-2.5">
-              <Badge variant="outline" className="text-yellow-300 border-yellow-500/50 bg-yellow-900/20 px-3 py-1.5 text-sm font-semibold whitespace-nowrap">
+      {/* Content */}
+      {!isCollapsed && (
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4">
+            {/* Mode Toggle */}
+            <div className="mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleInteractionMode}
+                className="flex items-center gap-2 w-full"
+              >
+                <Zap className="w-4 h-4" />
+                {mode === 'CoPilot' ? 'Co-Pilot Mode' : 'Guidance Mode'}
+              </Button>
+            </div>
+
+            {/* Mode Description */}
+            <div className="mb-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <p className="text-sm text-blue-200">
+                {mode === 'CoPilot' 
+                  ? '🤖 AI will automatically apply low-risk, high-confidence recommendations. You can review and undo changes.'
+                  : '👁️ All recommendations require manual review before application. Full control over every change.'
+                }
+              </p>
+            </div>
+
+            {/* Status Summary */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <Badge variant="outline" className="text-yellow-300 border-yellow-500/50 bg-yellow-900/20 px-3 py-1.5 text-sm font-semibold">
                 {statusCounts.pending} Pending
               </Badge>
-            </div>
-            <div className="flex items-center gap-2.5">
-              <Badge className="text-green-300 border-green-500/50 bg-green-900/30 px-3 py-1.5 text-sm font-semibold shadow-lg shadow-green-500/20 whitespace-nowrap">
+              <Badge className="text-green-300 border-green-500/50 bg-green-900/30 px-3 py-1.5 text-sm font-semibold">
                 {statusCounts.applied} Applied
               </Badge>
-            </div>
-            <div className="flex items-center gap-2.5">
-              <Badge variant="outline" className="text-gray-300 border-gray-500/50 bg-gray-800/30 px-3 py-1.5 text-sm font-semibold whitespace-nowrap">
+              <Badge variant="outline" className="text-gray-300 border-gray-500/50 bg-gray-800/30 px-3 py-1.5 text-sm font-semibold">
                 {statusCounts.dismissed} Dismissed
               </Badge>
             </div>
-          </div>
-        )}
-      </div>
 
-      {/* Controls */}
-      {isCardExpanded && (
-        <div className="p-5 border-b border-gray-700/50 bg-gradient-to-r from-gray-800/60 to-gray-700/40">
-          <div className="space-y-4">
-            {/* Filter and Sort Row */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5">
-              {/* Filter */}
-              <div className="flex items-center gap-3">
+            {/* Controls */}
+            <div className="space-y-3 mb-4">
+              <div className="flex items-center gap-2">
                 <div className="p-2 bg-gray-700/50 rounded-lg">
                   <Filter className="w-4 h-4 text-gray-300" />
                 </div>
-                <select
-                  value={filterStatus}
+                <select 
+                  value={filterStatus} 
                   onChange={(e) => setFilterStatus(e.target.value as any)}
-                  className="bg-gray-700/80 border border-gray-600/50 rounded-lg px-4 py-2 text-sm text-white font-medium focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 transition-all duration-200 min-w-[140px]"
+                  className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white"
                 >
                   <option value="all">All Status</option>
-                  <option value="pending">Pending Review</option>
+                  <option value="pending">Pending</option>
                   <option value="applied">Applied</option>
                   <option value="dismissed">Dismissed</option>
                 </select>
               </div>
-
-              {/* Sort */}
-              <div className="flex items-center gap-3">
+              
+              <div className="flex items-center gap-2">
                 <div className="p-2 bg-gray-700/50 rounded-lg">
                   <SortAsc className="w-4 h-4 text-gray-300" />
                 </div>
-                <select
-                  value={sortBy}
+                <select 
+                  value={sortBy} 
                   onChange={(e) => setSortBy(e.target.value as any)}
-                  className="bg-gray-700/80 border border-gray-600/50 rounded-lg px-4 py-2 text-sm text-white font-medium focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 transition-all duration-200 min-w-[160px]"
+                  className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white"
                 >
                   <option value="impact">Sort by Impact</option>
                   <option value="confidence">Sort by Confidence</option>
@@ -236,57 +266,39 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
               </div>
             </div>
 
-            {/* Refresh Button Row */}
-            <div className="flex justify-end">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={refreshAnalysis}
-                disabled={isLoading}
-                className="text-gray-300 hover:text-white hover:bg-gray-700/50 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                {isLoading ? 'Analyzing...' : 'Refresh Analysis'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+            {/* Refresh Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refreshAnalysis}
+              className="w-full mb-4"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh Analysis
+            </Button>
 
-      {/* Recommendations List */}
-      {isCardExpanded && (
-        <div className="p-6">
-          {filteredRecommendations.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-800/50 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Shield className="w-8 h-8 text-gray-400" />
+            {/* Recommendations */}
+            {filteredRecommendations.length === 0 ? (
+              <div className="text-center py-8">
+                <Shield className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                <h4 className="text-base font-semibold text-gray-300 mb-1">No recommendations yet</h4>
+                <p className="text-sm text-gray-400">
+                  Your story analysis will appear here once complete. The AI is analyzing your story structure and will provide actionable recommendations.
+                </p>
               </div>
-              <h4 className="text-xl font-bold text-gray-300 mb-3">
-                {filterStatus === 'all' 
-                  ? 'No recommendations yet' 
-                  : `No ${filterStatus} recommendations`
-                }
-              </h4>
-              <p className="text-base text-gray-400 leading-relaxed max-w-sm mx-auto">
-                {filterStatus === 'all' 
-                  ? 'Your story analysis will appear here once complete. The AI is analyzing your story structure and will provide actionable recommendations.'
-                  : 'Try adjusting your filters or refresh the analysis to see more recommendations.'
-                }
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-5">
-              {filteredRecommendations.map((recommendation) => (
-                <RecommendationCard
-                  key={recommendation.id}
-                  recommendation={recommendation}
-                  onApply={manuallyApplyRecommendation}
-                  onUndo={undoRecommendation}
-                  onDismiss={dismissRecommendation}
-                />
-              ))}
-            </div>
-          )}
+            ) : (
+              <div className="space-y-3">
+                {filteredRecommendations.map(rec => (
+                  <RecommendationCard
+                    key={rec.id}
+                    recommendation={rec}
+                    onApply={() => manuallyApplyRecommendation(rec.id)}
+                    onDismiss={() => dismissRecommendation(rec.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -294,10 +306,7 @@ const StoryInsights: React.FC<StoryInsightsProps> = ({
       {selectedMutation && (
         <ReviewModal
           isOpen={isReviewModalOpen}
-          onClose={() => {
-            setIsReviewModalOpen(false);
-            setSelectedMutation(null);
-          }}
+          onClose={() => setIsReviewModalOpen(false)}
           mutation={selectedMutation.proposedMutation}
           onAccept={handleAcceptChanges}
           showAcceptButton={mode === 'Guidance'}

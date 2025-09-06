@@ -1,3 +1,6 @@
+import { Header } from '@/components/layout/Header'
+import WorkflowTopNav from '@/components/layout/WorkflowTopNav'
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex overflow-hidden bg-sf-background">
@@ -22,9 +25,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto bg-sf-background">
+        {/* Global header (restored) */}
+        <Header />
+        <WorkflowTopNav />
         {/* Content */}
         <div className="p-8">
-            {children}
+          {children}
         </div>
       </main>
     </div>

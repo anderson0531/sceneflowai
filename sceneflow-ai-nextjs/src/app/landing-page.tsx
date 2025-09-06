@@ -3,6 +3,7 @@
 import { Header } from './components/Header'
 import { HeroSection } from './components/HeroSection'
 import { ProblemSolution } from './components/ProblemSolution'
+import { DemocratizationSection } from './components/DemocratizationSection'
 import { HowItWorks } from './components/HowItWorks'
 import { FeatureHighlight } from './components/FeatureHighlight'
 import { TargetAudience } from './components/TargetAudience'
@@ -17,6 +18,7 @@ export default function LandingPage() {
       <Header />
       <HeroSection />
       <ProblemSolution />
+      <DemocratizationSection />
       <HowItWorks />
       <FeatureHighlight />
       <TargetAudience />

@@ -68,8 +68,8 @@ export default function NewProjectPage() {
         
         // Wait a moment then redirect to Spark Studio
         setTimeout(() => {
-          console.log('🚀 Redirecting to Spark Studio...');
-          router.push(`/studio/${projectId}`)
+          console.log('🚀 Redirecting to The Blueprint...');
+          router.push(`/dashboard/studio/${projectId}`)
         }, 1000)
       } else {
         throw new Error(result.error || 'Failed to generate project')
@@ -327,7 +327,7 @@ export default function NewProjectPage() {
               <Sparkles className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-white">The Spark Studio</h1>
+              <h1 className="text-4xl md:text-5xl font-bold text-white">The Blueprint</h1>
               <p className="text-xl text-gray-400 mt-2">Ideation & Brainstorming</p>
             </div>
           </div>

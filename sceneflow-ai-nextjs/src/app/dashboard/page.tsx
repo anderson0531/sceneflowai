@@ -1,6 +1,6 @@
 'use client'
 
-import { CueCommandCenter } from './components/CueCommandCenter'
+import CueCommandCenter from './components/CueCommandCenter'
 import { ProductionProjectsTable } from './components/ProductionProjectsTable'
 import { PlanAndCreditsWidget } from './components/PlanAndCreditsWidget'
 import { BYOKIntegrationStatus } from './components/BYOKIntegrationStatus'
@@ -14,22 +14,30 @@ export default function DashboardPage() {
         {/* Section 1: Cue Command Center (Full Width, Focal Point) */}
         <CueCommandCenter />
 
-               {/* Section 2: Dashboard Grid (2-Column Layout) */}
-       <div className="mt-6 md:mt-8 grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-8">
-         
-         {/* Primary Workflow Area (2/3 width) */}
-         <div className="xl:col-span-2">
-           <ProductionProjectsTable />
-         </div>
+               {/* Section 2: Plan & Credits (Below Analytics, Above Projects) */}
+               <div className="mt-6 md:mt-8">
+                 <PlanAndCreditsWidget />
+               </div>
 
-         {/* Status Sidebar (1/3 width) */}
-         <div className="xl:col-span-1 space-y-6 md:space-y-8">
-           <PlanAndCreditsWidget />
-           <ResourcesOverviewWidget />
-           <BYOKIntegrationStatus />
-         </div>
-         
-       </div>
+               {/* Section 3: Recent Projects (Full Width) */}
+               <div className="mt-6 md:mt-8">
+                 <ProductionProjectsTable />
+               </div>
+
+               {/* Section 4: Important Status Cards (2-Column Layout) */}
+               <div className="mt-6 md:mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+                 
+                 {/* Left Column: Production Resources */}
+                 <div className="space-y-6 md:space-y-8">
+                   <ResourcesOverviewWidget />
+                 </div>
+
+                 {/* Right Column: Video Generation (BYOK) */}
+                 <div className="space-y-6 md:space-y-8">
+                   <BYOKIntegrationStatus />
+                 </div>
+                 
+               </div>
       </div>
     </div>
   )

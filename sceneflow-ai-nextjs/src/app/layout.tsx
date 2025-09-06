@@ -4,7 +4,9 @@ import './globals.css'
 
 import { StoreProvider } from '@/components/providers/StoreProvider'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { GlobalSidebar } from '@/components/layout/GlobalSidebar'
 import InstallPrompt from '@/components/pwa/InstallPrompt'
+import { ConditionalLayout } from '@/components/layout/ConditionalLayout'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -65,12 +67,10 @@ export default function RootLayout({
         <meta property="og:image" content="/favicon.ico" />
       </head>
       <body className={`${inter.className} bg-base text-sf-text-secondary`}>
-        <StoreProvider>
-          <AuthProvider>
-            {children}
-            <InstallPrompt />
-          </AuthProvider>
-        </StoreProvider>
+        <ConditionalLayout>
+          {children}
+        </ConditionalLayout>
+        <InstallPrompt />
       </body>
     </html>
   )

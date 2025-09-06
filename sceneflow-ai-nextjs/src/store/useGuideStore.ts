@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ProductionGuide, Beat, CharacterProfile, ViewMode, BeatFunction, EmotionalCharge, BoneyardItem } from '@/types/productionGuide';
+import { ProductionGuide, Beat, CharacterProfile, ViewMode, BeatFunction, EmotionalCharge, BoneyardItem, FilmTreatmentDetails } from '@/types/productionGuide';
 
 // Dynamic project initialization - no hardcoded data
 const initialGuide: ProductionGuide = {
@@ -11,7 +11,17 @@ const initialGuide: ProductionGuide = {
   boneyardCollapsed: true,
   filmTreatment: '',
   characters: [],
-  beatSheet: []
+  beatSheet: [],
+  treatmentDetails: {
+    title: '',
+    logline: '',
+    synopsis: '',
+    keyCharacters: '',
+    toneAndStyle: '',
+    themes: '',
+    visualLanguage: '',
+    billboardImageUrl: null
+  }
 };
 
 interface GuideState {
@@ -19,8 +29,11 @@ interface GuideState {
   // Project initialization
   initializeProject: (projectData: Partial<ProductionGuide>) => void;
   resetProject: () => void;
+  // Project metadata updates
+  updateTitle: (title: string) => void;
   // Content updates
   updateTreatment: (newTreatment: string) => void;
+  updateTreatmentDetails: (updates: Partial<FilmTreatmentDetails>) => void;
   updateCharacter: (updatedCharacter: CharacterProfile) => void;
   // This function handles both reordering and moving beats between Acts
   updateBeats: (newBeats: Beat[]) => void;
@@ -65,12 +78,19 @@ export const useGuideStore = create<GuideState>((set) => ({
     });
   },
   
+  updateTitle: (title) => set((state) => ({
+    guide: { ...state.guide, title }
+  })),
+  
   resetProject: () => set(() => ({
     guide: initialGuide
   })),
   
   updateTreatment: (newTreatment) => set((state) => ({
     guide: { ...state.guide, filmTreatment: newTreatment }
+  })),
+  updateTreatmentDetails: (updates) => set((state) => ({
+    guide: { ...state.guide, treatmentDetails: { ...(state.guide.treatmentDetails || {} as any), ...updates } }
   })),
   updateCharacter: (updatedCharacter) => set((state) => ({
     guide: {

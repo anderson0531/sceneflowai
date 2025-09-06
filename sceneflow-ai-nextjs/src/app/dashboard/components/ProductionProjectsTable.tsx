@@ -104,10 +104,10 @@ export function ProductionProjectsTable() {
             <h2 className="text-2xl font-bold text-white">Recent Projects</h2>
             <p className="text-gray-400 mt-1">Manage your active video production workflow</p>
           </div>
-          <Link href="/dashboard/projects/new">
+          <Link href="/dashboard/studio/new-project">
             <Button className="bg-blue-600 hover:bg-blue-700 text-white">
               <Plus className="w-4 h-4 mr-2" />
-              + New Project
+              Start Project
             </Button>
           </Link>
         </div>
@@ -141,7 +141,7 @@ export function ProductionProjectsTable() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.4, delay: 0.1 + index * 0.1 }}
                   className="hover:bg-gray-700/30 transition duration-150 cursor-pointer"
-                  onClick={() => window.open(`/studio/${project.id}`, '_blank')}
+                  onClick={() => window.open(`/dashboard/studio/${project.id}`, '_blank')}
                 >
                   <td className="px-4 md:px-6 py-4 text-sm font-medium text-white">
                     <div className="flex items-center">
@@ -175,7 +175,7 @@ export function ProductionProjectsTable() {
                   </td>
                   <td className="px-4 md:px-6 py-4 text-center">
                     <div className="flex items-center justify-center space-x-1">
-                      <Link href={`/studio/${project.id}`} onClick={(e) => e.stopPropagation()}>
+                      <Link href={`/dashboard/studio/${project.id}`} onClick={(e) => e.stopPropagation()}>
                         <Button
                           variant="ghost"
                           size="sm"

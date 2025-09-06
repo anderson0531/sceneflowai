@@ -8,6 +8,56 @@ interface ConversationMessage {
   timestamp: string
 }
 
+interface ScriptCharacter {
+  name: string
+  role: 'Protagonist' | 'Antagonist' | 'Supporting' | 'Narrator' | 'Expert'
+  description: string
+  importance: 'High' | 'Medium' | 'Low'
+}
+
+interface ScriptAnalysis {
+  input_title: string
+  input_synopsis: string
+  input_treatment: string
+  characters: ScriptCharacter[]
+  core_themes: string[]
+}
+
+interface Beat {
+  beat_number: number
+  beat_title: string
+  beat_description: string
+  duration_estimate: string
+  key_elements: string[]
+}
+
+interface ActStructure {
+  title: string
+  duration: string
+  beats: Beat[]
+}
+
+interface VideoConcept {
+  id: string
+  title: string
+  concept_synopsis: string
+  concept_approach: string
+  narrative_structure: '3-Act Structure' | '5-Act Structure' | 'Hero\'s Journey' | 'Documentary Structure' | 'Series Structure' | 'Experimental Structure'
+  act_structure: {
+    act_1: ActStructure
+    act_2: ActStructure
+    act_3: ActStructure
+  }
+  thumbnail_prompt: string
+  strength_rating: number
+}
+
+interface ScriptAnalysisResponse {
+  script_analysis: ScriptAnalysis
+  video_concepts: VideoConcept[]
+}
+
+// Legacy interface for backward compatibility
 interface VideoIdea {
   id: string
   title: string
@@ -15,6 +65,21 @@ interface VideoIdea {
   scene_outline: string[]
   thumbnail_prompt: string
   strength_rating: number
+  // New fields for enhanced structure
+  film_treatment?: string
+  narrative_structure?: string
+  characters?: ScriptCharacter[]
+  act_structure?: {
+    act_1: ActStructure
+    act_2: ActStructure
+    act_3: ActStructure
+  }
+  // Legacy fields for backward compatibility
+  details?: any
+  actStructure?: any
+  outline?: string[]
+  logline?: string
+  beat_outline?: Beat[]
 }
 
 interface IdeaGenerationRequest {
@@ -37,6 +102,9 @@ interface IdeaGenerationRequest {
 interface IdeaGenerationResponse {
   success: boolean
   data: {
+    script_analysis: ScriptAnalysis
+    video_concepts: VideoConcept[]
+    // Legacy fields for backward compatibility
     ideas: VideoIdea[]
     conceptSummary: {
       targetAudience: string
@@ -112,22 +180,31 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate video ideas using the LLM
-    const generatedIdeas = await generateVideoIdeas(
+    console.log('🎬 Starting idea generation with concept:', JSON.stringify(finalizedConcept, null, 2))
+    console.log('📝 Conversation history length:', conversationHistory.length)
+    console.log('📝 Last conversation message:', conversationHistory[conversationHistory.length - 1]?.content?.substring(0, 200) + '...')
+    
+    const result = await generateVideoIdeas(
       conversationHistory,
       finalizedConcept,
       provider,
       isUsingUserProvider,
       providerCapabilities
     )
+    
+    console.log('💡 Generated ideas result:', JSON.stringify(result, null, 2))
 
-    console.log(`💡 Generated ${generatedIdeas.length} video ideas`)
-    console.log(`⭐ Average strength rating: ${(generatedIdeas.reduce((sum, idea) => sum + idea.strength_rating, 0) / generatedIdeas.length).toFixed(1)}`)
+    console.log(`💡 Generated ${result.legacyIdeas.length} video ideas`)
+    console.log(`⭐ Average strength rating: ${(result.legacyIdeas.reduce((sum, idea) => sum + idea.strength_rating, 0) / result.legacyIdeas.length).toFixed(1)}`)
 
     // Create response with metadata
     const response: IdeaGenerationResponse = {
       success: true,
       data: {
-        ideas: generatedIdeas,
+        script_analysis: result.scriptAnalysis,
+        video_concepts: result.videoConcepts,
+        // Legacy fields for backward compatibility
+        ideas: result.legacyIdeas,
         conceptSummary: {
           targetAudience: finalizedConcept.targetAudience || 'Not specified',
           keyMessage: finalizedConcept.keyMessage || 'Not specified',
@@ -136,9 +213,9 @@ export async function POST(request: NextRequest) {
           estimatedDuration: finalizedConcept.duration || 60
         },
         generationMetadata: {
-          totalIdeas: generatedIdeas.length,
-          averageStrengthRating: Number((generatedIdeas.reduce((sum, idea) => sum + idea.strength_rating, 0) / generatedIdeas.length).toFixed(1)),
-          strongestIdea: generatedIdeas.reduce((strongest, current) => 
+          totalIdeas: result.legacyIdeas.length,
+          averageStrengthRating: Number((result.legacyIdeas.reduce((sum, idea) => sum + idea.strength_rating, 0) / result.legacyIdeas.length).toFixed(1)),
+          strongestIdea: result.legacyIdeas.reduce((strongest, current) => 
             current.strength_rating > strongest.strength_rating ? current : strongest
           ),
           generationTimestamp: new Date().toISOString()
@@ -170,55 +247,111 @@ async function generateVideoIdeas(
   provider: AIProvider,
   isUsingUserProvider: boolean,
   providerCapabilities: any
-): Promise<VideoIdea[]> {
+): Promise<{ scriptAnalysis: ScriptAnalysis, videoConcepts: VideoConcept[], legacyIdeas: VideoIdea[] }> {
 
   // Construct the idea generation prompt
   const systemPrompt = constructIdeaGenerationPrompt(finalizedConcept, provider, providerCapabilities)
   // Format conversation for LLM
   const formattedConversation = formatConversationForIdeaGeneration(systemPrompt, conversationHistory, finalizedConcept)
 
-  // 1) Try OpenAI (if key present) for real generations
-  const apiKey = process.env.OPENAI_API_KEY
+  // 1) Try Google Gemini (if key present) for real generations
+  const apiKey = process.env.GOOGLE_GEMINI_API_KEY
+  console.log('Google Gemini API Key present:', !!apiKey)
   if (apiKey) {
     try {
-      const openAIResponse = await callOpenAI([
-        { role: 'system', content: 'You are a senior creative strategist. Respond ONLY with valid JSON matching the requested schema. No prose.' },
+      console.log('🤖 Calling Google Gemini 2.0 Flash with formatted conversation length:', formattedConversation.length)
+      console.log('🤖 First 500 chars of conversation:', formattedConversation.substring(0, 500))
+      
+      const geminiResponse = await callGoogleGemini([
+        { role: 'system', content: 'You are a professional script analyst. CRITICAL: Analyze the input carefully, create ORIGINAL summaries (not verbatim copies), identify ALL characters, and separate content properly. Introduction/Description must be brief overview only. Film Treatment must be vision/approach only. Act Structure must be detailed beat breakdown. Respond with valid JSON only.' },
         { role: 'user', content: formattedConversation }
       ], apiKey)
-      const parsedIdeas = parseGeneratedIdeas(openAIResponse, finalizedConcept)
-      if (parsedIdeas && parsedIdeas.length >= 1) return parsedIdeas
+      
+      console.log('🤖 Gemini response length:', geminiResponse.length)
+      console.log('🤖 First 1000 chars of Gemini response:', geminiResponse.substring(0, 1000))
+      
+      const parsedIdeas = parseGeneratedIdeas(geminiResponse, finalizedConcept)
+      console.log('🤖 Parsed ideas from Gemini:', JSON.stringify(parsedIdeas, null, 2))
+      
+      if (parsedIdeas && parsedIdeas.legacyIdeas.length >= 1) return parsedIdeas
     } catch (err) {
-      console.warn('OpenAI idea generation failed, falling back to simulation:', err)
+      console.warn('Google Gemini idea generation failed, falling back to simulation:', err)
     }
   }
 
   // 2) Fallback: simulate
+  console.log('Using simulation fallback for concept:', finalizedConcept)
   const llmResponse = await simulateLLMIdeaGeneration(formattedConversation, finalizedConcept)
-  return parseGeneratedIdeas(llmResponse, finalizedConcept)
+  const result = parseGeneratedIdeas(llmResponse, finalizedConcept)
+  console.log('Generated ideas from simulation:', result)
+  return result
 }
 
-async function callOpenAI(
+async function callGoogleGemini(
   messages: { role: 'system' | 'user' | 'assistant'; content: string }[],
   apiKey: string
 ): Promise<string> {
+  // Convert messages to Gemini format
+  const contents = messages
+    .filter(msg => msg.role !== 'system') // Gemini handles system messages differently
+    .map(msg => ({
+      role: msg.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: msg.content }]
+    }))
+
+  // Add system instruction if present
+  const systemMessage = messages.find(msg => msg.role === 'system')
+  const systemInstruction = systemMessage ? systemMessage.content : undefined
+
   const body = {
-    model: 'gpt-4o-mini',
-    messages,
+    contents,
+    systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : undefined,
+    generationConfig: {
     temperature: 0.7,
+      topK: 40,
+      topP: 0.95,
+      maxOutputTokens: 8192, // Large context for handling scripts
+    },
+    safetySettings: [
+      {
+        category: "HARM_CATEGORY_HARASSMENT",
+        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+      },
+      {
+        category: "HARM_CATEGORY_HATE_SPEECH",
+        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+      },
+      {
+        category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+      },
+      {
+        category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+      }
+    ]
   }
-  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+
+  const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify(body),
-    // 30s timeout safeguard
   })
-  if (!resp.ok) throw new Error(`OpenAI error: ${await resp.text()}`)
+  
+  if (!resp.ok) {
+    const errorText = await resp.text()
+    throw new Error(`Google Gemini error: ${errorText}`)
+  }
+  
   const json = await resp.json()
-  const content: string | undefined = json?.choices?.[0]?.message?.content
-  if (!content) throw new Error('OpenAI returned no content')
+  const content = json?.candidates?.[0]?.content?.parts?.[0]?.text
+  
+  if (!content) {
+    throw new Error('Google Gemini returned no content')
+  }
+  
   return content
 }
 
@@ -229,77 +362,121 @@ function constructIdeaGenerationPrompt(finalizedConcept: any, provider: AIProvid
   const providerInfo = getProviderInfo(provider)
   const capabilities = providerCapabilities ? `Provider Capabilities: ${JSON.stringify(providerCapabilities)}` : 'Standard video generation capabilities'
   
-  return `You are an expert video concept developer and creative strategist. Your task is to generate 4 distinct, compelling video ideas based on the finalized concept and conversation history.
+  return `CRITICAL INSTRUCTIONS: You are a professional script analyst. Follow these steps EXACTLY:
 
-CONCEPT ANALYSIS:
+STEP 1: ANALYZE THE INPUT
+- Read the input script/content carefully
+- Identify the core theme and message
+- Extract ALL characters with names, roles, and descriptions
+- Determine the most appropriate narrative structure
+
+STEP 2: CREATE CONCISE SUMMARIES (DO NOT COPY SCRIPT CONTENT)
+- Write a clear introduction (≤50 words) that captures the essence
+- Write a film treatment (≤100 words) that describes the vision and approach
+- These must be ORIGINAL summaries, not verbatim script content
+
+STEP 3: GENERATE 4 DISTINCT VIDEO CONCEPTS
+- Each concept must have a unique approach and style
+- Each concept must have proper act structure with detailed beats
+- Beat descriptions should be specific and actionable
+- Total beat duration must equal the project duration
+
+STEP 4: SEPARATE CONTENT PROPERLY
+- Introduction/Description: Brief overview only
+- Film Treatment: Vision and approach only  
+- Act Structure: Detailed beat-by-beat breakdown
+- Character Breakdown: All characters with roles and descriptions
+
+Create 4 video production ideas that include:
+
+1. Title
+2. Description (≤50 words)
+3. Genre
+4. Duration
+5. Audience
+6. Tone
+7. Act Structure
+8. Film Treatment (≤100 words)
+9. Character Breakdown
+10. Beat Sheet organized by Act and Beats within each Act
+
+Context:
 - Target Audience: ${finalizedConcept.targetAudience}
 - Key Message: ${finalizedConcept.keyMessage}
 - Tone: ${finalizedConcept.tone || 'Not specified'}
 - Genre: ${finalizedConcept.genre || 'Not specified'}
 - Duration: ${finalizedConcept.duration || 60} seconds
 - Platform: ${finalizedConcept.platform || 'Multi-platform'}
-- Call to Action: ${finalizedConcept.callToAction || 'Not specified'}
 
-TECHNICAL CONTEXT:
-- AI Provider: ${providerInfo.name}
-- ${capabilities}
-
-CREATIVE REQUIREMENTS:
-1. Generate exactly 4 distinct video ideas
-2. Each idea must be unique in approach and execution
-3. Ideas should vary in style, format, and storytelling approach
-4. Consider different engagement strategies for the target audience
-5. Ensure each idea can be executed within the specified duration
-6. Optimize for the specified platform and audience behavior
-
-STRENGTH RATING CRITERIA (1-5 scale):
-- 1-2: Basic concept, limited audience appeal
-- 3: Good concept, moderate audience appeal
-- 4: Strong concept, high audience appeal
-- 5: Exceptional concept, maximum audience appeal
-
-Consider these factors for rating:
-- Relevance to target audience
-- Clarity of message delivery
-- Emotional engagement potential
-- Shareability and virality potential
-- Brand alignment and positioning
-- Execution feasibility
-
-RESPONSE FORMAT:
-You must respond with valid JSON in this exact structure:
-[
-  {
-    "id": "uuid-string-1",
-    "title": "Compelling video title",
-    "synopsis": "2-3 sentence description of the video concept",
-    "scene_outline": [
-      "Scene 1: Opening hook and setup",
-      "Scene 2: Problem introduction",
-      "Scene 3: Solution demonstration",
-      "Scene 4: Call to action"
+Respond with valid JSON in this exact structure:
+{
+  "script_analysis": {
+    "input_title": "Descriptive Title based on the Input Script",
+    "input_synopsis": "BRIEF overview summary only (≤50 words) - DO NOT include act content",
+    "input_treatment": "Vision and approach only (≤100 words) - DO NOT include detailed beats",
+    "characters": [
+      {
+        "name": "Character Name",
+        "role": "Protagonist" | "Antagonist" | "Supporting" | "Narrator" | "Expert",
+        "description": "Brief character description",
+        "importance": "High" | "Medium" | "Low"
+      }
     ],
-    "thumbnail_prompt": "Detailed description for generating an engaging thumbnail image",
-    "strength_rating": 4.5
+    "core_themes": ["Theme 1", "Theme 2"]
   },
-  {
-    "id": "uuid-string-2",
-    "title": "Second video title",
-    "synopsis": "Description of second concept",
-    "scene_outline": ["Scene 1...", "Scene 2...", "Scene 3...", "Scene 4..."],
-    "thumbnail_prompt": "Thumbnail description for second concept",
-    "strength_rating": 4.2
-  }
-  // ... continue for all 4 ideas
-]
-
-IMPORTANT: 
-- Ensure your response is valid JSON
-- Generate exactly 4 ideas
-- Each idea must have a unique strength_rating
-- Strength ratings should range from 3.0 to 5.0 for quality concepts
-- Scene outlines should be specific and actionable
-- Thumbnail prompts should be detailed and visual`
+  "video_concepts": [
+    {
+      "id": "uuid-string-1",
+      "title": "Video Title",
+      "concept_synopsis": "BRIEF concept overview (≤50 words) - DO NOT include act details",
+      "concept_approach": "Vision and approach only (≤100 words) - DO NOT include beat content",
+      "narrative_structure": "3-Act Structure" | "5-Act Structure" | "Hero's Journey" | "Documentary Structure" | "Series Structure" | "Experimental Structure",
+      "act_structure": {
+        "act_1": {
+          "title": "Setup",
+          "duration": "25% of total",
+          "beats": [
+            {
+              "beat_number": 1,
+              "beat_title": "Opening Hook",
+              "beat_description": "Detailed description of what happens",
+              "duration_estimate": "5-10% of total",
+              "key_elements": ["Element 1", "Element 2"]
+            }
+          ]
+        },
+        "act_2": {
+          "title": "Development",
+          "duration": "50% of total",
+          "beats": [
+            {
+              "beat_number": 2,
+              "beat_title": "Main Content",
+              "beat_description": "Detailed description of core content",
+              "duration_estimate": "30-40% of total",
+              "key_elements": ["Element 1", "Element 2"]
+            }
+          ]
+        },
+        "act_3": {
+          "title": "Resolution",
+          "duration": "25% of total",
+          "beats": [
+            {
+              "beat_number": 3,
+              "beat_title": "Call to Action",
+              "beat_description": "Clear conclusion and CTA",
+              "duration_estimate": "15-20% of total",
+              "key_elements": ["Element 1", "Element 2"]
+            }
+          ]
+        }
+      },
+      "thumbnail_prompt": "Description for thumbnail image",
+      "strength_rating": 4.5
+    }
+  ]
+}`
 }
 
 /**
@@ -308,22 +485,22 @@ IMPORTANT:
 function getProviderInfo(provider: AIProvider): { name: string; capabilities: string } {
   const providerInfo = {
     [AIProvider.GOOGLE_VEO]: {
-      name: 'Google Veo',
-      capabilities: 'High-quality cinematic video generation, up to 60s, multiple aspect ratios, motion control'
+      name: 'Google Gemini 2.0 Flash',
+      capabilities: 'Most powerful AI model available, supports full scripts and extensive content, up to 2M tokens, superior script analysis and character identification'
     },
     [AIProvider.RUNWAY]: {
-      name: 'Runway ML',
-      capabilities: 'Professional video generation, up to 120s, advanced motion control, style transfer'
+      name: 'Google Gemini 2.0 Flash',
+      capabilities: 'Most powerful AI model available, supports full scripts and extensive content, up to 2M tokens, superior script analysis and character identification'
     },
     [AIProvider.STABILITY_AI]: {
-      name: 'Stability AI',
-      capabilities: 'Creative video generation, up to 25s, artistic styles, stable diffusion technology'
+      name: 'Google Gemini 2.0 Flash',
+      capabilities: 'Most powerful AI model available, supports full scripts and extensive content, up to 2M tokens, superior script analysis and character identification'
     }
   }
   
   return providerInfo[provider] || {
-    name: 'Unknown Provider',
-    capabilities: 'Standard video generation capabilities'
+    name: 'Google Gemini 2.0 Flash',
+    capabilities: 'Most powerful AI model available, supports full scripts and extensive content, up to 2M tokens, superior script analysis and character identification'
   }
 }
 
@@ -444,36 +621,236 @@ function generateContextualVideoIdeas(finalizedConcept: any): VideoIdea[] {
 /**
  * Parse generated ideas from LLM response
  */
-function parseGeneratedIdeas(llmResponse: string, finalizedConcept: any): VideoIdea[] {
+function parseGeneratedIdeas(llmResponse: string, finalizedConcept: any): { scriptAnalysis: ScriptAnalysis, videoConcepts: VideoConcept[], legacyIdeas: VideoIdea[] } {
   try {
     // Try to parse the JSON response
     const parsed = JSON.parse(llmResponse)
+    console.log('🔍 Parsing LLM response:', JSON.stringify(parsed, null, 2))
     
-    // Validate and structure the response
-    if (Array.isArray(parsed)) {
-      return parsed.slice(0, 4).map((idea, index) => ({
-        id: idea.id || generateUUID(),
-        title: idea.title || `Video Idea ${index + 1}`,
-        synopsis: idea.synopsis || `A compelling video concept based on ${finalizedConcept.keyMessage}`,
-        scene_outline: Array.isArray(idea.scene_outline) ? idea.scene_outline.slice(0, 6) : [
+    // Check if it's the new structure with script_analysis and video_concepts
+    if (parsed.script_analysis && parsed.video_concepts) {
+      const scriptAnalysis: ScriptAnalysis = {
+        input_title: parsed.script_analysis.input_title || 'Script Analysis',
+        input_synopsis: parsed.script_analysis.input_synopsis || 'Script summary',
+        input_treatment: parsed.script_analysis.input_treatment || 'Script treatment',
+        characters: Array.isArray(parsed.script_analysis.characters) ? parsed.script_analysis.characters : [],
+        core_themes: Array.isArray(parsed.script_analysis.core_themes) ? parsed.script_analysis.core_themes : []
+      }
+      
+      console.log('🔍 Extracted script analysis:', JSON.stringify(scriptAnalysis, null, 2))
+      
+      console.log('🔍 Raw video_concepts from API:', JSON.stringify(parsed.video_concepts, null, 2))
+      
+      const videoConcepts: VideoConcept[] = parsed.video_concepts.slice(0, 4).map((concept: any, index: number) => {
+        console.log(`🔍 Processing concept ${index + 1}:`, JSON.stringify(concept, null, 2))
+        
+        return {
+          id: concept.id || generateUUID(),
+          title: concept.title || `Video Concept ${index + 1}`,
+          concept_synopsis: concept.concept_synopsis || `A compelling video concept based on ${finalizedConcept.keyMessage}`,
+          concept_approach: concept.concept_approach || `A focused approach for this concept`,
+          narrative_structure: concept.narrative_structure || '3-Act Structure',
+        act_structure: concept.act_structure || {
+          act_1: {
+            title: 'Setup',
+            duration: '25% of total',
+            beats: [
+              {
+                beat_number: 1,
+                beat_title: 'Opening Hook',
+                beat_description: 'Engaging opening that captures attention',
+                duration_estimate: '5-10% of total',
+                key_elements: ['Hook', 'Introduction']
+              }
+            ]
+          },
+          act_2: {
+            title: 'Development',
+            duration: '50% of total',
+            beats: [
+              {
+                beat_number: 2,
+                beat_title: 'Main Content',
+                beat_description: 'Core content and message delivery',
+                duration_estimate: '30-40% of total',
+                key_elements: ['Content', 'Message']
+              }
+            ]
+          },
+          act_3: {
+            title: 'Resolution',
+            duration: '25% of total',
+            beats: [
+              {
+                beat_number: 3,
+                beat_title: 'Call to Action',
+                beat_description: 'Clear call to action and conclusion',
+                duration_estimate: '15-20% of total',
+                key_elements: ['CTA', 'Conclusion']
+              }
+            ]
+          }
+        },
+        thumbnail_prompt: concept.thumbnail_prompt || `An engaging thumbnail representing the video concept`,
+        strength_rating: typeof concept.strength_rating === 'number' ? 
+          Math.max(1, Math.min(5, concept.strength_rating)) : 4.0
+        }
+      })
+      
+      // Create legacy VideoIdea format for backward compatibility
+      const legacyIdeas: VideoIdea[] = videoConcepts.map(concept => ({
+        id: concept.id,
+        title: concept.title,
+        synopsis: concept.concept_synopsis,
+        film_treatment: concept.concept_approach,
+        narrative_structure: concept.narrative_structure,
+        characters: scriptAnalysis.characters,
+        act_structure: concept.act_structure,
+        scene_outline: [
           "Scene 1: Opening and setup",
-          "Scene 2: Problem introduction",
+          "Scene 2: Problem introduction", 
           "Scene 3: Solution demonstration",
           "Scene 4: Call to action"
         ],
-        thumbnail_prompt: idea.thumbnail_prompt || `An engaging thumbnail representing the video concept with ${finalizedConcept.tone || 'professional'} styling`,
-        strength_rating: typeof idea.strength_rating === 'number' ? 
-          Math.max(1, Math.min(5, idea.strength_rating)) : 4.0
+        thumbnail_prompt: concept.thumbnail_prompt,
+        strength_rating: concept.strength_rating,
+        // Legacy fields
+        details: {
+          genre: finalizedConcept.genre || 'Documentary',
+          duration: `${finalizedConcept.duration || 60} seconds`,
+          targetAudience: finalizedConcept.targetAudience || 'General Audience',
+          keyThemes: finalizedConcept.keyMessage || 'Core themes',
+          characterCount: 'Multiple',
+          tone: finalizedConcept.tone || 'Professional',
+          setting: 'Various locations'
+        },
+        actStructure: {
+          act1: 'Setup and introduction',
+          act2: 'Rising action and development', 
+          act3: 'Climax and resolution'
+        },
+        outline: [
+          "Opening and setup",
+          "Problem introduction",
+          "Solution demonstration", 
+          "Call to action"
+        ],
+        logline: concept.concept_synopsis,
+        beat_outline: concept.act_structure?.act_1?.beats || []
       }))
+      
+      console.log('🔍 Final parsed videoConcepts:', JSON.stringify(videoConcepts, null, 2))
+      console.log('🔍 Final parsed legacyIdeas:', JSON.stringify(legacyIdeas, null, 2))
+      
+      return { scriptAnalysis, videoConcepts, legacyIdeas }
     }
     
-    throw new Error('Response is not an array')
+    // Fallback: try to parse as legacy array format
+    if (Array.isArray(parsed)) {
+      const legacyIdeas = parsed.slice(0, 4).map((idea, index) => ({
+        id: idea.id || generateUUID(),
+        title: idea.title || `Video Idea ${index + 1}`,
+        synopsis: idea.synopsis || `A compelling video concept based on ${finalizedConcept.keyMessage}`,
+        film_treatment: idea.film_treatment || `A comprehensive film treatment for ${idea.title || 'this concept'}`,
+        narrative_structure: idea.narrative_structure || '3-Act Structure',
+        characters: Array.isArray(idea.characters) ? idea.characters : [],
+        act_structure: idea.act_structure || {
+          act_1: { title: 'Setup', duration: '25%', beats: [] },
+          act_2: { title: 'Development', duration: '50%', beats: [] },
+          act_3: { title: 'Resolution', duration: '25%', beats: [] }
+        },
+        scene_outline: Array.isArray(idea.scene_outline) ? idea.scene_outline.slice(0, 6) : [
+          "Scene 1: Opening and setup",
+          "Scene 2: Problem introduction", 
+          "Scene 3: Solution demonstration",
+          "Scene 4: Call to action"
+        ],
+        thumbnail_prompt: idea.thumbnail_prompt || `An engaging thumbnail representing the video concept`,
+        strength_rating: typeof idea.strength_rating === 'number' ? 
+          Math.max(1, Math.min(5, idea.strength_rating)) : 4.0,
+        // Legacy fields
+        details: {
+          genre: finalizedConcept.genre || 'Documentary',
+          duration: `${finalizedConcept.duration || 60} seconds`,
+          targetAudience: finalizedConcept.targetAudience || 'General Audience',
+          keyThemes: finalizedConcept.keyMessage || 'Core themes',
+          characterCount: 'Multiple',
+          tone: finalizedConcept.tone || 'Professional',
+          setting: 'Various locations'
+        },
+        actStructure: {
+          act1: 'Setup and introduction',
+          act2: 'Rising action and development', 
+          act3: 'Climax and resolution'
+        },
+        outline: [
+          "Opening and setup",
+          "Problem introduction",
+          "Solution demonstration", 
+          "Call to action"
+        ],
+        logline: idea.synopsis || `A compelling video concept based on ${finalizedConcept.keyMessage}`,
+        beat_outline: idea.act_structure?.act_1?.beats || []
+      }))
+      
+      // Create default script analysis for legacy format
+      const scriptAnalysis: ScriptAnalysis = {
+        input_title: 'Script Analysis',
+        input_synopsis: 'Script summary extracted from concepts',
+        input_treatment: 'Script treatment based on analysis',
+        characters: legacyIdeas[0]?.characters || [],
+        core_themes: ['Core themes']
+      }
+      
+      const videoConcepts: VideoConcept[] = legacyIdeas.map(idea => ({
+        id: idea.id,
+        title: idea.title,
+        concept_synopsis: idea.synopsis,
+        concept_approach: idea.film_treatment || idea.synopsis,
+        narrative_structure: idea.narrative_structure || '3-Act Structure',
+        act_structure: idea.act_structure || {
+          act_1: { title: 'Setup', duration: '25%', beats: [] },
+          act_2: { title: 'Development', duration: '50%', beats: [] },
+          act_3: { title: 'Resolution', duration: '25%', beats: [] }
+        },
+        thumbnail_prompt: idea.thumbnail_prompt,
+        strength_rating: idea.strength_rating
+      }))
+      
+      return { scriptAnalysis, videoConcepts, legacyIdeas }
+    }
+    
+    throw new Error('Response is not in expected format')
     
   } catch (error) {
     console.error('Failed to parse LLM response:', error)
+    console.error('LLM Response that failed to parse:', llmResponse.substring(0, 1000))
     
     // Return fallback ideas
-    return generateContextualVideoIdeas(finalizedConcept)
+    const fallbackIdeas = generateContextualVideoIdeas(finalizedConcept)
+    const scriptAnalysis: ScriptAnalysis = {
+      input_title: 'Script Analysis',
+      input_synopsis: 'Script summary',
+      input_treatment: 'Script treatment',
+      characters: [],
+      core_themes: ['Core themes']
+    }
+    const videoConcepts: VideoConcept[] = fallbackIdeas.map(idea => ({
+      id: idea.id,
+      title: idea.title,
+      concept_synopsis: idea.synopsis,
+      concept_approach: idea.synopsis,
+      narrative_structure: '3-Act Structure',
+      act_structure: {
+        act_1: { title: 'Setup', duration: '25%', beats: [] },
+        act_2: { title: 'Development', duration: '50%', beats: [] },
+        act_3: { title: 'Resolution', duration: '25%', beats: [] }
+      },
+      thumbnail_prompt: idea.thumbnail_prompt,
+      strength_rating: idea.strength_rating
+    }))
+    
+    return { scriptAnalysis, videoConcepts, legacyIdeas: fallbackIdeas }
   }
 }
 

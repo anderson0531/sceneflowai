@@ -80,7 +80,7 @@ export default function ProjectBiblePage() {
       router.push(`/dashboard/project-bible/create?projectId=${currentProject.id}`)
     } else {
       // Show project selection modal or navigate to project creation
-      router.push('/studio/crispr-debate-001')
+      router.push('/dashboard/studio/crispr-debate-001')
     }
   }
 

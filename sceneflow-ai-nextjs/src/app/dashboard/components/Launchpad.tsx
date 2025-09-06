@@ -17,10 +17,10 @@ export function Launchpad() {
 
   const getStageDisplayName = (step: string) => {
     const stageNames = {
-      'ideation': 'Spark Studio',
-      'storyboard': 'Storyboard',
-      'scene-direction': "Director's Chair",
-      'video-generation': 'Video Lab'
+      'ideation': 'The Blueprint',
+      'storyboard': 'Vision',
+      'scene-direction': 'Action Plan',
+      'video-generation': 'Creation Hub'
     }
     return stageNames[step as keyof typeof stageNames] || step
   }
@@ -39,7 +39,7 @@ export function Launchpad() {
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Card 1: Start Project - Enhanced with blue accent background and border */}
-        <Link href="/studio/crispr-debate-001">
+        <Link href="/dashboard/studio/crispr-debate-001">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}

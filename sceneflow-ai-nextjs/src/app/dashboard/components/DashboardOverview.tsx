@@ -120,7 +120,7 @@ export function DashboardOverview() {
               <div className="text-xs text-gray-400 mb-3">
                 Currently in progress
               </div>
-              <Link href="/studio/crispr-debate-001">
+              <Link href="/dashboard/studio/crispr-debate-001">
                 <Button
                   size="sm"
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs"

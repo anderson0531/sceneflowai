@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { LoginForm } from './LoginForm'
 import { SignUpForm } from './SignUpForm'
 
@@ -14,6 +15,7 @@ interface AuthModalProps {
 
 export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) {
   const [mode, setMode] = useState<'login' | 'signup'>(initialMode)
+  const router = useRouter()
 
   // Close modal on escape key
   useEffect(() => {
@@ -37,7 +39,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
   const handleSuccess = () => {
     onClose()
     // Navigate to dashboard after successful authentication
-    window.location.href = '/dashboard/'
+    router.push('/dashboard')
   }
 
   const switchMode = (newMode: 'login' | 'signup') => {

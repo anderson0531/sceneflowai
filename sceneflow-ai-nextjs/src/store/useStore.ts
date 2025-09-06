@@ -140,6 +140,7 @@ interface AppState {
   // Project state
   currentProject: Project | null;
   projects: Project[];
+  setProjects: (projects: Project[]) => void;
   
   // Workflow state
   currentStep: WorkflowStep;
@@ -209,6 +210,7 @@ export const useStore = create<AppState>((set, get) => ({
   isLoading: false,
   currentProject: null,
   projects: [],
+  setProjects: (projects) => set({ projects }),
   currentStep: 'ideation',
   stepProgress: {
     'ideation': 0,
