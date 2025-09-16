@@ -32,7 +32,7 @@ export function HeroBanner({ userName }: HeroBannerProps) {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="text-4xl md:text-5xl font-bold text-white mb-4"
         >
-          Welcome back, {userName} 👋
+          Welcome back, {(userName?.split(' ')[0] || 'Friend')} 👋
         </motion.h1>
         
         <motion.p

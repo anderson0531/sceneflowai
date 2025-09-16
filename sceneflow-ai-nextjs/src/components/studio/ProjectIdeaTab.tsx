@@ -29,6 +29,23 @@ async function postOnce(url: string, body: any): Promise<Response | undefined> {
   return p;
 }
 
+async function postWithTimeout(url: string, body: any, timeoutMs = 180000): Promise<Response> {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+      cache: 'no-store',
+      keepalive: true
+    });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 // Project Idea Interface
 interface Character {
   name: string;
@@ -173,40 +190,11 @@ export default function ProjectIdeaTab() {
       return hasMultipleSentences ? 'story' : 'topic';
     };
 
-    const validateInput = (text: string) => {
-      const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
-      const hasSceneHeaders = /(INT\.|EXT\.|Scene\s+\d+)/i.test(text);
-      const hasCharacterDialogue = /\b[A-Z][A-Z\s]{2,15}:/.test(text);
-      const hasActMarkers = /\bAct\s*\d\b/i.test(text);
-      const hasMultipleSentences = /[\.!?][\s\S]+?[\.!?]/.test(text);
-      const mode = classifyInput(text);
-      if (wordCount < 3) {
-        return { valid: false, mode, message: 'Your entry is too short. Add a few words describing the topic or a sentence of story.' };
-      }
-      if (mode === 'topic') {
-        if (wordCount < 6) {
-          return { valid: false, mode, message: 'Topic is too short. Add a goal, audience, or tone. Example: "Short documentary for teens about ocean cleanup; upbeat, hopeful."' };
-        }
-        return { valid: true, mode, message: '' };
-      }
-      // story mode validation
-      const storyLooksValid = hasSceneHeaders || hasCharacterDialogue || hasActMarkers || (hasMultipleSentences && wordCount >= 20);
-      if (!storyLooksValid) {
-        return { valid: false, mode, message: 'Storyline needs 2–3 sentences with characters and conflict. Example: "A retired chef mentors a teen to save a family diner after a rival chain opens."' };
-      }
-      return { valid: true, mode, message: '' };
-    };
-
-    const validation = validateInput(projectDescription);
-    if (!validation.valid) {
-      setGenError(validation.message);
-      setGenStatus('');
-      return;
-    }
-
+    // Do not block on pre-validation; infer mode heuristically and continue
+    const inputMode = classifyInput(projectDescription);
+    setGenError('');
     setIsGeneratingIdeas(true);
     setGenProgress(10);
-    const inputMode = validation.mode;
     setGenStatus(inputMode === 'topic' ? 'Generating Project Ideas' : 'Generating Film Treatment');
     try {
       setGenError('');
@@ -220,9 +208,25 @@ export default function ProjectIdeaTab() {
         keyMessage: projectDescription,
         tone: 'Professional',
         platform: 'Multi-platform',
-        variantHint: inputMode as 'topic' | 'story'
+        variantHint: inputMode as 'topic' | 'story',
+        variants: 3,
+        detailMode: 'narrative'
       };
-      let response = await postOnce('/api/v2/blueprint/analyze/', baseBody);
+      let response: Response
+      let reducedTried = false
+      try {
+        // Try v3 simplified pipeline first (explicitly request 3 variants)
+        response = await postWithTimeout('/api/v3/blueprint/analyze/', { input: projectDescription, variants: 3 }, 180000)
+      } catch (e) {
+        // Fallback to v2, then v1
+        console.warn('v3 blueprint aborted or failed, falling back to v2:', e)
+        try {
+          response = await postWithTimeout('/api/v2/blueprint/analyze/', baseBody, 180000)
+        } catch (e2) {
+          console.warn('v2 blueprint aborted or failed, falling back to v1:', e2)
+          response = await postWithTimeout('/api/v1/blueprint/analyze/', baseBody, 180000)
+        }
+      }
       if (!response) {
         setIsGeneratingIdeas(false);
         return;
@@ -234,12 +238,32 @@ export default function ProjectIdeaTab() {
         const raw = await response.text();
         const is429 = response.status === 429 || /429|RESOURCE_EXHAUSTED|quota/i.test(raw);
         if (is429) {
-          setGenError('Rate limit exceeded. Please wait a minute and try again.');
-          setIsGeneratingIdeas(false);
-          return;
+          if (!reducedTried && (baseBody as any).variants > 1) {
+            reducedTried = true
+            await new Promise(r => setTimeout(r, 1000 + Math.floor(Math.random()*600)))
+            const lighter = { ...baseBody, variants: 1 }
+            try {
+              const retry = await postWithTimeout('/api/v2/blueprint/analyze/', lighter, 180000)
+              if (retry.ok) {
+                response = retry
+              } else {
+                setGenError('Rate limit exceeded. Please wait a minute and try again.');
+                setIsGeneratingIdeas(false);
+                return;
+              }
+            } catch {
+              setGenError('Rate limit exceeded. Please wait a minute and try again.');
+              setIsGeneratingIdeas(false);
+              return;
+            }
+          } else {
+            setGenError('Rate limit exceeded. Please wait a minute and try again.');
+            setIsGeneratingIdeas(false);
+            return;
+          }
         } else {
           // Try v1 once as a fallback
-          const v1 = await postOnce('/api/v1/blueprint/analyze/', baseBody);
+          const v1 = await postWithTimeout('/api/v1/blueprint/analyze/', baseBody, 180000);
           if (v1 && v1.ok) {
             response = v1;
           } else {
@@ -281,8 +305,9 @@ export default function ProjectIdeaTab() {
         return;
       }
 
-      // Convert BlueprintResult to our ProjectIdea list (single concept for now)
-      const blueprint = data.data;
+      // Support v3 (single object) and v2 (single or batch)
+      const blueprints: any[] = Array.isArray(data.data) ? data.data : [data.data];
+      const blueprint = blueprints[0];
       const treatment = blueprint.treatment || {};
       const projectInfo = (treatment as any).project_info || {};
       const deriveTitle = (log: string) => {
@@ -292,16 +317,37 @@ export default function ProjectIdeaTab() {
         return words.endsWith('.') ? words.slice(0, -1) : words;
       };
       const audienceAnalysis = (() => {
-        const parts: string[] = [];
-        if ((treatment as any).target_audience) parts.push(String((treatment as any).target_audience));
-        if ((treatment as any).tone_style) parts.push(`Tone/Style: ${(treatment as any).tone_style}`);
-        if (Array.isArray((treatment as any).themes) && (treatment as any).themes.length) parts.push(`Themes: ${(treatment as any).themes.join(', ')}`);
-        if ((treatment as any).estimated_duration) parts.push(`Estimated Duration: ${(treatment as any).estimated_duration}`);
-        return parts.join(' \u2022 ');
+        const ta = (treatment as any)?.target_audience
+        const toneArr = Array.isArray((treatment as any)?.tone_style)
+          ? (treatment as any).tone_style
+          : ((treatment as any)?.tone_style ? [(treatment as any).tone_style] : [])
+        const themes = Array.isArray((treatment as any)?.themes) ? (treatment as any).themes : []
+        const parts: string[] = []
+        if (ta && typeof ta === 'object') {
+          if (ta.primary_demographic) parts.push(String(ta.primary_demographic))
+          if (ta.psychographics) parts.push(String(ta.psychographics))
+          if (ta.viewing_context) parts.push(String(ta.viewing_context))
+        } else if ((treatment as any)?.target_audience) {
+          parts.push(String((treatment as any).target_audience))
+        }
+        if (toneArr.length) parts.push(`Tone: ${toneArr.join(', ')}`)
+        if (themes.length) parts.push(`Themes: ${themes.join(', ')}`)
+        if ((treatment as any)?.estimated_duration) parts.push(`Estimated Duration: ${(treatment as any).estimated_duration}`)
+        return parts.join(' \u2022 ')
       })();
-      const inferredGenre = blueprint.genre || 'Unspecified';
-      const inferredDuration = blueprint.durationSeconds ? `${Math.round(blueprint.durationSeconds / 60)} minutes` : 'Unspecified';
-      const inferredStructure = blueprint.structure || '3-Act Structure';
+      const inferredGenre = (() => {
+        const tg = (treatment as any)?.genre || (blueprint as any)?.genre
+        if (Array.isArray(tg) && tg.length) return tg.join(', ')
+        if (typeof tg === 'string' && tg) return tg
+        if (String(blueprint.structure || '').toLowerCase().includes('documentary')) return 'Documentary'
+        return 'Unspecified'
+      })();
+      const inferredDuration = (() => {
+        if ((treatment as any)?.estimated_duration) return String((treatment as any).estimated_duration)
+        if (blueprint.durationSeconds) return `${Math.round(blueprint.durationSeconds / 60)} minutes`
+        return 'Unspecified'
+      })();
+      const inferredStructure = blueprint.structure || '3-Act Structure'
       // Build dynamic acts by grouping beats by act label and preserving order
       const dynamicActs = (() => {
         const beats: any[] = (blueprint.beats || [])
@@ -314,15 +360,16 @@ export default function ProjectIdeaTab() {
         const acts: DynamicAct[] = []
         for (const [actLabel, list] of actMap.entries()) {
           const first = list[0] || {}
-          const minutes = first.act_duration_seconds ? `${Math.round(first.act_duration_seconds / 60)} min` : 'n/a'
+          const seconds = first.act_duration_seconds || first.duration_seconds
+          const minutes = seconds ? `${Math.round(seconds / 60)} min` : 'n/a'
           acts.push({
             title: first.act_title || actLabel,
             duration: minutes,
             beats: list.map((b: any, i: number) => ({
               beat_number: i + 1,
-              beat_title: b.title,
-              beat_description: b.description,
-              duration_estimate: b.duration_estimate || 'n/a',
+              beat_title: b.beat_title || b.title,
+              beat_description: b.scene || b.description || (b.scene_elements?.narrative_point),
+              duration_estimate: b.duration_estimate || (b.duration_seconds? `${Math.round(b.duration_seconds/60)} min` : 'n/a'),
               key_elements: b.key_elements || []
             }))
           })
@@ -330,10 +377,10 @@ export default function ProjectIdeaTab() {
         return acts
       })()
 
-      let generatedIdeas: ProjectIdea[] = [
+      let ideas: ProjectIdea[] = [
         {
           id: 'blueprint-1',
-          title: projectInfo.title || deriveTitle(blueprint.logline) || 'Generated Concept',
+          title: projectInfo.title || (blueprint as any).title || deriveTitle(blueprint.logline) || 'Generated Concept',
           synopsis: blueprint.synopsis,
           film_treatment: 'A concise treatment will be expanded in the Film Treatment step.',
           narrative_structure: inferredStructure,
@@ -350,9 +397,9 @@ export default function ProjectIdeaTab() {
               for (const m of mains) {
                 const idx = base.findIndex(x => x.name.toLowerCase() === String(m.name || '').toLowerCase());
                 if (idx >= 0) {
-                  base[idx] = { ...base[idx], arc: m.arc || m.motivations };
+                  base[idx] = { ...base[idx], arc: m.arc || (Array.isArray(m.motivations) ? m.motivations.join('; ') : m.motivations) };
                 } else if (m.name) {
-                  base.push({ name: m.name, role: m.role || 'Supporting', description: m.description || '', importance: 'Medium', arc: m.arc || m.motivations });
+                  base.push({ name: m.name, role: m.role || 'Supporting', description: m.description || '', importance: 'Medium', arc: m.arc || (Array.isArray(m.motivations) ? m.motivations.join('; ') : m.motivations) });
                 }
               }
             }
@@ -366,11 +413,11 @@ export default function ProjectIdeaTab() {
             return base;
           })(),
           act_structure: {
-            act_1: { title: ((blueprint.beats||[]).find((b:any)=>/Act\s*1/i.test(b.act)||/Opening|Setup/i.test(b.act))?.act_title) || 'Act 1', duration: (()=>{const s=(blueprint.beats||[]).find((b:any)=>/Act\s*1/i.test(b.act)||/Opening|Setup/i.test(b.act))?.act_duration_seconds;return s?`${Math.round(s/60)} min`: 'n/a'})(), beats: (blueprint.beats || []).filter((b: any) => /Act\s*1/i.test(b.act) || /Opening|Setup/i.test(b.act)).map((b: any, i: number) => ({ beat_number: i+1, beat_title: b.title, beat_description: b.description, duration_estimate: b.duration_estimate || 'n/a', key_elements: b.key_elements || [] })) },
-            act_2: { title: ((blueprint.beats||[]).find((b:any)=>/Act\s*2/i.test(b.act)||/Development|Arguments/i.test(b.act))?.act_title) || 'Act 2', duration: (()=>{const s=(blueprint.beats||[]).find((b:any)=>/Act\s*2/i.test(b.act)||/Development|Arguments/i.test(b.act))?.act_duration_seconds;return s?`${Math.round(s/60)} min`: 'n/a'})(), beats: (blueprint.beats || []).filter((b: any) => /Act\s*2/i.test(b.act) || /Development|Arguments/i.test(b.act)).map((b: any, i: number) => ({ beat_number: i+1, beat_title: b.title, beat_description: b.description, duration_estimate: b.duration_estimate || 'n/a', key_elements: b.key_elements || [] })) },
-            act_3: { title: ((blueprint.beats||[]).find((b:any)=>/Act\s*3/i.test(b.act)||/Resolution|Closing/i.test(b.act))?.act_title) || 'Act 3', duration: (()=>{const s=(blueprint.beats||[]).find((b:any)=>/Act\s*3/i.test(b.act)||/Resolution|Closing/i.test(b.act))?.act_duration_seconds;return s?`${Math.round(s/60)} min`: 'n/a'})(), beats: (blueprint.beats || []).filter((b: any) => /Act\s*3/i.test(b.act) || /Resolution|Closing/i.test(b.act)).map((b: any, i: number) => ({ beat_number: i+1, beat_title: b.title, beat_description: b.description, duration_estimate: b.duration_estimate || 'n/a', key_elements: b.key_elements || [] })) },
+            act_1: { title: ((blueprint.beats||[]).find((b:any)=>/Act\s*1/i.test(b.act)||/Opening|Setup/i.test(b.act))?.act_title) || 'Act 1', duration: (()=>{const s=(blueprint.beats||[]).find((b:any)=>/Act\s*1/i.test(b.act)||/Opening|Setup/i.test(b.act))?.act_duration_seconds || (blueprint.beats||[]).find((b:any)=>/Act\s*1/i.test(b.act)||/Opening|Setup/i.test(b.act))?.duration_seconds;return s?`${Math.round(s/60)} min`: 'n/a'})(), beats: (blueprint.beats || []).filter((b: any) => /Act\s*1/i.test(b.act) || /Opening|Setup/i.test(b.act)).map((b: any, i: number) => ({ beat_number: i+1, beat_title: b.beat_title || b.title, beat_description: (b.scene_elements?.narrative_point) || b.description, duration_estimate: (b.duration_estimate || (b.duration_seconds? `${Math.round(b.duration_seconds/60)} min` : 'n/a')), key_elements: b.key_elements || [] })) },
+            act_2: { title: ((blueprint.beats||[]).find((b:any)=>/Act\s*2/i.test(b.act)||/Development|Arguments/i.test(b.act))?.act_title) || 'Act 2', duration: (()=>{const s=(blueprint.beats||[]).find((b:any)=>/Act\s*2/i.test(b.act)||/Development|Arguments/i.test(b.act))?.act_duration_seconds || (blueprint.beats||[]).find((b:any)=>/Act\s*2/i.test(b.act)||/Development|Arguments/i.test(b.act))?.duration_seconds;return s?`${Math.round(s/60)} min`: 'n/a'})(), beats: (blueprint.beats || []).filter((b: any) => /Act\s*2/i.test(b.act) || /Development|Arguments/i.test(b.act)).map((b: any, i: number) => ({ beat_number: i+1, beat_title: b.beat_title || b.title, beat_description: (b.scene_elements?.narrative_point) || b.description, duration_estimate: (b.duration_estimate || (b.duration_seconds? `${Math.round(b.duration_seconds/60)} min` : 'n/a')), key_elements: b.key_elements || [] })) },
+            act_3: { title: ((blueprint.beats||[]).find((b:any)=>/Act\s*3/i.test(b.act)||/Resolution|Closing/i.test(b.act))?.act_title) || 'Act 3', duration: (()=>{const s=(blueprint.beats||[]).find((b:any)=>/Act\s*3/i.test(b.act)||/Resolution|Closing/i.test(b.act))?.act_duration_seconds || (blueprint.beats||[]).find((b:any)=>/Act\s*3/i.test(b.act)||/Resolution|Closing/i.test(b.act))?.duration_seconds;return s?`${Math.round(s/60)} min`: 'n/a'})(), beats: (blueprint.beats || []).filter((b: any) => /Act\s*3/i.test(b.act) || /Resolution|Closing/i.test(b.act)).map((b: any, i: number) => ({ beat_number: i+1, beat_title: b.beat_title || b.title, beat_description: (b.scene_elements?.narrative_point) || b.description, duration_estimate: (b.duration_estimate || (b.duration_seconds? `${Math.round(b.duration_seconds/60)} min` : 'n/a')), key_elements: b.key_elements || [] })) },
           },
-          beat_outline: (blueprint.beats || []).map((b: any, i: number) => ({ beat_number: i+1, beat_title: b.title, beat_description: b.description, duration_estimate: 'n/a', key_elements: [] })),
+          beat_outline: (blueprint.beats || []).map((b: any, i: number) => ({ beat_number: i+1, beat_title: b.beat_title || b.title, beat_description: (b.scene || b.scene_elements?.narrative_point)|| b.description, duration_estimate: (b.duration_estimate || (b.duration_seconds? `${Math.round(b.duration_seconds/60)} min` : 'n/a')), key_elements: b.key_elements || [] })),
           thumbnail_prompt: 'An engaging thumbnail representing the concept.',
           strength_rating: 4.0,
           dynamic_acts: dynamicActs,
@@ -378,10 +425,14 @@ export default function ProjectIdeaTab() {
           details: {
             genre: inferredGenre,
             duration: inferredDuration,
-            targetAudience: 'General Audience',
+            targetAudience: (typeof (treatment as any)?.target_audience === 'object' && (treatment as any)?.target_audience?.primary_demographic)
+              ? String((treatment as any).target_audience.primary_demographic)
+              : ((blueprint as any)?.audience?.primary_demographic || 'General Audience'),
             keyThemes: (blueprint.coreThemes || []).join(', '),
             characterCount: `${(blueprint.characters || []).length} characters`,
-            tone: 'Professional',
+            tone: Array.isArray((treatment as any)?.tone_style)
+              ? (treatment as any).tone_style.join(', ')
+              : (Array.isArray((blueprint as any)?.tone) ? (blueprint as any).tone.join(', ') : ((treatment as any)?.tone_style || 'Professional')),
             setting: 'Various locations'
           },
           actStructure: { act1: 'Setup', act2: 'Development', act3: 'Resolution' },
@@ -396,80 +447,67 @@ export default function ProjectIdeaTab() {
       const synopsisWords = String(blueprint.synopsis||'').split(/\s+/).length
       const isStoryLike = hasNamedCharacters && synopsisWords > 20
 
-      if (inputMode === 'topic' || !isStoryLike) {
-        // Topic mode → request 3 more variants in parallel with variantHint 'topic'
-        setGenStatus('Exploring creative variants')
-        const variantBodies = [1,2,3].map(()=>({
-          input: projectDescription,
-          targetAudience: 'General Audience',
-          keyMessage: projectDescription,
-          tone: 'Professional',
-          platform: 'Multi-platform',
-          variantHint: 'topic' as const
-        }))
-        try {
-          const variantResponses = await Promise.all(variantBodies.map(body=>postOnce('/api/v2/blueprint/analyze/', body)))
-          const okVariants = (variantResponses.filter(Boolean) as Response[]).filter(r=>r.ok)
-          const variantJsons = await Promise.all(okVariants.map(r=>r.json()))
-          for (let i=0;i<variantJsons.length;i++){
-            const v = variantJsons[i]
-            const vb = v.data
-            const vt = vb.treatment || {}
-            const vProjectInfo = (vt as any).project_info || {}
-            const vAudience = (() => {
-              const parts: string[] = []
-              if ((vt as any).target_audience) parts.push(String((vt as any).target_audience))
-              if ((vt as any).tone_style) parts.push(`Tone/Style: ${(vt as any).tone_style}`)
-              if (Array.isArray((vt as any).themes) && (vt as any).themes.length) parts.push(`Themes: ${(vt as any).themes.join(', ')}`)
-              if ((vt as any).estimated_duration) parts.push(`Estimated Duration: ${(vt as any).estimated_duration}`)
-              return parts.join(' \u2022 ')
-            })()
-            const vIdea: ProjectIdea = {
-              id: `blueprint-variant-${i+1}`,
-              title: vProjectInfo.title || deriveTitle(vb.logline) || 'Generated Concept',
-              synopsis: vb.synopsis,
-              film_treatment: 'A concise treatment will be expanded in the Film Treatment step.',
-              narrative_structure: vb.structure || '3-Act Structure',
-              characters: (vb.characters||[]).map((c:any)=>({ name:c.name, role:c.role, description:c.description, importance:'Medium' })),
-              act_structure: {
-                act_1: { title: ((vb.beats||[]).find((b:any)=>/Act\s*1/i.test(b.act)||/Opening|Setup/i.test(b.act))?.act_title) || 'Act 1', duration: (()=>{const s=(vb.beats||[]).find((b:any)=>/Act\s*1/i.test(b.act)||/Opening|Setup/i.test(b.act))?.act_duration_seconds;return s?`${Math.round(s/60)} min`: 'n/a'})(), beats: (vb.beats || []).filter((b: any) => /Act\s*1/i.test(b.act) || /Opening|Setup/i.test(b.act)).map((b: any, i: number) => ({ beat_number: i+1, beat_title: b.title, beat_description: b.description, duration_estimate: b.duration_estimate || 'n/a', key_elements: b.key_elements || [] })) },
-                act_2: { title: ((vb.beats||[]).find((b:any)=>/Act\s*2/i.test(b.act)||/Development|Arguments/i.test(b.act))?.act_title) || 'Act 2', duration: (()=>{const s=(vb.beats||[]).find((b:any)=>/Act\s*2/i.test(b.act)||/Development|Arguments/i.test(b.act))?.act_duration_seconds;return s?`${Math.round(s/60)} min`: 'n/a'})(), beats: (vb.beats || []).filter((b: any) => /Act\s*2/i.test(b.act) || /Development|Arguments/i.test(b.act)).map((b: any, i: number) => ({ beat_number: i+1, beat_title: b.title, beat_description: b.description, duration_estimate: b.duration_estimate || 'n/a', key_elements: b.key_elements || [] })) },
-                act_3: { title: ((vb.beats||[]).find((b:any)=>/Act\s*3/i.test(b.act)||/Resolution|Closing/i.test(b.act))?.act_title) || 'Act 3', duration: (()=>{const s=(vb.beats||[]).find((b:any)=>/Act\s*3/i.test(b.act)||/Resolution|Closing/i.test(b.act))?.act_duration_seconds;return s?`${Math.round(s/60)} min`: 'n/a'})(), beats: (vb.beats || []).filter((b: any) => /Act\s*3/i.test(b.act) || /Resolution|Closing/i.test(b.act)).map((b: any, i: number) => ({ beat_number: i+1, beat_title: b.title, beat_description: b.description, duration_estimate: b.duration_estimate || 'n/a', key_elements: b.key_elements || [] })) },
-              },
-              beat_outline: (vb.beats || []).map((b: any, i: number) => ({ beat_number: i+1, beat_title: b.title, beat_description: b.description, duration_estimate: 'n/a', key_elements: [] })),
-              thumbnail_prompt: 'An engaging thumbnail representing the concept.',
-              strength_rating: 4.0,
-              dynamic_acts: (()=>{
-                const beats: any[] = (vb.beats || [])
-                const actMap = new Map<string, any[]>()
-                for (const b of beats) { const key = String(b.act || 'Act 1'); if (!actMap.has(key)) actMap.set(key, []); actMap.get(key)!.push(b) }
-                const acts: DynamicAct[] = []
-                for (const [actLabel, list] of actMap.entries()) {
-                  const first = list[0] || {}
-                  const minutes = first.act_duration_seconds ? `${Math.round(first.act_duration_seconds / 60)} min` : 'n/a'
-                  acts.push({ title: first.act_title || actLabel, duration: minutes, beats: list.map((b:any,i:number)=>({ beat_number:i+1, beat_title:b.title, beat_description:b.description, duration_estimate:b.duration_estimate||'n/a', key_elements:b.key_elements||[] })) })
-                }
-                return acts
-              })(),
-              audience_analysis: vAudience,
-              details: {
-                genre: vb.genre || 'Unspecified',
-                duration: vb.durationSeconds ? `${Math.round(vb.durationSeconds / 60)} minutes` : 'Unspecified',
-                targetAudience: 'General Audience',
-                keyThemes: (vb.coreThemes || []).join(', '),
-                characterCount: `${(vb.characters || []).length} characters`,
-                tone: 'Professional',
-                setting: 'Various locations'
-              },
-              actStructure: { act1: 'Setup', act2: 'Development', act3: 'Resolution' },
-              outline: (vb.beats || []).map((b: any) => b.title),
-              logline: vb.logline
-            }
-            generatedIdeas.push(vIdea)
+      // If API returned batch variants, append them directly (skip client-parallelism)
+      try {
+        if (blueprints.length > 1) {
+          for (let i = 1; i < blueprints.length; i++) {
+            const vb = blueprints[i]
+          const vt = vb.treatment || {}
+          const vProjectInfo = (vt as any).project_info || {}
+          const vAudience = (() => {
+            const parts: string[] = []
+            if ((vt as any).target_audience) parts.push(String((vt as any).target_audience))
+            if ((vt as any).tone_style) parts.push(`Tone/Style: ${(vt as any).tone_style}`)
+            if (Array.isArray((vt as any).themes) && (vt as any).themes.length) parts.push(`Themes: ${(vt as any).themes.join(', ')}`)
+            if ((vt as any).estimated_duration) parts.push(`Estimated Duration: ${(vt as any).estimated_duration}`)
+            return parts.join(' \u2022 ')
+          })()
+          const vIdea: ProjectIdea = {
+            id: `blueprint-variant-${i+1}`,
+            title: vProjectInfo.title || deriveTitle(vb.logline) || 'Generated Concept',
+            synopsis: vb.synopsis,
+            film_treatment: 'A concise treatment will be expanded in the Film Treatment step.',
+            narrative_structure: vb.structure || '3-Act Structure',
+            characters: (vb.characters || []).map((c: any) => ({ name: c.name, role: c.role, description: c.description, importance: 'Medium' })),
+            act_structure: {
+              act_1: { title: ((vb.beats || []).find((b: any) => /Act\s*1/i.test(b.act) || /Opening|Setup/i.test(b.act))?.act_title) || 'Act 1', duration: (() => { const s = (vb.beats || []).find((b: any) => /Act\s*1/i.test(b.act) || /Opening|Setup/i.test(b.act))?.act_duration_seconds; return s ? `${Math.round(s / 60)} min` : 'n/a' })(), beats: (vb.beats || []).filter((b: any) => /Act\s*1/i.test(b.act) || /Opening|Setup/i.test(b.act)).map((b: any, i: number) => ({ beat_number: i + 1, beat_title: (b.beat_title || b.title), beat_description: (b.scene || b.description), duration_estimate: (b.duration_estimate || (b.duration_seconds ? `${Math.round(b.duration_seconds/60)} min` : 'n/a')), key_elements: (b.key_elements || []) })) },
+              act_2: { title: ((vb.beats || []).find((b: any) => /Act\s*2/i.test(b.act) || /Development|Arguments/i.test(b.act))?.act_title) || 'Act 2', duration: (() => { const s = (vb.beats || []).find((b: any) => /Act\s*2/i.test(b.act) || /Development|Arguments/i.test(b.act))?.act_duration_seconds; return s ? `${Math.round(s / 60)} min` : 'n/a' })(), beats: (vb.beats || []).filter((b: any) => /Act\s*2/i.test(b.act) || /Development|Arguments/i.test(b.act)).map((b: any, i: number) => ({ beat_number: i + 1, beat_title: (b.beat_title || b.title), beat_description: (b.scene || b.description), duration_estimate: (b.duration_estimate || (b.duration_seconds ? `${Math.round(b.duration_seconds/60)} min` : 'n/a')), key_elements: (b.key_elements || []) })) },
+              act_3: { title: ((vb.beats || []).find((b: any) => /Act\s*3/i.test(b.act) || /Resolution|Closing/i.test(b.act))?.act_title) || 'Act 3', duration: (() => { const s = (vb.beats || []).find((b: any) => /Act\s*3/i.test(b.act) || /Resolution|Closing/i.test(b.act))?.act_duration_seconds || (vb.beats || []).find((b:any)=>/Act\s*3/i.test(b.act) || /Resolution|Closing/i.test(b.act))?.duration_seconds; return s ? `${Math.round(s / 60)} min` : 'n/a' })(), beats: (vb.beats || []).filter((b: any) => /Act\s*3/i.test(b.act) || /Resolution|Closing/i.test(b.act)).map((b: any, i: number) => ({ beat_number: i + 1, beat_title: (b.beat_title || b.title), beat_description: (b.scene || b.description), duration_estimate: (b.duration_estimate || (b.duration_seconds ? `${Math.round(b.duration_seconds/60)} min` : 'n/a')), key_elements: (b.key_elements || []) })) },
+            },
+            beat_outline: (vb.beats || []).map((b: any, i: number) => ({ beat_number: i + 1, beat_title: (b.beat_title || b.title), beat_description: (b.scene || b.description), duration_estimate: (b.duration_estimate || (b.duration_seconds ? `${Math.round(b.duration_seconds/60)} min` : 'n/a')), key_elements: [] })),
+            thumbnail_prompt: 'An engaging thumbnail representing the concept.',
+            strength_rating: 4.0,
+            dynamic_acts: (() => {
+              const beats: any[] = (vb.beats || [])
+              const actMap = new Map<string, any[]>()
+              for (const b of beats) { const key = String(b.act || 'Act 1'); if (!actMap.has(key)) actMap.set(key, []); actMap.get(key)!.push(b) }
+              const acts: DynamicAct[] = []
+              for (const [actLabel, list] of actMap.entries()) {
+                const first = list[0] || {}
+                const minutes = first.act_duration_seconds ? `${Math.round(first.act_duration_seconds / 60)} min` : (first.duration_seconds ? `${Math.round(first.duration_seconds/60)} min` : 'n/a')
+                acts.push({ title: first.act_title || actLabel, duration: minutes, beats: list.map((b: any, i: number) => ({ beat_number: i + 1, beat_title: (b.beat_title || b.title), beat_description: (b.scene || b.description), duration_estimate: (b.duration_estimate || (b.duration_seconds ? `${Math.round(b.duration_seconds/60)} min` : 'n/a')), key_elements: (b.key_elements || []) })) })
+              }
+              return acts
+            })(),
+            audience_analysis: vAudience,
+            details: {
+              genre: vb.genre || 'Unspecified',
+              duration: vb.durationSeconds ? `${Math.round(vb.durationSeconds / 60)} minutes` : 'Unspecified',
+              targetAudience: 'General Audience',
+              keyThemes: (vb.coreThemes || []).join(', '),
+              characterCount: `${(vb.characters || []).length} characters`,
+              tone: 'Professional',
+              setting: 'Various locations'
+            },
+            actStructure: { act1: 'Setup', act2: 'Development', act3: 'Resolution' },
+            outline: (vb.beats || []).map((b: any) => b.title),
+            logline: vb.logline
           }
-        } catch (e) {
-          console.warn('Variant generation failed', e)
+            ideas.push(vIdea)
+          }
         }
+      } catch (e) {
+        console.warn('Variant generation failed', e)
       }
 
       // Note: Direction and Storyboard generation are deferred until the user advances to those steps.
@@ -487,7 +525,7 @@ export default function ProjectIdeaTab() {
       
       setProjectDetails(extractedDetails);
       setAnalysisComplete(true);
-      setGeneratedIdeas(generatedIdeas);
+      setGeneratedIdeas(ideas);
       setGenProgress(100);
       setGenStatus('Done');
       
@@ -1207,29 +1245,64 @@ export default function ProjectIdeaTab() {
     
     setIsGenerating(true);
     try {
-      // Create comprehensive project description from selected idea
-      const comprehensiveDescription = `Project: ${activeIdea.title}
+      // Helper: infer beat template from selected idea/blueprint
+      const inferTemplateIdFromIdea = (i: ProjectIdea): string => {
+        const s = String(i.narrative_structure || '').toLowerCase();
+        const numActs = Array.isArray(i.dynamic_acts) ? i.dynamic_acts.length : 0;
+        if (s.includes('debate') || s.includes('educational')) return 'debate-educational';
+        if (s.includes('documentary')) return 'documentary';
+        if (s.includes('save the cat')) return 'save-the-cat';
+        if (s.includes('hero')) return 'hero-journey';
+        if (s.includes('5-act') || s.includes('5 act') || numActs >= 5) return 'five-act';
+        return 'three-act';
+      };
 
-${activeIdea.logline}
+      // Helper: map human act titles to concrete template column IDs
+      const mapActToColumnId = (templateId: string, actTitle: string, index: number): string => {
+        const t = String(actTitle || '').toLowerCase();
+        switch (templateId) {
+          case 'debate-educational':
+            if (t.includes('setup') || t.includes('stake')) return 'ACT_I';
+            if (t.includes('argument') || t.includes('development')) return 'ACT_IIA';
+            if (t.includes('balance') || t.includes('synth')) return 'ACT_IIB';
+            if (t.includes('resolution') || t.includes('conclusion')) return 'ACT_III';
+            return ['ACT_I', 'ACT_IIA', 'ACT_IIB', 'ACT_III'][Math.min(index, 3)];
+          case 'three-act':
+            return ['ACT_I', 'ACT_II', 'ACT_III'][Math.min(index, 2)];
+          case 'five-act':
+            return ['EXPOSITION', 'RISING_ACTION', 'CLIMAX', 'FALLING_ACTION', 'DENOUEMENT'][Math.min(index, 4)];
+          case 'documentary':
+            if (t.includes('hook')) return 'HOOK';
+            if (t.includes('investig')) return 'INVESTIGATION';
+            if (t.includes('complication') || t.includes('obstacle')) return 'COMPLICATION';
+            if (t.includes('revelation') || t.includes('insight')) return 'REVELATION';
+            if (t.includes('synthesis') || t.includes('conclusion')) return 'SYNTHESIS';
+            return ['HOOK', 'INVESTIGATION', 'COMPLICATION', 'REVELATION', 'SYNTHESIS'][Math.min(index, 4)];
+          case 'hero-journey':
+            return ['ORDINARY_WORLD', 'CALL_ADVENTURE', 'SPECIAL_WORLD', 'ORDEAL', 'REWARD', 'RETURN'][Math.min(index, 5)];
+          case 'save-the-cat':
+            return ['SETUP', 'CATALYST', 'DEBATE', 'FUN_GAMES', 'MIDPOINT', 'BAD_GUYS', 'DARK_NIGHT', 'FINALE'][Math.min(index, 7)];
+          default:
+            return 'ACT_I';
+        }
+      };
 
-Genre: ${activeIdea.details.genre}
-Duration: ${activeIdea.details.duration}
-Target Audience: ${activeIdea.details.targetAudience}
-Key Themes: ${activeIdea.details.keyThemes}
-Character Count: ${activeIdea.details.characterCount}
-Tone: ${activeIdea.details.tone}
-Setting: ${activeIdea.details.setting}
-
-3-Act Structure:
-Act 1: ${activeIdea.actStructure.act1}
-Act 2: ${activeIdea.actStructure.act2}
-Act 3: ${activeIdea.actStructure.act3}
-
-Scene Outline:
-${activeIdea.outline.map((scene, index) => `${index + 1}. ${scene}`).join('\n')}`;
+      const templateId = inferTemplateIdFromIdea(activeIdea);
+      // Build structured Film Treatment JSON for clean UX rendering
+      const treatmentPayload = {
+        title: activeIdea.title,
+        logline: activeIdea.logline || '',
+        synopsis: activeIdea.synopsis || '',
+        targetAudience: activeIdea.details?.targetAudience || '',
+        genre: activeIdea.details?.genre || '',
+        duration: activeIdea.details?.duration || '',
+        themes: activeIdea.details?.keyThemes || '',
+        structure: activeIdea.narrative_structure || '3-Act Structure'
+      };
+      const comprehensiveDescription = JSON.stringify(treatmentPayload);
 
       // Build store from selected idea
-      const mappedCharacters = (activeIdea.characters || []).map((c, idx) => ({
+      let mappedCharacters = (activeIdea.characters || []).map((c, idx) => ({
         id: `char-${idx}-${Date.now()}`,
         name: c.name,
         archetype: c.role || 'Character',
@@ -1242,21 +1315,41 @@ ${activeIdea.outline.map((scene, index) => `${index + 1}. ${scene}`).join('\n')}
           act3: ''
         }
       }));
-      const beatsFromDynamic = (activeIdea.dynamic_acts || []).flatMap((act, aIdx) =>
-        (act.beats || []).map((b) => ({
-          id: `beat-${aIdx}-${b.beat_number}-${Date.now()}`,
-          act: act.title,
+
+      // Fallback: ensure at least one character exists so Characters tab is populated
+      if (!mappedCharacters.length) {
+        const nowId = `${Date.now()}`;
+        mappedCharacters = [
+          {
+            id: `char-protagonist-${nowId}`,
+            name: 'Protagonist',
+            archetype: 'Protagonist',
+            motivation: activeIdea.logline || 'Lead character pursuing a meaningful goal.',
+            internalConflict: 'Undecided between comfort and growth.',
+            externalConflict: 'Faces obstacles inherent to the journey.',
+            arc: { act1: 'Introduced with a clear want.', act2: 'Confronts obstacles and changes.', act3: 'Resolves want with growth.' }
+          }
+        ];
+      }
+      // Build beats from either dynamic_acts or legacy act_structure, mapping to template columns
+      const actsSource = (activeIdea.dynamic_acts && activeIdea.dynamic_acts.length > 0)
+        ? (activeIdea.dynamic_acts as DynamicAct[]).map(a => ({ title: a.title, beats: a.beats }))
+        : [
+            { title: activeIdea.act_structure?.act_1?.title || 'Act 1', beats: activeIdea.act_structure?.act_1?.beats || [] },
+            { title: activeIdea.act_structure?.act_2?.title || 'Act 2', beats: activeIdea.act_structure?.act_2?.beats || [] },
+            { title: activeIdea.act_structure?.act_3?.title || 'Act 3', beats: activeIdea.act_structure?.act_3?.beats || [] }
+          ];
+
+      const mappedBeats = actsSource.flatMap((actObj, aIdx) =>
+        (actObj.beats || []).map((b, i) => ({
+          id: `beat-${aIdx}-${b.beat_number || i + 1}-${Date.now()}`,
+          act: mapActToColumnId(templateId, actObj.title, aIdx),
           title: b.beat_title,
           summary: b.beat_description,
-          estimatedDuration: undefined,
+          charactersPresent: [],
+          estimatedDuration: undefined
         }))
       );
-      const beatsFallback = [
-        ...(activeIdea.act_structure?.act_1?.beats || []).map((b) => ({ id: `beat-a1-${b.beat_number}-${Date.now()}`, act: 'Act 1', title: b.beat_title, summary: b.beat_description })),
-        ...(activeIdea.act_structure?.act_2?.beats || []).map((b) => ({ id: `beat-a2-${b.beat_number}-${Date.now()}`, act: 'Act 2', title: b.beat_title, summary: b.beat_description })),
-        ...(activeIdea.act_structure?.act_3?.beats || []).map((b) => ({ id: `beat-a3-${b.beat_number}-${Date.now()}`, act: 'Act 3', title: b.beat_title, summary: b.beat_description })),
-      ];
-      const mappedBeats = beatsFromDynamic.length ? beatsFromDynamic : beatsFallback;
 
       const createdProjectId = `project-${Date.now()}`
 
@@ -1266,8 +1359,8 @@ ${activeIdea.outline.map((scene, index) => `${index + 1}. ${scene}`).join('\n')}
         treatmentDetails: {
           title: activeIdea.title,
           logline: activeIdea.logline,
-          synopsis: activeIdea.synopsis || activeIdea.synopsis || activeIdea.synopsis,
-          keyCharacters: (activeIdea.characters || []).map(c => `${c.name} — ${c.role || ''}${c.description ? `: ${c.description}` : ''}`).join('\n'),
+          synopsis: activeIdea.synopsis || '',
+          keyCharacters: (mappedCharacters || []).map(c => `${c.name} — ${c.archetype}`).join('\n'),
           toneAndStyle: activeIdea.details?.tone || '',
           themes: activeIdea.details?.keyThemes || '',
           visualLanguage: '',
@@ -1275,6 +1368,7 @@ ${activeIdea.outline.map((scene, index) => `${index + 1}. ${scene}`).join('\n')}
         },
         characters: mappedCharacters as any,
         beatSheet: mappedBeats as any,
+        beatTemplate: templateId,
         projectId: createdProjectId
       });
 
@@ -1349,12 +1443,12 @@ ${activeIdea.outline.map((scene, index) => `${index + 1}. ${scene}`).join('\n')}
   };
 
     return (
-    <div className="space-y-8 max-w-6xl mx-auto px-4">
+    <div className="space-y-8 max-w-7xl mx-auto px-4">
       {/* Section 1: Describe Your Project Idea */}
       <div>
         <div className="mb-6 px-8">
-          <h1 className="text-[1.5rem] sm:text-[1.75rem] font-bold text-white mb-2 tracking-tight">Describe Your Idea</h1>
-          <p className="text-gray-300 text-[0.95rem] sm:text-[1rem]">Share your vision and let our AI create compelling project concepts tailored to your needs.</p>
+          <h1 className="text-[1.875rem] sm:text-[2.125rem] md:text-[2.375rem] lg:text-[2.625rem] font-extrabold text-white mb-2 tracking-tight leading-tight">Describe Your Concept</h1>
+          <p className="text-gray-300 text-[1rem] sm:text-[1.05rem]">Share your vision and let our AI create compelling project concepts tailored to your needs.</p>
         </div>
         
         <div className="bg-gray-900/50 border border-gray-700/50 rounded-lg p-8">
@@ -1371,7 +1465,7 @@ ${activeIdea.outline.map((scene, index) => `${index + 1}. ${scene}`).join('\n')}
             onChange={(e) => setProjectDescription(e.target.value)}
             placeholder="Tell us about your video project... Who is it for? What's the goal and tone? Paste a script or brief if you have one."
             rows={6}
-            className="bg-gray-800 border-gray-600 text-white placeholder-gray-400 !text-[1.2rem] sm:!text-[1.25rem] md:!text-[1.3rem] lg:!text-[1.35rem] resize-y min-h-[160px]"
+            className="bg-gray-800 border-gray-600 text-white placeholder-gray-400 !text-[1.125rem] sm:!text-[1.2rem] md:!text-[1.25rem] lg:!text-[1.3rem] leading-8 tracking-[0.005em] resize-y min-h-[200px] rounded-lg"
           />
           {genError && (
             <div className="mt-3 text-sm text-red-400">{genError}</div>
@@ -1420,7 +1514,7 @@ ${activeIdea.outline.map((scene, index) => `${index + 1}. ${scene}`).join('\n')}
                 disabled={!projectDescription.trim() || isGeneratingIdeas}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-medium"
               >
-                {isGeneratingIdeas ? 'Generating...' : generatedIdeas.length > 0 ? 'Generate More Ideas' : 'Generate Project Ideas'}
+                {isGeneratingIdeas ? 'Generating...' : generatedIdeas.length > 0 ? 'Generate More' : 'Generate Concept Treatments'}
               </Button>
             </div>
           </div>
@@ -1479,7 +1573,7 @@ ${activeIdea.outline.map((scene, index) => `${index + 1}. ${scene}`).join('\n')}
       {generatedIdeas.length > 0 && (
         <div className="bg-gray-900/50 border border-gray-700/50 rounded-lg p-8">
           <div className="mb-8">
-            <h2 className="text-3xl font-semibold text-white mb-3">Project Ideas</h2>
+            <h2 className="text-3xl font-semibold text-white mb-3">Concept Treatments</h2>
               </div>
 
           {/* Action Buttons - Above the cards */}

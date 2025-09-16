@@ -2,7 +2,7 @@ import { dol } from './DynamicOptimizationLayer';
 import { TaskType, TaskComplexity, PlatformModel } from '@/types/dol';
 import { StandardVideoRequest, StandardVideoResult } from '../ai-providers/BaseAIProviderAdapter';
 import { AIProviderFactory } from '../ai-providers/AIProviderFactory';
-import { AIProvider } from '@/models/UserProviderConfig';
+import { AIProvider } from '../ai-providers/BaseAIProviderAdapter';
 
 export interface DOLVideoRequest extends StandardVideoRequest {
   userId: string;

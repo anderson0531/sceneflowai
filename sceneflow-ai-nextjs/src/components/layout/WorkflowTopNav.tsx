@@ -17,7 +17,7 @@ export default function WorkflowTopNav() {
   return (
     <div className="sticky top-16 z-40 bg-sf-surface/70 backdrop-blur border-b border-sf-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <nav className="flex gap-2 py-2 overflow-x-auto">
+        <nav className="flex gap-2 py-2 overflow-x-auto justify-center">
           {steps.map((s) => {
             const active = pathname?.startsWith(s.href)
             return (

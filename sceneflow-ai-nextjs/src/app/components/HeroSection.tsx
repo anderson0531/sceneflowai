@@ -2,9 +2,13 @@
 
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
+import { useState } from 'react'
+import { DemoVideoModal } from './DemoVideoModal'
+import { trackCta } from '@/lib/analytics'
 import { Play, ArrowRight, Sparkles, Zap, Target } from 'lucide-react'
 
 export function HeroSection() {
+  const [isDemoOpen, setIsDemoOpen] = useState(false)
   return (
     <motion.section 
       className="relative py-32 overflow-hidden"
@@ -109,9 +113,10 @@ export function HeroSection() {
           >
             <Button
               size="lg"
+              onClick={() => { trackCta({ event: 'click', label: 'start-trial', location: 'hero' }); window.location.href = '/?signup=1' }}
               className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
             >
-              Start Creating Now
+              Start 7-Day Trial — $5
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
             
@@ -119,11 +124,25 @@ export function HeroSection() {
               variant="outline"
               size="lg"
               className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white px-8 py-4 text-lg font-semibold transition-all duration-200"
+              onClick={() => {
+                trackCta({ event: 'click', label: 'watch-demo', location: 'hero' })
+                setIsDemoOpen(true)
+              }}
             >
               <Play className="w-6 h-6 mr-3" />
               Watch the 1-minute demo
             </Button>
           </motion.div>
+
+          {/* Why $5 microcopy */}
+          <motion.p 
+            className="text-sm text-gray-400 mt-4"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 1.3 }}
+          >
+            Why $5? It covers GPU costs so you get fast, reliable access. Cancel anytime.
+          </motion.p>
           
           {/* Hero Visual - Simplified */}
           <motion.div 
@@ -161,6 +180,12 @@ export function HeroSection() {
           </motion.div>
         </motion.div>
       </div>
+      <DemoVideoModal 
+        open={isDemoOpen} 
+        onClose={() => setIsDemoOpen(false)} 
+        src="/demo/sceneflow-demo.mp4" 
+        poster="/demo/sceneflow-poster.jpg" 
+      />
     </motion.section>
   )
 }

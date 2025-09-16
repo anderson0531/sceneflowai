@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+export const runtime = 'nodejs'
+export const maxDuration = 300
+
 export async function POST(req: NextRequest) {
   try {
     const { prompt, options } = await req.json();
@@ -26,6 +29,7 @@ export async function POST(req: NextRequest) {
     console.log('🎨 Google: Generating image with prompt:', prompt);
 
     try {
+      const startedAt = Date.now();
       const traceId = `img-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       // Create a compelling image prompt for the film billboard
       const enhancedPrompt = `Create a cinematic billboard image for a film with the following requirements: ${prompt}
@@ -39,72 +43,141 @@ export async function POST(req: NextRequest) {
       
       console.log('🎨 Enhanced prompt created:', enhancedPrompt);
 
-      // Try SDK first with Gemini 2.5 Pro (if it supports inline image generation)
-      // Fallback to Imagen 3 predict endpoint if SDK path doesn't yield image bytes
-      const genAI = new GoogleGenerativeAI(googleApiKey);
-      const sdkModel = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
+      // If caller requests OpenAI directly, use it immediately
+      if (options?.forceOpenAI) {
+        const openaiKey = process.env.OPENAI_API_KEY
+        if (!openaiKey) {
+          return NextResponse.json({ success: false, error: 'OPENAI_API_KEY not configured', traceId }, { status: 500 })
+        }
+        const openaiResp = await fetch('https://api.openai.com/v1/images/generations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
+          body: JSON.stringify({
+            model: 'gpt-image-1',
+            prompt: enhancedPrompt,
+            size: (typeof options?.aspectRatio === 'string' && options.aspectRatio.includes('16:9')) ? '1792x1024' : '1024x1024',
+            quality: 'hd',
+            n: 1
+          })
+        })
+        if (openaiResp.ok) {
+          const oj = await openaiResp.json()
+          const b64 = oj?.data?.[0]?.b64_json
+          if (typeof b64 === 'string' && b64.length > 50) {
+            const openaiImage = `data:image/png;base64,${b64}`
+            return NextResponse.json({ success: true, imageUrl: openaiImage, images: [{ dataUrl: openaiImage, mimeType: 'image/png' }], prompt: enhancedPrompt, model: 'gpt-image-1', provider: 'openai', traceId })
+          }
+        }
+        return NextResponse.json({ success: false, error: 'OpenAI image generation failed', traceId }, { status: 500 })
+      }
 
+      // Prefer Imagen 4.0 Ultra; gracefully fall back to Imagen 4.0 Balanced → Fast → OpenAI
       let response: Response | undefined;
       let primaryStatus = 0;
       let primaryBodyText: string | undefined;
       let billingRequired = false;
       let rateLimited = false;
+      let providerUsed: 'gemini' | 'openai' | 'imagen' | 'none' = 'none';
 
       let data: any = null;
-      let selectedModel: string = 'gemini-2.5-pro';
-      let usedPath: 'sdk' | 'predict' = 'sdk';
-      try {
-        const sdkResult = await sdkModel.generateContent({
-          contents: [{ role: 'user', parts: [{ text: enhancedPrompt }] }]
-        });
-        data = sdkResult?.response;
-      } catch (sdkErr) {
-        // If SDK fails or doesn't return inlineData, go to predict endpoint
-        usedPath = 'predict';
-      }
+      let selectedModel: string = 'imagen-4.0-ultra-generate-001';
+      let usedPath: 'imagen4-ultra' | 'imagen4-balanced' | 'imagen4-fast' | 'openai' = 'imagen4-ultra';
 
-      if (usedPath === 'predict') {
-        selectedModel = 'imagen-3.0-generate-002';
-        const primaryUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:predict?key=${googleApiKey}`;
-        const requestBody = {
-          instances: [
-            {
-              prompt: enhancedPrompt
-            }
-          ],
-          parameters: {
-            sampleCount: Math.min(Math.max(Number(options?.numberOfImages) || 1, 1), 4),
-            aspectRatio: typeof options?.aspectRatio === 'string' ? options.aspectRatio : '16:9'
+      // Try Imagen 4.0 Ultra via generateContent (returns inline image data in parts)
+      try {
+        const imagenUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${googleApiKey}`;
+        const imagenBody = {
+          contents: [{ parts: [{ text: enhancedPrompt }] }],
+          generationConfig: {
+            temperature: 0.6,
+            topK: 40,
+            topP: 0.95,
+            responseMimeType: 'image/png'
           }
         } as const;
 
-        response = await fetch(primaryUrl, {
+        response = await fetch(imagenUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify(imagenBody)
         });
-
         primaryStatus = response.status;
         if (!response.ok) {
           try { primaryBodyText = await response.clone().text(); } catch {}
-          try {
-            const maybeErr = primaryBodyText ? JSON.parse(primaryBodyText) : undefined;
-            const errMsg: string | undefined = maybeErr?.error?.message || maybeErr?.message;
-            if (typeof errMsg === 'string' && errMsg.toLowerCase().includes('billed users')) {
-              billingRequired = true;
-            }
-            if ((maybeErr?.error?.code === 429) || (maybeErr?.error?.status === 'RESOURCE_EXHAUSTED') || (typeof errMsg === 'string' && errMsg.toLowerCase().includes('quota'))) {
-              rateLimited = true;
-            }
-          } catch {}
-        }
-
-        try {
+          usedPath = 'imagen4-balanced';
+        } else {
           data = await response.json();
-        } catch {}
+          providerUsed = 'imagen';
+        }
+      } catch {
+        usedPath = 'imagen4-balanced';
       }
 
-      // No secondary fallback to non-existent models; keep single-source of truth
+      // If Ultra path failed to produce bytes, try Imagen 4.0 balanced
+      if (usedPath === 'imagen4-balanced' && !data?.candidates) {
+        try {
+          selectedModel = 'imagen-4.0-generate-001';
+          const imagenUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${googleApiKey}`;
+          const body = {
+            contents: [{ parts: [{ text: enhancedPrompt }] }],
+            generationConfig: {
+              temperature: 0.6,
+              topK: 40,
+              topP: 0.95,
+              responseMimeType: 'image/png'
+            }
+          } as const;
+          response = await fetch(imagenUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+          primaryStatus = response.status;
+          if (!response.ok) {
+            try { primaryBodyText = await response.clone().text(); } catch {}
+            usedPath = 'imagen4-fast';
+          } else {
+            data = await response.json();
+            providerUsed = 'imagen';
+          }
+        } catch {
+          usedPath = 'imagen4-fast';
+        }
+      }
+
+      // If balanced also fails, try fast generate
+      if (usedPath === 'imagen4-fast' && !data?.candidates) {
+        try {
+          selectedModel = 'imagen-4.0-fast-generate-001';
+          const imagenUrl = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${googleApiKey}`;
+          const body = {
+            contents: [{ parts: [{ text: enhancedPrompt }] }],
+            generationConfig: {
+              temperature: 0.6,
+              topK: 40,
+              topP: 0.95,
+              responseMimeType: 'image/png'
+            }
+          } as const;
+          response = await fetch(imagenUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+          primaryStatus = response.status;
+          if (!response.ok) {
+            try { primaryBodyText = await response.clone().text(); } catch {}
+            usedPath = 'openai';
+          } else {
+            data = await response.json();
+            providerUsed = 'imagen';
+          }
+        } catch {
+          usedPath = 'openai';
+        }
+      }
+
+      // No Imagen path; we will use OpenAI as the only fallback
       const fallbackStatus = undefined as unknown as number | undefined;
       console.log('🎨 Google: API response received');
 
@@ -115,74 +188,58 @@ export async function POST(req: NextRequest) {
       let partsCount = 0;
       let partKinds: string[] = [];
       try {
-        // New Imagen 3 predict format: look for predictions array
-        if (Array.isArray(data?.predictions) && data.predictions.length > 0) {
-          const first = data.predictions[0];
-          // Common fields that may contain image bytes
-          const b64 = first?.bytesBase64Encoded || first?.b64Image || first?.image || first?.data;
-          const mime = first?.mimeType || first?.mime || (typeof b64 === 'string' ? 'image/png' : undefined);
-          if (typeof b64 === 'string') {
-            imageUrl = b64.startsWith('data:') ? b64 : `data:${mime || 'image/png'};base64,${b64}`;
-            images.push({ dataUrl: imageUrl, mimeType: mime || 'image/png' });
-          }
-          // Some responses may include an array of images
-          if (!imageUrl && Array.isArray(first?.images) && first.images.length > 0) {
-            const img0 = first.images[0];
-            const imgB64 = img0?.bytesBase64Encoded || img0?.b64Image || img0?.data;
-            const imgMime = img0?.mimeType || 'image/png';
-            if (typeof imgB64 === 'string') {
-              imageUrl = `data:${imgMime};base64,${imgB64}`;
-              images.push({ dataUrl: imageUrl, mimeType: imgMime });
-            }
-          }
-          // Collect any additional images if provided
-          if (Array.isArray(first?.images)) {
-            for (let i = 1; i < first.images.length; i++) {
-              const im = first.images[i];
-              const b = im?.bytesBase64Encoded || im?.b64Image || im?.data;
-              const m = im?.mimeType || 'image/png';
-              if (typeof b === 'string') {
-                images.push({ dataUrl: `data:${m};base64,${b}`, mimeType: m });
-              }
-            }
-          }
-        }
-
-        // Back-compat: Responses API style
+        // Imagen 4.0 returns inlineData/fileData under candidates
         if (data?.candidates?.[0]?.content?.parts?.length) {
           partsCount = data.candidates[0].content.parts.length;
           for (const part of data.candidates[0].content.parts) {
-            const kind = (part.inlineData || part.inline_data) ? 'inlineData' : (part.fileData || part.file_data ? 'fileData' : (part.text ? 'text' : 'unknown'));
-            partKinds.push(kind);
-            const inlineA = part.inlineData;
-            const inlineB = part.inline_data;
-            const fileA = part.fileData;
-            const fileB = part.file_data;
+            const inlineA = part.inlineData || part.inline_data;
+            const fileA = part.fileData || part.file_data;
             if (inlineA?.mimeType?.startsWith('image/') && inlineA?.data) {
               imageUrl = `data:${inlineA.mimeType};base64,${inlineA.data}`;
               images.push({ dataUrl: imageUrl, mimeType: inlineA.mimeType });
               break;
             }
-            if (inlineB?.mimeType?.startsWith('image/') && inlineB?.data) {
-              imageUrl = `data:${inlineB.mimeType};base64,${inlineB.data}`;
-              images.push({ dataUrl: imageUrl, mimeType: inlineB.mimeType });
-              break;
-            }
-            // Some responses may nest under 'fileData' or provide 'data' with default mime
             if (fileA?.mimeType?.startsWith('image/') && fileA?.data) {
               imageUrl = `data:${fileA.mimeType};base64,${fileA.data}`;
               images.push({ dataUrl: imageUrl, mimeType: fileA.mimeType });
               break;
             }
-            if (fileB?.mimeType?.startsWith('image/') && fileB?.data) {
-              imageUrl = `data:${fileB.mimeType};base64,${fileB.data}`;
-              images.push({ dataUrl: imageUrl, mimeType: fileB.mimeType });
+            if (typeof part.text === 'string' && part.text.startsWith('data:image/')) {
+              imageUrl = part.text;
+              images.push({ dataUrl: imageUrl, mimeType: 'image/png' });
               break;
             }
           }
         }
+
+        // Extra fallback: some Imagen responses nest base64 under grounded content
+        if (!imageUrl && typeof data === 'object') {
+          const deep = (obj: any): string | undefined => {
+            if (!obj || typeof obj !== 'object') return undefined;
+            if (typeof obj.data === 'string' && (obj.mimeType || obj.mime_type)?.startsWith?.('image/')) {
+              return `data:${obj.mimeType || obj.mime_type};base64,${obj.data}`;
+            }
+            for (const k of Object.keys(obj)) {
+              const v = obj[k];
+              const r = deep(v);
+              if (r) return r;
+            }
+            return undefined;
+          };
+          const nested = deep(data);
+          if (nested) {
+            imageUrl = nested;
+            images.push({ dataUrl: imageUrl, mimeType: 'image/png' });
+          }
+        }
+
       } catch (e) {
         console.warn('🎨 Could not parse inline image data:', e)
+      }
+
+      // Detect safety block or non-image content
+      if (!imageUrl && data && data?.promptFeedback) {
+        primaryBodyText = JSON.stringify(data.promptFeedback);
       }
 
       // Additional fallbacks: check for top-level image fields some SDKs return
@@ -204,10 +261,53 @@ export async function POST(req: NextRequest) {
         primaryStatus,
         fallbackStatus,
         partsCount,
-        partKinds
+        partKinds,
+        durationMs: Date.now() - startedAt
       } as const;
 
       if (!imageUrl) {
+        // Final fallback: try OpenAI Images API (gpt-image-1 / DALL·E 3)
+        try {
+          const openaiKey = process.env.OPENAI_API_KEY
+          if (openaiKey) {
+            const openaiResp = await fetch('https://api.openai.com/v1/images/generations', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${openaiKey}`
+              },
+              body: JSON.stringify({
+                model: 'gpt-image-1',
+                prompt: enhancedPrompt,
+                // Use 1024x1024 to keep response under platform payload limits
+                size: '1024x1024',
+                quality: 'hd',
+                n: 1
+              })
+            })
+            if (openaiResp.ok) {
+              const oj = await openaiResp.json()
+              const b64 = oj?.data?.[0]?.b64_json
+              if (typeof b64 === 'string' && b64.length > 50) {
+                const openaiImage = `data:image/png;base64,${b64}`
+                return NextResponse.json({
+                  success: true,
+                  imageUrl: openaiImage,
+                  images: [{ dataUrl: openaiImage, mimeType: 'image/png' }],
+                  prompt: enhancedPrompt,
+                  model: 'gpt-image-1',
+                  provider: 'openai',
+                  traceId
+                })
+              }
+            } else {
+              try { primaryBodyText = await openaiResp.text(); } catch {}
+            }
+          }
+        } catch (e) {
+          // ignore and continue returning detailed error below
+        }
+
         if (billingRequired) {
           return NextResponse.json({ 
             success: false, 
@@ -226,10 +326,32 @@ export async function POST(req: NextRequest) {
             message: 'Rate limit exceeded. Please wait a minute and try again.'
           }, { status: 429 });
         }
-        return NextResponse.json({ success: false, ...payload, primaryBodyText }, { status: 502 });
+        // Final attempt: force OpenAI even if not requested
+        try {
+          const openaiKey = process.env.OPENAI_API_KEY
+          if (openaiKey) {
+            const openaiResp = await fetch('https://api.openai.com/v1/images/generations', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
+              body: JSON.stringify({ model: 'gpt-image-1', prompt: enhancedPrompt, size: '1024x1024', quality: 'hd', n: 1 })
+            })
+            if (openaiResp.ok) {
+              const oj = await openaiResp.json()
+              const b64 = oj?.data?.[0]?.b64_json
+              if (typeof b64 === 'string' && b64.length > 50) {
+                const openaiImage = `data:image/png;base64,${b64}`
+                return NextResponse.json({ success: true, imageUrl: openaiImage, images: [{ dataUrl: openaiImage, mimeType: 'image/png' }], prompt: enhancedPrompt, model: 'gpt-image-1', provider: 'openai', traceId })
+              }
+            }
+          }
+        } catch {}
+        // As a last resort, return a placeholder SVG to avoid breaking the UI
+        const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='675' viewBox='0 0 1200 675' fill='none'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='#0f172a'/><stop offset='100%' stop-color='#1e293b'/></linearGradient></defs><rect width='1200' height='675' fill='url(#g)'/><g fill='#64748b'><rect x='80' y='120' width='1040' height='435' rx='16' ry='16' fill-opacity='0.25' stroke='#334155' stroke-width='2'/><text x='600' y='300' font-family='Inter, system-ui, -apple-system' font-size='42' text-anchor='middle' fill='#cbd5e1'>Billboard Preview</text><text x='600' y='360' font-family='Inter, system-ui, -apple-system' font-size='20' text-anchor='middle' fill='#94a3b8'>Image will appear here once generated</text></g></svg>`
+        const placeholder = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
+        return NextResponse.json({ success: true, ...payload, imageUrl: placeholder, images: [{ dataUrl: placeholder, mimeType: 'image/svg+xml' }], providerUsed, message: 'Placeholder returned: no image bytes from providers', primaryBodyText })
       }
 
-      return NextResponse.json({ success: true, ...payload });
+      return NextResponse.json({ success: true, ...payload, providerUsed });
       
     } catch (imagenError) {
       console.error('🎨 Google image generation error:', imagenError);

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { callLLM, LLMConfig, Provider } from '@/services/llmGateway'
 
+export const runtime = 'nodejs'
+export const maxDuration = 300
+
 const RequestSchema = z.object({
   input: z.string().min(1),
   targetAudience: z.string().optional(),
@@ -41,13 +44,13 @@ export async function POST(request: NextRequest) {
     // Resolve provider/model with safe fallback based on available keys
     const hasGemini = !!(process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY)
     const hasOpenAI = !!process.env.OPENAI_API_KEY
-    const resolvedProvider: Provider = ((): Provider => {
+    const resolvedProvider: Provider = (() => {
       if (data.provider === 'gemini' || data.provider === 'openai') return data.provider
       if (hasGemini) return 'gemini'
       if (hasOpenAI) return 'openai'
       return 'gemini'
     })()
-    const model = data.model || (resolvedProvider === 'openai' ? (process.env.OPENAI_MODEL || 'gpt-4.1') : (process.env.GEMINI_MODEL || 'gemini-2.5-flash'))
+    const model = data.model || (resolvedProvider === 'openai' ? (process.env.OPENAI_MODEL || 'gpt-4.1') : (process.env.GEMINI_MODEL || 'gemini-2.5-pro'))
 
     if (resolvedProvider === 'gemini' && !hasGemini) {
       if (hasOpenAI) {

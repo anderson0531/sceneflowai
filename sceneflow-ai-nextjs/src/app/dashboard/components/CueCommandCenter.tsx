@@ -116,7 +116,7 @@ export default function CueCommandCenter() {
             </div>
             <div>
               <h1 className="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-gray-200 to-white tracking-tight">
-                Welcome back, {user?.name || 'User'}
+                Welcome back, {(user?.first_name || user?.name?.split(' ')[0] || 'Friend')}
               </h1>
               <p className="text-gray-300 text-2xl md:text-3xl mt-3 font-medium">Your AI-powered creative expert production studio</p>
             </div>

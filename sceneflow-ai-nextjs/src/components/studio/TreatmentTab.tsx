@@ -3,7 +3,7 @@
 import { useGuideStore } from '@/store/useGuideStore';
 import { useCue } from '@/store/useCueStore';
 import { Button } from '@/components/ui/Button';
-import { SparklesIcon, Wand2, Edit3, Eye, MessageSquare, Image, RefreshCw } from 'lucide-react';
+import { SparklesIcon, Wand2, Edit3, Eye, MessageSquare, RefreshCw } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 
@@ -31,36 +31,23 @@ export function TreatmentTab() {
     selectedText: ''
   });
   const [showRefinementOptions, setShowRefinementOptions] = useState(false);
-  const [billboardImage, setBillboardImage] = useState<string | null>(null);
-  const [imagePrompt, setImagePrompt] = useState<string>('');
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isGeneratingTreatment, setIsGeneratingTreatment] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
-  const imageRequestedRef = useRef<boolean>(false);
-  const [showImageDebug, setShowImageDebug] = useState(false);
-  const [imageDebug, setImageDebug] = useState<{ status?: number; ok?: boolean; model?: string; error?: string; prompt?: string; message?: string; } | null>(null);
-  const [imageError, setImageError] = useState<string | null>(null);
+  const [outline, setOutline] = useState<string[]>([]);
+  const [fullScript, setFullScript] = useState<string | null>(null);
 
   // Ensure component is mounted before rendering
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Auto-generate billboard image only once per session when treatment arrives
+  // Generate scene outline and script once when treatment arrives
   useEffect(() => {
-    console.log('🎬 TreatmentTab: Film treatment changed, considering auto image generation');
     if (!guide.filmTreatment) return;
-    if (billboardImage || guide.treatmentDetails?.billboardImageUrl) return;
-    if (imageRequestedRef.current) return;
-    imageRequestedRef.current = true;
-    console.log('🎬 TreatmentTab: Auto-generating billboard image (first time)');
-    generateBillboardImage();
+    generateOutlineAndScript();
   }, [guide.filmTreatment]);
 
-  // Monitor billboard image state changes
-  useEffect(() => {
-    console.log('🎬 TreatmentTab: Billboard image state changed:', billboardImage);
-  }, [billboardImage]);
+  // Removed billboard image state
 
   // Handle text selection
   useEffect(() => {
@@ -113,16 +100,10 @@ export function TreatmentTab() {
   };
 
   const handleRefineSection = (section: string) => {
-    if (section === 'Billboard Image') {
-      // Generate billboard image directly
-      generateBillboardImage();
-    } else {
-      // Handle other sections with Cue
       invokeCue({
         type: 'text',
         content: `Refine the ${section} section of the Film Treatment. Make it more compelling, clear, and production-ready.`
       });
-    }
   };
 
   const handleRefineEntireTreatment = () => {
@@ -133,147 +114,33 @@ export function TreatmentTab() {
   };
 
   const handleExpandSection = (section: string) => {
-    if (section === 'Billboard Image') {
-      // Generate billboard image directly
-      generateBillboardImage();
-    } else {
-      // Handle other sections with Cue
       invokeCue({
         type: 'text',
         content: `Expand the ${section} section of the Film Treatment with more detail, examples, and production considerations.`
       });
-    }
   };
 
-  const generateBillboardImage = async () => {
-    console.log('🎬 TreatmentTab: generateBillboardImage function called!');
-    console.log('🎬 TreatmentTab: Current billboardImage state:', billboardImage);
-    setIsGeneratingImage(true);
-    setShowImageDebug(true);
-    setImageError(null);
+  // Removed billboard image generation
+
+  const generateOutlineAndScript = async () => {
     try {
-      // Generate a compelling image prompt based on the film treatment content
-      let imagePrompt = '';
-      
-      if (guide.filmTreatment) {
-        // Try to extract key elements for image generation
-        try {
-          const treatmentData = JSON.parse(guide.filmTreatment);
-          const treatment = treatmentData.Treatment || treatmentData.treatment || treatmentData;
-          
-          // Create a compelling image prompt from the treatment
-          imagePrompt = `Create a cinematic billboard image for a documentary film titled "${treatment.title || 'The Designer Baby Dilemma'}". 
-          
-          Film Content: ${treatment.logline || 'A documentary exploring the ethics of CRISPR technology and genetic engineering'}
-          
-          Visual Requirements:
-          - Cinematic composition with dramatic lighting and high contrast
-          - Professional photography quality suitable for film marketing
-          - Visual elements that represent the film's themes: genetic engineering, CRISPR technology, ethical dilemmas
-          - Modern, sophisticated aesthetic that appeals to educated audiences
-          - Billboard-ready design with strong visual impact
-          - Color palette: deep blues, purples, and whites to represent DNA and technology
-          - Include subtle visual metaphors for genetic modification and human evolution
-          
-          Style: Professional documentary film poster, high-end cinematography, suitable for streaming platforms and educational content.`;
-        } catch (parseError) {
-          // Fallback prompt if JSON parsing fails
-          imagePrompt = `Create a cinematic billboard image for a documentary film about genetic engineering and CRISPR technology.
-          
-          Visual Requirements:
-          - Cinematic composition with dramatic lighting and high contrast
-          - Professional photography quality suitable for film marketing
-          - Visual elements representing DNA, genetic modification, and ethical dilemmas
-          - Modern, sophisticated aesthetic for educated audiences
-          - Billboard-ready design with strong visual impact
-          - Color palette: deep blues, purples, and whites representing DNA and technology
-          - Include visual metaphors for genetic modification and human evolution
-          
-          Style: Professional documentary film poster, high-end cinematography, suitable for streaming platforms and educational content.`;
-        }
-      } else {
-        // Default prompt if no treatment exists
-        imagePrompt = `Create a cinematic billboard image for a documentary film about genetic engineering and CRISPR technology.
-          
-          Visual Requirements:
-          - Cinematic composition with dramatic lighting and high contrast
-          - Professional photography quality suitable for film marketing
-          - Visual elements representing DNA, genetic modification, and ethical dilemmas
-          - Modern, sophisticated aesthetic for educated audiences
-          - Billboard-ready design with strong visual impact
-          - Color palette: deep blues, purples, and whites representing DNA and technology
-          - Include visual metaphors for genetic modification and human evolution
-          
-          Style: Professional documentary film poster, high-end cinematography, suitable for streaming platforms and educational content.`;
-      }
-      
-      console.log('🎬 TreatmentTab: Generated image prompt:', imagePrompt);
-      
-      // Call the image generation API
-      console.log('🎬 TreatmentTab: Calling image generation API with prompt:', imagePrompt);
-      
-      const response = await fetch('/api/generate-image/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: imagePrompt })
+      const content = guide.filmTreatment || '';
+      const prompt = `Create a scene-by-scene outline (10-20 scenes) then a full screenplay-style script based on this treatment. Respond as JSON with keys "outline" (array of strings) and "script" (string). Treatment: ${content}`;
+      const resp = await fetch('/api/cue/respond', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], context: { type: 'script-generation' } })
       });
-      
-      console.log('🎬 TreatmentTab: API response status:', response.status);
-      console.log('🎬 TreatmentTab: API response ok:', response.ok);
-      setImageDebug({ status: response.status, ok: response.ok, prompt: imagePrompt });
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('🎬 TreatmentTab: API response data:', data);
-        console.log('🎬 TreatmentTab: Setting billboard image to:', data.imageUrl);
-        
-        setBillboardImage(data.imageUrl);
-        updateTreatmentDetails({ billboardImageUrl: data.imageUrl });
-        
-        // Verify the state update
-        console.log('🎬 TreatmentTab: Billboard image state updated, current billboardImage:', billboardImage);
-        
-        // Show success message based on model used
-        if (data.model === 'imagen-4') {
-          console.log('🎬 TreatmentTab: Billboard image generated successfully using Google Imagen:', data.imageUrl);
-        } else {
-          console.log('🎬 TreatmentTab: Billboard image generated using fallback model:', data.imageUrl);
+      if (resp.ok) {
+        const data = await resp.json();
+        const txt = data.reply || data.content || '';
+        try {
+          const parsed = JSON.parse(txt);
+          if (Array.isArray(parsed.outline)) setOutline(parsed.outline);
+          if (typeof parsed.script === 'string') setFullScript(parsed.script);
+          } catch {}
         }
-        setImageDebug(prev => ({ ...(prev || {}), model: data.model, message: data.message, error: undefined }));
-      } else {
-        // Read body once safely
-        let errorText = '';
-        let errJson: any = null;
-        const raw = await response.text();
-        try { errJson = JSON.parse(raw); } catch {}
-        if (errJson) {
-          const billingHint = errJson?.errorCode === 'BILLING_REQUIRED' ? ' (Enable billing for Google Imagen in AI Studio)' : '';
-          setImageDebug(prev => ({ ...(prev || {}), error: `${errJson?.error || errJson?.message || 'Error'}${billingHint} (trace: ${errJson?.traceId || 'n/a'})` }));
-          errorText = JSON.stringify(errJson);
-          if (errJson?.errorCode === 'BILLING_REQUIRED') {
-            setImageError('Imagen requires billing. Add a billing-enabled Google API key in Settings → BYOK, then retry.');
-          } else if (errJson?.errorCode === 'RATE_LIMITED') {
-            setImageError('Rate limit exceeded. Please wait a minute and retry the image generation.');
-          } else {
-            setImageError(`Image API error ${response.status}. Trace: ${errJson?.traceId || 'n/a'}. Primary: ${errJson?.primaryStatus ?? '—'} Fallback: ${errJson?.fallbackStatus ?? '—'}`);
-          }
-        } else {
-          errorText = raw;
-          setImageDebug(prev => ({ ...(prev || {}), error: errorText }));
-          setImageError(`Image API error ${response.status}. ${errorText}`);
-        }
-        console.error('🎬 TreatmentTab: API error response:', errorText);
-        // Do not throw further; we surface error in UI and allow retry
-        return;
-      }
-    } catch (error) {
-      console.error('🎬 TreatmentTab: Error generating billboard image:', error);
-      setImageDebug(prev => ({ ...(prev || {}), error: (error as Error)?.message || 'Unknown error' }));
-      setImageError((error as Error)?.message || 'Unknown error');
-      // Don't set fallback image, let the user see the error state
-      return;
-    } finally {
-      setIsGeneratingImage(false);
+    } catch (e) {
+      console.warn('Outline/script generation failed', e);
     }
   };
 
@@ -351,62 +218,7 @@ export function TreatmentTab() {
             <div className="text-xl font-semibold text-white">{treatment.title || 'No title provided'}</div>
           </div>
           
-          {/* Billboard Image */}
-          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
-            <label className="block text-sm font-medium text-gray-400 mb-3">Billboard Image</label>
-            
-            {/* Image Display */}
-            {billboardImage || guide.treatmentDetails?.billboardImageUrl ? (
-              <div className="mb-4">
-                <img 
-                  src={billboardImage || (guide.treatmentDetails?.billboardImageUrl as string)} 
-                  alt="Billboard for film treatment"
-                  className="w-full h-48 object-cover rounded-lg border border-gray-600/50"
-                />
-              </div>
-            ) : isGeneratingImage ? (
-              <div className="text-center py-8 text-gray-400">
-                <RefreshCw className="w-12 h-12 mx-auto mb-3 animate-spin opacity-50" />
-                <p>Generating billboard image...</p>
-                <p className="text-sm mt-1">Creating a compelling visual for your film</p>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-400">
-                <Image className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>Billboard image will be generated automatically</p>
-                <p className="text-sm mt-1">Based on your film treatment content</p>
-                {imageError && (
-                  <p className="text-xs text-red-400 mt-2">{imageError}</p>
-                )}
-              </div>
-            )}
-
-            {/* Debug toggle */}
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <button
-                onClick={() => generateBillboardImage()}
-                disabled={isGeneratingImage}
-                className="text-xs text-blue-400 hover:text-blue-200 underline disabled:opacity-50"
-              >
-                {isGeneratingImage ? 'Generating…' : 'Retry generation'}
-              </button>
-              <button
-                onClick={() => setShowImageDebug(!showImageDebug)}
-                className="text-xs text-gray-400 hover:text-gray-200 underline"
-              >
-                {showImageDebug ? 'Hide image debug' : 'Show image debug'}
-              </button>
-            </div>
-
-            {showImageDebug && (
-              <div className="mt-2 text-xs bg-gray-900/60 border border-gray-700 rounded p-3 text-gray-300 whitespace-pre-wrap">
-                <div><strong>Status:</strong> {imageDebug?.status ?? '—'} | <strong>OK:</strong> {String(imageDebug?.ok ?? false)} | <strong>Model:</strong> {imageDebug?.model ?? '—'}</div>
-                {imageDebug?.message && <div className="mt-1"><strong>Message:</strong> {imageDebug.message}</div>}
-                {imageDebug?.error && <div className="mt-1 text-red-400"><strong>Error:</strong> {imageDebug.error}</div>}
-                {imageDebug?.prompt && <div className="mt-1"><strong>Prompt:</strong> {imageDebug.prompt}</div>}
-              </div>
-            )}
-          </div>
+          {/* Billboard image removed per request */}
           
           {/* Logline */}
           <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
@@ -514,65 +326,10 @@ export function TreatmentTab() {
         return null;
       };
       
-      // Always include the billboard image section, even for HTML content
+      // Billboard image removed for HTML content too
       return (
         <div className="space-y-6">
-          {/* Billboard Image Section - Always Visible */}
-          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
-            <label className="block text-sm font-medium text-gray-400 mb-3">Billboard Image</label>
-            
-            {/* Image Display */}
-            {billboardImage ? (
-              <div className="mb-4">
-                <img 
-                  src={billboardImage} 
-                  alt="Billboard for film treatment"
-                  className="w-full h-48 object-cover rounded-lg border border-gray-600/50"
-                />
-              </div>
-            ) : isGeneratingImage ? (
-              <div className="text-center py-8 text-gray-400">
-                <RefreshCw className="w-12 h-12 mx-auto mb-3 animate-spin opacity-50" />
-                <p>Generating billboard image...</p>
-                <p className="text-sm mt-1">Creating a compelling visual for your film</p>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-400">
-                <Image className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>Billboard image will be generated automatically</p>
-                <p className="text-sm mt-1">Based on your film treatment content</p>
-                {imageError && (
-                  <p className="text-xs text-red-400 mt-2">{imageError}</p>
-                )}
-              </div>
-            )}
-
-            {/* Debug + retry controls */}
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <button
-                onClick={() => generateBillboardImage()}
-                disabled={isGeneratingImage}
-                className="text-xs text-blue-400 hover:text-blue-200 underline disabled:opacity-50"
-              >
-                {isGeneratingImage ? 'Generating…' : 'Retry generation'}
-              </button>
-              <button
-                onClick={() => setShowImageDebug(!showImageDebug)}
-                className="text-xs text-gray-400 hover:text-gray-200 underline"
-              >
-                {showImageDebug ? 'Hide image debug' : 'Show image debug'}
-              </button>
-            </div>
-
-            {showImageDebug && (
-              <div className="mt-2 text-xs bg-gray-900/60 border border-gray-700 rounded p-3 text-gray-300 whitespace-pre-wrap">
-                <div><strong>Status:</strong> {imageDebug?.status ?? '—'} | <strong>OK:</strong> {String(imageDebug?.ok ?? false)} | <strong>Model:</strong> {imageDebug?.model ?? '—'}</div>
-                {imageDebug?.message && <div className="mt-1"><strong>Message:</strong> {imageDebug.message}</div>}
-                {imageDebug?.error && <div className="mt-1 text-red-400"><strong>Error:</strong> {imageDebug.error}</div>}
-                {imageDebug?.prompt && <div className="mt-1"><strong>Prompt:</strong> {imageDebug.prompt}</div>}
-              </div>
-            )}
-          </div>
+          {/* Billboard image removed */}
           
           {/* HTML Content */}
           <div className="space-y-4">
@@ -602,7 +359,7 @@ export function TreatmentTab() {
             <div className="w-10 h-10 bg-blue-600/20 rounded-xl flex items-center justify-center">
               <Eye className="w-5 h-5 text-blue-400" />
             </div>
-            <h1 className="text-3xl font-bold text-white">Film Treatment</h1>
+            <h1 className="text-3xl font-bold text-white">Narrative/Script</h1>
           </div>
           <div className="flex gap-3">
             <Button 
@@ -707,17 +464,7 @@ export function TreatmentTab() {
                 </div>
               </Button>
               
-              <Button
-                onClick={() => handleRefineSection('Billboard Image')}
-                variant="outline"
-                size="sm"
-                className="border-gray-600 text-gray-300 hover:bg-gray-600 hover:text-white text-left justify-start h-auto py-3 px-4"
-              >
-                <div>
-                  <div className="font-medium">Billboard Image</div>
-                  <div className="text-xs text-gray-400 mt-1">Generate compelling visual</div>
-                </div>
-              </Button>
+              {/* Billboard refine removed */}
             </div>
             
             <div className="mt-4 pt-4 border-t border-gray-600">
@@ -750,15 +497,7 @@ export function TreatmentTab() {
                   Add Production Notes
                 </Button>
                 
-                <Button
-                  onClick={() => handleExpandSection('Billboard Image')}
-                  variant="outline"
-                  size="sm"
-                  className="border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white"
-                >
-                  <Image className="w-4 h-4 mr-2" />
-                  Generate Billboard
-                </Button>
+                {/* Billboard expand removed */}
               </div>
             </div>
           </motion.div>
@@ -780,27 +519,7 @@ export function TreatmentTab() {
             renderContent(guide.filmTreatment)
           ) : (
             <div className="space-y-6">
-              {/* Billboard Image Section - Always Visible */}
-              <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
-                <label className="block text-sm font-medium text-gray-400 mb-3">Billboard Image</label>
-                
-                {/* Image Display */}
-                {billboardImage || guide.treatmentDetails?.billboardImageUrl ? (
-                  <div className="mb-4">
-                    <img 
-                      src={billboardImage || (guide.treatmentDetails?.billboardImageUrl as string)} 
-                      alt="Billboard for film treatment"
-                      className="w-full h-48 object-cover rounded-lg border border-gray-600/50"
-                    />
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-400">
-                    <Image className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>No billboard image generated yet</p>
-                    <p className="text-sm mt-1">Use Cue to generate a compelling billboard image</p>
-                  </div>
-                )}
-              </div>
+              {/* Billboard image section removed */}
 
               {/* Project Title */}
               <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
@@ -907,6 +626,24 @@ export function TreatmentTab() {
                   )}
                 </Button>
               </div>
+            </div>
+          )}
+          
+          {/* Scene-by-scene outline */}
+          {outline.length > 0 && (
+            <div className="mt-10">
+              <h2 className="text-2xl font-bold mb-4">Scene-by-Scene Outline</h2>
+              <ol className="list-decimal ml-6 space-y-2 text-gray-300">
+                {outline.map((s, i) => (<li key={i}>{s}</li>))}
+              </ol>
+            </div>
+          )}
+
+          {/* Full script */}
+          {fullScript && (
+            <div className="mt-10">
+              <h2 className="text-2xl font-bold mb-4">Full Script</h2>
+              <pre className="whitespace-pre-wrap text-gray-200 bg-gray-900/40 border border-gray-700 rounded p-4">{fullScript}</pre>
             </div>
           )}
           

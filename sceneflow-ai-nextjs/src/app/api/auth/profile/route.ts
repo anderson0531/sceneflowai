@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+
+export const runtime = 'nodejs'
 import { AuthService } from '@/services/AuthService'
 import { User } from '@/models/User'
 

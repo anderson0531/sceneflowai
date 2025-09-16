@@ -269,7 +269,7 @@ export function BeatCard({ beat, isDragging = false }: BeatCardProps) {
                       
                       {/* Character Avatars */}
                       <div className="flex -space-x-1">
-                        {beat.charactersPresent.slice(0, 3).map((characterId, index) => {
+                        {(beat.charactersPresent || []).slice(0, 3).map((characterId, index) => {
                           const avatar = getCharacterAvatar(characterId, guide.characters);
                           return (
                             <TooltipProvider key={characterId}>
@@ -303,9 +303,9 @@ export function BeatCard({ beat, isDragging = false }: BeatCardProps) {
                             </TooltipProvider>
                           );
                         })}
-                        {beat.charactersPresent.length > 3 && (
+                        {(beat.charactersPresent || []).length > 3 && (
                           <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-white text-xs font-bold border-2 border-gray-700">
-                            +{beat.charactersPresent.length - 3}
+                            +{(beat.charactersPresent || []).length - 3}
                           </div>
                         )}
                       </div>

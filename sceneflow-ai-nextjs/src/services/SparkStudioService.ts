@@ -1,5 +1,4 @@
 import { Editframe } from '@editframe/editframe-js'
-import { Shotstack } from 'shotstack-sdk'
 
 export interface VideoClip {
   id: string
@@ -49,7 +48,7 @@ export interface GenerationSettings {
 export class SparkStudioService {
   private static instance: SparkStudioService
   private editframeClient: Editframe | null = null
-  private shotstackClient: Shotstack | null = null
+  private shotstackClient: any | null = null
   private assemblyJobs = new Map<string, VideoAssemblyJob>()
 
   private constructor() {}
@@ -81,7 +80,9 @@ export class SparkStudioService {
    */
   private async initShotstack(apiKey: string): Promise<void> {
     try {
-      this.shotstackClient = new Shotstack({
+      const mod: any = await import('shotstack-sdk')
+      const Client = mod?.default || mod?.Shotstack || mod
+      this.shotstackClient = new Client({
         apiKey,
         host: process.env.SHOTSTACK_HOST || 'https://api.shotstack.io'
       })

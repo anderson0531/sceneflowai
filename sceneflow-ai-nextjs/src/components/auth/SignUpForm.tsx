@@ -70,12 +70,11 @@ export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
       
       if (success) {
         onSuccess()
-      } else {
-        setError('Sign up failed. Please try again.')
       }
     } catch (err) {
       console.error('Registration error:', err)
-      setError(err instanceof Error ? err.message : 'Sign up failed. Please try again.')
+      const message = err instanceof Error ? err.message : 'Sign up failed. Please try again.'
+      setError(message)
     } finally {
       setIsLoading(false)
     }

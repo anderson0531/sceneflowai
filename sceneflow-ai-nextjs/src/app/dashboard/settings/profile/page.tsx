@@ -155,26 +155,17 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8">
-      {/* Enhanced Header with Atmospheric Background */}
+      {/* Header (simplified and aligned with app UI) */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="relative isolate overflow-hidden py-8 px-6 rounded-2xl border border-indigo-500/10 bg-gradient-to-r from-gray-900/95 to-gray-800/95 backdrop-blur-sm"
+        className="py-6 px-6 rounded-2xl border border-dark-border bg-dark-card"
       >
-        {/* Atmospheric Background Effect */}
-        <div className="absolute inset-x-0 top-0 -z-10 transform-gpu overflow-hidden blur-3xl" aria-hidden="true">
-          <div className="relative left-[calc(25%)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tl from-indigo-600 to-purple-600 opacity-20 sm:w-[72.1875rem]"
-               style={{clipPath: "polygon(25.9% 44.1%, 0% 61.6%, 2.5% 26.9%, 14.5% 0.1%, 19.3% 2%, 27.5% 32.5%, 39.8% 62.4%, 47.6% 68.1%, 52.5% 58.3%, 54.8% 34.5%, 72.5% 76.7%, 99.9% 64.9%, 82.1% 100%, 72.4% 76.8%, 23.9% 97.7%, 25.9% 44.1%)"}}>
-          </div>
-        </div>
-        
         <div className="relative z-10 flex items-center justify-between">
           <div>
-            <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-gray-200 to-white tracking-tight">
-              Profile Settings
-            </h1>
-            <p className="text-gray-300 mt-2 text-lg">Manage your account information and preferences</p>
+            <h1 className="text-2xl font-semibold text-white">Profile</h1>
+            <p className="text-dark-text-secondary mt-1">Manage your account information and preferences</p>
           </div>
         
                   <div className="flex space-x-3">
@@ -208,7 +199,7 @@ export default function ProfilePage() {
             ) : (
               <Button
                 onClick={() => setIsEditing(true)}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2.5 transition-all duration-200 font-semibold shadow-lg"
+                className="bg-dark-accent hover:bg-dark-accent-hover text-white px-4 py-2.5 transition-all duration-200 font-semibold shadow-lg"
               >
                 <Edit3 className="w-4 h-4 mr-2" />
                 Edit Profile
@@ -240,23 +231,23 @@ export default function ProfilePage() {
         </motion.div>
       )}
 
-      {/* Enhanced Profile Form */}
+      {/* Profile Form */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-sm rounded-2xl border border-indigo-500/10 p-8 shadow-2xl"
+        className="bg-dark-card rounded-2xl border border-dark-border p-8 shadow-xl"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Basic Information */}
           <div className="space-y-6">
-            <h3 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-purple-300 flex items-center">
-              <User className="w-6 h-6 mr-3 text-indigo-400" />
+            <h3 className="text-xl font-semibold text-white flex items-center">
+              <User className="w-6 h-6 mr-3 text-dark-text" />
               Basic Information
             </h3>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-200 mb-3">
+              <label className="block text-sm font-semibold text-dark-text mb-3">
                 First Name
               </label>
               <Input
@@ -270,7 +261,7 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-200 mb-3">
+              <label className="block text-sm font-semibold text-dark-text mb-3">
                 Last Name
               </label>
               <Input
@@ -284,7 +275,7 @@ export default function ProfilePage() {
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-200 mb-3">
+              <label className="block text-sm font-semibold text-dark-text mb-3">
                 Company
               </label>
               <Input
@@ -298,7 +289,7 @@ export default function ProfilePage() {
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-200 mb-3">
+              <label className="block text-sm font-semibold text-dark-text mb-3">
                 Bio
               </label>
               <textarea
@@ -314,13 +305,13 @@ export default function ProfilePage() {
 
           {/* Contact Information */}
           <div className="space-y-6">
-            <h3 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-purple-300 flex items-center">
-              <Mail className="w-6 h-6 mr-3 text-indigo-400" />
+            <h3 className="text-xl font-semibold text-white flex items-center">
+              <Mail className="w-6 h-6 mr-3 text-dark-text" />
               Contact Information
             </h3>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-200 mb-3">
+              <label className="block text-sm font-semibold text-dark-text mb-3">
                 Email Address
               </label>
               <Input
@@ -334,7 +325,7 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-200 mb-3">
+              <label className="block text-sm font-semibold text-dark-text mb-3">
                 Username
               </label>
               <Input
@@ -348,7 +339,7 @@ export default function ProfilePage() {
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-200 mb-3">
+              <label className="block text-sm font-semibold text-dark-text mb-3">
                 Phone Number
               </label>
               <Input
@@ -362,7 +353,7 @@ export default function ProfilePage() {
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-200 mb-3">
+              <label className="block text-sm font-semibold text-dark-text mb-3">
                 Location
               </label>
               <Input
@@ -376,7 +367,7 @@ export default function ProfilePage() {
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-200 mb-3">
+              <label className="block text-sm font-semibold text-dark-text mb-3">
                 Website
               </label>
               <Input
@@ -391,11 +382,9 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Enhanced Account Status */}
+        {/* Account Status */}
         <div className="mt-10 pt-8 border-t border-gray-700/50">
-          <h3 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-purple-300 mb-6">
-            Account Status
-          </h3>
+          <h3 className="text-xl font-semibold text-white mb-6">Account Status</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-gradient-to-br from-green-900/30 to-green-800/20 border border-green-500/40 p-6 rounded-xl backdrop-blur-sm hover:border-green-400/60 transition-all duration-300">
               <div className="flex items-center space-x-3 mb-3">

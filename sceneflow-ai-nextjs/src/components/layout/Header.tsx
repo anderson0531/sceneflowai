@@ -12,11 +12,25 @@ import {
   HelpCircle
 } from 'lucide-react'
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 export function Header() {
   const { user, isAuthenticated, logout } = useAuth()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const { sidebarOpen } = useEnhancedStore()
+  const pathname = usePathname()
+
+  // Derive current page title for header suffix
+  const pageTitle = (() => {
+    const p = pathname || ''
+    if (p.includes('/dashboard/studio') || p.includes('/dashboard/projects/new') || p.includes('/dashboard/workflow/ideation')) {
+      return 'The Blueprint'
+    }
+    if (p.includes('/dashboard/templates')) return 'Templates'
+    if (p.includes('/dashboard/story-insights')) return 'Story Insights'
+    if (p.includes('/dashboard/project-bible')) return 'Series Bible'
+    return ''
+  })()
 
   const handleLogout = () => {
     logout()
@@ -24,25 +38,34 @@ export function Header() {
   }
 
   return (
-    <header className={`sf-brand bg-dark-card border-b border-dark-border sticky top-0 z-40 ${sidebarOpen ? 'lg:pl-80' : ''}`}>
-      <div className="w-full px-6 sm:px-8">
-        <div className="flex items-center justify-between h-24">
+    <header className={`sf-brand bg-black border-b border-dark-border sticky top-0 z-40 ${sidebarOpen ? 'lg:pl-80' : ''}`}>
+      <div className="w-full px-4 sm:px-6">
+        <div className="flex items-center justify-between h-20">
           {/* Logo and App Name - left aligned */}
           <div className="flex items-center">
             <div className="flex items-center ml-0">
               <div className="flex-shrink-0 flex items-center">
                 {/* Brand mark matching landing header styling, increased size */}
                 <div className="relative">
-                  <div className="w-20 h-20 bg-sf-surface-light rounded-2xl flex items-center justify-center">
-                    <div className="w-14 h-14 bg-sf-primary rounded-xl flex items-center justify-center">
-                      <div className="w-7 h-7 bg-sf-background rounded-sm"></div>
+                  <div className="w-16 h-16 bg-sf-surface-light rounded-xl flex items-center justify-center">
+                    <div className="w-10 h-10 bg-sf-primary rounded-lg flex items-center justify-center">
+                      <div className="w-5 h-5 bg-sf-background rounded-sm"></div>
                     </div>
                   </div>
-                  <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-0 h-0 border-l-4 border-l-sf-primary border-t-4 border-t-transparent border-b-4 border-b-transparent" />
+                  <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-0 h-0 border-l-4 border-l-sf-primary border-t-4 border-t-transparent border-b-4 border-b-transparent" />
                 </div>
-                <h1 className="app-name-text ml-5 font-extrabold text-dark-text tracking-tight" style={{ fontSize: '3.5rem', lineHeight: '1.03', fontWeight: 800 }}>
-                  <span className="text-white">SceneFlow </span>
-                  <span className="text-sf-primary">AI</span>
+                <h1 className="app-name-text ml-4 font-extrabold text-dark-text tracking-tight flex items-end leading-none">
+                  <span className="text-white text-2xl sm:text-3xl md:text-4xl">SceneFlow</span>
+                  <span className="text-sf-primary text-2xl sm:text-3xl md:text-4xl ml-1">AI</span>
+                  {pageTitle && (
+                    <span
+                      aria-label="Current section"
+                      className="ml-4 pl-4 border-l border-white/20 font-semibold 
+                                 text-sm sm:text-base md:text-lg text-blue-300"
+                    >
+                      {pageTitle}
+                    </span>
+                  )}
                 </h1>
               </div>
             </div>
@@ -93,23 +116,21 @@ export function Header() {
 
                 {/* User Dropdown Menu */}
                 {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-dark-card rounded-md shadow-lg py-1 z-50 border border-dark-border">
-                    <div className="px-4 py-2 border-b border-dark-border">
-                      <p className="text-sm font-medium text-dark-text">{user.name}</p>
-                      <p className="text-sm text-dark-text-secondary">{user.email}</p>
+                  <div className="absolute right-0 mt-2 w-56 rounded-md shadow-2xl z-50 border border-dark-border bg-gray-900">
+                    <div className="px-4 py-3 border-b border-dark-border">
+                      <p className="text-sm font-semibold text-white">{user.name}</p>
+                      <p className="text-xs text-gray-400">{user.email}</p>
                     </div>
-                    
                     <a
-                      href="/settings"
-                      className="flex items-center px-4 py-2 text-sm text-dark-text hover:bg-dark-bg"
+                      href="/dashboard/settings"
+                      className="flex items-center px-4 py-2.5 text-sm text-gray-200 hover:bg-gray-800"
                     >
                       <Settings className="w-4 h-4 mr-2" />
                       Settings
                     </a>
-                    
                     <button
                       onClick={handleLogout}
-                      className="flex items-center w-full px-4 py-2 text-sm text-dark-text hover:bg-dark-bg"
+                      className="flex items-center w-full px-4 py-2.5 text-sm text-gray-200 hover:bg-gray-800"
                     >
                       <LogOut className="w-4 h-4 mr-2" />
                       Sign Out

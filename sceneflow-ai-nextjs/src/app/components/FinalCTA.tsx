@@ -2,8 +2,12 @@
 
 import { motion } from 'framer-motion'
 import { CheckCircle, Play, Zap } from 'lucide-react'
+import { useState } from 'react'
+import { DemoVideoModal } from './DemoVideoModal'
+import { trackCta } from '@/lib/analytics'
 
 export function FinalCTA() {
+  const [isDemoOpen, setIsDemoOpen] = useState(false)
   const scrollToPricing = () => {
     const element = document.getElementById('pricing')
     if (element) {
@@ -29,12 +33,15 @@ export function FinalCTA() {
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
             <button
-              onClick={scrollToPricing}
+              onClick={() => (window.location.href = '/?signup=1')}
               className="bg-sf-primary hover:bg-sf-accent text-sf-background text-xl px-12 py-6 rounded-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
             >
-              Start Video Production Now
+              Start 7-Day Trial — $5
             </button>
-            <button className="border border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white text-xl px-12 py-6 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center">
+            <button 
+              onClick={() => { trackCta({ event: 'click', label: 'watch-demo', location: 'final-cta' }); setIsDemoOpen(true) }}
+              className="border border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white text-xl px-12 py-6 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center"
+            >
               <Play className="w-6 h-6 mr-3" />
               Watch the 1-minute demo
             </button>
@@ -99,6 +106,12 @@ export function FinalCTA() {
           </motion.div>
         </motion.div>
       </div>
+      <DemoVideoModal 
+        open={isDemoOpen} 
+        onClose={() => setIsDemoOpen(false)} 
+        src="/demo/sceneflow-demo.mp4" 
+        poster="/demo/sceneflow-poster.jpg" 
+      />
     </section>
   )
 }

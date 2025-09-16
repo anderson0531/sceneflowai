@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { isDemoMode } from '@/lib/env'
 
 interface User {
   id: string
@@ -34,8 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const token = localStorage.getItem('authToken')
       
       if (token) {
-        // Check if it's a demo token
-        if (token.startsWith('demo-token-')) {
+        // Check if it's a demo token (only honor in demo mode)
+        if (isDemoMode() && token.startsWith('demo-token-')) {
           // For demo tokens, we'll use the stored user data
           const storedUser = localStorage.getItem('demoUser')
           if (storedUser) {
@@ -104,13 +105,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ email, password }),
       })
 
-      const data = await response.json()
+      // Safely parse JSON (avoid empty/invalid JSON throwing)
+      const raw = await response.text()
+      const data = raw ? (() => { try { return JSON.parse(raw) } catch { return {} } })() : {}
 
       if (response.ok) {
         localStorage.setItem('authToken', data.token)
         
-        // Handle demo mode
-        if (data.demo) {
+        // Handle demo mode (only if enabled)
+        if (isDemoMode() && data.demo) {
           const userData: User = {
             id: data.user.id,
             name: data.user.name,
@@ -148,12 +151,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         return true
       } else {
-        console.error('Login failed:', data.error)
-        return false
+        const message = typeof (data as any)?.error === 'string' ? (data as any).error : (response.status === 0 ? 'Network error. Please try again.' : 'Login failed')
+        throw new Error(message)
       }
     } catch (error) {
       console.error('Login error:', error)
-      return false
+      throw (error instanceof Error ? error : new Error('Login failed'))
     }
   }
 
@@ -181,13 +184,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }),
       })
 
-      const data = await response.json()
+      // Safely parse JSON (avoid empty/invalid JSON throwing)
+      const raw = await response.text()
+      const data = raw ? (() => { try { return JSON.parse(raw) } catch { return {} } })() : {}
 
       if (response.ok) {
         localStorage.setItem('authToken', data.token)
         
-        // Handle demo mode
-        if (data.demo) {
+        // Handle demo mode (only if enabled)
+        if (isDemoMode() && data.demo) {
           const userData: User = {
             id: data.user.id,
             name: data.user.name,
@@ -225,12 +230,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         return true
       } else {
-        console.error('Signup failed:', data.error)
-        return false
+        // If server failed but demo fallback token exists in body, treat as success
+        if ((data as any)?.token && (data as any)?.user) {
+          localStorage.setItem('authToken', (data as any).token)
+          if ((data as any).demo) {
+            const userData: User = {
+              id: (data as any).user.id,
+              name: (data as any).user.name || ((data as any).user.first_name && (data as any).user.last_name ? `${(data as any).user.first_name} ${(data as any).user.last_name}` : (data as any).user.username),
+              email: (data as any).user.email,
+              username: (data as any).user.username,
+              first_name: (data as any).user.first_name,
+              last_name: (data as any).user.last_name,
+              credits: 1500,
+              monthlyCredits: 1500,
+              userType: 'user'
+            }
+            localStorage.setItem('demoUser', JSON.stringify(userData))
+            setUser(userData)
+            setIsAuthenticated(true)
+            try { localStorage.setItem('authUserId', userData.id) } catch {}
+            return true
+          }
+        }
+        const message = typeof (data as any)?.error === 'string' ? (data as any).error : (response.status === 0 ? 'Network error. Please try again.' : 'Sign up failed')
+        throw new Error(message)
       }
     } catch (error) {
       console.error('Signup error:', error)
-      return false
+      throw (error instanceof Error ? error : new Error('Sign up failed'))
     }
   }
 

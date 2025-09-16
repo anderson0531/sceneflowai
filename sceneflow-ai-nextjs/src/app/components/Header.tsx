@@ -1,6 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/Button'
+import { trackCta } from '@/lib/analytics'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { Menu, X, User, LogOut } from 'lucide-react'
@@ -136,10 +137,10 @@ export function Header() {
                     Sign In
                   </Button>
                   <Button 
-                    onClick={() => openAuthModal('signup')}
+                    onClick={() => { trackCta({ event: 'click', label: 'start-trial', location: 'header' }); openAuthModal('signup') }}
                     className="bg-sf-primary hover:bg-sf-accent text-sf-background shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 px-4 py-2 text-sm font-medium"
                   >
-                    Get Started
+                    Start 7-Day Trial — $5
                   </Button>
                 </>
               )}
@@ -221,16 +222,16 @@ export function Header() {
                       <>
                         <Button 
                           variant="outline" 
-                          onClick={() => openAuthModal('login')}
+                          onClick={() => { trackCta({ event: 'click', label: 'sign-in', location: 'mobile-menu' }); openAuthModal('login') }}
                           className="w-full px-4 bg-gray-800/50 hover:bg-gray-700/50 border-sf-primary text-sf-primary hover:bg-sf-primary hover:text-sf-background py-3 text-base font-medium"
                         >
                           Sign In
                         </Button>
                         <Button 
-                          onClick={() => openAuthModal('signup')} 
+                          onClick={() => { trackCta({ event: 'click', label: 'start-trial', location: 'mobile-menu' }); openAuthModal('signup') }} 
                           className="w-full px-4 bg-sf-primary hover:bg-sf-accent text-sf-background py-3 text-base font-medium"
                         >
-                          Get Started
+                          Start 7-Day Trial — $5
                         </Button>
                       </>
                     )}

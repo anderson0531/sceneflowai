@@ -2,6 +2,7 @@ import { sequelize } from '../config/database'
 import User from './User'
 import Project from './Project'
 import UserProviderConfig from './UserProviderConfig'
+import APIUsageLog from './APIUsageLog'
 import PlatformModel from './PlatformModel'
 import PromptTemplate from './PromptTemplate'
 import FeatureUpdate from './FeatureUpdate'
@@ -63,6 +64,7 @@ export {
   PlatformModel,
   PromptTemplate,
   FeatureUpdate,
+  APIUsageLog,
 }
 
 // Export default for convenience
@@ -74,4 +76,5 @@ export default {
   PlatformModel,
   PromptTemplate,
   FeatureUpdate,
+  APIUsageLog,
 }

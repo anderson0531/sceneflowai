@@ -315,23 +315,7 @@ export default function NewProjectPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12"
-        >
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center">
-              <Sparkles className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-white">The Blueprint</h1>
-              <p className="text-xl text-gray-400 mt-2">Ideation & Brainstorming</p>
-            </div>
-          </div>
-        </motion.div>
+        {/* Header removed per request (handled in global header) */}
 
         {/* Main Content */}
         <div className="mb-12">

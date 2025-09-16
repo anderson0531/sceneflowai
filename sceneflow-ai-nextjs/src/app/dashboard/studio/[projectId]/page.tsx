@@ -89,14 +89,8 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
           {/* Left spacer to allow perfect centering */}
           <div className="hidden sm:block" />
 
-          {/* Centered Page Title */}
-          <div className="flex items-center justify-center gap-3 sm:gap-4 text-center min-w-0">
-            <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-sf-primary flex-shrink-0" />
-            <div className="min-w-0">
-              <h1 className="font-extrabold text-white leading-tight tracking-tight truncate" style={{ fontSize: '2rem', lineHeight: '1.15' }}>The Blueprint</h1>
-              <p className="hidden sm:block text-[1rem] text-blue-300 mt-1 font-medium">Ideation & Scripting</p>
-            </div>
-          </div>
+          {/* Centered Page Title removed per request (global header shows context) */}
+          <div className="flex items-center justify-center gap-3 sm:gap-4 text-center min-w-0" />
 
           {/* Actions */}
           <div className="flex items-center justify-end gap-2 sm:gap-3">
@@ -133,11 +127,10 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
               <TabsList className="flex w-full bg-transparent m-0 p-0 h-auto overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700/60 scrollbar-track-transparent">
                 <TabsTrigger 
                   value="project-idea" 
-                  disabled={!!(guide.filmTreatment && guide.filmTreatment.trim() !== '' && guide.title && guide.title !== 'Untitled Project')}
+                  disabled={false}
                   className="flex-shrink-0 h-16 px-4 sm:px-6 text-sm sm:text-lg font-semibold text-gray-200 border-b-4 border-transparent hover:text-white hover:border-gray-400 hover:bg-gray-800/50 data-[state=active]:text-white data-[state=active]:font-bold data-[state=active]:border-blue-500 data-[state=active]:bg-gray-800/80 bg-transparent rounded-none transition-all duration-200"
-                  title={(guide.filmTreatment && guide.filmTreatment.trim() !== '' && guide.title && guide.title !== 'Untitled Project') ? 'Project created. Continue in Film Treatment' : ''}
                 >
-                  Project Idea
+                  Project Concept
                 </TabsTrigger>
                 <TabsTrigger 
                   value="treatment" 
@@ -150,7 +143,7 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
                   title={!isProjectCreated ? "Complete Project Idea first to unlock this tab" : ""}
                 >
                   {!isProjectCreated && <Lock className="w-4 h-4 mr-2 inline" />}
-                  Film Treatment
+                  Narrative/Script
                 </TabsTrigger>
                 <TabsTrigger 
                   value="characters" 

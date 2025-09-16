@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+
+export const runtime = 'nodejs'
 import { testConnection } from '@/config/database'
 
 export async function GET(request: NextRequest) {

@@ -177,7 +177,8 @@ const withPWA = require('next-pwa')({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Full Next.js app for Netlify deployment
-  trailingSlash: true,
+  // Disable trailing slash to avoid redirects breaking API POST routes
+  trailingSlash: false,
   images: {
     unoptimized: true,
     domains: ['localhost'],
@@ -186,21 +187,8 @@ const nextConfig = {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
     NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || require('./package.json').version,
   },
-  // Force include database packages for Vercel
+  // Ensure these packages are bundled for server runtime on Vercel
   serverExternalPackages: ['pg', 'pg-hstore', 'sequelize'],
-  // Webpack configuration to force include packages
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      // Force include pg packages
-      config.externals = config.externals.filter(external => {
-        if (typeof external === 'string') {
-          return !external.includes('pg') && !external.includes('sequelize');
-        }
-        return true;
-      });
-    }
-    return config;
-  },
   // Temporarily disable TypeScript checking for deployment
   typescript: {
     ignoreBuildErrors: true,

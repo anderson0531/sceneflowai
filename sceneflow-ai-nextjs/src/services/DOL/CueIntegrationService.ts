@@ -1,6 +1,7 @@
 import { dol } from './DynamicOptimizationLayer';
 import { feedbackLoop } from './FeedbackLoop';
 import { TaskType, TaskComplexity } from '@/types/dol';
+import { callLLM, type Provider as LLMProvider } from '@/services/llmGateway';
 
 export interface CueMessage {
   role: 'system' | 'user' | 'assistant';
@@ -261,79 +262,64 @@ Focus on character consistency and development:
     model: any
   ): Promise<string> {
     const { platformId, modelId } = model;
-    
+
+    // Map to llmGateway provider and enforce JSON contract
+    const provider = this.mapPlatformToLLMProvider(platformId);
+    const llmPrompt = this.buildJsonReplyPrompt(optimizedPrompt);
+
     try {
-      if (platformId === 'google' || platformId === 'google-veo') {
-        return await this.callGeminiAPI(optimizedPrompt, parameters, modelId);
-      } else if (platformId === 'openai') {
-        return await this.callOpenAIAPI(optimizedPrompt, parameters, modelId);
-      } else {
-        throw new Error(`Unsupported platform: ${platformId}`);
+      const jsonString = await callLLM({ provider, model: modelId }, llmPrompt);
+      const parsed = JSON.parse(jsonString);
+      const reply = typeof parsed === 'string' ? parsed : parsed.reply;
+      if (!reply || typeof reply !== 'string') {
+        throw new Error('LLM returned JSON without a "reply" string');
       }
-    } catch (error) {
-      console.error(`Error executing prompt for ${platformId}:`, error);
-      throw error;
+      return reply;
+    } catch (primaryError) {
+      // Gemini-first fallback to OpenAI if primary fails
+      if (provider === 'gemini') {
+        try {
+          const fallbackJson = await callLLM({ provider: 'openai', model: 'gpt-4o-mini' }, llmPrompt);
+          const parsed = JSON.parse(fallbackJson);
+          const reply = typeof parsed === 'string' ? parsed : parsed.reply;
+          if (!reply || typeof reply !== 'string') {
+            throw new Error('Fallback LLM returned JSON without a "reply" string');
+          }
+          return reply;
+        } catch (fallbackError) {
+          throw new Error(
+            `Primary (Gemini) and fallback (OpenAI) both failed: ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`
+          );
+        }
+      }
+      throw primaryError instanceof Error ? primaryError : new Error(String(primaryError));
     }
   }
 
-  async callGeminiAPI(prompt: string, parameters: Record<string, any>, modelId: string): Promise<string> {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error('Gemini API key not configured');
-
-    const body = {
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: parameters.maxTokens || 1024,
-      }
-    };
-
-    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-
-    if (!resp.ok) {
-      const errText = await resp.text().catch(() => 'unknown error');
-      throw new Error(`Gemini error: ${resp.status} ${errText}`);
+  private mapPlatformToLLMProvider(platformId: string): LLMProvider {
+    switch ((platformId || '').toLowerCase()) {
+      case 'google':
+      case 'google-veo':
+        return 'gemini';
+      case 'openai':
+        return 'openai';
+      default:
+        return 'gemini';
     }
-
-    const json = await resp.json();
-    const content = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!content) throw new Error('No content from Gemini');
-    return content;
   }
 
-  async callOpenAIAPI(prompt: string, parameters: Record<string, any>, modelId: string): Promise<string> {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) throw new Error('OpenAI API key not configured');
-
-    const body = {
-      model: modelId,
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: parameters.maxTokens || 1024,
-      temperature: 0.7,
-    };
-
-    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!resp.ok) {
-      const errText = await resp.text().catch(() => 'unknown error');
-      throw new Error(`OpenAI error: ${resp.status} ${errText}`);
-    }
-
-    const json = await resp.json();
-    const content: string | undefined = json?.choices?.[0]?.message?.content;
-    if (!content) throw new Error('No content from OpenAI');
-    return content;
+  private buildJsonReplyPrompt(optimizedPrompt: string): string {
+    return [
+      'Respond ONLY as strict JSON with this shape:',
+      '{ "reply": "..." }',
+      '',
+      'Guidelines:',
+      '- Do not include prose outside JSON.',
+      '- Put the full assistant message in the "reply" field.',
+      '',
+      'Instructions and context:',
+      optimizedPrompt
+    ].join('\n');
   }
 
   /**

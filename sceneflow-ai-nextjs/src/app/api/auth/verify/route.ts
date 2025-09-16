@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
+
+export const runtime = 'nodejs'
 import { AuthService } from '@/services/AuthService'
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { token } = body
+    // Prefer cookie, fallback to body.token for legacy callers
+    const cookieToken = request.cookies.get('auth_token')?.value
+    const body = cookieToken ? null : await request.json()
+    const token = cookieToken || body?.token
 
-    // Validate required fields
     if (!token) {
-      return NextResponse.json(
-        { error: 'Token is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Token is required' }, { status: 400 })
     }
 
     // Verify token

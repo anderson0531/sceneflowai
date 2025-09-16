@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+
+export const runtime = 'nodejs'
 import { sequelize } from '@/config/database'
 import '@/models/User' // Import User model to register it
 

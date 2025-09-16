@@ -14,7 +14,6 @@ import {
   Key,
   Zap
 } from 'lucide-react'
-import DashboardHeader from '../components/DashboardHeader'
 
 const settingsNavItems = [
   {
@@ -64,8 +63,7 @@ export default function SettingsLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardHeader />
+    <div className="min-h-screen bg-dark-bg">
       
       <div className="max-w-7xl mx-auto p-4 sm:p-8">
         {/* Settings Header */}
@@ -76,14 +74,12 @@ export default function SettingsLayout({
           className="mb-8"
         >
           <div className="flex items-center space-x-3 mb-2">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Settings className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 bg-sf-primary/20 rounded-lg flex items-center justify-center">
+              <Settings className="w-5 h-5 text-sf-primary" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+            <h1 className="text-2xl font-semibold text-white">Account Settings</h1>
           </div>
-          <p className="text-gray-600">
-            Manage your account, integrations, and preferences
-          </p>
+          <p className="text-gray-400">Manage your account, integrations, and preferences</p>
         </motion.div>
 
         <div className="flex flex-col lg:flex-row gap-8">
@@ -94,8 +90,8 @@ export default function SettingsLayout({
             transition={{ duration: 0.5, delay: 0.1 }}
             className="lg:w-80 flex-shrink-0"
           >
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Settings Menu</h2>
+            <div className="bg-dark-card rounded-xl border border-dark-border p-6">
+              <h2 className="text-lg font-semibold text-dark-text mb-4">Settings</h2>
               
               <nav className="space-y-2">
                 {settingsNavItems.map((item) => {
@@ -108,22 +104,22 @@ export default function SettingsLayout({
                       href={item.href}
                       className={`block p-3 rounded-lg transition-colors duration-200 ${
                         isActive
-                          ? 'bg-blue-50 border-r-2 border-blue-500 text-blue-700'
-                          : 'text-gray-700 hover:bg-gray-50'
+                          ? 'bg-dark-bg border-r-2 border-sf-primary text-white'
+                          : 'text-dark-text-secondary hover:bg-dark-bg'
                       }`}
                     >
                       <div className="flex items-center space-x-3">
                         <Icon className={`w-5 h-5 ${
-                          isActive ? 'text-blue-600' : 'text-gray-500'
+                          isActive ? 'text-sf-primary' : 'text-dark-text-secondary'
                         }`} />
                         <div className="flex-1">
                           <div className={`font-medium ${
-                            isActive ? 'text-blue-900' : 'text-gray-900'
+                            isActive ? 'text-white' : 'text-dark-text'
                           }`}>
                             {item.name}
                           </div>
                           <div className={`text-sm ${
-                            isActive ? 'text-blue-600' : 'text-gray-500'
+                            isActive ? 'text-sf-primary' : 'text-dark-text-secondary'
                           }`}>
                             {item.description}
                           </div>
@@ -135,18 +131,18 @@ export default function SettingsLayout({
               </nav>
 
               {/* Quick Actions */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h3 className="text-sm font-medium text-gray-900 mb-3">Quick Actions</h3>
+              <div className="mt-6 pt-6 border-t border-dark-border">
+                <h3 className="text-sm font-medium text-dark-text mb-3">Quick Actions</h3>
                 <div className="space-y-2">
                   <Link
                     href="/dashboard"
-                    className="block p-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors duration-200"
+                    className="block p-2 text-sm text-dark-text-secondary hover:text-dark-text hover:bg-dark-bg rounded transition-colors duration-200"
                   >
                     ← Back to Dashboard
                   </Link>
                   <Link
                     href="/dashboard/workflow"
-                    className="block p-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors duration-200"
+                    className="block p-2 text-sm text-dark-text-secondary hover:text-dark-text hover:bg-dark-bg rounded transition-colors duration-200"
                   >
                     Continue Workflow
                   </Link>
