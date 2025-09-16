@@ -3,7 +3,7 @@
 import { useGuideStore } from '@/store/useGuideStore';
 import { useCue } from '@/store/useCueStore';
 import { Button } from '@/components/ui/Button';
-import { SparklesIcon, Wand2, Edit3, Eye, MessageSquare, RefreshCw } from 'lucide-react';
+import { SparklesIcon, Eye, RefreshCw } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 
@@ -363,145 +363,16 @@ export function TreatmentTab() {
           </div>
           <div className="flex gap-3">
             <Button 
-              onClick={() => setShowRefinementOptions(!showRefinementOptions)}
-              variant="outline"
-              className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-            >
-              <Edit3 className="w-4 h-4 mr-2" />
-              Refine Options
-            </Button>
-            <Button 
               onClick={handleRefineEntireTreatment}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               <SparklesIcon className="w-4 h-4 mr-2" />
-              Refine with Cue
+              Ask Flow
             </Button>
           </div>
         </div>
 
-        {/* Refinement Options Panel */}
-        {showRefinementOptions && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8 bg-gray-700/50 border border-gray-600 rounded-xl p-6"
-          >
-            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-blue-400" />
-              Refine Your Film Treatment
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              <Button
-                onClick={() => handleRefineSection('Title and Logline')}
-                variant="outline"
-                size="sm"
-                className="border-gray-600 text-gray-300 hover:bg-gray-600 hover:text-white text-left justify-start h-auto py-3 px-4"
-              >
-                <div>
-                  <div className="font-medium">Title & Logline</div>
-                  <div className="text-xs text-gray-400 mt-1">Make it more compelling</div>
-                </div>
-              </Button>
-              
-              <Button
-                onClick={() => handleRefineSection('Synopsis')}
-                variant="outline"
-                size="sm"
-                className="border-gray-600 text-gray-300 hover:bg-gray-600 hover:text-white text-left justify-start h-auto py-3 px-4"
-              >
-                <div>
-                  <div className="font-medium">Synopsis</div>
-                  <div className="text-xs text-gray-400 mt-1">Improve flow and clarity</div>
-                </div>
-              </Button>
-              
-              <Button
-                onClick={() => handleRefineSection('Target Audience')}
-                variant="outline"
-                size="sm"
-                className="border-gray-600 text-gray-300 hover:bg-gray-600 hover:text-white text-left justify-start h-auto py-3 px-4"
-              >
-                <div>
-                  <div className="font-medium">Target Audience</div>
-                  <div className="text-xs text-gray-400 mt-1">Define more precisely</div>
-                </div>
-              </Button>
-              
-              <Button
-                onClick={() => handleRefineSection('Genre and Tone')}
-                variant="outline"
-                size="sm"
-                className="border-gray-600 text-gray-300 hover:bg-gray-600 hover:text-white text-left justify-start h-auto py-3 px-4"
-              >
-                <div>
-                  <div className="font-medium">Genre & Tone</div>
-                  <div className="text-xs text-gray-400 mt-1">Clarify style and mood</div>
-                </div>
-              </Button>
-              
-              <Button
-                onClick={() => handleRefineSection('Key Themes')}
-                variant="outline"
-                size="sm"
-                className="border-gray-600 text-gray-300 hover:bg-gray-600 hover:text-white text-left justify-start h-auto py-3 px-4"
-              >
-                <div>
-                  <div className="font-medium">Key Themes</div>
-                  <div className="text-xs text-gray-400 mt-1">Strengthen messaging</div>
-                </div>
-              </Button>
-              
-              <Button
-                onClick={() => handleRefineSection('Story Structure')}
-                variant="outline"
-                size="sm"
-                className="border-gray-600 text-gray-300 hover:bg-gray-600 hover:text-white text-left justify-start h-auto py-3 px-4"
-              >
-                <div>
-                  <div className="font-medium">Story Structure</div>
-                  <div className="text-xs text-gray-400 mt-1">Optimize pacing</div>
-                </div>
-              </Button>
-              
-              {/* Billboard refine removed */}
-            </div>
-            
-            <div className="mt-4 pt-4 border-t border-gray-600">
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => handleExpandSection('Synopsis')}
-                  variant="outline"
-                  size="sm"
-                  className="border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white"
-                >
-                  <Wand2 className="w-4 h-4 mr-2" />
-                  Expand Synopsis
-                </Button>
-                <Button
-                  onClick={() => handleExpandSection('Character Development')}
-                  variant="outline"
-                  size="sm"
-                  className="border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white"
-                >
-                  <Wand2 className="w-4 h-4 mr-2" />
-                  Add Character Details
-                </Button>
-                <Button
-                  onClick={() => handleExpandSection('Production Notes')}
-                  variant="outline"
-                  size="sm"
-                  className="border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white"
-                >
-                  <Wand2 className="w-4 h-4 mr-2" />
-                  Add Production Notes
-                </Button>
-                
-                {/* Billboard expand removed */}
-              </div>
-            </div>
-          </motion.div>
-        )}
+        {/* Refinement Options removed */}
         
         {/* Content Display with Selection Support */}
         <div 
@@ -509,10 +380,7 @@ export function TreatmentTab() {
           className="prose prose-invert max-w-none relative select-text bg-gray-900/30 rounded-xl p-8 border border-gray-700/50"
           style={{ userSelect: 'text' }}
         >
-          {/* Intro blurb */}
-          <div className="mb-6 text-gray-300 text-sm leading-6 bg-gray-800/40 border border-gray-700 rounded-lg p-4">
-            A film treatment is a prose document that provides an in-depth summary of a screenplay idea, presenting its story, characters, themes, and tone. Unlike a finished script, it is written in present tense and focuses on the narrative arc rather than technical details, allowing the writer to test an idea or pitch it to producers.
-          </div>
+          {/* Intro blurb removed */}
 
           {/* Structured editor when treatment not yet converted to rich content */}
           {guide.filmTreatment ? (
@@ -662,7 +530,7 @@ export function TreatmentTab() {
                 size="sm"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 text-xs"
               >
-                <Wand2 className="w-3 h-3 mr-1" />
+                <SparklesIcon className="w-3 h-3 mr-1" />
                 Ask Cue
               </Button>
             </div>
