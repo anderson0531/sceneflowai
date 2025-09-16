@@ -51,6 +51,36 @@ async function callOpenAIJson(messages: Message[], apiKey: string): Promise<any>
   return JSON.parse(content)
 }
 
+async function callGeminiJson(messages: Message[], apiKey: string): Promise<any> {
+  // Convert to Gemini format
+  const contents = messages.map(m => ({
+    role: m.role === 'system' ? 'user' : (m.role === 'user' ? 'user' : 'model'),
+    parts: [{ text: m.content }]
+  }))
+  // Force JSON by instruction
+  contents.unshift({ role: 'user', parts: [{ text: 'Return ONLY valid JSON with a root key "scenes" as specified. No prose.' }]})
+
+  const body = {
+    contents,
+    generationConfig: {
+      temperature: 0.5,
+      responseMimeType: 'application/json'
+    }
+  }
+  const model = 'gemini-2.5-flash'
+  const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+  })
+  if (!resp.ok) {
+    const txt = await resp.text().catch(() => 'unknown error')
+    throw new Error(`Gemini JSON error: ${resp.status} ${txt}`)
+  }
+  const json = await resp.json()
+  const text = json?.candidates?.[0]?.content?.parts?.[0]?.text
+  if (!text) throw new Error('No content from Gemini')
+  return JSON.parse(text)
+}
+
 export async function POST(req: NextRequest) {
   try {
     const apiKey = process.env.OPENAI_API_KEY
@@ -69,7 +99,26 @@ export async function POST(req: NextRequest) {
       { role: 'user', content: `Treatment:\n${treatment}\n\nReturn ONLY valid JSON as specified.` },
     ]
 
-    const result = await callOpenAIJson(messages, apiKey)
+    let result: any | null = null
+    // Try OpenAI first
+    try {
+      result = await callOpenAIJson(messages, apiKey)
+    } catch (errOpenAI) {
+      // Fallback to Gemini if available
+      const geminiKey = process.env.GEMINI_API_KEY
+      if (!geminiKey) throw errOpenAI
+      try {
+        result = await callGeminiJson(messages, geminiKey)
+      } catch (errGemini) {
+        // As last resort, attempt to extract JSON from OpenAI error text if any
+        const text = String(errOpenAI)
+        const match = text.match(/\{[\s\S]*\}/)
+        if (match) {
+          try { result = JSON.parse(match[0]) } catch {}
+        }
+        if (!result) throw errGemini
+      }
+    }
     if (!result?.scenes || !Array.isArray(result.scenes)) {
       return new Response(JSON.stringify({ error: 'Model did not return scenes[]' }), { status: 502 })
     }
