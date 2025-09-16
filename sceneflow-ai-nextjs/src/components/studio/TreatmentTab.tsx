@@ -5,7 +5,8 @@ import { useCue } from '@/store/useCueStore';
 import { Button } from '@/components/ui/Button';
 import { SparklesIcon, Eye, RefreshCw } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { OutlineEditor, SceneItem } from '@/components/studio/OutlineEditor';
+import { ScriptViewer } from '@/components/studio/ScriptViewer';
 
 interface FloatingToolbar {
   visible: boolean;
@@ -35,6 +36,9 @@ export function TreatmentTab() {
   const contentRef = useRef<HTMLDivElement>(null);
   const [outline, setOutline] = useState<string[]>([]);
   const [fullScript, setFullScript] = useState<string | null>(null);
+  const [scenes, setScenes] = useState<SceneItem[]>([]);
+  const [isGeneratingOutline, setIsGeneratingOutline] = useState(false);
+  const [isGeneratingScript, setIsGeneratingScript] = useState(false);
 
   // Ensure component is mounted before rendering
   useEffect(() => {
@@ -123,25 +127,55 @@ export function TreatmentTab() {
   // Removed billboard image generation
 
   const generateOutlineAndScript = async () => {
+    // Deprecated in favor of explicit outline + chunked script
+  };
+
+  const generateOutline = async () => {
+    if (!guide.filmTreatment) return;
+    setIsGeneratingOutline(true);
     try {
-      const content = guide.filmTreatment || '';
-      const prompt = `Create a scene-by-scene outline (10-20 scenes) then a full screenplay-style script based on this treatment. Respond as JSON with keys "outline" (array of strings) and "script" (string). Treatment: ${content}`;
-      const resp = await fetch('/api/cue/respond', {
+      const resp = await fetch('/api/generate/outline', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], context: { type: 'script-generation' } })
-      });
+        body: JSON.stringify({ treatment: guide.filmTreatment })
+      })
       if (resp.ok) {
         const data = await resp.json();
-        const txt = data.reply || data.content || '';
-        try {
-          const parsed = JSON.parse(txt);
-          if (Array.isArray(parsed.outline)) setOutline(parsed.outline);
-          if (typeof parsed.script === 'string') setFullScript(parsed.script);
-          } catch {}
-        }
-    } catch (e) {
-      console.warn('Outline/script generation failed', e);
+        setScenes(data.scenes as SceneItem[]);
+      }
+    } finally {
+      setIsGeneratingOutline(false);
     }
+  };
+
+  const chunkArray = <T,>(arr: T[], size: number): T[][] => {
+    const out: T[][] = [];
+    for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+    return out;
+  };
+
+  const generateScriptFromOutline = async () => {
+    if (scenes.length === 0) return;
+    setIsGeneratingScript(true);
+    setFullScript('');
+    const chunks = chunkArray(scenes, 10);
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      const prev = i > 0 ? chunks[i - 1][chunks[i - 1].length - 1]?.summary || '' : '';
+      const resp = await fetch('/api/generate/script-chunk', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outline_chunk: chunk, treatment_context: guide.filmTreatment, previous_scene_summary: prev })
+      });
+      if (!resp.ok || !resp.body) continue;
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const text = decoder.decode(value);
+        setFullScript(prevText => (prevText || '') + text);
+      }
+    }
+    setIsGeneratingScript(false);
   };
 
   const generateFilmTreatment = async () => {
@@ -497,21 +531,29 @@ export function TreatmentTab() {
             </div>
           )}
           
-          {/* Scene-by-scene outline */}
-          {outline.length > 0 && (
-            <div className="mt-10">
-              <h2 className="text-2xl font-bold mb-4">Scene-by-Scene Outline</h2>
-              <ol className="list-decimal ml-6 space-y-2 text-gray-300">
-                {outline.map((s, i) => (<li key={i}>{s}</li>))}
-              </ol>
+          {/* Outline and generation controls */}
+          <div className="mt-10">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-2xl font-bold">Scene Outline</h2>
+              <div className="flex gap-2">
+                <Button onClick={generateOutline} disabled={isGeneratingOutline} className="bg-blue-600 hover:bg-blue-700 text-white">
+                  {isGeneratingOutline ? 'Generating Outline…' : 'Generate Outline'}
+                </Button>
+                <Button onClick={generateScriptFromOutline} disabled={isGeneratingScript || scenes.length === 0} className="bg-green-600 hover:bg-green-700 text-white">
+                  {isGeneratingScript ? 'Generating Script…' : 'Finalize Outline and Generate Script'}
+                </Button>
+              </div>
             </div>
-          )}
+            {scenes.length > 0 && (
+              <OutlineEditor scenes={scenes} onChange={setScenes} />
+            )}
+          </div>
 
           {/* Full script */}
           {fullScript && (
             <div className="mt-10">
               <h2 className="text-2xl font-bold mb-4">Full Script</h2>
-              <pre className="whitespace-pre-wrap text-gray-200 bg-gray-900/40 border border-gray-700 rounded p-4">{fullScript}</pre>
+              <ScriptViewer fountainText={fullScript} />
             </div>
           )}
           
