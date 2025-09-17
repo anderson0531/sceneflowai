@@ -1168,6 +1168,18 @@ export default function ProjectIdeaTab() {
       setSidebarVisibility(true);
       const contextPayload = {
         input: text,
+        mode: 'concept_treatment_refine',
+        concept: {
+          id: idea.id,
+          title: idea.title,
+          synopsis: idea.synopsis,
+          logline: idea.logline,
+          genre: idea.details?.genre,
+          duration: idea.details?.duration,
+          audience: idea.details?.targetAudience,
+          tone: idea.details?.tone,
+          structure: idea.narrative_structure
+        },
         existingIdeas: generatedIdeas.map(i => ({ id: i.id, title: i.title, synopsis: i.synopsis })),
         expectation: 'Return an improved, copy-ready single input paragraph suitable for generating compelling project ideas/blueprints. Keep the creator intent but strengthen clarity, audience, tone, and hook.'
       };
