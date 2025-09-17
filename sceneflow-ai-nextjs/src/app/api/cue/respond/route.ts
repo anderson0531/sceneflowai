@@ -201,12 +201,39 @@ export async function POST(req: NextRequest) {
     const context = (data?.context || {}) as CueContext
 
     const contextSummary = buildContextSummary(context)
+    const mode = (context as any)?.project?.metadata?.activeContext?.payload?.mode || (context as any)?.mode || (context as any)?.type
 
-    const finalMessages: Message[] = [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'system', content: `App Context:\n${contextSummary}` },
-      ...messages,
-    ]
+    let finalMessages: Message[]
+
+    if (mode === 'concept_treatment_refine' || mode === 'idea_optimization' || mode === 'concept_refine') {
+      const FLOW_REWRITE_SYSTEM = [
+        'You are Flow, an AI Co‑Director refining a Concept Treatment input description for blueprint generation.',
+        '',
+        'Output ONLY these blocks in order:',
+        '<<<INPUT_DESCRIPTION>>>',
+        '{single paragraph capturing the current concept accurately}',
+        '<<<IMPROVED_IDEA>>>',
+        '{single paragraph refined per the creator\'s latest instruction; if no instruction, repeat INPUT_DESCRIPTION}',
+        '<<<GUIDANCE>>>',
+        'Suggest 1-2 short follow-up instructions the creator could try.',
+        '',
+        'Rules:',
+        '- Do not include rationale, audience POV, or generic advice outside the blocks.',
+        '- Preserve creator intent; strengthen clarity, hook, tone, and audience resonance.'
+      ].join('\n')
+
+      finalMessages = [
+        { role: 'system', content: FLOW_REWRITE_SYSTEM },
+        { role: 'system', content: `App Context:\n${contextSummary}` },
+        ...messages,
+      ]
+    } else {
+      finalMessages = [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: `App Context:\n${contextSummary}` },
+        ...messages,
+      ]
+    }
 
     // Try providers in order of preference: Gemini first (free/cheap), then OpenAI
     const providers = [
