@@ -490,22 +490,29 @@ export function CueSidebar({ className }: CueSidebarProps) {
                 </div>
               )}
 
-              {/* Apply to Idea Input when context is idea optimization */}
+              {/* Apply to Idea Input when Flow returns IMPROVED_IDEA */}
               {message.role === 'assistant' &&
                activeContext?.payload?.input !== undefined &&
-               !message.streaming && !!extractImprovedIdea(message.content) && (
+               !message.streaming && (
                 <div className="mt-3 pt-2 border-t border-gray-600">
                   <Button
                     onClick={() => {
-                      // Parse improved text
-                      const improved = extractImprovedIdea(message.content)!;
-                      window.dispatchEvent(new CustomEvent('flow.applyIdeaInput', { detail: { improved } }));
-                      setMessages(prev => ([...prev, {
-                        id: Date.now().toString(),
-                        role: 'assistant',
-                        content: '✅ Applied the improved input to your Project Idea field.',
-                        timestamp: new Date()
-                      }]));
+                      // Parse improved text; if missing, fall back to INPUT_DESCRIPTION
+                      const improved = extractImprovedIdea(message.content);
+                      let applyText = improved || '';
+                      if (!applyText) {
+                        const m = message.content.match(/<<<INPUT_DESCRIPTION>>>[\s\S]*?(?=<<<)/);
+                        if (m) applyText = m[0].replace('<<<INPUT_DESCRIPTION>>>', '').trim();
+                      }
+                      if (applyText) {
+                        window.dispatchEvent(new CustomEvent('flow.applyIdeaInput', { detail: { improved: applyText } }));
+                        setMessages(prev => ([...prev, {
+                          id: Date.now().toString(),
+                          role: 'assistant',
+                          content: '✅ Applied the refined description to your Concept Treatment input.',
+                          timestamp: new Date()
+                        }]));
+                      }
                     }}
                     size="sm"
                     className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-md"
