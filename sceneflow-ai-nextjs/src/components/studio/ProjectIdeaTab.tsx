@@ -1448,7 +1448,7 @@ export default function ProjectIdeaTab() {
       <div>
         <div className="mb-6 px-8">
           <h1 className="text-[1.875rem] sm:text-[2.125rem] md:text-[2.375rem] lg:text-[2.625rem] font-extrabold text-white mb-2 tracking-tight leading-tight">Describe Your Concept</h1>
-          <p className="text-gray-300 text-[1rem] sm:text-[1.05rem]">Share your vision and let our AI create compelling project concepts tailored to your needs.</p>
+          <p className="text-gray-300 text-[1rem] sm:text-[1.05rem]">Share your vision and let your Flow C0-Director create compelling concepts treaments tailored to your needs.</p>
         </div>
         
         <div className="bg-gray-900/50 border border-gray-700/50 rounded-lg p-8">
@@ -1493,22 +1493,6 @@ export default function ProjectIdeaTab() {
           </div>
           
             <div className="flex items-center gap-3">
-            <Button
-                onClick={async () => {
-                  const contextPayload = {
-                    input: projectDescription,
-                    existingIdeas: generatedIdeas.map(i => ({ id: i.id, title: i.title, synopsis: i.synopsis })),
-                    expectation: 'Return an improved, copy-ready single input paragraph suitable for generating compelling project ideas/blueprints. Keep the creator intent but strengthen clarity, audience, tone, and hook.'
-                  };
-                  await invokeCue({ type: 'text', content: 'Optimizing Project Idea input...', payload: contextPayload });
-                  window.dispatchEvent(new CustomEvent('flow.optimizeIdea', { detail: contextPayload }));
-                }}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 text-lg font-medium flex items-center gap-2"
-              >
-                <Clapperboard className="w-5 h-5" />
-                Ask Flow to Improve
-            </Button>
-            
               <Button
                 onClick={generateProjectIdeas}
                 disabled={!projectDescription.trim() || isGeneratingIdeas}
