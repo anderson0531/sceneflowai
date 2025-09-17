@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Lightbulb, Sparkles, Users, Clock, Target, Palette, Zap, Clapperboard } from 'lucide-react';
+import { FlowRefineModal } from '@/components/cue/FlowRefineModal';
 import { useRouter } from 'next/navigation';
 import { useGuideStore } from '@/store/useGuideStore';
 import { useCue } from '@/store/useCueStore';
@@ -148,6 +149,7 @@ export default function ProjectIdeaTab() {
   const [showGuideCard, setShowGuideCard] = useState(false);
   const [showCollaborationSection, setShowCollaborationSection] = useState(false);
   const [apiDebug, setApiDebug] = useState<{ api?: string; provider?: string; model?: string; timestamp?: string } | null>(null);
+  const [refineOpen, setRefineOpen] = useState(false);
   const [refiningIdeaId, setRefiningIdeaId] = useState<string | null>(null);
 
   // Hide Cue CoPilot when Project Idea tab is active
@@ -1536,6 +1538,12 @@ export default function ProjectIdeaTab() {
           
             <div className="flex items-center gap-3">
               <Button
+                onClick={()=> setRefineOpen(true)}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 text-lg font-medium"
+              >
+                Refine with Flow
+              </Button>
+              <Button
                 onClick={generateProjectIdeas}
                 disabled={!projectDescription.trim() || isGeneratingIdeas}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-medium"
@@ -1544,6 +1552,12 @@ export default function ProjectIdeaTab() {
               </Button>
             </div>
           </div>
+          <FlowRefineModal
+            open={refineOpen}
+            onOpenChange={setRefineOpen}
+            seedText={projectDescription}
+            onApply={(text)=> setProjectDescription(text)}
+          />
         </div>
       </div>
 

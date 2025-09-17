@@ -93,15 +93,6 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
 
           {/* Actions */}
           <div className="flex items-center justify-end gap-2 sm:gap-3">
-            {/* Ask Cue Button */}
-            <Button 
-              onClick={toggleSidebar}
-              className="bg-sf-primary-dark hover:bg-blue-700 text-white border-sf-primary-dark hover:border-blue-700 px-4 py-3 rounded-lg text-base font-medium flex items-center gap-2"
-            >
-              <Clapperboard className="w-5 h-5" />
-              <span className="hidden md:inline">Ask Flow</span>
-            </Button>
-            
             <Button 
               onClick={handleExport} 
               className="bg-sf-primary-dark hover:bg-blue-700 text-white border-sf-primary-dark hover:border-blue-700 px-4 py-3 rounded-lg text-base font-medium flex items-center gap-2"
@@ -112,14 +103,7 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
           </div>
         </header>
 
-        {/* Flow Co‑Pilot Sidebar */}
-        {isSidebarOpen && (
-          <div className="hidden lg:block fixed right-0 top-24 bottom-0 w-[360px] border-l border-gray-800 bg-gray-900/60 backdrop-blur-sm">
-            <FlowSidebar />
-          </div>
-        )}
-
-        <main className={cn("flex-1 overflow-hidden", isSidebarOpen ? "mr-0 lg:mr-[360px]" : "mr-0") }>
+        <main className={cn("flex-1 overflow-hidden", "mr-0") }>
           {/* The Tabs container needs to manage its own height/overflow */}
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="w-full h-full flex flex-col">
             <div className="border border-gray-700/50 bg-gray-900/50 rounded-t-lg">
