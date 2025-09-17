@@ -1448,7 +1448,10 @@ export default function ProjectIdeaTab() {
       <div>
         <div className="mb-6 px-8">
           <h1 className="text-[1.875rem] sm:text-[2.125rem] md:text-[2.375rem] lg:text-[2.625rem] font-extrabold text-white mb-2 tracking-tight leading-tight">Describe Your Concept</h1>
-          <p className="text-gray-300 text-[1rem] sm:text-[1.05rem]">Share your vision and let your Flow C0-Director create compelling concepts treaments tailored to your needs.</p>
+          <div className="text-[1rem] sm:text-[1.05rem]">
+            <div className="font-semibold text-white">Start Here: Describe Your Vision</div>
+            <p className="text-gray-300 mt-1">Tell Flow, your AI Co-Director, the story you want to bring to life. From a single sentence to a detailed paragraph, share your idea and Flow will instantly generate powerful concepts to explore.</p>
+          </div>
         </div>
         
         <div className="bg-gray-900/50 border border-gray-700/50 rounded-lg p-8">
