@@ -265,7 +265,7 @@ export function CueSidebar({ className }: CueSidebarProps) {
       if (!payload) return;
 
       const userPrompt = [
-        'You are Flow, an AI Co‑Director assisting the creator in refining a Concept Treatment input description for blueprint generation.',
+        'You are Flow, an AI Co‑Director refining a Concept Treatment input description for blueprint generation.',
         '',
         'TASKS:',
         '1) From the provided context, build an accurate single‑paragraph INPUT_DESCRIPTION that faithfully represents the current concept (title, synopsis/logline, genre, audience, tone, duration, structure).',
@@ -285,6 +285,18 @@ export function CueSidebar({ className }: CueSidebarProps) {
         '- Preserve creator intent; strengthen clarity, hook, tone, and audience resonance.',
         '- No bullet lists except inside <<<GUIDANCE>>>. No templates. No extra prose outside blocks.'
       ].join('\n');
+
+      // seed the chat with the current input for currency
+      const seedInput = payload?.input || '';
+      if (seedInput) {
+        const seedMsg: Message = {
+          id: `${Date.now()}-seed`,
+          role: 'user',
+          content: `Current description to refine (for context):\n\n${seedInput}`,
+          timestamp: new Date(),
+        } as any;
+        setMessages(prev => [...prev, seedMsg]);
+      }
 
       const syntheticUserMessage: Message = {
         id: Date.now().toString(),
@@ -518,6 +530,23 @@ export function CueSidebar({ className }: CueSidebarProps) {
                     className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-md"
                   >
                     Apply to Idea Input
+                  </Button>
+                  {/* Also allow copying the refined description without applying */}
+                  <Button
+                    onClick={() => {
+                      const improved = extractImprovedIdea(message.content);
+                      let text = improved || '';
+                      if (!text) {
+                        const m = message.content.match(/<<<INPUT_DESCRIPTION>>>[\s\S]*?(?=<<<)/);
+                        if (m) text = m[0].replace('<<<INPUT_DESCRIPTION>>>', '').trim();
+                      }
+                      if (text) navigator.clipboard.writeText(text).catch(() => {});
+                    }}
+                    size="sm"
+                    variant="outline"
+                    className="ml-2 text-xs px-3 py-1"
+                  >
+                    Copy Refined Text
                   </Button>
                 </div>
               )}
