@@ -265,14 +265,25 @@ export function CueSidebar({ className }: CueSidebarProps) {
       if (!payload) return;
 
       const userPrompt = [
-        'Optimize the user\'s Project Idea input to produce a stronger, clearer prompt for generating compelling project ideas/blueprints.',
-        'Keep the creator\'s intent. Strengthen: audience, tone, hook, and clarity. Avoid templates.',
-        'Return ONLY the following format:',
-        '<<<IMPROVED_IDEA>>>',
-        '{single improved paragraph}',
-        '<<<END>>>',
+        'You are Flow, an AI Co‑Director assisting the creator in refining a Concept Treatment input description for blueprint generation.',
         '',
-        'Then include a short section titled "Why These Changes" with up to 4 bullets.'
+        'TASKS:',
+        '1) From the provided context, build an accurate single‑paragraph INPUT_DESCRIPTION that faithfully represents the current concept (title, synopsis/logline, genre, audience, tone, duration, structure).',
+        '2) If the creator provides additional instructions, refine that INPUT_DESCRIPTION accordingly to produce a stronger, clearer paragraph suited for concept blueprint generation.',
+        '3) If no instruction has been given yet, invite the creator to provide one (e.g., "Make the story more inspirational"), but still return the baseline INPUT_DESCRIPTION now.',
+        '',
+        'FORMATTING (STRICT):',
+        'Return ONLY these blocks in order:
+<<<INPUT_DESCRIPTION>>>
+{single paragraph}
+<<<IMPROVED_IDEA>>>
+{single paragraph (refined if instruction present, otherwise same as INPUT_DESCRIPTION)}
+<<<GUIDANCE>>>
+Suggest 1‑2 example refinement prompts the creator could try.',
+        '',
+        'CONSTRAINTS:',
+        '- Preserve creator intent; strengthen clarity, hook, tone, and audience resonance.',
+        '- No bullet lists except inside <<<GUIDANCE>>>. No templates. No extra prose outside blocks.'
       ].join('\n');
 
       const syntheticUserMessage: Message = {
@@ -326,7 +337,15 @@ export function CueSidebar({ className }: CueSidebarProps) {
 
         // Show apply button hint
         const improved = extractImprovedIdea(responseText);
-        if (improved) {
+        const inputBlock = (() => {
+          const m = responseText.match(/<<<INPUT_DESCRIPTION>>>[\s\S]*?<<<IMPROVED_IDEA>>>/);
+          if (!m) return '';
+          return m[0]
+            .replace('<<<INPUT_DESCRIPTION>>>', '')
+            .replace('<<<IMPROVED_IDEA>>>', '')
+            .trim();
+        })();
+        if (improved || inputBlock) {
           setMessages(prev => [...prev, { id: `${Date.now()}-apply-hint`, role: 'assistant', content: 'Click “Apply to Idea Input” to use the improved text.', timestamp: new Date() }]);
         }
       } catch (err) {
