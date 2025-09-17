@@ -28,8 +28,19 @@ export function FlowRefineModal({ open, onOpenChange, seedText, onApply }: Props
     setLoading(true)
     setResult('')
     try {
+      const inst = (instruction && instruction.trim()) ? instruction.trim() : 'Improve this description while preserving all concrete details.'
       const messages = [
-        { role: 'user', content: instruction ? instruction : 'Improve this description.' }
+        {
+          role: 'user',
+          content: [
+            'You will refine the CURRENT_DESCRIPTION below. Preserve factual details, names, locations, roles, genre/audience/tone fields, and the overall story world. Do NOT invent new settings or characters. Apply the INSTRUCTION to change style/tone only.',
+            '',
+            'CURRENT_DESCRIPTION:',
+            seedText,
+            '',
+            `INSTRUCTION: ${inst}`
+          ].join('\n')
+        }
       ]
       const context = {
         pathname: '/inline-refine',
