@@ -393,7 +393,7 @@ export function TreatmentTab() {
             <div className="w-10 h-10 bg-blue-600/20 rounded-xl flex items-center justify-center">
               <Eye className="w-5 h-5 text-blue-400" />
             </div>
-            <h1 className="text-3xl font-bold text-white">Narrative/Script</h1>
+            <h1 className="text-3xl font-bold text-white">Film Treatment</h1>
           </div>
           <div className="flex gap-3">
             <Button 

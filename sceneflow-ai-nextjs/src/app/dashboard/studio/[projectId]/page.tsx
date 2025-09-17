@@ -113,7 +113,7 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
                   disabled={false}
                   className="flex-shrink-0 h-16 px-5 sm:px-7 text-sm sm:text-lg font-semibold text-gray-200 border-b-4 border-transparent hover:text-white hover:border-blue-400/60 hover:bg-gray-800/40 data-[state=active]:text-white data-[state=active]:font-bold data-[state=active]:border-blue-500 data-[state=active]:bg-gray-800/70 bg-transparent rounded-none transition-all duration-200"
                 >
-                  Concept Treatment
+                  Film Concept
                 </TabsTrigger>
                 <TabsTrigger 
                   value="treatment" 
@@ -126,7 +126,7 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
                   title={!isProjectCreated ? "Complete Project Idea first to unlock this tab" : ""}
                 >
                   {!isProjectCreated && <Lock className="w-4 h-4 mr-2 inline" />}
-                  Scene Outline
+                  Film Treatment
                 </TabsTrigger>
                 <TabsTrigger 
                   value="series-bible" 
