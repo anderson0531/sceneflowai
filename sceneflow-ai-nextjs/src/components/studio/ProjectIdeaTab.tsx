@@ -148,6 +148,7 @@ export default function ProjectIdeaTab() {
   const [showGuideCard, setShowGuideCard] = useState(false);
   const [showCollaborationSection, setShowCollaborationSection] = useState(false);
   const [apiDebug, setApiDebug] = useState<{ api?: string; provider?: string; model?: string; timestamp?: string } | null>(null);
+  const [refiningIdeaId, setRefiningIdeaId] = useState<string | null>(null);
 
   // Hide Cue CoPilot when Project Idea tab is active
   useEffect(() => {
@@ -164,13 +165,17 @@ export default function ProjectIdeaTab() {
       const improved = e?.detail?.improved as string;
       if (improved && typeof improved === 'string') {
         setProjectDescription(improved);
+        if (refiningIdeaId) {
+          setGeneratedIdeas(prev => prev.map(i => i.id === refiningIdeaId ? { ...i, synopsis: improved, logline: improved } : i));
+          setRefiningIdeaId(null);
+        }
       }
     };
     if (typeof window !== 'undefined') {
       window.addEventListener('flow.applyIdeaInput', handler as EventListener);
       return () => window.removeEventListener('flow.applyIdeaInput', handler as EventListener);
     }
-  }, []);
+  }, [refiningIdeaId]);
 
   const generateProjectIdeas = async () => {
     if (!projectDescription.trim()) {
@@ -1158,13 +1163,15 @@ export default function ProjectIdeaTab() {
   const handleAskFlowFromIdea = async (idea: ProjectIdea) => {
     const text = formatIdeaForFlow(idea);
     setProjectDescription(text);
+    setRefiningIdeaId(idea.id);
     try {
       setSidebarVisibility(true);
-      await invokeCue({
-        type: 'text',
-        content: `Please refine this concept into a single, stronger paragraph suitable for blueprint generation. Keep intent and audience, clarify hook, and strengthen tone.
-\n\nConcept:\n${text}`
-      });
+      const contextPayload = {
+        input: text,
+        existingIdeas: generatedIdeas.map(i => ({ id: i.id, title: i.title, synopsis: i.synopsis })),
+        expectation: 'Return an improved, copy-ready single input paragraph suitable for generating compelling project ideas/blueprints. Keep the creator intent but strengthen clarity, audience, tone, and hook.'
+      };
+      window.dispatchEvent(new CustomEvent('flow.optimizeIdea', { detail: contextPayload }));
     } catch {}
   };
 
