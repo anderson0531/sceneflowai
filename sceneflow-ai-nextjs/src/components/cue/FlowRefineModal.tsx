@@ -33,12 +33,26 @@ export function FlowRefineModal({ open, onOpenChange, seedText, onApply }: Props
         {
           role: 'user',
           content: [
-            'You will refine the CURRENT_DESCRIPTION below. Preserve factual details, names, locations, roles, genre/audience/tone fields, and the overall story world. Do NOT invent new settings or characters. Apply the INSTRUCTION to change style/tone only.',
+            'You will refine the CURRENT_DESCRIPTION below. Preserve factual details, names, locations, roles, and the overall story world. Do NOT invent new settings or characters. Apply the INSTRUCTION to improve clarity, tone, and specificity.',
             '',
             'CURRENT_DESCRIPTION:',
             seedText,
             '',
-            `INSTRUCTION: ${inst}`
+            `INSTRUCTION: ${inst}`,
+            '',
+            'REQUIREMENTS:',
+            '- Keep the original subject matter (Thai cuisine journey, chef name, locations, etc.).',
+            '- Use engaging, vivid language and active voice.',
+            '- Length: 120–200 words for the improved version.',
+            '- If metadata lines are present (Genre, Audience, Tone, Duration, Structure), repeat them exactly with any necessary tone tweaks after the refined paragraph(s).',
+            '',
+            'OUTPUT (STRICT):',
+            '<<<INPUT_DESCRIPTION>>>',
+            '{single paragraph faithfully summarizing CURRENT_DESCRIPTION}',
+            '<<<IMPROVED_IDEA>>>',
+            '{one or two paragraphs, 120–200 words, refined per INSTRUCTION, preserving names and context; then, on new lines, include any metadata lines (Genre, Audience, Tone, Duration, Structure) if they appeared in the input}',
+            '<<<GUIDANCE>>>',
+            'Provide 1–2 short follow‑up instructions the creator could try.'
           ].join('\n')
         }
       ]

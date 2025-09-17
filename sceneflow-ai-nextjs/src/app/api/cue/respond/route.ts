@@ -215,7 +215,7 @@ export async function POST(req: NextRequest) {
         '<<<INPUT_DESCRIPTION>>>',
         '{single paragraph capturing the current concept accurately}',
         '<<<IMPROVED_IDEA>>>',
-        '{single paragraph refined per the creator\'s latest instruction; if no instruction, repeat INPUT_DESCRIPTION; keep proper nouns/details from input}',
+        '{one or two paragraphs (120–200 words total) refined per the instruction; preserve proper nouns/details; include any metadata lines (Genre, Audience, Tone, Duration, Structure) if present in the source, placed after the refined paragraph(s)}',
         '<<<GUIDANCE>>>',
         'Suggest 1-2 short follow-up instructions the creator could try.',
         '',
