@@ -9,8 +9,7 @@ import { useCue } from "@/store/useCueStore";
 // Import Tab Components (placeholders for now)
 import ProjectIdeaTab from "@/components/studio/ProjectIdeaTab";
 import { TreatmentTab } from "@/components/studio/TreatmentTab";
-import { CharactersTab } from "@/components/studio/CharactersTab";
-import { BeatSheetTab } from "@/components/studio/BeatSheetTab";
+// Characters and Beat Sheet removed in favor of Outline
 import { SeriesBiblePanel } from "@/components/studio/SeriesBiblePanel";
 import { cn } from "@/lib/utils";
 import dynamic from 'next/dynamic';
@@ -23,7 +22,7 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
   const { toggleSidebar, invokeCue, isSidebarOpen } = useCue();
   const [isNewProject, setIsNewProject] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'project-idea' | 'treatment' | 'characters' | 'beat-sheet' | 'series-bible'>('project-idea');
+  const [activeTab, setActiveTab] = useState<'project-idea' | 'treatment' | 'series-bible'>('project-idea');
   
   // Check if project has been created (has content beyond basic initialization)
   const isProjectCreated = guide.filmTreatment && guide.filmTreatment.trim() !== '' && 
@@ -124,59 +123,33 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
           {/* The Tabs container needs to manage its own height/overflow */}
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="w-full h-full flex flex-col">
             <div className="border border-gray-700/50 bg-gray-900/50 rounded-t-lg">
-              <TabsList className="flex w-full bg-transparent m-0 p-0 h-auto overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700/60 scrollbar-track-transparent">
+              <TabsList className="flex w-full bg-gradient-to-r from-gray-900/60 to-gray-800/50 m-0 p-0 h-auto overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700/60 scrollbar-track-transparent">
                 <TabsTrigger 
                   value="project-idea" 
                   disabled={false}
-                  className="flex-shrink-0 h-16 px-4 sm:px-6 text-sm sm:text-lg font-semibold text-gray-200 border-b-4 border-transparent hover:text-white hover:border-gray-400 hover:bg-gray-800/50 data-[state=active]:text-white data-[state=active]:font-bold data-[state=active]:border-blue-500 data-[state=active]:bg-gray-800/80 bg-transparent rounded-none transition-all duration-200"
+                  className="flex-shrink-0 h-16 px-5 sm:px-7 text-sm sm:text-lg font-semibold text-gray-200 border-b-4 border-transparent hover:text-white hover:border-blue-400/60 hover:bg-gray-800/40 data-[state=active]:text-white data-[state=active]:font-bold data-[state=active]:border-blue-500 data-[state=active]:bg-gray-800/70 bg-transparent rounded-none transition-all duration-200"
                 >
-                  Project Concept
+                  Concept Treatment
                 </TabsTrigger>
                 <TabsTrigger 
                   value="treatment" 
                   disabled={!isProjectCreated}
-                  className={`flex-shrink-0 h-16 px-4 sm:px-6 text-sm sm:text-lg font-semibold border-b-4 border-transparent transition-all duration-200 ${
+                  className={`flex-shrink-0 h-16 px-5 sm:px-7 text-sm sm:text-lg font-semibold border-b-4 border-transparent transition-all duration-200 ${
                     isProjectCreated 
-                      ? 'text-gray-200 hover:text-white hover:border-gray-400 hover:bg-gray-800/50 data-[state=active]:text-white data-[state=active]:font-bold data-[state=active]:border-blue-500 data-[state=active]:bg-gray-800/80 bg-transparent rounded-none' 
+                      ? 'text-gray-200 hover:text-white hover:border-blue-400/60 hover:bg-gray-800/40 data-[state=active]:text-white data-[state=active]:font-bold data-[state=active]:border-blue-500 data-[state=active]:bg-gray-800/70 bg-transparent rounded-none' 
                       : 'text-gray-500 cursor-not-allowed opacity-50'
                   }`}
                   title={!isProjectCreated ? "Complete Project Idea first to unlock this tab" : ""}
                 >
                   {!isProjectCreated && <Lock className="w-4 h-4 mr-2 inline" />}
-                  Narrative/Script
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="characters" 
-                  disabled={!isProjectCreated}
-                  className={`flex-shrink-0 h-16 px-4 sm:px-6 text-sm sm:text-lg font-semibold border-b-4 border-transparent transition-all duration-200 ${
-                    isProjectCreated 
-                      ? 'text-gray-200 hover:text-white hover:border-gray-400 hover:bg-gray-800/50 data-[state=active]:text-white data-[state=active]:font-bold data-[state=active]:border-blue-500 data-[state=active]:bg-gray-800/80 bg-transparent rounded-none' 
-                      : 'text-gray-500 cursor-not-allowed opacity-50'
-                  }`}
-                  title={!isProjectCreated ? "Complete Project Idea first to unlock this tab" : ""}
-                >
-                  {!isProjectCreated && <Lock className="w-4 h-4 mr-2 inline" />}
-                  Character Breakdowns
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="beat-sheet" 
-                  disabled={!isProjectCreated}
-                  className={`flex-shrink-0 h-16 px-4 sm:px-6 text-sm sm:text-lg font-semibold border-b-4 border-transparent transition-all duration-200 ${
-                    isProjectCreated 
-                      ? 'text-gray-200 hover:text-white hover:border-gray-400 hover:bg-gray-800/50 data-[state=active]:text-white data-[state=active]:font-bold data-[state=active]:border-blue-500 data-[state=active]:bg-gray-800/80 bg-transparent rounded-none' 
-                      : 'text-gray-500 cursor-not-allowed opacity-50'
-                  }`}
-                  title={!isProjectCreated ? "Complete Project Idea first to unlock this tab" : ""}
-                >
-                  {!isProjectCreated && <Lock className="w-4 h-4 mr-2 inline" />}
-                  Interactive Beat Sheet
+                  Scene Outline
                 </TabsTrigger>
                 <TabsTrigger 
                   value="series-bible" 
                   disabled={!isProjectCreated}
-                  className={`flex-shrink-0 h-16 px-4 sm:px-6 text-sm sm:text-lg font-semibold border-b-4 border-transparent transition-all duration-200 ${
+                  className={`flex-shrink-0 h-16 px-5 sm:px-7 text-sm sm:text-lg font-semibold border-b-4 border-transparent transition-all duration-200 ${
                     isProjectCreated 
-                      ? 'text-gray-200 hover:text-white hover:border-gray-400 hover:bg-gray-800/50 data-[state=active]:text-white data-[state=active]:font-bold data-[state=active]:border-blue-500 data-[state=active]:bg-gray-800/80 bg-transparent rounded-none' 
+                      ? 'text-gray-200 hover:text-white hover:border-blue-400/60 hover:bg-gray-800/40 data-[state=active]:text-white data-[state=active]:font-bold data-[state=active]:border-blue-500 data-[state=active]:bg-gray-800/70 bg-transparent rounded-none' 
                       : 'text-gray-500 cursor-not-allowed opacity-50'
                   }`}
                   title={!isProjectCreated ? "Complete Project Idea first to unlock this tab" : ""}
@@ -191,8 +164,6 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
             <div className="flex-1 overflow-auto p-3 sm:p-6 pt-4">
                 <TabsContent value="project-idea"><ProjectIdeaTab /></TabsContent>
                 <TabsContent value="treatment"><TreatmentTab /></TabsContent>
-                <TabsContent value="characters"><CharactersTab /></TabsContent>
-                <TabsContent value="beat-sheet" className="h-full"><BeatSheetTab /></TabsContent>
                 <TabsContent value="series-bible"><SeriesBiblePanel /></TabsContent>
             </div>
           </Tabs>

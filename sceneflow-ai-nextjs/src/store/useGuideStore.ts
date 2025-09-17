@@ -34,6 +34,8 @@ interface GuideState {
   // Content updates
   updateTreatment: (newTreatment: string) => void;
   updateTreatmentDetails: (updates: Partial<FilmTreatmentDetails>) => void;
+  setScenesOutline: (scenes: any[]) => void;
+  setFullScriptText: (text: string | null) => void;
   updateCharacter: (updatedCharacter: CharacterProfile) => void;
   // This function handles both reordering and moving beats between Acts
   updateBeats: (newBeats: Beat[]) => void;
@@ -91,6 +93,12 @@ export const useGuideStore = create<GuideState>((set) => ({
   })),
   updateTreatmentDetails: (updates) => set((state) => ({
     guide: { ...state.guide, treatmentDetails: { ...(state.guide.treatmentDetails || {} as any), ...updates } }
+  })),
+  setScenesOutline: (scenes) => set((state) => ({
+    guide: { ...state.guide, scenesOutline: scenes }
+  })),
+  setFullScriptText: (text) => set((state) => ({
+    guide: { ...state.guide, fullScriptText: text }
   })),
   updateCharacter: (updatedCharacter) => set((state) => ({
     guide: {

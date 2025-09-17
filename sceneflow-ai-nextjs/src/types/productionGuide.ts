@@ -93,4 +93,7 @@ export interface ProductionGuide {
   viewMode?: ViewMode; // Current visualization mode
   boneyard?: BoneyardItem[]; // Unused beats and alternative ideas
   boneyardCollapsed?: boolean; // Whether boneyard sidebar is collapsed
+  // New outline/script fields
+  scenesOutline?: any[];
+  fullScriptText?: string | null;
 }

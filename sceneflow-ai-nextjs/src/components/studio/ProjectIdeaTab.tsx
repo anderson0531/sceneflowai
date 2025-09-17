@@ -1710,11 +1710,19 @@ export default function ProjectIdeaTab() {
                         {idea.title}
                       </h3>
                       <button
-                        onClick={(e) => { e.preventDefault(); handleCreateProject(idea); }}
+                        onClick={async (e) => { 
+                          e.preventDefault(); 
+                          await handleCreateProject(idea);
+                          // After creation, auto-generate outline and navigate to Outline tab
+                          try {
+                            const ev = new CustomEvent('studio.goto.treatment');
+                            window.dispatchEvent(ev);
+                          } catch {}
+                        }}
                         className="px-5 py-2.5 rounded-md text-base font-semibold transition-colors bg-blue-600 hover:bg-blue-700 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
                         title="Create project from this idea"
                       >
-                        Create Project
+                        Create Outline
                       </button>
         </div>
                     <button
