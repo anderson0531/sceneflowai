@@ -1145,6 +1145,29 @@ export default function ProjectIdeaTab() {
     setSelectedIdea(idea);
   };
 
+  const formatIdeaForFlow = (idea: ProjectIdea): string => {
+    const genre = idea?.details?.genre ? `Genre: ${idea.details.genre}.` : '';
+    const duration = idea?.details?.duration ? `Duration: ${idea.details.duration}.` : '';
+    const audience = idea?.details?.targetAudience ? `Audience: ${idea.details.targetAudience}.` : '';
+    const tone = idea?.details?.tone ? `Tone: ${idea.details.tone}.` : '';
+    const structure = idea?.narrative_structure ? `Structure: ${idea.narrative_structure}.` : '';
+    const synopsis = idea.synopsis || idea.logline || '';
+    return `${idea.title} — ${synopsis} ${genre} ${audience} ${tone} ${duration} ${structure}`.replace(/\s+/g, ' ').trim();
+  };
+
+  const handleAskFlowFromIdea = async (idea: ProjectIdea) => {
+    const text = formatIdeaForFlow(idea);
+    setProjectDescription(text);
+    try {
+      setSidebarVisibility(true);
+      await invokeCue({
+        type: 'text',
+        content: `Please refine this concept into a single, stronger paragraph suitable for blueprint generation. Keep intent and audience, clarify hook, and strengthen tone.
+\n\nConcept:\n${text}`
+      });
+    } catch {}
+  };
+
   const toggleCardExpansion = (ideaId: string) => {
     const newExpandedCards = new Set(expandedCards);
     if (newExpandedCards.has(ideaId)) {
@@ -1686,36 +1709,40 @@ export default function ProjectIdeaTab() {
                 }`}
               >
                 <CardContent className="p-8">
-                  {/* Header with Title, Selection, and Expand/Collapse */}
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-6">
-                      <h3 className="text-2xl font-semibold text-white flex items-center">
-                        <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-500/80 ring-4 ring-blue-500/10 mr-3" />
-                        {idea.title}
-                      </h3>
+                  {/* Row 1: Actions */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <Button
+                        onClick={() => handleAskFlowFromIdea(idea)}
+                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 text-sm font-medium"
+                      >
+                        Ask Flow
+                      </Button>
                       <button
                         onClick={async (e) => { 
                           e.preventDefault(); 
                           await handleCreateProject(idea);
-                          // After creation, auto-generate outline and navigate to Outline tab
-                          try {
-                            const ev = new CustomEvent('studio.goto.treatment');
-                            window.dispatchEvent(ev);
-                          } catch {}
+                          try { window.dispatchEvent(new CustomEvent('studio.goto.treatment')); } catch {}
                         }}
-                        className="px-5 py-2.5 rounded-md text-base font-semibold transition-colors bg-blue-600 hover:bg-blue-700 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
-                        title="Create project from this idea"
+                        className="px-4 py-2 rounded-md text-sm font-semibold transition-colors bg-blue-600 hover:bg-blue-700 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
+                        title="Create outline from this concept"
                       >
                         Create Outline
                       </button>
-        </div>
+                    </div>
                     <button
                       onClick={() => toggleCardExpansion(idea.id)}
-                      className="text-gray-300 hover:text-white text-base font-medium transition-colors px-3 py-1 rounded-md hover:bg-gray-700/40"
+                      className="text-gray-300 hover:text-white text-sm font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-700/40"
                     >
                       {expandedCards.has(idea.id) ? 'Hide Details' : 'Show Details'}
                     </button>
                   </div>
+
+                  {/* Row 2: Title */}
+                  <h3 className="text-2xl font-semibold text-white flex items-center mb-4">
+                    <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-500/80 ring-4 ring-blue-500/10 mr-3" />
+                    {idea.title}
+                  </h3>
                   
                   {/* Always visible summary */}
                   <p className="text-gray-300 text-lg mb-6 leading-relaxed">{idea.synopsis || idea.logline}</p>
