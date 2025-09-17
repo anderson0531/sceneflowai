@@ -273,13 +273,13 @@ export function CueSidebar({ className }: CueSidebarProps) {
         '3) If no instruction has been given yet, invite the creator to provide one (e.g., "Make the story more inspirational"), but still return the baseline INPUT_DESCRIPTION now.',
         '',
         'FORMATTING (STRICT):',
-        'Return ONLY these blocks in order:
-<<<INPUT_DESCRIPTION>>>
-{single paragraph}
-<<<IMPROVED_IDEA>>>
-{single paragraph (refined if instruction present, otherwise same as INPUT_DESCRIPTION)}
-<<<GUIDANCE>>>
-Suggest 1‑2 example refinement prompts the creator could try.',
+        'Return ONLY these blocks in order:',
+        '<<<INPUT_DESCRIPTION>>>',
+        '{single paragraph}',
+        '<<<IMPROVED_IDEA>>>',
+        '{single paragraph (refined if instruction present, otherwise same as INPUT_DESCRIPTION)}',
+        '<<<GUIDANCE>>>',
+        'Suggest 1-2 example refinement prompts the creator could try.',
         '',
         'CONSTRAINTS:',
         '- Preserve creator intent; strengthen clarity, hook, tone, and audience resonance.',
