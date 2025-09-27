@@ -113,7 +113,7 @@ export function HeroSection() {
           >
             <Button
               size="lg"
-              onClick={() => { trackCta({ event: 'click', label: 'start-trial', location: 'hero' }); window.location.href = '/?signup=1' }}
+              onClick={() => { /*trackCta({ event: 'click', label: 'start-trial', location: 'hero' });*/ window.location.href = '/?signup=1' }}
               className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
             >
               Start 7-Day Trial — $5
@@ -125,7 +125,7 @@ export function HeroSection() {
               size="lg"
               className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white px-8 py-4 text-lg font-semibold transition-all duration-200"
               onClick={() => {
-                trackCta({ event: 'click', label: 'watch-demo', location: 'hero' })
+                // trackCta({ event: 'click', label: 'watch-demo', location: 'hero' })
                 setIsDemoOpen(true)
               }}
             >

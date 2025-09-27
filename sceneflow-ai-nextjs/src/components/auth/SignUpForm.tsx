@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { signIn } from 'next-auth/react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock, User, CheckCircle } from 'lucide-react'
-import { useAuth } from '@/contexts/AuthContext'
 
 interface SignUpFormProps {
   onSuccess: () => void
@@ -13,13 +13,11 @@ interface SignUpFormProps {
 }
 
 export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
-  const { signup } = useAuth()
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: '',
-    userType: 'creator'
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -27,7 +25,7 @@ export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
   const [error, setError] = useState('')
   const [termsAccepted, setTermsAccepted] = useState(false)
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
@@ -39,43 +37,54 @@ export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
     setIsLoading(true)
     setError('')
 
-    // Validation
-    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
-      setError('Please fill in all required fields')
-      setIsLoading(false)
-      return
-    }
-
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match')
-      setIsLoading(false)
-      return
+      setError('Passwords do not match');
+      setIsLoading(false);
+      return;
     }
-
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long')
-      setIsLoading(false)
-      return
-    }
-
+    
     if (!termsAccepted) {
-      setError('Please accept the terms and conditions')
-      setIsLoading(false)
-      return
+        setError('You must accept the terms and conditions');
+        setIsLoading(false);
+        return;
     }
 
     try {
-      // Use the AuthContext signup method
-      const success = await signup(formData.name, formData.email, formData.password)
-      
-      if (success) {
-        onSuccess()
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json();
+        setError(body.error || 'Something went wrong');
+        setIsLoading(false);
+        return;
+      }
+
+      const signInResult = await signIn('credentials', {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
+      });
+
+      if (signInResult?.error) {
+        setError('Login failed after registration.');
+        setIsLoading(false);
+      } else {
+        onSuccess();
       }
     } catch (err) {
       console.error('Registration error:', err)
       const message = err instanceof Error ? err.message : 'Sign up failed. Please try again.'
       setError(message)
-    } finally {
       setIsLoading(false)
     }
   }
@@ -101,18 +110,18 @@ export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
           )}
 
           <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium text-gray-300">
-              Full Name
+            <label htmlFor="username" className="text-sm font-medium text-gray-300">
+              Username
             </label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
-                id="name"
-                name="name"
+                id="username"
+                name="username"
                 type="text"
-                value={formData.name}
+                value={formData.username}
                 onChange={handleChange}
-                placeholder="Enter your full name"
+                placeholder="Choose a username"
                 className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500"
                 required
               />
@@ -136,23 +145,6 @@ export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
                 required
               />
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="userType" className="text-sm font-medium text-gray-300">
-              Account Type
-            </label>
-            <select
-              name="userType"
-              value={formData.userType}
-              onChange={handleChange}
-              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:border-blue-500 focus:outline-none transition-colors"
-            >
-              <option value="creator">Content Creator</option>
-              <option value="marketing">Marketing Professional</option>
-              <option value="educator">Educator/Trainer</option>
-              <option value="business">Business Owner</option>
-            </select>
           </div>
 
           <div className="space-y-2">

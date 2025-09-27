@@ -368,7 +368,7 @@ export function InteractiveStoryboard({
     setIsGeneratingImages(prev => new Set(prev).add(scene.id))
     
     try {
-      const response = await fetch('/api/thumbnails/generate', {
+      const response = await fetch('/api/thumbnails/generate?byok=1', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -142,9 +142,15 @@ if (connectionEnvName === 'DB_DATABASE_URL') {
 }
 
 // Provide sanitized connection info for diagnostics
-const parsed = new URL(CONN)
-const selectedConnectionHost = parsed.hostname
-const selectedConnectionIsPooled = /pooler|prisma/i.test(parsed.hostname)
+let selectedConnectionHost = 'unknown'
+let selectedConnectionIsPooled = false
+try {
+  if (CONN) {
+    const parsed = new URL(CONN)
+    selectedConnectionHost = parsed.hostname
+    selectedConnectionIsPooled = /pooler|prisma/i.test(parsed.hostname)
+  }
+} catch {}
 
 // Test database connection
 export const testConnection = async (): Promise<void> => {

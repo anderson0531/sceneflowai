@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { signIn } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
-import { useAuth } from '@/contexts/AuthContext'
 
 interface LoginFormProps {
   onSuccess: () => void
@@ -13,7 +14,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProps) {
-  const { login } = useAuth()
+  const router = useRouter();
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -26,17 +27,22 @@ export function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProps) {
     setError('')
 
     try {
-      // Use the AuthContext login method
-      const success = await login(email, password)
-      
-      if (success) {
-        onSuccess()
+      const result = await signIn('credentials', {
+        redirect: false,
+        email,
+        password,
+      });
+
+      if (result?.error) {
+        setError('Invalid email or password');
+        setIsLoading(false);
+      } else {
+        onSuccess();
       }
     } catch (err) {
       console.error('Login error:', err)
       const message = err instanceof Error ? err.message : 'Login failed. Please check your credentials.'
       setError(message)
-    } finally {
       setIsLoading(false)
     }
   }

@@ -1,4 +1,4 @@
-import { WorkflowNavigator } from '@/components/workflow/WorkflowNavigator'
+import { WorkflowTabs } from '@/components/workflow/WorkflowTabs'
 
 export default function WorkflowLayout({
   children,
@@ -7,7 +7,7 @@ export default function WorkflowLayout({
 }) {
   return (
     <>
-      <WorkflowNavigator />
+      <WorkflowTabs />
       {children}
     </>
   )

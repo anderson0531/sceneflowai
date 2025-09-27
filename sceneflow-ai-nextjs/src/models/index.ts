@@ -1,5 +1,8 @@
 import { sequelize } from '../config/database'
 import User from './User'
+import AIPricing from './AIPricing'
+import CreditLedger from './CreditLedger'
+import AIUsage from './AIUsage'
 import Project from './Project'
 import UserProviderConfig from './UserProviderConfig'
 import APIUsageLog from './APIUsageLog'
@@ -65,6 +68,9 @@ export {
   PromptTemplate,
   FeatureUpdate,
   APIUsageLog,
+  AIPricing,
+  CreditLedger,
+  AIUsage,
 }
 
 // Export default for convenience
@@ -77,4 +83,7 @@ export default {
   PromptTemplate,
   FeatureUpdate,
   APIUsageLog,
+  AIPricing,
+  CreditLedger,
+  AIUsage,
 }

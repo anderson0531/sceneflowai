@@ -3,10 +3,11 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 
 import { StoreProvider } from '@/components/providers/StoreProvider'
-import { AuthProvider } from '@/contexts/AuthContext'
 import { GlobalSidebar } from '@/components/layout/GlobalSidebar'
+import AuthSessionProvider from '@/components/providers/AuthSessionProvider'
 import InstallPrompt from '@/components/pwa/InstallPrompt'
 import { ConditionalLayout } from '@/components/layout/ConditionalLayout'
+import { GlobalHeader } from '@/components/layout/GlobalHeader'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -30,6 +31,9 @@ export const viewport: Viewport = {
   maximumScale: 1,
   themeColor: '#00BFA5',
 }
+
+// Disable static prerender across the app to avoid build-time evaluation of dynamic code
+export const dynamic = 'force-dynamic'
 
 export default function RootLayout({
   children,
@@ -67,10 +71,12 @@ export default function RootLayout({
         <meta property="og:image" content="/favicon.ico" />
       </head>
       <body className={`${inter.className} bg-base text-sf-text-secondary`}>
-        <ConditionalLayout>
-          {children}
-        </ConditionalLayout>
-        <InstallPrompt />
+        {/* SessionProvider typed wrapper */}
+        <AuthSessionProvider children={undefined}>
+          <GlobalHeader />
+          <ConditionalLayout children={children} />
+          <InstallPrompt />
+        </AuthSessionProvider>
       </body>
     </html>
   )

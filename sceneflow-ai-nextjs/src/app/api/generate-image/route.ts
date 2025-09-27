@@ -32,7 +32,13 @@ export async function POST(req: NextRequest) {
       const startedAt = Date.now();
       const traceId = `img-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       // Create a compelling image prompt for the film billboard
-      const enhancedPrompt = `Create a cinematic billboard image for a film with the following requirements: ${prompt}
+      const sanitize = (p: string) => p
+        .replace(/\b(16\s*[:x]\s*9|9\s*[:x]\s*16)\b/gi, '')
+        .replace(/\b(1024|1536|1792)\s*x\s*(1024|1536|1792)\b/gi, '')
+        .replace(/aspect\s*ratio\s*:?\s*[^\n]+/gi, '')
+        .replace(/resolution\s*:?\s*[^\n]+/gi, '')
+        .trim();
+      const enhancedPrompt = `Create a cinematic billboard image for a film with the following requirements: ${sanitize(prompt)}
       
       Style: Professional film poster, cinematic lighting, high contrast, suitable for billboard display
       Quality: High-resolution, professional photography, visually striking
@@ -55,8 +61,9 @@ export async function POST(req: NextRequest) {
           body: JSON.stringify({
             model: 'gpt-image-1',
             prompt: enhancedPrompt,
-            size: (typeof options?.aspectRatio === 'string' && options.aspectRatio.includes('16:9')) ? '1792x1024' : '1024x1024',
-            quality: 'hd',
+            // Provider-compatible automatic sizing
+            size: 'auto',
+            quality: 'high',
             n: 1
           })
         })
@@ -279,9 +286,9 @@ export async function POST(req: NextRequest) {
               body: JSON.stringify({
                 model: 'gpt-image-1',
                 prompt: enhancedPrompt,
-                // Use 1024x1024 to keep response under platform payload limits
-                size: '1024x1024',
-                quality: 'hd',
+                // Provider-compatible automatic sizing
+                size: 'auto',
+                quality: 'high',
                 n: 1
               })
             })
@@ -333,7 +340,7 @@ export async function POST(req: NextRequest) {
             const openaiResp = await fetch('https://api.openai.com/v1/images/generations', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
-              body: JSON.stringify({ model: 'gpt-image-1', prompt: enhancedPrompt, size: '1024x1024', quality: 'hd', n: 1 })
+              body: JSON.stringify({ model: 'gpt-image-1', prompt: enhancedPrompt, size: 'auto', quality: 'high', n: 1 })
             })
             if (openaiResp.ok) {
               const oj = await openaiResp.json()

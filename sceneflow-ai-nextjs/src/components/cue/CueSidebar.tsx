@@ -94,16 +94,27 @@ export function CueSidebar({ className }: CueSidebarProps) {
 
   // Update welcome message only when context actually changes
   useEffect(() => {
-    // Skip the initial render to prevent duplicate messages
+    // On very first mount, process immediately if an autoSend context is present
     if (!hasInitialized) {
       setHasInitialized(true);
       if (activeContext) {
-        setLastContextId(activeContext.id || null);
+        // If autoSend, do not early-return; continue to processing below
+        if (!activeContext.payload?.autoSend) {
+          setLastContextId(activeContext.id || null);
+          return;
+        }
+      } else {
+        return;
       }
-      return;
     }
 
-    if (activeContext && activeContext.id !== lastContextId) {
+    if (activeContext && (activeContext.id !== lastContextId || activeContext.payload?.autoSend)) {
+      // If context payload requests an auto-send, push it as the user's message immediately
+      if (activeContext.payload?.autoSend && activeContext.payload?.initialMessage) {
+        // Trigger the send pipeline directly; UI will show it streaming
+        setTimeout(() => { (async () => { await handleSendMessage(activeContext.payload.initialMessage); })(); }, 0);
+      }
+
       // Add a visual separator for new chat threads
       const separatorMessage: Message = {
         id: `separator-${Date.now()}`,
@@ -127,18 +138,19 @@ export function CueSidebar({ className }: CueSidebarProps) {
     }
   }, [activeContext, lastContextId, hasInitialized]);
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
+  const handleSendMessage = async (forcedContent?: string) => {
+    const contentToSend = typeof forcedContent === 'string' ? forcedContent : inputValue.trim();
+    if (!contentToSend || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: inputValue.trim(),
+      content: contentToSend,
       timestamp: new Date(),
     };
 
     setMessages(prev => [...prev, userMessage]);
-    setInputValue('');
+    if (!forcedContent) setInputValue('');
     setIsLoading(true);
 
     // Create assistant message for streaming

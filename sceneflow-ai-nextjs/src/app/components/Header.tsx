@@ -6,14 +6,16 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { Menu, X, User, LogOut } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useSession, signOut } from 'next-auth/react'
 import { AuthModal } from '@/components/auth/AuthModal'
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
-  const { user, isAuthenticated, logout } = useAuth()
+  const { data: session } = useSession()
+  const isAuthenticated = !!session?.user
+  const user = session?.user
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId)
@@ -41,7 +43,7 @@ export function Header() {
   }
 
   const handleLogout = () => {
-    logout()
+    signOut()
     setIsMobileMenuOpen(false)
   }
 
@@ -137,7 +139,7 @@ export function Header() {
                     Sign In
                   </Button>
                   <Button 
-                    onClick={() => { trackCta({ event: 'click', label: 'start-trial', location: 'header' }); openAuthModal('signup') }}
+                    onClick={() => { /*trackCta({ event: 'click', label: 'start-trial', location: 'header' });*/ openAuthModal('signup') }}
                     className="bg-sf-primary hover:bg-sf-accent text-sf-background shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 px-4 py-2 text-sm font-medium"
                   >
                     Start 7-Day Trial — $5
@@ -222,13 +224,13 @@ export function Header() {
                       <>
                         <Button 
                           variant="outline" 
-                          onClick={() => { trackCta({ event: 'click', label: 'sign-in', location: 'mobile-menu' }); openAuthModal('login') }}
+                          onClick={() => { /*trackCta({ event: 'click', label: 'sign-in', location: 'mobile-menu' });*/ openAuthModal('login') }}
                           className="w-full px-4 bg-gray-800/50 hover:bg-gray-700/50 border-sf-primary text-sf-primary hover:bg-sf-primary hover:text-sf-background py-3 text-base font-medium"
                         >
                           Sign In
                         </Button>
                         <Button 
-                          onClick={() => { trackCta({ event: 'click', label: 'start-trial', location: 'mobile-menu' }); openAuthModal('signup') }} 
+                          onClick={() => { /*trackCta({ event: 'click', label: 'start-trial', location: 'mobile-menu' });*/ openAuthModal('signup') }} 
                           className="w-full px-4 bg-sf-primary hover:bg-sf-accent text-sf-background py-3 text-base font-medium"
                         >
                           Start 7-Day Trial — $5

@@ -5,14 +5,31 @@ import Project from '@/models/Project'
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+    if (id) {
+      const p: any = await Project.findByPk(id)
+      if (!p) return NextResponse.json({ success: false, error: 'Project not found' }, { status: 404 })
+      const project = {
+        id: p.id,
+        title: p.title,
+        description: p.description || '',
+        currentStep: (p.current_step as any) || 'ideation',
+        progress: (typeof (p.step_progress as any)?.overall === 'number' ? (p.step_progress as any).overall : 0) || 0,
+        status: (p.status as any) || 'draft',
+        createdAt: p.created_at,
+        updatedAt: p.updated_at,
+        completedSteps: Object.entries((p.step_progress as any) || {}).filter(([_, v]) => (v as number) === 100).map(([k]) => k),
+        metadata: p.metadata || {}
+      }
+      return NextResponse.json({ success: true, project })
+    }
+
     const userId = searchParams.get('userId') || request.headers.get('x-user-id') || undefined
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Missing userId' }, { status: 401 })
     }
 
-    const where: any = {}
-    if (userId) where.user_id = userId
-
+    const where: any = { user_id: userId }
     const page = Math.max(1, Number(searchParams.get('page') || '1'))
     const pageSize = Math.min(50, Math.max(1, Number(searchParams.get('pageSize') || '20')))
     const offset = (page - 1) * pageSize
@@ -24,7 +41,7 @@ export async function GET(request: NextRequest) {
       offset
     })
 
-    const projects = rows.map((p) => ({
+    const projects = rows.map((p: any) => ({
       id: p.id,
       title: p.title,
       description: p.description || '',
@@ -76,4 +93,30 @@ export async function POST(request: NextRequest) {
   }
 }
 
+
+// PUT /api/projects
+// Body: { id: string, metadata?: any, title?, description?, status?, currentStep?, step_progress? }
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { id, metadata, title, description, status, currentStep, step_progress } = body || {}
+    if (!id) return NextResponse.json({ success: false, error: 'id is required' }, { status: 400 })
+
+    const updateData: any = {}
+    if (typeof title === 'string') updateData.title = title
+    if (typeof description === 'string') updateData.description = description
+    if (metadata !== undefined) updateData.metadata = metadata
+    if (status) updateData.status = status
+    if (currentStep) updateData.current_step = currentStep
+    if (step_progress) updateData.step_progress = step_progress
+
+    const [count] = await Project.update(updateData, { where: { id } })
+    if (count === 0) return NextResponse.json({ success: false, error: 'Project not found or no changes' }, { status: 404 })
+    const updated: any = await Project.findByPk(id)
+    return NextResponse.json({ success: true, project: updated })
+  } catch (error) {
+    console.error('PUT /api/projects failed:', error)
+    return NextResponse.json({ success: false, error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 })
+  }
+}
 

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" fill="none">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b1020"/>
+      <stop offset="100%" stop-color="#141a2a"/>
+    </linearGradient>
+    <radialGradient id="stars" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#6ee7ff" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#6ee7ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="675" fill="url(#g)"/>
+  <circle cx="600" cy="250" r="320" fill="url(#stars)"/>
+  <g opacity="0.25" fill="#9ca3af">
+    <polygon points="600,140 760,232 760,418 600,510 440,418 440,232" fill="#cbd5e1" fill-opacity="0.12"/>
+    <polygon points="600,168 734,244 734,406 600,482 466,406 466,244" fill="#93c5fd" fill-opacity="0.08"/>
+  </g>
+  <rect x="72" y="560" width="1056" height="44" rx="10" ry="10" fill="#111827" stroke="#1f2937"/>
+  <text x="600" y="588" font-family="Inter, system-ui, -apple-system, Segoe UI" font-size="18" text-anchor="middle" fill="#9ca3af">Atmospheric Preview</text>
+</svg>
+
+

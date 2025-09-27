@@ -7,13 +7,17 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-sf-primary text-white hover:bg-sf-primary/90",
+        // Back-compat: default maps to secondary for safer emphasis
+        default: "bg-sf-surface-dark text-sf-text-primary hover:bg-sf-surface",
+        // New design language
+        primary: "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-900/20 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-sf-border bg-background hover:bg-sf-surface-dark hover:text-sf-text-primary",
-        secondary: "bg-sf-surface-dark text-sf-text-primary hover:bg-sf-surface hover:text-sf-text-primary",
-        ghost: "hover:bg-sf-surface-dark hover:text-sf-text-primary",
+        // Secondary can be solid dark or subtle outline depending on theme
+        secondary: "bg-sf-surface-dark text-sf-text-primary border border-sf-border hover:bg-sf-surface",
+        outline: "border border-sf-border bg-transparent text-sf-text-primary hover:bg-sf-surface-dark",
+        // Tertiary/Ghost
+        ghost: "bg-transparent text-sf-text-secondary hover:text-sf-text-primary hover:bg-sf-surface-dark/60",
         link: "text-sf-primary underline-offset-4 hover:underline",
-        primary: "bg-sf-primary text-white hover:bg-sf-primary/90",
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -23,7 +27,7 @@ const buttonVariants = cva(
       },
     },
     defaultVariants: {
-      variant: "default",
+      variant: "secondary",
       size: "default",
     },
   }

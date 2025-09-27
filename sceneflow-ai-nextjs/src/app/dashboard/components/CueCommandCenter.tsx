@@ -4,12 +4,10 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Lightbulb, CreditCard, MessageSquare, Send } from 'lucide-react'
-import ClapperIcon from '@/components/icons/ClapperIcon'
-import { useAuth } from '@/contexts/AuthContext'
+import { Lightbulb, CreditCard, MessageSquare, Send, Clapperboard } from 'lucide-react'
 
 export default function CueCommandCenter() {
-  const { user } = useAuth()
+  const [userName, setUserName] = useState<string>('Friend')
   const [userInput, setUserInput] = useState('')
   const [insight, setInsight] = useState('Based on your recent activity, I notice you\'ve been working on video projects. Would you like me to help you optimize your workflow or suggest some creative ideas for your next project?')
   const [suggestions] = useState([
@@ -91,6 +89,13 @@ export default function CueCommandCenter() {
     }
   }
 
+  useEffect(() => {
+    try {
+      const stored = typeof window !== 'undefined' ? localStorage.getItem('authUserName') : null
+      if (stored && stored.trim()) setUserName(stored.split(' ')[0])
+    } catch {}
+  }, [])
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -111,12 +116,11 @@ export default function CueCommandCenter() {
         <div className="relative z-10 flex flex-col items-center text-center">
           <div className="flex items-center gap-6 mb-2">
             <div className="w-64 h-64 md:w-80 md:h-80 flex items-center justify-center">
-              {/* Professional Scene Clapperboard Icon */}
-              <ClapperIcon className="w-120 h-120 md:w-144 md:h-144 text-gray-100 transition duration-300 ease-in-out hover:scale-110" />
+              <Clapperboard size={192} />
             </div>
             <div>
               <h1 className="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-gray-200 to-white tracking-tight">
-                Welcome back, {(user?.first_name || user?.name?.split(' ')[0] || 'Friend')}
+                Welcome back, {userName}
               </h1>
               <p className="text-gray-300 text-2xl md:text-3xl mt-3 font-medium">Your AI-powered creative expert production studio</p>
             </div>
@@ -127,8 +131,8 @@ export default function CueCommandCenter() {
                      {/* Cue's Insight (Proactive Context) */}
                <div className="p-6 md:p-8 border-b border-gray-700/50">
         <div className="flex items-start gap-4 mb-6">
-          <div className="w-12 h-12 bg-indigo-600/20 rounded-xl flex items-center justify-center flex-shrink-0">
-            <Lightbulb className="w-6 h-6 text-indigo-400" />
+            <div className="w-12 h-12 bg-indigo-600/20 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Lightbulb size={24} />
           </div>
           <div className="flex-1">
             <h2 className="text-xl font-semibold text-white mb-2">✨ Cue's Insight</h2>
@@ -142,7 +146,7 @@ export default function CueCommandCenter() {
                  <div className="mb-8">
                    <div className="flex items-center gap-3 mb-4">
                      <span className="text-gray-300 text-base font-medium">Recommended Actions:</span>
-                     <CreditCard className="w-5 h-5 text-indigo-400" />
+                           <CreditCard size={20} />
                    </div>
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      {suggestions.slice(0, 2).map((suggestion, index) => (
@@ -184,7 +188,7 @@ export default function CueCommandCenter() {
                        size="sm"
                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 flex-shrink-0"
                      >
-                       <MessageSquare className="w-4 h-4" />
+                      <MessageSquare size={16} />
                        Ask Cue
                      </Button>
                    </div>

@@ -40,6 +40,8 @@ interface TemplatePerformance {
   isDeprecated: boolean;
 }
 
+export const dynamic = 'force-dynamic'
+
 export default function AnalyticsPage() {
   const [analytics, setAnalytics] = useState<DOLAnalytics | null>(null);
   const [platformPerformance, setPlatformPerformance] = useState<PlatformPerformance[]>([]);

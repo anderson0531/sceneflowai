@@ -2,117 +2,78 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 
 export function FAQ() {
-  const [openIndex, setOpenIndex] = useState<number | null>(null)
+  // const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
-  const faqs = [
-    {
-      question: "What is the BYOK (Bring Your Own Key) model?",
-      answer: "BYOK means you provide your own Google Gemini API key for AI generation. This gives you direct control over your AI costs and ensures you're only paying for what you use. SceneFlow AI provides the workflow tools and platform access."
-    },
-    {
-      question: "What happens if I don't provide my own API key?",
-      answer: "You can still access all SceneFlow AI workflow tools, storyboarding, and project management features. However, you'll need a Gemini API key to generate actual video content and AI-powered assets."
-    },
-    {
-      question: "How do Project Credits work?",
-      answer: "Credits are consumed when you use AI generation features like creating storyboards, scene directions, or video clips. Each action costs a certain number of credits based on complexity. Your subscription provides a monthly credit allowance."
-    },
-    {
-      question: "What AI models do you use?",
-      answer: "We use Google's Gemini models for text analysis, image generation, and video creation. These are state-of-the-art multimodal AI models that provide professional-quality outputs for creative projects."
-    },
-    {
-      question: "Can I cancel my subscription at any time?",
-      answer: "Yes, you can cancel your subscription at any time. Your access continues until the end of your current billing period. No long-term contracts or cancellation fees."
-    },
-    {
-      question: "Do I need video editing experience?",
-      answer: "No! SceneFlow AI is designed for creators of all skill levels. Our AI workflow tools guide you through the entire process, from ideation to final output. You can focus on your creative vision while AI handles the technical complexity."
-    },
-    {
-      question: "Can I use my own assets and branding?",
-      answer: "Absolutely! You can upload your own images, logos, and brand elements. SceneFlow AI will incorporate these into your generated content, ensuring your projects maintain your unique brand identity."
-    },
-    {
-      question: "Why does the trial cost $5?",
-      answer: "Our $5 trial fee covers the operational costs of providing professional-grade AI visualization tools. This small investment ensures dedicated, high-speed access for serious creators and helps us maintain the quality of service you deserve. Think of it as the price of a latte for access to premium creative tools."
-    }
-  ]
-
-  const toggleFAQ = (index: number) => {
-    setOpenIndex(openIndex === index ? null : index)
-  }
+  // const faqs = [
+  //   {
+  //     question: 'What is SceneFlow AI?',
+  //     answer:
+  //       'SceneFlow AI is a comprehensive video creation platform that uses AI to help you go from idea to finished video in a fraction of the time. It includes tools for scripting, storyboarding, video generation, and more.',
+  //   },
+  //   {
+  //     question: 'Who is SceneFlow AI for?',
+  //     answer:
+  //       'SceneFlow AI is for anyone who wants to create professional videos quickly and easily. This includes content creators, marketers, educators, and businesses of all sizes.',
+  //   },
+  //   {
+  //     question: 'How much does SceneFlow AI cost?',
+  //     answer:
+  //       'SceneFlow AI offers a variety of pricing plans to fit your needs. We have a free plan with limited features, as well as paid plans with more advanced features and higher usage limits. You can find more details on our pricing page.',
+  //   },
+  //   {
+  //     question: 'What kind of videos can I create?',
+  //     answer:
+  //       'You can create a wide variety of videos with SceneFlow AI, including marketing videos, educational videos, social media videos, and more. Our AI tools are designed to be flexible and adaptable to your creative vision.',
+  //   },
+  // ]
 
   return (
-    <section id="faq" className="py-24 bg-gray-950">
+    <section id="faq" className="py-24 bg-gray-900">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <h2 className="text-5xl font-bold mb-6">Frequently Asked Questions</h2>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            Get answers to common questions about SceneFlow AI and our complete 6-step video production workflow.
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-bold">Frequently Asked Questions</h2>
+          <p className="text-lg text-gray-400 mt-4">
+            Have a question? We've got answers.
           </p>
-        </motion.div>
+        </div>
 
-        <div className="space-y-4">
+        {/* <div className="space-y-6">
           {faqs.map((faq, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden"
+              transition={{ duration: 0.5, delay: 0.1 * index }}
+              className="bg-gray-800/50 p-6 rounded-2xl border border-gray-700/50"
             >
               <button
-                onClick={() => toggleFAQ(index)}
-                className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-800/50 transition-colors duration-200"
+                onClick={() => setActiveIndex(activeIndex === index ? null : index)}
+                className="w-full text-left flex justify-between items-center"
               >
-                <span className="text-lg font-medium text-white">{faq.question}</span>
-                {openIndex === index ? (
-                  <ChevronUp className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                )}
+                <h3 className="text-xl font-semibold">{faq.question}</h3>
+                <ChevronDown
+                  className={`w-6 h-6 transition-transform ${
+                    activeIndex === index ? 'transform rotate-180' : ''
+                  }`}
+                />
               </button>
-              
-              {openIndex === index && (
+              {activeIndex === index && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="px-6 pb-4 border-t border-gray-800"
+                  className="mt-4"
                 >
-                  <p className="text-gray-300 leading-relaxed pt-4">{faq.answer}</p>
+                  <p className="text-gray-400">{faq.answer}</p>
                 </motion.div>
               )}
             </motion.div>
           ))}
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-          className="text-center mt-12"
-        >
-          <p className="text-gray-400 mb-6">
-            Still have questions? We&apos;re here to help you succeed.
-          </p>
-          <button className="bg-sf-primary hover:bg-sf-accent text-sf-background px-8 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105">
-            Get Started Today
-          </button>
-        </motion.div>
+        </div> */}
       </div>
     </section>
   )

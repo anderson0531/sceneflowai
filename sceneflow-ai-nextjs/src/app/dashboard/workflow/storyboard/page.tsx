@@ -315,11 +315,11 @@ export default function StoryboardPage() {
           {!currentProject?.metadata?.selectedIdea && (
             <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-yellow-800 text-sm">
-                ⚠️ Please return to the Spark Studio and select an idea before generating a storyboard.
+                ⚠️ Please return to The Blueprint and select an idea before generating a storyboard.
               </p>
-              <Link href="/dashboard/workflow/ideation">
+              <Link href="/dashboard/studio/new-project">
                 <Button variant="outline" size="sm" className="mt-2 text-yellow-700 border-yellow-300 hover:bg-yellow-100">
-                  Go to Spark Studio
+                  Go to The Blueprint
                 </Button>
               </Link>
             </div>
@@ -461,10 +461,10 @@ export default function StoryboardPage() {
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Link href="/dashboard/workflow/ideation">
+            <Link href="/dashboard/studio/new-project">
               <Button variant="outline">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Spark Studio
+                Back to The Blueprint
               </Button>
             </Link>
             

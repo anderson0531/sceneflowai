@@ -233,23 +233,21 @@ export default function IdeationPage() {
 
   const handleNextStep = () => {
     handleSave()
-    router.push('/dashboard/workflow/storyboard')
+    router.push('/dashboard/studio/new-project')
   }
 
   // Enhanced feature handlers
   const handleGenerateIdeas = async (ideas: any[]) => {
     setGeneratedIdeas(ideas)
     setShowIdeas(true)
-    
-    // Auto-generate thumbnails
-    handleGenerateThumbnails(ideas)
+    // Thumbnail generation is now manual (BYOK). Use the action button below.
   }
 
   const handleGenerateThumbnails = async (ideas: any[]) => {
     setIsGeneratingThumbnails(true)
     
     try {
-      const response = await fetch('/api/thumbnails/generate', {
+      const response = await fetch('/api/thumbnails/generate?byok=1', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

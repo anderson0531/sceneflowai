@@ -28,7 +28,6 @@ const mainNav = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Projects', href: '/dashboard/projects', icon: FolderOpen },
   { name: 'Start Project', href: '/dashboard/studio/new-project', icon: Sparkles },
-  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ]
 
 const workflowNav = [
@@ -89,15 +88,17 @@ const workflowNav = [
 ]
 
 const settingsNav = [
-  { name: 'Profile', href: '/dashboard/settings/profile', icon: User },
-  { name: 'BYOK Settings', href: '/dashboard/settings/byok', icon: Key },
-  { name: 'Billing & Credits', href: '/dashboard/settings/billing', icon: CreditCard },
+  { name: 'Profile', href: '/dashboard', icon: User },
+  { name: 'BYOK Settings', href: '/dashboard', icon: Key },
+  { name: 'Billing & Credits', href: '/dashboard', icon: CreditCard },
 ]
 
 export function Sidebar() {
-  const { sidebarOpen, setSidebarOpen, user, currentStep, projects } = useEnhancedStore()
+  const { sidebarOpen, setSidebarOpen, user, currentStep, projects, currentProject } = useEnhancedStore()
   const pathname = usePathname()
-
+  const studioHref = currentProject?.id ? `/dashboard/studio/${currentProject.id}` : '/dashboard/studio/new-project'
+  const projectVisionHref = currentProject?.id ? `/projects/${currentProject.id}/vision` : '/dashboard/workflow/storyboard'
+  
   const isActive = (href: string) => {
     if (href.startsWith('/dashboard/studio')) {
       return pathname.startsWith('/dashboard/studio')
@@ -121,7 +122,11 @@ export function Sidebar() {
   }
 
   // Group workflow steps by phase
-  const phase1Steps = workflowNav.filter(item => item.phase === 1)
+  const phase1Steps = workflowNav.filter(item => item.phase === 1).map(item => {
+    if (item.name === 'The Blueprint') return { ...item, href: studioHref }
+    if (item.name === 'Vision') return { ...item, href: projectVisionHref }
+    return item
+  })
   const phase2Steps = workflowNav.filter(item => item.phase === 2)
 
   // Note: mobile/desktop initialization handled in GlobalSidebar
@@ -192,14 +197,14 @@ export function Sidebar() {
                   return (
                     <Link
                       key={item.name}
-                      href={item.href}
+                      href={item.name === 'Start Project' ? studioHref : item.href}
                       className={`flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-all duration-200 ${
                         isActiveItem 
                           ? 'bg-sf-primary/15 text-white border-l-4 border-sf-primary shadow-lg' 
                           : 'text-gray-200 hover:text-white hover:bg-gray-800/50 hover:translate-x-1'
                       }`}
                     >
-                      <Icon className={`mr-4 h-6 w-6 ${isActiveItem ? 'text-sf-primary' : 'text-gray-400'}`} />
+                      <span className={`mr-4 ${isActiveItem ? 'text-sf-primary' : 'text-gray-400'}`}><Icon size={24} /></span>
                       <span className={isActiveItem ? 'text-white' : 'text-gray-200'}>
                         {item.name}
                       </span>
@@ -240,7 +245,7 @@ export function Sidebar() {
                             : 'text-gray-500 cursor-not-allowed opacity-50'
                         }`}
                       >
-                        <Icon className={`mr-4 h-6 w-6 ${isActiveItem ? 'text-blue-400' : isStepEnabled ? 'text-gray-400' : 'text-gray-500'}`} />
+                        <span className={`mr-4 ${isActiveItem ? 'text-blue-400' : isStepEnabled ? 'text-gray-400' : 'text-gray-500'}`}><Icon size={24} /></span>
                         <div className="flex-1 min-w-0">
                           <div className={`text-base font-semibold transition-colors leading-tight ${isActiveItem ? 'text-white' : isStepEnabled ? 'text-gray-200' : 'text-gray-500'}`}>
                             {item.name}
@@ -287,7 +292,7 @@ export function Sidebar() {
                             : 'text-gray-500 cursor-not-allowed opacity-50'
                         }`}
                       >
-                        <Icon className={`mr-4 h-6 w-6 ${isActiveItem ? 'text-orange-400' : isStepEnabled ? 'text-gray-400' : 'text-gray-500'}`} />
+                        <span className={`mr-4 ${isActiveItem ? 'text-orange-400' : isStepEnabled ? 'text-gray-400' : 'text-gray-500'}`}><Icon size={24} /></span>
                         <div className="flex-1 min-w-0">
                           <div className={`text-base font-semibold transition-colors leading-tight ${isActiveItem ? 'text-white' : isStepEnabled ? 'text-gray-200' : 'text-gray-500'}`}>
                             {item.name}
@@ -320,7 +325,7 @@ export function Sidebar() {
                           : 'text-gray-200 hover:text-white hover:bg-gray-800/50 hover:translate-x-1'
                       }`}
                     >
-                      <Icon className={`mr-4 h-6 w-6 ${isActiveItem ? 'text-sf-primary' : 'text-gray-400'}`} />
+                      <span className={`mr-4 ${isActiveItem ? 'text-sf-primary' : 'text-gray-400'}`}><Icon size={24} /></span>
                       <span className={isActiveItem ? 'text-white' : 'text-gray-200'}>
                         {item.name}
                       </span>

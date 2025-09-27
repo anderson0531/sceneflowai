@@ -1,5 +1,40 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+// Local fallback type since legacy Vision types were removed
+export interface StoryboardPanelData {
+  id: string;
+  frameNumber?: number;
+  shotType?: string;
+  description?: string;
+  imagePrompt?: string;
+  audio?: {
+    scene?: boolean;
+    natural?: boolean;
+    dialogue?: boolean;
+    ai?: boolean;
+  };
+  duration?: string;
+  style?: string;
+  camera?: string;
+  lighting?: string;
+}
+
+export interface Beat {
+  id: string;
+  title: string;
+  act: string;
+  slugline: string;
+  summary?: string;
+  // Story Hub structured metadata
+  objective?: string;
+  keyAction?: string;
+  emotionalTone?: 'Tense' | 'Wondrous' | 'Contemplative' | 'Joyful' | 'Somber';
+  charactersPresent?: string[];
+  // Visuals
+  thumbnailUrl?: string | null;
+  // Timeline
+  estimatedDuration?: number; // seconds
+}
 
 export interface User {
   id: string;
@@ -82,6 +117,8 @@ export interface Project {
     storyboardMetadata?: any;
     notes?: string[];
     prompts?: string[];
+    fountain?: string;
+    scriptBlocks?: any[];
     changelog?: { id: string; timestamp: string; action: string; details?: string }[];
     // Enhanced project structure
     projectType?: 'short' | 'medium' | 'long';
@@ -97,7 +134,8 @@ export interface Project {
       visualStyle?: any;
       tone?: string;
       theme?: string;
-    };
+        blueprintStoryboard?: any;
+      };
   };
 }
 
@@ -141,6 +179,9 @@ interface AppState {
   currentProject: Project | null;
   projects: Project[];
   setProjects: (projects: Project[]) => void;
+  storyboardPanels: StoryboardPanelData[];
+  beatSheet: Beat[];
+  isBeatSheetDirty: boolean;
   
   // Workflow state
   currentStep: WorkflowStep;
@@ -176,6 +217,16 @@ interface AppState {
   updateProject: (projectId: string, updates: Partial<Project>) => void;
   deleteProject: (projectId: string) => void;
   
+  setStoryboardPanels: (panels: StoryboardPanelData[]) => void;
+  updateStoryboardPanel: (panelId: string, updatedData: Partial<StoryboardPanelData>) => void;
+
+  setBeats: (beats: Beat[]) => void;
+  updateBeat: (beatId: string, updates: Partial<Beat>) => void;
+  reorderBeats: (newOrder: Beat[]) => void;
+  addBeat: () => void;
+  deleteBeat: (beatId: string) => void;
+  saveBeatSheet: () => Promise<void>;
+
   setCurrentStep: (step: WorkflowStep) => void;
   updateStepProgress: (step: WorkflowStep, progress: number) => void;
   advanceToNextStep: () => void;
@@ -211,6 +262,9 @@ export const useStore = create<AppState>((set, get) => ({
   currentProject: null,
   projects: [],
   setProjects: (projects) => set({ projects }),
+  storyboardPanels: [],
+  beatSheet: [],
+  isBeatSheetDirty: false,
   currentStep: 'ideation',
   stepProgress: {
     'ideation': 0,
@@ -254,6 +308,55 @@ export const useStore = create<AppState>((set, get) => ({
     currentProject: state.currentProject?.id === projectId ? null : state.currentProject
   })),
   
+  setStoryboardPanels: (panels) => set({ storyboardPanels: panels }),
+  updateStoryboardPanel: (panelId, updatedData) => set((state) => ({
+    storyboardPanels: state.storyboardPanels.map((p) =>
+      p.id === panelId ? { ...p, ...updatedData } : p
+    ),
+  })),
+
+  setBeats: (beats) => set({ beatSheet: beats, isBeatSheetDirty: false }),
+  updateBeat: (beatId, updates) => set((state) => ({
+    beatSheet: state.beatSheet.map((b) =>
+      b.id === beatId ? { ...b, ...updates } : b
+    ),
+    isBeatSheetDirty: true,
+  })),
+  reorderBeats: (newOrder) => set({ beatSheet: newOrder, isBeatSheetDirty: true }),
+  addBeat: () => set((state) => {
+    const newBeat: Beat = {
+      id: `beat-${Date.now()}`,
+      slugline: 'NEW SCENE',
+      summary: '',
+      // @ts-ignore
+      act: 1, 
+      estimatedDuration: 60,
+    };
+    return { 
+      beatSheet: [...state.beatSheet, newBeat],
+      isBeatSheetDirty: true
+    };
+  }),
+  deleteBeat: (beatId) => set((state) => ({
+    beatSheet: state.beatSheet.filter((b) => b.id !== beatId),
+    isBeatSheetDirty: true,
+  })),
+  saveBeatSheet: async () => {
+    const { currentProject, beatSheet } = get();
+    if (!currentProject) throw new Error("No active project.");
+    
+    await fetch(`/api/projects`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: currentProject.id,
+        metadata: { ...currentProject.metadata, acts: beatSheet },
+      }),
+    });
+    
+    set({ isBeatSheetDirty: false });
+  },
+
   setCurrentStep: (step) => set({ currentStep: step }),
   updateStepProgress: (step, progress) => set((state) => ({
     stepProgress: { ...state.stepProgress, [step]: progress }

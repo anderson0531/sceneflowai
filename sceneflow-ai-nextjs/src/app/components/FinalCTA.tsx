@@ -39,7 +39,10 @@ export function FinalCTA() {
               Start 7-Day Trial — $5
             </button>
             <button 
-              onClick={() => { trackCta({ event: 'click', label: 'watch-demo', location: 'final-cta' }); setIsDemoOpen(true) }}
+              onClick={() => { 
+                // trackCta({ event: 'click', label: 'watch-demo', location: 'final-cta' });
+                setIsDemoOpen(true) 
+              }}
               className="border border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white text-xl px-12 py-6 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center"
             >
               <Play className="w-6 h-6 mr-3" />

@@ -12,6 +12,7 @@ export interface UserAttributes {
   avatar_url?: string
   is_active: boolean
   email_verified: boolean
+  credits?: number
   last_login?: Date
   created_at: Date
   updated_at: Date
@@ -29,6 +30,7 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
   public avatar_url?: string
   public is_active!: boolean
   public email_verified!: boolean
+  public credits?: number
   public last_login?: Date
   public created_at!: Date
   public updated_at!: Date
@@ -96,6 +98,11 @@ User.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,
+    },
+    credits: {
+      type: DataTypes.BIGINT,
+      allowNull: false,
+      defaultValue: 0,
     },
     last_login: {
       type: DataTypes.DATE,
