@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
       .map(s => s.trim().toLowerCase())
       .filter(Boolean)
     const isAdmin = !!(email && admins.includes(email))
-    return NextResponse.json({ success: true, isAdmin })
+    return NextResponse.json({ success: true, isAdmin, email, adminsCount: admins.length })
   } catch (e: any) {
     return NextResponse.json({ success: false, isAdmin: false, error: e?.message || 'error' }, { status: 200 })
   }
