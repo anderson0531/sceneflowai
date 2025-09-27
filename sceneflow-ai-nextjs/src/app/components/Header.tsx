@@ -17,13 +17,17 @@ export function Header() {
   const isAuthenticated = !!session?.user
   const user = session?.user
 
-  const isAdmin = useMemo(() => {
-    const email = user?.email?.toLowerCase().trim()
-    const list = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || process.env.ADMIN_EMAILS || '')
-      .split(',')
-      .map(s => s.trim().toLowerCase())
-      .filter(Boolean)
-    return !!(email && list.includes(email))
+  const [isAdmin, setIsAdmin] = useState(false)
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/admin/is-admin', { cache: 'no-store' })
+        const json = await res.json().catch(()=>({})) as any
+        if (!cancelled) setIsAdmin(Boolean(json?.isAdmin))
+      } catch { if (!cancelled) setIsAdmin(false) }
+    })()
+    return () => { cancelled = true }
   }, [user?.email])
 
   const scrollToSection = (sectionId: string) => {
