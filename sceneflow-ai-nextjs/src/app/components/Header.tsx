@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/Button'
 import { trackCta } from '@/lib/analytics'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
-import { Menu, X, User, LogOut } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Menu, X, User, LogOut, Shield } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { AuthModal } from '@/components/auth/AuthModal'
 
@@ -16,6 +16,15 @@ export function Header() {
   const { data: session } = useSession()
   const isAuthenticated = !!session?.user
   const user = session?.user
+
+  const isAdmin = useMemo(() => {
+    const email = user?.email?.toLowerCase().trim()
+    const list = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || process.env.ADMIN_EMAILS || '')
+      .split(',')
+      .map(s => s.trim().toLowerCase())
+      .filter(Boolean)
+    return !!(email && list.includes(email))
+  }, [user?.email])
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId)
@@ -108,6 +117,16 @@ export function Header() {
             <div className="flex items-center space-x-4">
               {isAuthenticated ? (
                 <>
+                  {isAdmin && (
+                    <Button 
+                      onClick={() => { window.location.href = '/admin' }}
+                      variant="outline"
+                      className="border-sf-primary text-sf-primary hover:bg-sf-primary hover:text-sf-background transition-all duration-200"
+                    >
+                      <Shield className="w-4 h-4 mr-2" />
+                      Admin
+                    </Button>
+                  )}
                   <div className="flex items-center space-x-3 text-white">
                     <div className="w-8 h-8 bg-sf-primary rounded-full flex items-center justify-center">
                       <User className="w-4 h-4" />
@@ -195,6 +214,16 @@ export function Header() {
                   <button onClick={() => scrollToSection('features')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">Features</button>
                   <button onClick={() => scrollToSection('pricing')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">Pricing</button>
                   <button onClick={() => scrollToSection('faq')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">FAQ</button>
+                  {isAuthenticated && isAdmin && (
+                    <Button 
+                      onClick={() => { window.location.href = '/admin' }}
+                      variant="outline"
+                      className="w-full bg-gray-800/50 hover:bg-gray-700/50 border-sf-primary text-sf-primary hover:bg-sf-primary hover:text-sf-background py-3 text-base font-medium"
+                    >
+                      <Shield className="w-4 h-4 mr-2" />
+                      Admin
+                    </Button>
+                  )}
                   
                   <div className="flex flex-col space-y-3 pt-4">
                     {isAuthenticated ? (
