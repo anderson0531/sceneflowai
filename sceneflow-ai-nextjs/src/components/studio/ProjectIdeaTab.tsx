@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Lightbulb, Sparkles, Users, Clock, Target, Palette, Zap, Clapperboard, Volume2, Square, Network, Loader2 } from 'lucide-react';
+import { Lightbulb, Sparkles, Users, Clock, Target, Palette, Zap, Clapperboard, Volume2, Square, Network, Loader2, ChevronDown, ChevronUp, Plus, Pencil } from 'lucide-react';
 import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
 import { FlowRefineModal } from '@/components/cue/FlowRefineModal';
 import { useRouter } from 'next/navigation';
@@ -13,6 +13,10 @@ import { useGuideStore } from '@/store/useGuideStore';
 import { useCue } from '@/store/useCueStore';
 import { useStore } from '@/store/useStore';
 import { toast } from 'sonner'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import OwnerCollabCard from './OwnerCollabCard';
+import PerConceptBadge from './PerConceptBadge';
+import ShareCollabModal from './ShareCollabModal';
 // ProvenanceBanner removed from UI per request
 
 // Prevent duplicate concurrent requests and accidental rapid repeats
@@ -292,9 +296,9 @@ function buildAtmosphericInstruction(idea: ProjectIdea, seed?: string): string {
 }
 
 export default function ProjectIdeaTab() {
-  const { guide, initializeProject, updateGuide } = useGuideStore();
+  const { guide, initializeProject, updateGuide } = useGuideStore() as any;
   const { invokeCue, setSidebarVisibility } = useCue();
-  const { addProject, setCurrentProject } = useStore();
+  const { addProject, setCurrentProject, currentProject } = useStore() as any;
   const router = useRouter();
   const [projectDescription, setProjectDescription] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -319,6 +323,7 @@ export default function ProjectIdeaTab() {
   const [showProjectDetails, setShowProjectDetails] = useState(false);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [collaborationLink, setCollaborationLink] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const [isCreatingLink, setIsCreatingLink] = useState(false);
   const [collaborationResults, setCollaborationResults] = useState<any>(null);
   const [isLoadingResults, setIsLoadingResults] = useState(false);
@@ -437,7 +442,7 @@ export default function ProjectIdeaTab() {
     }
   }, [refiningIdeaId]);
 
-  const generateProjectIdeas = async () => {
+  const generateProjectIdeas = async (overrideInput?: string) => {
     if (!projectDescription.trim()) {
       setGenError('Enter a short topic or a brief storyline to begin.');
       return;
@@ -456,7 +461,8 @@ export default function ProjectIdeaTab() {
     };
 
     // Do not block on pre-validation; infer mode heuristically and continue
-    const inputMode = classifyInput(projectDescription);
+    const baseText = (overrideInput ?? projectDescription)
+    const inputMode = classifyInput(baseText);
     setGenError('');
     setIsGeneratingIdeas(true);
     setGenProgress(10);
@@ -464,11 +470,11 @@ export default function ProjectIdeaTab() {
     try {
       setGenError('');
       // Call v1 Blueprint API
-      console.log('🚀 Calling Blueprint API with project description:', projectDescription);
+      console.log('🚀 Calling Blueprint API with project description:', baseText);
       console.log('🚀 API Endpoint: /api/v2/blueprint/analyze/');
       setGenProgress(20);
       const baseBody = {
-        input: projectDescription,
+        input: baseText,
         targetAudience: 'General Audience',
         keyMessage: projectDescription,
         tone: 'Professional',
@@ -481,7 +487,7 @@ export default function ProjectIdeaTab() {
       let reducedTried = false
       try {
         // Try v3 simplified pipeline first (explicitly request 3 variants)
-        response = await postWithTimeout('/api/v3/blueprint/analyze/', { input: projectDescription, variants: 3 }, 180000)
+        response = await postWithTimeout('/api/v3/blueprint/analyze/', { input: baseText, variants: 3 }, 180000)
       } catch (e) {
         // Fallback to v2, then v1
         console.warn('v3 blueprint aborted or failed, falling back to v2:', e)
@@ -777,7 +783,8 @@ export default function ProjectIdeaTab() {
       
       setProjectDetails(extractedDetails);
       setAnalysisComplete(true);
-      setGeneratedIdeas(ideas);
+      // Default-hide images on initial render
+      setGeneratedIdeas(ideas.map((i:any)=> ({ ...i, _imgHidden: true })) as any);
       setGenProgress(100);
       setGenStatus('Done');
       
@@ -791,11 +798,12 @@ export default function ProjectIdeaTab() {
         //   })
         // );
         // const imageResponses = await Promise.all(imagePromises);
-        const ideasWithImages = ideas.map((idea) => ({
+        const ideasWithImages = ideas.map((idea:any) => ({
           ...idea,
           thumbnailUrl: null,
+          _imgHidden: true
         }));
-        setGeneratedIdeas(ideasWithImages);
+        setGeneratedIdeas(ideasWithImages as any);
       } else {
         setGenError('Received an unexpected format for project ideas.');
       }
@@ -1458,22 +1466,61 @@ export default function ProjectIdeaTab() {
     setRefineLoading(true)
     try {
       const lines: string[] = []
-      const title = selectedIdea.title?.trim()
-      const synopsis = (selectedIdea.synopsis || selectedIdea.logline || '').trim()
-      if (title) lines.push(`${title}`)
-      if (synopsis) lines.push('', synopsis)
+      const title = String(selectedIdea.title || '').trim()
+      const logline = String(selectedIdea.logline || selectedIdea.synopsis || '').trim()
+
+      // Title and Logline
+      if (title) lines.push(`Title: ${title}`)
+      if (logline) lines.push(`Logline: ${logline}`)
+
+      // Quick details
       const genre = String(selectedIdea?.details?.genre || '').trim()
       const audience = String(selectedIdea?.details?.targetAudience || '').trim()
       const tone = String(selectedIdea?.details?.tone || '').trim()
       const duration = String(selectedIdea?.details?.duration || '').trim()
       const structure = String(selectedIdea?.narrative_structure || '').trim()
-      const meta: string[] = []
-      if (genre) meta.push(`Genre: ${genre}`)
-      if (audience) meta.push(`Audience: ${audience}`)
-      if (tone) meta.push(`Tone: ${tone}`)
-      if (duration) meta.push(`Duration: ${duration}`)
-      if (structure) meta.push(`Structure: ${structure}`)
-      if (meta.length) lines.push('', ...meta)
+      if (genre) lines.push(`Genre: ${genre}`)
+      if (duration) lines.push(`Duration (approximate): ${duration}`)
+      if (audience) lines.push(`Audience: ${audience}`)
+      if (tone) lines.push(`Tone: ${tone}`)
+      if (structure) lines.push(`Structure: ${structure}`)
+
+      // Characters
+      const chars = Array.isArray(selectedIdea.characters) ? selectedIdea.characters : []
+      if (chars.length) {
+        lines.push('Characters:')
+        chars.slice(0, 12).forEach((c: any, idx: number) => {
+          const name = (c?.name || c?.role || `Character ${idx + 1}`).toString()
+          const desc = (c?.description || c?.role || '').toString()
+          lines.push(`- ${name}${desc ? ` — ${desc}` : ''}`)
+        })
+      }
+
+      // Scenes
+      const scenes: string[] = []
+      try {
+        if (Array.isArray((selectedIdea as any).beat_outline) && (selectedIdea as any).beat_outline.length) {
+          (selectedIdea as any).beat_outline.forEach((b: any, i: number) => {
+            const idx = String(b.scene_number || b.beat_number || i + 1).padStart(2, '0')
+            const name = (b.scene_name || b.beat_title || 'Scene').toString()
+            const dur = (b.scene_duration || b.duration_estimate || '').toString()
+            scenes.push(`${idx}. ${name}${dur ? ` — ${dur}` : ''}`)
+          })
+        } else if (Array.isArray((selectedIdea as any).dynamic_acts) && (selectedIdea as any).dynamic_acts.length) {
+          ;(selectedIdea as any).dynamic_acts.forEach((a: any) => {
+            ;(a?.beats || []).forEach((b: any, i: number) => {
+              const name = (b.beat_title || b.title || 'Scene').toString()
+              const dur = (b.duration_estimate || '').toString()
+              scenes.push(`${name}${dur ? ` — ${dur}` : ''}`)
+            })
+          })
+        }
+      } catch {}
+      if (scenes.length) {
+        lines.push('Scenes:')
+        lines.push(...scenes)
+      }
+
       setProjectDescription(lines.join('\n'))
     } finally { setRefineLoading(false) }
   }
@@ -1493,38 +1540,26 @@ export default function ProjectIdeaTab() {
       alert('Please generate some project ideas first before sharing.');
       return;
     }
-
     setIsCreatingLink(true);
     try {
-      const response = await fetch('/api/collaborate/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          projectDescription,
-          projectIdeas: generatedIdeas,
-          projectDetails: analysisComplete ? projectDetails : null,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create collaboration link');
+      const body = {
+        spaceKey: { projectId: currentProject?.id || 'current', scopeType: 'concepts' },
+        options: { anonAllowed: true, rubricEnabled: false },
       }
-
-      const data = await response.json();
-      const link = `${window.location.origin}/collaborate/${data.sessionId}`;
-      setCollaborationLink(link);
-      
-      // Copy to clipboard
-      await navigator.clipboard.writeText(link);
-      alert('Collaboration link created and copied to clipboard!');
-    } catch (error) {
-      console.error('Error creating collaboration link:', error);
-      alert('Failed to create collaboration link. Please try again.');
-    } finally {
-      setIsCreatingLink(false);
-    }
+      const items = generatedIdeas.map((i:any) => ({ id: i.id, title: i.title, logline: i.logline || i.synopsis || '', synopsis: i.synopsis, details: { genre: i.details?.genre, duration: i.details?.duration, targetAudience: i.details?.targetAudience, tone: i.details?.tone, structure: i.narrative_structure } }))
+      const res = await fetch('/api/collab/session.create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, items }) })
+      if (!res.ok) throw new Error('Failed to create collaboration session')
+      const data = await res.json()
+      // Embed items as a signed-like token fallback so reviewers can load even if server memory is cold
+      const tokenPayload = { items }
+      const token = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(tokenPayload)))))
+      const link = `${window.location.origin}/c/${data.sessionId}?t=${token}`
+      setCollaborationLink(link)
+      setShareOpen(true)
+    } catch (e) {
+      console.error(e)
+      alert('Failed to create collaboration link. Please try again.')
+    } finally { setIsCreatingLink(false) }
   };
 
   const copyLinkToClipboard = async () => {
@@ -1542,7 +1577,8 @@ export default function ProjectIdeaTab() {
   const fetchCollaborationResults = async (sessionId: string) => {
     try {
       setIsLoadingResults(true);
-      const response = await fetch(`/api/collaborate/${sessionId}`);
+      // Use new collab analytics endpoint
+      const response = await fetch(`/api/collab/feedback.list?sessionId=${sessionId}`);
       if (response.ok) {
         const data = await response.json();
         setCollaborationResults(data);
@@ -1557,7 +1593,7 @@ export default function ProjectIdeaTab() {
   // Poll for collaboration results when a link is created
   useEffect(() => {
     if (collaborationLink) {
-      const sessionId = collaborationLink.split('/').pop();
+      const sessionId = (()=>{ try { const u=new URL(collaborationLink); return (u.pathname.split('/').pop()||'').split('?')[0] } catch { const tail=(collaborationLink.split('/').pop()||''); return tail.split('?')[0] } })()
       if (sessionId) {
         // Fetch immediately
         fetchCollaborationResults(sessionId);
@@ -1710,7 +1746,7 @@ export default function ProjectIdeaTab() {
 
       // Persist to DB (best-effort). If DB not configured, continue silently.
       try {
-        // Ensure we have a stable userId
+        // Soft-create endpoint may not exist in all deployments; ignore failures
         let userId: string | null = null
         if (typeof window !== 'undefined') {
           userId = localStorage.getItem('authUserId')
@@ -1730,8 +1766,8 @@ export default function ProjectIdeaTab() {
             metadata: { concept: activeIdea.logline, selectedIdea: activeIdea },
             currentStep: 'ideation'
           })
-        })
-        if (resp.ok) {
+        }).catch(()=>null)
+        if (resp && resp.ok) {
           const json = await resp.json()
           // Sync normalized userId if the server sent it (cookie-compatible)
           if (json?.userId && typeof window !== 'undefined') {
@@ -1766,8 +1802,6 @@ export default function ProjectIdeaTab() {
               metadata: created.metadata || { selectedIdea: activeIdea }
             } as any)
           }
-        } else {
-          console.warn('Project DB persist failed:', resp.status)
         }
       } catch (e) {
         console.warn('Project DB persist skipped:', e)
@@ -1805,18 +1839,16 @@ export default function ProjectIdeaTab() {
         updatedAt: now,
         completedSteps: [],
         metadata: {
-          concept: activeIdea.logline
+          concept: activeIdea.logline,
+          selectedIdea: activeIdea
         }
       } as any)
 
-      // Background refinement
-      invokeCue({ type: 'text', content: `Refine baseline content for "${activeIdea.title}".` });
-
-      // Hide ideas and switch to treatment
+      // Hide ideas and switch to the refactored Scene Outline
       setGeneratedIdeas([]);
       setSelectedIdea(null);
       setAnalysisComplete(true);
-      window.dispatchEvent(new CustomEvent('studio.goto.treatment'));
+      window.dispatchEvent(new CustomEvent('studio.goto.beats'));
       
     } catch (error) {
       console.error('Error creating project:', error);
@@ -1839,7 +1871,7 @@ export default function ProjectIdeaTab() {
     
     // Create a new project object in the Zustand store
     // This allows the data to be carried over to the studio page
-    const newProjectData = {
+    const newProjectData: any = {
       id: createdProjectId,
       title: idea.title,
       description: idea.logline,
@@ -1860,7 +1892,7 @@ export default function ProjectIdeaTab() {
     setCurrentProject(newProjectData);
     
     // Programmatically navigate to the studio page
-    router.push(`/dashboard/studio/${createdProjectId}`);
+    router.push(`/dashboard/studio/${createdProjectId}?tab=outline`);
   };
 
   const handleRefineIdea = (idea: ProjectIdea) => {
@@ -1874,9 +1906,9 @@ export default function ProjectIdeaTab() {
     <div className="space-y-8 max-w-7xl mx-auto px-4">
       {/* Section 1: Describe Your Project Idea */}
       <div>
-        <div className="mb-6 px-8">
+        <div className="mb-6 px-0">
           <h1 className="text-[1.875rem] sm:text-[2.125rem] md:text-[2.375rem] lg:text-[2.625rem] font-extrabold text-white mb-2 tracking-tight leading-tight">Start Here: Describe Your Vision</h1>
-          <p className="text-gray-300 text-[1rem] sm:text-[1.05rem]">Tell Flow, your AI Co-Director, the story you want to bring to life. From a single sentence to a detailed paragraph, share your idea and Flow will instantly generate powerful concepts to explore.</p>
+          {/* <p className="text-gray-300 text-[1rem] sm:text-[1.05rem]">Tell Flow, your AI Co-Director, the story you want to bring to life. From a single sentence to a detailed paragraph, share your idea and Flow will instantly generate powerful concepts to explore.</p> */}
         </div>
         
         <div className="bg-gray-900/50 border border-gray-700/50 rounded-lg p-8">
@@ -2051,18 +2083,31 @@ export default function ProjectIdeaTab() {
 
             {/* Right Group: Actions */}
             <div className="flex items-center gap-3">
-              <Button onClick={()=> setRefineOpen(true)} variant="secondary" className="px-6 py-3 text-lg font-medium">
-                <Clapperboard className="w-5 h-5 mr-2" />
-                Ask Flow
-              </Button>
-              <Button
-                onClick={generateProjectIdeas}
-                disabled={!projectDescription.trim() || isGeneratingIdeas}
-                variant="primary"
-                className="px-8 py-3 text-lg font-medium"
-              >
-                {isGeneratingIdeas ? 'Generating...' : generatedIdeas.length > 0 ? 'Generate More' : 'Generate Concepts'}
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button onClick={()=> setRefineOpen(true)} variant="secondary" size="icon">
+                      <Clapperboard className="w-5 h-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-700 text-white border border-gray-600">Ask Flow to improve input</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={()=>generateProjectIdeas()}
+                      disabled={!projectDescription.trim() || isGeneratingIdeas}
+                      variant="primary"
+                      size="icon"
+                    >
+                      {isGeneratingIdeas ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-700 text-white border border-gray-600">{isGeneratingIdeas ? 'Generating…' : (generatedIdeas.length > 0 ? 'Generate more concepts' : 'Generate concepts')}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
           <FlowRefineModal
@@ -2112,177 +2157,125 @@ export default function ProjectIdeaTab() {
         <div className="bg-gray-900/50 border border-gray-700/50 rounded-lg p-8">
           <div className="mb-8 flex items-center justify-between">
             <h2 className="text-3xl font-semibold text-white">Optional Concepts</h2>
-            <Button variant="ghost" onClick={createCollaborationLink} disabled={isCreatingLink || generatedIdeas.length === 0}>
-              {isCreatingLink ? 'Generating…' : 'Get Feedback'}
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* Owner control card trigger (inline, simple analytics preview) */}
+              {collaborationLink && (
+                <div className="text-xs text-gray-400 mr-2 hidden sm:block">Link active</div>
+              )}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={createCollaborationLink} disabled={isCreatingLink || generatedIdeas.length === 0}>
+                      {isCreatingLink ? <Loader2 className="w-5 h-5 animate-spin" /> : <Users className="w-5 h-5" />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-700 text-white border border-gray-600">Create/share collaboration link</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
+          </div>
 
           {/* Actions above concept options */}
           <div className="mb-4 flex items-center justify-end gap-3">
-            {!isEditingSelection ? (
-              <>
-                <Button variant="secondary" disabled={!selectedIdea || refineLoading} onClick={refineSelectedIdeaToInput}>
-                  {refineLoading ? 'Refining…' : 'Refine Selection'}
-                </Button>
-                <Button variant="primary" disabled={!selectedIdea} onClick={() => selectedIdea && handleCreateProject(selectedIdea)}>
-                  Create Project
-                </Button>
-              </>
-            ) : (
-              <>
-                {/* Legacy edit mode removed per new flow; keep minimal Cancel for safety */}
-                <Button variant="ghost" onClick={() => { setIsEditingSelection(false); setEditedSynopsis(''); }}>Cancel</Button>
-              </>
-            )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="primary" size="icon" disabled={!selectedIdea} onClick={() => selectedIdea && handleCreateProject(selectedIdea)}>
+                    <Plus className="w-5 h-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-700 text-white border border-gray-600">Create project from selected concept</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
 
+          {/* Owner collaboration control card */}
+          <div className="mb-4">
+            <OwnerCollabCard sessionLink={collaborationLink} onApplyRound={(concepts:any[])=>{
+              // Show inline apply list: for now, replace generatedIdeas with new concepts mapped into ProjectIdea shape
+              try {
+                const mapped = (concepts || []).map((c:any, i:number)=> ({
+                  id: `regen-${Date.now()}-${i+1}`,
+                  title: c.title || `Concept ${i+1}`,
+                  synopsis: c.synopsis || c.logline || '',
+                  film_treatment: 'Generated via collaboration refinement.',
+                  narrative_structure: c.structure || '3-Act Structure',
+                  characters: (c.characters || []).map((x:any)=>({ name: x.name, role: x.role, description: x.description, importance: 'Medium' })),
+                  act_structure: { act_1: { title: 'Act 1', duration: 'n/a', beats: [] }, act_2: { title: 'Act 2', duration: 'n/a', beats: [] }, act_3: { title: 'Act 3', duration: 'n/a', beats: [] } },
+                  beat_outline: (c.beats || []).map((b:any, idx:number)=> ({ beat_number: idx+1, beat_title: b.beat_title || b.title, beat_description: b.scene || b.description, duration_estimate: b.duration_estimate || '', key_elements: [] })),
+                  dynamic_acts: [],
+                  details: { genre: Array.isArray(c.genre)? c.genre.join(', ') : (c.genre||'Unspecified'), duration: '', targetAudience: 'General Audience', keyThemes: (c.coreThemes||[]).join(', '), characterCount: `${(c.characters||[]).length} characters`, tone: Array.isArray(c.tone)? c.tone.join(', '): 'Professional', setting: 'Various locations' },
+                  logline: c.logline || ''
+                }))
+                setGeneratedIdeas(mapped as any)
+              } catch {}
+            }} />
+          </div>
+          {/* Share modal */}
+          <ShareCollabModal open={shareOpen} onOpenChange={setShareOpen} link={collaborationLink} />
           {/* Project Ideas - Single Column with Hide/Show Controls */}
-          <div className="space-y-6">
+          <div className="space-y-6 max-w-[70rem] mx-auto">
             {generatedIdeas.map((idea) => (
               <Card 
                 key={idea.id} 
                 onClick={() => { setSelectedIdea(idea); if (isEditingSelection) setEditedSynopsis(idea.synopsis || idea.logline || ''); }}
-                className={`group cursor-pointer bg-gradient-to-br from-gray-800/60 to-gray-900/40 border-2 rounded-xl shadow-sm transition-all duration-200 ${
+                className={`group cursor-pointer bg-gradient-to-br from-gray-800/50 to-gray-900/30 border rounded-xl shadow-sm transition-all duration-200 ${
                   selectedIdea?.id === idea.id 
-                    ? 'border-blue-500 scale-102 shadow-blue-500/10'
-                    : 'border-gray-700 hover:border-blue-500/50 hover:shadow-lg'
+                    ? 'border-blue-500/70 scale-102 shadow-blue-500/10'
+                    : 'border-gray-700/60 hover:border-blue-500/40 hover:shadow-lg'
                 }`}
               >
                 {/* Controls row (always visible) */}
                 <div className="px-4 pt-3 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <button
-                      className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-gray-600 bg-gray-700 hover:bg-gray-600 text-white"
-                      onClick={(e)=>{ e.stopPropagation(); setGeneratedIdeas(prev => prev.map(i => i.id === idea.id ? ({ ...i, _imgHidden: !(i as any)._imgHidden } as any) : i)) }}
-                      title={(idea as any)._imgHidden ? 'Show image' : 'Hide image'}
-                    >
-                      {(idea as any)._imgHidden ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-4 w-4"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg>
-                      ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-4 w-4"><path d="M3 3l18 18"/><path d="M10.58 10.58A3 3 0 0 0 12 15a3 3 0 0 0 2.42-4.42"/><path d="M16.1 16.1C14.74 16.71 13.4 17 12 17 5 17 1 12 1 12a17.6 17.6 0 0 1 5.06-4.38"/><path d="M13.41 6.6a9.82 9.82 0 0 1 7.59 5.4s-1.12 1.82-3.18 3.34"/></svg>
-                      )}
-                    </button>
-                    <button
-                      className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-blue-500 bg-blue-600 hover:bg-blue-700 text-white"
-                      onClick={async (e) => {
-                        e.stopPropagation()
-                        setGeneratedIdeas(prev => prev.map(i => i.id === idea.id ? ({ ...i, _imgLoading: true, _imgHidden: false } as any) : i))
-                        const url = await generateAtmosphericImage(idea, (idea as any)._promptOverride)
-                        if (url) {
-                          setGeneratedIdeas(prev => prev.map(i => i.id === idea.id ? ({ ...i, thumbnailUrl: url, _imgLoading: false } as any) : i))
-                        } else {
-                          setGeneratedIdeas(prev => prev.map(i => i.id === idea.id ? ({ ...i, _imgLoading: false } as any) : i))
-                        }
-                      }}
-                      title="Regenerate image"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-4 w-4"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>
-                    </button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button size="icon" variant="ghost" onClick={(e)=>{ e.stopPropagation(); setSelectedIdea(idea); refineSelectedIdeaToInput(); }}>
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-700 text-white border border-gray-600">Edit/refine this concept</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    {collaborationLink && (
+                      <PerConceptBadge sessionLink={collaborationLink} scopeId={idea.id} />
+                    )}
                   </div>
                 </div>
 
-                {/* Accent image (reduced height to keep focus on text) */}
-                {!((idea as any)._imgHidden) && (
-                <div className="relative w-full rounded-lg overflow-hidden bg-gray-900/50 border-b border-gray-800">
-                  <div className="w-full" style={{ position: 'relative', paddingTop: '56.25%' }}>
-                    <div className="absolute inset-0">
-                      <img
-                        src={(idea as any).thumbnailUrl || '/images/placeholders/atmospheric-placeholder.svg'}
-                        alt={`Thumbnail for ${idea.title}`}
-                        className="w-full h-full object-cover"
-                        onError={(e)=>{ const img = (e.currentTarget as HTMLImageElement); if (img.dataset.fallback !== '1') { img.dataset.fallback = '1'; img.src = '/images/placeholders/atmospheric-placeholder.svg' } }}
-                      />
-                      <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors duration-200" />
-                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent" />
-                      
-                    </div>
-                  </div>
-                  {Boolean((idea as any)._imgLoading) && (
-                    <div className="absolute inset-0 z-10 bg-black/40 backdrop-blur-sm flex items-center justify-center text-gray-200 text-sm">
-                      Generating image...
-                    </div>
-                  )}
-                </div>
-                )}
-                {/* Prompt refine row */}
-                {!((idea as any)._imgHidden) && (
-                <div className="px-4 pt-3">
-                  <div className="flex items-start gap-2">
-                    <div className="flex-1">
-                      <UITextarea
-                        placeholder="Refine image prompt (optional)"
-                        defaultValue={(idea as any)._promptOverride || buildAtmosphericInstruction(idea)}
-                        onClick={(e)=> e.stopPropagation()}
-                        onChange={(e)=> setGeneratedIdeas(prev => prev.map(i => i.id === idea.id ? ({ ...i, _promptOverride: e.target.value } as any) : i))}
-                        className="bg-gray-900/60 border-gray-700 text-gray-100 min-h-[60px] max-h-[200px] resize-y"
-                        rows={3}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <button
-                        className="text-xs px-3 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white border border-blue-500"
-                        onClick={async (e) => {
-                          e.stopPropagation()
-                          setGeneratedIdeas(prev => prev.map(i => i.id === idea.id ? ({ ...i, _imgLoading: true } as any) : i))
-                          const url = await generateAtmosphericImage(idea, (idea as any)._promptOverride)
-                          if (url) {
-                            setGeneratedIdeas(prev => prev.map(i => i.id === idea.id ? ({ ...i, thumbnailUrl: url, _imgLoading: false } as any) : i))
-                          } else {
-                            setGeneratedIdeas(prev => prev.map(i => i.id === idea.id ? ({ ...i, _imgLoading: false } as any) : i))
-                          }
-                        }}
-                      >
-                        Generate
-                      </button>
-                      <button
-                        className="text-xs px-3 py-2 rounded-md bg-gray-700 hover:bg-gray-600 text-white border border-gray-600"
-                        onClick={(e)=>{ e.stopPropagation(); setGeneratedIdeas(prev => prev.map(i => i.id === idea.id ? ({ ...i, _promptOverride: '' } as any) : i)) }}
-                      >
-                        Clear
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                )}
-                {/* Removed duplicate small title header */}
-                <CardHeader className="hidden" />
                 <CardContent className="p-8">
-                  {/* Row 1: Selection/Header (actions removed) */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3" />
-                  </div>
-
-                  {/* Row 2: Title */}
-                  <h3 className="text-2xl font-semibold text-white flex items-center mb-4">
-                    <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-500/80 ring-4 ring-blue-500/10 mr-3" />
-                    {idea.title}
-                  </h3>
-                  
-                  {/* Logline (concise pitch) */}
-                  <div className="mb-6">
-                    <div className="text-gray-400 text-sm uppercase tracking-wide mb-1">Logline</div>
-                    <p className="text-gray-200 text-lg leading-8">{idea.logline || idea.synopsis}</p>
-                      </div>
-                  
-                  {/* Comps (optional) */}
-                  {Boolean((idea as any).comps) && (
-                    <div className="mb-6">
-                      <div className="text-gray-400 text-sm uppercase tracking-wide mb-1">Comps</div>
-                      <div className="text-gray-200">{(idea as any).comps}</div>
+                {/* Row 2: Title */}
+                <h3 className="text-2xl font-semibold text-white flex items-center mb-4">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-500/80 ring-4 ring-blue-500/10 mr-3" />
+                  {idea.title}
+                </h3>
+                
+                {/* Logline (concise pitch) */}
+                <div className="mb-6">
+                  <div className="text-gray-400 text-sm uppercase tracking-wide mb-1">Logline</div>
+                  <p className="text-gray-200 text-lg leading-8">{idea.logline || idea.synopsis}</p>
                     </div>
-                  )}
-                  
-                  {/* Quick Details (Core) */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-gray-800/40 rounded-lg p-4 border border-gray-700/50 shadow-inner">
-                      <div className="text-gray-400 text-sm uppercase tracking-wide mb-2">Genre</div>
-                      <div className="flex flex-wrap gap-2">
-                        {String(idea.details.genre || '').split(',').map((g, idx) => (
-                          <span key={idx} className="px-2 py-1 rounded-full bg-gray-700/60 border border-gray-600/60 text-gray-200 text-xs">
-                            {g.trim()}
-                          </span>
-                        ))}
-                      </div>
+                
+                {/* Comps (optional) */}
+                {Boolean((idea as any).comps) && (
+                  <div className="mb-6">
+                    <div className="text-gray-400 text-sm uppercase tracking-wide mb-1">Comps</div>
+                    <div className="text-gray-200">{(idea as any).comps}</div>
+                  </div>
+                )}
+                
+                {/* Quick Details (Core) */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-gray-800/40 rounded-lg p-4 border border-gray-700/50 shadow-inner">
+                    <div className="text-gray-400 text-sm uppercase tracking-wide mb-2">Genre</div>
+                    <div className="flex flex-wrap gap-2">
+                      {String(idea.details.genre || '').split(',').map((g, idx) => (
+                        <span key={idx} className="px-2 py-1 rounded-full bg-gray-700/60 border border-gray-600/60 text-gray-200 text-xs">
+                          {g.trim()}
+                        </span>
+                      ))}
+                    </div>
           </div>
                     <div className="bg-gray-800/40 rounded-lg p-4 border border-gray-700/50 shadow-inner">
                       <div className="text-gray-400 text-sm uppercase tracking-wide mb-2">Duration (approximate)</div>
@@ -2321,6 +2314,20 @@ export default function ProjectIdeaTab() {
                     </div>
         </div>
         
+                  {/* Collapse control above Structure when expanded */}
+                  {expandedCards.has(idea.id) && (
+                    <div className="flex items-center justify-end mb-2">
+                      <button
+                        className="inline-flex items-center gap-1 text-sf-primary hover:underline"
+                        onClick={(e)=>{ e.stopPropagation(); const next = new Set(expandedCards); next.delete(idea.id); setExpandedCards(next) }}
+                        title="Collapse details"
+                      >
+                        <ChevronUp className="w-4 h-4" />
+                        <span className="sr-only">Collapse details</span>
+                      </button>
+                    </div>
+                  )}
+
                   {/* Narrative Structure (moved under View More Details) */}
                   {expandedCards.has(idea.id) && (
                     <div className="bg-gray-800/40 rounded-lg p-4 mb-6 border border-gray-700/50">
@@ -2362,54 +2369,26 @@ export default function ProjectIdeaTab() {
                     </div>
                   )}
 
-                  {/* Progressive details toggle */}
-                  <div className="mt-2">
-                    {!expandedCards.has(idea.id) ? (
-                      <Button variant="ghost" onClick={(e)=>{ e.stopPropagation(); setExpandedCards(new Set([ ...Array.from(expandedCards), idea.id ])) }}>
-                        View More Details
-                      </Button>
-                    ) : (
-                      <Button variant="ghost" onClick={(e)=>{ e.stopPropagation(); const next = new Set(expandedCards); next.delete(idea.id); setExpandedCards(next) }}>
-                        View Less
-                      </Button>
-                    )}
-                  </div>
+                {/* Progressive details toggle */}
+                <div className="mt-2 flex items-center">
+                  {!expandedCards.has(idea.id) && (
+                    <button
+                      className="inline-flex items-center gap-1 text-sf-primary hover:underline"
+                      onClick={(e)=>{ e.stopPropagation(); setExpandedCards(new Set([ ...Array.from(expandedCards), idea.id ])) }}
+                      title="View more details"
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                      <span className="sr-only">View more details</span>
+                    </button>
+                  )}
+                </div>
 
                   {/* Expanded Details */}
                   {expandedCards.has(idea.id) && (
                     <div className="mt-4 space-y-5">
-                      {/* Synopsis (longer) */}
-                      <div>
-                        <div className="text-gray-400 text-sm uppercase tracking-wide mb-1">Synopsis</div>
-                        {isEditingSelection && selectedIdea?.id === idea.id ? (
-                          <div className="mb-2">
-                            <textarea
-                              value={editedSynopsis}
-                              onChange={(e)=>setEditedSynopsis(e.target.value)}
-                              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-gray-100 text-base leading-7"
-                              rows={5}
-                            />
-                            <div className="mt-3">
-                              <Button variant="secondary" onClick={()=> handleAskFlowFromIdea({ ...idea, synopsis: editedSynopsis })}>
-                                Ask Flow: Improve this concept
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <p className="text-gray-300 leading-7">{idea.synopsis}</p>
-                        )}
-                      </div>
+                      {/* Synopsis removed as redundant */}
 
-                      {/* Protagonist */}
-                      {Array.isArray(idea.characters) && idea.characters.length > 0 && (
-                        <div>
-                          <div className="text-gray-400 text-sm uppercase tracking-wide mb-1">Protagonist</div>
-                          {(() => {
-                            const lead = idea.characters.find((c:any)=>c.role==='protagonist') || idea.characters[0]
-                            return <p className="text-gray-200">{lead?.name ? <><strong>{lead.name}</strong>{lead?.description ? ` – ${lead.description}` : ''}</> : (lead?.description || '—')}</p>
-                          })()}
-                        </div>
-                      )}
+                      {/* Protagonist removed as redundant */}
 
                       {/* Core Conflict */}
                       {Boolean((idea as any).core_conflict) && (
@@ -2431,11 +2410,7 @@ export default function ProjectIdeaTab() {
                         </div>
                       )}
 
-                      {/* Target Audience (repeated for deeper view) */}
-                      <div>
-                        <div className="text-gray-400 text-sm uppercase tracking-wide mb-1">Target Audience</div>
-                        <p className="text-gray-200">{idea.details.targetAudience || '—'}</p>
-                      </div>
+                      {/* Target Audience removed as redundant */}
                     </div>
                   )}
                 </CardContent>
@@ -2446,14 +2421,7 @@ export default function ProjectIdeaTab() {
       )}
 
       {/* Collaboration Slide-over */}
-      {collaborationLink && (
-        <div className="fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/60" onClick={()=>{ setCollaborationLink(null); setCollaborationResults(null); }} />
-          <div className="absolute right-0 top-0 h-full w-full sm:w-[520px] bg-gray-900 border-l border-gray-700 shadow-xl p-6 overflow-y-auto">
-            {/* slide-over content */}
-          </div>
-        </div>
-      )}
+      {/* Legacy slide-over removed in favor of ShareCollabModal and OwnerCollabCard */}
 
     </div>
 

@@ -179,7 +179,7 @@ export class CollaborationService {
    */
   static generateShareLink(sessionId: string): string {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-    return `${baseUrl}/collaborate/${sessionId}`
+    return `${baseUrl}/c/${sessionId}`
   }
   
   /**

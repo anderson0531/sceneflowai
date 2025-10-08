@@ -5,7 +5,12 @@ import { Key, CheckCircle, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 
-const PlatformStatus = ({ platformName, isConnected }) => (
+interface PlatformStatusProps {
+  platformName: string
+  isConnected: boolean
+}
+
+const PlatformStatus = ({ platformName, isConnected }: PlatformStatusProps) => (
   <div className="flex items-center justify-between py-3">
     <span className="text-gray-300">{platformName}</span>
     {isConnected ? (

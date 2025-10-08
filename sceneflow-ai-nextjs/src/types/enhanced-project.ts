@@ -521,7 +521,7 @@ export interface ProjectBible {
   
   // Characters
   characters: Character[];
-  characterArcs: CharacterArc[];
+  characterArcs: BibleCharacterArc[];
   
   // World Building
   locations: Location[];
@@ -548,7 +548,7 @@ export interface ProjectBible {
   contributors: Contributor[];
 }
 
-export interface CharacterArc {
+export interface BibleCharacterArc {
   characterId: string;
   act: number;
   chapter: number;
@@ -558,6 +558,14 @@ export interface CharacterArc {
   growth: string;
   setbacks: string;
   resolution: string;
+}
+
+// Add missing Theme type used by ProjectBible
+export interface Theme {
+  id: string;
+  name: string;
+  description: string;
+  motifs: string[];
 }
 
 export interface VisualGuidelines {

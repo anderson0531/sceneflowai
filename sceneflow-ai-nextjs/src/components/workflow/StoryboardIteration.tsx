@@ -38,7 +38,7 @@ export function StoryboardIteration({
 }: StoryboardIterationProps) {
   const [isIterating, setIsIterating] = useState(false)
   const [iterationHistory, setIterationHistory] = useState<string[]>([])
-  const [currentRating, setCurrentRating] = useState<number>(scene.strength_rating || 0)
+  const [currentRating, setCurrentRating] = useState<number>((scene as any).strength_rating || 0)
   const [showCueInterface, setShowCueInterface] = useState(false)
 
   const handleIterateWithCue = () => {
@@ -88,11 +88,8 @@ export function StoryboardIteration({
       mood: originalScene.mood ? `${originalScene.mood} (Refined)` : 'Engaging (Refined)'
     }
     
-    return {
-      ...originalScene,
-      ...improvements,
-      strength_rating: Math.min(5, (originalScene.strength_rating || 0) + 0.5)
-    }
+    const next: any = { ...originalScene, ...improvements }
+    return next as StoryboardScene
   }
 
   const handleSceneEdit = () => {
@@ -355,10 +352,9 @@ export function StoryboardIteration({
                     onClick={() => {
                       // Reset to original version
                       onSceneUpdate({
-                        ...scene,
-                        strength_rating: scene.strength_rating || 0
+                        ...scene
                       })
-                      setCurrentRating(scene.strength_rating || 0)
+                      setCurrentRating(((scene as any).strength_rating) || 0)
                       setIterationHistory([])
                     }}
                     className="text-orange-600 border-orange-300 hover:bg-orange-50"

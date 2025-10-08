@@ -39,7 +39,9 @@ interface PlatformModel {
 }
 
 export default function DOLAdminPage() {
-  const [activeTab, setActiveTab] = useState<'templates' | 'models' | 'analytics'>('templates');
+  const [activeTab, setActiveTab] = useState<
+    'templates' | 'models' | 'analytics' | 'video-monitoring' | 'optimization' | 'production-health'
+  >('templates');
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [models, setModels] = useState<PlatformModel[]>([]);
   const [loading, setLoading] = useState(false);

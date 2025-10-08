@@ -15,10 +15,7 @@ export async function POST(request: NextRequest) {
 
     const result = await performanceOptimizer.applyOptimizations(recommendations);
     
-    return NextResponse.json({
-      success: true,
-      ...result
-    });
+    return NextResponse.json(Object.assign({ success: true }, result));
 
   } catch (error) {
     console.error('Error applying optimizations:', error);

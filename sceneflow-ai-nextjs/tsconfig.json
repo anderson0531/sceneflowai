@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -19,9 +23,34 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@/services/*": [
+        "./src/service-stubs/*",
+        "./src/service-stubs/index.d.ts"
+      ]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "*.d.ts",
+    "next-env.d.ts",
+    "src/service-stubs/**/*.d.ts",
+    "src/types/**/*.d.ts",
+    "src/types/**/*.ts",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "src/examples/**",
+    "src/scripts/**",
+    "src/app/test-neon/**",
+    "src/services/**",
+    "src/app/api/**",
+    "src/domain/**",
+    "src/hooks/**",
+    "src/store/**",
+    "src/app/dashboard/**",
+    "src/components/workflow/**"
+  ]
 }

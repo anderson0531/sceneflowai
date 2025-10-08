@@ -19,9 +19,10 @@ export function CharactersTab() {
     if (!activeCharacter) return;
     let updatedData;
     if (subfield) {
+        const base: any = (activeCharacter as any)[field] && typeof (activeCharacter as any)[field] === 'object' ? (activeCharacter as any)[field] : {}
         updatedData = {
             ...activeCharacter,
-            [field]: { ...activeCharacter[field as keyof typeof activeCharacter], [subfield]: value }
+            [field]: { ...base, [subfield]: value }
         };
     } else {
         updatedData = { ...activeCharacter, [field]: value };

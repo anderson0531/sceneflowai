@@ -190,7 +190,7 @@ export function CueSidebar({ className }: CueSidebarProps) {
             characters: guide.characters.map(c => ({
               name: c.name,
               archetype: c.archetype,
-              motivation: c.primaryMotivation
+              motivation: (c as any).motivations?.[0] || (c as any).primaryMotivation || ''
             })),
             beatSheet: guide.beatSheet.map(b => ({
               title: b.title,
@@ -664,7 +664,7 @@ export function CueSidebar({ className }: CueSidebarProps) {
 
               {/* Send Button */}
               <Button
-                onClick={handleSendMessage}
+                onClick={() => handleSendMessage()}
                 disabled={!inputValue.trim() || isLoading}
                 className="p-1.5 bg-sf-primary hover:bg-sf-primary-dark text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Send message"

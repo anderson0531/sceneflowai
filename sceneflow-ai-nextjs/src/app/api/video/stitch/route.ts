@@ -37,7 +37,7 @@ export interface VideoStitchResponse {
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const body: VideoStitchRequest = await request.body
+    const body: VideoStitchRequest = await request.json()
     const { generationId, userId, clips, outputSettings } = body
 
     if (!generationId || !userId || !clips || clips.length === 0) {

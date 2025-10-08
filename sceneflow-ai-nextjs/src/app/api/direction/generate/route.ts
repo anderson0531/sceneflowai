@@ -203,85 +203,23 @@ IMPORTANT:
 - Optimize for the target audience and platform`
 
     // Generate directions using LLM
-    const aiProvider = AIProviderFactory.createProvider(llmProvider as any)
+    const aiProvider = AIProviderFactory.createAdapterWithRawCredentials(llmProvider as any)
     if (!aiProvider) {
       return NextResponse.json({
         success: false,
         error: 'No AI provider available for direction generation'
       }, { status: 500 })
     }
-
-    const response = await aiProvider.generateContent(systemPrompt, {
-      maxTokens: 6000,
-      temperature: 0.7,
-      topP: 0.9
-    })
-
-    if (!response.success || !response.content) {
+    const response = await aiProvider.generate({ prompt: systemPrompt, aspect_ratio: '16:9', motion_intensity: 5 }, {})
+    if (response.status === 'FAILED' || !response.provider_job_id) {
       return NextResponse.json({
         success: false,
-        error: 'Failed to generate direction content'
+        error: 'Failed to trigger direction generation'
       }, { status: 500 })
     }
 
-    // Parse the LLM response
-    let directions: SceneDirection[]
-    try {
-      // Extract JSON from the response (handle markdown formatting)
-      const jsonMatch = response.content.match(/\[[\s\S]*\]/)
-      if (!jsonMatch) {
-        throw new Error('No JSON array found in response')
-      }
-
-      directions = JSON.parse(jsonMatch[0])
-      
-      // Validate directions structure
-      if (!Array.isArray(directions)) {
-        throw new Error('Response is not an array')
-      }
-
-      // Validate each direction
-      directions.forEach((direction, index) => {
-        if (!direction.scene_number || !direction.detailed_script || !direction.camera_direction) {
-          throw new Error(`Invalid direction structure at index ${index}`)
-        }
-        
-        // Ensure scene numbers match storyboard
-        direction.scene_number = index + 1
-        
-        // Set default values for optional fields
-        direction.performance_notes = direction.performance_notes || 'Natural, authentic performance'
-        direction.props_set_design = direction.props_set_design || 'Minimal, clean set design'
-        direction.sound_design = direction.sound_design || 'Subtle ambient music and natural sound'
-        direction.pacing_notes = direction.pacing_notes || 'Maintain steady, engaging pace'
-        direction.technical_requirements = direction.technical_requirements || 'Standard production equipment'
-        
-        // Ensure quality indicators are present
-        if (!direction.quality_indicators) {
-          direction.quality_indicators = {
-            visual_impact: 7,
-            narrative_clarity: 7,
-            technical_feasibility: 7,
-            emotional_resonance: 7
-          }
-        }
-        
-        // Calculate overall strength rating if not provided
-        if (!direction.strength_rating) {
-          const avgQuality = Object.values(direction.quality_indicators).reduce((sum, val) => sum + val, 0) / 4
-          direction.strength_rating = Math.round(avgQuality * 10) / 10
-        }
-      })
-
-    } catch (parseError) {
-      console.error('Failed to parse LLM response:', parseError)
-      console.error('Raw response:', response.content)
-      
-      return NextResponse.json({
-        success: false,
-        error: 'Failed to parse direction response from AI provider'
-      }, { status: 500 })
-    }
+    // Placeholder: downstream pipeline would fetch content/status by provider_job_id
+    const directions: SceneDirection[] = []
 
     // Calculate metadata
     const totalScenes = directions.length

@@ -32,8 +32,17 @@ export interface Beat {
   charactersPresent?: string[];
   // Visuals
   thumbnailUrl?: string | null;
+  storyboardFrames?: Array<{ id: string; imageUrl: string; prompt?: string; updatedAt?: string }>;
   // Timeline
   estimatedDuration?: number; // seconds
+  startTimeSec?: number; // computed timeline start
+  endTimeSec?: number;   // computed timeline end
+  // Script
+  script?: string;
+  scriptVersions?: Array<{ id: string; createdAt: string; label?: string; text: string }>;
+  // New context controls
+  sceneCharacters?: string[]; // ids from treatment.characters
+  targetSeconds?: number;     // desired duration target for balancing
 }
 
 export interface User {
@@ -344,16 +353,19 @@ export const useStore = create<AppState>((set, get) => ({
   saveBeatSheet: async () => {
     const { currentProject, beatSheet } = get();
     if (!currentProject) throw new Error("No active project.");
-    
+    // Compact: ensure versions arrays aren't huge
+    const compact = beatSheet.map(b=> ({
+      ...b,
+      scriptVersions: (b.scriptVersions || []).slice(-10)
+    }))
     await fetch(`/api/projects`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         id: currentProject.id,
-        metadata: { ...currentProject.metadata, acts: beatSheet },
+        metadata: { ...currentProject.metadata, acts: compact },
       }),
     });
-    
     set({ isBeatSheetDirty: false });
   },
 

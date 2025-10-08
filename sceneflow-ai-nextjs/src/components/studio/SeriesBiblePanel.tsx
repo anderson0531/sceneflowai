@@ -24,7 +24,7 @@ export function SeriesBiblePanel() {
     bibleManager.updateProjectBible(bible.id, {
       logline: `Series based on ${guide.title}`,
       synopsis: guide.filmTreatment,
-      characters: guide.characters
+      characters: (guide.characters as any)
     });
     
     setIsCreating(false);

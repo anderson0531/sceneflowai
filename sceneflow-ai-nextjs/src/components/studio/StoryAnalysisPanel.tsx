@@ -13,6 +13,8 @@ import {
   Zap,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   Target,
   BarChart3,
   AlertCircle,
@@ -230,7 +232,7 @@ export function StoryAnalysisPanel({ className }: StoryAnalysisPanelProps) {
             <TooltipContent side={isCollapsed ? "left" : "bottom"} className="bg-gray-700 text-white border border-gray-600">
               <p>{isCollapsed ? 'Expand Director\'s Notes' : 'Collapse Director\'s Notes'}</p>
               <p className="text-xs text-gray-300">Toggle panel visibility for more workspace space</p>
-            </TooltipTrigger>
+            </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </div>

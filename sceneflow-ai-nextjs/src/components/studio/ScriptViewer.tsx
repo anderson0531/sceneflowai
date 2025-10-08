@@ -9,7 +9,7 @@ import { DndContext as _ignore } from '@dnd-kit/core'
 import { Button } from '@/components/ui/Button'
 import { LayoutPanelLeft, PanelRightOpen, Volume2, Square, History } from 'lucide-react'
 import { ScriptEditor } from '@/components/studio/ScriptEditor'
-function ChangesPanel({ editorContainerRef }: { editorContainerRef: React.RefObject<HTMLDivElement> }) {
+function ChangesPanel({ editorContainerRef }: { editorContainerRef: React.RefObject<HTMLDivElement | null> }) {
   const [items, setItems] = useState<Array<{ id: string; type: 'add'|'del'; text: string }>>([])
 
   const refresh = () => {
@@ -151,7 +151,7 @@ export default function ScriptViewer({ fountainText }: { fountainText: string })
   const sensors = useSensors(useSensor(PointerSensor))
 
   // AI Inspector state
-  const [inspectorTab, setInspectorTab] = useState<'flow'|'comments'|'voices'|'changes'|'settings'>('flow')
+  const [inspectorTab, setInspectorTab] = useState<'flow'|'comments'|'voices'|'changes'|'history'|'settings'>('flow')
   const [aiOriginal, setAiOriginal] = useState('')
   const [aiSuggestion, setAiSuggestion] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
@@ -494,7 +494,7 @@ export default function ScriptViewer({ fountainText }: { fountainText: string })
                         <Button variant="primary" onClick={()=>{
                           const ed: any = (editorContainerRef.current as any)?.__editor
                           if (!ed) return
-                          ed.chain().focus().command(({ tr }) => {
+                          ed.chain().focus().command(({ tr }: any) => {
                             const { from, to } = ed.state.selection
                             tr = tr.insertText(aiSuggestion, from, to)
                             ed.view.dispatch(tr)
@@ -876,7 +876,7 @@ export default function ScriptViewer({ fountainText }: { fountainText: string })
 
 
 // ----- Export helpers -----
-function collectBlocksFromEditor(editorContainerRef: React.RefObject<HTMLDivElement>): Array<{ type:string; text:string }> {
+function collectBlocksFromEditor(editorContainerRef: React.RefObject<HTMLDivElement | null>): Array<{ type:string; text:string }> {
   try {
     const ed: any = (editorContainerRef.current as any)?.__editor
     if (!ed) return []

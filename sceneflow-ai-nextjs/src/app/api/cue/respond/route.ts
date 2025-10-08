@@ -10,7 +10,8 @@ interface CueContext {
   pathname?: string
   currentStep?: string
   stepProgress?: Record<string, number>
-  type?: 'project-creation' | 'text' | 'beatCard' | 'character' | 'template' | 'analysis' | 'pacing' | 'conflict' | 'consistency'
+  type?: 'project-creation' | 'text' | 'beatCard' | 'character' | 'template' | 'analysis' | 'pacing' | 'conflict' | 'consistency' | 'scene_script'
+  mode?: string
   project?: {
     id?: string
     title?: string
@@ -66,6 +67,17 @@ When context.type is 'project-creation', you are creating a COMPLETE NEW PROJECT
 2. Generate comprehensive baseline content following the No Blank Canvas principle
 3. Provide structured output that can be parsed into the project system
 4. Use higher token limits and more detailed generation for complete story development`
+
+const SCENE_SCRIPT_SYSTEM = [
+  'You are a professional screenwriter. Produce ONLY a scene script.',
+  '',
+  'Strict output rules:',
+  '- Include these blocks only: Title (optional), Episode (optional), Scene number, Estimated Duration, SCENE START, slugline, VISUAL, AUDIO, SCENE END.',
+  '- Use cinematic prose with specific sensory detail.',
+  '- Do NOT include director notes, rationale, audience POV, or any analysis.',
+  '- Do NOT include extra headings before or after the scene blocks.',
+].join('\n')
+
 async function callGemini(messages: Message[], apiKey: string, context?: CueContext): Promise<string> {
   // Convert OpenAI format to Gemini format
   const contents = messages
@@ -92,7 +104,7 @@ async function callGemini(messages: Message[], apiKey: string, context?: CueCont
   // Use maximum model capability for project creation
   const isProjectCreation = context?.type === 'project-creation'
   const model = isProjectCreation ? 'gemini-2.5-flash' : 'gemini-2.5-flash'
-  const maxTokens = isProjectCreation ? 32768 : 1024
+  const maxTokens = isProjectCreation ? 32768 : 4096
 
   const body = {
     contents,
@@ -122,10 +134,9 @@ async function callGemini(messages: Message[], apiKey: string, context?: CueCont
 }
 
 async function callOpenAI(messages: Message[], apiKey: string, context?: CueContext): Promise<string> {
-  // Use maximum model capability for project creation
   const isProjectCreation = context?.type === 'project-creation'
   const model = isProjectCreation ? 'gpt-4o' : 'gpt-4o-mini'
-  const maxTokens = isProjectCreation ? 8192 : undefined
+  const maxTokens = isProjectCreation ? 8192 : 4096
   
   const body = {
     model,
@@ -194,11 +205,76 @@ function fallbackAdvisor(userText: string, ctx?: CueContext): string {
   ].join('\n')
 }
 
+function heuristicRefine(seed: string, instruction: string): string {
+  try {
+    const inst = (instruction || '').toLowerCase()
+    let out = seed
+    const lines = out.split('\n')
+    const iLog = lines.findIndex(l => /^\s*logline\s*:/i.test(l))
+    const mutateLogline = (mutator: (s: string) => string) => {
+      if (iLog >= 0) {
+        const m = lines[iLog].match(/^(\s*logline\s*:\s*)([\s\S]*)$/i)
+        if (m) {
+          const prefix = m[1]
+          const body = m[2]
+          lines[iLog] = prefix + mutator(body)
+        }
+        out = lines.join('\n')
+      } else {
+        const firstBreak = out.indexOf('\n')
+        const head = firstBreak === -1 ? out : out.slice(0, firstBreak)
+        const tail = firstBreak === -1 ? '' : out.slice(firstBreak)
+        out = mutator(head) + tail
+      }
+    }
+    if (inst.includes('suspense')) {
+      mutateLogline((s) => {
+        const base = s.replace(/\s+$/, '')
+        const addon = base.endsWith('.') ? '' : '.'
+        return `${base}${addon} But a hidden threat surfaces, and a ticking clock forces hard choices before everything unravels.`
+      })
+    }
+    if (/funny|funnier|humou?r/i.test(instruction)) {
+      mutateLogline((s) => {
+        const base = s.replace(/\s+$/, '')
+        const addon = base.endsWith('.') ? '' : '.'
+        return `${base}${addon} Along the way, witty asides and awkward missteps keep the tone playfully self‑aware.`
+      })
+      out = out.replace(/^(\s*tone\s*:\s*)(.*)$/im, (m, p1, p2) => `${p1}${p2.replace(/\s*,?\s*$/, '')}, Playful`)
+    }
+    if (/shorten|tighter|concise|compress/i.test(instruction)) {
+      out = out.replace(/^(\s*tone\s*:\s*)(.*)$/im, (m, p1, p2) => {
+        const parts = p2.split(/\s*,\s*/).slice(0, 4)
+        return `${p1}${parts.join(', ')}`
+      })
+      mutateLogline((s) => s
+        .replace(/\b(very|quite|really|just|some|various|incredibly)\b/gi, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim())
+    }
+    if (/visual|cinematography|shots?/i.test(instruction)) {
+      mutateLogline((s) => {
+        const base = s.replace(/\s+$/, '')
+        const addon = base.endsWith('.') ? '' : '.'
+        return `${base}${addon} Visual plan: wide establishing shots, dynamic close‑ups on hands, and atmospheric cutaways to texture the world.`
+      })
+    }
+    return out
+  } catch {
+    return seed
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json()
-    const messages = (data?.messages || []) as Message[]
+    let messages = (data?.messages || []) as Message[]
     const context = (data?.context || {}) as CueContext
+
+    // Allow simple { prompt } usage by wrapping as a user message
+    if ((!messages || messages.length === 0) && typeof data?.prompt === 'string' && data.prompt.trim()) {
+      messages = [{ role: 'user', content: data.prompt }]
+    }
 
     const contextSummary = buildContextSummary(context)
     const mode = (context as any)?.project?.metadata?.activeContext?.payload?.mode || (context as any)?.mode || (context as any)?.type
@@ -229,6 +305,12 @@ export async function POST(req: NextRequest) {
         { role: 'system', content: `App Context:\n${contextSummary}` },
         ...messages,
       ]
+    } else if (mode === 'scene_script') {
+      finalMessages = [
+        { role: 'system', content: SCENE_SCRIPT_SYSTEM },
+        // Intentionally do NOT inject analysis context here to avoid polluting output
+        ...messages,
+      ]
     } else {
       finalMessages = [
         { role: 'system', content: SYSTEM_PROMPT },
@@ -237,7 +319,6 @@ export async function POST(req: NextRequest) {
       ]
     }
 
-    // Try providers in order of preference: Gemini first (free/cheap), then OpenAI
     const providers = [
       { name: 'Gemini', key: process.env.GEMINI_API_KEY, call: callGemini },
       { name: 'OpenAI', key: process.env.OPENAI_API_KEY, call: callOpenAI }
@@ -249,16 +330,12 @@ export async function POST(req: NextRequest) {
           console.log(`🤖 Trying ${provider.name}...`)
           const reply = await provider.call(finalMessages, provider.key, context)
           console.log(`✅ ${provider.name} success`)
-          
-          // For project creation, ensure we return structured JSON
           if (context?.type === 'project-creation') {
             try {
-              // Try to parse the reply as JSON to ensure it's valid
               JSON.parse(reply)
               console.log('✅ Project creation response is valid JSON')
             } catch (parseError) {
               console.warn('⚠️ Project creation response is not valid JSON, attempting to fix...')
-              // If the response isn't valid JSON, try to extract JSON from it
               const jsonMatch = reply.match(/\{[\s\S]*\}/)
               if (jsonMatch) {
                 const extractedJson = jsonMatch[0]
@@ -279,7 +356,6 @@ export async function POST(req: NextRequest) {
               }
             }
           }
-          
           return new Response(JSON.stringify({ 
             reply, 
             provider: provider.name.toLowerCase(),
@@ -290,14 +366,41 @@ export async function POST(req: NextRequest) {
           })
         } catch (error) {
           console.warn(`❌ ${provider.name} failed:`, error)
-          // Continue to next provider
         }
       }
     }
 
-    // If all AI providers fail, use fallback
     console.log('🔄 Using fallback mode')
     const lastUser = messages.filter(m => m.role === 'user').slice(-1)[0]?.content || ''
+    const modeForFallback = (context as any)?.project?.metadata?.activeContext?.payload?.mode || (context as any)?.mode
+
+    if (modeForFallback === 'concept_treatment_refine' || modeForFallback === 'idea_optimization' || modeForFallback === 'concept_refine') {
+      try {
+        const seedMatch = lastUser.match(/CURRENT_DESCRIPTION:\n([\s\S]*?)(?:\n\nINSTRUCTION:|\nINSTRUCTION:|$)/)
+        const seed = (seedMatch?.[1] || '').trim()
+        const instMatch = lastUser.match(/INSTRUCTION:\s*([\s\S]*?)$/)
+        const inst = (instMatch?.[1] || '').trim()
+        const improved = heuristicRefine(seed || '', inst || '')
+        const guidance = inst ? `Try it again with: "${inst}"` : 'Try: Sharpen the hook in the first sentence.'
+        const reply = [
+          '<<<INPUT_DESCRIPTION>>>',
+          seed,
+          '<<<IMPROVED_IDEA>>>',
+          improved,
+          '<<<GUIDANCE>>>',
+          guidance,
+        ].join('\n')
+        return new Response(JSON.stringify({ 
+          reply, 
+          provider: 'fallback',
+          model: 'structured-template'
+        }), { 
+          status: 200, 
+          headers: { 'Content-Type': 'application/json' } 
+        })
+      } catch {}
+    }
+
     const reply = fallbackAdvisor(lastUser, context)
     return new Response(JSON.stringify({ 
       reply, 

@@ -38,7 +38,7 @@ export function FlowRefineModal({ open, onOpenChange, seedText, onApply, initial
     }
   }, [open, initialInstruction])
 
-  const refine = async () => {
+  const refine = async (): Promise<void> => {
     setLoading(true)
     setResult('')
     setVariations([])
@@ -85,13 +85,13 @@ export function FlowRefineModal({ open, onOpenChange, seedText, onApply, initial
         .replace(/<<<GUIDANCE>>>[\s\S]*?$/g, '')
         .trim()
       // Try to extract multiple variations
-      const blocks = txt.match(/<<<IMPROVED_IDEA[^>]*>>>[\s\S]*?(?=<<<|$)/g) || []
+      const blocks: string[] = txt.match(/<<<IMPROVED_IDEA[^>]*>>>[\s\S]*?(?=<<<|$)/g) || []
       let vars: string[] = []
       if (blocks.length > 1) {
         vars = blocks.map(b => b.replace(/<<<IMPROVED_IDEA[^>]*>>>/,'').trim())
       } else {
         // heuristic split delimiters
-        const split = improved.split(/\n-{3,}\n|\n\|\|\|\n/).map(s=>s.trim()).filter(Boolean)
+        const split = improved.split(/\n-{3,}\n|\n\|\|\|\n/).map((s: string)=>s.trim()).filter(Boolean)
         vars = split.length > 1 ? split : [improved]
       }
       setVariations(vars)

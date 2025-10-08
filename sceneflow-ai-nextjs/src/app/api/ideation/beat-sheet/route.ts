@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { strictJsonPromptSuffix } from '@/lib/safeJson'
 
 interface BeatSheetRequest {
   input: string
@@ -224,7 +225,7 @@ Respond with valid JSON only:
   "total_duration": "${context.duration || 60} seconds",
   "pacing_notes": ["Note 1", "Note 2"],
   "transition_notes": ["Transition 1", "Transition 2"]
-}`
+}` + strictJsonPromptSuffix
 
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
     method: 'POST',
@@ -254,7 +255,13 @@ Respond with valid JSON only:
   console.log('📋 Gemini Beat Sheet Response:', generatedText)
 
   try {
-    const parsed = JSON.parse(generatedText)
+  const parsed = (() => {
+    let t = (generatedText || '').trim()
+    if (t.includes('```')) { const s=t.indexOf('```'); const e=t.indexOf('```', s+3); if (s!==-1&&e!==-1&&e>s){ t=t.slice(s+3,e).trim(); const nl=t.indexOf('\n'); const fl= nl!==-1 ? t.slice(0,nl) : t; if (/^[a-zA-Z]+\s*$/.test(fl)) t=(nl!==-1?t.slice(nl+1):'').trim(); } }
+    const a=t.indexOf('{'); const b=t.lastIndexOf('}'); if (a!==-1&&b!==-1&&b>a) t=t.slice(a,b+1);
+    t = t.replace(/[“”]/g,'"').replace(/[‘’]/g,"'").replace(/,\s*([}\]])/g,'$1')
+    return JSON.parse(t)
+  })()
     return {
       act_structure: parsed.act_structure || {
         act_1: { title: 'Setup', duration: '25%', beats: [] },

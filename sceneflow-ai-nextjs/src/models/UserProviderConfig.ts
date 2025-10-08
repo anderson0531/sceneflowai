@@ -93,3 +93,4 @@ UserProviderConfig.init(
 )
 
 export default UserProviderConfig
+export { AIProvider }

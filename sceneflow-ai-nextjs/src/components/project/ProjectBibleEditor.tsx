@@ -119,7 +119,7 @@ export function ProjectBibleEditor({
       personality: [],
       appearance: '',
       motivations: [],
-      arc: { start: '', development: [], peak: '', resolution: '' },
+      arc: { start: '', development: [], end: '', growth: '' },
       relationships: [],
       dialogueStyle: '',
       visualReferences: [],

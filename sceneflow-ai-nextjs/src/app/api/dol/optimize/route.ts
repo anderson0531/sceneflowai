@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       taskType: body.taskType,
       complexity: body.complexity,
       userInput: body.userInput,
-      byokPlatformId: body.byUrl,
+      byokPlatformId: body.byokPlatformId,
       userPreferences: body.userPreferences,
       budget: body.budget,
       qualityRequirement: body.qualityRequirement
@@ -55,10 +55,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('DOL API error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -67,8 +64,8 @@ export async function GET() {
     message: 'DOL Optimization API',
     endpoints: {
       POST: '/api/dol/optimize - Optimize task with DOL',
-      GET: '/api/dol/models - Get all available models',
-      GET: '/api/dol/templates - Get all prompt templates'
+      MODELS: '/api/dol/models - Get all available models',
+      TEMPLATES: '/api/dol/templates - Get all prompt templates'
     }
   });
 }

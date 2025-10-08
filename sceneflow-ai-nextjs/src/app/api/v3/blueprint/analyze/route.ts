@@ -53,19 +53,48 @@ HARD RULES:
 INPUT:\n${input}`
 }
 
+function stripCodeFences(text: string): string {
+  return text.replace(/^```json\s*\n?|^```\s*\n?|```\s*$/gm, '').trim()
+}
+
+function extractJson(text: string): string {
+  const cleaned = stripCodeFences(text)
+  // Try parsing directly first
+  try { JSON.parse(cleaned); return cleaned } catch {}
+  // Find the first '{' and last '}' and attempt to parse the slice
+  const start = cleaned.indexOf('{')
+  const end = cleaned.lastIndexOf('}')
+  if (start >= 0 && end > start) {
+    const candidate = cleaned.slice(start, end + 1)
+    try { JSON.parse(candidate); return candidate } catch {}
+  }
+  // Attempt simple bracket balancing
+  let buffer = ''
+  let depth = 0
+  let started = false
+  for (const ch of cleaned) {
+    if (ch === '{') { depth++; started = true }
+    if (started) buffer += ch
+    if (ch === '}') { depth--; if (depth === 0 && started) break }
+  }
+  if (buffer) {
+    try { JSON.parse(buffer); return buffer } catch {}
+  }
+  // Give up; return original for higher-level error handling
+  return cleaned
+}
+
 export async function POST(req: NextRequest) {
   const reqId = crypto.randomUUID()
   try {
     const body = await req.json()
     const input = String(body?.input || '')
-    const variants = Math.max(1, Math.min(5, Number(body?.variants || 3)))
+    const variantsRequested = Math.max(1, Math.min(5, Number(body?.variants || 3)))
     if (!input) return NextResponse.json({ success: false, error: 'Missing input' }, { status: 400 })
 
     const provider = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY ? 'gemini' : 'openai'
     const model = provider === 'gemini' ? (process.env.GEMINI_MODEL || 'gemini-2.5-pro') : (process.env.OPENAI_MODEL || 'gpt-4.1')
     const prompt = toPrompt(input)
-
-    const clean = (t: string) => t.replace(/^```json\n?|```$/g, '').trim()
 
     async function generateOne(): Promise<SimpleBlueprint> {
       let jsonText = ''
@@ -86,20 +115,36 @@ export async function POST(req: NextRequest) {
         const data = await resp.json()
         jsonText = data?.choices?.[0]?.message?.content || ''
       }
-      const parsed: SimpleBlueprint = JSON.parse(clean(jsonText))
+      if (!jsonText || typeof jsonText !== 'string') throw new Error('Empty model response')
+      const repaired = extractJson(jsonText)
+      const parsed: SimpleBlueprint = JSON.parse(repaired)
       return parsed
     }
 
-    const results = await Promise.all(Array.from({ length: variants }, () => generateOne()))
+    // Generate with retries until we reach the requested variant count (cap extra attempts)
+    const target = variantsRequested
+    const maxAttempts = target + 3
+    const results: SimpleBlueprint[] = []
+    let attempts = 0
+    while (results.length < target && attempts < maxAttempts) {
+      const remaining = target - results.length
+      const settled = await Promise.allSettled(Array.from({ length: remaining }, () => generateOne()))
+      for (const s of settled) {
+        if (s.status === 'fulfilled' && s.value) results.push(s.value)
+      }
+      attempts++
+    }
 
-    const payload = variants === 1 ? results[0] : results
+    if (!results.length) throw new Error('No valid variants generated')
 
-    return NextResponse.json({ success: true, data: payload, debug: { api: 'v3-blueprint', provider, model, reqId, variants } }, {
+    const payload = target === 1 ? results[0] : results.slice(0, target)
+
+    return NextResponse.json({ success: true, data: payload, debug: { api: 'v3-blueprint', provider, model, reqId, variants: target } }, {
       headers: {
         'x-sf-api': 'v3-blueprint',
         'x-sf-provider': provider,
         'x-sf-model': model,
-        'x-sf-variants': String(variants),
+        'x-sf-variants': String(target),
         'x-sf-request-id': reqId,
         'cache-control': 'no-store',
       }

@@ -11,6 +11,7 @@ export interface PromptTemplateAttributes {
   currentQualityScore: number;
   usageCount: number;
   isDeprecated: boolean;
+  userSatisfaction?: number;
   metadata: Record<string, any>;
 }
 
@@ -28,6 +29,7 @@ class PromptTemplate extends Model<PromptTemplateAttributes, PromptTemplateCreat
   public currentQualityScore!: number;
   public usageCount!: number;
   public isDeprecated!: boolean;
+  public userSatisfaction?: number;
   public metadata!: Record<string, any>;
 
   public readonly createdAt!: Date;
@@ -77,6 +79,10 @@ PromptTemplate.init(
     isDeprecated: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+    },
+    userSatisfaction: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     metadata: {
       type: DataTypes.JSONB,

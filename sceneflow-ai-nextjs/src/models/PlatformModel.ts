@@ -11,6 +11,7 @@ export interface PlatformModelAttributes {
   description: string;
   costPerUnit: number;
   basePerformanceScore: number;
+  // Optional capability limits
   maxTokens?: number;
   maxDuration?: number;
   maxResolution?: string;
@@ -18,6 +19,18 @@ export interface PlatformModelAttributes {
   isBYOKSupported: boolean;
   isOperational: boolean;
   isActive: boolean;
+  // Aggregated performance metrics
+  totalRequests: number;
+  successCount: number;
+  successRate: number;
+  totalCost: number;
+  averageCost: number;
+  totalDuration: number;
+  averageDuration: number;
+  totalQuality: number;
+  averageQuality: number;
+  totalUserRating: number;
+  averageUserRating: number;
   lastUpdated: Date;
   metadata: Record<string, any>;
 }
@@ -44,6 +57,17 @@ class PlatformModel extends Model<PlatformModelAttributes, PlatformModelCreation
   public isBYOKSupported!: boolean;
   public isOperational!: boolean;
   public isActive!: boolean;
+  public totalRequests!: number;
+  public successCount!: number;
+  public successRate!: number;
+  public totalCost!: number;
+  public averageCost!: number;
+  public totalDuration!: number;
+  public averageDuration!: number;
+  public totalQuality!: number;
+  public averageQuality!: number;
+  public totalUserRating!: number;
+  public averageUserRating!: number;
   public lastUpdated!: Date;
   public metadata!: Record<string, any>;
 
@@ -122,6 +146,51 @@ PlatformModel.init(
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
+    },
+    // Aggregated performance metrics
+    totalRequests: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    successCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    successRate: {
+      type: DataTypes.DECIMAL(10, 6),
+      defaultValue: 0,
+    },
+    totalCost: {
+      type: DataTypes.DECIMAL(10, 6),
+      defaultValue: 0,
+    },
+    averageCost: {
+      type: DataTypes.DECIMAL(10, 6),
+      defaultValue: 0,
+    },
+    totalDuration: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    averageDuration: {
+      type: DataTypes.DECIMAL(10, 6),
+      defaultValue: 0,
+    },
+    totalQuality: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    averageQuality: {
+      type: DataTypes.DECIMAL(10, 6),
+      defaultValue: 0,
+    },
+    totalUserRating: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    averageUserRating: {
+      type: DataTypes.DECIMAL(10, 6),
+      defaultValue: 0,
     },
     lastUpdated: {
       type: DataTypes.DATE,

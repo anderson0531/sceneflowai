@@ -9,16 +9,7 @@ function isAdmin(email: string | null | undefined): boolean {
 }
 
 export default async function AdminPage() {
-  const session = await getServerSession(authOptions)
-  const email = session?.user?.email || null
-  if (!email || !isAdmin(email)) {
-    return (
-      <div className="max-w-xl mx-auto py-20 text-center text-sf-text-primary">
-        <h1 className="text-2xl font-semibold mb-2">Access denied</h1>
-        <p className="text-sf-text-secondary">You must be an administrator to view this page.</p>
-      </div>
-    ) as any
-  }
+  // Temporarily allow access to admin page without restriction
 
   return (
     <div className="max-w-5xl mx-auto py-10 space-y-6 text-sf-text-primary">

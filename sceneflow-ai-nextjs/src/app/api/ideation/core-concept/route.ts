@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { strictJsonPromptSuffix } from '@/lib/safeJson'
 
 interface CoreConceptRequest {
   input: string
@@ -107,7 +108,7 @@ Respond with valid JSON only:
   "input_synopsis": "Brief overview summary (≤50 words) - ORIGINAL SUMMARY ONLY",
   "core_themes": ["Theme 1", "Theme 2", "Theme 3"],
   "narrative_structure": "3-Act Structure" | "5-Act Structure" | "Hero's Journey" | "Documentary Structure" | "Series Structure" | "Experimental Structure"
-}`
+}` + strictJsonPromptSuffix
 
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
     method: 'POST',
@@ -137,7 +138,15 @@ Respond with valid JSON only:
   console.log('🎯 Gemini Core Concept Response:', generatedText)
 
   try {
-    const parsed = JSON.parse(generatedText)
+    const parsed = (() => {
+      let t = (generatedText || '').trim()
+      if (t.includes('```')) {
+        const s = t.indexOf('```'); const e = t.indexOf('```', s+3); if (s!==-1 && e!==-1 && e>s) { t = t.slice(s+3, e).trim(); const nl=t.indexOf('\n'); const fl= nl!==-1 ? t.slice(0,nl) : t; if (/^[a-zA-Z]+\s*$/.test(fl)) t = (nl!==-1 ? t.slice(nl+1) : '').trim(); }
+      }
+      const a=t.indexOf('{'); const b=t.lastIndexOf('}'); if (a!==-1 && b!==-1 && b>a) t=t.slice(a,b+1);
+      t = t.replace(/[“”]/g,'"').replace(/[‘’]/g,"'").replace(/,\s*([}\]])/g,'$1')
+      return JSON.parse(t)
+    })()
     return {
       input_title: parsed.input_title || 'Core Concept',
       input_synopsis: parsed.input_synopsis || 'Brief overview of the concept',

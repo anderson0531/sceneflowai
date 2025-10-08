@@ -10,8 +10,8 @@ interface ConditionalLayoutProps {
 export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
   
-  // Check if this is a collaboration page
-  const isCollaborationPage = pathname.startsWith('/collaborate/');
+  // Check if this is a collaboration page (legacy and new)
+  const isCollaborationPage = pathname.startsWith('/collaborate/') || pathname.startsWith('/c/');
   
   if (isCollaborationPage) {
     // For collaboration pages, render without sidebar

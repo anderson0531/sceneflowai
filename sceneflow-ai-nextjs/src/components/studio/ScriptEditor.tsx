@@ -173,11 +173,13 @@ export function ScriptEditor({ fountain, onReady, containerRef, onComment, onAsk
         if (event.key === 'Tab') {
           if (isEmpty) {
             event.preventDefault()
-            const cycle: string[] = ['action', 'character', 'parenthetical', 'dialogue']
-            const idx = Math.max(0, cycle.indexOf(typeName))
-            const next = cycle[(idx + 1) % cycle.length]
-            // try toggleNode fallbacks
-            (view as any).editor?.chain().focus().toggleNode(typeName || 'action', next).run()
+            try {
+              const cycle: string[] = ['action', 'character', 'parenthetical', 'dialogue']
+              const current: string = typeName || 'action'
+              const idx: number = Math.max(0, cycle.indexOf(current))
+              const nextNode: string = cycle[(idx + 1) % cycle.length]
+              ;(view as any).editor?.chain().focus().toggleNode(current, nextNode).run()
+            } catch {}
             return true
           }
         }
@@ -275,7 +277,7 @@ export function ScriptEditor({ fountain, onReady, containerRef, onComment, onAsk
 
   const applySuggestion = (value: string) => {
     if (!editor) return
-    editor.chain().focus().command(({ tr }) => {
+    editor.chain().focus().command(({ tr }: any) => {
       const {$from} = tr.selection as any
       const parent = $from.parent
       const from = $from.before()

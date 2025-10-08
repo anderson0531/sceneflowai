@@ -10,31 +10,31 @@ export function CurrentPlan() {
 
   if (!user) return null
 
-  const hasValidBYOK = byokSettings.videoGenerationProvider.isConfigured
+  const hasValidBYOK = Boolean(byokSettings?.videoGenerationProvider?.isConfigured)
 
   // BYOK provider status
   const byokProviders = [
     {
       name: 'Google Gemini Veo',
-      status: byokSettings.videoGenerationProvider.name === 'google-veo' && byokSettings.videoGenerationProvider.isConfigured,
+      status: byokSettings?.videoGenerationProvider?.name === 'google-veo' && byokSettings?.videoGenerationProvider?.isConfigured,
       icon: '🤖',
       description: 'AI Video Generation'
     },
     {
       name: 'Runway',
-      status: byokSettings.videoGenerationProvider.name === 'runway' && byokSettings.videoGenerationProvider.isConfigured,
+      status: String(byokSettings?.videoGenerationProvider?.name) === 'runway' && Boolean(byokSettings?.videoGenerationProvider?.isConfigured),
       icon: '🎬',
       description: 'Creative AI Platform'
     },
     {
       name: 'OpenAI Sora',
-      status: byokSettings.videoGenerationProvider.name === 'openai' && byokSettings.videoGenerationProvider.isConfigured,
+      status: byokSettings?.videoGenerationProvider?.name === 'openai' && byokSettings?.videoGenerationProvider?.isConfigured,
       icon: '✨',
       description: 'Advanced Video AI'
     },
     {
       name: 'Anthropic Claude',
-      status: byokSettings.llmProvider.name === 'anthropic' && byokSettings.llmProvider.isConfigured,
+      status: byokSettings?.llmProvider?.name === 'anthropic' && byokSettings?.llmProvider?.isConfigured,
       icon: '🧠',
       description: 'LLM & Analysis'
     }

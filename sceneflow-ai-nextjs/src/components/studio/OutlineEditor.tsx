@@ -20,7 +20,7 @@ import {
 } from '@dnd-kit/sortable';
 import { useMemo, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Save, Clapperboard, Sparkles, Loader2, Plus, FileText, List, Activity as TimelineIcon } from 'lucide-react';
+import { Save, Clapperboard, Sparkles, Loader2, Plus, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { BeatCard } from './BeatCard';
 import { AskFlowModal } from './AskFlowModal';
@@ -44,35 +44,63 @@ export function OutlineEditor({ isGenerating }: { isGenerating?: boolean }) {
   const [mounted, setMounted] = useState(false)
   const [isFlowModalOpen, setIsFlowModalOpen] = useState(false);
   const [isGeneratingScript, setIsGeneratingScript] = useState(false);
-  const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list');
+  // Only list view is supported (timeline removed)
   const [isAutogenGenerating, setIsAutogenGenerating] = useState(false);
 
   useEffect(() => { setMounted(true) }, [])
 
-  // Load beats from the project when it changes
+  // Load beats from the project when it changes (single source of truth)
   useEffect(() => {
-    if (currentProject?.metadata?.acts && currentProject.metadata.acts.length > 0) {
-      setBeats(currentProject.metadata.acts as unknown as Beat[]);
-    } else {
-      // Clear stale outline when switching projects or when there are no acts yet
-      setBeats([]);
+    const selectedIdea: any = (currentProject?.metadata as any)?.selectedIdea
+    if (selectedIdea && Array.isArray(selectedIdea.beat_outline) && selectedIdea.beat_outline.length > 0) {
+      // Only map once or when switching projects; avoid re-mapping overlays
+      const mappedKey = `__sf_outline_mapped_${currentProject?.id || 'current'}`
+      const mappedFlag = typeof window !== 'undefined' ? (window as any)[mappedKey] === true : false
+      const alreadyConceptMapped = mappedFlag || (beatSheet.length > 0 && Boolean((beatSheet[0] as any)?.id?.startsWith?.('beat-concept-')))
+      if (!alreadyConceptMapped || beatSheet.length !== selectedIdea.beat_outline.length) {
+        const mapped: Beat[] = selectedIdea.beat_outline.map((b: any, idx: number) => ({
+          id: `beat-concept-${idx + 1}`,
+          // @ts-ignore keep act loose; default to ACT_I/II/III split by thirds
+          act: idx < Math.ceil(selectedIdea.beat_outline.length / 3) ? 'ACT_I' : idx < Math.ceil(2 * selectedIdea.beat_outline.length / 3) ? 'ACT_II' : 'ACT_III',
+          title: String(b.scene_name || b.beat_title || `Scene ${idx + 1}`),
+          slugline: String(b.scene_name || b.beat_title || `Scene ${idx + 1}`).toUpperCase(),
+          summary: String(b.beat_description || ''),
+          estimatedDuration: undefined,
+        }))
+        console.debug('[Outline] map-from-concept-once', { projectId: currentProject?.id, before: beatSheet.length, after: mapped.length })
+        setBeats(mapped as any)
+        try { if (typeof window !== 'undefined') (window as any)[mappedKey] = true } catch {}
+      }
+      return
     }
-  }, [currentProject, setBeats]);
+
+    if (beatSheet.length === 0 && currentProject?.metadata?.acts && currentProject.metadata.acts.length > 0) {
+      // Fall back to stored acts only when no beats are currently set
+      console.debug('[Outline] fallback-to-acts', { projectId: currentProject?.id, acts: currentProject.metadata.acts.length })
+      setBeats(currentProject.metadata.acts as unknown as Beat[])
+    }
+  }, [currentProject?.id]);
 
   // Fallback: if outline is empty but we have a film treatment, auto-generate once
   useEffect(() => {
     const autogen = async () => {
+      // Do not autogen if we have a selectedIdea with scenes
+      const sel: any = (currentProject?.metadata as any)?.selectedIdea
+      if (sel && Array.isArray(sel.beat_outline) && sel.beat_outline.length > 0) return
+      const mappedKey = `__sf_outline_mapped_${currentProject?.id || 'current'}`
+      if (typeof window !== 'undefined' && (window as any)[mappedKey] === true) return
       if (!(currentProject?.metadata as any)?.filmTreatment) return
       if (beatSheet.length > 0) return
       try {
         setIsAutogenGenerating(true)
+        console.debug('[Outline] autogen-from-treatment', { projectId: currentProject?.id })
         const resp = await fetch('/api/generate/outline', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ treatment: (currentProject?.metadata as any)?.filmTreatment })
         })
         if (!resp.ok) return
-      const json = await resp.json()
+        const json = await resp.json()
         if (Array.isArray(json?.scenes) && json.scenes.length) {
           setBeats(json.scenes as Beat[])
         }
@@ -249,56 +277,99 @@ export function OutlineEditor({ isGenerating }: { isGenerating?: boolean }) {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800 space-x-2">
+      <div className="flex items-center justify-between p-4 border-b border-gray-800/70 bg-gray-900/70 backdrop-blur rounded-t-xl space-x-2">
+        <div />
         <div className="flex items-center gap-2">
-          <Button variant={viewMode==='list' ? 'default' : 'outline'} onClick={()=>setViewMode('list')}>
-            <List size={16} /> List View
+          <Button variant="outline" onClick={async ()=>{
+            try {
+              setIsAutogenGenerating(true)
+              const scenes = beatSheet.map(b=>({ id:b.id, slugline:b.slugline, summary:b.summary, objective:b.objective, keyAction:b.keyAction, emotionalTone:b.emotionalTone }))
+              if (!scenes.length) return
+              const payload = { title: (currentProject as any)?.title || '', episode: '', scenes }
+              const resp = await fetch('/api/generate/script-batch', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
+              if (!resp.ok) return
+              const txt = await resp.text()
+              const blocks = txt.split(/\nSCENE:\s+\d+\n/i).filter(Boolean)
+              setBeats(beatSheet.map((b, i)=> ({ ...b, script: blocks[i] ? (i===0 ? blocks[i] : ('SCENE: ' + (i+1) + '\n' + blocks[i])) : (b.script || '') })) as any)
+            } finally {
+              setIsAutogenGenerating(false)
+            }
+          }} disabled={isAutogenGenerating || beatSheet.length===0}>
+            <FileText size={16} /> Generate All Scripts
           </Button>
-          <Button variant={viewMode==='timeline' ? 'default' : 'outline'} onClick={()=>setViewMode('timeline')}>
-            <TimelineIcon size={16} /> Timeline View
-            </Button>
+          <Button variant="outline" onClick={addBeat}>
+            <Plus size={16} />
+            Add Scene
+          </Button>
+          <Button variant="outline" onClick={() => setIsFlowModalOpen(true)} disabled={beatSheet.length === 0}>
+            <Clapperboard size={16} />
+            Ask Flow
+          </Button>
+          <Button onClick={handleSave} disabled={!isBeatSheetDirty || beatSheet.length === 0}>
+            <Save size={16} />
+            {isBeatSheetDirty ? 'Save Outline' : 'Saved'}
+          </Button>
+          <Button onClick={handleGenerateScript} disabled={isGeneratingScript || beatSheet.length === 0} className="bg-sf-primary-gradient">
+            {isGeneratingScript ? <Loader2 size={16} /> : <FileText size={16} />}
+            Generate Script
+          </Button>
         </div>
-        <Button variant="outline" onClick={addBeat}>
-          <Plus size={16} />
-          Add Scene
-        </Button>
-        <Button variant="outline" onClick={() => setIsFlowModalOpen(true)} disabled={beatSheet.length === 0}>
-          <Clapperboard size={16} />
-          Ask Flow
-        </Button>
-        <Button onClick={handleSave} disabled={!isBeatSheetDirty || beatSheet.length === 0}>
-          <Save size={16} />
-          {isBeatSheetDirty ? 'Save Outline' : 'Saved'}
-        </Button>
-        <Button onClick={handleGenerateScript} disabled={isGeneratingScript || beatSheet.length === 0} className="bg-sf-primary-gradient">
-          {isGeneratingScript ? <Loader2 size={16} /> : <FileText size={16} />}
-          Generate Script
-        </Button>
-          </div>
+      </div>
       
       <div className="flex-1 overflow-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-4">
         {(isGenerating || isAutogenGenerating || beatSheet.length === 0) ? (
           <div className="flex flex-col h-full items-center justify-center text-center text-gray-400">
-            {(isGenerating || isAutogenGenerating) ? (
-              <>
-                <span className="w-12 h-12 mx-auto text-gray-500 mb-4 animate-spin inline-flex items-center justify-center"><Loader2 size={24} /></span>
-                <h3 className="text-lg font-semibold text-white">Generating Scene Outline...</h3>
-                <p className="mt-1 text-sm">Flow is creating your initial scenes based on the film treatment.</p>
-              </>
-            ) : (
-              <>
-                <div className="w-12 h-12 mx-auto text-gray-500 mb-4 flex items-center justify-center"><Clapperboard size={32} /></div>
-                <h3 className="text-lg font-semibold text-white">Your Scene Outline is Empty</h3>
-                <p className="mt-1 text-sm">
-                  Click "+ Add Scene" to begin building your outline.
-                </p>
-              </>
-            )}
+              <span className="w-12 h-12 mx-auto text-gray-500 mb-4 animate-spin inline-flex items-center justify-center"><Loader2 size={24} /></span>
+              <h3 className="text-lg font-semibold text-white">Generating Scene Outline...</h3>
+              <p className="mt-1 text-sm">Flow is creating your initial scenes based on the film treatment.</p>
           </div>
                   ) : (
           <>
+          {/* Selected Concept summary at top */}
+          {Boolean((currentProject?.metadata as any)?.selectedIdea) && (
+            <div className="lg:col-span-12">
+              <div className="rounded-lg border border-gray-800 bg-gray-900/40 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm uppercase tracking-wide text-gray-400">Selected Concept</div>
+                  <button className="text-xs text-blue-400 hover:underline" onClick={(e)=>{
+                    e.stopPropagation();
+                    // toggle hide/show by attaching a flag on project metadata for session only
+                    const root = document.getElementById('concept-card-body');
+                    if (root) root.classList.toggle('hidden');
+                  }}>Hide/Show</button>
+                </div>
+                <div id="concept-card-body" className="mt-2">
+                  {(() => {
+                    const idea: any = (currentProject?.metadata as any)?.selectedIdea || {}
+                    const chips = (str?: string) => String(str || '').split(',').filter(Boolean)
+                    return (
+                      <div>
+                        <div className="text-xl font-semibold text-white mb-2">{idea.title || 'Untitled Concept'}</div>
+                        {idea.logline && (<p className="text-sm text-gray-300 mb-3">{idea.logline}</p>)}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                          <div className="bg-gray-800/40 rounded border border-gray-700 p-3"><div className="text-xs text-gray-400 mb-1">Genre</div><div className="flex flex-wrap gap-1">{chips(idea.details?.genre).map((t:string,i:number)=>(<span key={i} className="px-2 py-0.5 text-xs bg-gray-800 border border-gray-700 rounded text-gray-200">{t.trim()}</span>))}</div></div>
+                          <div className="bg-gray-800/40 rounded border border-gray-700 p-3"><div className="text-xs text-gray-400 mb-1">Duration</div><div className="text-sm text-gray-200">{idea.details?.duration || '—'}</div></div>
+                          <div className="bg-gray-800/40 rounded border border-gray-700 p-3"><div className="text-xs text-gray-400 mb-1">Audience</div><div className="text-sm text-gray-200">{idea.details?.targetAudience || '—'}</div></div>
+                          <div className="bg-gray-800/40 rounded border border-gray-700 p-3"><div className="text-xs text-gray-400 mb-1">Tone</div><div className="flex flex-wrap gap-1">{chips(idea.details?.tone).map((t:string,i:number)=>(<span key={i} className="px-2 py-0.5 text-xs bg-gray-800 border border-gray-700 rounded text-gray-200">{t.trim()}</span>))}</div></div>
+                        </div>
+                        {Array.isArray(idea.beat_outline) && idea.beat_outline.length>0 && (
+                          <div className="mt-2 text-xs text-gray-300">
+                            <div className="text-gray-400 mb-1">Scenes</div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+                              {idea.beat_outline.map((b:any,i:number)=>(<div key={i} className="bg-gray-900/40 border border-gray-800 rounded px-2 py-1">{String(b.scene_number||i+1).padStart(2,'0')}. {b.scene_name||b.beat_title||'Scene'} {b.scene_duration?`— ${b.scene_duration}`:''}</div>))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
+                </div>
+              </div>
+            </div>
+          )}
+
+
           <div className="lg:col-span-8 xl:col-span-9">
-            {viewMode === 'list' ? (
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -335,29 +406,6 @@ export function OutlineEditor({ isGenerating }: { isGenerating?: boolean }) {
                   ) : null}
                 </DragOverlay>
               </DndContext>
-            ) : (
-              <div className="rounded-lg border border-gray-800 bg-gray-900/40 p-4">
-                <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
-                  <span>Timeline (seconds)</span>
-                  <span>Total: {Math.round((analysis.totalSeconds||0))}s</span>
-                </div>
-                <div className="w-full h-24 bg-gray-950/60 rounded overflow-hidden flex">
-                  {beatSheet.map((b, i) => {
-                    const dur = Math.max(5, Number(b.estimatedDuration) || 60)
-                    const total = Math.max(1, analysis.totalSeconds || (beatSheet.length*60))
-                    const widthPct = Math.max(2, Math.round((dur/total)*100))
-                    return (
-                      <div key={b.id} className="h-full relative group" style={{ width: `${widthPct}%` }}>
-                        <div className="h-full border-r border-gray-800 bg-blue-500/20 group-hover:bg-blue-500/30 transition-colors" />
-                        <div className="absolute inset-0 flex items-center justify-center text-[10px] text-gray-200">
-                          <span className="px-1 truncate max-w-full">{i+1}. {b.slugline || 'Scene'}</span>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
           </div>
           {/* Analysis Sidebar */}
           <aside className="lg:col-span-4 xl:col-span-3 space-y-3">

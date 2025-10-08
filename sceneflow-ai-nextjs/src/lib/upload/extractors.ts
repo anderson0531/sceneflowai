@@ -2,21 +2,19 @@
 
 export async function extractTextFromPdf(file: File): Promise<string> {
   try {
-    const [{ getDocument }, pdfjsWorker] = await Promise.all([
-      import('pdfjs-dist/build/pdf'),
+    const [pdfjs, pdfjsWorker] = await Promise.all([
+      import('pdfjs-dist') as any,
       // Use CDN worker to avoid bundling issues
       Promise.resolve('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'),
     ]) as any
 
     // Configure worker
-    if ((getDocument as any).GlobalWorkerOptions) {
-      (getDocument as any).GlobalWorkerOptions.workerSrc = pdfjsWorker
-    } else if ((await import('pdfjs-dist')).GlobalWorkerOptions) {
-      ;(await import('pdfjs-dist')).GlobalWorkerOptions.workerSrc = pdfjsWorker
+    if (pdfjs?.GlobalWorkerOptions) {
+      pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker
     }
 
     const data = await file.arrayBuffer()
-    const pdf = await (getDocument as any)({ data }).promise
+    const pdf = await (pdfjs.getDocument as any)({ data }).promise
     let out = ''
     const numPages: number = pdf.numPages
     for (let i = 1; i <= numPages; i++) {

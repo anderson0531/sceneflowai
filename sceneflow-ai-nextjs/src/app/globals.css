@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Header tokens */
+  --app-bar-h: 56px;
+  --context-bar-h: 48px;
+}
+
 @layer base {
   body {
     /* Global application background and text */

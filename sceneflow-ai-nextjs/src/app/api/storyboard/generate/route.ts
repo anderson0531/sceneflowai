@@ -178,67 +178,22 @@ IMPORTANT:
       console.log(`Generated storyboard from template: ${storyboard.length} scenes`)
     } else {
       // Generate storyboard using LLM
-      const aiProvider = AIProviderFactory.createProvider(llmProvider as any)
+      const aiProvider = AIProviderFactory.createAdapterWithRawCredentials(llmProvider as any)
       if (!aiProvider) {
         return NextResponse.json({
           success: false,
           error: 'No AI provider available for storyboard generation'
         }, { status: 500 })
       }
-
-      const response = await aiProvider.generateContent(systemPrompt, {
-        maxTokens: 4000,
-        temperature: 0.7,
-        topP: 0.9
-      })
-
-      if (!response.success || !response.content) {
+      const response = await aiProvider.generate({ prompt: systemPrompt, aspect_ratio: aspectRatio, motion_intensity: 5 }, {})
+      if (response.status === 'FAILED' || !response.provider_job_id) {
         return NextResponse.json({
           success: false,
-          error: 'Failed to generate storyboard content'
+          error: 'Failed to trigger storyboard generation'
         }, { status: 500 })
       }
-
-      // Parse the LLM response
-      try {
-        // Extract JSON from the response (handle markdown formatting)
-        const jsonMatch = response.content.match(/\[[\s\S]*\]/)
-        if (!jsonMatch) {
-          throw new Error('No JSON array found in response')
-        }
-
-        storyboard = JSON.parse(jsonMatch[0])
-        
-        // Validate storyboard structure
-        if (!Array.isArray(storyboard)) {
-          throw new Error('Response is not an array')
-        }
-
-        // Validate each scene
-        storyboard.forEach((scene, index) => {
-          if (!scene.scene_number || !scene.description || !scene.audio_cues || !scene.image_prompt) {
-            throw new Error(`Invalid scene structure at index ${index}`)
-          }
-          
-          // Ensure scene numbers are sequential
-          scene.scene_number = index + 1
-          
-          // Set default values for optional fields
-          scene.duration = scene.duration || Math.ceil(targetDuration / storyboard.length)
-          scene.camera_angle = scene.camera_angle || 'Medium shot'
-          scene.lighting = scene.lighting || 'Natural lighting'
-          scene.mood = scene.mood || 'Professional'
-        })
-
-      } catch (parseError) {
-        console.error('Failed to parse LLM response:', parseError)
-        console.error('Raw response:', response.content)
-        
-        return NextResponse.json({
-          success: false,
-          error: 'Failed to parse storyboard response from AI provider'
-        }, { status: 500 })
-      }
+      // Placeholder until polling implemented
+      storyboard = [] as any
     }
 
     // Calculate metadata

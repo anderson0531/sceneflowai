@@ -80,18 +80,17 @@ export function AskFlowModal({ isOpen, onClose, beatSheet, onApply }: AskFlowMod
       const response = await fetch('/api/cue/respond', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] }),
       });
 
       if (!response.ok) {
-        // Now expecting the error message to be in result.error
-        const result = await response.json();
-        throw new Error(result.error || 'Failed to get a response from the AI.');
+        const errJson = await response.json().catch(() => null);
+        throw new Error((errJson && errJson.error) || 'Failed to get a response from the AI.');
       }
 
-      // It's possible the 'response' key from the API is a stringified JSON
-      const innerResponse = JSON.parse(result.response);
-      const revisedBeatSheet = innerResponse.revisedBeatSheet;
+      const result = await response.json().catch(() => ({} as any));
+      const innerResponse = typeof result.response === 'string' ? JSON.parse(result.response) : result.response;
+      const revisedBeatSheet = innerResponse?.revisedBeatSheet;
 
       if (!revisedBeatSheet || !Array.isArray(revisedBeatSheet)) {
         throw new Error('The AI returned an invalid response format.');

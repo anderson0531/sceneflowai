@@ -20,9 +20,8 @@ import {
   PromptInstruction,
   AICapability 
 } from '@/types/ai-adaptability';
-import { enhancedProjectManager } from '@/services/EnhancedProjectManager';
+// Note: Avoid importing services here to keep type surface small for UI build
 import { aiCapabilityManager } from '@/services/AICapabilityManager';
-import { dynamicPromptEngine } from '@/services/DynamicPromptEngine';
 import { aiAgentManager } from '@/services/AIAgentManager';
 import { intelligentWorkflowManager } from '@/services/IntelligentWorkflowManager';
 import { aiAgentOrchestrator } from '@/services/AIAgentOrchestrator';

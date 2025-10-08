@@ -1,4 +1,5 @@
 import { PlatformModel, PromptTemplate, FeatureUpdate, APIUsageLog } from '@/models';
+import { fn, col, Op } from 'sequelize';
 import { TaskType, TaskComplexity, PlatformType } from '@/types/dol';
 
 export interface DOLDatabaseMetrics {
@@ -87,7 +88,7 @@ export class DOLDatabaseService {
         error_message: data.errorMessage,
         user_rating: data.userRating,
         output_quality: data.outputQuality,
-        metadata: JSON.stringify(data.metadata),
+        metadata: JSON.stringify(data.metadata || {}),
         timestamp: new Date()
       });
 
@@ -107,13 +108,13 @@ export class DOLDatabaseService {
   ): Promise<void> {
     try {
       const template = await PromptTemplate.findOne({
-        where: { template_id: templateId }
+        where: { templateId }
       });
 
       if (template) {
         // Calculate new quality score
-        const currentScore = template.current_quality_score;
-        const usageCount = template.usage_count || 0;
+        const currentScore = template.currentQualityScore;
+        const usageCount = template.usageCount || 0;
         
         // Weighted average based on usage count
         const newScore = usageCount > 0 
@@ -121,9 +122,8 @@ export class DOLDatabaseService {
           : newQualityScore;
 
         await template.update({
-          current_quality_score: newScore,
-          usage_count: usageCount + 1,
-          last_updated: new Date()
+          currentQualityScore: newScore,
+          usageCount: usageCount + 1
         });
 
         console.log(`📊 DOL Database: Template ${templateId} quality updated to ${newScore.toFixed(2)}`);
@@ -149,17 +149,17 @@ export class DOLDatabaseService {
   ): Promise<void> {
     try {
       const model = await PlatformModel.findOne({
-        where: { model_id: modelId, platform_id: platformId }
+        where: { modelId, platformId }
       });
 
       if (model) {
         // Update model performance data
-        const currentRequests = model.total_requests || 0;
-        const currentSuccessCount = model.success_count || 0;
-        const currentTotalCost = model.total_cost || 0;
-        const currentTotalDuration = model.total_duration || 0;
-        const currentTotalQuality = model.total_quality || 0;
-        const currentTotalRating = model.total_user_rating || 0;
+        const currentRequests = model.totalRequests || 0;
+        const currentSuccessCount = model.successCount || 0;
+        const currentTotalCost = Number(model.totalCost) || 0;
+        const currentTotalDuration = model.totalDuration || 0;
+        const currentTotalQuality = model.totalQuality || 0;
+        const currentTotalRating = model.totalUserRating || 0;
 
         const newRequests = currentRequests + 1;
         const newSuccessCount = currentSuccessCount + (metrics.success ? 1 : 0);
@@ -169,18 +169,18 @@ export class DOLDatabaseService {
         const newTotalRating = currentTotalRating + (metrics.userRating || 0);
 
         await model.update({
-          total_requests: newRequests,
-          success_count: newSuccessCount,
-          success_rate: newSuccessCount / newRequests,
-          total_cost: newTotalCost,
-          average_cost: newTotalCost / newRequests,
-          total_duration: newTotalDuration,
-          average_duration: newTotalDuration / newRequests,
-          total_quality: newTotalQuality,
-          average_quality: newTotalQuality / newRequests,
-          total_user_rating: newTotalRating,
-          average_user_rating: newTotalRating / newRequests,
-          last_updated: new Date()
+          totalRequests: newRequests,
+          successCount: newSuccessCount,
+          successRate: newSuccessCount / newRequests,
+          totalCost: newTotalCost,
+          averageCost: newTotalCost / newRequests,
+          totalDuration: newTotalDuration,
+          averageDuration: newTotalDuration / newRequests,
+          totalQuality: newTotalQuality,
+          averageQuality: newTotalQuality / newRequests,
+          totalUserRating: newTotalRating,
+          averageUserRating: newTotalRating / newRequests,
+          lastUpdated: new Date()
         });
 
         console.log(`📊 DOL Database: Model ${modelId} metrics updated`);
@@ -206,18 +206,14 @@ export class DOLDatabaseService {
 
       // Get average cost
       const costResult = await APIUsageLog.findOne({
-        attributes: [
-          [APIUsageLog.sequelize.fn('AVG', APIUsageLog.sequelize.col('cost')), 'averageCost']
-        ]
+        attributes: [[fn('AVG', col('cost')), 'averageCost']]
       });
       const averageCost = costResult ? parseFloat(costResult.get('averageCost') as string) || 0 : 0;
 
       // Get average quality
       const qualityResult = await APIUsageLog.findOne({
-        attributes: [
-          [APIUsageLog.sequelize.fn('AVG', APIUsageLog.sequelize.col('output_quality')), 'averageQuality']
-        ],
-        where: { output_quality: { [APIUsageLog.sequelize.Op.not]: null } }
+        attributes: [[fn('AVG', col('output_quality')), 'averageQuality']],
+        where: { output_quality: { [Op.not]: null } }
       });
       const averageQuality = qualityResult ? parseFloat(qualityResult.get('averageQuality') as string) || 0 : 0;
 
@@ -225,11 +221,11 @@ export class DOLDatabaseService {
       const topModelsResult = await APIUsageLog.findAll({
         attributes: [
           'model_id',
-          [APIUsageLog.sequelize.fn('COUNT', APIUsageLog.sequelize.col('id')), 'usage'],
-          [APIUsageLog.sequelize.fn('AVG', APIUsageLog.sequelize.col('success')), 'successRate']
+          [fn('COUNT', col('id')), 'usage'],
+          [fn('AVG', col('success')), 'successRate']
         ],
         group: ['model_id'],
-        order: [[APIUsageLog.sequelize.fn('COUNT', APIUsageLog.sequelize.col('id')), 'DESC']],
+        order: [[fn('COUNT', col('id')), 'DESC']],
         limit: 10
       });
 
@@ -245,17 +241,15 @@ export class DOLDatabaseService {
 
       const trendsResult = await APIUsageLog.findAll({
         attributes: [
-          [APIUsageLog.sequelize.fn('DATE', APIUsageLog.sequelize.col('timestamp')), 'date'],
-          [APIUsageLog.sequelize.fn('COUNT', APIUsageLog.sequelize.col('id')), 'requestCount'],
-          [APIUsageLog.sequelize.fn('AVG', APIUsageLog.sequelize.col('success')), 'successRate'],
-          [APIUsageLog.sequelize.fn('AVG', APIUsageLog.sequelize.col('cost')), 'averageCost'],
-          [APIUsageLog.sequelize.fn('AVG', APIUsageLog.sequelize.col('output_quality')), 'averageQuality']
+          [fn('DATE', col('timestamp')), 'date'],
+          [fn('COUNT', col('id')), 'requestCount'],
+          [fn('AVG', col('success')), 'successRate'],
+          [fn('AVG', col('cost')), 'averageCost'],
+          [fn('AVG', col('output_quality')), 'averageQuality']
         ],
-        where: {
-          timestamp: { [APIUsageLog.sequelize.Op.gte]: sevenDaysAgo }
-        },
-        group: [APIUsageLog.sequelize.fn('DATE', APIUsageLog.sequelize.col('timestamp'))],
-        order: [[APIUsageLog.sequelize.fn('DATE', APIUsageLog.sequelize.col('timestamp')), 'ASC']]
+        where: { timestamp: { [Op.gte]: sevenDaysAgo } },
+        group: [fn('DATE', col('timestamp'))],
+        order: [[fn('DATE', col('timestamp')), 'ASC']]
       });
 
       const recentTrends = trendsResult.map(result => ({
@@ -294,20 +288,20 @@ export class DOLDatabaseService {
   public async getPlatformPerformanceMetrics(): Promise<PlatformPerformanceMetrics[]> {
     try {
       const models = await PlatformModel.findAll({
-        where: { is_active: true },
-        order: [['total_requests', 'DESC']]
+        where: { isActive: true },
+        order: [['totalRequests', 'DESC']]
       });
 
       return models.map(model => ({
-        platformId: model.platform_id,
-        modelId: model.model_id,
-        totalRequests: model.total_requests || 0,
-        successCount: model.success_count || 0,
-        failureCount: (model.total_requests || 0) - (model.success_count || 0),
-        averageCost: model.average_cost || 0,
-        averageQuality: model.average_quality || 0,
-        averageResponseTime: model.average_duration || 0,
-        lastUsed: model.last_updated || new Date(),
+        platformId: model.platformId,
+        modelId: model.modelId,
+        totalRequests: model.totalRequests || 0,
+        successCount: model.successCount || 0,
+        failureCount: (model.totalRequests || 0) - (model.successCount || 0),
+        averageCost: Number(model.averageCost) || 0,
+        averageQuality: Number(model.averageQuality) || 0,
+        averageResponseTime: Number(model.averageDuration) || 0,
+        lastUsed: model.lastUpdated || new Date(),
         features: model.features || []
       }));
 
@@ -323,18 +317,18 @@ export class DOLDatabaseService {
   public async getTemplatePerformanceMetrics(): Promise<TemplatePerformanceMetrics[]> {
     try {
       const templates = await PromptTemplate.findAll({
-        where: { is_deprecated: false },
-        order: [['current_quality_score', 'DESC']]
+        where: { isDeprecated: false },
+        order: [['currentQualityScore', 'DESC']]
       });
 
       return templates.map(template => ({
-        templateId: template.template_id,
-        modelId: template.model_id,
-        totalUsage: template.usage_count || 0,
-        averageQuality: template.current_quality_score || 0,
-        userSatisfaction: template.user_satisfaction_score || 0,
-        lastUpdated: template.last_updated || new Date(),
-        isDeprecated: template.is_deprecated || false
+        templateId: template.templateId,
+        modelId: template.modelId,
+        totalUsage: template.usageCount || 0,
+        averageQuality: template.currentQualityScore || 0,
+        userSatisfaction: template.userSatisfaction || 0,
+        lastUpdated: template.updatedAt || new Date(),
+        isDeprecated: template.isDeprecated || false
       }));
 
     } catch (error) {
@@ -355,15 +349,15 @@ export class DOLDatabaseService {
 
       return updates.map(update => ({
         id: update.id,
-        platformId: update.platform_id,
-        modelId: update.model_id,
+        platformId: update.platformId,
+        modelId: update.modelId,
         feature: update.feature,
         status: update.status,
         description: update.description,
         source: update.source,
         confidence: update.confidence,
-        timestamp: update.timestamp,
-        metadata: update.metadata ? JSON.parse(update.metadata) : {}
+        timestamp: update.get('timestamp') as Date,
+        metadata: update.metadata || {}
       }));
 
     } catch (error) {
@@ -385,17 +379,15 @@ export class DOLDatabaseService {
   }): Promise<PromptTemplate> {
     try {
       const template = await PromptTemplate.create({
-        template_id: data.templateId,
-        model_id: data.modelId,
-        task_type: data.taskType,
-        template_string: data.templateString,
+        templateId: data.templateId,
+        modelId: data.modelId,
+        taskType: data.taskType,
+        templateString: data.templateString,
         variables: data.variables,
-        current_quality_score: 75, // Default score
-        usage_count: 0,
-        is_deprecated: false,
-        metadata: JSON.stringify(data.metadata || {}),
-        created_at: new Date(),
-        last_updated: new Date()
+        currentQualityScore: 75,
+        usageCount: 0,
+        isDeprecated: false,
+        metadata: data.metadata || {},
       });
 
       console.log(`📊 DOL Database: Template ${data.templateId} created successfully`);
@@ -427,32 +419,30 @@ export class DOLDatabaseService {
   }): Promise<PlatformModel> {
     try {
       const model = await PlatformModel.create({
-        model_id: data.modelId,
-        platform_id: data.platformId,
-        platform_type: data.platformType,
+        modelId: data.modelId,
+        platformId: data.platformId,
+        platformType: data.platformType,
         category: data.category,
-        display_name: data.displayName,
+        displayName: data.displayName,
         description: data.description,
-        cost_per_unit: data.costPerUnit,
-        base_performance_score: data.basePerformanceScore,
+        costPerUnit: data.costPerUnit,
+        basePerformanceScore: data.basePerformanceScore,
         features: data.features,
-        is_byok_supported: data.isBYOKSupported,
-        is_operational: data.isOperational,
-        is_active: data.isActive,
-        total_requests: 0,
-        success_count: 0,
-        success_rate: 0,
-        total_cost: 0,
-        average_cost: 0,
-        total_duration: 0,
-        average_duration: 0,
-        total_quality: 0,
-        average_quality: 0,
-        total_user_rating: 0,
-        average_user_rating: 0,
-        metadata: JSON.stringify(data.metadata || {}),
-        created_at: new Date(),
-        last_updated: new Date()
+        isBYOKSupported: data.isBYOKSupported,
+        isOperational: data.isOperational,
+        isActive: data.isActive,
+        totalRequests: 0,
+        successCount: 0,
+        successRate: 0,
+        totalCost: 0,
+        averageCost: 0,
+        totalDuration: 0,
+        averageDuration: 0,
+        totalQuality: 0,
+        averageQuality: 0,
+        totalUserRating: 0,
+        averageUserRating: 0,
+        metadata: data.metadata || {},
       });
 
       console.log(`📊 DOL Database: Model ${data.modelId} created successfully`);
@@ -474,13 +464,13 @@ export class DOLDatabaseService {
   ): Promise<void> {
     try {
       const model = await PlatformModel.findOne({
-        where: { model_id: modelId, platform_id: platformId }
+        where: { modelId, platformId }
       });
 
       if (model) {
         await model.update({
           features,
-          last_updated: new Date()
+          lastUpdated: new Date()
         });
 
         console.log(`📊 DOL Database: Model ${modelId} features updated`);
@@ -501,14 +491,12 @@ export class DOLDatabaseService {
   }> {
     try {
       const totalRecords = await APIUsageLog.count();
-      const lastRecord = await APIUsageLog.findOne({
-        order: [['timestamp', 'DESC']]
-      });
+      const lastRecord = await APIUsageLog.findOne({ order: [['timestamp', 'DESC']] });
 
       return {
         isHealthy: true,
         totalRecords,
-        lastUpdate: lastRecord?.timestamp || new Date(),
+        lastUpdate: (lastRecord?.get('timestamp') as Date) || new Date(),
         errorCount: 0
       };
 

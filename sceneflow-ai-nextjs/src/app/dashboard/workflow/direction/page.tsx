@@ -108,8 +108,7 @@ export default function DirectionPage() {
             updateProject(currentProject.id, {
               metadata: {
                 ...currentProject.metadata,
-                sceneDirections: data.directions,
-                directionMetadata: data.metadata
+                directions: data.directions as any
               }
             })
           }
@@ -137,7 +136,7 @@ export default function DirectionPage() {
       updateProject(currentProject.id, {
         metadata: {
           ...currentProject.metadata,
-          sceneDirections: updatedDirections
+          directions: updatedDirections as any
         }
       })
     }
@@ -160,7 +159,7 @@ export default function DirectionPage() {
       updateProject(currentProject.id, {
         metadata: {
           ...currentProject.metadata,
-          sceneDirections: updatedDirections
+          directions: updatedDirections as any
         }
       })
     }

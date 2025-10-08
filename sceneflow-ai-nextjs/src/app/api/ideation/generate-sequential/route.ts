@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { safeParseJsonFromText, strictJsonPromptSuffix } from '@/lib/safeJson'
 
 // ============================================================================
 // PHASE 1 OPTIMIZATION: Direct Function Calls (No HTTP Overhead)
@@ -72,6 +73,8 @@ interface ModelConfig {
   geminiApiKey?: string
   openaiApiKey?: string
 }
+
+// Local legacy helper removed in favor of shared import
 
 async function callLLM(modelConfig: ModelConfig, prompt: string): Promise<string> {
   const { provider, model, geminiApiKey, openaiApiKey } = modelConfig
@@ -155,13 +158,13 @@ Respond with valid JSON only:
   "input_synopsis": "Brief overview summary (≤50 words) - ORIGINAL SUMMARY ONLY",
   "core_themes": ["Theme 1", "Theme 2", "Theme 3"],
   "narrative_structure": "3-Act Structure" | "5-Act Structure" | "Hero's Journey" | "Documentary Structure" | "Series Structure" | "Experimental Structure"
-}`
+}` + strictJsonPromptSuffix
 
   const generatedText = await callLLM(modelConfig, prompt)
 
   console.log('🎯 Direct Core Concept Response:', generatedText)
 
-  const parsed = JSON.parse(generatedText)
+  const parsed = safeParseJsonFromText(generatedText)
   return {
     input_title: parsed.input_title || 'Core Concept',
     input_synopsis: parsed.input_synopsis || 'Brief overview of the concept',
@@ -208,19 +211,19 @@ TASK: Create a comprehensive film treatment that includes:
 3. Tone and mood description
 4. Target audience specifics
 
-Respond with valid JSON only:
+Respond with valid JSON only (no markdown fences, no backticks, no comments):
 {
   "film_treatment": "Treatment vision and approach (≤100 words) - NO SCENE DETAILS",
   "visual_style": "Visual aesthetic and style approach",
   "tone_description": "Detailed tone and mood description",
   "target_audience": "Specific target audience description"
-}`
+}` + strictJsonPromptSuffix
 
   const generatedText = await callLLM(modelConfig, prompt)
 
   console.log('🎬 Direct Film Treatment Response:', generatedText)
 
-  const parsed = JSON.parse(generatedText)
+  const parsed = safeParseJsonFromText(generatedText)
   return {
     film_treatment: parsed.film_treatment || 'Comprehensive film treatment',
     visual_style: parsed.visual_style || 'Professional visual style',
@@ -280,13 +283,13 @@ Respond with valid JSON only:
   ],
   "character_relationships": ["Relationship 1", "Relationship 2"],
   "character_arcs": ["Arc 1", "Arc 2"]
-}`
+}` + strictJsonPromptSuffix
 
   const generatedText = await callLLM(modelConfig, prompt)
 
   console.log('👥 Direct Character Breakdown Response:', generatedText)
 
-  const parsed = JSON.parse(generatedText)
+  const parsed = safeParseJsonFromText(generatedText)
   return {
     characters: Array.isArray(parsed.characters) ? parsed.characters : [],
     character_relationships: Array.isArray(parsed.character_relationships) ? parsed.character_relationships : [],
@@ -398,7 +401,7 @@ Respond with valid JSON only:
   "total_duration": "${context.duration || 60} seconds",
   "pacing_notes": ["Note 1", "Note 2"],
   "transition_notes": ["Transition 1", "Transition 2"]
-}`
+}` + strictJsonPromptSuffix
 
   const generatedText = await callLLM(modelConfig, prompt)
 
@@ -457,92 +460,119 @@ export async function POST(request: NextRequest) {
     console.log('🚀 PHASE 1: Using DIRECT function calls (No HTTP overhead)...')
     console.log('🔄 Input content preview:', input.substring(0, 200))
 
-    // Resolve provider/model and API keys
-    const resolvedProvider: Provider = provider || (process.env.OPENAI_API_KEY ? 'openai' : 'gemini')
+    // Resolve provider/model and API keys with Gemini-first fallback when auto
     const geminiApiKey = process.env.GOOGLE_GEMINI_API_KEY
     const openaiApiKey = process.env.OPENAI_API_KEY
-    const resolvedModel = model || (resolvedProvider === 'openai' ? (process.env.OPENAI_MODEL || 'gpt-5') : (process.env.GEMINI_MODEL || 'gemini-2.5-flash'))
 
-    if (resolvedProvider === 'openai' && !openaiApiKey) {
-      return NextResponse.json({ success: false, message: 'OpenAI API key not configured' }, { status: 500 })
-    }
-    if (resolvedProvider === 'gemini' && !geminiApiKey) {
-      return NextResponse.json({ success: false, message: 'Google Gemini API key not configured' }, { status: 500 })
-    }
+    const userProvider = provider && (provider as any) !== 'auto' ? (provider as Provider) : null
+    const hasGemini = !!geminiApiKey
+    const hasOpenAI = !!openaiApiKey
 
-    console.log(`🤖 Provider: ${resolvedProvider}, Model: ${resolvedModel}`)
+    const pick = (p: Provider) => ({
+      provider: p,
+      model: p === 'openai'
+        ? ((model && (model as any) !== 'auto') ? model : (process.env.OPENAI_MODEL || 'gpt-5'))
+        : ((model && (model as any) !== 'auto') ? model : (process.env.GEMINI_MODEL || 'gemini-2.5-flash'))
+    })
+
+    const candidates: Provider[] = userProvider
+      ? [userProvider]
+      : (hasGemini && hasOpenAI ? ['gemini','openai'] : (hasGemini ? ['gemini'] : ['openai']))
 
     const context = { targetAudience, keyMessage, tone, genre, duration, platform }
-    const modelConfig: ModelConfig = { provider: resolvedProvider, model: resolvedModel, geminiApiKey, openaiApiKey }
 
-    // Step 1: Direct Core Concept Analysis (No HTTP call)
-    console.log('🚀 Step 1: Direct Core Concept Analysis')
-    const coreConceptData = await analyzeCoreConcept(input, context, modelConfig)
-    console.log('✅ Core Concept Analysis completed (Direct call)')
+    let lastErr: any = null
+    for (const p of candidates) {
+      const { provider: tryProvider, model: tryModel } = pick(p)
 
-    // Step 2: Direct Film Treatment Generation (No HTTP call)
-    console.log('🚀 Step 2: Direct Film Treatment Generation')
-    const filmTreatmentData = await generateFilmTreatment(input, coreConceptData, context, modelConfig)
-    console.log('✅ Film Treatment Generation completed (Direct call)')
+      if (tryProvider === 'openai' && !openaiApiKey) {
+        lastErr = new Error('OpenAI API key not configured')
+        continue
+      }
+      if (tryProvider === 'gemini' && !geminiApiKey) {
+        lastErr = new Error('Google Gemini API key not configured')
+        continue
+      }
 
-    // Step 3: Direct Character Breakdown (No HTTP call)
-    console.log('🚀 Step 3: Direct Character Breakdown')
-    const characterBreakdownData = await generateCharacterBreakdown(input, coreConceptData, context, modelConfig)
-    console.log('✅ Character Breakdown completed (Direct call)')
+      const modelConfig: ModelConfig = { provider: tryProvider, model: tryModel, geminiApiKey, openaiApiKey }
+      console.log(`🤖 Trying provider ${tryProvider} model ${tryModel}`)
+      try {
+        // Step 1: Direct Core Concept Analysis (No HTTP call)
+        console.log('🚀 Step 1: Direct Core Concept Analysis')
+        const coreConceptData = await analyzeCoreConcept(input, context, modelConfig)
+        console.log('✅ Core Concept Analysis completed (Direct call)')
 
-    // Step 4: Direct Beat Sheet Generation (No HTTP call)
-    console.log('🚀 Step 4: Direct Beat Sheet Generation')
-    const beatSheetData = await generateBeatSheet(input, coreConceptData, filmTreatmentData, characterBreakdownData.characters, context, modelConfig)
-    console.log('✅ Beat Sheet Generation completed (Direct call)')
+        // Step 2: Direct Film Treatment Generation (No HTTP call)
+        console.log('🚀 Step 2: Direct Film Treatment Generation')
+        const filmTreatmentData = await generateFilmTreatment(input, coreConceptData, context, modelConfig)
+        console.log('✅ Film Treatment Generation completed (Direct call)')
 
-    // Combine all results (Phase 1: Direct data access)
-    const combinedResult = {
-      script_analysis: {
-        input_title: coreConceptData.input_title,
-        input_synopsis: coreConceptData.input_synopsis,
-        input_treatment: filmTreatmentData.film_treatment,
-        characters: characterBreakdownData.characters,
-        core_themes: coreConceptData.core_themes
-      },
-      video_concepts: [{
-        id: 'generated-concept-1',
-        title: coreConceptData.input_title,
-        concept_synopsis: coreConceptData.input_synopsis,
-        concept_approach: filmTreatmentData.film_treatment,
-        narrative_structure: coreConceptData.narrative_structure,
-        act_structure: beatSheetData.act_structure,
-        thumbnail_prompt: `Visual representation of ${coreConceptData.input_title}`,
-        strength_rating: 4.5
-      }]
-    }
+        // Step 3: Direct Character Breakdown (No HTTP call)
+        console.log('🚀 Step 3: Direct Character Breakdown')
+        const characterBreakdownData = await generateCharacterBreakdown(input, coreConceptData, context, modelConfig)
+        console.log('✅ Character Breakdown completed (Direct call)')
 
-    console.log('✅ Sequential Generation completed successfully')
+        // Step 4: Direct Beat Sheet Generation (No HTTP call)
+        console.log('🚀 Step 4: Direct Beat Sheet Generation')
+        const beatSheetData = await generateBeatSheet(input, coreConceptData, filmTreatmentData, characterBreakdownData.characters, context, modelConfig)
+        console.log('✅ Beat Sheet Generation completed (Direct call)')
 
-    const responseBody = {
-      success: true,
-      data: {
-        core_concept: coreConceptData,
-        film_treatment: filmTreatmentData,
-        character_breakdown: characterBreakdownData,
-        beat_sheet: beatSheetData,
-        combined_result: combinedResult
-      },
-      message: 'Phase 1 Optimized: Sequential generation completed with direct function calls',
-      debug: {
-        api: 'sequential-phase1',
-        provider: resolvedProvider,
-        model: resolvedModel,
-        timestamp: new Date().toISOString()
+        // Combine all results (Phase 1: Direct data access)
+        const combinedResult = {
+          script_analysis: {
+            input_title: coreConceptData.input_title,
+            input_synopsis: coreConceptData.input_synopsis,
+            input_treatment: filmTreatmentData.film_treatment,
+            characters: characterBreakdownData.characters,
+            core_themes: coreConceptData.core_themes
+          },
+          video_concepts: [{
+            id: 'generated-concept-1',
+            title: coreConceptData.input_title,
+            concept_synopsis: coreConceptData.input_synopsis,
+            concept_approach: filmTreatmentData.film_treatment,
+            narrative_structure: coreConceptData.narrative_structure,
+            act_structure: beatSheetData.act_structure,
+            thumbnail_prompt: `Visual representation of ${coreConceptData.input_title}`,
+            strength_rating: 4.5
+          }]
+        }
+
+        console.log('✅ Sequential Generation completed successfully')
+
+        const responseBody = {
+          success: true,
+          data: {
+            core_concept: coreConceptData,
+            film_treatment: filmTreatmentData,
+            character_breakdown: characterBreakdownData,
+            beat_sheet: beatSheetData,
+            combined_result: combinedResult
+          },
+          message: 'Phase 1 Optimized: Sequential generation completed with direct function calls',
+          debug: {
+            api: 'sequential-phase1',
+            provider: tryProvider,
+            model: tryModel,
+            timestamp: new Date().toISOString()
+          }
+        }
+
+        return NextResponse.json(responseBody, {
+          headers: {
+            'x-seq-api': 'sequential-phase1',
+            'x-llm-provider': tryProvider,
+            'x-llm-model': tryModel
+          }
+        })
+      } catch (e) {
+        console.error(`Provider ${tryProvider} failed`, e)
+        lastErr = e
+        continue
       }
     }
 
-    return NextResponse.json(responseBody, {
-      headers: {
-        'x-seq-api': 'sequential-phase1',
-        'x-llm-provider': resolvedProvider,
-        'x-llm-model': resolvedModel
-      }
-    })
+    throw lastErr || new Error('No provider succeeded')
 
   } catch (error) {
     console.error('❌ Sequential Generation Error:', error)

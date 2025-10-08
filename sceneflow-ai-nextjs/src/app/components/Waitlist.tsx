@@ -21,23 +21,25 @@ export function Waitlist() {
     // })
     // Simulate API call
     setTimeout(() => {
-      try {
-        const response = await fetch('/api/waitlist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
-        })
-        if (response.ok) {
-          setIsSubmitted(true)
-        } else {
-          const data = await response.json()
-          setError(data.error || 'Something went wrong')
+      ;(async () => {
+        try {
+          const response = await fetch('/api/waitlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+          })
+          if (response.ok) {
+            setIsSubmitted(true)
+          } else {
+            const data = await response.json()
+            setError(data.error || 'Something went wrong')
+          }
+        } catch (error) {
+          setError('Something went wrong')
+        } finally {
+          setIsLoading(false)
         }
-      } catch (error) {
-        setError('Something went wrong')
-      } finally {
-        setIsLoading(false)
-      }
+      })()
     }, 1000) // Simulate network delay
   }
 

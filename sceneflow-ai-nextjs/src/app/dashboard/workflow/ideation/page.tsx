@@ -686,7 +686,7 @@ export default function IdeationPage() {
       {phase === 'blueprint' && (
         <div ref={ideasRef} className="bg-sf-surface rounded-xl border border-sf-border p-6 shadow-md">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-sf-text-primary">The Blueprint</h3>
+            <h3 className="text-lg font-semibold text-sf-text-primary">Selected Concepts</h3>
             <div className="flex items-center space-x-3">
               <Button variant="ghost" size="sm" onClick={backToWorkshop} className="text-sf-text-secondary hover:text-sf-text-primary"><ArrowLeft className="w-4 h-4 mr-2"/>Back to Workshop</Button>
               <Button variant="secondary" size="sm" onClick={handleShareIdeas} className="border-sf-border text-sf-text-secondary hover:text-sf-text-primary"><Share2 className="w-4 h-4 mr-2"/>Share</Button>

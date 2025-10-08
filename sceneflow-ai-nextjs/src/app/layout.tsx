@@ -72,9 +72,9 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} bg-base text-sf-text-secondary`}>
         {/* SessionProvider typed wrapper */}
-        <AuthSessionProvider children={undefined}>
+        <AuthSessionProvider>
           <GlobalHeader />
-          <ConditionalLayout children={children} />
+          <ConditionalLayout>{children}</ConditionalLayout>
           <InstallPrompt />
         </AuthSessionProvider>
       </body>

@@ -101,7 +101,6 @@ export function ProjectTypeSelector({
             return (
               <Card
                 key={type.id}
-                variant={isSelected ? 'interactive' : 'standard'}
                 className={`cursor-pointer transition-all duration-300 ${
                   isSelected 
                     ? 'ring-2 ring-sf-primary ring-offset-2 ring-offset-sf-background' 
@@ -162,7 +161,6 @@ export function ProjectTypeSelector({
               return (
                 <Card
                   key={structure.id}
-                  variant={isSelected ? 'interactive' : 'standard'}
                   className={`cursor-pointer transition-all duration-300 ${
                     isSelected 
                       ? 'ring-2 ring-sf-primary ring-offset-2 ring-offset-sf-background' 

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Textarea } from '@/components/ui/textarea';
 import { SparklesIcon, Eye, RefreshCw, Clapperboard } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { OutlineEditor, SceneItem } from '@/components/studio/OutlineEditor';
+import { OutlineEditor } from '@/components/studio/OutlineEditor';
 import ScriptViewer from '@/components/studio/ScriptViewer';
 
 interface FloatingToolbar {
@@ -38,7 +38,7 @@ export function TreatmentTab() {
   const contentRef = useRef<HTMLDivElement>(null);
   const [outline, setOutline] = useState<string[]>([]);
   const [fullScript, setFullScript] = useState<string | null>(null);
-  const [scenes, setScenes] = useState<SceneItem[]>([]);
+  const [scenes, setScenes] = useState<any[]>([]);
   const [isGeneratingOutline, setIsGeneratingOutline] = useState(false);
   const [isGeneratingScript, setIsGeneratingScript] = useState(false);
   const [isAssessing, setIsAssessing] = useState(false);
@@ -561,7 +561,7 @@ export function TreatmentTab() {
       })
       if (resp.ok) {
         const data = await resp.json();
-        const scenesData = data.scenes as SceneItem[];
+        const scenesData = data.scenes as any[];
         setScenes(scenesData);
         try { setScenesOutline(scenesData as any); } catch {}
         // Route to Scene Outline tab section

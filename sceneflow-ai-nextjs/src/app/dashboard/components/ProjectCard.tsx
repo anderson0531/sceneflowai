@@ -112,7 +112,7 @@ export function ProjectCard({ project, className = '' }: ProjectCardProps) {
   const currentStepInfo = workflowSteps[project.currentStep as keyof typeof workflowSteps]
   const isPhase1Complete = project.completedSteps.includes('scene-direction')
   const isPhase2Available = isPhase1Complete
-  const hasValidBYOK = byokSettings.videoGenerationProvider.isConfigured
+  const hasValidBYOK = Boolean(byokSettings?.videoGenerationProvider?.isConfigured)
 
   // Calculate estimated costs based on project complexity and duration
   const getEstimatedCosts = () => {
@@ -134,11 +134,14 @@ export function ProjectCard({ project, className = '' }: ProjectCardProps) {
     if (!hasValidBYOK) {
       // Trigger Cue with BYOK onboarding flow
       invokeCue({
-        context: 'BYOK_GUIDED_SETUP',
-        projectId: project.id,
-        projectTitle: project.title,
-        estimatedCost: costs.estimatedBYOK,
-        message: `I need help setting up BYOK (Bring Your Own Key) to generate video for "${project.title}". The estimated cost is $${costs.estimatedBYOK}. Can you guide me through the setup process?`
+        type: 'analysis',
+        content: 'BYOK_GUIDED_SETUP',
+        payload: {
+          projectId: project.id,
+          projectTitle: project.title,
+          estimatedCost: costs.estimatedBYOK,
+          message: `I need help setting up BYOK (Bring Your Own Key) to generate video for "${project.title}". The estimated cost is $${costs.estimatedBYOK}. Can you guide me through the setup process?`
+        }
       })
     } else {
       // Proceed to generation page

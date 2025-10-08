@@ -57,6 +57,10 @@ interface GuideState {
   removeFromBoneyard: (boneyardItemId: string) => void;
   toggleBoneyard: () => void;
   clearBoneyard: () => void;
+  // New: treatment variants
+  setTreatmentVariants: (variants: Array<{ id: string; label?: string; content: string; visual_style?: string; tone_description?: string; target_audience?: string }>) => void;
+  selectTreatmentVariant: (id: string) => void;
+  useTreatmentVariant: (id: string) => void;
 }
 
 export const useGuideStore = create<GuideState>((set) => ({
@@ -74,7 +78,7 @@ export const useGuideStore = create<GuideState>((set) => ({
         filmTreatment: projectData.filmTreatment || '',
         characters: projectData.characters || [],
         beatSheet: projectData.beatSheet || []
-      };
+      } as any;
       // Store: New guide state
       return { guide: newGuide };
     });
@@ -135,7 +139,7 @@ export const useGuideStore = create<GuideState>((set) => ({
     const newGuide = {
       ...state.guide,
       beatTemplate: templateId
-    };
+    } as any;
     
     if (!preserveExistingBeats) {
       // Clear existing beats when applying new template
@@ -164,7 +168,7 @@ export const useGuideStore = create<GuideState>((set) => ({
     let currentTime = 0;
     
     const updatedBeats = sortedBeats.map(beat => {
-      const updatedBeat = { ...beat, startTime: currentTime };
+      const updatedBeat = { ...beat, startTime: currentTime } as any;
       currentTime += beat.estimatedDuration || 0;
       return updatedBeat;
     });
@@ -174,7 +178,7 @@ export const useGuideStore = create<GuideState>((set) => ({
         ...state.guide,
         beatSheet: updatedBeats
       }
-    };
+    } as any;
   }),
   
   // Beat operations
@@ -182,7 +186,7 @@ export const useGuideStore = create<GuideState>((set) => ({
     let beat1: Beat, beat2: Beat;
     
     set((state) => {
-      const originalBeat = state.guide.beatSheet.find(b => b.id === beatId);
+      const originalBeat = state.guide.beatSheet.find(b => b.id === beatId) as any;
       if (!originalBeat) throw new Error('Beat not found');
       
       const now = new Date();
@@ -194,7 +198,7 @@ export const useGuideStore = create<GuideState>((set) => ({
         childBeatIds: [`${beatId}-part2`],
         estimatedDuration: Math.ceil((originalBeat.estimatedDuration || 1) / 2),
         modifiedAt: now
-      };
+      } as any;
       
       beat2 = {
         ...originalBeat,
@@ -206,19 +210,19 @@ export const useGuideStore = create<GuideState>((set) => ({
         startTime: (originalBeat.startTime || 0) + Math.ceil((originalBeat.estimatedDuration || 1) / 2),
         createdAt: now,
         modifiedAt: now
-      };
+      } as any;
       
       const updatedBeats = state.guide.beatSheet.map(beat => 
-        beat.id === beatId ? beat1 : beat
+        (beat as any).id === beatId ? (beat1 as any) : beat
       );
-      updatedBeats.splice(updatedBeats.findIndex(b => b.id === beat1.id) + 1, 0, beat2);
+      updatedBeats.splice(updatedBeats.findIndex((b: any) => b.id === (beat1 as any).id) + 1, 0, beat2 as any);
       
       return {
         guide: {
           ...state.guide,
           beatSheet: updatedBeats
         }
-      };
+      } as any;
     });
     
     return { beat1: beat1!, beat2: beat2! };
@@ -228,7 +232,7 @@ export const useGuideStore = create<GuideState>((set) => ({
     let mergedBeat: Beat;
     
     set((state) => {
-      const beatsToMerge = state.guide.beatSheet.filter(b => beatIds.includes(b.id));
+      const beatsToMerge = state.guide.beatSheet.filter((b: any) => beatIds.includes(b.id));
       if (beatsToMerge.length < 2) throw new Error('Need at least 2 beats to merge');
       
       const primaryBeat = beatsToMerge[0];
@@ -237,20 +241,20 @@ export const useGuideStore = create<GuideState>((set) => ({
       mergedBeat = {
         ...primaryBeat,
         id: `merged-${Date.now()}`,
-        title: beatsToMerge.map(b => b.title).join(' + '),
-        summary: beatsToMerge.map(b => b.summary).join('\n\n'),
-        charactersPresent: [...new Set(beatsToMerge.flatMap(b => b.charactersPresent))],
-        keywords: [...new Set(beatsToMerge.flatMap(b => b.keywords || []))],
-        estimatedDuration: beatsToMerge.reduce((sum, b) => sum + (b.estimatedDuration || 0), 0),
+        title: beatsToMerge.map((b: any) => b.title).join(' + '),
+        summary: beatsToMerge.map((b: any) => b.summary).join('\n\n'),
+        charactersPresent: [...new Set(beatsToMerge.flatMap((b: any) => b.charactersPresent))],
+        keywords: [...new Set(beatsToMerge.flatMap((b: any) => b.keywords || []))],
+        estimatedDuration: beatsToMerge.reduce((sum: number, b: any) => sum + (b.estimatedDuration || 0), 0),
         childBeatIds: beatIds,
         modifiedAt: now
-      };
+      } as any;
       
-      const updatedBeats = state.guide.beatSheet.filter(b => !beatIds.includes(b.id));
+      const updatedBeats = state.guide.beatSheet.filter((b: any) => !beatIds.includes(b.id));
       updatedBeats.splice(
-        Math.min(...beatIds.map(id => state.guide.beatSheet.findIndex(b => b.id === id))),
+        Math.min(...beatIds.map(id => state.guide.beatSheet.findIndex((b: any) => b.id === id))),
         0,
-        mergedBeat
+        mergedBeat as any
       );
       
       return {
@@ -258,7 +262,7 @@ export const useGuideStore = create<GuideState>((set) => ({
           ...state.guide,
           beatSheet: updatedBeats
         }
-      };
+      } as any;
     });
     
     return mergedBeat!;
@@ -267,35 +271,35 @@ export const useGuideStore = create<GuideState>((set) => ({
   deleteBeat: (beatId) => set((state) => ({
     guide: {
       ...state.guide,
-      beatSheet: state.guide.beatSheet.filter(beat => beat.id !== beatId)
+      beatSheet: state.guide.beatSheet.filter((beat: any) => (beat as any).id !== beatId)
     }
   })),
   
   // Boneyard operations
   moveToBoneyard: (beatId, reason) => set((state) => {
-    const beat = state.guide.beatSheet.find(b => b.id === beatId);
-    if (!beat) return state;
+    const beat = state.guide.beatSheet.find((b: any) => (b as any).id === beatId);
+    if (!beat) return state as any;
     
     const boneyardItem: BoneyardItem = {
       id: `boneyard-${Date.now()}`,
-      beat: { ...beat, isInBoneyard: true, boneyardReason: reason },
+      beat: { ...(beat as any), isInBoneyard: true, boneyardReason: reason },
       reason,
       addedAt: new Date(),
       source: 'user_moved'
-    };
+    } as any;
     
     return {
       guide: {
         ...state.guide,
-        beatSheet: state.guide.beatSheet.filter(b => b.id !== beatId),
+        beatSheet: state.guide.beatSheet.filter((b: any) => (b as any).id !== beatId),
         boneyard: [...(state.guide.boneyard || []), boneyardItem]
       }
-    };
+    } as any;
   }),
   
   restoreFromBoneyard: (boneyardItemId, targetAct) => set((state) => {
-    const boneyardItem = state.guide.boneyard?.find(item => item.id === boneyardItemId);
-    if (!boneyardItem) return state;
+    const boneyardItem = (state.guide.boneyard || []).find((item: any) => item.id === boneyardItemId) as any;
+    if (!boneyardItem) return state as any;
     
     const restoredBeat = {
       ...boneyardItem.beat,
@@ -303,38 +307,38 @@ export const useGuideStore = create<GuideState>((set) => ({
       isInBoneyard: false,
       boneyardReason: undefined,
       modifiedAt: new Date()
-    };
+    } as any;
     
     return {
       guide: {
         ...state.guide,
         beatSheet: [...state.guide.beatSheet, restoredBeat],
-        boneyard: (state.guide.boneyard || []).filter(item => item.id !== boneyardItemId)
+        boneyard: (state.guide.boneyard || []).filter((item: any) => item.id !== boneyardItemId)
       }
-    };
+    } as any;
   }),
   
   addToBoneyard: (beat, reason, source) => set((state) => {
     const boneyardItem: BoneyardItem = {
       id: `boneyard-${Date.now()}`,
-      beat: { ...beat, isInBoneyard: true, boneyardReason: reason, createdAt: new Date() },
+      beat: { ...(beat as any), isInBoneyard: true, boneyardReason: reason, createdAt: new Date() },
       reason,
       addedAt: new Date(),
       source
-    };
+    } as any;
     
     return {
       guide: {
         ...state.guide,
         boneyard: [...(state.guide.boneyard || []), boneyardItem]
       }
-    };
+    } as any;
   }),
   
   removeFromBoneyard: (boneyardItemId) => set((state) => ({
     guide: {
       ...state.guide,
-      boneyard: (state.guide.boneyard || []).filter(item => item.id !== boneyardItemId)
+      boneyard: (state.guide.boneyard || []).filter((item: any) => item.id !== boneyardItemId)
     }
   })),
   
@@ -351,4 +355,39 @@ export const useGuideStore = create<GuideState>((set) => ({
       boneyard: []
     }
   })),
+  
+  // New: treatment variants
+  setTreatmentVariants: (variants) => set((state) => ({
+    guide: { ...(state.guide as any), treatmentVariants: variants, selectedTreatmentId: variants?.[0]?.id }
+  })),
+  selectTreatmentVariant: (id) => set((state) => ({
+    guide: { ...(state.guide as any), selectedTreatmentId: id }
+  })),
+  useTreatmentVariant: (id) => set((state) => {
+    const variants = ((state.guide as any).treatmentVariants || []) as Array<{ id: string; content: string; visual_style?: string; tone_description?: string; target_audience?: string; title?: string; logline?: string; synopsis?: string; style?: string; tone?: string; themes?: any; mood_references?: string[]; character_descriptions?: any; }>
+    const found = variants.find(v => v.id === id)
+    if (!found) return state as any
+    return {
+      guide: {
+        ...(state.guide as any),
+        filmTreatment: String(found.content || ''),
+        treatmentDetails: {
+          ...((state.guide as any).treatmentDetails || {}),
+          visual_style: found.visual_style || found.style,
+          tone_description: found.tone_description || found.tone,
+          target_audience: found.target_audience
+        },
+        treatmentStructured: {
+          title: found.title,
+          logline: found.logline,
+          synopsis: found.synopsis,
+          style: found.style,
+          tone: found.tone,
+          themes: found.themes,
+          mood_references: found.mood_references,
+          character_descriptions: found.character_descriptions
+        }
+      }
+    } as any
+  })
 }));

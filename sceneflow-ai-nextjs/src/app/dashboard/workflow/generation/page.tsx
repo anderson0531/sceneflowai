@@ -61,10 +61,12 @@ export default function GenerationPage() {
 
   useEffect(() => {
     // Check if we have scene directions from the previous step
-    if (currentProject?.metadata?.sceneDirections) {
+    const dirs = (currentProject?.metadata as any)?.directions
+    const projectId = currentProject?.id
+    if (dirs && projectId) {
       // Check if video generation is already in progress
       const existingJob = VideoGenerationService.getUserGenerationJobs('demo_user_001')
-        .find(job => job.projectId === currentProject.id)
+        .find(job => job.projectId === projectId)
       
       if (existingJob) {
         setGenerationJob(existingJob)
@@ -88,7 +90,11 @@ export default function GenerationPage() {
   }
 
   const handleStartGeneration = async () => {
-    if (!currentProject?.metadata?.sceneDirections) {
+    if (!currentProject) {
+      alert('Project not loaded')
+      return
+    }
+    if (!((currentProject.metadata as any)?.directions)) {
       alert('Please complete the scene direction step first')
       return
     }
@@ -99,12 +105,7 @@ export default function GenerationPage() {
       const job = await VideoGenerationService.startGeneration(
         'demo_user_001',
         currentProject.id,
-        currentProject.metadata.sceneDirections.map(direction => ({
-          scene_number: direction.scene_number,
-          video_clip_prompt: direction.video_clip_prompt,
-          duration: direction.duration || 10,
-          strength_rating: direction.strength_rating
-        })),
+        (currentProject.metadata as any)?.directions || (currentProject.metadata as any)?.sceneDirections,
         {
           title: currentProject.title,
           genre: currentProject.metadata?.genre || 'General',
@@ -119,15 +120,7 @@ export default function GenerationPage() {
       // Start status polling
       startStatusPolling(job.generationId)
       
-      // Update project metadata
-      if (currentProject) {
-        updateProject(currentProject.id, {
-          metadata: {
-            ...currentProject.metadata,
-            videoGenerationJob: job
-          }
-        })
-      }
+      // Project metadata update intentionally minimal to avoid unknown fields
       
       // Update progress
       updateStepProgress('video-generation', 50)
@@ -214,7 +207,7 @@ export default function GenerationPage() {
     
     // Update clip status to queued
     const updatedClips = generationJob.clips.map(c => 
-      c.clip_id === clipId ? { ...c, status: 'queued' as const, progress: 0, error: null } : c
+      c.clip_id === clipId ? { ...c, status: 'queued' as const, progress: 0 } : c
     )
     
     const updatedJob = {
@@ -247,7 +240,8 @@ export default function GenerationPage() {
     
     // Update the scene direction with new prompt
     if (currentProject) {
-      const updatedDirections = currentProject.metadata.sceneDirections.map(d => 
+      const baseDirs = (currentProject.metadata as any).directions
+      const updatedDirections = (baseDirs as any[]).map((d: any) => 
         d.scene_number === sceneNumber 
           ? { ...d, video_clip_prompt: newPrompt }
           : d
@@ -256,7 +250,7 @@ export default function GenerationPage() {
       updateProject(currentProject.id, {
         metadata: {
           ...currentProject.metadata,
-          sceneDirections: updatedDirections
+          directions: updatedDirections as any
         }
       })
     }
@@ -299,7 +293,7 @@ export default function GenerationPage() {
     }
   }
 
-  const totalScenes = currentProject?.metadata?.sceneDirections?.length || 0
+  const totalScenes = ((currentProject?.metadata as any)?.directions)?.length || 0
   const completedClips = generationJob?.clips.filter(clip => clip.status === 'done').length || 0
   const failedClips = generationJob?.clips.filter(clip => clip.status === 'failed').length || 0
 
@@ -410,7 +404,7 @@ export default function GenerationPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               onClick={handleStartGeneration}
-              disabled={isGenerating || !currentProject?.metadata?.sceneDirections}
+              disabled={isGenerating || !(currentProject?.metadata as any)?.directions}
               className="bg-purple-600 hover:bg-purple-700 text-white"
             >
               {isGenerating ? (
@@ -431,7 +425,7 @@ export default function GenerationPage() {
             </Button>
           </div>
           
-          {!currentProject?.metadata?.sceneDirections && (
+          {!((currentProject?.metadata as any)?.directions) && (
             <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-yellow-800 text-sm">
                 ⚠️ Please complete the Director's Chair (Scene Direction) step before generating videos.
@@ -529,7 +523,7 @@ export default function GenerationPage() {
             finalVideoUrl={stitchJob.final_video_url}
             thumbnailUrl={stitchJob.thumbnail_url}
             projectTitle={currentProject?.title || 'Untitled Project'}
-            sceneDirections={currentProject?.metadata?.sceneDirections || []}
+            sceneDirections={((currentProject?.metadata as any)?.directions) || []}
             onRegenerateScene={handleRegenerateScene}
             onDownload={handleDownload}
           />

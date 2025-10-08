@@ -27,9 +27,9 @@ export async function GET(
     }
 
     // Convert votes Map to object for JSON serialization
-    const votesObject = {};
-    session.votes.forEach((votes, ideaId) => {
-      votesObject[ideaId] = votes;
+    const votesObject: Record<string, { upvotes: number; downvotes: number; voters: string[] }> = {};
+    session.votes.forEach((votes: { upvotes: number; downvotes: number; voters: Set<string> }, ideaId: string) => {
+      votesObject[ideaId] = { upvotes: votes.upvotes, downvotes: votes.downvotes, voters: Array.from(votes.voters) };
     });
 
     return NextResponse.json({

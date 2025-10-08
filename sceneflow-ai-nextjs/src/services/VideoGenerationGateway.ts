@@ -78,7 +78,7 @@ export class VideoGenerationGateway {
 
       // Step 2: Securely retrieve and decrypt the user's credentials
       const credentials = await this.getUserCredentials(userId, providerName)
-      if (!credentials.success) {
+      if (!credentials.success || !credentials.data) {
         return {
           success: false,
           error: credentials.error || 'Failed to retrieve user credentials'
@@ -86,7 +86,7 @@ export class VideoGenerationGateway {
       }
 
       // Step 3: Verify the is_valid flag in the database
-      if (!credentials.data.isValid) {
+      if (!credentials.data?.isValid) {
         return {
           success: false,
           error: 'Provider credentials are not valid. Please verify your API keys.'
@@ -97,7 +97,7 @@ export class VideoGenerationGateway {
       const adapter = this.get_adapter(providerName)
 
       // Step 5: Call the adapter's generate method
-      const generationResult = await adapter.generate(request, credentials.data.decryptedCredentials)
+      const generationResult = await adapter.generate(request, credentials.data?.decryptedCredentials)
 
       // Step 6: Log the generation attempt
       await this.logGenerationAttempt(userId, providerName, request, generationResult)
@@ -141,7 +141,7 @@ export class VideoGenerationGateway {
     try {
       // Get user credentials
       const credentials = await this.getUserCredentials(userId, providerName)
-      if (!credentials.success) {
+      if (!credentials.success || !credentials.data) {
         return {
           success: false,
           error: credentials.error || 'Failed to retrieve user credentials'
@@ -150,7 +150,7 @@ export class VideoGenerationGateway {
 
       // Get adapter and check status
       const adapter = this.get_adapter(providerName)
-      const statusResult = await adapter.check_status(providerJobId, credentials.data.decryptedCredentials)
+      const statusResult = await adapter.check_status(providerJobId, credentials.data?.decryptedCredentials)
 
       return {
         success: true,
@@ -182,7 +182,7 @@ export class VideoGenerationGateway {
     try {
       // Get user credentials
       const credentials = await this.getUserCredentials(userId, providerName)
-      if (!credentials.success) {
+      if (!credentials.success || !credentials.data) {
         return {
           success: false,
           error: credentials.error || 'Failed to retrieve user credentials'
@@ -191,7 +191,7 @@ export class VideoGenerationGateway {
 
       // Get adapter and cancel generation
       const adapter = this.get_adapter(providerName)
-      const cancellationResult = await adapter.cancel_generation(providerJobId, credentials.data.decryptedCredentials)
+      const cancellationResult = await adapter.cancel_generation(providerJobId, credentials.data?.decryptedCredentials)
 
       if (cancellationResult) {
         return {
@@ -427,7 +427,7 @@ export class VideoGenerationGateway {
   ): Promise<GatewayResponse<boolean>> {
     try {
       const credentials = await this.getUserCredentials(userId, providerName)
-      if (!credentials.success) {
+      if (!credentials.success || !credentials.data) {
         return {
           success: false,
           error: credentials.error || 'Failed to retrieve user credentials'
@@ -435,7 +435,7 @@ export class VideoGenerationGateway {
       }
 
       const adapter = this.get_adapter(providerName)
-      const isValid = await adapter.testConnection(credentials.data.decryptedCredentials)
+      const isValid = await adapter.testConnection(credentials.data?.decryptedCredentials)
 
       return {
         success: true,

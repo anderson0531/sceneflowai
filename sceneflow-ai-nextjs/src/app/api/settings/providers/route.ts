@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate provider name
-    if (!Object.values(AIProvider).includes(provider)) {
+    if (!Object.values(AIProvider).includes(provider as AIProvider)) {
       return NextResponse.json(
         { error: 'Invalid provider name' },
         { status: 400 }
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     console.log(`🔐 Validating credentials for provider: ${provider}`)
     
     try {
-      const validationResult = await videoGenerationGateway.testProviderConnection(userId, provider)
+      const validationResult = await videoGenerationGateway.testProviderConnection(userId, provider as AIProvider)
       
       if (!validationResult.success || !validationResult.data) {
         return NextResponse.json(
@@ -145,11 +145,11 @@ export async function POST(request: NextRequest) {
       const [userConfig, created] = await UserProviderConfig.findOrCreate({
         where: { 
           user_id: userId, 
-          provider_name: provider 
+          provider_name: provider as AIProvider 
         },
         defaults: {
           user_id: userId,
-          provider_name: provider,
+          provider_name: provider as AIProvider,
           encrypted_credentials: encryptedCredentials,
           is_valid: true
         }
@@ -170,9 +170,9 @@ export async function POST(request: NextRequest) {
         success: true,
         data: {
           provider,
-          displayName: getProviderDisplayName(provider),
-          description: getProviderDescription(provider),
-          icon: getProviderIcon(provider),
+          displayName: getProviderDisplayName(provider as AIProvider),
+          description: getProviderDescription(provider as AIProvider),
+          icon: getProviderIcon(provider as AIProvider),
           isConnected: true,
           isConfigured: true,
           status: 'connected',
@@ -216,7 +216,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Validate provider name
-    if (!Object.values(AIProvider).includes(provider)) {
+    if (!Object.values(AIProvider).includes(provider as AIProvider)) {
       return NextResponse.json(
         { error: 'Invalid provider name' },
         { status: 400 }
@@ -227,7 +227,7 @@ export async function DELETE(request: NextRequest) {
     const deleted = await UserProviderConfig.destroy({
       where: { 
         user_id: userId, 
-        provider_name: provider 
+        provider_name: provider as AIProvider 
       }
     })
 
@@ -269,7 +269,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Validate provider name
-    if (!Object.values(AIProvider).includes(provider)) {
+    if (!Object.values(AIProvider).includes(provider as AIProvider)) {
       return NextResponse.json(
         { error: 'Invalid provider name' },
         { status: 400 }
@@ -282,7 +282,7 @@ export async function PUT(request: NextRequest) {
       { 
         where: { 
           user_id: userId, 
-          provider_name: provider 
+          provider_name: provider as AIProvider 
         }
       }
     )

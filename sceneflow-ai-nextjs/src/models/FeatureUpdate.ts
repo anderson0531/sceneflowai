@@ -10,6 +10,7 @@ export interface FeatureUpdateAttributes {
   description: string;
   source: string;
   confidence: number;
+  timestamp?: Date;
   metadata: Record<string, any>;
 }
 
@@ -26,6 +27,7 @@ class FeatureUpdate extends Model<FeatureUpdateAttributes, FeatureUpdateCreation
   public description!: string;
   public source!: string;
   public confidence!: number;
+  public timestamp?: Date;
   public metadata!: Record<string, any>;
 
   public readonly createdAt!: Date;
@@ -75,6 +77,10 @@ FeatureUpdate.init(
         min: 0,
         max: 100,
       },
+    },
+    timestamp: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
     },
     metadata: {
       type: DataTypes.JSONB,

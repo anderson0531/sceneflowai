@@ -19,13 +19,7 @@ import {
   ArrowRight
 } from 'lucide-react'
 
-// Global type declarations for speech recognition
-declare global {
-  interface Window {
-    SpeechRecognition: any
-    webkitSpeechRecognition: any
-  }
-}
+// SpeechRecognition types are declared in src/types/ambient.d.ts
 
 interface Message {
   id: string
@@ -249,8 +243,13 @@ export default function CueChat({ concept, onClose }: CueChatProps) {
       setIsRecording(true)
       setTranscript('')
 
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-      const recognition = new SpeechRecognition()
+      const RecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+      if (!RecognitionCtor) {
+        alert('Speech recognition is not supported in this browser')
+        setIsRecording(false)
+        return
+      }
+      const recognition = new RecognitionCtor()
       
       recognition.continuous = false
       recognition.interimResults = false

@@ -39,6 +39,11 @@ export class AIProviderFactory {
     }
   }
 
+  // Backwards compatibility for old call sites expecting createProvider
+  static async createProvider(providerName: AIProvider, encryptedCredentials: string) {
+    return this.createAdapter(providerName, encryptedCredentials)
+  }
+
   /**
    * Creates an adapter with raw (unencrypted) credentials for testing/validation
    * @param providerName - The AI provider to create

@@ -53,13 +53,6 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
-    return NextResponse.json(
-      { 
-        error: 'Video generation failed', 
-        details: error instanceof Error ? error.message : 'Unknown error' 
-      },
-      { status: 500 }
-    );
   }
 }
 
@@ -68,8 +61,8 @@ export async function GET() {
     message: 'DOL Video Generation API',
     endpoints: {
       POST: '/api/dol/video/generate - Generate video with DOL optimization',
-      GET: '/api/dol/video/models - Get available video models',
-      GET: '/api/dol/video/cost-estimate - Get cost estimate'
+      MODELS: '/api/dol/video/models - Get available video models',
+      COST_ESTIMATE: '/api/dol/video/cost-estimate - Get cost estimate'
     }
   });
 }

@@ -1,13 +1,14 @@
 'use client';
 
-import { Act, Beat } from '@/types/productionGuide';
+import { Act } from '@/types/productionGuide';
+import type { Beat as StoreBeat } from '@/store/useStore';
 import { BeatCard } from './BeatCard';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 
 interface ActColumnProps {
   act: Act;
-  beats: Beat[];
+  beats: StoreBeat[];
 }
 
 export function ActColumn({ act, beats }: ActColumnProps) {
@@ -26,7 +27,7 @@ export function ActColumn({ act, beats }: ActColumnProps) {
       import('@dnd-kit/core').then(mod => {
         const { useDroppable } = mod;
         const { setNodeRef, isOver } = useDroppable({
-          id: act,
+          id: String(act),
           data: { type: 'ACT' },
         });
 
@@ -46,8 +47,14 @@ export function ActColumn({ act, beats }: ActColumnProps) {
       )}>
         <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-teal-400">{act} ({beats.length})</h3>
         <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 pr-2">
-          {beats.map(beat => (
-            <BeatCard key={beat.id} beat={beat} />
+          {beats.map((beat, idx) => (
+            <BeatCard
+              key={beat.id}
+              beat={beat}
+              sceneNumber={idx + 1}
+              onUpdate={() => { /* no-op in column list */ }}
+              onDelete={() => { /* no-op in column list */ }}
+            />
           ))}
         </div>
       </div>
@@ -64,8 +71,14 @@ export function ActColumn({ act, beats }: ActColumnProps) {
     >
       <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-teal-400">{act} ({beats.length})</h3>
       <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 pr-2">
-        {beats.map(beat => (
-          <BeatCard key={beat.id} beat={beat} />
+        {beats.map((beat, idx) => (
+          <BeatCard
+            key={beat.id}
+            beat={beat}
+            sceneNumber={idx + 1}
+            onUpdate={() => { /* no-op in column list */ }}
+            onDelete={() => { /* no-op in column list */ }}
+          />
         ))}
       </div>
     </div>
