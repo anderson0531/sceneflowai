@@ -1,10 +1,10 @@
 "use client";
-import { useEffect, useMemo, useState } from 'react'
+import { use, useEffect, useMemo, useState } from 'react'
 import { useCollabChat } from '@/hooks/useCollabChat'
 import ChatWindow from '@/components/collab/ChatWindow'
 
-export default function CollaborationPage({ params }: { params: { sessionId: string } }) {
-  const { sessionId } = params
+export default function CollaborationPage({ params }: { params: Promise<{ sessionId: string }> }) {
+  const { sessionId } = use(params)
   const [messages, setMessages] = useState<any[]>([])
   const [feedbackByItem, setFeedbackByItem] = useState<Record<string, any[]>>({})
   const [text, setText] = useState('')
