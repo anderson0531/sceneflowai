@@ -85,7 +85,7 @@ export function GlobalSidebar({ children }: { children?: React.ReactNode }) {
                   return blocked ? (
                     <span key={i.key} className={className} title={!byokReady && i.byok ? 'Bring Your Own Key required' : 'Complete earlier phases first'}>{content}</span>
                   ) : (
-                    <Link key={i.key} href={i.href} className={className}>{content}</Link>
+                    <Link key={i.key} href={i.href} prefetch={false} className={className}>{content}</Link>
                   )
                 })}
               </div>

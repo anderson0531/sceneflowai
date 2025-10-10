@@ -61,10 +61,44 @@ interface GuideState {
   setTreatmentVariants: (variants: Array<{ id: string; label?: string; content: string; visual_style?: string; tone_description?: string; target_audience?: string }>) => void;
   selectTreatmentVariant: (id: string) => void;
   useTreatmentVariant: (id: string) => void;
+  updateTreatmentVariant: (id: string, patch: any) => void;
+  addTreatmentVariant: (variant: any) => void;
+  cloneTreatmentVariant: (id: string) => any | null;
+  lastEdit?: { variantId: string; before: any } | null;
+  setLastEdit: (e: { variantId: string; before: any } | null) => void;
+  undoLastEdit: () => void;
+  // UI feedback for Apply
+  justAppliedVariantId?: string;
+  appliedAt?: number;
+  markJustApplied: (variantId: string) => void;
 }
 
 export const useGuideStore = create<GuideState>((set) => ({
   guide: initialGuide,
+  lastEdit: null,
+  setLastEdit: (e) => set({ lastEdit: e }),
+  undoLastEdit: () => set((state) => {
+    const le = (state as any).lastEdit
+    if (!le) return state as any
+    const list = ((state.guide as any).treatmentVariants || []) as any[]
+    const idx = list.findIndex((v: any) => v.id === le.variantId)
+    if (idx === -1) return { ...(state as any), lastEdit: null }
+    const restored = [...list]
+    restored[idx] = { ...restored[idx], ...le.before, updatedAt: Date.now() }
+    return {
+      guide: { ...(state.guide as any), treatmentVariants: restored },
+      lastEdit: null
+    } as any
+  }),
+  justAppliedVariantId: undefined,
+  appliedAt: undefined,
+  markJustApplied: (variantId) => {
+    set({ justAppliedVariantId: variantId, appliedAt: Date.now() })
+    // Auto-clear after 2s if still pointing to same variant
+    setTimeout(() => {
+      set((s: any) => (s.justAppliedVariantId === variantId ? { justAppliedVariantId: undefined, appliedAt: undefined } : s))
+    }, 2000)
+  },
   
   // Project initialization
   initializeProject: (projectData) => {
@@ -389,5 +423,32 @@ export const useGuideStore = create<GuideState>((set) => ({
         }
       }
     } as any
-  })
+  }),
+  updateTreatmentVariant: (id, patch) => set((state) => {
+    const list = ((state.guide as any).treatmentVariants || []) as any[]
+    const idx = list.findIndex((v: any) => v.id === id)
+    if (idx === -1) return state as any
+    const before = list[idx]
+    const updated = [...list]
+    updated[idx] = { ...before, ...patch, updatedAt: Date.now() }
+    return { guide: { ...(state.guide as any), treatmentVariants: updated }, lastEdit: { variantId: id, before } } as any
+  }),
+  addTreatmentVariant: (variant) => set((state) => {
+    const list = ((state.guide as any).treatmentVariants || []) as any[]
+    const next = [...list, variant]
+    return { guide: { ...(state.guide as any), treatmentVariants: next } } as any
+  }),
+  cloneTreatmentVariant: (id) => {
+    let cloned: any = null
+    set((state) => {
+      const list = ((state.guide as any).treatmentVariants || []) as any[]
+      const src = list.find(v => v.id === id)
+      if (!src) return state as any
+      const newId = `${id}′`
+      cloned = { ...src, id: newId, label: `${src.label || src.id}′` }
+      const next = [...list, cloned]
+      return { guide: { ...(state.guide as any), treatmentVariants: next, selectedTreatmentId: newId } } as any
+    })
+    return cloned
+  }
 }));

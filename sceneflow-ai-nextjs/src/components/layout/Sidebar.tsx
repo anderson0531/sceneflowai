@@ -1,6 +1,7 @@
 'use client'
 
-import { useEnhancedStore } from '@/store/enhancedStore'
+import React from 'react'
+import { useEnhancedStore } from '../../store/enhancedStore'
 import { 
   Home, 
   FolderOpen, 
@@ -198,6 +199,7 @@ export function Sidebar() {
                     <Link
                       key={item.name}
                       href={item.name === 'Start Project' ? studioHref : item.href}
+                      prefetch={false}
                       className={`flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-all duration-200 ${
                         isActiveItem 
                           ? 'bg-sf-primary/15 text-white border-l-4 border-sf-primary shadow-lg' 
@@ -231,6 +233,7 @@ export function Sidebar() {
                       <Link
                         key={item.name}
                         href={isStepEnabled ? item.href : '#'}
+                        prefetch={false}
                         onClick={(e) => {
                           if (!isStepEnabled) {
                             e.preventDefault()
@@ -278,6 +281,7 @@ export function Sidebar() {
                       <Link
                         key={item.name}
                         href={isStepEnabled ? item.href : '#'}
+                        prefetch={false}
                         onClick={(e) => {
                           if (!isStepEnabled) {
                             e.preventDefault()
@@ -319,6 +323,7 @@ export function Sidebar() {
                     <Link
                       key={item.name}
                       href={item.href}
+                      prefetch={false}
                       className={`flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-all duration-200 ${
                         isActiveItem 
                           ? 'bg-sf-primary/15 text-white border-l-4 border-sf-primary shadow-lg' 

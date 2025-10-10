@@ -7,14 +7,23 @@ import { trackCta } from '@/lib/analytics'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { Mic, MicOff } from 'lucide-react'
 
-export function BlueprintComposer({ onGenerate }: { onGenerate: (text: string, opts?: { persona: string; model: string }) => void }) {
+export function BlueprintComposer({
+  onGenerate,
+  rigor,
+  onChangeRigor,
+}: {
+  onGenerate: (text: string, opts?: { persona?: 'Narrator'|'Director'; model?: string; rigor?: 'fast'|'balanced'|'thorough' }) => void
+  rigor?: 'fast'|'balanced'|'thorough'
+  onChangeRigor?: (r: 'fast'|'balanced'|'thorough') => void
+}) {
   const [text, setText] = useState('')
-  const [persona, setPersona] = useState('Brian')
+  const [persona, setPersona] = useState<'Narrator'|'Director'>('Narrator')
   const [model, setModel] = useState('auto')
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
-  const { supported: sttSupported, isRecording, transcript, error: sttError, start, stop, setTranscript } = useSpeechRecognition()
+  const { supported: sttSupported, isSecure, permission, isRecording, transcript, error: sttError, start, stop, setTranscript } = useSpeechRecognition()
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
   const creditForModel = (m: string) => {
     switch (m) {
@@ -72,35 +81,20 @@ export function BlueprintComposer({ onGenerate }: { onGenerate: (text: string, o
     <div className="w-full grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
       <div className="space-y-3">
         <div className="flex gap-2 items-center">
-          <Select value={persona} onValueChange={setPersona}>
-            <SelectTrigger className="w-48"><SelectValue placeholder="Persona" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Brian">Brian</SelectItem>
-              <SelectItem value="Narrator">Narrator</SelectItem>
-              <SelectItem value="Director">Director</SelectItem>
-            </SelectContent>
-          </Select>
           <button
             type="button"
             onClick={() => (isRecording ? stop() : start())}
             disabled={!sttSupported}
             aria-label={isRecording ? 'Stop voice input' : 'Start voice input'}
             className={`text-xs px-2 py-1 rounded border ${isRecording ? 'border-red-500 text-red-300 hover:bg-red-500/10' : 'border-gray-700 text-gray-300 hover:bg-gray-800'} ${!sttSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
-            title={sttSupported ? (isRecording ? 'Stop voice input' : 'Start voice input') : 'Voice input not supported in this browser'}
+            title={sttSupported ? (isRecording ? 'Stop voice input' : 'Start voice input') : (isSecure ? 'Voice input not supported in this browser' : 'Use HTTPS or localhost for mic access')}
           >
             <span className="inline-flex items-center gap-1">
               {isRecording ? <MicOff size={14} /> : <Mic size={14} />}
               {isRecording ? 'Stop' : 'Voice'}
             </span>
           </button>
-          <button
-            type="button"
-            onClick={() => setShowAdvanced(v => !v)}
-            className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:bg-gray-800"
-            aria-expanded={showAdvanced}
-          >
-            {showAdvanced ? 'Hide Advanced' : 'Advanced'}
-          </button>
+          {/* Advanced moved next to Generate */}
         </div>
         {showAdvanced && (
           <div className="flex gap-2 items-center text-xs text-gray-300">
@@ -120,6 +114,7 @@ export function BlueprintComposer({ onGenerate }: { onGenerate: (text: string, o
           </div>
         )}
         <Textarea
+          ref={textareaRef as any}
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Tell us about your video project... Who is it for? What's the goal and tone? Paste a script or brief if you have one."
@@ -128,7 +123,41 @@ export function BlueprintComposer({ onGenerate }: { onGenerate: (text: string, o
         {/* Examples removed to reduce clutter */}
       </div>
       <GuidanceRail onInsert={(snippet: string) => setText(t => (t ? t + '\n\n' : '') + snippet)} />
-      <div className="lg:col-span-2 flex items-center justify-end gap-3">
+      <div className="lg:col-span-2 flex items-center justify-end gap-2">
+        {/* Persona near Generate */}
+        <div className="hidden md:flex items-center gap-2">
+          <div className="text-[11px] text-gray-400">Persona</div>
+          <Select value={persona} onValueChange={(v)=>setPersona(v as any)}>
+            <SelectTrigger className="w-36"><SelectValue placeholder="Persona" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Narrator">Narrator</SelectItem>
+              <SelectItem value="Director">Director</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {/* Rigor as dropdown */}
+        {rigor && onChangeRigor && (
+          <div className="hidden md:flex items-center gap-2">
+            <div className="text-[11px] text-gray-400">Rigor</div>
+            <Select value={rigor} onValueChange={(v)=> onChangeRigor(v as any)}>
+              <SelectTrigger className="w-36"><SelectValue placeholder="Rigor" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="fast">Fast</SelectItem>
+                <SelectItem value="balanced">Balanced</SelectItem>
+                <SelectItem value="thorough">Thorough</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        {/* Advanced toggle */}
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(v => !v)}
+          className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:bg-gray-800"
+          aria-expanded={showAdvanced}
+        >
+          {showAdvanced ? 'Advanced ▲' : 'Advanced ▼'}
+        </button>
         <div className="text-xs px-2 py-1 rounded bg-gray-800 text-gray-300 border border-gray-700/70">
           {creditForModel(model)}
         </div>
@@ -144,9 +173,10 @@ export function BlueprintComposer({ onGenerate }: { onGenerate: (text: string, o
         </div>
       )}
 
-      {sttError && (
+      {(!sttSupported || !isSecure || sttError) && (
         <div className="lg:col-span-2 mt-2 text-xs text-amber-300 bg-amber-900/20 border border-amber-800 rounded px-2 py-1">
-          {String(sttError)}
+          {!isSecure ? 'Microphone requires HTTPS or localhost.' : !sttSupported ? 'Voice input is not supported in this browser. Try Chrome or Edge.' : `Mic error: ${String(sttError)}`}
+          {permission && permission !== 'granted' ? ` (Permission: ${permission})` : ''}
         </div>
       )}
 

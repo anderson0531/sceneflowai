@@ -8,14 +8,35 @@ export function useSpeechRecognition() {
     (typeof window !== 'undefined' && (window as Window).webkitSpeechRecognition) ||
     (typeof window !== 'undefined' && (window as Window).SpeechRecognition) ||
     false
-  const supported = Boolean(RecognitionCtor)
+  const isSecure = typeof window !== 'undefined' && (window.isSecureContext || /^localhost(:\d+)?$/.test(window.location.hostname))
+  const supported = Boolean(RecognitionCtor) && isSecure
 
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const [isRecording, setIsRecording] = useState(false)
   const [transcript, setTranscript] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [permission, setPermission] = useState<PermissionState | 'unknown'>('unknown')
 
   useEffect(() => {
+    if (!isSecure) {
+      setError('Insecure context: use HTTPS or localhost')
+      return
+    }
+    if (!RecognitionCtor) {
+      setError('Speech recognition not supported in this browser')
+      return
+    }
+
+    // Preflight microphone permission (best-effort)
+    try {
+      if (typeof navigator !== 'undefined' && (navigator as any).permissions?.query) {
+        ;(navigator as any).permissions.query({ name: 'microphone' as PermissionName }).then((res: any) => {
+          setPermission(res.state as PermissionState)
+          res.onchange = () => setPermission(res.state as PermissionState)
+        }).catch(() => setPermission('unknown'))
+      }
+    } catch {}
+
     if (!supported || !RecognitionCtor) return
     const recognition: SpeechRecognition = new RecognitionCtor()
     recognitionRef.current = recognition
@@ -43,7 +64,9 @@ export function useSpeechRecognition() {
     }
 
     recognition.onerror = (e: any) => {
-      setError(e?.error || 'Speech recognition error')
+      const code = e?.error || 'error'
+      if (code === 'not-allowed' || code === 'permission-denied') setPermission('denied')
+      setError(code)
       setIsRecording(false)
     }
 
@@ -57,7 +80,7 @@ export function useSpeechRecognition() {
       } catch {}
       recognitionRef.current = null
     }
-  }, [supported])
+  }, [supported, isSecure])
 
   const start = useCallback(() => {
     if (!supported || !recognitionRef.current) return
@@ -75,11 +98,13 @@ export function useSpeechRecognition() {
 
   return {
     supported,
+    isSecure,
     isRecording,
     transcript,
     error,
     start,
     stop,
     setTranscript,
+    permission,
   }
 }

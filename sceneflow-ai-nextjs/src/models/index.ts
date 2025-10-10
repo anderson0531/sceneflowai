@@ -9,6 +9,12 @@ import APIUsageLog from './APIUsageLog'
 import PlatformModel from './PlatformModel'
 import PromptTemplate from './PromptTemplate'
 import FeatureUpdate from './FeatureUpdate'
+import CollabSession from './CollabSession'
+import CollabParticipant from './CollabParticipant'
+import CollabScore from './CollabScore'
+import CollabComment from './CollabComment'
+import CollabRecommendation from './CollabRecommendation'
+import CollabChatMessage from './CollabChatMessage'
 
 // Define model associations
 User.hasMany(Project, {
@@ -71,6 +77,12 @@ export {
   AIPricing,
   CreditLedger,
   AIUsage,
+  CollabSession,
+  CollabParticipant,
+  CollabScore,
+  CollabComment,
+  CollabRecommendation,
+  CollabChatMessage,
 }
 
 // Export default for convenience
@@ -86,4 +98,10 @@ export default {
   AIPricing,
   CreditLedger,
   AIUsage,
+  CollabSession,
+  CollabParticipant,
+  CollabScore,
+  CollabComment,
+  CollabRecommendation,
+  CollabChatMessage,
 }

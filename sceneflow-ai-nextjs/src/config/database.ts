@@ -14,6 +14,7 @@ if (!process.env.DB_DATABASE_URL && !process.env.DATABASE_URL) {
   // Environment check
 
 let sequelize: Sequelize
+const isVercelBuild = process.env.NEXT_PHASE === 'phase-production-build'
 
 // Prefer Neon/Vercel-style vars, fall back to legacy
 function readFirst(keys: string[]): string | undefined {
@@ -104,6 +105,11 @@ function chooseConnectionString(): { conn: string; envName: string } {
     return { conn: DB_DATABASE_URL, envName: 'DB_DATABASE_URL' }
   }
 
+  if (isVercelBuild) {
+    // During `next build` on Vercel, allow missing DB and use a dummy local connection
+    // to avoid throwing at build time. Actual runtime will still require valid env.
+    return { conn: 'postgresql://user:pass@localhost:5432/dummy', envName: 'build-dummy' }
+  }
   throw new Error('No database connection string found. Please set DATABASE_URL or DATABASE_URL_UNPOOLED')
 }
 

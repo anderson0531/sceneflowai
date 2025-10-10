@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useCollabChat } from '@/hooks/useCollabChat'
 import ChatWindow from '@/components/collab/ChatWindow'
 
@@ -14,12 +14,13 @@ export default function CollaborationPage({ params }: { params: { sessionId: str
   const [activeId, setActiveId] = useState<string | null>(null)
   const [reviewer, setReviewer] = useState<{ reviewerId: string; name: string } | null>(null)
   const [regOpen, setRegOpen] = useState<boolean>(false)
-  const [scores, setScores] = useState<Record<string, { score: number; comment: string }>>({})
+  const [scores, setScores] = useState<Record<string, any>>({})
   const [submitted, setSubmitted] = useState<Record<string, boolean>>({})
   const [finishOpen, setFinishOpen] = useState(false)
   const [finished, setFinished] = useState(false)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [preferredId, setPreferredId] = useState<string | null>(null)
 
   useEffect(() => {
     const init = async ()=>{
@@ -106,18 +107,23 @@ export default function CollaborationPage({ params }: { params: { sessionId: str
   }
 
   const submitInline = async (scopeId: string) => {
-    const entry = scores[scopeId] || { score: 0, comment: '' }
-    if (!entry.score) return
-    await fetch('/api/collab/feedback.submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId, score: entry.score, comment: entry.comment, scopeId, reviewerId: reviewer?.reviewerId, alias: reviewer?.name }) })
+    const entry = scores[scopeId] || {}
+    const hasQual = Boolean((entry.strengths||'').trim() || (entry.concerns||'').trim() || (entry.suggestions||'').trim() || (entry.questions||'').trim() || entry.score)
+    if (!hasQual) return
+    const payload = { score: Number(entry.score||0), strengths: String(entry.strengths||''), concerns: String(entry.concerns||''), suggestions: String(entry.suggestions||''), questions: String(entry.questions||''), preferred: preferredId === scopeId }
+    const summary = `Score:${payload.score} | Strengths:${payload.strengths} | Concerns:${payload.concerns} | Suggestions:${payload.suggestions} | Questions:${payload.questions} | Preferred:${payload.preferred}`
+    const commentPayload = `${summary}\n${JSON.stringify(payload)}`
+    await fetch('/api/collab/feedback.submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId, score: payload.score, comment: commentPayload, scopeId, reviewerId: reviewer?.reviewerId, alias: reviewer?.name }) })
     setSubmitted(prev => ({ ...prev, [scopeId]: true }))
   }
 
   const idxOf = (id: string | null) => (id ? items.findIndex(it=>it.id===id) : -1)
   const submitAll = async () => {
-    // submit any ratings not yet sent but have a score
+    // submit any feedback not yet sent but with qualitative info or score
     const entries = Object.entries(scores)
     for (const [scopeId, val] of entries) {
-      if (!submitted[scopeId] && val.score) {
+      const hasQual = Boolean((val?.strengths||'').trim() || (val?.concerns||'').trim() || (val?.suggestions||'').trim() || (val?.questions||'').trim() || val?.score)
+      if (!submitted[scopeId] && hasQual) {
         await submitInline(scopeId)
       }
     }
@@ -135,11 +141,16 @@ export default function CollaborationPage({ params }: { params: { sessionId: str
   const totalCount = items.length
   const progressPct = totalCount ? Math.round((reviewedCount/totalCount)*100) : 0
 
+  const isIdentityComplete = useMemo(() => Boolean(reviewer?.name && reviewer?.reviewerId), [reviewer])
+
   return (
     <>
     <div className="min-h-screen bg-gray-950 text-white p-4">
-      <div className="max-w-3xl mx-auto space-y-6">
-        <h1 className="text-2xl font-semibold">Collaboration</h1>
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">SceneFlow AI — Collaboration Review</h1>
+          <a href="/" className="text-sm text-blue-400 hover:underline">Create your own</a>
+        </div>
         {loading && (
           <div className="rounded border border-gray-800 p-6 bg-gray-900/60 text-center text-gray-300">Loading session…</div>
         )}
@@ -153,7 +164,7 @@ export default function CollaborationPage({ params }: { params: { sessionId: str
             <a href="/" className="inline-block px-4 py-2 rounded bg-blue-600 hover:bg-blue-500">Close</a>
           </div>
         )}
-        {!finished && !reviewer && !loading && (
+        {!finished && !isIdentityComplete && !loading && (
           <div className="rounded border border-gray-800 p-3 bg-gray-900/50">
             <div className="text-sm text-gray-300 mb-2">Tell us who you are</div>
             <div className="flex items-center gap-2">
@@ -169,11 +180,11 @@ export default function CollaborationPage({ params }: { params: { sessionId: str
             </div>
           </div>
         )}
-        {!loading && items.length > 0 && (
+        {!loading && isIdentityComplete && items.length > 0 && (
           <div className="rounded border border-gray-800 p-3 bg-gray-900/50 space-y-3">
             <div className="text-sm text-gray-300 flex items-center justify-between">
-              <span>Concepts</span>
-              <span className="text-gray-400">Reviewed {reviewedCount}/{totalCount}</span>
+              <span>Variants</span>
+              <span className="text-gray-400">Progress {reviewedCount}/{totalCount}</span>
             </div>
             <div className="w-full h-2 bg-gray-800 rounded overflow-hidden">
               <div className="h-2 bg-blue-600" style={{ width: `${progressPct}%` }} />
@@ -190,7 +201,12 @@ export default function CollaborationPage({ params }: { params: { sessionId: str
                         </div>
                       )}
                     </div>
-                    <button onClick={()=>setActiveId(it.id)} className={`text-xs px-2 py-1 rounded ${activeId===it.id?'bg-blue-600':'bg-gray-800'}`}>{activeId===it.id?'Selected':'Review'}</button>
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs text-gray-300 inline-flex items-center gap-1">
+                        <input type="radio" name="preferred" checked={preferredId===it.id} onChange={()=> setPreferredId(it.id)} /> Preferred
+                      </label>
+                      <button onClick={()=>setActiveId(it.id)} className={`text-xs px-2 py-1 rounded ${activeId===it.id?'bg-blue-600':'bg-gray-800'}`}>{activeId===it.id?'Selected':'Review'}</button>
+                    </div>
                   </div>
                   {it.details && (
                     <div className="grid grid-cols-2 gap-2 mt-2 text-xs text-gray-300">
@@ -200,6 +216,13 @@ export default function CollaborationPage({ params }: { params: { sessionId: str
                       {it.details.tone && <div><span className="text-gray-400">Tone:</span> {String(it.details.tone)}</div>}
                       {it.details.structure && <div><span className="text-gray-400">Structure:</span> {String(it.details.structure)}</div>}
                     </div>
+                  )}
+                  {/* Full treatment (collapsible) */}
+                  {(it.synopsis || it.content) && (
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-sm text-blue-400">Read full treatment</summary>
+                      <div className="mt-2 text-sm text-gray-200 whitespace-pre-wrap leading-6">{String(it.synopsis || it.content || '')}</div>
+                    </details>
                   )}
                   {Array.isArray(it.characters) && it.characters.length > 0 && (
                     <div className="mt-2 text-xs text-gray-300">
@@ -227,15 +250,23 @@ export default function CollaborationPage({ params }: { params: { sessionId: str
                       </ol>
                     </div>
                   )}
-                  {/* Inline rating */}
+                  {/* Structured feedback */}
                   <div className="mt-3 border-t border-gray-800 pt-3">
-                    <div className="text-xs text-gray-300 mb-1">Your rating</div>
-                    <div className="flex items-center gap-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <textarea placeholder="Strengths (what works well)" value={scores[it.id]?.strengths || ''} onChange={e=> setScores(prev=> ({ ...prev, [it.id]: { ...(prev[it.id]||{}), strengths: (e.target as HTMLTextAreaElement).value } }))} className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs resize-y min-h-[40px]" />
+                      <textarea placeholder="Concerns (what's unclear or weak)" value={scores[it.id]?.concerns || ''} onChange={e=> setScores(prev=> ({ ...prev, [it.id]: { ...(prev[it.id]||{}), concerns: (e.target as HTMLTextAreaElement).value } }))} className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs resize-y min-h-[40px]" />
+                      <textarea placeholder="Suggestions (how to improve)" value={scores[it.id]?.suggestions || ''} onChange={e=> setScores(prev=> ({ ...prev, [it.id]: { ...(prev[it.id]||{}), suggestions: (e.target as HTMLTextAreaElement).value } }))} className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs resize-y min-h-[40px]" />
+                      <textarea placeholder="Questions (what do you need answered)" value={scores[it.id]?.questions || ''} onChange={e=> setScores(prev=> ({ ...prev, [it.id]: { ...(prev[it.id]||{}), questions: (e.target as HTMLTextAreaElement).value } }))} className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs resize-y min-h-[40px]" />
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      <div className="text-xs text-gray-400">Optional score</div>
                       {[1,2,3,4,5].map(n => (
-                        <button key={n} onClick={()=> setScores(prev => ({ ...prev, [it.id]: { score: n, comment: prev[it.id]?.comment || '' } }))} className={`px-2 py-1 rounded ${ (scores[it.id]?.score||0) >= n ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-300'}`}>{n}</button>
+                        <button key={n} onClick={()=> setScores(prev => ({ ...prev, [it.id]: { ...(prev[it.id]||{}), score: n } }))} className={`px-2 py-1 rounded ${ (scores[it.id]?.score||0) >= n ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-300'}`}>{n}</button>
                       ))}
-                      <textarea value={scores[it.id]?.comment || ''} onBlur={()=> { if ((scores[it.id]?.score||0)>0) submitInline(it.id) }} onChange={e=> setScores(prev=> ({ ...prev, [it.id]: { score: prev[it.id]?.score||0, comment: (e.target as HTMLTextAreaElement).value } }))} placeholder="Optional comment" rows={2} className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs resize-y min-h-[40px]" />
-                      <button onClick={()=>submitInline(it.id)} className="px-2 py-1 rounded bg-green-600 text-xs">Submit</button>
+                      <div className="ml-auto flex gap-2">
+                        <button onClick={()=> submitInline(it.id)} className="px-2 py-1 rounded bg-green-600 text-xs">Submit</button>
+                        <button onClick={()=> setText(`#Variant ${String(it.id)} — `)} className="px-2 py-1 rounded bg-gray-800 text-xs">Discuss in chat</button>
+                      </div>
                     </div>
                     {activeId===it.id && (
                       <div className="mt-2 flex justify-end gap-2">
@@ -261,7 +292,13 @@ export default function CollaborationPage({ params }: { params: { sessionId: str
             </div>
           </div>
         )}
-        <ChatWindow sessionId={sessionId} reviewer={reviewer} role="collaborator" />
+        <ChatWindow sessionId={sessionId} reviewer={reviewer} role="collaborator" context={text.startsWith('#Variant') ? text : undefined} />
+        <div className="max-w-4xl mx-auto mt-6">
+          <div className="rounded border border-gray-800 bg-gray-900/60 p-4 flex items-center justify-between">
+            <div className="text-sm text-gray-300">Create your own collaboration review in minutes with SceneFlow AI.</div>
+            <a href="/" className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 text-sm">Try SceneFlow AI</a>
+          </div>
+        </div>
         {/* Overall feedback removed by request */}
       </div>
     </div>

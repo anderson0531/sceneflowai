@@ -449,6 +449,14 @@
 
 /* Additional accessibility and utility classes */
 @layer utilities {
+  /* Subtle flash highlight for recently updated fields */
+  .flash-highlight {
+    animation: flashHighlight 1.2s ease-out;
+  }
+  @keyframes flashHighlight {
+    0% { background-color: rgba(250, 204, 21, 0.45); }
+    100% { background-color: transparent; }
+  }
   /* Text contrast utilities */
   .text-high-contrast {
     @apply text-sf-text-primary;

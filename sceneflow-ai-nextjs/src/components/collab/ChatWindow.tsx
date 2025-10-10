@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useCollabChat } from '@/hooks/useCollabChat'
 
-export default function ChatWindow({ sessionId, reviewer, role = 'collaborator' }: { sessionId: string; reviewer?: { reviewerId: string; name: string } | null; role?: 'owner' | 'collaborator' }) {
+export default function ChatWindow({ sessionId, reviewer, role = 'collaborator', context }: { sessionId: string; reviewer?: { reviewerId: string; name: string } | null; role?: 'owner' | 'collaborator'; context?: string }) {
   const { messages, send, canSend, isLoading } = useCollabChat({ sessionId, channel: 'general', reviewer })
   const [text, setText] = useState('')
   const scrollerRef = useRef<HTMLDivElement>(null)
@@ -13,6 +13,11 @@ export default function ChatWindow({ sessionId, reviewer, role = 'collaborator' 
     if (!el) return
     el.scrollTop = el.scrollHeight
   }, [messages.length])
+
+  // Prefill a contextual message when provided (e.g., "Discuss Variant A")
+  useEffect(() => {
+    if (context && !text) setText(context)
+  }, [context])
 
   const handleSend = async () => {
     if (!text.trim() || disabled) return

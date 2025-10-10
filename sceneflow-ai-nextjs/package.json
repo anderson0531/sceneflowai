@@ -2,6 +2,9 @@
         "name": "sceneflow-ai-nextjs",
         "version": "2.0.1",
         "private": true,
+        "engines": {
+                "node": ">=20 <21"
+        },
         "scripts": {
                 "dev": "next dev --turbopack",
                 "build": "next build",

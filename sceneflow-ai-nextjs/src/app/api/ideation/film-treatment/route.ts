@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { strictJsonPromptSuffix, safeParseJsonFromText } from '@/lib/safeJson'
+import { analyzeDuration, normalizeDuration } from '@/lib/treatment/duration'
+import { buildTreatmentPrompt } from '@/lib/treatment/prompts'
+import { BEAT_STRUCTURES, type BeatStructureKey } from '@/lib/treatment/structures'
+import { repairTreatment } from '@/lib/treatment/validate'
 
 interface FilmTreatmentRequest {
   input: string
@@ -15,6 +19,10 @@ interface FilmTreatmentRequest {
   genre?: string
   duration?: number
   platform?: string
+  format?: 'youtube'|'short_film'|'documentary'|'education'|'training'
+  targetMinutes?: number
+  rigor?: 'fast'|'balanced'|'thorough'
+  beatStructure?: BeatStructureKey
   variants?: number // default 3
 }
 
@@ -53,6 +61,9 @@ interface FilmTreatmentItem {
     description: string
     image_prompt?: string
   }>
+  // Duration-aware additions
+  estimatedDurationMinutes?: number
+  beats?: Array<{ title: string; intent?: string; minutes: number; synopsis?: string }>
 }
 
 interface FilmTreatmentResponse {
@@ -75,6 +86,8 @@ export async function POST(request: NextRequest) {
     const { input, targetAudience, keyMessage, tone, genre, duration, platform } = body
     let { coreConcept } = body
     const variantsCount = Math.max(1, Math.min(body.variants || 3, 5))
+    const format = body.format || 'documentary'
+    const targetMinutes = body.targetMinutes || analyzeDuration(input, 20)
 
     if (!input) {
       return NextResponse.json({ success: false, message: 'Input content is required' }, { status: 400 })
@@ -105,7 +118,7 @@ export async function POST(request: NextRequest) {
     // Generate variants serially (keeps logs clearer); can parallelize later if needed
     const variants: Array<{ id: string; label: string } & FilmTreatmentItem> = []
     for (const cfg of variantConfigs) {
-      const v = await generateFilmTreatment(input, coreConcept!, { ...context, variantStyle: cfg.styleHint }, apiKey)
+      const v = await generateFilmTreatment(input, coreConcept!, { ...context, variantStyle: cfg.styleHint, format, targetMinutes }, apiKey)
       variants.push({ id: cfg.id, label: cfg.label, ...v })
     }
 
@@ -131,69 +144,17 @@ async function generateFilmTreatment(
   context: any,
   apiKey: string
 ): Promise<FilmTreatmentItem> {
-  
-  const prompt = `CRITICAL INSTRUCTIONS: You are a professional film treatment writer. Create a treatment based on the core concept, NOT by copying the input.
-
-INPUT:
-${input}
-
-CORE CONCEPT:
-- Title: ${coreConcept.input_title}
-- Synopsis: ${coreConcept.input_synopsis}
-- Themes: ${coreConcept.core_themes.join(', ')}
-- Structure: ${coreConcept.narrative_structure}
-
-CONTEXT:
-- Target Audience: ${context.targetAudience || 'General'}
-- Key Message: ${context.keyMessage || 'Not specified'}
-- Tone: ${context.tone || 'Professional'}
-- Genre: ${context.genre || 'Documentary'}
-- Duration: ${context.duration || 60} seconds
-- Platform: ${context.platform || 'Multi-platform'}
- - Variant Style: ${context.variantStyle || 'Default professional style'}
-
-CRITICAL RULES:
-1. DO NOT copy or repeat the input content
-2. Create ORIGINAL treatment based on the core concept
-3. Focus on VISION and APPROACH, not scene details
-4. Keep treatment under 100 words - be CONCISE
-5. Describe HOW to tell the story, not WHAT happens
-
-TASK: Create a comprehensive film treatment that includes:
-1. Treatment description (≤100 words) - VISION ONLY, no scene details
-2. Visual style and aesthetic approach
-3. Tone and mood description
-4. Target audience specifics
-
-Respond with valid JSON only (no markdown fences, no backticks). Use EXACT keys below:
-{
-  "title": "Proposed title",
-  "logline": "One or two-sentence summary",
-  "genre": "Genre",
-  "format_length": "Feature (90-120m) | Short (5-40m) | Series Pilot | ...",
-  "target_audience": "Primary demographic",
-  "author_writer": "Author/Writer name",
-  "date": "YYYY-MM-DD",
-
-  "synopsis": "Concise overview of the entire plot (paragraph)",
-  "setting": "Time/place and world rules",
-  "protagonist": "Main character brief (goal/flaw)",
-  "antagonist": "Primary opposing force/conflict",
-  "act_breakdown": {
-    "act1": "Beginning: setup/inciting incident/main goal",
-    "act2": "Middle: rising action/complications/midpoint",
-    "act3": "End: climax/resolution/transformation"
-  },
-
-  "tone": "Overall mood",
-  "style": "Visual/narrative approach",
-  "themes": ["Theme 1", "Theme 2"],
-  "mood_references": ["Reference 1", "Reference 2"],
-
-  "character_descriptions": [
-    { "name": "Name", "description": "Concise", "image_prompt": "Concise generative prompt" }
-  ]
-}` + strictJsonPromptSuffix
+  const targetMinutes = context?.targetMinutes || 20
+  const prompt = buildTreatmentPrompt({
+    input,
+    coreConcept,
+    format: context?.format || 'documentary',
+    targetMinutes,
+    styleHint: context?.variantStyle,
+    context,
+    beatStructure: context?.beatStructure ? { label: BEAT_STRUCTURES[context.beatStructure as BeatStructureKey]?.label, beats: (BEAT_STRUCTURES[context.beatStructure as BeatStructureKey]?.beats || []).map(b => ({ title: b.title })) } : null,
+    persona: (context as any)?.persona ?? null
+  }) + strictJsonPromptSuffix
 
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
     method: 'POST',
@@ -222,8 +183,15 @@ Respond with valid JSON only (no markdown fences, no backticks). Use EXACT keys 
 
   console.log('🎬 Gemini Film Treatment Response:', generatedText)
 
-  const parsed = safeParseJsonFromText(generatedText)
-  const filmTreatmentText = parsed.film_treatment || parsed.synopsis || 'Comprehensive film treatment'
+  const parsedRaw = safeParseJsonFromText(generatedText)
+  const parsed = repairTreatment(parsedRaw)
+  // Normalize beats to target duration if model deviates
+  const beats = Array.isArray(parsed.beats) ? parsed.beats : []
+  const normalizedBeats = normalizeDuration(
+    beats.map((b: any) => ({ title: b.title || 'Segment', summary: b.intent || '', minutes: Number(b.minutes) || 1 })),
+    targetMinutes
+  )
+  const filmTreatmentText = (parsed as any).film_treatment || parsed.synopsis || 'Comprehensive film treatment'
   return {
     // Legacy minimal
     film_treatment: filmTreatmentText,
@@ -236,21 +204,35 @@ Respond with valid JSON only (no markdown fences, no backticks). Use EXACT keys 
     logline: parsed.logline,
     genre: parsed.genre,
     format_length: parsed.format_length,
-    author_writer: parsed.author_writer,
-    date: parsed.date,
+    author_writer: (parsed as any).author_writer,
+    date: (parsed as any).date,
 
     synopsis: parsed.synopsis,
     setting: parsed.setting,
     protagonist: parsed.protagonist,
     antagonist: parsed.antagonist,
-    act_breakdown: parsed.act_breakdown,
+    act_breakdown: (parsed as any).act_breakdown,
 
     tone: parsed.tone,
     style: parsed.style,
     themes: parsed.themes,
     mood_references: parsed.mood_references,
 
-    character_descriptions: Array.isArray(parsed.character_descriptions) ? parsed.character_descriptions : undefined
+    character_descriptions: Array.isArray((parsed as any).character_descriptions)
+      ? ((parsed as any).character_descriptions as any[]).map((c: any) => ({
+          name: String(c?.name || ''),
+          description: String(c?.description || ''),
+          image_prompt: c?.image_prompt ? String(c.image_prompt) : undefined,
+        }))
+      : undefined,
+    // Embed summarized beats and estimate (preserve beat synopsis/intent from model)
+    beats: normalizedBeats.map((b: any, i: number) => ({
+      title: beats[i]?.title || b.title,
+      intent: beats[i]?.intent,
+      minutes: b.minutes,
+      synopsis: beats[i]?.synopsis
+    })),
+    estimatedDurationMinutes: targetMinutes
   }
 }
 
