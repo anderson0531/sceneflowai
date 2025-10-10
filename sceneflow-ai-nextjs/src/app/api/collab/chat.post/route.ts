@@ -1,48 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession, postMessage, createSession } from '@/lib/collab/store'
-import { kvAvailable, addChatMessageKV } from '@/lib/collab/kv'
+import CollabChatMessage from '@/models/CollabChatMessage'
+import { sequelize } from '@/config/database'
 
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { sessionId, channel, scopeId, text, authorRole, alias } = body || {}
+    const { sessionId, channel, scopeId, text, authorRole, alias, clientId } = body || {}
+    
     if (!sessionId || !channel || typeof text !== 'string' || text.trim().length === 0) {
       return NextResponse.json({ success: false, error: 'Missing fields' }, { status: 400 })
     }
-    let session = getSession(sessionId)
-    // Lazily create a lightweight session if cold
-    if (!session) {
-      createSession({
-        id: sessionId,
-        spaceKey: { projectId: 'public', scopeType: 'generic' },
-        round: 1,
-        status: 'open',
-        options: {},
-        createdAt: new Date().toISOString(),
-      })
-      session = getSession(sessionId)
-    }
-    const chatMessage = {
+
+    // Ensure database connection
+    await sequelize.authenticate()
+
+    // Create message in database
+    const message = await CollabChatMessage.create({
       id: crypto.randomUUID(),
-      sessionId,
+      session_id: sessionId,
       channel,
-      scopeId,
-      authorRole: (authorRole === 'owner' ? 'owner' : 'collaborator') as 'owner' | 'collaborator',
+      scope_id: scopeId,
+      author_role: authorRole === 'owner' ? 'owner' : 'collaborator',
       alias: alias || 'Reviewer',
       text: String(text).slice(0, 2000),
-      createdAt: new Date().toISOString(),
-    }
-    // Persist to in-memory for current process
-    postMessage(chatMessage as any)
-    // Persist to KV if available
-    if (kvAvailable()) {
-      try { await addChatMessageKV({ ...chatMessage, clientId: String(body?.clientId || ''), seq: Date.now() } as any) } catch {}
-    }
-    return NextResponse.json({ success: true, message: chatMessage })
+      client_id: clientId,
+      seq: Date.now(),
+    })
+
+    return NextResponse.json({ 
+      success: true, 
+      message: {
+        id: message.id,
+        sessionId: message.session_id,
+        channel: message.channel,
+        authorRole: message.author_role,
+        alias: message.alias,
+        text: message.text,
+        createdAt: message.created_at.toISOString(),
+        seq: message.seq,
+      }
+    })
   } catch (e: any) {
-    return NextResponse.json({ success: false, error: e?.message || 'Failed' }, { status: 400 })
+    console.error('[Chat POST] Error:', e)
+    return NextResponse.json({ success: false, error: e?.message || 'Failed' }, { status: 500 })
   }
 }
 
