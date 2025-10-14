@@ -114,12 +114,12 @@ export async function POST(request: NextRequest) {
       { id: 'C', label: 'C', styleHint: 'Energetic, bold, high-contrast visuals, rhythmic editing' },
     ].slice(0, variantsCount)
 
-    const context = { targetAudience, keyMessage, tone, genre, duration, platform }
+    const context = { targetAudience, keyMessage, tone, genre, duration, platform, format, targetMinutes, beatStructure: body.beatStructure }
 
     // Generate variants serially (keeps logs clearer); can parallelize later if needed
     const variants: Array<{ id: string; label: string } & FilmTreatmentItem> = []
     for (const cfg of variantConfigs) {
-      const v = await generateFilmTreatment(input, coreConcept!, { ...context, variantStyle: cfg.styleHint, format, targetMinutes }, apiKey)
+      const v = await generateFilmTreatment(input, coreConcept!, { ...context, variantStyle: cfg.styleHint }, apiKey)
       variants.push({ 
         id: cfg.id, 
         label: cfg.label, 
