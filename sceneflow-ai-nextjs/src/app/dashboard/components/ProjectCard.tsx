@@ -238,7 +238,8 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
           projectId: project.id,
           description: project.description || project.metadata?.concept || project.title,
           title: project.title,
-          genre: project.metadata?.genre
+          genre: project.metadata?.genre,
+          userApiKey: byokSettings?.imageGenerationProvider?.apiKey || '' // Pass BYOK key
         })
       })
 

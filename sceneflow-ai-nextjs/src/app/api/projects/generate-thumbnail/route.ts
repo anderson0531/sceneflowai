@@ -6,7 +6,7 @@ export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
   try {
-    const { projectId, description, title, genre } = await request.json()
+    const { projectId, description, title, genre, userApiKey } = await request.json()
 
     if (!projectId) {
       return NextResponse.json(
@@ -22,12 +22,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const openaiKey = process.env.OPENAI_API_KEY
-    if (!openaiKey) {
-      return NextResponse.json(
-        { success: false, error: 'OpenAI API key not configured' },
-        { status: 500 }
-      )
+    // BYOK: Use user-provided key if available, fallback to server key for development
+    const geminiApiKey = userApiKey || process.env.GOOGLE_GEMINI_API_KEY
+
+    if (!geminiApiKey) {
+      return NextResponse.json({
+        success: false,
+        error: 'Google Gemini API key required. Please configure BYOK settings.',
+        requiresBYOK: true
+      }, { status: 400 })
     }
 
     // Build a cinematic billboard prompt
@@ -54,33 +57,27 @@ Style Requirements:
 
     console.log('[Thumbnail] Generating billboard image for project:', projectId)
 
-    // Call OpenAI DALL-E 3
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openaiKey}`
-      },
-      body: JSON.stringify({
-        model: 'dall-e-3',
-        prompt: enhancedPrompt,
-        size: '1792x1024', // 16:9 landscape for billboard
-        quality: 'hd',
-        n: 1,
-        response_format: 'b64_json'
-      })
-    })
+    // Call Gemini Imagen 3
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${geminiApiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          instances: [{ prompt: enhancedPrompt }],
+          parameters: {
+            sampleCount: 1,
+            aspectRatio: '16:9',
+            safetyFilterLevel: 'block_few',
+            personGeneration: 'allow_adult'
+          }
+        })
+      }
+    )
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}))
-      console.error('[Thumbnail] OpenAI error:', response.status, error)
-      
-      if (response.status === 400 && error?.error?.code === 'content_policy_violation') {
-        return NextResponse.json({ 
-          success: false,
-          error: 'Content policy violation. Please try a different project description.' 
-        }, { status: 400 })
-      }
+      console.error('[Thumbnail] Gemini error:', response.status, error)
       
       return NextResponse.json({ 
         success: false,
@@ -89,12 +86,12 @@ Style Requirements:
     }
 
     const data = await response.json()
-    const b64 = data?.data?.[0]?.b64_json
+    const b64 = data?.predictions?.[0]?.bytesBase64Encoded
     
     if (!b64) {
       return NextResponse.json({ 
         success: false,
-        error: 'No image data returned' 
+        error: 'No image data returned from Gemini' 
       }, { status: 500 })
     }
 
@@ -125,8 +122,9 @@ Style Requirements:
     return NextResponse.json({ 
       success: true, 
       imageUrl,
-      model: 'dall-e-3',
-      provider: 'openai'
+      model: 'imagen-3.0-generate-001',
+      provider: 'google-gemini',
+      usedBYOK: !!userApiKey
     })
 
   } catch (error) {
