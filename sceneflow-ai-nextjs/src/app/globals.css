@@ -753,12 +753,17 @@
     font-size: inherit !important;
     line-height: inherit !important;
   }
-  /* Explicit brand rule to ensure header text scales */
-  header.sf-brand .app-name-text,
-  header.sf-brand .app-name-text *,
-  header.sf-brand .app-name-text span {
-    font-size: 3.5rem !important;
-    line-height: 1.03 !important;
-    font-weight: 800 !important;
+  /* Responsive app name sizing - professional and balanced */
+  header .app-name-text {
+    font-size: clamp(1.125rem, 1vw + 0.75rem, 1.25rem) !important; /* 18px → 20px */
+    line-height: 1.2 !important;
+    font-weight: 700 !important; /* Bold, not extrabold */
+    letter-spacing: -0.01em !important;
+  }
+  
+  header .app-name-text * {
+    font-size: inherit !important;
+    line-height: inherit !important;
+    font-weight: inherit !important;
   }
 }
