@@ -9,6 +9,11 @@
 }
 
 @layer base {
+  /* Responsive base font size - scales from 16px (mobile) to 18px (desktop) */
+  html {
+    font-size: clamp(16px, 1vw + 14px, 18px);
+  }
+
   /* Dark mode styles (default) */
   body {
     /* Global application background and text */
@@ -16,8 +21,9 @@
     /* Subtle atmospheric background */
     @apply bg-no-repeat bg-sf-radial-atmosphere;
     /* Optimized typography for dark mode */
+    font-size: 1rem; /* Now responsive: 16-18px */
     font-weight: 400;
-    line-height: 1.6;
+    line-height: 1.7; /* Increased from 1.6 for better readability */
   }
   
   /* Light mode body */
@@ -40,34 +46,38 @@
 
   h1 {
     font-weight: 700;
-    font-size: 2.25rem;
+    font-size: clamp(2rem, 4vw + 1rem, 3.5rem); /* 32px → 56px */
     line-height: 1.2;
+    margin-bottom: 1.5rem;
   }
 
   h2 {
     font-weight: 600;
-    font-size: 1.875rem;
-    line-height: 1.3;
+    font-size: clamp(1.75rem, 3vw + 0.75rem, 2.75rem); /* 28px → 44px */
+    line-height: 1.25;
+    margin-bottom: 1.25rem;
   }
 
   h3 {
     font-weight: 600;
-    font-size: 1.5rem;
-    line-height: 1.4;
+    font-size: clamp(1.5rem, 2vw + 0.5rem, 2.25rem); /* 24px → 36px */
+    line-height: 1.3;
+    margin-bottom: 1rem;
   }
 
   h4 {
     font-weight: 600;
-    font-size: 1.25rem;
+    font-size: clamp(1.25rem, 1.5vw + 0.5rem, 1.875rem); /* 20px → 30px */
     line-height: 1.4;
+    margin-bottom: 0.875rem;
   }
 
   /* Default text color for body content with optimized readability */
   p, span, div, li {
     @apply text-gray-100 dark:text-gray-100;
     font-weight: 400;
-    line-height: 1.6;
-    font-size: 0.95rem; /* Slightly larger base font size */
+    line-height: 1.7;
+    font-size: 1rem; /* Responsive via html base size: 16-18px */
   }
   
   /* Light mode text */
@@ -77,8 +87,8 @@
 
   /* Paragraphs with enhanced spacing */
   p {
-    margin-bottom: 1rem;
-    line-height: 1.7;
+    margin-bottom: 1.25rem;
+    line-height: 1.75; /* Increased for better readability */
   }
 
   /* Lists with proper spacing */
@@ -201,13 +211,26 @@
     @apply text-gray-100;
   }
   
-  /* Enhanced small text readability */
+  /* Enhanced small text readability - fluid responsive */
   .text-sm {
-    font-size: 0.9rem; /* Slightly larger than default text-sm */
+    font-size: clamp(0.875rem, 0.5vw + 0.75rem, 1rem); /* 14px → 16px */
+    line-height: 1.6;
   }
   
   .text-xs {
-    font-size: 0.8rem; /* Slightly larger than default text-xs */
+    font-size: clamp(0.75rem, 0.5vw + 0.625rem, 0.875rem); /* 12px → 14px */
+    line-height: 1.5;
+  }
+
+  /* Large text for emphasis - fluid responsive */
+  .text-lg {
+    font-size: clamp(1.125rem, 1vw + 0.5rem, 1.25rem); /* 18px → 20px */
+    line-height: 1.65;
+  }
+
+  .text-xl {
+    font-size: clamp(1.25rem, 1.5vw + 0.5rem, 1.5rem); /* 20px → 24px */
+    line-height: 1.6;
   }
 
   /* Strong text with enhanced weight */
@@ -248,12 +271,13 @@
 
   select, input[type="text"], input[type="search"], input[type="email"], input[type="number"], input[type="password"] {
     @apply py-2 px-4;
-    font-size: 1rem;
+    font-size: clamp(0.9375rem, 0.5vw + 0.8125rem, 1.0625rem); /* 15px → 17px */
   }
 
   /* Button base styles with optimized typography and strong contrast */
   button {
     @apply transition-all duration-200;
+    font-size: clamp(0.875rem, 0.5vw + 0.75rem, 1rem); /* 14px → 16px */
     font-weight: 500;
     line-height: 1.4;
     letter-spacing: 0.025em;

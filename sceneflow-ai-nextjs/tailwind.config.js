@@ -9,6 +9,22 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontSize: {
+        // Fluid typography scale for responsive design
+        'fluid-xs': 'clamp(0.75rem, 0.5vw + 0.625rem, 0.875rem)',
+        'fluid-sm': 'clamp(0.875rem, 0.5vw + 0.75rem, 1rem)',
+        'fluid-base': 'clamp(1rem, 0.5vw + 0.875rem, 1.125rem)',
+        'fluid-lg': 'clamp(1.125rem, 1vw + 0.5rem, 1.25rem)',
+        'fluid-xl': 'clamp(1.25rem, 1.5vw + 0.5rem, 1.5rem)',
+        'fluid-2xl': 'clamp(1.5rem, 2vw + 0.5rem, 2rem)',
+        'fluid-3xl': 'clamp(1.875rem, 2.5vw + 0.75rem, 2.5rem)',
+        'fluid-4xl': 'clamp(2.25rem, 3vw + 1rem, 3rem)',
+      },
+      lineHeight: {
+        'reading': '1.75',
+        'comfortable': '1.7',
+        'condensed': '1.4',
+      },
       colors: {
         // Sophisticated Dark Theme Palette (WCAG AA Compliant)
         // Backgrounds (The "Black" Style)
