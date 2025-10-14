@@ -55,6 +55,7 @@ function EmptyState({ hasProjects, searchQuery, onReset }: { hasProjects: boolea
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<any[]>([])
+  const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
@@ -97,8 +98,10 @@ export default function ProjectsPage() {
       
       if (data.success) {
         const projectCount = data.projects?.length || 0
+        const total = data.total || 0
         setProjects(data.projects || [])
-        console.log(`[${timestamp}] [loadProjects] State updated with ${projectCount} projects`)
+        setTotalCount(total)
+        console.log(`[${timestamp}] [loadProjects] State updated with ${projectCount} projects on page, ${total} total projects`)
       } else {
         console.log(`[${timestamp}] [loadProjects] Response not successful:`, data.error)
       }
@@ -348,7 +351,9 @@ export default function ProjectsPage() {
         {projects.length > 0 && (
           <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">
             <div className="flex items-center justify-center gap-8 text-sm text-gray-600 dark:text-gray-400">
-              <span>{stats.total} total projects</span>
+              <span className="font-semibold">Page: {projects.length} projects</span>
+              <span>•</span>
+              <span className="font-semibold">Total: {totalCount} projects</span>
               <span>•</span>
               <span>{stats.active} active</span>
               <span>•</span>
