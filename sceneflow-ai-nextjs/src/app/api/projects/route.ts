@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 // GET /api/projects?userId=<uuid>
 export async function GET(request: NextRequest) {
   const timestamp = new Date().toISOString()
@@ -40,7 +44,9 @@ export async function GET(request: NextRequest) {
         metadata: p.metadata || {}
       }
       console.log(`[${timestamp}] [GET /api/projects] Sending single project response`)
-      return NextResponse.json({ success: true, project })
+      const response = NextResponse.json({ success: true, project })
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+      return response
     }
 
     if (!userId) {
@@ -80,7 +86,11 @@ export async function GET(request: NextRequest) {
     }))
 
     console.log(`[${timestamp}] [GET /api/projects] Sending response with ${projects.length} projects`)
-    return NextResponse.json({ success: true, projects, page, pageSize, total: count })
+    const response = NextResponse.json({ success: true, projects, page, pageSize, total: count })
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
+    return response
   } catch (error) {
     console.error(`[${timestamp}] [GET /api/projects] Error:`, error)
     return NextResponse.json({ success: false, error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 })
