@@ -435,21 +435,6 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
         </div>
       )}
       
-      {/* Visual Description (show if expanded) */}
-      {!isOutline && scene.visualDescription && (
-        <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-start gap-2">
-            <ImageIcon className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Visual Description:</div>
-              <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-3">
-                {scene.visualDescription}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      
       {scene.heading && (
         <div className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{scene.heading}</div>
       )}
