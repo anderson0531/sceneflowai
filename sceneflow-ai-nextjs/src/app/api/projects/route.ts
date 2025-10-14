@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
+import { sequelize } from '@/config/database'
 
 // GET /api/projects?userId=<uuid>
 export async function GET(request: NextRequest) {
   try {
+    // Ensure database connection
+    await sequelize.authenticate()
+    
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
     if (id) {
@@ -65,6 +69,9 @@ export async function GET(request: NextRequest) {
 // Body: { userId?: string, title: string, description?: string, metadata?: any, currentStep?: string }
 export async function POST(request: NextRequest) {
   try {
+    // Ensure database connection
+    await sequelize.authenticate()
+    
     const body = await request.json()
     const { userId, title, description, metadata, currentStep } = body || {}
 
@@ -98,6 +105,9 @@ export async function POST(request: NextRequest) {
 // Body: { id: string, metadata?: any, title?, description?, status?, currentStep?, step_progress? }
 export async function PUT(request: NextRequest) {
   try {
+    // Ensure database connection
+    await sequelize.authenticate()
+    
     const body = await request.json()
     const { id, metadata, title, description, status, currentStep, step_progress } = body || {}
     if (!id) return NextResponse.json({ success: false, error: 'id is required' }, { status: 400 })
