@@ -116,33 +116,27 @@ CRITICAL: Return ONLY the JSON array, no other text.`
       calculatedDefault: Math.ceil(targetDuration / 8)
     })
 
-    // Use beat sheet count if available, otherwise calculate from duration
-    let sceneCount = Math.ceil(targetDuration / 8) // Default: ~8s per scene average
+    // Calculate scenes per beat based on duration (industry standard: 3-7 scenes per beat)
+    const beatsCount = Array.isArray(beatSheet) ? beatSheet.length : Math.ceil(targetDuration / 600)
+    const targetScenesPerBeat = Math.ceil(targetDuration / 60 / beatsCount) // Minutes per beat determines scenes
+    const minScenesPerBeat = 3
+    const maxScenesPerBeat = 7
 
-    // Check for beats array (PRIMARY source - the actual story beats!)
-    if (Array.isArray(beatSheet)) {
-      sceneCount = beatSheet.length
-      console.log(`[Script Gen] Using beats array: ${sceneCount} beats`)
-    }
-    // Fallback: Check for beats property
-    else if (beatSheet?.beats && Array.isArray(beatSheet.beats)) {
-      sceneCount = beatSheet.beats.length
-      console.log(`[Script Gen] Using beatSheet.beats: ${sceneCount} beats`)
-    }
-    // Last resort: Duration-based calculation
-    else {
-      // If we have a targetDuration suggesting a long video, use reasonable beat count
-      if (targetDuration >= 600) { // 10+ minutes
-        sceneCount = Math.min(12, Math.ceil(targetDuration / 120)) // ~2 min per scene, max 12
-      }
-      console.log(`[Script Gen] No beats array found, using duration-based calculation: ${sceneCount} scenes for ${targetDuration}s`)
+    // Target 25-45 scenes for 60 minutes (industry standard)
+    let sceneCount = beatsCount * Math.max(minScenesPerBeat, Math.min(maxScenesPerBeat, targetScenesPerBeat))
+
+    // Ensure within 25-45 range for 60min+ content
+    if (targetDuration >= 3000) { // 50+ minutes
+      sceneCount = Math.max(25, Math.min(45, sceneCount))
     }
 
-    // Safety cap: Never generate more than 20 scenes regardless of calculation
-    if (sceneCount > 20) {
-      console.warn(`[Script Gen] Scene count ${sceneCount} exceeds maximum of 20, capping at 20`)
-      sceneCount = 20
+    // Safety cap: Never generate more than 45 scenes regardless of calculation
+    if (sceneCount > 45) {
+      console.warn(`[Script Gen] Scene count ${sceneCount} exceeds maximum of 45, capping at 45`)
+      sceneCount = 45
     }
+
+    console.log(`[Script Gen] Beat expansion: ${beatsCount} beats → ${sceneCount} scenes (${Math.floor(sceneCount / beatsCount)} scenes per beat)`)
 
     console.log(`[Script Gen] Final scene count: ${sceneCount} scenes for ${targetDuration}s (${Math.floor(targetDuration / 60)} min)`)
 
@@ -151,42 +145,76 @@ CRITICAL: Return ONLY the JSON array, no other text.`
     
     // STAGE 1: Generate scene outlines (lightweight, always completes)
     const perSceneDuration = Math.floor(targetDuration / sceneCount)
-    const outlinesPrompt = `Create ${sceneCount} scene outlines for a ${Math.floor(targetDuration / 60)}-minute video.
+    const outlinesPrompt = `You are an expert screenwriter and script analyst with deep knowledge of screenplay structure, pacing, and scene construction.
 
-TITLE: ${filmTreatmentVariant.title || 'Untitled'}
-GENRE: ${filmTreatmentVariant.genre || 'Documentary'}
-DURATION: ${targetDuration} seconds (${Math.floor(targetDuration / 60)} minutes)
-TONE: ${toneDescription}
+CRITICAL TASK: Expand the provided Beat Structure from a Film Treatment into a detailed, logical Scene Structure suitable for a ${Math.floor(targetDuration / 60)}-minute ${filmTreatmentVariant.genre || 'video'}.
 
-${Array.isArray(beatSheet) && beatSheet.length > 0 ? `
-STORY BEATS (${sceneCount} total):
-${beatSheet.map((b: any, i: number) => `${i + 1}. ${b.title || b.beat_title || `Beat ${i + 1}`} (${b.minutes || Math.floor(targetDuration / sceneCount / 60)} min)`).join('\n')}
+PROJECT DETAILS:
+- Title: ${filmTreatmentVariant.title || 'Untitled'}
+- Genre: ${filmTreatmentVariant.genre || 'Documentary'}  
+- Duration: ${targetDuration} seconds (${Math.floor(targetDuration / 60)} minutes)
+- Tone: ${toneDescription}
+- Required Scene Count: ${sceneCount} scenes (industry standard: 25-45 for 60 min)
 
-Create ONE scene outline for EACH beat above.
-` : ''}
+BEAT STRUCTURE TO EXPAND:
+${Array.isArray(beatSheet) && beatSheet.length > 0 ? 
+  beatSheet.map((b: any, i: number) => 
+    `Beat ${i + 1}: "${b.title || b.beat_title}" (${b.minutes || 1} min)
+    Intent: ${b.intent || b.synopsis || 'Advance the story'}
+    `
+  ).join('\n') 
+  : 'No beats provided - create logical story progression'
+}
 
-${actBreakdown ? `
-ACT STRUCTURE:
-- Act 1: ${actBreakdown.act1 || 'Setup'}
-- Act 2: ${actBreakdown.act2 || 'Development'}
-- Act 3: ${actBreakdown.act3 || 'Resolution'}
-` : ''}
+CRITICAL INSTRUCTIONS - BEAT TO SCENE EXPANSION:
 
-Return a JSON array of exactly ${sceneCount} scene outlines:
+1. DECONSTRUCT BEATS: Each beat above must be broken into ${minScenesPerBeat}-${maxScenesPerBeat} sequential scenes.
+
+2. SUB-BEATS: For each major beat, create 2-4 Sub-Beats (mini-goals). Each Sub-Beat = 1-2 scenes.
+   Example: Beat "Journey to Discovery" → Sub-Beats: "Preparation", "Departure", "Obstacle", "Arrival"
+
+3. SCENE DEFINITION: A scene is ONE continuous action in ONE time and ONE place.
+   - New Location = New Scene (INT. OFFICE → EXT. STREET = 2 scenes)
+   - New Time = New Scene (MORNING → AFTERNOON = 2 scenes)
+   - Simultaneous actions in different places = Separate scenes
+
+4. SCENE PURPOSE: Each scene must:
+   - Advance plot OR reveal character OR provide context OR establish mood
+   - Have clear beginning, middle, end
+   - Connect logically to previous/next scene
+
+5. PACING: 
+   - ${sceneCount} total scenes for ${Math.floor(targetDuration / 60)} minutes
+   - Average scene length: ${Math.floor(targetDuration / sceneCount)} seconds (1-3 pages)
+   - DO NOT merge disparate actions ("drives, argues, arrives" = 3 scenes)
+
+6. CONTINUITY: Use proper scene transitions:
+   - CONTINUOUS (same time, different place)
+   - LATER (time jump, same place)
+   - SAME TIME (parallel action)
+
+REQUIRED OUTPUT - JSON array of EXACTLY ${sceneCount} scenes:
 [
   {
     "num": 1,
-    "heading": "EXT. LOCATION - TIME",
-    "summary": "What happens in this scene",
-    "duration": ${perSceneDuration}
+    "beat": "Beat 1 title",
+    "subBeat": "Sub-beat name (e.g., Setup/Preparation)",
+    "heading": "INT./EXT. SPECIFIC LOCATION - TIME",
+    "summary": "What happens in this single time/place unit",
+    "purpose": "Why this scene exists (plot/character/context/mood)",
+    "duration": ${Math.floor(targetDuration / sceneCount)},
+    "transition": "CONTINUOUS/CUT TO/LATER/etc"
   }
 ]
 
-CRITICAL: 
-- Return ONLY the JSON array
-- Must have EXACTLY ${sceneCount} scenes (one per beat)
-- Each scene ${perSceneDuration} seconds
-- Total ${targetDuration} seconds`
+VALIDATION:
+- Must return EXACTLY ${sceneCount} scenes
+- Each beat must have ${minScenesPerBeat}-${maxScenesPerBeat} scenes
+- Each scene is ONE time + ONE place
+- Total duration = ${targetDuration} seconds
+- Logical sequence from scene 1 to scene ${sceneCount}
+
+Return ONLY the JSON array.`
 
     // STAGE 1: Generate outlines
     console.log(`[Script Gen] Stage 1: Generating ${sceneCount} scene outlines...`)
@@ -223,9 +251,13 @@ CRITICAL:
     // Convert outlines to lightweight scene objects with isExpanded: false
     const outlineScenes = parsedOutlines.map((outline, idx) => ({
       sceneNumber: idx + 1,
+      beat: outline.beat || 'Unknown Beat',
+      subBeat: outline.subBeat || '',
       heading: outline.heading || outline.head || `SCENE ${idx + 1}`,
       summary: outline.summary || outline.description || 'Scene content',
+      purpose: outline.purpose || 'Advance story',
       duration: outline.duration || Math.floor(targetDuration / sceneCount),
+      transition: outline.transition || 'CUT TO',
       isExpanded: false,
       // Preserve outline data for later expansion
       _outline: outline
@@ -464,34 +496,66 @@ function extractCharactersFromScenes(scenes: any[]): any[] {
 
 // Helper: Generate fallback outlines when AI fails
 function generateFallbackOutlines(beatSheet: any, sceneCount: number, filmTreatmentVariant: any, perSceneDuration: number): any[] {
-  console.log('[Script Gen] Generating fallback outlines')
+  console.log('[Script Gen] Generating fallback outlines with beat expansion')
   
-  // Priority 1: Use beats array from Film Treatment (PRIMARY source!)
+  // Priority 1: Use beats array from Film Treatment and expand to multiple scenes
   if (filmTreatmentVariant.beats && Array.isArray(filmTreatmentVariant.beats)) {
-    return filmTreatmentVariant.beats.map((beat: any, idx: number) => ({
-      num: idx + 1,
-      heading: `SCENE ${idx + 1}`,
-      summary: beat.title || beat.beat_title || beat.intent || `Beat ${idx + 1}`,
-      duration: (beat.minutes || 1) * 60
-    }))
+    const beats = filmTreatmentVariant.beats
+    const scenesPerBeat = Math.ceil(sceneCount / beats.length)
+    const fallbackScenes: any[] = []
+    
+    beats.forEach((beat: any, beatIdx: number) => {
+      // Generate 3-7 scenes per beat
+      for (let i = 0; i < scenesPerBeat; i++) {
+        fallbackScenes.push({
+          num: fallbackScenes.length + 1,
+          beat: beat.title || beat.beat_title || `Beat ${beatIdx + 1}`,
+          subBeat: `Part ${i + 1}`,
+          heading: `SCENE ${fallbackScenes.length + 1}`,
+          summary: `${beat.title || beat.intent} - Part ${i + 1}`,
+          purpose: 'Advance story',
+          duration: (beat.minutes || 1) * 60 / scenesPerBeat,
+          transition: i === 0 ? 'CUT TO' : 'CONTINUOUS'
+        })
+      }
+    })
+    
+    return fallbackScenes.slice(0, sceneCount)
   }
   
-  // Priority 2: Try beatSheet if it's an array
+  // Priority 2: Try beatSheet if it's an array and expand
   if (Array.isArray(beatSheet)) {
-    return beatSheet.map((beat: any, idx: number) => ({
-      num: idx + 1,
-      heading: `SCENE ${idx + 1}`,
-      summary: beat.title || beat.beat_title || `Beat ${idx + 1}`,
-      duration: (beat.minutes || perSceneDuration / 60) * 60
-    }))
+    const scenesPerBeat = Math.ceil(sceneCount / beatSheet.length)
+    const fallbackScenes: any[] = []
+    
+    beatSheet.forEach((beat: any, beatIdx: number) => {
+      for (let i = 0; i < scenesPerBeat; i++) {
+        fallbackScenes.push({
+          num: fallbackScenes.length + 1,
+          beat: beat.title || beat.beat_title || `Beat ${beatIdx + 1}`,
+          subBeat: `Part ${i + 1}`,
+          heading: `SCENE ${fallbackScenes.length + 1}`,
+          summary: `${beat.title || beat.beat_title} - Part ${i + 1}`,
+          purpose: 'Story progression',
+          duration: (beat.minutes || perSceneDuration / 60) * 60 / scenesPerBeat,
+          transition: i === 0 ? 'CUT TO' : 'CONTINUOUS'
+        })
+      }
+    })
+    
+    return fallbackScenes.slice(0, sceneCount)
   }
   
-  // Priority 3: Last resort - create generic outlines based on sceneCount
+  // Priority 3: Last resort - create generic outlines based on sceneCount with beat grouping
   return Array.from({ length: sceneCount }, (_, idx) => ({
     num: idx + 1,
+    beat: `Beat ${Math.floor(idx / 5) + 1}`,
+    subBeat: `Scene ${(idx % 5) + 1}`,
     heading: `SCENE ${idx + 1}`,
     summary: `Scene ${idx + 1} from ${filmTreatmentVariant.title || 'the story'}`,
-    duration: perSceneDuration
+    purpose: 'Story progression',
+    duration: perSceneDuration,
+    transition: 'CUT TO'
   }))
 }
 
