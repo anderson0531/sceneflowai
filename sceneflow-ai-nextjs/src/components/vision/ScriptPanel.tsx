@@ -1,10 +1,11 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { getCuratedElevenVoices, type CuratedVoice } from '@/lib/tts/voices'
+import { ScenePromptBuilder } from './ScenePromptBuilder'
 
 interface ScriptPanelProps {
   script: any
@@ -12,10 +13,11 @@ interface ScriptPanelProps {
   isGenerating: boolean
   onExpandScene?: (sceneNumber: number) => Promise<void>
   onExpandAllScenes?: () => Promise<void>
-  onGenerateSceneImage?: (sceneIdx: number) => Promise<void>
+  onGenerateSceneImage?: (sceneIdx: number, customPrompt?: string) => Promise<void>
+  characters?: Array<{ name: string; description: string }>
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [] }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [editMode, setEditMode] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -31,6 +33,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   
   // Image generation state
   const [generatingImageForScene, setGeneratingImageForScene] = useState<number | null>(null)
+  
+  // Scene prompt builder state
+  const [sceneBuilderOpen, setSceneBuilderOpen] = useState(false)
+  const [sceneBuilderIdx, setSceneBuilderIdx] = useState<number | null>(null)
+  const [scenePrompts, setScenePrompts] = useState<Record<number, string>>({})
 
   const scenes = script?.script?.scenes || []
 
@@ -170,10 +177,24 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     if (!onGenerateSceneImage) return
     setGeneratingImageForScene(sceneIdx)
     try {
-      await onGenerateSceneImage(sceneIdx)
+      const customPrompt = scenePrompts[sceneIdx]
+      await onGenerateSceneImage(sceneIdx, customPrompt)
     } finally {
       setGeneratingImageForScene(null)
     }
+  }
+
+  const handleOpenSceneBuilder = (sceneIdx: number) => {
+    setSceneBuilderIdx(sceneIdx)
+    setSceneBuilderOpen(true)
+  }
+
+  const handleApplyScenePrompt = (prompt: string) => {
+    if (sceneBuilderIdx !== null) {
+      setScenePrompts(prev => ({ ...prev, [sceneBuilderIdx]: prompt }))
+    }
+    setSceneBuilderOpen(false)
+    setSceneBuilderIdx(null)
   }
 
   return (
@@ -304,12 +325,30 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   sceneIdx={idx}
                   onGenerateImage={handleGenerateImage}
                   isGeneratingImage={generatingImageForScene === idx}
+                  onOpenPromptBuilder={handleOpenSceneBuilder}
+                  scenePrompt={scenePrompts[idx]}
+                  onPromptChange={(sceneIdx, prompt) => setScenePrompts(prev => ({ ...prev, [sceneIdx]: prompt }))}
                 />
               ))
             )}
           </div>
         )}
       </div>
+
+      {/* Scene Prompt Builder Modal */}
+      {sceneBuilderIdx !== null && (
+        <ScenePromptBuilder
+          open={sceneBuilderOpen}
+          onClose={() => {
+            setSceneBuilderOpen(false)
+            setSceneBuilderIdx(null)
+          }}
+          initialPrompt={scenePrompts[sceneBuilderIdx] || scenes[sceneBuilderIdx]?.visualDescription || ''}
+          sceneHeading={scenes[sceneBuilderIdx]?.heading || `Scene ${sceneBuilderIdx + 1}`}
+          availableCharacters={characters}
+          onApply={handleApplyScenePrompt}
+        />
+      )}
     </div>
   )
 }
@@ -327,10 +366,14 @@ interface SceneCardProps {
   sceneIdx: number
   onGenerateImage?: (sceneIdx: number) => Promise<void>
   isGeneratingImage?: boolean
+  onOpenPromptBuilder?: (sceneIdx: number) => void
+  scenePrompt?: string
+  onPromptChange?: (sceneIdx: number, prompt: string) => void
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage }: SceneCardProps) {
+function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, scenePrompt, onPromptChange }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
+  const promptTextareaRef = useRef<HTMLTextAreaElement>(null)
   
   const handleExpand = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -352,6 +395,22 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
       await onGenerateImage(sceneIdx)
     }
   }
+
+  const handleOpenBuilder = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (onOpenPromptBuilder) {
+      onOpenPromptBuilder(sceneIdx)
+    }
+  }
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const textarea = promptTextareaRef.current
+    if (textarea) {
+      textarea.style.height = 'auto'
+      textarea.style.height = textarea.scrollHeight + 'px'
+    }
+  }, [scenePrompt, scene.visualDescription])
   
   return (
     <div 
@@ -406,23 +465,59 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
           
           {/* Generate Image Button (for expanded scenes) */}
           {!isOutline && onGenerateImage && scene.visualDescription && (
-            <Button
-              size="sm"
-              onClick={handleGenerateImage}
-              disabled={isGeneratingImage}
-              className="bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 text-xs px-2 py-1 h-auto flex items-center gap-1"
-              title="Generate image from visual description"
-            >
-              {isGeneratingImage ? (
-                <Loader className="w-3 h-3 animate-spin" />
-              ) : (
-                <ImageIcon className="w-3 h-3" />
-              )}
-              <span>{scene.imageUrl ? 'Regenerate' : 'Generate'} Image</span>
-            </Button>
+            <>
+              <Button
+                size="sm"
+                onClick={handleOpenBuilder}
+                disabled={isGeneratingImage}
+                className="bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 text-xs px-2 py-1 h-auto"
+                title="Open prompt builder"
+              >
+                <Wand2 className="w-3 h-3" />
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleGenerateImage}
+                disabled={isGeneratingImage}
+                className="bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 text-xs px-2 py-1 h-auto flex items-center gap-1"
+                title="Generate image from prompt"
+              >
+                {isGeneratingImage ? (
+                  <Loader className="w-3 h-3 animate-spin" />
+                ) : (
+                  <ImageIcon className="w-3 h-3" />
+                )}
+                <span>{scene.imageUrl ? 'Regenerate' : 'Generate'} Image</span>
+              </Button>
+            </>
           )}
         </div>
       </div>
+
+      {/* Editable Prompt Textarea (for expanded scenes) */}
+      {!isOutline && scene.visualDescription && (
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Scene Prompt</label>
+            <span className="text-xs text-gray-400">Edit before generating</span>
+          </div>
+          <textarea
+            ref={promptTextareaRef}
+            value={scenePrompt !== undefined ? scenePrompt : scene.visualDescription}
+            onChange={(e) => {
+              e.stopPropagation()
+              if (onPromptChange) {
+                onPromptChange(sceneIdx, e.target.value)
+              }
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full text-sm p-2 rounded bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="Describe the scene for image generation..."
+            rows={3}
+            style={{ minHeight: '60px' }}
+          />
+        </div>
+      )}
       
       {/* Scene Image - Prominent Storyboard Display */}
       {!isOutline && scene.imageUrl && (

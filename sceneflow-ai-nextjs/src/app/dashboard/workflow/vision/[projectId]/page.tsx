@@ -697,7 +697,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     console.log('Regenerate scene:', sceneIndex)
   }
 
-  const handleGenerateSceneImage = async (sceneIdx: number) => {
+  const handleGenerateSceneImage = async (sceneIdx: number, customPrompt?: string) => {
     const scene = script?.script?.scenes?.[sceneIdx]
     if (!scene || !scene.visualDescription) {
       console.warn('No visual description available for scene', sceneIdx)
@@ -706,7 +706,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
     
     try {
-      const prompt = scene.visualDescription
+      // Use custom prompt if provided, otherwise use visual description
+      const prompt = customPrompt || scene.visualDescription
+      
+      // Get characters in this scene and their details
+      const sceneCharacters = scene.characters?.map((charName: string) => {
+        const char = characters.find((c: any) => c.name === charName)
+        return char ? {
+          name: char.name,
+          description: char.description,
+          referenceImage: char.referenceImage // Link to character image for consistency
+        } : null
+      }).filter(Boolean) || []
+      
       const response = await fetch('/api/scene/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -714,8 +726,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           prompt,
           sceneContext: {
             heading: scene.heading,
-            characters: scene.characters,
-            visualStyle: project?.metadata?.filmTreatmentVariant?.visual_style
+            characters: sceneCharacters,
+            visualStyle: project?.metadata?.filmTreatmentVariant?.visual_style,
+            tone: project?.metadata?.filmTreatmentVariant?.tone_description
           }
         })
       })
@@ -819,6 +832,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               onExpandScene={expandScene}
               onExpandAllScenes={expandAllScenes}
               onGenerateSceneImage={handleGenerateSceneImage}
+              characters={characters}
             />
           )}
           

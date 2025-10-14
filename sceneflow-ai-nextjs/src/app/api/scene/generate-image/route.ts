@@ -16,8 +16,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'OPENAI_API_KEY not configured' }, { status: 500 })
     }
 
+    // Build character references for visual consistency
+    let characterRefs = ''
+    if (sceneContext?.characters && Array.isArray(sceneContext.characters) && sceneContext.characters.length > 0) {
+      const charDescriptions = sceneContext.characters.map((c: any) => 
+        `${c.name}: ${c.description}${c.referenceImage ? ' (maintain visual consistency with established appearance)' : ''}`
+      ).join(', ')
+      characterRefs = `\n\nCharacters in scene: ${charDescriptions}`
+    }
+
     // Enhance prompt for cinematic scene
-    let enhancedPrompt = prompt
+    let enhancedPrompt = prompt + characterRefs
     
     // Add scene context if provided
     if (sceneContext) {
@@ -25,7 +34,7 @@ export async function POST(req: NextRequest) {
       if (sceneContext.visualStyle) contextParts.push(`Visual style: ${sceneContext.visualStyle}`)
       if (sceneContext.tone) contextParts.push(`Tone: ${sceneContext.tone}`)
       if (contextParts.length > 0) {
-        enhancedPrompt = `${prompt}\n\n${contextParts.join(', ')}`
+        enhancedPrompt += `\n\n${contextParts.join(', ')}`
       }
     }
     
@@ -36,7 +45,7 @@ Composition: 16:9 aspect ratio, professional framing, rule of thirds
 Camera: Cinematic camera angle, depth of field
 Lighting: Cinematic lighting, atmospheric, professional film lighting`
 
-    console.log('[Scene Image] Generating with DALL-E 3:', enhancedPrompt.substring(0, 100))
+    console.log('[Scene Image] Generating with DALL-E 3:', enhancedPrompt.substring(0, 150))
 
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
