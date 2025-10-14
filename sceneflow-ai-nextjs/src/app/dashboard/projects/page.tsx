@@ -144,17 +144,23 @@ export default function ProjectsPage() {
     if (!confirm('Are you sure you want to delete this project? This cannot be undone.')) return
     
     try {
+      console.log('[Delete] Deleting project:', projectId)
       const res = await fetch(`/api/projects/${projectId}`, {
         method: 'DELETE'
       })
       
-      if (res.ok) {
+      const data = await res.json()
+      console.log('[Delete] Response:', data)
+      
+      if (res.ok && data.success) {
         loadProjects()
         try { const { toast } = require('sonner'); toast.success('Project deleted') } catch {}
+      } else {
+        throw new Error(data.error || 'Delete failed')
       }
-    } catch (error) {
-      console.error('Failed to delete:', error)
-      try { const { toast } = require('sonner'); toast.error('Failed to delete project') } catch {}
+    } catch (error: any) {
+      console.error('[Delete] Error:', error)
+      try { const { toast } = require('sonner'); toast.error(error.message || 'Failed to delete project') } catch {}
     }
   }
 

@@ -181,6 +181,28 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
 
   const workflowStatus = getWorkflowStatus()
 
+  // Helper function to get project thumbnail
+  const getThumbnailUrl = (): string | null => {
+    // Priority 1: First scene image from vision phase
+    const firstSceneImage = project.metadata?.visionPhase?.script?.script?.scenes?.[0]?.imageUrl
+    if (firstSceneImage) return firstSceneImage
+    
+    // Priority 2: First scene from scenes array
+    const firstScene = project.metadata?.visionPhase?.scenes?.[0]?.imageUrl
+    if (firstScene) return firstScene
+    
+    // Priority 3: First character image
+    const firstCharImage = project.metadata?.visionPhase?.characters?.[0]?.referenceImage
+    if (firstCharImage) return firstCharImage
+    
+    // Priority 4: Cached generated thumbnail
+    const cachedThumb = project.metadata?.thumbnail
+    if (cachedThumb) return cachedThumb
+    
+    // Priority 5: null (show gradient placeholder)
+    return null
+  }
+
   // Helper function to get correct route for resume action
   const getResumeRoute = (): string => {
     const { currentStep, id } = project
@@ -213,13 +235,21 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
       className={`bg-gray-900/95 backdrop-blur-sm rounded-xl border border-gray-700/50 shadow-2xl overflow-hidden ${className}`}
     >
       {/* Project Thumbnail */}
-      <div className="relative h-40 bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center">
-        <div className="text-center">
-          <div className={`w-16 h-16 mx-auto mb-3 ${currentStepInfo.bgColor} ${currentStepInfo.borderColor} border-2 rounded-xl flex items-center justify-center`}>
-            <currentStepInfo.icon className={`w-8 h-8 ${currentStepInfo.color}`} />
+      <div className="relative h-40 bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center overflow-hidden">
+        {getThumbnailUrl() ? (
+          <img 
+            src={getThumbnailUrl()!} 
+            alt={project.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="text-center">
+            <div className={`w-16 h-16 mx-auto mb-3 ${currentStepInfo.bgColor} ${currentStepInfo.borderColor} border-2 rounded-xl flex items-center justify-center`}>
+              <currentStepInfo.icon className={`w-8 h-8 ${currentStepInfo.color}`} />
+            </div>
+            <p className="text-gray-400 text-sm">{project.metadata?.genre || 'Project'}</p>
           </div>
-          <p className="text-gray-400 text-sm">Project Thumbnail</p>
-        </div>
+        )}
         
         {/* Actions Menu */}
         {(onDuplicate || onArchive || onDelete) && (
