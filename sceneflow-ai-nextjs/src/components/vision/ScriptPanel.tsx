@@ -426,7 +426,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
       
       {/* Scene Image - Prominent Storyboard Display */}
       {!isOutline && scene.imageUrl && (
-        <div className="mb-4 rounded-lg overflow-hidden border-2 border-gray-300 dark:border-gray-600 shadow-md">
+        <div className="mb-4 rounded-lg overflow-hidden border-2 border-gray-300 dark:border-gray-600 shadow-md max-w-3xl">
           <img 
             src={scene.imageUrl} 
             alt={scene.heading}
@@ -456,13 +456,6 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
               <span className="ml-2 italic text-gray-700 dark:text-gray-300">"{d.line}"</span>
             </div>
           ))}
-        </div>
-      )}
-      
-      {!isOutline && scene.visualDescription && (
-        <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
-          <span className="text-xs text-gray-500 dark:text-gray-400">Visual: </span>
-          <span className="text-xs text-gray-600 dark:text-gray-400">{scene.visualDescription}</span>
         </div>
       )}
     </div>
