@@ -697,6 +697,78 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     console.log('Regenerate scene:', sceneIndex)
   }
 
+  const handleGenerateSceneImage = async (sceneIdx: number) => {
+    const scene = script?.script?.scenes?.[sceneIdx]
+    if (!scene || !scene.visualDescription) {
+      console.warn('No visual description available for scene', sceneIdx)
+      try { const { toast } = require('sonner'); toast.error('Scene must be expanded first to generate image') } catch {}
+      return
+    }
+    
+    try {
+      const prompt = scene.visualDescription
+      const response = await fetch('/api/scene/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          prompt,
+          sceneContext: {
+            heading: scene.heading,
+            characters: scene.characters,
+            visualStyle: project?.metadata?.filmTreatmentVariant?.visual_style
+          }
+        })
+      })
+      
+      if (!response.ok) throw new Error('Image generation failed')
+      
+      const data = await response.json()
+      
+      // Update scene with image
+      const updatedScenes = [...(script.script.scenes || [])]
+      updatedScenes[sceneIdx] = {
+        ...updatedScenes[sceneIdx],
+        imageUrl: data.imageUrl,
+        imagePrompt: prompt
+      }
+      
+      // Update local state
+      setScript({
+        ...script,
+        script: {
+          ...script.script,
+          scenes: updatedScenes
+        }
+      })
+      
+      // Persist to database
+      await fetch(`/api/projects/${project?.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          metadata: {
+            ...project?.metadata,
+            visionPhase: {
+              ...project?.metadata?.visionPhase,
+              script: {
+                ...script,
+                script: {
+                  ...script.script,
+                  scenes: updatedScenes
+                }
+              }
+            }
+          }
+        })
+      })
+      
+      try { const { toast } = require('sonner'); toast.success('Scene image generated!') } catch {}
+    } catch (error) {
+      console.error('Failed to generate scene image:', error)
+      try { const { toast } = require('sonner'); toast.error('Failed to generate image') } catch {}
+    }
+  }
+
   const handleExport = () => {
     console.log('Export Vision')
   }
@@ -746,6 +818,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               isGenerating={isGenerating}
               onExpandScene={expandScene}
               onExpandAllScenes={expandAllScenes}
+              onGenerateSceneImage={handleGenerateSceneImage}
             />
           )}
           

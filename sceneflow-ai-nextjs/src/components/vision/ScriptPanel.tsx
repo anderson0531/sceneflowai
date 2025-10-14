@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2 } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { getCuratedElevenVoices, type CuratedVoice } from '@/lib/tts/voices'
@@ -12,9 +12,10 @@ interface ScriptPanelProps {
   isGenerating: boolean
   onExpandScene?: (sceneNumber: number) => Promise<void>
   onExpandAllScenes?: () => Promise<void>
+  onGenerateSceneImage?: (sceneIdx: number) => Promise<void>
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [editMode, setEditMode] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -27,6 +28,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [selectedVoiceId, setSelectedVoiceId] = useState<string | undefined>(undefined)
   const queueAbortRef = useRef<{ abort: boolean }>({ abort: false })
+  
+  // Image generation state
+  const [generatingImageForScene, setGeneratingImageForScene] = useState<number | null>(null)
 
   const scenes = script?.script?.scenes || []
 
@@ -162,6 +166,16 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     }
   }
 
+  const handleGenerateImage = async (sceneIdx: number) => {
+    if (!onGenerateSceneImage) return
+    setGeneratingImageForScene(sceneIdx)
+    try {
+      await onGenerateSceneImage(sceneIdx)
+    } finally {
+      setGeneratingImageForScene(null)
+    }
+  }
+
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 h-full flex flex-col overflow-hidden">
       {/* Header */}
@@ -288,6 +302,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   isPlaying={loadingSceneId === idx}
                   audioEnabled={enabled}
                   sceneIdx={idx}
+                  onGenerateImage={handleGenerateImage}
+                  isGeneratingImage={generatingImageForScene === idx}
                 />
               ))
             )}
@@ -309,9 +325,11 @@ interface SceneCardProps {
   isPlaying?: boolean
   audioEnabled?: boolean
   sceneIdx: number
+  onGenerateImage?: (sceneIdx: number) => Promise<void>
+  isGeneratingImage?: boolean
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx }: SceneCardProps) {
+function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   
   const handleExpand = async (e: React.MouseEvent) => {
@@ -328,6 +346,13 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
     }
   }
   
+  const handleGenerateImage = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (onGenerateImage && !isGeneratingImage) {
+      await onGenerateImage(sceneIdx)
+    }
+  }
+  
   return (
     <div 
       onClick={onClick}
@@ -337,7 +362,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
       } ${isOutline ? 'bg-yellow-50 dark:bg-yellow-950/20' : ''}`}
     >
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">SCENE {sceneNumber}</span>
           {scene.duration && (
@@ -367,26 +392,61 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
           )}
         </div>
         
-        {isOutline && onExpand && (
-          <Button
-            size="sm"
-            onClick={handleExpand}
-            disabled={isExpanding}
-            className="bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50 text-xs px-2 py-1 h-auto"
-          >
-            {isExpanding ? <Loader className="w-3 h-3 animate-spin" /> : 'Generate'}
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {isOutline && onExpand && (
+            <Button
+              size="sm"
+              onClick={handleExpand}
+              disabled={isExpanding}
+              className="bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50 text-xs px-2 py-1 h-auto"
+            >
+              {isExpanding ? <Loader className="w-3 h-3 animate-spin" /> : 'Generate'}
+            </Button>
+          )}
+          
+          {/* Generate Image Button (for expanded scenes) */}
+          {!isOutline && onGenerateImage && scene.visualDescription && (
+            <Button
+              size="sm"
+              onClick={handleGenerateImage}
+              disabled={isGeneratingImage}
+              className="bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 text-xs px-2 py-1 h-auto flex items-center gap-1"
+              title="Generate image from visual description"
+            >
+              {isGeneratingImage ? (
+                <Loader className="w-3 h-3 animate-spin" />
+              ) : (
+                <ImageIcon className="w-3 h-3" />
+              )}
+              <span>{scene.imageUrl ? 'Regenerate' : 'Generate'} Image</span>
+            </Button>
+          )}
+        </div>
       </div>
       
-      {/* Scene image (if expanded and has image) */}
+      {/* Scene Image - Prominent Storyboard Display */}
       {!isOutline && scene.imageUrl && (
-        <div className="mb-3 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div className="mb-4 rounded-lg overflow-hidden border-2 border-gray-300 dark:border-gray-600 shadow-md">
           <img 
             src={scene.imageUrl} 
             alt={scene.heading}
             className="w-full h-auto object-cover"
           />
+        </div>
+      )}
+      
+      {/* Visual Description (show if expanded) */}
+      {!isOutline && scene.visualDescription && (
+        <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex items-start gap-2">
+            <ImageIcon className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Visual Description:</div>
+              <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-3">
+                {scene.visualDescription}
+              </div>
+            </div>
+          </div>
         </div>
       )}
       
