@@ -24,6 +24,9 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
+    // Ensure database connection
+    await sequelize.authenticate()
+
     const project = await Project.findByPk(projectId)
     
     if (!project) {
@@ -79,18 +82,19 @@ export async function POST(request: NextRequest) {
       sceneNumber
     )
 
-    // Generate scene image
-    console.log(`[Expand Scene] Generating image for scene ${sceneNumber}...`)
-    const sceneImage = await generateSceneImage(
-      sceneNumber,
-      expandedScene,
-      characters,
-      visualStyle
-    )
+    // Save expanded scene immediately without waiting for image
+    expandedScene.imageUrl = null // Will be generated async
+    expandedScene.hasImage = false
+    expandedScene.isExpanded = true
 
-    // Add image to expanded scene
-    expandedScene.imageUrl = sceneImage
-    expandedScene.hasImage = !!sceneImage
+    // Generate image asynchronously (don't await to avoid timeout)
+    generateSceneImage(sceneNumber, expandedScene, characters, visualStyle)
+      .then(imageUrl => {
+        if (imageUrl) {
+          console.log(`[Expand Scene] Image generated asynchronously for scene ${sceneNumber}`)
+        }
+      })
+      .catch(err => console.error(`[Scene Image] Async generation failed:`, err))
 
     // Update the scene in the project metadata
     const updatedScenes = scenes.map((s: any) => 
@@ -169,7 +173,7 @@ Return ONLY valid JSON in this format:
 Include realistic dialogue if characters speak. Make visualDescription very specific and concrete.`
 
   try {
-    const response = await callGeminiWithRetry(apiKey, prompt, 16000, 3)
+    const response = await callGeminiWithRetry(apiKey, prompt, 16000, 1)
     const scene = JSON.parse(response)
     return scene
   } catch (error) {
@@ -255,8 +259,8 @@ async function callGeminiWithRetry(
         throw error // Last attempt, give up
       }
       
-      // Exponential backoff: 2s, 4s, 8s
-      const delay = Math.pow(2, attempt) * 1000
+      // Shorter delay: 1s, 2s instead of 2s, 4s, 8s
+      const delay = Math.pow(2, attempt - 1) * 1000
       console.log(`[Gemini API] Retrying in ${delay}ms...`)
       await new Promise(resolve => setTimeout(resolve, delay))
     }
@@ -267,7 +271,7 @@ async function callGeminiWithRetry(
 // Helper: Call Gemini API
 async function callGemini(apiKey: string, prompt: string, maxTokens: number): Promise<string> {
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 60000)
+  const timeout = setTimeout(() => controller.abort(), 30000)
   
   try {
     const response = await fetch(
