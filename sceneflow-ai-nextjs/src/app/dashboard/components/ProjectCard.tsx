@@ -67,58 +67,76 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
   // Enhanced workflow step mapping with phase information
   const workflowSteps = {
     'ideation': { 
-      name: 'Script Analysis', 
+      name: 'The Blueprint', 
       phase: 1, 
       stepNumber: 1,
       icon: FileText,
       color: 'text-blue-400',
       bgColor: 'bg-blue-500/20',
-      borderColor: 'border-blue-500/40'
+      borderColor: 'border-blue-500/40',
+      phaseBadgeBg: 'bg-blue-500/20',
+      phaseBadgeText: 'text-blue-300',
+      phaseBadgeBorder: 'border-blue-500/40'
     },
     'storyboard': { 
-      name: 'Storyboarding', 
-      phase: 1, 
+      name: 'Vision', 
+      phase: 2, 
       stepNumber: 2,
       icon: Eye,
       color: 'text-purple-400',
       bgColor: 'bg-purple-500/20',
-      borderColor: 'border-purple-500/40'
+      borderColor: 'border-purple-500/40',
+      phaseBadgeBg: 'bg-purple-500/20',
+      phaseBadgeText: 'text-purple-300',
+      phaseBadgeBorder: 'border-purple-500/40'
     },
     'scene-direction': { 
-      name: "Director's Chair", 
-      phase: 1, 
+      name: 'Action Plan', 
+      phase: 3, 
       stepNumber: 3,
       icon: Camera,
       color: 'text-green-400',
       bgColor: 'bg-green-500/20',
-      borderColor: 'border-green-500/40'
+      borderColor: 'border-green-500/40',
+      phaseBadgeBg: 'bg-green-500/20',
+      phaseBadgeText: 'text-green-300',
+      phaseBadgeBorder: 'border-green-500/40'
     },
     'video-generation': { 
-      name: 'Video Generation', 
-      phase: 2, 
+      name: 'Creation Hub', 
+      phase: 4, 
       stepNumber: 4,
       icon: Film,
       color: 'text-orange-400',
       bgColor: 'bg-orange-500/20',
-      borderColor: 'border-orange-500/40'
+      borderColor: 'border-orange-500/40',
+      phaseBadgeBg: 'bg-orange-500/20',
+      phaseBadgeText: 'text-orange-300',
+      phaseBadgeBorder: 'border-orange-500/40'
     },
     'review': { 
-      name: 'Quality Review', 
-      phase: 2, 
+      name: 'Polish', 
+      phase: 5, 
       stepNumber: 5,
       icon: CheckCircle,
-      color: 'text-yellow-400',
-      bgColor: 'bg-yellow-500/20',
-      borderColor: 'border-yellow-500/40'
+      color: 'text-teal-400',
+      bgColor: 'bg-teal-500/20',
+      borderColor: 'border-teal-500/40',
+      phaseBadgeBg: 'bg-teal-500/20',
+      phaseBadgeText: 'text-teal-300',
+      phaseBadgeBorder: 'border-teal-500/40'
     },
     'optimization': { 
-      name: 'Optimization', 
-      phase: 2, 
+      name: 'Launchpad', 
+      phase: 6, 
       stepNumber: 6,
       icon: Wrench,
-      color: 'text-red-400',
-      bgColor: 'bg-red-500/20',
-      borderColor: 'border-red-500/40'
+      color: 'text-pink-400',
+      bgColor: 'bg-pink-500/20',
+      borderColor: 'border-pink-500/40',
+      phaseBadgeBg: 'bg-pink-500/20',
+      phaseBadgeText: 'text-pink-300',
+      phaseBadgeBorder: 'border-pink-500/40'
     }
   }
 
@@ -369,12 +387,8 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
         
         {/* Phase Indicator */}
         <div className="absolute top-3 right-3">
-          <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            currentStepInfo.phase === 1 
-              ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40' 
-              : 'bg-orange-500/20 text-orange-300 border border-orange-500/40'
-          }`}>
-            Phase {currentStepInfo.phase}
+          <div className={`px-3 py-1 rounded-full text-xs font-semibold ${currentStepInfo.phaseBadgeBg} ${currentStepInfo.phaseBadgeText} border ${currentStepInfo.phaseBadgeBorder}`}>
+            Phase {currentStepInfo.phase} • {currentStepInfo.name}
           </div>
         </div>
       </div>
