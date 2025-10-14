@@ -47,6 +47,9 @@ interface ProjectCardProps {
       concept?: string
       keyMessage?: string
       tone?: string
+      thumbnail?: string
+      visionPhase?: any
+      [key: string]: any // Allow additional properties
     }
   }
   className?: string
@@ -59,6 +62,7 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
   const { user, byokSettings } = useEnhancedStore()
   const { invokeCue } = useCueStore()
   const [isHovered, setIsHovered] = useState(false)
+  const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false)
 
   // Enhanced workflow step mapping with phase information
   const workflowSteps = {
@@ -203,6 +207,49 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
     return null
   }
 
+  // Handler for generating thumbnail
+  const handleGenerateThumbnail = async () => {
+    if (isGeneratingThumbnail) return
+    
+    setIsGeneratingThumbnail(true)
+    try {
+      const response = await fetch('/api/projects/generate-thumbnail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: project.id,
+          description: project.description || project.metadata?.concept || project.title,
+          title: project.title,
+          genre: project.metadata?.genre
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        // Trigger a reload of the projects list by calling parent
+        // The thumbnail is already saved in the backend, so a page refresh will show it
+        try { 
+          const { toast } = require('sonner')
+          toast.success('Thumbnail generated successfully!')
+        } catch {}
+        
+        // Force a page reload to show the new thumbnail
+        window.location.reload()
+      } else {
+        throw new Error(data.error || 'Failed to generate thumbnail')
+      }
+    } catch (error: any) {
+      console.error('Thumbnail generation error:', error)
+      try { 
+        const { toast } = require('sonner')
+        toast.error(error.message || 'Failed to generate thumbnail')
+      } catch {}
+    } finally {
+      setIsGeneratingThumbnail(false)
+    }
+  }
+
   // Helper function to get correct route for resume action
   const getResumeRoute = (): string => {
     const { currentStep, id } = project
@@ -270,6 +317,13 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
                     Duplicate
                   </DropdownMenuItem>
                 )}
+                <DropdownMenuItem 
+                  onClick={(e) => { e.stopPropagation(); handleGenerateThumbnail() }}
+                  disabled={isGeneratingThumbnail}
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  {isGeneratingThumbnail ? 'Generating...' : 'Generate Thumbnail'}
+                </DropdownMenuItem>
                 {onArchive && (
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onArchive(project.id) }}>
                     <Archive className="w-4 h-4 mr-2" />

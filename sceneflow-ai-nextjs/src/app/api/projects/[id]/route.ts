@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
-import sequelize from '@/config/database'
+import { sequelize } from '@/config/database'
 
 export async function DELETE(
   request: NextRequest,
