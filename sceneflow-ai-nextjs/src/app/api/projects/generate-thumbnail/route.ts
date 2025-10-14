@@ -57,19 +57,20 @@ Style Requirements:
 
     console.log('[Thumbnail] Generating billboard image for project:', projectId)
 
-    // Call Gemini Imagen 3
+    // Call Gemini Imagen 4.0 with correct API
+    const selectedModel = 'imagen-4.0-generate-001'
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${geminiApiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${geminiApiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          instances: [{ prompt: enhancedPrompt }],
-          parameters: {
-            sampleCount: 1,
-            aspectRatio: '16:9',
-            safetyFilterLevel: 'block_few',
-            personGeneration: 'allow_adult'
+          contents: [{ parts: [{ text: enhancedPrompt }] }],
+          generationConfig: {
+            temperature: 0.6,
+            topK: 40,
+            topP: 0.95,
+            responseMimeType: 'image/png'
           }
         })
       }
@@ -81,21 +82,31 @@ Style Requirements:
       
       return NextResponse.json({ 
         success: false,
-        error: error?.error?.message || 'Thumbnail generation failed' 
+        error: `Gemini API error: ${response.status} - ${error?.error?.message || 'Unknown error'}` 
       }, { status: response.status })
     }
 
     const data = await response.json()
-    const b64 = data?.predictions?.[0]?.bytesBase64Encoded
-    
-    if (!b64) {
+
+    // Extract image from Imagen 4.0 response format
+    let imageUrl = ''
+    if (data?.candidates?.[0]?.content?.parts?.length) {
+      for (const part of data.candidates[0].content.parts) {
+        const inlineA = part.inlineData || part.inline_data
+        if (inlineA?.mimeType?.startsWith('image/') && inlineA?.data) {
+          imageUrl = `data:${inlineA.mimeType};base64,${inlineA.data}`
+          break
+        }
+      }
+    }
+
+    if (!imageUrl) {
+      console.error('[Thumbnail] No image data in Gemini response:', JSON.stringify(data, null, 2))
       return NextResponse.json({ 
         success: false,
         error: 'No image data returned from Gemini' 
       }, { status: 500 })
     }
-
-    const imageUrl = `data:image/png;base64,${b64}`
     
     // Update project metadata with the thumbnail
     await sequelize.authenticate()
@@ -122,7 +133,7 @@ Style Requirements:
     return NextResponse.json({ 
       success: true, 
       imageUrl,
-      model: 'imagen-3.0-generate-001',
+      model: 'imagen-4.0-generate-001',
       provider: 'google-gemini',
       usedBYOK: !!userApiKey
     })
