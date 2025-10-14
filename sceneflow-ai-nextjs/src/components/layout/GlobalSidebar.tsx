@@ -56,30 +56,30 @@ export function GlobalSidebar({ children }: { children?: React.ReactNode }) {
 
   return (
     <div className="flex">
-      <aside className="w-64 shrink-0 border-r border-gray-800 bg-gray-950/90">
+      <aside className="w-64 shrink-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/90">
         <div className="p-4 space-y-6">
           <section>
-            <h3 className="text-xs font-semibold text-gray-400 mb-2">MAIN</h3>
+            <h3 className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">MAIN</h3>
             <div className="space-y-1">
               {mainNav.map(i => (
-                <Link key={i.key} href={i.href} className={`block px-3 py-2 rounded hover:bg-gray-800 ${pathname===i.href?'bg-gray-800 text-white':'text-gray-300'}`}>{i.label}</Link>
+                <Link key={i.key} href={i.href} className={`block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 ${pathname===i.href?'bg-sf-primary/15 text-gray-900 dark:text-white':'text-gray-700 dark:text-gray-300'}`}>{i.label}</Link>
               ))}
             </div>
           </section>
 
           {flowItems.length > 0 && (
             <section>
-              <h3 className="text-xs font-semibold text-gray-400 mb-2">WORKFLOW</h3>
+              <h3 className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">WORKFLOW</h3>
               <div className="space-y-1">
                 {flowItems.map(i => {
                   const unmet = (i.requires || []).some(p => !(phaseLocks as any)[p]?.locked)
                   const blocked = unmet || (i.byok && !byokReady)
-                  const className = `block px-3 py-2 rounded ${pathname===i.href?'bg-gray-800 text-white':'text-gray-300 hover:bg-gray-800'} ${blocked?'opacity-60 cursor-not-allowed':''}`
+                  const className = `block px-3 py-2 rounded ${pathname===i.href?'bg-sf-primary/15 text-gray-900 dark:text-white':'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'} ${blocked?'opacity-60 cursor-not-allowed':''}`
                   const content = (
                     <span className="flex items-center gap-2">
                       <span>{i.label}</span>
-                      {i.byok && !byokReady && <span className="text-[10px] px-1 rounded bg-orange-500/20 text-orange-300">BYOK</span>}
-                      {unmet && <span className="text-[10px] px-1 rounded bg-blue-500/20 text-blue-300">Locked</span>}
+                      {i.byok && !byokReady && <span className="text-[10px] px-1 rounded bg-orange-500/20 text-orange-600 dark:text-orange-300">BYOK</span>}
+                      {unmet && <span className="text-[10px] px-1 rounded bg-blue-500/20 text-blue-600 dark:text-blue-300">Locked</span>}
                     </span>
                   )
                   return blocked ? (
@@ -93,10 +93,10 @@ export function GlobalSidebar({ children }: { children?: React.ReactNode }) {
           )}
 
           <section>
-            <h3 className="text-xs font-semibold text-gray-400 mb-2">SETTINGS</h3>
+            <h3 className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">SETTINGS</h3>
             <div className="space-y-1">
               {settingsNav.map(i => (
-                <Link key={i.key} href={i.href} className={`block px-3 py-2 rounded hover:bg-gray-800 ${pathname===i.href?'bg-gray-800 text-white':'text-gray-300'}`}>{i.label}</Link>
+                <Link key={i.key} href={i.href} className={`block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 ${pathname===i.href?'bg-sf-primary/15 text-gray-900 dark:text-white':'text-gray-700 dark:text-gray-300'}`}>{i.label}</Link>
               ))}
             </div>
           </section>

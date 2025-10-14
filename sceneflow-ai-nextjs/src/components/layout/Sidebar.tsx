@@ -146,13 +146,13 @@ export function Sidebar() {
       <div className={`fixed inset-y-0 left-0 z-50 w-80 navigation-bar transform transition-transform duration-300 ease-in-out ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <div className="flex flex-col h-full bg-gray-900/95 border-r border-gray-700/50">
+        <div className="flex flex-col h-full bg-white dark:bg-gray-900/95 border-r border-gray-200 dark:border-gray-700/50">
           {/* Close button for mobile only */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-700/50 bg-gray-800/30 md:hidden">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700/50 bg-gray-50 dark:bg-gray-800/30 md:hidden">
             <div className="flex-1"></div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700/50 transition-colors"
+              className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
               aria-label="Hide menu"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -164,7 +164,7 @@ export function Sidebar() {
 
           {/* User Info & Credits */}
           {user && (
-            <div className="p-6 border-b border-gray-700/50 bg-gray-800/30">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700/50 bg-gray-50 dark:bg-gray-800/30">
               <div className="flex items-center space-x-4 mb-4">
                 <div className="w-12 h-12 bg-sf-primary rounded-full flex items-center justify-center shadow-lg">
                   <span className="text-white font-bold text-lg">
@@ -172,8 +172,8 @@ export function Sidebar() {
                   </span>
                 </div>
                 <div>
-                  <p className="text-base font-bold text-white">{user.name}</p>
-                  <p className="text-sm text-gray-300">{user.email}</p>
+                  <p className="text-base font-bold text-gray-900 dark:text-white">{user.name}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">{user.email}</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3 px-4 py-3 bg-sf-primary/10 rounded-xl border border-sf-primary/20">
@@ -188,7 +188,7 @@ export function Sidebar() {
           {/* Main Navigation */}
           <div className="flex-1 overflow-y-auto">
             <div className="p-4">
-              <h3 className="nav-section-header mb-4 text-base font-bold text-gray-300 tracking-wide">
+              <h3 className="nav-section-header mb-4 text-base font-bold text-gray-600 dark:text-gray-300 tracking-wide">
                 MAIN
               </h3>
               <nav className="space-y-2 mb-8">
@@ -202,12 +202,12 @@ export function Sidebar() {
                       prefetch={false}
                       className={`flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-all duration-200 ${
                         isActiveItem 
-                          ? 'bg-sf-primary/15 text-white border-l-4 border-sf-primary shadow-lg' 
-                          : 'text-gray-200 hover:text-white hover:bg-gray-800/50 hover:translate-x-1'
+                          ? 'bg-sf-primary/15 text-gray-900 dark:text-white border-l-4 border-sf-primary shadow-lg' 
+                          : 'text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:translate-x-1'
                       }`}
                     >
-                      <span className={`mr-4 ${isActiveItem ? 'text-sf-primary' : 'text-gray-400'}`}><Icon size={24} /></span>
-                      <span className={isActiveItem ? 'text-white' : 'text-gray-200'}>
+                      <span className={`mr-4 ${isActiveItem ? 'text-sf-primary' : 'text-gray-500 dark:text-gray-400'}`}><Icon size={24} /></span>
+                      <span className={isActiveItem ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-200'}>
                         {item.name}
                       </span>
                     </Link>
@@ -217,10 +217,10 @@ export function Sidebar() {
 
               {/* Phase 1: Pre-Production Suite */}
               <div className="mb-8">
-                <h3 className="nav-section-header mb-4 text-base font-bold text-blue-300 tracking-wide">
+                <h3 className="nav-section-header mb-4 text-base font-bold text-blue-600 dark:text-blue-300 tracking-wide">
                   PHASE 1: PRE-PRODUCTION SUITE
                 </h3>
-                <p className="text-xs text-blue-200 mb-3 px-4">
+                <p className="text-xs text-blue-600 dark:text-blue-200 mb-3 px-4">
                   Uses Analysis Credits
                 </p>
                 <nav className="space-y-2 mb-4">
@@ -242,18 +242,18 @@ export function Sidebar() {
                         }}
                         className={`flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-all duration-200 ${
                           isActiveItem 
-                            ? 'bg-blue-500/15 text-white border-l-4 border-blue-500 shadow-lg' 
+                            ? 'bg-blue-500/15 text-gray-900 dark:text-white border-l-4 border-blue-500 shadow-lg' 
                             : isStepEnabled
-                            ? 'text-gray-200 hover:text-white hover:bg-gray-800/50 hover:translate-x-1'
-                            : 'text-gray-500 cursor-not-allowed opacity-50'
+                            ? 'text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:translate-x-1'
+                            : 'text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-50'
                         }`}
                       >
-                        <span className={`mr-4 ${isActiveItem ? 'text-blue-400' : isStepEnabled ? 'text-gray-400' : 'text-gray-500'}`}><Icon size={24} /></span>
+                        <span className={`mr-4 ${isActiveItem ? 'text-blue-400' : isStepEnabled ? 'text-gray-500 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500'}`}><Icon size={24} /></span>
                         <div className="flex-1 min-w-0">
-                          <div className={`text-base font-semibold transition-colors leading-tight ${isActiveItem ? 'text-white' : isStepEnabled ? 'text-gray-200' : 'text-gray-500'}`}>
+                          <div className={`text-base font-semibold transition-colors leading-tight ${isActiveItem ? 'text-gray-900 dark:text-white' : isStepEnabled ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400 dark:text-gray-500'}`}>
                             {item.name}
                           </div>
-                          <div className={`text-sm transition-colors mt-1 leading-tight ${isActiveItem ? 'text-blue-400/80' : isStepEnabled ? 'text-gray-400' : 'text-gray-500'}`}>
+                          <div className={`text-sm transition-colors mt-1 leading-tight ${isActiveItem ? 'text-blue-600 dark:text-blue-400/80' : isStepEnabled ? 'text-gray-600 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500'}`}>
                             {item.description}
                           </div>
                         </div>
@@ -265,10 +265,10 @@ export function Sidebar() {
 
               {/* Phase 2: Generation & Post */}
               <div className="mb-8">
-                <h3 className="nav-section-header mb-4 text-base font-bold text-orange-300 tracking-wide">
+                <h3 className="nav-section-header mb-4 text-base font-bold text-orange-600 dark:text-orange-300 tracking-wide">
                   PHASE 2: GENERATION & POST
                 </h3>
-                <p className="text-xs text-orange-200 mb-3 px-4">
+                <p className="text-xs text-orange-600 dark:text-orange-200 mb-3 px-4">
                   🔑 BYOK Required
                 </p>
                 <nav className="space-y-2">
@@ -290,18 +290,18 @@ export function Sidebar() {
                         }}
                         className={`flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-all duration-200 ${
                           isActiveItem 
-                            ? 'bg-orange-500/15 text-white border-l-4 border-orange-500 shadow-lg' 
+                            ? 'bg-orange-500/15 text-gray-900 dark:text-white border-l-4 border-orange-500 shadow-lg' 
                             : isStepEnabled
-                            ? 'text-gray-200 hover:text-white hover:bg-gray-800/50 hover:translate-x-1'
-                            : 'text-gray-500 cursor-not-allowed opacity-50'
+                            ? 'text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:translate-x-1'
+                            : 'text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-50'
                         }`}
                       >
-                        <span className={`mr-4 ${isActiveItem ? 'text-orange-400' : isStepEnabled ? 'text-gray-400' : 'text-gray-500'}`}><Icon size={24} /></span>
+                        <span className={`mr-4 ${isActiveItem ? 'text-orange-400' : isStepEnabled ? 'text-gray-500 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500'}`}><Icon size={24} /></span>
                         <div className="flex-1 min-w-0">
-                          <div className={`text-base font-semibold transition-colors leading-tight ${isActiveItem ? 'text-white' : isStepEnabled ? 'text-gray-200' : 'text-gray-500'}`}>
+                          <div className={`text-base font-semibold transition-colors leading-tight ${isActiveItem ? 'text-gray-900 dark:text-white' : isStepEnabled ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400 dark:text-gray-500'}`}>
                             {item.name}
                           </div>
-                          <div className={`text-sm transition-colors mt-1 leading-tight ${isActiveItem ? 'text-orange-400/80' : isStepEnabled ? 'text-gray-400' : 'text-gray-500'}`}>
+                          <div className={`text-sm transition-colors mt-1 leading-tight ${isActiveItem ? 'text-orange-600 dark:text-orange-400/80' : isStepEnabled ? 'text-gray-600 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500'}`}>
                             {item.description}
                           </div>
                         </div>
@@ -312,7 +312,7 @@ export function Sidebar() {
               </div>
 
               {/* Settings Navigation */}
-              <h3 className="nav-section-header mb-4 text-base font-bold text-gray-300 tracking-wide">
+              <h3 className="nav-section-header mb-4 text-base font-bold text-gray-600 dark:text-gray-300 tracking-wide">
                 SETTINGS
               </h3>
               <nav className="space-y-2">
@@ -326,12 +326,12 @@ export function Sidebar() {
                       prefetch={false}
                       className={`flex items-center px-4 py-3 text-base font-semibold rounded-xl transition-all duration-200 ${
                         isActiveItem 
-                          ? 'bg-sf-primary/15 text-white border-l-4 border-sf-primary shadow-lg' 
-                          : 'text-gray-200 hover:text-white hover:bg-gray-800/50 hover:translate-x-1'
+                          ? 'bg-sf-primary/15 text-gray-900 dark:text-white border-l-4 border-sf-primary shadow-lg' 
+                          : 'text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:translate-x-1'
                       }`}
                     >
-                      <span className={`mr-4 ${isActiveItem ? 'text-sf-primary' : 'text-gray-400'}`}><Icon size={24} /></span>
-                      <span className={isActiveItem ? 'text-white' : 'text-gray-200'}>
+                      <span className={`mr-4 ${isActiveItem ? 'text-sf-primary' : 'text-gray-500 dark:text-gray-400'}`}><Icon size={24} /></span>
+                      <span className={isActiveItem ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-200'}>
                         {item.name}
                       </span>
                     </Link>
@@ -342,9 +342,9 @@ export function Sidebar() {
           </div>
 
           {/* Footer */}
-          <div className="p-6 border-t border-gray-700/50 bg-gray-800/30">
+          <div className="p-6 border-t border-gray-200 dark:border-gray-700/50 bg-gray-50 dark:bg-gray-800/30">
             <div className="text-center">
-              <p className="text-sm text-gray-400 font-medium">
+              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
                 {`SceneFlow AI${process.env.NEXT_PUBLIC_APP_VERSION ? ` v${process.env.NEXT_PUBLIC_APP_VERSION}` : ''}`}
               </p>
             </div>

@@ -64,6 +64,7 @@ interface FilmTreatmentItem {
   // Duration-aware additions
   estimatedDurationMinutes?: number
   beats?: Array<{ title: string; intent?: string; minutes: number; synopsis?: string }>
+  total_duration_seconds?: number
 }
 
 interface FilmTreatmentResponse {
@@ -119,15 +120,46 @@ export async function POST(request: NextRequest) {
     const variants: Array<{ id: string; label: string } & FilmTreatmentItem> = []
     for (const cfg of variantConfigs) {
       const v = await generateFilmTreatment(input, coreConcept!, { ...context, variantStyle: cfg.styleHint, format, targetMinutes }, apiKey)
-      variants.push({ id: cfg.id, label: cfg.label, ...v })
+      variants.push({ 
+        id: cfg.id, 
+        label: cfg.label, 
+        ...v,
+        // Explicitly preserve critical fields to ensure they're not stripped
+        beats: v.beats,
+        estimatedDurationMinutes: v.estimatedDurationMinutes,
+        total_duration_seconds: v.total_duration_seconds
+      })
     }
 
-    return NextResponse.json({
+    // LOG WHAT WE'RE ACTUALLY RETURNING
+    console.log('[Film Treatment API] Returning response:', {
+      variantCount: variants.length,
+      firstVariant: {
+        hasBeats: !!variants[0]?.beats,
+        beatsCount: Array.isArray(variants[0]?.beats) ? variants[0].beats.length : 0,
+        hasDuration: !!variants[0]?.total_duration_seconds,
+        durationValue: variants[0]?.total_duration_seconds,
+        formatLength: variants[0]?.format_length
+      }
+    })
+
+    const responseData = {
       success: true,
-      data: variants[0], // backward compatibility
+      data: variants[0],
       variants,
       message: 'Film treatment variants generated successfully'
-    })
+    }
+
+    console.log('[Film Treatment API] RESPONSE DATA:', JSON.stringify({
+      variantsCount: responseData.variants.length,
+      firstVariantKeys: Object.keys(responseData.variants[0]),
+      hasBeats: !!responseData.variants[0].beats,
+      hasTotalDuration: !!responseData.variants[0].total_duration_seconds,
+      beatsValue: responseData.variants[0].beats,
+      totalDurationValue: responseData.variants[0].total_duration_seconds
+    }, null, 2))
+
+    return NextResponse.json(responseData)
 
   } catch (error) {
     console.error('❌ Film Treatment Error:', error)
@@ -192,7 +224,12 @@ async function generateFilmTreatment(
     targetMinutes
   )
   const filmTreatmentText = (parsed as any).film_treatment || parsed.synopsis || 'Comprehensive film treatment'
-  return {
+  
+  // Calculate total duration from beats (in seconds)
+  const totalDurationSeconds = normalizedBeats.reduce((sum: number, b: any) => sum + ((b.minutes || 1) * 60), 0)
+  
+  // Prepare the result object
+  const result = {
     // Legacy minimal
     film_treatment: filmTreatmentText,
     visual_style: parsed.visual_style || parsed.style || 'Professional visual style',
@@ -203,9 +240,13 @@ async function generateFilmTreatment(
     title: parsed.title,
     logline: parsed.logline,
     genre: parsed.genre,
-    format_length: parsed.format_length,
-    author_writer: (parsed as any).author_writer,
-    date: (parsed as any).date,
+    format_length: `${totalDurationSeconds} seconds`,
+    author_writer: 'Google Gemini 2.5 Flash',
+    date: new Date().toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    }),
 
     synopsis: parsed.synopsis,
     setting: parsed.setting,
@@ -225,15 +266,36 @@ async function generateFilmTreatment(
           image_prompt: c?.image_prompt ? String(c.image_prompt) : undefined,
         }))
       : undefined,
-    // Embed summarized beats and estimate (preserve beat synopsis/intent from model)
+    
+    // Embed summarized beats and estimate
     beats: normalizedBeats.map((b: any, i: number) => ({
       title: beats[i]?.title || b.title,
       intent: beats[i]?.intent,
       minutes: b.minutes,
       synopsis: beats[i]?.synopsis
     })),
-    estimatedDurationMinutes: targetMinutes
+    estimatedDurationMinutes: targetMinutes,
+    total_duration_seconds: totalDurationSeconds
   }
+  
+  // LOG THE COMPLETE VARIANT BEFORE RETURNING
+  console.log('[Film Treatment] Generated variant:', {
+    title: parsed.title,
+    beatsCount: normalizedBeats?.length || 0,
+    estimatedDurationMinutes: targetMinutes,
+    total_duration_seconds: totalDurationSeconds,
+    format_length: `${totalDurationSeconds} seconds`
+  })
+  
+  console.log('[generateFilmTreatment] RETURNING:', {
+    hasBeats: !!result.beats,
+    beatsCount: Array.isArray(result.beats) ? result.beats.length : 0,
+    hasTotalDuration: !!result.total_duration_seconds,
+    totalDuration: result.total_duration_seconds,
+    resultKeys: Object.keys(result)
+  })
+  
+  return result
 }
 
 async function analyzeCoreConcept(

@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/Button'
 import { GuidanceRail } from './GuidanceRail'
 import { trackCta } from '@/lib/analytics'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
-import { Mic, MicOff } from 'lucide-react'
+import { Mic, MicOff, Sparkles, Loader2 } from 'lucide-react'
 
 export function BlueprintComposer({
   onGenerate,
@@ -17,7 +17,7 @@ export function BlueprintComposer({
   onChangeRigor?: (r: 'fast'|'balanced'|'thorough') => void
 }) {
   const [text, setText] = useState('')
-  const [persona, setPersona] = useState<'Narrator'|'Director'>('Narrator')
+  const [persona] = useState<'Narrator'|'Director'>('Director')
   const [model, setModel] = useState('auto')
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -124,46 +124,30 @@ export function BlueprintComposer({
       </div>
       <GuidanceRail onInsert={(snippet: string) => setText(t => (t ? t + '\n\n' : '') + snippet)} />
       <div className="lg:col-span-2 flex items-center justify-end gap-2">
-        {/* Persona near Generate */}
-        <div className="hidden md:flex items-center gap-2">
-          <div className="text-[11px] text-gray-400">Persona</div>
-          <Select value={persona} onValueChange={(v)=>setPersona(v as any)}>
-            <SelectTrigger className="w-36"><SelectValue placeholder="Persona" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Narrator">Narrator</SelectItem>
-              <SelectItem value="Director">Director</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        {/* Rigor as dropdown */}
-        {rigor && onChangeRigor && (
-          <div className="hidden md:flex items-center gap-2">
-            <div className="text-[11px] text-gray-400">Rigor</div>
-            <Select value={rigor} onValueChange={(v)=> onChangeRigor(v as any)}>
-              <SelectTrigger className="w-36"><SelectValue placeholder="Rigor" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="fast">Fast</SelectItem>
-                <SelectItem value="balanced">Balanced</SelectItem>
-                <SelectItem value="thorough">Thorough</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        )}
         {/* Advanced toggle */}
-        <button
+        <Button
           type="button"
           onClick={() => setShowAdvanced(v => !v)}
-          className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:bg-gray-800"
+          variant="outline"
+          size="default"
+          className="border-gray-700 text-gray-200 hover:bg-gray-800"
           aria-expanded={showAdvanced}
         >
           {showAdvanced ? 'Advanced ▲' : 'Advanced ▼'}
-        </button>
-        <div className="text-xs px-2 py-1 rounded bg-gray-800 text-gray-300 border border-gray-700/70">
-          {creditForModel(model)}
-        </div>
+        </Button>
         <Button variant="outline" onClick={() => setText('')} className="border-gray-700 text-gray-200">Clear</Button>
-        <Button onClick={handleGen} disabled={!text.trim() || isGenerating} className="bg-sf-primary text-sf-background hover:bg-sf-accent disabled:opacity-50 disabled:cursor-not-allowed">
-          {isGenerating ? 'Generating…' : 'Generate Treatment ⌘⏎'}
+        <Button onClick={handleGen} disabled={!text.trim() || isGenerating} className="bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50 disabled:cursor-not-allowed">
+          {isGenerating ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Generating
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-4 w-4 mr-2" />
+              Generate
+            </>
+          )}
         </Button>
       </div>
 

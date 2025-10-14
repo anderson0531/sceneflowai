@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/Input";
-import { DownloadIcon } from "lucide-react";
+import { DownloadIcon, Edit, ChevronUp } from "lucide-react";
 import { useGuideStore } from "@/store/useGuideStore";
 import { useStore } from '@/store/useStore'
 import { useCue } from "@/store/useCueStore";
@@ -105,7 +105,7 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
   // Duration controls state
   const [format, setFormat] = useState<'youtube'|'short_film'|'documentary'|'education'|'training'>('documentary')
   const [targetMinutes, setTargetMinutes] = useState<number>(20)
-  const [rigor, setRigor] = useState<'fast'|'balanced'|'thorough'>('balanced')
+  const [rigor] = useState<'fast'|'balanced'|'thorough'>('thorough')
   const [beatStructure, setBeatStructure] = useState<'three_act'|'save_the_cat'|'heros_journey'|'mini_doc'|'instructional'>(()=>{
     if (format==='documentary' || format==='youtube') return 'mini_doc'
     if (format==='education' || format==='training') return 'instructional'
@@ -114,6 +114,10 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
 
   // Store last input to enable quick re-generate
   const lastInputRef = React.useRef<string>('')
+
+  // Input visibility state
+  const [isInputExpanded, setIsInputExpanded] = useState(true)
+  const [lastInput, setLastInput] = useState('')
 
   // Result: duration-aware beats
   const [beatsView, setBeatsView] = useState<Array<{ title: string; intent?: string; minutes: number }>>([])
@@ -125,6 +129,7 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
       setIsGen(true)
       startProgress()
       lastInputRef.current = text.trim()
+      setLastInput(text.trim()) // Store for collapsed view
       const res = await fetch('/api/ideation/film-treatment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -156,7 +161,10 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
             style: v.style,
             themes: v.themes,
             mood_references: v.mood_references,
-            character_descriptions: v.character_descriptions
+            character_descriptions: v.character_descriptions,
+            beats: v.beats,  // CRITICAL: Include beats array!
+            total_duration_seconds: v.total_duration_seconds,  // CRITICAL: Include duration!
+            estimatedDurationMinutes: v.estimatedDurationMinutes  // CRITICAL: Include estimate!
           })))
         }
         const treatment = json?.data?.film_treatment || ''
@@ -170,6 +178,9 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
           setBeatsView([])
           setEstimatedRuntime(null)
         }
+        
+        // Auto-collapse input after successful generation
+        setIsInputExpanded(false)
       } else {
         console.error('Generation failed:', json?.message || 'Unknown error')
       }
@@ -198,45 +209,92 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
             titleVariant="page"
             emphasis
           />
-          <div className="flex-1 overflow-auto p-3 sm:p-6 pt-4" style={{ scrollMarginTop: 'calc(var(--app-bar-h) + var(--context-bar-h))' }}>
-            {/* Duration controls */}
-            <div className="mb-3 grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div>
-                <div className="text-xs text-gray-400 mb-1">Format</div>
-                <Select value={format} onValueChange={(v)=>setFormat(v as any)}>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Select format" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="youtube">YouTube</SelectItem>
-                    <SelectItem value="short_film">Short Film</SelectItem>
-                    <SelectItem value="documentary">Documentary</SelectItem>
-                    <SelectItem value="education">Education</SelectItem>
-                    <SelectItem value="training">Training</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <div className="text-xs text-gray-400 mb-1">Beat Structure</div>
-                <Select value={beatStructure} onValueChange={(v)=>setBeatStructure(v as any)}>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Select structure" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="three_act">Three‑Act</SelectItem>
-                    <SelectItem value="save_the_cat">Save the Cat</SelectItem>
-                    <SelectItem value="heros_journey">Hero’s Journey</SelectItem>
-                    <SelectItem value="mini_doc">Mini‑Doc</SelectItem>
-                    <SelectItem value="instructional">Instructional</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <div className="text-xs text-gray-400 mb-1">Target Minutes</div>
-                <Input type="number" value={targetMinutes} onChange={(e)=> setTargetMinutes(() => {
-                  const v = Number(e.target.value); if (!Number.isFinite(v)) return 20; return Math.max(5, Math.min(60, Math.floor(v)))
-                })} className="w-full" />
-                <div className="text-[11px] text-gray-500 mt-1">Default 10–30; explicit values allowed.</div>
-              </div>
-              {/* Rigor moved next to Generate in composer */}
+          <div className="flex-1 overflow-auto p-3 sm:p-6 pt-20 md:pt-24" style={{ scrollMarginTop: 'calc(var(--app-bar-h) + var(--context-bar-h))' }}>
+            {/* Collapsible Input Section */}
+            <div className="space-y-4">
+              {/* Compact header when collapsed */}
+              {!isInputExpanded && (
+                <div className="flex items-center justify-between p-4 bg-gray-900/60 border border-gray-700 rounded-lg">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <span className="text-sm text-gray-400">Your Input:</span>
+                    <span className="text-sm text-gray-200 truncate">
+                      {lastInput?.slice(0, 120) || 'No input'}
+                      {lastInput && lastInput.length > 120 ? '...' : ''}
+                    </span>
+                  </div>
+                  <Button 
+                    onClick={() => setIsInputExpanded(true)}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    <span className="hidden sm:inline">Edit Input</span>
+                  </Button>
+                </div>
+              )}
+              
+              {/* Full input area when expanded */}
+              {isInputExpanded && (
+                <>
+                  {/* Duration controls */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <div className="text-xs text-gray-400 mb-1">Format</div>
+                      <Select value={format} onValueChange={(v)=>setFormat(v as any)}>
+                        <SelectTrigger className="w-full"><SelectValue placeholder="Select format" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="youtube">YouTube</SelectItem>
+                          <SelectItem value="short_film">Short Film</SelectItem>
+                          <SelectItem value="documentary">Documentary</SelectItem>
+                          <SelectItem value="education">Education</SelectItem>
+                          <SelectItem value="training">Training</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-400 mb-1">Beat Structure</div>
+                      <Select value={beatStructure} onValueChange={(v)=>setBeatStructure(v as any)}>
+                        <SelectTrigger className="w-full"><SelectValue placeholder="Select structure" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="three_act">Three‑Act</SelectItem>
+                          <SelectItem value="save_the_cat">Save the Cat</SelectItem>
+                          <SelectItem value="heros_journey">Hero's Journey</SelectItem>
+                          <SelectItem value="mini_doc">Mini‑Doc</SelectItem>
+                          <SelectItem value="instructional">Instructional</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-400 mb-1">Target Minutes</div>
+                      <Input type="number" value={targetMinutes} onChange={(e)=> setTargetMinutes(() => {
+                        const v = Number(e.target.value); if (!Number.isFinite(v)) return 20; return Math.max(5, Math.min(60, Math.floor(v)))
+                      })} className="w-full" />
+                      <div className="text-[11px] text-gray-500 mt-1">Default 10–30; explicit values allowed.</div>
+                    </div>
+                    {/* Rigor moved next to Generate in composer */}
+                  </div>
+                  
+                  <BlueprintComposer onGenerate={onGenerate} rigor={rigor} />
+                  
+                  {/* Collapse button - only show after variants exist */}
+                  {(guide as any).treatmentVariants && Array.isArray((guide as any).treatmentVariants) && (guide as any).treatmentVariants.length > 0 && (
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={() => setIsInputExpanded(false)}
+                        variant="ghost"
+                        size="sm"
+                        className="text-gray-400 hover:text-gray-200"
+                      >
+                        <ChevronUp className="h-4 w-4 mr-1" />
+                        Hide Input
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-            <BlueprintComposer onGenerate={onGenerate} rigor={rigor} onChangeRigor={setRigor} />
+            
             <TreatmentCard />
             {/* Beats panel */}
             {beatsView.length > 0 && (

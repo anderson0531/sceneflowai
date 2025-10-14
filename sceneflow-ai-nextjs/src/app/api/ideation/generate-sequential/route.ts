@@ -137,7 +137,7 @@ CONTEXT:
 - Key Message: ${context.keyMessage || 'Not specified'}
 - Tone: ${context.tone || 'Professional'}
 - Genre: ${context.genre || 'Documentary'}
-- Duration: ${context.duration || 60} seconds
+- Duration: ${context.duration || 300} seconds (minimum 5 minutes)
 
 CRITICAL RULES:
 1. If the input is a detailed script, DO NOT copy the script content
@@ -195,7 +195,7 @@ CONTEXT:
 - Key Message: ${context.keyMessage || 'Not specified'}
 - Tone: ${context.tone || 'Professional'}
 - Genre: ${context.genre || 'Documentary'}
-- Duration: ${context.duration || 60} seconds
+- Duration: ${context.duration || 300} seconds (minimum 5 minutes)
 - Platform: ${context.platform || 'Multi-platform'}
 
 CRITICAL RULES:
@@ -254,7 +254,7 @@ CONTEXT:
 - Key Message: ${context.keyMessage || 'Not specified'}
 - Tone: ${context.tone || 'Professional'}
 - Genre: ${context.genre || 'Documentary'}
-- Duration: ${context.duration || 60} seconds
+- Duration: ${context.duration || 300} seconds (minimum 5 minutes)
 
 CRITICAL RULES:
 1. Identify EVERY character mentioned in the input
@@ -330,7 +330,7 @@ CONTEXT:
 - Key Message: ${context.keyMessage || 'Not specified'}
 - Tone: ${context.tone || 'Professional'}
 - Genre: ${context.genre || 'Documentary'}
-- Duration: ${context.duration || 60} seconds
+- Duration: ${context.duration || 300} seconds (minimum 5 minutes)
 - Platform: ${context.platform || 'Multi-platform'}
 
 CRITICAL RULES:
@@ -347,7 +347,7 @@ TASK: Create a detailed beat sheet with:
 4. Visual and audio cues for each beat
 5. Pacing and transition notes
 
-CRITICAL: Total duration of all beats must equal ${context.duration || 60} seconds.
+CRITICAL: Total duration of all beats must equal ${context.duration || 300} seconds (minimum 5 minutes).
 
 Respond with valid JSON only:
 {

@@ -20,28 +20,29 @@ export async function GET(req: NextRequest) {
     // Ensure database connection
     await sequelize.authenticate()
 
-    // Query messages from database
-    const messages = await CollabChatMessage.findAll({
-      where: {
-        session_id: sessionId,
-        channel,
-        ...(since > 0 ? { seq: { [Op.gt]: since } } : {}),
-      },
-      order: [['seq', 'ASC']],
-      limit,
-    })
+        // Query messages from database
+        const messages = await CollabChatMessage.findAll({
+          where: {
+            sessionId: sessionId,  // Changed from session_id (underscored: true handles mapping)
+            channel,
+            ...(since > 0 ? { seq: { [Op.gt]: since } } : {}),
+          },
+          order: [['seq', 'ASC']],
+          limit,
+        })
 
-    const formattedMessages = messages.map(m => ({
-      id: m.id,
-      sessionId: m.session_id,
-      channel: m.channel,
-      scopeId: m.scope_id,
-      authorRole: m.author_role,
-      alias: m.alias,
-      text: m.text,
-      createdAt: m.created_at.toISOString(),
-      seq: m.seq,
-    }))
+        // Map to response (properties are already camelCase)
+        const formattedMessages = messages.map(m => ({
+          id: m.id,
+          sessionId: m.sessionId,        // Already camelCase
+          channel: m.channel,
+          scopeId: m.scopeId,            // Already camelCase
+          authorRole: m.authorRole,      // Already camelCase
+          alias: m.alias,
+          text: m.text,
+          createdAt: m.createdAt.toISOString(),
+          seq: m.seq,
+        }))
 
     const nextCursor = messages.length > 0 
       ? Math.max(...messages.map(m => m.seq)) 

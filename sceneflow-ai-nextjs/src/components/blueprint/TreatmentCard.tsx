@@ -1,10 +1,11 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useGuideStore } from '@/store/useGuideStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Play, Square, Volume2, Share2, CheckCircle2, PencilLine, MoreHorizontal, ChevronDown, MessageSquare } from 'lucide-react'
+import { Play, Square, Volume2, Share2, PencilLine, MoreHorizontal, ChevronDown, MessageSquare, ArrowRight, Loader2, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -12,14 +13,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import VariantEditorDrawer from './VariantEditorDrawer'
 import OwnerCollabPanel from '@/components/studio/OwnerCollabPanel'
 import { getCuratedElevenVoices, type CuratedVoice } from '@/lib/tts/voices'
+import { CharacterPromptBuilder } from './CharacterPromptBuilder'
 
 export function TreatmentCard() {
+  const router = useRouter()
   const { guide } = useGuideStore()
-  const { selectTreatmentVariant, useTreatmentVariant } = useGuideStore() as any
+  const { selectTreatmentVariant } = useGuideStore() as any
   const { lastEdit, justAppliedVariantId, appliedAt } = useGuideStore() as any
-  const treatmentText = (guide as any)?.filmTreatment || ''
-  const details = (guide as any)?.treatmentDetails || {}
-  const variants = (guide as any)?.treatmentVariants as Array<{ id: string; label?: string; content: string; visual_style?: string; tone_description?: string; target_audience?: string; title?: string; logline?: string; genre?: string; format_length?: string; author_writer?: string; date?: string; synopsis?: string; setting?: string; protagonist?: string; antagonist?: string; act_breakdown?: any; tone?: string; style?: string; themes?: any; mood_references?: string[]; character_descriptions?: Array<{ name: string; description: string; image_prompt?: string }>; }> | undefined
+  const variants = (guide as any)?.treatmentVariants as Array<{ id: string; label?: string; content: string; visual_style?: string; tone_description?: string; target_audience?: string; title?: string; logline?: string; genre?: string; format_length?: string; author_writer?: string; date?: string; synopsis?: string; setting?: string; protagonist?: string; antagonist?: string; act_breakdown?: any; tone?: string; style?: string; themes?: any; mood_references?: string[]; character_descriptions?: Array<{ name: string; description: string; image_prompt?: string }>; beats?: Array<{ title: string; intent?: string; minutes: number; synopsis?: string }>; total_duration_seconds?: number; estimatedDurationMinutes?: number; }> | undefined
   const selectedId = (guide as any)?.selectedTreatmentId as string | undefined
 
   // Top-level hooks (must not be conditional)
@@ -32,7 +33,7 @@ export function TreatmentCard() {
   const [shareOpen, setShareOpen] = useState(false)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isSharing, setIsSharing] = useState(false)
-  const [isUsing, setIsUsing] = useState(false)
+  const [isCreatingVision, setIsCreatingVision] = useState(false)
   const [audioMenuOpen, setAudioMenuOpen] = useState(false)
   const [collabOpen, setCollabOpen] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -48,6 +49,11 @@ export function TreatmentCard() {
   }
   const [narrationMode, setNarrationMode] = useState<'synopsis'|'full'|'beats'>('synopsis')
   const queueAbortRef = useRef<{ abort: boolean }>({ abort: false })
+  // Character image generation state
+  const [charImages, setCharImages] = useState<Record<string, Record<number, { url?: string; loading?: boolean; prompt?: string }>>>({})
+  const [builderOpen, setBuilderOpen] = useState(false)
+  const [builderVariantId, setBuilderVariantId] = useState<string | null>(null)
+  const [builderCharIdx, setBuilderCharIdx] = useState<number | null>(null)
 
   const active = useMemo(() => {
     if (selectedId) return selectedId
@@ -156,6 +162,49 @@ export function TreatmentCard() {
     }
   }
 
+  const generateCharImage = async (variantId: string, charIdx: number, prompt: string) => {
+    if (!prompt?.trim()) return
+    setCharImages(prev => ({ 
+      ...prev, 
+      [variantId]: { 
+        ...prev[variantId], 
+        [charIdx]: { ...prev[variantId]?.[charIdx], loading: true } 
+      } 
+    }))
+    try {
+      const res = await fetch('/api/character/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      })
+      const json = await res.json()
+      if (json?.imageUrl) {
+        setCharImages(prev => ({ 
+          ...prev, 
+          [variantId]: { 
+            ...prev[variantId], 
+            [charIdx]: { url: json.imageUrl, loading: false, prompt } 
+          } 
+        }))
+        try { const { toast } = require('sonner'); toast('Character image generated') } catch {}
+      } else {
+        const errorMsg = json?.error || 'Failed to generate image'
+        throw new Error(errorMsg)
+      }
+    } catch (e) {
+      console.error('Character image generation failed:', e)
+      setCharImages(prev => ({ 
+        ...prev, 
+        [variantId]: { 
+          ...prev[variantId], 
+          [charIdx]: { ...prev[variantId]?.[charIdx], loading: false } 
+        } 
+      }))
+      const errorMessage = e instanceof Error ? e.message : 'Failed to generate image'
+      try { const { toast } = require('sonner'); toast(errorMessage) } catch {}
+    }
+  }
+
   // Keyboard shortcuts scoped to this card when variants exist
   useEffect(() => {
     if (!active) return
@@ -261,13 +310,59 @@ export function TreatmentCard() {
                     }
                   }
 
-                  const handleUse = async () => {
+                  const handleStartVision = async () => {
                     try {
-                      setIsUsing(true)
-                      if (active) useTreatmentVariant(v.id)
-                      try { const { toast } = require('sonner'); toast('Variant selected') } catch {}
+                      setIsCreatingVision(true)
+                      
+                      // LOG VARIANT DATA BEFORE SENDING
+                      console.log('[Start Vision] Sending variant:', {
+                        title: v.title,
+                        hasBeats: !!v.beats,
+                        beatsCount: Array.isArray(v.beats) ? v.beats.length : 0,
+                        total_duration_seconds: v.total_duration_seconds,
+                        estimatedDurationMinutes: v.estimatedDurationMinutes,
+                        format_length: v.format_length
+                      })
+                      console.log('[Start Vision] BEATS DATA:', v.beats)
+                      console.log('[Start Vision] FULL VARIANT:', JSON.stringify({
+                        total_duration_seconds: v.total_duration_seconds,
+                        estimatedDurationMinutes: v.estimatedDurationMinutes,
+                        format_length: v.format_length,
+                        beatsCount: Array.isArray(v.beats) ? v.beats.length : 0,
+                        firstBeat: Array.isArray(v.beats) && v.beats[0] ? v.beats[0] : null
+                      }, null, 2))
+                      
+                      // Get or create user ID
+                      let userId = localStorage.getItem('authUserId')
+                      if (!userId) {
+                        userId = crypto.randomUUID()
+                        localStorage.setItem('authUserId', userId)
+                      }
+                      
+                      // Create project from Film Treatment variant
+                      const res = await fetch('/api/projects/from-variant', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          userId,
+                          variant: v // Send full variant with all data
+                        })
+                      })
+                      
+                      const data = await res.json()
+                      
+                      if (data.success && data.project) {
+                        try { const { toast } = require('sonner'); toast('Creating Vision...') } catch {}
+                        // Navigate to Vision page
+                        router.push(`/dashboard/workflow/vision/${data.project.id}`)
+                      } else {
+                        try { const { toast } = require('sonner'); toast('Failed to create project') } catch {}
+                      }
+                    } catch (e) {
+                      console.error('Vision creation error:', e)
+                      try { const { toast } = require('sonner'); toast('Failed to create Vision') } catch {}
                     } finally {
-                      setIsUsing(false)
+                      setIsCreatingVision(false)
                     }
                   }
 
@@ -300,24 +395,6 @@ export function TreatmentCard() {
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>Share & Collaborate (S)</TooltipContent>
-                        </Tooltip>
-
-                        {/* Use this - primary */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              aria-busy={isUsing}
-                              aria-label="Use this"
-                              onClick={handleUse}
-                              className={`h-8 px-2 border ${accent}`}
-                              variant="outline"
-                              size="sm"
-                            >
-                              <CheckCircle2 className="h-4 w-4" />
-                              <span className="hidden md:inline ml-1.5">Use this</span>
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Select this variant (Enter)</TooltipContent>
                         </Tooltip>
 
                         {/* Edit */}
@@ -446,6 +523,30 @@ export function TreatmentCard() {
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
+
+                        {/* Start Vision - moved to end */}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              aria-busy={isCreatingVision}
+                              aria-label="Start Vision"
+                              onClick={handleStartVision}
+                              disabled={isCreatingVision}
+                              className="h-8 px-2 bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50"
+                              size="sm"
+                            >
+                              {isCreatingVision ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <ArrowRight className="h-4 w-4" />
+                              )}
+                              <span className="hidden md:inline ml-1.5">
+                                {isCreatingVision ? 'Creating...' : 'Start Vision'}
+                              </span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Create project & generate script + visuals</TooltipContent>
+                        </Tooltip>
                       </div>
                     </TooltipProvider>
                   )
@@ -587,22 +688,7 @@ export function TreatmentCard() {
                             </div>
                           ))}
                         </div>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 divide-y md:divide-y-0 md:divide-x divide-gray-800 pt-2">
-                          <div>
-                            <div className="text-xs text-gray-400">Act I</div>
-                            <div className="text-gray-200 whitespace-pre-wrap leading-6">{v.act_breakdown?.act1 || '—'}</div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-gray-400">Act II</div>
-                            <div className="text-gray-200 whitespace-pre-wrap leading-6">{v.act_breakdown?.act2 || '—'}</div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-gray-400">Act III</div>
-                            <div className="text-gray-200 whitespace-pre-wrap leading-6">{v.act_breakdown?.act3 || '—'}</div>
-                          </div>
-                        </div>
-                      )}
+                      ) : null}
                     </div>
                   </div>
 
@@ -610,32 +696,113 @@ export function TreatmentCard() {
                   {Array.isArray(v.character_descriptions) && v.character_descriptions.length > 0 ? (
                     <div className="space-y-1">
                       <div className="text-xs text-gray-400">Characters</div>
-                      <div className="space-y-2 p-3 rounded border border-gray-700/60 bg-gray-900/40">
-                        {v.character_descriptions.map((c, idx) => (
-                          <div key={`${c.name}-${idx}`} className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <div>
-                              <div className="text-xs text-gray-400">Name</div>
-                              <div className="text-gray-200">{c.name}</div>
-                            </div>
-                            <div className="md:col-span-2">
-                              <div className="text-xs text-gray-400">Description</div>
-                              <div className="text-gray-200 whitespace-pre-wrap leading-6">{c.description}</div>
-                            </div>
-                            {c.image_prompt ? (
-                              <div className="md:col-span-3">
-                                <div className="text-xs text-gray-400">Image Prompt</div>
-                                <div className="flex items-center gap-2">
-                                  <div className="flex-1 text-gray-200 truncate" title={c.image_prompt}>{c.image_prompt}</div>
+                      <div className="space-y-3">
+                        {v.character_descriptions.map((c, idx) => {
+                          const charState = charImages[v.id]?.[idx]
+                          const imageUrl = charState?.url || (c as any).image_url || (c as any).referenceImage
+                          const currentPrompt = charState?.prompt || c.image_prompt || `Professional character portrait of ${c.name}: ${c.description}`
+                          return (
+                            <div key={`${c.name}-${idx}`} className="flex gap-3 p-3 rounded border border-gray-700/60 bg-gray-900/40">
+                              {/* Image thumbnail */}
+                              <div className="shrink-0 w-24 h-24 rounded overflow-hidden bg-gray-800 relative">
+                                {imageUrl ? (
+                                  <img src={imageUrl} alt={c.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="flex items-center justify-center h-full text-3xl text-gray-500">
+                                    {c.name?.[0] || '?'}
+                                  </div>
+                                )}
+                                {charState?.loading && (
+                                  <div className="absolute inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center z-10">
+                                    <Loader2 className="w-10 h-10 animate-spin text-blue-400 mb-2" />
+                                    <span className="text-xs text-white font-medium">Generating...</span>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Character info & prompt editor */}
+                              <div className="flex-1 space-y-2">
+                                <div className="font-medium text-gray-100">{c.name}</div>
+                                <div className="text-sm text-gray-300 leading-6">{c.description}</div>
+                                <div className="space-y-1">
+                                  <div className="text-xs text-gray-400">Image Prompt</div>
+                                  <div className="relative">
+                                    <textarea 
+                                      value={currentPrompt}
+                                      onChange={(e) => {
+                                        setCharImages(prev => ({
+                                          ...prev, 
+                                          [v.id]: {
+                                            ...prev[v.id], 
+                                            [idx]: {...prev[v.id]?.[idx], prompt: e.target.value}
+                                          }
+                                        }))
+                                        // Auto-resize
+                                        e.target.style.height = 'auto'
+                                        e.target.style.height = e.target.scrollHeight + 'px'
+                                      }}
+                                      disabled={charState?.loading}
+                                      className="w-full text-xs px-2 py-1 rounded bg-gray-800 border border-gray-700 text-gray-200 focus:border-gray-600 focus:outline-none pr-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                                      style={{ resize: 'vertical', minHeight: '3rem', maxHeight: '12rem' }}
+                                      rows={3}
+                                      placeholder="Enter image generation prompt..."
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setBuilderVariantId(v.id)
+                                        setBuilderCharIdx(idx)
+                                        setBuilderOpen(true)
+                                      }}
+                                      disabled={charState?.loading}
+                                      className="absolute top-1 right-1 p-1 rounded bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                      title="Open Prompt Builder"
+                                    >
+                                      <Wand2 className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
                                   <button
                                     type="button"
-                                    onClick={() => navigator.clipboard?.writeText?.(c.image_prompt || '')}
-                                    className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-200 hover:bg-gray-800"
-                                  >Copy</button>
+                                    onClick={() => generateCharImage(v.id, idx, currentPrompt)}
+                                    disabled={charState?.loading || !currentPrompt?.trim()}
+                                    className="flex-1 text-xs px-3 py-1.5 rounded border border-blue-500 text-blue-300 hover:bg-blue-500/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                  >
+                                    {charState?.loading ? 'Generating...' : imageUrl ? 'Regenerate' : 'Generate'}
+                                  </button>
+                                  <label className={`flex-1 text-xs px-3 py-1.5 rounded border border-gray-600 text-gray-300 transition-colors text-center ${charState?.loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700/50 cursor-pointer'}`}>
+                                    Upload
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      className="hidden"
+                                      disabled={charState?.loading}
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0]
+                                        if (file) {
+                                          const reader = new FileReader()
+                                          reader.onload = (evt) => {
+                                            const dataUrl = evt.target?.result as string
+                                            setCharImages(prev => ({
+                                              ...prev,
+                                              [v.id]: {
+                                                ...prev[v.id],
+                                                [idx]: { url: dataUrl, loading: false, prompt: currentPrompt }
+                                              }
+                                            }))
+                                            try { const { toast } = require('sonner'); toast('Character image uploaded') } catch {}
+                                          }
+                                          reader.readAsDataURL(file)
+                                        }
+                                      }}
+                                    />
+                                  </label>
                                 </div>
                               </div>
-                            ) : null}
-                          </div>
-                        ))}
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
                   ) : null}
@@ -670,6 +837,25 @@ export function TreatmentCard() {
           activeVariantId={activeVariant.id}
           onSelectVariant={(id)=> selectTreatmentVariant(id)}
         />
+        {/* Character Prompt Builder */}
+        {builderVariantId !== null && builderCharIdx !== null && (
+          <CharacterPromptBuilder
+            open={builderOpen}
+            onClose={() => setBuilderOpen(false)}
+            initialPrompt={charImages[builderVariantId]?.[builderCharIdx]?.prompt || ''}
+            characterName={variants?.find(v => v.id === builderVariantId)?.character_descriptions?.[builderCharIdx]?.name || 'Character'}
+            onApply={(prompt, structure) => {
+              setCharImages(prev => ({
+                ...prev,
+                [builderVariantId]: {
+                  ...prev[builderVariantId],
+                  [builderCharIdx]: { ...prev[builderVariantId]?.[builderCharIdx], prompt }
+                }
+              }))
+              setBuilderOpen(false)
+            }}
+          />
+        )}
         {shareOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/60" onClick={() => setShareOpen(false)} />
@@ -705,42 +891,7 @@ export function TreatmentCard() {
     )
   }
 
-  if (!treatmentText) return null
-
-  return (
-    <Card className="mt-4 border-gray-700/60 bg-gray-900/60">
-      <CardHeader>
-        <CardTitle className="text-white">Film Treatment</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3 text-sm text-gray-200">
-          <div className="whitespace-pre-wrap leading-6">{String(treatmentText)}</div>
-          {(details?.visual_style || details?.toneAndStyle || details?.targetAudience) && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-gray-700/50">
-              {details?.visual_style || details?.visualStyle ? (
-                <div>
-                  <div className="text-xs text-gray-400">Visual Style</div>
-                  <div className="text-gray-200">{details.visual_style || details.visualStyle}</div>
-                </div>
-              ) : null}
-              {details?.tone_description || details?.toneAndStyle ? (
-                <div>
-                  <div className="text-xs text-gray-400">Tone</div>
-                  <div className="text-gray-200">{details.tone_description || details.toneAndStyle}</div>
-                </div>
-              ) : null}
-              {details?.target_audience || details?.targetAudience ? (
-                <div>
-                  <div className="text-xs text-gray-400">Target Audience</div>
-                  <div className="text-gray-200">{details.target_audience || details.targetAudience}</div>
-                </div>
-              ) : null}
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  )
+  return null
 }
 
 export default TreatmentCard

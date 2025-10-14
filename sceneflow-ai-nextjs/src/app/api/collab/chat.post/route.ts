@@ -16,32 +16,33 @@ export async function POST(req: NextRequest) {
     // Ensure database connection
     await sequelize.authenticate()
 
-    // Create message in database
-    const message = await CollabChatMessage.create({
-      id: crypto.randomUUID(),
-      session_id: sessionId,
-      channel,
-      scope_id: scopeId,
-      author_role: authorRole === 'owner' ? 'owner' : 'collaborator',
-      alias: alias || 'Reviewer',
-      text: String(text).slice(0, 2000),
-      client_id: clientId,
-      seq: Date.now(),
-    })
+        // Create message in database
+        const message = await CollabChatMessage.create({
+          id: crypto.randomUUID(),
+          sessionId: sessionId,  // Changed from session_id
+          channel,
+          scopeId: scopeId,      // Changed from scope_id
+          authorRole: authorRole === 'owner' ? 'owner' : 'collaborator',  // Changed from author_role
+          alias: alias || 'Reviewer',
+          text: String(text).slice(0, 2000),
+          clientId: clientId,    // Changed from client_id
+          seq: Date.now(),
+        })
 
-    return NextResponse.json({ 
-      success: true, 
-      message: {
-        id: message.id,
-        sessionId: message.session_id,
-        channel: message.channel,
-        authorRole: message.author_role,
-        alias: message.alias,
-        text: message.text,
-        createdAt: message.created_at.toISOString(),
-        seq: message.seq,
-      }
-    })
+        // Response automatically has camelCase properties
+        return NextResponse.json({ 
+          success: true, 
+          message: {
+            id: message.id,
+            sessionId: message.sessionId,      // Already camelCase
+            channel: message.channel,
+            authorRole: message.authorRole,    // Already camelCase
+            alias: message.alias,
+            text: message.text,
+            createdAt: message.createdAt.toISOString(),
+            seq: message.seq,
+          }
+        })
   } catch (e: any) {
     console.error('[Chat POST] Error:', e)
     return NextResponse.json({ success: false, error: e?.message || 'Failed' }, { status: 500 })

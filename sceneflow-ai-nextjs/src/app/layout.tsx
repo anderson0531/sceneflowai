@@ -8,6 +8,7 @@ import AuthSessionProvider from '@/components/providers/AuthSessionProvider'
 import InstallPrompt from '@/components/pwa/InstallPrompt'
 import { ConditionalLayout } from '@/components/layout/ConditionalLayout'
 import { GlobalHeader } from '@/components/layout/GlobalHeader'
+import { ThemeProvider } from '@/components/providers/ThemeProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -41,7 +42,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="application-name" content="SceneFlow AI" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -70,13 +71,14 @@ export default function RootLayout({
         <meta property="og:url" content="https://sceneflowai.com" />
         <meta property="og:image" content="/favicon.ico" />
       </head>
-      <body className={`${inter.className} bg-base text-sf-text-secondary`}>
-        {/* SessionProvider typed wrapper */}
-        <AuthSessionProvider>
-          <GlobalHeader />
-          <ConditionalLayout>{children}</ConditionalLayout>
-          <InstallPrompt />
-        </AuthSessionProvider>
+      <body className={inter.className}>
+        <ThemeProvider>
+          <AuthSessionProvider>
+            <GlobalHeader />
+            <ConditionalLayout>{children}</ConditionalLayout>
+            <InstallPrompt />
+          </AuthSessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

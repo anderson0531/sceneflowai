@@ -3,17 +3,15 @@
 import { ThemeProvider as NextThemesProvider } from 'next-themes'
 import { ReactNode } from 'react'
 
-interface ThemeProviderProps {
-  children: ReactNode
-  attribute?: string
-  defaultTheme?: string
-  enableSystem?: boolean
-  disableTransitionOnChange?: boolean
-}
-
-export function ThemeProvider({ 
-  children, 
-  ...props 
-}: ThemeProviderProps) {
-  return <NextThemesProvider {...(props as Record<string, unknown>)}>{children}</NextThemesProvider>
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  return (
+    <NextThemesProvider
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem={false}
+      disableTransitionOnChange={false}
+    >
+      {children}
+    </NextThemesProvider>
+  )
 }

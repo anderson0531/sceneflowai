@@ -7,6 +7,7 @@ import { Menu, X, Settings, User, HelpCircle, LogOut } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { AuthModal } from '../../components/auth/AuthModal'
 import { Breadcrumbs } from '../../components/layout/Breadcrumbs'
+import { ThemeToggle } from './ThemeToggle'
 
 declare global {
   namespace JSX {
@@ -53,24 +54,24 @@ export function GlobalHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-gray-950/80 backdrop-blur sf-brand">
+      <header className="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur sf-brand">
         <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-3">
           {/* Left: Logo + Mobile Menu */}
           <div className="flex items-center gap-3">
             <button
-              className="p-2 rounded-md text-gray-300 hover:text-white hover:bg-gray-800/60 lg:hidden"
+              className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/60 lg:hidden"
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label="Toggle menu"
             >
               {mobileOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
             <a href="/dashboard" className="flex items-center gap-2 group">
-              <div className="w-10 h-10 bg-sf-surface-light rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gray-100 dark:bg-sf-surface-light rounded-lg flex items-center justify-center">
                 <div className="w-6 h-6 bg-sf-primary rounded-md flex items-center justify-center">
-                  <div className="w-3 h-3 bg-sf-background rounded-sm" />
+                  <div className="w-3 h-3 bg-white dark:bg-sf-background rounded-sm" />
                 </div>
               </div>
-              <span className="app-name-text font-extrabold text-xl md:text-2xl tracking-tight text-white flex items-baseline gap-1 leading-none">
+              <span className="app-name-text font-extrabold text-xl md:text-2xl tracking-tight text-gray-900 dark:text-white flex items-baseline gap-1 leading-none">
                 <span>SceneFlow</span> <span className="text-sf-primary">AI</span>
               </span>
             </a>
@@ -81,9 +82,11 @@ export function GlobalHeader() {
 
           {/* Right: Controls */}
           <div className="flex items-center gap-3 ml-auto">
+            {/* Theme Toggle */}
+            <ThemeToggle />
             {/* Profile */}
             <button
-              className="p-2 rounded-md text-gray-300 hover:text-white hover:bg-gray-800/60"
+              className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/60"
               aria-label="Profile"
               onClick={() => (isSignedIn ? (window.location.href = '/dashboard/profile') : signIn())}
             >
@@ -91,7 +94,7 @@ export function GlobalHeader() {
             </button>
             {/* Help */}
             <button
-              className="p-2 rounded-md text-gray-300 hover:text-white hover:bg-gray-800/60"
+              className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/60"
               aria-label="Help"
               onClick={() => (window.location.href = '/dashboard')}
             >
@@ -99,7 +102,7 @@ export function GlobalHeader() {
             </button>
             {/* Settings */}
             <button
-              className="p-2 rounded-md text-gray-300 hover:text-white hover:bg-gray-800/60"
+              className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/60"
               aria-label="Settings"
               onClick={() => (window.location.href = '/dashboard')}
             >
@@ -111,14 +114,14 @@ export function GlobalHeader() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-gray-700 text-gray-200 hover:bg-gray-800"
+                  className="border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
                   onClick={() => setAuthOpen(true)}
                 >
                   Sign In
                 </Button>
                 <Button
                   size="sm"
-                  className="bg-sf-primary hover:bg-sf-accent text-sf-background"
+                  className="bg-sf-primary hover:bg-sf-accent text-white"
                   onClick={() => setAuthOpen(true)}
                 >
                   Get Started
@@ -128,7 +131,7 @@ export function GlobalHeader() {
             {/* Sign out (visible only when signed in) */}
             {isSignedIn && (
               <button
-                className="p-2 rounded-md text-gray-300 hover:text-white hover:bg-gray-800/60"
+                className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/60"
                 aria-label="Sign out"
                 onClick={handleSignOut}
                 title={userName ? `Sign out ${userName}` : 'Sign out'}
@@ -141,10 +144,10 @@ export function GlobalHeader() {
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className="lg:hidden border-t border-gray-800 bg-gray-950/95">
+          <div className="lg:hidden border-t border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-950/95">
             <div className="max-w-7xl mx-auto px-3 py-3 flex flex-col gap-1">
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" className="flex-1 border-gray-700 text-gray-200 hover:bg-gray-800" onClick={() => setAuthOpen(true)}>
+                  <Button variant="outline" className="flex-1 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => setAuthOpen(true)}>
                     <span className="mr-2 inline-flex items-center"><User size={16} /></span> {isSignedIn ? 'Switch Account' : 'Sign In'}
                   </Button>
                 </div>
