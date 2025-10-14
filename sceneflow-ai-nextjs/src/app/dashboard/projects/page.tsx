@@ -79,17 +79,34 @@ export default function ProjectsPage() {
   }, [])
 
   const loadProjects = async () => {
+    const timestamp = new Date().toISOString()
+    console.log(`[${timestamp}] [loadProjects] Starting...`)
+    
     try {
       const userId = getUserId()
-      const res = await fetch(`/api/projects?userId=${userId}`)
+      console.log(`[${timestamp}] [loadProjects] Using userId:`, userId)
+      
+      const apiUrl = `/api/projects?userId=${userId}`
+      console.log(`[${timestamp}] [loadProjects] Fetching from:`, apiUrl)
+      
+      const res = await fetch(apiUrl)
+      console.log(`[${timestamp}] [loadProjects] Response status:`, res.status, res.statusText)
+      
       const data = await res.json()
+      console.log(`[${timestamp}] [loadProjects] Response data:`, data)
+      
       if (data.success) {
+        const projectCount = data.projects?.length || 0
         setProjects(data.projects || [])
+        console.log(`[${timestamp}] [loadProjects] State updated with ${projectCount} projects`)
+      } else {
+        console.log(`[${timestamp}] [loadProjects] Response not successful:`, data.error)
       }
     } catch (error) {
-      console.error('Failed to load projects:', error)
+      console.error(`[${timestamp}] [loadProjects] Failed to load projects:`, error)
     } finally {
       setLoading(false)
+      console.log(`[${timestamp}] [loadProjects] Completed`)
     }
   }
 
@@ -141,25 +158,37 @@ export default function ProjectsPage() {
   }
 
   const handleDelete = async (projectId: string) => {
-    if (!confirm('Are you sure you want to delete this project? This cannot be undone.')) return
+    const timestamp = new Date().toISOString()
+    console.log(`[${timestamp}] [handleDelete] Confirm dialog shown for project:`, projectId)
+    
+    if (!confirm('Are you sure you want to delete this project? This cannot be undone.')) {
+      console.log(`[${timestamp}] [handleDelete] User cancelled deletion`)
+      return
+    }
+    
+    console.log(`[${timestamp}] [handleDelete] User confirmed deletion`)
     
     try {
-      console.log('[Delete] Deleting project:', projectId)
+      console.log(`[${timestamp}] [handleDelete] Sending DELETE request to /api/projects/${projectId}`)
       const res = await fetch(`/api/projects/${projectId}`, {
         method: 'DELETE'
       })
       
+      console.log(`[${timestamp}] [handleDelete] Response status:`, res.status, res.statusText)
+      
       const data = await res.json()
-      console.log('[Delete] Response:', data)
+      console.log(`[${timestamp}] [handleDelete] Response data:`, data)
       
       if (res.ok && data.success) {
-        loadProjects()
+        console.log(`[${timestamp}] [handleDelete] Delete successful, calling loadProjects()`)
+        await loadProjects()
+        console.log(`[${timestamp}] [handleDelete] loadProjects() completed`)
         try { const { toast } = require('sonner'); toast.success('Project deleted') } catch {}
       } else {
         throw new Error(data.error || 'Delete failed')
       }
     } catch (error: any) {
-      console.error('[Delete] Error:', error)
+      console.error(`[${timestamp}] [handleDelete] Error:`, error)
       try { const { toast } = require('sonner'); toast.error(error.message || 'Failed to delete project') } catch {}
     }
   }

@@ -4,15 +4,29 @@ import { sequelize } from '@/config/database'
 
 // GET /api/projects?userId=<uuid>
 export async function GET(request: NextRequest) {
+  const timestamp = new Date().toISOString()
+  
   try {
+    console.log(`[${timestamp}] [GET /api/projects] Request received`)
+    
     // Ensure database connection
+    console.log(`[${timestamp}] [GET /api/projects] Authenticating database connection...`)
     await sequelize.authenticate()
+    console.log(`[${timestamp}] [GET /api/projects] Database authenticated`)
     
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
+    const userId = searchParams.get('userId') || request.headers.get('x-user-id') || undefined
+    
+    console.log(`[${timestamp}] [GET /api/projects] Query params:`, { id, userId })
+    
     if (id) {
+      console.log(`[${timestamp}] [GET /api/projects] Fetching single project by id:`, id)
       const p: any = await Project.findByPk(id)
-      if (!p) return NextResponse.json({ success: false, error: 'Project not found' }, { status: 404 })
+      if (!p) {
+        console.log(`[${timestamp}] [GET /api/projects] Project not found:`, id)
+        return NextResponse.json({ success: false, error: 'Project not found' }, { status: 404 })
+      }
       const project = {
         id: p.id,
         title: p.title,
@@ -25,18 +39,23 @@ export async function GET(request: NextRequest) {
         completedSteps: Object.entries((p.step_progress as any) || {}).filter(([_, v]) => (v as number) === 100).map(([k]) => k),
         metadata: p.metadata || {}
       }
+      console.log(`[${timestamp}] [GET /api/projects] Sending single project response`)
       return NextResponse.json({ success: true, project })
     }
 
-    const userId = searchParams.get('userId') || request.headers.get('x-user-id') || undefined
     if (!userId) {
+      console.log(`[${timestamp}] [GET /api/projects] Missing userId`)
       return NextResponse.json({ success: false, error: 'Missing userId' }, { status: 401 })
     }
 
+    console.log(`[${timestamp}] [GET /api/projects] Fetching projects for userId:`, userId)
+    
     const where: any = { user_id: userId }
     const page = Math.max(1, Number(searchParams.get('page') || '1'))
     const pageSize = Math.min(50, Math.max(1, Number(searchParams.get('pageSize') || '20')))
     const offset = (page - 1) * pageSize
+
+    console.log(`[${timestamp}] [GET /api/projects] Query options:`, { where, page, pageSize, offset })
 
     const { rows, count } = await Project.findAndCountAll({
       where,
@@ -44,6 +63,8 @@ export async function GET(request: NextRequest) {
       limit: pageSize,
       offset
     })
+
+    console.log(`[${timestamp}] [GET /api/projects] Database returned ${rows.length} rows, total count: ${count}`)
 
     const projects = rows.map((p: any) => ({
       id: p.id,
@@ -58,9 +79,10 @@ export async function GET(request: NextRequest) {
       metadata: p.metadata || {}
     }))
 
+    console.log(`[${timestamp}] [GET /api/projects] Sending response with ${projects.length} projects`)
     return NextResponse.json({ success: true, projects, page, pageSize, total: count })
   } catch (error) {
-    console.error('GET /api/projects failed:', error)
+    console.error(`[${timestamp}] [GET /api/projects] Error:`, error)
     return NextResponse.json({ success: false, error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 })
   }
 }

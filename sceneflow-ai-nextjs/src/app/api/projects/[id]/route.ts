@@ -6,11 +6,17 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const timestamp = new Date().toISOString()
+  
   try {
+    console.log(`[${timestamp}] [DELETE /api/projects/[id]] Request received`)
+    
     // Await params in Next.js 15
     const { id } = await params
+    console.log(`[${timestamp}] [DELETE /api/projects/[id]] Params:`, { id })
     
     if (!id) {
+      console.log(`[${timestamp}] [DELETE /api/projects/[id]] Missing project ID`)
       return NextResponse.json({ 
         success: false, 
         error: 'Project ID is required' 
@@ -18,24 +24,28 @@ export async function DELETE(
     }
 
     // Ensure database connection
+    console.log(`[${timestamp}] [DELETE /api/projects/[id]] Authenticating database connection...`)
     await sequelize.authenticate()
+    console.log(`[${timestamp}] [DELETE /api/projects/[id]] Database authenticated`)
     
-    console.log('[DELETE] Attempting to delete project:', id)
+    console.log(`[${timestamp}] [DELETE /api/projects/[id]] Attempting to delete project:`, id)
 
     const deleted = await Project.destroy({ where: { id } })
+    console.log(`[${timestamp}] [DELETE /api/projects/[id]] Deleted count:`, deleted)
     
     if (deleted === 0) {
-      console.log('[DELETE] Project not found:', id)
+      console.log(`[${timestamp}] [DELETE /api/projects/[id]] Project not found:`, id)
       return NextResponse.json({ 
         success: false, 
         error: 'Project not found' 
       }, { status: 404 })
     }
     
-    console.log('[DELETE] Project deleted successfully:', id)
+    console.log(`[${timestamp}] [DELETE /api/projects/[id]] Project deleted successfully:`, id)
+    console.log(`[${timestamp}] [DELETE /api/projects/[id]] Sending success response`)
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('DELETE /api/projects/[id] failed:', error)
+    console.error(`[${timestamp}] [DELETE /api/projects/[id]] Error:`, error)
     return NextResponse.json({ 
       success: false, 
       error: error instanceof Error ? error.message : 'Delete failed' 
