@@ -15,12 +15,18 @@ import {
   Clock,
   DollarSign,
   Key,
-  AlertTriangle
+  AlertTriangle,
+  MoreVertical,
+  Edit,
+  Copy,
+  Archive,
+  Trash
 } from 'lucide-react'
 import { useEnhancedStore } from '@/store/enhancedStore'
 import { useCueStore } from '@/store/useCueStore'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 
 interface ProjectCardProps {
   project: {
@@ -44,9 +50,12 @@ interface ProjectCardProps {
     }
   }
   className?: string
+  onDuplicate?: (projectId: string) => void
+  onArchive?: (projectId: string) => void
+  onDelete?: (projectId: string) => void
 }
 
-export function ProjectCard({ project, className = '' }: ProjectCardProps) {
+export function ProjectCard({ project, className = '', onDuplicate, onArchive, onDelete }: ProjectCardProps) {
   const { user, byokSettings } = useEnhancedStore()
   const { invokeCue } = useCueStore()
   const [isHovered, setIsHovered] = useState(false)
@@ -189,6 +198,45 @@ export function ProjectCard({ project, className = '' }: ProjectCardProps) {
           </div>
           <p className="text-gray-400 text-sm">Project Thumbnail</p>
         </div>
+        
+        {/* Actions Menu */}
+        {(onDuplicate || onArchive || onDelete) && (
+          <div className="absolute top-3 left-3">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button 
+                  className="p-2 rounded-lg bg-gray-800/80 hover:bg-gray-700 text-gray-300 backdrop-blur-sm transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {onDuplicate && (
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDuplicate(project.id) }}>
+                    <Copy className="w-4 h-4 mr-2" />
+                    Duplicate
+                  </DropdownMenuItem>
+                )}
+                {onArchive && (
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onArchive(project.id) }}>
+                    <Archive className="w-4 h-4 mr-2" />
+                    Archive
+                  </DropdownMenuItem>
+                )}
+                {onDelete && (
+                  <DropdownMenuItem 
+                    onClick={(e) => { e.stopPropagation(); onDelete(project.id) }}
+                    className="text-red-400 focus:text-red-400"
+                  >
+                    <Trash className="w-4 h-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
         
         {/* Phase Indicator */}
         <div className="absolute top-3 right-3">
