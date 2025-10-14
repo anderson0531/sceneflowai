@@ -69,8 +69,7 @@ Style Requirements:
           generationConfig: {
             temperature: 0.6,
             topK: 40,
-            topP: 0.95,
-            responseMimeType: 'image/png'
+            topP: 0.95
           }
         })
       }
