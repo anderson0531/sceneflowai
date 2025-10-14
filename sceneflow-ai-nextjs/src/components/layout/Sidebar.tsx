@@ -43,10 +43,10 @@ const workflowNav = [
   },
   { 
     name: 'Vision', 
-    href: '/dashboard/workflow/storyboard', 
+    href: '/dashboard/workflow/vision', 
     icon: Layout,
-    description: 'Interactive Storyboard',
-    step: 'storyboard',
+    description: 'Script & Visual Development',
+    step: 'vision',
     phase: 1,
     credits: 'Uses Analysis Credits'
   },
@@ -103,6 +103,12 @@ export function Sidebar() {
   const isActive = (href: string) => {
     if (href.startsWith('/dashboard/studio')) {
       return pathname.startsWith('/dashboard/studio')
+    }
+    if (href.startsWith('/dashboard/workflow/vision')) {
+      return pathname.startsWith('/dashboard/workflow/vision')
+    }
+    if (href.startsWith('/dashboard/workflow')) {
+      return pathname.startsWith(href)
     }
     return pathname === href
   }

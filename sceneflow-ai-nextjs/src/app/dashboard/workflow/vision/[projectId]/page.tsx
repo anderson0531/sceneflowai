@@ -2,11 +2,13 @@
 
 import { use, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { VisionHeader } from '@/components/vision/VisionHeader'
+import { ContextBar } from '@/components/layout/ContextBar'
 import { ScriptPanel } from '@/components/vision/ScriptPanel'
 import { CharacterLibrary } from '@/components/vision/CharacterLibrary'
 import { SceneGallery } from '@/components/vision/SceneGallery'
 import { GenerationProgress } from '@/components/vision/GenerationProgress'
+import { Button } from '@/components/ui/Button'
+import { Save, Share2, ArrowRight } from 'lucide-react'
 
 interface Project {
   id: string
@@ -815,10 +817,35 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-sf-background">
-      <VisionHeader 
-        project={project} 
-        activePanel={activePanel}
-        onPanelChange={setActivePanel}
+      <ContextBar
+        title="Vision"
+        titleVariant="page"
+        emphasis
+        tabs={[
+          { id: 'script', label: 'Script' },
+          { id: 'characters', label: 'Characters' },
+          { id: 'scenes', label: 'Scenes' }
+        ]}
+        activeTab={activePanel}
+        onTabChange={(tab) => setActivePanel(tab as 'script' | 'characters' | 'scenes')}
+        primaryActions={
+          <Button className="bg-sf-primary text-white hover:bg-sf-accent flex items-center gap-2">
+            <span>Continue to Direction</span>
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+        }
+        secondaryActions={
+          <>
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <Save className="w-4 h-4" />
+              <span className="hidden sm:inline">Save Draft</span>
+            </Button>
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <Share2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Share</span>
+            </Button>
+          </>
+        }
       />
       
       <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4 p-4">
