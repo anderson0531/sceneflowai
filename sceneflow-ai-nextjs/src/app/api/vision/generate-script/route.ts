@@ -218,7 +218,7 @@ Return ONLY the JSON array.`
 
     // STAGE 1: Generate outlines
     console.log(`[Script Gen] Stage 1: Generating ${sceneCount} scene outlines...`)
-    const outlines = await callGeminiWithRetry(apiKey, outlinesPrompt, 4000, 3)
+    const outlines = await callGeminiWithRetry(apiKey, outlinesPrompt, 8000, 1)
     
     let parsedOutlines: any[]
     try {
@@ -340,8 +340,8 @@ async function callGeminiWithRetry(
         throw error // Last attempt, give up
       }
       
-      // Exponential backoff: 2s, 4s, 8s
-      const delay = Math.pow(2, attempt) * 1000
+      // Shorter delay: 1s, 2s instead of 2s, 4s, 8s
+      const delay = Math.pow(2, attempt - 1) * 1000
       console.log(`[Gemini API] Retrying in ${delay}ms...`)
       await new Promise(resolve => setTimeout(resolve, delay))
     }
@@ -352,7 +352,7 @@ async function callGeminiWithRetry(
 // Helper: Call Gemini API
 async function callGemini(apiKey: string, prompt: string, maxTokens: number): Promise<string> {
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 60000) // Increased from 30s to 60s
+  const timeout = setTimeout(() => controller.abort(), 30000) // 30s timeout
   
   try {
     const response = await fetch(
