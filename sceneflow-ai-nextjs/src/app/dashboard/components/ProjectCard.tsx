@@ -181,6 +181,28 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
 
   const workflowStatus = getWorkflowStatus()
 
+  // Helper function to get correct route for resume action
+  const getResumeRoute = (): string => {
+    const { currentStep, id } = project
+    
+    // Map workflow steps to correct routes
+    const routeMap: Record<string, string> = {
+      // Phase 1 - Pre-Production
+      'ideation': `/dashboard/studio/${id}`,
+      'start': `/dashboard/studio/${id}`,
+      'storyboard': `/dashboard/workflow/vision/${id}`, // Route to new Vision page
+      'vision': `/dashboard/workflow/vision/${id}`,     // Route to new Vision page
+      'scene-direction': `/dashboard/workflow/scene-direction?project=${id}`,
+      
+      // Phase 2 - Production
+      'video-generation': `/dashboard/workflow/video-generation?project=${id}`,
+      'review': `/dashboard/workflow/review?project=${id}`,
+      'optimization': `/dashboard/workflow/optimization?project=${id}`
+    }
+    
+    return routeMap[currentStep] || `/dashboard/studio/${id}`
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -319,13 +341,15 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
             </>
           ) : (
             // Phase 1: Continue current step
-            <Button
-              onClick={() => window.location.href = `/dashboard/workflow/${project.currentStep}?project=${project.id}`}
-              className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-base font-semibold shadow-lg shadow-blue-500/25"
-            >
-              <Play className="w-5 h-5 mr-2" />
-              Resume Project
-            </Button>
+            <Link href={getResumeRoute()}>
+              <Button
+                className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-base font-semibold shadow-lg shadow-blue-500/25"
+                title={`Continue to ${currentStepInfo.name}`}
+              >
+                <Play className="w-5 h-5 mr-2" />
+                Resume Project
+              </Button>
+            </Link>
           )}
         </div>
 
