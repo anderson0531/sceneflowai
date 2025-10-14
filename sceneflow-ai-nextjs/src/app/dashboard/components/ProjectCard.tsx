@@ -26,7 +26,7 @@ import { useEnhancedStore } from '@/store/enhancedStore'
 import { useCueStore } from '@/store/useCueStore'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 
 interface ProjectCardProps {
   project: {
@@ -310,34 +310,57 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
                   <MoreVertical className="w-4 h-4" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
+              <DropdownMenuContent align="start" className="min-w-[180px]">
                 {onDuplicate && (
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDuplicate(project.id) }}>
+                  <DropdownMenuItem 
+                    onClick={(e) => { 
+                      e.stopPropagation()
+                      e.preventDefault()
+                      onDuplicate(project.id)
+                    }}
+                  >
                     <Copy className="w-4 h-4 mr-2" />
                     Duplicate
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem 
-                  onClick={(e) => { e.stopPropagation(); handleGenerateThumbnail() }}
+                  onClick={(e) => { 
+                    e.stopPropagation()
+                    e.preventDefault()
+                    handleGenerateThumbnail()
+                  }}
                   disabled={isGeneratingThumbnail}
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
                   {isGeneratingThumbnail ? 'Generating...' : 'Generate Thumbnail'}
                 </DropdownMenuItem>
                 {onArchive && (
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onArchive(project.id) }}>
+                  <DropdownMenuItem 
+                    onClick={(e) => { 
+                      e.stopPropagation()
+                      e.preventDefault()
+                      onArchive(project.id)
+                    }}
+                  >
                     <Archive className="w-4 h-4 mr-2" />
                     Archive
                   </DropdownMenuItem>
                 )}
                 {onDelete && (
-                  <DropdownMenuItem 
-                    onClick={(e) => { e.stopPropagation(); onDelete(project.id) }}
-                    className="text-red-400 focus:text-red-400"
-                  >
-                    <Trash className="w-4 h-4 mr-2" />
-                    Delete
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={(e) => { 
+                        e.stopPropagation()
+                        e.preventDefault()
+                        onDelete(project.id)
+                      }}
+                      className="text-red-400 hover:text-red-300 hover:bg-red-900/20 focus:text-red-300 focus:bg-red-900/20"
+                    >
+                      <Trash className="w-4 h-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
