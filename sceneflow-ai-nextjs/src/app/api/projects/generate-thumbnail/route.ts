@@ -57,53 +57,42 @@ Style Requirements:
 
     console.log('[Thumbnail] Generating billboard image for project:', projectId)
 
-    // Call Gemini Imagen 4.0 with correct API
-    const selectedModel = 'imagen-4.0-generate-001'
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${geminiApiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: enhancedPrompt }] }],
-          generationConfig: {
-            temperature: 0.6,
-            topK: 40,
-            topP: 0.95
-          }
-        })
-      }
-    )
+    // Use the existing generate-image endpoint which has proper fallbacks
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : 'http://localhost:3000'
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}))
-      console.error('[Thumbnail] Gemini error:', response.status, error)
-      
+    const imageGenResponse = await fetch(`${baseUrl}/api/generate-image`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: enhancedPrompt,
+        options: {
+          userApiKey: geminiApiKey, // Pass the BYOK key
+          width: 1792,
+          height: 1024,
+          style: 'cinematic'
+        }
+      })
+    })
+
+    if (!imageGenResponse.ok) {
+      const error = await imageGenResponse.json().catch(() => ({}))
+      console.error('[Thumbnail] Image generation error:', imageGenResponse.status, error)
       return NextResponse.json({ 
         success: false,
-        error: `Gemini API error: ${response.status} - ${error?.error?.message || 'Unknown error'}` 
-      }, { status: response.status })
+        error: error?.error || 'Thumbnail generation failed' 
+      }, { status: imageGenResponse.status })
     }
 
-    const data = await response.json()
-
-    // Extract image from Imagen 4.0 response format
-    let imageUrl = ''
-    if (data?.candidates?.[0]?.content?.parts?.length) {
-      for (const part of data.candidates[0].content.parts) {
-        const inlineA = part.inlineData || part.inline_data
-        if (inlineA?.mimeType?.startsWith('image/') && inlineA?.data) {
-          imageUrl = `data:${inlineA.mimeType};base64,${inlineA.data}`
-          break
-        }
-      }
-    }
+    const imageData = await imageGenResponse.json()
+    const imageUrl = imageData?.imageUrl || imageData?.images?.[0]?.dataUrl
 
     if (!imageUrl) {
-      console.error('[Thumbnail] No image data in Gemini response:', JSON.stringify(data, null, 2))
+      console.error('[Thumbnail] No image URL in response')
       return NextResponse.json({ 
         success: false,
-        error: 'No image data returned from Gemini' 
+        error: 'No image data returned' 
       }, { status: 500 })
     }
     
@@ -132,8 +121,8 @@ Style Requirements:
     return NextResponse.json({ 
       success: true, 
       imageUrl,
-      model: 'imagen-4.0-generate-001',
-      provider: 'google-gemini',
+      model: imageData?.model || 'unknown',
+      provider: imageData?.provider || 'unknown',
       usedBYOK: !!userApiKey
     })
 
