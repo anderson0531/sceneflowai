@@ -18,6 +18,10 @@ export async function GET(request: NextRequest) {
     await sequelize.authenticate()
     console.log(`[${timestamp}] [GET /api/projects] Database authenticated`)
     
+    // Auto-create tables if they don't exist (first-time setup for new database)
+    await sequelize.sync({ alter: false })
+    console.log(`[${timestamp}] [GET /api/projects] Database tables synchronized`)
+    
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
     const userId = searchParams.get('userId') || request.headers.get('x-user-id') || undefined
@@ -116,6 +120,9 @@ export async function POST(request: NextRequest) {
     // Ensure database connection
     await sequelize.authenticate()
     
+    // Auto-create tables if they don't exist (first-time setup)
+    await sequelize.sync({ alter: false })
+    
     const body = await request.json()
     const { userId, title, description, metadata, currentStep } = body || {}
 
@@ -151,6 +158,9 @@ export async function PUT(request: NextRequest) {
   try {
     // Ensure database connection
     await sequelize.authenticate()
+    
+    // Auto-create tables if they don't exist (first-time setup)
+    await sequelize.sync({ alter: false })
     
     const body = await request.json()
     const { id, metadata, title, description, status, currentStep, step_progress } = body || {}
