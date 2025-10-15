@@ -124,12 +124,17 @@ console.log(`[Database] Provider: ${maskedConn.includes('supabase') ? 'Supabase'
 console.log(`[Database] Connection status: DB link removed, using manual config`)
 
 // Configure SSL for cloud providers (Supabase, Neon)
+// Detect cloud database from connection string hostname
+const isCloudDatabase = CONN.includes('supabase.co') || CONN.includes('neon.tech') || CONN.includes('aws.com') || CONN.includes('.rds.')
+
 const dialectOptions = {
-  ssl: process.env.NODE_ENV === 'production' ? {
+  ssl: isCloudDatabase ? {
     require: true,
     rejectUnauthorized: false // Accept cloud provider certificates
   } : false
 }
+
+console.log(`[Database] SSL config: ${isCloudDatabase ? 'enabled (cloud database detected)' : 'disabled (local database)'}`)
 
 if (connectionEnvName === 'DB_DATABASE_URL') {
   sequelize = new Sequelize(CONN as string, {
