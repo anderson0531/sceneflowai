@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import '@/models' // Import all models to register them with Sequelize
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 
