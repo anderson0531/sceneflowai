@@ -123,16 +123,19 @@ console.log(`[Database] Timestamp: ${new Date().toISOString()}`)
 console.log(`[Database] Provider: ${maskedConn.includes('supabase') ? 'Supabase' : maskedConn.includes('neon') ? 'Neon' : 'Other'}`)
 console.log(`[Database] Connection status: DB link removed, using manual config`)
 
+// Configure SSL for cloud providers (Supabase, Neon)
+const dialectOptions = {
+  ssl: process.env.NODE_ENV === 'production' ? {
+    require: true,
+    rejectUnauthorized: false // Accept cloud provider certificates
+  } : false
+}
+
 if (connectionEnvName === 'DB_DATABASE_URL') {
   sequelize = new Sequelize(CONN as string, {
     dialect: 'postgres',
     dialectModule: pg,
-    dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false
-      }
-    },
+    dialectOptions,
     pool: { max: 10, min: 0, acquire: 30000, idle: 10000 },
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     timezone: '+00:00',
@@ -142,12 +145,7 @@ if (connectionEnvName === 'DB_DATABASE_URL') {
   sequelize = new Sequelize(CONN as string, {
     dialect: 'postgres',
     dialectModule: pg,
-    dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false
-      }
-    },
+    dialectOptions,
     pool: { max: 10, min: 0, acquire: 30000, idle: 10000 },
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     timezone: '+00:00',
