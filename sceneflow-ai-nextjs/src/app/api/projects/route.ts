@@ -90,10 +90,22 @@ export async function GET(request: NextRequest) {
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
     response.headers.set('Pragma', 'no-cache')
     response.headers.set('Expires', '0')
+    
+    console.log(`[${timestamp}] [GET /api/projects] Response headers set, size: ${JSON.stringify({ success: true, projects, page, pageSize, total: count }).length} bytes`)
+    
     return response
   } catch (error) {
     console.error(`[${timestamp}] [GET /api/projects] Error:`, error)
-    return NextResponse.json({ success: false, error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 })
+    console.error(`[${timestamp}] [GET /api/projects] Error details:`, {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    })
+    return NextResponse.json({ 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      errorSource: 'database' // Add source identifier
+    }, { status: 500 })
   }
 }
 
