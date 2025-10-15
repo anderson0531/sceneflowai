@@ -115,6 +115,11 @@ function chooseConnectionString(): { conn: string; envName: string } {
 
 const { conn: CONN, envName: connectionEnvName } = chooseConnectionString()
 
+// LOG which connection string we're actually using (with password masked)
+const maskedConn = CONN.replace(/:([^@]+)@/, ':****@')
+console.log(`[Database] Using connection from: ${connectionEnvName}`)
+console.log(`[Database] Connection string (masked): ${maskedConn}`)
+
 if (connectionEnvName === 'DB_DATABASE_URL') {
   sequelize = new Sequelize(CONN as string, {
     dialect: 'postgres',
