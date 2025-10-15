@@ -1,5 +1,6 @@
 'use client'
 import React, { useState, useCallback, useRef } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { trackCta } from '@/lib/analytics'
 import { Sparkles, X, Pin, ChevronRight } from 'lucide-react'
 
@@ -7,6 +8,12 @@ interface Variant {
   id: string
   text: string
   pinned?: boolean
+}
+
+interface InspirationDrawerProps {
+  open: boolean
+  onClose: () => void
+  onInsert: (text: string) => void
 }
 
 const QUICK_TAGS = [
@@ -20,15 +27,14 @@ const QUICK_TAGS = [
   'event recap'
 ]
 
-export function GuidanceRail({ onInsert }: { onInsert: (text: string) => void }) {
-  const [open, setOpen] = useState(true)
+export function InspirationDrawer({ open, onClose, onInsert }: InspirationDrawerProps) {
   const [keyword, setKeyword] = useState('')
   const [variants, setVariants] = useState<Variant[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLInputElement | null>(null)
 
   // Static fallback examples
   const fallbackExamples: Variant[] = [
@@ -114,8 +120,7 @@ export function GuidanceRail({ onInsert }: { onInsert: (text: string) => void })
   const insert = (variant: Variant) => {
     onInsert(variant.text)
     trackCta({ event: 'inspiration_inserted', label: variant.id })
-    // Auto-hide after insertion for cleaner UX
-    setOpen(false)
+    onClose() // Auto-close after insertion
   }
 
   const togglePin = (id: string, e: React.MouseEvent) => {
@@ -136,24 +141,21 @@ export function GuidanceRail({ onInsert }: { onInsert: (text: string) => void })
     ? [...variants.filter(v => v.pinned), ...variants.filter(v => !v.pinned)]
     : fallbackExamples
 
+  if (!open) return null
+
   return (
-    <aside className="hidden lg:block space-y-3">
-      {/* Collapsible Header */}
-      <button 
-        className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-200 transition-colors" 
-        onClick={() => { 
-          setOpen(!open)
-          trackCta({ event: 'inspiration_toggled', value: open ? 0 : 1 })
-        }}
-      >
-        <Sparkles size={14} className={open ? 'text-sf-primary' : ''} />
-        <span className="font-medium">{open ? 'Hide Inspiration' : 'Show Inspiration'}</span>
-      </button>
-      
-      {open && (
-        <div className="space-y-3">
-          {/* Keyword Input with Enhanced UX */}
-        <div className="space-y-2">
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="fixed right-0 left-auto top-0 bottom-0 translate-x-0 translate-y-0 ml-auto w-[min(100vw,400px)] max-w-full overflow-hidden rounded-none border-l bg-gray-950 pr-[env(safe-area-inset-right)]">
+        <DialogHeader className="sticky top-0 z-10 bg-gray-950/80 backdrop-blur supports-[backdrop-filter]:bg-gray-950/60">
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles size={18} className="text-sf-primary" />
+            Inspiration
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="flex flex-col h-[calc(100dvh-56px)] overflow-y-auto px-6 sm:px-8 py-4 space-y-4">
+          {/* Keyword Input */}
+          <div className="space-y-2">
             <div className="relative">
               <input
                 ref={inputRef}
@@ -190,8 +192,8 @@ export function GuidanceRail({ onInsert }: { onInsert: (text: string) => void })
                   className="text-xs px-2 py-1 rounded-md bg-gray-800/50 border border-gray-700 text-gray-300 hover:bg-gray-800 hover:border-sf-primary hover:text-sf-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {tag}
-            </button>
-          ))}
+                </button>
+              ))}
             </div>
 
             <div className="text-[10px] text-gray-500 flex items-center gap-1">
@@ -300,13 +302,11 @@ export function GuidanceRail({ onInsert }: { onInsert: (text: string) => void })
               <li>• Pin favorites to keep them at the top</li>
               <li>• Be specific: include duration, tone, and style</li>
               <li>• Use "Start Vision" on Treatment Variants below</li>
-          </ul>
+            </ul>
           </div>
         </div>
-      )}
-    </aside>
+      </DialogContent>
+    </Dialog>
   )
 }
-
-
 

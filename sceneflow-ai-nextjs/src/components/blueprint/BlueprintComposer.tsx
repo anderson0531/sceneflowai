@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Textarea } from '../../components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { Button } from '../../components/ui/Button'
-import { GuidanceRail } from './GuidanceRail'
+import { InspirationDrawer } from './InspirationDrawer'
 import { trackCta } from '@/lib/analytics'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { Mic, MicOff, Sparkles, Loader2 } from 'lucide-react'
@@ -22,6 +22,7 @@ export function BlueprintComposer({
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [inspirationOpen, setInspirationOpen] = useState(false)
   const { supported: sttSupported, isSecure, permission, isRecording, transcript, error: sttError, start, stop, setTranscript } = useSpeechRecognition()
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
@@ -78,7 +79,7 @@ export function BlueprintComposer({
   }, [transcript, isRecording])
 
   return (
-    <div className="w-full grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
+    <div className="w-full space-y-4">
       <div className="space-y-3">
         <div className="flex gap-2 items-center">
           <button
@@ -92,6 +93,16 @@ export function BlueprintComposer({
             <span className="inline-flex items-center gap-1">
               {isRecording ? <MicOff size={14} /> : <Mic size={14} />}
               {isRecording ? 'Stop' : 'Voice'}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setInspirationOpen(true)}
+            className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:bg-gray-800"
+          >
+            <span className="inline-flex items-center gap-1">
+              <Sparkles size={14} />
+              Inspiration
             </span>
           </button>
           {/* Advanced moved next to Generate */}
@@ -122,8 +133,8 @@ export function BlueprintComposer({
         />
         {/* Examples removed to reduce clutter */}
       </div>
-      <GuidanceRail onInsert={(snippet: string) => setText(t => (t ? t + '\n\n' : '') + snippet)} />
-      <div className="lg:col-span-2 flex items-center justify-end gap-2">
+      
+      <div className="flex items-center justify-end gap-2">
         {/* Advanced toggle */}
         <Button
           type="button"
@@ -152,13 +163,13 @@ export function BlueprintComposer({
       </div>
 
       {errorMsg && (
-        <div className="lg:col-span-2 mt-2 text-xs text-red-300 bg-red-900/30 border border-red-800 rounded px-2 py-1">
+        <div className="mt-2 text-xs text-red-300 bg-red-900/30 border border-red-800 rounded px-2 py-1">
           {errorMsg}
         </div>
       )}
 
       {(!sttSupported || !isSecure || sttError) && (
-        <div className="lg:col-span-2 mt-2 text-xs text-amber-300 bg-amber-900/20 border border-amber-800 rounded px-2 py-1">
+        <div className="mt-2 text-xs text-amber-300 bg-amber-900/20 border border-amber-800 rounded px-2 py-1">
           {!isSecure ? 'Microphone requires HTTPS or localhost.' : !sttSupported ? 'Voice input is not supported in this browser. Try Chrome or Edge.' : `Mic error: ${String(sttError)}`}
           {permission && permission !== 'granted' ? ` (Permission: ${permission})` : ''}
         </div>
@@ -166,7 +177,7 @@ export function BlueprintComposer({
 
       {/* Advanced under primary action */}
       {showAdvanced && (
-        <div className="lg:col-span-2 mt-2 flex items-center justify-end gap-2 text-xs text-gray-300">
+        <div className="mt-2 flex items-center justify-end gap-2 text-xs text-gray-300">
           <div className="shrink-0">Model:</div>
           <Select value={model} onValueChange={setModel}>
             <SelectTrigger className="w-56"><SelectValue placeholder="Auto (Best value)" /></SelectTrigger>
@@ -182,6 +193,16 @@ export function BlueprintComposer({
           </span>
         </div>
       )}
+
+      {/* Inspiration Drawer */}
+      <InspirationDrawer
+        open={inspirationOpen}
+        onClose={() => setInspirationOpen(false)}
+        onInsert={(snippet) => {
+          setText(t => (t ? t + '\n\n' : '') + snippet)
+          setInspirationOpen(false)
+        }}
+      />
     </div>
   )
 }
