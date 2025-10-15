@@ -119,6 +119,7 @@ const { conn: CONN, envName: connectionEnvName } = chooseConnectionString()
 const maskedConn = CONN.replace(/:([^@]+)@/, ':****@')
 console.log(`[Database] Using connection from: ${connectionEnvName}`)
 console.log(`[Database] Connection string (masked): ${maskedConn}`)
+console.log(`[Database] Timestamp: ${new Date().toISOString()}`)
 
 if (connectionEnvName === 'DB_DATABASE_URL') {
   sequelize = new Sequelize(CONN as string, {
