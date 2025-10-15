@@ -56,63 +56,73 @@ Style Requirements:
 - No text, titles, or watermarks on the image
 - Photorealistic or stylized based on genre appropriateness`
 
-    console.log('[Thumbnail] Generating billboard image with OpenAI DALL-E 3')
+    console.log('[Thumbnail] Generating with Gemini/Imagen...')
 
-    // Use OpenAI DALL-E 3 - BYOK feature (users provide their own key)
-    const openaiApiKey = userApiKey || process.env.OPENAI_API_KEY
+    // Try multiple Gemini image models
+    const modelsToTry = [
+      'gemini-2.0-flash-exp',  // Gemini 2.0 Flash experimental
+      'gemini-1.5-flash',      // Gemini 1.5 Flash (known to work for text)
+      'gemini-1.5-pro'         // Gemini Pro (fallback)
+    ]
 
-    if (!openaiApiKey) {
+    let imageUrl: string | null = null
+    let usedModel: string | null = null
+
+    for (const model of modelsToTry) {
+      try {
+        console.log(`[Thumbnail] Trying model: ${model}`)
+        
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ 
+                parts: [{ 
+                  text: `Generate an image: ${enhancedPrompt}` 
+                }] 
+              }]
+            })
+          }
+        )
+        
+        if (!response.ok) {
+          console.log(`[Thumbnail] Model ${model} returned ${response.status}`)
+          continue
+        }
+        
+        const data = await response.json()
+        
+        // Try to extract image from response
+        if (data?.candidates?.[0]?.content?.parts) {
+          for (const part of data.candidates[0].content.parts) {
+            const inlineData = part.inlineData || part.inline_data
+            if (inlineData?.mimeType?.startsWith('image/') && inlineData?.data) {
+              imageUrl = `data:${inlineData.mimeType};base64,${inlineData.data}`
+              usedModel = model
+              break
+            }
+          }
+        }
+        
+        if (imageUrl) break // Success!
+        
+      } catch (error) {
+        console.log(`[Thumbnail] Model ${model} failed:`, error)
+        continue
+      }
+    }
+
+    if (!imageUrl) {
       return NextResponse.json({
         success: false,
-        error: 'OpenAI API key required. Please configure BYOK settings to generate thumbnails.',
-        requiresBYOK: !userApiKey // Only require BYOK if no server key
-      }, { status: 400 })
+        error: 'No Gemini models available for image generation. Imagen may require Vertex AI or special access.',
+        triedModels: modelsToTry
+      }, { status: 503 })
     }
 
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openaiApiKey}`
-      },
-      body: JSON.stringify({
-        model: 'dall-e-3',
-        prompt: enhancedPrompt,
-        size: '1792x1024',
-        quality: 'hd',
-        n: 1,
-        response_format: 'b64_json'
-      })
-    })
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}))
-      console.error('[Thumbnail] OpenAI error:', response.status, error)
-      
-      if (response.status === 400 && error?.error?.code === 'content_policy_violation') {
-        return NextResponse.json({ 
-          success: false,
-          error: 'Content policy violation. Please try a different project description.' 
-        }, { status: 400 })
-      }
-      
-      return NextResponse.json({ 
-        success: false,
-        error: error?.error?.message || 'Thumbnail generation failed' 
-      }, { status: response.status })
-    }
-
-    const data = await response.json()
-    const b64 = data?.data?.[0]?.b64_json
-
-    if (!b64) {
-      return NextResponse.json({ 
-        success: false,
-        error: 'No image data returned from OpenAI' 
-      }, { status: 500 })
-    }
-
-    const imageUrl = `data:image/png;base64,${b64}`
+    console.log(`[Thumbnail] Success with model: ${usedModel}`)
     
     // Upload to Vercel Blob instead of storing base64
     console.log('[Thumbnail] Uploading to Vercel Blob storage...')
@@ -144,9 +154,10 @@ Style Requirements:
     return NextResponse.json({ 
       success: true, 
       imageUrl: blobUrl, // Return Blob URL, not base64
-      model: 'dall-e-3',
-      provider: 'openai',
-      usedBYOK: !!userApiKey
+      model: usedModel || 'unknown',
+      provider: 'google-gemini',
+      usedBYOK: !!userApiKey,
+      storageType: 'vercel-blob'
     })
 
   } catch (error) {
