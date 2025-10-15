@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 import { AuthService } from '@/services/AuthService'
 import { User } from '@/models/User'
 
