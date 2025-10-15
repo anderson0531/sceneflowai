@@ -3,6 +3,7 @@ import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   let variant: any = null
