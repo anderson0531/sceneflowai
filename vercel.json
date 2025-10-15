@@ -1,5 +1,0 @@
-{
-  "buildCommand": "cd sceneflow-ai-nextjs && npm run build",
-  "installCommand": "cd sceneflow-ai-nextjs && npm ci",
-  "outputDirectory": "sceneflow-ai-nextjs/.next"
-}
