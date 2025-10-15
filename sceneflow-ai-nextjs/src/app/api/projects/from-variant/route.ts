@@ -40,14 +40,7 @@ export async function POST(request: NextRequest) {
     // Ensure database connection
     await sequelize.authenticate()
     
-    // Auto-create tables if they don't exist (first-time setup for new database)
-    try {
-      await sequelize.sync({ force: false, alter: false })
-      console.log('[from-variant] Database tables synchronized successfully')
-    } catch (syncError) {
-      console.error('[from-variant] Table sync error:', syncError)
-      // Continue anyway - tables might already exist
-    }
+    // Note: Run POST /api/setup/database once to create tables in fresh database
     
     // Helper: Extract keywords from long text (for VARCHAR fields)
     const extractKeywords = (text: string | undefined, fallback: string = '', maxLength: number = 100) => {

@@ -19,14 +19,7 @@ export async function GET(request: NextRequest) {
     await sequelize.authenticate()
     console.log(`[${timestamp}] [GET /api/projects] Database authenticated`)
     
-    // Auto-create tables if they don't exist (first-time setup for new database)
-    try {
-      await sequelize.sync({ force: false, alter: false })
-      console.log(`[${timestamp}] [GET /api/projects] Database tables synchronized successfully`)
-    } catch (syncError) {
-      console.error(`[${timestamp}] [GET /api/projects] Table sync error:`, syncError)
-      // Continue anyway - tables might already exist
-    }
+    // Note: Run POST /api/setup/database once to create tables in fresh database
     
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
@@ -126,13 +119,7 @@ export async function POST(request: NextRequest) {
     // Ensure database connection
     await sequelize.authenticate()
     
-    // Auto-create tables if they don't exist (first-time setup)
-    try {
-      await sequelize.sync({ force: false, alter: false })
-      console.log('[POST /api/projects] Database tables synchronized successfully')
-    } catch (syncError) {
-      console.error('[POST /api/projects] Table sync error:', syncError)
-    }
+    // Note: Run POST /api/setup/database once to create tables in fresh database
     
     const body = await request.json()
     const { userId, title, description, metadata, currentStep } = body || {}
@@ -170,13 +157,7 @@ export async function PUT(request: NextRequest) {
     // Ensure database connection
     await sequelize.authenticate()
     
-    // Auto-create tables if they don't exist (first-time setup)
-    try {
-      await sequelize.sync({ force: false, alter: false })
-      console.log('[PUT /api/projects] Database tables synchronized successfully')
-    } catch (syncError) {
-      console.error('[PUT /api/projects] Table sync error:', syncError)
-    }
+    // Note: Run POST /api/setup/database once to create tables in fresh database
     
     const body = await request.json()
     const { id, metadata, title, description, status, currentStep, step_progress } = body || {}
