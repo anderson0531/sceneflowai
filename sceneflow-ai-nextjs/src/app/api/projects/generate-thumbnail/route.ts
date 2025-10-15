@@ -55,46 +55,63 @@ Style Requirements:
 - No text, titles, or watermarks on the image
 - Photorealistic or stylized based on genre appropriateness`
 
-    console.log('[Thumbnail] Generating billboard image for project:', projectId)
+    console.log('[Thumbnail] Generating billboard image with OpenAI DALL-E 3')
 
-    // Use the existing generate-image endpoint which has proper fallbacks
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : 'http://localhost:3000'
+    // Use OpenAI DALL-E 3 - BYOK feature (users provide their own key)
+    const openaiApiKey = userApiKey || process.env.OPENAI_API_KEY
 
-    const imageGenResponse = await fetch(`${baseUrl}/api/generate-image`, {
+    if (!openaiApiKey) {
+      return NextResponse.json({
+        success: false,
+        error: 'OpenAI API key required. Please configure BYOK settings to generate thumbnails.',
+        requiresBYOK: !userApiKey // Only require BYOK if no server key
+      }, { status: 400 })
+    }
+
+    const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openaiApiKey}`
+      },
       body: JSON.stringify({
+        model: 'dall-e-3',
         prompt: enhancedPrompt,
-        options: {
-          userApiKey: geminiApiKey, // Pass the BYOK key
-          width: 1792,
-          height: 1024,
-          style: 'cinematic'
-        }
+        size: '1792x1024',
+        quality: 'hd',
+        n: 1,
+        response_format: 'b64_json'
       })
     })
 
-    if (!imageGenResponse.ok) {
-      const error = await imageGenResponse.json().catch(() => ({}))
-      console.error('[Thumbnail] Image generation error:', imageGenResponse.status, error)
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      console.error('[Thumbnail] OpenAI error:', response.status, error)
+      
+      if (response.status === 400 && error?.error?.code === 'content_policy_violation') {
+        return NextResponse.json({ 
+          success: false,
+          error: 'Content policy violation. Please try a different project description.' 
+        }, { status: 400 })
+      }
+      
       return NextResponse.json({ 
         success: false,
-        error: error?.error || 'Thumbnail generation failed' 
-      }, { status: imageGenResponse.status })
+        error: error?.error?.message || 'Thumbnail generation failed' 
+      }, { status: response.status })
     }
 
-    const imageData = await imageGenResponse.json()
-    const imageUrl = imageData?.imageUrl || imageData?.images?.[0]?.dataUrl
+    const data = await response.json()
+    const b64 = data?.data?.[0]?.b64_json
 
-    if (!imageUrl) {
-      console.error('[Thumbnail] No image URL in response')
+    if (!b64) {
       return NextResponse.json({ 
         success: false,
-        error: 'No image data returned' 
+        error: 'No image data returned from OpenAI' 
       }, { status: 500 })
     }
+
+    const imageUrl = `data:image/png;base64,${b64}`
     
     // Update project metadata with the thumbnail
     await sequelize.authenticate()
@@ -121,8 +138,8 @@ Style Requirements:
     return NextResponse.json({ 
       success: true, 
       imageUrl,
-      model: imageData?.model || 'unknown',
-      provider: imageData?.provider || 'unknown',
+      model: 'dall-e-3',
+      provider: 'openai',
       usedBYOK: !!userApiKey
     })
 

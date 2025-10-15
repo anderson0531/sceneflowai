@@ -256,6 +256,10 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
         // Force a page reload to show the new thumbnail
         window.location.reload()
       } else {
+        // Check if BYOK is required
+        if (data.requiresBYOK) {
+          throw new Error('OpenAI API key required. Please configure your BYOK settings in the dashboard.')
+        }
         throw new Error(data.error || 'Failed to generate thumbnail')
       }
     } catch (error: any) {
