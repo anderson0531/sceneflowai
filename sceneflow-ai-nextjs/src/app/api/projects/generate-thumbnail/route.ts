@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
+import { uploadImageToBlob } from '@/lib/storage/blob'
 
 export const maxDuration = 60
 
@@ -113,6 +114,11 @@ Style Requirements:
 
     const imageUrl = `data:image/png;base64,${b64}`
     
+    // Upload to Vercel Blob instead of storing base64
+    console.log('[Thumbnail] Uploading to Vercel Blob storage...')
+    const blobUrl = await uploadImageToBlob(imageUrl, `thumbnails/${projectId}-${Date.now()}.png`)
+    console.log('[Thumbnail] Uploaded to Blob:', blobUrl)
+    
     // Update project metadata with the thumbnail
     await sequelize.authenticate()
     
@@ -124,10 +130,10 @@ Style Requirements:
       }, { status: 404 })
     }
 
-    // Update the metadata with the thumbnail
+    // Update the metadata with Blob URL, not base64
     const updatedMetadata = {
       ...project.metadata,
-      thumbnail: imageUrl,
+      thumbnail: blobUrl, // URL instead of base64
       thumbnailGeneratedAt: new Date().toISOString()
     }
 
@@ -137,7 +143,7 @@ Style Requirements:
 
     return NextResponse.json({ 
       success: true, 
-      imageUrl,
+      imageUrl: blobUrl, // Return Blob URL, not base64
       model: 'dall-e-3',
       provider: 'openai',
       usedBYOK: !!userApiKey
