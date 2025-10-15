@@ -127,11 +127,16 @@ console.log(`[Database] Connection status: DB link removed, using manual config`
 // Detect cloud database from connection string hostname
 const isCloudDatabase = CONN.includes('supabase.co') || CONN.includes('neon.tech') || CONN.includes('aws.com') || CONN.includes('.rds.')
 
+// SSL configuration for pg driver
+const sslConfig = isCloudDatabase ? {
+  require: true,
+  rejectUnauthorized: false,
+  // Explicitly bypass certificate validation for cloud providers
+  checkServerIdentity: () => undefined
+} : false
+
 const dialectOptions = {
-  ssl: isCloudDatabase ? {
-    require: true,
-    rejectUnauthorized: false // Accept cloud provider certificates
-  } : false
+  ssl: sslConfig
 }
 
 console.log(`[Database] SSL config: ${isCloudDatabase ? 'enabled (cloud database detected)' : 'disabled (local database)'}`)
