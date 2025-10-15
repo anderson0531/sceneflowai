@@ -218,7 +218,7 @@ Return ONLY the JSON array.`
 
     // STAGE 1: Generate outlines
     console.log(`[Script Gen] Stage 1: Generating ${sceneCount} scene outlines...`)
-    const outlines = await callGeminiWithRetry(apiKey, outlinesPrompt, 8000, 1)
+    const outlines = await callGeminiWithRetry(apiKey, outlinesPrompt, 8000, 2) // 2 retries with 60s timeout each
     
     let parsedOutlines: any[]
     try {
@@ -352,7 +352,7 @@ async function callGeminiWithRetry(
 // Helper: Call Gemini API
 async function callGemini(apiKey: string, prompt: string, maxTokens: number): Promise<string> {
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 30000) // 30s timeout
+  const timeout = setTimeout(() => controller.abort(), 60000) // 60s timeout for large outline generation
   
   try {
     const response = await fetch(
