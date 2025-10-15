@@ -121,7 +121,7 @@ console.log(`[Database] Using connection from: ${connectionEnvName}`)
 console.log(`[Database] Connection string (masked): ${maskedConn}`)
 console.log(`[Database] Timestamp: ${new Date().toISOString()}`)
 console.log(`[Database] Provider: ${maskedConn.includes('supabase') ? 'Supabase' : maskedConn.includes('neon') ? 'Neon' : 'Other'}`)
-console.log(`[Database] Ready to connect with credentials`)
+console.log(`[Database] Connection status: DB link removed, using manual config`)
 
 if (connectionEnvName === 'DB_DATABASE_URL') {
   sequelize = new Sequelize(CONN as string, {
