@@ -9,6 +9,7 @@ import { DndContext as _ignore } from '@dnd-kit/core'
 import { Button } from '@/components/ui/Button'
 import { LayoutPanelLeft, PanelRightOpen, Volume2, Square, History } from 'lucide-react'
 import { ScriptEditor } from '@/components/studio/ScriptEditor'
+import { VoiceSelector } from '@/components/tts/VoiceSelector'
 function ChangesPanel({ editorContainerRef }: { editorContainerRef: React.RefObject<HTMLDivElement | null> }) {
   const [items, setItems] = useState<Array<{ id: string; type: 'add'|'del'; text: string }>>([])
 
@@ -181,7 +182,6 @@ export default function ScriptViewer({ fountainText }: { fountainText: string })
       if (el) (el as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' })
     } catch {}
   }
-  const [voiceOptions, setVoiceOptions] = useState<Array<{ id: string; name: string }>>([])
   const [charVoices, setCharVoices] = useState<Record<string, string>>({ Narrator: '' })
   const [isReading, setIsReading] = useState(false)
   const isReadingRef = useRef(false)
@@ -191,18 +191,7 @@ export default function ScriptViewer({ fountainText }: { fountainText: string })
   const [playTotal, setPlayTotal] = useState(0)
   const [ttsError, setTtsError] = useState<string | null>(null)
 
-  // Preload ElevenLabs voices on mount so dropdowns are populated immediately
-  useEffect(() => {
-    (async () => {
-      try {
-        const resp = await fetch('/api/tts/elevenlabs/voices')
-        const data = await resp.json().catch(() => ({}))
-        if (data && Array.isArray(data.voices)) {
-          setVoiceOptions(data.voices.map((v: any) => ({ id: v.id, name: v.name })))
-        }
-      } catch {}
-    })()
-  }, [])
+  // Voice fetching now handled by VoiceSelector component
 
   // Collect character names when opening Voices panel so assignments appear
   useEffect(() => {
@@ -515,17 +504,16 @@ export default function ScriptViewer({ fountainText }: { fountainText: string })
                 {ttsError && (
                   <div className="bg-red-900/30 border border-red-700 text-red-200 rounded px-3 py-2 text-xs">{ttsError}</div>
                 )}
-                  <div className="space-y-2 max-h-[40vh] overflow-auto pr-1">
+                  <div className="space-y-3 max-h-[60vh] overflow-auto pr-1">
                     {Object.keys(charVoices).length===0 && <div className="text-gray-500">No characters detected yet.</div>}
                     {Object.keys(charVoices).map(name => (
-                      <div key={name} className="flex items-center justify-between gap-2 bg-gray-800/50 border border-gray-700 rounded px-2 py-1">
-                        <div className="font-medium text-gray-200">{name}</div>
-                        <select className="bg-gray-900 border border-gray-700 rounded px-2 py-1 text-gray-100"
-                                value={charVoices[name]}
-                                onChange={e=> setCharVoices(prev => ({ ...prev, [name]: e.target.value }))}>
-                          <option value="">System</option>
-                          {voiceOptions.map(v=> (<option key={v.id} value={v.id}>{v.name}</option>))}
-                        </select>
+                      <div key={name} className="space-y-2 bg-gray-800/50 border border-gray-700 rounded p-3">
+                        <div className="font-medium text-gray-200 text-sm">{name}</div>
+                        <VoiceSelector
+                          selectedVoiceId={charVoices[name]}
+                          onSelectVoice={(voiceId) => setCharVoices(prev => ({ ...prev, [name]: voiceId }))}
+                          compact={true}
+                        />
                       </div>
                     ))}
                   </div>
