@@ -127,22 +127,26 @@ console.log(`[Database] Connection status: DB link removed, using manual config`
 // Detect cloud database from connection string hostname
 const isCloudDatabase = CONN.includes('supabase.co') || CONN.includes('neon.tech') || CONN.includes('aws.com') || CONN.includes('.rds.')
 
-// SSL configuration for pg driver
-const sslConfig = isCloudDatabase ? {
-  require: true,
-  rejectUnauthorized: false,
-  // Explicitly bypass certificate validation for cloud providers
-  checkServerIdentity: () => undefined
-} : false
-
-const dialectOptions = {
-  ssl: sslConfig
-}
+// Remove sslmode parameter from connection string if present
+// This prevents connection string params from overriding our SSL config
+let cleanConn = CONN.replace(/[&?]sslmode=[^&]*/g, '')
+// Ensure no trailing & or ?
+cleanConn = cleanConn.replace(/[&?]$/, '')
 
 console.log(`[Database] SSL config: ${isCloudDatabase ? 'enabled (cloud database detected)' : 'disabled (local database)'}`)
+console.log(`[Database] Connection cleaned: ${CONN !== cleanConn ? 'removed sslmode parameter' : 'no changes needed'}`)
+
+// SSL configuration for pg driver - force bypass all certificate validation
+const dialectOptions = {
+  ssl: isCloudDatabase ? {
+    require: true,
+    rejectUnauthorized: false,
+    checkServerIdentity: () => undefined
+  } : false
+}
 
 if (connectionEnvName === 'DB_DATABASE_URL') {
-  sequelize = new Sequelize(CONN as string, {
+  sequelize = new Sequelize(cleanConn as string, {
     dialect: 'postgres',
     dialectModule: pg,
     dialectOptions,
@@ -151,8 +155,8 @@ if (connectionEnvName === 'DB_DATABASE_URL') {
     timezone: '+00:00',
     define: { timestamps: true, underscored: true, freezeTableName: true }
   })
-} else if (CONN) {
-  sequelize = new Sequelize(CONN as string, {
+} else if (cleanConn) {
+  sequelize = new Sequelize(cleanConn as string, {
     dialect: 'postgres',
     dialectModule: pg,
     dialectOptions,
@@ -167,8 +171,8 @@ if (connectionEnvName === 'DB_DATABASE_URL') {
 let selectedConnectionHost = 'unknown'
 let selectedConnectionIsPooled = false
 try {
-  if (CONN) {
-    const parsed = new URL(CONN)
+  if (cleanConn) {
+    const parsed = new URL(cleanConn)
     selectedConnectionHost = parsed.hostname
     selectedConnectionIsPooled = /pooler|prisma/i.test(parsed.hostname)
   }
