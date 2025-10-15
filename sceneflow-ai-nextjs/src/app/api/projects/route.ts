@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import '@/models' // Import all models to register them with Sequelize
 import Project from '@/models/Project'
+import User from '@/models/User'
 import { sequelize } from '@/config/database'
 
 // Disable caching for this route
@@ -126,6 +127,23 @@ export async function POST(request: NextRequest) {
 
     if (!title || typeof title !== 'string') {
       return NextResponse.json({ success: false, error: 'title is required' }, { status: 400 })
+    }
+    
+    // Ensure user exists (auto-create if doesn't exist)
+    if (userId) {
+      let user = await User.findByPk(userId)
+      if (!user) {
+        console.log('[POST /api/projects] User not found, creating user:', userId)
+        user = await User.create({
+          id: userId,
+          email: `user-${userId}@temp.sceneflow.ai`,
+          username: `user_${userId.slice(0, 8)}`,
+          password_hash: 'oauth-user', // Placeholder for OAuth users
+          is_active: true,
+          email_verified: false
+        })
+        console.log('[POST /api/projects] User created successfully')
+      }
     }
 
     if (!userId) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import '@/models' // Import all models to register them with Sequelize
 import Project from '@/models/Project'
+import User from '@/models/User'
 import { sequelize } from '@/config/database'
 
 export const runtime = 'nodejs'
@@ -41,6 +42,23 @@ export async function POST(request: NextRequest) {
     await sequelize.authenticate()
     
     // Note: Run POST /api/setup/database once to create tables in fresh database
+    
+    // Ensure user exists (auto-create if doesn't exist)
+    let user = await User.findByPk(userId)
+    if (!user) {
+      console.log('[from-variant] User not found, creating user:', userId)
+      user = await User.create({
+        id: userId,
+        email: `user-${userId}@temp.sceneflow.ai`, // Temporary email
+        username: `user_${userId.slice(0, 8)}`,
+        password_hash: 'oauth-user', // Placeholder for OAuth users
+        is_active: true,
+        email_verified: false
+      })
+      console.log('[from-variant] User created successfully')
+    } else {
+      console.log('[from-variant] User exists:', userId)
+    }
     
     // Helper: Extract keywords from long text (for VARCHAR fields)
     const extractKeywords = (text: string | undefined, fallback: string = '', maxLength: number = 100) => {
