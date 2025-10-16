@@ -102,6 +102,9 @@ function buildPrompt(treatment: any, start: number, end: number, total: number, 
     ? `PREVIOUS SCENES:\n${previousScenes.slice(-3).map((s: any) => `${s.sceneNumber}. ${s.heading}: ${s.action.substring(0, 100)}...`).join('\n')}\n\n`
     : ''
 
+  const sceneDuration = Math.floor((treatment.total_duration_seconds || 300) / total)
+  const dialoguesPerScene = Math.max(1, Math.floor(sceneDuration / 10))  // 10-second rule
+
   return `Generate scenes ${start}-${end} of a ${total}-scene script.
 
 TREATMENT:
@@ -111,19 +114,37 @@ Synopsis: ${treatment.synopsis || treatment.content}
 Genre: ${treatment.genre}
 Tone: ${treatment.tone}
 
+DIALOGUE DENSITY RULE (10-SECOND RULE):
+- Each scene is ${sceneDuration} seconds
+- Average dialogue = 10 seconds per line
+- REQUIRED: ~${dialoguesPerScene} dialogue exchanges per scene
+- Create natural back-and-forth conversations
+- Mix dialogue with action descriptions
+- Don't rush - let scenes breathe
+
 ${prev}Return JSON array ONLY:
 [
   {
     "sceneNumber": ${start},
     "heading": "INT. LOCATION - TIME",
     "action": "Detailed action and what happens",
-    "dialogue": [{"character": "NAME", "line": "text"}],
+    "dialogue": [
+      {"character": "NAME", "line": "First line (~10s)"},
+      {"character": "NAME", "line": "Response (~10s)"},
+      {"character": "NAME", "line": "Follow-up (~10s)"},
+      {"character": "NAME", "line": "Reaction (~10s)"},
+      {"character": "NAME", "line": "Counter-point (~10s)"},
+      {"character": "NAME", "line": "Conclusion (~10s)"}
+      // ~${dialoguesPerScene} total dialogue exchanges
+    ],
     "visualDescription": "Camera, lighting, composition",
-    "duration": ${Math.floor((treatment.total_duration_seconds || 300) / total)}
+    "duration": ${sceneDuration}
   }
 ]
 
-Generate ${end - start + 1} complete scenes with dialogue.`
+CRITICAL: Each ${sceneDuration}s scene needs ~${dialoguesPerScene} dialogue lines. Create natural conversations, not sparse narration.
+
+Generate ${end - start + 1} complete scenes with FULL dialogue density.`
 }
 
 async function callGemini(apiKey: string, prompt: string): Promise<string> {
