@@ -30,26 +30,60 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'API key not configured' }, { status: 500 })
     }
 
-    // Simple calculation: ~1 scene per minute
+    // Variable scene count - AI decides based on content
     const duration = project.duration || 300
-    const sceneCount = Math.max(10, Math.min(40, Math.floor(duration / 60)))
+    const minScenes = Math.floor(duration / 90)   // Conservative (scenes avg 90s)
+    const maxScenes = Math.floor(duration / 20)   // Aggressive (scenes avg 20s)  
+    const suggestedScenes = Math.floor(duration / 50)  // Recommended (scenes avg 50s)
     
-    console.log(`[Script Gen V2] Generating ${sceneCount} scenes for ${duration}s project`)
+    console.log(`[Script Gen V2] Target: ${duration}s - Scene range: ${minScenes}-${maxScenes} (suggested: ${suggestedScenes})`)
 
-    // Generate in 2 batches (20 scenes max per batch)
-    const batchSize = Math.ceil(sceneCount / 2)
-    const allScenes: any[] = []
+    const INITIAL_BATCH_SIZE = 12  // First batch size
+    let actualTotalScenes = suggestedScenes  // Will be updated by AI
+    let allScenes: any[] = []
 
-    for (let batch = 0; batch < 2; batch++) {
-      const start = batch * batchSize + 1
-      const end = Math.min((batch + 1) * batchSize, sceneCount)
+    // BATCH 1: Generate first batch, AI determines total scene count
+    console.log(`[Script Gen V2] Batch 1: Generating first ${INITIAL_BATCH_SIZE} scenes (AI will determine total)...`)
+    
+    const batch1Prompt = buildBatch1Prompt(treatment, 1, INITIAL_BATCH_SIZE, minScenes, maxScenes, suggestedScenes, duration, [])
+    const batch1Response = await callGemini(apiKey, batch1Prompt)
+    const batch1Data = parseBatch1(batch1Response, 1, INITIAL_BATCH_SIZE)
+    
+    // Extract AI's determined total
+    if (batch1Data.totalScenes && batch1Data.totalScenes >= minScenes && batch1Data.totalScenes <= maxScenes) {
+      actualTotalScenes = batch1Data.totalScenes
+      console.log(`[Script Gen V2] AI determined ${actualTotalScenes} total scenes`)
+    } else {
+      console.log(`[Script Gen V2] Using suggested ${actualTotalScenes} scenes (AI total out of range or not provided)`)
+    }
+    
+    allScenes.push(...batch1Data.scenes)
+    console.log(`[Script Gen V2] Batch 1 complete: ${batch1Data.scenes.length} scenes`)
+    
+    // BATCH 2: Generate remaining scenes if needed
+    const remainingScenes = actualTotalScenes - allScenes.length
+    if (remainingScenes > 0) {
+      console.log(`[Script Gen V2] Batch 2: Generating remaining ${remainingScenes} scenes...`)
       
-      const prompt = buildPrompt(treatment, start, end, sceneCount, allScenes)
-      const response = await callGemini(apiKey, prompt)
-      const scenes = parseScenes(response, start, end)
+      const batch2Prompt = buildBatch2Prompt(treatment, allScenes.length + 1, actualTotalScenes, duration, allScenes)
+      const batch2Response = await callGemini(apiKey, batch2Prompt)
+      const batch2Data = parseScenes(batch2Response, allScenes.length + 1, actualTotalScenes)
       
-      allScenes.push(...scenes)
-      console.log(`[Script Gen V2] Batch ${batch + 1}/2: ${scenes.length} scenes`)
+      allScenes.push(...batch2Data.scenes)
+      console.log(`[Script Gen V2] Batch 2 complete: ${batch2Data.scenes.length} scenes`)
+    }
+    
+    // Validation and logging
+    const totalEstimatedDuration = allScenes.reduce((sum: number, s: any) => sum + (s.duration || 0), 0)
+    const durationAccuracy = ((totalEstimatedDuration / duration) * 100).toFixed(1)
+    
+    console.log(`[Script Gen V2] Generation complete:`)
+    console.log(`  - Scenes: ${allScenes.length} (suggested ${suggestedScenes})`)
+    console.log(`  - Estimated: ${totalEstimatedDuration}s vs Target: ${duration}s`)
+    console.log(`  - Accuracy: ${durationAccuracy}%`)
+    
+    if (Math.abs(totalEstimatedDuration - duration) / duration > 0.15) {
+      console.warn(`[Script Gen V2] Duration accuracy >15% off - may need regeneration`)
     }
 
     // Extract characters from dialogue
@@ -97,14 +131,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function buildPrompt(treatment: any, start: number, end: number, total: number, previousScenes: any[]) {
-  const prev = previousScenes.length > 0
-    ? `PREVIOUS SCENES:\n${previousScenes.slice(-3).map((s: any) => `${s.sceneNumber}. ${s.heading}: ${s.action.substring(0, 100)}...`).join('\n')}\n\n`
-    : ''
-
-  const sceneDuration = Math.floor((treatment.total_duration_seconds || 300) / total)
-
-  return `Generate scenes ${start}-${end} of a ${total}-scene script.
+function buildBatch1Prompt(treatment: any, start: number, end: number, min: number, max: number, suggested: number, targetDuration: number, prev: any[]) {
+  return `Generate the FIRST ${end} scenes of a script targeting ${targetDuration} seconds total.
 
 TREATMENT:
 Title: ${treatment.title}
@@ -113,38 +141,91 @@ Synopsis: ${treatment.synopsis || treatment.content}
 Genre: ${treatment.genre}
 Tone: ${treatment.tone}
 
-DURATION GUIDANCE (FLEXIBLE, NOT STRICT):
-- Target ~${sceneDuration}s per scene (guideline for depth/scope)
-- Short scenes (~30s): Quick exchanges, focused action
-- Medium scenes (~60s): Natural conversations, room to breathe
-- Long scenes (~90s+): Deeper exploration, multiple beats
-- LET THE STORY DICTATE LENGTH - quality over exact timing
+SCENE PLANNING:
+- Total target: ${targetDuration}s (±10% is fine)
+- Suggested total scenes: ${suggested} (you can choose ${min}-${max})
+- YOU DECIDE: How many total scenes best tells this story?
+- Generate first ${end} scenes now, determine total count
 
-${prev}Return JSON array ONLY:
+DURATION ESTIMATION (CRITICAL):
+For each scene, estimate REALISTIC duration based on actual content:
+- Count dialogue lines × 10s each
+- Add action/setup time (5-30s depending on complexity)
+- Examples:
+  * 1 dialogue + setup = 15-30s
+  * 3 dialogues + action = 40-60s
+  * 6 dialogues + complex action = 70-90s
+
+Return JSON:
+{
+  "totalScenes": 24,  // YOUR DECISION (${min}-${max}) - how many scenes total for this story?
+  "estimatedTotalDuration": 300,  // Sum of first ${end} scenes only
+  "scenes": [
+    {
+      "sceneNumber": 1,
+      "heading": "INT. LOCATION - TIME",
+      "action": "What happens",
+      "dialogue": [{"character": "NAME", "line": "..."}],
+      "visualDescription": "Camera, lighting",
+      "duration": 25  // REALISTIC based on content (dialogue count + action time)
+    }
+  ]
+}
+
+CRITICAL:
+1. Determine total scene count that best fits ${targetDuration}s story
+2. Estimate accurate durations (don't use arbitrary numbers)
+3. Quality writing over exact duration matching
+
+Generate first ${end} scenes with realistic durations.`
+}
+
+function buildBatch2Prompt(treatment: any, start: number, total: number, targetDuration: number, prevScenes: any[]) {
+  const remaining = total - prevScenes.length
+  const prevDuration = prevScenes.reduce((sum: number, s: any) => sum + (s.duration || 0), 0)
+  const remainingDuration = targetDuration - prevDuration
+  const avgNeeded = Math.floor(remainingDuration / remaining)
+  
+  return `Generate scenes ${start}-${total} (final ${remaining} scenes) of a ${total}-scene script.
+
+TREATMENT:
+Title: ${treatment.title}
+Logline: ${treatment.logline}
+Synopsis: ${treatment.synopsis || treatment.content}
+
+PREVIOUS SCENES (${prevScenes.length} so far, ${prevDuration}s total):
+${prevScenes.slice(-3).map((s: any) => `${s.sceneNumber}. ${s.heading} (${s.duration}s): ${s.action.substring(0, 80)}...`).join('\n')}
+
+DURATION TARGET:
+- Remaining: ~${remainingDuration}s for ${remaining} scenes
+- Average needed: ~${avgNeeded}s per scene (flexible guidance)
+- Estimate realistically based on actual content
+- Total target: ${targetDuration}s (±10%)
+
+DURATION ESTIMATION:
+- 1-2 dialogues + setup = 15-30s
+- 3-4 dialogues + action = 40-60s
+- 5-8 dialogues + complex = 70-90s
+
+Return JSON array:
 [
   {
     "sceneNumber": ${start},
     "heading": "INT. LOCATION - TIME",
-    "action": "Detailed action and what happens",
-    "dialogue": [
-      {"character": "NAME", "line": "Natural dialogue..."}
-      // As many or as few as the scene needs
-    ],
-    "visualDescription": "Camera, lighting, composition",
-    "duration": ${sceneDuration}
+    "action": "What happens",
+    "dialogue": [{"character": "NAME", "line": "..."}],
+    "visualDescription": "Camera, lighting",
+    "duration": 45  // REALISTIC estimate
   }
 ]
 
 FOCUS ON:
-1. Captivating, high-quality writing
-2. Natural dialogue that serves the story
-3. Proper pacing and emotional beats
-4. Character voice consistency
-5. Smooth scene transitions
+1. Quality, engaging writing
+2. Natural dialogue
+3. Realistic duration estimates
+4. Smooth conclusion to story
 
-Duration is approximate - prioritize QUALITY and NATURAL FLOW over exact timing.
-
-Generate ${end - start + 1} complete scenes with excellent dialogue and pacing.`
+Complete the script with accurate duration estimates.`
 }
 
 async function callGemini(apiKey: string, prompt: string): Promise<string> {
@@ -171,34 +252,58 @@ async function callGemini(apiKey: string, prompt: string): Promise<string> {
   return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
 }
 
-function parseScenes(response: string, start: number, end: number): any[] {
+function parseBatch1(response: string, start: number, end: number): any {
+  try {
+    const cleaned = response.replace(/```json\n?|```/g, '').trim()
+    const parsed = JSON.parse(cleaned)
+    
+    // Batch 1 returns object with totalScenes and scenes
+    return {
+      totalScenes: parsed.totalScenes || null,
+      estimatedTotalDuration: parsed.estimatedTotalDuration || 0,
+      scenes: (parsed.scenes || []).map((s: any, idx: number) => ({
+        sceneNumber: start + idx,
+        heading: s.heading || `SCENE ${start + idx}`,
+        action: s.action || 'Scene content',
+        dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
+        visualDescription: s.visualDescription || s.action || 'Cinematic shot',
+        duration: s.duration || 30,  // Use AI's realistic estimate
+        isExpanded: true
+      }))
+    }
+  } catch (error) {
+    console.error('[Parse Batch 1] Error:', error)
+    // Fallback
+    return {
+      totalScenes: null,
+      estimatedTotalDuration: 0,
+      scenes: []
+    }
+  }
+}
+
+function parseScenes(response: string, start: number, end: number): any {
   try {
     const cleaned = response.replace(/```json\n?|```/g, '').trim()
     const parsed = JSON.parse(cleaned)
     const scenes = Array.isArray(parsed) ? parsed : (parsed.scenes || [])
     
-    // Mark as expanded and add missing fields
-    return scenes.map((s: any, idx: number) => ({
-      sceneNumber: start + idx,
-      heading: s.heading || `SCENE ${start + idx}`,
-      action: s.action || 'Scene content',
-      dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
-      visualDescription: s.visualDescription || s.action || 'Cinematic shot',
-      duration: s.duration || 8,
-      isExpanded: true
-    }))
-  } catch {
-    // Fallback: create basic scenes
-    const count = end - start + 1
-    return Array.from({ length: count }, (_, i) => ({
-      sceneNumber: start + i,
-      heading: `SCENE ${start + i}`,
-      action: 'Scene content',
-      dialogue: [],
-      visualDescription: 'Cinematic shot',
-      duration: 8,
-      isExpanded: true
-    }))
+    // Batch 2+ returns just scenes array
+    return {
+      scenes: scenes.map((s: any, idx: number) => ({
+        sceneNumber: start + idx,
+        heading: s.heading || `SCENE ${start + idx}`,
+        action: s.action || 'Scene content',
+        dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
+        visualDescription: s.visualDescription || s.action || 'Cinematic shot',
+        duration: s.duration || 30,  // Use AI's realistic estimate
+        isExpanded: true
+      }))
+    }
+  } catch (error) {
+    console.error('[Parse Scenes] Error:', error)
+    // Fallback
+    return { scenes: [] }
   }
 }
 
