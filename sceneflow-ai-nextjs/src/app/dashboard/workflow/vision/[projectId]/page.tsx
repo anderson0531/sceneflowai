@@ -39,7 +39,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [script, setScript] = useState<any>(null)
   const [characters, setCharacters] = useState<any[]>([])
   const [scenes, setScenes] = useState<any[]>([])
-  const [activePanel, setActivePanel] = useState<'script' | 'characters' | 'scenes'>('script')
   const [isGenerating, setIsGenerating] = useState(false)
   const [generationProgress, setGenerationProgress] = useState({
     script: { complete: false, progress: 0 },
@@ -821,13 +820,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         title="Vision"
         titleVariant="page"
         emphasis
-        tabs={[
-          { id: 'script', label: 'Script' },
-          { id: 'characters', label: 'Characters' },
-          { id: 'scenes', label: 'Scenes' }
-        ]}
-        activeTab={activePanel}
-        onTabChange={(tab) => setActivePanel(tab as 'script' | 'characters' | 'scenes')}
         primaryActions={
           <Button className="bg-sf-primary text-white hover:bg-sf-accent flex items-center gap-2">
             <span>Continue to Direction</span>
@@ -848,99 +840,32 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       />
       
-      <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4 p-4">
-        {/* Main Content Area */}
-        <div className="space-y-4 overflow-hidden">
-          {activePanel === 'script' && (
-            <ScriptPanel 
-              script={script}
-              onScriptChange={setScript}
-              isGenerating={isGenerating}
-              onExpandScene={expandScene}
-              onExpandAllScenes={expandAllScenes}
-              onGenerateSceneImage={handleGenerateSceneImage}
-              characters={characters}
-            />
-          )}
-          
-          {activePanel === 'characters' && (
-            <CharacterLibrary 
-              characters={characters}
-              onRegenerateCharacter={handleRegenerateCharacter}
-              onGenerateCharacter={handleGenerateCharacter}
-              onUploadCharacter={handleUploadCharacter}
-              onApproveCharacter={handleApproveCharacter}
-            />
-          )}
-          
-          {activePanel === 'scenes' && (
-            <SceneGallery 
-              scenes={scenes}
-              characters={characters}
-              onRegenerateScene={handleRegenerateScene}
-              onGenerateScene={handleGenerateScene}
-              onUploadScene={handleUploadScene}
-            />
-          )}
+      <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 px-6 py-4">
+        {/* Main: Script with Scene Cards */}
+        <div className="overflow-y-auto">
+          <ScriptPanel 
+            script={script}
+            onScriptChange={setScript}
+            isGenerating={isGenerating}
+            onExpandScene={expandScene}
+            onExpandAllScenes={expandAllScenes}
+            onGenerateSceneImage={handleGenerateSceneImage}
+            characters={characters}
+            projectId={projectId}
+            visualStyle={project?.tone || project?.metadata?.filmTreatmentVariant?.tone}
+          />
         </div>
         
-        {/* Sidebar: Context & Tools */}
-        <div className="space-y-4 overflow-y-auto">
-          {/* Quick character reference for consistency */}
-          {characters.length > 0 && (
-            <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-              <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100 mb-3">Character Quick Reference</h3>
-              <div className="space-y-2">
-                {characters.slice(0, 5).map((char, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0">
-                      {char.referenceImage ? (
-                        <img src={char.referenceImage} alt={char.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xs text-gray-500 dark:text-gray-400">
-                          {char.name?.[0] || '?'}
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-sm min-w-0">
-                      <div className="font-medium text-gray-900 dark:text-gray-100 truncate">{char.name}</div>
-                      <div className="text-gray-600 dark:text-gray-400 text-xs truncate">{char.role}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Project Info */}
-          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-            <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100 mb-2">Project Details</h3>
-            <dl className="space-y-2 text-sm">
-              <div>
-                <dt className="text-gray-600 dark:text-gray-400">Duration</dt>
-                <dd className="font-medium text-gray-900 dark:text-gray-100">
-                  {(() => {
-                    const dur = project.duration || project.metadata?.filmTreatmentVariant?.total_duration_seconds || 60
-                    return `${Math.floor(dur / 60)}m ${dur % 60}s`
-                  })()}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-gray-600 dark:text-gray-400">Scenes</dt>
-                <dd className="font-medium text-gray-900 dark:text-gray-100">
-                  {script?.script?.scenes?.length || 0} {script?.script?.scenes?.length === 1 ? 'scene' : 'scenes'}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-gray-600 dark:text-gray-400">Genre</dt>
-                <dd className="font-medium text-gray-900 dark:text-gray-100 capitalize">{project.genre || (project.metadata as any)?.parsedMetadata?.genre || 'General'}</dd>
-              </div>
-              <div>
-                <dt className="text-gray-600 dark:text-gray-400">Tone</dt>
-                <dd className="font-medium text-gray-900 dark:text-gray-100 capitalize">{project.tone || (project.metadata as any)?.parsedMetadata?.tone || 'Neutral'}</dd>
-              </div>
-            </dl>
-          </div>
+        {/* Right Sidebar: Characters */}
+        <div className="overflow-y-auto">
+          <CharacterLibrary 
+            characters={characters}
+            onRegenerateCharacter={handleRegenerateCharacter}
+            onGenerateCharacter={handleGenerateCharacter}
+            onUploadCharacter={handleUploadCharacter}
+            onApproveCharacter={handleApproveCharacter}
+            compact={true}
+          />
         </div>
       </div>
       

@@ -11,9 +11,10 @@ interface CharacterLibraryProps {
   onGenerateCharacter: (characterId: string, prompt: string) => void
   onUploadCharacter: (characterId: string, file: File) => void
   onApproveCharacter: (characterId: string) => void
+  compact?: boolean
 }
 
-export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter }: CharacterLibraryProps) {
+export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, compact = false }: CharacterLibraryProps) {
   const [selectedChar, setSelectedChar] = useState<string | null>(null)
   const [charPrompts, setCharPrompts] = useState<Record<string, string>>({})
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(new Set())
@@ -21,29 +22,33 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
   const [builderCharId, setBuilderCharId] = useState<string | null>(null)
   
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6 h-full overflow-y-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 ${compact ? 'p-4' : 'p-6'} h-full overflow-y-auto`}>
+      <div className={`flex items-center justify-between ${compact ? 'mb-4' : 'mb-6'}`}>
         <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-sf-primary" />
-          <h2 className="font-semibold text-gray-900 dark:text-gray-100">Character Library</h2>
+          <Users className={`${compact ? 'w-4 h-4' : 'w-5 h-5'} text-sf-primary`} />
+          <h3 className={`${compact ? 'text-sm font-medium' : 'font-semibold'} text-gray-900 dark:text-gray-100`}>
+            {compact ? 'Characters' : 'Character Library'}
+          </h3>
           <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
-            {characters.length} {characters.length === 1 ? 'character' : 'characters'}
+            {characters.length}
           </span>
         </div>
         
-        <Button variant="outline" size="sm" className="flex items-center gap-1">
-          <Plus className="w-4 h-4" />
-          <span className="hidden sm:inline">Add Character</span>
-        </Button>
+        {!compact && (
+          <Button variant="outline" size="sm" className="flex items-center gap-1">
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Add Character</span>
+          </Button>
+        )}
       </div>
       
       {characters.length === 0 ? (
-        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-          <Users className="w-12 h-12 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-          <p>No characters generated yet</p>
+        <div className={`text-center ${compact ? 'py-8' : 'py-12'} text-gray-500 dark:text-gray-400`}>
+          <Users className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} mx-auto mb-2 text-gray-300 dark:text-gray-600`} />
+          <p className={compact ? 'text-sm' : ''}>No characters yet</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className={`${compact ? 'space-y-3' : 'grid grid-cols-2 lg:grid-cols-3 gap-4'}`}>
           {characters.map((char, idx) => {
             const charId = char.id || idx.toString()
             // Use saved imagePrompt if available, otherwise generate default

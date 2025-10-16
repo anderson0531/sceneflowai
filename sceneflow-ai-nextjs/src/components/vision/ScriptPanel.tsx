@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2 } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { getCuratedElevenVoices, type CuratedVoice } from '@/lib/tts/voices'
@@ -212,10 +212,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 h-full flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0">
+      <div className="px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
-          <FileText className="w-5 h-5 text-sf-primary" />
-          <h2 className="font-semibold text-gray-900 dark:text-gray-100">Production Script</h2>
+          <FileText className="w-4 h-4 text-sf-primary" />
+          <h2 className="text-base font-medium text-gray-900 dark:text-gray-100">Production Script</h2>
           {isGenerating && (
             <span className="text-xs text-blue-600 flex items-center gap-1">
               <Loader className="w-3 h-3 animate-spin" />
@@ -408,6 +408,7 @@ interface SceneCardProps {
 
 function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
+  const [isOpen, setIsOpen] = useState(false)
   
   const handleExpand = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -436,19 +437,31 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
       onOpenPromptBuilder(sceneIdx)
     }
   }
+
+  const toggleOpen = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setIsOpen(!isOpen)
+  }
   
   return (
     <div 
-      onClick={onClick}
-      className={`p-4 rounded-lg border cursor-pointer transition-all ${
+      className={`p-4 rounded-lg border transition-all ${
         isSelected 
           ? 'border-sf-primary bg-blue-50 dark:bg-blue-950/30 ring-2 ring-sf-primary' 
           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
       } ${isOutline ? 'bg-yellow-50 dark:bg-yellow-950/20' : ''}`}
     >
-      <div className="flex items-center justify-between mb-3">
+      {/* Collapsible Header */}
+      <div 
+        onClick={toggleOpen}
+        className="flex items-center justify-between cursor-pointer mb-3"
+      >
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">SCENE {sceneNumber}</span>
+          <ChevronRight className={`w-4 h-4 transition-transform text-gray-500 dark:text-gray-400 ${isOpen ? 'rotate-90' : ''}`} />
+          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">SCENE {sceneNumber}</span>
+          {scene.heading && (
+            <span className="text-sm text-gray-600 dark:text-gray-400">{scene.heading}</span>
+          )}
           {scene.duration && (
             <span className="text-xs text-gray-400 dark:text-gray-500">{scene.duration}s</span>
           )}
@@ -519,40 +532,45 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
         </div>
       </div>
 
-      {/* Prompt textarea hidden - accessible via drawer/builder */}
-      
-      {/* Scene Image - Prominent Storyboard Display */}
-      {!isOutline && scene.imageUrl && (
-        <div className="mb-4 rounded-lg overflow-hidden border-2 border-gray-300 dark:border-gray-600 shadow-md max-w-3xl mx-auto">
-          <img 
-            src={scene.imageUrl} 
-            alt={scene.heading}
-            className="w-full h-auto object-cover"
-          />
-        </div>
-      )}
-      
-      {scene.heading && (
-        <div className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{scene.heading}</div>
-      )}
-      
-      {/* Show summary for outlines, action for expanded scenes */}
-      {isOutline && scene.summary && (
-        <div className="text-sm text-gray-600 dark:text-gray-400 mb-2 italic">{scene.summary}</div>
-      )}
-      
-      {!isOutline && scene.action && (
-        <div className="text-sm text-gray-700 dark:text-gray-300 mb-2">{scene.action}</div>
-      )}
-      
-      {!isOutline && scene.dialogue && scene.dialogue.length > 0 && (
-        <div className="space-y-1">
-          {scene.dialogue.map((d: any, i: number) => (
-            <div key={i} className="text-sm ml-4">
-              <span className="font-semibold text-gray-900 dark:text-gray-100">{d.character}:</span>
-              <span className="ml-2 italic text-gray-700 dark:text-gray-300">"{d.line}"</span>
+      {/* Collapsible Content */}
+      {isOpen && (
+        <div className="mt-3">
+          {/* Prompt textarea hidden - accessible via drawer/builder */}
+          
+          {/* Scene Image - Prominent Storyboard Display */}
+          {!isOutline && scene.imageUrl && (
+            <div className="mb-4 rounded-lg overflow-hidden border-2 border-gray-300 dark:border-gray-600 shadow-md max-w-3xl mx-auto">
+              <img 
+                src={scene.imageUrl} 
+                alt={scene.heading}
+                className="w-full h-auto object-cover"
+              />
             </div>
-          ))}
+          )}
+          
+          {scene.heading && (
+            <div className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{scene.heading}</div>
+          )}
+          
+          {/* Show summary for outlines, action for expanded scenes */}
+          {isOutline && scene.summary && (
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2 italic">{scene.summary}</div>
+          )}
+          
+          {!isOutline && scene.action && (
+            <div className="text-sm text-gray-700 dark:text-gray-300 mb-2">{scene.action}</div>
+          )}
+          
+          {!isOutline && scene.dialogue && scene.dialogue.length > 0 && (
+            <div className="space-y-1">
+              {scene.dialogue.map((d: any, i: number) => (
+                <div key={i} className="text-sm ml-4">
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">{d.character}:</span>
+                  <span className="ml-2 italic text-gray-700 dark:text-gray-300">"{d.line}"</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
