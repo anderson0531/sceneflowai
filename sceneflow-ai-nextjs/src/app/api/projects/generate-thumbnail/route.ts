@@ -95,8 +95,8 @@ Style Requirements:
     return NextResponse.json({ 
       success: true, 
       imageUrl: blobUrl, // Return Blob URL, not base64
-      model: 'imagegeneration@006',
-      provider: 'vertex-ai-imagen',
+      model: 'imagen-3.0-generate-001',
+      provider: 'vertex-ai-imagen-3',
       usedBYOK: !!userApiKey,
       storageType: 'vercel-blob'
     })

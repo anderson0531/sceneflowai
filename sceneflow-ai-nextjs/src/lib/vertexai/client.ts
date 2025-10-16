@@ -57,13 +57,13 @@ export async function callVertexAIImagen(
     throw new Error('GCP_PROJECT_ID not configured')
   }
 
-  console.log('[Vertex AI] Generating image with Imagen...')
+  console.log('[Vertex AI] Generating image with Imagen 3...')
   console.log('[Vertex AI] Project:', projectId, 'Region:', region)
 
   const accessToken = await getVertexAIAuthToken()
   
-  // Vertex AI Imagen endpoint
-  const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/imagegeneration@006:predict`
+  // Vertex AI Imagen 3 endpoint (imagegeneration@006 is deprecated, removed Sept 2025)
+  const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/imagen-3.0-generate-001:predict`
   
   const response = await fetch(endpoint, {
     method: 'POST',
@@ -79,8 +79,8 @@ export async function callVertexAIImagen(
         sampleCount: options.numberOfImages || 1,
         aspectRatio: options.aspectRatio || '16:9',
         negativePrompt: options.negativePrompt || '',
-        safetySetting: 'block_few'
-        // personGeneration removed - not available for all GCP accounts
+        safetySetting: 'block_only_high', // Renamed from 'block_few' in Imagen 3
+        personGeneration: 'allow_adult' // Default setting - allows adults but not celebrities
       }
     })
   })
