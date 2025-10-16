@@ -79,6 +79,17 @@ export default function ProjectsPage() {
     loadProjects()
   }, [])
 
+  // Listen for project updates (e.g., thumbnail generation)
+  useEffect(() => {
+    const handleProjectUpdate = () => {
+      console.log('[Projects Page] Project updated, reloading projects...')
+      loadProjects()
+    }
+
+    window.addEventListener('project-updated', handleProjectUpdate)
+    return () => window.removeEventListener('project-updated', handleProjectUpdate)
+  }, [])
+
   const loadProjects = async () => {
     const timestamp = new Date().toISOString()
     console.log(`[${timestamp}] [loadProjects] Starting...`)
