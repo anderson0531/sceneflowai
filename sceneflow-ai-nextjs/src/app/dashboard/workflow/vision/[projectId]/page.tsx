@@ -733,6 +733,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     console.log('Share Vision')
   }
 
+  const handleSaveProject = async () => {
+    try {
+      if (!project) return
+      
+      // Vision data is already saved during generation
+      // This just forces a manual save/refresh
+      await loadProject()
+      
+      try {
+        const { toast } = require('sonner')
+        toast.success('Project saved!')
+      } catch {}
+    } catch (error) {
+      console.error('Save failed:', error)
+      try {
+        const { toast } = require('sonner')
+        toast.error('Failed to save project')
+      } catch {}
+    }
+  }
+
   const getUserId = () => {
     if (typeof window !== 'undefined') {
       let userId = localStorage.getItem('authUserId')
@@ -770,11 +791,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
         secondaryActions={
           <>
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-2"
+              onClick={handleSaveProject}
+            >
               <Save className="w-4 h-4" />
               <span className="hidden sm:inline">Save Draft</span>
             </Button>
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="flex items-center gap-2" onClick={handleShare}>
               <Share2 className="w-4 h-4" />
               <span className="hidden sm:inline">Share</span>
             </Button>

@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 // Removed Tabs for single-phase view
 import { Button } from "@/components/ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/Input";
-import { DownloadIcon, Edit, ChevronUp } from "lucide-react";
+import { DownloadIcon, Edit, ChevronUp, Save } from "lucide-react";
 import { useGuideStore } from "@/store/useGuideStore";
 import { useStore } from '@/store/useStore'
 import { useCue } from "@/store/useCueStore";
@@ -26,6 +26,7 @@ import GeneratingOverlay from '@/components/ui/GeneratingOverlay'
 
 export default function SparkStudioPage({ params }: { params: { projectId: string } }) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { guide } = useGuideStore();
   const { invokeCue } = useCue();
   const { currentProject, setCurrentProject, setBeats } = useStore();
@@ -37,6 +38,63 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
 
   const handleExport = () => {
     console.log("Exporting PDF...");
+  };
+
+  const handleSaveProject = async () => {
+    try {
+      const userId = typeof window !== 'undefined' ? localStorage.getItem('authUserId') || crypto.randomUUID() : 'anonymous'
+      if (typeof window !== 'undefined' && !localStorage.getItem('authUserId')) {
+        localStorage.setItem('authUserId', userId)
+      }
+      
+      const blueprintData = {
+        title: guide.title || 'Untitled Project',
+        description: '',
+        metadata: {
+          blueprintInput: lastInput,
+          filmTreatment: guide.filmTreatment,
+          treatmentVariants: (guide as any).treatmentVariants || [],
+          beats: beatsView,
+          estimatedRuntime: estimatedRuntime
+        }
+      }
+      
+      if (params.projectId && !params.projectId.startsWith('new-project')) {
+        // Update existing project
+        const res = await fetch(`/api/projects`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: params.projectId,
+            ...blueprintData
+          })
+        })
+        
+        if (res.ok) {
+          try { const { toast } = require('sonner'); toast.success('Project saved!') } catch {}
+        }
+      } else {
+        // Create new project
+        const res = await fetch('/api/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            ...blueprintData,
+            currentStep: 'ideation'
+          })
+        })
+        
+        const data = await res.json()
+        if (data.success && data.project) {
+          try { const { toast } = require('sonner'); toast.success('Project created!') } catch {}
+          router.push(`/dashboard/studio/${data.project.id}`)
+        }
+      }
+    } catch (error) {
+      console.error('Save failed:', error)
+      try { const { toast } = require('sonner'); toast.error('Failed to save project') } catch {}
+    }
   };
 
   // Init with Cue for new projects
@@ -208,6 +266,17 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
             title="The Blueprint"
             titleVariant="page"
             emphasis
+            secondaryActions={
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex items-center gap-2"
+                onClick={handleSaveProject}
+              >
+                <Save className="w-4 h-4" />
+                <span className="hidden sm:inline">Save</span>
+              </Button>
+            }
           />
           <div className="flex-1 overflow-auto p-3 sm:p-6 pt-20 md:pt-24" style={{ scrollMarginTop: 'calc(var(--app-bar-h) + var(--context-bar-h))' }}>
             {/* Collapsible Input Section */}
