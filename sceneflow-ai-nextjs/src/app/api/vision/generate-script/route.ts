@@ -207,54 +207,114 @@ SCREENPLAY FORMAT - Return ONLY valid JSON:
   ]
 }
 
-Generate the ENTIRE script as one cohesive narrative. Do NOT generate outlines - generate FULL, COMPLETE scenes with dialogue and action.`
+Generate COMPLETE scenes with full dialogue and action.`
 
-    // Generate complete script in one pass
-    console.log(`[Script Gen] Generating complete ${sceneCount}-scene script in one pass...`)
-    const fullScript = await callGeminiWithRetry(apiKey, fullScriptPrompt, 32000, 2) // Increased token limit for full script
+    // BATCHED GENERATION: Split into batches to avoid MAX_TOKENS
+    const SCENES_PER_BATCH = 12
+    const batches = Math.ceil(sceneCount / SCENES_PER_BATCH)
     
-    let parsedScript: any
-    try {
-      parsedScript = JSON.parse(fullScript)
-      if (!parsedScript.scenes || !Array.isArray(parsedScript.scenes)) {
-        throw new Error('Script must contain scenes array')
-      }
-    } catch (e) {
-      console.error('[Script Gen] Failed to parse script JSON:', e)
-      // Try to extract JSON object from response
-      const jsonMatch = fullScript.match(/\{[\s\S]*\}/)
-      if (jsonMatch) {
-        try {
-          parsedScript = JSON.parse(jsonMatch[0])
-          if (!parsedScript.scenes || !Array.isArray(parsedScript.scenes)) {
-            throw new Error('Extracted JSON does not contain scenes array')
-          }
-        } catch (parseError) {
-          console.warn('[Script Gen] Failed to parse script, generating fallback')
-          parsedScript = {
-            title: filmTreatmentVariant.title,
-            logline: filmTreatmentVariant.logline,
-            scenes: generateFallbackOutlines(beatSheet, sceneCount, filmTreatmentVariant, perSceneDuration)
-          }
+    console.log(`[Script Gen] Generating ${sceneCount} scenes in ${batches} batch(es) of ~${SCENES_PER_BATCH} scenes`)
+    
+    const allScenes: any[] = []
+
+    for (let batchIndex = 0; batchIndex < batches; batchIndex++) {
+      const startScene = batchIndex * SCENES_PER_BATCH + 1
+      const endScene = Math.min((batchIndex + 1) * SCENES_PER_BATCH, sceneCount)
+      const scenesInBatch = endScene - startScene + 1
+      
+      console.log(`[Script Gen] Batch ${batchIndex + 1}/${batches}: Generating scenes ${startScene}-${endScene}`)
+      
+      // Build prompt with context from previous batch
+      const previousScenesSummary = allScenes.length > 0
+        ? `\n\nPREVIOUS SCENES (for continuity):\n${allScenes.slice(-5).map((s: any) => 
+            `Scene ${s.sceneNumber}: ${s.heading} - ${s.action?.substring(0, 100)}...`
+          ).join('\n')}`
+        : ''
+      
+      // Determine which beats apply to this batch
+      const batchBeats = beatSheet.filter((b: any, i: number) => {
+        const beatStartScene = Math.floor((i / beatSheet.length) * sceneCount) + 1
+        const beatEndScene = Math.floor(((i + 1) / beatSheet.length) * sceneCount)
+        return beatStartScene <= endScene && beatEndScene >= startScene
+      })
+      
+      const batchPrompt = `You are an expert screenwriter. Generate scenes ${startScene}-${endScene} of a ${sceneCount}-scene script.
+
+STORY BIBLE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Title: ${filmTreatmentVariant.title}
+Logline: ${filmTreatmentVariant.logline}
+Genre: ${filmTreatmentVariant.genre}
+Total Duration: ${targetDuration} seconds
+Tone: ${toneDescription}
+
+Synopsis: ${filmTreatmentVariant.synopsis}
+
+BEATS FOR THIS BATCH:
+${batchBeats.map((b: any) => `"${b.title}" - ${b.intent}`).join('\n')}
+
+CHARACTERS:
+${characters.map((c: any) => `${c.name} (${c.role}): ${c.description}`).join('\n')}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${previousScenesSummary}
+
+Generate scenes ${startScene}-${endScene} (${scenesInBatch} scenes total).
+${batchIndex === 0 ? 'This is the BEGINNING of the script.' : ''}
+${batchIndex === batches - 1 ? 'This is the END of the script - provide satisfying conclusion.' : ''}
+${batchIndex > 0 ? 'Maintain continuity with previous scenes listed above.' : ''}
+
+Return ONLY valid JSON:
+{
+  "scenes": [
+    {
+      "sceneNumber": ${startScene},
+      "heading": "INT. LOCATION - TIME",
+      "action": "Detailed action...",
+      "dialogue": [{"character": "NAME", "line": "..."}],
+      "visualDescription": "Camera, lighting...",
+      "duration": ${Math.floor(targetDuration / sceneCount)},
+      "beat": "Beat name",
+      "purpose": "Scene purpose",
+      "transition": "CUT TO",
+      "characters": ["NAME"]
+    }
+    // ... scenes ${startScene} through ${endScene}
+  ]
+}
+
+Generate COMPLETE scenes with full dialogue and action.`
+
+      try {
+        const batchScript = await callGeminiWithRetry(apiKey, batchPrompt, 16000, 2)
+        const parsedBatch = JSON.parse(batchScript)
+        
+        if (parsedBatch.scenes && Array.isArray(parsedBatch.scenes)) {
+          allScenes.push(...parsedBatch.scenes)
+          console.log(`[Script Gen] Batch ${batchIndex + 1} complete: ${parsedBatch.scenes.length} scenes`)
+        } else {
+          throw new Error('Batch does not contain scenes array')
         }
-      } else {
-        console.warn('[Script Gen] No JSON found in response, generating fallback')
-        parsedScript = {
-          title: filmTreatmentVariant.title,
-          logline: filmTreatmentVariant.logline,
-          scenes: generateFallbackOutlines(beatSheet, sceneCount, filmTreatmentVariant, perSceneDuration)
-        }
+      } catch (error) {
+        console.error(`[Script Gen] Batch ${batchIndex + 1} failed:`, error)
+        // Generate fallback for this batch
+        const fallbackScenes = generateFallbackOutlines(
+          beatSheet, 
+          scenesInBatch, 
+          filmTreatmentVariant, 
+          Math.floor(targetDuration / sceneCount)
+        ).map((s: any, idx: number) => ({
+          ...s,
+          sceneNumber: startScene + idx,
+          isExpanded: true
+        }))
+        allScenes.push(...fallbackScenes)
       }
     }
-    
-    if (parsedScript.scenes.length < sceneCount) {
-      console.warn(`[Script Gen] Got ${parsedScript.scenes.length}/${sceneCount} scenes`)
-    } else {
-      console.log(`[Script Gen] Successfully generated ${parsedScript.scenes.length} complete scenes!`)
-    }
+
+    console.log(`[Script Gen] All batches complete: ${allScenes.length} total scenes`)
 
     // Convert full scenes to scene objects with dialogue and action (already expanded)
-    const outlineScenes = parsedScript.scenes.map((scene: any, idx: number) => ({
+    const outlineScenes = allScenes.map((scene: any, idx: number) => ({
       sceneNumber: idx + 1,
       beat: scene.beat || 'Unknown Beat',
       heading: scene.heading || `SCENE ${idx + 1}`,
@@ -283,8 +343,8 @@ Generate the ENTIRE script as one cohesive narrative. Do NOT generate outlines -
     
     // Combine into final script structure (fully expanded scenes with dialogue)
     const scriptData = {
-      title: parsedScript.title || filmTreatmentVariant.title || 'Untitled',
-      logline: parsedScript.logline || filmTreatmentVariant.logline || '',
+      title: filmTreatmentVariant.title || 'Untitled',
+      logline: filmTreatmentVariant.logline || '',
       script: {
         scenes: outlineScenes
       },
