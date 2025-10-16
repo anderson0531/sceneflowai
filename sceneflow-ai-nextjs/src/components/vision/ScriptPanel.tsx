@@ -408,7 +408,6 @@ interface SceneCardProps {
 
 function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
-  const promptTextareaRef = useRef<HTMLTextAreaElement>(null)
   
   const handleExpand = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -431,28 +430,12 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
     }
   }
 
-  const handleOpenBuilder = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (onOpenPromptBuilder) {
-      onOpenPromptBuilder(sceneIdx)
-    }
-  }
-
   const handleOpenDrawer = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (onOpenPromptDrawer) {
       onOpenPromptDrawer(sceneIdx)
     }
   }
-
-  // Auto-resize textarea
-  useEffect(() => {
-    const textarea = promptTextareaRef.current
-    if (textarea) {
-      textarea.style.height = 'auto'
-      textarea.style.height = textarea.scrollHeight + 'px'
-    }
-  }, [scenePrompt, scene.visualDescription])
   
   return (
     <div 
@@ -505,7 +488,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
             </Button>
           )}
           
-          {/* Generate Image Button (for expanded scenes) */}
+          {/* Generate Image Buttons (for expanded scenes) */}
           {!isOutline && onGenerateImage && scene.visualDescription && (
             <>
               <Button
@@ -516,15 +499,6 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                 title="Edit scene image with AI assist"
               >
                 <Edit className="w-3 h-3" />
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleOpenBuilder}
-                disabled={isGeneratingImage}
-                className="bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 text-xs px-2 py-1 h-auto"
-                title="Open prompt builder"
-              >
-                <Wand2 className="w-3 h-3" />
               </Button>
               <Button
                 size="sm"
@@ -545,34 +519,11 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
         </div>
       </div>
 
-      {/* Editable Prompt Textarea (for expanded scenes) */}
-      {!isOutline && scene.visualDescription && (
-        <div className="mb-3">
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Scene Prompt</label>
-            <span className="text-xs text-gray-400">Edit before generating</span>
-          </div>
-          <textarea
-            ref={promptTextareaRef}
-            value={scenePrompt !== undefined ? scenePrompt : scene.visualDescription}
-            onChange={(e) => {
-              e.stopPropagation()
-              if (onPromptChange) {
-                onPromptChange(sceneIdx, e.target.value)
-              }
-            }}
-            onClick={(e) => e.stopPropagation()}
-            className="w-full text-sm p-2 rounded bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="Describe the scene for image generation..."
-            rows={3}
-            style={{ minHeight: '60px' }}
-          />
-        </div>
-      )}
+      {/* Prompt textarea hidden - accessible via drawer/builder */}
       
       {/* Scene Image - Prominent Storyboard Display */}
       {!isOutline && scene.imageUrl && (
-        <div className="mb-4 rounded-lg overflow-hidden border-2 border-gray-300 dark:border-gray-600 shadow-md max-w-3xl">
+        <div className="mb-4 rounded-lg overflow-hidden border-2 border-gray-300 dark:border-gray-600 shadow-md max-w-3xl mx-auto">
           <img 
             src={scene.imageUrl} 
             alt={scene.heading}
