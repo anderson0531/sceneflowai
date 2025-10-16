@@ -86,36 +86,51 @@ export async function POST(request: NextRequest) {
       console.warn(`[Script Gen V2] Duration accuracy >15% off - may need regeneration`)
     }
 
-    // Extract characters from dialogue
-    const extractedCharacters = extractCharacters(allScenes)
-    console.log(`[Script Gen V2] Extracted ${extractedCharacters.length} characters`)
+    // Use existing characters from Film Treatment (preserve detailed descriptions)
+    const existingCharacters = project.metadata?.visionPhase?.characters || []
+    const existingCharNames = existingCharacters.map((c: any) => c.name?.toUpperCase() || '')
+    
+    // Extract characters that appear in dialogue
+    const dialogueChars = extractCharacters(allScenes)
+    
+    // Find NEW characters that aren't in Film Treatment
+    const newChars = dialogueChars.filter((c: any) => 
+      !existingCharNames.includes(c.name?.toUpperCase())
+    )
+    
+    // Combine: existing (with all Film Treatment details) + any new ones
+    const allCharacters = [
+      ...existingCharacters,  // Keep Film Treatment characters with appearance, demeanor, clothing
+      ...newChars.map((c: any) => ({
+        ...c,
+        imagePrompt: `Professional character portrait: ${c.name}, ${c.description}, photorealistic, high detail, studio lighting, neutral background, character design, 8K quality`,
+        referenceImage: null,
+        generating: false
+      }))
+    ]
 
-    // Create character cards with image prompts (no actual images - generated on-demand)
-    const charactersWithPrompts = extractedCharacters.map((char: any) => ({
-      ...char,
-      imagePrompt: `Professional character portrait: ${char.name}, ${char.description}, photorealistic, high detail, studio lighting, neutral background, character design, 8K quality`,
-      referenceImage: null,  // No image yet - user will generate on-demand
-      generating: false
-    }))
-
-    console.log(`[Script Gen V2] Created ${charactersWithPrompts.length} character cards with prompts (images will be generated on-demand)`)
+    console.log(`[Script Gen V2] Characters: ${existingCharacters.length} from Film Treatment + ${newChars.length} new from dialogue (${allCharacters.length} total)`)
 
     // Build final script
     const script = {
       title: treatment.title,
       logline: treatment.logline,
       script: { scenes: allScenes },
-      characters: charactersWithPrompts,  // With prompts, no images
-      totalDuration: duration
+      characters: allCharacters,  // Film Treatment characters + any new ones
+      totalDuration: totalEstimatedDuration  // Use accurate estimated duration
     }
 
-    // Save to project
+    // Save to project (preserve existing visionPhase data)
+    const existingVisionPhase = project.metadata?.visionPhase || {}
     await project.update({
       metadata: {
         ...project.metadata,
         visionPhase: {
+          ...existingVisionPhase,
           script,
-          scriptGenerated: true
+          scriptGenerated: true,
+          characters: allCharacters,  // Update with combined characters
+          scenes: allScenes  // Update with generated scenes
         }
       }
     })
