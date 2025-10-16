@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
+import { callVertexAIImagen } from '../../../../lib/vertexai/client'
+import { uploadImageToBlob } from '../../../../lib/storage/blob'
 
 export const runtime = 'nodejs'
-export const maxDuration = 60
+export const maxDuration = 120  // Allow 2 minutes for 2 batches
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,12 +54,45 @@ export async function POST(request: NextRequest) {
       console.log(`[Script Gen V2] Batch ${batch + 1}/2: ${scenes.length} scenes`)
     }
 
+    // Extract characters from dialogue
+    const extractedCharacters = extractCharacters(allScenes)
+    console.log(`[Script Gen V2] Extracted ${extractedCharacters.length} characters`)
+
+    // Generate character reference images
+    const charactersWithImages: any[] = []
+    for (const char of extractedCharacters) {
+      try {
+        const prompt = `Professional character portrait: ${char.name}, ${char.description}, photorealistic, studio lighting, neutral background`
+        
+        // Call Vertex AI for character image
+        const base64Image = await callVertexAIImagen(prompt, {
+          aspectRatio: '1:1',
+          numberOfImages: 1
+        })
+        
+        const imageUrl = await uploadImageToBlob(
+          base64Image,
+          `characters/${projectId}-${char.name.replace(/\s+/g, '-')}-${Date.now()}.png`
+        )
+        
+        charactersWithImages.push({
+          ...char,
+          referenceImage: imageUrl
+        })
+        
+        console.log(`[Script Gen V2] Generated image for ${char.name}`)
+      } catch (error) {
+        console.error(`[Script Gen V2] Failed to generate image for ${char.name}:`, error)
+        charactersWithImages.push(char) // Add without image
+      }
+    }
+
     // Build final script
     const script = {
       title: treatment.title,
       logline: treatment.logline,
       script: { scenes: allScenes },
-      characters: extractCharacters(allScenes),
+      characters: charactersWithImages,  // With images
       totalDuration: duration
     }
 
