@@ -103,7 +103,6 @@ function buildPrompt(treatment: any, start: number, end: number, total: number, 
     : ''
 
   const sceneDuration = Math.floor((treatment.total_duration_seconds || 300) / total)
-  const dialoguesPerScene = Math.max(1, Math.floor(sceneDuration / 10))  // 10-second rule
 
   return `Generate scenes ${start}-${end} of a ${total}-scene script.
 
@@ -114,13 +113,12 @@ Synopsis: ${treatment.synopsis || treatment.content}
 Genre: ${treatment.genre}
 Tone: ${treatment.tone}
 
-DIALOGUE DENSITY RULE (10-SECOND RULE):
-- Each scene is ${sceneDuration} seconds
-- Average dialogue = 10 seconds per line
-- REQUIRED: ~${dialoguesPerScene} dialogue exchanges per scene
-- Create natural back-and-forth conversations
-- Mix dialogue with action descriptions
-- Don't rush - let scenes breathe
+DURATION GUIDANCE (FLEXIBLE, NOT STRICT):
+- Target ~${sceneDuration}s per scene (guideline for depth/scope)
+- Short scenes (~30s): Quick exchanges, focused action
+- Medium scenes (~60s): Natural conversations, room to breathe
+- Long scenes (~90s+): Deeper exploration, multiple beats
+- LET THE STORY DICTATE LENGTH - quality over exact timing
 
 ${prev}Return JSON array ONLY:
 [
@@ -129,22 +127,24 @@ ${prev}Return JSON array ONLY:
     "heading": "INT. LOCATION - TIME",
     "action": "Detailed action and what happens",
     "dialogue": [
-      {"character": "NAME", "line": "First line (~10s)"},
-      {"character": "NAME", "line": "Response (~10s)"},
-      {"character": "NAME", "line": "Follow-up (~10s)"},
-      {"character": "NAME", "line": "Reaction (~10s)"},
-      {"character": "NAME", "line": "Counter-point (~10s)"},
-      {"character": "NAME", "line": "Conclusion (~10s)"}
-      // ~${dialoguesPerScene} total dialogue exchanges
+      {"character": "NAME", "line": "Natural dialogue..."}
+      // As many or as few as the scene needs
     ],
     "visualDescription": "Camera, lighting, composition",
     "duration": ${sceneDuration}
   }
 ]
 
-CRITICAL: Each ${sceneDuration}s scene needs ~${dialoguesPerScene} dialogue lines. Create natural conversations, not sparse narration.
+FOCUS ON:
+1. Captivating, high-quality writing
+2. Natural dialogue that serves the story
+3. Proper pacing and emotional beats
+4. Character voice consistency
+5. Smooth scene transitions
 
-Generate ${end - start + 1} complete scenes with FULL dialogue density.`
+Duration is approximate - prioritize QUALITY and NATURAL FLOW over exact timing.
+
+Generate ${end - start + 1} complete scenes with excellent dialogue and pacing.`
 }
 
 async function callGemini(apiKey: string, prompt: string): Promise<string> {
