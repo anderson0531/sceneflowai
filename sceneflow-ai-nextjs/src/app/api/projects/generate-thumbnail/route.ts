@@ -8,18 +8,11 @@ export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
   try {
-    const { projectId, description, title, genre, userApiKey } = await request.json()
+    const { projectId, description, title, genre, userApiKey, customPrompt } = await request.json()
 
     if (!projectId) {
       return NextResponse.json(
         { success: false, error: 'Project ID is required' },
-        { status: 400 }
-      )
-    }
-
-    if (!description) {
-      return NextResponse.json(
-        { success: false, error: 'Project description is required' },
         { status: 400 }
       )
     }
@@ -34,14 +27,21 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Build a cinematic billboard prompt
-    const projectInfo = [
-      title ? `Film Title: ${title}` : '',
-      genre ? `Genre: ${genre}` : '',
-      `Concept: ${description}`
-    ].filter(Boolean).join('\n')
+    // Use custom prompt if provided, otherwise generate default
+    let enhancedPrompt: string
+    
+    if (customPrompt) {
+      enhancedPrompt = customPrompt
+      console.log('[Thumbnail] Using custom prompt from user')
+    } else {
+      // Build default cinematic billboard prompt
+      const projectInfo = [
+        title ? `Film Title: ${title}` : '',
+        genre ? `Genre: ${genre}` : '',
+        description ? `Concept: ${description}` : ''
+      ].filter(Boolean).join('\n')
 
-    const enhancedPrompt = `Create a cinematic billboard image for a film with the following details:
+      enhancedPrompt = `Create a cinematic billboard image for a film with the following details:
 
 ${projectInfo}
 
@@ -55,6 +55,9 @@ Style Requirements:
 - 16:9 landscape aspect ratio
 - No text, titles, or watermarks on the image
 - Photorealistic or stylized based on genre appropriateness`
+      
+      console.log('[Thumbnail] Using default generated prompt')
+    }
 
     console.log('[Thumbnail] Generating with Vertex AI Imagen...')
 
@@ -81,10 +84,11 @@ Style Requirements:
       }, { status: 404 })
     }
 
-    // Update the metadata with Blob URL, not base64
+    // Update the metadata with Blob URL and prompt used
     const updatedMetadata = {
       ...project.metadata,
       thumbnail: blobUrl, // URL instead of base64
+      thumbnailPrompt: enhancedPrompt, // Save prompt for editing/reference
       thumbnailGeneratedAt: new Date().toISOString()
     }
 
@@ -95,6 +99,7 @@ Style Requirements:
     return NextResponse.json({ 
       success: true, 
       imageUrl: blobUrl, // Return Blob URL, not base64
+      promptUsed: enhancedPrompt, // Return the actual prompt used
       model: 'imagen-3.0-generate-001',
       provider: 'vertex-ai-imagen-3',
       usedBYOK: !!userApiKey,

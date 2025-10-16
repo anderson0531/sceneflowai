@@ -27,6 +27,7 @@ import { useCueStore } from '@/store/useCueStore'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import ThumbnailPromptDrawer from '@/components/project/ThumbnailPromptDrawer'
 
 interface ProjectCardProps {
   project: {
@@ -63,6 +64,7 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
   const { invokeCue } = useCueStore()
   const [isHovered, setIsHovered] = useState(false)
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false)
+  const [promptDrawerOpen, setPromptDrawerOpen] = useState(false)
 
   // Enhanced workflow step mapping with phase information
   const workflowSteps = {
@@ -350,12 +352,22 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
                   onClick={(e) => { 
                     e.stopPropagation()
                     e.preventDefault()
+                    setPromptDrawerOpen(true)
+                  }}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Thumbnail Prompt
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={(e) => { 
+                    e.stopPropagation()
+                    e.preventDefault()
                     handleGenerateThumbnail()
                   }}
                   disabled={isGeneratingThumbnail}
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
-                  {isGeneratingThumbnail ? 'Generating...' : 'Generate Thumbnail'}
+                  {isGeneratingThumbnail ? 'Generating...' : 'Quick Generate'}
                 </DropdownMenuItem>
                 {onArchive && (
                   <DropdownMenuItem 
@@ -501,6 +513,19 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
           </div>
         )}
       </div>
+
+      {/* Thumbnail Prompt Editor Drawer */}
+      <ThumbnailPromptDrawer
+        open={promptDrawerOpen}
+        onClose={() => setPromptDrawerOpen(false)}
+        project={project}
+        currentThumbnail={getThumbnailUrl() || undefined}
+        onThumbnailGenerated={(imageUrl) => {
+          // Thumbnail was generated and saved via API
+          // Trigger parent to reload projects
+          window.dispatchEvent(new CustomEvent('project-updated'))
+        }}
+      />
     </motion.div>
   )
 }
