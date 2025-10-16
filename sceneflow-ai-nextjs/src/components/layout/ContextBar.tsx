@@ -45,7 +45,7 @@ export function ContextBar({
       style={{ top: stickyTop }}
     >
       {/* Top row: Title + actions (mobile stacks) */}
-      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-6">
         <div className={cn(
           'h-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2',
           titleVariant === 'page' ? 'py-3 md:py-4' : 'py-2 sm:py-0 sm:h-12'

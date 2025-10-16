@@ -224,17 +224,17 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           )}
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Voice Selector */}
           {enabled && voices.length > 0 && (
             <Select value={selectedVoiceId} onValueChange={setSelectedVoiceId}>
-              <SelectTrigger className="w-[140px] h-8 text-xs">
-                <Volume2 className="w-3 h-3 mr-1" />
+              <SelectTrigger className="h-9 text-sm min-w-[160px]">
+                <Volume2 className="w-4 h-4 mr-1" />
                 <SelectValue placeholder="Voice" />
               </SelectTrigger>
               <SelectContent>
                 {voices.map((v) => (
-                  <SelectItem key={v.id} value={v.id} className="text-xs">
+                  <SelectItem key={v.id} value={v.id} className="text-sm">
                     {v.name}
                   </SelectItem>
                 ))}
@@ -260,20 +260,19 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               size="sm"
               onClick={onExpandAllScenes}
               disabled={isGenerating}
-              className="bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"
+              className="bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50"
             >
               <Sparkles className="w-4 h-4" />
-              <span className="hidden sm:inline">Generate All Scenes</span>
+              <span>Generate All</span>
             </Button>
           )}
           <Button
             variant="outline"
             size="sm"
             onClick={() => setEditMode(!editMode)}
-            className="flex items-center gap-1"
           >
-            {editMode ? <Eye className="w-4 h-4 text-gray-700 dark:text-gray-300" /> : <Edit className="w-4 h-4 text-gray-700 dark:text-gray-300" />}
-            <span className="hidden sm:inline">{editMode ? 'Preview' : 'Edit'}</span>
+            {editMode ? <Eye className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
+            <span>{editMode ? 'Preview' : 'Edit'}</span>
           </Button>
         </div>
       </div>
