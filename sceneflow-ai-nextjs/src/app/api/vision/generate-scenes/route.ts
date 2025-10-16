@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import UserProviderConfig from '@/models/UserProviderConfig'
 import { sequelize } from '@/config/database'
+import { callVertexAIImagen } from '@/lib/vertexai/client'
+import { uploadImageToBlob } from '@/lib/storage/blob'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -195,33 +197,21 @@ async function generateWithDALLE(apiKey: string, prompt: string): Promise<string
 }
 
 async function generateWithGemini(apiKey: string, prompt: string): Promise<string> {
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        instances: [{
-          prompt: prompt
-        }],
-        parameters: {
-          sampleCount: 1,
-          aspectRatio: '16:9',
-          safetyFilterLevel: 'block_few',
-          personGeneration: 'allow_adult'
-        }
-      })
-    }
+  // Use Vertex AI Imagen 3 (same as thumbnail generation)
+  console.log('[Scene Gen] Using Vertex AI Imagen 3 for scene image')
+  
+  const base64Image = await callVertexAIImagen(prompt, {
+    aspectRatio: '16:9',
+    numberOfImages: 1
+  })
+  
+  // Upload to Vercel Blob and return URL
+  const blobUrl = await uploadImageToBlob(
+    base64Image,
+    `scenes/scene-${Date.now()}.png`
   )
   
-  if (!response.ok) {
-    throw new Error(`Gemini Imagen API error: ${response.status}`)
-  }
-  
-  const data = await response.json()
-  return data.predictions?.[0]?.bytesBase64Encoded 
-    ? `data:image/png;base64,${data.predictions[0].bytesBase64Encoded}`
-    : data.predictions?.[0]?.imageUrl || ''
+  return blobUrl
 }
 
 async function generateWithStability(apiKey: string, prompt: string): Promise<string> {
