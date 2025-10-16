@@ -430,10 +430,10 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
     }
   }
 
-  const handleOpenDrawer = (e: React.MouseEvent) => {
+  const handleOpenBuilder = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (onOpenPromptDrawer) {
-      onOpenPromptDrawer(sceneIdx)
+    if (onOpenPromptBuilder) {
+      onOpenPromptBuilder(sceneIdx)
     }
   }
   
@@ -493,12 +493,12 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
             <>
               <Button
                 size="sm"
-                onClick={handleOpenDrawer}
+                onClick={handleOpenBuilder}
                 disabled={isGeneratingImage}
-                className="bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 text-xs px-2 py-1 h-auto"
-                title="Edit scene image with AI assist"
+                className="bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 text-xs px-2 py-1 h-auto"
+                title="Open prompt builder"
               >
-                <Edit className="w-3 h-3" />
+                <Wand2 className="w-3 h-3" />
               </Button>
               <Button
                 size="sm"
