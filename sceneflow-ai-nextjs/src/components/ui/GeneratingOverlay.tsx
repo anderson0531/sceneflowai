@@ -22,7 +22,11 @@ export function GeneratingOverlay({ visible = false, title = 'Generating…', pr
           <div className="text-base font-semibold text-gray-100">{title}</div>
         </div>
         {subtext ? <div className="text-sm text-gray-400 mb-4">{subtext}</div> : (
-          <div className="text-sm text-gray-400 mb-4">This can take ~30–60 seconds depending on provider load.</div>
+          <div className="text-sm text-gray-400 mb-4">
+            {progress > 0 
+              ? `Processing... ${progress}% complete`
+              : 'Initializing generation...'}
+          </div>
         )}
         <div className="h-2 w-full rounded bg-gray-800 overflow-hidden">
           <div

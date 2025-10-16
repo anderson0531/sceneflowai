@@ -5,7 +5,7 @@ import { Loader, CheckCircle } from 'lucide-react'
 
 interface GenerationProgressProps {
   progress: {
-    script: { complete: boolean; progress: number }
+    script: { complete: boolean; progress: number; batch?: number; totalBatches?: number; message?: string }
     characters: { complete: boolean; progress: number; total: number }
     scenes: { complete: boolean; progress: number; total: number }
   }
@@ -26,7 +26,18 @@ export function GenerationProgress({ progress }: GenerationProgressProps) {
           ) : (
             <Loader className="w-4 h-4 animate-spin text-sf-primary flex-shrink-0" />
           )}
-          <span className="text-gray-700 dark:text-gray-300">Script generation</span>
+          <div className="flex-1">
+            <span className="text-gray-700 dark:text-gray-300">Script generation</span>
+            {progress.script.batch && progress.script.totalBatches && (
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Batch {progress.script.batch}/{progress.script.totalBatches}
+                {progress.script.message && ` • ${progress.script.message}`}
+              </div>
+            )}
+          </div>
+          {progress.script.progress > 0 && (
+            <span className="text-xs text-gray-500 dark:text-gray-400">{progress.script.progress}%</span>
+          )}
         </div>
         
         <div className="flex items-center gap-2">

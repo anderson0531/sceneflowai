@@ -215,52 +215,112 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   const generateScript = async (proj: Project): Promise<{ characters: any[], scenes: any[] } | null> => {
-    try {
-      console.log('[Vision] Calling script generation API...')
-      setGenerationProgress(prev => ({ ...prev, script: { complete: false, progress: 10 } }))
+    return new Promise((resolve, reject) => {
+      console.log('[Vision] Starting SSE script generation...')
+      setGenerationProgress(prev => ({ ...prev, script: { complete: false, progress: 0 } }))
       
-      const res = await fetch('/api/vision/generate-script', {
+      // Use fetch with SSE Accept header
+      fetch('/api/vision/generate-script', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId: proj.id
-        })
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream'
+        },
+        body: JSON.stringify({ projectId: proj.id })
+      }).then(response => {
+        if (!response.ok) {
+          reject(new Error('Script generation failed'))
+          return
+        }
+        
+        const reader = response.body?.getReader()
+        const decoder = new TextDecoder()
+        
+        if (!reader) {
+          reject(new Error('No response stream'))
+          return
+        }
+        
+        const readStream = async () => {
+          try {
+            while (true) {
+              const { done, value } = await reader.read()
+              if (done) break
+              
+              const chunk = decoder.decode(value)
+              const lines = chunk.split('\n')
+              
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  const data = JSON.parse(line.slice(6))
+                  
+                  switch (data.type) {
+                    case 'batch_start':
+                      console.log(`[Vision] Batch ${data.batch}/${data.totalBatches}: ${data.message}`)
+                      setGenerationProgress(prev => ({
+                        ...prev,
+                        script: {
+                          complete: false,
+                          progress: data.progress || Math.floor(((data.batch - 1) / data.totalBatches) * 100),
+                          batch: data.batch,
+                          totalBatches: data.totalBatches,
+                          message: data.message
+                        }
+                      }))
+                      break
+                      
+                    case 'batch_complete':
+                      console.log(`[Vision] Batch ${data.batch} complete: ${data.scenesCompleted}/${data.totalScenes} scenes`)
+                      setGenerationProgress(prev => ({
+                        ...prev,
+                        script: {
+                          complete: false,
+                          progress: data.progress,
+                          batch: data.batch,
+                          totalBatches: data.totalBatches,
+                          message: data.message
+                        }
+                      }))
+                      break
+                      
+                    case 'complete':
+                      console.log('[Vision] Script generation complete!')
+                      const freshCharacters = data.script?.characters || []
+                      const freshScenes = data.script?.script?.scenes || []
+                      
+                      setScript(data.script)
+                      setCharacters(freshCharacters)
+                      setScenes(freshScenes)
+                      setGenerationProgress(prev => ({
+                        ...prev,
+                        script: { complete: true, progress: 100 },
+                        characters: { complete: false, progress: 0, total: freshCharacters.length },
+                        scenes: { complete: false, progress: 0, total: freshScenes.length }
+                      }))
+                      
+                      resolve({ characters: freshCharacters, scenes: freshScenes })
+                      break
+                      
+                    case 'error':
+                      console.error('[Vision] Script generation error:', data.error)
+                      reject(new Error(data.error))
+                      break
+                  }
+                }
+              }
+            }
+          } catch (error) {
+            console.error('[Vision] Stream reading error:', error)
+            reject(error)
+          }
+        }
+        
+        readStream()
+      }).catch(error => {
+        console.error('[Vision] Fetch error:', error)
+        reject(error)
       })
-      
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}))
-        console.error('[Vision] Script API error:', res.status, errorData)
-        throw new Error(errorData.error || 'Script generation failed')
-      }
-      
-      const data = await res.json()
-      const freshCharacters = data.script?.characters || []
-      const freshScenes = data.script?.script?.scenes || []
-      
-      console.log('[Vision] Script API response:', {
-        hasScript: !!data.script,
-        sceneCount: freshScenes.length,
-        characterCount: freshCharacters.length
-      })
-      
-      setScript(data.script)
-      setCharacters(freshCharacters)
-      setScenes(freshScenes)
-      
-      setGenerationProgress(prev => ({ 
-        ...prev, 
-        script: { complete: true, progress: 100 },
-        characters: { complete: false, progress: 0, total: freshCharacters.length },
-        scenes: { complete: false, progress: 0, total: freshScenes.length }
-      }))
-      
-      // Return fresh data for immediate use
-      return { characters: freshCharacters, scenes: freshScenes }
-    } catch (error) {
-      console.error('[Vision] Script generation error:', error)
-      try { const { toast } = require('sonner'); toast.error('Script generation failed') } catch {}
-      throw error
-    }
+    })
   }
 
   const generateCharacters = async () => {

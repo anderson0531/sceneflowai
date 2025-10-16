@@ -7,7 +7,8 @@ export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
   try {
-    const { projectId } = await request.json()
+    const body = await request.json()
+    const { projectId } = body
     
     if (!projectId) {
       return NextResponse.json({ 
@@ -16,24 +17,74 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
+    // Check if client wants SSE progress updates
+    const wantsSSE = request.headers.get('accept')?.includes('text/event-stream')
+    
+    if (wantsSSE) {
+      // Return SSE stream with real-time progress
+      return generateScriptWithProgress(projectId, body)
+    }
+
+    // Regular JSON response (fallback)
+    const result = await generateScriptInternal(projectId, null)
+    return NextResponse.json(result)
+    
+  } catch (error: any) {
+    console.error('[Generate Script] Error:', error)
+    return NextResponse.json({
+      success: false,
+      error: error.message || 'Failed to generate script'
+    }, { status: 500 })
+  }
+}
+
+// SSE Streaming Response
+async function generateScriptWithProgress(projectId: string, body: any) {
+  const encoder = new TextEncoder()
+  
+  const stream = new ReadableStream({
+    async start(controller) {
+      const sendProgress = (data: any) => {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
+      }
+      
+      try {
+        await generateScriptInternal(projectId, sendProgress)
+        controller.close()
+      } catch (error: any) {
+        sendProgress({
+          type: 'error',
+          error: error.message || 'Generation failed'
+        })
+        controller.close()
+      }
+    }
+  })
+  
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    }
+  })
+}
+
+// Core generation logic (works with or without progress callback)
+async function generateScriptInternal(projectId: string, sendProgress: ((data: any) => void) | null) {
+  try {
     // Ensure database connection
     await sequelize.authenticate()
 
     // Load project to get Film Treatment variant data
     const project = await Project.findByPk(projectId)
     if (!project) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Project not found' 
-      }, { status: 404 })
+      throw new Error('Project not found')
     }
 
     const filmTreatmentVariant = project.metadata?.filmTreatmentVariant
     if (!filmTreatmentVariant) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'No Film Treatment variant found in project' 
-      }, { status: 400 })
+      throw new Error('No Film Treatment variant found in project')
     }
 
     // Use project duration or parse from variant
@@ -224,6 +275,19 @@ Generate COMPLETE scenes with full dialogue and action.`
       
       console.log(`[Script Gen] Batch ${batchIndex + 1}/${batches}: Generating scenes ${startScene}-${endScene}`)
       
+      // Send progress: batch started
+      if (sendProgress) {
+        sendProgress({
+          type: 'batch_start',
+          batch: batchIndex + 1,
+          totalBatches: batches,
+          startScene,
+          endScene,
+          scenesInBatch,
+          message: `Generating scenes ${startScene}-${endScene}...`
+        })
+      }
+      
       // Build prompt with context from previous batch
       const previousScenesSummary = allScenes.length > 0
         ? `\n\nPREVIOUS SCENES (for continuity):\n${allScenes.slice(-5).map((s: any) => 
@@ -308,6 +372,20 @@ Generate COMPLETE scenes with full dialogue and action.`
           isExpanded: true
         }))
         allScenes.push(...fallbackScenes)
+      }
+      
+      // Send progress: batch completed
+      if (sendProgress) {
+        const progress = Math.floor((allScenes.length / sceneCount) * 100)
+        sendProgress({
+          type: 'batch_complete',
+          batch: batchIndex + 1,
+          totalBatches: batches,
+          scenesCompleted: allScenes.length,
+          totalScenes: sceneCount,
+          progress,
+          message: `${allScenes.length}/${sceneCount} scenes completed`
+        })
       }
     }
 
@@ -396,16 +474,22 @@ Generate COMPLETE scenes with full dialogue and action.`
       metadata: updatedMetadata
     })
 
-    return NextResponse.json({
+    // Send final progress: generation complete
+    if (sendProgress) {
+      sendProgress({
+        type: 'complete',
+        script: scriptData
+      })
+    }
+
+    // Return data (for non-SSE mode)
+    return {
       success: true,
       script: scriptData
-    })
+    }
   } catch (error: any) {
-    console.error('[Generate Script] Error:', error)
-    return NextResponse.json({
-      success: false,
-      error: error.message || 'Failed to generate script'
-    }, { status: 500 })
+    console.error('[Generate Script Internal] Error:', error)
+    throw error
   }
 }
 
