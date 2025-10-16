@@ -310,7 +310,7 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
       <div className="relative h-40 bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center overflow-hidden">
         {getThumbnailUrl() ? (
           <img 
-            src={getThumbnailUrl()!} 
+            src={`${getThumbnailUrl()}?t=${project.metadata?.thumbnailGeneratedAt || Date.now()}`}
             alt={project.title}
             className="w-full h-full object-cover"
           />
