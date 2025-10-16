@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { getCuratedElevenVoices, type CuratedVoice } from '@/lib/tts/voices'
 import { ScenePromptBuilder } from './ScenePromptBuilder'
+import ScenePromptDrawer from './ScenePromptDrawer'
 
 interface ScriptPanelProps {
   script: any
@@ -15,9 +16,11 @@ interface ScriptPanelProps {
   onExpandAllScenes?: () => Promise<void>
   onGenerateSceneImage?: (sceneIdx: number, customPrompt?: string) => Promise<void>
   characters?: Array<{ name: string; description: string }>
+  projectId?: string
+  visualStyle?: string
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [] }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [editMode, setEditMode] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -38,6 +41,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [sceneBuilderOpen, setSceneBuilderOpen] = useState(false)
   const [sceneBuilderIdx, setSceneBuilderIdx] = useState<number | null>(null)
   const [scenePrompts, setScenePrompts] = useState<Record<number, string>>({})
+  
+  // Scene prompt drawer state (new editor)
+  const [sceneDrawerOpen, setSceneDrawerOpen] = useState(false)
+  const [sceneDrawerIdx, setSceneDrawerIdx] = useState<number | null>(null)
 
   const scenes = script?.script?.scenes || []
 
@@ -189,6 +196,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     setSceneBuilderOpen(true)
   }
 
+  const handleOpenSceneDrawer = (sceneIdx: number) => {
+    setSceneDrawerIdx(sceneIdx)
+    setSceneDrawerOpen(true)
+  }
+
   const handleApplyScenePrompt = (prompt: string) => {
     if (sceneBuilderIdx !== null) {
       setScenePrompts(prev => ({ ...prev, [sceneBuilderIdx]: prompt }))
@@ -326,6 +338,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   onGenerateImage={handleGenerateImage}
                   isGeneratingImage={generatingImageForScene === idx}
                   onOpenPromptBuilder={handleOpenSceneBuilder}
+                  onOpenPromptDrawer={handleOpenSceneDrawer}
                   scenePrompt={scenePrompts[idx]}
                   onPromptChange={(sceneIdx, prompt) => setScenePrompts(prev => ({ ...prev, [sceneIdx]: prompt }))}
                 />
@@ -349,6 +362,27 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           onApply={handleApplyScenePrompt}
         />
       )}
+
+      {/* Scene Prompt Drawer (New Editor with AI Assist) */}
+      {sceneDrawerIdx !== null && projectId && (
+        <ScenePromptDrawer
+          open={sceneDrawerOpen}
+          onClose={() => {
+            setSceneDrawerOpen(false)
+            setSceneDrawerIdx(null)
+          }}
+          scene={scenes[sceneDrawerIdx]}
+          characters={characters}
+          visualStyle={visualStyle || 'Cinematic'}
+          projectId={projectId}
+          onSceneImageGenerated={(imageUrl, sceneNumber) => {
+            // Trigger refresh - the parent component should listen for scene-updated event
+            window.dispatchEvent(new CustomEvent('scene-updated', {
+              detail: { sceneNumber, imageUrl }
+            }))
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -367,11 +401,12 @@ interface SceneCardProps {
   onGenerateImage?: (sceneIdx: number) => Promise<void>
   isGeneratingImage?: boolean
   onOpenPromptBuilder?: (sceneIdx: number) => void
+  onOpenPromptDrawer?: (sceneIdx: number) => void
   scenePrompt?: string
   onPromptChange?: (sceneIdx: number, prompt: string) => void
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, scenePrompt, onPromptChange }: SceneCardProps) {
+function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const promptTextareaRef = useRef<HTMLTextAreaElement>(null)
   
@@ -400,6 +435,13 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
     e.stopPropagation()
     if (onOpenPromptBuilder) {
       onOpenPromptBuilder(sceneIdx)
+    }
+  }
+
+  const handleOpenDrawer = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (onOpenPromptDrawer) {
+      onOpenPromptDrawer(sceneIdx)
     }
   }
 
@@ -468,6 +510,15 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
             <>
               <Button
                 size="sm"
+                onClick={handleOpenDrawer}
+                disabled={isGeneratingImage}
+                className="bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 text-xs px-2 py-1 h-auto"
+                title="Edit scene image with AI assist"
+              >
+                <Edit className="w-3 h-3" />
+              </Button>
+              <Button
+                size="sm"
                 onClick={handleOpenBuilder}
                 disabled={isGeneratingImage}
                 className="bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 text-xs px-2 py-1 h-auto"
@@ -480,7 +531,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                 onClick={handleGenerateImage}
                 disabled={isGeneratingImage}
                 className="bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 text-xs px-2 py-1 h-auto flex items-center gap-1"
-                title="Generate image from prompt"
+                title="Quick generate image"
               >
                 {isGeneratingImage ? (
                   <Loader className="w-3 h-3 animate-spin" />

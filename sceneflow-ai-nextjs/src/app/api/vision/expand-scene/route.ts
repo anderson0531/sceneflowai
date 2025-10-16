@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
+import { callVertexAIImagen } from '@/lib/vertexai/client'
+import { uploadImageToBlob } from '@/lib/storage/blob'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -88,7 +90,7 @@ export async function POST(request: NextRequest) {
     expandedScene.isExpanded = true
 
     // Generate image asynchronously (don't await to avoid timeout)
-    generateSceneImage(sceneNumber, expandedScene, characters, visualStyle)
+    generateSceneImage(sceneNumber, expandedScene, characters, visualStyle, projectId)
       .then(imageUrl => {
         if (imageUrl) {
           console.log(`[Expand Scene] Image generated asynchronously for scene ${sceneNumber}`)
@@ -192,49 +194,56 @@ Include realistic dialogue if characters speak. Make visualDescription very spec
   }
 }
 
-// Helper: Generate scene image
+// Helper: Generate scene image using Vertex AI Imagen 3
 async function generateSceneImage(
   sceneNumber: number,
   scene: any,
   characters: any[],
-  visualStyle: string
+  visualStyle: string,
+  projectId?: string,
+  customPrompt?: string
 ): Promise<string | null> {
   try {
-    // Build image prompt from scene
-    const prompt = `${scene.visualDescription || scene.action}
+    // Build enhanced image prompt from scene
+    const characterList = characters.length > 0 
+      ? `\nCharacters: ${characters.map(c => c.name || c).join(', ')}`
+      : ''
+    
+    const defaultPrompt = `Generate a cinematic scene image:
 
-Style: ${visualStyle}
-Setting: ${scene.heading}
+Scene: ${scene.heading}
+Action: ${scene.visualDescription || scene.action || scene.summary}
+Visual Style: ${visualStyle}${characterList}
 
-Cinematic, high-quality, professional composition.`
+Requirements:
+- Professional film production quality
+- Cinematic composition and framing
+- ${visualStyle} visual aesthetic
+- Proper blocking and staging
+- Authentic lighting for scene mood
+- 16:9 landscape aspect ratio
+- High detail and photorealistic rendering
+- No text, titles, or watermarks
+- Film-ready production value`
 
-    // Get base URL for internal API call
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : 'http://localhost:3000'
+    const prompt = customPrompt || defaultPrompt
 
-    // Call image generation API
-    const res = await fetch(`${baseUrl}/api/generate-image`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        prompt: prompt.slice(0, 1000), // Limit prompt length
-        options: {
-          width: 1024,
-          height: 576, // 16:9 aspect ratio
-          style: 'cinematic'
-        }
-      })
+    console.log(`[Scene Image] Generating with Vertex AI Imagen 3 for scene ${sceneNumber}`)
+
+    // Generate with Vertex AI Imagen 3 (same as thumbnails)
+    const base64Image = await callVertexAIImagen(prompt, {
+      aspectRatio: '16:9',
+      numberOfImages: 1
     })
 
-    if (!res.ok) {
-      console.warn(`[Scene Image] Failed to generate image for scene ${sceneNumber}: ${res.status}`)
-      return null
-    }
+    // Upload to Vercel Blob
+    const blobUrl = await uploadImageToBlob(
+      base64Image,
+      `scenes/${projectId || 'unknown'}-scene-${sceneNumber}-${Date.now()}.png`
+    )
 
-    const data = await res.json()
-    console.log(`[Scene Image] Generated image for scene ${sceneNumber}`)
-    return data.url || null
+    console.log(`[Scene Image] Scene ${sceneNumber} image uploaded to Blob`)
+    return blobUrl
   } catch (error) {
     console.error(`[Scene Image] Error generating image for scene ${sceneNumber}:`, error)
     return null // Don't fail the whole scene if image fails
