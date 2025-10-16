@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import UserProviderConfig from '@/models/UserProviderConfig'
 import { sequelize } from '@/config/database'
+import { callVertexAIImagen } from '@/lib/vertexai/client'
+import { uploadImageToBlob } from '@/lib/storage/blob'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -145,100 +147,22 @@ async function generateCharacterImage(params: {
   apiKey: string
   prompt: string
 }): Promise<string> {
-  const { provider, apiKey, prompt } = params
+  // Force Vertex AI for now (bypass BYOK)
+  console.log('[Character Gen] Using Vertex AI Imagen 3 (platform service account)')
   
-  switch (provider) {
-    case 'OPENAI':
-      return await generateWithDALLE(apiKey, prompt)
-    case 'GOOGLE_GEMINI':
-      return await generateWithGemini(apiKey, prompt)
-    case 'STABILITY_AI':
-      return await generateWithStability(apiKey, prompt)
-    default:
-      throw new Error(`Unsupported provider: ${provider}`)
-  }
-}
-
-async function generateWithDALLE(apiKey: string, prompt: string): Promise<string> {
-  const response = await fetch('https://api.openai.com/v1/images/generations', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model: 'dall-e-3',
-      prompt: prompt.slice(0, 4000), // DALL-E limit
-      size: '1024x1024',
-      quality: 'hd',
-      style: 'vivid',
-      n: 1
-    })
+  const base64Image = await callVertexAIImagen(params.prompt, {
+    aspectRatio: '1:1', // Portrait aspect ratio
+    numberOfImages: 1
   })
   
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
-    throw new Error(error.error?.message || `DALL-E API error: ${response.status}`)
-  }
-  
-  const data = await response.json()
-  return data.data[0].url
-}
-
-async function generateWithGemini(apiKey: string, prompt: string): Promise<string> {
-  // Gemini Imagen 3 API call
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        instances: [{
-          prompt: prompt
-        }],
-        parameters: {
-          sampleCount: 1,
-          aspectRatio: '1:1',
-          safetyFilterLevel: 'block_few',
-          personGeneration: 'allow_adult'
-        }
-      })
-    }
+  const blobUrl = await uploadImageToBlob(
+    base64Image,
+    `characters/char-${Date.now()}.png`
   )
   
-  if (!response.ok) {
-    throw new Error(`Gemini Imagen API error: ${response.status}`)
-  }
-  
-  const data = await response.json()
-  // Return base64 or URL depending on Gemini's response format
-  return data.predictions?.[0]?.bytesBase64Encoded 
-    ? `data:image/png;base64,${data.predictions[0].bytesBase64Encoded}`
-    : data.predictions?.[0]?.imageUrl || ''
+  return blobUrl
 }
 
-async function generateWithStability(apiKey: string, prompt: string): Promise<string> {
-  const response = await fetch(
-    'https://api.stability.ai/v2beta/stable-image/generate/core',
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-        prompt,
-        output_format: 'png',
-        aspect_ratio: '1:1'
-      })
-    }
-  )
-  
-  if (!response.ok) {
-    throw new Error(`Stability AI API error: ${response.status}`)
-  }
-  
-  const data = await response.json()
-  return data.image ? `data:image/png;base64,${data.image}` : ''
-}
+// Old provider functions removed - now using Vertex AI for all character images
+// BYOK will be re-implemented later with Vertex AI service accounts
 
