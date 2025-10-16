@@ -79,8 +79,8 @@ export async function callVertexAIImagen(
         sampleCount: options.numberOfImages || 1,
         aspectRatio: options.aspectRatio || '16:9',
         negativePrompt: options.negativePrompt || '',
-        safetySetting: 'block_few',
-        personGeneration: 'allow_all'
+        safetySetting: 'block_few'
+        // personGeneration removed - not available for all GCP accounts
       }
     })
   })
