@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { uploadImageToBlob } from '@/lib/storage/blob'
+import { callVertexAIImagen } from '@/lib/vertexai/client'
 
 export const maxDuration = 60
 
@@ -23,13 +24,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // BYOK: Use user-provided key if available, fallback to server key for development
-    const geminiApiKey = userApiKey || process.env.GOOGLE_GEMINI_API_KEY
-
-    if (!geminiApiKey) {
+    // TODO: BYOK - Use user's service account credentials when BYOK is implemented
+    // For now, use platform Vertex AI service account
+    if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || !process.env.GCP_PROJECT_ID) {
       return NextResponse.json({
         success: false,
-        error: 'Google Gemini API key required. Please configure BYOK settings.',
+        error: 'Vertex AI not configured. Please set GOOGLE_APPLICATION_CREDENTIALS_JSON and GCP_PROJECT_ID.',
         requiresBYOK: true
       }, { status: 400 })
     }
@@ -56,77 +56,18 @@ Style Requirements:
 - No text, titles, or watermarks on the image
 - Photorealistic or stylized based on genre appropriateness`
 
-    console.log('[Thumbnail] Generating with Gemini/Imagen...')
+    console.log('[Thumbnail] Generating with Vertex AI Imagen...')
 
-    // Try multiple Gemini image models
-    const modelsToTry = [
-      'gemini-2.0-flash-exp',  // Gemini 2.0 Flash experimental
-      'gemini-1.5-flash',      // Gemini 1.5 Flash (known to work for text)
-      'gemini-1.5-pro'         // Gemini Pro (fallback)
-    ]
-
-    let imageUrl: string | null = null
-    let usedModel: string | null = null
-
-    for (const model of modelsToTry) {
-      try {
-        console.log(`[Thumbnail] Trying model: ${model}`)
-        
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ 
-                parts: [{ 
-                  text: `Generate an image: ${enhancedPrompt}` 
-                }] 
-              }]
-            })
-          }
-        )
-        
-        if (!response.ok) {
-          console.log(`[Thumbnail] Model ${model} returned ${response.status}`)
-          continue
-        }
-        
-        const data = await response.json()
-        
-        // Try to extract image from response
-        if (data?.candidates?.[0]?.content?.parts) {
-          for (const part of data.candidates[0].content.parts) {
-            const inlineData = part.inlineData || part.inline_data
-            if (inlineData?.mimeType?.startsWith('image/') && inlineData?.data) {
-              imageUrl = `data:${inlineData.mimeType};base64,${inlineData.data}`
-              usedModel = model
-              break
-            }
-          }
-        }
-        
-        if (imageUrl) break // Success!
-        
-      } catch (error) {
-        console.log(`[Thumbnail] Model ${model} failed:`, error)
-        continue
-      }
-    }
-
-    if (!imageUrl) {
-      return NextResponse.json({
-        success: false,
-        error: 'No Gemini models available for image generation. Imagen may require Vertex AI or special access.',
-        triedModels: modelsToTry
-      }, { status: 503 })
-    }
-
-    console.log(`[Thumbnail] Success with model: ${usedModel}`)
+    // Generate image using Vertex AI Imagen
+    const base64Image = await callVertexAIImagen(enhancedPrompt, {
+      aspectRatio: '16:9',
+      numberOfImages: 1
+    })
     
-    // Upload to Vercel Blob instead of storing base64
-    console.log('[Thumbnail] Uploading to Vercel Blob storage...')
-    const blobUrl = await uploadImageToBlob(imageUrl, `thumbnails/${projectId}-${Date.now()}.png`)
+    console.log('[Thumbnail] Image generated, uploading to Vercel Blob...')
+    
+    // Upload to Vercel Blob storage
+    const blobUrl = await uploadImageToBlob(base64Image, `thumbnails/${projectId}-${Date.now()}.png`)
     console.log('[Thumbnail] Uploaded to Blob:', blobUrl)
     
     // Update project metadata with the thumbnail
@@ -154,8 +95,8 @@ Style Requirements:
     return NextResponse.json({ 
       success: true, 
       imageUrl: blobUrl, // Return Blob URL, not base64
-      model: usedModel || 'unknown',
-      provider: 'google-gemini',
+      model: 'imagegeneration@006',
+      provider: 'vertex-ai-imagen',
       usedBYOK: !!userApiKey,
       storageType: 'vercel-blob'
     })
