@@ -143,137 +143,134 @@ CRITICAL: Return ONLY the JSON array, no other text.`
     // TWO-STAGE GENERATION for guaranteed completeness
     console.log(`[Script Gen] Starting two-stage generation: ${sceneCount} scenes, ${targetDuration}s`)
     
-    // STAGE 1: Generate scene outlines (lightweight, always completes)
+    // SINGLE-PASS: Generate complete script with all scenes fully written
     const perSceneDuration = Math.floor(targetDuration / sceneCount)
-    const outlinesPrompt = `You are an expert screenwriter and script analyst with deep knowledge of screenplay structure, pacing, and scene construction.
+    const fullScriptPrompt = `You are an expert screenwriter. Generate a COMPLETE, PRODUCTION-READY script based on the approved film treatment.
 
-CRITICAL TASK: Expand the provided Beat Structure from a Film Treatment into a detailed, logical Scene Structure suitable for a ${Math.floor(targetDuration / 60)}-minute ${filmTreatmentVariant.genre || 'video'}.
+STORY BIBLE (MUST FOLLOW):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Title: ${filmTreatmentVariant.title || 'Untitled'}
+Logline: ${filmTreatmentVariant.logline || ''}
+Genre: ${filmTreatmentVariant.genre || 'Documentary'}
+Duration: ${targetDuration} seconds (${Math.floor(targetDuration / 60)} minutes)
+Tone: ${toneDescription}
+Visual Style: ${visualStyle}
 
-PROJECT DETAILS:
-- Title: ${filmTreatmentVariant.title || 'Untitled'}
-- Genre: ${filmTreatmentVariant.genre || 'Documentary'}  
-- Duration: ${targetDuration} seconds (${Math.floor(targetDuration / 60)} minutes)
-- Tone: ${toneDescription}
-- Required Scene Count: ${sceneCount} scenes (industry standard: 25-45 for 60 min)
+Synopsis:
+${filmTreatmentVariant.synopsis || 'Follow the treatment closely'}
 
-BEAT STRUCTURE TO EXPAND:
+BEAT STRUCTURE:
 ${Array.isArray(beatSheet) && beatSheet.length > 0 ? 
   beatSheet.map((b: any, i: number) => 
     `Beat ${i + 1}: "${b.title || b.beat_title}" (${b.minutes || 1} min)
-    Intent: ${b.intent || b.synopsis || 'Advance the story'}
-    `
+  Intent: ${b.intent || b.synopsis || 'Advance the story'}`
   ).join('\n') 
   : 'No beats provided - create logical story progression'
 }
 
-CRITICAL INSTRUCTIONS - BEAT TO SCENE EXPANSION:
+CHARACTERS:
+${characters.map((c: any) => `${c.name} (${c.role}): ${c.description || ''}`).join('\n') || 'Extract characters from story'}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. DECONSTRUCT BEATS: Each beat above must be broken into ${minScenesPerBeat}-${maxScenesPerBeat} sequential scenes.
+CRITICAL REQUIREMENTS:
+1. Generate a COMPLETE, CONTINUOUS script with ${sceneCount} scenes
+2. Each scene must have: heading, action, dialogue, visual description
+3. Stay 100% faithful to the logline, synopsis, and beat structure
+4. Use ONLY the characters defined above
+5. Write in industry-standard screenplay format
+6. Ensure smooth transitions between scenes
+7. Maintain consistent pacing aligned with beat structure
+8. Create natural, character-appropriate dialogue
+9. Each scene is ONE time + ONE location
 
-2. SUB-BEATS: For each major beat, create 2-4 Sub-Beats (mini-goals). Each Sub-Beat = 1-2 scenes.
-   Example: Beat "Journey to Discovery" → Sub-Beats: "Preparation", "Departure", "Obstacle", "Arrival"
+SCREENPLAY FORMAT - Return ONLY valid JSON:
+{
+  "title": "${filmTreatmentVariant.title || 'Untitled'}",
+  "logline": "${filmTreatmentVariant.logline || ''}",
+  "scenes": [
+    {
+      "sceneNumber": 1,
+      "heading": "INT. LOCATION - TIME",
+      "action": "Detailed action description of what happens in this scene",
+      "dialogue": [
+        {"character": "CHARACTER_NAME", "line": "Their dialogue"},
+        {"character": "CHARACTER_NAME", "line": "Response"}
+      ],
+      "visualDescription": "Specific camera angles, lighting, composition for image generation",
+      "duration": ${perSceneDuration},
+      "beat": "Beat title this scene belongs to",
+      "purpose": "Why this scene exists",
+      "transition": "CUT TO",
+      "characters": ["CHARACTER_NAME"]
+    }
+    // ... all ${sceneCount} scenes in sequence
+  ]
+}
 
-3. SCENE DEFINITION: A scene is ONE continuous action in ONE time and ONE place.
-   - New Location = New Scene (INT. OFFICE → EXT. STREET = 2 scenes)
-   - New Time = New Scene (MORNING → AFTERNOON = 2 scenes)
-   - Simultaneous actions in different places = Separate scenes
+Generate the ENTIRE script as one cohesive narrative. Do NOT generate outlines - generate FULL, COMPLETE scenes with dialogue and action.`
 
-4. SCENE PURPOSE: Each scene must:
-   - Advance plot OR reveal character OR provide context OR establish mood
-   - Have clear beginning, middle, end
-   - Connect logically to previous/next scene
-
-5. PACING: 
-   - ${sceneCount} total scenes for ${Math.floor(targetDuration / 60)} minutes
-   - Average scene length: ${Math.floor(targetDuration / sceneCount)} seconds (1-3 pages)
-   - DO NOT merge disparate actions ("drives, argues, arrives" = 3 scenes)
-
-6. CONTINUITY: Use proper scene transitions:
-   - CONTINUOUS (same time, different place)
-   - LATER (time jump, same place)
-   - SAME TIME (parallel action)
-
-CRITICAL: These outlines will be expanded later. Provide SPECIFIC, CONCRETE details, not vague descriptions.
-
-REQUIRED OUTPUT - JSON array of EXACTLY ${sceneCount} scenes with DETAILED summaries:
-[
-  {
-    "num": 1,
-    "beat": "Beat 1 title",
-    "subBeat": "Sub-beat name (e.g., Setup/Preparation)",
-    "heading": "INT./EXT. SPECIFIC LOCATION - TIME",
-    "summary": "DETAILED 3-4 sentence description with SPECIFIC actions, emotions, and story beats. Include WHO does WHAT and WHY. Example: 'Sarah enters the abandoned warehouse, her flashlight cutting through dust motes. She discovers the locked safe behind a false wall and realizes someone has been here recently—fresh boot prints in the dust. Her phone buzzes: a threatening text from an unknown number.'",
-    "purpose": "Why this scene exists (plot/character/context/mood)",
-    "duration": ${Math.floor(targetDuration / sceneCount)},
-    "transition": "CONTINUOUS/CUT TO/LATER/etc",
-    "characters": ["CHARACTER_NAME"]
-  }
-]
-
-SUMMARY REQUIREMENTS:
-- 3-4 sentences minimum
-- Include WHO, WHAT, WHY
-- Specific actions, not vague ("they talk" → "Maria confronts John about the missing funds, waving the bank statement in his face")
-- Include emotional beats and reactions
-- Concrete details that guide expansion
-
-VALIDATION:
-- Must return EXACTLY ${sceneCount} scenes
-- Each beat must have ${minScenesPerBeat}-${maxScenesPerBeat} scenes
-- Each scene is ONE time + ONE place
-- Total duration = ${targetDuration} seconds
-- Logical sequence from scene 1 to scene ${sceneCount}
-
-Return ONLY the JSON array.`
-
-    // STAGE 1: Generate outlines
-    console.log(`[Script Gen] Stage 1: Generating ${sceneCount} scene outlines...`)
-    const outlines = await callGeminiWithRetry(apiKey, outlinesPrompt, 8000, 2) // 2 retries with 60s timeout each
+    // Generate complete script in one pass
+    console.log(`[Script Gen] Generating complete ${sceneCount}-scene script in one pass...`)
+    const fullScript = await callGeminiWithRetry(apiKey, fullScriptPrompt, 32000, 2) // Increased token limit for full script
     
-    let parsedOutlines: any[]
+    let parsedScript: any
     try {
-      parsedOutlines = JSON.parse(outlines)
-      if (!Array.isArray(parsedOutlines)) {
-        throw new Error('Outlines must be an array')
+      parsedScript = JSON.parse(fullScript)
+      if (!parsedScript.scenes || !Array.isArray(parsedScript.scenes)) {
+        throw new Error('Script must contain scenes array')
       }
     } catch (e) {
-      // Try to extract array from response
-      const arrayMatch = outlines.match(/\[[\s\S]*\]/)
-      if (arrayMatch) {
+      console.error('[Script Gen] Failed to parse script JSON:', e)
+      // Try to extract JSON object from response
+      const jsonMatch = fullScript.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
         try {
-          parsedOutlines = JSON.parse(arrayMatch[0])
+          parsedScript = JSON.parse(jsonMatch[0])
+          if (!parsedScript.scenes || !Array.isArray(parsedScript.scenes)) {
+            throw new Error('Extracted JSON does not contain scenes array')
+          }
         } catch (parseError) {
-          console.warn('[Script Gen] Failed to parse outlines, generating fallback')
-          parsedOutlines = generateFallbackOutlines(beatSheet, sceneCount, filmTreatmentVariant, perSceneDuration)
+          console.warn('[Script Gen] Failed to parse script, generating fallback')
+          parsedScript = {
+            title: filmTreatmentVariant.title,
+            logline: filmTreatmentVariant.logline,
+            scenes: generateFallbackOutlines(beatSheet, sceneCount, filmTreatmentVariant, perSceneDuration)
+          }
         }
       } else {
-        console.warn('[Script Gen] Failed to parse outlines, generating fallback')
-        parsedOutlines = generateFallbackOutlines(beatSheet, sceneCount, filmTreatmentVariant, perSceneDuration)
+        console.warn('[Script Gen] No JSON found in response, generating fallback')
+        parsedScript = {
+          title: filmTreatmentVariant.title,
+          logline: filmTreatmentVariant.logline,
+          scenes: generateFallbackOutlines(beatSheet, sceneCount, filmTreatmentVariant, perSceneDuration)
+        }
       }
     }
     
-    if (parsedOutlines.length < sceneCount) {
-      console.warn(`[Script Gen] Stage 1: Got ${parsedOutlines.length}/${sceneCount} outlines`)
+    if (parsedScript.scenes.length < sceneCount) {
+      console.warn(`[Script Gen] Got ${parsedScript.scenes.length}/${sceneCount} scenes`)
     } else {
-      console.log(`[Script Gen] Stage 1: Successfully generated ${parsedOutlines.length} outlines!`)
+      console.log(`[Script Gen] Successfully generated ${parsedScript.scenes.length} complete scenes!`)
     }
 
-    // Convert outlines to lightweight scene objects with isExpanded: false
-    const outlineScenes = parsedOutlines.map((outline, idx) => ({
+    // Convert full scenes to scene objects with dialogue and action (already expanded)
+    const outlineScenes = parsedScript.scenes.map((scene: any, idx: number) => ({
       sceneNumber: idx + 1,
-      beat: outline.beat || 'Unknown Beat',
-      subBeat: outline.subBeat || '',
-      heading: outline.heading || outline.head || `SCENE ${idx + 1}`,
-      summary: outline.summary || outline.description || 'Scene content',
-      purpose: outline.purpose || 'Advance story',
-      duration: outline.duration || Math.floor(targetDuration / sceneCount),
-      transition: outline.transition || 'CUT TO',
-      isExpanded: false,
-      // Preserve outline data for later expansion
-      _outline: outline
+      beat: scene.beat || 'Unknown Beat',
+      heading: scene.heading || `SCENE ${idx + 1}`,
+      action: scene.action || scene.summary || 'Scene content',
+      dialogue: Array.isArray(scene.dialogue) ? scene.dialogue : [],
+      visualDescription: scene.visualDescription || scene.action || 'Cinematic shot',
+      purpose: scene.purpose || 'Advance story',
+      duration: scene.duration || Math.floor(targetDuration / sceneCount),
+      transition: scene.transition || 'CUT TO',
+      characters: Array.isArray(scene.characters) ? scene.characters : [],
+      isExpanded: true, // Already fully generated with dialogue and action
+      // Preserve summary for reference
+      _outline: { summary: scene.action?.substring(0, 150) || scene.heading }
     }))
 
-    console.log(`[Script Gen] Returning ${outlineScenes.length} scene outlines (not yet expanded)`)
+    console.log(`[Script Gen] Returning ${outlineScenes.length} fully expanded scenes with dialogue`)
 
     // Extract characters from scenes if not provided by variant
     const extractedCharacters = characters.length > 0 ? characters : extractCharactersFromScenes(outlineScenes)
@@ -284,16 +281,16 @@ Return ONLY the JSON array.`
       finalCount: extractedCharacters.length
     })
     
-    // Combine into final script structure (outlines only, not expanded)
+    // Combine into final script structure (fully expanded scenes with dialogue)
     const scriptData = {
-      title: filmTreatmentVariant.title || 'Untitled',
-      logline: filmTreatmentVariant.logline || '',
+      title: parsedScript.title || filmTreatmentVariant.title || 'Untitled',
+      logline: parsedScript.logline || filmTreatmentVariant.logline || '',
       script: {
         scenes: outlineScenes
       },
       characters: extractedCharacters,
       totalDuration: outlineScenes.reduce((sum: number, scene: any) => sum + (scene.duration || 0), 0),
-      // Store context for later scene expansion
+      // Store context for reference and potential regeneration
       _context: {
         visualStyle,
         toneDescription,
