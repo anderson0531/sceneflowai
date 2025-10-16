@@ -70,7 +70,7 @@ const workflowNav = [
   },
   { 
     name: 'Polish', 
-    href: '/dashboard/workflow/review', 
+    href: '/dashboard/workflow/generation', 
     icon: CheckCircle,
     description: 'Screening & Editing',
     step: 'review',
@@ -79,7 +79,7 @@ const workflowNav = [
   },
   { 
     name: 'Launchpad', 
-    href: '/dashboard/workflow/optimization', 
+    href: '/dashboard', 
     icon: Wrench,
     description: 'Optimization & Publishing',
     step: 'optimization',
@@ -98,7 +98,7 @@ export function Sidebar() {
   const { sidebarOpen, setSidebarOpen, user, currentStep, projects, currentProject } = useEnhancedStore()
   const pathname = usePathname()
   const studioHref = currentProject?.id ? `/dashboard/studio/${currentProject.id}` : '/dashboard/studio/new-project'
-  const projectVisionHref = currentProject?.id ? `/projects/${currentProject.id}/vision` : '/dashboard/workflow/storyboard'
+  const projectVisionHref = currentProject?.id ? `/dashboard/workflow/vision/${currentProject.id}` : '/dashboard/workflow/storyboard'
   
   const isActive = (href: string) => {
     if (href.startsWith('/dashboard/studio')) {

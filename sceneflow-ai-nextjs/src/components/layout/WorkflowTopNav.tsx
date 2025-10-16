@@ -8,7 +8,7 @@ const steps = (
   projectId: string | undefined
 ): Array<{ key: string; label: string; href: string }> => [
   { key: 'blueprint', label: 'Blueprint', href: '/dashboard/studio/new-project' },
-  { key: 'vision', label: 'Vision', href: `/projects/${projectId || 'current'}/vision` },
+  { key: 'vision', label: 'Vision', href: `/dashboard/workflow/vision/${projectId || 'current'}` },
   { key: 'action', label: 'Action Plan', href: '/dashboard/workflow/scene-direction' },
   { key: 'creation', label: 'Creation Hub', href: '/dashboard/workflow/video-generation' },
   { key: 'polish', label: 'Polish', href: '/dashboard/workflow/generation' },

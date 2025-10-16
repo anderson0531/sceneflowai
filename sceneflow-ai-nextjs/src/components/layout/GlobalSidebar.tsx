@@ -29,14 +29,14 @@ function usePhaseLocks(seriesId?: string, episodeId?: string) {
 function useLegacyWorkflow(pathname: string) {
   const currentProject = useStore(s => s.currentProject)
   const studioHref = currentProject?.id ? `/dashboard/studio/${currentProject.id}` : '/dashboard/studio/new-project'
-  const projectVisionHref = currentProject?.id ? `/projects/${currentProject.id}/vision` : '/dashboard/workflow/storyboard'
+  const projectVisionHref = currentProject?.id ? `/dashboard/workflow/vision/${currentProject.id}` : '/dashboard/workflow/storyboard'
   const items = [
     { key: 'start', label: 'The Blueprint', href: studioHref },
     { key: 'vision', label: 'Vision', href: projectVisionHref },
     { key: 'direction', label: 'Action Plan', href: '/dashboard/workflow/scene-direction' },
     { key: 'video', label: 'Creation Hub', href: '/dashboard/workflow/video-generation' },
-    { key: 'review', label: 'Polish', href: '/dashboard/workflow/review' },
-    { key: 'opt', label: 'Launchpad', href: '/dashboard/workflow/optimization' },
+    { key: 'review', label: 'Polish', href: '/dashboard/workflow/generation' },
+    { key: 'opt', label: 'Launchpad', href: '/dashboard' },
   ]
   return { items }
 }
