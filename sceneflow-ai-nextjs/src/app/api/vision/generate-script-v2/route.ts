@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
-import { callVertexAIImagen } from '../../../../lib/vertexai/client'
-import { uploadImageToBlob } from '../../../../lib/storage/blob'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120  // Allow 2 minutes for 2 batches
@@ -58,41 +56,22 @@ export async function POST(request: NextRequest) {
     const extractedCharacters = extractCharacters(allScenes)
     console.log(`[Script Gen V2] Extracted ${extractedCharacters.length} characters`)
 
-    // Generate character reference images
-    const charactersWithImages: any[] = []
-    for (const char of extractedCharacters) {
-      try {
-        const prompt = `Professional character portrait: ${char.name}, ${char.description}, photorealistic, studio lighting, neutral background`
-        
-        // Call Vertex AI for character image
-        const base64Image = await callVertexAIImagen(prompt, {
-          aspectRatio: '1:1',
-          numberOfImages: 1
-        })
-        
-        const imageUrl = await uploadImageToBlob(
-          base64Image,
-          `characters/${projectId}-${char.name.replace(/\s+/g, '-')}-${Date.now()}.png`
-        )
-        
-        charactersWithImages.push({
-          ...char,
-          referenceImage: imageUrl
-        })
-        
-        console.log(`[Script Gen V2] Generated image for ${char.name}`)
-      } catch (error) {
-        console.error(`[Script Gen V2] Failed to generate image for ${char.name}:`, error)
-        charactersWithImages.push(char) // Add without image
-      }
-    }
+    // Create character cards with image prompts (no actual images - generated on-demand)
+    const charactersWithPrompts = extractedCharacters.map((char: any) => ({
+      ...char,
+      imagePrompt: `Professional character portrait: ${char.name}, ${char.description}, photorealistic, high detail, studio lighting, neutral background, character design, 8K quality`,
+      referenceImage: null,  // No image yet - user will generate on-demand
+      generating: false
+    }))
+
+    console.log(`[Script Gen V2] Created ${charactersWithPrompts.length} character cards with prompts (images will be generated on-demand)`)
 
     // Build final script
     const script = {
       title: treatment.title,
       logline: treatment.logline,
       script: { scenes: allScenes },
-      characters: charactersWithImages,  // With images
+      characters: charactersWithPrompts,  // With prompts, no images
       totalDuration: duration
     }
 
