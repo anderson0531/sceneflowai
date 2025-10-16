@@ -65,23 +65,37 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Get expansion context
+    // Get expansion context with story bible
     const context = visionPhase.script._context || {}
     const visualStyle = context.visualStyle || 'Cinematic, high-quality'
     const toneDescription = context.toneDescription || 'Professional'
     const characters = context.characters || []
+    const storyBible = context.storyBible || {}
     const outline = sceneToExpand._outline || sceneToExpand
 
-    console.log(`[Expand Scene] Expanding scene ${sceneNumber}...`)
+    // Get previous scenes for continuity
+    const previousScenes = scenes
+      .filter((s: any) => s.sceneNumber < sceneNumber && s.isExpanded)
+      .map((s: any) => `Scene ${s.sceneNumber}: ${s.heading} - ${s.action?.substring(0, 150)}...`)
+      .slice(-3) // Last 3 scenes
 
-    // Expand the scene using Gemini
+    // Get beat context
+    const sceneBeat = storyBible.sceneToBeatMap?.find((m: any) => m.sceneNumber === sceneNumber)
+    const currentBeat = storyBible.beatStructure?.[sceneBeat?.beatIndex || 0]
+
+    console.log(`[Expand Scene] Expanding scene ${sceneNumber} with full story bible...`)
+
+    // Expand the scene using Gemini with story bible context
     const expandedScene = await expandScene(
       apiKey,
       outline,
       characters,
       visualStyle,
       toneDescription,
-      sceneNumber
+      sceneNumber,
+      storyBible,
+      previousScenes,
+      currentBeat
     )
 
     // Save expanded scene immediately without waiting for image
@@ -134,49 +148,95 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Helper: Expand a single scene outline into full detail
+// Helper: Expand a single scene outline into full detail with story bible context
 async function expandScene(
   apiKey: string,
   outline: any,
   characters: any[],
   visualStyle: string,
   toneDescription: string,
-  sceneNumber: number
+  sceneNumber: number,
+  storyBible: any = {},
+  previousScenes: string[] = [],
+  currentBeat: any = null
 ): Promise<any> {
-  const charNames = characters.map(c => c.name).join(', ') || 'NARRATOR'
-  const prompt = `You are a professional screenwriter. Expand this scene outline into a full, detailed scene.
+  
+  // Build character bible
+  const characterBible = characters.map(c => 
+    `${c.name} (${c.role}): ${c.description || ''}`
+  ).join('\n  ') || 'No predefined characters'
+  
+  // Build previous scene context
+  const sceneHistory = previousScenes.length > 0
+    ? `\n\nPREVIOUS SCENES (for continuity):\n${previousScenes.join('\n')}`
+    : ''
+  
+  // Build beat context
+  const beatContext = currentBeat
+    ? `\n\nCURRENT STORY BEAT:\nBeat: "${currentBeat.title}"\nIntent: ${currentBeat.intent}`
+    : ''
+  
+  const prompt = `You are a professional screenwriter working on a specific production. You MUST stay faithful to the approved film treatment and story bible.
 
-Scene Outline:
-${JSON.stringify(outline, null, 2)}
+CRITICAL: This scene is part of a larger narrative. DO NOT invent new storylines or contradict the treatment.
 
-Visual Style: ${visualStyle}
+STORY BIBLE (APPROVED TREATMENT):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Logline: ${storyBible.logline || 'N/A'}
+Genre: ${storyBible.genre || 'N/A'}
 Tone: ${toneDescription}
-Available Characters: ${charNames}
+Visual Style: ${visualStyle}
 
-Generate a complete scene with:
-1. Heading (location & time)
-2. Detailed action description
-3. Natural dialogue (if characters speak)
-4. Specific visual directions for cinematography
-5. Character list who appear in this scene
+Synopsis:
+${storyBible.synopsis || 'Follow the treatment closely'}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Return ONLY valid JSON in this format:
+CHARACTER BIBLE (maintain consistency):
+  ${characterBible}
+
+${beatContext}
+
+${sceneHistory}
+
+SCENE TO EXPAND:
+Scene Number: ${sceneNumber}
+Heading: ${outline.heading || outline.head}
+Summary: ${outline.summary}
+Duration: ${outline.duration}s
+
+STRICT REQUIREMENTS:
+1. Stay 100% faithful to the logline and synopsis above
+2. Use ONLY the characters defined in the character bible
+3. Maintain continuity with previous scenes
+4. Align with the current story beat's intent
+5. Do NOT introduce new plot elements not in the treatment
+6. Do NOT change character personalities or relationships
+7. Expand the summary into detailed action and dialogue WITHOUT changing the core story
+
+Generate a complete scene that EXPANDS (not changes) the outline. Return ONLY valid JSON:
 {
   "sceneNumber": ${sceneNumber},
   "heading": "INT. LOCATION - TIME",
-  "action": "Detailed action description...",
-  "dialogue": [{"character": "NAME", "line": "dialogue"}],
+  "action": "Detailed action description that MATCHES the synopsis and beat intent...",
+  "dialogue": [{"character": "NAME", "line": "dialogue that matches character voice"}],
   "duration": ${outline.duration || 5},
-  "visualDescription": "Specific camera angles, lighting, composition...",
+  "visualDescription": "Specific camera angles, lighting, composition matching visual style...",
   "characters": ["CHARACTER_NAME"],
   "isExpanded": true
 }
 
-Include realistic dialogue if characters speak. Make visualDescription very specific and concrete.`
+Remember: You are EXPANDING an approved treatment, not creating a new story. Stay faithful to the source material.`
 
   try {
     const response = await callGeminiWithRetry(apiKey, prompt, 16000, 1)
     const scene = JSON.parse(response)
+    
+    // Add story bible reference for future edits
+    scene._storyBibleRef = {
+      beat: currentBeat?.title,
+      logline: storyBible.logline
+    }
+    
     return scene
   } catch (error) {
     console.error(`[Scene Expand] Failed to expand scene ${sceneNumber}:`, error)

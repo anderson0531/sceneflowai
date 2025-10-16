@@ -193,19 +193,29 @@ CRITICAL INSTRUCTIONS - BEAT TO SCENE EXPANSION:
    - LATER (time jump, same place)
    - SAME TIME (parallel action)
 
-REQUIRED OUTPUT - JSON array of EXACTLY ${sceneCount} scenes:
+CRITICAL: These outlines will be expanded later. Provide SPECIFIC, CONCRETE details, not vague descriptions.
+
+REQUIRED OUTPUT - JSON array of EXACTLY ${sceneCount} scenes with DETAILED summaries:
 [
   {
     "num": 1,
     "beat": "Beat 1 title",
     "subBeat": "Sub-beat name (e.g., Setup/Preparation)",
     "heading": "INT./EXT. SPECIFIC LOCATION - TIME",
-    "summary": "What happens in this single time/place unit",
+    "summary": "DETAILED 3-4 sentence description with SPECIFIC actions, emotions, and story beats. Include WHO does WHAT and WHY. Example: 'Sarah enters the abandoned warehouse, her flashlight cutting through dust motes. She discovers the locked safe behind a false wall and realizes someone has been here recently—fresh boot prints in the dust. Her phone buzzes: a threatening text from an unknown number.'",
     "purpose": "Why this scene exists (plot/character/context/mood)",
     "duration": ${Math.floor(targetDuration / sceneCount)},
-    "transition": "CONTINUOUS/CUT TO/LATER/etc"
+    "transition": "CONTINUOUS/CUT TO/LATER/etc",
+    "characters": ["CHARACTER_NAME"]
   }
 ]
+
+SUMMARY REQUIREMENTS:
+- 3-4 sentences minimum
+- Include WHO, WHAT, WHY
+- Specific actions, not vague ("they talk" → "Maria confronts John about the missing funds, waving the bank statement in his face")
+- Include emotional beats and reactions
+- Concrete details that guide expansion
 
 VALIDATION:
 - Must return EXACTLY ${sceneCount} scenes
@@ -287,7 +297,27 @@ Return ONLY the JSON array.`
       _context: {
         visualStyle,
         toneDescription,
-        characters: extractedCharacters
+        characters: extractedCharacters,
+        // Story Bible for consistency during scene expansion
+        storyBible: {
+          logline: filmTreatmentVariant.logline || '',
+          synopsis: filmTreatmentVariant.synopsis || '',
+          genre: filmTreatmentVariant.genre || '',
+          tone: toneDescription,
+          visualStyle,
+          duration: targetDuration,
+          beatStructure: beatSheet.map((b: any) => ({
+            title: b.title || b.beat_title,
+            intent: b.intent || b.synopsis,
+            minutes: b.minutes || 1
+          })),
+          // Map scenes to beats for context
+          sceneToBeatMap: outlineScenes.map((scene: any, idx: number) => ({
+            sceneNumber: scene.sceneNumber,
+            beatIndex: Math.floor(idx / sceneCount * beatSheet.length),
+            beatTitle: beatSheet[Math.floor(idx / sceneCount * beatSheet.length)]?.title || ''
+          }))
+        }
       }
     }
 
