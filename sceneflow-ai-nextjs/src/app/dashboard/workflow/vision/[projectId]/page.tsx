@@ -140,72 +140,34 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   const initiateGeneration = async (proj: Project) => {
-    console.log('[Vision] Starting generation process...')
+    console.log('[Vision] Starting script text generation...')
     setIsGenerating(true)
     
     try {
       const visionPhase = proj.metadata?.visionPhase
-      let freshCharacters = characters
-      let freshScenes = scenes
       
-      // Step 1: Generate script (only if not already done)
+      // ONLY generate script text (not images)
       if (!visionPhase?.scriptGenerated) {
-        console.log('[Vision] Step 1: Generating script...')
+        console.log('[Vision] Generating script text (dialogue and action)...')
         const scriptData = await generateScript(proj)
         if (scriptData) {
-          freshCharacters = scriptData.characters
-          freshScenes = scriptData.scenes
-          console.log('[Vision] Using fresh data:', {
-            characterCount: freshCharacters.length,
-            sceneCount: freshScenes.length
-          })
+          setCharacters(scriptData.characters)
+          setScenes(scriptData.scenes)
+          console.log(`[Vision] Script complete: ${scriptData.scenes.length} scenes, ${scriptData.characters.length} characters`)
         }
-        console.log('[Vision] Step 1: Script generation complete')
+        console.log('[Vision] Script generation complete!')
       } else {
-        console.log('[Vision] Step 1: Script already generated, skipping')
+        console.log('[Vision] Script already generated')
       }
       
-      // Step 2: Generate character references (use fresh data!)
-      if (!visionPhase?.charactersGenerated) {
-        console.log('[Vision] Step 2: Generating characters...')
-        if (freshCharacters.length > 0) {
-          // Update state with fresh data before API call
-          setCharacters(freshCharacters)
-          await new Promise(resolve => setTimeout(resolve, 50)) // Let state update
-          await generateCharacters()
-        } else {
-          console.log('[Vision] No characters to generate images for, marking complete')
-          setGenerationProgress(prev => ({
-            ...prev,
-            characters: { complete: true, progress: 0, total: 0 }
-          }))
-        }
-        console.log('[Vision] Step 2: Character generation complete')
-      } else {
-        console.log('[Vision] Step 2: Characters already generated, skipping')
-      }
+      // Mark progress complete (not generating images automatically)
+      setGenerationProgress(prev => ({
+        ...prev,
+        characters: { complete: true, progress: 0, total: 0 },
+        scenes: { complete: true, progress: 0, total: 0 }
+      }))
       
-      // Step 3: Generate scene images (use fresh data!)
-      if (!visionPhase?.scenesGenerated) {
-        console.log('[Vision] Step 3: Generating scene images...')
-        if (freshScenes.length > 0) {
-          // Update state with fresh data before API call
-          setScenes(freshScenes)
-          await new Promise(resolve => setTimeout(resolve, 50)) // Let state update
-          await generateScenes()
-        } else {
-          console.log('[Vision] No scenes to generate images for, marking complete')
-          setGenerationProgress(prev => ({
-            ...prev,
-            scenes: { complete: true, progress: 0, total: 0 }
-          }))
-        }
-        console.log('[Vision] Step 3: Scene generation complete')
-      } else {
-        console.log('[Vision] Step 3: Scenes already generated, skipping')
-      }
-      
-      console.log('[Vision] All generation complete!')
+      console.log('[Vision] Generation complete! Images can be generated on-demand.')
     } catch (error) {
       console.error('[Vision] Generation error:', error)
       try { const { toast } = require('sonner'); toast.error('Generation failed: ' + (error as Error).message) } catch {}

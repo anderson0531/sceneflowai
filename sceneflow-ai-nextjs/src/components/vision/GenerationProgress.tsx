@@ -20,6 +20,7 @@ export function GenerationProgress({ progress }: GenerationProgressProps) {
       </div>
       
       <div className="space-y-2 text-sm">
+        {/* Script Progress - Only relevant item during script generation */}
         <div className="flex items-center gap-2">
           {progress.script.complete ? (
             <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
@@ -40,33 +41,7 @@ export function GenerationProgress({ progress }: GenerationProgressProps) {
           )}
         </div>
         
-        <div className="flex items-center gap-2">
-          {progress.characters.complete ? (
-            <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-          ) : (
-            <Loader className="w-4 h-4 animate-spin text-sf-primary flex-shrink-0" />
-          )}
-          <span className="text-gray-700 dark:text-gray-300">
-            Character references 
-            {progress.characters.total > 0 && (
-              <span className="text-gray-500 dark:text-gray-400"> ({progress.characters.progress}/{progress.characters.total})</span>
-            )}
-          </span>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          {progress.scenes.complete ? (
-            <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-          ) : (
-            <Loader className="w-4 h-4 animate-spin text-sf-primary flex-shrink-0" />
-          )}
-          <span className="text-gray-700 dark:text-gray-300">
-            Scene images
-            {progress.scenes.total > 0 && (
-              <span className="text-gray-500 dark:text-gray-400"> ({progress.scenes.progress}/{progress.scenes.total})</span>
-            )}
-          </span>
-        </div>
+        {/* Character/Scene progress hidden - images generated on-demand, not during script gen */}
       </div>
     </div>
   )
