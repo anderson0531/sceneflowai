@@ -60,6 +60,28 @@ SCHEMA:
   "setting": "Time/place + world rules",
   "protagonist": "Main character brief (goal/flaw)",
   "antagonist": "Primary opposing force/conflict",
+  
+  "character_descriptions": [
+    {
+      "name": "Character Name",
+      "role": "protagonist | supporting | antagonist",
+      "appearance": "Detailed: Age, height, build, facial features, hair, ethnicity (e.g., 'Mid-30s, 5'10\\", athletic build, sharp jawline, short dark hair, Asian-American')",
+      "demeanor": "Personality, body language, mannerisms, energy (e.g., 'Confident but guarded, stands with arms crossed, speaks deliberately, intense eye contact')",
+      "clothing": "Style, colors, typical outfit, accessories (e.g., 'Business casual: navy blazer, white shirt, dark jeans, leather messenger bag, silver watch')",
+      "description": "Brief character summary for script context"
+    }
+  ],
+  
+  "scene_descriptions": [
+    {
+      "name": "Location Name (e.g., 'Corporate Office', 'Beach House')",
+      "type": "INT | EXT",
+      "location": "Specific place, size, layout (e.g., 'Modern open-plan office, glass walls, 50x30ft space, downtown high-rise 20th floor')",
+      "atmosphere": "Lighting, time of day, weather, mood (e.g., 'Fluorescent overhead lights, late afternoon sun through windows, tense corporate energy, air conditioning hum')",
+      "furniture_props": "Key objects, furniture, decorations (e.g., 'Standing desks with dual monitors, whiteboard walls with diagrams, coffee station, potted plants, framed motivational posters')"
+    }
+  ],
+  
   "themes": ["Theme 1", "Theme 2"],
   "opening_hook": "string",
   "cta": ${formatBlock.includeCTA ? '"string"' : 'null'},
@@ -70,7 +92,14 @@ SCHEMA:
   "visual_style": "string",
   "audio_direction": "string",
   "broll_suggestions": ["string"]
-}`
+}
+
+CRITICAL: 
+- Generate 3-5 detailed character_descriptions (protagonist + supporting characters)
+- Generate 3-5 detailed scene_descriptions (key locations)
+- Include SPECIFIC visual details for consistency in image/video generation
+- Appearance, demeanor, clothing must be concrete and filmable
+- Location, atmosphere, furniture must be specific and visualizable`
 }
 
 function formatLabel(f: Format): string {

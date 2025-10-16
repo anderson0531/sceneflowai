@@ -262,8 +262,22 @@ async function generateFilmTreatment(
     character_descriptions: Array.isArray((parsed as any).character_descriptions)
       ? ((parsed as any).character_descriptions as any[]).map((c: any) => ({
           name: String(c?.name || ''),
+          role: String(c?.role || 'supporting'),
+          appearance: String(c?.appearance || ''),
+          demeanor: String(c?.demeanor || ''),
+          clothing: String(c?.clothing || ''),
           description: String(c?.description || ''),
           image_prompt: c?.image_prompt ? String(c.image_prompt) : undefined,
+        }))
+      : undefined,
+    
+    scene_descriptions: Array.isArray((parsed as any).scene_descriptions)
+      ? ((parsed as any).scene_descriptions as any[]).map((s: any) => ({
+          name: String(s?.name || ''),
+          type: String(s?.type || 'INT'),
+          location: String(s?.location || ''),
+          atmosphere: String(s?.atmosphere || ''),
+          furniture_props: String(s?.furniture_props || '')
         }))
       : undefined,
     
