@@ -4,24 +4,30 @@ export const dynamic = 'force-dynamic'
 
 // Static voice list (ListVoices API is blocked, so we use a curated list)
 const GOOGLE_VOICES = [
-  // Female voices
-  { name: 'en-US-Neural2-F', languageCode: 'en-US', gender: 'FEMALE', type: 'Neural2' },
-  { name: 'en-US-Neural2-C', languageCode: 'en-US', gender: 'FEMALE', type: 'Neural2' },
-  { name: 'en-US-Neural2-E', languageCode: 'en-US', gender: 'FEMALE', type: 'Neural2' },
-  { name: 'en-US-Neural2-G', languageCode: 'en-US', gender: 'FEMALE', type: 'Neural2' },
-  { name: 'en-US-Neural2-H', languageCode: 'en-US', gender: 'FEMALE', type: 'Neural2' },
-  // Male voices
-  { name: 'en-US-Neural2-A', languageCode: 'en-US', gender: 'MALE', type: 'Neural2' },
-  { name: 'en-US-Neural2-D', languageCode: 'en-US', gender: 'MALE', type: 'Neural2' },
-  { name: 'en-US-Neural2-I', languageCode: 'en-US', gender: 'MALE', type: 'Neural2' },
-  { name: 'en-US-Neural2-J', languageCode: 'en-US', gender: 'MALE', type: 'Neural2' },
-  // WaveNet voices
-  { name: 'en-US-Wavenet-A', languageCode: 'en-US', gender: 'MALE', type: 'WaveNet' },
-  { name: 'en-US-Wavenet-B', languageCode: 'en-US', gender: 'MALE', type: 'WaveNet' },
-  { name: 'en-US-Wavenet-C', languageCode: 'en-US', gender: 'FEMALE', type: 'WaveNet' },
-  { name: 'en-US-Wavenet-D', languageCode: 'en-US', gender: 'MALE', type: 'WaveNet' },
-  { name: 'en-US-Wavenet-E', languageCode: 'en-US', gender: 'FEMALE', type: 'WaveNet' },
-  { name: 'en-US-Wavenet-F', languageCode: 'en-US', gender: 'FEMALE', type: 'WaveNet' },
+  // Chirp 3 HD voices (Latest, highest quality)
+  { name: 'en-US-Chirp-3-HD-Male-1', languageCode: 'en-US', gender: 'MALE', type: 'Chirp3HD', displayName: 'Marcus (Chirp 3 HD)' },
+  { name: 'en-US-Chirp-3-HD-Male-2', languageCode: 'en-US', gender: 'MALE', type: 'Chirp3HD', displayName: 'James (Chirp 3 HD)' },
+  { name: 'en-US-Chirp-3-HD-Female-1', languageCode: 'en-US', gender: 'FEMALE', type: 'Chirp3HD', displayName: 'Sophia (Chirp 3 HD)' },
+  { name: 'en-US-Chirp-3-HD-Female-2', languageCode: 'en-US', gender: 'FEMALE', type: 'Chirp3HD', displayName: 'Emma (Chirp 3 HD)' },
+  
+  // Neural2 voices (High quality)
+  { name: 'en-US-Neural2-F', languageCode: 'en-US', gender: 'FEMALE', type: 'Neural2', displayName: 'Rachel (Neural2)' },
+  { name: 'en-US-Neural2-C', languageCode: 'en-US', gender: 'FEMALE', type: 'Neural2', displayName: 'Isabella (Neural2)' },
+  { name: 'en-US-Neural2-E', languageCode: 'en-US', gender: 'FEMALE', type: 'Neural2', displayName: 'Aria (Neural2)' },
+  { name: 'en-US-Neural2-G', languageCode: 'en-US', gender: 'FEMALE', type: 'Neural2', displayName: 'Charlotte (Neural2)' },
+  { name: 'en-US-Neural2-H', languageCode: 'en-US', gender: 'FEMALE', type: 'Neural2', displayName: 'Olivia (Neural2)' },
+  { name: 'en-US-Neural2-A', languageCode: 'en-US', gender: 'MALE', type: 'Neural2', displayName: 'Alexander (Neural2)' },
+  { name: 'en-US-Neural2-D', languageCode: 'en-US', gender: 'MALE', type: 'Neural2', displayName: 'David (Neural2)' },
+  { name: 'en-US-Neural2-I', languageCode: 'en-US', gender: 'MALE', type: 'Neural2', displayName: 'Isaac (Neural2)' },
+  { name: 'en-US-Neural2-J', languageCode: 'en-US', gender: 'MALE', type: 'Neural2', displayName: 'Joseph (Neural2)' },
+  
+  // WaveNet voices (Good quality)
+  { name: 'en-US-Wavenet-A', languageCode: 'en-US', gender: 'MALE', type: 'WaveNet', displayName: 'Andrew (WaveNet)' },
+  { name: 'en-US-Wavenet-B', languageCode: 'en-US', gender: 'MALE', type: 'WaveNet', displayName: 'Benjamin (WaveNet)' },
+  { name: 'en-US-Wavenet-C', languageCode: 'en-US', gender: 'FEMALE', type: 'WaveNet', displayName: 'Catherine (WaveNet)' },
+  { name: 'en-US-Wavenet-D', languageCode: 'en-US', gender: 'MALE', type: 'WaveNet', displayName: 'Daniel (WaveNet)' },
+  { name: 'en-US-Wavenet-E', languageCode: 'en-US', gender: 'FEMALE', type: 'WaveNet', displayName: 'Elizabeth (WaveNet)' },
+  { name: 'en-US-Wavenet-F', languageCode: 'en-US', gender: 'FEMALE', type: 'WaveNet', displayName: 'Fiona (WaveNet)' },
 ]
 
 export async function GET(_req: NextRequest) {
@@ -40,7 +46,7 @@ export async function GET(_req: NextRequest) {
     // Use static voice list (ListVoices API is blocked)
     const formattedVoices = GOOGLE_VOICES.map((voice) => ({
       id: voice.name,
-      name: formatVoiceName(voice.name),
+      name: voice.displayName || formatVoiceName(voice.name),
       language: voice.languageCode,
       gender: voice.gender,
       type: voice.type,
@@ -63,7 +69,10 @@ export async function GET(_req: NextRequest) {
   }
 }
 
-function formatVoiceName(voiceName: string): string {
+function formatVoiceName(voiceName: string, displayName?: string): string {
+  // Use custom display name if provided
+  if (displayName) return displayName
+  
   // Convert 'en-US-Neural2-F' to 'English (US) - Neural2 F'
   const parts = voiceName.split('-')
   if (parts.length < 3) return voiceName
@@ -76,14 +85,6 @@ function formatVoiceName(voiceName: string): string {
     'EN-US': 'English (US)',
     'EN-GB': 'English (UK)',
     'EN-AU': 'English (AU)',
-    'ES-ES': 'Spanish (ES)',
-    'ES-US': 'Spanish (US)',
-    'FR-FR': 'French',
-    'DE-DE': 'German',
-    'IT-IT': 'Italian',
-    'JA-JP': 'Japanese',
-    'KO-KR': 'Korean',
-    'ZH-CN': 'Chinese (CN)',
   }
 
   const localeName = localeNames[locale] || locale
