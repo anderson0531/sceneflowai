@@ -687,7 +687,7 @@ export default function ScriptViewer({ fountainText }: { fountainText: string })
                         try {
                           setTtsError(null)
                           const sample = 'This is a short narrator test.'
-                          const resp = await fetch('/api/tts/elevenlabs', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text: sample, voiceId: charVoices['Narrator'] || undefined }) })
+                          const resp = await fetch('/api/tts/google', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text: sample, voiceId: charVoices['Narrator'] || undefined }) })
                           if (!resp.ok) {
                             let detail = ''
                             try { const j = await resp.json(); detail = j?.error || j?.details || '' } catch { detail = await resp.text().catch(()=> '') }

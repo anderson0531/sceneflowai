@@ -50,9 +50,9 @@ export function VoiceSelector({
     try {
       const headers: any = {}
       // TODO: BYOK - Use user's API key when implemented
-      if (apiKey) headers['x-elevenlabs-api-key'] = apiKey
+      if (apiKey) headers['x-google-api-key'] = apiKey
       
-      const res = await fetch('/api/tts/elevenlabs/voices', { 
+      const res = await fetch('/api/tts/google/voices', { 
         headers,
         cache: 'no-store' 
       })

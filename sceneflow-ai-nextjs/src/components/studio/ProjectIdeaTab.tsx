@@ -375,12 +375,12 @@ export default function ProjectIdeaTab() {
     }
   }, [defaultVoice, selectedVoice, highQualityVoices]);
 
-  // Fetch ElevenLabs voices if API key is configured
+  // Fetch Google voices if API key is configured
   useEffect(() => {
     let mounted = true
     const load = async () => {
       try {
-        const res = await fetch('/api/tts/elevenlabs/voices', { cache: 'no-store' })
+        const res = await fetch('/api/tts/google/voices', { cache: 'no-store' })
         const data = await res.json()
         if (!mounted) return
         if (data?.enabled && Array.isArray(data.voices) && data.voices.length) {
@@ -402,7 +402,7 @@ export default function ProjectIdeaTab() {
   const ensureStudioReady = async (): Promise<boolean> => {
     if (studioReady) return true
     try {
-      const res = await fetch('/api/tts/elevenlabs/voices', { cache: 'no-store' })
+      const res = await fetch('/api/tts/google/voices', { cache: 'no-store' })
       const data = await res.json()
       if (data?.enabled && Array.isArray(data.voices) && data.voices.length) {
         setStudioReady(true)

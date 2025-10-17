@@ -66,7 +66,7 @@ export function TreatmentCard() {
     ;(async () => {
       try {
         const fetcher = async () => {
-          const res = await fetch('/api/tts/elevenlabs/voices', { cache: 'no-store' })
+          const res = await fetch('/api/tts/google/voices', { cache: 'no-store' })
           const data = await res.json().catch(() => null)
           if (data?.enabled && Array.isArray(data.voices)) {
             return data.voices.map((v: any) => ({ id: v.id, name: v.name })) as Array<{ id: string; name: string }>
@@ -122,7 +122,7 @@ export function TreatmentCard() {
     queueAbortRef.current.abort = false
     for (const t of texts) {
       if (queueAbortRef.current.abort) break
-      const resp = await fetch('/api/tts/elevenlabs', {
+      const resp = await fetch('/api/tts/google', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: t, voiceId: selectedVoiceId || voices[0]?.id })
       })
