@@ -1,5 +1,4 @@
 import { NextRequest } from 'next/server'
-import { TextToSpeechClient } from '@google-cloud/text-to-speech'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,11 +28,9 @@ export async function POST(req: NextRequest) {
       return new Response(JSON.stringify({ error: 'No blocks provided' }), { status: 400 })
     }
 
-    // Initialize Google TTS client
-    const client = new TextToSpeechClient({ apiKey })
-
     const encoder = new TextEncoder()
     const boundary = '--SFBND--'
+    const baseUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`
 
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
@@ -46,30 +43,46 @@ export async function POST(req: NextRequest) {
           // Map voice ID to Google voice name
           const lowercaseVoiceId = voiceId.toLowerCase()
           const googleVoice = VOICE_MAPPING[lowercaseVoiceId] || voiceId || DEFAULT_VOICE
+          const languageCode = googleVoice.split('-').slice(0, 2).join('-')
           
           try {
-            const [response] = await client.synthesizeSpeech({
-              input: { text },
-              voice: {
-                languageCode: googleVoice.split('-').slice(0, 2).join('-'),
-                name: googleVoice,
+            const response = await fetch(baseUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
               },
-              audioConfig: {
-                audioEncoding: 'MP3',
-                speakingRate: 1.0,
-                pitch: 0.0,
-                volumeGainDb: 0.0,
-              },
+              body: JSON.stringify({
+                input: { text },
+                voice: {
+                  languageCode,
+                  name: googleVoice,
+                },
+                audioConfig: {
+                  audioEncoding: 'MP3',
+                  speakingRate: 1.0,
+                  pitch: 0.0,
+                  volumeGainDb: 0.0,
+                },
+              }),
             })
 
-            if (!response.audioContent) {
+            if (!response.ok) {
+              const errorText = await response.text().catch(() => 'API error')
+              controller.enqueue(encoder.encode(`${boundary}\nERR:${who}:${errorText}\n`))
+              continue
+            }
+
+            const data = await response.json()
+            
+            if (!data.audioContent) {
               controller.enqueue(encoder.encode(`${boundary}\nERR:${who}:No audio generated\n`))
               continue
             }
 
-            const buf = new Uint8Array(response.audioContent as Buffer)
+            // audioContent is base64 encoded
+            const buf = Buffer.from(data.audioContent, 'base64')
             controller.enqueue(encoder.encode(`${boundary}\nMETA:${who}:${buf.byteLength}\n`))
-            controller.enqueue(buf)
+            controller.enqueue(new Uint8Array(buf))
           } catch (err: any) {
             controller.enqueue(encoder.encode(`${boundary}\nERR:${who}:${err.message || 'error'}\n`))
             continue

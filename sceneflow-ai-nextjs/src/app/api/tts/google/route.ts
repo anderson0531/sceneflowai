@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { TextToSpeechClient } from '@google-cloud/text-to-speech'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,33 +46,49 @@ export async function POST(request: NextRequest) {
     
     console.log('[Google TTS] Generating speech:', { text: text.substring(0, 50), voice: googleVoice })
 
-    // Initialize the Text-to-Speech client with API key
-    const client = new TextToSpeechClient({
-      apiKey: apiKey,
+    // Use REST API instead of client library
+    const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`
+    
+    const languageCode = googleVoice.split('-').slice(0, 2).join('-') // e.g., 'en-US'
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        input: { text },
+        voice: {
+          languageCode,
+          name: googleVoice,
+        },
+        audioConfig: {
+          audioEncoding: 'MP3',
+          speakingRate: 1.0,
+          pitch: 0.0,
+          volumeGainDb: 0.0,
+        },
+      }),
     })
 
-    // Construct the request
-    const [response] = await client.synthesizeSpeech({
-      input: { text },
-      voice: {
-        languageCode: googleVoice.split('-').slice(0, 2).join('-'), // e.g., 'en-US'
-        name: googleVoice,
-      },
-      audioConfig: {
-        audioEncoding: 'MP3',
-        speakingRate: 1.0,
-        pitch: 0.0,
-        volumeGainDb: 0.0,
-      },
-    })
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('[Google TTS] REST API error:', response.status, errorText)
+      return NextResponse.json({ 
+        error: 'TTS failed', 
+        details: errorText 
+      }, { status: 502 })
+    }
 
-    if (!response.audioContent) {
+    const data = await response.json()
+    
+    if (!data.audioContent) {
       console.error('[Google TTS] No audio content in response')
       return NextResponse.json({ error: 'No audio generated' }, { status: 500 })
     }
 
-    // Convert audioContent to Buffer
-    const audioBuffer = Buffer.from(response.audioContent as Uint8Array)
+    // audioContent is base64 encoded
+    const audioBuffer = Buffer.from(data.audioContent, 'base64')
     console.log('[Google TTS] Audio generated successfully, size:', audioBuffer.length)
 
     return new Response(audioBuffer, {
