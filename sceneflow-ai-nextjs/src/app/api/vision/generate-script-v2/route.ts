@@ -326,9 +326,33 @@ async function callGemini(apiKey: string, prompt: string): Promise<string> {
   return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
 }
 
+function sanitizeJsonString(jsonStr: string): string {
+  // Remove markdown code fences
+  let cleaned = jsonStr.replace(/```json\n?|```/g, '').trim()
+  
+  // Replace unescaped control characters within string values
+  // This regex finds strings and replaces literal control chars with escaped versions
+  try {
+    // First, try to parse as-is
+    JSON.parse(cleaned)
+    return cleaned
+  } catch {
+    // If parsing fails, sanitize control characters
+    cleaned = cleaned
+      .replace(/\r\n/g, '\\n')  // Windows line endings
+      .replace(/\n/g, '\\n')     // Unix line endings
+      .replace(/\r/g, '\\n')     // Mac line endings
+      .replace(/\t/g, '\\t')     // Tabs
+      .replace(/\f/g, '\\f')     // Form feeds
+      .replace(/\b/g, '\\b')     // Backspaces
+    
+    return cleaned
+  }
+}
+
 function parseBatch1(response: string, start: number, end: number): any {
   try {
-    const cleaned = response.replace(/```json\n?|```/g, '').trim()
+    const cleaned = sanitizeJsonString(response)
     const parsed = JSON.parse(cleaned)
     
     // Batch 1 returns object with totalScenes and scenes
@@ -366,7 +390,7 @@ function parseBatch1(response: string, start: number, end: number): any {
 
 function parseScenes(response: string, start: number, end: number): any {
   try {
-    const cleaned = response.replace(/```json\n?|```/g, '').trim()
+    const cleaned = sanitizeJsonString(response)
     const parsed = JSON.parse(cleaned)
     const scenes = Array.isArray(parsed) ? parsed : (parsed.scenes || [])
     
