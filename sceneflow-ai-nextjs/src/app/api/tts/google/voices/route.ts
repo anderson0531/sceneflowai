@@ -1,12 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { TextToSpeechClient } from '@google-cloud/text-to-speech'
 
 export const dynamic = 'force-dynamic'
 
-// Cache for voice list (valid for 1 hour)
-let cachedVoices: any[] | null = null
-let cacheTime: number = 0
-const CACHE_DURATION = 60 * 60 * 1000 // 1 hour
+// Static voice list (ListVoices API is blocked, so we use a curated list)
+const GOOGLE_VOICES = [
+  // Female voices
+  { name: 'en-US-Neural2-F', languageCode: 'en-US', gender: 'FEMALE', type: 'Neural2' },
+  { name: 'en-US-Neural2-C', languageCode: 'en-US', gender: 'FEMALE', type: 'Neural2' },
+  { name: 'en-US-Neural2-E', languageCode: 'en-US', gender: 'FEMALE', type: 'Neural2' },
+  { name: 'en-US-Neural2-G', languageCode: 'en-US', gender: 'FEMALE', type: 'Neural2' },
+  { name: 'en-US-Neural2-H', languageCode: 'en-US', gender: 'FEMALE', type: 'Neural2' },
+  // Male voices
+  { name: 'en-US-Neural2-A', languageCode: 'en-US', gender: 'MALE', type: 'Neural2' },
+  { name: 'en-US-Neural2-D', languageCode: 'en-US', gender: 'MALE', type: 'Neural2' },
+  { name: 'en-US-Neural2-I', languageCode: 'en-US', gender: 'MALE', type: 'Neural2' },
+  { name: 'en-US-Neural2-J', languageCode: 'en-US', gender: 'MALE', type: 'Neural2' },
+  // WaveNet voices
+  { name: 'en-US-Wavenet-A', languageCode: 'en-US', gender: 'MALE', type: 'WaveNet' },
+  { name: 'en-US-Wavenet-B', languageCode: 'en-US', gender: 'MALE', type: 'WaveNet' },
+  { name: 'en-US-Wavenet-C', languageCode: 'en-US', gender: 'FEMALE', type: 'WaveNet' },
+  { name: 'en-US-Wavenet-D', languageCode: 'en-US', gender: 'MALE', type: 'WaveNet' },
+  { name: 'en-US-Wavenet-E', languageCode: 'en-US', gender: 'FEMALE', type: 'WaveNet' },
+  { name: 'en-US-Wavenet-F', languageCode: 'en-US', gender: 'FEMALE', type: 'WaveNet' },
+]
 
 export async function GET(_req: NextRequest) {
   try {
@@ -14,59 +30,23 @@ export async function GET(_req: NextRequest) {
     
     if (!apiKey) {
       console.error('[Google Voices] Error: Google API key not configured')
-      return NextResponse.json({ error: 'TTS not configured' }, { status: 500 })
+      return NextResponse.json({ 
+        enabled: false,
+        error: 'TTS not configured',
+        voices: []
+      }, { status: 500 })
     }
 
-    // Check cache
-    const now = Date.now()
-    if (cachedVoices && (now - cacheTime) < CACHE_DURATION) {
-      console.log('[Google Voices] Returning cached voices')
-      return NextResponse.json({ voices: cachedVoices })
-    }
+    // Use static voice list (ListVoices API is blocked)
+    const formattedVoices = GOOGLE_VOICES.map((voice) => ({
+      id: voice.name,
+      name: formatVoiceName(voice.name),
+      language: voice.languageCode,
+      gender: voice.gender,
+      type: voice.type,
+    }))
 
-    console.log('[Google Voices] Fetching voice list from Google')
-
-    // Initialize the Text-to-Speech client
-    const client = new TextToSpeechClient({
-      apiKey: apiKey,
-    })
-
-    // Fetch available voices
-    const [response] = await client.listVoices({})
-
-    if (!response.voices) {
-      console.error('[Google Voices] No voices returned from API')
-      return NextResponse.json({ error: 'No voices available' }, { status: 500 })
-    }
-
-    // Format voices for frontend consumption
-    // Prioritize Neural2 and WaveNet voices, filter English voices for better UX
-    const formattedVoices = response.voices
-      .filter((voice) => {
-        // Include all Neural2, WaveNet, and Studio voices
-        const name = voice.name || ''
-        return name.includes('Neural2') || name.includes('Wavenet') || name.includes('Studio')
-      })
-      .map((voice) => ({
-        id: voice.name || '',
-        name: formatVoiceName(voice.name || ''),
-        language: voice.languageCodes?.[0] || 'en-US',
-        gender: voice.ssmlGender || 'NEUTRAL',
-        type: getVoiceType(voice.name || ''),
-      }))
-      .sort((a, b) => {
-        // Sort: English first, then by type (Neural2, Studio, WaveNet), then by name
-        if (a.language.startsWith('en') && !b.language.startsWith('en')) return -1
-        if (!a.language.startsWith('en') && b.language.startsWith('en')) return 1
-        if (a.type !== b.type) return a.type.localeCompare(b.type)
-        return a.name.localeCompare(b.name)
-      })
-
-    // Update cache
-    cachedVoices = formattedVoices
-    cacheTime = now
-
-    console.log('[Google Voices] Found', formattedVoices.length, 'voices')
+    console.log('[Google Voices] Returning', formattedVoices.length, 'static voices')
 
     return NextResponse.json({ 
       enabled: true, 
@@ -109,11 +89,3 @@ function formatVoiceName(voiceName: string): string {
   const localeName = localeNames[locale] || locale
   return `${localeName} - ${type} ${variant}`.trim()
 }
-
-function getVoiceType(voiceName: string): string {
-  if (voiceName.includes('Neural2')) return 'Neural2'
-  if (voiceName.includes('Studio')) return 'Studio'
-  if (voiceName.includes('Wavenet')) return 'WaveNet'
-  return 'Standard'
-}
-
