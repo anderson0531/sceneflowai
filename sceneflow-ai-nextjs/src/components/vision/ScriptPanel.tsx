@@ -822,26 +822,27 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
             <>
               <Button
                 size="sm"
+                variant="ghost"
                 onClick={handleOpenBuilder}
                 disabled={isGeneratingImage}
-                className="bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 text-xs px-2 py-1 h-auto"
+                className="h-6 w-6 p-0 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:text-gray-400 dark:hover:text-indigo-400 dark:hover:bg-indigo-900/20"
                 title="Open prompt builder"
               >
                 <Wand2 className="w-3 h-3" />
               </Button>
               <Button
                 size="sm"
+                variant="ghost"
                 onClick={handleGenerateImage}
                 disabled={isGeneratingImage}
-                className="bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 text-xs px-2 py-1 h-auto flex items-center gap-1"
-                title="Quick generate image"
+                className="h-6 w-6 p-0 text-gray-500 hover:text-purple-600 hover:bg-purple-50 dark:text-gray-400 dark:hover:text-purple-400 dark:hover:bg-purple-900/20"
+                title={scene.imageUrl ? "Regenerate scene image" : "Generate scene image"}
               >
                 {isGeneratingImage ? (
                   <Loader className="w-3 h-3 animate-spin" />
                 ) : (
                   <ImageIcon className="w-3 h-3" />
                 )}
-                <span>{scene.imageUrl ? 'Regenerate' : 'Generate'} Image</span>
               </Button>
             </>
           )}
