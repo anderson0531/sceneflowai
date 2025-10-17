@@ -4,12 +4,6 @@ export const dynamic = 'force-dynamic'
 
 // Static voice list (ListVoices API is blocked, so we use a curated list)
 const GOOGLE_VOICES = [
-  // Chirp 3 HD voices (Latest, highest quality)
-  { name: 'en-US-Chirp-3-HD-Male-1', languageCode: 'en-US', gender: 'MALE', type: 'Chirp3HD', displayName: 'Marcus (Chirp 3 HD)' },
-  { name: 'en-US-Chirp-3-HD-Male-2', languageCode: 'en-US', gender: 'MALE', type: 'Chirp3HD', displayName: 'James (Chirp 3 HD)' },
-  { name: 'en-US-Chirp-3-HD-Female-1', languageCode: 'en-US', gender: 'FEMALE', type: 'Chirp3HD', displayName: 'Sophia (Chirp 3 HD)' },
-  { name: 'en-US-Chirp-3-HD-Female-2', languageCode: 'en-US', gender: 'FEMALE', type: 'Chirp3HD', displayName: 'Emma (Chirp 3 HD)' },
-  
   // Neural2 voices (High quality)
   { name: 'en-US-Neural2-F', languageCode: 'en-US', gender: 'FEMALE', type: 'Neural2', displayName: 'Rachel (Neural2)' },
   { name: 'en-US-Neural2-C', languageCode: 'en-US', gender: 'FEMALE', type: 'Neural2', displayName: 'Isabella (Neural2)' },
