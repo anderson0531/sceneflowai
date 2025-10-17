@@ -22,31 +22,26 @@ export async function POST(request: NextRequest) {
     // Ensure database connection
     await sequelize.authenticate()
 
-    // Check user's BYOK image provider
-    const provider = await getUserImageProvider(userId)
-    
-    if (!provider) {
-      return NextResponse.json({
-        success: false,
-        error: 'No image generation provider configured. Please configure BYOK in settings.',
-        requiresBYOK: true
-      }, { status: 400 })
-    }
+    // TODO: BYOK - Check user's provider when BYOK is implemented
+    // For now, use platform Vertex AI service account for all scene images
+    console.log(`[Scene Gen] Generating ${scenes.length} scene images with Vertex AI Imagen 3`)
 
-    console.log(`[Scene Gen] Generating ${scenes.length} scene images with ${provider.providerName}`)
-
-    // Generate scene images with character consistency
+    // Generate scene images with Vertex AI
     const sceneImages = await Promise.all(
       scenes.map(async (scene: any, index: number) => {
         try {
           const prompt = buildScenePrompt(scene, characters)
           
-          const imageUrl = await generateSceneImage({
-            userId,
-            provider: provider.providerName,
-            apiKey: provider.apiKey,
-            prompt
+          // Use Vertex AI directly (bypass BYOK for now)
+          const base64Image = await callVertexAIImagen(prompt, {
+            aspectRatio: '16:9',
+            numberOfImages: 1
           })
+          
+          const imageUrl = await uploadImageToBlob(
+            base64Image,
+            `scenes/${projectId}-scene-${index + 1}-${Date.now()}.png`
+          )
           
           return {
             ...scene,

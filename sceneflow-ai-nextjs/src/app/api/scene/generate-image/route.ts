@@ -13,17 +13,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
     }
 
-    // Build character references for visual consistency
+    // Build character references with detailed appearance for visual consistency
     let characterRefs = ''
     if (sceneContext?.characters && Array.isArray(sceneContext.characters) && sceneContext.characters.length > 0) {
-      const charDescriptions = sceneContext.characters.map((c: any) => 
-        `${c.name}: ${c.description}${c.referenceImage ? ' (maintain visual consistency with established appearance)' : ''}`
-      ).join(', ')
-      characterRefs = `\n\nCharacters in scene: ${charDescriptions}`
+      const charDetails = sceneContext.characters.map((c: any) => {
+        const parts = [`${c.name}`]
+        if (c.appearance) parts.push(`Appearance: ${c.appearance}`)
+        if (c.demeanor) parts.push(`Demeanor: ${c.demeanor}`)
+        if (c.clothing) parts.push(`Clothing: ${c.clothing}`)
+        if (c.description && !c.appearance) parts.push(c.description)  // Fallback if no appearance
+        return parts.join(', ')
+      }).join('; ')
+      
+      characterRefs = `\n\nCHARACTERS IN SCENE: ${charDetails}`
+    }
+
+    // Add scene description if available
+    let sceneDesc = ''
+    if (sceneContext?.sceneDescription) {
+      const s = sceneContext.sceneDescription
+      const parts = []
+      if (s.location) parts.push(`Location: ${s.location}`)
+      if (s.atmosphere) parts.push(`Atmosphere: ${s.atmosphere}`)
+      if (s.furniture_props) parts.push(`Furniture/Props: ${s.furniture_props}`)
+      if (parts.length > 0) {
+        sceneDesc = `\n\nLOCATION DETAILS: ${parts.join(', ')}`
+      }
     }
 
     // Enhance prompt for cinematic scene
-    let enhancedPrompt = prompt + characterRefs
+    let enhancedPrompt = prompt + characterRefs + sceneDesc
     
     // Add scene context if provided
     if (sceneContext) {

@@ -1,12 +1,14 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
 import { getCuratedElevenVoices, type CuratedVoice } from '@/lib/tts/voices'
 import { ScenePromptBuilder } from './ScenePromptBuilder'
 import ScenePromptDrawer from './ScenePromptDrawer'
+import { AudioMixer, type AudioTrack } from './AudioMixer'
 
 interface ScriptPanelProps {
   script: any
@@ -45,6 +47,14 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // Scene prompt drawer state (new editor)
   const [sceneDrawerOpen, setSceneDrawerOpen] = useState(false)
   const [sceneDrawerIdx, setSceneDrawerIdx] = useState<number | null>(null)
+  
+  // Audio features state
+  const [generatingSFX, setGeneratingSFX] = useState<{sceneIdx: number, sfxIdx: number} | null>(null)
+  const [generatingMusic, setGeneratingMusic] = useState<number | null>(null)
+  const [audioTracks, setAudioTracks] = useState<AudioTrack[]>([])
+  const [isPlayingMixed, setIsPlayingMixed] = useState(false)
+  const [isPlayingAll, setIsPlayingAll] = useState(false)
+  const playbackAbortRef = useRef(false)
 
   const scenes = script?.script?.scenes || []
 
@@ -180,6 +190,234 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     }
   }
 
+  // Audio generation functions
+  const generateSFX = async (sceneIdx: number, sfxIdx: number) => {
+    const scene = scenes[sceneIdx]
+    const sfx = scene?.sfx?.[sfxIdx]
+    if (!sfx) return
+
+    setGeneratingSFX({ sceneIdx, sfxIdx })
+    try {
+      const response = await fetch('/api/tts/elevenlabs/sound-effects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: sfx.description, duration: 2.0 })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.details || 'SFX generation failed')
+      }
+
+      const blob = await response.blob()
+      const audioUrl = URL.createObjectURL(blob)
+      
+      // Update scene with audio URL
+      await saveSceneAudio(sceneIdx, 'sfx', audioUrl, sfxIdx)
+    } catch (error: any) {
+      console.error('[SFX Generation] Error:', error)
+      alert(`Failed to generate sound effect: ${error.message}`)
+    } finally {
+      setGeneratingSFX(null)
+    }
+  }
+
+  const generateMusic = async (sceneIdx: number) => {
+    const scene = scenes[sceneIdx]
+    const music = scene?.music
+    if (!music) return
+
+    setGeneratingMusic(sceneIdx)
+    try {
+      const duration = scene.duration || 30
+      const response = await fetch('/api/tts/elevenlabs/music', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: music.description, duration })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.details || 'Music generation failed')
+      }
+
+      const blob = await response.blob()
+      const audioUrl = URL.createObjectURL(blob)
+      
+      // Update scene with audio URL
+      await saveSceneAudio(sceneIdx, 'music', audioUrl)
+    } catch (error: any) {
+      console.error('[Music Generation] Error:', error)
+      alert(`Failed to generate music: ${error.message}`)
+    } finally {
+      setGeneratingMusic(null)
+    }
+  }
+
+  const uploadAudio = async (sceneIdx: number, type: 'sfx' | 'music', sfxIdx?: number) => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'audio/mp3,audio/wav,audio/ogg,audio/webm'
+    
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (!file) return
+
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const response = await fetch('/api/audio/upload', {
+          method: 'POST',
+          body: formData
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.details || 'Upload failed')
+        }
+
+        const data = await response.json()
+        await saveSceneAudio(sceneIdx, type, data.audioUrl, sfxIdx)
+      } catch (error: any) {
+        console.error('[Audio Upload] Error:', error)
+        alert(`Failed to upload audio: ${error.message}`)
+      }
+    }
+
+    input.click()
+  }
+
+  const saveSceneAudio = async (sceneIdx: number, audioType: 'sfx' | 'music', audioUrl: string, sfxIdx?: number) => {
+    const updatedScenes = [...scenes]
+    
+    if (audioType === 'sfx' && sfxIdx !== undefined) {
+      if (!updatedScenes[sceneIdx].sfx) updatedScenes[sceneIdx].sfx = []
+      updatedScenes[sceneIdx].sfx[sfxIdx].audioUrl = audioUrl
+    } else if (audioType === 'music') {
+      if (!updatedScenes[sceneIdx].music) updatedScenes[sceneIdx].music = { description: '' }
+      updatedScenes[sceneIdx].music.audioUrl = audioUrl
+    }
+
+    // Update local state
+    const updatedScript = {
+      ...script,
+      script: {
+        ...script.script,
+        scenes: updatedScenes
+      }
+    }
+    onScriptChange(updatedScript)
+
+    // Save to database if projectId is available
+    if (projectId) {
+      try {
+        await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: {
+              visionPhase: {
+                ...script,
+                script: { scenes: updatedScenes }
+              }
+            }
+          })
+        })
+      } catch (error) {
+        console.error('[Save Audio] Error:', error)
+      }
+    }
+  }
+
+  const playAllScenes = async () => {
+    playbackAbortRef.current = false
+    setIsPlayingAll(true)
+    
+    for (let i = 0; i < scenes.length; i++) {
+      if (playbackAbortRef.current) break
+      await playScene(i)
+      await new Promise(resolve => setTimeout(resolve, 1000))  // 1s gap between scenes
+    }
+    
+    setIsPlayingAll(false)
+  }
+
+  const stopAllAudio = () => {
+    playbackAbortRef.current = true
+    stopAudio()
+    setIsPlayingAll(false)
+    setIsPlayingMixed(false)
+  }
+
+  // Parse action text for inline SFX and Music
+  const parseScriptForAudio = (action: string) => {
+    if (!action) return []
+    const lines = action.split('\n')
+    const parsed: Array<{type: 'text' | 'sfx' | 'music', content: string}> = []
+    
+    lines.forEach(line => {
+      const trimmed = line.trim()
+      if (trimmed.startsWith('SFX:')) {
+        parsed.push({ type: 'sfx', content: trimmed.replace('SFX:', '').trim() })
+      } else if (trimmed.startsWith('Music:')) {
+        parsed.push({ type: 'music', content: trimmed.replace('Music:', '').trim() })
+      } else if (trimmed) {
+        parsed.push({ type: 'text', content: line })
+      }
+    })
+    
+    return parsed
+  }
+
+  // Quick play SFX (generate and play immediately)
+  const generateAndPlaySFX = async (description: string) => {
+    try {
+      const response = await fetch('/api/tts/elevenlabs/sound-effects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: description, duration: 2.0 })
+      })
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'SFX generation failed' }))
+        throw new Error(error.details || error.error || 'SFX generation failed')
+      }
+      
+      const blob = await response.blob()
+      const audioUrl = URL.createObjectURL(blob)
+      const audio = new Audio(audioUrl)
+      audio.play()
+    } catch (error: any) {
+      console.error('[SFX Playback] Error:', error)
+      alert(`Failed to play sound effect: ${error.message}`)
+    }
+  }
+
+  // Quick play Music (generate and play immediately)
+  const generateAndPlayMusic = async (description: string, duration: number = 30) => {
+    try {
+      const response = await fetch('/api/tts/elevenlabs/music', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: description, duration })
+      })
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Music generation failed' }))
+        throw new Error(error.details || error.error || 'Music generation failed')
+      }
+      
+      const blob = await response.blob()
+      const audioUrl = URL.createObjectURL(blob)
+      const audio = new Audio(audioUrl)
+      audio.play()
+    } catch (error: any) {
+      console.error('[Music Playback] Error:', error)
+      alert(`Failed to play music: ${error.message}`)
+    }
+  }
+
   const handleGenerateImage = async (sceneIdx: number) => {
     if (!onGenerateSceneImage) return
     setGeneratingImageForScene(sceneIdx)
@@ -253,6 +491,33 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               <Square className="w-4 h-4" />
               <span className="hidden sm:inline">Stop</span>
             </Button>
+          )}
+          
+          {/* Full Script Playback Controls */}
+          {scenes.length > 0 && enabled && (
+            <>
+              {!isPlayingAll ? (
+                <Button
+                  size="sm"
+                  onClick={playAllScenes}
+                  className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-1"
+                >
+                  <Play className="w-4 h-4" />
+                  <span className="hidden sm:inline">Play Full Script</span>
+                  <span className="sm:hidden">Play All</span>
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={stopAllAudio}
+                  className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-1"
+                >
+                  <StopCircle className="w-4 h-4" />
+                  <span className="hidden sm:inline">Stop All</span>
+                  <span className="sm:hidden">Stop</span>
+                </Button>
+              )}
+            </>
           )}
           
           {scenes.some((s: any) => !s.isExpanded) && onExpandAllScenes && (
@@ -373,6 +638,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   onOpenPromptDrawer={handleOpenSceneDrawer}
                   scenePrompt={scenePrompts[idx]}
                   onPromptChange={(sceneIdx, prompt) => setScenePrompts(prev => ({ ...prev, [sceneIdx]: prompt }))}
+                  parseScriptForAudio={parseScriptForAudio}
+                  generateAndPlaySFX={generateAndPlaySFX}
+                  generateAndPlayMusic={generateAndPlayMusic}
                 />
               ))
             )}
@@ -436,9 +704,13 @@ interface SceneCardProps {
   onOpenPromptDrawer?: (sceneIdx: number) => void
   scenePrompt?: string
   onPromptChange?: (sceneIdx: number, prompt: string) => void
+  // Audio functions - inline play
+  parseScriptForAudio?: (action: string) => Array<{type: 'text' | 'sfx' | 'music', content: string}>
+  generateAndPlaySFX?: (description: string) => Promise<void>
+  generateAndPlayMusic?: (description: string, duration?: number) => Promise<void>
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange }: SceneCardProps) {
+function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
   
@@ -590,7 +862,45 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
           )}
           
           {!isOutline && scene.action && (
-            <div className="text-sm text-gray-700 dark:text-gray-300 mb-2">{scene.action}</div>
+            <div className="mb-2 space-y-1">
+              {parseScriptForAudio?.(scene.action).map((item: any, i: number) => {
+                if (item.type === 'sfx') {
+                  return (
+                    <div key={i} className="flex items-center gap-2 my-2 bg-purple-50 dark:bg-purple-900/20 p-2 rounded">
+                      <span className="text-sm font-semibold text-purple-700 dark:text-purple-400">SFX:</span>
+                      <span className="text-sm italic text-gray-700 dark:text-gray-300 flex-1">{item.content}</span>
+                      <Button 
+                        size="sm" 
+                        onClick={() => generateAndPlaySFX?.(item.content)}
+                        className="text-xs px-2 py-1 h-auto bg-purple-600 hover:bg-purple-700"
+                        title="Play sound effect"
+                      >
+                        <Play className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )
+                } else if (item.type === 'music') {
+                  return (
+                    <div key={i} className="flex items-center gap-2 my-2 bg-blue-50 dark:bg-blue-900/20 p-2 rounded">
+                      <span className="text-sm font-semibold text-blue-700 dark:text-blue-400">Music:</span>
+                      <span className="text-sm italic text-gray-700 dark:text-gray-300 flex-1">{item.content}</span>
+                      <Button 
+                        size="sm" 
+                        onClick={() => generateAndPlayMusic?.(item.content, scene.duration || 30)}
+                        className="text-xs px-2 py-1 h-auto bg-blue-600 hover:bg-blue-700"
+                        title="Play music"
+                      >
+                        <Play className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )
+                } else {
+                  return (
+                    <div key={i} className="text-sm text-gray-700 dark:text-gray-300">{item.content}</div>
+                  )
+                }
+              })}
+            </div>
           )}
           
           {!isOutline && scene.dialogue && scene.dialogue.length > 0 && (
