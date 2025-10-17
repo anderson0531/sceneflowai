@@ -205,9 +205,9 @@ export function CueAssistantWidget() {
       addCueMessage({ type: 'assistant', content: response })
 
       if (voiceEnabled) {
-        // Prefer ElevenLabs
+        // Prefer Google TTS
         try {
-          const res = await fetch('/api/tts/elevenlabs', {
+          const res = await fetch('/api/tts/google', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: response }),

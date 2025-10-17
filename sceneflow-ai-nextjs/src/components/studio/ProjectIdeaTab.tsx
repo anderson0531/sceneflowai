@@ -2032,7 +2032,7 @@ export default function ProjectIdeaTab() {
                     try {
                       const controller = new AbortController();
                       studioAbortRef.current = controller
-                      const resp = await fetch('/api/tts/elevenlabs', {
+                      const resp = await fetch('/api/tts/google', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ text: projectDescription, voiceId: selectedVoice || studioVoices[0].id }),
                         signal: controller.signal

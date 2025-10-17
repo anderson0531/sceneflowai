@@ -1,18 +1,36 @@
 import { NextRequest } from 'next/server'
+import { TextToSpeechClient } from '@google-cloud/text-to-speech'
 
 export const dynamic = 'force-dynamic'
 
 type Block = { who: string; text: string }
 
+// Voice mapping for common characters
+const DEFAULT_VOICE = 'en-US-Neural2-F'
+const VOICE_MAPPING: Record<string, string> = {
+  'rachel': 'en-US-Neural2-F',
+  'bella': 'en-US-Neural2-C',
+  'domi': 'en-US-Neural2-E',
+  'elli': 'en-US-Neural2-G',
+  'adam': 'en-US-Neural2-D',
+  'antoni': 'en-US-Neural2-A',
+  'arnold': 'en-US-Neural2-I',
+  'josh': 'en-US-Neural2-J',
+  '21m00Tcm4TlvDq8ikWAM': 'en-US-Neural2-F',
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const apiKey = process.env.ELEVENLABS_API_KEY
+    const apiKey = process.env.GOOGLE_API_KEY
     if (!apiKey) return new Response(JSON.stringify({ error: 'TTS not configured' }), { status: 500 })
 
     const { blocks, voiceMap, narratorVoiceId } = await req.json()
     if (!Array.isArray(blocks) || blocks.length === 0) {
       return new Response(JSON.stringify({ error: 'No blocks provided' }), { status: 400 })
     }
+
+    // Initialize Google TTS client
+    const client = new TextToSpeechClient({ apiKey })
 
     const encoder = new TextEncoder()
     const boundary = '--SFBND--'
@@ -23,18 +41,39 @@ export async function POST(req: NextRequest) {
           const text = String(b.text || '').trim()
           if (!text) continue
           const who = String(b.who || 'Narrator')
-          const voiceId = (voiceMap?.[who] || (who === 'Narrator' ? narratorVoiceId : '')) || '21m00Tcm4TlvDq8ikWAM'
-          const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?optimize_streaming_latency=0&output_format=mp3_44100_128`
-          const body = { text, model_id: 'eleven_multilingual_v2', voice_settings: { stability: 0.25, similarity_boost: 0.8, style: 0.5, use_speaker_boost: true } }
-          const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'xi-api-key': apiKey, Accept: 'audio/mpeg' }, body: JSON.stringify(body) })
-          if (!resp.ok) {
-            const err = await resp.text().catch(()=> 'error')
-            controller.enqueue(encoder.encode(`${boundary}\nERR:${who}:${err}\n`))
+          let voiceId = (voiceMap?.[who] || (who === 'Narrator' ? narratorVoiceId : '')) || DEFAULT_VOICE
+          
+          // Map voice ID to Google voice name
+          const lowercaseVoiceId = voiceId.toLowerCase()
+          const googleVoice = VOICE_MAPPING[lowercaseVoiceId] || voiceId || DEFAULT_VOICE
+          
+          try {
+            const [response] = await client.synthesizeSpeech({
+              input: { text },
+              voice: {
+                languageCode: googleVoice.split('-').slice(0, 2).join('-'),
+                name: googleVoice,
+              },
+              audioConfig: {
+                audioEncoding: 'MP3',
+                speakingRate: 1.0,
+                pitch: 0.0,
+                volumeGainDb: 0.0,
+              },
+            })
+
+            if (!response.audioContent) {
+              controller.enqueue(encoder.encode(`${boundary}\nERR:${who}:No audio generated\n`))
+              continue
+            }
+
+            const buf = new Uint8Array(response.audioContent as Buffer)
+            controller.enqueue(encoder.encode(`${boundary}\nMETA:${who}:${buf.byteLength}\n`))
+            controller.enqueue(buf)
+          } catch (err: any) {
+            controller.enqueue(encoder.encode(`${boundary}\nERR:${who}:${err.message || 'error'}\n`))
             continue
           }
-          const buf = new Uint8Array(await resp.arrayBuffer())
-          controller.enqueue(encoder.encode(`${boundary}\nMETA:${who}:${buf.byteLength}\n`))
-          controller.enqueue(buf)
         }
         controller.close()
       }

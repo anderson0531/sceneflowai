@@ -175,7 +175,7 @@ export default function CueChat({ concept, onClose }: CueChatProps) {
       setIsPlaying(true)
       
       if (ttsMode === 'elevenlabs') {
-        const response = await fetch('/api/tts/elevenlabs', {
+        const response = await fetch('/api/tts/google', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text, voiceId })

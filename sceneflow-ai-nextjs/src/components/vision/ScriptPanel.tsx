@@ -230,7 +230,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     setGeneratingMusic(sceneIdx)
     try {
       const duration = scene.duration || 30
-      const response = await fetch('/api/tts/elevenlabs/music', {
+      const response = await fetch('/api/tts/google/music', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: music.description, duration })
