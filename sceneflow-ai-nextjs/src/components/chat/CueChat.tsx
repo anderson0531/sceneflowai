@@ -90,8 +90,8 @@ export default function CueChat({ concept, onClose }: CueChatProps) {
   const [isTyping, setIsTyping] = useState(false)
   const [voiceEnabled, setVoiceEnabled] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [ttsMode, setTtsMode] = useState<'elevenlabs' | 'browser'>('elevenlabs')
-  const [selectedVoice, setSelectedVoice] = useState('21m00Tcm4TlvDq8ikWAM')
+  const [ttsMode, setTtsMode] = useState<'elevenlabs' | 'google' | 'browser'>('google')
+  const [selectedVoice, setSelectedVoice] = useState('en-US-Neural2-F')
   const [showVoiceSettings, setShowVoiceSettings] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
   const [transcript, setTranscript] = useState('')
@@ -174,8 +174,9 @@ export default function CueChat({ concept, onClose }: CueChatProps) {
     try {
       setIsPlaying(true)
       
-      if (ttsMode === 'elevenlabs') {
-        const response = await fetch('/api/tts/google', {
+      if (ttsMode === 'elevenlabs' || ttsMode === 'google') {
+        const apiEndpoint = ttsMode === 'elevenlabs' ? '/api/tts/elevenlabs' : '/api/tts/google'
+        const response = await fetch(apiEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text, voiceId })
@@ -193,7 +194,7 @@ export default function CueChat({ concept, onClose }: CueChatProps) {
           
           audio.play()
         } else {
-          console.error('ElevenLabs TTS failed, falling back to browser TTS')
+          console.error('TTS failed, falling back to browser TTS')
           setTtsMode('browser')
           // Fall through to browser TTS
         }
@@ -654,13 +655,13 @@ Instead of asking you for each detail, I've built the foundation so we can focus
               size="sm"
               onClick={toggleVoice}
               className={`${voiceEnabled ? 'text-sf-primary' : 'text-sf-text-secondary'}`}
-              title={`${voiceEnabled ? 'Disable voice' : 'Enable voice'} (${ttsMode === 'elevenlabs' ? 'High Quality' : 'Browser TTS'})`}
+              title={`${voiceEnabled ? 'Disable voice' : 'Enable voice'} (${ttsMode === 'elevenlabs' || ttsMode === 'google' ? 'High Quality' : 'Browser TTS'})`}
             >
               {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </Button>
             
             {/* Voice Selector */}
-            {voiceEnabled && ttsMode === 'elevenlabs' && (
+            {voiceEnabled && (ttsMode === 'elevenlabs' || ttsMode === 'google') && (
               <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                 <select
                   value={selectedVoice}
