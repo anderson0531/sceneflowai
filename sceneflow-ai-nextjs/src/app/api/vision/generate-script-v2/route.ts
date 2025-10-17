@@ -330,23 +330,50 @@ function sanitizeJsonString(jsonStr: string): string {
   // Remove markdown code fences
   let cleaned = jsonStr.replace(/```json\n?|```/g, '').trim()
   
-  // Replace unescaped control characters within string values
-  // This regex finds strings and replaces literal control chars with escaped versions
+  // First attempt: try to parse as-is
   try {
-    // First, try to parse as-is
     JSON.parse(cleaned)
     return cleaned
-  } catch {
-    // If parsing fails, sanitize control characters
-    cleaned = cleaned
-      .replace(/\r\n/g, '\\n')  // Windows line endings
-      .replace(/\n/g, '\\n')     // Unix line endings
-      .replace(/\r/g, '\\n')     // Mac line endings
-      .replace(/\t/g, '\\t')     // Tabs
-      .replace(/\f/g, '\\f')     // Form feeds
-      .replace(/\b/g, '\\b')     // Backspaces
+  } catch (firstError: any) {
+    // Second attempt: Replace literal control characters with escaped versions
+    // Use character codes to avoid regex issues
+    let result = ''
+    for (let i = 0; i < cleaned.length; i++) {
+      const char = cleaned[i]
+      const code = cleaned.charCodeAt(i)
+      
+      // Replace control characters (0x00-0x1F except those already escaped)
+      if (code < 32) {
+        // Check if already escaped (preceded by backslash)
+        const prevChar = i > 0 ? cleaned[i - 1] : ''
+        if (prevChar !== '\\') {
+          switch (code) {
+            case 8: result += '\\b'; break;  // backspace
+            case 9: result += '\\t'; break;  // tab
+            case 10: result += '\\n'; break; // line feed
+            case 12: result += '\\f'; break; // form feed
+            case 13: result += '\\r'; break; // carriage return
+            default: result += char; break;  // keep other control chars as-is
+          }
+        } else {
+          result += char
+        }
+      } else {
+        result += char
+      }
+    }
     
-    return cleaned
+    // Third attempt: try parsing the sanitized version
+    try {
+      JSON.parse(result)
+      return result
+    } catch (secondError: any) {
+      // If still failing, log both errors and return cleaned version
+      console.error('[Sanitize] Original error:', firstError.message)
+      console.error('[Sanitize] After sanitization:', secondError.message)
+      console.error('[Sanitize] First 200 chars:', cleaned.substring(0, 200))
+      return cleaned  // Return original cleaned version as fallback
+    }
   }
 }
 
