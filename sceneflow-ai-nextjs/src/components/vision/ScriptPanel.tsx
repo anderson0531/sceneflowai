@@ -230,7 +230,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     setGeneratingMusic(sceneIdx)
     try {
       const duration = scene.duration || 30
-      const response = await fetch('/api/tts/suno/music', {
+      const response = await fetch('/api/tts/google/music', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: music.description, duration })
@@ -238,6 +238,14 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
       if (!response.ok) {
         const error = await response.json()
+        
+        // Handle 501 (Not Implemented) for Lyria API
+        if (response.status === 501) {
+          alert('Music generation is coming soon! Google Lyria RealTime API is currently in experimental preview.')
+          setGeneratingMusic(null)
+          return
+        }
+        
         throw new Error(error.details || 'Music generation failed')
       }
 
@@ -397,7 +405,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // Quick play Music (generate and play immediately)
   const generateAndPlayMusic = async (description: string, duration: number = 30) => {
     try {
-      const response = await fetch('/api/tts/suno/music', {
+      const response = await fetch('/api/tts/google/music', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: description, duration })
@@ -405,6 +413,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       
       if (!response.ok) {
         const error = await response.json().catch(() => ({ error: 'Music generation failed' }))
+        
+        // Handle 501 (Not Implemented) for Lyria API
+        if (response.status === 501) {
+          alert('Music generation is coming soon! Google Lyria RealTime API is currently in experimental preview.')
+          return
+        }
+        
         throw new Error(error.details || error.error || 'Music generation failed')
       }
       
