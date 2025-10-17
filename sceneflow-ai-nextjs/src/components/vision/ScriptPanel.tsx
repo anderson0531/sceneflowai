@@ -77,20 +77,17 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     let mounted = true
     ;(async () => {
       try {
-        const fetcher = async () => {
-          const res = await fetch('/api/tts/google/voices', { cache: 'no-store' })
-          const data = await res.json().catch(() => null)
-          if (data?.enabled && Array.isArray(data.voices)) {
-            return data.voices.map((v: any) => ({ id: v.id, name: v.name })) as Array<{ id: string; name: string }>
-          }
-          return []
-        }
-        const { voices: curated, defaultVoiceId } = await getCuratedElevenVoices(fetcher)
+        const res = await fetch('/api/tts/google/voices', { cache: 'no-store' })
+        const data = await res.json().catch(() => null)
         if (!mounted) return
-        if (curated.length > 0) {
+        if (data?.enabled && Array.isArray(data.voices) && data.voices.length > 0) {
+          const formattedVoices = data.voices.map((v: any) => ({ 
+            id: v.id, 
+            name: v.name 
+          }))
           setEnabled(true)
-          setVoices(curated)
-          setSelectedVoiceId(defaultVoiceId || curated[0].id)
+          setVoices(formattedVoices)
+          setSelectedVoiceId(data.voices[0].id)
         } else {
           setEnabled(false)
           setVoices([])

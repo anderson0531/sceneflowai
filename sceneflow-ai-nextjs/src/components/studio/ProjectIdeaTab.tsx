@@ -383,7 +383,7 @@ export default function ProjectIdeaTab() {
         const res = await fetch('/api/tts/google/voices', { cache: 'no-store' })
         const data = await res.json()
         if (!mounted) return
-        if (data?.enabled && Array.isArray(data.voices) && data.voices.length) {
+        if (data?.enabled && Array.isArray(data.voices) && data.voices.length > 0) {
           setStudioReady(true)
           setStudioVoices(data.voices)
           setUseStudioTTS(true)
@@ -404,7 +404,7 @@ export default function ProjectIdeaTab() {
     try {
       const res = await fetch('/api/tts/google/voices', { cache: 'no-store' })
       const data = await res.json()
-      if (data?.enabled && Array.isArray(data.voices) && data.voices.length) {
+      if (data?.enabled && Array.isArray(data.voices) && data.voices.length > 0) {
         setStudioReady(true)
         setStudioVoices(data.voices)
         setUseStudioTTS(true)
