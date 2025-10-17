@@ -39,10 +39,34 @@ export async function POST(request: NextRequest) {
     console.log(`[Script Gen V2] Target: ${duration}s - Scene range: ${minScenes}-${maxScenes} (suggested: ${suggestedScenes})`)
 
     // Load existing characters BEFORE generating script
-    const existingCharacters = project.metadata?.visionPhase?.characters || 
-                              treatment.character_descriptions || []
+    // Priority: visionPhase.characters (user-refined) > treatment.character_descriptions (AI-generated)
+    let existingCharacters = project.metadata?.visionPhase?.characters || []
     
-    console.log(`[Script Gen V2] Using ${existingCharacters.length} characters from Film Treatment`)
+    // If no vision phase characters, sync from treatment
+    if (existingCharacters.length === 0 && treatment.character_descriptions) {
+      existingCharacters = treatment.character_descriptions.map((c: any) => ({
+        ...c,
+        version: 1,
+        lastModified: new Date().toISOString(),
+        referenceImage: c.referenceImage || null,
+        generating: false,
+      }))
+      
+      // Auto-save to vision phase
+      await project.update({
+        metadata: {
+          ...project.metadata,
+          visionPhase: {
+            ...(project.metadata?.visionPhase || {}),
+            characters: existingCharacters,
+          }
+        }
+      })
+      
+      console.log(`[Script Gen V2] Auto-synced ${existingCharacters.length} characters from Film Treatment`)
+    } else {
+      console.log(`[Script Gen V2] Using ${existingCharacters.length} characters from Vision Phase`)
+    }
 
     const INITIAL_BATCH_SIZE = 12  // First batch size
     let actualTotalScenes = suggestedScenes  // Will be updated by AI

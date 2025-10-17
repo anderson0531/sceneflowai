@@ -261,13 +261,41 @@ async function generateFilmTreatment(
 
     character_descriptions: Array.isArray((parsed as any).character_descriptions)
       ? ((parsed as any).character_descriptions as any[]).map((c: any) => ({
+          // Core Identity
           name: String(c?.name || ''),
           role: String(c?.role || 'supporting'),
+          age: c?.age ? String(c.age) : undefined,
+          gender: c?.gender ? String(c.gender) : undefined,
+          ethnicity: c?.ethnicity ? String(c.ethnicity) : undefined,
+          
+          // Physical Appearance
           appearance: String(c?.appearance || ''),
+          hairStyle: c?.hairStyle ? String(c.hairStyle) : undefined,
+          hairColor: c?.hairColor ? String(c.hairColor) : undefined,
+          eyeColor: c?.eyeColor ? String(c.eyeColor) : undefined,
+          build: c?.build ? String(c.build) : undefined,
+          height: c?.height ? String(c.height) : undefined,
+          distinctiveFeatures: c?.distinctiveFeatures ? String(c.distinctiveFeatures) : undefined,
+          
+          // Personality & Demeanor
           demeanor: String(c?.demeanor || ''),
+          personality: c?.personality ? String(c.personality) : undefined,
+          voiceCharacteristics: c?.voiceCharacteristics ? String(c.voiceCharacteristics) : undefined,
+          
+          // Visual Presentation
           clothing: String(c?.clothing || ''),
+          clothingStyle: c?.clothingStyle ? String(c.clothingStyle) : undefined,
+          accessories: c?.accessories ? String(c.accessories) : undefined,
+          
+          // Reference & Generation
           description: String(c?.description || ''),
-          image_prompt: c?.image_prompt ? String(c.image_prompt) : undefined,
+          imagePrompt: c?.image_prompt ? String(c.image_prompt) : undefined,
+          referenceImage: null,
+          generating: false,
+          
+          // Metadata
+          version: 1,
+          lastModified: new Date().toISOString(),
         }))
       : undefined,
     
