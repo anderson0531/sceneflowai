@@ -68,12 +68,17 @@ export async function GET(_req: NextRequest) {
 
     console.log('[Google Voices] Found', formattedVoices.length, 'voices')
 
-    return NextResponse.json({ voices: formattedVoices })
+    return NextResponse.json({ 
+      enabled: true, 
+      voices: formattedVoices 
+    })
   } catch (error: any) {
     console.error('[Google Voices] Error:', error?.message || String(error))
     return NextResponse.json({ 
+      enabled: false,
       error: 'Failed to fetch voices', 
-      details: error?.message || String(error)
+      details: error?.message || String(error),
+      voices: []
     }, { status: 500 })
   }
 }
