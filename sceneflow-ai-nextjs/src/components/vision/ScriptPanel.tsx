@@ -498,7 +498,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               variant="outline"
               size="sm"
               onClick={stopAudio}
-              className="flex items-center gap-1 bg-red-50 hover:bg-red-100 text-red-600 border-red-200"
+              className="flex items-center gap-1 bg-red-50 hover:bg-red-100 text-red-600 border-red-200 dark:bg-red-900 dark:hover:bg-red-800 dark:text-red-100 dark:border-red-700"
             >
               <Square className="w-4 h-4" />
               <span className="hidden sm:inline">Stop</span>
