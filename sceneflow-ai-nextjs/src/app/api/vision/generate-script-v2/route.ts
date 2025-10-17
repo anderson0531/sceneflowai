@@ -335,44 +335,69 @@ function sanitizeJsonString(jsonStr: string): string {
     JSON.parse(cleaned)
     return cleaned
   } catch (firstError: any) {
-    // Second attempt: Replace literal control characters with escaped versions
-    // Use character codes to avoid regex issues
-    let result = ''
-    for (let i = 0; i < cleaned.length; i++) {
-      const char = cleaned[i]
-      const code = cleaned.charCodeAt(i)
-      
-      // Replace control characters (0x00-0x1F except those already escaped)
-      if (code < 32) {
-        // Check if already escaped (preceded by backslash)
-        const prevChar = i > 0 ? cleaned[i - 1] : ''
-        if (prevChar !== '\\') {
-          switch (code) {
-            case 8: result += '\\b'; break;  // backspace
-            case 9: result += '\\t'; break;  // tab
-            case 10: result += '\\n'; break; // line feed
-            case 12: result += '\\f'; break; // form feed
-            case 13: result += '\\r'; break; // carriage return
-            default: result += char; break;  // keep other control chars as-is
-          }
-        } else {
-          result += char
-        }
-      } else {
-        result += char
-      }
-    }
+    console.error('[Sanitize] Original error:', firstError.message)
+    console.error('[Sanitize] First 200 chars:', cleaned.substring(0, 200))
     
-    // Third attempt: try parsing the sanitized version
+    // Second attempt: Fix control characters within string values only
+    // This regex finds strings and replaces literal control chars
     try {
-      JSON.parse(result)
-      return result
+      // Match string values in JSON (between quotes, handling escaped quotes)
+      const sanitized = cleaned.replace(
+        /"((?:[^"\\]|\\.)*)"/g,
+        (match, stringContent) => {
+          // Only sanitize the content inside the string
+          const fixed = stringContent
+            .replace(/\r\n/g, '\\n')
+            .replace(/\r/g, '\\n')
+            .replace(/\n/g, '\\n')
+            .replace(/\t/g, '\\t')
+            // Don't replace if already escaped
+            .replace(/([^\\])\\n/g, '$1\\n')
+            .replace(/([^\\])\\t/g, '$1\\t')
+            .replace(/([^\\])\\r/g, '$1\\r')
+          
+          return `"${fixed}"`
+        }
+      )
+      
+      // Third attempt: try parsing the sanitized version
+      JSON.parse(sanitized)
+      return sanitized
     } catch (secondError: any) {
-      // If still failing, log both errors and return cleaned version
-      console.error('[Sanitize] Original error:', firstError.message)
       console.error('[Sanitize] After sanitization:', secondError.message)
-      console.error('[Sanitize] First 200 chars:', cleaned.substring(0, 200))
-      return cleaned  // Return original cleaned version as fallback
+      
+      // Final fallback: Try more aggressive approach
+      // Replace any literal control characters with spaces as last resort
+      try {
+        const aggressive = cleaned.replace(
+          /"((?:[^"\\]|\\.)*)"/g,
+          (match, stringContent) => {
+            // Replace any literal control chars with escaped versions
+            const fixed = stringContent
+              .split('')
+              .map((char: string) => {
+                const code = char.charCodeAt(0)
+                if (code < 32 && code !== 9 && code !== 10 && code !== 13) {
+                  return ' ' // Replace with space
+                }
+                if (code === 9) return '\\t'
+                if (code === 10) return '\\n'
+                if (code === 13) return '\\r'
+                return char
+              })
+              .join('')
+            
+            return `"${fixed}"`
+          }
+        )
+        
+        JSON.parse(aggressive)
+        return aggressive
+      } catch (finalError: any) {
+        console.error('[Sanitize] Final attempt failed:', finalError.message)
+        // Return original as last resort
+        return cleaned
+      }
     }
   }
 }
