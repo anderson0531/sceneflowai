@@ -65,18 +65,14 @@ SCHEMA:
     {
       "name": "Character Name",
       "role": "protagonist | supporting | antagonist",
-      "coreIdentity": {
-        "subject": "Full name with title/nickname (e.g., 'Captain Valerius \"Val\" Zinn')",
-        "ethnicity": "Specific ethnic/cultural origin (e.g., 'Mediterranean/Outer Rim Colonies')",
-        "keyFeature": "Defining characteristic or profession (e.g., 'Scarred, charismatic freelance cargo pilot and occasional smuggler')"
-      },
-      "appearanceDetails": {
-        "hairStyle": "Specific style, length, texture (e.g., 'Mid-length, swept back, slightly unruly and oil-stained')",
-        "hairColor": "Exact color with detail (e.g., 'Deep, dark auburn')",
-        "eyeColor": "Exact eye color (e.g., 'Bright, electric amber')",
-        "expression": "Typical facial expression/demeanor (e.g., 'Constant, slight smirk, weary but calculating, with crow's feet from years of exposure')",
-        "build": "Body type, physique, movement style (e.g., 'Wiry, compact, and deceptively strong, favoring quick movements over bulk')"
-      },
+      "subject": "Full name with title/nickname (e.g., 'Captain Valerius \"Val\" Zinn')",
+      "ethnicity": "Specific ethnic/cultural origin (e.g., 'Mediterranean/Outer Rim Colonies')",
+      "keyFeature": "Defining characteristic or profession (e.g., 'Scarred, charismatic freelance cargo pilot and occasional smuggler')",
+      "hairStyle": "Specific style, length, texture (e.g., 'Mid-length, swept back, slightly unruly and oil-stained')",
+      "hairColor": "Exact color with detail (e.g., 'Deep, dark auburn')",
+      "eyeColor": "Exact eye color (e.g., 'Bright, electric amber')",
+      "expression": "Typical facial expression/demeanor (e.g., 'Constant, slight smirk, weary but calculating, with crow's feet from years of exposure')",
+      "build": "Body type, physique, movement style (e.g., 'Wiry, compact, and deceptively strong, favoring quick movements over bulk')",
       "description": "Brief character context for story (role in narrative)"
     }
   ],
@@ -105,7 +101,7 @@ SCHEMA:
 
 CRITICAL: 
 - Generate 3-5 detailed character_descriptions (protagonist + supporting characters)
-- Each character MUST have complete coreIdentity (subject, ethnicity, keyFeature) and appearanceDetails (hairStyle, hairColor, eyeColor, expression, build)
+- Each character MUST have complete attributes: subject, ethnicity, keyFeature, hairStyle, hairColor, eyeColor, expression, build
 - Generate 3-5 detailed scene_descriptions (key locations)
 - All details must be SPECIFIC and VISUAL for precise image generation
 - Character attributes must be detailed enough to recreate consistent character images across all scenes`

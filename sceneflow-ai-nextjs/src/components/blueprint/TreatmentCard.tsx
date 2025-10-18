@@ -23,18 +23,14 @@ export function TreatmentCard() {
   const variants = (guide as any)?.treatmentVariants as Array<{ id: string; label?: string; content: string; visual_style?: string; tone_description?: string; target_audience?: string; title?: string; logline?: string; genre?: string; format_length?: string; author_writer?: string; date?: string; synopsis?: string; setting?: string; protagonist?: string; antagonist?: string; act_breakdown?: any; tone?: string; style?: string; themes?: any; mood_references?: string[]; character_descriptions?: Array<{
     name: string;
     role: string;
-    coreIdentity: {
-      subject: string;
-      ethnicity: string;
-      keyFeature: string;
-    };
-    appearanceDetails: {
-      hairStyle: string;
-      hairColor: string;
-      eyeColor: string;
-      expression: string;
-      build: string;
-    };
+    subject: string;
+    ethnicity: string;
+    keyFeature: string;
+    hairStyle: string;
+    hairColor: string;
+    eyeColor: string;
+    expression: string;
+    build: string;
     description: string;
     imagePrompt?: string;
     referenceImage?: string | null;
@@ -756,55 +752,55 @@ export function TreatmentCard() {
                                   console.log('🎭 Character Name:', c.name);
                                   console.log('🎭 Full Character Object:', c);
                                   console.log('🎭 Character JSON:', JSON.stringify(c, null, 2));
-                                  console.log('🎭 coreIdentity exists?', !!c.coreIdentity);
-                                  console.log('🎭 coreIdentity object:', c.coreIdentity);
-                                  console.log('🎭 coreIdentity.subject:', c.coreIdentity?.subject);
-                                  console.log('🎭 coreIdentity.ethnicity:', c.coreIdentity?.ethnicity);
-                                  console.log('🎭 coreIdentity.keyFeature:', c.coreIdentity?.keyFeature);
-                                  console.log('🎭 appearanceDetails exists?', !!c.appearanceDetails);
-                                  console.log('🎭 appearanceDetails object:', c.appearanceDetails);
-                                  console.log('🎭 appearanceDetails keys:', c.appearanceDetails ? Object.keys(c.appearanceDetails) : 'none');
+                                  console.log('🎭 subject:', c.subject);
+                                  console.log('🎭 ethnicity:', c.ethnicity);
+                                  console.log('🎭 keyFeature:', c.keyFeature);
+                                  console.log('🎭 hairStyle:', c.hairStyle);
+                                  console.log('🎭 hairColor:', c.hairColor);
+                                  console.log('🎭 eyeColor:', c.eyeColor);
+                                  console.log('🎭 expression:', c.expression);
+                                  console.log('🎭 build:', c.build);
                                   console.log('🎭 ===== CHARACTER DEBUG END =====');
                                   return null;
                                 })()}
                                 
                                 {/* Core Identity */}
-                                {c.coreIdentity && (
+                                {(c.subject || c.ethnicity || c.keyFeature) && (
                                   <div className="space-y-1">
                                     <div className="text-xs font-semibold text-purple-400">Core Identity</div>
                                     <div className="text-xs text-gray-300 space-y-0.5">
-                                      {c.coreIdentity.subject && (
-                                        <div><span className="text-gray-500">Subject:</span> {c.coreIdentity.subject}</div>
+                                      {c.subject && (
+                                        <div><span className="text-gray-500">Subject:</span> {c.subject}</div>
                                       )}
-                                      {c.coreIdentity.ethnicity && (
-                                        <div><span className="text-gray-500">Ethnicity:</span> {c.coreIdentity.ethnicity}</div>
+                                      {c.ethnicity && (
+                                        <div><span className="text-gray-500">Ethnicity:</span> {c.ethnicity}</div>
                                       )}
-                                      {c.coreIdentity.keyFeature && (
-                                        <div><span className="text-gray-500">Key Feature:</span> {c.coreIdentity.keyFeature}</div>
+                                      {c.keyFeature && (
+                                        <div><span className="text-gray-500">Key Feature:</span> {c.keyFeature}</div>
                                       )}
                                     </div>
                                   </div>
                                 )}
                                 
                                 {/* Appearance Details */}
-                                {c.appearanceDetails && (
+                                {(c.hairStyle || c.hairColor || c.eyeColor || c.expression || c.build) && (
                                   <div className="space-y-1">
                                     <div className="text-xs font-semibold text-blue-400">Appearance</div>
                                     <div className="text-xs text-gray-300 space-y-0.5">
-                                      {c.appearanceDetails.hairStyle && (
-                                        <div><span className="text-gray-500">Hair Style:</span> {c.appearanceDetails.hairStyle}</div>
+                                      {c.hairStyle && (
+                                        <div><span className="text-gray-500">Hair Style:</span> {c.hairStyle}</div>
                                       )}
-                                      {c.appearanceDetails.hairColor && (
-                                        <div><span className="text-gray-500">Hair Color:</span> {c.appearanceDetails.hairColor}</div>
+                                      {c.hairColor && (
+                                        <div><span className="text-gray-500">Hair Color:</span> {c.hairColor}</div>
                                       )}
-                                      {c.appearanceDetails.eyeColor && (
-                                        <div><span className="text-gray-500">Eyes:</span> {c.appearanceDetails.eyeColor}</div>
+                                      {c.eyeColor && (
+                                        <div><span className="text-gray-500">Eyes:</span> {c.eyeColor}</div>
                                       )}
-                                      {c.appearanceDetails.expression && (
-                                        <div><span className="text-gray-500">Expression:</span> {c.appearanceDetails.expression}</div>
+                                      {c.expression && (
+                                        <div><span className="text-gray-500">Expression:</span> {c.expression}</div>
                                       )}
-                                      {c.appearanceDetails.build && (
-                                        <div><span className="text-gray-500">Build:</span> {c.appearanceDetails.build}</div>
+                                      {c.build && (
+                                        <div><span className="text-gray-500">Build:</span> {c.build}</div>
                                       )}
                                     </div>
                                   </div>
@@ -912,14 +908,14 @@ export function TreatmentCard() {
         {builderVariantId !== null && builderCharIdx !== null && (() => {
           const character = variants?.find(v => v.id === builderVariantId)?.character_descriptions?.[builderCharIdx] as any
           const initialStructure = character ? {
-            subject: character.coreIdentity?.subject || character.name || '',
-            ethnicity: character.coreIdentity?.ethnicity || '',
-            keyFeature: character.coreIdentity?.keyFeature || '',
-            hairStyle: character.appearanceDetails?.hairStyle || '',
-            hairColor: character.appearanceDetails?.hairColor || '',
-            eyeColor: character.appearanceDetails?.eyeColor || '',
-            eyeExpression: character.appearanceDetails?.expression || '',
-            build: character.appearanceDetails?.build || '',
+            subject: character.subject || character.name || '',
+            ethnicity: character.ethnicity || '',
+            keyFeature: character.keyFeature || '',
+            hairStyle: character.hairStyle || '',
+            hairColor: character.hairColor || '',
+            eyeColor: character.eyeColor || '',
+            eyeExpression: character.expression || '',
+            build: character.build || '',
           } : undefined
           
           return (

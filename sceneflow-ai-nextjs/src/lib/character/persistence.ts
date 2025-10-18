@@ -5,20 +5,16 @@ export interface EnhancedCharacter {
   role: string  // protagonist, antagonist, supporting
   
   // Core Identity (3 required fields)
-  coreIdentity: {
-    subject: string            // "Captain Valerius 'Val' Zinn"
-    ethnicity: string          // "Mediterranean/Outer Rim Colonies"
-    keyFeature: string         // "Scarred, charismatic freelance cargo pilot"
-  }
+  subject: string            // "Captain Valerius 'Val' Zinn"
+  ethnicity: string          // "Mediterranean/Outer Rim Colonies"
+  keyFeature: string         // "Scarred, charismatic freelance cargo pilot"
   
   // Appearance Details (5 required fields)
-  appearanceDetails: {
-    hairStyle: string          // "Mid-length, swept back, slightly unruly"
-    hairColor: string          // "Deep, dark auburn"
-    eyeColor: string           // "Bright, electric amber"
-    expression: string         // "Constant slight smirk, weary but calculating"
-    build: string              // "Wiry, compact, deceptively strong"
-  }
+  hairStyle: string          // "Mid-length, swept back, slightly unruly"
+  hairColor: string          // "Deep, dark auburn"
+  eyeColor: string           // "Bright, electric amber"
+  expression: string         // "Constant slight smirk, weary but calculating"
+  build: string              // "Wiry, compact, deceptively strong"
   
   // Optional fields
   description?: string         // Narrative description

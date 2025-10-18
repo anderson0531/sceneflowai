@@ -16,32 +16,29 @@ export async function POST(req: NextRequest) {
     if (projectId && characterId && !finalPrompt) {
       const character = await getCharacterAttributes(projectId, characterId)
       if (character) {
-        // Build comprehensive prompt from nested character structure
+        // Build comprehensive prompt from flat character structure
         const parts: string[] = []
         
         // Core identity - key feature is primary descriptor
-        if (character.coreIdentity?.keyFeature) {
-          parts.push(character.coreIdentity.keyFeature)
+        if (character.keyFeature) {
+          parts.push(character.keyFeature)
         }
-        if (character.coreIdentity?.ethnicity) {
-          parts.push(character.coreIdentity.ethnicity)
+        if (character.ethnicity) {
+          parts.push(character.ethnicity)
         }
         
         // Appearance details - build comprehensive visual
-        const appearance = character.appearanceDetails
-        if (appearance) {
-          if (appearance.hairColor && appearance.hairStyle) {
-            parts.push(`${appearance.hairColor} ${appearance.hairStyle} hair`)
-          }
-          if (appearance.eyeColor) {
-            parts.push(`${appearance.eyeColor} eyes`)
-          }
-          if (appearance.expression) {
-            parts.push(appearance.expression)
-          }
-          if (appearance.build) {
-            parts.push(`${appearance.build} build`)
-          }
+        if (character.hairColor && character.hairStyle) {
+          parts.push(`${character.hairColor} ${character.hairStyle} hair`)
+        }
+        if (character.eyeColor) {
+          parts.push(`${character.eyeColor} eyes`)
+        }
+        if (character.expression) {
+          parts.push(character.expression)
+        }
+        if (character.build) {
+          parts.push(`${character.build} build`)
         }
         
         finalPrompt = parts.join(', ')
