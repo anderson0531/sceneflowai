@@ -157,7 +157,7 @@ export function CharacterPromptBuilder({
                     value={structure.subject}
                     onChange={(e) => setStructure(prev => ({ ...prev, subject: e.target.value }))}
                     placeholder="A young woman, An old wizard, A robot detective"
-                    className="mt-1"
+                    className="mt-1 text-gray-200"
                   />
                 </div>
                 <div>
@@ -166,7 +166,7 @@ export function CharacterPromptBuilder({
                     value={structure.ethnicity}
                     onChange={(e) => setStructure(prev => ({ ...prev, ethnicity: e.target.value }))}
                     placeholder="Japanese, Elven, Martian"
-                    className="mt-1"
+                    className="mt-1 text-gray-200"
                   />
                 </div>
                 <div>
@@ -244,7 +244,7 @@ export function CharacterPromptBuilder({
                     value={structure.hairColor}
                     onChange={(e) => setStructure(prev => ({ ...prev, hairColor: e.target.value }))}
                     placeholder="crimson red, silver"
-                    className="mt-1"
+                    className="mt-1 text-gray-200"
                   />
                 </div>
                 <div>
@@ -253,7 +253,7 @@ export function CharacterPromptBuilder({
                     value={structure.eyeColor}
                     onChange={(e) => setStructure(prev => ({ ...prev, eyeColor: e.target.value }))}
                     placeholder="emerald green, piercing blue"
-                    className="mt-1"
+                    className="mt-1 text-gray-200"
                   />
                 </div>
                 <div>
@@ -262,7 +262,7 @@ export function CharacterPromptBuilder({
                     value={structure.eyeExpression}
                     onChange={(e) => setStructure(prev => ({ ...prev, eyeExpression: e.target.value }))}
                     placeholder="thoughtful, joyful, stern"
-                    className="mt-1"
+                    className="mt-1 text-gray-200"
                   />
                 </div>
                 <div className="col-span-2">
@@ -271,7 +271,7 @@ export function CharacterPromptBuilder({
                     value={structure.build}
                     onChange={(e) => setStructure(prev => ({ ...prev, build: e.target.value }))}
                     placeholder="athletic, slender, imposing"
-                    className="mt-1"
+                    className="mt-1 text-gray-200"
                   />
                 </div>
               </div>
