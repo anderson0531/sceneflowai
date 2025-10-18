@@ -20,7 +20,28 @@ export function TreatmentCard() {
   const { guide } = useGuideStore()
   const { selectTreatmentVariant } = useGuideStore() as any
   const { lastEdit, justAppliedVariantId, appliedAt } = useGuideStore() as any
-  const variants = (guide as any)?.treatmentVariants as Array<{ id: string; label?: string; content: string; visual_style?: string; tone_description?: string; target_audience?: string; title?: string; logline?: string; genre?: string; format_length?: string; author_writer?: string; date?: string; synopsis?: string; setting?: string; protagonist?: string; antagonist?: string; act_breakdown?: any; tone?: string; style?: string; themes?: any; mood_references?: string[]; character_descriptions?: Array<{ name: string; description: string; image_prompt?: string }>; beats?: Array<{ title: string; intent?: string; minutes: number; synopsis?: string }>; total_duration_seconds?: number; estimatedDurationMinutes?: number; }> | undefined
+  const variants = (guide as any)?.treatmentVariants as Array<{ id: string; label?: string; content: string; visual_style?: string; tone_description?: string; target_audience?: string; title?: string; logline?: string; genre?: string; format_length?: string; author_writer?: string; date?: string; synopsis?: string; setting?: string; protagonist?: string; antagonist?: string; act_breakdown?: any; tone?: string; style?: string; themes?: any; mood_references?: string[]; character_descriptions?: Array<{
+    name: string;
+    role: string;
+    coreIdentity: {
+      subject: string;
+      ethnicity: string;
+      keyFeature: string;
+    };
+    appearanceDetails: {
+      hairStyle: string;
+      hairColor: string;
+      eyeColor: string;
+      expression: string;
+      build: string;
+    };
+    description: string;
+    imagePrompt?: string;
+    referenceImage?: string | null;
+    generating?: boolean;
+    version?: number;
+    lastModified?: string;
+  }>; beats?: Array<{ title: string; intent?: string; minutes: number; synopsis?: string }>; total_duration_seconds?: number; estimatedDurationMinutes?: number; }> | undefined
   const selectedId = (guide as any)?.selectedTreatmentId as string | undefined
 
   // Top-level hooks (must not be conditional)
@@ -697,7 +718,7 @@ export function TreatmentCard() {
                         {v.character_descriptions.map((c, idx) => {
                           const charState = charImages[v.id]?.[idx]
                           const imageUrl = charState?.url || (c as any).image_url || (c as any).referenceImage
-                          const currentPrompt = charState?.prompt || c.image_prompt || `Professional character portrait of ${c.name}: ${c.description}`
+                          const currentPrompt = charState?.prompt || c.imagePrompt || `Professional character portrait of ${c.name}: ${c.description}`
                           return (
                             <div key={`${c.name}-${idx}`} className="flex gap-3 p-3 rounded border border-gray-700/60 bg-gray-900/40">
                               {/* Image thumbnail */}
@@ -721,43 +742,51 @@ export function TreatmentCard() {
                               <div className="flex-1 space-y-2">
                                 <div className="font-medium text-gray-100">{c.name}</div>
                                 
+                                {/* Debug: Log character data */}
+                                {(() => {
+                                  console.log('🎭 TreatmentCard Character Data:', c);
+                                  console.log('🎭 coreIdentity:', c.coreIdentity);
+                                  console.log('🎭 appearanceDetails:', c.appearanceDetails);
+                                  return null;
+                                })()}
+                                
                                 {/* Core Identity */}
-                                {(c as any).coreIdentity && Object.keys((c as any).coreIdentity).length > 0 && (
+                                {c.coreIdentity && Object.keys(c.coreIdentity).length > 0 && (
                                   <div className="space-y-1">
                                     <div className="text-xs font-semibold text-purple-400">Core Identity</div>
                                     <div className="text-xs text-gray-300 space-y-0.5">
-                                      {(c as any).coreIdentity.subject?.trim() && (
-                                        <div><span className="text-gray-500">Subject:</span> {(c as any).coreIdentity.subject}</div>
+                                      {c.coreIdentity.subject?.trim() && (
+                                        <div><span className="text-gray-500">Subject:</span> {c.coreIdentity.subject}</div>
                                       )}
-                                      {(c as any).coreIdentity.ethnicity?.trim() && (
-                                        <div><span className="text-gray-500">Ethnicity:</span> {(c as any).coreIdentity.ethnicity}</div>
+                                      {c.coreIdentity.ethnicity?.trim() && (
+                                        <div><span className="text-gray-500">Ethnicity:</span> {c.coreIdentity.ethnicity}</div>
                                       )}
-                                      {(c as any).coreIdentity.keyFeature?.trim() && (
-                                        <div><span className="text-gray-500">Key Feature:</span> {(c as any).coreIdentity.keyFeature}</div>
+                                      {c.coreIdentity.keyFeature?.trim() && (
+                                        <div><span className="text-gray-500">Key Feature:</span> {c.coreIdentity.keyFeature}</div>
                                       )}
                                     </div>
                                   </div>
                                 )}
                                 
                                 {/* Appearance Details */}
-                                {(c as any).appearanceDetails && Object.keys((c as any).appearanceDetails).length > 0 && (
+                                {c.appearanceDetails && Object.keys(c.appearanceDetails).length > 0 && (
                                   <div className="space-y-1">
                                     <div className="text-xs font-semibold text-blue-400">Appearance</div>
                                     <div className="text-xs text-gray-300 space-y-0.5">
-                                      {(c as any).appearanceDetails.hairStyle?.trim() && (
-                                        <div><span className="text-gray-500">Hair Style:</span> {(c as any).appearanceDetails.hairStyle}</div>
+                                      {c.appearanceDetails.hairStyle?.trim() && (
+                                        <div><span className="text-gray-500">Hair Style:</span> {c.appearanceDetails.hairStyle}</div>
                                       )}
-                                      {(c as any).appearanceDetails.hairColor?.trim() && (
-                                        <div><span className="text-gray-500">Hair Color:</span> {(c as any).appearanceDetails.hairColor}</div>
+                                      {c.appearanceDetails.hairColor?.trim() && (
+                                        <div><span className="text-gray-500">Hair Color:</span> {c.appearanceDetails.hairColor}</div>
                                       )}
-                                      {(c as any).appearanceDetails.eyeColor?.trim() && (
-                                        <div><span className="text-gray-500">Eyes:</span> {(c as any).appearanceDetails.eyeColor}</div>
+                                      {c.appearanceDetails.eyeColor?.trim() && (
+                                        <div><span className="text-gray-500">Eyes:</span> {c.appearanceDetails.eyeColor}</div>
                                       )}
-                                      {(c as any).appearanceDetails.expression?.trim() && (
-                                        <div><span className="text-gray-500">Expression:</span> {(c as any).appearanceDetails.expression}</div>
+                                      {c.appearanceDetails.expression?.trim() && (
+                                        <div><span className="text-gray-500">Expression:</span> {c.appearanceDetails.expression}</div>
                                       )}
-                                      {(c as any).appearanceDetails.build?.trim() && (
-                                        <div><span className="text-gray-500">Build:</span> {(c as any).appearanceDetails.build}</div>
+                                      {c.appearanceDetails.build?.trim() && (
+                                        <div><span className="text-gray-500">Build:</span> {c.appearanceDetails.build}</div>
                                       )}
                                     </div>
                                   </div>
