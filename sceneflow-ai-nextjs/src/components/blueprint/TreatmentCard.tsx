@@ -766,7 +766,7 @@ export function TreatmentCard() {
                                 })()}
                                 
                                 {/* Core Identity */}
-                                {c.coreIdentity && (c.coreIdentity.ethnicity || c.coreIdentity.keyFeature) && (
+                                {c.coreIdentity && (
                                   <div className="space-y-1">
                                     <div className="text-xs font-semibold text-purple-400">Core Identity</div>
                                     <div className="text-xs text-gray-300 space-y-0.5">
@@ -784,7 +784,7 @@ export function TreatmentCard() {
                                 )}
                                 
                                 {/* Appearance Details */}
-                                {c.appearanceDetails && (c.appearanceDetails.hairStyle || c.appearanceDetails.hairColor || c.appearanceDetails.eyeColor || c.appearanceDetails.expression || c.appearanceDetails.build) && (
+                                {c.appearanceDetails && (
                                   <div className="space-y-1">
                                     <div className="text-xs font-semibold text-blue-400">Appearance</div>
                                     <div className="text-xs text-gray-300 space-y-0.5">
