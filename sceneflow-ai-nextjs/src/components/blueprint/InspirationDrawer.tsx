@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useRef } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { trackCta } from '@/lib/analytics'
-import { Sparkles, X, Pin, ChevronRight, ArrowRight } from 'lucide-react'
+import { Lightbulb, X, Pin, ChevronRight, ArrowRight } from 'lucide-react'
 
 interface Variant {
   id: string
@@ -141,14 +141,15 @@ export function InspirationDrawer({ open, onClose, onInsert }: InspirationDrawer
       <DialogContent className="fixed right-0 left-auto top-0 bottom-0 translate-x-0 translate-y-0 ml-auto w-[min(100vw,400px)] max-w-full overflow-hidden rounded-none border-l bg-gray-950 pr-[env(safe-area-inset-right)]">
         <DialogHeader className="sticky top-0 z-10 bg-gray-950/80 backdrop-blur supports-[backdrop-filter]:bg-gray-950/60">
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles size={18} className="text-sf-primary" />
+            <Lightbulb size={18} className="text-sf-primary" />
             Inspiration
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col h-[calc(100dvh-56px)] overflow-y-auto px-6 sm:px-8 py-4 space-y-4">
-          {/* Keyword Input */}
-          <div className="space-y-2">
+        <div className="flex flex-col h-[calc(100dvh-56px)]">
+          <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-4 space-y-4">
+            {/* Keyword Input */}
+            <div className="space-y-2">
             <div className="relative">
               <input
                 ref={inputRef}
@@ -207,7 +208,7 @@ export function InspirationDrawer({ open, onClose, onInsert }: InspirationDrawer
           {displayItems.length === 0 && (
             <div className="flex-1 flex flex-col items-center justify-center text-center py-12 px-6">
               <div className="w-16 h-16 rounded-full bg-sf-primary/10 flex items-center justify-center mb-4">
-                <Sparkles size={32} className="text-sf-primary" />
+                <Lightbulb size={32} className="text-sf-primary" />
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">
                 Get Inspired
@@ -301,9 +302,10 @@ export function InspirationDrawer({ open, onClose, onInsert }: InspirationDrawer
               ))}
             </div>
           )}
-
-          {/* Tips Section */}
-          <div className="pt-2 space-y-1.5 border-t border-gray-800">
+          </div>
+          
+          {/* Tips Section - Always visible at bottom */}
+          <div className="px-6 sm:px-8 py-3 space-y-1.5 border-t border-gray-800 bg-gray-950">
             <div className="text-xs text-gray-400 font-medium">💡 Pro Tips</div>
             <ul className="text-[11px] text-gray-500 space-y-0.5 pl-4">
               <li>• Double-click any idea to edit before using</li>

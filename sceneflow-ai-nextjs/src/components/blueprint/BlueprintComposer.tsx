@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '../../
 import { InspirationDrawer } from './InspirationDrawer'
 import { trackCta } from '@/lib/analytics'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
-import { Mic, MicOff, Sparkles, Loader2 } from 'lucide-react'
+import { Mic, MicOff, Lightbulb, Sparkles, Loader2 } from 'lucide-react'
 
 export function BlueprintComposer({
   onGenerate,
@@ -109,7 +109,7 @@ export function BlueprintComposer({
                   className="p-2 rounded-lg border border-gray-700 text-gray-300 hover:bg-gray-800 transition-colors"
                   aria-label="Get inspiration"
                 >
-                  <Sparkles size={18} />
+                  <Lightbulb size={18} />
                 </button>
               </TooltipTrigger>
               <TooltipContent>
