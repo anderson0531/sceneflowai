@@ -35,6 +35,15 @@ const TreatmentSchema = z.object({
     .array(
       z.object({
         name: z.string().optional(),
+        role: z.string().optional(),
+        subject: z.string().optional(),
+        ethnicity: z.string().optional(),
+        keyFeature: z.string().optional(),
+        hairStyle: z.string().optional(),
+        hairColor: z.string().optional(),
+        eyeColor: z.string().optional(),
+        expression: z.string().optional(),
+        build: z.string().optional(),
         description: z.string().optional(),
         image_prompt: z.string().optional(),
       })
