@@ -720,7 +720,50 @@ export function TreatmentCard() {
                               {/* Character info & prompt editor */}
                               <div className="flex-1 space-y-2">
                                 <div className="font-medium text-gray-100">{c.name}</div>
-                                <div className="text-sm text-gray-300 leading-6">{c.description}</div>
+                                
+                                {/* Core Identity */}
+                                {(c as any).coreIdentity && (
+                                  <div className="space-y-1">
+                                    <div className="text-xs font-semibold text-purple-400">Core Identity</div>
+                                    <div className="text-xs text-gray-300 space-y-0.5">
+                                      {(c as any).coreIdentity.ethnicity && (
+                                        <div><span className="text-gray-500">Ethnicity:</span> {(c as any).coreIdentity.ethnicity}</div>
+                                      )}
+                                      {(c as any).coreIdentity.keyFeature && (
+                                        <div><span className="text-gray-500">Key Feature:</span> {(c as any).coreIdentity.keyFeature}</div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {/* Appearance Details */}
+                                {(c as any).appearanceDetails && (
+                                  <div className="space-y-1">
+                                    <div className="text-xs font-semibold text-blue-400">Appearance</div>
+                                    <div className="text-xs text-gray-300 space-y-0.5">
+                                      {(c as any).appearanceDetails.hairStyle && (c as any).appearanceDetails.hairColor && (
+                                        <div><span className="text-gray-500">Hair:</span> {(c as any).appearanceDetails.hairColor}, {(c as any).appearanceDetails.hairStyle}</div>
+                                      )}
+                                      {(c as any).appearanceDetails.eyeColor && (
+                                        <div><span className="text-gray-500">Eyes:</span> {(c as any).appearanceDetails.eyeColor}</div>
+                                      )}
+                                      {(c as any).appearanceDetails.build && (
+                                        <div><span className="text-gray-500">Build:</span> {(c as any).appearanceDetails.build}</div>
+                                      )}
+                                      {(c as any).appearanceDetails.expression && (
+                                        <div><span className="text-gray-500">Expression:</span> {(c as any).appearanceDetails.expression}</div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {/* Brief description for context */}
+                                {c.description && (
+                                  <div className="text-xs text-gray-400 italic border-t border-gray-700/50 pt-1.5">
+                                    {c.description}
+                                  </div>
+                                )}
+                                
                                 <div className="space-y-1">
                                   <div className="text-xs text-gray-400">Image Prompt</div>
                                   <div className="relative">
