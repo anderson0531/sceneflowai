@@ -197,15 +197,6 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
       if (json?.success) {
         const variants = Array.isArray(json?.variants) ? json.variants : []
         if (variants.length) {
-          // DEBUG: Log what we're setting in the store
-          console.log('🎬 [Studio] Setting treatment variants:', variants.map((v: any) => ({
-            id: v.id,
-            title: v.title,
-            characterCount: v.character_descriptions?.length,
-            firstCharacter: v.character_descriptions?.[0],
-            allCharacters: v.character_descriptions
-          })))
-          
           setTreatmentVariants(variants.map((v: any) => ({
             id: v.id,
             label: v.label,

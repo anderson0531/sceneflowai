@@ -713,40 +713,11 @@ export function TreatmentCard() {
                       <div className="text-xs text-gray-400">Characters</div>
                       <div className="space-y-3">
                         {v.character_descriptions.map((c, idx) => {
-                          // DEBUG: Log what we're actually rendering at the start
-                          console.log(`🎭 [TreatmentCard] Rendering character ${idx} for variant ${v.id}:`, {
-                            name: c.name,
-                            role: c.role,
-                            subject: c.subject,
-                            ethnicity: c.ethnicity,
-                            keyFeature: c.keyFeature,
-                            hairStyle: c.hairStyle,
-                            hairColor: c.hairColor,
-                            eyeColor: c.eyeColor,
-                            expression: c.expression,
-                            build: c.build,
-                            description: c.description,
-                            fullObjectKeys: Object.keys(c),
-                            fullObject: c
-                          })
-                          
-                          // DEBUG: Array index check
-                          console.log(`🎭 [ARRAY CHECK] Character at index ${idx}:`, {
-                            idx,
-                            name: c.name,
-                            role: c.role,
-                            isExpectedFirst: idx === 0 ? 'YES - This is the protagonist' : 'NO - Supporting character'
-                          })
-                          
                           const charState = charImages[v.id]?.[idx]
                           const imageUrl = charState?.url || (c as any).image_url || (c as any).referenceImage
                           const currentPrompt = charState?.prompt || c.imagePrompt || `Professional character portrait of ${c.name}: ${c.description}`
                           return (
-                            <div key={`${v.id}-char-${idx}`} className="relative flex gap-3 p-3 rounded border border-gray-700/60 bg-gray-900/40">
-                              {/* DEBUG: Array index indicator */}
-                              <div className="absolute top-1 right-1 text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono">
-                                idx:{idx}
-                              </div>
+                            <div key={`${v.id}-char-${idx}`} className="flex gap-3 p-3 rounded border border-gray-700/60 bg-gray-900/40">
                               {/* Image thumbnail */}
                               <div 
                                 className="shrink-0 w-32 h-32 rounded overflow-hidden bg-gray-800 relative cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all"
@@ -770,33 +741,10 @@ export function TreatmentCard() {
                               
                               {/* Character info & prompt editor */}
                               <div className="flex-1 space-y-2">
-                                <div className="font-medium text-gray-100 flex items-center gap-2">
-                                  {c.name}
-                                  <span className="text-[8px] px-1 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono">
-                                    v2.1
-                                  </span>
-                                </div>
+                                <div className="font-medium text-gray-100">{c.name}</div>
                                 {c.role && (
                                   <div className="text-xs text-gray-400 capitalize">Role: {c.role}</div>
                                 )}
-                                
-                                {/* Debug: Log character data */}
-                                {(() => {
-                                  console.log('🎭 ===== CHARACTER DEBUG START =====');
-                                  console.log('🎭 Character Name:', c.name);
-                                  console.log('🎭 Full Character Object:', c);
-                                  console.log('🎭 Character JSON:', JSON.stringify(c, null, 2));
-                                  console.log('🎭 subject:', c.subject);
-                                  console.log('🎭 ethnicity:', c.ethnicity);
-                                  console.log('🎭 keyFeature:', c.keyFeature);
-                                  console.log('🎭 hairStyle:', c.hairStyle);
-                                  console.log('🎭 hairColor:', c.hairColor);
-                                  console.log('🎭 eyeColor:', c.eyeColor);
-                                  console.log('🎭 expression:', c.expression);
-                                  console.log('🎭 build:', c.build);
-                                  console.log('🎭 ===== CHARACTER DEBUG END =====');
-                                  return null;
-                                })()}
                                 
                                 {/* Core Identity */}
                                 {(c.subject || c.ethnicity || c.keyFeature) && (
