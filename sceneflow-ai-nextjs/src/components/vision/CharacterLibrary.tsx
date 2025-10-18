@@ -91,18 +91,33 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
       )}
       
       {/* Prompt Builder Modal */}
-      {builderCharId && (
-        <CharacterPromptBuilder
-          open={builderOpen}
-          onClose={() => setBuilderOpen(false)}
-          initialPrompt={charPrompts[builderCharId] || characters.find((c, idx) => (c.id || idx.toString()) === builderCharId)?.imagePrompt || ''}
-          characterName={characters.find((c, idx) => (c.id || idx.toString()) === builderCharId)?.name || 'Character'}
-          onApply={(prompt, structure) => {
-            setCharPrompts(prev => ({ ...prev, [builderCharId]: prompt }))
-            setBuilderOpen(false)
-          }}
-        />
-      )}
+      {builderCharId && (() => {
+        const character = characters.find((c, idx) => (c.id || idx.toString()) === builderCharId)
+        const initialStructure = character ? {
+          subject: character.name || '',
+          ethnicity: character.ethnicity || '',
+          keyFeature: character.distinctiveFeatures || '',
+          hairStyle: character.hairStyle || '',
+          hairColor: character.hairColor || '',
+          eyeColor: character.eyeColor || '',
+          eyeExpression: '',
+          build: character.build || '',
+        } : undefined
+        
+        return (
+          <CharacterPromptBuilder
+            open={builderOpen}
+            onClose={() => setBuilderOpen(false)}
+            initialPrompt={charPrompts[builderCharId] || character?.imagePrompt || ''}
+            initialStructure={initialStructure}
+            characterName={character?.name || 'Character'}
+            onApply={(prompt, structure) => {
+              setCharPrompts(prev => ({ ...prev, [builderCharId]: prompt }))
+              setBuilderOpen(false)
+            }}
+          />
+        )
+      })()}
     </div>
   )
 }

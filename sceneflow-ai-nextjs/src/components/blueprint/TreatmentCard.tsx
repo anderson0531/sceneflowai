@@ -835,24 +835,39 @@ export function TreatmentCard() {
           onSelectVariant={(id)=> selectTreatmentVariant(id)}
         />
         {/* Character Prompt Builder */}
-        {builderVariantId !== null && builderCharIdx !== null && (
-          <CharacterPromptBuilder
-            open={builderOpen}
-            onClose={() => setBuilderOpen(false)}
-            initialPrompt={charImages[builderVariantId]?.[builderCharIdx]?.prompt || ''}
-            characterName={variants?.find(v => v.id === builderVariantId)?.character_descriptions?.[builderCharIdx]?.name || 'Character'}
-            onApply={(prompt, structure) => {
-              setCharImages(prev => ({
-                ...prev,
-                [builderVariantId]: {
-                  ...prev[builderVariantId],
-                  [builderCharIdx]: { ...prev[builderVariantId]?.[builderCharIdx], prompt }
-                }
-              }))
-              setBuilderOpen(false)
-            }}
-          />
-        )}
+        {builderVariantId !== null && builderCharIdx !== null && (() => {
+          const character = variants?.find(v => v.id === builderVariantId)?.character_descriptions?.[builderCharIdx] as any
+          const initialStructure = character ? {
+            subject: character.name || '',
+            ethnicity: character.ethnicity || '',
+            keyFeature: character.distinctiveFeatures || '',
+            hairStyle: character.hairStyle || '',
+            hairColor: character.hairColor || '',
+            eyeColor: character.eyeColor || '',
+            eyeExpression: '',
+            build: character.build || '',
+          } : undefined
+          
+          return (
+            <CharacterPromptBuilder
+              open={builderOpen}
+              onClose={() => setBuilderOpen(false)}
+              initialPrompt={charImages[builderVariantId]?.[builderCharIdx]?.prompt || ''}
+              initialStructure={initialStructure}
+              characterName={character?.name || 'Character'}
+              onApply={(prompt, structure) => {
+                setCharImages(prev => ({
+                  ...prev,
+                  [builderVariantId]: {
+                    ...prev[builderVariantId],
+                    [builderCharIdx]: { ...prev[builderVariantId]?.[builderCharIdx], prompt, structure }
+                  }
+                }))
+                setBuilderOpen(false)
+              }}
+            />
+          )
+        })()}
         {shareOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/60" onClick={() => setShareOpen(false)} />
