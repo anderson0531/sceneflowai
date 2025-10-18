@@ -730,11 +730,23 @@ export function TreatmentCard() {
                             fullObject: c
                           })
                           
+                          // DEBUG: Array index check
+                          console.log(`🎭 [ARRAY CHECK] Character at index ${idx}:`, {
+                            idx,
+                            name: c.name,
+                            role: c.role,
+                            isExpectedFirst: idx === 0 ? 'YES - This is the protagonist' : 'NO - Supporting character'
+                          })
+                          
                           const charState = charImages[v.id]?.[idx]
                           const imageUrl = charState?.url || (c as any).image_url || (c as any).referenceImage
                           const currentPrompt = charState?.prompt || c.imagePrompt || `Professional character portrait of ${c.name}: ${c.description}`
                           return (
-                            <div key={`${c.name}-${idx}`} className="flex gap-3 p-3 rounded border border-gray-700/60 bg-gray-900/40">
+                            <div key={`${v.id}-char-${idx}`} className="relative flex gap-3 p-3 rounded border border-gray-700/60 bg-gray-900/40">
+                              {/* DEBUG: Array index indicator */}
+                              <div className="absolute top-1 right-1 text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono">
+                                idx:{idx}
+                              </div>
                               {/* Image thumbnail */}
                               <div 
                                 className="shrink-0 w-32 h-32 rounded overflow-hidden bg-gray-800 relative cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all"
@@ -758,7 +770,12 @@ export function TreatmentCard() {
                               
                               {/* Character info & prompt editor */}
                               <div className="flex-1 space-y-2">
-                                <div className="font-medium text-gray-100">{c.name}</div>
+                                <div className="font-medium text-gray-100 flex items-center gap-2">
+                                  {c.name}
+                                  <span className="text-[8px] px-1 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono">
+                                    v2.1
+                                  </span>
+                                </div>
                                 {c.role && (
                                   <div className="text-xs text-gray-400 capitalize">Role: {c.role}</div>
                                 )}
