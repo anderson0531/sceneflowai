@@ -308,10 +308,10 @@ export function InspirationDrawer({ open, onClose, onInsert }: InspirationDrawer
           <div className="px-6 sm:px-8 py-3 space-y-1.5 border-t border-gray-800 bg-gray-950">
             <div className="text-xs text-gray-400 font-medium">💡 Pro Tips</div>
             <ul className="text-[11px] text-gray-500 space-y-0.5 pl-4">
-              <li>• Double-click any idea to edit before using</li>
-              <li>• Pin favorites to keep them at the top</li>
-              <li>• Be specific: include duration, tone, and style</li>
-              <li>• Use "Start Vision" on Treatment Variants below</li>
+              <li>• Click any idea to insert it into your blueprint</li>
+              <li>• Double-click to customize before inserting</li>
+              <li>• Pin your favorites with the pin icon</li>
+              <li>• Generate richer results with detailed keywords</li>
             </ul>
           </div>
         </div>
