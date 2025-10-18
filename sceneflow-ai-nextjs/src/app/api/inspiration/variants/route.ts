@@ -95,8 +95,8 @@ function parseVariants(llmResponse: string): string[] {
     .split('\n')
     .map(line => line.trim())
     .filter(line => 
-      line.length >= 15 && 
-      line.length <= 200 &&
+      line.length >= 20 && 
+      line.length <= 400 &&
       !line.startsWith('#') &&
       !line.startsWith('**') &&
       !/^(Here|These|Output)/i.test(line)
