@@ -746,6 +746,9 @@ export function TreatmentCard() {
                               {/* Character info & prompt editor */}
                               <div className="flex-1 space-y-2">
                                 <div className="font-medium text-gray-100">{c.name}</div>
+                                {c.role && (
+                                  <div className="text-xs text-gray-400 capitalize">Role: {c.role}</div>
+                                )}
                                 
                                 {/* Debug: Log character data */}
                                 {(() => {
@@ -770,13 +773,13 @@ export function TreatmentCard() {
                                   <div className="space-y-1">
                                     <div className="text-xs font-semibold text-purple-400">Core Identity</div>
                                     <div className="text-xs text-gray-300 space-y-0.5">
-                                      {c.coreIdentity.subject?.trim() && (
+                                      {c.coreIdentity.subject && (
                                         <div><span className="text-gray-500">Subject:</span> {c.coreIdentity.subject}</div>
                                       )}
-                                      {c.coreIdentity.ethnicity?.trim() && (
+                                      {c.coreIdentity.ethnicity && (
                                         <div><span className="text-gray-500">Ethnicity:</span> {c.coreIdentity.ethnicity}</div>
                                       )}
-                                      {c.coreIdentity.keyFeature?.trim() && (
+                                      {c.coreIdentity.keyFeature && (
                                         <div><span className="text-gray-500">Key Feature:</span> {c.coreIdentity.keyFeature}</div>
                                       )}
                                     </div>
@@ -788,19 +791,19 @@ export function TreatmentCard() {
                                   <div className="space-y-1">
                                     <div className="text-xs font-semibold text-blue-400">Appearance</div>
                                     <div className="text-xs text-gray-300 space-y-0.5">
-                                      {c.appearanceDetails.hairStyle?.trim() && (
+                                      {c.appearanceDetails.hairStyle && (
                                         <div><span className="text-gray-500">Hair Style:</span> {c.appearanceDetails.hairStyle}</div>
                                       )}
-                                      {c.appearanceDetails.hairColor?.trim() && (
+                                      {c.appearanceDetails.hairColor && (
                                         <div><span className="text-gray-500">Hair Color:</span> {c.appearanceDetails.hairColor}</div>
                                       )}
-                                      {c.appearanceDetails.eyeColor?.trim() && (
+                                      {c.appearanceDetails.eyeColor && (
                                         <div><span className="text-gray-500">Eyes:</span> {c.appearanceDetails.eyeColor}</div>
                                       )}
-                                      {c.appearanceDetails.expression?.trim() && (
+                                      {c.appearanceDetails.expression && (
                                         <div><span className="text-gray-500">Expression:</span> {c.appearanceDetails.expression}</div>
                                       )}
-                                      {c.appearanceDetails.build?.trim() && (
+                                      {c.appearanceDetails.build && (
                                         <div><span className="text-gray-500">Build:</span> {c.appearanceDetails.build}</div>
                                       )}
                                     </div>
