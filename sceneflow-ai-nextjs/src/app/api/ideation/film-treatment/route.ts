@@ -260,24 +260,47 @@ async function generateFilmTreatment(
     mood_references: parsed.mood_references,
 
     character_descriptions: Array.isArray((parsed as any).character_descriptions)
-      ? ((parsed as any).character_descriptions as any[]).map((c: any) => ({
-          name: String(c?.name || ''),
-          role: String(c?.role || 'supporting'),
-          subject: String(c?.subject || c?.name || ''),
-          ethnicity: String(c?.ethnicity || ''),
-          keyFeature: String(c?.keyFeature || ''),
-          hairStyle: String(c?.hairStyle || ''),
-          hairColor: String(c?.hairColor || ''),
-          eyeColor: String(c?.eyeColor || ''),
-          expression: String(c?.expression || ''),
-          build: String(c?.build || ''),
-          description: String(c?.description || ''),
-          imagePrompt: c?.imagePrompt || c?.image_prompt ? String(c.imagePrompt || c.image_prompt) : undefined,
-          referenceImage: null,
-          generating: false,
-          version: 1,
-          lastModified: new Date().toISOString(),
-        }))
+      ? (() => {
+          // DEBUG: Log raw character data from Gemini
+          console.log('🔍 [API] Raw character data from Gemini:', 
+            JSON.stringify((parsed as any).character_descriptions, null, 2))
+          
+          return ((parsed as any).character_descriptions as any[]).map((c: any, idx: number) => {
+            // DEBUG: Log each character before parsing
+            console.log(`🔍 [API] Parsing character ${idx}:`, c)
+            console.log(`🔍 [API] Character ${idx} fields:`, {
+              name: c?.name,
+              role: c?.role,
+              subject: c?.subject,
+              ethnicity: c?.ethnicity,
+              keyFeature: c?.keyFeature,
+              hairStyle: c?.hairStyle,
+              hairColor: c?.hairColor,
+              eyeColor: c?.eyeColor,
+              expression: c?.expression,
+              build: c?.build
+            })
+            
+            return {
+              name: String(c?.name || ''),
+              role: String(c?.role || 'supporting'),
+              subject: String(c?.subject || c?.name || ''),
+              ethnicity: String(c?.ethnicity || ''),
+              keyFeature: String(c?.keyFeature || ''),
+              hairStyle: String(c?.hairStyle || ''),
+              hairColor: String(c?.hairColor || ''),
+              eyeColor: String(c?.eyeColor || ''),
+              expression: String(c?.expression || ''),
+              build: String(c?.build || ''),
+              description: String(c?.description || ''),
+              imagePrompt: c?.imagePrompt || c?.image_prompt ? String(c.imagePrompt || c.image_prompt) : undefined,
+              referenceImage: null,
+              generating: false,
+              version: 1,
+              lastModified: new Date().toISOString(),
+            }
+          })
+        })()
       : undefined,
     
     scene_descriptions: Array.isArray((parsed as any).scene_descriptions)
