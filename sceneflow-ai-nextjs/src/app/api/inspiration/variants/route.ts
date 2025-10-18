@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { analyzeDuration } from '@/lib/treatment/duration'
 
 export const runtime = 'nodejs'
 export const maxDuration = 10
@@ -14,13 +15,30 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    const prompt = `You are a creative film strategist. Generate ${count} compelling, production-ready Blueprint inputs for: "${keyword}"
+    // Analyze input length to determine if we should generate synopsis or variations
+    const estimatedMinutes = analyzeDuration(keyword, 20)
+    const isLongForm = estimatedMinutes >= 10
+    
+    // Adaptive prompt based on content length
+    const promptType = isLongForm 
+      ? 'Generate 5 unique SYNOPSIS variations'
+      : 'Generate 5 unique variations'
+    
+    const contentType = isLongForm ? 'story' : 'concept'
+    
+    const specificInstructions = isLongForm
+      ? 'Each synopsis should capture the core narrative, main characters, and emotional arc in 25-40 words. Focus on plot progression and key dramatic moments.'
+      : 'Each variation should rephrase and enhance the core idea in 25-40 words. Emphasize visual aesthetics, emotional journey, and narrative structure.'
+
+    const prompt = `You are a creative film strategist. ${promptType} of the following ${contentType}: "${keyword}"
+
+${specificInstructions}
 
 STYLE REQUIREMENTS:
-- Each variation: 25-40 words (full sentence structure)
+- Each ${isLongForm ? 'synopsis' : 'variation'}: 25-40 words (full sentence structure)
 - Paint a vivid picture: sensory details, emotional tone, specific visuals
-- Include: runtime, visual style, narrative approach, audience emotion
-- Make each variation DISTINCTLY different in genre, mood, and execution
+- Include: ${isLongForm ? 'plot, characters, conflict' : 'runtime, visual style, narrative approach, audience emotion'}
+- Make each ${isLongForm ? 'synopsis' : 'variation'} DISTINCTLY different in ${isLongForm ? 'narrative focus and dramatic emphasis' : 'genre, mood, and execution'}
 - Use evocative, cinematic language that sparks imagination
 
 COMPELLING EXAMPLES:
@@ -29,9 +47,9 @@ COMPELLING EXAMPLES:
 - "2-minute founder story filmed in golden hour at startup warehouse. Handheld camera follows determined entrepreneur through authentic daily moments. Raw, vulnerable tone builds to inspiring crescendo showcasing vision realized."
 
 CRITICAL:
-- Be SPECIFIC about visual aesthetics (lighting, camera movement, color palette)
+- Be SPECIFIC about ${isLongForm ? 'character motivations, plot turns, and conflicts' : 'visual aesthetics (lighting, camera movement, color palette)'}
 - Include EMOTIONAL journey (how viewer should feel)
-- Suggest NARRATIVE structure (opening, development, payoff)
+- ${isLongForm ? 'Capture the STORY ARC (setup, conflict, resolution)' : 'Suggest NARRATIVE structure (opening, development, payoff)'}
 - Avoid generic words like "engaging" or "compelling"
 
 OUTPUT FORMAT: Return ONLY the variations, one per line, no numbering, no markdown.`
