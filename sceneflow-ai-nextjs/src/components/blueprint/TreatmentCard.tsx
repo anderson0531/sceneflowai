@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useGuideStore } from '@/store/useGuideStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Play, Square, Volume2, Share2, PencilLine, MoreHorizontal, ChevronDown, MessageSquare, ArrowRight, Loader2, Wand2, X } from 'lucide-react'
+import { Play, Square, Volume2, Share2, PencilLine, MoreHorizontal, ChevronDown, MessageSquare, ArrowRight, Loader2, Wand2, X, Users } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -13,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import VariantEditorDrawer from './VariantEditorDrawer'
 import OwnerCollabPanel from '@/components/studio/OwnerCollabPanel'
 import { getCuratedElevenVoices, type CuratedVoice } from '@/lib/tts/voices'
-import { CharacterPromptBuilder } from './CharacterPromptBuilder'
 
 export function TreatmentCard() {
   const router = useRouter()
@@ -55,7 +54,7 @@ export function TreatmentCard() {
   const [audioMenuOpen, setAudioMenuOpen] = useState(false)
   const [collabOpen, setCollabOpen] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
-  const [zoomedImage, setZoomedImage] = useState<{url: string; name: string} | null>(null)
+  // zoomedImage removed - now in Vision phase
   function mapVariantToInputText(v: any): string {
     const title = v?.title ? `${v.title}\n\n` : ''
     const logline = v?.logline ? `Logline: ${v.logline}\n\n` : ''
@@ -68,13 +67,7 @@ export function TreatmentCard() {
   }
   const [narrationMode, setNarrationMode] = useState<'synopsis'|'full'|'beats'>('synopsis')
   const queueAbortRef = useRef<{ abort: boolean }>({ abort: false })
-  // Character image generation state
-  const [charImages, setCharImages] = useState<Record<string, Record<number, { url?: string; loading?: boolean; prompt?: string }>>>({})
-  const [builderOpen, setBuilderOpen] = useState(false)
-  const [builderVariantId, setBuilderVariantId] = useState<string | null>(null)
-  const [builderCharIdx, setBuilderCharIdx] = useState<number | null>(null)
-  const [analyzingImage, setAnalyzingImage] = useState<Record<string, Record<number, boolean>>>({})
-  const [uploadingRef, setUploadingRef] = useState<Record<string, Record<number, boolean>>>({})
+  // Character state removed - all character management moved to Vision phase
 
   const active = useMemo(() => {
     if (selectedId) return selectedId
@@ -180,155 +173,7 @@ export function TreatmentCard() {
     }
   }
 
-  const generateCharImage = async (variantId: string, charIdx: number, prompt: string) => {
-    if (!prompt?.trim()) return
-    setCharImages(prev => ({ 
-      ...prev, 
-      [variantId]: { 
-        ...prev[variantId], 
-        [charIdx]: { ...prev[variantId]?.[charIdx], loading: true } 
-      } 
-    }))
-    try {
-      const res = await fetch('/api/character/generate-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
-      })
-      const json = await res.json()
-      if (json?.imageUrl) {
-        setCharImages(prev => ({ 
-          ...prev, 
-          [variantId]: { 
-            ...prev[variantId], 
-            [charIdx]: { url: json.imageUrl, loading: false, prompt } 
-          } 
-        }))
-        try { const { toast } = require('sonner'); toast('Character image generated') } catch {}
-      } else {
-        const errorMsg = json?.error || 'Failed to generate image'
-        throw new Error(errorMsg)
-      }
-    } catch (e) {
-      console.error('Character image generation failed:', e)
-      setCharImages(prev => ({ 
-        ...prev, 
-        [variantId]: { 
-          ...prev[variantId], 
-          [charIdx]: { ...prev[variantId]?.[charIdx], loading: false } 
-        } 
-      }))
-      const errorMessage = e instanceof Error ? e.message : 'Failed to generate image'
-      try { const { toast } = require('sonner'); toast(errorMessage) } catch {}
-    }
-  }
-
-  const handleImageUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    variantId: string,
-    charIdx: number,
-    characterName: string
-  ) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    
-    setUploadingRef(prev => ({
-      ...prev,
-      [variantId]: { ...prev[variantId], [charIdx]: true }
-    }))
-    
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('projectId', 'temp-project-id') // TODO: Get actual project ID from context
-      formData.append('characterName', characterName)
-      
-      const res = await fetch('/api/character/upload-reference', {
-        method: 'POST',
-        body: formData
-      })
-      
-      const data = await res.json()
-      if (data.success) {
-        // Update character image URL
-        setCharImages(prev => ({
-          ...prev,
-          [variantId]: {
-            ...prev[variantId],
-            [charIdx]: { ...prev[variantId]?.[charIdx], url: data.url }
-          }
-        }))
-        try { const { toast } = require('sonner'); toast('Reference image uploaded') } catch {}
-      } else {
-        throw new Error(data.error || 'Upload failed')
-      }
-    } catch (error) {
-      console.error('[Upload Reference] Error:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Failed to upload image'
-      try { const { toast } = require('sonner'); toast(errorMessage) } catch {}
-    } finally {
-      setUploadingRef(prev => ({
-        ...prev,
-        [variantId]: { ...prev[variantId], [charIdx]: false }
-      }))
-    }
-  }
-
-  const handleAnalyzeImage = async (
-    variantId: string,
-    charIdx: number,
-    imageUrl: string,
-    characterName: string
-  ) => {
-    setAnalyzingImage(prev => ({
-      ...prev,
-      [variantId]: { ...prev[variantId], [charIdx]: true }
-    }))
-    
-    try {
-      const res = await fetch('/api/character/analyze-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl, characterName })
-      })
-      
-      const data = await res.json()
-      if (data.success && data.attributes) {
-        // Update character attributes in the variant
-        const updatedVariants = variants?.map(v => {
-          if (v.id === variantId) {
-            return {
-              ...v,
-              character_descriptions: v.character_descriptions?.map((c, i) => {
-                if (i === charIdx) {
-                  return { ...c, ...data.attributes }
-                }
-                return c
-              })
-            }
-          }
-          return v
-        })
-        
-        // Update store
-        if (updatedVariants) {
-          setTreatmentVariants(updatedVariants)
-        }
-        try { const { toast } = require('sonner'); toast('Character attributes extracted from image') } catch {}
-      } else {
-        throw new Error(data.error || 'Analysis failed')
-      }
-    } catch (error) {
-      console.error('[Analyze Image] Error:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Failed to analyze image'
-      try { const { toast } = require('sonner'); toast(errorMessage) } catch {}
-    } finally {
-      setAnalyzingImage(prev => ({
-        ...prev,
-        [variantId]: { ...prev[variantId], [charIdx]: false }
-      }))
-    }
-  }
+  // Character image generation removed - all character management moved to Vision phase
 
   // Keyboard shortcuts scoped to this card when variants exist
   useEffect(() => {
@@ -817,186 +662,26 @@ export function TreatmentCard() {
                     </div>
                   </div>
 
-                  {/* Characters */}
+                  {/* Characters - Simple Preview */}
                   {Array.isArray(v.character_descriptions) && v.character_descriptions.length > 0 ? (
                     <div className="space-y-1">
-                      <div className="text-xs text-gray-400">Characters</div>
-                      <div className="space-y-3">
-                        {v.character_descriptions.map((c, idx) => {
-                          const charState = charImages[v.id]?.[idx]
-                          const imageUrl = charState?.url || (c as any).image_url || (c as any).referenceImage
-                          const currentPrompt = charState?.prompt || c.imagePrompt || `Professional character portrait of ${c.name}: ${c.description}`
-                          return (
-                            <div key={`${v.id}-char-${idx}`} className="flex gap-3 p-3 rounded border border-gray-700/60 bg-gray-900/40">
-                              {/* Image thumbnail and upload/analyze controls */}
-                              <div className="shrink-0 w-32 space-y-2">
-                                <div 
-                                  className="w-32 h-32 rounded overflow-hidden bg-gray-800 relative cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all"
-                                  onClick={() => imageUrl && setZoomedImage({url: imageUrl, name: c.name})}
-                                  title="Click to enlarge"
-                                >
-                                  {imageUrl ? (
-                                    <img src={imageUrl} alt={c.name} className="w-full h-full object-cover" />
-                                  ) : (
-                                    <div className="flex items-center justify-center h-full text-3xl text-gray-500">
-                                      {c.name?.[0] || '?'}
-                                    </div>
-                                  )}
-                                  {charState?.loading && (
-                                    <div className="absolute inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center z-10">
-                                      <Loader2 className="w-10 h-10 animate-spin text-blue-400 mb-2" />
-                                      <span className="text-xs text-white font-medium">Generating...</span>
-                                    </div>
-                                  )}
-                                  {uploadingRef[v.id]?.[idx] && (
-                                    <div className="absolute inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center z-10">
-                                      <Loader2 className="w-10 h-10 animate-spin text-blue-400 mb-2" />
-                                      <span className="text-xs text-white font-medium">Uploading...</span>
-                                    </div>
-                                  )}
-                                </div>
-                                
-                                {/* Upload and Analyze controls */}
-                                <div className="flex flex-col gap-1.5">
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    id={`ref-upload-${v.id}-${idx}`}
-                                    className="hidden"
-                                    onChange={(e) => handleImageUpload(e, v.id, idx, c.name)}
-                                  />
-                                  <label
-                                    htmlFor={`ref-upload-${v.id}-${idx}`}
-                                    className="px-2 py-1 text-xs rounded bg-gray-700 hover:bg-gray-600 cursor-pointer text-center transition-colors"
-                                  >
-                                    {uploadingRef[v.id]?.[idx] ? 'Uploading...' : 'Upload Reference'}
-                                  </label>
-                                  
-                                  {imageUrl && (
-                                    <button
-                                      onClick={() => handleAnalyzeImage(v.id, idx, imageUrl, c.name)}
-                                      disabled={analyzingImage[v.id]?.[idx]}
-                                      className="px-2 py-1 text-xs rounded bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                      {analyzingImage[v.id]?.[idx] ? 'Analyzing...' : 'Analyze Image'}
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                              
-                              {/* Character info & prompt editor */}
-                              <div className="flex-1 space-y-2">
-                                <div className="font-medium text-gray-100">{c.name}</div>
-                                {c.role && (
-                                  <div className="text-xs text-gray-400 capitalize">Role: {c.role}</div>
-                                )}
-                                
-                                {/* Core Identity */}
-                                {(c.subject || c.ethnicity || c.keyFeature) && (
-                                  <div className="space-y-1">
-                                    <div className="text-xs font-semibold text-purple-400">Core Identity</div>
-                                    <div className="text-xs text-gray-300 space-y-0.5">
-                                      {c.subject && (
-                                        <div><span className="text-gray-500">Subject:</span> {c.subject}</div>
-                                      )}
-                                      {c.ethnicity && (
-                                        <div><span className="text-gray-500">Ethnicity:</span> {c.ethnicity}</div>
-                                      )}
-                                      {c.keyFeature && (
-                                        <div><span className="text-gray-500">Key Feature:</span> {c.keyFeature}</div>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-                                
-                                {/* Appearance Details */}
-                                {(c.hairStyle || c.hairColor || c.eyeColor || c.expression || c.build) && (
-                                  <div className="space-y-1">
-                                    <div className="text-xs font-semibold text-blue-400">Appearance</div>
-                                    <div className="text-xs text-gray-300 space-y-0.5">
-                                      {c.hairStyle && (
-                                        <div><span className="text-gray-500">Hair Style:</span> {c.hairStyle}</div>
-                                      )}
-                                      {c.hairColor && (
-                                        <div><span className="text-gray-500">Hair Color:</span> {c.hairColor}</div>
-                                      )}
-                                      {c.eyeColor && (
-                                        <div><span className="text-gray-500">Eyes:</span> {c.eyeColor}</div>
-                                      )}
-                                      {c.expression && (
-                                        <div><span className="text-gray-500">Expression:</span> {c.expression}</div>
-                                      )}
-                                      {c.build && (
-                                        <div><span className="text-gray-500">Build:</span> {c.build}</div>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-                                
-                                {/* Brief description for context */}
-                                {c.description && (
-                                  <div className="text-xs text-gray-400 italic border-t border-gray-700/50 pt-1.5">
-                                    {c.description}
-                                  </div>
-                                )}
-                                
-                                {/* Prompt Builder Button */}
-                                <div className="pt-2 flex gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setBuilderVariantId(v.id)
-                                      setBuilderCharIdx(idx)
-                                      setBuilderOpen(true)
-                                    }}
-                                    disabled={charState?.loading}
-                                    className="flex-1 text-xs px-3 py-2 rounded-lg border border-purple-500/50 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 hover:border-purple-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
-                                  >
-                                    <Wand2 className="w-3.5 h-3.5" />
-                                    Edit Character Appearance
-                                  </button>
-                                </div>
-                                <div className="flex gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => generateCharImage(v.id, idx, currentPrompt)}
-                                    disabled={charState?.loading || !currentPrompt?.trim()}
-                                    className="flex-1 text-xs px-3 py-1.5 rounded border border-blue-500 text-blue-300 hover:bg-blue-500/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                  >
-                                    {charState?.loading ? 'Generating...' : imageUrl ? 'Regenerate' : 'Generate'}
-                                  </button>
-                                  <label className={`flex-1 text-xs px-3 py-1.5 rounded border border-gray-600 text-gray-300 transition-colors text-center ${charState?.loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700/50 cursor-pointer'}`}>
-                                    Upload
-                                    <input
-                                      type="file"
-                                      accept="image/*"
-                                      className="hidden"
-                                      disabled={charState?.loading}
-                                      onChange={(e) => {
-                                        const file = e.target.files?.[0]
-                                        if (file) {
-                                          const reader = new FileReader()
-                                          reader.onload = (evt) => {
-                                            const dataUrl = evt.target?.result as string
-                                            setCharImages(prev => ({
-                                              ...prev,
-                                              [v.id]: {
-                                                ...prev[v.id],
-                                                [idx]: { url: dataUrl, loading: false, prompt: currentPrompt }
-                                              }
-                                            }))
-                                            try { const { toast } = require('sonner'); toast('Character image uploaded') } catch {}
-                                          }
-                                          reader.readAsDataURL(file)
-                                        }
-                                      }}
-                                    />
-                                  </label>
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        })}
+                      <div className="text-xs text-gray-400 flex items-center gap-2">
+                        <Users className="w-3 h-3" />
+                        Characters ({v.character_descriptions.length})
+                      </div>
+                      <div className="flex flex-wrap gap-2 p-3 rounded border border-gray-700/60 bg-gray-900/40">
+                        {v.character_descriptions.map((c, idx) => (
+                          <div 
+                            key={idx} 
+                            className="px-2.5 py-1 text-xs rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1.5"
+                          >
+                            {c.name}
+                            {c.role && <span className="text-purple-400/60">· {c.role}</span>}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="text-xs text-gray-400 italic mt-2 px-3">
+                        💡 Characters will be refined with images and detailed attributes in the Vision phase
                       </div>
                     </div>
                   ) : null}
@@ -1031,40 +716,7 @@ export function TreatmentCard() {
           activeVariantId={activeVariant.id}
           onSelectVariant={(id)=> selectTreatmentVariant(id)}
         />
-        {/* Character Prompt Builder */}
-        {builderVariantId !== null && builderCharIdx !== null && (() => {
-          const character = variants?.find(v => v.id === builderVariantId)?.character_descriptions?.[builderCharIdx] as any
-          const initialStructure = character ? {
-            subject: character.subject || character.name || '',
-            ethnicity: character.ethnicity || '',
-            keyFeature: character.keyFeature || '',
-            hairStyle: character.hairStyle || '',
-            hairColor: character.hairColor || '',
-            eyeColor: character.eyeColor || '',
-            eyeExpression: character.expression || '',
-            build: character.build || '',
-          } : undefined
-          
-          return (
-            <CharacterPromptBuilder
-              open={builderOpen}
-              onClose={() => setBuilderOpen(false)}
-              initialPrompt={charImages[builderVariantId]?.[builderCharIdx]?.prompt || ''}
-              initialStructure={initialStructure}
-              characterName={character?.name || 'Character'}
-              onApply={(prompt, structure) => {
-                setCharImages(prev => ({
-                  ...prev,
-                  [builderVariantId]: {
-                    ...prev[builderVariantId],
-                    [builderCharIdx]: { ...prev[builderVariantId]?.[builderCharIdx], prompt, structure }
-                  }
-                }))
-                setBuilderOpen(false)
-              }}
-            />
-          )
-        })()}
+        {/* Character Prompt Builder removed - now in Vision phase */}
         {shareOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/60" onClick={() => setShareOpen(false)} />
@@ -1097,31 +749,7 @@ export function TreatmentCard() {
           </div>
         )}
 
-        {/* Image Zoom Modal */}
-        {zoomedImage && (
-          <div 
-            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-8 backdrop-blur-sm"
-            onClick={() => setZoomedImage(null)}
-          >
-            <div className="relative max-w-5xl max-h-full" onClick={(e) => e.stopPropagation()}>
-              <img 
-                src={zoomedImage.url} 
-                alt={zoomedImage.name} 
-                className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" 
-              />
-              <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 to-transparent p-4">
-                <p className="text-white font-medium">{zoomedImage.name}</p>
-              </div>
-              <button 
-                onClick={() => setZoomedImage(null)}
-                className="absolute top-4 right-4 text-white bg-black/50 hover:bg-black/70 rounded-full p-2 transition-colors"
-                title="Close (or click outside)"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Image Zoom Modal removed - now in Vision phase */}
       </Card>
     )
   }

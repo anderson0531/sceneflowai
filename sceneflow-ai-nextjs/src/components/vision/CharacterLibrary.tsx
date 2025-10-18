@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Users, Plus, RefreshCw, Loader, Wand2 } from 'lucide-react'
+import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { CharacterPromptBuilder } from '@/components/blueprint/CharacterPromptBuilder'
 
@@ -20,6 +20,67 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(new Set())
   const [builderOpen, setBuilderOpen] = useState(false)
   const [builderCharId, setBuilderCharId] = useState<string | null>(null)
+  const [analyzingImage, setAnalyzingImage] = useState<Record<string, boolean>>({})
+  const [uploadingRef, setUploadingRef] = useState<Record<string, boolean>>({})
+  const [zoomedImage, setZoomedImage] = useState<{url: string; name: string} | null>(null)
+  
+  const handleUploadReference = async (characterId: string, file: File, characterName: string) => {
+    setUploadingRef(prev => ({ ...prev, [characterId]: true }))
+    
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('projectId', 'vision-project') // TODO: Get from context
+      formData.append('characterName', characterName)
+      
+      const res = await fetch('/api/character/upload-reference', {
+        method: 'POST',
+        body: formData
+      })
+      
+      const data = await res.json()
+      if (data.success) {
+        // Call parent handler to update character
+        onUploadCharacter(characterId, file)
+        try { const { toast } = require('sonner'); toast('Reference image uploaded') } catch {}
+      } else {
+        throw new Error(data.error || 'Upload failed')
+      }
+    } catch (error) {
+      console.error('[Upload Reference] Error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload'
+      try { const { toast } = require('sonner'); toast(errorMessage) } catch {}
+    } finally {
+      setUploadingRef(prev => ({ ...prev, [characterId]: false }))
+    }
+  }
+  
+  const handleAnalyzeImage = async (characterId: string, imageUrl: string, characterName: string) => {
+    setAnalyzingImage(prev => ({ ...prev, [characterId]: true }))
+    
+    try {
+      const res = await fetch('/api/character/analyze-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl, characterName })
+      })
+      
+      const data = await res.json()
+      if (data.success && data.attributes) {
+        // TODO: Need a callback to update character attributes in parent
+        console.log('[Analyze Image] Extracted attributes:', data.attributes)
+        try { const { toast } = require('sonner'); toast('Character attributes extracted') } catch {}
+      } else {
+        throw new Error(data.error || 'Analysis failed')
+      }
+    } catch (error) {
+      console.error('[Analyze Image] Error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to analyze'
+      try { const { toast } = require('sonner'); toast(errorMessage) } catch {}
+    } finally {
+      setAnalyzingImage(prev => ({ ...prev, [characterId]: false }))
+    }
+  }
   
   return (
     <div className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 ${compact ? 'p-4' : 'p-6'} h-full overflow-y-auto`}>
@@ -118,6 +179,32 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
           />
         )
       })()}
+      
+      {/* Image Zoom Modal */}
+      {zoomedImage && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setZoomedImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh]">
+            <button
+              onClick={() => setZoomedImage(null)}
+              className="absolute -top-10 right-0 p-2 rounded-full bg-gray-800 hover:bg-gray-700 text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <img 
+              src={zoomedImage.url} 
+              alt={zoomedImage.name}
+              className="max-w-full max-h-[90vh] rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+              <div className="text-white font-medium">{zoomedImage.name}</div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -150,7 +237,17 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
       }`}
     >
       {/* Character Image */}
-      <div className="aspect-square bg-gray-100 dark:bg-gray-800 relative">
+      <div 
+        className="aspect-square bg-gray-100 dark:bg-gray-800 relative cursor-pointer hover:opacity-90 transition-opacity"
+        onClick={(e) => {
+          e.stopPropagation()
+          if (character.referenceImage) {
+            // TODO: Pass setZoomedImage from parent
+            console.log('Zoom image:', character.referenceImage)
+          }
+        }}
+        title={character.referenceImage ? "Click to enlarge" : undefined}
+      >
         {character.referenceImage ? (
           <img 
             src={character.referenceImage} 
@@ -177,9 +274,58 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
       </div>
       
       {/* Character Info */}
-      <div className="p-3 bg-white dark:bg-gray-800">
-        <div className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">{character.name || 'Unnamed'}</div>
-        <div className="text-xs text-gray-600 dark:text-gray-400 truncate">{character.role || 'Character'}</div>
+      <div className="p-3 bg-white dark:bg-gray-800 space-y-2">
+        <div>
+          <div className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">{character.name || 'Unnamed'}</div>
+          <div className="text-xs text-gray-600 dark:text-gray-400 truncate">{character.role || 'Character'}</div>
+        </div>
+        
+        {/* Character Attributes */}
+        {(character.subject || character.ethnicity || character.keyFeature) && (
+          <div className="space-y-1">
+            <div className="text-[10px] font-semibold text-purple-400 dark:text-purple-300">Core Identity</div>
+            <div className="text-[10px] text-gray-600 dark:text-gray-300 space-y-0.5">
+              {character.subject && (
+                <div><span className="text-gray-400">Subject:</span> {character.subject}</div>
+              )}
+              {character.ethnicity && (
+                <div><span className="text-gray-400">Ethnicity:</span> {character.ethnicity}</div>
+              )}
+              {character.keyFeature && (
+                <div><span className="text-gray-400">Key Feature:</span> {character.keyFeature}</div>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {(character.hairStyle || character.hairColor || character.eyeColor || character.expression || character.build) && (
+          <div className="space-y-1">
+            <div className="text-[10px] font-semibold text-blue-400 dark:text-blue-300">Appearance</div>
+            <div className="text-[10px] text-gray-600 dark:text-gray-300 space-y-0.5">
+              {character.hairStyle && (
+                <div><span className="text-gray-400">Hair Style:</span> {character.hairStyle}</div>
+              )}
+              {character.hairColor && (
+                <div><span className="text-gray-400">Hair Color:</span> {character.hairColor}</div>
+              )}
+              {character.eyeColor && (
+                <div><span className="text-gray-400">Eyes:</span> {character.eyeColor}</div>
+              )}
+              {character.expression && (
+                <div><span className="text-gray-400">Expression:</span> {character.expression}</div>
+              )}
+              {character.build && (
+                <div><span className="text-gray-400">Build:</span> {character.build}</div>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {character.description && (
+          <div className="text-[10px] text-gray-500 dark:text-gray-400 italic border-t border-gray-200 dark:border-gray-700 pt-1.5">
+            {character.description}
+          </div>
+        )}
       </div>
       
       {/* Action buttons - show different UI based on approval status */}
@@ -229,6 +375,17 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
                 <Wand2 className="w-3 h-3" />
               </button>
             </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onOpenBuilder()
+              }}
+              disabled={isGenerating}
+              className="w-full text-xs px-3 py-1.5 rounded bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
+            >
+              <Wand2 className="w-3 h-3" />
+              Edit Character Appearance
+            </button>
             <div className="flex gap-1">
               <button
                 onClick={(e) => { e.stopPropagation(); onGenerate(prompt); }}
@@ -260,12 +417,17 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
               </label>
               {hasImage && (
                 <button
-                  onClick={(e) => { e.stopPropagation(); onApprove(); }}
+                  onClick={(e) => { 
+                    e.stopPropagation()
+                    // TODO: Call handleAnalyzeImage here
+                    alert('Analyze Image feature - Coming soon!')
+                  }}
                   disabled={isGenerating}
-                  className="flex-1 text-xs px-2 py-1 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  title="Approve and lock image"
+                  className="flex-1 text-xs px-2 py-1 rounded bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1"
+                  title="Analyze image to extract attributes"
                 >
-                  Approve
+                  <Scan className="w-3 h-3" />
+                  Analyze
                 </button>
               )}
             </div>
