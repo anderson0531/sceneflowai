@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useGuideStore } from '@/store/useGuideStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Play, Square, Volume2, Share2, PencilLine, MoreHorizontal, ChevronDown, MessageSquare, ArrowRight, Loader2, Wand2 } from 'lucide-react'
+import { Play, Square, Volume2, Share2, PencilLine, MoreHorizontal, ChevronDown, MessageSquare, ArrowRight, Loader2, Wand2, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -58,6 +58,7 @@ export function TreatmentCard() {
   const [audioMenuOpen, setAudioMenuOpen] = useState(false)
   const [collabOpen, setCollabOpen] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [zoomedImage, setZoomedImage] = useState<{url: string; name: string} | null>(null)
   function mapVariantToInputText(v: any): string {
     const title = v?.title ? `${v.title}\n\n` : ''
     const logline = v?.logline ? `Logline: ${v.logline}\n\n` : ''
@@ -722,7 +723,11 @@ export function TreatmentCard() {
                           return (
                             <div key={`${c.name}-${idx}`} className="flex gap-3 p-3 rounded border border-gray-700/60 bg-gray-900/40">
                               {/* Image thumbnail */}
-                              <div className="shrink-0 w-24 h-24 rounded overflow-hidden bg-gray-800 relative">
+                              <div 
+                                className="shrink-0 w-32 h-32 rounded overflow-hidden bg-gray-800 relative cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all"
+                                onClick={() => imageUrl && setZoomedImage({url: imageUrl, name: c.name})}
+                                title="Click to enlarge"
+                              >
                                 {imageUrl ? (
                                   <img src={imageUrl} alt={c.name} className="w-full h-full object-cover" />
                                 ) : (
@@ -744,14 +749,24 @@ export function TreatmentCard() {
                                 
                                 {/* Debug: Log character data */}
                                 {(() => {
-                                  console.log('🎭 TreatmentCard Character Data:', c);
-                                  console.log('🎭 coreIdentity:', c.coreIdentity);
-                                  console.log('🎭 appearanceDetails:', c.appearanceDetails);
+                                  console.log('🎭 ===== CHARACTER DEBUG START =====');
+                                  console.log('🎭 Character Name:', c.name);
+                                  console.log('🎭 Full Character Object:', c);
+                                  console.log('🎭 Character JSON:', JSON.stringify(c, null, 2));
+                                  console.log('🎭 coreIdentity exists?', !!c.coreIdentity);
+                                  console.log('🎭 coreIdentity object:', c.coreIdentity);
+                                  console.log('🎭 coreIdentity.subject:', c.coreIdentity?.subject);
+                                  console.log('🎭 coreIdentity.ethnicity:', c.coreIdentity?.ethnicity);
+                                  console.log('🎭 coreIdentity.keyFeature:', c.coreIdentity?.keyFeature);
+                                  console.log('🎭 appearanceDetails exists?', !!c.appearanceDetails);
+                                  console.log('🎭 appearanceDetails object:', c.appearanceDetails);
+                                  console.log('🎭 appearanceDetails keys:', c.appearanceDetails ? Object.keys(c.appearanceDetails) : 'none');
+                                  console.log('🎭 ===== CHARACTER DEBUG END =====');
                                   return null;
                                 })()}
                                 
                                 {/* Core Identity */}
-                                {c.coreIdentity && Object.keys(c.coreIdentity).length > 0 && (
+                                {c.coreIdentity && (c.coreIdentity.ethnicity || c.coreIdentity.keyFeature) && (
                                   <div className="space-y-1">
                                     <div className="text-xs font-semibold text-purple-400">Core Identity</div>
                                     <div className="text-xs text-gray-300 space-y-0.5">
@@ -769,7 +784,7 @@ export function TreatmentCard() {
                                 )}
                                 
                                 {/* Appearance Details */}
-                                {c.appearanceDetails && Object.keys(c.appearanceDetails).length > 0 && (
+                                {c.appearanceDetails && (c.appearanceDetails.hairStyle || c.appearanceDetails.hairColor || c.appearanceDetails.eyeColor || c.appearanceDetails.expression || c.appearanceDetails.build) && (
                                   <div className="space-y-1">
                                     <div className="text-xs font-semibold text-blue-400">Appearance</div>
                                     <div className="text-xs text-gray-300 space-y-0.5">
@@ -952,6 +967,32 @@ export function TreatmentCard() {
               <div className="mt-4 flex justify-end">
                 <button className="px-3 py-1 rounded bg-gray-800 text-xs" onClick={() => setShareOpen(false)}>Close</button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Image Zoom Modal */}
+        {zoomedImage && (
+          <div 
+            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-8 backdrop-blur-sm"
+            onClick={() => setZoomedImage(null)}
+          >
+            <div className="relative max-w-5xl max-h-full" onClick={(e) => e.stopPropagation()}>
+              <img 
+                src={zoomedImage.url} 
+                alt={zoomedImage.name} 
+                className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" 
+              />
+              <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 to-transparent p-4">
+                <p className="text-white font-medium">{zoomedImage.name}</p>
+              </div>
+              <button 
+                onClick={() => setZoomedImage(null)}
+                className="absolute top-4 right-4 text-white bg-black/50 hover:bg-black/70 rounded-full p-2 transition-colors"
+                title="Close (or click outside)"
+              >
+                <X className="w-6 h-6" />
+              </button>
             </div>
           </div>
         )}
