@@ -19,6 +19,7 @@ export function TreatmentCard() {
   const router = useRouter()
   const { guide } = useGuideStore()
   const { selectTreatmentVariant } = useGuideStore() as any
+  const { setTreatmentVariants } = useGuideStore() as any
   const { lastEdit, justAppliedVariantId, appliedAt } = useGuideStore() as any
   const variants = (guide as any)?.treatmentVariants as Array<{ id: string; label?: string; content: string; visual_style?: string; tone_description?: string; target_audience?: string; title?: string; logline?: string; genre?: string; format_length?: string; author_writer?: string; date?: string; synopsis?: string; setting?: string; protagonist?: string; antagonist?: string; act_breakdown?: any; tone?: string; style?: string; themes?: any; mood_references?: string[]; character_descriptions?: Array<{
     name: string;
@@ -72,6 +73,8 @@ export function TreatmentCard() {
   const [builderOpen, setBuilderOpen] = useState(false)
   const [builderVariantId, setBuilderVariantId] = useState<string | null>(null)
   const [builderCharIdx, setBuilderCharIdx] = useState<number | null>(null)
+  const [analyzingImage, setAnalyzingImage] = useState<Record<string, Record<number, boolean>>>({})
+  const [uploadingRef, setUploadingRef] = useState<Record<string, Record<number, boolean>>>({})
 
   const active = useMemo(() => {
     if (selectedId) return selectedId
@@ -217,6 +220,113 @@ export function TreatmentCard() {
       }))
       const errorMessage = e instanceof Error ? e.message : 'Failed to generate image'
       try { const { toast } = require('sonner'); toast(errorMessage) } catch {}
+    }
+  }
+
+  const handleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    variantId: string,
+    charIdx: number,
+    characterName: string
+  ) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    
+    setUploadingRef(prev => ({
+      ...prev,
+      [variantId]: { ...prev[variantId], [charIdx]: true }
+    }))
+    
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('projectId', 'temp-project-id') // TODO: Get actual project ID from context
+      formData.append('characterName', characterName)
+      
+      const res = await fetch('/api/character/upload-reference', {
+        method: 'POST',
+        body: formData
+      })
+      
+      const data = await res.json()
+      if (data.success) {
+        // Update character image URL
+        setCharImages(prev => ({
+          ...prev,
+          [variantId]: {
+            ...prev[variantId],
+            [charIdx]: { ...prev[variantId]?.[charIdx], url: data.url }
+          }
+        }))
+        try { const { toast } = require('sonner'); toast('Reference image uploaded') } catch {}
+      } else {
+        throw new Error(data.error || 'Upload failed')
+      }
+    } catch (error) {
+      console.error('[Upload Reference] Error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload image'
+      try { const { toast } = require('sonner'); toast(errorMessage) } catch {}
+    } finally {
+      setUploadingRef(prev => ({
+        ...prev,
+        [variantId]: { ...prev[variantId], [charIdx]: false }
+      }))
+    }
+  }
+
+  const handleAnalyzeImage = async (
+    variantId: string,
+    charIdx: number,
+    imageUrl: string,
+    characterName: string
+  ) => {
+    setAnalyzingImage(prev => ({
+      ...prev,
+      [variantId]: { ...prev[variantId], [charIdx]: true }
+    }))
+    
+    try {
+      const res = await fetch('/api/character/analyze-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl, characterName })
+      })
+      
+      const data = await res.json()
+      if (data.success && data.attributes) {
+        // Update character attributes in the variant
+        const updatedVariants = variants?.map(v => {
+          if (v.id === variantId) {
+            return {
+              ...v,
+              character_descriptions: v.character_descriptions?.map((c, i) => {
+                if (i === charIdx) {
+                  return { ...c, ...data.attributes }
+                }
+                return c
+              })
+            }
+          }
+          return v
+        })
+        
+        // Update store
+        if (updatedVariants) {
+          setTreatmentVariants(updatedVariants)
+        }
+        try { const { toast } = require('sonner'); toast('Character attributes extracted from image') } catch {}
+      } else {
+        throw new Error(data.error || 'Analysis failed')
+      }
+    } catch (error) {
+      console.error('[Analyze Image] Error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to analyze image'
+      try { const { toast } = require('sonner'); toast(errorMessage) } catch {}
+    } finally {
+      setAnalyzingImage(prev => ({
+        ...prev,
+        [variantId]: { ...prev[variantId], [charIdx]: false }
+      }))
     }
   }
 
@@ -718,25 +828,60 @@ export function TreatmentCard() {
                           const currentPrompt = charState?.prompt || c.imagePrompt || `Professional character portrait of ${c.name}: ${c.description}`
                           return (
                             <div key={`${v.id}-char-${idx}`} className="flex gap-3 p-3 rounded border border-gray-700/60 bg-gray-900/40">
-                              {/* Image thumbnail */}
-                              <div 
-                                className="shrink-0 w-32 h-32 rounded overflow-hidden bg-gray-800 relative cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all"
-                                onClick={() => imageUrl && setZoomedImage({url: imageUrl, name: c.name})}
-                                title="Click to enlarge"
-                              >
-                                {imageUrl ? (
-                                  <img src={imageUrl} alt={c.name} className="w-full h-full object-cover" />
-                                ) : (
-                                  <div className="flex items-center justify-center h-full text-3xl text-gray-500">
-                                    {c.name?.[0] || '?'}
-                                  </div>
-                                )}
-                                {charState?.loading && (
-                                  <div className="absolute inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center z-10">
-                                    <Loader2 className="w-10 h-10 animate-spin text-blue-400 mb-2" />
-                                    <span className="text-xs text-white font-medium">Generating...</span>
-                                  </div>
-                                )}
+                              {/* Image thumbnail and upload/analyze controls */}
+                              <div className="shrink-0 w-32 space-y-2">
+                                <div 
+                                  className="w-32 h-32 rounded overflow-hidden bg-gray-800 relative cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all"
+                                  onClick={() => imageUrl && setZoomedImage({url: imageUrl, name: c.name})}
+                                  title="Click to enlarge"
+                                >
+                                  {imageUrl ? (
+                                    <img src={imageUrl} alt={c.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <div className="flex items-center justify-center h-full text-3xl text-gray-500">
+                                      {c.name?.[0] || '?'}
+                                    </div>
+                                  )}
+                                  {charState?.loading && (
+                                    <div className="absolute inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center z-10">
+                                      <Loader2 className="w-10 h-10 animate-spin text-blue-400 mb-2" />
+                                      <span className="text-xs text-white font-medium">Generating...</span>
+                                    </div>
+                                  )}
+                                  {uploadingRef[v.id]?.[idx] && (
+                                    <div className="absolute inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center z-10">
+                                      <Loader2 className="w-10 h-10 animate-spin text-blue-400 mb-2" />
+                                      <span className="text-xs text-white font-medium">Uploading...</span>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Upload and Analyze controls */}
+                                <div className="flex flex-col gap-1.5">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    id={`ref-upload-${v.id}-${idx}`}
+                                    className="hidden"
+                                    onChange={(e) => handleImageUpload(e, v.id, idx, c.name)}
+                                  />
+                                  <label
+                                    htmlFor={`ref-upload-${v.id}-${idx}`}
+                                    className="px-2 py-1 text-xs rounded bg-gray-700 hover:bg-gray-600 cursor-pointer text-center transition-colors"
+                                  >
+                                    {uploadingRef[v.id]?.[idx] ? 'Uploading...' : 'Upload Reference'}
+                                  </label>
+                                  
+                                  {imageUrl && (
+                                    <button
+                                      onClick={() => handleAnalyzeImage(v.id, idx, imageUrl, c.name)}
+                                      disabled={analyzingImage[v.id]?.[idx]}
+                                      className="px-2 py-1 text-xs rounded bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                      {analyzingImage[v.id]?.[idx] ? 'Analyzing...' : 'Analyze Image'}
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                               
                               {/* Character info & prompt editor */}
