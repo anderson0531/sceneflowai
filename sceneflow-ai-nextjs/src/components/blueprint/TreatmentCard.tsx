@@ -722,17 +722,17 @@ export function TreatmentCard() {
                                 <div className="font-medium text-gray-100">{c.name}</div>
                                 
                                 {/* Core Identity */}
-                                {(c as any).coreIdentity && (
+                                {(c as any).coreIdentity && Object.keys((c as any).coreIdentity).length > 0 && (
                                   <div className="space-y-1">
                                     <div className="text-xs font-semibold text-purple-400">Core Identity</div>
                                     <div className="text-xs text-gray-300 space-y-0.5">
-                                      {(c as any).coreIdentity.subject && (
+                                      {(c as any).coreIdentity.subject?.trim() && (
                                         <div><span className="text-gray-500">Subject:</span> {(c as any).coreIdentity.subject}</div>
                                       )}
-                                      {(c as any).coreIdentity.ethnicity && (
+                                      {(c as any).coreIdentity.ethnicity?.trim() && (
                                         <div><span className="text-gray-500">Ethnicity:</span> {(c as any).coreIdentity.ethnicity}</div>
                                       )}
-                                      {(c as any).coreIdentity.keyFeature && (
+                                      {(c as any).coreIdentity.keyFeature?.trim() && (
                                         <div><span className="text-gray-500">Key Feature:</span> {(c as any).coreIdentity.keyFeature}</div>
                                       )}
                                     </div>
@@ -740,23 +740,23 @@ export function TreatmentCard() {
                                 )}
                                 
                                 {/* Appearance Details */}
-                                {(c as any).appearanceDetails && (
+                                {(c as any).appearanceDetails && Object.keys((c as any).appearanceDetails).length > 0 && (
                                   <div className="space-y-1">
                                     <div className="text-xs font-semibold text-blue-400">Appearance</div>
                                     <div className="text-xs text-gray-300 space-y-0.5">
-                                      {(c as any).appearanceDetails.hairStyle && (
+                                      {(c as any).appearanceDetails.hairStyle?.trim() && (
                                         <div><span className="text-gray-500">Hair Style:</span> {(c as any).appearanceDetails.hairStyle}</div>
                                       )}
-                                      {(c as any).appearanceDetails.hairColor && (
+                                      {(c as any).appearanceDetails.hairColor?.trim() && (
                                         <div><span className="text-gray-500">Hair Color:</span> {(c as any).appearanceDetails.hairColor}</div>
                                       )}
-                                      {(c as any).appearanceDetails.eyeColor && (
+                                      {(c as any).appearanceDetails.eyeColor?.trim() && (
                                         <div><span className="text-gray-500">Eyes:</span> {(c as any).appearanceDetails.eyeColor}</div>
                                       )}
-                                      {(c as any).appearanceDetails.expression && (
+                                      {(c as any).appearanceDetails.expression?.trim() && (
                                         <div><span className="text-gray-500">Expression:</span> {(c as any).appearanceDetails.expression}</div>
                                       )}
-                                      {(c as any).appearanceDetails.build && (
+                                      {(c as any).appearanceDetails.build?.trim() && (
                                         <div><span className="text-gray-500">Build:</span> {(c as any).appearanceDetails.build}</div>
                                       )}
                                     </div>
@@ -771,7 +771,7 @@ export function TreatmentCard() {
                                 )}
                                 
                                 {/* Prompt Builder Button */}
-                                <div className="pt-2">
+                                <div className="pt-2 flex gap-2">
                                   <button
                                     type="button"
                                     onClick={() => {
@@ -780,10 +780,10 @@ export function TreatmentCard() {
                                       setBuilderOpen(true)
                                     }}
                                     disabled={charState?.loading}
-                                    className="w-full text-xs px-3 py-2 rounded-lg border border-purple-500/50 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 hover:border-purple-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                                    className="flex-1 text-xs px-3 py-2 rounded-lg border border-purple-500/50 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 hover:border-purple-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
                                   >
-                                    <Wand2 className="w-4 h-4" />
-                                    Open Prompt Builder
+                                    <Wand2 className="w-3.5 h-3.5" />
+                                    Edit Character Appearance
                                   </button>
                                 </div>
                                 <div className="flex gap-2">
