@@ -713,6 +713,23 @@ export function TreatmentCard() {
                       <div className="text-xs text-gray-400">Characters</div>
                       <div className="space-y-3">
                         {v.character_descriptions.map((c, idx) => {
+                          // DEBUG: Log what we're actually rendering at the start
+                          console.log(`🎭 [TreatmentCard] Rendering character ${idx} for variant ${v.id}:`, {
+                            name: c.name,
+                            role: c.role,
+                            subject: c.subject,
+                            ethnicity: c.ethnicity,
+                            keyFeature: c.keyFeature,
+                            hairStyle: c.hairStyle,
+                            hairColor: c.hairColor,
+                            eyeColor: c.eyeColor,
+                            expression: c.expression,
+                            build: c.build,
+                            description: c.description,
+                            fullObjectKeys: Object.keys(c),
+                            fullObject: c
+                          })
+                          
                           const charState = charImages[v.id]?.[idx]
                           const imageUrl = charState?.url || (c as any).image_url || (c as any).referenceImage
                           const currentPrompt = charState?.prompt || c.imagePrompt || `Professional character portrait of ${c.name}: ${c.description}`
