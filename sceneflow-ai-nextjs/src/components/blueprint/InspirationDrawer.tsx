@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useRef } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { trackCta } from '@/lib/analytics'
-import { Sparkles, X, Pin, ChevronRight } from 'lucide-react'
+import { Sparkles, X, Pin, ChevronRight, ArrowRight } from 'lucide-react'
 
 interface Variant {
   id: string
@@ -35,13 +35,6 @@ export function InspirationDrawer({ open, onClose, onInsert }: InspirationDrawer
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
   const inputRef = useRef<HTMLInputElement | null>(null)
-
-  // Static fallback examples
-  const fallbackExamples: Variant[] = [
-    { id: 'ex1', text: '60s brand launch for eco water bottle; urban outdoors; confident, modern tone; highlight sustainability' },
-    { id: 'ex2', text: '90s founder profile; office + workshop; hopeful, authentic tone; 3-act structure with mission reveal' },
-    { id: 'ex3', text: '30s recipe tutorial; overhead shots; upbeat, energetic; end with subscribe CTA and recipe link' },
-  ]
 
   const generateVariants = useCallback(async (kw: string) => {
     const cleanKeyword = kw.trim()
@@ -139,7 +132,7 @@ export function InspirationDrawer({ open, onClose, onInsert }: InspirationDrawer
 
   const displayItems = variants.length > 0 
     ? [...variants.filter(v => v.pinned), ...variants.filter(v => !v.pinned)]
-    : fallbackExamples
+    : []
 
   if (!open) return null
 
@@ -210,23 +203,37 @@ export function InspirationDrawer({ open, onClose, onInsert }: InspirationDrawer
             </div>
           )}
 
-          {/* Variants Display */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-300 font-semibold">
-                {variants.length > 0 ? `${variants.length} Ideas` : 'Example Ideas'}
+          {/* Empty State */}
+          {displayItems.length === 0 && (
+            <div className="flex-1 flex flex-col items-center justify-center text-center py-12 px-6">
+              <div className="w-16 h-16 rounded-full bg-sf-primary/10 flex items-center justify-center mb-4">
+                <Sparkles size={32} className="text-sf-primary" />
               </div>
-              {variants.length > 0 && (
+              <h3 className="text-lg font-semibold text-white mb-2">
+                Get Inspired
+              </h3>
+              <p className="text-sm text-gray-400 max-w-xs">
+                Enter a topic or keyword above to generate creative blueprint variations
+              </p>
+            </div>
+          )}
+
+          {/* Variants Display */}
+          {displayItems.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-300 font-semibold">
+                  {variants.length} Ideas
+                </div>
                 <button
                   onClick={clearGenerated}
                   className="text-[10px] px-2 py-0.5 rounded border border-gray-700 text-gray-400 hover:text-gray-200 hover:border-gray-600"
                 >
                   Clear
                 </button>
-              )}
-            </div>
+              </div>
 
-            {displayItems.map((variant) => (
+              {displayItems.map((variant) => (
               <div
                 key={variant.id}
                 className="group relative"
@@ -261,38 +268,39 @@ export function InspirationDrawer({ open, onClose, onInsert }: InspirationDrawer
                     </div>
                   </div>
                 ) : (
-                  // Display Mode
-                  <div className="relative">
-                    <button 
-                      onClick={() => insert(variant)}
-                      onDoubleClick={() => startEdit(variant)}
-                      className="w-full text-left text-sm px-3 py-2.5 pr-8 rounded-lg border border-gray-700 text-gray-300 hover:bg-gray-800 hover:border-sf-primary transition-all leading-relaxed"
-                    >
+                  // Display Mode - Modern Card
+                  <div 
+                    onClick={() => insert(variant)}
+                    onDoubleClick={() => startEdit(variant)}
+                    className="group relative p-4 rounded-lg border border-gray-700/60 bg-gray-900/40 hover:bg-gray-800/60 hover:border-sf-primary/40 cursor-pointer transition-all duration-200"
+                  >
+                    <p className="text-sm text-gray-200 leading-relaxed mb-3 pr-6">
                       {variant.text}
-                    </button>
-                    
-                    {/* Pin & Edit Actions */}
-                    <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {variants.length > 0 && (
-                        <button
-                          onClick={(e) => togglePin(variant.id, e)}
-                          className={`p-1 rounded ${variant.pinned ? 'text-yellow-400' : 'text-gray-500 hover:text-gray-300'}`}
-                          title={variant.pinned ? 'Unpin' : 'Pin'}
-                        >
-                          <Pin size={12} fill={variant.pinned ? 'currentColor' : 'none'} />
-                        </button>
-                      )}
+                    </p>
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span className="group-hover:text-sf-primary transition-colors">Click to insert</span>
+                      <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity text-sf-primary" />
                     </div>
-
-                    {/* Hover hint */}
-                    <div className="absolute -bottom-5 left-0 text-[9px] text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                      Click to use · Double-click to edit
+                    
+                    {/* Pin Action */}
+                    <div className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          togglePin(variant.id, e)
+                        }}
+                        className={`p-1 rounded ${variant.pinned ? 'text-yellow-400' : 'text-gray-500 hover:text-gray-300'}`}
+                        title={variant.pinned ? 'Unpin' : 'Pin'}
+                      >
+                        <Pin size={12} fill={variant.pinned ? 'currentColor' : 'none'} />
+                      </button>
                     </div>
                   </div>
                 )}
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           {/* Tips Section */}
           <div className="pt-2 space-y-1.5 border-t border-gray-800">

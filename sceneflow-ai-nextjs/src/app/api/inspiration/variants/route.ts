@@ -14,20 +14,27 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    const prompt = `Generate ${count} diverse, production-ready Blueprint inputs for: "${keyword}"
+    const prompt = `You are a creative film strategist. Generate ${count} compelling, production-ready Blueprint inputs for: "${keyword}"
 
-REQUIREMENTS:
-- Each variation must be 15-30 words
-- Include: duration (30s-120s), project type, visual style, tone, key elements
-- Make them DISTINCTLY different in approach, style, and duration
-- Use concrete, actionable language
-- No generic phrases like "engaging" or "compelling"
+STYLE REQUIREMENTS:
+- Each variation: 25-40 words (full sentence structure)
+- Paint a vivid picture: sensory details, emotional tone, specific visuals
+- Include: runtime, visual style, narrative approach, audience emotion
+- Make each variation DISTINCTLY different in genre, mood, and execution
+- Use evocative, cinematic language that sparks imagination
 
-EXAMPLES OF GOOD FORMAT:
-- "90s documentary on artisan coffee roasting; overhead shots in cozy roastery; warm, educational tone; emphasize craft and tradition"
-- "30s product demo for smart home device; clean minimalist aesthetic; confident tech-forward tone; focus on seamless integration"
+COMPELLING EXAMPLES:
+- "A 90-second documentary portrait of an aging jazz musician in dim, smoke-filled clubs. Intimate close-ups capture weathered hands on piano keys. Melancholic yet hopeful tone celebrates musical legacy and the passage of time."
+- "30-second product reveal for luxury timepiece. Slow-motion macro shots reveal intricate mechanical movements. Dark, moody cinematography with dramatic lighting. Evokes precision, craftsmanship, and timeless elegance."
+- "2-minute founder story filmed in golden hour at startup warehouse. Handheld camera follows determined entrepreneur through authentic daily moments. Raw, vulnerable tone builds to inspiring crescendo showcasing vision realized."
 
-OUTPUT FORMAT: Return ONLY the variations, one per line, no numbering, no headers.`
+CRITICAL:
+- Be SPECIFIC about visual aesthetics (lighting, camera movement, color palette)
+- Include EMOTIONAL journey (how viewer should feel)
+- Suggest NARRATIVE structure (opening, development, payoff)
+- Avoid generic words like "engaging" or "compelling"
+
+OUTPUT FORMAT: Return ONLY the variations, one per line, no numbering, no markdown.`
 
     // Call Gemini API directly with high temperature for creativity
     const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY

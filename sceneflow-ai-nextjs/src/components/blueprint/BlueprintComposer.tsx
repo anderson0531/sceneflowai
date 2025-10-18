@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Textarea } from '../../components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { Button } from '../../components/ui/Button'
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '../../components/ui/tooltip'
 import { InspirationDrawer } from './InspirationDrawer'
 import { trackCta } from '@/lib/analytics'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
@@ -82,29 +83,40 @@ export function BlueprintComposer({
     <div className="w-full space-y-4">
       <div className="space-y-3">
         <div className="flex gap-2 items-center">
-          <button
-            type="button"
-            onClick={() => (isRecording ? stop() : start())}
-            disabled={!sttSupported}
-            aria-label={isRecording ? 'Stop voice input' : 'Start voice input'}
-            className={`text-xs px-2 py-1 rounded border ${isRecording ? 'border-red-500 text-red-300 hover:bg-red-500/10' : 'border-gray-700 text-gray-300 hover:bg-gray-800'} ${!sttSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
-            title={sttSupported ? (isRecording ? 'Stop voice input' : 'Start voice input') : (isSecure ? 'Voice input not supported in this browser' : 'Use HTTPS or localhost for mic access')}
-          >
-            <span className="inline-flex items-center gap-1">
-              {isRecording ? <MicOff size={14} /> : <Mic size={14} />}
-              {isRecording ? 'Stop' : 'Voice'}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setInspirationOpen(true)}
-            className="text-xs px-2 py-1 rounded border border-gray-700 text-gray-300 hover:bg-gray-800"
-          >
-            <span className="inline-flex items-center gap-1">
-              <Sparkles size={14} />
-              Inspiration
-            </span>
-          </button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => (isRecording ? stop() : start())}
+                  disabled={!sttSupported}
+                  aria-label={isRecording ? 'Stop voice input' : 'Start voice input'}
+                  className={`p-2 rounded-lg border transition-colors ${isRecording ? 'border-red-500 text-red-300 hover:bg-red-500/10' : 'border-gray-700 text-gray-300 hover:bg-gray-800'} ${!sttSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{sttSupported ? (isRecording ? 'Stop voice input' : 'Start voice input') : (isSecure ? 'Voice input not supported' : 'Use HTTPS for mic access')}</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setInspirationOpen(true)}
+                  className="p-2 rounded-lg border border-gray-700 text-gray-300 hover:bg-gray-800 transition-colors"
+                  aria-label="Get inspiration"
+                >
+                  <Sparkles size={18} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Get inspiration for your blueprint</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           {/* Advanced moved next to Generate */}
         </div>
         {showAdvanced && (
