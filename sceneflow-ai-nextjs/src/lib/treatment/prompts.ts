@@ -65,23 +65,19 @@ SCHEMA:
     {
       "name": "Character Name",
       "role": "protagonist | supporting | antagonist",
-      "age": "35" or "mid-30s",
-      "gender": "male | female | non-binary",
-      "ethnicity": "e.g., Asian-American, Hispanic, Caucasian, African-American",
-      "height": "e.g., 5'10\\" | tall | average | short",
-      "build": "e.g., athletic | slim | stocky | muscular",
-      "hairStyle": "e.g., short cropped | shoulder-length | buzz cut",
-      "hairColor": "e.g., dark brown | blonde | graying",
-      "eyeColor": "e.g., brown | blue | green | hazel",
-      "distinctiveFeatures": "e.g., scar above left eyebrow, wire-rimmed glasses, silver earring",
-      "appearance": "Full description: Age, height, build, facial features (synthesizes above)",
-      "demeanor": "Personality, body language, mannerisms (e.g., 'Confident, stands tall, speaks deliberately')",
-      "personality": "Core traits (e.g., 'Analytical, reserved, compassionate under pressure')",
-      "voiceCharacteristics": "e.g., Deep baritone, speaks slowly, slight accent",
-      "clothing": "Typical outfit details (e.g., 'Navy blazer, white shirt, dark jeans')",
-      "clothingStyle": "e.g., business casual | street wear | formal",
-      "accessories": "e.g., leather messenger bag, silver watch, glasses",
-      "description": "Brief character summary for script context"
+      "coreIdentity": {
+        "subject": "Full name with title/nickname (e.g., 'Captain Valerius \"Val\" Zinn')",
+        "ethnicity": "Specific ethnic/cultural origin (e.g., 'Mediterranean/Outer Rim Colonies')",
+        "keyFeature": "Defining characteristic or profession (e.g., 'Scarred, charismatic freelance cargo pilot and occasional smuggler')"
+      },
+      "appearanceDetails": {
+        "hairStyle": "Specific style, length, texture (e.g., 'Mid-length, swept back, slightly unruly and oil-stained')",
+        "hairColor": "Exact color with detail (e.g., 'Deep, dark auburn')",
+        "eyeColor": "Exact eye color (e.g., 'Bright, electric amber')",
+        "expression": "Typical facial expression/demeanor (e.g., 'Constant, slight smirk, weary but calculating, with crow's feet from years of exposure')",
+        "build": "Body type, physique, movement style (e.g., 'Wiry, compact, and deceptively strong, favoring quick movements over bulk')"
+      },
+      "description": "Brief character context for story (role in narrative)"
     }
   ],
   
@@ -109,10 +105,10 @@ SCHEMA:
 
 CRITICAL: 
 - Generate 3-5 detailed character_descriptions (protagonist + supporting characters)
+- Each character MUST have complete coreIdentity (subject, ethnicity, keyFeature) and appearanceDetails (hairStyle, hairColor, eyeColor, expression, build)
 - Generate 3-5 detailed scene_descriptions (key locations)
-- Include SPECIFIC visual details for consistency in image/video generation
-- Appearance, demeanor, clothing must be concrete and filmable
-- Location, atmosphere, furniture must be specific and visualizable`
+- All details must be SPECIFIC and VISUAL for precise image generation
+- Character attributes must be detailed enough to recreate consistent character images across all scenes`
 }
 
 function formatLabel(f: Format): string {

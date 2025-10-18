@@ -16,24 +16,36 @@ export async function POST(req: NextRequest) {
     if (projectId && characterId && !finalPrompt) {
       const character = await getCharacterAttributes(projectId, characterId)
       if (character) {
-        // Build comprehensive prompt from character attributes
+        // Build comprehensive prompt from nested character structure
         const parts: string[] = []
-        parts.push(`Professional character portrait of ${character.name}`)
-        if (character.age) parts.push(`age ${character.age}`)
-        if (character.gender) parts.push(character.gender)
-        if (character.ethnicity) parts.push(character.ethnicity)
-        if (character.build) parts.push(`${character.build} build`)
-        if (character.height) parts.push(character.height)
-        if (character.hairStyle && character.hairColor) parts.push(`${character.hairColor} ${character.hairStyle} hair`)
-        else if (character.hairStyle) parts.push(`${character.hairStyle} hair`)
-        else if (character.hairColor) parts.push(`${character.hairColor} hair`)
-        if (character.eyeColor) parts.push(`${character.eyeColor} eyes`)
-        if (character.distinctiveFeatures) parts.push(character.distinctiveFeatures)
-        if (character.clothing) parts.push(`wearing ${character.clothing}`)
-        if (character.demeanor) parts.push(character.demeanor)
+        
+        // Core identity - key feature is primary descriptor
+        if (character.coreIdentity?.keyFeature) {
+          parts.push(character.coreIdentity.keyFeature)
+        }
+        if (character.coreIdentity?.ethnicity) {
+          parts.push(character.coreIdentity.ethnicity)
+        }
+        
+        // Appearance details - build comprehensive visual
+        const appearance = character.appearanceDetails
+        if (appearance) {
+          if (appearance.hairColor && appearance.hairStyle) {
+            parts.push(`${appearance.hairColor} ${appearance.hairStyle} hair`)
+          }
+          if (appearance.eyeColor) {
+            parts.push(`${appearance.eyeColor} eyes`)
+          }
+          if (appearance.expression) {
+            parts.push(appearance.expression)
+          }
+          if (appearance.build) {
+            parts.push(`${appearance.build} build`)
+          }
+        }
         
         finalPrompt = parts.join(', ')
-        console.log('[Character Image] Built prompt from stored attributes:', finalPrompt.substring(0, 100))
+        console.log('[Character Image] Built prompt from structured attributes:', finalPrompt.substring(0, 100))
       }
     }
     

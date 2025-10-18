@@ -94,14 +94,14 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
       {builderCharId && (() => {
         const character = characters.find((c, idx) => (c.id || idx.toString()) === builderCharId)
         const initialStructure = character ? {
-          subject: character.name || '',
-          ethnicity: character.ethnicity || '',
-          keyFeature: character.distinctiveFeatures || '',
-          hairStyle: character.hairStyle || '',
-          hairColor: character.hairColor || '',
-          eyeColor: character.eyeColor || '',
-          eyeExpression: '',
-          build: character.build || '',
+          subject: character.coreIdentity?.subject || character.name || '',
+          ethnicity: character.coreIdentity?.ethnicity || '',
+          keyFeature: character.coreIdentity?.keyFeature || '',
+          hairStyle: character.appearanceDetails?.hairStyle || '',
+          hairColor: character.appearanceDetails?.hairColor || '',
+          eyeColor: character.appearanceDetails?.eyeColor || '',
+          eyeExpression: character.appearanceDetails?.expression || '',
+          build: character.appearanceDetails?.build || '',
         } : undefined
         
         return (

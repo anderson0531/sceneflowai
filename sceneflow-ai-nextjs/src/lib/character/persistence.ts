@@ -1,42 +1,34 @@
 import Project from '../../models/Project'
 
 export interface EnhancedCharacter {
-  // Core Identity
   name: string
   role: string  // protagonist, antagonist, supporting
-  age?: string
-  gender?: string
-  ethnicity?: string
   
-  // Physical Appearance
-  appearance: string
-  hairStyle?: string
-  hairColor?: string
-  eyeColor?: string
-  build?: string
-  height?: string
-  distinctiveFeatures?: string
+  // Core Identity (3 required fields)
+  coreIdentity: {
+    subject: string            // "Captain Valerius 'Val' Zinn"
+    ethnicity: string          // "Mediterranean/Outer Rim Colonies"
+    keyFeature: string         // "Scarred, charismatic freelance cargo pilot"
+  }
   
-  // Personality & Demeanor
-  demeanor: string
-  personality?: string
-  voiceCharacteristics?: string
+  // Appearance Details (5 required fields)
+  appearanceDetails: {
+    hairStyle: string          // "Mid-length, swept back, slightly unruly"
+    hairColor: string          // "Deep, dark auburn"
+    eyeColor: string           // "Bright, electric amber"
+    expression: string         // "Constant slight smirk, weary but calculating"
+    build: string              // "Wiry, compact, deceptively strong"
+  }
   
-  // Visual Presentation
-  clothing: string
-  clothingStyle?: string
-  accessories?: string
-  
-  // Reference & Generation
-  description: string
-  imagePrompt?: string
+  // Optional fields
+  description?: string         // Narrative description
+  imagePrompt?: string         // Generated visual prompt
   referenceImage?: string | null
   generating?: boolean
   
   // Metadata
-  firstAppearance?: number
-  lastModified?: string
-  version?: number
+  version: number
+  lastModified: string
 }
 
 /**
