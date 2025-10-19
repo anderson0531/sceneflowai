@@ -73,27 +73,40 @@ export async function POST(req: NextRequest) {
         
         // Add reference image URL if available
         if (c.referenceImage) {
-          parts.push(`Reference Image: ${c.referenceImage}`)
+          parts.push(`[REFERENCE IMAGE: ${c.referenceImage}]`)
         }
         
-        // Add text descriptions as fallback/supplement
-        if (c.ethnicity) parts.push(`Ethnicity: ${c.ethnicity}`)
-        if (c.keyFeature) parts.push(`Key Feature: ${c.keyFeature}`)
-        if (c.hairStyle) parts.push(`Hair: ${c.hairStyle}`)
-        if (c.hairColor) parts.push(`Hair Color: ${c.hairColor}`)
-        if (c.eyeColor) parts.push(`Eyes: ${c.eyeColor}`)
-        if (c.build) parts.push(`Build: ${c.build}`)
+        // CRITICAL: Add text descriptions as fallback/supplement
+        // Build detailed physical description
+        const physicalDesc = []
+        if (c.ethnicity) physicalDesc.push(c.ethnicity)
+        if (c.keyFeature) physicalDesc.push(c.keyFeature)
+        if (c.hairStyle || c.hairColor) {
+          const hair = [c.hairColor, c.hairStyle].filter(Boolean).join(' ')
+          if (hair) physicalDesc.push(`Hair: ${hair}`)
+        }
+        if (c.eyeColor) physicalDesc.push(`Eyes: ${c.eyeColor}`)
+        if (c.expression) physicalDesc.push(`Expression: ${c.expression}`)
+        if (c.build) physicalDesc.push(`Build: ${c.build}`)
         
-        // Legacy fields as fallback
-        if (c.appearance) parts.push(`Appearance: ${c.appearance}`)
-        if (c.demeanor) parts.push(`Demeanor: ${c.demeanor}`)
-        if (c.clothing) parts.push(`Clothing: ${c.clothing}`)
-        if (c.description && !c.keyFeature && !c.appearance) parts.push(c.description)
+        if (physicalDesc.length > 0) {
+          parts.push(`Appearance: ${physicalDesc.join(', ')}`)
+        }
         
-        return parts.join(', ')
+        // Legacy fields as additional fallback
+        if (c.appearance) parts.push(`Details: ${c.appearance}`)
+        if (c.description && physicalDesc.length === 0) parts.push(c.description)
+        
+        return parts.join(' - ')
       }).join('\n')
       
-      characterRefs = `\n\nCHARACTERS IN SCENE:\n${charDetails}\n\nIMPORTANT: Match the exact appearance of characters shown in their reference images.`
+      const hasRefs = sceneContext.characters.some((c: any) => c.referenceImage)
+      characterRefs = `\n\nCHARACTERS IN SCENE:\n${charDetails}`
+      if (hasRefs) {
+        characterRefs += `\n\nIMPORTANT: Match the exact appearance shown in [REFERENCE IMAGE] URLs. Use physical descriptions as supplementary details.`
+      } else {
+        characterRefs += `\n\nIMPORTANT: Match the physical appearance details exactly.`
+      }
     }
 
     // Add scene description if available

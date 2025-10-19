@@ -748,11 +748,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       const sceneCharacters = sceneCharacterNames.map((charName: string) => {
         const char = characters.find((c: any) => c.name === charName)
-        return char ? {
+        if (!char) {
+          console.warn('[Scene Image] Character not found:', charName)
+          return null
+        }
+        
+        const charData = {
           name: char.name,
           description: char.description,
-          referenceImage: char.referenceImage, // Link to character image for consistency
-          // Include extracted attributes for character consistency
+          referenceImage: char.referenceImage,
           ethnicity: char.ethnicity,
           keyFeature: char.keyFeature,
           hairStyle: char.hairStyle,
@@ -760,8 +764,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           eyeColor: char.eyeColor,
           expression: char.expression,
           build: char.build
-        } : null
+        }
+        
+        console.log('[Scene Image] Character data for', char.name, ':', charData)
+        return charData
       }).filter(Boolean) || []
+      
+      console.log('[Scene Image] Final sceneCharacters array:', sceneCharacters)
       
       const response = await fetch('/api/scene/generate-image', {
         method: 'POST',
