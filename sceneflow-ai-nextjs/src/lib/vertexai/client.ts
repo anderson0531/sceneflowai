@@ -51,7 +51,7 @@ export async function callVertexAIImagen(
     referenceImages?: Array<{
       referenceId: number
       bytesBase64Encoded: string
-      referenceType?: 'REFERENCE_TYPE_UNSPECIFIED' | 'SUBJECT'
+      referenceType?: 'REFERENCE_TYPE_UNSPECIFIED' | 'REFERENCE_TYPE_SUBJECT'
       subjectDescription?: string
     }>
   } = {}

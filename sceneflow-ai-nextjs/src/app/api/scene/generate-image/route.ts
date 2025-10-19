@@ -225,6 +225,12 @@ Composition: 16:9 aspect ratio, professional framing
 Camera: Cinematic camera angle, depth of field`
 
     console.log('[Scene Image] Using', characterReferences.length, 'character references')
+    console.log('[Scene Image] Reference data check:', characterReferences.map(r => ({
+      id: r.id,
+      name: r.name,
+      hasBase64: !!r.bytesBase64Encoded,
+      base64Length: r.bytesBase64Encoded?.length || 0
+    })))
     console.log('[Scene Image] Generating with Vertex AI Imagen 3:', stylePrompt.substring(0, 150))
 
     // Generate image with Vertex AI Imagen 3
@@ -233,9 +239,9 @@ Camera: Cinematic camera angle, depth of field`
       numberOfImages: 1,
       referenceImages: characterReferences.map(ref => ({
         referenceId: ref.id,
-        bytesBase64Encoded: ref.imageBase64,
-        referenceType: 'SUBJECT' as const,
-        subjectDescription: ref.description
+        bytesBase64Encoded: ref.bytesBase64Encoded,
+        referenceType: ref.referenceType,
+        subjectDescription: ref.subjectDescription
       }))
     })
     

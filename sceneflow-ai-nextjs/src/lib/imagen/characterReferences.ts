@@ -2,7 +2,7 @@ export interface CharacterReference {
   id: number
   name: string
   bytesBase64Encoded: string
-  referenceType?: string
+  referenceType?: 'REFERENCE_TYPE_UNSPECIFIED' | 'REFERENCE_TYPE_SUBJECT'
   subjectDescription?: string
 }
 
