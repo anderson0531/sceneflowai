@@ -11,10 +11,11 @@ interface CharacterLibraryProps {
   onGenerateCharacter: (characterId: string, prompt: string) => void
   onUploadCharacter: (characterId: string, file: File) => void
   onApproveCharacter: (characterId: string) => void
+  onUpdateCharacterAttributes?: (characterId: string, attributes: any) => void
   compact?: boolean
 }
 
-export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, compact = false }: CharacterLibraryProps) {
+export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, compact = false }: CharacterLibraryProps) {
   const [selectedChar, setSelectedChar] = useState<string | null>(null)
   const [charPrompts, setCharPrompts] = useState<Record<string, string>>({})
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(new Set())
@@ -76,16 +77,27 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
       
       const data = await res.json()
       if (data.success && data.attributes) {
-        // TODO: Need a callback to update character attributes in parent
         console.log('[Analyze Image] Extracted attributes:', data.attributes)
-        try { const { toast } = require('sonner'); toast('Character attributes extracted') } catch {}
+        
+        // Update character attributes via parent callback
+        if (onUpdateCharacterAttributes) {
+          onUpdateCharacterAttributes(characterId, data.attributes)
+        }
+        
+        try { 
+          const { toast } = require('sonner')
+          toast.success('Character attributes extracted and updated!')
+        } catch {}
       } else {
         throw new Error(data.error || 'Analysis failed')
       }
     } catch (error) {
       console.error('[Analyze Image] Error:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to analyze'
-      try { const { toast } = require('sonner'); toast(errorMessage) } catch {}
+      try { 
+        const { toast } = require('sonner')
+        toast.error(errorMessage)
+      } catch {}
     } finally {
       setAnalyzingImage(prev => ({ ...prev, [characterId]: false }))
     }
@@ -151,6 +163,8 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                   setBuilderCharId(charId)
                   setBuilderOpen(true)
                 }}
+                onAnalyze={handleAnalyzeImage}
+                analyzingImage={analyzingImage[charId]}
                 prompt={charPrompts[charId] || savedPrompt || defaultPrompt}
                 onPromptChange={(prompt) => setCharPrompts(prev => ({ ...prev, [charId]: prompt }))}
                 isGenerating={generatingChars.has(charId)}
@@ -230,6 +244,8 @@ interface CharacterCardProps {
   onUpload: (file: File) => void
   onApprove: () => void
   onOpenBuilder: () => void
+  onAnalyze?: (characterId: string, imageUrl: string, characterName: string) => void
+  analyzingImage?: boolean
   prompt: string
   onPromptChange: (prompt: string) => void
   isGenerating: boolean
@@ -237,7 +253,7 @@ interface CharacterCardProps {
   onToggleExpand?: (charId: string, section: 'coreIdentity' | 'appearance') => void
 }
 
-function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, onOpenBuilder, prompt, onPromptChange, isGenerating, expandedCharId, onToggleExpand }: CharacterCardProps) {
+function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, onOpenBuilder, onAnalyze, analyzingImage, prompt, onPromptChange, isGenerating, expandedCharId, onToggleExpand }: CharacterCardProps) {
   const hasImage = !!character.referenceImage
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
@@ -425,14 +441,19 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
               <button
                 onClick={(e) => { 
                   e.stopPropagation()
-                  // TODO: Call handleAnalyzeImage here
-                  alert('Analyze Image feature - Coming soon!')
+                  if (onAnalyze && character.referenceImage) {
+                    onAnalyze(characterId, character.referenceImage, character.name)
+                  }
                 }}
-                disabled={isGenerating}
+                disabled={isGenerating || analyzingImage}
                 className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
                 title="Analyze image to extract attributes"
               >
-                <Scan className="w-4 h-4" />
+                {analyzingImage ? (
+                  <Loader className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Scan className="w-4 h-4" />
+                )}
               </button>
               
               {!isApproved && (

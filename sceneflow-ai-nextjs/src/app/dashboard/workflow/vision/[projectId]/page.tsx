@@ -635,6 +635,57 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  const handleUpdateCharacterAttributes = async (characterId: string, attributes: any) => {
+    try {
+      console.log('[Vision] Updating character attributes:', characterId, attributes)
+      
+      // Update local state
+      setCharacters(prevChars => 
+        prevChars.map(char => {
+          const id = char.id || characters.indexOf(char).toString()
+          if (id === characterId) {
+            return {
+              ...char,
+              ...attributes,
+              // Preserve existing fields
+              name: char.name,
+              role: char.role,
+              description: char.description,
+              referenceImage: char.referenceImage
+            }
+          }
+          return char
+        })
+      )
+      
+      // Save to database
+      const res = await fetch('/api/character/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          characterId,
+          attributes: {
+            ...characters.find((c, i) => (c.id || i.toString()) === characterId),
+            ...attributes
+          }
+        })
+      })
+      
+      if (!res.ok) {
+        throw new Error('Failed to save character attributes')
+      }
+      
+      console.log('[Vision] Character attributes saved successfully')
+    } catch (error) {
+      console.error('[Vision] Error updating character:', error)
+      try {
+        const { toast } = require('sonner')
+        toast.error('Failed to save character attributes')
+      } catch {}
+    }
+  }
+
   const handleRegenerateScene = async (sceneIndex: number) => {
     // Implement scene regeneration
     console.log('Regenerate scene:', sceneIndex)
@@ -832,6 +883,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             onGenerateCharacter={handleGenerateCharacter}
             onUploadCharacter={handleUploadCharacter}
             onApproveCharacter={handleApproveCharacter}
+            onUpdateCharacterAttributes={handleUpdateCharacterAttributes}
             compact={true}
           />
         </div>
