@@ -99,13 +99,26 @@ export async function callVertexAIImagen(
     console.log('[Vertex AI] Using', options.referenceImages.length, 'character reference images')
   }
 
+  // Log request size for debugging
+  const requestBodyStr = JSON.stringify(requestBody)
+  const requestSizeKB = Math.round(requestBodyStr.length / 1024)
+  console.log(`[Vertex AI] Request body size: ${requestSizeKB}KB`)
+
+  // Log first reference image info if exists
+  if (requestBody.parameters?.editConfig?.referenceImages?.[0]) {
+    const ref = requestBody.parameters.editConfig.referenceImages[0]
+    const base64Length = ref.referenceImage?.bytesBase64Encoded?.length || 0
+    const refSizeKB = Math.round((base64Length * 0.75) / 1024)
+    console.log(`[Vertex AI] Reference image Base64 length: ${base64Length}, ~${refSizeKB}KB`)
+  }
+
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(requestBody)
+    body: requestBodyStr
   })
 
   if (!response.ok) {

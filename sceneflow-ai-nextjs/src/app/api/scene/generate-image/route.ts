@@ -39,18 +39,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
     }
 
-    // Build character references with visual URLs and detailed appearance for consistency
+    // Build character references with detailed appearance for consistency
     let characterRefs = ''
     if (sceneContext?.characters && Array.isArray(sceneContext.characters) && sceneContext.characters.length > 0) {
       const charDetails = sceneContext.characters.map((c: any) => {
         const parts = [`${c.name}`]
         
-        // Add reference image URL if available
-        if (c.referenceImage) {
-          parts.push(`[REFERENCE IMAGE: ${c.referenceImage}]`)
-        }
-        
-        // CRITICAL: Add text descriptions as fallback/supplement
+        // CRITICAL: Add text descriptions (reference images are in separate array)
         // Build detailed physical description
         const physicalDesc = []
         if (c.ethnicity) physicalDesc.push(c.ethnicity)
@@ -77,7 +72,7 @@ export async function POST(req: NextRequest) {
       const hasRefs = sceneContext.characters.some((c: any) => c.referenceImage)
       characterRefs = `\n\nCHARACTERS IN SCENE:\n${charDetails}`
       if (hasRefs) {
-        characterRefs += `\n\nIMPORTANT: Match the exact appearance shown in [REFERENCE IMAGE] URLs. Use physical descriptions as supplementary details.`
+        characterRefs += `\n\nIMPORTANT: Match characters to their reference images using the [referenceId] in the prompt.`
       } else {
         characterRefs += `\n\nIMPORTANT: Match the physical appearance details exactly.`
       }
