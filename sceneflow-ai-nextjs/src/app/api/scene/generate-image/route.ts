@@ -6,6 +6,24 @@ import { prepareCharacterReferences, buildPromptWithReferences } from '@/lib/ima
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
+// Helper to extract character names from scene
+function getSceneCharacterNames(sceneContext: any): string[] {
+  // Try explicit characters array first
+  if (sceneContext?.characters && sceneContext.characters.length > 0) {
+    return sceneContext.characters.map((c: any) => c.name || c) as string[]
+  }
+  
+  // Fallback: extract from dialogue if available
+  if (sceneContext?.dialogue && Array.isArray(sceneContext.dialogue)) {
+    const names = sceneContext.dialogue
+      .map((d: any) => d.character)
+      .filter(Boolean) as string[]
+    return [...new Set(names)]
+  }
+  
+  return []
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { prompt, sceneContext } = await req.json()
@@ -76,8 +94,8 @@ export async function POST(req: NextRequest) {
       ? await prepareCharacterReferences(sceneContext.characters)
       : []
 
-    // Build prompt with reference IDs
-    const sceneCharacterNames = sceneContext?.characters?.map((c: any) => c.name) || []
+    // Build prompt with reference IDs (using helper that checks dialogue fallback)
+    const sceneCharacterNames = getSceneCharacterNames(sceneContext)
     const finalPrompt = characterReferences.length > 0
       ? buildPromptWithReferences(enhancedPrompt, characterReferences, sceneCharacterNames)
       : enhancedPrompt

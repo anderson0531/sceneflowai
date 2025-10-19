@@ -704,7 +704,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const prompt = customPrompt || scene.visualDescription
       
       // Get characters in this scene and their details
-      const sceneCharacters = scene.characters?.map((charName: string) => {
+      let sceneCharacterNames = scene.characters || []
+      
+      // FALLBACK: If scene.characters is empty, extract from dialogue
+      if (sceneCharacterNames.length === 0 && scene.dialogue && scene.dialogue.length > 0) {
+        sceneCharacterNames = [...new Set(
+          scene.dialogue.map((d: any) => d.character).filter(Boolean)
+        )]
+        console.log('[Scene Image] No characters assigned, extracted from dialogue:', sceneCharacterNames)
+      }
+      
+      const sceneCharacters = sceneCharacterNames.map((charName: string) => {
         const char = characters.find((c: any) => c.name === charName)
         return char ? {
           name: char.name,
@@ -729,6 +739,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           sceneContext: {
             heading: scene.heading,
             characters: sceneCharacters,
+            dialogue: scene.dialogue, // Pass dialogue for fallback extraction
             visualStyle: project?.metadata?.filmTreatmentVariant?.visual_style,
             tone: project?.metadata?.filmTreatmentVariant?.tone_description
           }

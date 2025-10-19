@@ -231,6 +231,7 @@ Return JSON:
     {
       "sceneNumber": 1,
       "heading": "INT. LOCATION - TIME",
+      "characters": ["Character Name 1", "Character Name 2"],  // CRITICAL: List all characters in this scene
       "action": "SOUND of gentle sizzling, a timer beeps. CLOSE UP on character's hands. They move across the room.\n\nSFX: Gentle sizzling, timer beeps\n\nMusic: Soft upbeat piano",
       "dialogue": [{"character": "NAME", "line": "..."}],
       "visualDescription": "Camera, lighting",
@@ -263,6 +264,7 @@ CRITICAL:
 1. Determine total scene count that best fits ${targetDuration}s story
 2. Estimate accurate durations (don't use arbitrary numbers)
 3. Quality writing over exact duration matching
+4. MUST include "characters" array in EVERY scene - list all characters who appear (speaking or non-speaking)
 
 Generate first ${end} scenes with realistic durations.`
 }
@@ -306,6 +308,7 @@ Return JSON array:
   {
     "sceneNumber": ${start},
     "heading": "INT. LOCATION - TIME",
+    "characters": ["Character Name 1", "Character Name 2"],  // CRITICAL: List all characters in this scene
     "action": "SOUND of footsteps approaching. Character enters.\n\nSFX: Footsteps on hardwood\n\nMusic: Suspenseful strings",
     "dialogue": [{"character": "NAME", "line": "..."}],
     "visualDescription": "Camera, lighting",
@@ -326,6 +329,7 @@ FOCUS ON:
 2. Natural dialogue
 3. Realistic duration estimates
 4. Smooth conclusion to story
+5. MUST include "characters" array in EVERY scene - list all characters who appear
 
 Complete the script with accurate duration estimates.`
 }
@@ -479,6 +483,7 @@ function parseScenes(response: string, start: number, end: number): any {
         scenes: scenes.map((s: any, idx: number) => ({
           sceneNumber: start + idx,
           heading: s.heading || `SCENE ${start + idx}`,
+          characters: s.characters || [],  // CRITICAL: Preserve characters array from AI
           action: s.action || 'Scene content',
           dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
           visualDescription: s.visualDescription || s.action || 'Cinematic shot',
