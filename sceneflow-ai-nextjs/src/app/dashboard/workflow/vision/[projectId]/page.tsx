@@ -639,6 +639,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     try {
       console.log('[Vision] Updating character attributes:', characterId, attributes)
       
+      // Find character name from characterId
+      const char = characters.find((c, i) => (c.id || i.toString()) === characterId)
+      const characterName = char?.name || attributes.name
+      
+      if (!characterName) {
+        throw new Error('Character name not found')
+      }
+      
       // Update local state
       setCharacters(prevChars => 
         prevChars.map(char => {
@@ -649,7 +657,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               ...attributes,
               // Preserve existing fields
               name: char.name,
-              role: char.role,
+              role: char.role || attributes.role,
               description: char.description,
               referenceImage: char.referenceImage
             }
@@ -658,25 +666,33 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       )
       
-      // Save to database
+      // Save to database with correct format
       const res = await fetch('/api/character/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId,
-          characterId,
+          characterName,  // ← Separate parameter
           attributes: {
-            ...characters.find((c, i) => (c.id || i.toString()) === characterId),
-            ...attributes
+            ...attributes,
+            // Remove name from attributes (it's a separate param)
+            name: undefined
           }
         })
       })
       
       if (!res.ok) {
-        throw new Error('Failed to save character attributes')
+        const error = await res.json()
+        throw new Error(error.error || 'Failed to save character attributes')
       }
       
       console.log('[Vision] Character attributes saved successfully')
+      
+      // Show success toast
+      try {
+        const { toast } = require('sonner')
+        toast.success('Character attributes saved!')
+      } catch {}
     } catch (error) {
       console.error('[Vision] Error updating character:', error)
       try {
