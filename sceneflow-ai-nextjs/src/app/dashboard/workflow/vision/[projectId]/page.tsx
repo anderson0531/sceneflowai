@@ -706,12 +706,44 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Get characters in this scene and their details
       let sceneCharacterNames = scene.characters || []
       
-      // FALLBACK: If scene.characters is empty, extract from dialogue
-      if (sceneCharacterNames.length === 0 && scene.dialogue && scene.dialogue.length > 0) {
-        sceneCharacterNames = [...new Set(
-          scene.dialogue.map((d: any) => d.character).filter(Boolean)
-        )]
-        console.log('[Scene Image] No characters assigned, extracted from dialogue:', sceneCharacterNames)
+      // FALLBACK: If scene.characters is empty, extract from dialogue AND action
+      if (sceneCharacterNames.length === 0) {
+        const names = new Set<string>()
+        
+        // Extract from dialogue
+        if (scene.dialogue && scene.dialogue.length > 0) {
+          scene.dialogue.forEach((d: any) => {
+            if (d.character) names.add(d.character)
+          })
+        }
+        
+        // Extract from action/visualDescription
+        const textToSearch = [scene.action || '', scene.visualDescription || ''].join(' ')
+        if (textToSearch) {
+          characters.forEach((char: any) => {
+            const charName = char.name || ''
+            if (charName) {
+              const regex = new RegExp(`\\b${charName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
+              if (regex.test(textToSearch)) {
+                names.add(charName)
+              }
+              
+              // Check first name only
+              const firstName = charName.split(' ')[0]
+              if (firstName && firstName.length > 2) {
+                const firstNameRegex = new RegExp(`\\b${firstName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
+                if (firstNameRegex.test(textToSearch)) {
+                  names.add(charName)
+                }
+              }
+            }
+          })
+        }
+        
+        sceneCharacterNames = Array.from(names)
+        if (sceneCharacterNames.length > 0) {
+          console.log('[Scene Image] Extracted characters from dialogue and action:', sceneCharacterNames)
+        }
       }
       
       const sceneCharacters = sceneCharacterNames.map((charName: string) => {
@@ -738,8 +770,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           prompt,
           sceneContext: {
             heading: scene.heading,
+            action: scene.action, // NEW - needed for character extraction
+            visualDescription: scene.visualDescription, // NEW - needed for character extraction
             characters: sceneCharacters,
             dialogue: scene.dialogue, // Pass dialogue for fallback extraction
+            allCharacters: characters, // NEW - full character list for name matching
             visualStyle: project?.metadata?.filmTreatmentVariant?.visual_style,
             tone: project?.metadata?.filmTreatmentVariant?.tone_description
           }
