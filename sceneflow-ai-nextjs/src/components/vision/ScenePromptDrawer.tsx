@@ -165,7 +165,7 @@ export default function ScenePromptDrawer({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="fixed right-0 left-auto top-0 bottom-0 translate-x-0 translate-y-0 ml-auto w-[min(100vw,800px)] max-w-full overflow-hidden rounded-none border-l bg-gray-950 pr-[env(safe-area-inset-right)]">
+      <DialogContent className="fixed right-0 left-auto top-0 bottom-0 translate-x-0 translate-y-0 ml-auto w-[min(100vw,672px)] max-w-full overflow-hidden rounded-none border-l bg-gray-950 pr-[env(safe-area-inset-right)]">
         <DialogHeader className="sticky top-0 z-10 bg-gray-950/80 backdrop-blur supports-[backdrop-filter]:bg-gray-950/60">
           <DialogTitle>Edit Scene {scene.sceneNumber} Image</DialogTitle>
           <div className="text-sm text-gray-400">{scene.heading}</div>
@@ -190,13 +190,13 @@ export default function ScenePromptDrawer({
           </div>
 
           {/* Body */}
-          <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-4 space-y-4">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 sm:px-8 py-4 space-y-4">
             {tab === 'edit' && (
               <>
                 <div className="space-y-3">
                   <div>
                     <div className="text-xs text-gray-400 mb-2">Original Prompt</div>
-                    <div className="w-full p-3 bg-gray-900 border border-gray-800 rounded text-gray-300 whitespace-pre-wrap text-sm min-h-[200px] max-h-[300px] overflow-y-auto">
+                    <div className="w-full p-3 bg-gray-900 border border-gray-800 rounded text-gray-300 whitespace-pre-wrap break-words text-sm min-h-[200px] max-h-[300px] overflow-y-auto overflow-x-hidden">
                       {originalPrompt}
                     </div>
                   </div>
@@ -206,7 +206,7 @@ export default function ScenePromptDrawer({
                     <textarea
                       value={editedPrompt}
                       onChange={(e) => setEditedPrompt(e.target.value)}
-                      className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-gray-100 text-sm min-h-[200px] focus:outline-none focus:border-blue-500"
+                      className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-gray-100 text-sm min-h-[200px] focus:outline-none focus:border-blue-500 resize-none"
                       placeholder="Edit the scene image generation prompt..."
                     />
                     <div className="text-xs text-gray-500 mt-1">
@@ -258,7 +258,7 @@ export default function ScenePromptDrawer({
               <div className="space-y-4">
                 <div>
                   <div className="text-xs text-gray-400 mb-2">Current Prompt</div>
-                  <div className="p-3 bg-gray-900 border border-gray-800 rounded text-gray-300 text-sm whitespace-pre-wrap max-h-[150px] overflow-y-auto">
+                  <div className="p-3 bg-gray-900 border border-gray-800 rounded text-gray-300 text-sm whitespace-pre-wrap break-words max-h-[150px] overflow-y-auto overflow-x-hidden">
                     {editedPrompt}
                   </div>
                 </div>
@@ -268,7 +268,7 @@ export default function ScenePromptDrawer({
                   <textarea
                     value={aiInstructions}
                     onChange={(e) => setAiInstructions(e.target.value)}
-                    className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-gray-100 text-sm"
+                    className="w-full p-3 bg-gray-900 border border-gray-700 rounded text-gray-100 text-sm resize-none"
                     rows={5}
                     placeholder="E.g., 'Add more dramatic lighting', 'Focus on character emotion', 'Make it darker and moodier'"
                   />
@@ -294,7 +294,7 @@ export default function ScenePromptDrawer({
                 {refinedPrompt && (
                   <div>
                     <div className="text-xs text-gray-400 mb-2">AI Suggestion</div>
-                    <div className="p-3 bg-emerald-900/20 border border-emerald-800 rounded text-gray-200 text-sm whitespace-pre-wrap">
+                    <div className="p-3 bg-emerald-900/20 border border-emerald-800 rounded text-gray-200 text-sm whitespace-pre-wrap break-words overflow-x-hidden">
                       {refinedPrompt}
                     </div>
                     <button
@@ -357,7 +357,7 @@ export default function ScenePromptDrawer({
 
                 <div>
                   <div className="text-xs text-gray-400 mb-2">Edited Prompt</div>
-                  <div className="p-3 bg-gray-900 border border-gray-800 rounded text-gray-300 text-sm whitespace-pre-wrap max-h-[200px] overflow-y-auto">
+                  <div className="p-3 bg-gray-900 border border-gray-800 rounded text-gray-300 text-sm whitespace-pre-wrap break-words max-h-[200px] overflow-y-auto overflow-x-hidden">
                     {editedPrompt}
                   </div>
                 </div>
