@@ -4,6 +4,7 @@ import UserProviderConfig from '@/models/UserProviderConfig'
 import { sequelize } from '@/config/database'
 import { callVertexAIImagen } from '@/lib/vertexai/client'
 import { uploadImageToBlob } from '@/lib/storage/blob'
+import { prepareCharacterReferences, buildPromptWithReferences } from '@/lib/imagen/characterReferences'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -26,16 +27,32 @@ export async function POST(request: NextRequest) {
     // For now, use platform Vertex AI service account for all scene images
     console.log(`[Scene Gen] Generating ${scenes.length} scene images with Vertex AI Imagen 3`)
 
+    // Prepare character references once for all scenes
+    const characterReferences = await prepareCharacterReferences(characters || [])
+    console.log(`[Scene Gen] Prepared ${characterReferences.length} character references`)
+
     // Generate scene images with Vertex AI
     const sceneImages = await Promise.all(
       scenes.map(async (scene: any, index: number) => {
         try {
           const prompt = buildScenePrompt(scene, characters)
           
+          // Build prompt with character references
+          const sceneCharacterNames = scene.characters || []
+          const finalPrompt = characterReferences.length > 0
+            ? buildPromptWithReferences(prompt, characterReferences, sceneCharacterNames)
+            : prompt
+          
           // Use Vertex AI directly (bypass BYOK for now)
-          const base64Image = await callVertexAIImagen(prompt, {
+          const base64Image = await callVertexAIImagen(finalPrompt, {
             aspectRatio: '16:9',
-            numberOfImages: 1
+            numberOfImages: 1,
+            referenceImages: characterReferences.map(ref => ({
+              referenceId: ref.id,
+              bytesBase64Encoded: ref.imageBase64,
+              referenceType: 'SUBJECT' as const,
+              subjectDescription: ref.description
+            }))
           })
           
           const imageUrl = await uploadImageToBlob(

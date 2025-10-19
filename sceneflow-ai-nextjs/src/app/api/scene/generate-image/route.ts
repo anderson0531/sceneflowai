@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { callVertexAIImagen } from '@/lib/vertexai/client'
 import { uploadImageToBlob } from '@/lib/storage/blob'
+import { prepareCharacterReferences, buildPromptWithReferences } from '@/lib/imagen/characterReferences'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -70,24 +71,37 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    // Add character consistency instruction if reference images exist
-    if (sceneContext?.characters?.some((c: any) => c.referenceImage)) {
-      enhancedPrompt += '\n\nCRITICAL: Ensure characters match their reference images exactly - same facial features, hair style/color, build, and clothing when specified.'
-    }
-    
+    // Prepare character references if available
+    const characterReferences = sceneContext?.characters 
+      ? await prepareCharacterReferences(sceneContext.characters)
+      : []
+
+    // Build prompt with reference IDs
+    const sceneCharacterNames = sceneContext?.characters?.map((c: any) => c.name) || []
+    const finalPrompt = characterReferences.length > 0
+      ? buildPromptWithReferences(enhancedPrompt, characterReferences, sceneCharacterNames)
+      : enhancedPrompt
+
     // Add cinematic quality enhancers
-    enhancedPrompt += `\n\nStyle: Cinematic scene, professional cinematography, film quality
+    const stylePrompt = finalPrompt + `\n\nStyle: Cinematic scene, professional cinematography, film quality
 Quality: 4K resolution, cinematic lighting, sharp focus
 Composition: 16:9 aspect ratio, professional framing, rule of thirds
 Camera: Cinematic camera angle, depth of field
 Lighting: Cinematic lighting, atmospheric, professional film lighting`
 
-    console.log('[Scene Image] Generating with Vertex AI Imagen 3:', enhancedPrompt.substring(0, 150))
+    console.log('[Scene Image] Using', characterReferences.length, 'character references')
+    console.log('[Scene Image] Generating with Vertex AI Imagen 3:', stylePrompt.substring(0, 150))
 
     // Generate image with Vertex AI Imagen 3
-    const base64Image = await callVertexAIImagen(enhancedPrompt, {
+    const base64Image = await callVertexAIImagen(stylePrompt, {
       aspectRatio: '16:9',
-      numberOfImages: 1
+      numberOfImages: 1,
+      referenceImages: characterReferences.map(ref => ({
+        referenceId: ref.id,
+        bytesBase64Encoded: ref.imageBase64,
+        referenceType: 'SUBJECT' as const,
+        subjectDescription: ref.description
+      }))
     })
     
     // Upload to Vercel Blob storage

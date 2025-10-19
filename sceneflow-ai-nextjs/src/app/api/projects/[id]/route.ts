@@ -2,6 +2,34 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const body = await request.json()
+    
+    await sequelize.authenticate()
+    
+    const project = await Project.findByPk(id)
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    }
+    
+    // Update project fields
+    await project.update({
+      ...body,
+      metadata: body.metadata || project.metadata
+    })
+    
+    return NextResponse.json({ success: true, project })
+  } catch (error) {
+    console.error('[Projects PUT] Error:', error)
+    return NextResponse.json({ error: 'Failed to update project' }, { status: 500 })
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

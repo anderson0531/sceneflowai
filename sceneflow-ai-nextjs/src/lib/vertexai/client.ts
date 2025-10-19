@@ -39,7 +39,7 @@ export async function getVertexAIAuthToken(): Promise<string> {
 /**
  * Generate image using Vertex AI Imagen
  * @param prompt - Text description of image to generate
- * @param options - Generation options (aspect ratio, number of images, etc.)
+ * @param options - Generation options (aspect ratio, number of images, reference images, etc.)
  * @returns Base64-encoded image data URL
  */
 export async function callVertexAIImagen(
@@ -48,6 +48,12 @@ export async function callVertexAIImagen(
     aspectRatio?: '1:1' | '9:16' | '16:9' | '4:3' | '3:4'
     numberOfImages?: number
     negativePrompt?: string
+    referenceImages?: Array<{
+      referenceId: number
+      bytesBase64Encoded: string
+      referenceType?: 'REFERENCE_TYPE_UNSPECIFIED' | 'SUBJECT'
+      subjectDescription?: string
+    }>
   } = {}
 ): Promise<string> {
   const projectId = process.env.GCP_PROJECT_ID
@@ -65,24 +71,41 @@ export async function callVertexAIImagen(
   // Vertex AI Imagen 3 endpoint (imagegeneration@006 is deprecated, removed Sept 2025)
   const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/imagen-3.0-generate-001:predict`
   
+  const requestBody: any = {
+    instances: [{
+      prompt: prompt
+    }],
+    parameters: {
+      sampleCount: options.numberOfImages || 1,
+      aspectRatio: options.aspectRatio || '16:9',
+      negativePrompt: options.negativePrompt || '',
+      safetySetting: 'block_only_high', // Renamed from 'block_few' in Imagen 3
+      personGeneration: 'allow_adult' // Default setting - allows adults but not celebrities
+    }
+  }
+
+  // Add reference images if provided
+  if (options.referenceImages && options.referenceImages.length > 0) {
+    requestBody.parameters.editConfig = {
+      referenceImages: options.referenceImages.map(ref => ({
+        referenceId: ref.referenceId,
+        referenceImage: {
+          bytesBase64Encoded: ref.bytesBase64Encoded
+        },
+        referenceType: ref.referenceType || 'SUBJECT',
+        ...(ref.subjectDescription && { subjectDescription: ref.subjectDescription })
+      }))
+    }
+    console.log('[Vertex AI] Using', options.referenceImages.length, 'character reference images')
+  }
+
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
-      instances: [{
-        prompt: prompt
-      }],
-      parameters: {
-        sampleCount: options.numberOfImages || 1,
-        aspectRatio: options.aspectRatio || '16:9',
-        negativePrompt: options.negativePrompt || '',
-        safetySetting: 'block_only_high', // Renamed from 'block_few' in Imagen 3
-        personGeneration: 'allow_adult' // Default setting - allows adults but not celebrities
-      }
-    })
+    body: JSON.stringify(requestBody)
   })
 
   if (!response.ok) {

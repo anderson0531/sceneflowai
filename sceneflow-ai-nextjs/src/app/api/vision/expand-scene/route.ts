@@ -3,6 +3,7 @@ import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { callVertexAIImagen } from '@/lib/vertexai/client'
 import { uploadImageToBlob } from '@/lib/storage/blob'
+import { prepareCharacterReferences, buildPromptWithReferences } from '@/lib/imagen/characterReferences'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -306,14 +307,28 @@ ${hasCharacterRefs ? '- Characters MUST match their reference images' : ''}
     const prompt = customPrompt || defaultPrompt
 
     console.log(`[Scene Image] Generating with Vertex AI Imagen 3 for scene ${sceneNumber}`)
-    if (hasCharacterRefs) {
-      console.log(`[Scene Image] Using character reference images for consistency`)
+    
+    // Prepare character references
+    const characterReferences = await prepareCharacterReferences(characters)
+    const characterNames = characters.map((c: any) => c.name || c)
+    const finalPrompt = characterReferences.length > 0
+      ? buildPromptWithReferences(prompt, characterReferences, characterNames)
+      : prompt
+    
+    if (characterReferences.length > 0) {
+      console.log(`[Scene Image] Using ${characterReferences.length} character reference images for consistency`)
     }
 
     // Generate with Vertex AI Imagen 3 (same as thumbnails)
-    const base64Image = await callVertexAIImagen(prompt, {
+    const base64Image = await callVertexAIImagen(finalPrompt, {
       aspectRatio: '16:9',
-      numberOfImages: 1
+      numberOfImages: 1,
+      referenceImages: characterReferences.map(ref => ({
+        referenceId: ref.id,
+        bytesBase64Encoded: ref.imageBase64,
+        referenceType: 'SUBJECT' as const,
+        subjectDescription: ref.description
+      }))
     })
 
     // Upload to Vercel Blob
