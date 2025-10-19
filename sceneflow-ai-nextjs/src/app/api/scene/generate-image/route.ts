@@ -13,19 +13,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
     }
 
-    // Build character references with detailed appearance for visual consistency
+    // Build character references with visual URLs and detailed appearance for consistency
     let characterRefs = ''
     if (sceneContext?.characters && Array.isArray(sceneContext.characters) && sceneContext.characters.length > 0) {
       const charDetails = sceneContext.characters.map((c: any) => {
         const parts = [`${c.name}`]
+        
+        // Add reference image URL if available
+        if (c.referenceImage) {
+          parts.push(`Reference Image: ${c.referenceImage}`)
+        }
+        
+        // Add text descriptions as fallback/supplement
+        if (c.ethnicity) parts.push(`Ethnicity: ${c.ethnicity}`)
+        if (c.keyFeature) parts.push(`Key Feature: ${c.keyFeature}`)
+        if (c.hairStyle) parts.push(`Hair: ${c.hairStyle}`)
+        if (c.hairColor) parts.push(`Hair Color: ${c.hairColor}`)
+        if (c.eyeColor) parts.push(`Eyes: ${c.eyeColor}`)
+        if (c.build) parts.push(`Build: ${c.build}`)
+        
+        // Legacy fields as fallback
         if (c.appearance) parts.push(`Appearance: ${c.appearance}`)
         if (c.demeanor) parts.push(`Demeanor: ${c.demeanor}`)
         if (c.clothing) parts.push(`Clothing: ${c.clothing}`)
-        if (c.description && !c.appearance) parts.push(c.description)  // Fallback if no appearance
+        if (c.description && !c.keyFeature && !c.appearance) parts.push(c.description)
+        
         return parts.join(', ')
-      }).join('; ')
+      }).join('\n')
       
-      characterRefs = `\n\nCHARACTERS IN SCENE: ${charDetails}`
+      characterRefs = `\n\nCHARACTERS IN SCENE:\n${charDetails}\n\nIMPORTANT: Match the exact appearance of characters shown in their reference images.`
     }
 
     // Add scene description if available
@@ -52,6 +68,11 @@ export async function POST(req: NextRequest) {
       if (contextParts.length > 0) {
         enhancedPrompt += `\n\n${contextParts.join(', ')}`
       }
+    }
+    
+    // Add character consistency instruction if reference images exist
+    if (sceneContext?.characters?.some((c: any) => c.referenceImage)) {
+      enhancedPrompt += '\n\nCRITICAL: Ensure characters match their reference images exactly - same facial features, hair style/color, build, and clothing when specified.'
     }
     
     // Add cinematic quality enhancers

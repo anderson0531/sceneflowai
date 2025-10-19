@@ -709,7 +709,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return char ? {
           name: char.name,
           description: char.description,
-          referenceImage: char.referenceImage // Link to character image for consistency
+          referenceImage: char.referenceImage, // Link to character image for consistency
+          // Include extracted attributes for character consistency
+          ethnicity: char.ethnicity,
+          keyFeature: char.keyFeature,
+          hairStyle: char.hairStyle,
+          hairColor: char.hairColor,
+          eyeColor: char.eyeColor,
+          expression: char.expression,
+          build: char.build
         } : null
       }).filter(Boolean) || []
       

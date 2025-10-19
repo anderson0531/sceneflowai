@@ -133,14 +133,35 @@ function buildScenePrompt(scene: any, characters: any[]): string {
     .map((name: string) => characters?.find((c: any) => c.name === name))
     .filter(Boolean)
   
-  const charDescriptions = sceneCharacters.length > 0
-    ? sceneCharacters.map((c: any) => `${c.name}: ${c.description}`).join(', ')
-    : ''
+  // Build character descriptions with reference image URLs
+  let charDescriptions = ''
+  if (sceneCharacters.length > 0) {
+    const charParts = sceneCharacters.map((c: any) => {
+      let desc = c.name
+      if (c.referenceImage) {
+        desc += ` (Reference Image: ${c.referenceImage})`
+      }
+      // Add physical attributes
+      const attrs = []
+      if (c.ethnicity) attrs.push(c.ethnicity)
+      if (c.keyFeature) attrs.push(c.keyFeature)
+      if (c.hairStyle) attrs.push(`${c.hairColor || ''} ${c.hairStyle}`.trim())
+      if (c.build) attrs.push(c.build)
+      
+      if (attrs.length > 0) {
+        desc += `: ${attrs.join(', ')}`
+      } else if (c.description) {
+        desc += `: ${c.description}`
+      }
+      return desc
+    })
+    charDescriptions = `, featuring ${charParts.join('; ')}`
+  }
   
   const visualDesc = scene.visualDescription || scene.action || ''
   const location = scene.heading || ''
   
-  const prompt = `Cinematic film still, ${visualDesc}${charDescriptions ? `, featuring ${charDescriptions}` : ''}, ${location}, professional film production, high quality cinematography, detailed, photorealistic, 8k, film grain, cinematic lighting, wide angle lens`
+  const prompt = `Cinematic film still, ${visualDesc}${charDescriptions}, ${location}, professional film production, high quality cinematography, detailed, photorealistic, 8k, film grain, cinematic lighting, wide angle lens${sceneCharacters.some((c: any) => c.referenceImage) ? ', MATCH CHARACTER REFERENCE IMAGES EXACTLY' : ''}`
   
   return prompt.slice(0, 4000) // Limit for most providers
 }

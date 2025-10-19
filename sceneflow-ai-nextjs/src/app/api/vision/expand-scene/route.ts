@@ -264,16 +264,32 @@ async function generateSceneImage(
   customPrompt?: string
 ): Promise<string | null> {
   try {
-    // Build enhanced image prompt from scene
+    // Build character list with references
     const characterList = characters.length > 0 
-      ? `\nCharacters: ${characters.map(c => c.name || c).join(', ')}`
+      ? `\n\nCHARACTERS:\n${characters.map(c => {
+          let desc = `- ${c.name || c}`
+          if (typeof c === 'object') {
+            if (c.referenceImage) desc += ` (Reference: ${c.referenceImage})`
+            const attrs = []
+            if (c.ethnicity) attrs.push(c.ethnicity)
+            if (c.keyFeature) attrs.push(c.keyFeature)
+            if (c.hairStyle) attrs.push(`${c.hairColor || ''} ${c.hairStyle}`.trim())
+            if (attrs.length > 0) desc += ` - ${attrs.join(', ')}`
+          }
+          return desc
+        }).join('\n')}`
+      : ''
+    
+    const hasCharacterRefs = characters.some((c: any) => typeof c === 'object' && c.referenceImage)
+    const refInstruction = hasCharacterRefs 
+      ? '\n\nCRITICAL: Match character appearances from their reference images exactly.'
       : ''
     
     const defaultPrompt = `Generate a cinematic scene image:
 
 Scene: ${scene.heading}
 Action: ${scene.visualDescription || scene.action || scene.summary}
-Visual Style: ${visualStyle}${characterList}
+Visual Style: ${visualStyle}${characterList}${refInstruction}
 
 Requirements:
 - Professional film production quality
@@ -283,12 +299,16 @@ Requirements:
 - Authentic lighting for scene mood
 - 16:9 landscape aspect ratio
 - High detail and photorealistic rendering
+${hasCharacterRefs ? '- Characters MUST match their reference images' : ''}
 - No text, titles, or watermarks
 - Film-ready production value`
 
     const prompt = customPrompt || defaultPrompt
 
     console.log(`[Scene Image] Generating with Vertex AI Imagen 3 for scene ${sceneNumber}`)
+    if (hasCharacterRefs) {
+      console.log(`[Scene Image] Using character reference images for consistency`)
+    }
 
     // Generate with Vertex AI Imagen 3 (same as thumbnails)
     const base64Image = await callVertexAIImagen(prompt, {
