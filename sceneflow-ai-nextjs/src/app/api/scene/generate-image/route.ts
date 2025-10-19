@@ -58,12 +58,6 @@ function enforceCloseUpForReferences(
     if (location) newPrompt += `, ${location}`
     if (lighting) newPrompt += `. ${lighting}`
     
-    // Sanitize the prompt
-    newPrompt = sanitizePromptForVisualGeneration(newPrompt)
-    
-    // Add essential style keywords
-    newPrompt += ', photorealistic, professional photography, 8K resolution, sharp focus'
-    
     console.log('[Scene Image] Original prompt:', prompt.substring(0, 100))
     console.log('[Scene Image] Replaced with:', newPrompt)
     
@@ -318,6 +312,14 @@ export async function POST(req: NextRequest) {
       characterReferences.length > 0,
       sceneContext?.action || ''
     )
+    
+    // CRITICAL: Sanitize the entire final prompt
+    finalPrompt = sanitizePromptForVisualGeneration(finalPrompt)
+    
+    // Add essential style keywords if missing
+    if (!finalPrompt.includes('photorealistic')) {
+      finalPrompt += ', photorealistic, professional photography, 8K resolution, sharp focus'
+    }
     
     // Add cinematic quality enhancers
     const stylePrompt = finalPrompt + `\n\nStyle: Cinematic scene, professional cinematography, film quality
