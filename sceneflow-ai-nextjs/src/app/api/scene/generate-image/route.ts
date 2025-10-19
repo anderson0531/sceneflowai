@@ -7,7 +7,7 @@ export const runtime = 'nodejs'
 export const maxDuration = 60
 
 // Helper to extract character names from scene
-function getSceneCharacterNames(sceneContext: any, allCharacters: any[]): string[] {
+function getSceneCharacterNames(sceneContext: any): string[] {
   const foundNames = new Set<string>()
   
   // 1. Try explicit characters array first
@@ -25,34 +25,8 @@ function getSceneCharacterNames(sceneContext: any, allCharacters: any[]): string
     })
   }
   
-  // 3. CRITICAL: Extract from action/visual description
-  const textToSearch = [
-    sceneContext?.action || '',
-    sceneContext?.visualDescription || ''
-  ].join(' ')
-  
-  if (textToSearch && allCharacters.length > 0) {
-    // Check if any character names appear in the scene description
-    allCharacters.forEach((char: any) => {
-      const charName = char.name || ''
-      if (charName) {
-        // Look for name in text (case-insensitive, whole word)
-        const regex = new RegExp(`\\b${charName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
-        if (regex.test(textToSearch)) {
-          foundNames.add(charName)
-        }
-        
-        // Also check first name only (e.g., "Brian" for "Brian Anderson")
-        const firstName = charName.split(' ')[0]
-        if (firstName && firstName.length > 2) {
-          const firstNameRegex = new RegExp(`\\b${firstName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
-          if (firstNameRegex.test(textToSearch)) {
-            foundNames.add(charName)
-          }
-        }
-      }
-    })
-  }
+  // Note: Vision page already does character extraction from action/description
+  // so we don't need to duplicate that logic here
   
   return Array.from(foundNames)
 }
@@ -140,8 +114,8 @@ export async function POST(req: NextRequest) {
       ? await prepareCharacterReferences(sceneContext.characters)
       : []
 
-    // Build prompt with reference IDs (using helper that checks dialogue AND action)
-    const sceneCharacterNames = getSceneCharacterNames(sceneContext, sceneContext?.allCharacters || [])
+    // Build prompt with reference IDs
+    const sceneCharacterNames = getSceneCharacterNames(sceneContext)
     const finalPrompt = characterReferences.length > 0
       ? buildPromptWithReferences(enhancedPrompt, characterReferences, sceneCharacterNames)
       : enhancedPrompt

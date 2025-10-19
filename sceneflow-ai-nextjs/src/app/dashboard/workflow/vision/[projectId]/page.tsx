@@ -795,11 +795,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           prompt,
           sceneContext: {
             heading: scene.heading,
-            action: scene.action, // NEW - needed for character extraction
-            visualDescription: scene.visualDescription, // NEW - needed for character extraction
+            action: scene.action,
+            visualDescription: scene.visualDescription,
             characters: sceneCharacters,
-            dialogue: scene.dialogue, // Pass dialogue for fallback extraction
-            allCharacters: characters, // NEW - full character list for name matching
+            dialogue: scene.dialogue,
             visualStyle: project?.metadata?.filmTreatmentVariant?.visual_style,
             tone: project?.metadata?.filmTreatmentVariant?.tone_description
           }
