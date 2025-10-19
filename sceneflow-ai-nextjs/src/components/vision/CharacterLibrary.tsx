@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X, ChevronDown } from 'lucide-react'
+import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X, ChevronDown, Check } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { CharacterPromptBuilder } from '@/components/blueprint/CharacterPromptBuilder'
 
@@ -365,110 +365,121 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
         )}
       </div>
       
-      {/* Action buttons - show different UI based on approval status */}
-      {isApproved ? (
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Controls Section - Below character info, NOT overlaying */}
+      <div className="p-2 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
+        {/* Status indicator */}
+        {hasImage && !isApproved && (
+          <div className="text-[10px] text-yellow-600 dark:text-yellow-400 mb-2 flex items-center gap-1">
+            <span className="inline-block w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
+            Pending approval
+          </div>
+        )}
+        
+        {/* Prompt textarea with builder icon */}
+        <div className="relative mb-2">
+          <textarea 
+            value={prompt}
+            onChange={(e) => {
+              onPromptChange(e.target.value)
+              // Auto-resize
+              e.target.style.height = 'auto'
+              e.target.style.height = e.target.scrollHeight + 'px'
+            }}
+            disabled={isGenerating}
+            placeholder="Enter image prompt..."
+            className="w-full text-xs px-2 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-purple-500 dark:focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:focus:ring-purple-400 pr-8 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ resize: 'vertical', minHeight: '3rem', maxHeight: '12rem' }}
+            rows={3}
+          />
           <button
-            onClick={(e) => { e.stopPropagation(); onApprove(); }}
-            className="p-1.5 rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
-            title="Edit image"
+            onClick={(e) => {
+              e.stopPropagation()
+              onOpenBuilder()
+            }}
+            disabled={isGenerating}
+            className="absolute top-1.5 right-1.5 p-1 rounded bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+            title="Open Prompt Builder"
           >
-            <RefreshCw className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+            <Wand2 className="w-3 h-3" />
           </button>
         </div>
-      ) : (
-        <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-          <div className="space-y-1" onClick={(e) => e.stopPropagation()}>
-            {hasImage && !isApproved && (
-              <div className="text-[10px] text-yellow-300 mb-1 flex items-center gap-1">
-                <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
-                Pending approval
-              </div>
+        
+        {/* Icon-based action buttons */}
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={(e) => { e.stopPropagation(); onGenerate(prompt); }}
+            disabled={isGenerating || !prompt.trim()}
+            className="p-2 rounded-lg bg-purple-600 border border-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+            title={hasImage ? "Regenerate character image" : "Generate character image"}
+          >
+            {isGenerating ? (
+              <Loader className="w-4 h-4 animate-spin" />
+            ) : (
+              <Wand2 className="w-4 h-4" />
             )}
-            <div className="relative">
-              <textarea 
-                value={prompt}
-                onChange={(e) => {
-                  onPromptChange(e.target.value)
-                  // Auto-resize
-                  e.target.style.height = 'auto'
-                  e.target.style.height = e.target.scrollHeight + 'px'
-                }}
-                disabled={isGenerating}
-                placeholder="Enter image prompt..."
-                className="w-full text-xs px-2 py-1 rounded bg-gray-900/80 border border-gray-600 text-white placeholder-gray-400 focus:border-gray-500 focus:outline-none pr-8 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ resize: 'vertical', minHeight: '3rem', maxHeight: '12rem' }}
-                rows={3}
-              />
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onOpenBuilder()
-                }}
-                disabled={isGenerating}
-                className="absolute top-1 right-1 p-1 rounded bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Open Prompt Builder"
-              >
-                <Wand2 className="w-3 h-3" />
-              </button>
-            </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onOpenBuilder()
-              }}
+          </button>
+          
+          <label 
+            className={`p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 transition-all shadow-sm ${isGenerating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            title="Upload reference image"
+          >
+            <Upload className="w-4 h-4" />
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
               disabled={isGenerating}
-              className="w-full text-xs px-3 py-1.5 rounded bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
-            >
-              <Wand2 className="w-3 h-3" />
-              Edit Character Appearance
-            </button>
-            <div className="flex gap-1">
+              onChange={(e) => {
+                e.stopPropagation()
+                const file = e.target.files?.[0]
+                if (file) onUpload(file)
+              }}
+            />
+          </label>
+          
+          {hasImage && (
+            <>
               <button
-                onClick={(e) => { e.stopPropagation(); onGenerate(prompt); }}
-                disabled={isGenerating || !prompt.trim()}
-                className="flex-1 text-xs px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1"
+                onClick={(e) => { 
+                  e.stopPropagation()
+                  // TODO: Call handleAnalyzeImage here
+                  alert('Analyze Image feature - Coming soon!')
+                }}
+                disabled={isGenerating}
+                className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                title="Analyze image to extract attributes"
               >
-                {isGenerating ? (
-                  <>
-                    <Loader className="w-3 h-3 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  hasImage ? 'Regenerate' : 'Generate'
-                )}
+                <Scan className="w-4 h-4" />
               </button>
-              <label className={`flex-1 text-xs px-2 py-1 rounded bg-gray-700 text-white transition-colors flex items-center justify-center gap-1 ${isGenerating ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-600 cursor-pointer'}`}>
-                Upload
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  disabled={isGenerating}
-                  onChange={(e) => {
-                    e.stopPropagation()
-                    const file = e.target.files?.[0]
-                    if (file) onUpload(file)
-                  }}
-                />
-              </label>
-              {hasImage && (
+              
+              {!isApproved && (
                 <button
                   onClick={(e) => { 
                     e.stopPropagation()
-                    // TODO: Call handleAnalyzeImage here
-                    alert('Analyze Image feature - Coming soon!')
+                    onApprove()
                   }}
                   disabled={isGenerating}
-                  className="flex-1 text-xs px-2 py-1 rounded bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1"
-                  title="Analyze image to extract attributes"
+                  className="p-2 rounded-lg bg-green-600 border border-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                  title="Approve character image"
                 >
-                  <Scan className="w-3 h-3" />
-                  Analyze
+                  <Check className="w-4 h-4" />
                 </button>
               )}
-            </div>
-          </div>
+            </>
+          )}
+        </div>
+      </div>
+      
+      {/* Regenerate button for approved images - top-right corner */}
+      {isApproved && (
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
+            className="p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            title="Regenerate character"
+          >
+            <RefreshCw className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+          </button>
         </div>
       )}
     </div>
