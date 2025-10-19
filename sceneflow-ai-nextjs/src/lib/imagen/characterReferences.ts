@@ -25,8 +25,8 @@ export async function prepareCharacterReferences(
         // Get image data
         const arrayBuffer = await response.arrayBuffer()
         
-        // Resize image to reduce token count (max 256x256)
-        const resizedBase64 = await resizeImageToBase64(arrayBuffer, 256, 256)
+        // Resize image to reduce token count (max 512x512 for better facial detail)
+        const resizedBase64 = await resizeImageToBase64(arrayBuffer, 512, 512)
         
         // Build description from character attributes
         const descParts = []
@@ -42,7 +42,7 @@ export async function prepareCharacterReferences(
           subjectDescription: char.name
         })
         
-        console.log(`[Char Ref] Prepared reference for ${char.name} (resized to 256x256)`)
+        console.log(`[Char Ref] Prepared reference for ${char.name} (resized to 512x512)`)
       } catch (error) {
         console.error(`Error preparing reference for ${char.name}:`, error)
       }
@@ -66,7 +66,7 @@ async function resizeImageToBase64(
       fit: 'inside',  // Maintain aspect ratio
       withoutEnlargement: true  // Don't upscale small images
     })
-    .jpeg({ quality: 75 })  // Convert to JPEG with more compression
+    .jpeg({ quality: 80 })  // Convert to JPEG with good quality for facial details
     .toBuffer()
   
   const base64 = resized.toString('base64')

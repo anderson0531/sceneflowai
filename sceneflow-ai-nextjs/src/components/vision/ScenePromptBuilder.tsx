@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Copy, Check, Sparkles } from 'lucide-react'
+import { Copy, Check, Sparkles, Info } from 'lucide-react'
 import { artStylePresets } from '@/constants/artStylePresets'
 
 interface ScenePromptStructure {
@@ -219,6 +219,26 @@ export function ScenePromptBuilder({
             <TabsTrigger value="advanced" className="flex-1">Advanced Mode</TabsTrigger>
           </TabsList>
 
+          {/* Character Reference Guidance Banner */}
+          {structure.characters.length > 0 && structure.characters.some(charName => {
+            const char = availableCharacters.find(c => c.name === charName)
+            return char?.referenceImage
+          }) && (
+            <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                <div className="text-xs text-blue-300">
+                  <p className="font-medium mb-1">Character References Active</p>
+                  <p className="text-blue-400/80">
+                    For best results with character references, use <span className="font-medium">Close-Up</span> or{' '}
+                    <span className="font-medium">Medium Shot</span> framing. Wide shots make characters too small 
+                    for facial recognition.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Guided Mode */}
           <TabsContent value="guided" className="space-y-4 mt-4">
             {/* Location & Setting */}
@@ -358,11 +378,38 @@ export function ScenePromptBuilder({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="wide-shot">Wide Shot</SelectItem>
-                      <SelectItem value="medium-shot">Medium Shot</SelectItem>
-                      <SelectItem value="close-up">Close-up</SelectItem>
-                      <SelectItem value="extreme-wide">Extreme Wide</SelectItem>
-                      <SelectItem value="over-shoulder">Over Shoulder</SelectItem>
+                      {(() => {
+                        const hasReferences = structure.characters.some(charName => {
+                          const char = availableCharacters.find(c => c.name === charName)
+                          return char?.referenceImage
+                        })
+                        
+                        return (
+                          <>
+                            <SelectItem value="extreme-close-up">
+                              Extreme Close-Up (ECU) {hasReferences && '✓'}
+                            </SelectItem>
+                            <SelectItem value="close-up">
+                              Close-Up (CU) {hasReferences && '✓ Recommended'}
+                            </SelectItem>
+                            <SelectItem value="medium-close-up">
+                              Medium Close-Up (MCU) {hasReferences && '✓'}
+                            </SelectItem>
+                            <SelectItem value="medium-shot">
+                              Medium Shot (MS) {hasReferences && '✓'}
+                            </SelectItem>
+                            <SelectItem value="over-shoulder">
+                              Over Shoulder {hasReferences && '✓'}
+                            </SelectItem>
+                            <SelectItem value="wide-shot" className={hasReferences ? 'text-yellow-400' : ''}>
+                              Wide Shot (WS) {hasReferences && '⚠️ Limited'}
+                            </SelectItem>
+                            <SelectItem value="extreme-wide" className={hasReferences ? 'text-red-400' : ''}>
+                              Extreme Wide {hasReferences && '❌ Too small'}
+                            </SelectItem>
+                          </>
+                        )
+                      })()}
                     </SelectContent>
                   </Select>
                 </div>

@@ -6,6 +6,29 @@ import { prepareCharacterReferences, buildPromptWithReferences } from '@/lib/ima
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
+// Helper to optimize prompt when character references are used
+function optimizePromptForCharacterReference(
+  sceneContext: any,
+  hasCharacterReferences: boolean
+): string {
+  // Extract shot type from visual description or action
+  const visualDesc = sceneContext?.visualDescription || ''
+  const action = sceneContext?.action || ''
+  
+  // Detect wide/establishing shots
+  const isWideShot = /wide|establishing|aerial|extreme wide|birds eye|overhead/i.test(visualDesc)
+  const hasCloseUpAction = /close up|close-up|cu on|face|eyes|expression/i.test(action)
+  
+  // If we have references and a wide shot, prioritize the close-up action
+  if (hasCharacterReferences && isWideShot && hasCloseUpAction) {
+    console.log('[Scene Image] Auto-adjusting: Wide shot + character reference → Using close-up from action')
+    return action // Use action description which mentions close-ups
+  }
+  
+  // Otherwise use visual description
+  return visualDesc
+}
+
 // Helper to parse scene action for details
 function parseSceneAction(sceneContext: any) {
   const action = sceneContext?.action || sceneContext?.visualDescription || ''
@@ -156,8 +179,11 @@ export async function POST(req: NextRequest) {
     // Build scene-focused prompt
     const scenePromptParts = []
     
-    // 1. Start with visual description (shot type, framing)
-    const visualDesc = sceneContext?.visualDescription || ''
+    // 1. Start with optimized visual description
+    const visualDesc = optimizePromptForCharacterReference(
+      sceneContext,
+      characterReferences.length > 0
+    )
     if (visualDesc) {
       scenePromptParts.push(visualDesc)
     }
@@ -231,6 +257,30 @@ Camera: Cinematic camera angle, depth of field`
       hasBase64: !!r.bytesBase64Encoded,
       base64Length: r.bytesBase64Encoded?.length || 0
     })))
+    
+    // Validate shot type compatibility with character references
+    if (characterReferences.length > 0) {
+      const isWideShot = /wide|establishing|aerial/i.test(stylePrompt)
+      
+      if (isWideShot) {
+        console.log('[Scene Image] ⚠️  WARNING: Wide shot with character reference may not show facial details')
+        console.log('[Scene Image] Consider using: Close-Up, Medium Close-Up, or Medium Shot')
+      } else {
+        console.log('[Scene Image] ✓ Shot type compatible with character reference')
+      }
+      
+      // Detect conflicting lighting instructions
+      const lightingTerms = ['natural lighting', 'studio lighting', 'harsh lighting', 'soft lighting']
+      const foundLighting = lightingTerms.filter(term => 
+        stylePrompt.toLowerCase().includes(term)
+      )
+      
+      if (foundLighting.length > 1) {
+        console.log('[Scene Image] ⚠️  Conflicting lighting detected:', foundLighting)
+        console.log('[Scene Image] Using first mentioned:', foundLighting[0])
+      }
+    }
+    
     console.log('[Scene Image] Generating with Vertex AI Imagen 3:', stylePrompt.substring(0, 150))
 
     // Generate image with Vertex AI Imagen 3
