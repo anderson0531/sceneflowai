@@ -24,8 +24,8 @@ export async function prepareCharacterReferences(
         // Get image data
         const arrayBuffer = await response.arrayBuffer()
         
-        // Resize image to reduce token count (max 512x512)
-        const resizedBase64 = await resizeImageToBase64(arrayBuffer, 512, 512)
+        // Resize image to reduce token count (max 256x256)
+        const resizedBase64 = await resizeImageToBase64(arrayBuffer, 256, 256)
         
         // Build description from character attributes
         const descParts = []
@@ -40,7 +40,7 @@ export async function prepareCharacterReferences(
           description: descParts.join(', ') || char.description || char.name
         })
         
-        console.log(`[Char Ref] Prepared reference for ${char.name} (resized to 512x512)`)
+        console.log(`[Char Ref] Prepared reference for ${char.name} (resized to 256x256)`)
       } catch (error) {
         console.error(`Error preparing reference for ${char.name}:`, error)
       }
@@ -64,10 +64,16 @@ async function resizeImageToBase64(
       fit: 'inside',  // Maintain aspect ratio
       withoutEnlargement: true  // Don't upscale small images
     })
-    .jpeg({ quality: 85 })  // Convert to JPEG with good quality
+    .jpeg({ quality: 75 })  // Convert to JPEG with more compression
     .toBuffer()
   
-  return resized.toString('base64')
+  const base64 = resized.toString('base64')
+  const sizeKB = Math.round(resized.length / 1024)
+  const estimatedTokens = Math.round(base64.length * 0.75)  // Rough estimate
+  
+  console.log(`[Char Ref] Resized image: ${sizeKB}KB, ~${estimatedTokens} tokens`)
+  
+  return base64
 }
 
 export function buildPromptWithReferences(
