@@ -153,13 +153,20 @@ export async function POST(req: NextRequest) {
     
     // 2. Character in action with reference
     const sceneCharacterNames = getSceneCharacterNames(sceneContext)
+    
+    console.log('[Scene Image] Scene character names:', sceneCharacterNames)
+    console.log('[Scene Image] Character references:', characterReferences.map(r => ({ id: r.id, name: r.name })))
+    
     if (characterReferences.length > 0) {
-      const charMentions = characterReferences
-        .filter(ref => sceneCharacterNames.includes(ref.name))
-        .map(ref => `${ref.name} [${ref.id}]`)
-        .join(', ')
+      // Map character names to include [referenceId]
+      const charWithRefs = sceneCharacterNames.map(charName => {
+        const ref = characterReferences.find(r => r.name === charName)
+        return ref ? `${charName} [${ref.id}]` : charName
+      }).join(', ')
       
-      if (charMentions) {
+      console.log('[Scene Image] Characters with reference IDs:', charWithRefs)
+      
+      if (charWithRefs) {
         // Add character with their current action/emotion
         const actionDesc = sceneDetails.actions.length > 0 
           ? sceneDetails.actions.slice(0, 2).join(', ')
@@ -169,9 +176,9 @@ export async function POST(req: NextRequest) {
           : ''
         
         if (actionDesc || emotionDesc) {
-          scenePromptParts.push(`featuring ${charMentions} ${actionDesc} ${emotionDesc}`.trim())
+          scenePromptParts.push(`featuring ${charWithRefs} ${actionDesc} ${emotionDesc}`.trim())
         } else {
-          scenePromptParts.push(`featuring ${charMentions}`)
+          scenePromptParts.push(`featuring ${charWithRefs}`)
         }
       }
     } else if (sceneCharacterNames.length > 0) {
