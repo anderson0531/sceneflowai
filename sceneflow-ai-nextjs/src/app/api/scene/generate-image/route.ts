@@ -6,6 +6,46 @@ import { prepareCharacterReferences, buildPromptWithReferences } from '@/lib/ima
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
+// Helper to parse scene action for details
+function parseSceneAction(sceneContext: any) {
+  const action = sceneContext?.action || sceneContext?.visualDescription || ''
+  const details = {
+    actions: [] as string[],
+    emotion: [] as string[],
+    lighting: [] as string[],
+    sounds: [] as string[],
+    environment: [] as string[]
+  }
+  
+  const actionLower = action.toLowerCase()
+  
+  // Extract key actions (verbs that show what's happening)
+  const actionMatches = action.match(/([A-Z][a-z]+(?:\s+[a-z]+)*(?:ing|s|ed))/g)
+  if (actionMatches) {
+    details.actions = actionMatches.slice(0, 3)  // Top 3 actions
+  }
+  
+  // Detect emotion/mood
+  if (actionLower.includes('stress') || actionLower.includes('tense')) details.emotion.push('stressed, tense')
+  if (actionLower.includes('joy') || actionLower.includes('happy')) details.emotion.push('joyful, happy')
+  if (actionLower.includes('sad') || actionLower.includes('tears')) details.emotion.push('sad, tearful')
+  if (actionLower.includes('fear') || actionLower.includes('panic')) details.emotion.push('fearful, panicked')
+  
+  // Extract lighting cues
+  if (actionLower.includes('illuminated by')) {
+    const lightMatch = action.match(/illuminated by ([^,\.]+)/i)
+    if (lightMatch) details.lighting.push(lightMatch[1])
+  }
+  if (actionLower.includes('glow')) details.lighting.push('glowing light')
+  if (actionLower.includes('shadow')) details.lighting.push('dramatic shadows')
+  
+  // Extract environmental details
+  const envMatch = action.match(/in a ([^,\.]+(?:office|room|street|beach|[a-z]+))/i)
+  if (envMatch) details.environment.push(envMatch[1])
+  
+  return details
+}
+
 // Helper to extract character names from scene
 function getSceneCharacterNames(sceneContext: any): string[] {
   const foundNames = new Set<string>()
@@ -39,42 +79,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
     }
 
-    // Build character references with detailed appearance for consistency
+    // Build simplified character references (physical appearance handled by reference images)
     let characterRefs = ''
     if (sceneContext?.characters && Array.isArray(sceneContext.characters) && sceneContext.characters.length > 0) {
       const charDetails = sceneContext.characters.map((c: any) => {
         const parts = [`${c.name}`]
         
-        // CRITICAL: Add text descriptions (reference images are in separate array)
-        // Build detailed physical description
-        const physicalDesc = []
-        if (c.ethnicity) physicalDesc.push(c.ethnicity)
-        if (c.keyFeature) physicalDesc.push(c.keyFeature)
-        if (c.hairStyle || c.hairColor) {
-          const hair = [c.hairColor, c.hairStyle].filter(Boolean).join(' ')
-          if (hair) physicalDesc.push(`Hair: ${hair}`)
-        }
-        if (c.eyeColor) physicalDesc.push(`Eyes: ${c.eyeColor}`)
-        if (c.expression) physicalDesc.push(`Expression: ${c.expression}`)
-        if (c.build) physicalDesc.push(`Build: ${c.build}`)
+        // Only include non-visual attributes (reference handles physical appearance)
+        if (c.role) parts.push(c.role)
         
-        if (physicalDesc.length > 0) {
-          parts.push(`Appearance: ${physicalDesc.join(', ')}`)
+        // Expression/demeanor (changes by scene)
+        const context = []
+        if (c.expression) context.push(c.expression)
+        if (c.demeanor) context.push(c.demeanor)
+        
+        if (context.length > 0) {
+          return `${parts.join(' ')}: ${context.join(', ')}`
         }
         
-        // Legacy fields as additional fallback
-        if (c.appearance) parts.push(`Details: ${c.appearance}`)
-        if (c.description && physicalDesc.length === 0) parts.push(c.description)
-        
-        return parts.join(' - ')
-      }).join('\n')
+        return parts.join(' ')
+      }).join('; ')
+      
+      characterRefs = `\n\nCharacters: ${charDetails}`
       
       const hasRefs = sceneContext.characters.some((c: any) => c.referenceImage)
-      characterRefs = `\n\nCHARACTERS IN SCENE:\n${charDetails}`
       if (hasRefs) {
-        characterRefs += `\n\nIMPORTANT: Match characters to their reference images using the [referenceId] in the prompt.`
-      } else {
-        characterRefs += `\n\nIMPORTANT: Match the physical appearance details exactly.`
+        characterRefs += `\n\nIMPORTANT: Match character physical appearance to reference images using [referenceId].`
       }
     }
 
@@ -104,23 +134,77 @@ export async function POST(req: NextRequest) {
       }
     }
     
+    // Parse scene details for emotion, lighting, environment
+    const sceneDetails = parseSceneAction(sceneContext)
+    
     // Prepare character references if available
     const characterReferences = sceneContext?.characters 
       ? await prepareCharacterReferences(sceneContext.characters)
       : []
 
-    // Build prompt with reference IDs
+    // Build scene-focused prompt
+    const scenePromptParts = []
+    
+    // 1. Start with visual description (shot type, framing)
+    const visualDesc = sceneContext?.visualDescription || ''
+    if (visualDesc) {
+      scenePromptParts.push(visualDesc)
+    }
+    
+    // 2. Character in action with reference
     const sceneCharacterNames = getSceneCharacterNames(sceneContext)
-    const finalPrompt = characterReferences.length > 0
-      ? buildPromptWithReferences(enhancedPrompt, characterReferences, sceneCharacterNames)
-      : enhancedPrompt
-
+    if (characterReferences.length > 0) {
+      const charMentions = characterReferences
+        .filter(ref => sceneCharacterNames.includes(ref.name))
+        .map(ref => `${ref.name} [${ref.id}]`)
+        .join(', ')
+      
+      if (charMentions) {
+        // Add character with their current action/emotion
+        const actionDesc = sceneDetails.actions.length > 0 
+          ? sceneDetails.actions.slice(0, 2).join(', ')
+          : ''
+        const emotionDesc = sceneDetails.emotion.length > 0
+          ? sceneDetails.emotion[0]
+          : ''
+        
+        if (actionDesc || emotionDesc) {
+          scenePromptParts.push(`featuring ${charMentions} ${actionDesc} ${emotionDesc}`.trim())
+        } else {
+          scenePromptParts.push(`featuring ${charMentions}`)
+        }
+      }
+    } else if (sceneCharacterNames.length > 0) {
+      // No references, just mention character names
+      scenePromptParts.push(`featuring ${sceneCharacterNames.join(', ')}`)
+    }
+    
+    // 3. Environment and atmosphere
+    if (sceneDetails.environment.length > 0) {
+      scenePromptParts.push(`in ${sceneDetails.environment.join(', ')}`)
+    }
+    
+    // 4. Lighting details
+    if (sceneDetails.lighting.length > 0) {
+      scenePromptParts.push(`${sceneDetails.lighting.join(', ')}`)
+    }
+    
+    // 5. Location from heading
+    if (sceneContext?.heading) {
+      scenePromptParts.push(sceneContext.heading)
+    }
+    
+    // Build optimized scene prompt
+    const scenePrompt = scenePromptParts.filter(Boolean).join(', ')
+    
+    // Use scene-focused prompt with character refs and scene desc
+    const finalPrompt = (scenePrompt || prompt) + characterRefs + sceneDesc
+    
     // Add cinematic quality enhancers
     const stylePrompt = finalPrompt + `\n\nStyle: Cinematic scene, professional cinematography, film quality
 Quality: 4K resolution, cinematic lighting, sharp focus
-Composition: 16:9 aspect ratio, professional framing, rule of thirds
-Camera: Cinematic camera angle, depth of field
-Lighting: Cinematic lighting, atmospheric, professional film lighting`
+Composition: 16:9 aspect ratio, professional framing
+Camera: Cinematic camera angle, depth of field`
 
     console.log('[Scene Image] Using', characterReferences.length, 'character references')
     console.log('[Scene Image] Generating with Vertex AI Imagen 3:', stylePrompt.substring(0, 150))
