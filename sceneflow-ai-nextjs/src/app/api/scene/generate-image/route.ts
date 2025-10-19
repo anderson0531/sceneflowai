@@ -16,7 +16,7 @@ function optimizePromptForCharacterReference(
   const action = sceneContext?.action || ''
   
   // Detect wide/establishing shots
-  const isWideShot = /wide|establishing|aerial|extreme wide|birds eye|overhead/i.test(visualDesc)
+  const isWideShot = /wide|establishing|aerial|extreme wide|birds eye|overhead|high-angle|high angle/i.test(visualDesc)
   const hasCloseUpAction = /close up|close-up|cu on|face|eyes|expression/i.test(action)
   
   // If we have references and a wide shot, prioritize the close-up action
@@ -27,6 +27,44 @@ function optimizePromptForCharacterReference(
   
   // Otherwise use visual description
   return visualDesc
+}
+
+// Helper to enforce close-up framing when character references are present
+function enforceCloseUpForReferences(
+  prompt: string,
+  hasCharacterReferences: boolean,
+  action: string
+): string {
+  if (!hasCharacterReferences) return prompt
+  
+  // Check if prompt has incompatible shot types
+  const incompatibleShot = /wide.*shot|establishing.*shot|aerial|extreme wide|birds?.eye|overhead|high-?angle/i
+  
+  if (incompatibleShot.test(prompt)) {
+    console.log('[Scene Image] ⚠️  Replacing incompatible shot type with CLOSE UP for character reference')
+    
+    // Extract key scene details (lighting, atmosphere, environment)
+    const lightingMatch = prompt.match(/(cold|warm|blue|harsh|soft|natural|dramatic).*?(lighting|tint|glow)/i)
+    const lighting = lightingMatch ? lightingMatch[0] : ''
+    
+    // Extract location
+    const locationMatch = prompt.match(/(in|at|within)\s+([^,\.]+)/i)
+    const location = locationMatch ? locationMatch[0] : ''
+    
+    // Build close-up prompt using action details
+    const closeUpAction = action.match(/close up[^\.]+/i)?.[0] || 'CLOSE UP on face'
+    
+    let newPrompt = closeUpAction
+    if (location) newPrompt += `, ${location}`
+    if (lighting) newPrompt += `. ${lighting}`
+    
+    console.log('[Scene Image] Original prompt:', prompt.substring(0, 100))
+    console.log('[Scene Image] Replaced with:', newPrompt)
+    
+    return newPrompt
+  }
+  
+  return prompt
 }
 
 // Helper to parse scene action for details
@@ -242,7 +280,14 @@ export async function POST(req: NextRequest) {
     const scenePrompt = scenePromptParts.filter(Boolean).join(', ')
     
     // Use scene-focused prompt with character refs and scene desc
-    const finalPrompt = (scenePrompt || prompt) + characterRefs + sceneDesc
+    let finalPrompt = (scenePrompt || prompt) + characterRefs + sceneDesc
+    
+    // CRITICAL: Enforce close-up framing when character references are present
+    finalPrompt = enforceCloseUpForReferences(
+      finalPrompt,
+      characterReferences.length > 0,
+      sceneContext?.action || ''
+    )
     
     // Add cinematic quality enhancers
     const stylePrompt = finalPrompt + `\n\nStyle: Cinematic scene, professional cinematography, film quality
@@ -260,7 +305,7 @@ Camera: Cinematic camera angle, depth of field`
     
     // Validate shot type compatibility with character references
     if (characterReferences.length > 0) {
-      const isWideShot = /wide|establishing|aerial/i.test(stylePrompt)
+      const isWideShot = /wide|establishing|aerial|high-angle|high angle|bird.?s eye|overhead/i.test(stylePrompt)
       
       if (isWideShot) {
         console.log('[Scene Image] ⚠️  WARNING: Wide shot with character reference may not show facial details')
