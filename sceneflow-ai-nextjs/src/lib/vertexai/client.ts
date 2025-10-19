@@ -92,7 +92,8 @@ export async function callVertexAIImagen(
       base64Encoded: ref.bytesBase64Encoded,  // Map to correct API field name
       referenceType: ref.referenceType || 'REFERENCE_TYPE_SUBJECT',
       subjectImageConfig: {
-        subjectDescription: ref.subjectDescription || `Character ${ref.referenceId}`
+        subjectDescription: ref.subjectDescription || `Character ${ref.referenceId}`,
+        subjectType: 'SUBJECT_TYPE_PERSON'
       }
     }))
     
