@@ -118,11 +118,15 @@ export async function POST(request: NextRequest) {
 
     // Extract characters that appear in dialogue (for validation)
     const dialogueChars = extractCharacters(allScenes)
-    const existingCharNames = existingCharacters.map((c: any) => c.name?.toUpperCase() || '')
+    
+    // Normalize existing character names for comparison
+    const existingCharNamesNormalized = existingCharacters.map((c: any) => 
+      normalizeCharacterName(c.name || '')
+    )
     
     // Find NEW characters that appeared in dialogue but aren't in Film Treatment
     const newChars = dialogueChars.filter((c: any) => 
-      !existingCharNames.includes(c.name?.toUpperCase())
+      !existingCharNamesNormalized.includes(normalizeCharacterName(c.name || ''))
     )
     
     // Combine: existing (with all Film Treatment details) + any new ones
@@ -497,13 +501,37 @@ function parseScenes(response: string, start: number, end: number): any {
   }
 }
 
+// Normalize character names for deduplication
+function normalizeCharacterName(name: string): string {
+  if (!name) return ''
+  
+  // Remove voice-over indicators: (V.O.), (O.S.), (O.C.), (CONT'D)
+  let normalized = name.replace(/\s*\([^)]*\)\s*/g, '').trim()
+  
+  // Convert to uppercase for case-insensitive comparison
+  normalized = normalized.toUpperCase()
+  
+  // Remove extra whitespace
+  normalized = normalized.replace(/\s+/g, ' ')
+  
+  return normalized
+}
+
 function extractCharacters(scenes: any[]): any[] {
   const charMap = new Map()
   scenes.forEach((scene: any) => {
     scene.dialogue?.forEach((d: any) => {
-      if (!charMap.has(d.character)) {
-        charMap.set(d.character, {
-          name: d.character,
+      if (!d.character) return
+      
+      const normalizedName = normalizeCharacterName(d.character)
+      
+      // Use normalized name as key, but keep original (cleaned) name for display
+      if (!charMap.has(normalizedName)) {
+        // Clean the display name (remove V.O., etc. but keep proper case)
+        const cleanName = d.character.replace(/\s*\([^)]*\)\s*/g, '').trim()
+        
+        charMap.set(normalizedName, {
+          name: cleanName,  // Use cleaned version (e.g., "Brian Anderson" not "BRIAN ANDERSON (V.O.)")
           role: 'character',
           description: `Character from script`
         })

@@ -644,15 +644,37 @@ Include realistic dialogue if characters speak. Make visualDescription very spec
   }
 }
 
+// Normalize character names for deduplication
+function normalizeCharacterName(name: string): string {
+  if (!name) return ''
+  
+  // Remove voice-over indicators: (V.O.), (O.S.), (O.C.), (CONT'D)
+  let normalized = name.replace(/\s*\([^)]*\)\s*/g, '').trim()
+  
+  // Convert to uppercase for case-insensitive comparison
+  normalized = normalized.toUpperCase()
+  
+  // Remove extra whitespace
+  normalized = normalized.replace(/\s+/g, ' ')
+  
+  return normalized
+}
+
 // Helper: Extract unique characters from scenes
 function extractCharactersFromScenes(scenes: any[]): any[] {
   const charMap = new Map()
   
   scenes.forEach(scene => {
     scene.dialogue?.forEach((d: any) => {
-      if (d.character && !charMap.has(d.character)) {
-        charMap.set(d.character, {
-          name: d.character,
+      if (!d.character) return
+      
+      const normalizedName = normalizeCharacterName(d.character)
+      
+      if (!charMap.has(normalizedName)) {
+        const cleanName = d.character.replace(/\s*\([^)]*\)\s*/g, '').trim()
+        
+        charMap.set(normalizedName, {
+          name: cleanName,
           role: d.character === 'NARRATOR' ? 'narrator' : 'supporting',
           description: `Character from script`,
           age: 'N/A',

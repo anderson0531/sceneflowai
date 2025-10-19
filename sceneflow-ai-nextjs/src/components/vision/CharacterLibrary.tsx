@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X, ChevronDown, Check } from 'lucide-react'
+import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X, ChevronDown, Check, Settings, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { CharacterPromptBuilder } from '@/components/blueprint/CharacterPromptBuilder'
 
@@ -375,37 +375,20 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
           </div>
         )}
         
-        {/* Prompt textarea with builder icon */}
-        <div className="relative mb-2">
-          <textarea 
-            value={prompt}
-            onChange={(e) => {
-              onPromptChange(e.target.value)
-              // Auto-resize
-              e.target.style.height = 'auto'
-              e.target.style.height = e.target.scrollHeight + 'px'
-            }}
-            disabled={isGenerating}
-            placeholder="Enter image prompt..."
-            className="w-full text-xs px-2 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-purple-500 dark:focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:focus:ring-purple-400 pr-8 disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ resize: 'vertical', minHeight: '3rem', maxHeight: '12rem' }}
-            rows={3}
-          />
+        {/* Icon-based action buttons */}
+        <div className="flex items-center gap-1.5">
           <button
             onClick={(e) => {
               e.stopPropagation()
               onOpenBuilder()
             }}
             disabled={isGenerating}
-            className="absolute top-1.5 right-1.5 p-1 rounded bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-            title="Open Prompt Builder"
+            className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+            title="Edit Character Prompt"
           >
-            <Wand2 className="w-3 h-3" />
+            <Settings className="w-4 h-4" />
           </button>
-        </div>
-        
-        {/* Icon-based action buttons */}
-        <div className="flex items-center gap-1.5">
+          
           <button
             onClick={(e) => { e.stopPropagation(); onGenerate(prompt); }}
             disabled={isGenerating || !prompt.trim()}
@@ -415,7 +398,7 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
             {isGenerating ? (
               <Loader className="w-4 h-4 animate-spin" />
             ) : (
-              <Wand2 className="w-4 h-4" />
+              <Sparkles className="w-4 h-4" />
             )}
           </button>
           
