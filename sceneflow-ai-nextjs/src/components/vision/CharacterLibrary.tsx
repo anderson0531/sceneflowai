@@ -1,9 +1,10 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X, ChevronDown, Check, Settings, Sparkles } from 'lucide-react'
+import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X, ChevronDown, Check, Settings, Sparkles, Lightbulb } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { CharacterPromptBuilder } from '@/components/blueprint/CharacterPromptBuilder'
+import { toast } from 'sonner'
 
 interface CharacterLibraryProps {
   characters: any[]
@@ -35,34 +36,65 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
   }
   
   const handleUploadReference = async (characterId: string, file: File, characterName: string) => {
-    setUploadingRef(prev => ({ ...prev, [characterId]: true }))
-    
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('projectId', 'vision-project') // TODO: Get from context
-      formData.append('characterName', characterName)
-      
-      const res = await fetch('/api/character/upload-reference', {
-        method: 'POST',
-        body: formData
-      })
-      
-      const data = await res.json()
-      if (data.success) {
-        // Call parent handler to update character
-        onUploadCharacter(characterId, file)
-        try { const { toast } = require('sonner'); toast('Reference image uploaded') } catch {}
-      } else {
-        throw new Error(data.error || 'Upload failed')
-      }
-    } catch (error) {
-      console.error('[Upload Reference] Error:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Failed to upload'
-      try { const { toast } = require('sonner'); toast(errorMessage) } catch {}
-    } finally {
-      setUploadingRef(prev => ({ ...prev, [characterId]: false }))
+    // Validate file size (warn if > 5MB, block if > 10MB)
+    const sizeMB = file.size / (1024 * 1024)
+    if (sizeMB > 10) {
+      toast.error('Image too large. Please use images under 10MB.')
+      return
     }
+    
+    if (sizeMB > 5) {
+      toast.warning(`Large image (${sizeMB.toFixed(1)}MB). Consider using smaller images for better performance.`)
+    }
+    
+    // Validate image dimensions
+    const img = new Image()
+    const objectUrl = URL.createObjectURL(file)
+    
+    img.onload = async () => {
+      URL.revokeObjectURL(objectUrl)
+      
+      if (img.width < 256 || img.height < 256) {
+        toast.warning('Image resolution is low. Use at least 512x512 for best facial recognition.')
+      }
+      
+      // Proceed with upload
+      setUploadingRef(prev => ({ ...prev, [characterId]: true }))
+      
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('projectId', 'vision-project') // TODO: Get from context
+        formData.append('characterName', characterName)
+        
+        const res = await fetch('/api/character/upload-reference', {
+          method: 'POST',
+          body: formData
+        })
+        
+        const data = await res.json()
+        if (data.success) {
+          // Call parent handler to update character
+          onUploadCharacter(characterId, file)
+          toast.success('Reference image uploaded successfully!')
+        } else {
+          throw new Error(data.error || 'Upload failed')
+        }
+      } catch (error) {
+        console.error('[Upload Reference] Error:', error)
+        const errorMessage = error instanceof Error ? error.message : 'Failed to upload'
+        toast.error(errorMessage)
+      } finally {
+        setUploadingRef(prev => ({ ...prev, [characterId]: false }))
+      }
+    }
+    
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      toast.error('Invalid image file')
+    }
+    
+    img.src = objectUrl
   }
   
   const handleAnalyzeImage = async (characterId: string, imageUrl: string, characterName: string) => {
@@ -486,6 +518,25 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
           </button>
         </div>
       )}
+      
+      {/* Image Upload Pro Tips */}
+      <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+        <div className="flex items-start gap-3">
+          <Lightbulb className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="text-sm font-semibold text-blue-300 mb-2">
+              Pro Tips: Character Reference Images
+            </h4>
+            <ul className="text-xs text-blue-400/80 space-y-1.5">
+              <li>• <span className="font-medium">Resolution:</span> Use high-quality images (at least 512x512 pixels)</li>
+              <li>• <span className="font-medium">Composition:</span> Clear, well-lit headshots work best for facial recognition</li>
+              <li>• <span className="font-medium">File Size:</span> Keep images under 5MB for optimal performance</li>
+              <li>• <span className="font-medium">Lighting:</span> Avoid harsh shadows or extreme lighting that obscures facial features</li>
+              <li>• <span className="font-medium">Expression:</span> Neutral or calm expressions provide the most consistent results</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

@@ -58,6 +58,12 @@ function enforceCloseUpForReferences(
     if (location) newPrompt += `, ${location}`
     if (lighting) newPrompt += `. ${lighting}`
     
+    // Sanitize the prompt
+    newPrompt = sanitizePromptForVisualGeneration(newPrompt)
+    
+    // Add essential style keywords
+    newPrompt += ', photorealistic, professional photography, 8K resolution, sharp focus'
+    
     console.log('[Scene Image] Original prompt:', prompt.substring(0, 100))
     console.log('[Scene Image] Replaced with:', newPrompt)
     
@@ -65,6 +71,30 @@ function enforceCloseUpForReferences(
   }
   
   return prompt
+}
+
+// Helper to sanitize prompt for visual generation
+function sanitizePromptForVisualGeneration(prompt: string): string {
+  let cleaned = prompt
+  
+  // Remove audio/sound descriptions
+  cleaned = cleaned.replace(/SOUND\s+of[^.]*\./gi, '')
+  cleaned = cleaned.replace(/sound effects?[^.]*\./gi, '')
+  cleaned = cleaned.replace(/\b(hears?|listens?to|audio)\b[^.]*\./gi, '')
+  
+  // Soften harsh emotional descriptions
+  cleaned = cleaned.replace(/lines of stress etched/gi, 'showing focused intensity')
+  cleaned = cleaned.replace(/wrinkles of worry/gi, 'thoughtful expression')
+  cleaned = cleaned.replace(/tears streaming/gi, 'glistening eyes')
+  
+  // Improve harsh lighting descriptions
+  cleaned = cleaned.replace(/illuminated by a monitor/gi, 'softly lit by monitor glow')
+  cleaned = cleaned.replace(/harsh.*light/gi, 'dramatic lighting')
+  
+  // Clean up extra whitespace
+  cleaned = cleaned.replace(/\s+/g, ' ').replace(/,\s*,/g, ',').trim()
+  
+  return cleaned
 }
 
 // Helper to parse scene action for details

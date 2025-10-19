@@ -25,8 +25,14 @@ export async function prepareCharacterReferences(
         // Get image data
         const arrayBuffer = await response.arrayBuffer()
         
-        // Resize image to reduce token count (max 512x512 for better facial detail)
-        const resizedBase64 = await resizeImageToBase64(arrayBuffer, 512, 512)
+        // Validate image size (warn if too large)
+        const sizeMB = arrayBuffer.byteLength / (1024 * 1024)
+        if (sizeMB > 5) {
+          console.warn(`[Char Ref] ⚠️  Large image (${sizeMB.toFixed(1)}MB) for ${char.name}. Consider using images under 5MB for optimal performance.`)
+        }
+        
+        // Use original image for maximum facial detail
+        const base64 = Buffer.from(arrayBuffer).toString('base64')
         
         // Build description from character attributes
         const descParts = []
@@ -37,12 +43,13 @@ export async function prepareCharacterReferences(
         references.push({
           id: refId++,
           name: char.name,
-          bytesBase64Encoded: resizedBase64,
+          bytesBase64Encoded: base64,
           referenceType: 'REFERENCE_TYPE_SUBJECT',
           subjectDescription: char.name
         })
         
-        console.log(`[Char Ref] Prepared reference for ${char.name} (resized to 512x512)`)
+        const sizeKB = Math.round(arrayBuffer.byteLength / 1024)
+        console.log(`[Char Ref] Prepared reference for ${char.name} (${sizeKB}KB, original resolution)`)
       } catch (error) {
         console.error(`Error preparing reference for ${char.name}:`, error)
       }
@@ -50,32 +57,6 @@ export async function prepareCharacterReferences(
   }
   
   return references
-}
-
-// Helper to resize image and convert to Base64
-async function resizeImageToBase64(
-  imageBuffer: ArrayBuffer,
-  maxWidth: number,
-  maxHeight: number
-): Promise<string> {
-  // Use sharp for server-side image resizing
-  const sharp = require('sharp')
-  
-  const resized = await sharp(Buffer.from(imageBuffer))
-    .resize(maxWidth, maxHeight, {
-      fit: 'inside',  // Maintain aspect ratio
-      withoutEnlargement: true  // Don't upscale small images
-    })
-    .jpeg({ quality: 80 })  // Convert to JPEG with good quality for facial details
-    .toBuffer()
-  
-  const base64 = resized.toString('base64')
-  const sizeKB = Math.round(resized.length / 1024)
-  const estimatedTokens = Math.round(base64.length * 0.75)  // Rough estimate
-  
-  console.log(`[Char Ref] Resized image: ${sizeKB}KB, ~${estimatedTokens} tokens`)
-  
-  return base64
 }
 
 export function buildPromptWithReferences(
