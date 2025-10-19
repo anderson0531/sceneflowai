@@ -691,7 +691,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     console.log('Regenerate scene:', sceneIndex)
   }
 
-  const handleGenerateSceneImage = async (sceneIdx: number, customPrompt?: string) => {
+  const handleGenerateSceneImage = async (sceneIdx: number, customPrompt?: string, selectedCharacters?: string[]) => {
     const scene = script?.script?.scenes?.[sceneIdx]
     if (!scene || !scene.visualDescription) {
       console.warn('No visual description available for scene', sceneIdx)
@@ -703,8 +703,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Use custom prompt if provided, otherwise use visual description
       const prompt = customPrompt || scene.visualDescription
       
-      // Get characters in this scene and their details
-      let sceneCharacterNames = scene.characters || []
+      // Use selectedCharacters if provided, otherwise extract from scene
+      let sceneCharacterNames = selectedCharacters || scene.characters || []
       
       // FALLBACK: If scene.characters is empty, extract from dialogue AND action
       if (sceneCharacterNames.length === 0) {

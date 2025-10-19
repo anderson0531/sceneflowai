@@ -1,13 +1,13 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Copy, Check } from 'lucide-react'
+import { Copy, Check, Sparkles } from 'lucide-react'
 import { artStylePresets } from '@/constants/artStylePresets'
 
 interface ScenePromptStructure {
@@ -28,19 +28,21 @@ interface ScenePromptStructure {
 interface ScenePromptBuilderProps {
   open: boolean
   onClose: () => void
-  initialPrompt?: string
-  sceneHeading?: string
-  availableCharacters?: Array<{ name: string; description: string }>
-  onApply: (prompt: string) => void
+  scene: any
+  availableCharacters?: Array<{ 
+    name: string
+    description: string
+    referenceImage?: string
+  }>
+  onGenerateImage: (prompt: string, selectedCharacters: string[]) => void
 }
 
 export function ScenePromptBuilder({
   open,
   onClose,
-  initialPrompt = '',
-  sceneHeading = 'Scene',
+  scene,
   availableCharacters = [],
-  onApply
+  onGenerateImage
 }: ScenePromptBuilderProps) {
   const [mode, setMode] = useState<'guided' | 'advanced'>('guided')
   const [structure, setStructure] = useState<ScenePromptStructure>({
@@ -58,8 +60,67 @@ export function ScenePromptBuilder({
     negativePrompt: 'blurry, low quality, distorted, poor composition'
   })
   
-  const [advancedPrompt, setAdvancedPrompt] = useState(initialPrompt)
+  const [advancedPrompt, setAdvancedPrompt] = useState('')
   const [copied, setCopied] = useState(false)
+
+  // Parse scene description to auto-populate fields
+  useEffect(() => {
+    if (!open || !scene) return
+    
+    const updates: Partial<ScenePromptStructure> = {}
+    
+    // Parse heading: "INT./EXT. LOCATION - TIME"
+    if (scene.heading) {
+      const headingMatch = scene.heading.match(/(INT|EXT)\.\s+(.+?)\s+-\s+(.+)/i)
+      if (headingMatch) {
+        updates.location = headingMatch[2].trim()
+        const time = headingMatch[3].trim().toLowerCase()
+        if (time.includes('night') || time.includes('evening')) updates.timeOfDay = 'night'
+        else if (time.includes('morning') || time.includes('dawn')) updates.timeOfDay = 'morning'
+        else if (time.includes('afternoon')) updates.timeOfDay = 'afternoon'
+        else if (time.includes('dusk') || time.includes('sunset')) updates.timeOfDay = 'dusk'
+        else updates.timeOfDay = 'day'
+      }
+    }
+    
+    // Parse visual description for atmosphere, lighting, camera
+    const desc = (scene.visualDescription || scene.action || '').toLowerCase()
+    
+    // Atmosphere
+    if (desc.includes('dark') || desc.includes('moody') || desc.includes('ominous')) {
+      updates.atmosphere = 'dark and moody'
+    } else if (desc.includes('bright') || desc.includes('vibrant') || desc.includes('cheerful')) {
+      updates.atmosphere = 'bright and vibrant'
+    } else if (desc.includes('tense') || desc.includes('suspenseful')) {
+      updates.atmosphere = 'tense and suspenseful'
+    }
+    
+    // Camera angles
+    if (desc.includes('close up') || desc.includes('close-up')) {
+      updates.shotType = 'close-up'
+    } else if (desc.includes('wide shot') || desc.includes('wide angle') || desc.includes('establishing')) {
+      updates.shotType = 'wide-shot'
+    } else if (desc.includes('medium')) {
+      updates.shotType = 'medium-shot'
+    }
+    
+    if (desc.includes('high angle') || desc.includes('high-angle')) {
+      updates.cameraAngle = 'high-angle'
+    } else if (desc.includes('low angle') || desc.includes('low-angle')) {
+      updates.cameraAngle = 'low-angle'
+    }
+    
+    // Lighting
+    if (desc.includes('dramatic lighting') || desc.includes('side lighting')) {
+      updates.lighting = 'dramatic'
+    } else if (desc.includes('soft') || desc.includes('diffused')) {
+      updates.lighting = 'soft'
+    } else if (desc.includes('backlight') || desc.includes('silhouette')) {
+      updates.lighting = 'backlit'
+    }
+    
+    setStructure(prev => ({ ...prev, ...updates }))
+  }, [open, scene])
 
   // Construct prompt from structure
   const constructPrompt = (): string => {
@@ -134,8 +195,8 @@ export function ScenePromptBuilder({
 
   const constructedPrompt = mode === 'guided' ? constructPrompt() : advancedPrompt
 
-  const handleApply = () => {
-    onApply(constructedPrompt)
+  const handleGenerateScene = () => {
+    onGenerateImage(constructedPrompt, structure.characters)
     onClose()
   }
 
@@ -149,7 +210,7 @@ export function ScenePromptBuilder({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-900 text-white border-gray-700">
         <DialogHeader>
-          <DialogTitle className="text-white">Scene Prompt Builder - {sceneHeading}</DialogTitle>
+          <DialogTitle className="text-white">Scene Prompt Builder - {scene?.heading || `Scene ${scene?.sceneNumber || ''}`}</DialogTitle>
         </DialogHeader>
 
         <Tabs value={mode} onValueChange={(v) => setMode(v as any)}>
@@ -233,9 +294,16 @@ export function ScenePromptBuilder({
                 <div className="space-y-2">
                   <div>
                     <label className="text-xs text-gray-400">Select Characters</label>
-                    <div className="mt-1 space-y-1">
+                    <div className="mt-1 space-y-2">
                       {availableCharacters.map(char => (
-                        <label key={char.name} className="flex items-center gap-2 p-2 rounded hover:bg-gray-700/50 cursor-pointer">
+                        <label 
+                          key={char.name} 
+                          className={`flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors ${
+                            structure.characters.includes(char.name)
+                              ? 'border-blue-500 bg-blue-500/10'
+                              : 'border-gray-700 hover:border-gray-600'
+                          }`}
+                        >
                           <input
                             type="checkbox"
                             checked={structure.characters.includes(char.name)}
@@ -249,8 +317,19 @@ export function ScenePromptBuilder({
                             }}
                             className="rounded"
                           />
-                          <span className="text-sm text-gray-200">{char.name}</span>
-                          <span className="text-xs text-gray-400 truncate">{char.description}</span>
+                          {char.referenceImage && (
+                            <img
+                              src={char.referenceImage}
+                              alt={char.name}
+                              className="w-8 h-8 rounded-full object-cover border border-gray-600"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <div className="text-sm text-gray-200">{char.name}</div>
+                            {char.referenceImage && (
+                              <div className="text-[10px] text-green-400">✓ Has reference image</div>
+                            )}
+                          </div>
                         </label>
                       ))}
                     </div>
@@ -391,8 +470,9 @@ export function ScenePromptBuilder({
             {constructedPrompt || <span className="text-gray-500 italic">Fill in the fields above to build your prompt...</span>}
           </div>
           <div className="flex gap-2 mt-2">
-            <Button onClick={handleApply} className="flex-1">
-              Apply Prompt
+            <Button onClick={handleGenerateScene} className="flex-1 bg-purple-600 hover:bg-purple-700">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Generate Scene Image
             </Button>
             <Button onClick={handleCopy} variant="outline" className="px-3">
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}

@@ -16,8 +16,8 @@ interface ScriptPanelProps {
   isGenerating: boolean
   onExpandScene?: (sceneNumber: number) => Promise<void>
   onExpandAllScenes?: () => Promise<void>
-  onGenerateSceneImage?: (sceneIdx: number, customPrompt?: string) => Promise<void>
-  characters?: Array<{ name: string; description: string }>
+  onGenerateSceneImage?: (sceneIdx: number, customPrompt?: string, selectedCharacters?: string[]) => Promise<void>
+  characters?: Array<{ name: string; description: string; referenceImage?: string }>
   projectId?: string
   visualStyle?: string
 }
@@ -668,10 +668,19 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             setSceneBuilderOpen(false)
             setSceneBuilderIdx(null)
           }}
-          initialPrompt={scenePrompts[sceneBuilderIdx] || scenes[sceneBuilderIdx]?.visualDescription || ''}
-          sceneHeading={scenes[sceneBuilderIdx]?.heading || `Scene ${sceneBuilderIdx + 1}`}
-          availableCharacters={characters}
-          onApply={handleApplyScenePrompt}
+          scene={scenes[sceneBuilderIdx]}
+          availableCharacters={characters.map(c => ({
+            name: c.name,
+            description: c.description,
+            referenceImage: c.referenceImage
+          }))}
+          onGenerateImage={async (prompt, selectedCharacters) => {
+            if (onGenerateSceneImage) {
+              await onGenerateSceneImage(sceneBuilderIdx, prompt, selectedCharacters)
+            }
+            setSceneBuilderOpen(false)
+            setSceneBuilderIdx(null)
+          }}
         />
       )}
 
