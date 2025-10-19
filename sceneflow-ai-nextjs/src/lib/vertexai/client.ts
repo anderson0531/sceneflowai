@@ -89,14 +89,18 @@ export async function callVertexAIImagen(
     requestBody.parameters.editConfig = {
       referenceImages: options.referenceImages.map(ref => ({
         referenceId: ref.referenceId,
+        referenceType: 'REFERENCE_TYPE_SUBJECT',
         referenceImage: {
           bytesBase64Encoded: ref.bytesBase64Encoded
         },
-        referenceType: ref.referenceType || 'SUBJECT',
-        ...(ref.subjectDescription && { subjectDescription: ref.subjectDescription })
+        subjectImageConfig: {
+          subjectDescription: ref.subjectDescription || `Character ${ref.referenceId}`,
+          subjectType: 'SUBJECT_TYPE_PERSON'
+        }
       }))
     }
     console.log('[Vertex AI] Using', options.referenceImages.length, 'character reference images')
+    console.log('[Vertex AI] Reference config:', JSON.stringify(requestBody.parameters.editConfig.referenceImages[0], null, 2))
   }
 
   // Log request size for debugging

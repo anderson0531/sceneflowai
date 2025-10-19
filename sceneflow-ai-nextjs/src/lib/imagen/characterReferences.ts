@@ -1,8 +1,9 @@
 export interface CharacterReference {
   id: number
   name: string
-  imageBase64: string
-  description?: string
+  bytesBase64Encoded: string
+  referenceType?: string
+  subjectDescription?: string
 }
 
 export async function prepareCharacterReferences(
@@ -36,8 +37,9 @@ export async function prepareCharacterReferences(
         references.push({
           id: refId++,
           name: char.name,
-          imageBase64: resizedBase64,
-          description: descParts.join(', ') || char.description || char.name
+          bytesBase64Encoded: resizedBase64,
+          referenceType: 'REFERENCE_TYPE_SUBJECT',
+          subjectDescription: char.name
         })
         
         console.log(`[Char Ref] Prepared reference for ${char.name} (resized to 256x256)`)
