@@ -21,9 +21,11 @@ export async function prepareCharacterReferences(
           continue
         }
         
-        // Convert to Base64
+        // Get image data
         const arrayBuffer = await response.arrayBuffer()
-        const base64 = Buffer.from(arrayBuffer).toString('base64')
+        
+        // Resize image to reduce token count (max 512x512)
+        const resizedBase64 = await resizeImageToBase64(arrayBuffer, 512, 512)
         
         // Build description from character attributes
         const descParts = []
@@ -34,9 +36,11 @@ export async function prepareCharacterReferences(
         references.push({
           id: refId++,
           name: char.name,
-          imageBase64: base64,
+          imageBase64: resizedBase64,
           description: descParts.join(', ') || char.description || char.name
         })
+        
+        console.log(`[Char Ref] Prepared reference for ${char.name} (resized to 512x512)`)
       } catch (error) {
         console.error(`Error preparing reference for ${char.name}:`, error)
       }
@@ -44,6 +48,26 @@ export async function prepareCharacterReferences(
   }
   
   return references
+}
+
+// Helper to resize image and convert to Base64
+async function resizeImageToBase64(
+  imageBuffer: ArrayBuffer,
+  maxWidth: number,
+  maxHeight: number
+): Promise<string> {
+  // Use sharp for server-side image resizing
+  const sharp = require('sharp')
+  
+  const resized = await sharp(Buffer.from(imageBuffer))
+    .resize(maxWidth, maxHeight, {
+      fit: 'inside',  // Maintain aspect ratio
+      withoutEnlargement: true  // Don't upscale small images
+    })
+    .jpeg({ quality: 85 })  // Convert to JPEG with good quality
+    .toBuffer()
+  
+  return resized.toString('base64')
 }
 
 export function buildPromptWithReferences(
