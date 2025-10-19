@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X } from 'lucide-react'
+import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { CharacterPromptBuilder } from '@/components/blueprint/CharacterPromptBuilder'
 
@@ -23,6 +23,15 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
   const [analyzingImage, setAnalyzingImage] = useState<Record<string, boolean>>({})
   const [uploadingRef, setUploadingRef] = useState<Record<string, boolean>>({})
   const [zoomedImage, setZoomedImage] = useState<{url: string; name: string} | null>(null)
+  const [expandedSections, setExpandedSections] = useState<Record<string, string | null>>({})
+  
+  const handleToggleSection = (charId: string, section: 'coreIdentity' | 'appearance') => {
+    const key = `${charId}-${section === 'coreIdentity' ? 'core' : 'appear'}`
+    setExpandedSections(prev => ({
+      ...prev,
+      [charId]: prev[charId] === key ? null : key
+    }))
+  }
   
   const handleUploadReference = async (characterId: string, file: File, characterName: string) => {
     setUploadingRef(prev => ({ ...prev, [characterId]: true }))
@@ -145,6 +154,8 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                 prompt={charPrompts[charId] || savedPrompt || defaultPrompt}
                 onPromptChange={(prompt) => setCharPrompts(prev => ({ ...prev, [charId]: prompt }))}
                 isGenerating={generatingChars.has(charId)}
+                expandedCharId={expandedSections[charId]}
+                onToggleExpand={handleToggleSection}
               />
             )
           })}
@@ -222,11 +233,15 @@ interface CharacterCardProps {
   prompt: string
   onPromptChange: (prompt: string) => void
   isGenerating: boolean
+  expandedCharId?: string | null
+  onToggleExpand?: (charId: string, section: 'coreIdentity' | 'appearance') => void
 }
 
-function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, onOpenBuilder, prompt, onPromptChange, isGenerating }: CharacterCardProps) {
+function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, onOpenBuilder, prompt, onPromptChange, isGenerating, expandedCharId, onToggleExpand }: CharacterCardProps) {
   const hasImage = !!character.referenceImage
   const isApproved = character.imageApproved === true
+  const isCoreExpanded = expandedCharId === `${characterId}-core`
+  const isAppearanceExpanded = expandedCharId === `${characterId}-appear`
   return (
     <div 
       onClick={onClick}
@@ -283,46 +298,68 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
         {/* Character Attributes */}
         {(character.subject || character.ethnicity || character.keyFeature) && (
           <div className="space-y-1">
-            <div className="text-[10px] font-semibold text-purple-400 dark:text-purple-300">Core Identity</div>
-            <div className="text-[10px] text-gray-600 dark:text-gray-300 space-y-0.5">
-              {character.subject && (
-                <div><span className="text-gray-400">Subject:</span> {character.subject}</div>
-              )}
-              {character.ethnicity && (
-                <div><span className="text-gray-400">Ethnicity:</span> {character.ethnicity}</div>
-              )}
-              {character.keyFeature && (
-                <div><span className="text-gray-400">Key Feature:</span> {character.keyFeature}</div>
-              )}
-            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleExpand?.(characterId, 'coreIdentity')
+              }}
+              className="flex items-center justify-between w-full text-xs font-semibold text-purple-400 dark:text-purple-300 hover:text-purple-300 dark:hover:text-purple-200 transition-colors"
+            >
+              <span>Core Identity</span>
+              <ChevronDown className={`w-3 h-3 transition-transform ${isCoreExpanded ? 'rotate-180' : ''}`} />
+            </button>
+            {isCoreExpanded && (
+              <div className="text-xs text-gray-600 dark:text-gray-300 space-y-0.5">
+                {character.subject && (
+                  <div><span className="text-gray-400">Subject:</span> {character.subject}</div>
+                )}
+                {character.ethnicity && (
+                  <div><span className="text-gray-400">Ethnicity:</span> {character.ethnicity}</div>
+                )}
+                {character.keyFeature && (
+                  <div><span className="text-gray-400">Key Feature:</span> {character.keyFeature}</div>
+                )}
+              </div>
+            )}
           </div>
         )}
         
         {(character.hairStyle || character.hairColor || character.eyeColor || character.expression || character.build) && (
           <div className="space-y-1">
-            <div className="text-[10px] font-semibold text-blue-400 dark:text-blue-300">Appearance</div>
-            <div className="text-[10px] text-gray-600 dark:text-gray-300 space-y-0.5">
-              {character.hairStyle && (
-                <div><span className="text-gray-400">Hair Style:</span> {character.hairStyle}</div>
-              )}
-              {character.hairColor && (
-                <div><span className="text-gray-400">Hair Color:</span> {character.hairColor}</div>
-              )}
-              {character.eyeColor && (
-                <div><span className="text-gray-400">Eyes:</span> {character.eyeColor}</div>
-              )}
-              {character.expression && (
-                <div><span className="text-gray-400">Expression:</span> {character.expression}</div>
-              )}
-              {character.build && (
-                <div><span className="text-gray-400">Build:</span> {character.build}</div>
-              )}
-            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleExpand?.(characterId, 'appearance')
+              }}
+              className="flex items-center justify-between w-full text-xs font-semibold text-blue-400 dark:text-blue-300 hover:text-blue-300 dark:hover:text-blue-200 transition-colors"
+            >
+              <span>Appearance</span>
+              <ChevronDown className={`w-3 h-3 transition-transform ${isAppearanceExpanded ? 'rotate-180' : ''}`} />
+            </button>
+            {isAppearanceExpanded && (
+              <div className="text-xs text-gray-600 dark:text-gray-300 space-y-0.5">
+                {character.hairStyle && (
+                  <div><span className="text-gray-400">Hair Style:</span> {character.hairStyle}</div>
+                )}
+                {character.hairColor && (
+                  <div><span className="text-gray-400">Hair Color:</span> {character.hairColor}</div>
+                )}
+                {character.eyeColor && (
+                  <div><span className="text-gray-400">Eyes:</span> {character.eyeColor}</div>
+                )}
+                {character.expression && (
+                  <div><span className="text-gray-400">Expression:</span> {character.expression}</div>
+                )}
+                {character.build && (
+                  <div><span className="text-gray-400">Build:</span> {character.build}</div>
+                )}
+              </div>
+            )}
           </div>
         )}
         
         {character.description && (
-          <div className="text-[10px] text-gray-500 dark:text-gray-400 italic border-t border-gray-200 dark:border-gray-700 pt-1.5">
+          <div className="text-xs text-gray-500 dark:text-gray-400 italic border-t border-gray-200 dark:border-gray-700 pt-1.5">
             {character.description}
           </div>
         )}
