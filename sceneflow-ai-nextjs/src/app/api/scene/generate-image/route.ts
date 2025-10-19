@@ -79,11 +79,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
     }
 
-    // Build simplified character references (physical appearance handled by reference images)
+    // Prepare character references FIRST (need this for IDs)
+    const characterReferences = sceneContext?.characters 
+      ? await prepareCharacterReferences(sceneContext.characters)
+      : []
+
+    // Build character context with reference IDs
     let characterRefs = ''
     if (sceneContext?.characters && Array.isArray(sceneContext.characters) && sceneContext.characters.length > 0) {
       const charDetails = sceneContext.characters.map((c: any) => {
-        const parts = [`${c.name}`]
+        const parts = []
+        
+        // Find if this character has a prepared reference
+        const ref = characterReferences.find(r => r.name === c.name)
+        
+        // Add name with [referenceId] if available
+        if (ref) {
+          parts.push(`${c.name} [${ref.id}]`)
+        } else {
+          parts.push(`${c.name}`)
+        }
         
         // Only include non-visual attributes (reference handles physical appearance)
         if (c.role) parts.push(c.role)
@@ -102,8 +117,9 @@ export async function POST(req: NextRequest) {
       
       characterRefs = `\n\nCharacters: ${charDetails}`
       
-      const hasRefs = sceneContext.characters.some((c: any) => c.referenceImage)
-      if (hasRefs) {
+      console.log('[Scene Image] Character list with IDs:', charDetails)
+      
+      if (characterReferences.length > 0) {
         characterRefs += `\n\nIMPORTANT: Match character physical appearance to reference images using [referenceId].`
       }
     }
@@ -136,11 +152,6 @@ export async function POST(req: NextRequest) {
     
     // Parse scene details for emotion, lighting, environment
     const sceneDetails = parseSceneAction(sceneContext)
-    
-    // Prepare character references if available
-    const characterReferences = sceneContext?.characters 
-      ? await prepareCharacterReferences(sceneContext.characters)
-      : []
 
     // Build scene-focused prompt
     const scenePromptParts = []
