@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { callVertexAIImagen } from '@/lib/vertexai/client'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { prepareCharacterReferences, buildPromptWithReferences } from '@/lib/imagen/characterReferences'
+import { optimizePromptForImagen } from '@/lib/imagen/promptOptimizer'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -306,19 +307,53 @@ export async function POST(req: NextRequest) {
     // Use scene-focused prompt with character refs and scene desc
     let finalPrompt = (scenePrompt || prompt) + characterRefs + sceneDesc
     
-    // CRITICAL: Enforce close-up framing when character references are present
-    finalPrompt = enforceCloseUpForReferences(
-      finalPrompt,
-      characterReferences.length > 0,
-      sceneContext?.action || ''
-    )
-    
-    // CRITICAL: Sanitize the entire final prompt
-    finalPrompt = sanitizePromptForVisualGeneration(finalPrompt)
-    
-    // Add essential style keywords if missing
-    if (!finalPrompt.includes('photorealistic')) {
-      finalPrompt += ', photorealistic, professional photography, 8K resolution, sharp focus'
+    // CRITICAL: Use AI to optimize prompt for Imagen with character references
+    if (characterReferences.length > 0) {
+      try {
+        const optimizedPrompt = await optimizePromptForImagen({
+          rawPrompt: finalPrompt,
+          sceneAction: sceneContext?.action || '',
+          visualDescription: sceneContext?.visualDescription || '',
+          characterNames: sceneCharacterNames,
+          hasCharacterReferences: true
+        })
+        
+        // Ensure character references with [referenceId] are present
+        let promptWithRefs = optimizedPrompt
+        sceneCharacterNames.forEach(charName => {
+          const ref = characterReferences.find(r => r.name === charName)
+          if (ref && !optimizedPrompt.includes(`[${ref.id}]`)) {
+            // AI didn't add [referenceId], add it now
+            const regex = new RegExp(`\\b${charName}\\b`, 'gi')
+            promptWithRefs = promptWithRefs.replace(regex, `${charName} [${ref.id}]`)
+          }
+        })
+        
+        finalPrompt = promptWithRefs
+        console.log('[Scene Image] ✓ AI-optimized prompt')
+      } catch (error) {
+        console.error('[Prompt Optimizer] AI failed, using fallback:', error)
+        
+        // Fallback: use regex sanitization
+        finalPrompt = enforceCloseUpForReferences(
+          finalPrompt,
+          characterReferences.length > 0,
+          sceneContext?.action || ''
+        )
+        
+        finalPrompt = sanitizePromptForVisualGeneration(finalPrompt)
+        
+        if (!finalPrompt.includes('photorealistic')) {
+          finalPrompt += ', photorealistic, professional photography, 8K resolution, sharp focus'
+        }
+      }
+    } else {
+      // No references - use basic sanitization
+      finalPrompt = sanitizePromptForVisualGeneration(finalPrompt)
+      
+      if (!finalPrompt.includes('photorealistic')) {
+        finalPrompt += ', photorealistic, professional photography, 8K resolution, sharp focus'
+      }
     }
     
     // Add cinematic quality enhancers
