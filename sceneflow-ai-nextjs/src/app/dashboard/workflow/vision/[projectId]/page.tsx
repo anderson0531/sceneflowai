@@ -400,11 +400,44 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       const { url: blobUrl } = await uploadRes.json()
       
-      // Update character with the Blob URL (NOT data URL)
+      // Auto-analyze to generate appearance description
+      let analysisData: any = null
+      try {
+        const analyzeRes = await fetch('/api/character/analyze-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageUrl: blobUrl, characterName: character?.name })
+        })
+        
+        if (analyzeRes.ok) {
+          analysisData = await analyzeRes.json()
+          console.log('[Character Upload] Auto-analyzed appearance:', analysisData.appearanceDescription)
+        }
+      } catch (analyzeError) {
+        console.error('[Character Upload] Auto-analysis failed:', analyzeError)
+        // Continue with upload even if analysis fails
+      }
+      
+      // Update character with the Blob URL and analysis results
       const updatedCharacters = characters.map(char => {
         const charId = char.id || characters.indexOf(char).toString()
         return charId === characterId 
-          ? { ...char, referenceImage: blobUrl, imageApproved: false }  // Use Blob URL
+          ? { 
+              ...char, 
+              referenceImage: blobUrl, 
+              imageApproved: false,
+              // Add appearance description and attributes if analysis succeeded
+              ...(analysisData?.success ? {
+                appearanceDescription: analysisData.appearanceDescription,
+                ethnicity: analysisData.ethnicity || char.ethnicity,
+                hairStyle: analysisData.hairStyle || char.hairStyle,
+                hairColor: analysisData.hairColor || char.hairColor,
+                eyeColor: analysisData.eyeColor || char.eyeColor,
+                expression: analysisData.expression || char.expression,
+                build: analysisData.build || char.build,
+                keyFeature: analysisData.keyFeature || char.keyFeature
+              } : {})
+            }
           : char
       })
       
@@ -435,7 +468,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       
       setUploadingRef(prev => ({ ...prev, [characterId]: false }))
-      try { const { toast } = require('sonner'); toast.success('Character image uploaded!') } catch {}
+      
+      const successMessage = analysisData?.success 
+        ? 'Character image uploaded and analyzed!'
+        : 'Character image uploaded!'
+      try { const { toast } = require('sonner'); toast.success(successMessage) } catch {}
     } catch (error) {
       console.error('Character image upload failed:', error)
       setUploadingRef(prev => ({ ...prev, [characterId]: false }))

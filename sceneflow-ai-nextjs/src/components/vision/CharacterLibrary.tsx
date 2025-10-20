@@ -27,6 +27,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
   const [zoomedImage, setZoomedImage] = useState<{url: string; name: string} | null>(null)
   const [expandedSections, setExpandedSections] = useState<Record<string, string | null>>({})
   const [needsReupload, setNeedsReupload] = useState<Record<string, boolean>>({})
+  const [editingAppearance, setEditingAppearance] = useState<Record<string, boolean>>({})
   
   // Detect low-resolution images that need re-upload
   useEffect(() => {
@@ -157,6 +158,23 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
     }
   }
   
+  const handleAppearanceChange = async (characterId: string, characterName: string, newDescription: string) => {
+    // Update local state immediately
+    const updatedCharacters = characters.map(char => {
+      const charId = char.id || characters.indexOf(char).toString()
+      return charId === characterId 
+        ? { ...char, appearanceDescription: newDescription } 
+        : char
+    })
+    
+    // Persist to database
+    if (onUpdateCharacterAttributes) {
+      await onUpdateCharacterAttributes(characterName, {
+        appearanceDescription: newDescription
+      })
+    }
+  }
+  
   return (
     <div className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 ${compact ? 'p-4' : 'p-6'} h-full overflow-y-auto`}>
       <div className={`flex items-center justify-between ${compact ? 'mb-4' : 'mb-6'}`}>
@@ -224,6 +242,9 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                 isGenerating={generatingChars.has(charId)}
                 expandedCharId={expandedSections[charId]}
                 onToggleExpand={handleToggleSection}
+                editingAppearance={editingAppearance[charId]}
+                onAppearanceEdit={() => setEditingAppearance(prev => ({ ...prev, [charId]: !prev[charId] }))}
+                onAppearanceChange={handleAppearanceChange}
               />
             )
           })}
@@ -305,9 +326,12 @@ interface CharacterCardProps {
   isGenerating: boolean
   expandedCharId?: string | null
   onToggleExpand?: (charId: string, section: 'coreIdentity' | 'appearance') => void
+  editingAppearance?: boolean
+  onAppearanceEdit?: () => void
+  onAppearanceChange?: (characterId: string, characterName: string, value: string) => void
 }
 
-function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, onOpenBuilder, onAnalyze, analyzingImage, prompt, onPromptChange, isGenerating, expandedCharId, onToggleExpand }: CharacterCardProps) {
+function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, onOpenBuilder, onAnalyze, analyzingImage, prompt, onPromptChange, isGenerating, expandedCharId, onToggleExpand, editingAppearance, onAppearanceEdit, onAppearanceChange }: CharacterCardProps) {
   const hasImage = !!character.referenceImage
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
@@ -451,6 +475,53 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
             )}
           </div>
         )}
+        
+        {/* Appearance Description (AI-Generated, User-Refinable) */}
+        <div className="mb-2">
+          <div className="flex items-center justify-between mb-1">
+            <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
+              Appearance Description (for Image Generation)
+            </div>
+            {onAppearanceEdit && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onAppearanceEdit()
+                }}
+                className="text-xs text-blue-400 hover:text-blue-300"
+              >
+                {editingAppearance ? 'Save' : 'Edit'}
+              </button>
+            )}
+          </div>
+          
+          {editingAppearance ? (
+            <textarea
+              value={character.appearanceDescription || ''}
+              onChange={(e) => {
+                e.stopPropagation()
+                if (onAppearanceChange) {
+                  onAppearanceChange(characterId, character.name, e.target.value)
+                }
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full text-xs p-2 bg-gray-700 border border-gray-600 rounded resize-none text-gray-200"
+              rows={3}
+              placeholder="E.g., An African American man in his late 40s, with short black hair, dark brown skin, and a strong jawline"
+            />
+          ) : (
+            <div className="text-xs text-gray-200 bg-blue-500/10 border border-blue-500/30 rounded p-2">
+              {character.appearanceDescription || 'Upload and analyze a reference image to generate'}
+            </div>
+          )}
+          
+          {!character.appearanceDescription && character.referenceImage && (
+            <div className="text-xs text-amber-300 mt-1 flex items-center gap-1">
+              <Lightbulb className="w-3 h-3" />
+              <span>Click "Analyze" to auto-generate from your reference image</span>
+            </div>
+          )}
+        </div>
         
         {character.description && (
           <div className="text-xs text-gray-500 dark:text-gray-400 italic border-t border-gray-200 dark:border-gray-700 pt-1.5">

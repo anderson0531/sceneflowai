@@ -20,6 +20,7 @@ export interface EnhancedCharacter {
   description?: string         // Narrative description
   imagePrompt?: string         // Generated visual prompt
   referenceImage?: string | null
+  appearanceDescription?: string  // AI-generated from reference image for hybrid consistency
   generating?: boolean
   
   // Metadata

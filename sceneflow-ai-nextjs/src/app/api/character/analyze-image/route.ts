@@ -28,21 +28,32 @@ export async function POST(req: NextRequest) {
     const base64Image = Buffer.from(imageBuffer).toString('base64')
     const mimeType = imageResponse.headers.get('content-type') || 'image/jpeg'
     
-    const prompt = `Analyze this character image and extract detailed physical attributes.
+    const prompt = `Analyze this character reference image and extract physical appearance details.
 
-Return ONLY valid JSON with this exact structure:
+PART 1 - STRUCTURED ATTRIBUTES (for database):
+Extract these specific fields as JSON:
 {
-  "ethnicity": "Specific ethnic/cultural origin (e.g., 'Japanese', 'Mediterranean', 'West African')",
-  "keyFeature": "Most distinctive characteristic (e.g., 'Piercing gaze and confident posture')",
-  "hairStyle": "Specific style, length, texture (e.g., 'Short, side-parted, slightly tousled')",
-  "hairColor": "Exact color with detail (e.g., 'Deep chestnut brown with subtle highlights')",
-  "eyeColor": "Exact eye color (e.g., 'Warm amber brown')",
-  "expression": "Typical facial expression/demeanor (e.g., 'Calm, focused, with slight smile')",
-  "build": "Body type, physique (e.g., 'Athletic, lean, moves with grace')"
+  "subject": "brief role description",
+  "ethnicity": "ethnicity/race (e.g., 'African American', 'Asian', 'Caucasian', 'Hispanic')",
+  "keyFeature": "most distinctive feature",
+  "hairStyle": "hair style",
+  "hairColor": "hair color",
+  "eyeColor": "eye color",
+  "expression": "typical expression",
+  "build": "body build"
 }
 
-Be SPECIFIC and VISUAL. These attributes will be used to generate consistent character images across multiple scenes.
+PART 2 - APPEARANCE DESCRIPTION (for image generation):
+Create a single concise sentence describing objective physical appearance ONLY.
+Focus on: Ethnicity/Race, Gender, Apparent Age (e.g., "in his late 40s"), Hair (color, style, texture), Skin Tone, and distinct Facial Features (e.g., "strong jawline", "clean-shaven", "glasses").
+DO NOT include: Emotion, Action, Lighting, Clothing, or Background.
 
+Format as:
+"appearanceDescription": "An [ethnicity] [gender] in [his/her] [age], with [hair details], [skin tone], and [facial features]"
+
+Example: "An African American man in his late 40s, with short black hair, dark brown skin, and a strong jawline"
+
+Output both parts in JSON format with all fields.
 IMPORTANT: Return ONLY the JSON object, no markdown fences, no explanations.`
 
     const response = await fetch(
@@ -88,13 +99,23 @@ IMPORTANT: Return ONLY the JSON object, no markdown fences, no explanations.`
     let cleanedText = text.trim()
     cleanedText = cleanedText.replace(/```json\n?|\n?```|```/g, '').trim()
     
-    const attributes = JSON.parse(cleanedText)
+    const parsed = JSON.parse(cleanedText)
+    
+    // Ensure appearanceDescription is present, generate fallback if needed
+    const appearanceDescription = parsed.appearanceDescription || 
+      `${parsed.ethnicity || ''} ${parsed.subject || 'person'} with ${parsed.hairColor || ''} ${parsed.hairStyle || ''} hair`.trim()
+    
+    const attributes = {
+      ...parsed,
+      appearanceDescription
+    }
     
     console.log('[Analyze Image] Extracted attributes:', attributes)
+    console.log('[Analyze Image] Appearance description:', appearanceDescription)
     
     return NextResponse.json({ 
       success: true, 
-      attributes 
+      ...attributes  // Return attributes at top level for easier access
     })
   } catch (error: any) {
     console.error('[Analyze Image] Error:', error)

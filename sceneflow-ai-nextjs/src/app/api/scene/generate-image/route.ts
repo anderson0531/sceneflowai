@@ -316,7 +316,14 @@ export async function POST(req: NextRequest) {
           sceneAction: sceneContext?.action || '',
           visualDescription: sceneContext?.visualDescription || '',
           characterNames: sceneCharacterNames,
-          hasCharacterReferences: true
+          hasCharacterReferences: true,
+          characterMetadata: selectedCharacters?.map((char: any) => ({
+            name: char.name,
+            ethnicity: char.ethnicity,
+            subject: char.subject,
+            appearanceDescription: char.appearanceDescription || 
+              `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
+          }))
         })
         
         // Ensure character references with [referenceId] are present

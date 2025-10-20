@@ -6,6 +6,12 @@ interface OptimizePromptParams {
   visualDescription: string
   characterNames: string[]
   hasCharacterReferences: boolean
+  characterMetadata?: Array<{
+    name: string
+    ethnicity?: string
+    subject?: string
+    appearanceDescription?: string
+  }>
 }
 
 export async function optimizePromptForImagen(params: OptimizePromptParams): Promise<string> {
@@ -14,39 +20,33 @@ export async function optimizePromptForImagen(params: OptimizePromptParams): Pro
   
   const systemPrompt = `You are an expert at creating image generation prompts for Google's Imagen 3 API with character reference images.
 
-CRITICAL: When character reference images are provided, you MUST use the EXPLICIT REFERENCE METHOD:
+CRITICAL REQUIREMENTS:
+1. Shot framing MUST be Close-Up, Medium Close-Up, or Medium Shot for facial recognition
+2. Character faces must be FULLY VISIBLE and PROMINENT - NO OCCLUSION
+3. REMOVE/REPLACE facial occlusion actions:
+   - "rubbing temples/eyes/face" → "staring intently"
+   - "hands on face/head" → "looking focused"
+   - "covering eyes/mouth" → "gazing"
+   - "looking down" → "looking toward [object]"
+4. EXPLICITLY use the full appearanceDescription provided for each character
+5. Format: "[Appearance Description] [referenceId], [NON-OCCLUSIVE ACTION]"
+6. Remove ALL non-visual elements (sound, audio, dialogue)
+7. Use gentle lighting ("softly lit", "warm glow")
+8. Maintain photorealistic, cinematic quality
 
-1. START with a reference pointer (choose one):
-   - "The character from the reference image..."
-   - "The person in the reference image..."
-   - "The subject from the reference image..."
+PROMPT STRUCTURE:
+"[SHOT TYPE] of [Full Appearance Description] [referenceId], [face-visible action] with [expression]. [Environment]. [Lighting]. Photorealistic, 8K resolution, sharp focus."
 
-2. REMOVE ALL physical character descriptions from the prompt:
-   - NO ethnicity, race, skin color
-   - NO facial features (eyes, nose, mouth, face shape)
-   - NO hair descriptions (color, style, length)
-   - NO body descriptions (height, build, physique)
-   - NO age descriptors
+EXAMPLES:
+✓ GOOD: "CLOSE UP of An African American man in his late 40s, with short black hair, dark brown skin, and a strong jawline [1], staring intently at the computer screen with a weary expression. Modern office cubicle, softly lit by monitor glow. Photorealistic, 8K resolution."
 
-3. KEEP ONLY:
-   - Actions, poses, gestures
-   - Facial expressions and emotions
-   - Scene/environment details
-   - Lighting and atmosphere
-   - Clothing/attire (if changing from reference)
-   - Camera framing (Close-Up, Medium Close-Up, Medium Shot only)
+✗ BAD: "The character from the reference image [1] rubbing his temples" 
+   (Missing appearance description! Face occluded!)
 
-4. MAINTAIN [referenceId] format after character name for API
+✗ BAD: "Brian Anderson [1] with stressed expression"
+   (Name only - need full appearance description!)
 
-EXAMPLE TRANSFORMATIONS:
-
-Input: "A tall African American man with short black hair and a determined expression, wearing a suit, working at his desk"
-Output: "The character from the reference image [1] with a determined expression, wearing a business suit, working at his desk in a modern office. Medium close-up shot, softly lit."
-
-Input: "Brian Anderson, stressed and worried, illuminated by harsh monitor light"  
-Output: "The character from the reference image [1] showing a focused, contemplative expression, softly lit by warm computer monitor glow. Close-up shot, professional office setting."
-
-OUTPUT: Single paragraph, photorealistic, cinematic quality.`
+OUTPUT: A single, clean prompt (one paragraph, no explanations).`
 
   const userPrompt = `${systemPrompt}
 
@@ -54,19 +54,24 @@ Raw scene information:
 - Visual Description: ${params.visualDescription}
 - Scene Action: ${params.sceneAction}
 - Characters: ${params.characterNames.join(', ')}
+- Character Appearance Data: ${JSON.stringify(params.characterMetadata || [])}
 - Has Reference Images: ${params.hasCharacterReferences}
 
-${params.hasCharacterReferences ? `
-IMPORTANT: Character reference images are provided. The shot MUST show character faces clearly.
-If the visual description requests a wide/establishing shot, OVERRIDE it with a close-up or medium shot.
-` : ''}
+CRITICAL INSTRUCTIONS:
+1. For EACH character with a reference image, use their FULL appearanceDescription
+2. If action involves facial occlusion, REPLACE with face-visible alternative:
+   - "rubbing temples" → "staring intently"
+   - "hands on face" → "looking focused"
+   - "looking down" → "gazing at [object]"
+3. Format: "[Full Appearance Description] [referenceId], [action]"
+4. Keep faces FULLY VISIBLE and PROMINENT
 
-Create an optimized Imagen 3 prompt that:
-- Removes non-visual elements (sounds, audio)
-- Uses appropriate framing for character visibility
-- Softens harsh emotional/lighting descriptions
-- Maintains character [referenceId] format
-- Focuses on visual composition, expression, environment, lighting
+Example transformation:
+Input: "Brian rubs his temples"
+Character Data: {name: "Brian Anderson", appearanceDescription: "An African American man in his late 40s, short black hair, dark brown skin"}
+Output: "An African American man in his late 40s, short black hair, dark brown skin [1], staring intently with weary expression"
+
+Create an optimized Imagen 3 prompt following the structure above.
 
 Output ONLY the optimized prompt, nothing else.`
 
