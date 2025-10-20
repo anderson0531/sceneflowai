@@ -7,8 +7,9 @@ import { ScriptPanel } from '@/components/vision/ScriptPanel'
 import { CharacterLibrary } from '@/components/vision/CharacterLibrary'
 import { SceneGallery } from '@/components/vision/SceneGallery'
 import { GenerationProgress } from '@/components/vision/GenerationProgress'
+import { ScriptPlayer } from '@/components/vision/ScriptPlayer'
 import { Button } from '@/components/ui/Button'
-import { Save, Share2, ArrowRight } from 'lucide-react'
+import { Save, Share2, ArrowRight, Play } from 'lucide-react'
 
 interface Project {
   id: string
@@ -42,6 +43,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [isGenerating, setIsGenerating] = useState(false)
   const [uploadingRef, setUploadingRef] = useState<Record<string, boolean>>({})
   const [validationWarnings, setValidationWarnings] = useState<Record<number, string>>({})
+  const [isPlayerOpen, setIsPlayerOpen] = useState(false)
   const [generationProgress, setGenerationProgress] = useState({
     script: { complete: false, progress: 0 },
     characters: { complete: false, progress: 0, total: 0 },
@@ -990,6 +992,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               variant="outline" 
               size="sm" 
               className="flex items-center gap-2"
+              onClick={() => setIsPlayerOpen(true)}
+              disabled={!script || !script.script?.scenes || script.script.scenes.length === 0}
+            >
+              <Play className="w-4 h-4" />
+              <span className="hidden sm:inline">Play Script</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-2"
               onClick={handleSaveProject}
             >
               <Save className="w-4 h-4" />
@@ -1040,6 +1052,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           <GenerationProgress progress={generationProgress} />
         )}
       </div>
+
+      {/* Script Player (Full-screen overlay) */}
+      {isPlayerOpen && script && (
+        <ScriptPlayer
+          script={script}
+          characters={characters}
+          onClose={() => setIsPlayerOpen(false)}
+        />
+      )}
     </div>
   )
 }
