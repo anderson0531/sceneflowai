@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
@@ -20,9 +20,10 @@ interface ScriptPanelProps {
   characters?: Array<{ name: string; description: string; referenceImage?: string }>
   projectId?: string
   visualStyle?: string
+  validationWarnings?: Record<number, string>
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {} }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [editMode, setEditMode] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -650,6 +651,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   onOpenPromptDrawer={handleOpenSceneDrawer}
                   scenePrompt={scenePrompts[idx]}
                   onPromptChange={(sceneIdx, prompt) => setScenePrompts(prev => ({ ...prev, [sceneIdx]: prompt }))}
+                  validationWarning={validationWarnings[idx]}
                   parseScriptForAudio={parseScriptForAudio}
                   generateAndPlaySFX={generateAndPlaySFX}
                   generateAndPlayMusic={generateAndPlayMusic}
@@ -725,13 +727,14 @@ interface SceneCardProps {
   onOpenPromptDrawer?: (sceneIdx: number) => void
   scenePrompt?: string
   onPromptChange?: (sceneIdx: number, prompt: string) => void
+  validationWarning?: string
   // Audio functions - inline play
   parseScriptForAudio?: (action: string) => Array<{type: 'text' | 'sfx' | 'music', content: string}>
   generateAndPlaySFX?: (description: string) => Promise<void>
   generateAndPlayMusic?: (description: string, duration?: number) => Promise<void>
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic }: SceneCardProps) {
+function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
   
@@ -862,6 +865,22 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
       {isOpen && (
         <div className="mt-3">
           {/* Prompt textarea hidden - accessible via drawer/builder */}
+          
+          {/* Validation Warning Banner */}
+          {validationWarning && (
+            <div className="mb-3 p-3 bg-amber-500/20 border border-amber-500/50 rounded-lg">
+              <div className="flex items-start gap-2 text-amber-200">
+                <AlertTriangle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <div className="font-semibold mb-1">Character Reference Not Applied</div>
+                  <div className="text-amber-300/80">{validationWarning}</div>
+                  <div className="text-amber-300/80 mt-1">
+                    Try regenerating or upload a different reference image for better results.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* Scene Image - Prominent Storyboard Display */}
           {!isOutline && scene.imageUrl && (

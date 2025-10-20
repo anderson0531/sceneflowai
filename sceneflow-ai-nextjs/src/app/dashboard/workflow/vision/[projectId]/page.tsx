@@ -41,6 +41,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [scenes, setScenes] = useState<any[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [uploadingRef, setUploadingRef] = useState<Record<string, boolean>>({})
+  const [validationWarnings, setValidationWarnings] = useState<Record<number, string>>({})
   const [generationProgress, setGenerationProgress] = useState({
     script: { complete: false, progress: 0 },
     characters: { complete: false, progress: 0, total: 0 },
@@ -820,13 +821,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             dialogue: scene.dialogue,
             visualStyle: project?.metadata?.filmTreatmentVariant?.visual_style,
             tone: project?.metadata?.filmTreatmentVariant?.tone_description
-          }
+          },
+          selectedCharacters: sceneCharacters
         })
       })
       
       if (!response.ok) throw new Error('Image generation failed')
       
       const data = await response.json()
+      
+      // Check for validation warnings in response
+      if (data.validationWarning) {
+        setValidationWarnings(prev => ({
+          ...prev,
+          [sceneIdx]: data.validationWarning
+        }))
+      }
       
       // Update scene with image
       const updatedScenes = [...(script.script.scenes || [])]
@@ -969,6 +979,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             characters={characters}
             projectId={projectId}
             visualStyle={project?.tone || project?.metadata?.filmTreatmentVariant?.tone}
+            validationWarnings={validationWarnings}
           />
         </div>
         

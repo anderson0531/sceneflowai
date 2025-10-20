@@ -3,6 +3,7 @@ import { callVertexAIImagen } from '@/lib/vertexai/client'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { prepareCharacterReferences, buildPromptWithReferences } from '@/lib/imagen/characterReferences'
 import { optimizePromptForImagen } from '@/lib/imagen/promptOptimizer'
+import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -159,7 +160,7 @@ function getSceneCharacterNames(sceneContext: any): string[] {
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, sceneContext } = await req.json()
+    const { prompt, sceneContext, selectedCharacters } = await req.json()
     
     if (!prompt?.trim()) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
@@ -396,7 +397,7 @@ Camera: Cinematic camera angle, depth of field`
     console.log('[Scene Image] Generating with Vertex AI Imagen 3:', stylePrompt.substring(0, 150))
 
     // Generate image with Vertex AI Imagen 3
-    const base64Image = await callVertexAIImagen(stylePrompt, {
+    let base64Image = await callVertexAIImagen(stylePrompt, {
       aspectRatio: '16:9',
       numberOfImages: 1,
       referenceImages: characterReferences.map(ref => ({
@@ -408,17 +409,75 @@ Camera: Cinematic camera angle, depth of field`
     })
     
     // Upload to Vercel Blob storage
-    const imageUrl = await uploadImageToBlob(
+    let imageUrl = await uploadImageToBlob(
       base64Image,
       `scenes/scene-${Date.now()}.png`
     )
+    
+    // Validate character likeness if references were used
+    let validation: any = null
+    if (characterReferences.length > 0 && selectedCharacters && selectedCharacters.length > 0) {
+      console.log('[Scene Image] Validating character likeness...')
+      
+      const primaryChar = selectedCharacters[0]
+      
+      try {
+        validation = await validateCharacterLikeness(
+          imageUrl,
+          primaryChar.referenceImage!,
+          primaryChar.name
+        )
+        
+        // If validation fails with low confidence, retry with enhanced descriptor
+        if (!validation.matches && validation.confidence < 60) {
+          console.warn('[Scene Image] ⚠️  Character likeness validation failed. Retrying with enhanced descriptor...')
+          console.warn('[Scene Image] Issues:', validation.issues.join(', '))
+          
+          // Enhance the subjectDescription with critical physical attributes
+          const enhancedReferences = characterReferences.map(ref => ({
+            ...ref,
+            subjectDescription: `${ref.subjectDescription} - ${primaryChar.ethnicity || ''} ${primaryChar.subject || 'person'}`.trim()
+          }))
+          
+          // Retry generation
+          base64Image = await callVertexAIImagen(stylePrompt, {
+            aspectRatio: '16:9',
+            numberOfImages: 1,
+            referenceImages: enhancedReferences.map(ref => ({
+              referenceId: ref.id,
+              bytesBase64Encoded: ref.bytesBase64Encoded,
+              referenceType: ref.referenceType,
+              subjectDescription: ref.subjectDescription
+            }))
+          })
+          
+          // Upload retried image
+          imageUrl = await uploadImageToBlob(
+            base64Image,
+            `scenes/scene-retry-${Date.now()}.png`
+          )
+          
+          console.log('[Scene Image] ✓ Regenerated with enhanced descriptor')
+        } else if (validation.matches) {
+          console.log(`[Scene Image] ✓ Character likeness validated (${validation.confidence}% confidence)`)
+        } else {
+          console.warn(`[Scene Image] ⚠️  Low confidence match (${validation.confidence}%), but proceeding`)
+        }
+      } catch (error) {
+        console.error('[Scene Image] Validation failed:', error)
+        // Proceed with original image if validation fails
+      }
+    }
     
     return NextResponse.json({ 
       success: true, 
       imageUrl,
       model: 'imagen-3.0-generate-001',
       provider: 'vertex-ai',
-      storage: 'vercel-blob'
+      storage: 'vercel-blob',
+      validationWarning: validation && !validation.matches && validation.confidence < 60
+        ? `Generated character may not match reference. Issues: ${validation.issues.join(', ')}`
+        : undefined
     })
 
   } catch (error) {
