@@ -40,6 +40,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [characters, setCharacters] = useState<any[]>([])
   const [scenes, setScenes] = useState<any[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
+  const [uploadingRef, setUploadingRef] = useState<Record<string, boolean>>({})
   const [generationProgress, setGenerationProgress] = useState({
     script: { complete: false, progress: 0 },
     characters: { complete: false, progress: 0, total: 0 },
@@ -375,50 +376,68 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   const handleUploadCharacter = async (characterId: string, file: File) => {
     try {
-      // Convert to base64 data URL
-      const reader = new FileReader()
-      reader.onload = async (e) => {
-        const dataUrl = e.target?.result as string
-        
-        // Update character with uploaded image
-        const updatedCharacters = characters.map(char => {
-          const charId = char.id || characters.indexOf(char).toString()
-          return charId === characterId 
-            ? { ...char, referenceImage: dataUrl, imageApproved: false } 
-            : char
-        })
-        
-        setCharacters(updatedCharacters)
-        
-        // Persist to project metadata
-        try {
-          const existingMetadata = project?.metadata || {}
-          const existingVisionPhase = existingMetadata.visionPhase || {}
-          
-          await fetch(`/api/projects`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              id: projectId,
-              metadata: {
-                ...existingMetadata,
-                visionPhase: {
-                  ...existingVisionPhase,
-                  characters: updatedCharacters
-                }
-              }
-            })
-          })
-          console.log('[Character Upload] Saved to project metadata')
-        } catch (saveError) {
-          console.error('Failed to save uploaded character to project:', saveError)
-        }
-        
-        try { const { toast } = require('sonner'); toast.success('Character image uploaded!') } catch {}
+      setUploadingRef(prev => ({ ...prev, [characterId]: true }))
+      
+      // Upload to Vercel Blob first to get public URL
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('projectId', projectId)
+      const character = characters.find(c => {
+        const charId = c.id || characters.indexOf(c).toString()
+        return charId === characterId
+      })
+      formData.append('characterName', character?.name || 'character')
+      
+      const uploadRes = await fetch('/api/character/upload-reference', {
+        method: 'POST',
+        body: formData
+      })
+      
+      if (!uploadRes.ok) {
+        throw new Error('Upload failed')
       }
-      reader.readAsDataURL(file)
+      
+      const { url: blobUrl } = await uploadRes.json()
+      
+      // Update character with the Blob URL (NOT data URL)
+      const updatedCharacters = characters.map(char => {
+        const charId = char.id || characters.indexOf(char).toString()
+        return charId === characterId 
+          ? { ...char, referenceImage: blobUrl, imageApproved: false }  // Use Blob URL
+          : char
+      })
+      
+      setCharacters(updatedCharacters)
+      
+      // Persist to project metadata
+      try {
+        const existingMetadata = project?.metadata || {}
+        const existingVisionPhase = existingMetadata.visionPhase || {}
+        
+        await fetch(`/api/projects`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: projectId,
+            metadata: {
+              ...existingMetadata,
+              visionPhase: {
+                ...existingVisionPhase,
+                characters: updatedCharacters
+              }
+            }
+          })
+        })
+        console.log('[Character Upload] Saved to project metadata')
+      } catch (saveError) {
+        console.error('Failed to save uploaded character to project:', saveError)
+      }
+      
+      setUploadingRef(prev => ({ ...prev, [characterId]: false }))
+      try { const { toast } = require('sonner'); toast.success('Character image uploaded!') } catch {}
     } catch (error) {
       console.error('Character image upload failed:', error)
+      setUploadingRef(prev => ({ ...prev, [characterId]: false }))
       try { const { toast } = require('sonner'); toast.error('Failed to upload image') } catch {}
     }
   }
