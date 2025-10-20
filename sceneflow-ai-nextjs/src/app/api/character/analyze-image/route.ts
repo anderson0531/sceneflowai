@@ -101,17 +101,12 @@ IMPORTANT: Return ONLY the JSON object, no markdown fences, no explanations.`
     
     const parsed = JSON.parse(cleanedText)
     
-    // Ensure appearanceDescription is present, generate fallback if needed
-    const appearanceDescription = parsed.appearanceDescription || 
-      `${parsed.ethnicity || ''} ${parsed.subject || 'person'} with ${parsed.hairColor || ''} ${parsed.hairStyle || ''} hair`.trim()
-    
-    const attributes = {
-      ...parsed,
-      appearanceDescription
-    }
+    // Only use appearanceDescription if AI actually generated it
+    const attributes = parsed.appearanceDescription 
+      ? { ...parsed, appearanceDescription: parsed.appearanceDescription }
+      : parsed
     
     console.log('[Analyze Image] Extracted attributes:', attributes)
-    console.log('[Analyze Image] Appearance description:', appearanceDescription)
     
     return NextResponse.json({ 
       success: true, 

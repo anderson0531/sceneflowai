@@ -319,10 +319,13 @@ export async function POST(req: NextRequest) {
           hasCharacterReferences: true,
           characterMetadata: selectedCharacters?.map((char: any) => ({
             name: char.name,
-            ethnicity: char.ethnicity,
-            subject: char.subject,
-            appearanceDescription: char.appearanceDescription || 
-              `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
+            ethnicity: char.ethnicity || '',
+            subject: char.subject || 'person',
+            hairStyle: char.hairStyle || '',
+            hairColor: char.hairColor || '',
+            eyeColor: char.eyeColor || '',
+            build: char.build || '',
+            expression: char.expression || ''
           }))
         })
         
