@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X, ChevronDown, Check, Settings, Sparkles, Lightbulb, AlertTriangle } from 'lucide-react'
+import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X, ChevronDown, Check, Settings, Sparkles, Lightbulb, AlertTriangle, Info } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { CharacterPromptBuilder } from '@/components/blueprint/CharacterPromptBuilder'
 import { toast } from 'sonner'
@@ -27,6 +27,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
   const [zoomedImage, setZoomedImage] = useState<{url: string; name: string} | null>(null)
   const [expandedSections, setExpandedSections] = useState<Record<string, string | null>>({})
   const [needsReupload, setNeedsReupload] = useState<Record<string, boolean>>({})
+  const [showProTips, setShowProTips] = useState(false)
   
   // Detect low-resolution images that need re-upload
   useEffect(() => {
@@ -168,6 +169,15 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
           <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
             {characters.length}
           </span>
+          
+          {/* Pro Tips Toggle Button */}
+          <button
+            onClick={() => setShowProTips(prev => !prev)}
+            className="ml-2 p-1.5 rounded-full hover:bg-blue-500/10 text-blue-400 hover:text-blue-300 transition-colors"
+            title={showProTips ? "Hide Pro Tips" : "Show Pro Tips"}
+          >
+            <Info className="w-4 h-4" />
+          </button>
         </div>
         
         {!compact && (
@@ -227,6 +237,27 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
               />
             )
           })}
+        </div>
+      )}
+      
+      {/* Image Upload Pro Tips - Collapsible */}
+      {showProTips && (
+        <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg transition-all duration-300 ease-in-out">
+          <div className="flex items-start gap-3">
+            <Lightbulb className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+            <div>
+              <h4 className="text-sm font-semibold text-blue-300 mb-2">
+                Pro Tips: Character Reference Images
+              </h4>
+              <ul className="text-xs text-blue-400/80 space-y-1.5">
+                <li>• <span className="font-medium">Resolution:</span> Use high-quality images (at least 512x512 pixels)</li>
+                <li>• <span className="font-medium">Composition:</span> Clear, well-lit headshots work best for facial recognition</li>
+                <li>• <span className="font-medium">File Size:</span> Keep images under 5MB for optimal performance</li>
+                <li>• <span className="font-medium">Lighting:</span> Avoid harsh shadows or extreme lighting that obscures facial features</li>
+                <li>• <span className="font-medium">Expression:</span> Neutral or calm expressions provide the most consistent results</li>
+              </ul>
+            </div>
+          </div>
         </div>
       )}
       
@@ -564,25 +595,6 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
           </button>
         </div>
       )}
-      
-      {/* Image Upload Pro Tips */}
-      <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-        <div className="flex items-start gap-3">
-          <Lightbulb className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
-          <div>
-            <h4 className="text-sm font-semibold text-blue-300 mb-2">
-              Pro Tips: Character Reference Images
-            </h4>
-            <ul className="text-xs text-blue-400/80 space-y-1.5">
-              <li>• <span className="font-medium">Resolution:</span> Use high-quality images (at least 512x512 pixels)</li>
-              <li>• <span className="font-medium">Composition:</span> Clear, well-lit headshots work best for facial recognition</li>
-              <li>• <span className="font-medium">File Size:</span> Keep images under 5MB for optimal performance</li>
-              <li>• <span className="font-medium">Lighting:</span> Avoid harsh shadows or extreme lighting that obscures facial features</li>
-              <li>• <span className="font-medium">Expression:</span> Neutral or calm expressions provide the most consistent results</li>
-            </ul>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
