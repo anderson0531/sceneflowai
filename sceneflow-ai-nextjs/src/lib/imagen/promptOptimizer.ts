@@ -12,19 +12,41 @@ export async function optimizePromptForImagen(params: OptimizePromptParams): Pro
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
   
-  const systemPrompt = `You are an expert at creating image generation prompts for Google's Imagen 3 API.
+  const systemPrompt = `You are an expert at creating image generation prompts for Google's Imagen 3 API with character reference images.
 
-CRITICAL REQUIREMENTS when character reference images are provided:
-1. Shot framing MUST be Close-Up, Medium Close-Up, or Medium Shot for facial recognition
-2. Character faces must be VISIBLE and PROMINENT in the frame
-3. Remove ALL non-visual elements (sound, audio, dialogue)
-4. Soften harsh emotional descriptions that conflict with reference images
-5. Use gentle lighting descriptions (avoid "harsh", "illuminated by", use "softly lit", "warm glow")
-6. Keep character names followed by [referenceId] format (e.g., "Brian Anderson [1]")
-7. Focus on: facial expression, body language, environment, atmosphere, lighting
-8. Maintain photorealistic, cinematic quality
+CRITICAL: When character reference images are provided, you MUST use the EXPLICIT REFERENCE METHOD:
 
-OUTPUT: A single, clean prompt (one paragraph, no explanations).`
+1. START with a reference pointer (choose one):
+   - "The character from the reference image..."
+   - "The person in the reference image..."
+   - "The subject from the reference image..."
+
+2. REMOVE ALL physical character descriptions from the prompt:
+   - NO ethnicity, race, skin color
+   - NO facial features (eyes, nose, mouth, face shape)
+   - NO hair descriptions (color, style, length)
+   - NO body descriptions (height, build, physique)
+   - NO age descriptors
+
+3. KEEP ONLY:
+   - Actions, poses, gestures
+   - Facial expressions and emotions
+   - Scene/environment details
+   - Lighting and atmosphere
+   - Clothing/attire (if changing from reference)
+   - Camera framing (Close-Up, Medium Close-Up, Medium Shot only)
+
+4. MAINTAIN [referenceId] format after character name for API
+
+EXAMPLE TRANSFORMATIONS:
+
+Input: "A tall African American man with short black hair and a determined expression, wearing a suit, working at his desk"
+Output: "The character from the reference image [1] with a determined expression, wearing a business suit, working at his desk in a modern office. Medium close-up shot, softly lit."
+
+Input: "Brian Anderson, stressed and worried, illuminated by harsh monitor light"  
+Output: "The character from the reference image [1] showing a focused, contemplative expression, softly lit by warm computer monitor glow. Close-up shot, professional office setting."
+
+OUTPUT: Single paragraph, photorealistic, cinematic quality.`
 
   const userPrompt = `${systemPrompt}
 
@@ -53,6 +75,10 @@ Output ONLY the optimized prompt, nothing else.`
   
   console.log('[Prompt Optimizer] Original:', params.rawPrompt.substring(0, 100))
   console.log('[Prompt Optimizer] Optimized:', optimizedPrompt.substring(0, 100))
+  console.log('[Prompt Optimizer] Input contained character descriptions:', 
+    /African American|white|black|tall|short|hair|eyes|skin|face|ethnicity/i.test(params.rawPrompt))
+  console.log('[Prompt Optimizer] Output uses explicit reference:', 
+    /character from the reference|person in the reference|subject from the reference/i.test(optimizedPrompt))
   
   return optimizedPrompt
 }
