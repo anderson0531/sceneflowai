@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState } from 'react'
-import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X, ChevronDown, Check, Settings, Sparkles, Lightbulb } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X, ChevronDown, Check, Settings, Sparkles, Lightbulb, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { CharacterPromptBuilder } from '@/components/blueprint/CharacterPromptBuilder'
 import { toast } from 'sonner'
@@ -26,6 +26,28 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
   const [uploadingRef, setUploadingRef] = useState<Record<string, boolean>>({})
   const [zoomedImage, setZoomedImage] = useState<{url: string; name: string} | null>(null)
   const [expandedSections, setExpandedSections] = useState<Record<string, string | null>>({})
+  const [needsReupload, setNeedsReupload] = useState<Record<string, boolean>>({})
+  
+  // Detect low-resolution images that need re-upload
+  useEffect(() => {
+    const warnings: Record<string, boolean> = {}
+    characters.forEach(char => {
+      const charId = char.id || characters.indexOf(char).toString()
+      if (char.referenceImage) {
+        // Detect data URL (old method)
+        if (char.referenceImage.startsWith('data:')) {
+          // Estimate size from data URL length
+          const base64Length = char.referenceImage.split(',')[1]?.length || 0
+          const estimatedKB = (base64Length * 0.75) / 1024
+          
+          if (estimatedKB < 50) {
+            warnings[charId] = true
+          }
+        }
+      }
+    })
+    setNeedsReupload(warnings)
+  }, [characters])
   
   const handleToggleSection = (charId: string, section: 'coreIdentity' | 'appearance') => {
     const key = `${charId}-${section === 'coreIdentity' ? 'core' : 'appear'}`
@@ -342,6 +364,30 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
           <div className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">{character.name || 'Unnamed'}</div>
           <div className="text-xs text-gray-600 dark:text-gray-400 truncate">{character.role || 'Character'}</div>
         </div>
+        
+        {/* Low Resolution Warning */}
+        {character.referenceImage && character.referenceImage.startsWith('data:') && (() => {
+          const base64Length = character.referenceImage.split(',')[1]?.length || 0
+          const estimatedKB = (base64Length * 0.75) / 1024
+          
+          if (estimatedKB < 50) {
+            return (
+              <div className="p-2 bg-amber-500/20 border border-amber-500/50 rounded text-xs text-amber-200">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold">Low Resolution Detected</div>
+                    <div className="text-amber-300/80 mt-0.5">
+                      This character uses a compressed image ({estimatedKB.toFixed(0)}KB). 
+                      Re-upload a higher resolution image (512x512+ recommended) for accurate character generation.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          }
+          return null
+        })()}
         
         {/* Character Attributes */}
         {(character.subject || character.ethnicity || character.keyFeature) && (
