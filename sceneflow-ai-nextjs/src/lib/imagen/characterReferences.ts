@@ -25,6 +25,10 @@ export async function prepareCharacterReferences(
         // Get image data
         const arrayBuffer = await response.arrayBuffer()
         
+        // Detailed logging for debugging
+        console.log(`[Char Ref] Fetched ${char.name} from URL:`, char.referenceImage.substring(0, 50))
+        console.log(`[Char Ref] ArrayBuffer size: ${arrayBuffer.byteLength} bytes (${(arrayBuffer.byteLength / 1024).toFixed(1)}KB)`)
+        
         // Validate image size (warn if too large)
         const sizeMB = arrayBuffer.byteLength / (1024 * 1024)
         if (sizeMB > 5) {
@@ -33,6 +37,16 @@ export async function prepareCharacterReferences(
         
         // Use original image for maximum facial detail
         const base64 = Buffer.from(arrayBuffer).toString('base64')
+        
+        console.log(`[Char Ref] Base64 string length: ${base64.length} characters`)
+        console.log(`[Char Ref] Estimated decoded size: ${(base64.length * 0.75 / 1024).toFixed(1)}KB`)
+        
+        // Detect if it's a data URL vs Blob URL
+        if (char.referenceImage.startsWith('data:')) {
+          console.warn(`[Char Ref] ⚠️  Character ${char.name} uses data URL (may be compressed). Re-upload for full resolution.`)
+        } else {
+          console.log(`[Char Ref] ✓ Character ${char.name} uses Blob URL (full resolution)`)
+        }
         
         // Build description from character attributes
         const descParts = []
