@@ -225,7 +225,7 @@ For each scene, estimate REALISTIC duration based on actual content:
 
 Return JSON:
 {
-  "totalScenes": 24,  // YOUR DECISION (${min}-${max}) - how many scenes total for this story?
+  "totalScenes": ${suggested},  // YOUR DECISION (${min}-${max}) - how many scenes best fits the ${targetDuration}s story?
   "estimatedTotalDuration": 300,  // Sum of first ${end} scenes only
   "scenes": [
     {
