@@ -60,16 +60,16 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const scenes = script?.script?.scenes || []
 
   React.useEffect(() => {
+    console.log('[ScriptPanel] === RENDER UPDATE ===')
     console.log('[ScriptPanel] Props received:', {
       hasScript: !!script,
       scriptKeys: script ? Object.keys(script) : [],
       hasNestedScript: !!script?.script,
       nestedScriptKeys: script?.script ? Object.keys(script.script) : [],
       sceneCount: scenes.length,
-      firstScene: scenes[0] ? { 
-        heading: scenes[0].heading, 
-        duration: scenes[0].duration 
-      } : 'NO SCENES'
+      sceneNumbers: scenes.map((s: any, i: number) => s.sceneNumber || i + 1).join(', '),
+      firstScene: scenes[0] ? { heading: scenes[0].heading, duration: scenes[0].duration } : 'NO SCENES',
+      lastScene: scenes[scenes.length - 1] ? { heading: scenes[scenes.length - 1].heading, sceneNumber: scenes[scenes.length - 1].sceneNumber } : 'NO LAST SCENE'
     })
   }, [script, scenes])
 

@@ -170,6 +170,12 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    console.log(`[Script Gen V2] === FINAL RESULT ===`)
+    console.log(`[Script Gen V2] Returning ${allScenes.length} scenes to client`)
+    console.log(`[Script Gen V2] Scene numbers: ${allScenes.map((s: any) => s.sceneNumber).join(', ')}`)
+    console.log(`[Script Gen V2] First scene: ${JSON.stringify(allScenes[0]).substring(0, 100)}`)
+    console.log(`[Script Gen V2] Last scene: ${JSON.stringify(allScenes[allScenes.length - 1]).substring(0, 100)}`)
+
     return NextResponse.json({ success: true, script })
     
   } catch (error: any) {

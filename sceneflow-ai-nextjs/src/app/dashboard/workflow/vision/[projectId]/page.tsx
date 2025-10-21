@@ -93,14 +93,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
         
         if (visionPhase.script) {
-          console.log('[Vision] Setting script state:', {
-            hasTitle: !!visionPhase.script.title,
-            hasNestedScript: !!visionPhase.script.script,
-            nestedSceneCount: visionPhase.script.script?.scenes?.length || 0,
-            firstScenePreview: visionPhase.script.script?.scenes?.[0] 
-              ? JSON.stringify(visionPhase.script.script.scenes[0]).slice(0, 200)
-              : 'NO SCENE DATA'
-          })
+          console.log('[Vision] === LOADING SCRIPT ===')
+          console.log('[Vision] Script object keys:', Object.keys(visionPhase.script))
+          console.log('[Vision] Nested script keys:', visionPhase.script.script ? Object.keys(visionPhase.script.script) : 'NO NESTED SCRIPT')
+          console.log('[Vision] Scene count in visionPhase.script:', visionPhase.script.script?.scenes?.length || 0)
+          console.log('[Vision] First 5 scene numbers:', visionPhase.script.script?.scenes?.slice(0, 5).map((s: any) => s.sceneNumber))
+          console.log('[Vision] Last 5 scene numbers:', visionPhase.script.script?.scenes?.slice(-5).map((s: any) => s.sceneNumber))
+          
           setScript(visionPhase.script)
         }
         if (visionPhase.characters) setCharacters(visionPhase.characters)
