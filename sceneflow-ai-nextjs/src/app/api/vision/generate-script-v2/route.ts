@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     const duration = project.duration || 300
     const minScenes = Math.floor(duration / 90)   // Conservative (scenes avg 90s)
     const maxScenes = Math.floor(duration / 20)   // Aggressive (scenes avg 20s)  
-    const suggestedScenes = Math.floor(duration / 50)  // Recommended (scenes avg 50s)
+    const suggestedScenes = Math.ceil(duration / 30)  // Recommended (scenes avg 30s) - more scenes for better pacing
     
     console.log(`[Script Gen V2] Target: ${duration}s - Scene range: ${minScenes}-${maxScenes} (suggested: ${suggestedScenes})`)
 
