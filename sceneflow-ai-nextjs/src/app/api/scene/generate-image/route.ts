@@ -118,12 +118,12 @@ export async function POST(req: NextRequest) {
       hasAppearance: !!c.appearanceDescription
     })))
 
-    // Build optimized prompt using AI
+    // Build optimized prompt using deterministic template
     let finalPrompt = prompt
     
     if (charactersWithGCS.length > 0) {
       try {
-        finalPrompt = await optimizePromptForImagen({
+        finalPrompt = optimizePromptForImagen({
           rawPrompt: prompt,
           sceneAction: sceneContext?.action || '',
           visualDescription: sceneContext?.visualDescription || prompt,
@@ -136,10 +136,10 @@ export async function POST(req: NextRequest) {
           }))
         })
 
-        console.log('[Scene Image] ✓ AI-optimized prompt with GCS references')
+        console.log('[Scene Image] ✓ Deterministic prompt with GCS references')
         console.log('[Scene Image] Prompt preview:', finalPrompt.substring(0, 200))
       } catch (error) {
-        console.error('[Prompt Optimizer] AI failed:', error)
+        console.error('[Prompt Optimizer] Failed:', error)
         // Fallback: use original prompt
         console.warn('[Scene Image] Using original prompt as fallback')
       }

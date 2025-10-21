@@ -1,5 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
-
 interface OptimizePromptParams {
   rawPrompt: string
   sceneAction: string
@@ -8,96 +6,179 @@ interface OptimizePromptParams {
   hasCharacterReferences: boolean
   characterMetadata?: Array<{
     name: string
-    referenceImageGCS?: string  // GCS URL for embedding in prompt
-    appearanceDescription?: string  // Brief physical description
+    referenceImageGCS?: string
+    appearanceDescription?: string
   }>
 }
 
 /**
- * Optimize prompt for Imagen 3 using GCS reference URLs embedded in text
- * Follows best practice format: [Image Reference: gs://bucket/path]
+ * Optimized deterministic prompt generator for Vertex AI Imagen 3
+ * Uses template-based approach with explicit structure for character references
  */
-export async function optimizePromptForImagen(params: OptimizePromptParams): Promise<string> {
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+export function optimizePromptForImagen(params: OptimizePromptParams): string {
+  // Input validation
+  if (!params.hasCharacterReferences || !params.characterMetadata || params.characterMetadata.length === 0) {
+    // No character references - return cleaned scene description
+    return cleanSceneDescription(params.visualDescription || params.rawPrompt)
+  }
+
+  const primaryCharacter = params.characterMetadata[0]
   
-  const systemPrompt = `You are an expert at creating image generation prompts for Google's Imagen 3 API with character reference images.
+  if (!primaryCharacter.referenceImageGCS) {
+    throw new Error('Character reference GCS URL is required')
+  }
 
-CRITICAL REQUIREMENTS:
-1. Use GCS URL format for character references: [Image Reference: gs://bucket/path]
-2. Add brief physical descriptor AFTER the reference (e.g., "African American man in his late 40s")
-3. Shot framing MUST be Close-Up, Medium Close-Up, or Medium Shot for facial recognition
-4. Character faces must be FULLY VISIBLE and PROMINENT - NO OCCLUSION
-5. REMOVE/REPLACE facial occlusion actions:
-   - "rubbing temples/eyes/face" → "staring intently"
-   - "hands on face/head" → "looking focused"
-   - "covering eyes/mouth" → "gazing"
-   - "looking down" → "looking toward [object]"
-   - "head bowed" → "head raised, looking at [object]"
-   - "face turned away" → "facing camera"
-6. DO NOT include expressions, emotions, or mood descriptors
-7. Remove ALL non-visual elements (sound, audio, dialogue)
-8. Use objective physical attributes only
-
-PROMPT STRUCTURE (follow exactly):
-"[SHOT TYPE] of [Image Reference: gs://bucket/path], [brief physical descriptor], [NON-OCCLUSIVE ACTION] in [environment]. Character modifiers: cinematic lighting, photo-realistic, detailed facial features, focused intensity. Scene modifiers: [lighting], [color scheme], [atmosphere], 8K resolution."
-
-EXAMPLES:
-
-✓ GOOD: "CLOSE UP of [Image Reference: gs://sceneflow-refs/brian-anderson.jpg], African American man in his late 40s, staring intently at computer screen in modern office cubicle at night. Character modifiers: cinematic lighting, photo-realistic, detailed facial features, sharp focus. Scene modifiers: volumetric light from monitor, cool blue tones, dramatic shadows, 8K resolution."
-
-✓ GOOD: "MEDIUM SHOT of [Image Reference: gs://sceneflow-refs/kavita-patel.jpg], South Asian woman in her early 30s, looking toward sunset from rooftop garden. Character modifiers: cinematic lighting, photo-realistic, natural skin texture. Scene modifiers: warm golden hour light, soft bokeh background, warm orange and pink tones."
-
-✗ BAD: "The character from the reference image rubbing his temples with a weary expression" 
-   (Missing GCS URL! Face occluded! Emotion descriptor!)
-
-✗ BAD: "[Image Reference: gs://bucket/image.jpg] looking stressed"
-   (Missing physical descriptor! Emotion!)
-
-OUTPUT: A single, clean prompt following the structure above (one paragraph, no explanations).`
-
-  const characterContext = params.characterMetadata && params.characterMetadata.length > 0
-    ? params.characterMetadata.map(char => {
-        return `Character: ${char.name}
-  - GCS URL: ${char.referenceImageGCS || 'NOT AVAILABLE'}
-  - Physical Description: ${char.appearanceDescription || 'NOT AVAILABLE'}`
-      }).join('\n\n')
-    : 'No character references available'
-
-  const userPrompt = `${systemPrompt}
-
-Raw scene information:
-- Visual Description: ${params.visualDescription}
-- Scene Action: ${params.sceneAction}
-- Characters in Scene: ${params.characterNames.join(', ')}
-
-${characterContext}
-
-CRITICAL INSTRUCTIONS:
-1. For EACH character with a reference image, use this format:
-   [Image Reference: <GCS_URL>], <Physical Description>
-2. If action involves facial occlusion, REPLACE with face-visible alternative
-3. NO emotions or expressions - only objective physical attributes
-4. Keep faces FULLY VISIBLE and PROMINENT
-
-Example transformation:
-Input: "Brian rubs his temples in the office"
-Character: Brian Anderson
-GCS URL: gs://sceneflow-refs/brian-anderson-123.jpg
-Physical: African American man in his late 40s
-Output: "CLOSE UP of [Image Reference: gs://sceneflow-refs/brian-anderson-123.jpg], African American man in his late 40s, staring intently at computer screen in modern office. Character modifiers: cinematic lighting, photo-realistic, detailed facial features. Scene modifiers: soft office lighting, neutral tones, 8K resolution."
-
-Create an optimized Imagen 3 prompt following the structure above.
-
-Output ONLY the optimized prompt, nothing else.`
-
-  const result = await model.generateContent(userPrompt)
-  const optimizedPrompt = result.response.text().trim()
+  // 1. Extract composition type (shot type)
+  const compositionType = extractCompositionType(params.visualDescription, params.sceneAction)
   
-  console.log('[Prompt Optimizer] Original:', params.rawPrompt.substring(0, 100))
-  console.log('[Prompt Optimizer] Optimized:', optimizedPrompt.substring(0, 150))
-  console.log('[Prompt Optimizer] Uses GCS references:', /\[Image Reference: gs:\/\//i.test(optimizedPrompt))
-  console.log('[Prompt Optimizer] Has physical descriptors:', params.characterMetadata?.some(c => c.appearanceDescription))
+  // 2. Build scene description (action + environment)
+  const sceneDescription = buildSceneDescription(params)
   
-  return optimizedPrompt
+  // 3. Core Instruction
+  const coreInstruction = `Create a ${compositionType} of [Image Reference: ${primaryCharacter.referenceImageGCS}] ${sceneDescription}.`
+  
+  // 4. Character Modifiers
+  const characterModifiers = [
+    "cinematic lighting",
+    "photo-realistic",
+    "detailed facial features",
+    "natural skin texture",
+    "8K resolution",
+    "sharp focus"
+  ]
+  
+  // 5. Scene Modifiers (extracted from scene description)
+  const sceneModifiers = extractSceneModifiers(params)
+  
+  // 6. Construct final prompt
+  const optimizedPrompt = `${coreInstruction}
+
+Character Modifiers: ${characterModifiers.join(", ")}.
+
+Scene Modifiers: ${sceneModifiers.join(", ")}.`
+
+  console.log('[Prompt Optimizer] Deterministic prompt generated')
+  console.log('[Prompt Optimizer] Composition:', compositionType)
+  console.log('[Prompt Optimizer] GCS Reference:', primaryCharacter.referenceImageGCS)
+  console.log('[Prompt Optimizer] Scene:', sceneDescription.substring(0, 100))
+
+  return optimizedPrompt.trim()
+}
+
+// Helper: Extract composition type from scene description
+function extractCompositionType(visualDesc: string, action: string): string {
+  const text = `${visualDesc} ${action}`.toLowerCase()
+  
+  if (/close.?up|cu\s/i.test(text)) return "close-up"
+  if (/medium\s+close.?up/i.test(text)) return "medium close-up"
+  if (/medium\s+shot/i.test(text)) return "medium shot"
+  if (/wide\s+shot|establishing/i.test(text)) return "wide shot"
+  if (/overhead|bird.?s\s+eye/i.test(text)) return "overhead shot"
+  
+  // Default to medium shot (good balance for character reference)
+  return "medium shot"
+}
+
+// Helper: Build clean scene description
+function buildSceneDescription(params: OptimizePromptParams): string {
+  const parts: string[] = []
+  
+  // Extract action (remove technical terms)
+  const action = cleanAction(params.sceneAction || params.visualDescription)
+  if (action) parts.push(action)
+  
+  // Extract environment/setting
+  const environment = extractEnvironment(params.visualDescription)
+  if (environment) parts.push(`in ${environment}`)
+  
+  return parts.join(' ')
+}
+
+// Helper: Clean action description
+function cleanAction(action: string): string {
+  let cleaned = action
+  
+  // Remove shot type indicators
+  cleaned = cleaned.replace(/\b(close.?up|cu|medium\s+shot|wide\s+shot|overhead|establishing)\s+/gi, '')
+  
+  // Remove "SOUND of..." and similar
+  cleaned = cleaned.replace(/SOUND\s+of[^.]*\.?/gi, '')
+  
+  // Remove facial occlusion actions
+  cleaned = cleaned.replace(/rubbing\s+(his|her|their)\s+(temples|eyes|face)/gi, 'looking intently')
+  cleaned = cleaned.replace(/hands?\s+on\s+(his|her|their)\s+(face|head)/gi, 'focused')
+  cleaned = cleaned.replace(/looking\s+down/gi, 'gazing')
+  
+  // Extract just the key action
+  const actionMatch = cleaned.match(/(?:is\s+)?([a-z]+ing[^,\.]+)/i)
+  if (actionMatch) {
+    return actionMatch[1].trim()
+  }
+  
+  return cleaned.trim()
+}
+
+// Helper: Extract environment from visual description
+function extractEnvironment(visualDesc: string): string {
+  // Look for location indicators
+  const locationMatch = visualDesc.match(/\b(?:in|at|on|within)\s+(?:a|an|the)\s+([^,\.]+)/i)
+  if (locationMatch) {
+    return locationMatch[1].trim()
+  }
+  
+  // Look for common environment patterns
+  const environments = [
+    'office', 'cubicle', 'room', 'street', 'beach', 'park', 'building',
+    'rooftop', 'train', 'car', 'house', 'apartment', 'kitchen', 'bedroom'
+  ]
+  
+  for (const env of environments) {
+    if (new RegExp(`\\b${env}\\b`, 'i').test(visualDesc)) {
+      return env
+    }
+  }
+  
+  return ''
+}
+
+// Helper: Extract scene modifiers from description
+function extractSceneModifiers(params: OptimizePromptParams): string[] {
+  const modifiers: string[] = []
+  const text = `${params.visualDescription} ${params.sceneAction}`.toLowerCase()
+  
+  // Lighting
+  if (/night|dark|dim/i.test(text)) modifiers.push("volumetric light", "dramatic shadows")
+  if (/sunset|golden\s+hour/i.test(text)) modifiers.push("warm golden light")
+  if (/sunrise|dawn/i.test(text)) modifiers.push("soft morning light")
+  if (/monitor|screen\s+glow/i.test(text)) modifiers.push("cool blue glow from monitor")
+  
+  // Atmosphere
+  if (/tense|stressed|urgent/i.test(text)) modifiers.push("high contrast", "dramatic atmosphere")
+  if (/calm|peaceful|serene/i.test(text)) modifiers.push("soft lighting", "peaceful atmosphere")
+  
+  // Color scheme
+  if (/blue/i.test(text)) modifiers.push("cool blue tones")
+  if (/warm|orange|red/i.test(text)) modifiers.push("warm color palette")
+  
+  // Default modifiers if none found
+  if (modifiers.length === 0) {
+    modifiers.push("dynamic perspective", "cinematic composition", "depth of field")
+  }
+  
+  return modifiers
+}
+
+// Helper: Clean scene description for non-reference images
+function cleanSceneDescription(description: string): string {
+  let cleaned = description
+  
+  // Remove SOUND of...
+  cleaned = cleaned.replace(/SOUND\s+of[^.]*\.?/gi, '')
+  
+  // Add photorealistic quality
+  if (!cleaned.includes('photorealistic')) {
+    cleaned += '. Photorealistic, cinematic lighting, 8K resolution, sharp focus.'
+  }
+  
+  return cleaned.trim()
 }
