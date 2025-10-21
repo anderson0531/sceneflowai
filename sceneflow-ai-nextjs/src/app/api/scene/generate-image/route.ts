@@ -30,20 +30,19 @@ function getSceneCharacterNames(sceneContext: any): string[] {
     })
   }
   
-  // 3. Extract from action/visual description
-  const textToSearch = [
-    sceneContext?.action || '',
-    sceneContext?.visualDescription || ''
-  ].join(' ')
-  
-  // Look for character name patterns (capitalize first letter of each word)
-  const namePattern = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b/g
-  const matches = textToSearch.matchAll(namePattern)
-  
-  for (const match of matches) {
-    const potentialName = match[1]
-    // Filter out common words that aren't names
-    if (!['The', 'A', 'An', 'In', 'On', 'At', 'From', 'To', 'And', 'Or', 'But', 'INT', 'EXT', 'CU', 'CLOSE', 'UP'].includes(potentialName)) {
+  // 3. Extract from action/visual description (only if no characters found yet)
+  if (foundNames.size === 0) {
+    const textToSearch = [
+      sceneContext?.action || '',
+      sceneContext?.visualDescription || ''
+    ].join(' ')
+    
+    // Look for character name patterns (full names with 2+ parts, or single capitalized names)
+    const namePattern = /\b([A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b/g
+    const matches = textToSearch.matchAll(namePattern)
+    
+    for (const match of matches) {
+      const potentialName = match[1]
       foundNames.add(potentialName)
     }
   }
@@ -63,18 +62,54 @@ export async function POST(req: NextRequest) {
     console.log('[Scene Image] Generating scene image')
     console.log('[Scene Image] Has scene context:', !!sceneContext)
     console.log('[Scene Image] Selected characters:', selectedCharacters.length)
+    console.log('[Scene Image] Selected character details:', selectedCharacters.map((c: any) => ({
+      name: c.name,
+      hasGCS: !!c.referenceImageGCS,
+      gcsUrl: c.referenceImageGCS?.substring(0, 50) || 'none',
+      hasAppearance: !!c.appearanceDescription
+    })))
 
     // Extract character names from scene
     const sceneCharacterNames = getSceneCharacterNames(sceneContext)
     console.log('[Scene Image] Scene character names:', sceneCharacterNames)
 
     // Filter selected characters to only those in the scene with GCS URLs
+    // Use flexible matching: check if character name contains scene name or vice versa
     const charactersWithGCS = selectedCharacters.filter((char: any) => {
-      const isInScene = sceneCharacterNames.some(name => 
-        name.toLowerCase().includes(char.name.toLowerCase()) ||
-        char.name.toLowerCase().includes(name.toLowerCase())
-      )
-      return isInScene && char.referenceImageGCS
+      if (!char.referenceImageGCS) {
+        console.log(`[Scene Image] Character ${char.name} has no GCS URL, skipping`)
+        return false
+      }
+      
+      // Normalize names for comparison (remove extra spaces, lowercase)
+      const charNameNorm = char.name.toLowerCase().trim()
+      
+      // Check if this character matches any scene character name
+      const isInScene = sceneCharacterNames.some(sceneName => {
+        const sceneNameNorm = sceneName.toLowerCase().trim()
+        
+        // Match if:
+        // 1. Exact match
+        // 2. Character name contains scene name (e.g., "Brian Anderson Sr" contains "Brian")
+        // 3. Scene name contains character name (e.g., "Brian" matches "Brian Anderson Sr")
+        const matches = charNameNorm === sceneNameNorm ||
+                       charNameNorm.includes(sceneNameNorm) ||
+                       sceneNameNorm.includes(charNameNorm)
+        
+        if (matches) {
+          console.log(`[Scene Image] ✓ Matched "${char.name}" to scene name "${sceneName}"`)
+        }
+        
+        return matches
+      })
+      
+      if (!isInScene && sceneCharacterNames.length === 0) {
+        // If no scene names found, include all characters with GCS
+        console.log(`[Scene Image] No scene names found, including character ${char.name}`)
+        return true
+      }
+      
+      return isInScene
     })
 
     console.log('[Scene Image] Characters with GCS references:', charactersWithGCS.map((c: any) => ({
