@@ -19,7 +19,8 @@ export interface EnhancedCharacter {
   // Optional fields
   description?: string         // Narrative description
   imagePrompt?: string         // Generated visual prompt
-  referenceImage?: string | null
+  referenceImage?: string | null  // Vercel Blob URL for UI display
+  referenceImageGCS?: string | null  // GCS URL for Imagen API (gs://bucket/path)
   appearanceDescription?: string  // AI-generated from reference image for hybrid consistency
   generating?: boolean
   

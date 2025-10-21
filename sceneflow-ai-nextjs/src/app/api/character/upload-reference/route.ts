@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { put } from '@vercel/blob'
+import { uploadImageToGCS } from '@/lib/storage/gcs'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -19,18 +20,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing projectId or characterName' }, { status: 400 })
     }
     
-    // Upload to Vercel Blob
-    const blob = await put(
-      `character-refs/${projectId}/${characterName}-${Date.now()}.${file.name.split('.').pop()}`,
-      file,
-      { access: 'public' }
-    )
+    // Convert file to buffer for GCS upload
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
     
-    console.log('[Upload Reference] Uploaded:', blob.url)
+    console.log('[Upload Reference] Starting dual upload for', characterName)
+    
+    // Upload to both storage systems in parallel
+    const [blobResult, gcsUrl] = await Promise.all([
+      // 1. Upload to Vercel Blob (for UI display/thumbnails)
+      put(
+        `character-refs/${projectId}/${characterName}-${Date.now()}.${file.name.split('.').pop()}`,
+        file,
+        { access: 'public' }
+      ),
+      // 2. Upload to Google Cloud Storage (for Imagen API)
+      uploadImageToGCS(buffer, characterName)
+    ])
+    
+    console.log('[Upload Reference] Vercel Blob URL:', blobResult.url)
+    console.log('[Upload Reference] GCS URL:', gcsUrl)
     
     return NextResponse.json({ 
       success: true, 
-      url: blob.url 
+      url: blobResult.url,  // Vercel Blob URL for UI
+      gcsUrl: gcsUrl  // GCS URL for Imagen API
     })
   } catch (error: any) {
     console.error('[Upload Reference] Error:', error)

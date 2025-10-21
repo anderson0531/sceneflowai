@@ -4,7 +4,7 @@ import UserProviderConfig from '@/models/UserProviderConfig'
 import { sequelize } from '@/config/database'
 import { callVertexAIImagen } from '@/lib/vertexai/client'
 import { uploadImageToBlob } from '@/lib/storage/blob'
-import { prepareCharacterReferences, buildPromptWithReferences } from '@/lib/imagen/characterReferences'
+import { optimizePromptForImagen } from '@/lib/imagen/promptOptimizer'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -27,9 +27,9 @@ export async function POST(request: NextRequest) {
     // For now, use platform Vertex AI service account for all scene images
     console.log(`[Scene Gen] Generating ${scenes.length} scene images with Vertex AI Imagen 3`)
 
-    // Prepare character references once for all scenes
-    const characterReferences = await prepareCharacterReferences(characters || [])
-    console.log(`[Scene Gen] Prepared ${characterReferences.length} character references`)
+    // Filter characters with GCS references
+    const charactersWithGCS = (characters || []).filter((c: any) => c.referenceImageGCS)
+    console.log(`[Scene Gen] Found ${charactersWithGCS.length} characters with GCS references`)
 
     // Generate scene images with Vertex AI
     const sceneImages = await Promise.all(
@@ -37,22 +37,33 @@ export async function POST(request: NextRequest) {
         try {
           const prompt = buildScenePrompt(scene, characters)
           
-          // Build prompt with character references
+          // Build optimized prompt with GCS references
           const sceneCharacterNames = scene.characters || []
-          const finalPrompt = characterReferences.length > 0
-            ? buildPromptWithReferences(prompt, characterReferences, sceneCharacterNames)
-            : prompt
+          let finalPrompt = prompt
           
-          // Use Vertex AI directly (bypass BYOK for now)
+          if (charactersWithGCS.length > 0) {
+            try {
+              finalPrompt = await optimizePromptForImagen({
+                rawPrompt: prompt,
+                sceneAction: scene.action || '',
+                visualDescription: scene.visualDescription || prompt,
+                characterNames: sceneCharacterNames,
+                hasCharacterReferences: true,
+                characterMetadata: charactersWithGCS.map((char: any) => ({
+                  name: char.name,
+                  referenceImageGCS: char.referenceImageGCS,
+                  appearanceDescription: char.appearanceDescription || `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
+                }))
+              })
+            } catch (error) {
+              console.error(`[Scene Gen] Prompt optimizer failed for scene ${index + 1}:`, error)
+            }
+          }
+          
+          // Use Vertex AI with GCS references embedded in prompt
           const base64Image = await callVertexAIImagen(finalPrompt, {
             aspectRatio: '16:9',
-            numberOfImages: 1,
-            referenceImages: characterReferences.map(ref => ({
-              referenceId: ref.id,
-              bytesBase64Encoded: ref.imageBase64,
-              referenceType: 'SUBJECT' as const,
-              subjectDescription: ref.description
-            }))
+            numberOfImages: 1
           })
           
           const imageUrl = await uploadImageToBlob(

@@ -31,8 +31,14 @@ export async function validateCharacterLikeness(
 IMAGE 1: Reference character image (what the character should look like)
 IMAGE 2: Generated scene image (what was produced)
 
+CRITICAL SCORING CRITERIA (must match for high confidence):
+1. Ethnicity Match (40 points): Skin tone, racial features must be identical
+2. Facial Structure Match (30 points): Face shape, jawline, bone structure
+3. Hair Match (20 points): Color, style, texture
+4. Overall Likeness (10 points): General appearance, age range
+
 Analyze if IMAGE 2's character matches IMAGE 1's physical appearance:
-- Ethnicity and skin tone
+- Ethnicity and skin tone (MOST CRITICAL - major mismatch = low confidence)
 - Facial features and structure
 - Hair color and style
 - Age appearance
@@ -42,9 +48,17 @@ Respond in JSON format:
 {
   "matches": true/false,
   "confidence": 0-100,
+  "ethnicity_match": true/false,
+  "facial_match": true/false,
+  "hair_match": true/false,
   "issues": ["issue 1", "issue 2"],
   "analysis": "brief comparison summary"
-}`
+}
+
+IMPORTANT: 
+- If ethnicity/skin tone doesn't match, confidence MUST be < 40
+- If facial structure is completely different, confidence MUST be < 50
+- Only mark "matches": true if confidence >= 85 and ethnicity matches`
 
   const result = await model.generateContent([
     {

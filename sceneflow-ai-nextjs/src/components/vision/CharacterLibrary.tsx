@@ -422,6 +422,37 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
           return null
         })()}
         
+        {/* Missing GCS Reference Warning */}
+        {character.referenceImage && !character.referenceImageGCS && (
+          <div className="p-2 bg-blue-500/20 border border-blue-500/50 rounded text-xs text-blue-200">
+            <div className="flex items-start gap-2">
+              <Lightbulb className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <div>
+                <div className="font-semibold">Re-upload Required</div>
+                <div className="text-blue-300/80 mt-0.5">
+                  This reference image needs to be re-uploaded to Google Cloud Storage for optimal Imagen 3 character consistency. 
+                  Please upload the image again.
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Missing Appearance Description Tip */}
+        {character.referenceImageGCS && !character.appearanceDescription && (
+          <div className="p-2 bg-purple-500/20 border border-purple-500/50 rounded text-xs text-purple-200">
+            <div className="flex items-start gap-2">
+              <Lightbulb className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <div>
+                <div className="font-semibold">Pro Tip</div>
+                <div className="text-purple-300/80 mt-0.5">
+                  Click "Analyze" to auto-generate an appearance description for better character consistency.
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Character Attributes */}
         {(character.subject || character.ethnicity || character.keyFeature) && (
           <div className="space-y-1">

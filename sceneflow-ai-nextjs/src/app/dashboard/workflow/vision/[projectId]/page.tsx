@@ -381,7 +381,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     try {
       setUploadingRef(prev => ({ ...prev, [characterId]: true }))
       
-      // Upload to Vercel Blob first to get public URL
+      // Upload to both Vercel Blob and GCS
       const formData = new FormData()
       formData.append('file', file)
       formData.append('projectId', projectId)
@@ -400,7 +400,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         throw new Error('Upload failed')
       }
       
-      const { url: blobUrl } = await uploadRes.json()
+      const { url: blobUrl, gcsUrl } = await uploadRes.json()
+      console.log('[Character Upload] Vercel Blob URL:', blobUrl)
+      console.log('[Character Upload] GCS URL:', gcsUrl)
       
       // Auto-analyze to generate appearance description
       let analysisData: any = null
@@ -426,7 +428,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return charId === characterId 
           ? { 
               ...char, 
-              referenceImage: blobUrl, 
+              referenceImage: blobUrl,  // Vercel Blob URL for UI display
+              referenceImageGCS: gcsUrl,  // GCS URL for Imagen API
               imageApproved: false,
               // Add appearance description and attributes if analysis succeeded
               ...(analysisData?.success ? {

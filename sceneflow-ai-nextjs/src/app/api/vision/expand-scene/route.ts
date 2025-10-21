@@ -3,7 +3,7 @@ import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { callVertexAIImagen } from '@/lib/vertexai/client'
 import { uploadImageToBlob } from '@/lib/storage/blob'
-import { prepareCharacterReferences, buildPromptWithReferences } from '@/lib/imagen/characterReferences'
+import { optimizePromptForImagen } from '@/lib/imagen/promptOptimizer'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -308,27 +308,37 @@ ${hasCharacterRefs ? '- Characters MUST match their reference images' : ''}
 
     console.log(`[Scene Image] Generating with Vertex AI Imagen 3 for scene ${sceneNumber}`)
     
-    // Prepare character references
-    const characterReferences = await prepareCharacterReferences(characters)
+    // Filter characters with GCS references
+    const charactersWithGCS = characters.filter((c: any) => c.referenceImageGCS)
     const characterNames = characters.map((c: any) => c.name || c)
-    const finalPrompt = characterReferences.length > 0
-      ? buildPromptWithReferences(prompt, characterReferences, characterNames)
-      : prompt
     
-    if (characterReferences.length > 0) {
-      console.log(`[Scene Image] Using ${characterReferences.length} character reference images for consistency`)
+    let finalPrompt = prompt
+    
+    // Optimize prompt if GCS references available
+    if (charactersWithGCS.length > 0) {
+      try {
+        finalPrompt = await optimizePromptForImagen({
+          rawPrompt: prompt,
+          sceneAction: scene.action || '',
+          visualDescription: scene.visualDescription || prompt,
+          characterNames,
+          hasCharacterReferences: true,
+          characterMetadata: charactersWithGCS.map((char: any) => ({
+            name: char.name,
+            referenceImageGCS: char.referenceImageGCS,
+            appearanceDescription: char.appearanceDescription || `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
+          }))
+        })
+        console.log(`[Scene Image] Using ${charactersWithGCS.length} character GCS references for consistency`)
+      } catch (error) {
+        console.error('[Prompt Optimizer] Failed, using original prompt:', error)
+      }
     }
 
-    // Generate with Vertex AI Imagen 3 (same as thumbnails)
+    // Generate with Vertex AI Imagen 3 (GCS references embedded in prompt)
     const base64Image = await callVertexAIImagen(finalPrompt, {
       aspectRatio: '16:9',
-      numberOfImages: 1,
-      referenceImages: characterReferences.map(ref => ({
-        referenceId: ref.id,
-        bytesBase64Encoded: ref.imageBase64,
-        referenceType: 'SUBJECT' as const,
-        subjectDescription: ref.description
-      }))
+      numberOfImages: 1
     })
 
     // Upload to Vercel Blob
