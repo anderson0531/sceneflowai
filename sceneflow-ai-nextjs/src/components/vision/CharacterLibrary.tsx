@@ -285,6 +285,8 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
             onApply={(prompt, structure) => {
               setCharPrompts(prev => ({ ...prev, [builderCharId]: prompt }))
               setBuilderOpen(false)
+              // Reset builder state for next use
+              setTimeout(() => setBuilderCharId(null), 300)
             }}
           />
         )

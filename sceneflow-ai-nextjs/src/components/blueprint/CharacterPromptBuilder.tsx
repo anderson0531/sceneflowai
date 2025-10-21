@@ -62,6 +62,33 @@ export function CharacterPromptBuilder({
   const [suggestions, setSuggestions] = useState<Record<string, string[]>>({})
   const [copied, setCopied] = useState(false)
 
+  // Update structure when initialStructure prop changes (e.g., different character selected)
+  useEffect(() => {
+    if (initialStructure) {
+      setStructure({
+        subject: initialStructure.subject || '',
+        ethnicity: initialStructure.ethnicity || '',
+        keyFeature: initialStructure.keyFeature || '',
+        hairStyle: initialStructure.hairStyle || '',
+        hairColor: initialStructure.hairColor || '',
+        eyeColor: initialStructure.eyeColor || '',
+        eyeExpression: initialStructure.eyeExpression || '',
+        build: initialStructure.build || '',
+        shotType: initialStructure.shotType || 'portrait',
+        artStyle: initialStructure.artStyle || 'photorealistic',
+        background: initialStructure.background || '',
+        negativePrompt: initialStructure.negativePrompt || 'ugly, deformed, extra limbs, blurry, low quality'
+      })
+    }
+  }, [initialStructure])
+
+  // Update advanced prompt when initialPrompt changes
+  useEffect(() => {
+    if (initialPrompt) {
+      setAdvancedPrompt(initialPrompt)
+    }
+  }, [initialPrompt])
+
   // Construct prompt from structure
   const constructPrompt = (): string => {
     const parts: string[] = []
