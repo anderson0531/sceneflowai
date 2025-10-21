@@ -53,8 +53,9 @@ Format as:
 
 Example: "An African American man in his late 40s, with short black hair, dark brown skin, and a strong jawline"
 
-Output both parts in JSON format with all fields.
-IMPORTANT: Return ONLY the JSON object, no markdown fences, no explanations.`
+CRITICAL: Output ONLY a single valid JSON object with all fields.
+DO NOT include markdown fences, explanations, or any text before or after the JSON.
+Start your response with { and end with }`
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
@@ -93,18 +94,52 @@ IMPORTANT: Return ONLY the JSON object, no markdown fences, no explanations.`
       throw new Error('No response from Gemini')
     }
     
-    console.log('[Analyze Image] Raw response:', text.substring(0, 200))
+    console.log('[Analyze Image] Raw response:', text.substring(0, 500))
     
-    // Parse JSON response (handle markdown fences)
+    // Remove markdown fences first
     let cleanedText = text.trim()
-    cleanedText = cleanedText.replace(/```json\n?|\n?```|```/g, '').trim()
+    cleanedText = cleanedText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
     
-    const parsed = JSON.parse(cleanedText)
+    // Extract JSON object by finding first { and last }
+    const firstBrace = cleanedText.indexOf('{')
+    const lastBrace = cleanedText.lastIndexOf('}')
+    
+    if (firstBrace === -1 || lastBrace === -1 || firstBrace >= lastBrace) {
+      console.error('[Analyze Image] No valid JSON object found in response')
+      console.error('[Analyze Image] Cleaned text:', cleanedText)
+      throw new Error('Invalid response format from Gemini')
+    }
+    
+    const jsonString = cleanedText.substring(firstBrace, lastBrace + 1)
+    console.log('[Analyze Image] Extracted JSON:', jsonString.substring(0, 200))
+    
+    let parsed
+    try {
+      parsed = JSON.parse(jsonString)
+    } catch (parseError: any) {
+      console.error('[Analyze Image] JSON parse error:', parseError.message)
+      console.error('[Analyze Image] JSON string:', jsonString)
+      throw new Error('Failed to parse Gemini response as JSON')
+    }
     
     // Only use appearanceDescription if AI actually generated it
     const attributes = parsed.appearanceDescription 
       ? { ...parsed, appearanceDescription: parsed.appearanceDescription }
       : parsed
+    
+    // Validate required fields
+    const requiredFields = ['subject', 'ethnicity', 'hairStyle', 'hairColor', 'eyeColor', 'expression', 'build']
+    const missingFields = requiredFields.filter(field => !attributes[field])
+    
+    if (missingFields.length > 0) {
+      console.warn('[Analyze Image] Missing fields:', missingFields)
+      // Fill with defaults
+      missingFields.forEach(field => {
+        if (!attributes[field]) {
+          attributes[field] = ''
+        }
+      })
+    }
     
     console.log('[Analyze Image] Extracted attributes:', attributes)
     
