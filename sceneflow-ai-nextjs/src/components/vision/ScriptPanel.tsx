@@ -119,17 +119,15 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   function buildSceneNarrationText(scene: any): string {
     const parts: string[] = []
     
-    if (scene.heading) {
-      parts.push(scene.heading)
+    // Use dedicated narration field (captivating storytelling)
+    if (scene.narration) {
+      parts.push(scene.narration)
     }
     
-    if (scene.action) {
-      parts.push(scene.action)
-    }
-    
+    // Add dialogue only (skip action/technical description)
     if (scene.dialogue && scene.dialogue.length > 0) {
       scene.dialogue.forEach((d: any) => {
-        parts.push(`${d.character} says: ${d.line}`)
+        parts.push(`${d.character}: ${d.line}`)
       })
     }
     

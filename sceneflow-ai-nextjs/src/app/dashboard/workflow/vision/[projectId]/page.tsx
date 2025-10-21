@@ -44,6 +44,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [uploadingRef, setUploadingRef] = useState<Record<string, boolean>>({})
   const [validationWarnings, setValidationWarnings] = useState<Record<number, string>>({})
   const [isPlayerOpen, setIsPlayerOpen] = useState(false)
+  const [voiceAssignments, setVoiceAssignments] = useState<Record<string, any>>({})
   const [generationProgress, setGenerationProgress] = useState({
     script: { complete: false, progress: 0 },
     characters: { complete: false, progress: 0, total: 0 },

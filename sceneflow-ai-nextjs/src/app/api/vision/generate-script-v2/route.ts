@@ -244,13 +244,20 @@ SCENE PLANNING:
 - Generate first ${end} scenes now
 
 DURATION ESTIMATION (CRITICAL):
-For each scene, estimate REALISTIC duration based on actual content:
-- Count dialogue lines × 10s each
-- Add action/setup time (5-30s depending on complexity)
-- Examples:
-  * 1 dialogue + setup = 15-30s
-  * 3 dialogues + action = 40-60s
-  * 6 dialogues + complex action = 70-90s
+Calculate REALISTIC duration based on SPEECH TIME (narration + dialogue):
+- Narration: ~150 words per minute (WPM) = 0.4s per word
+- Dialogue: ~130 words per minute (natural speech) = 0.46s per word
+- Add 2-5s setup/transition time per scene
+
+Formula: 
+  duration = (narration_words * 0.4) + (dialogue_words * 0.46) + (setup_time: 2-5s)
+
+Examples:
+- Narration (30 words) + 1 dialogue (15 words) + setup (3s) = 12s + 7s + 3s = 22s
+- Narration (50 words) + 3 dialogues (40 words total) + setup (5s) = 20s + 18s + 5s = 43s
+- Narration (80 words) + 6 dialogues (90 words total) + action (10s) = 32s + 41s + 10s = 83s
+
+CRITICAL: Estimate duration based on actual word count of narration and dialogue, not arbitrary numbers.
 
 Return JSON:
 {
@@ -339,10 +346,12 @@ DURATION TARGET:
 - Estimate realistically based on actual content
 - Total target: ${targetDuration}s (±10%)
 
-DURATION ESTIMATION:
-- 1-2 dialogues + setup = 15-30s
-- 3-4 dialogues + action = 40-60s
-- 5-8 dialogues + complex = 70-90s
+DURATION ESTIMATION (CRITICAL):
+Calculate based on SPEECH TIME (narration + dialogue):
+- Narration: ~150 WPM = 0.4s per word
+- Dialogue: ~130 WPM = 0.46s per word
+- Formula: (narration_words * 0.4) + (dialogue_words * 0.46) + (setup: 2-5s)
+- Base estimates on actual word count
 
 Return JSON array:
 [
