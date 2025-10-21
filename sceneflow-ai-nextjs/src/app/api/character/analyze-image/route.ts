@@ -100,25 +100,31 @@ Start your response with { and end with }`
     let cleanedText = text.trim()
     cleanedText = cleanedText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
     
-    // Extract JSON object by finding first { and last }
-    const firstBrace = cleanedText.indexOf('{')
-    const lastBrace = cleanedText.lastIndexOf('}')
+    // Extract all JSON objects (Gemini sometimes returns multiple objects)
+    // Match all {...} patterns that look like complete JSON objects
+    const jsonObjectRegex = /\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g
+    const jsonMatches = cleanedText.match(jsonObjectRegex)
     
-    if (firstBrace === -1 || lastBrace === -1 || firstBrace >= lastBrace) {
-      console.error('[Analyze Image] No valid JSON object found in response')
+    if (!jsonMatches || jsonMatches.length === 0) {
+      console.error('[Analyze Image] No valid JSON objects found in response')
       console.error('[Analyze Image] Cleaned text:', cleanedText)
       throw new Error('Invalid response format from Gemini')
     }
     
-    const jsonString = cleanedText.substring(firstBrace, lastBrace + 1)
-    console.log('[Analyze Image] Extracted JSON:', jsonString.substring(0, 200))
+    console.log('[Analyze Image] Found', jsonMatches.length, 'JSON object(s)')
     
-    let parsed
+    // Parse and merge all JSON objects
+    let parsed = {}
     try {
-      parsed = JSON.parse(jsonString)
+      for (let i = 0; i < jsonMatches.length; i++) {
+        const obj = JSON.parse(jsonMatches[i])
+        console.log(`[Analyze Image] Object ${i + 1}:`, Object.keys(obj))
+        parsed = { ...parsed, ...obj }
+      }
+      console.log('[Analyze Image] Merged attributes:', Object.keys(parsed))
     } catch (parseError: any) {
       console.error('[Analyze Image] JSON parse error:', parseError.message)
-      console.error('[Analyze Image] JSON string:', jsonString)
+      console.error('[Analyze Image] JSON matches:', jsonMatches)
       throw new Error('Failed to parse Gemini response as JSON')
     }
     
