@@ -80,8 +80,8 @@ export async function uploadImageToGCS(
       resumable: false // For smaller files, non-resumable is faster
     })
     
-    // Make the file publicly readable (Vertex AI needs access)
-    await file.makePublic()
+    // Note: Public access is configured at bucket level (uniform bucket-level access)
+    // Individual file.makePublic() is not needed and would cause an error
     
     const gsUrl = `gs://${bucketName}/${filename}`
     
