@@ -39,13 +39,13 @@ export function ContextBar({
   return (
     <div
       className={cn(
-        'sticky z-40 w-full border-b border-gray-800 bg-gray-900/80 backdrop-blur',
+        'sticky z-40 w-full border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur',
         className,
       )}
       style={{ top: stickyTop }}
     >
       {/* Top row: Title + actions (mobile stacks) */}
-      <div className="mx-auto max-w-7xl px-6">
+      <div className="px-6 lg:px-8">
         <div className={cn(
           'h-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2',
           titleVariant === 'page' ? 'py-3 md:py-4' : 'py-2 sm:py-0 sm:h-12'
@@ -53,7 +53,7 @@ export function ContextBar({
           <div className="min-w-0 flex items-center gap-2">
             <h2
               className={cn(
-                'truncate font-semibold text-white',
+                'truncate font-semibold text-gray-900 dark:text-white',
                 titleVariant === 'page' ? 'text-2xl md:text-3xl font-extrabold tracking-tight' : 'text-sm md:text-base',
                 emphasis && titleVariant !== 'page' && 'text-base md:text-lg font-bold'
               )}
