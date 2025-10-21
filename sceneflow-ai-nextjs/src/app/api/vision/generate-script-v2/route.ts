@@ -3,7 +3,7 @@ import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 
 export const runtime = 'nodejs'
-export const maxDuration = 120  // Allow 2 minutes for 2 batches
+export const maxDuration = 300  // 5 minutes for large script generation (requires Vercel Pro)
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     const duration = project.duration || 300
     const minScenes = Math.floor(duration / 90)   // Conservative (scenes avg 90s)
     const maxScenes = Math.floor(duration / 20)   // Aggressive (scenes avg 20s)  
-    const suggestedScenes = Math.ceil(duration / 30)  // Recommended (scenes avg 30s) - more scenes for better pacing
+    const suggestedScenes = Math.ceil(duration / 53)  // Realistic: 53s avg per scene (user empirical data)
     
     console.log(`[Script Gen V2] Target: ${duration}s - Scene range: ${minScenes}-${maxScenes} (suggested: ${suggestedScenes})`)
 
@@ -69,8 +69,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Scale batch size based on story duration
-    const INITIAL_BATCH_SIZE = duration >= 600 ? 15 : 12  // Larger first batch for 10+ min stories
-    let actualTotalScenes = suggestedScenes  // Will be updated by AI
+    const BATCH_SIZE = 30  // Max scenes per batch to avoid timeout
+    const INITIAL_BATCH_SIZE = Math.min(15, suggestedScenes)  // First batch
+    let actualTotalScenes = suggestedScenes
     let allScenes: any[] = []
 
     // BATCH 1: Generate first batch, AI determines total scene count
@@ -85,9 +86,10 @@ export async function POST(request: NextRequest) {
       actualTotalScenes = batch1Data.totalScenes
       console.log(`[Script Gen V2] AI determined ${actualTotalScenes} total scenes`)
       
-      // OVERRIDE: If AI chose 24 but suggested is significantly different, use suggested
-      if (actualTotalScenes === 24 && suggestedScenes > 28) {
-        console.warn(`[Script Gen V2] AI defaulted to 24, but story needs ${suggestedScenes}. Overriding to ${suggestedScenes}`)
+      // OVERRIDE: If AI chose value significantly different from suggested, use suggested
+      const deviation = Math.abs(actualTotalScenes - suggestedScenes)
+      if (deviation > suggestedScenes * 0.3) {  // >30% deviation
+        console.warn(`[Script Gen V2] AI chose ${actualTotalScenes}, but suggested is ${suggestedScenes}. Overriding.`)
         actualTotalScenes = suggestedScenes
       }
     } else {
@@ -97,17 +99,32 @@ export async function POST(request: NextRequest) {
     allScenes.push(...batch1Data.scenes)
     console.log(`[Script Gen V2] Batch 1 complete: ${batch1Data.scenes.length} scenes`)
     
-    // BATCH 2: Generate remaining scenes if needed
-    const remainingScenes = actualTotalScenes - allScenes.length
-    if (remainingScenes > 0) {
-      console.log(`[Script Gen V2] Batch 2: Generating remaining ${remainingScenes} scenes...`)
+    // MULTI-BATCH: Generate remaining scenes in chunks
+    let remainingScenes = actualTotalScenes - allScenes.length
+    let batchNumber = 2
+    
+    while (remainingScenes > 0) {
+      const batchSize = Math.min(BATCH_SIZE, remainingScenes)
+      const startScene = allScenes.length + 1
+      const endScene = startScene + batchSize - 1
       
-      const batch2Prompt = buildBatch2Prompt(treatment, allScenes.length + 1, actualTotalScenes, duration, allScenes, existingCharacters)
-      const batch2Response = await callGemini(apiKey, batch2Prompt)
-      const batch2Data = parseScenes(batch2Response, allScenes.length + 1, actualTotalScenes)
+      console.log(`[Script Gen V2] Batch ${batchNumber}: Generating scenes ${startScene}-${endScene} (${batchSize} scenes)...`)
       
-      allScenes.push(...batch2Data.scenes)
-      console.log(`[Script Gen V2] Batch 2 complete: ${batch2Data.scenes.length} scenes`)
+      const batchPrompt = buildBatch2Prompt(treatment, startScene, actualTotalScenes, duration, allScenes, existingCharacters)
+      const batchResponse = await callGemini(apiKey, batchPrompt)
+      const batchData = parseScenes(batchResponse, startScene, endScene)
+      
+      allScenes.push(...batchData.scenes)
+      console.log(`[Script Gen V2] Batch ${batchNumber} complete: ${batchData.scenes.length} scenes (total: ${allScenes.length})`)
+      
+      remainingScenes = actualTotalScenes - allScenes.length
+      batchNumber++
+      
+      // Safety: Prevent infinite loop
+      if (batchNumber > 10) {
+        console.error(`[Script Gen V2] Too many batches (${batchNumber}), stopping generation`)
+        break
+      }
     }
     
     // Validation and logging
