@@ -44,11 +44,8 @@ export function AudioTrackManager({
 }: AudioTrackManagerProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
-  // Extract narration text from action
-  const narrationText = scene.action?.split('\n')
-    .filter((line: string) => !line.startsWith('SFX:') && !line.startsWith('Music:'))
-    .join(' ')
-    .trim() || ''
+  // Use dedicated narration field (captivating storytelling narration)
+  const narrationText = scene.narration || ''
 
   // Extract SFX from scene data
   const sfxList = scene.sfx || []

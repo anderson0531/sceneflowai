@@ -902,6 +902,19 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
             <div className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{scene.heading}</div>
           )}
           
+          {/* Narration (if available) */}
+          {scene.narration && (
+            <div className="mt-3 mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center gap-2 mb-2">
+                <Volume2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Scene Narration</span>
+              </div>
+              <div className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
+                "{scene.narration}"
+              </div>
+            </div>
+          )}
+          
           {/* Show summary for outlines, action for expanded scenes */}
           {isOutline && scene.summary && (
             <div className="text-sm text-gray-600 dark:text-gray-400 mb-2 italic">{scene.summary}</div>

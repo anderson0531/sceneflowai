@@ -262,6 +262,7 @@ Return JSON:
       "heading": "INT. LOCATION - TIME",
       "characters": ["Character Name 1", "Character Name 2"],  // CRITICAL: List all characters in this scene
       "action": "SOUND of gentle sizzling, a timer beeps. CLOSE UP on character's hands. They move across the room.\n\nSFX: Gentle sizzling, timer beeps\n\nMusic: Soft upbeat piano",
+      "narration": "In the quiet hours before dawn, a dream takes shape in flour and fire.",  // NEW: Captivating voiceover narration
       "dialogue": [{"character": "NAME", "line": "..."}],
       "visualDescription": "Camera, lighting",
       "duration": 25,  // REALISTIC based on content (dialogue count + action time)
@@ -270,6 +271,17 @@ Return JSON:
     }
   ]
 }
+
+NARRATION REQUIREMENTS (CRITICAL):
+- Each scene MUST include a "narration" field with captivating voiceover narration (1-2 sentences)
+- Use vivid, evocative language that engages the audience emotionally
+- Focus on: internal thoughts/emotions, thematic significance, foreshadowing, poetic atmosphere
+- DO NOT: repeat action description, use technical camera language, state obvious visuals, be generic
+- Examples:
+  ✓ GOOD: "In the dim glow of his monitor, Brian races against time. Each keystroke brings him closer to his dream—or his breaking point."
+  ✓ GOOD: "She had learned that silence could be louder than words, and tonight, it was deafening."
+  ✗ BAD: "Brian types on his computer." (Too literal)
+  ✗ BAD: "The scene takes place in an office." (States the obvious)
 
 SCRIPT FORMAT REQUIREMENTS (CRITICAL):
 - Include sound effects naturally in action description using SOUND OF, HEAR, etc.
@@ -339,6 +351,7 @@ Return JSON array:
     "heading": "INT. LOCATION - TIME",
     "characters": ["Character Name 1", "Character Name 2"],  // CRITICAL: List all characters in this scene
     "action": "SOUND of footsteps approaching. Character enters.\n\nSFX: Footsteps on hardwood\n\nMusic: Suspenseful strings",
+    "narration": "Every step echoes with the weight of decisions unmade.",  // CRITICAL: Captivating voiceover
     "dialogue": [{"character": "NAME", "line": "..."}],
     "visualDescription": "Camera, lighting",
     "duration": 45,  // REALISTIC estimate
@@ -346,6 +359,11 @@ Return JSON array:
     "music": {"description": "Suspenseful strings"}
   }
 ]
+
+NARRATION REQUIREMENTS (CRITICAL):
+- MUST include captivating "narration" field in EVERY scene (1-2 sentences)
+- Write engaging, emotionally resonant voiceover narration
+- Focus on storytelling, not technical description
 
 SCRIPT FORMAT REQUIREMENTS (CRITICAL):
 - Include sound effects naturally in action using SOUND OF, HEAR, etc.
@@ -476,6 +494,7 @@ function parseBatch1(response: string, start: number, end: number): any {
             sceneNumber: start + idx,
             heading: s.heading || `SCENE ${start + idx}`,
             action: s.action || 'Scene content',
+            narration: s.narration || '',  // NEW: Preserve captivating narration
             dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
             visualDescription: s.visualDescription || s.action || 'Cinematic shot',
             duration: s.duration || 30,  // Use AI's realistic estimate
@@ -514,6 +533,7 @@ function parseScenes(response: string, start: number, end: number): any {
           heading: s.heading || `SCENE ${start + idx}`,
           characters: s.characters || [],  // CRITICAL: Preserve characters array from AI
           action: s.action || 'Scene content',
+          narration: s.narration || '',  // NEW: Preserve captivating narration
           dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
           visualDescription: s.visualDescription || s.action || 'Cinematic shot',
           duration: s.duration || 30,  // Use AI's realistic estimate
