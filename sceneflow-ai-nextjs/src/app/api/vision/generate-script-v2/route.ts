@@ -68,7 +68,8 @@ export async function POST(request: NextRequest) {
       console.log(`[Script Gen V2] Using ${existingCharacters.length} characters from Vision Phase`)
     }
 
-    const INITIAL_BATCH_SIZE = 12  // First batch size
+    // Scale batch size based on story duration
+    const INITIAL_BATCH_SIZE = duration >= 600 ? 15 : 12  // Larger first batch for 10+ min stories
     let actualTotalScenes = suggestedScenes  // Will be updated by AI
     let allScenes: any[] = []
 
@@ -83,6 +84,12 @@ export async function POST(request: NextRequest) {
     if (batch1Data.totalScenes && batch1Data.totalScenes >= minScenes && batch1Data.totalScenes <= maxScenes) {
       actualTotalScenes = batch1Data.totalScenes
       console.log(`[Script Gen V2] AI determined ${actualTotalScenes} total scenes`)
+      
+      // OVERRIDE: If AI chose 24 but suggested is significantly different, use suggested
+      if (actualTotalScenes === 24 && suggestedScenes > 28) {
+        console.warn(`[Script Gen V2] AI defaulted to 24, but story needs ${suggestedScenes}. Overriding to ${suggestedScenes}`)
+        actualTotalScenes = suggestedScenes
+      }
     } else {
       console.log(`[Script Gen V2] Using suggested ${actualTotalScenes} scenes (AI total out of range or not provided)`)
     }
@@ -216,9 +223,8 @@ CRITICAL CHARACTER RULE:
 
 SCENE PLANNING:
 - Total target: ${targetDuration}s (±10% is fine)
-- Suggested total scenes: ${suggested} (you can choose ${min}-${max})
-- YOU DECIDE: How many total scenes best tells this story?
-- Generate first ${end} scenes now, determine total count
+- REQUIRED total scenes: ${suggested} scenes (you MUST use ${suggested}, can adjust ±2 if absolutely necessary for story flow)
+- Generate first ${end} scenes now
 
 DURATION ESTIMATION (CRITICAL):
 For each scene, estimate REALISTIC duration based on actual content:
@@ -231,7 +237,7 @@ For each scene, estimate REALISTIC duration based on actual content:
 
 Return JSON:
 {
-  "totalScenes": ${suggested},  // YOUR DECISION (${min}-${max}) - how many scenes best fits the ${targetDuration}s story?
+  "totalScenes": ${suggested},  // REQUIRED: Use ${suggested} scenes (±2 max) for ${targetDuration}s story
   "estimatedTotalDuration": 300,  // Sum of first ${end} scenes only
   "scenes": [
     {
