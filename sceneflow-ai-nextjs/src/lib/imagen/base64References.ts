@@ -1,3 +1,5 @@
+import sharp from 'sharp'
+
 /**
  * Simple, clean Base64 reference image preparation for Imagen 3
  * No GCS, no complexity - just what works
@@ -12,7 +14,7 @@ export interface Base64CharacterReference {
 
 /**
  * Fetch character reference images and convert to Base64
- * Uses moderate compression to avoid token limits
+ * Resizes to moderate resolution to avoid token limits
  */
 export async function prepareBase64References(
   characters: any[]
@@ -38,10 +40,22 @@ export async function prepareBase64References(
       }
 
       const arrayBuffer = await response.arrayBuffer()
-      const base64 = Buffer.from(arrayBuffer).toString('base64')
+      const originalSizeKB = Math.round(arrayBuffer.byteLength / 1024)
       
-      const sizeKB = Math.round(arrayBuffer.byteLength / 1024)
-      console.log(`[Base64 Ref] Converted ${char.name} to Base64 (${sizeKB}KB)`)
+      // Resize to moderate resolution (512x512) with good quality
+      // This balances detail retention with token limits
+      const resizedBuffer = await sharp(Buffer.from(arrayBuffer))
+        .resize(512, 512, {
+          fit: 'cover',
+          position: 'center'
+        })
+        .jpeg({ quality: 85 })
+        .toBuffer()
+      
+      const base64 = resizedBuffer.toString('base64')
+      const finalSizeKB = Math.round(resizedBuffer.byteLength / 1024)
+      
+      console.log(`[Base64 Ref] ${char.name}: ${originalSizeKB}KB → ${finalSizeKB}KB (resized to 512x512)`)
 
       references.push({
         referenceId: i + 1,

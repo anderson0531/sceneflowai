@@ -38,7 +38,7 @@ interface ScenePromptBuilderProps {
     ethnicity?: string
     subject?: string
   }>
-  onGenerateImage: (prompt: string, selectedCharacters: any[]) => void
+  onGenerateImage: (selectedCharacters: any[]) => void
 }
 
 export function ScenePromptBuilder({
@@ -245,11 +245,12 @@ export function ScenePromptBuilder({
     
     console.log('[Scene Prompt Builder] Generating with characters:', selectedCharacterObjects.map(c => ({
       name: c?.name,
-      hasGCS: !!c?.referenceImageGCS,
-      gcsUrl: c?.referenceImageGCS?.substring(0, 50) || 'none'
+      hasReferenceImage: !!c?.referenceImage,
+      hasAppearance: !!c?.appearanceDescription
     })))
     
-    onGenerateImage(constructedPrompt, selectedCharacterObjects)
+    // Only pass selected characters - API will build the prompt from scene description
+    onGenerateImage(selectedCharacterObjects)
     onClose()
   }
 

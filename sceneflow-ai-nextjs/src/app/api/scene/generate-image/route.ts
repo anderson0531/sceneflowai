@@ -61,16 +61,27 @@ export async function POST(req: NextRequest) {
     if (base64References.length > 0 && selectedCharacters.length > 0) {
       console.log('[Scene Image] Validating character likeness...')
 
-      const primaryChar = selectedCharacters[0]
+      // Determine which character to validate (prefer character mentioned in action/visualDesc)
+      let primaryCharForValidation = selectedCharacters[0]
+      
+      const sceneText = `${sceneContext?.action || ''} ${sceneContext?.visualDescription || ''}`.toLowerCase()
+      for (const char of selectedCharacters) {
+        if (char.name && sceneText.includes(char.name.toLowerCase())) {
+          // This character is mentioned in the scene, use them for validation
+          primaryCharForValidation = char
+          console.log(`[Scene Image] Validating against ${char.name} (featured in scene)`)
+          break
+        }
+      }
 
       try {
         validation = await validateCharacterLikeness(
           imageUrl,
-          primaryChar.referenceImage!,
-          primaryChar.name
+          primaryCharForValidation.referenceImage!,
+          primaryCharForValidation.name
         )
 
-        console.log(`[Image Validator] ${primaryChar.name} - Matches: ${validation.matches}, Confidence: ${validation.confidence}%`)
+        console.log(`[Image Validator] ${primaryCharForValidation.name} - Matches: ${validation.matches}, Confidence: ${validation.confidence}%`)
         
         if (!validation.matches && validation.confidence < 90) {
           console.warn('[Scene Image] ⚠️  Character likeness validation failed (confidence < 90%).')

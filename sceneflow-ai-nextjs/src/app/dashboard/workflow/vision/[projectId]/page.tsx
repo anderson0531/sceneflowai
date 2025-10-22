@@ -791,7 +791,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     console.log('Regenerate scene:', sceneIndex)
   }
 
-  const handleGenerateSceneImage = async (sceneIdx: number, customPrompt?: string, selectedCharacters?: any[]) => {
+  const handleGenerateSceneImage = async (sceneIdx: number, selectedCharacters?: any[]) => {
     const scene = script?.script?.scenes?.[sceneIdx]
     if (!scene || !scene.visualDescription) {
       console.warn('No visual description available for scene', sceneIdx)
@@ -800,12 +800,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
     
     try {
-      // Use custom prompt if provided, otherwise use visual description
-      const prompt = customPrompt || scene.visualDescription
-      
       console.log('[Scene Image] handleGenerateSceneImage called with:', {
         sceneIdx,
-        hasCustomPrompt: !!customPrompt,
         selectedCharactersCount: selectedCharacters?.length || 0,
         selectedCharactersAreObjects: selectedCharacters?.[0] && typeof selectedCharacters[0] === 'object'
       })
@@ -892,15 +888,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          prompt,
           sceneContext: {
             heading: scene.heading,
             action: scene.action,
             visualDescription: scene.visualDescription,
             characters: sceneCharacters,
-            dialogue: scene.dialogue,
-            visualStyle: project?.metadata?.filmTreatmentVariant?.visual_style,
-            tone: project?.metadata?.filmTreatmentVariant?.tone_description
+            dialogue: scene.dialogue
           },
           selectedCharacters: sceneCharacters
         })

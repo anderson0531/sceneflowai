@@ -16,7 +16,7 @@ interface ScriptPanelProps {
   isGenerating: boolean
   onExpandScene?: (sceneNumber: number) => Promise<void>
   onExpandAllScenes?: () => Promise<void>
-  onGenerateSceneImage?: (sceneIdx: number, customPrompt?: string, selectedCharacters?: any[]) => Promise<void>
+  onGenerateSceneImage?: (sceneIdx: number, selectedCharacters?: any[]) => Promise<void>
   characters?: Array<{ 
     name: string
     description: string
@@ -691,9 +691,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             ethnicity: c.ethnicity,
             subject: c.subject
           }))}
-          onGenerateImage={async (prompt, selectedCharacters) => {
+          onGenerateImage={async (selectedCharacters) => {
             if (onGenerateSceneImage) {
-              await onGenerateSceneImage(sceneBuilderIdx, prompt, selectedCharacters)
+              await onGenerateSceneImage(sceneBuilderIdx, selectedCharacters)
             }
             setSceneBuilderOpen(false)
             setSceneBuilderIdx(null)
