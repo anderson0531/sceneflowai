@@ -73,6 +73,44 @@ export function ScenePromptBuilder({
     
     const updates: Partial<ScenePromptStructure> = {}
     
+    // AUTO-DETECT AND PRE-SELECT CHARACTERS
+    const detectedCharacterNames: string[] = []
+    
+    // 1. Check scene.characters array
+    if (scene.characters && Array.isArray(scene.characters) && scene.characters.length > 0) {
+      scene.characters.forEach((c: any) => {
+        const name = typeof c === 'string' ? c : c.name
+        if (name) detectedCharacterNames.push(name)
+      })
+    }
+    
+    // 2. Extract from dialogue
+    if (scene.dialogue && Array.isArray(scene.dialogue)) {
+      scene.dialogue.forEach((d: any) => {
+        if (d.character) {
+          const cleanName = d.character.replace(/\s*\([^)]*\)/g, '').trim()
+          if (!detectedCharacterNames.includes(cleanName)) {
+            detectedCharacterNames.push(cleanName)
+          }
+        }
+      })
+    }
+    
+    // 3. Extract from action/visual description
+    const sceneText = `${scene.action || ''} ${scene.visualDescription || ''}`
+    availableCharacters.forEach(char => {
+      const namePattern = new RegExp(`\\b${char.name}\\b`, 'i')
+      if (namePattern.test(sceneText) && !detectedCharacterNames.includes(char.name)) {
+        detectedCharacterNames.push(char.name)
+      }
+    })
+    
+    // Set detected characters
+    if (detectedCharacterNames.length > 0) {
+      updates.characters = detectedCharacterNames
+      console.log('[Scene Prompt Builder] Auto-detected characters:', detectedCharacterNames)
+    }
+    
     // Parse heading: "INT./EXT. LOCATION - TIME"
     if (scene.heading) {
       const headingMatch = scene.heading.match(/(INT|EXT)\.\s+(.+?)\s+-\s+(.+)/i)
@@ -124,7 +162,7 @@ export function ScenePromptBuilder({
     }
     
     setStructure(prev => ({ ...prev, ...updates }))
-  }, [open, scene])
+  }, [open, scene, availableCharacters])
 
   // Construct prompt from structure
   const constructPrompt = (): string => {
