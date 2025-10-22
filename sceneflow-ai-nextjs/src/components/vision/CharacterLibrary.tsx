@@ -131,12 +131,14 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
       })
       
       const data = await res.json()
-      if (data.success && data.attributes) {
-        console.log('[Analyze Image] Extracted attributes:', data.attributes)
+      if (data.success) {
+        // Extract attributes (API returns them at top level, not nested)
+        const { success, ...attributes } = data
+        console.log('[Analyze Image] Extracted attributes:', attributes)
         
         // Update character attributes via parent callback
         if (onUpdateCharacterAttributes) {
-          onUpdateCharacterAttributes(characterId, data.attributes)
+          await onUpdateCharacterAttributes(characterName, attributes)
         }
         
         try { 
