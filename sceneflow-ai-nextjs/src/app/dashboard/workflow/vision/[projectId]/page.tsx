@@ -45,6 +45,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [isGenerating, setIsGenerating] = useState(false)
   const [uploadingRef, setUploadingRef] = useState<Record<string, boolean>>({})
   const [validationWarnings, setValidationWarnings] = useState<Record<number, string>>({})
+  
+  // Enhanced validation info state (not just warnings)
+  const [validationInfo, setValidationInfo] = useState<Record<number, {
+    passed: boolean
+    confidence: number
+    message?: string
+    warning?: string
+    dismissed?: boolean
+  }>>({})
   const [isPlayerOpen, setIsPlayerOpen] = useState(false)
   const [voiceAssignments, setVoiceAssignments] = useState<Record<string, any>>({})
   const [generationProgress, setGenerationProgress] = useState({
@@ -85,6 +94,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         console.error('[Quality] Failed to save quality setting:', error)
       }
     }
+  }
+  
+  // Handle validation warning dismiss
+  const handleDismissValidationWarning = (sceneIdx: number) => {
+    setValidationInfo(prev => ({
+      ...prev,
+      [sceneIdx]: {
+        ...prev[sceneIdx],
+        dismissed: true
+      }
+    }))
+    console.log(`[Validation] Warning dismissed for scene ${sceneIdx}`)
   }
 
   useEffect(() => {
@@ -949,12 +970,42 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       const data = await response.json()
       
-      // Check for validation warnings in response
-      if (data.validationWarning) {
+      // Handle validation info based on response
+      if (data.validationPassed === false && data.validationWarning) {
+        // Validation failed - show warning
+        setValidationInfo(prev => ({
+          ...prev,
+          [sceneIdx]: {
+            passed: false,
+            confidence: data.validationConfidence,
+            warning: data.validationWarning,
+            dismissed: false
+          }
+        }))
+        
+        // Also set legacy warning for backward compatibility
         setValidationWarnings(prev => ({
           ...prev,
           [sceneIdx]: data.validationWarning
         }))
+      } else if (data.validationPassed === true) {
+        // Validation passed - clear any existing warning and set success info
+        setValidationInfo(prev => ({
+          ...prev,
+          [sceneIdx]: {
+            passed: true,
+            confidence: data.validationConfidence,
+            message: data.validationMessage,
+            dismissed: false
+          }
+        }))
+        
+        // Clear legacy warning
+        setValidationWarnings(prev => {
+          const newWarnings = { ...prev }
+          delete newWarnings[sceneIdx]
+          return newWarnings
+        })
       }
       
       // Update scene with image
@@ -1113,6 +1164,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             projectId={projectId}
             visualStyle={project?.tone || project?.metadata?.filmTreatmentVariant?.tone}
             validationWarnings={validationWarnings}
+            validationInfo={validationInfo}
+            onDismissValidationWarning={handleDismissValidationWarning}
           />
         </div>
         

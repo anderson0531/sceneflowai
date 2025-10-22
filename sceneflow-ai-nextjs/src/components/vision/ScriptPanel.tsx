@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
@@ -29,9 +29,17 @@ interface ScriptPanelProps {
   projectId?: string
   visualStyle?: string
   validationWarnings?: Record<number, string>
+  validationInfo?: Record<number, {
+    passed: boolean
+    confidence: number
+    message?: string
+    warning?: string
+    dismissed?: boolean
+  }>
+  onDismissValidationWarning?: (sceneIdx: number) => void
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {} }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [editMode, setEditMode] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -688,8 +696,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   scenePrompt={scenePrompts[idx]}
                   onPromptChange={(sceneIdx, prompt) => setScenePrompts(prev => ({ ...prev, [sceneIdx]: prompt }))}
                   validationWarning={validationWarnings[idx]}
+                  validationInfo={validationInfo[idx]}
                   isWarningExpanded={warningExpanded[idx] || false}
                   onToggleWarningExpanded={() => toggleWarningExpanded(idx)}
+                  onDismissValidationWarning={() => onDismissValidationWarning?.(idx)}
                   parseScriptForAudio={parseScriptForAudio}
                   generateAndPlaySFX={generateAndPlaySFX}
                   generateAndPlayMusic={generateAndPlayMusic}
@@ -770,15 +780,23 @@ interface SceneCardProps {
   scenePrompt?: string
   onPromptChange?: (sceneIdx: number, prompt: string) => void
   validationWarning?: string
+  validationInfo?: {
+    passed: boolean
+    confidence: number
+    message?: string
+    warning?: string
+    dismissed?: boolean
+  }
   isWarningExpanded?: boolean
   onToggleWarningExpanded?: () => void
+  onDismissValidationWarning?: () => void
   // Audio functions - inline play
   parseScriptForAudio?: (action: string) => Array<{type: 'text' | 'sfx' | 'music', content: string}>
   generateAndPlaySFX?: (description: string) => Promise<void>
   generateAndPlayMusic?: (description: string, duration?: number) => Promise<void>
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, isWarningExpanded, onToggleWarningExpanded, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic }: SceneCardProps) {
+function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
   
@@ -910,32 +928,84 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
         <div className="mt-3">
           {/* Prompt textarea hidden - accessible via drawer/builder */}
           
-          {/* Validation Warning Banner */}
-          {validationWarning && (
-            <div className="mb-3 p-3 bg-amber-500/20 border border-amber-500/50 rounded-lg">
-              {/* Clickable Header with Warning Icon */}
-              <div 
-                className="flex items-center justify-between cursor-pointer hover:bg-amber-500/10 -m-3 p-3 rounded-lg transition-colors"
-                onClick={onToggleWarningExpanded}
-              >
-                <div className="flex items-center gap-2 text-amber-200">
-                  <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-                  <span className="font-semibold text-sm">Character Reference Not Applied</span>
+          {/* Validation Info Display */}
+          {(() => {
+            // Only show warning if validation failed and not dismissed
+            const shouldShowWarning = validationInfo && 
+              validationInfo.passed === false && 
+              validationInfo.warning && 
+              !validationInfo.dismissed
+
+            // Show success indicator if validation passed with high confidence (≥90%) and not dismissed
+            const shouldShowSuccess = validationInfo && 
+              validationInfo.passed === true && 
+              validationInfo.confidence >= 90 &&
+              !validationInfo.dismissed
+
+            if (shouldShowWarning) {
+              return (
+                <div className="mb-3 p-3 bg-amber-500/20 border border-amber-500/50 rounded-lg">
+                  {/* Clickable Header with Warning Icon */}
+                  <div 
+                    className="flex items-center justify-between cursor-pointer hover:bg-amber-500/10 -m-3 p-3 rounded-lg transition-colors"
+                    onClick={onToggleWarningExpanded}
+                  >
+                    <div className="flex items-center gap-2 text-amber-200">
+                      <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                      <span className="font-semibold text-sm">
+                        Character Reference Not Applied ({validationInfo.confidence}% match)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <ChevronDown className={`w-4 h-4 text-amber-300 transition-transform ${isWarningExpanded ? '' : '-rotate-90'}`} />
+                    </div>
+                  </div>
+                  
+                  {/* Collapsible Details */}
+                  {isWarningExpanded && (
+                    <div className="mt-2 pl-7 text-sm">
+                      <div className="text-amber-300/80">{validationInfo.warning}</div>
+                      <div className="flex items-center gap-2 mt-3">
+                        <div className="text-amber-300/80">
+                          💡 Try regenerating with Max quality or upload a different reference image for better results.
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onDismissValidationWarning?.()
+                          }}
+                          className="ml-auto px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded transition-colors"
+                        >
+                          Dismiss
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <ChevronDown className={`w-4 h-4 text-amber-300 transition-transform ${isWarningExpanded ? '' : '-rotate-90'}`} />
-              </div>
-              
-              {/* Collapsible Details */}
-              {isWarningExpanded && (
-                <div className="mt-2 pl-7 text-sm">
-                  <div className="text-amber-300/80">{validationWarning}</div>
-                  <div className="text-amber-300/80 mt-2">
-                    💡 Try regenerating or upload a different reference image for better results.
+              )
+            }
+
+            if (shouldShowSuccess) {
+              return (
+                <div className="mb-3 p-2 bg-green-500/20 border border-green-500/50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-green-200 text-sm">
+                      <Check className="w-4 h-4 flex-shrink-0" />
+                      <span>Character reference verified ({validationInfo.confidence}% match)</span>
+                    </div>
+                    <button
+                      onClick={() => onDismissValidationWarning?.()}
+                      className="text-green-300 hover:text-green-100 text-xs"
+                    >
+                      ✕
+                    </button>
                   </div>
                 </div>
-              )}
-            </div>
-          )}
+              )
+            }
+
+            return null
+          })()}
           
           {/* Scene Image - Prominent Storyboard Display */}
           {!isOutline && scene.imageUrl && (

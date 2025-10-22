@@ -95,16 +95,40 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({
+    // Prepare response based on validation results
+    const response: any = {
       success: true,
       imageUrl,
-      model: 'imagen-3.0-generate-002',
+      model: quality === 'max' ? 'imagen-4.0-ultra-generate-001' : 'imagen-3.0-generate-002',
+      quality: quality,
       provider: 'vertex-ai',
-      storage: 'vercel-blob',
-      validationWarning: validation && !validation.matches && validation.confidence < 90
-        ? `Generated character may not match reference (${validation.confidence}% confidence). Issues: ${validation.issues.join(', ')}`
-        : undefined
-    })
+      storage: 'vercel-blob'
+    }
+
+    // Add validation info based on results
+    if (validation) {
+      response.validationConfidence = validation.confidence
+      
+      if (!validation.matches && validation.confidence < 90) {
+        // Validation failed - show warning
+        response.validationPassed = false
+        response.validationWarning = `Generated character may not match reference (${validation.confidence}% confidence). Issues: ${validation.issues.join(', ')}`
+        
+        // Suggest Max quality if currently using Auto
+        if (quality === 'auto') {
+          response.qualitySuggestion = 'max'
+          response.qualitySuggestionMessage = 'Try regenerating with Max quality (Imagen 4 Ultra) for better character cloning'
+        }
+      } else {
+        // Validation passed or acceptable for storyboards
+        response.validationPassed = true
+        if (validation.confidence >= 90) {
+          response.validationMessage = `Character likeness verified (${validation.confidence}% confidence)`
+        }
+      }
+    }
+
+    return NextResponse.json(response)
   } catch (error: any) {
     console.error('[Scene Image] Error:', error)
     return NextResponse.json(

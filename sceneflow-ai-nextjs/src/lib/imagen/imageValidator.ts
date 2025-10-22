@@ -1,5 +1,14 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
+/**
+ * Confidence Thresholds:
+ * - ≥90%: High confidence match (ideal for video production)
+ * - 75-89%: Acceptable for storyboards, may need refinement for video
+ * - <75%: Failed validation, regeneration recommended
+ * 
+ * Use Max quality (Imagen 4 Ultra) for best character cloning results
+ */
+
 interface ValidationResult {
   matches: boolean
   confidence: number
