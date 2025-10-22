@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
@@ -47,6 +47,31 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   
   // Image generation state
   const [generatingImageForScene, setGeneratingImageForScene] = useState<number | null>(null)
+  
+  // Warning expansion state - track which scene warnings are expanded
+  const [warningExpanded, setWarningExpanded] = useState<Record<number, boolean>>({})
+  
+  // Toggle warning expansion for a specific scene
+  const toggleWarningExpanded = (sceneIdx: number) => {
+    setWarningExpanded(prev => ({
+      ...prev,
+      [sceneIdx]: !prev[sceneIdx]
+    }))
+  }
+  
+  // Set warnings as expanded by default when they first appear
+  useEffect(() => {
+    const newExpanded: Record<number, boolean> = {}
+    Object.keys(validationWarnings).forEach(sceneIdxStr => {
+      const sceneIdx = parseInt(sceneIdxStr)
+      if (validationWarnings[sceneIdx] && warningExpanded[sceneIdx] === undefined) {
+        newExpanded[sceneIdx] = true // Default to expanded
+      }
+    })
+    if (Object.keys(newExpanded).length > 0) {
+      setWarningExpanded(prev => ({ ...prev, ...newExpanded }))
+    }
+  }, [validationWarnings, warningExpanded])
   
   // Scene prompt builder state
   const [sceneBuilderOpen, setSceneBuilderOpen] = useState(false)
@@ -441,8 +466,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     if (!onGenerateSceneImage) return
     setGeneratingImageForScene(sceneIdx)
     try {
-      const customPrompt = scenePrompts[sceneIdx]
-      await onGenerateSceneImage(sceneIdx, customPrompt)
+      // Pass undefined for selectedCharacters - the API will extract from scene
+      await onGenerateSceneImage(sceneIdx, undefined)
     } finally {
       setGeneratingImageForScene(null)
     }
@@ -663,6 +688,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   scenePrompt={scenePrompts[idx]}
                   onPromptChange={(sceneIdx, prompt) => setScenePrompts(prev => ({ ...prev, [sceneIdx]: prompt }))}
                   validationWarning={validationWarnings[idx]}
+                  isWarningExpanded={warningExpanded[idx] || false}
+                  onToggleWarningExpanded={() => toggleWarningExpanded(idx)}
                   parseScriptForAudio={parseScriptForAudio}
                   generateAndPlaySFX={generateAndPlaySFX}
                   generateAndPlayMusic={generateAndPlayMusic}
@@ -743,13 +770,15 @@ interface SceneCardProps {
   scenePrompt?: string
   onPromptChange?: (sceneIdx: number, prompt: string) => void
   validationWarning?: string
+  isWarningExpanded?: boolean
+  onToggleWarningExpanded?: () => void
   // Audio functions - inline play
   parseScriptForAudio?: (action: string) => Array<{type: 'text' | 'sfx' | 'music', content: string}>
   generateAndPlaySFX?: (description: string) => Promise<void>
   generateAndPlayMusic?: (description: string, duration?: number) => Promise<void>
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic }: SceneCardProps) {
+function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, isWarningExpanded, onToggleWarningExpanded, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
   
@@ -884,16 +913,27 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
           {/* Validation Warning Banner */}
           {validationWarning && (
             <div className="mb-3 p-3 bg-amber-500/20 border border-amber-500/50 rounded-lg">
-              <div className="flex items-start gap-2 text-amber-200">
-                <AlertTriangle className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                <div className="text-sm">
-                  <div className="font-semibold mb-1">Character Reference Not Applied</div>
+              {/* Clickable Header with Warning Icon */}
+              <div 
+                className="flex items-center justify-between cursor-pointer hover:bg-amber-500/10 -m-3 p-3 rounded-lg transition-colors"
+                onClick={onToggleWarningExpanded}
+              >
+                <div className="flex items-center gap-2 text-amber-200">
+                  <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                  <span className="font-semibold text-sm">Character Reference Not Applied</span>
+                </div>
+                <ChevronDown className={`w-4 h-4 text-amber-300 transition-transform ${isWarningExpanded ? '' : '-rotate-90'}`} />
+              </div>
+              
+              {/* Collapsible Details */}
+              {isWarningExpanded && (
+                <div className="mt-2 pl-7 text-sm">
                   <div className="text-amber-300/80">{validationWarning}</div>
-                  <div className="text-amber-300/80 mt-1">
-                    Try regenerating or upload a different reference image for better results.
+                  <div className="text-amber-300/80 mt-2">
+                    💡 Try regenerating or upload a different reference image for better results.
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
           
