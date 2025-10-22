@@ -485,6 +485,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           })
         })
         console.log('[Character Upload] ✓ Saved to project metadata with GCS URL')
+        
+        // Reload project to ensure fresh character data is available for scene generation
+        console.log('[Character Upload] Reloading project to refresh character data...')
+        await loadProject()
+        console.log('[Character Upload] ✓ Project reloaded with fresh character data')
       } catch (saveError) {
         console.error('Failed to save uploaded character to project:', saveError)
       }
