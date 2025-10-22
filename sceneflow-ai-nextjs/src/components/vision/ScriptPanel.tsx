@@ -16,8 +16,16 @@ interface ScriptPanelProps {
   isGenerating: boolean
   onExpandScene?: (sceneNumber: number) => Promise<void>
   onExpandAllScenes?: () => Promise<void>
-  onGenerateSceneImage?: (sceneIdx: number, customPrompt?: string, selectedCharacters?: string[]) => Promise<void>
-  characters?: Array<{ name: string; description: string; referenceImage?: string }>
+  onGenerateSceneImage?: (sceneIdx: number, customPrompt?: string, selectedCharacters?: any[]) => Promise<void>
+  characters?: Array<{ 
+    name: string
+    description: string
+    referenceImage?: string
+    referenceImageGCS?: string
+    appearanceDescription?: string
+    ethnicity?: string
+    subject?: string
+  }>
   projectId?: string
   visualStyle?: string
   validationWarnings?: Record<number, string>
@@ -677,7 +685,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           availableCharacters={characters.map(c => ({
             name: c.name,
             description: c.description,
-            referenceImage: c.referenceImage
+            referenceImage: c.referenceImage,
+            referenceImageGCS: c.referenceImageGCS,  // Pass GCS URL for Imagen API
+            appearanceDescription: c.appearanceDescription,  // Pass appearance description
+            ethnicity: c.ethnicity,
+            subject: c.subject
           }))}
           onGenerateImage={async (prompt, selectedCharacters) => {
             if (onGenerateSceneImage) {
