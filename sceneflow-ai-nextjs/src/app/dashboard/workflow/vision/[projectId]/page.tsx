@@ -9,9 +9,32 @@ import { SceneGallery } from '@/components/vision/SceneGallery'
 import { GenerationProgress } from '@/components/vision/GenerationProgress'
 import { ScriptPlayer } from '@/components/vision/ScriptPlayer'
 import { ImageQualitySelector } from '@/components/vision/ImageQualitySelector'
+import { VoiceSelector } from '@/components/tts/VoiceSelector'
 import { Button } from '@/components/ui/Button'
-import { Save, Share2, ArrowRight, Play } from 'lucide-react'
+import { Save, Share2, ArrowRight, Play, Volume2 } from 'lucide-react'
 import { findSceneCharacters } from '../../../../../lib/character/matching'
+
+interface VoiceConfig {
+  provider: 'elevenlabs' | 'google'
+  voiceId: string
+  voiceName: string
+  // ElevenLabs specific
+  stability?: number
+  similarityBoost?: number
+  // Google specific
+  languageCode?: string
+}
+
+interface Character {
+  id: string
+  name: string
+  description: string
+  role?: 'protagonist' | 'main' | 'supporting'
+  referenceImage?: string
+  appearanceDescription?: string
+  // NEW: Voice assignment
+  voiceConfig?: VoiceConfig
+}
 
 interface Project {
   id: string
@@ -31,6 +54,7 @@ interface Project {
       scriptGenerated?: boolean
       charactersGenerated?: boolean
       scenesGenerated?: boolean
+      narrationVoice?: VoiceConfig
     }
   }
 }
@@ -63,6 +87,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     scenes: { complete: false, progress: 0, total: 0 }
   })
   
+  // Audio generation state
+  const [narrationVoice, setNarrationVoice] = useState<VoiceConfig | null>(null)
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false)
+  
   // Image quality setting
   const [imageQuality, setImageQuality] = useState<'max' | 'auto'>('auto')
   
@@ -93,6 +121,77 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         console.log(`[Quality] Updated to ${quality} quality`)
       } catch (error) {
         console.error('[Quality] Failed to save quality setting:', error)
+      }
+    }
+  }
+  
+  // Handle narration voice change
+  const handleNarrationVoiceChange = async (voiceConfig: VoiceConfig) => {
+    setNarrationVoice(voiceConfig)
+    
+    if (project) {
+      const updatedProject = {
+        ...project,
+        metadata: {
+          ...project.metadata,
+          visionPhase: {
+            ...project.metadata?.visionPhase,
+            narrationVoice: voiceConfig
+          }
+        }
+      }
+      setProject(updatedProject)
+      
+      // Save to database
+      try {
+        await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: updatedProject.metadata
+          })
+        })
+        console.log('[Narration Voice] Updated narration voice:', voiceConfig)
+      } catch (error) {
+        console.error('[Narration Voice] Failed to save narration voice:', error)
+      }
+    }
+  }
+  
+  // Handle character voice update
+  const handleUpdateCharacterVoice = async (characterId: string, voiceConfig: VoiceConfig) => {
+    const updatedCharacters = characters.map(char => 
+      char.id === characterId 
+        ? { ...char, voiceConfig }
+        : char
+    )
+    setCharacters(updatedCharacters)
+    
+    if (project) {
+      const updatedProject = {
+        ...project,
+        metadata: {
+          ...project.metadata,
+          visionPhase: {
+            ...project.metadata?.visionPhase,
+            characters: updatedCharacters
+          }
+        }
+      }
+      setProject(updatedProject)
+      
+      // Save to database
+      try {
+        await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: updatedProject.metadata
+          })
+        })
+        console.log('[Character Voice] Updated character voice:', characterId, voiceConfig)
+      } catch (error) {
+        console.error('[Character Voice] Failed to save character voice:', error)
       }
     }
   }
@@ -185,6 +284,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           setCharacters(charactersWithRole)
         }
         if (visionPhase.scenes) setScenes(visionPhase.scenes)
+        
+        // Load narration voice setting
+        if (visionPhase.narrationVoice) {
+          setNarrationVoice(visionPhase.narrationVoice)
+          console.log('[Vision] Loaded narration voice:', visionPhase.narrationVoice)
+        }
         
         // Update generation progress to reflect saved state
         setGenerationProgress({
@@ -1024,6 +1129,84 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  // Handle generate all audio
+  const handleGenerateAllAudio = async () => {
+    if (!narrationVoice) {
+      try { const { toast } = require('sonner'); toast.error('Please select a narration voice first') } catch {}
+      return
+    }
+
+    // Check if all characters have voices
+    const charactersWithoutVoice = characters.filter(c => !c.voiceConfig)
+    if (charactersWithoutVoice.length > 0) {
+      try { 
+        const { toast } = require('sonner')
+        toast.error(`Please assign voices to: ${charactersWithoutVoice.map(c => c.name).join(', ')}`)
+      } catch {}
+      return
+    }
+
+    setIsGeneratingAudio(true)
+    try {
+      const response = await fetch('/api/vision/generate-all-audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId }),
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        try { const { toast } = require('sonner'); toast.success('All audio generated successfully!') } catch {}
+        await loadProject() // Reload to get updated audio URLs
+      }
+    } catch (error) {
+      console.error('[Generate All Audio] Error:', error)
+      try { const { toast } = require('sonner'); toast.error('Failed to generate audio') } catch {}
+    } finally {
+      setIsGeneratingAudio(false)
+    }
+  }
+
+  // Handle generate scene audio
+  const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string) => {
+    const scene = script?.script?.scenes?.[sceneIdx]
+    if (!scene) return
+
+    try {
+      const text = audioType === 'narration' ? scene.narration : 
+        scene.dialogue?.find((d: any) => d.character === characterName)?.line
+      
+      if (!text) return
+
+      const voiceConfig = audioType === 'narration' ? narrationVoice : 
+        characters.find(c => c.name === characterName)?.voiceConfig
+
+      if (!voiceConfig) return
+
+      const response = await fetch('/api/vision/generate-scene-audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex: sceneIdx,
+          audioType,
+          text,
+          voiceConfig,
+          characterName
+        }),
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        try { const { toast } = require('sonner'); toast.success('Audio generated!') } catch {}
+        await loadProject() // Reload to get updated audio URLs
+      }
+    } catch (error) {
+      console.error('[Generate Scene Audio] Error:', error)
+      try { const { toast } = require('sonner'); toast.error('Failed to generate audio') } catch {}
+    }
+  }
+
   const handleExport = () => {
     console.log('Export Vision')
   }
@@ -1095,6 +1278,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               onChange={handleQualityChange}
             />
             <Button 
+              onClick={handleGenerateAllAudio}
+              disabled={isGeneratingAudio}
+              className="flex items-center gap-2"
+            >
+              <Volume2 className="w-4 h-4" />
+              {isGeneratingAudio ? 'Generating Audio...' : 'Generate All Audio'}
+            </Button>
+            <Button 
               variant="outline" 
               size="sm" 
               className="flex items-center gap-2"
@@ -1142,6 +1333,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         
         {/* Right Sidebar: Characters */}
         <div className="overflow-y-auto">
+          {/* Narration Voice Selector */}
+          <div className="p-4 border-b border-gray-700">
+            <div className="flex items-center gap-2 mb-2">
+              <Volume2 className="w-4 h-4 text-gray-400" />
+              <label className="text-sm font-medium text-gray-300">Narration Voice</label>
+            </div>
+            <VoiceSelector
+              selectedVoiceId={narrationVoice?.voiceId || ''}
+              onSelectVoice={(voiceId, voiceName) =>
+                handleNarrationVoiceChange({ 
+                  provider: 'elevenlabs', // Default to ElevenLabs for now
+                  voiceId, 
+                  voiceName 
+                })
+              }
+              compact={true}
+            />
+            {narrationVoice && (
+              <div className="text-xs text-green-400 mt-1">
+                ✓ {narrationVoice.voiceName}
+              </div>
+            )}
+          </div>
+          
           <CharacterLibrary 
             characters={characters}
             onRegenerateCharacter={handleRegenerateCharacter}
@@ -1149,6 +1364,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             onUploadCharacter={handleUploadCharacter}
             onApproveCharacter={handleApproveCharacter}
             onUpdateCharacterAttributes={handleUpdateCharacterAttributes}
+            onUpdateCharacterVoice={handleUpdateCharacterVoice}
             compact={true}
           />
         </div>

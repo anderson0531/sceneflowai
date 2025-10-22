@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
@@ -52,6 +52,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [selectedVoiceId, setSelectedVoiceId] = useState<string | undefined>(undefined)
   const queueAbortRef = useRef<{ abort: boolean }>({ abort: false })
+  
+  // Individual audio playback state
+  const [playingAudio, setPlayingAudio] = useState<string | null>(null)
+  const individualAudioRef = useRef<HTMLAudioElement | null>(null)
   
   // Image generation state
   const [generatingImageForScene, setGeneratingImageForScene] = useState<number | null>(null)
@@ -481,6 +485,64 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     }
   }
 
+  // Individual audio playback handlers
+  const handlePlayAudio = (audioUrl: string, label: string) => {
+    if (playingAudio === audioUrl) {
+      individualAudioRef.current?.pause()
+      setPlayingAudio(null)
+    } else {
+      if (individualAudioRef.current) {
+        individualAudioRef.current.src = audioUrl
+        individualAudioRef.current.play()
+        setPlayingAudio(audioUrl)
+      }
+    }
+  }
+
+  const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string) => {
+    const scene = scenes[sceneIdx]
+    if (!scene) return
+
+    try {
+      const text = audioType === 'narration' ? scene.narration : 
+        scene.dialogue?.find((d: any) => d.character === characterName)?.line
+      
+      if (!text) return
+
+      const response = await fetch('/api/vision/generate-scene-audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex: sceneIdx,
+          audioType,
+          text,
+          characterName
+        }),
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        // Reload the script to get updated audio URLs
+        if (onScriptChange) {
+          const updatedScript = { ...script }
+          if (updatedScript.script?.scenes) {
+            updatedScript.script.scenes[sceneIdx] = {
+              ...updatedScript.script.scenes[sceneIdx],
+              [audioType === 'narration' ? 'narrationAudioUrl' : 'dialogueAudio']: 
+                audioType === 'narration' ? data.audioUrl : 
+                [...(updatedScript.script.scenes[sceneIdx].dialogueAudio || []), 
+                 { character: characterName, audioUrl: data.audioUrl }]
+            }
+          }
+          onScriptChange(updatedScript)
+        }
+      }
+    } catch (error) {
+      console.error('[Generate Scene Audio] Error:', error)
+    }
+  }
+
   const handleOpenSceneBuilder = (sceneIdx: number) => {
     setSceneBuilderIdx(sceneIdx)
     setSceneBuilderOpen(true)
@@ -703,6 +765,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   parseScriptForAudio={parseScriptForAudio}
                   generateAndPlaySFX={generateAndPlaySFX}
                   generateAndPlayMusic={generateAndPlayMusic}
+                  onPlayAudio={handlePlayAudio}
+                  onGenerateSceneAudio={handleGenerateSceneAudio}
+                  playingAudio={playingAudio}
                 />
               ))
             )}
@@ -758,6 +823,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           }}
         />
       )}
+      
+      {/* Hidden audio player for individual audio files */}
+      <audio
+        ref={individualAudioRef}
+        onEnded={() => setPlayingAudio(null)}
+        className="hidden"
+      />
     </div>
   )
 }
@@ -794,9 +866,13 @@ interface SceneCardProps {
   parseScriptForAudio?: (action: string) => Array<{type: 'text' | 'sfx' | 'music', content: string}>
   generateAndPlaySFX?: (description: string) => Promise<void>
   generateAndPlayMusic?: (description: string, duration?: number) => Promise<void>
+  // Individual audio playback
+  onPlayAudio?: (audioUrl: string, label: string) => void
+  onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string) => void
+  playingAudio?: string | null
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic }: SceneCardProps) {
+function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
   
@@ -1025,9 +1101,45 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
           {/* Narration (if available) */}
           {scene.narration && (
             <div className="mt-3 mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="flex items-center gap-2 mb-2">
-                <Volume2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Scene Narration</span>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Volume2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Scene Narration</span>
+                </div>
+                {scene.narrationAudioUrl ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onPlayAudio?.(scene.narrationAudioUrl, 'narration')
+                      }}
+                      className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
+                    >
+                      {playingAudio === scene.narrationAudioUrl ? (
+                        <Pause className="w-4 h-4" />
+                      ) : (
+                        <Play className="w-4 h-4" />
+                      )}
+                    </button>
+                    <a
+                      href={scene.narrationAudioUrl}
+                      download
+                      className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
+                    >
+                      <Download className="w-4 h-4" />
+                    </a>
+                  </div>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                        onGenerateSceneAudio?.(sceneIdx, 'narration')
+                    }}
+                    className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
+                  >
+                    Generate Audio
+                  </button>
+                )}
               </div>
               <div className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
                 "{scene.narration}"
@@ -1083,13 +1195,52 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
           )}
           
           {!isOutline && scene.dialogue && scene.dialogue.length > 0 && (
-            <div className="space-y-1">
-              {scene.dialogue.map((d: any, i: number) => (
-                <div key={i} className="text-sm ml-4">
-                  <span className="font-semibold text-gray-900 dark:text-gray-100">{d.character}:</span>
-                  <span className="ml-2 italic text-gray-700 dark:text-gray-300">"{d.line}"</span>
-                </div>
-              ))}
+            <div className="space-y-2">
+              {scene.dialogue.map((d: any, i: number) => {
+                const audioEntry = scene.dialogueAudio?.find((a: any) => a.character === d.character)
+                return (
+                  <div key={i} className="flex items-start gap-2">
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{d.character}</div>
+                      <div className="text-sm text-gray-700 dark:text-gray-300 italic">"{d.line}"</div>
+                    </div>
+                    {audioEntry?.audioUrl ? (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onPlayAudio?.(audioEntry.audioUrl, d.character)
+                          }}
+                          className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                        >
+                          {playingAudio === audioEntry.audioUrl ? (
+                            <Pause className="w-4 h-4" />
+                          ) : (
+                            <Play className="w-4 h-4" />
+                          )}
+                        </button>
+                        <a
+                          href={audioEntry.audioUrl}
+                          download
+                          className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                        >
+                          <Download className="w-4 h-4" />
+                        </a>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onGenerateSceneAudio?.(sceneIdx, 'dialogue', d.character)
+                        }}
+                        className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
+                      >
+                        Generate
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>

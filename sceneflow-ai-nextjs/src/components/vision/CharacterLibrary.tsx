@@ -1,9 +1,10 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X, ChevronDown, Check, Settings, Sparkles, Lightbulb, AlertTriangle, Info } from 'lucide-react'
+import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X, ChevronDown, Check, Settings, Sparkles, Lightbulb, AlertTriangle, Info, Volume2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { CharacterPromptBuilder } from '@/components/blueprint/CharacterPromptBuilder'
+import { VoiceSelector } from '@/components/tts/VoiceSelector'
 import { toast } from 'sonner'
 
 interface CharacterLibraryProps {
@@ -13,10 +14,11 @@ interface CharacterLibraryProps {
   onUploadCharacter: (characterId: string, file: File) => void
   onApproveCharacter: (characterId: string) => void
   onUpdateCharacterAttributes?: (characterId: string, attributes: any) => void
+  onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void
   compact?: boolean
 }
 
-export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, compact = false }: CharacterLibraryProps) {
+export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, compact = false }: CharacterLibraryProps) {
   const [selectedChar, setSelectedChar] = useState<string | null>(null)
   const [charPrompts, setCharPrompts] = useState<Record<string, string>>({})
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(new Set())
@@ -236,6 +238,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                 isGenerating={generatingChars.has(charId)}
                 expandedCharId={expandedSections[charId]}
                 onToggleExpand={handleToggleSection}
+                onUpdateCharacterVoice={onUpdateCharacterVoice}
               />
             )
           })}
@@ -340,9 +343,10 @@ interface CharacterCardProps {
   isGenerating: boolean
   expandedCharId?: string | null
   onToggleExpand?: (charId: string, section: 'coreIdentity' | 'appearance') => void
+  onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void
 }
 
-function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, onOpenBuilder, onAnalyze, analyzingImage, prompt, onPromptChange, isGenerating, expandedCharId, onToggleExpand }: CharacterCardProps) {
+function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, onOpenBuilder, onAnalyze, analyzingImage, prompt, onPromptChange, isGenerating, expandedCharId, onToggleExpand, onUpdateCharacterVoice }: CharacterCardProps) {
   const hasImage = !!character.referenceImage
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
@@ -616,6 +620,32 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
             </>
           )}
         </div>
+        
+        {/* Character Voice Selector */}
+        {onUpdateCharacterVoice && (
+          <div className="mt-3 border-t border-gray-700 pt-3">
+            <label className="text-xs text-gray-400 mb-2 block flex items-center gap-1">
+              <Volume2 className="w-3 h-3" />
+              Character Voice
+            </label>
+            <VoiceSelector
+              selectedVoiceId={character.voiceConfig?.voiceId || ''}
+              onSelectVoice={(voiceId, voiceName) => 
+                onUpdateCharacterVoice?.(characterId, {
+                  provider: 'elevenlabs', // Default to ElevenLabs for now
+                  voiceId,
+                  voiceName
+                })
+              }
+              compact={true}
+            />
+            {character.voiceConfig && (
+              <div className="text-xs text-green-400 mt-1">
+                ✓ {character.voiceConfig.voiceName}
+              </div>
+            )}
+          </div>
+        )}
       </div>
       
       {/* Regenerate button for approved images - top-right corner */}
