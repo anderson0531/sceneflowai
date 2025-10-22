@@ -22,13 +22,15 @@ export function optimizePromptForImagen(params: OptimizePromptParams): string {
   
   console.log('[Prompt Optimizer] Cleaned scene action:', cleanedAction.substring(0, 100))
   
-  // If character reference exists, add it to the prompt
+  // If character reference exists, tag character name in prompt with [referenceId]
   if (params.characterReference) {
+    // Add [referenceId] tag inline with the character description
+    // This tells Imagen which person in the scene should match the reference
     const prompt = `${cleanedAction}
 
-Character reference [${params.characterReference.referenceId}]: ${params.characterReference.description}
+Featuring character [${params.characterReference.referenceId}]: ${params.characterReference.description}
 
-Style: Photorealistic, cinematic lighting, 8K resolution, sharp focus, professional photography.`
+Style: Photorealistic, cinematic lighting, 8K resolution, sharp focus, professional photography, realistic human proportions.`
 
     console.log('[Prompt Optimizer] Built prompt with character reference [' + params.characterReference.referenceId + ']')
     return prompt.trim()
