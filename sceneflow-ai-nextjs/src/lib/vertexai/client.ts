@@ -38,10 +38,10 @@ export async function getVertexAIAuthToken(): Promise<string> {
 
 /**
  * Generate image using Vertex AI Imagen
- * Character references can be provided via GCS URIs in the referenceImages parameter
+ * Character references provided as Base64-encoded images
  * 
  * @param prompt - Text description of image to generate
- * @param options - Generation options (aspect ratio, number of images, reference images with GCS URIs)
+ * @param options - Generation options (aspect ratio, number of images, Base64 reference images)
  * @returns Base64-encoded image data URL
  */
 export async function callVertexAIImagen(
@@ -52,7 +52,7 @@ export async function callVertexAIImagen(
     negativePrompt?: string
     referenceImages?: Array<{
       referenceId: number
-      gcsUri: string
+      base64Image: string
       referenceType?: 'REFERENCE_TYPE_SUBJECT'
       subjectDescription?: string
     }>
@@ -87,11 +87,11 @@ export async function callVertexAIImagen(
     }
   }
 
-  // Add reference images if provided (using GCS URIs)
+  // Add reference images if provided (using Base64)
   if (options.referenceImages && options.referenceImages.length > 0) {
     requestBody.parameters.referenceImages = options.referenceImages.map(ref => ({
       referenceId: ref.referenceId,
-      gcsUri: ref.gcsUri,
+      base64Encoded: ref.base64Image,
       referenceType: ref.referenceType || 'REFERENCE_TYPE_SUBJECT',
       subjectImageConfig: {
         subjectDescription: ref.subjectDescription || `Character ${ref.referenceId}`,
@@ -99,16 +99,18 @@ export async function callVertexAIImagen(
       }
     }))
     
-    console.log('[Vertex AI] Using', options.referenceImages.length, 'GCS reference images')
-    console.log('[Vertex AI] Reference config:', JSON.stringify(requestBody.parameters.referenceImages[0], null, 2))
+    const firstRef = options.referenceImages[0]
+    const base64SizeKB = Math.round((firstRef.base64Image.length * 0.75) / 1024)
+    
+    console.log('[Vertex AI] Using', options.referenceImages.length, 'Base64 reference images')
+    console.log(`[Vertex AI] Reference size: ${base64SizeKB}KB`)
+    console.log('[Vertex AI] Reference description:', firstRef.subjectDescription?.substring(0, 60))
   }
   
   // Log request size for debugging
   const requestBodyStr = JSON.stringify(requestBody)
   const requestSizeKB = Math.round(requestBodyStr.length / 1024)
-  console.log(`[Vertex AI] Request body size: ${requestSizeKB}KB`)
-  console.log(`[Vertex AI] Prompt contains GCS reference in text: ${/\[Image Reference: gs:\/\//i.test(prompt)}`)
-  console.log(`[Vertex AI] Has referenceImages parameter: ${!!options.referenceImages}`)
+  console.log(`[Vertex AI] Total request size: ${requestSizeKB}KB`)
 
   const response = await fetch(endpoint, {
     method: 'POST',
