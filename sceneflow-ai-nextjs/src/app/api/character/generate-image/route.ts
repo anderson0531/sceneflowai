@@ -8,7 +8,7 @@ export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, projectId, characterId } = await req.json()
+    const { prompt, projectId, characterId, quality = 'auto' } = await req.json()
     
     let finalPrompt = prompt?.trim() || ''
     
@@ -61,10 +61,11 @@ Lighting: Soft natural lighting, professional photography`
 
     console.log('[Character Image] Generating with Vertex AI Imagen 3:', enhancedPrompt.substring(0, 100))
 
-    // Generate with Vertex AI Imagen 3 (1:1 for portrait)
+    // Generate with Vertex AI (1:1 for portrait)
     const base64Image = await callVertexAIImagen(enhancedPrompt, {
       aspectRatio: '1:1',
-      numberOfImages: 1
+      numberOfImages: 1,
+      quality: quality // Pass quality setting
     })
     
     // Upload to Vercel Blob
@@ -76,7 +77,8 @@ Lighting: Soft natural lighting, professional photography`
     return NextResponse.json({ 
       success: true, 
       imageUrl,
-      model: 'imagen-3.0-generate-001',
+      model: quality === 'max' ? 'imagen-4.0-ultra-generate-001' : 'imagen-3.0-generate-002',
+      quality: quality,
       provider: 'vertex-ai',
       storage: 'vercel-blob'
     })

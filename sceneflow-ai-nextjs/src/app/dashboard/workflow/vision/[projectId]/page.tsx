@@ -8,6 +8,7 @@ import { CharacterLibrary } from '@/components/vision/CharacterLibrary'
 import { SceneGallery } from '@/components/vision/SceneGallery'
 import { GenerationProgress } from '@/components/vision/GenerationProgress'
 import { ScriptPlayer } from '@/components/vision/ScriptPlayer'
+import { ImageQualitySelector } from '@/components/vision/ImageQualitySelector'
 import { Button } from '@/components/ui/Button'
 import { Save, Share2, ArrowRight, Play } from 'lucide-react'
 
@@ -21,6 +22,7 @@ interface Project {
   metadata?: {
     blueprintVariant?: string
     filmTreatmentVariant?: any
+    imageQuality?: 'max' | 'auto' // NEW: Image generation quality setting
     visionPhase?: {
       script?: any
       characters?: any[]
@@ -50,6 +52,40 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     characters: { complete: false, progress: 0, total: 0 },
     scenes: { complete: false, progress: 0, total: 0 }
   })
+  
+  // Image quality setting
+  const [imageQuality, setImageQuality] = useState<'max' | 'auto'>('auto')
+  
+  // Handle quality setting change
+  const handleQualityChange = async (quality: 'max' | 'auto') => {
+    setImageQuality(quality)
+    
+    // Update project metadata
+    if (project) {
+      const updatedProject = {
+        ...project,
+        metadata: {
+          ...project.metadata,
+          imageQuality: quality
+        }
+      }
+      setProject(updatedProject)
+      
+      // Save to database
+      try {
+        await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: updatedProject.metadata
+          })
+        })
+        console.log(`[Quality] Updated to ${quality} quality`)
+      } catch (error) {
+        console.error('[Quality] Failed to save quality setting:', error)
+      }
+    }
+  }
 
   useEffect(() => {
     setMounted(true)
@@ -80,6 +116,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       })
       
       setProject(proj)
+      
+      // Load image quality setting from project metadata
+      if (proj.metadata?.imageQuality) {
+        setImageQuality(proj.metadata.imageQuality)
+        console.log('[Quality] Loaded quality setting:', proj.metadata.imageQuality)
+      }
       
       // Load existing Vision data if available
       const visionPhase = proj.metadata?.visionPhase
@@ -557,7 +599,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const res = await fetch('/api/character/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
+        body: JSON.stringify({ 
+          prompt,
+          quality: imageQuality // Pass quality setting
+        })
       })
       
       const json = await res.json()
@@ -895,7 +940,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             characters: sceneCharacters,
             dialogue: scene.dialogue
           },
-          selectedCharacters: sceneCharacters
+          selectedCharacters: sceneCharacters,
+          quality: imageQuality // Pass quality setting
         })
       })
       
@@ -1022,6 +1068,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
         secondaryActions={
           <>
+            <ImageQualitySelector
+              value={imageQuality}
+              onChange={handleQualityChange}
+            />
             <Button 
               variant="outline" 
               size="sm" 

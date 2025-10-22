@@ -50,6 +50,7 @@ export async function callVertexAIImagen(
     aspectRatio?: '1:1' | '9:16' | '16:9' | '4:3' | '3:4'
     numberOfImages?: number
     negativePrompt?: string
+    quality?: 'max' | 'auto' // NEW parameter
     referenceImages?: Array<{
       referenceId: number
       base64Image: string
@@ -65,20 +66,25 @@ export async function callVertexAIImagen(
     throw new Error('GCP_PROJECT_ID not configured')
   }
 
-  console.log('[Vertex AI] Generating image with Imagen 3...')
+  // Determine model based on quality setting
+  const model = options.quality === 'max' 
+    ? 'imagen-4.0-ultra-generate-001'  // Imagen 4 Ultra
+    : 'imagen-3.0-generate-002'         // Imagen 3 (default)
+  
+  console.log(`[Vertex AI] Generating image with ${model} (${options.quality || 'auto'} quality)...`)
   console.log('[Vertex AI] Project:', projectId, 'Region:', region)
 
   const accessToken = await getVertexAIAuthToken()
   
-  // Vertex AI Imagen 3 endpoint (imagegeneration@006 is deprecated, removed Sept 2025)
-  const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/imagen-3.0-generate-002:predict`
+  // Vertex AI endpoint with selected model
+  const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${model}:predict`
   
   const requestBody: any = {
     instances: [{
       prompt: prompt
     }],
     parameters: {
-      model: 'imagen-3.0-generate-002',
+      model, // Use selected model
       sampleCount: options.numberOfImages || 1,
       aspectRatio: options.aspectRatio || '16:9',
       negativePrompt: options.negativePrompt || '',

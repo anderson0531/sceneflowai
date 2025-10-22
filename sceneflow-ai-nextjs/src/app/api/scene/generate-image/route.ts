@@ -13,7 +13,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const {
       sceneContext,
-      selectedCharacters = []
+      selectedCharacters = [],
+      quality = 'auto' // NEW parameter
     } = body
 
     console.log('[Scene Image] Generating scene image')
@@ -39,6 +40,7 @@ export async function POST(req: NextRequest) {
     const base64Image = await callVertexAIImagen(optimizedPrompt, {
       aspectRatio: '16:9',
       numberOfImages: 1,
+      quality: quality, // Pass quality setting
       referenceImages: base64References.map(ref => ({
         referenceId: ref.referenceId,
         base64Image: ref.base64Image,
