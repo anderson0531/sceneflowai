@@ -118,15 +118,25 @@ export async function POST(req: NextRequest) {
       hasAppearance: !!c.appearanceDescription
     })))
 
+    // CRITICAL: When GCS references exist, use scene description instead of custom prompt
+    // Custom prompts from Scene Prompt Builder are often generic and miss scene details
+    let basePrompt = prompt
+    if (charactersWithGCS.length > 0 && sceneContext) {
+      // Prefer scene action/visualDescription over custom prompt for better scene capture
+      basePrompt = sceneContext.action || sceneContext.visualDescription || prompt
+      console.log('[Scene Image] Using scene description for GCS reference (ignoring custom prompt)')
+      console.log('[Scene Image] Base prompt preview:', basePrompt.substring(0, 100))
+    }
+
     // Build optimized prompt using hybrid approach (AI parsing + deterministic template)
-    let finalPrompt = prompt
+    let finalPrompt = basePrompt
     
     if (charactersWithGCS.length > 0) {
       try {
         finalPrompt = await optimizePromptForImagen({
-          rawPrompt: prompt,
+          rawPrompt: basePrompt,
           sceneAction: sceneContext?.action || '',
-          visualDescription: sceneContext?.visualDescription || prompt,
+          visualDescription: sceneContext?.visualDescription || basePrompt,
           characterNames: sceneCharacterNames,
           hasCharacterReferences: true,
           characterMetadata: charactersWithGCS.map((char: any) => ({
