@@ -33,8 +33,12 @@ interface ScenePromptBuilderProps {
     name: string
     description: string
     referenceImage?: string
+    referenceImageGCS?: string
+    appearanceDescription?: string
+    ethnicity?: string
+    subject?: string
   }>
-  onGenerateImage: (prompt: string, selectedCharacters: string[]) => void
+  onGenerateImage: (prompt: string, selectedCharacters: any[]) => void
 }
 
 export function ScenePromptBuilder({
@@ -196,7 +200,18 @@ export function ScenePromptBuilder({
   const constructedPrompt = mode === 'guided' ? constructPrompt() : advancedPrompt
 
   const handleGenerateScene = () => {
-    onGenerateImage(constructedPrompt, structure.characters)
+    // Pass full character objects (not just names) so API gets referenceImageGCS
+    const selectedCharacterObjects = structure.characters
+      .map(charName => availableCharacters.find(c => c.name === charName))
+      .filter(Boolean)
+    
+    console.log('[Scene Prompt Builder] Generating with characters:', selectedCharacterObjects.map(c => ({
+      name: c?.name,
+      hasGCS: !!c?.referenceImageGCS,
+      gcsUrl: c?.referenceImageGCS?.substring(0, 50) || 'none'
+    })))
+    
+    onGenerateImage(constructedPrompt, selectedCharacterObjects)
     onClose()
   }
 
