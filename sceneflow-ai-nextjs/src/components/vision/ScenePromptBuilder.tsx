@@ -67,6 +67,10 @@ export function ScenePromptBuilder({
   
   const [advancedPrompt, setAdvancedPrompt] = useState('')
   const [copied, setCopied] = useState(false)
+  
+  // New state for editable prompt
+  const [editedPrompt, setEditedPrompt] = useState('')
+  const [isPromptEdited, setIsPromptEdited] = useState(false)
 
   // Parse scene description to auto-populate fields
   useEffect(() => {
@@ -144,6 +148,27 @@ export function ScenePromptBuilder({
     setStructure(prev => ({ ...prev, ...updates }))
   }, [open, scene, availableCharacters])
 
+  // Sync guided prompt to advanced mode when switching
+  useEffect(() => {
+    if (mode === 'advanced' && !advancedPrompt) {
+      // If switching to advanced and it's empty, populate with guided prompt
+      const guidedPrompt = isPromptEdited ? editedPrompt : constructPrompt()
+      if (guidedPrompt) {
+        setAdvancedPrompt(guidedPrompt)
+      }
+    }
+  }, [mode])
+
+  // Reset editing state when dialog opens/closes
+  useEffect(() => {
+    if (!open) {
+      // Reset editing state when dialog closes
+      setIsPromptEdited(false)
+      setEditedPrompt('')
+      setAdvancedPrompt('')
+    }
+  }, [open])
+
   // Construct prompt from structure
   const constructPrompt = (): string => {
     const parts: string[] = []
@@ -215,7 +240,9 @@ export function ScenePromptBuilder({
     return parts.filter(Boolean).join(', ')
   }
 
-  const constructedPrompt = mode === 'guided' ? constructPrompt() : advancedPrompt
+  const constructedPrompt = mode === 'guided' 
+    ? (isPromptEdited ? editedPrompt : constructPrompt())
+    : advancedPrompt
 
   const handleGenerateScene = () => {
     // Pass full character objects (not just names) so API gets referenceImageGCS
@@ -240,6 +267,16 @@ export function ScenePromptBuilder({
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const handleModeChange = (newMode: string) => {
+    const mode = newMode as 'guided' | 'advanced'
+    if (mode === 'advanced') {
+      // When switching to advanced, populate with current crafted prompt
+      const currentPrompt = isPromptEdited ? editedPrompt : constructPrompt()
+      setAdvancedPrompt(currentPrompt)
+    }
+    setMode(mode)
+  }
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-900 text-white border-gray-700">
@@ -247,10 +284,17 @@ export function ScenePromptBuilder({
           <DialogTitle className="text-white">Scene Prompt Builder - {scene?.heading || `Scene ${scene?.sceneNumber || ''}`}</DialogTitle>
         </DialogHeader>
 
-        <Tabs value={mode} onValueChange={(v) => setMode(v as any)}>
+        <Tabs value={mode} onValueChange={handleModeChange}>
           <TabsList className="w-full">
-            <TabsTrigger value="guided" className="flex-1">Guided Mode</TabsTrigger>
-            <TabsTrigger value="advanced" className="flex-1">Advanced Mode</TabsTrigger>
+            <TabsTrigger value="guided" className="flex-1 relative">
+              Guided Mode
+              {isPromptEdited && (
+                <span className="ml-1 text-xs text-amber-400">✏️</span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="advanced" className="flex-1">
+              Advanced Mode
+            </TabsTrigger>
           </TabsList>
 
           {/* Character Reference Guidance Banner */}
@@ -516,6 +560,41 @@ export function ScenePromptBuilder({
                 className="resize-none"
               />
             </div>
+
+            {/* Crafted Prompt - Editable */}
+            <div className="space-y-3 p-3 rounded border border-gray-700 bg-gray-800/50">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-200">Crafted Prompt</h3>
+                {isPromptEdited && (
+                  <button
+                    onClick={() => {
+                      setEditedPrompt(constructPrompt())
+                      setIsPromptEdited(false)
+                    }}
+                    className="text-xs text-blue-400 hover:text-blue-300"
+                  >
+                    Reset to Auto-Crafted
+                  </button>
+                )}
+              </div>
+              <Textarea
+                value={isPromptEdited ? editedPrompt : constructPrompt()}
+                onChange={(e) => {
+                  setEditedPrompt(e.target.value)
+                  setIsPromptEdited(true)
+                }}
+                rows={6}
+                className="resize-vertical text-sm"
+                placeholder="Your crafted prompt will appear here..."
+              />
+              <p className="text-xs text-gray-400">
+                {isPromptEdited ? (
+                  <span className="text-amber-400">✏️ Prompt manually edited</span>
+                ) : (
+                  <span>💡 Auto-crafted from selections above. Edit directly if needed.</span>
+                )}
+              </p>
+            </div>
           </TabsContent>
 
           {/* Advanced Mode */}
@@ -546,7 +625,25 @@ export function ScenePromptBuilder({
 
         {/* Live Prompt Preview */}
         <div className="sticky bottom-0 bg-gray-900 border-t border-gray-700 p-3 -mx-6 -mb-6">
-          <label className="text-xs text-gray-400 block mb-1">Generated Prompt</label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs text-gray-400">
+              {mode === 'guided' 
+                ? (isPromptEdited ? 'Edited Prompt' : 'Auto-Crafted Prompt')
+                : 'Custom Prompt'
+              }
+            </label>
+            {mode === 'guided' && isPromptEdited && (
+              <button
+                onClick={() => {
+                  setEditedPrompt(constructPrompt())
+                  setIsPromptEdited(false)
+                }}
+                className="text-xs text-blue-400 hover:text-blue-300"
+              >
+                Reset
+              </button>
+            )}
+          </div>
           <div className="text-sm text-gray-200 p-2 bg-gray-800 rounded border border-gray-700 max-h-32 overflow-y-auto leading-relaxed">
             {constructedPrompt || <span className="text-gray-500 italic">Fill in the fields above to build your prompt...</span>}
           </div>
