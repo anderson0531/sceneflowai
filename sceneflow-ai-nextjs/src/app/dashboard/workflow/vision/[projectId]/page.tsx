@@ -103,7 +103,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           
           setScript(visionPhase.script)
         }
-        if (visionPhase.characters) setCharacters(visionPhase.characters)
+        if (visionPhase.characters) {
+          console.log('[Vision] Loading characters from visionPhase:', visionPhase.characters.map((c: any) => ({
+            name: c.name,
+            hasReferenceImage: !!c.referenceImage,
+            hasReferenceImageGCS: !!c.referenceImageGCS,
+            gcsUrl: c.referenceImageGCS?.substring(0, 50) || 'none',
+            hasAppearanceDesc: !!c.appearanceDescription
+          })))
+          setCharacters(visionPhase.characters)
+        }
         if (visionPhase.scenes) setScenes(visionPhase.scenes)
         
         // Update generation progress to reflect saved state
@@ -448,6 +457,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       setCharacters(updatedCharacters)
       
+      console.log('[Character Upload] Updated character details:', updatedCharacters.map(c => ({
+        name: c.name,
+        hasReferenceImage: !!c.referenceImage,
+        hasReferenceImageGCS: !!c.referenceImageGCS,
+        gcsUrl: c.referenceImageGCS?.substring(0, 50) || 'none',
+        hasAppearanceDesc: !!c.appearanceDescription
+      })))
+      
       // Persist to project metadata
       try {
         const existingMetadata = project?.metadata || {}
@@ -467,7 +484,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           })
         })
-        console.log('[Character Upload] Saved to project metadata')
+        console.log('[Character Upload] ✓ Saved to project metadata with GCS URL')
       } catch (saveError) {
         console.error('Failed to save uploaded character to project:', saveError)
       }
