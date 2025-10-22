@@ -38,11 +38,10 @@ export async function getVertexAIAuthToken(): Promise<string> {
 
 /**
  * Generate image using Vertex AI Imagen
- * Character references should be embedded in the prompt text using GCS URLs:
- * e.g., "[Image Reference: gs://bucket/character.jpg], African American man in his late 40s, ..."
+ * Character references can be provided via GCS URIs in the referenceImages parameter
  * 
- * @param prompt - Text description of image to generate (with embedded GCS references)
- * @param options - Generation options (aspect ratio, number of images, etc.)
+ * @param prompt - Text description of image to generate
+ * @param options - Generation options (aspect ratio, number of images, reference images with GCS URIs)
  * @returns Base64-encoded image data URL
  */
 export async function callVertexAIImagen(
@@ -51,6 +50,12 @@ export async function callVertexAIImagen(
     aspectRatio?: '1:1' | '9:16' | '16:9' | '4:3' | '3:4'
     numberOfImages?: number
     negativePrompt?: string
+    referenceImages?: Array<{
+      referenceId: number
+      gcsUri: string
+      referenceType?: 'REFERENCE_TYPE_SUBJECT'
+      subjectDescription?: string
+    }>
   } = {}
 ): Promise<string> {
   const projectId = process.env.GCP_PROJECT_ID
@@ -82,15 +87,28 @@ export async function callVertexAIImagen(
     }
   }
 
-  // Character references are now embedded in the prompt text using GCS URLs
-  // No need for referenceImages parameter
-  console.log('[Vertex AI] Using GCS references embedded in prompt')
+  // Add reference images if provided (using GCS URIs)
+  if (options.referenceImages && options.referenceImages.length > 0) {
+    requestBody.parameters.referenceImages = options.referenceImages.map(ref => ({
+      referenceId: ref.referenceId,
+      gcsUri: ref.gcsUri,
+      referenceType: ref.referenceType || 'REFERENCE_TYPE_SUBJECT',
+      subjectImageConfig: {
+        subjectDescription: ref.subjectDescription || `Character ${ref.referenceId}`,
+        subjectType: 'SUBJECT_TYPE_PERSON'
+      }
+    }))
+    
+    console.log('[Vertex AI] Using', options.referenceImages.length, 'GCS reference images')
+    console.log('[Vertex AI] Reference config:', JSON.stringify(requestBody.parameters.referenceImages[0], null, 2))
+  }
   
   // Log request size for debugging
   const requestBodyStr = JSON.stringify(requestBody)
   const requestSizeKB = Math.round(requestBodyStr.length / 1024)
   console.log(`[Vertex AI] Request body size: ${requestSizeKB}KB`)
-  console.log(`[Vertex AI] Prompt contains GCS reference: ${/\[Image Reference: gs:\/\//i.test(prompt)}`)
+  console.log(`[Vertex AI] Prompt contains GCS reference in text: ${/\[Image Reference: gs:\/\//i.test(prompt)}`)
+  console.log(`[Vertex AI] Has referenceImages parameter: ${!!options.referenceImages}`)
 
   const response = await fetch(endpoint, {
     method: 'POST',

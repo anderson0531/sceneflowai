@@ -160,10 +160,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Generate image with Vertex AI Imagen 3
-    // GCS references are now embedded in the prompt text
+    // Use hybrid approach: GCS references in both prompt text AND API parameter
     const base64Image = await callVertexAIImagen(finalPrompt, {
       aspectRatio: '16:9',
-      numberOfImages: 1
+      numberOfImages: 1,
+      referenceImages: charactersWithGCS.length > 0 ? charactersWithGCS.map((char: any, idx: number) => ({
+        referenceId: idx + 1,
+        gcsUri: char.referenceImageGCS,
+        referenceType: 'REFERENCE_TYPE_SUBJECT' as const,
+        subjectDescription: char.appearanceDescription || `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
+      })) : undefined
     })
 
     // Upload to Vercel Blob storage
