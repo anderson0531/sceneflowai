@@ -158,6 +158,7 @@ export async function POST(request: NextRequest) {
       ...existingCharacters,  // Keep Film Treatment characters with appearance, demeanor, clothing
       ...newChars.map((c: any) => ({
         ...c,
+        role: c.role || 'supporting', // Default to supporting if no role specified
         imagePrompt: `Professional character portrait: ${c.name}, ${c.description}, photorealistic, high detail, studio lighting, neutral background, character design, 8K quality`,
         referenceImage: null,
         generating: false

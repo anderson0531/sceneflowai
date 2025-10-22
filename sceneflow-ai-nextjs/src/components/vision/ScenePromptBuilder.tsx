@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
 import { Copy, Check, Sparkles, Info } from 'lucide-react'
 import { artStylePresets } from '@/constants/artStylePresets'
+import { findSceneCharacters } from '../../lib/character/matching'
 
 interface ScenePromptStructure {
   location: string
@@ -73,42 +74,21 @@ export function ScenePromptBuilder({
     
     const updates: Partial<ScenePromptStructure> = {}
     
-    // AUTO-DETECT AND PRE-SELECT CHARACTERS
-    const detectedCharacterNames: string[] = []
-    
-    // 1. Check scene.characters array
-    if (scene.characters && Array.isArray(scene.characters) && scene.characters.length > 0) {
-      scene.characters.forEach((c: any) => {
-        const name = typeof c === 'string' ? c : c.name
-        if (name) detectedCharacterNames.push(name)
-      })
-    }
-    
-    // 2. Extract from dialogue
-    if (scene.dialogue && Array.isArray(scene.dialogue)) {
-      scene.dialogue.forEach((d: any) => {
-        if (d.character) {
-          const cleanName = d.character.replace(/\s*\([^)]*\)/g, '').trim()
-          if (!detectedCharacterNames.includes(cleanName)) {
-            detectedCharacterNames.push(cleanName)
-          }
-        }
-      })
-    }
-    
-    // 3. Extract from action/visual description
-    const sceneText = `${scene.action || ''} ${scene.visualDescription || ''}`
-    availableCharacters.forEach(char => {
-      const namePattern = new RegExp(`\\b${char.name}\\b`, 'i')
-      if (namePattern.test(sceneText) && !detectedCharacterNames.includes(char.name)) {
-        detectedCharacterNames.push(char.name)
+    // AUTO-DETECT AND PRE-SELECT CHARACTERS using smart matching
+    if (availableCharacters && availableCharacters.length > 0) {
+      const sceneText = [
+        scene.heading || '',
+        scene.action || '',
+        scene.visualDescription || '',
+        ...(scene.dialogue || []).map((d: any) => d.character || '')
+      ].join(' ')
+      
+      const detectedChars = findSceneCharacters(sceneText, availableCharacters)
+      
+      if (detectedChars.length > 0) {
+        updates.characters = detectedChars.map((c: any) => c.name)
+        console.log('[Scene Prompt Builder] Auto-detected characters:', updates.characters)
       }
-    })
-    
-    // Set detected characters
-    if (detectedCharacterNames.length > 0) {
-      updates.characters = detectedCharacterNames
-      console.log('[Scene Prompt Builder] Auto-detected characters:', detectedCharacterNames)
     }
     
     // Parse heading: "INT./EXT. LOCATION - TIME"

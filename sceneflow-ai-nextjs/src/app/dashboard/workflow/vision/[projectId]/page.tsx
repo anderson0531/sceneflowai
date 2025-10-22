@@ -11,6 +11,7 @@ import { ScriptPlayer } from '@/components/vision/ScriptPlayer'
 import { ImageQualitySelector } from '@/components/vision/ImageQualitySelector'
 import { Button } from '@/components/ui/Button'
 import { Save, Share2, ArrowRight, Play } from 'lucide-react'
+import { findSceneCharacters } from '../../../../../lib/character/matching'
 
 interface Project {
   id: string
@@ -169,12 +170,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (visionPhase.characters) {
           console.log('[Vision] Loading characters from visionPhase:', visionPhase.characters.map((c: any) => ({
             name: c.name,
+            role: c.role || 'supporting',
             hasReferenceImage: !!c.referenceImage,
             hasReferenceImageGCS: !!c.referenceImageGCS,
             gcsUrl: c.referenceImageGCS?.substring(0, 50) || 'none',
             hasAppearanceDesc: !!c.appearanceDescription
           })))
-          setCharacters(visionPhase.characters)
+          
+          // Ensure character roles are preserved (default to supporting if not specified)
+          const charactersWithRole = visionPhase.characters.map((c: any) => ({
+            ...c,
+            role: c.role || 'supporting'
+          }))
+          setCharacters(charactersWithRole)
         }
         if (visionPhase.scenes) setScenes(visionPhase.scenes)
         
@@ -889,59 +897,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }).filter(Boolean)
         }
       } else {
-        // No characters provided, extract from scene
-        console.log('[Scene Image] No pre-selected characters, extracting from scene')
-        let sceneCharacterNames = scene.characters || []
-      
-        // FALLBACK: If scene.characters is empty, extract from dialogue AND action
-        if (sceneCharacterNames.length === 0) {
-          const names = new Set<string>()
-          
-          // Extract from dialogue
-          if (scene.dialogue && scene.dialogue.length > 0) {
-            scene.dialogue.forEach((d: any) => {
-              if (d.character) names.add(d.character)
-            })
-          }
-          
-          // Extract from action/visualDescription
-          const textToSearch = [scene.action || '', scene.visualDescription || ''].join(' ')
-          if (textToSearch) {
-            characters.forEach((char: any) => {
-              const charName = char.name || ''
-              if (charName) {
-                const regex = new RegExp(`\\b${charName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
-                if (regex.test(textToSearch)) {
-                  names.add(charName)
-                }
-                
-                // Check first name only
-                const firstName = charName.split(' ')[0]
-                if (firstName && firstName.length > 2) {
-                  const firstNameRegex = new RegExp(`\\b${firstName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
-                  if (firstNameRegex.test(textToSearch)) {
-                    names.add(charName)
-                  }
-                }
-              }
-            })
-          }
-          
-          sceneCharacterNames = Array.from(names)
-          if (sceneCharacterNames.length > 0) {
-            console.log('[Scene Image] Extracted characters from dialogue and action:', sceneCharacterNames)
-          }
-        }
+        // Auto-detect characters from scene using smart matching
+        console.log('[Scene Image] Auto-detecting characters from scene')
         
-        // Map character names to full objects
-        sceneCharacters = sceneCharacterNames.map((charName: string) => {
-          const char = characters.find((c: any) => c.name === charName)
-          if (!char) {
-            console.warn('[Scene Image] Character name not found in characters array:', charName)
-            return null
-          }
-          return char
-        }).filter(Boolean) || []
+        // Use smart matching to find characters in scene
+        const sceneText = [
+          scene.heading || '',
+          scene.action || '',
+          scene.visualDescription || '',
+          ...(scene.dialogue || []).map((d: any) => d.character || '')
+        ].join(' ')
+        
+        sceneCharacters = findSceneCharacters(sceneText, characters)
+        
+        console.log('[Scene Image] Auto-detected characters:', 
+          sceneCharacters.map(c => c.name).join(', ')
+        )
       }
       
       console.log('[Scene Image] Final sceneCharacters array:', sceneCharacters.map((c: any) => ({
