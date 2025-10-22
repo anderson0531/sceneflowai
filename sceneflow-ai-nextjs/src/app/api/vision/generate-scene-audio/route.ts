@@ -28,9 +28,28 @@ export async function POST(req: NextRequest) {
   try {
     const { projectId, sceneIndex, audioType, text, voiceConfig, characterName } = await req.json()
 
+    // Log the request for debugging
+    console.log('[Scene Audio] Request:', { 
+      projectId, 
+      sceneIndex, 
+      audioType, 
+      characterName,
+      hasText: !!text,
+      hasVoiceConfig: !!voiceConfig 
+    })
+
     if (!projectId || sceneIndex === undefined || !text || !voiceConfig) {
+      const missingFields = []
+      if (!projectId) missingFields.push('projectId')
+      if (sceneIndex === undefined) missingFields.push('sceneIndex')
+      if (!text) missingFields.push('text')
+      if (!voiceConfig) missingFields.push('voiceConfig')
+      
+      const errorMessage = `Missing required fields: ${missingFields.join(', ')}`
+      console.error('[Scene Audio] Error:', errorMessage)
+      
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: errorMessage },
         { status: 400 }
       )
     }

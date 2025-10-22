@@ -623,10 +623,18 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
         
         {/* Character Voice Selector */}
         {onUpdateCharacterVoice && (
-          <div className="mt-3 border-t border-gray-700 pt-3">
+          <div 
+            className="mt-3 border-t border-gray-700 pt-3"
+            onClick={(e) => e.stopPropagation()}
+          >
             <label className="text-xs text-gray-400 mb-2 block flex items-center gap-1">
               <Volume2 className="w-3 h-3" />
               Character Voice
+              {!character.voiceConfig && (
+                <span className="ml-auto text-xs px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded">
+                  Required for audio
+                </span>
+              )}
             </label>
             <VoiceSelector
               selectedVoiceId={character.voiceConfig?.voiceId || ''}

@@ -1176,12 +1176,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const text = audioType === 'narration' ? scene.narration : 
         scene.dialogue?.find((d: any) => d.character === characterName)?.line
       
-      if (!text) return
+      if (!text) {
+        try { const { toast } = require('sonner'); toast.error('No text found to generate audio') } catch {}
+        return
+      }
 
       const voiceConfig = audioType === 'narration' ? narrationVoice : 
         characters.find(c => c.name === characterName)?.voiceConfig
 
-      if (!voiceConfig) return
+      if (!voiceConfig) {
+        // Show specific error message based on audio type
+        if (audioType === 'narration') {
+          try { const { toast } = require('sonner'); toast.error('Please select a narration voice first') } catch {}
+        } else {
+          try { const { toast } = require('sonner'); toast.error(`Please assign a voice to character "${characterName}" in the Character Library`) } catch {}
+        }
+        return
+      }
 
       const response = await fetch('/api/vision/generate-scene-audio', {
         method: 'POST',
@@ -1200,6 +1211,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (data.success) {
         try { const { toast } = require('sonner'); toast.success('Audio generated!') } catch {}
         await loadProject() // Reload to get updated audio URLs
+      } else {
+        try { const { toast } = require('sonner'); toast.error(data.error || 'Failed to generate audio') } catch {}
       }
     } catch (error) {
       console.error('[Generate Scene Audio] Error:', error)
