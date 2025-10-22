@@ -1,3 +1,5 @@
+import { GoogleGenerativeAI } from '@google/generative-ai'
+
 interface OptimizePromptParams {
   rawPrompt: string
   sceneAction: string
@@ -11,11 +13,22 @@ interface OptimizePromptParams {
   }>
 }
 
+interface ParsedSceneDetails {
+  compositionType: string
+  characterAction: string
+  environment: string
+  characterExpression: string
+  props: string[]
+  lighting: string
+  atmosphere: string
+  colorScheme: string
+}
+
 /**
- * Optimized deterministic prompt generator for Vertex AI Imagen 3
- * Uses template-based approach with explicit structure for character references
+ * Hybrid prompt optimizer: Uses AI to parse scene details, then deterministically constructs template
+ * This ensures consistent structure with intelligent content extraction
  */
-export function optimizePromptForImagen(params: OptimizePromptParams): string {
+export async function optimizePromptForImagen(params: OptimizePromptParams): Promise<string> {
   // Input validation
   if (!params.hasCharacterReferences || !params.characterMetadata || params.characterMetadata.length === 0) {
     // No character references - return cleaned scene description
@@ -28,147 +41,157 @@ export function optimizePromptForImagen(params: OptimizePromptParams): string {
     throw new Error('Character reference GCS URL is required')
   }
 
-  // 1. Extract composition type (shot type)
-  const compositionType = extractCompositionType(params.visualDescription, params.sceneAction)
+  // Use AI to intelligently extract scene details
+  const sceneDetails = await parseSceneWithAI(params)
   
-  // 2. Build scene description (action + environment)
-  const sceneDescription = buildSceneDescription(params)
+  // Deterministically construct the template using extracted details
+  const optimizedPrompt = constructPromptTemplate(primaryCharacter.referenceImageGCS, sceneDetails)
   
-  // 3. Core Instruction
-  const coreInstruction = `Create a ${compositionType} of [Image Reference: ${primaryCharacter.referenceImageGCS}] ${sceneDescription}.`
-  
-  // 4. Character Modifiers
-  const characterModifiers = [
-    "cinematic lighting",
-    "photo-realistic",
-    "detailed facial features",
-    "natural skin texture",
-    "8K resolution",
-    "sharp focus"
-  ]
-  
-  // 5. Scene Modifiers (extracted from scene description)
-  const sceneModifiers = extractSceneModifiers(params)
-  
-  // 6. Construct final prompt
-  const optimizedPrompt = `${coreInstruction}
+  console.log('[Prompt Optimizer] Hybrid approach: AI parsing + deterministic template')
+  console.log('[Prompt Optimizer] Composition:', sceneDetails.compositionType)
+  console.log('[Prompt Optimizer] GCS Reference:', primaryCharacter.referenceImageGCS.substring(0, 50))
+  console.log('[Prompt Optimizer] Action:', sceneDetails.characterAction.substring(0, 80))
 
-Character Modifiers: ${characterModifiers.join(", ")}.
-
-Scene Modifiers: ${sceneModifiers.join(", ")}.`
-
-  console.log('[Prompt Optimizer] Deterministic prompt generated')
-  console.log('[Prompt Optimizer] Composition:', compositionType)
-  console.log('[Prompt Optimizer] GCS Reference:', primaryCharacter.referenceImageGCS)
-  console.log('[Prompt Optimizer] Scene:', sceneDescription.substring(0, 100))
-
-  return optimizedPrompt.trim()
+  return optimizedPrompt
 }
 
-// Helper: Extract composition type from scene description
-function extractCompositionType(visualDesc: string, action: string): string {
-  const text = `${visualDesc} ${action}`.toLowerCase()
+/**
+ * Use Gemini to intelligently parse scene description into structured components
+ */
+async function parseSceneWithAI(params: OptimizePromptParams): Promise<ParsedSceneDetails> {
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
   
-  if (/close.?up|cu\s/i.test(text)) return "close-up"
-  if (/medium\s+close.?up/i.test(text)) return "medium close-up"
-  if (/medium\s+shot/i.test(text)) return "medium shot"
-  if (/wide\s+shot|establishing/i.test(text)) return "wide shot"
-  if (/overhead|bird.?s\s+eye/i.test(text)) return "overhead shot"
+  const sceneText = `${params.visualDescription} ${params.sceneAction}`.trim()
   
-  // Default to medium shot (good balance for character reference)
-  return "medium shot"
+  const prompt = `Analyze this scene description and extract specific visual elements for image generation.
+
+Scene Description:
+"${sceneText}"
+
+Extract the following elements and respond ONLY with valid JSON (no markdown fences, no explanations):
+
+{
+  "compositionType": "close-up" | "medium close-up" | "medium shot" | "wide shot" | "overhead shot",
+  "characterAction": "concise description of what the character is doing (e.g., 'sitting at desk, rubbing temples in exhaustion')",
+  "environment": "location and setting (e.g., 'cluttered office desk covered in coffee cups and takeout containers')",
+  "characterExpression": "facial expression or emotional state (e.g., 'weary and stressed expression, tired eyes')",
+  "props": ["list", "of", "visible", "objects"],
+  "lighting": "lighting description (e.g., 'harsh overhead fluorescent lighting')",
+  "atmosphere": "mood/atmosphere (e.g., 'sterile office atmosphere')",
+  "colorScheme": "color palette (e.g., 'muted cool color scheme')"
 }
 
-// Helper: Build clean scene description
-function buildSceneDescription(params: OptimizePromptParams): string {
-  const parts: string[] = []
-  
-  // Extract action (remove technical terms)
-  const action = cleanAction(params.sceneAction || params.visualDescription)
-  if (action) parts.push(action)
-  
-  // Extract environment/setting
-  const environment = extractEnvironment(params.visualDescription)
-  if (environment) parts.push(`in ${environment}`)
-  
-  return parts.join(' ')
-}
+CRITICAL RULES:
+1. Output ONLY the JSON object, nothing else
+2. Keep descriptions concise and visual
+3. Focus on what can be seen, not sounds or abstract concepts
+4. Remove character names - use "character" or pronouns
+5. Avoid emotional interpretations - describe visible appearance only
+6. If a field isn't clear from the description, use empty string ""
 
-// Helper: Clean action description
-function cleanAction(action: string): string {
-  let cleaned = action
-  
-  // Remove shot type indicators
-  cleaned = cleaned.replace(/\b(close.?up|cu|medium\s+shot|wide\s+shot|overhead|establishing)\s+/gi, '')
-  
-  // Remove "SOUND of..." and similar
-  cleaned = cleaned.replace(/SOUND\s+of[^.]*\.?/gi, '')
-  
-  // Remove facial occlusion actions
-  cleaned = cleaned.replace(/rubbing\s+(his|her|their)\s+(temples|eyes|face)/gi, 'looking intently')
-  cleaned = cleaned.replace(/hands?\s+on\s+(his|her|their)\s+(face|head)/gi, 'focused')
-  cleaned = cleaned.replace(/looking\s+down/gi, 'gazing')
-  
-  // Extract just the key action
-  const actionMatch = cleaned.match(/(?:is\s+)?([a-z]+ing[^,\.]+)/i)
-  if (actionMatch) {
-    return actionMatch[1].trim()
-  }
-  
-  return cleaned.trim()
-}
+START JSON:`
 
-// Helper: Extract environment from visual description
-function extractEnvironment(visualDesc: string): string {
-  // Look for location indicators
-  const locationMatch = visualDesc.match(/\b(?:in|at|on|within)\s+(?:a|an|the)\s+([^,\.]+)/i)
-  if (locationMatch) {
-    return locationMatch[1].trim()
-  }
-  
-  // Look for common environment patterns
-  const environments = [
-    'office', 'cubicle', 'room', 'street', 'beach', 'park', 'building',
-    'rooftop', 'train', 'car', 'house', 'apartment', 'kitchen', 'bedroom'
-  ]
-  
-  for (const env of environments) {
-    if (new RegExp(`\\b${env}\\b`, 'i').test(visualDesc)) {
-      return env
+  try {
+    const result = await model.generateContent(prompt)
+    const text = result.response.text().trim()
+    
+    // Extract JSON from response
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) {
+      console.warn('[Prompt Optimizer] AI failed to return JSON, using fallback')
+      return getFallbackSceneDetails(params)
     }
+    
+    const parsed = JSON.parse(jsonMatch[0])
+    
+    // Validate and fill missing fields
+    return {
+      compositionType: parsed.compositionType || 'medium shot',
+      characterAction: parsed.characterAction || 'standing',
+      environment: parsed.environment || '',
+      characterExpression: parsed.characterExpression || '',
+      props: Array.isArray(parsed.props) ? parsed.props : [],
+      lighting: parsed.lighting || '',
+      atmosphere: parsed.atmosphere || '',
+      colorScheme: parsed.colorScheme || ''
+    }
+  } catch (error) {
+    console.error('[Prompt Optimizer] AI parsing failed:', error)
+    return getFallbackSceneDetails(params)
   }
-  
-  return ''
 }
 
-// Helper: Extract scene modifiers from description
-function extractSceneModifiers(params: OptimizePromptParams): string[] {
-  const modifiers: string[] = []
+/**
+ * Fallback scene parser if AI fails
+ */
+function getFallbackSceneDetails(params: OptimizePromptParams): ParsedSceneDetails {
   const text = `${params.visualDescription} ${params.sceneAction}`.toLowerCase()
   
-  // Lighting
-  if (/night|dark|dim/i.test(text)) modifiers.push("volumetric light", "dramatic shadows")
-  if (/sunset|golden\s+hour/i.test(text)) modifiers.push("warm golden light")
-  if (/sunrise|dawn/i.test(text)) modifiers.push("soft morning light")
-  if (/monitor|screen\s+glow/i.test(text)) modifiers.push("cool blue glow from monitor")
+  // Simple pattern matching fallback
+  let compositionType = 'medium shot'
+  if (/close.?up/i.test(text)) compositionType = 'close-up'
+  if (/wide\s+shot/i.test(text)) compositionType = 'wide shot'
   
-  // Atmosphere
-  if (/tense|stressed|urgent/i.test(text)) modifiers.push("high contrast", "dramatic atmosphere")
-  if (/calm|peaceful|serene/i.test(text)) modifiers.push("soft lighting", "peaceful atmosphere")
-  
-  // Color scheme
-  if (/blue/i.test(text)) modifiers.push("cool blue tones")
-  if (/warm|orange|red/i.test(text)) modifiers.push("warm color palette")
-  
-  // Default modifiers if none found
-  if (modifiers.length === 0) {
-    modifiers.push("dynamic perspective", "cinematic composition", "depth of field")
+  return {
+    compositionType,
+    characterAction: params.sceneAction || 'in scene',
+    environment: params.visualDescription || '',
+    characterExpression: '',
+    props: [],
+    lighting: /fluores/i.test(text) ? 'fluorescent lighting' : '',
+    atmosphere: '',
+    colorScheme: ''
   }
-  
-  return modifiers
 }
 
-// Helper: Clean scene description for non-reference images
+/**
+ * Deterministically construct the final prompt using the template structure
+ */
+function constructPromptTemplate(gcsUrl: string, details: ParsedSceneDetails): string {
+  // 1. Core Instruction
+  const actionPart = details.characterAction ? details.characterAction : 'in scene'
+  const environmentPart = details.environment ? `. ${details.environment}` : ''
+  
+  const coreInstruction = `Create a ${details.compositionType} of [Image Reference: ${gcsUrl}] ${actionPart}${environmentPart}.`
+  
+  // 2. Character Modifiers
+  const characterModifiers = [
+    details.characterExpression || 'natural expression',
+    'photo-realistic',
+    'detailed skin texture',
+    'cinematic look',
+    '8k resolution'
+  ]
+  
+  // 3. Scene Modifiers
+  const sceneModifiers: string[] = []
+  
+  if (details.lighting) sceneModifiers.push(details.lighting)
+  if (details.props.length > 0) {
+    sceneModifiers.push(`${details.props.join(', ')} in foreground`)
+  }
+  if (details.atmosphere) sceneModifiers.push(details.atmosphere)
+  if (details.colorScheme) sceneModifiers.push(details.colorScheme)
+  
+  // Add defaults if empty
+  if (sceneModifiers.length === 0) {
+    sceneModifiers.push('cinematic composition', 'depth of field', 'high contrast')
+  }
+  
+  // 4. Construct final prompt with explicit structure
+  const finalPrompt = `${coreInstruction}
+
+Character Modifiers: ${characterModifiers.join(', ')}.
+
+Scene Modifiers: ${sceneModifiers.join(', ')}.`
+
+  return finalPrompt.trim()
+}
+
+/**
+ * Clean scene description for non-reference images
+ */
 function cleanSceneDescription(description: string): string {
   let cleaned = description
   
