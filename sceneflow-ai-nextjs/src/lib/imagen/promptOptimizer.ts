@@ -6,10 +6,11 @@
 interface OptimizePromptParams {
   sceneAction: string
   visualDescription: string
-  characterReference?: {
+  characterReferences?: Array<{
     referenceId: number
+    name: string
     description: string
-  }
+  }>
 }
 
 /**
@@ -18,21 +19,30 @@ interface OptimizePromptParams {
  */
 export function optimizePromptForImagen(params: OptimizePromptParams): string {
   // Clean the scene action - remove ALL audio and non-visual elements
-  const cleanedAction = cleanSceneForVisuals(params.sceneAction, params.visualDescription)
+  let cleanedAction = cleanSceneForVisuals(params.sceneAction, params.visualDescription)
   
   console.log('[Prompt Optimizer] Cleaned scene action:', cleanedAction.substring(0, 100))
   
-  // If character reference exists, tag character name in prompt with [referenceId]
-  if (params.characterReference) {
-    // Add [referenceId] tag inline with the character description
-    // This tells Imagen which person in the scene should match the reference
+  // If character references exist, tag character names in the scene with [referenceId]
+  if (params.characterReferences && params.characterReferences.length > 0) {
+    // Tag each character name in the cleaned action with their reference ID
+    params.characterReferences.forEach(ref => {
+      const namePattern = new RegExp(`\\b${ref.name}\\b`, 'gi')
+      cleanedAction = cleanedAction.replace(namePattern, `${ref.name} [${ref.referenceId}]`)
+    })
+    
+    // Build character descriptions
+    const characterDescriptions = params.characterReferences
+      .map(ref => `Character [${ref.referenceId}] (${ref.name}): ${ref.description}`)
+      .join('\n')
+    
     const prompt = `${cleanedAction}
 
-Featuring character [${params.characterReference.referenceId}]: ${params.characterReference.description}
+${characterDescriptions}
 
-Style: Photorealistic, cinematic lighting, 8K resolution, sharp focus, professional photography, realistic human proportions.`
+Style: Photorealistic, cinematic lighting, 8K resolution, sharp focus, professional photography, realistic human proportions, natural adult appearance.`
 
-    console.log('[Prompt Optimizer] Built prompt with character reference [' + params.characterReference.referenceId + ']')
+    console.log('[Prompt Optimizer] Built prompt with', params.characterReferences.length, 'character references')
     return prompt.trim()
   }
   

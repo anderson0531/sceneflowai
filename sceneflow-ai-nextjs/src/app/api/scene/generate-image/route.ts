@@ -22,16 +22,15 @@ export async function POST(req: NextRequest) {
     // Prepare Base64 character references
     const base64References = await prepareBase64References(selectedCharacters)
     
-    // Build clean prompt from scene description only
-    const primaryCharacter = base64References.length > 0 ? base64References[0] : null
-    
+    // Build clean prompt from scene description with ALL character references
     const optimizedPrompt = optimizePromptForImagen({
       sceneAction: sceneContext?.action || '',
       visualDescription: sceneContext?.visualDescription || '',
-      characterReference: primaryCharacter ? {
-        referenceId: primaryCharacter.referenceId,
-        description: primaryCharacter.description
-      } : undefined
+      characterReferences: base64References.map(ref => ({
+        referenceId: ref.referenceId,
+        name: ref.name,
+        description: ref.description
+      }))
     })
 
     console.log('[Scene Image] Optimized prompt preview:', optimizedPrompt.substring(0, 150))
