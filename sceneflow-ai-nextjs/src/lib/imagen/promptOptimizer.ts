@@ -79,8 +79,12 @@ function cleanSceneForVisuals(action: string, visualDesc: string): string {
     cleaned = cleaned.replace(regex, '')
   })
   
-  // Remove character name annotations: "BRIAN ANDERSON SR (50s, sharp but weary)" → simple description
-  cleaned = cleaned.replace(/[A-Z][A-Z\s]+\([^)]+\)/g, 'Character')
+  // Remove character annotations but preserve the name
+  // "BRIAN ANDERSON SR (50s, sharp but weary)" → "Brian Anderson Sr"
+  cleaned = cleaned.replace(/([A-Z][A-Z\s]+)\s*\([^)]+\)/g, (match, name) => {
+    // Convert to title case: "BRIAN ANDERSON SR" → "Brian Anderson Sr"
+    return name.toLowerCase().replace(/\b\w/g, (l: string) => l.toUpperCase())
+  })
   
   // Clean up punctuation and whitespace
   cleaned = cleaned.replace(/\s*,\s*,/g, ',')        // Remove double commas
