@@ -129,14 +129,6 @@ export function ImageQualitySelector({ value, onChange, disabled = false }: Imag
           </div>
         </div>
       )}
-
-      {/* Future BYOK Support */}
-      <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-900 rounded border border-dashed opacity-60">
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <Key className="w-4 h-4" />
-          <span>BYOK: Use your own API keys (Coming Soon)</span>
-        </div>
-      </div>
     </div>
   )
 }
