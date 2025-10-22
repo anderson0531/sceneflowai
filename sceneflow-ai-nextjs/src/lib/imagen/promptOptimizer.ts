@@ -56,13 +56,38 @@ export async function optimizePromptForImagen(params: OptimizePromptParams): Pro
 }
 
 /**
+ * Clean scene action by removing SFX, Music, and dialogue annotations
+ */
+function cleanSceneAction(action: string): string {
+  let cleaned = action
+  
+  // Remove SFX annotations
+  cleaned = cleaned.replace(/\n\nSFX:.*$/s, '')
+  
+  // Remove Music annotations  
+  cleaned = cleaned.replace(/\n\nMusic:.*$/s, '')
+  
+  // Remove "SOUND of..." descriptions
+  cleaned = cleaned.replace(/SOUND\s+of[^.]*\./gi, '')
+  
+  // Remove character name annotations like "BRIAN ANDERSON SR (50s, sharp but weary)"
+  cleaned = cleaned.replace(/([A-Z\s]+)\s+\([^)]+\)/g, 'Character')
+  
+  return cleaned.trim()
+}
+
+/**
  * Use Gemini to intelligently parse scene description into structured components
  */
 async function parseSceneWithAI(params: OptimizePromptParams): Promise<ParsedSceneDetails> {
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
   
-  const sceneText = `${params.visualDescription} ${params.sceneAction}`.trim()
+  // Clean the scene action to remove noise
+  const cleanedAction = cleanSceneAction(params.sceneAction)
+  
+  // Only use the core scene description
+  const sceneText = `${params.visualDescription} ${cleanedAction}`.trim()
   
   const prompt = `Analyze this scene description and extract specific visual elements for image generation.
 
