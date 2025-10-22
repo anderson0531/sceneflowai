@@ -26,7 +26,7 @@ interface ParsedSceneDetails {
 
 /**
  * Hybrid prompt optimizer: Uses AI to parse scene details, then deterministically constructs template
- * This ensures consistent structure with intelligent content extraction
+ * ALWAYS starts fresh from scene description, ignoring any pre-built prompts
  */
 export async function optimizePromptForImagen(params: OptimizePromptParams): Promise<string> {
   // Input validation
@@ -41,7 +41,10 @@ export async function optimizePromptForImagen(params: OptimizePromptParams): Pro
     throw new Error('Character reference GCS URL is required')
   }
 
-  // Use AI to intelligently extract scene details
+  console.log('[Prompt Optimizer] Starting fresh prompt build from scene description')
+  console.log('[Prompt Optimizer] Ignoring any pre-built prompts - using only scene action and visual description')
+
+  // Use AI to intelligently extract scene details from CLEAN scene description
   const sceneDetails = await parseSceneWithAI(params)
   
   // Deterministically construct the template using extracted details
@@ -56,22 +59,30 @@ export async function optimizePromptForImagen(params: OptimizePromptParams): Pro
 }
 
 /**
- * Clean scene action by removing SFX, Music, and dialogue annotations
+ * Clean scene action by removing SFX, Music, dialogue, and ALL non-visual noise
  */
 function cleanSceneAction(action: string): string {
   let cleaned = action
   
-  // Remove SFX annotations
-  cleaned = cleaned.replace(/\n\nSFX:.*$/s, '')
-  
-  // Remove Music annotations  
-  cleaned = cleaned.replace(/\n\nMusic:.*$/s, '')
+  // Remove everything after SFX: or Music: markers
+  cleaned = cleaned.split(/\n\n(?:SFX|Music):/)[0]
   
   // Remove "SOUND of..." descriptions
-  cleaned = cleaned.replace(/SOUND\s+of[^.]*\./gi, '')
+  cleaned = cleaned.replace(/SOUND\s+of[^.]*[.!?]/gi, '')
   
   // Remove character name annotations like "BRIAN ANDERSON SR (50s, sharp but weary)"
-  cleaned = cleaned.replace(/([A-Z\s]+)\s+\([^)]+\)/g, 'Character')
+  // Replace with neutral "Character" or remove entirely
+  cleaned = cleaned.replace(/[A-Z][A-Z\s]+\([^)]+\)/g, 'Character')
+  
+  // Remove sound-related phrases
+  cleaned = cleaned.replace(/distant office chatter/gi, '')
+  cleaned = cleaned.replace(/fluorescent lights hum/gi, 'fluorescent lights')
+  cleaned = cleaned.replace(/keyboard clicking/gi, '')
+  
+  // Clean up extra whitespace and commas
+  cleaned = cleaned.replace(/\s*,\s*,/g, ',')
+  cleaned = cleaned.replace(/\s{2,}/g, ' ')
+  cleaned = cleaned.replace(/^\s*,\s*/g, '')
   
   return cleaned.trim()
 }
