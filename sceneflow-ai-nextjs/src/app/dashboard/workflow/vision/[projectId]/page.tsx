@@ -791,7 +791,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     console.log('Regenerate scene:', sceneIndex)
   }
 
-  const handleGenerateSceneImage = async (sceneIdx: number, customPrompt?: string, selectedCharacters?: string[]) => {
+  const handleGenerateSceneImage = async (sceneIdx: number, customPrompt?: string, selectedCharacters?: any[]) => {
     const scene = script?.script?.scenes?.[sceneIdx]
     if (!scene || !scene.visualDescription) {
       console.warn('No visual description available for scene', sceneIdx)
@@ -803,74 +803,90 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Use custom prompt if provided, otherwise use visual description
       const prompt = customPrompt || scene.visualDescription
       
-      // Use selectedCharacters if provided, otherwise extract from scene
-      let sceneCharacterNames = selectedCharacters || scene.characters || []
+      console.log('[Scene Image] handleGenerateSceneImage called with:', {
+        sceneIdx,
+        hasCustomPrompt: !!customPrompt,
+        selectedCharactersCount: selectedCharacters?.length || 0,
+        selectedCharactersAreObjects: selectedCharacters?.[0] && typeof selectedCharacters[0] === 'object'
+      })
       
-      // FALLBACK: If scene.characters is empty, extract from dialogue AND action
-      if (sceneCharacterNames.length === 0) {
-        const names = new Set<string>()
-        
-        // Extract from dialogue
-        if (scene.dialogue && scene.dialogue.length > 0) {
-          scene.dialogue.forEach((d: any) => {
-            if (d.character) names.add(d.character)
-          })
+      // Check if selectedCharacters are already full objects (from Scene Prompt Builder)
+      let sceneCharacters: any[] = []
+      
+      if (selectedCharacters && selectedCharacters.length > 0) {
+        // Check if they're already full character objects
+        if (typeof selectedCharacters[0] === 'object' && selectedCharacters[0].name) {
+          console.log('[Scene Image] Using pre-selected character objects from Scene Prompt Builder')
+          sceneCharacters = selectedCharacters
+        } else {
+          // They're character names (strings), need to map to full objects
+          console.log('[Scene Image] Mapping character names to full objects')
+          sceneCharacters = selectedCharacters.map((charName: string) => {
+            const char = characters.find((c: any) => c.name === charName)
+            return char || null
+          }).filter(Boolean)
         }
-        
-        // Extract from action/visualDescription
-        const textToSearch = [scene.action || '', scene.visualDescription || ''].join(' ')
-        if (textToSearch) {
-          characters.forEach((char: any) => {
-            const charName = char.name || ''
-            if (charName) {
-              const regex = new RegExp(`\\b${charName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
-              if (regex.test(textToSearch)) {
-                names.add(charName)
-              }
-              
-              // Check first name only
-              const firstName = charName.split(' ')[0]
-              if (firstName && firstName.length > 2) {
-                const firstNameRegex = new RegExp(`\\b${firstName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
-                if (firstNameRegex.test(textToSearch)) {
+      } else {
+        // No characters provided, extract from scene
+        console.log('[Scene Image] No pre-selected characters, extracting from scene')
+        let sceneCharacterNames = scene.characters || []
+      
+        // FALLBACK: If scene.characters is empty, extract from dialogue AND action
+        if (sceneCharacterNames.length === 0) {
+          const names = new Set<string>()
+          
+          // Extract from dialogue
+          if (scene.dialogue && scene.dialogue.length > 0) {
+            scene.dialogue.forEach((d: any) => {
+              if (d.character) names.add(d.character)
+            })
+          }
+          
+          // Extract from action/visualDescription
+          const textToSearch = [scene.action || '', scene.visualDescription || ''].join(' ')
+          if (textToSearch) {
+            characters.forEach((char: any) => {
+              const charName = char.name || ''
+              if (charName) {
+                const regex = new RegExp(`\\b${charName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
+                if (regex.test(textToSearch)) {
                   names.add(charName)
                 }
+                
+                // Check first name only
+                const firstName = charName.split(' ')[0]
+                if (firstName && firstName.length > 2) {
+                  const firstNameRegex = new RegExp(`\\b${firstName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
+                  if (firstNameRegex.test(textToSearch)) {
+                    names.add(charName)
+                  }
+                }
               }
-            }
-          })
+            })
+          }
+          
+          sceneCharacterNames = Array.from(names)
+          if (sceneCharacterNames.length > 0) {
+            console.log('[Scene Image] Extracted characters from dialogue and action:', sceneCharacterNames)
+          }
         }
         
-        sceneCharacterNames = Array.from(names)
-        if (sceneCharacterNames.length > 0) {
-          console.log('[Scene Image] Extracted characters from dialogue and action:', sceneCharacterNames)
-        }
+        // Map character names to full objects
+        sceneCharacters = sceneCharacterNames.map((charName: string) => {
+          const char = characters.find((c: any) => c.name === charName)
+          if (!char) {
+            console.warn('[Scene Image] Character name not found in characters array:', charName)
+            return null
+          }
+          return char
+        }).filter(Boolean) || []
       }
       
-      const sceneCharacters = sceneCharacterNames.map((charName: string) => {
-        const char = characters.find((c: any) => c.name === charName)
-        if (!char) {
-          console.warn('[Scene Image] Character not found:', charName)
-          return null
-        }
-        
-        const charData = {
-          name: char.name,
-          description: char.description,
-          referenceImage: char.referenceImage,
-          ethnicity: char.ethnicity,
-          keyFeature: char.keyFeature,
-          hairStyle: char.hairStyle,
-          hairColor: char.hairColor,
-          eyeColor: char.eyeColor,
-          expression: char.expression,
-          build: char.build
-        }
-        
-        console.log('[Scene Image] Character data for', char.name, ':', charData)
-        return charData
-      }).filter(Boolean) || []
-      
-      console.log('[Scene Image] Final sceneCharacters array:', sceneCharacters)
+      console.log('[Scene Image] Final sceneCharacters array:', sceneCharacters.map((c: any) => ({
+        name: c.name,
+        hasGCS: !!c.referenceImageGCS,
+        hasAppearance: !!c.appearanceDescription
+      })))
       
       const response = await fetch('/api/scene/generate-image', {
         method: 'POST',
