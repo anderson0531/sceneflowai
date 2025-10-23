@@ -50,6 +50,11 @@ export async function POST(req: NextRequest) {
       console.log('[Scene Image] Loaded character objects:', characterObjects.length)
     }
 
+    // ✅ ADD: Universal filter for BOTH paths
+    // Ensure characterObjects only contains valid characters with reference images
+    characterObjects = characterObjects.filter((c: any) => c != null && c.referenceImage)
+    console.log('[Scene Image] Valid character objects after filtering:', characterObjects.length)
+
     // Prepare Base64 character references
     const base64References = await prepareBase64References(characterObjects)
     
