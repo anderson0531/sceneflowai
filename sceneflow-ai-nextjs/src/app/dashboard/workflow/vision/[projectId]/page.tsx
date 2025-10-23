@@ -127,6 +127,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Handle narration voice change
   const handleNarrationVoiceChange = async (voiceConfig: VoiceConfig) => {
+    console.log('[Narration Voice] Setting narration voice:', voiceConfig)
     setNarrationVoice(voiceConfig)
     
     if (project) {
@@ -312,6 +313,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (visionPhase.narrationVoice) {
           setNarrationVoice(visionPhase.narrationVoice)
           console.log('[Vision] Loaded narration voice:', visionPhase.narrationVoice)
+        } else {
+          console.log('[Vision] No narration voice found in project metadata')
+          setNarrationVoice(null)
         }
         
         // Update generation progress to reflect saved state
@@ -1192,6 +1196,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   // Handle generate scene audio
   const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string) => {
+    console.log('[Generate Scene Audio] Called with:', { sceneIdx, audioType, characterName })
+    console.log('[Generate Scene Audio] Current narrationVoice:', narrationVoice)
+    console.log('[Generate Scene Audio] Current characters:', characters.map(c => ({ name: c.name, hasVoice: !!c.voiceConfig })))
+    
     const scene = script?.script?.scenes?.[sceneIdx]
     if (!scene) return
 
@@ -1207,11 +1215,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const voiceConfig = audioType === 'narration' ? narrationVoice : 
         characters.find(c => c.name === characterName)?.voiceConfig
 
+      console.log('[Generate Scene Audio] Voice config determined:', { voiceConfig, audioType })
+
       if (!voiceConfig) {
         // Show specific error message based on audio type
         if (audioType === 'narration') {
+          console.log('[Generate Scene Audio] No narration voice found - showing error toast')
           try { const { toast } = require('sonner'); toast.error('Please select a narration voice first') } catch {}
         } else {
+          console.log('[Generate Scene Audio] No character voice found - showing error toast')
           try { const { toast } = require('sonner'); toast.error(`Please assign a voice to character "${characterName}" in the Character Library`) } catch {}
         }
         return
