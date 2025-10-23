@@ -32,6 +32,8 @@ export async function POST(request: NextRequest) {
         
         let generatedCount = 0
         let skippedScenes: any[] = []
+        let failedScenes: any[] = []
+        let quotaErrorDetected = false
         
         // Generate image for each scene
         for (let i = 0; i < scenes.length; i++) {
@@ -101,19 +103,81 @@ export async function POST(request: NextRequest) {
               console.log(`[Batch Images] Scene ${i + 1}: SUCCESS`)
             } else {
               console.error(`[Batch Images] Scene ${i + 1}: FAILED - ${imageData.error}`)
-              skippedScenes.push({
-                scene: i + 1,
-                heading: scene.heading,
-                reason: imageData.error || 'Generation failed'
-              })
+              
+              // Check if it's a quota error
+              const isQuotaError = imageData.error?.includes('quota') || 
+                                 imageData.error?.includes('Quota exceeded') ||
+                                 imageData.error?.includes('RESOURCE_EXHAUSTED') ||
+                                 imageData.error?.includes('429')
+              
+              if (isQuotaError) {
+                quotaErrorDetected = true
+                failedScenes.push({
+                  scene: i + 1,
+                  heading: scene.heading,
+                  reason: 'Google Cloud quota limit reached',
+                  errorType: 'quota',
+                  googleError: imageData.error,
+                  retryable: true
+                })
+                
+                // Send quota error event immediately
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                  type: 'error',
+                  errorType: 'quota',
+                  scene: i + 1,
+                  sceneHeading: scene.heading,
+                  error: 'Google Cloud quota limit reached',
+                  googleError: imageData.error,
+                  retryable: true,
+                  documentation: 'https://cloud.google.com/vertex-ai/docs/quotas'
+                })}\n\n`))
+              } else {
+                skippedScenes.push({
+                  scene: i + 1,
+                  heading: scene.heading,
+                  reason: imageData.error || 'Generation failed'
+                })
+              }
             }
           } catch (error: any) {
             console.error(`[Batch Images] Scene ${i + 1}: ERROR - ${error.message}`)
-            skippedScenes.push({
-              scene: i + 1,
-              heading: scene.heading,
-              reason: error.message
-            })
+            
+            // Check if it's a quota error in the catch block too
+            const isQuotaError = error.message?.includes('quota') || 
+                               error.message?.includes('Quota exceeded') ||
+                               error.message?.includes('RESOURCE_EXHAUSTED') ||
+                               error.message?.includes('429')
+            
+            if (isQuotaError) {
+              quotaErrorDetected = true
+              failedScenes.push({
+                scene: i + 1,
+                heading: scene.heading,
+                reason: 'Google Cloud quota limit reached',
+                errorType: 'quota',
+                googleError: error.message,
+                retryable: true
+              })
+              
+              // Send quota error event immediately
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                type: 'error',
+                errorType: 'quota',
+                scene: i + 1,
+                sceneHeading: scene.heading,
+                error: 'Google Cloud quota limit reached',
+                googleError: error.message,
+                retryable: true,
+                documentation: 'https://cloud.google.com/vertex-ai/docs/quotas'
+              })}\n\n`))
+            } else {
+              skippedScenes.push({
+                scene: i + 1,
+                heading: scene.heading,
+                reason: error.message
+              })
+            }
           }
         }
         
@@ -122,7 +186,10 @@ export async function POST(request: NextRequest) {
           type: 'complete',
           generatedCount,
           totalScenes: scenes.length,
-          skipped: skippedScenes
+          skipped: skippedScenes,
+          failed: failedScenes,
+          quotaErrorDetected,
+          quotaErrorCount: failedScenes.filter(f => f.errorType === 'quota').length
         })}\n\n`))
         
         controller.close()

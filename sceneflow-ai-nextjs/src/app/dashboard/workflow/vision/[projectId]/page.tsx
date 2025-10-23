@@ -1477,8 +1477,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       try { 
         const { toast } = require('sonner')
         const charNames = charactersWithoutVoice.map(c => c.name).join(', ')
-        toast.error(`Please assign voices to these characters: ${charNames}`, {
-          duration: 10000 // Show for 10 seconds
+        toast.error(`🎤 Voice Assignment Required\n\n${charNames}\n\nPlease assign voices to all characters before generating audio. Click on each character card to select a voice.`, {
+          duration: 15000, // Show for 15 seconds
+          style: {
+            background: '#dc2626',
+            color: 'white',
+            fontSize: '14px',
+            fontWeight: '500'
+          }
         })
       } catch {}
       return
@@ -1751,16 +1757,35 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             } else if (data.type === 'complete') {
               setImageProgress(null)
               
-              const skippedMsg = data.skipped?.length > 0
-                ? `\n\nSkipped ${data.skipped.length} scenes:\n${data.skipped.map((s: any) => `Scene ${s.scene}: ${s.reason}`).join('\n')}`
-                : ''
-              
-              try { 
-                const { toast } = require('sonner')
-                toast.success(`Generated ${data.generatedCount} of ${data.totalScenes} scene images!${skippedMsg}`, {
-                  duration: 8000
-                })
-              } catch {}
+              // Handle quota errors in completion
+              if (data.quotaErrorDetected) {
+                const quotaErrorMsg = `⚠️ Google Cloud quota limit reached!\n\nGenerated ${data.generatedCount} of ${data.totalScenes} images before quota limit.\n\nFailed scenes: ${data.quotaErrorCount}\n\nSolutions:\n1. Wait and retry later\n2. Request quota increase from Google Cloud\n3. Use fewer images per batch\n\nDocumentation: https://cloud.google.com/vertex-ai/docs/quotas`
+                
+                try { 
+                  const { toast } = require('sonner')
+                  toast.error(quotaErrorMsg, {
+                    duration: 20000,
+                    style: {
+                      background: '#dc2626',
+                      color: 'white',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      whiteSpace: 'pre-line'
+                    }
+                  })
+                } catch {}
+              } else {
+                const skippedMsg = data.skipped?.length > 0
+                  ? `\n\nSkipped ${data.skipped.length} scenes:\n${data.skipped.map((s: any) => `Scene ${s.scene}: ${s.reason}`).join('\n')}`
+                  : ''
+                
+                try { 
+                  const { toast } = require('sonner')
+                  toast.success(`Generated ${data.generatedCount} of ${data.totalScenes} scene images!${skippedMsg}`, {
+                    duration: 8000
+                  })
+                } catch {}
+              }
               
               // Reload project to get updated image URLs
               let retries = 3
@@ -1778,7 +1803,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 }
               }
             } else if (data.type === 'error') {
-              try { const { toast } = require('sonner'); toast.error(`Batch generation failed: ${data.error}`) } catch {}
+              // Handle quota errors in real-time
+              if (data.errorType === 'quota') {
+                const quotaErrorMsg = `⚠️ Google Cloud Quota Limit Reached!\n\nScene ${data.scene}: ${data.sceneHeading}\n\n${data.error}\n\nSolutions:\n1. Wait and retry later\n2. Request quota increase from Google Cloud\n3. Use fewer images per batch\n\nDocumentation: ${data.documentation}`
+                
+                try { 
+                  const { toast } = require('sonner')
+                  toast.error(quotaErrorMsg, {
+                    duration: 20000,
+                    style: {
+                      background: '#dc2626',
+                      color: 'white',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      whiteSpace: 'pre-line'
+                    }
+                  })
+                } catch {}
+              } else {
+                try { const { toast } = require('sonner'); toast.error(`Batch generation failed: ${data.error}`) } catch {}
+              }
               setImageProgress(null)
             }
           }

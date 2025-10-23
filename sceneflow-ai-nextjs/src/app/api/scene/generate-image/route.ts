@@ -161,9 +161,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(response)
   } catch (error: any) {
     console.error('[Scene Image] Error:', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to generate scene image' },
-      { status: 500 }
-    )
+    
+    // Check if it's a quota error
+    const isQuotaError = error.message?.includes('quota') || 
+                        error.message?.includes('Quota exceeded') ||
+                        error.message?.includes('RESOURCE_EXHAUSTED') ||
+                        error.message?.includes('429')
+    
+    if (isQuotaError) {
+      return NextResponse.json({
+        success: false,
+        error: 'Google Cloud quota limit reached',
+        errorType: 'quota',
+        googleError: error.message,
+        retryable: true,
+        documentation: 'https://cloud.google.com/vertex-ai/docs/quotas'
+      }, { status: 429 })
+    }
+    
+    return NextResponse.json({
+      success: false,
+      error: error.message || 'Failed to generate scene image',
+      errorType: 'api'
+    }, { status: 500 })
   }
 }
