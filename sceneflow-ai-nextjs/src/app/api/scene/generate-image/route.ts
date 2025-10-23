@@ -24,35 +24,37 @@ export async function POST(req: NextRequest) {
     console.log('[Scene Image] Generating scene image')
     console.log('[Scene Image] Selected characters:', selectedCharacters.length)
 
-    // Load project to get character data if character IDs are provided
+    // Single unified project load for both character and scene data
+    let project = null
     let characterObjects = selectedCharacters
-    if (projectId && selectedCharacters.length > 0 && typeof selectedCharacters[0] === 'string') {
-      // Character IDs provided, need to load from database
+
+    if (projectId) {
       await sequelize.authenticate()
-      const project = await Project.findByPk(projectId)
+      project = await Project.findByPk(projectId)
       
       if (!project) {
         return NextResponse.json({ success: false, error: 'Project not found' }, { status: 404 })
       }
 
-      const characters = project.metadata?.visionPhase?.characters || []
-      
-      // Match characters by ID (primary) or name (fallback)
-      characterObjects = selectedCharacters.map((charId: string) => {
-        // Try ID match first
-        const byId = characters.find((c: any) => c.id === charId)
-        if (byId) return byId
+      // Load characters if IDs provided
+      if (selectedCharacters.length > 0 && typeof selectedCharacters[0] === 'string') {
+        const characters = project.metadata?.visionPhase?.characters || []
         
-        // Fallback: treat as name for legacy
-        return characters.find((c: any) => c.name === charId)
-      }).filter((c: any) => c != null)  // Universal filter below will handle reference image check
+        // Match characters by ID (primary) or name (fallback)
+        characterObjects = selectedCharacters.map((charId: string) => {
+          // Try ID match first
+          const byId = characters.find((c: any) => c.id === charId)
+          if (byId) return byId
+          
+          // Fallback: treat as name for legacy
+          return characters.find((c: any) => c.name === charId)
+        }).filter((c: any) => c != null)
 
-      console.log('[Scene Image] Loaded character objects:', characterObjects.length)
+        console.log('[Scene Image] Loaded character objects:', characterObjects.length)
+      }
     }
 
-    // ✅ ADD: Universal filter for BOTH paths
-    // Ensure characterObjects only contains valid characters with reference images
-    // Check for either referenceImage (Vercel Blob) or referenceImageGCS (GCS)
+    // Filter for valid reference images
     characterObjects = characterObjects.filter((c: any) => 
       c != null && (c.referenceImage || c.referenceImageGCS)
     )
@@ -61,34 +63,28 @@ export async function POST(req: NextRequest) {
     // Prepare Base64 character references
     const base64References = await prepareBase64References(characterObjects)
     
-    // Load actual scene data from project if available
+    // Load scene data (reuse same project variable)
     let fullSceneContext = scenePrompt || ''
-    let project = null
-    
-    if (projectId && typeof sceneIndex === 'number') {
-      await sequelize.authenticate()
-      project = await Project.findByPk(projectId)
+
+    if (project && typeof sceneIndex === 'number') {
+      const scenes = project.metadata?.visionPhase?.script?.script?.scenes || []
+      const scene = scenes[sceneIndex]
       
-      if (project) {
-        const scenes = project.metadata?.visionPhase?.script?.script?.scenes || []
-        const scene = scenes[sceneIndex]
+      if (scene) {
+        // Build comprehensive scene description from multiple fields
+        fullSceneContext = scene.visualDescription || 
+                          scene.action || 
+                          scene.heading || 
+                          scenePrompt || 
+                          ''
         
-        if (scene) {
-          // Build comprehensive scene description from multiple fields
-          fullSceneContext = scene.visualDescription || 
-                            scene.action || 
-                            scene.heading || 
-                            scenePrompt || 
-                            ''
-          
-          console.log('[Scene Image] Using scene data:', {
-            hasVisualDescription: !!scene.visualDescription,
-            hasAction: !!scene.action,
-            hasHeading: !!scene.heading,
-            contextLength: fullSceneContext.length,
-            sceneIndex: sceneIndex
-          })
-        }
+        console.log('[Scene Image] Using scene data:', {
+          hasVisualDescription: !!scene.visualDescription,
+          hasAction: !!scene.action,
+          hasHeading: !!scene.heading,
+          contextLength: fullSceneContext.length,
+          sceneIndex: sceneIndex
+        })
       }
     }
     
