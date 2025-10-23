@@ -251,11 +251,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   const loadProject = async () => {
     try {
-      console.log('[Load Project] Fetching project:', projectId)
       const res = await fetch(`/api/projects?id=${projectId}`)
-      
-      console.log('[Load Project] Response status:', res.status, res.statusText)
-      console.log('[Load Project] Response ok:', res.ok)
       
       if (!res.ok) {
         const errorText = await res.text()
@@ -264,8 +260,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       
       const contentType = res.headers.get('content-type')
-      console.log('[Load Project] Content-Type:', contentType)
-      
       if (!contentType?.includes('application/json')) {
         const text = await res.text()
         console.error('[Load Project] Non-JSON response:', text.substring(0, 500))
@@ -273,65 +267,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       
       const data = await res.json()
-      console.log('[Load Project] Data received, has project:', !!data.project)
       
       const proj = data.project || data
-      
-      // LOG PROJECT DURATION
-      console.log('[Vision] Loaded project duration:', {
-        projectId: projectId,
-        duration: proj.duration,
-        durationMinutes: proj.duration ? Math.floor(proj.duration / 60) : 0,
-        metadata_has_filmTreatmentVariant: !!proj.metadata?.filmTreatmentVariant,
-        metadata_total_duration_seconds: proj.metadata?.filmTreatmentVariant?.total_duration_seconds,
-        metadata_beats_count: proj.metadata?.filmTreatmentVariant?.beats?.length
-      })
       
       setProject(proj)
       
       // Load image quality setting from project metadata
       if (proj.metadata?.imageQuality) {
         setImageQuality(proj.metadata.imageQuality)
-        console.log('[Quality] Loaded quality setting:', proj.metadata.imageQuality)
       }
       
       // Load existing Vision data if available
       const visionPhase = proj.metadata?.visionPhase
       if (visionPhase) {
-        console.log('[Vision] Loading saved data:', {
-          scriptGenerated: visionPhase.scriptGenerated,
-          charactersGenerated: visionPhase.charactersGenerated,
-          scenesGenerated: visionPhase.scenesGenerated,
-          hasScript: !!visionPhase.script,
-          scriptScenesCount: visionPhase.script?.script?.scenes?.length || visionPhase.script?.scenes?.length || 0,
-          scenesCount: visionPhase.scenes?.length || 0,
-          characterCount: visionPhase.characters?.length
-        })
-        
         if (visionPhase.script) {
-          console.log('[Vision] === LOADING SCRIPT ===')
-          console.log('[Vision] Script object keys:', Object.keys(visionPhase.script))
-          console.log('[Vision] Nested script keys:', visionPhase.script.script ? Object.keys(visionPhase.script.script) : 'NO NESTED SCRIPT')
-          console.log('[Vision] Scene count in visionPhase.script:', visionPhase.script.script?.scenes?.length || 0)
-          console.log('[Vision] First 5 scene numbers:', visionPhase.script.script?.scenes?.slice(0, 5).map((s: any) => s.sceneNumber))
-          console.log('[Vision] Last 5 scene numbers:', visionPhase.script.script?.scenes?.slice(-5).map((s: any) => s.sceneNumber))
-          console.log('[Vision] Script scenes with audio URLs:', visionPhase.script.script?.scenes?.map((s: any, i: number) => ({
-            scene: i,
-            narrationAudioUrl: s.narrationAudioUrl,
-            dialogueAudio: s.dialogueAudio?.length || 0
-          })))
-          
           setScript(visionPhase.script)
         }
         if (visionPhase.characters) {
-          console.log('[Vision] Loading characters from visionPhase:', visionPhase.characters.map((c: any) => ({
-            name: c.name,
-            role: c.role || 'supporting',
-            hasReferenceImage: !!c.referenceImage,
-            hasReferenceImageGCS: !!c.referenceImageGCS,
-            gcsUrl: c.referenceImageGCS?.substring(0, 50) || 'none',
-            hasAppearanceDesc: !!c.appearanceDescription
-          })))
           
           // Ensure character roles are preserved (default to supporting if not specified)
           const charactersWithRole = visionPhase.characters.map((c: any) => {
@@ -358,13 +310,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             return char
           })
           
-          // ADD DETAILED LOGGING FOR CHARACTERS
-          console.log('[Load Project] Loaded characters:', charactersWithRole.map((c: any) => ({
-            name: c.name,
-            hasVoiceConfig: !!c.voiceConfig,
-            voiceConfig: c.voiceConfig
-          })))
-          
           // Check if any voice configs were auto-fixed and need saving
           const needsSaving = charactersWithRole.some((c: any) => 
             c.voiceConfig && 
@@ -376,7 +321,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           )
 
           if (needsSaving) {
-            console.log('[Load Project] Saving auto-fixed voice configs to database')
             try {
               await fetch('/api/projects', {
                 method: 'PUT',
@@ -392,7 +336,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   }
                 })
               })
-              console.log('[Load Project] Voice configs saved successfully')
             } catch (error) {
               console.warn('[Load Project] Failed to save voice configs:', error)
             }
@@ -401,27 +344,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           setCharacters(charactersWithRole)
         }
         if (visionPhase.scenes) {
-          console.log('[Vision] Loading scenes from visionPhase.scenes:', visionPhase.scenes.length, 'scenes')
-          console.log('[Vision] First scene audio URLs:', visionPhase.scenes[0]?.narrationAudioUrl, visionPhase.scenes[0]?.dialogueAudio)
           setScenes(visionPhase.scenes)
-        }
-        
-        // ALSO check script.script.scenes for audio URLs
-        if (visionPhase.script?.script?.scenes) {
-          console.log('[Vision] Script scenes audio status:', visionPhase.script.script.scenes.map((s: any, i: number) => ({
-            scene: i + 1,
-            hasNarrationAudio: !!s.narrationAudioUrl,
-            hasDialogueAudio: !!s.dialogueAudio,
-            dialogueCount: s.dialogue?.length || 0
-          })))
         }
         
         // Load narration voice setting
         if (visionPhase.narrationVoice) {
           setNarrationVoice(visionPhase.narrationVoice)
-          console.log('[Vision] Loaded narration voice:', visionPhase.narrationVoice)
         } else {
-          console.log('[Vision] No narration voice found in project metadata')
           setNarrationVoice(null)
         }
         
@@ -445,15 +374,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         
         // Check if generation is complete
         if (!visionPhase.scriptGenerated || !visionPhase.charactersGenerated || !visionPhase.scenesGenerated) {
-          console.log('[Vision] Initiating generation for incomplete items...')
           // Defer generation until after hydration to prevent hydration mismatch
           setTimeout(() => initiateGeneration(proj), 100)
-        } else {
-          console.log('[Vision] All generation already complete')
         }
       } else {
         // No Vision data yet, start generation
-        console.log('[Vision] No existing data, starting fresh generation')
         // Defer generation until after hydration to prevent hydration mismatch
         setTimeout(() => initiateGeneration(proj), 100)
       }
@@ -467,7 +392,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   const initiateGeneration = async (proj: Project) => {
-    console.log('[Vision] Starting script text generation...')
     setIsGenerating(true)
     
     try {
@@ -475,16 +399,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // ONLY generate script text (not images)
       if (!visionPhase?.scriptGenerated) {
-        console.log('[Vision] Generating script text (dialogue and action)...')
         const scriptData = await generateScript(proj)
         if (scriptData) {
           setCharacters(scriptData.characters)
           setScenes(scriptData.scenes)
-          console.log(`[Vision] Script complete: ${scriptData.scenes.length} scenes, ${scriptData.characters.length} characters`)
         }
-        console.log('[Vision] Script generation complete!')
-      } else {
-        console.log('[Vision] Script already generated')
       }
       
       // Mark progress complete (not generating images automatically)
@@ -493,8 +412,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         characters: { complete: true, progress: 0, total: 0 },
         scenes: { complete: true, progress: 0, total: 0 }
       }))
-      
-      console.log('[Vision] Generation complete! Images can be generated on-demand.')
     } catch (error) {
       console.error('[Vision] Generation error:', error)
       try { const { toast } = require('sonner'); toast.error('Generation failed: ' + (error as Error).message) } catch {}

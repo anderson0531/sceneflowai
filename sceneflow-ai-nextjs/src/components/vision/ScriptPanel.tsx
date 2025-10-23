@@ -106,27 +106,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
   const scenes = script?.script?.scenes || []
 
-  // Log audio status for debugging
-  console.log('[ScriptPanel] Scenes with audio:', scenes?.map((s: any, i: number) => ({
-    scene: i + 1,
-    hasNarrationAudio: !!s.narrationAudioUrl,
-    dialogueAudioCount: s.dialogueAudio?.length || 0
-  })))
-
-  React.useEffect(() => {
-    console.log('[ScriptPanel] === RENDER UPDATE ===')
-    console.log('[ScriptPanel] Props received:', {
-      hasScript: !!script,
-      scriptKeys: script ? Object.keys(script) : [],
-      hasNestedScript: !!script?.script,
-      nestedScriptKeys: script?.script ? Object.keys(script.script) : [],
-      sceneCount: scenes.length,
-      sceneNumbers: scenes.map((s: any, i: number) => s.sceneNumber || i + 1).join(', '),
-      firstScene: scenes[0] ? { heading: scenes[0].heading, duration: scenes[0].duration } : 'NO SCENES',
-      lastScene: scenes[scenes.length - 1] ? { heading: scenes[scenes.length - 1].heading, sceneNumber: scenes[scenes.length - 1].sceneNumber } : 'NO LAST SCENE'
-    })
-  }, [script, scenes])
-
   // Fetch Google voices
   useEffect(() => {
     let mounted = true

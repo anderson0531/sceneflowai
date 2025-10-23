@@ -639,8 +639,6 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
                 </span>
               )}
             </label>
-            {console.log('[CharacterCard] Voice config for', character.name, ':', character.voiceConfig)}
-            {console.log('[CharacterCard] Full character object for', character.name, ':', character)}
             <VoiceSelector
               provider={ttsProvider}
               selectedVoiceId={character.voiceConfig?.voiceId || ''}
