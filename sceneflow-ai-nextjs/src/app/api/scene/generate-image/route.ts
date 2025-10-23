@@ -28,6 +28,10 @@ export async function POST(req: NextRequest) {
     let project = null
     let characterObjects = selectedCharacters
 
+    console.log('[Scene Image] DEBUG - selectedCharacters type:', typeof selectedCharacters[0])
+    console.log('[Scene Image] DEBUG - selectedCharacters[0]:', JSON.stringify(selectedCharacters[0]).substring(0, 200))
+    console.log('[Scene Image] DEBUG - projectId:', projectId)
+
     if (projectId) {
       await sequelize.authenticate()
       project = await Project.findByPk(projectId)
@@ -36,21 +40,39 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: 'Project not found' }, { status: 404 })
       }
 
-      // Load characters if IDs provided
-      if (selectedCharacters.length > 0 && typeof selectedCharacters[0] === 'string') {
+      // ALWAYS load characters from database if we have a projectId
+      // This ensures we get the correct reference image properties
+      if (selectedCharacters.length > 0) {
         const characters = project.metadata?.visionPhase?.characters || []
+        console.log('[Scene Image] DEBUG - characters in project:', characters.length)
         
-        // Match characters by ID (primary) or name (fallback)
-        characterObjects = selectedCharacters.map((charId: string) => {
-          // Try ID match first
-          const byId = characters.find((c: any) => c.id === charId)
-          if (byId) return byId
+        // If selectedCharacters are IDs (strings), match them
+        if (typeof selectedCharacters[0] === 'string') {
+          characterObjects = selectedCharacters.map((charId: string) => {
+            const byId = characters.find((c: any) => c.id === charId)
+            if (byId) return byId
+            return characters.find((c: any) => c.name === charId)
+          }).filter((c: any) => c != null)
           
-          // Fallback: treat as name for legacy
-          return characters.find((c: any) => c.name === charId)
-        }).filter((c: any) => c != null)
-
-        console.log('[Scene Image] Loaded character objects:', characterObjects.length)
+          console.log('[Scene Image] Loaded character objects by ID:', characterObjects.length)
+        } 
+        // If selectedCharacters are already objects, reload them from DB to ensure correct properties
+        else {
+          characterObjects = selectedCharacters.map((char: any) => {
+            const byId = characters.find((c: any) => c.id === char.id)
+            if (byId) return byId
+            return characters.find((c: any) => c.name === char.name)
+          }).filter((c: any) => c != null)
+          
+          console.log('[Scene Image] Reloaded character objects from DB:', characterObjects.length)
+        }
+        
+        // DEBUG: Log what properties the character objects have
+        if (characterObjects.length > 0) {
+          console.log('[Scene Image] DEBUG - First character keys:', Object.keys(characterObjects[0]))
+          console.log('[Scene Image] DEBUG - Has referenceImage:', !!characterObjects[0].referenceImage)
+          console.log('[Scene Image] DEBUG - Has referenceImageGCS:', !!characterObjects[0].referenceImageGCS)
+        }
       }
     }
 
