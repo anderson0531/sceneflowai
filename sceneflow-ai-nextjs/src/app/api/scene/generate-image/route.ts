@@ -65,10 +65,21 @@ export async function POST(req: NextRequest) {
         // If selectedCharacters are already objects, reload them from DB
         else if (typeof characterObjects[0] === 'object') {
           characterObjects = characterObjects.map((char: any) => {
-            if (!char || !char.id) return null  // Safety check
-            const byId = characters.find((c: any) => c.id === char.id)
-            if (byId) return byId
-            return characters.find((c: any) => c.name === char.name)
+            if (!char) return null
+            
+            // Try ID match first (if ID exists)
+            if (char.id) {
+              const byId = characters.find((c: any) => c.id === char.id)
+              if (byId) return byId
+            }
+            
+            // Fallback to name match
+            if (char.name) {
+              const byName = characters.find((c: any) => c.name === char.name)
+              if (byName) return byName
+            }
+            
+            return null
           }).filter((c: any) => c != null)
           
           console.log('[Scene Image] Reloaded character objects from DB:', characterObjects.length)

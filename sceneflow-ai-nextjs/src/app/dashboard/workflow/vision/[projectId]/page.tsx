@@ -1381,7 +1381,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           projectId: projectId,           // ✅ ADD THIS
           sceneIndex: sceneIdx,           // ✅ ADD THIS
           scenePrompt: scene.visualDescription || scene.action || scene.heading,  // ✅ ADD THIS as fallback
-          selectedCharacters: sceneCharacters.map(c => c.id),  // Send character IDs
+          selectedCharacters: sceneCharacters,  // Send full character objects
           quality: imageQuality
         })
       })
