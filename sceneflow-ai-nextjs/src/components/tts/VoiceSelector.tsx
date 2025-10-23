@@ -18,6 +18,7 @@ interface Voice {
 }
 
 interface VoiceSelectorProps {
+  provider: 'elevenlabs' | 'google'  // ADD THIS
   selectedVoiceId?: string
   onSelectVoice: (voiceId: string, voiceName: string) => void
   apiKey?: string // For BYOK (optional, uses platform key if not provided)
@@ -26,6 +27,7 @@ interface VoiceSelectorProps {
 }
 
 export function VoiceSelector({ 
+  provider,
   selectedVoiceId, 
   onSelectVoice, 
   apiKey, 
@@ -40,28 +42,42 @@ export function VoiceSelector({
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null)
 
-  // Fetch voices on mount
+  // Fetch voices on mount and when provider changes
   useEffect(() => {
     fetchVoices()
-  }, [apiKey])
+  }, [apiKey, provider])
 
   const fetchVoices = async () => {
     setLoading(true)
     try {
       const headers: any = {}
       // TODO: BYOK - Use user's API key when implemented
-      if (apiKey) headers['x-google-api-key'] = apiKey
+      if (apiKey) {
+        if (provider === 'google') {
+          headers['x-google-api-key'] = apiKey
+        } else if (provider === 'elevenlabs') {
+          headers['x-elevenlabs-api-key'] = apiKey
+        }
+      }
       
-      const res = await fetch('/api/tts/google/voices', { 
+      const endpoint = provider === 'elevenlabs' 
+        ? '/api/tts/elevenlabs/voices'
+        : '/api/tts/google/voices'
+      
+      const res = await fetch(endpoint, { 
         headers,
         cache: 'no-store' 
       })
       const data = await res.json()
       if (data?.enabled && Array.isArray(data.voices)) {
         setVoices(data.voices)
+      } else {
+        console.warn(`[VoiceSelector] Provider ${provider} not available:`, data.error)
+        setVoices([])
       }
     } catch (err) {
       console.error('Failed to fetch voices:', err)
+      setVoices([])
     } finally {
       setLoading(false)
     }

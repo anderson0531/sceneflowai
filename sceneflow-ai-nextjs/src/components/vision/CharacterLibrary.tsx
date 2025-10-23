@@ -15,10 +15,11 @@ interface CharacterLibraryProps {
   onApproveCharacter: (characterId: string) => void
   onUpdateCharacterAttributes?: (characterId: string, attributes: any) => void
   onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void
+  ttsProvider: 'google' | 'elevenlabs'  // ADD THIS
   compact?: boolean
 }
 
-export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, compact = false }: CharacterLibraryProps) {
+export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, ttsProvider, compact = false }: CharacterLibraryProps) {
   const [selectedChar, setSelectedChar] = useState<string | null>(null)
   const [charPrompts, setCharPrompts] = useState<Record<string, string>>({})
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(new Set())
@@ -239,6 +240,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                 expandedCharId={expandedSections[charId]}
                 onToggleExpand={handleToggleSection}
                 onUpdateCharacterVoice={onUpdateCharacterVoice}
+                ttsProvider={ttsProvider}
               />
             )
           })}
@@ -344,9 +346,10 @@ interface CharacterCardProps {
   expandedCharId?: string | null
   onToggleExpand?: (charId: string, section: 'coreIdentity' | 'appearance') => void
   onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void
+  ttsProvider: 'google' | 'elevenlabs'  // ADD THIS
 }
 
-function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, onOpenBuilder, onAnalyze, analyzingImage, prompt, onPromptChange, isGenerating, expandedCharId, onToggleExpand, onUpdateCharacterVoice }: CharacterCardProps) {
+function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, onOpenBuilder, onAnalyze, analyzingImage, prompt, onPromptChange, isGenerating, expandedCharId, onToggleExpand, onUpdateCharacterVoice, ttsProvider }: CharacterCardProps) {
   const hasImage = !!character.referenceImage
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
@@ -639,11 +642,12 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
             {console.log('[CharacterCard] Voice config for', character.name, ':', character.voiceConfig)}
             {console.log('[CharacterCard] Full character object for', character.name, ':', character)}
             <VoiceSelector
+              provider={ttsProvider}
               selectedVoiceId={character.voiceConfig?.voiceId || ''}
               onSelectVoice={(voiceId, voiceName) => {
                 console.log('[VoiceSelector] Selected:', { voiceId, voiceName, characterId })
                 onUpdateCharacterVoice?.(characterId, {
-                  provider: 'elevenlabs', // Default to ElevenLabs for now
+                  provider: ttsProvider,
                   voiceId,
                   voiceName
                 })

@@ -91,9 +91,20 @@ export async function POST(req: NextRequest) {
 
 async function generateAudio(text: string, voiceConfig: VoiceConfig): Promise<Buffer> {
   if (voiceConfig.provider === 'elevenlabs') {
-    return generateElevenLabsAudio(text, voiceConfig)
+    try {
+      return await generateElevenLabsAudio(text, voiceConfig)
+    } catch (error: any) {
+      console.warn('[Audio] ElevenLabs failed, falling back to Google TTS:', error.message)
+      // Fallback to Google with a default voice
+      return await generateGoogleAudio(text, {
+        ...voiceConfig,
+        provider: 'google',
+        voiceId: 'en-US-Neural2-J',  // Default Google voice
+        languageCode: 'en-US'
+      })
+    }
   } else {
-    return generateGoogleAudio(text, voiceConfig)
+    return await generateGoogleAudio(text, voiceConfig)
   }
 }
 

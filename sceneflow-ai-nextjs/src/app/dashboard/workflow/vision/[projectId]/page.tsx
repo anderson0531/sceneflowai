@@ -93,6 +93,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Image quality setting
   const [imageQuality, setImageQuality] = useState<'max' | 'auto'>('auto')
+  const [ttsProvider, setTtsProvider] = useState<'google' | 'elevenlabs'>('google')
   
   // Handle quality setting change
   const handleQualityChange = async (quality: 'max' | 'auto') => {
@@ -1433,11 +1434,40 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               <Volume2 className="w-4 h-4 text-gray-400" />
               <label className="text-sm font-medium text-gray-300">Narration Voice</label>
             </div>
+            
+            {/* Provider Toggle */}
+            <div className="flex items-center gap-2 mb-3">
+              <label className="text-xs text-gray-400">Provider:</label>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setTtsProvider('google')}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    ttsProvider === 'google' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  }`}
+                >
+                  Google TTS
+                </button>
+                <button
+                  onClick={() => setTtsProvider('elevenlabs')}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    ttsProvider === 'elevenlabs' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  }`}
+                >
+                  ElevenLabs
+                </button>
+              </div>
+            </div>
+            
             <VoiceSelector
+              provider={ttsProvider}
               selectedVoiceId={narrationVoice?.voiceId || ''}
               onSelectVoice={(voiceId, voiceName) =>
                 handleNarrationVoiceChange({ 
-                  provider: 'elevenlabs', // Default to ElevenLabs for now
+                  provider: ttsProvider,
                   voiceId, 
                   voiceName 
                 })
@@ -1459,6 +1489,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             onApproveCharacter={handleApproveCharacter}
             onUpdateCharacterAttributes={handleUpdateCharacterAttributes}
             onUpdateCharacterVoice={handleUpdateCharacterVoice}
+            ttsProvider={ttsProvider}
             compact={true}
           />
         </div>
