@@ -349,7 +349,44 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         
         // Load narration voice setting
         if (visionPhase.narrationVoice) {
-          setNarrationVoice(visionPhase.narrationVoice)
+          let correctedNarrationVoice = visionPhase.narrationVoice
+          
+          // FIX: Detect and correct provider mismatch for narration voice
+          if (correctedNarrationVoice.provider === 'elevenlabs') {
+            const isGoogleVoice = correctedNarrationVoice.voiceId?.includes('Studio') || 
+                                  /^[a-z]{2}-[A-Z]{2}/.test(correctedNarrationVoice.voiceId)
+            
+            if (isGoogleVoice) {
+              console.warn(`[Load Project] Fixing narration provider mismatch: ${correctedNarrationVoice.voiceId} is Google voice but marked as ElevenLabs`)
+              correctedNarrationVoice = {
+                ...correctedNarrationVoice,
+                provider: 'google'
+              }
+              
+              // Save the corrected narration voice back to database
+              try {
+                await fetch('/api/projects', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    id: projectId,
+                    metadata: {
+                      ...proj.metadata,
+                      visionPhase: {
+                        ...visionPhase,
+                        narrationVoice: correctedNarrationVoice
+                      }
+                    }
+                  })
+                })
+                console.log('[Load Project] Narration voice config saved successfully')
+              } catch (error) {
+                console.warn('[Load Project] Failed to save narration voice config:', error)
+              }
+            }
+          }
+          
+          setNarrationVoice(correctedNarrationVoice)
         } else {
           setNarrationVoice(null)
         }
@@ -1316,7 +1353,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       const voiceConfig = audioType === 'narration' ? narrationVoice : 
-        characters.find(c => c.name === characterName)?.voiceConfig
+        characters.find(c => c.name.toLowerCase() === characterName?.toLowerCase())?.voiceConfig
 
       console.log('[Generate Scene Audio] Voice config determined:', { voiceConfig, audioType })
 

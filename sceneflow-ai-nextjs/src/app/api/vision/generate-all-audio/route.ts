@@ -110,9 +110,12 @@ export async function POST(req: NextRequest) {
               
               for (const dialogueLine of scene.dialogue) {
                 console.log(`[Batch Audio] Processing dialogue for character: "${dialogueLine.character}"`)
-                const character = characters.find((c: any) => c.name === dialogueLine.character)
+                const character = characters.find((c: any) => 
+                  c.name.toLowerCase() === dialogueLine.character.toLowerCase()
+                )
                 console.log(`[Batch Audio] Found character:`, character ? {
                   name: character.name,
+                  matchedWith: dialogueLine.character,
                   hasVoiceConfig: !!character.voiceConfig,
                   voiceConfig: character.voiceConfig
                 } : 'NOT FOUND')
