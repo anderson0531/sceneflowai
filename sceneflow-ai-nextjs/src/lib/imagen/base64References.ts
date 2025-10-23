@@ -24,16 +24,18 @@ export async function prepareBase64References(
   for (let i = 0; i < characters.length; i++) {
     const char = characters[i]
     
-    if (!char.referenceImage) {
+    // Check for either referenceImage (Vercel Blob) or referenceImageGCS (GCS)
+    const imageUrl = char.referenceImage || char.referenceImageGCS
+    if (!imageUrl) {
       console.log(`[Base64 Ref] Character ${char.name} has no reference image, skipping`)
       continue
     }
 
     try {
-      console.log(`[Base64 Ref] Fetching ${char.name} from:`, char.referenceImage.substring(0, 50))
+      console.log(`[Base64 Ref] Fetching ${char.name} from:`, imageUrl.substring(0, 50))
       
-      // Fetch the image from Vercel Blob
-      const response = await fetch(char.referenceImage)
+      // Fetch the image from Vercel Blob or GCS
+      const response = await fetch(imageUrl)
       if (!response.ok) {
         console.warn(`[Base64 Ref] Failed to fetch image for ${char.name}: ${response.status}`)
         continue
