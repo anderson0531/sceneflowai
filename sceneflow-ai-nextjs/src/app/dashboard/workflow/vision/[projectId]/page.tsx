@@ -169,6 +169,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     )
     
     console.log('[Character Voice] Updated characters:', updatedCharacters)
+    console.log('[Character Voice] Character 0 details:', updatedCharacters[0])
+    console.log('[Character Voice] Character 0 voiceConfig:', updatedCharacters[0]?.voiceConfig)
     setCharacters(updatedCharacters)
     
     if (project) {

@@ -637,6 +637,7 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
               )}
             </label>
             {console.log('[CharacterCard] Voice config for', character.name, ':', character.voiceConfig)}
+            {console.log('[CharacterCard] Full character object for', character.name, ':', character)}
             <VoiceSelector
               selectedVoiceId={character.voiceConfig?.voiceId || ''}
               onSelectVoice={(voiceId, voiceName) => {
