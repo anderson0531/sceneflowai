@@ -1064,6 +1064,12 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                 <div className="flex items-center gap-2">
                   <Volume2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Scene Narration</span>
+                  {scene.narrationAudioUrl && (
+                    <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
+                      <Volume2 className="w-3 h-3" />
+                      Audio Ready
+                    </span>
+                  )}
                 </div>
                 {scene.narrationAudioUrl ? (
                   <div className="flex items-center gap-2">
@@ -1160,7 +1166,14 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                 return (
                   <div key={i} className="flex items-start gap-2">
                     <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{d.character}</div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{d.character}</div>
+                        {audioEntry?.audioUrl && (
+                          <span className="text-xs px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded">
+                            ✓
+                          </span>
+                        )}
+                      </div>
                       <div className="text-sm text-gray-700 dark:text-gray-300 italic">"{d.line}"</div>
                     </div>
                     {audioEntry?.audioUrl ? (

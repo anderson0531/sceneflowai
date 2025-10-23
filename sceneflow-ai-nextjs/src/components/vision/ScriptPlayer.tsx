@@ -77,6 +77,58 @@ export function ScriptPlayer({ script, characters, onClose, initialScene = 0 }: 
     setIsLoadingAudio(true)
 
     try {
+      // CHECK FOR PRE-GENERATED AUDIO FIRST
+      if (scene.narrationAudioUrl) {
+        console.log('[Player] Using pre-generated audio for scene', sceneIndex + 1)
+        
+        // Play narration
+        if (audioRef.current) {
+          audioRef.current.src = scene.narrationAudioUrl
+          audioRef.current.playbackRate = playerState.playbackSpeed
+          audioRef.current.volume = playerState.volume
+          
+          await audioRef.current.play()
+          
+          // Wait for narration to finish
+          await new Promise<void>((resolve) => {
+            if (audioRef.current) {
+              audioRef.current.onended = () => resolve()
+            }
+          })
+        }
+        
+        // Play dialogue audios sequentially
+        if (scene.dialogueAudio && scene.dialogueAudio.length > 0) {
+          for (const dialogue of scene.dialogueAudio) {
+            if (dialogue.audioUrl && audioRef.current) {
+              console.log('[Player] Playing dialogue for', dialogue.character)
+              audioRef.current.src = dialogue.audioUrl
+              audioRef.current.playbackRate = playerState.playbackSpeed
+              audioRef.current.volume = playerState.volume
+              
+              await audioRef.current.play()
+              
+              await new Promise<void>((resolve) => {
+                if (audioRef.current) {
+                  audioRef.current.onended = () => resolve()
+                }
+              })
+            }
+          }
+        }
+        
+        setIsLoadingAudio(false)
+        
+        // Auto-advance to next scene
+        if (playerState.isPlaying) {
+          setTimeout(() => nextScene(), 1000)
+        }
+        return
+      }
+      
+      // FALLBACK: Generate audio on-the-fly (existing code)
+      console.log('[Player] No pre-generated audio, generating on-the-fly for scene', sceneIndex + 1)
+      
       // Build narration text from action
       const narrationText = scene.action || scene.visualDescription || ''
       
@@ -126,14 +178,15 @@ export function ScriptPlayer({ script, characters, onClose, initialScene = 0 }: 
         audioRef.current.play()
       }
     } catch (error) {
-      console.error('[Player] Audio generation error:', error)
+      console.error('[Player] Audio error:', error)
       setIsLoadingAudio(false)
-      // Auto-advance on error
+      
+      // Auto-advance even on error
       if (playerState.isPlaying) {
         setTimeout(() => nextScene(), 2000)
       }
     }
-  }, [scenes, playerState.voiceAssignments.narrator, playerState.playbackSpeed, playerState.volume])
+  }, [scenes, playerState.isPlaying, playerState.playbackSpeed, playerState.volume])
 
   // Handle audio end - auto-advance to next scene
   useEffect(() => {

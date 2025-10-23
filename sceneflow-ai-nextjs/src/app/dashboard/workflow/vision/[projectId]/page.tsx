@@ -90,6 +90,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Audio generation state
   const [narrationVoice, setNarrationVoice] = useState<VoiceConfig | null>(null)
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false)
+  const [audioProgress, setAudioProgress] = useState<{
+    current: number
+    total: number
+    status: string
+    dialogueCount?: number
+  } | null>(null)
   
   // Image quality setting
   const [imageQuality, setImageQuality] = useState<'max' | 'auto'>('auto')
@@ -1185,6 +1191,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
 
     setIsGeneratingAudio(true)
+    setAudioProgress({ current: 0, total: 0, status: 'Starting...' })
+    
     try {
       const response = await fetch('/api/vision/generate-all-audio', {
         method: 'POST',
@@ -1192,16 +1200,58 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         body: JSON.stringify({ projectId }),
       })
 
-      const data = await response.json()
-      if (data.success) {
-        try { const { toast } = require('sonner'); toast.success('All audio generated successfully!') } catch {}
-        await loadProject() // Reload to get updated audio URLs
+      if (!response.body) {
+        throw new Error('No response body')
+      }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        
+        if (done) break
+        
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n\n')
+        buffer = lines.pop() || ''
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6))
+              
+              if (data.type === 'progress') {
+                setAudioProgress({
+                  current: data.scene,
+                  total: data.total,
+                  status: data.status === 'generating_narration' 
+                    ? 'Generating narration...'
+                    : `Generating dialogue (${data.dialogueCount || 0} lines)...`,
+                  dialogueCount: data.dialogueCount
+                })
+              } else if (data.type === 'complete') {
+                try { 
+                  const { toast } = require('sonner')
+                  toast.success(`Generated ${data.narrationCount} narration + ${data.dialogueCount} dialogue audio files!`)
+                } catch {}
+                await loadProject()
+              } else if (data.type === 'error') {
+                throw new Error(data.message)
+              }
+            } catch (e) {
+              console.error('[Audio Progress] Parse error:', e)
+            }
+          }
+        }
       }
     } catch (error) {
       console.error('[Generate All Audio] Error:', error)
-      try { const { toast } = require('sonner'); toast.error('Failed to generate audio') } catch {}
+      try { const { toast } = require('sonner'); toast.error('Audio generation failed') } catch {}
     } finally {
       setIsGeneratingAudio(false)
+      setAudioProgress(null)
     }
   }
 
@@ -1509,6 +1559,32 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           characters={characters}
           onClose={() => setIsPlayerOpen(false)}
         />
+      )}
+
+      {/* Audio Generation Progress */}
+      {audioProgress && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-gray-900 border border-gray-700 rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-200 mb-4">
+              Generating Audio
+            </h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-400">Scene {audioProgress.current} of {audioProgress.total}</span>
+                <span className="text-gray-400">
+                  {Math.round((audioProgress.current / audioProgress.total) * 100)}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-800 rounded-full h-2">
+                <div 
+                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${(audioProgress.current / audioProgress.total) * 100}%` }}
+                />
+              </div>
+              <p className="text-sm text-gray-400">{audioProgress.status}</p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
