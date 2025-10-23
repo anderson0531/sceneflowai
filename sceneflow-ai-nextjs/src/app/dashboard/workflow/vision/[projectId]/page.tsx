@@ -1361,6 +1361,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         hasAppearance: !!c.appearanceDescription
       })))
       
+      console.log('[Scene Image] sceneCharacters FULL objects:', sceneCharacters.map(c => ({
+        name: c?.name,
+        id: c?.id,
+        hasId: c?.id !== undefined && c?.id !== null,
+        allKeys: c ? Object.keys(c) : []
+      })))
+      
       console.log('[Scene Image] About to send to API:', {
         characterIds: sceneCharacters.map(c => c?.id || 'NULL'),
         characterNames: sceneCharacters.map(c => c?.name || 'NULL'),
