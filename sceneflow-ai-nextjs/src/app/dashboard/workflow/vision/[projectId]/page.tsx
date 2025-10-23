@@ -1421,6 +1421,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             validationWarnings={validationWarnings}
             validationInfo={validationInfo}
             onDismissValidationWarning={handleDismissValidationWarning}
+            onGenerateSceneAudio={handleGenerateSceneAudio}
           />
         </div>
         

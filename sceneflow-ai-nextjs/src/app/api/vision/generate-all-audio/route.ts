@@ -13,6 +13,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Project ID is required' }, { status: 400 })
     }
 
+    // Get the base URL from the request headers
+    const protocol = req.headers.get('x-forwarded-proto') || 'http'
+    const host = req.headers.get('host') || 'localhost:3000'
+    const baseUrl = `${protocol}://${host}`
+    console.log(`[Batch Audio] Using base URL: ${baseUrl}`)
+
     await sequelize.authenticate()
     const project = await Project.findByPk(projectId)
     if (!project) {
@@ -39,7 +45,7 @@ export async function POST(req: NextRequest) {
       // Generate narration audio
       if (scene.narration) {
         console.log(`[Batch Audio] Generating narration for scene ${i + 1}`)
-        const narrationResult = await fetch(`${process.env.NEXTAUTH_URL}/api/vision/generate-scene-audio`, {
+        const narrationResult = await fetch(`${baseUrl}/api/vision/generate-scene-audio`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -64,7 +70,7 @@ export async function POST(req: NextRequest) {
           }
 
           console.log(`[Batch Audio] Generating dialogue for ${dialogueLine.character} in scene ${i + 1}`)
-          const dialogueResult = await fetch(`${process.env.NEXTAUTH_URL}/api/vision/generate-scene-audio`, {
+          const dialogueResult = await fetch(`${baseUrl}/api/vision/generate-scene-audio`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
