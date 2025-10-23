@@ -161,16 +161,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Handle character voice update
   const handleUpdateCharacterVoice = async (characterId: string, voiceConfig: VoiceConfig) => {
     console.log('[Character Voice] Updating:', { characterId, voiceConfig })
+    console.log('[Character Voice] Current characters:', characters.map(c => ({ id: c.id, name: c.name })))
     
-    const updatedCharacters = characters.map(char => 
-      char.id === characterId 
+    // Convert characterId to index (since CharacterLibrary uses index as fallback)
+    const charIndex = parseInt(characterId, 10)
+    console.log('[Character Voice] Using character index:', charIndex)
+    
+    const updatedCharacters = characters.map((char, idx) => 
+      idx === charIndex
         ? { ...char, voiceConfig }
         : char
     )
     
     console.log('[Character Voice] Updated characters:', updatedCharacters)
-    console.log('[Character Voice] Character 0 details:', updatedCharacters[0])
-    console.log('[Character Voice] Character 0 voiceConfig:', updatedCharacters[0]?.voiceConfig)
+    console.log('[Character Voice] Character at index', charIndex, ':', updatedCharacters[charIndex])
+    console.log('[Character Voice] voiceConfig applied:', updatedCharacters[charIndex]?.voiceConfig)
     setCharacters(updatedCharacters)
     
     if (project) {
