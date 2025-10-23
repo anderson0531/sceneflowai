@@ -53,10 +53,41 @@ export async function POST(req: NextRequest) {
     // Prepare Base64 character references
     const base64References = await prepareBase64References(characterObjects)
     
+    // Load actual scene data from project if available
+    let fullSceneContext = scenePrompt || ''
+    let project = null
+    
+    if (projectId && typeof sceneIndex === 'number') {
+      await sequelize.authenticate()
+      project = await Project.findByPk(projectId)
+      
+      if (project) {
+        const scenes = project.metadata?.visionPhase?.script?.script?.scenes || []
+        const scene = scenes[sceneIndex]
+        
+        if (scene) {
+          // Build comprehensive scene description from multiple fields
+          fullSceneContext = scene.visualDescription || 
+                            scene.action || 
+                            scene.heading || 
+                            scenePrompt || 
+                            ''
+          
+          console.log('[Scene Image] Using scene data:', {
+            hasVisualDescription: !!scene.visualDescription,
+            hasAction: !!scene.action,
+            hasHeading: !!scene.heading,
+            contextLength: fullSceneContext.length,
+            sceneIndex: sceneIndex
+          })
+        }
+      }
+    }
+    
     // Build clean prompt from scene description with ALL character references
     const optimizedPrompt = optimizePromptForImagen({
-      sceneAction: scenePrompt || '',
-      visualDescription: scenePrompt || '',
+      sceneAction: fullSceneContext,
+      visualDescription: fullSceneContext,
       characterReferences: base64References.map(ref => ({
         referenceId: ref.referenceId,
         name: ref.name,
@@ -95,7 +126,7 @@ export async function POST(req: NextRequest) {
       // Determine which character to validate (prefer character mentioned in action/visualDesc)
       let primaryCharForValidation = characterObjects[0]
       
-      const sceneText = `${scenePrompt || ''}`.toLowerCase()
+      const sceneText = `${fullSceneContext || ''}`.toLowerCase()
       for (const char of characterObjects) {
         if (char.name && sceneText.includes(char.name.toLowerCase())) {
           // This character is mentioned in the scene, use them for validation
