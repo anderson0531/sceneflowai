@@ -106,6 +106,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
   const scenes = script?.script?.scenes || []
 
+  // Log audio status for debugging
+  console.log('[ScriptPanel] Scenes with audio:', scenes?.map((s: any, i: number) => ({
+    scene: i + 1,
+    hasNarrationAudio: !!s.narrationAudioUrl,
+    dialogueAudioCount: s.dialogueAudio?.length || 0
+  })))
+
   React.useEffect(() => {
     console.log('[ScriptPanel] === RENDER UPDATE ===')
     console.log('[ScriptPanel] Props received:', {
@@ -1203,6 +1210,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
+                          console.log('[ScriptPanel] Generate dialogue clicked:', { sceneIdx, character: d.character })
                           onGenerateSceneAudio?.(sceneIdx, 'dialogue', d.character)
                         }}
                         className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"

@@ -182,11 +182,20 @@ async function updateSceneAudio(
 
   const metadata = project.metadata || {}
   const visionPhase = metadata.visionPhase || {}
+  
+  // FIX: Check where scenes actually live
   const script = visionPhase.script || {}
-  const scenes = script.script?.scenes || script.scenes || []
+  const existingScenes = script.script?.scenes || script.scenes || []
+  
+  console.log('[Update Scene Audio] Current structure:', {
+    hasScriptScript: !!script.script,
+    hasScriptScenes: !!script.scenes,
+    hasScriptScriptScenes: !!script.script?.scenes,
+    sceneCount: existingScenes.length
+  })
 
   // Update the specific scene
-  const updatedScenes = scenes.map((s: any, idx: number) => {
+  const updatedScenes = existingScenes.map((s: any, idx: number) => {
     if (idx !== sceneIndex) return s
 
     if (audioType === 'narration') {
@@ -214,17 +223,26 @@ async function updateSceneAudio(
     }
   })
 
+  // FIX: Preserve the existing structure (don't create double nesting)
+  const updatedScript = script.script?.scenes
+    ? { ...script, script: { ...script.script, scenes: updatedScenes } }  // Preserve script.script.scenes
+    : { ...script, scenes: updatedScenes }  // Use script.scenes
+
+  console.log('[Update Scene Audio] Updating with structure:', {
+    hasScriptScript: !!updatedScript.script,
+    hasScriptScenes: !!updatedScript.scenes
+  })
+
   // Update metadata
   await project.update({
     metadata: {
       ...metadata,
       visionPhase: {
         ...visionPhase,
-        script: {
-          ...script,
-          script: { scenes: updatedScenes },
-        },
+        script: updatedScript,
       },
     },
   })
+  
+  console.log('[Update Scene Audio] Project updated successfully')
 }

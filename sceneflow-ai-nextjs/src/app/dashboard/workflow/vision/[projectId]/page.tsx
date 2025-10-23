@@ -251,10 +251,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   const loadProject = async () => {
     try {
+      console.log('[Load Project] Fetching project:', projectId)
       const res = await fetch(`/api/projects?id=${projectId}`)
-      if (!res.ok) throw new Error('Failed to load project')
+      
+      console.log('[Load Project] Response status:', res.status, res.statusText)
+      console.log('[Load Project] Response ok:', res.ok)
+      
+      if (!res.ok) {
+        const errorText = await res.text()
+        console.error('[Load Project] Error response:', errorText)
+        throw new Error(`Failed to load project: ${res.status} ${res.statusText}`)
+      }
+      
+      const contentType = res.headers.get('content-type')
+      console.log('[Load Project] Content-Type:', contentType)
+      
+      if (!contentType?.includes('application/json')) {
+        const text = await res.text()
+        console.error('[Load Project] Non-JSON response:', text.substring(0, 500))
+        throw new Error('Server returned non-JSON response')
+      }
       
       const data = await res.json()
+      console.log('[Load Project] Data received, has project:', !!data.project)
+      
       const proj = data.project || data
       
       // LOG PROJECT DURATION
@@ -314,10 +334,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           })))
           
           // Ensure character roles are preserved (default to supporting if not specified)
-          const charactersWithRole = visionPhase.characters.map((c: any) => ({
-            ...c,
-            role: c.role || 'supporting'
-          }))
+          const charactersWithRole = visionPhase.characters.map((c: any) => {
+            const char = {
+              ...c,
+              role: c.role || 'supporting'
+            }
+            
+            // FIX: Detect and correct provider mismatch
+            if (char.voiceConfig && char.voiceConfig.provider === 'elevenlabs') {
+              // Check if voiceId looks like a Google voice (contains "Studio" or starts with language code)
+              const isGoogleVoice = char.voiceConfig.voiceId?.includes('Studio') || 
+                                    /^[a-z]{2}-[A-Z]{2}/.test(char.voiceConfig.voiceId)
+              
+              if (isGoogleVoice) {
+                console.warn(`[Load Project] Fixing provider mismatch for ${char.name}: ${char.voiceConfig.voiceId} is Google voice but marked as ElevenLabs`)
+                char.voiceConfig = {
+                  ...char.voiceConfig,
+                  provider: 'google'
+                }
+              }
+            }
+            
+            return char
+          })
           
           // ADD DETAILED LOGGING FOR CHARACTERS
           console.log('[Load Project] Loaded characters:', charactersWithRole.map((c: any) => ({
@@ -326,12 +365,55 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             voiceConfig: c.voiceConfig
           })))
           
+          // Check if any voice configs were auto-fixed and need saving
+          const needsSaving = charactersWithRole.some((c: any) => 
+            c.voiceConfig && 
+            c.voiceConfig.provider === 'google' && 
+            visionPhase.characters.find((orig: any) => 
+              orig.name === c.name && 
+              orig.voiceConfig?.provider === 'elevenlabs'
+            )
+          )
+
+          if (needsSaving) {
+            console.log('[Load Project] Saving auto-fixed voice configs to database')
+            try {
+              await fetch('/api/projects', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  id: projectId,
+                  metadata: {
+                    ...proj.metadata,
+                    visionPhase: {
+                      ...visionPhase,
+                      characters: charactersWithRole
+                    }
+                  }
+                })
+              })
+              console.log('[Load Project] Voice configs saved successfully')
+            } catch (error) {
+              console.warn('[Load Project] Failed to save voice configs:', error)
+            }
+          }
+
           setCharacters(charactersWithRole)
         }
         if (visionPhase.scenes) {
           console.log('[Vision] Loading scenes from visionPhase.scenes:', visionPhase.scenes.length, 'scenes')
           console.log('[Vision] First scene audio URLs:', visionPhase.scenes[0]?.narrationAudioUrl, visionPhase.scenes[0]?.dialogueAudio)
           setScenes(visionPhase.scenes)
+        }
+        
+        // ALSO check script.script.scenes for audio URLs
+        if (visionPhase.script?.script?.scenes) {
+          console.log('[Vision] Script scenes audio status:', visionPhase.script.script.scenes.map((s: any, i: number) => ({
+            scene: i + 1,
+            hasNarrationAudio: !!s.narrationAudioUrl,
+            hasDialogueAudio: !!s.dialogueAudio,
+            dialogueCount: s.dialogue?.length || 0
+          })))
         }
         
         // Load narration voice setting
@@ -377,6 +459,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     } catch (error) {
       console.error('Failed to load project:', error)
+      console.error('Error type:', error instanceof TypeError ? 'TypeError' : error instanceof Error ? error.constructor.name : typeof error)
+      console.error('Error message:', error instanceof Error ? error.message : String(error))
+      // Don't throw - just log and show user-friendly message
+      try { const { toast } = require('sonner'); toast.error('Failed to reload project data') } catch {}
     }
   }
 
@@ -1257,7 +1343,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     toast.success(msg)
                   }
                 } catch {}
-                await loadProject()
+                
+                // Retry logic for project reload after batch audio generation
+                let retries = 3
+                while (retries > 0) {
+                  try {
+                    await loadProject()
+                    break // Success!
+                  } catch (error) {
+                    retries--
+                    console.warn(`[Generate All Audio] Project reload failed, ${retries} retries left`)
+                    if (retries > 0) {
+                      await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1s before retry
+                    } else {
+                      console.error('[Generate All Audio] All retries exhausted')
+                      try { const { toast } = require('sonner'); toast.warning('Audio generated but page reload failed. Please refresh manually.') } catch {}
+                    }
+                  }
+                }
               } else if (data.type === 'error') {
                 throw new Error(data.message)
               }
@@ -1278,6 +1381,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   // Handle generate scene audio
   const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string) => {
+    console.log('[Generate Scene Audio] Button clicked!', { sceneIdx, audioType, characterName })
     console.log('[Generate Scene Audio] Called with:', { sceneIdx, audioType, characterName })
     console.log('[Generate Scene Audio] Current narrationVoice:', narrationVoice)
     console.log('[Generate Scene Audio] Current characters:', characters.map(c => ({ name: c.name, hasVoice: !!c.voiceConfig })))
@@ -1358,7 +1462,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
         
         try { const { toast } = require('sonner'); toast.success('Audio generated!') } catch {}
-        await loadProject() // Also reload for persistence
+        
+        // Retry logic for project reload
+        let retries = 3
+        while (retries > 0) {
+          try {
+            await loadProject()
+            break // Success!
+          } catch (error) {
+            retries--
+            console.warn(`[Audio] Project reload failed, ${retries} retries left`)
+            if (retries > 0) {
+              await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1s before retry
+            } else {
+              console.error('[Audio] All retries exhausted')
+              try { const { toast } = require('sonner'); toast.warning('Audio saved but page reload failed. Please refresh manually.') } catch {}
+            }
+          }
+        }
         
         // Debug logging after reload
         console.log('[Audio] Reloaded project, checking scene audio URLs:')
