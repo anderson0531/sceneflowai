@@ -636,15 +636,17 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
                 </span>
               )}
             </label>
+            {console.log('[CharacterCard] Voice config for', character.name, ':', character.voiceConfig)}
             <VoiceSelector
               selectedVoiceId={character.voiceConfig?.voiceId || ''}
-              onSelectVoice={(voiceId, voiceName) => 
+              onSelectVoice={(voiceId, voiceName) => {
+                console.log('[VoiceSelector] Selected:', { voiceId, voiceName, characterId })
                 onUpdateCharacterVoice?.(characterId, {
                   provider: 'elevenlabs', // Default to ElevenLabs for now
                   voiceId,
                   voiceName
                 })
-              }
+              }}
               compact={true}
             />
             {character.voiceConfig && (

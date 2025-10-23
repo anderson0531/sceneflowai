@@ -160,11 +160,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Handle character voice update
   const handleUpdateCharacterVoice = async (characterId: string, voiceConfig: VoiceConfig) => {
+    console.log('[Character Voice] Updating:', { characterId, voiceConfig })
+    
     const updatedCharacters = characters.map(char => 
       char.id === characterId 
         ? { ...char, voiceConfig }
         : char
     )
+    
+    console.log('[Character Voice] Updated characters:', updatedCharacters)
     setCharacters(updatedCharacters)
     
     if (project) {
@@ -190,8 +194,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           })
         })
         console.log('[Character Voice] Updated character voice:', characterId, voiceConfig)
+        
+        // Add success toast
+        try { 
+          const { toast } = require('sonner')
+          const char = updatedCharacters.find(c => c.id === characterId)
+          toast.success(`Voice assigned to ${char?.name || 'character'}: ${voiceConfig.voiceName}`)
+        } catch {}
       } catch (error) {
         console.error('[Character Voice] Failed to save character voice:', error)
+        // Add error toast
+        try { 
+          const { toast } = require('sonner')
+          toast.error('Failed to save voice assignment')
+        } catch {}
       }
     }
   }
