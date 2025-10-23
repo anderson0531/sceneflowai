@@ -1364,15 +1364,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          sceneContext: {
-            heading: scene.heading,
-            action: scene.action,
-            visualDescription: scene.visualDescription,
-            characters: sceneCharacters,
-            dialogue: scene.dialogue
-          },
-          selectedCharacters: sceneCharacters,
-          quality: imageQuality // Pass quality setting
+          projectId: projectId,           // ✅ ADD THIS
+          sceneIndex: sceneIdx,           // ✅ ADD THIS
+          scenePrompt: scene.visualDescription || scene.action || scene.heading,  // ✅ ADD THIS as fallback
+          selectedCharacters: sceneCharacters.map(c => c.id),  // Send character IDs
+          quality: imageQuality
         })
       })
       
