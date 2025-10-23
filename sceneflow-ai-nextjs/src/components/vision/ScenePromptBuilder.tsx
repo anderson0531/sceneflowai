@@ -247,14 +247,23 @@ export function ScenePromptBuilder({
     : advancedPrompt
 
   const handleGenerateScene = () => {
+    console.log('[Scene Prompt Builder] === START ===')
+    console.log('[Scene Prompt Builder] structure.characters:', structure.characters)
+    console.log('[Scene Prompt Builder] availableCharacters:', availableCharacters.map(c => ({ name: c.name, hasRef: !!c.referenceImage })))
+    
     // Pass full character objects (not just names) so API gets referenceImageGCS
     const selectedCharacterObjects = structure.characters
-      .map(charName => availableCharacters.find(c => c.name === charName))
+      .map(charName => {
+        const found = availableCharacters.find(c => c.name === charName)
+        console.log(`[Scene Prompt Builder] Looking for "${charName}":`, found ? found.name : 'NOT FOUND')
+        return found
+      })
       .filter(Boolean)
     
-    console.log('[Scene Prompt Builder] Generating with characters:', selectedCharacterObjects.map(c => ({
+    console.log('[Scene Prompt Builder] selectedCharacterObjects AFTER filter:', selectedCharacterObjects.map(c => ({
       name: c?.name,
       hasReferenceImage: !!c?.referenceImage,
+      hasReferenceImageGCS: !!c?.referenceImageGCS,
       hasAppearance: !!c?.appearanceDescription
     })))
     

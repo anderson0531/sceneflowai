@@ -23,14 +23,18 @@ export async function POST(req: NextRequest) {
 
     console.log('[Scene Image] Generating scene image')
     console.log('[Scene Image] Selected characters:', selectedCharacters.length)
+    console.log('[Scene Image] Raw selectedCharacters:', JSON.stringify(selectedCharacters))
 
     // Single unified project load for both character and scene data
     let project = null
     let characterObjects = selectedCharacters
 
     // Filter out null/undefined values immediately
+    const beforeFilterCount = selectedCharacters.length
     characterObjects = characterObjects.filter((c: any) => c != null)
+    const afterFilterCount = characterObjects.length
 
+    console.log(`[Scene Image] Filtered ${beforeFilterCount - afterFilterCount} null values`)
     console.log('[Scene Image] DEBUG - selectedCharacters type:', characterObjects[0] ? typeof characterObjects[0] : 'empty array')
     console.log('[Scene Image] DEBUG - selectedCharacters[0]:', characterObjects[0] ? JSON.stringify(characterObjects[0]).substring(0, 200) : 'none')
     console.log('[Scene Image] DEBUG - projectId:', projectId)

@@ -1316,7 +1316,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       console.log('[Scene Image] handleGenerateSceneImage called with:', {
         sceneIdx,
         selectedCharactersCount: selectedCharacters?.length || 0,
-        selectedCharactersAreObjects: selectedCharacters?.[0] && typeof selectedCharacters[0] === 'object'
+        selectedCharactersAreObjects: selectedCharacters?.[0] && typeof selectedCharacters[0] === 'object',
+        selectedCharactersRaw: JSON.stringify(selectedCharacters).substring(0, 500)
       })
       
       // Check if selectedCharacters are already full objects (from Scene Prompt Builder)
@@ -1359,6 +1360,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         hasGCS: !!c.referenceImageGCS,
         hasAppearance: !!c.appearanceDescription
       })))
+      
+      console.log('[Scene Image] About to send to API:', {
+        characterIds: sceneCharacters.map(c => c?.id || 'NULL'),
+        characterNames: sceneCharacters.map(c => c?.name || 'NULL'),
+        hasNulls: sceneCharacters.some(c => c === null)
+      })
       
       const response = await fetch('/api/scene/generate-image', {
         method: 'POST',
