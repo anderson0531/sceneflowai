@@ -556,11 +556,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // ONLY generate script text (not images)
       if (!visionPhase?.scriptGenerated) {
-        const scriptData = await generateScript(proj)
-        if (scriptData) {
-          setCharacters(scriptData.characters)
-          setScenes(scriptData.scenes)
-        }
+        // Generate script (returns empty data, reloads from DB)
+        await generateScript(proj)
+        
+        // Script data is now loaded via loadProject() in the complete handler
+        // No need to set characters/scenes here as they're loaded from DB
       }
       
       // Mark progress complete (not generating images automatically)
@@ -650,10 +650,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   toast.warning(data.message, { duration: 10000 })
                 } catch {}
               } else if (data.type === 'complete') {
-                scriptData = {
-                  characters: data.script.characters,
-                  scenes: data.script.script.scenes
-                }
+                // Don't use script data from SSE - reload from database instead
+                console.log(`[Vision] Script generation complete: ${data.totalScenes} scenes`)
                 
                 // Show warning if partial generation
                 if (data.partial) {
@@ -661,6 +659,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   try {
                     const { toast } = require('sonner')
                     toast.warning(`Script generated with ${data.totalScenes} of ${data.expectedScenes} scenes. You can regenerate to get the remaining scenes.`, { duration: 12000 })
+                  } catch {}
+                } else {
+                  try {
+                    const { toast } = require('sonner')
+                    toast.success(`Script generated with ${data.totalScenes} scenes!`)
                   } catch {}
                 }
                 
@@ -675,8 +678,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     batch: 0
                   }
                 }))
-                setScriptProgress(null) // Hide modal
-                console.log(`[Vision] Script generation complete: ${data.totalScenes} scenes`)
+                setScriptProgress(null)
+                
+                // Reload project data from database with retry
+                let retries = 3
+                while (retries > 0) {
+                  try {
+                    await loadProject()
+                    break
+                  } catch (error) {
+                    retries--
+                    if (retries > 0) {
+                      await new Promise(resolve => setTimeout(resolve, 1000))
+                    } else {
+                      try { 
+                        const { toast } = require('sonner')
+                        toast.warning('Script generated but page reload failed. Please refresh manually.') 
+                      } catch {}
+                    }
+                  }
+                }
+                
+                // Return empty scriptData - not used anymore
+                scriptData = { characters: [], scenes: [] }
               } else if (data.type === 'error') {
                 setScriptProgress(null) // Hide modal on error
                 throw new Error(data.error)

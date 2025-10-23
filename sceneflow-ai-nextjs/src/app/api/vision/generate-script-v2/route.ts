@@ -279,11 +279,11 @@ export async function POST(request: NextRequest) {
         const isPartial = allScenes.length < actualTotalScenes
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({
           type: 'complete',
-          script,
           totalScenes: allScenes.length,
           totalDuration: totalEstimatedDuration,
           partial: isPartial,
-          expectedScenes: actualTotalScenes
+          expectedScenes: actualTotalScenes,
+          projectId: projectId
         })}\n\n`))
         
         controller.close()
