@@ -276,8 +276,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           charactersGenerated: visionPhase.charactersGenerated,
           scenesGenerated: visionPhase.scenesGenerated,
           hasScript: !!visionPhase.script,
-          characterCount: visionPhase.characters?.length,
-          sceneCount: visionPhase.scenes?.length
+          scriptScenesCount: visionPhase.script?.script?.scenes?.length || visionPhase.script?.scenes?.length || 0,
+          scenesCount: visionPhase.scenes?.length || 0,
+          characterCount: visionPhase.characters?.length
         })
         
         if (visionPhase.script) {
@@ -287,6 +288,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           console.log('[Vision] Scene count in visionPhase.script:', visionPhase.script.script?.scenes?.length || 0)
           console.log('[Vision] First 5 scene numbers:', visionPhase.script.script?.scenes?.slice(0, 5).map((s: any) => s.sceneNumber))
           console.log('[Vision] Last 5 scene numbers:', visionPhase.script.script?.scenes?.slice(-5).map((s: any) => s.sceneNumber))
+          console.log('[Vision] Script scenes with audio URLs:', visionPhase.script.script?.scenes?.map((s: any, i: number) => ({
+            scene: i,
+            narrationAudioUrl: s.narrationAudioUrl,
+            dialogueAudio: s.dialogueAudio?.length || 0
+          })))
           
           setScript(visionPhase.script)
         }
@@ -307,7 +313,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }))
           setCharacters(charactersWithRole)
         }
-        if (visionPhase.scenes) setScenes(visionPhase.scenes)
+        if (visionPhase.scenes) {
+          console.log('[Vision] Loading scenes from visionPhase.scenes:', visionPhase.scenes.length, 'scenes')
+          console.log('[Vision] First scene audio URLs:', visionPhase.scenes[0]?.narrationAudioUrl, visionPhase.scenes[0]?.dialogueAudio)
+          setScenes(visionPhase.scenes)
+        }
         
         // Load narration voice setting
         if (visionPhase.narrationVoice) {
@@ -1244,8 +1254,43 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       const data = await response.json()
       if (data.success) {
+        console.log('[Audio] Audio generated successfully:', data)
+        
+        // Update script state immediately with audio URL
+        setScript((prevScript: any) => {
+          const updated = { ...prevScript }
+          if (updated.script?.scenes?.[sceneIdx]) {
+            if (audioType === 'narration') {
+              updated.script.scenes[sceneIdx] = {
+                ...updated.script.scenes[sceneIdx],
+                narrationAudioUrl: data.audioUrl
+              }
+            } else if (audioType === 'dialogue' && characterName) {
+              // Handle dialogue audio
+              const dialogueAudio = updated.script.scenes[sceneIdx].dialogueAudio || []
+              const existingIndex = dialogueAudio.findIndex((d: any) => d.character === characterName)
+              
+              if (existingIndex >= 0) {
+                dialogueAudio[existingIndex] = { character: characterName, audioUrl: data.audioUrl }
+              } else {
+                dialogueAudio.push({ character: characterName, audioUrl: data.audioUrl })
+              }
+              
+              updated.script.scenes[sceneIdx] = {
+                ...updated.script.scenes[sceneIdx],
+                dialogueAudio
+              }
+            }
+          }
+          return updated
+        })
+        
         try { const { toast } = require('sonner'); toast.success('Audio generated!') } catch {}
-        await loadProject() // Reload to get updated audio URLs
+        await loadProject() // Also reload for persistence
+        
+        // Debug logging after reload
+        console.log('[Audio] Reloaded project, checking scene audio URLs:')
+        console.log('[Audio] Scene', sceneIdx, 'narrationAudioUrl:', script?.script?.scenes?.[sceneIdx]?.narrationAudioUrl)
       } else {
         try { const { toast } = require('sonner'); toast.error(data.error || 'Failed to generate audio') } catch {}
       }
