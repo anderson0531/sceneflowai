@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
+import { v4 as uuidv4 } from 'uuid'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300  // 5 minutes for large script generation (requires Vercel Pro)
@@ -40,12 +41,16 @@ export async function POST(request: NextRequest) {
 
     // Load existing characters BEFORE generating script
     // Priority: visionPhase.characters (user-refined) > treatment.character_descriptions (AI-generated)
-    let existingCharacters = project.metadata?.visionPhase?.characters || []
+    let existingCharacters = (project.metadata?.visionPhase?.characters || []).map((c: any) => ({
+      ...c,
+      id: c.id || uuidv4() // Ensure all characters have UUIDs
+    }))
     
     // If no vision phase characters, sync from treatment
     if (existingCharacters.length === 0 && treatment.character_descriptions) {
       existingCharacters = treatment.character_descriptions.map((c: any) => ({
         ...c,
+        id: c.id || uuidv4(), // Assign UUID if missing
         version: 1,
         lastModified: new Date().toISOString(),
         referenceImage: c.referenceImage || null,
@@ -158,6 +163,7 @@ export async function POST(request: NextRequest) {
       ...existingCharacters,  // Keep Film Treatment characters with appearance, demeanor, clothing
       ...newChars.map((c: any) => ({
         ...c,
+        id: uuidv4(), // Assign UUID to new characters
         role: c.role || 'supporting', // Default to supporting if no role specified
         imagePrompt: `Professional character portrait: ${c.name}, ${c.description}, photorealistic, high detail, studio lighting, neutral background, character design, 8K quality`,
         referenceImage: null,
@@ -171,11 +177,29 @@ export async function POST(request: NextRequest) {
       console.warn(`[Script Gen V2] WARNING: Script introduced ${newChars.length} characters not in Film Treatment:`, newChars.map((c: any) => c.name))
     }
 
+    // Embed characterId in dialogue for reliable matching
+    const scenesWithCharacterIds = allScenes.map((scene: any) => ({
+      ...scene,
+      dialogue: scene.dialogue?.map((d: any) => {
+        if (!d.character) return d
+        
+        // Find character by name (case-insensitive fallback for legacy)
+        const character = allCharacters.find((c: any) => 
+          c.name.toLowerCase() === d.character.toLowerCase()
+        )
+        
+        return {
+          ...d,
+          characterId: character?.id // Embed UUID for reliable matching
+        }
+      })
+    }))
+
     // Build final script
     const script = {
       title: treatment.title,
       logline: treatment.logline,
-      script: { scenes: allScenes },
+      script: { scenes: scenesWithCharacterIds }, // Use scenes with embedded characterId
       characters: allCharacters,  // Film Treatment characters + any new ones
       totalDuration: totalEstimatedDuration  // Use accurate estimated duration
     }
@@ -190,7 +214,7 @@ export async function POST(request: NextRequest) {
           script,
           scriptGenerated: true,
           characters: allCharacters,  // Update with combined characters
-          scenes: allScenes  // Update with generated scenes
+          scenes: scenesWithCharacterIds  // Update with generated scenes (with characterId)
         }
       }
     })

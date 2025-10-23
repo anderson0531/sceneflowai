@@ -13,6 +13,7 @@ import { VoiceSelector } from '@/components/tts/VoiceSelector'
 import { Button } from '@/components/ui/Button'
 import { Save, Share2, ArrowRight, Play, Volume2 } from 'lucide-react'
 import { findSceneCharacters } from '../../../../../lib/character/matching'
+import { v4 as uuidv4 } from 'uuid'
 
 interface VoiceConfig {
   provider: 'elevenlabs' | 'google'
@@ -283,6 +284,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (visionPhase.script) {
           setScript(visionPhase.script)
         }
+        // Process characters first (needed for dialogue migration)
+        let charactersWithIds: any[] = []
         if (visionPhase.characters) {
           
           // Ensure character roles are preserved (default to supporting if not specified)
@@ -341,10 +344,99 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           }
 
-          setCharacters(charactersWithRole)
+          // MIGRATION: Ensure all characters have UUIDs
+          charactersWithIds = charactersWithRole.map((c: any) => ({
+            ...c,
+            id: c.id || uuidv4() // Assign UUID if missing
+          }))
+          
+          // Check if any characters needed UUIDs
+          const needsIdMigration = charactersWithIds.some((c: any, idx: number) => 
+            c.id !== charactersWithRole[idx].id
+          )
+          
+          if (needsIdMigration) {
+            console.log('[Load Project] Migrating characters to add UUIDs')
+            try {
+              await fetch('/api/projects', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  id: projectId,
+                  metadata: {
+                    ...proj.metadata,
+                    visionPhase: {
+                      ...visionPhase,
+                      characters: charactersWithIds
+                    }
+                  }
+                })
+              })
+              console.log('[Load Project] Character IDs migrated successfully')
+            } catch (error) {
+              console.warn('[Load Project] Failed to save character IDs:', error)
+            }
+          }
+
+          setCharacters(charactersWithIds)
         }
         if (visionPhase.scenes) {
-          setScenes(visionPhase.scenes)
+          // MIGRATION: Add characterId to dialogue if missing
+          const scenesWithCharacterIds = visionPhase.scenes.map((scene: any) => ({
+            ...scene,
+            dialogue: scene.dialogue?.map((d: any) => {
+              if (d.characterId) return d // Already has ID
+              
+              // Find character by name and add ID
+              const matchedChar = charactersWithIds?.find((c: any) => 
+                c.name.toLowerCase() === d.character.toLowerCase()
+              )
+              
+              return {
+                ...d,
+                characterId: matchedChar?.id
+              }
+            })
+          }))
+          
+          // Check if any dialogue needed characterId migration
+          const needsDialogueMigration = scenesWithCharacterIds.some((scene: any, sceneIdx: number) => 
+            scene.dialogue?.some((d: any, dIdx: number) => 
+              d.characterId !== visionPhase.scenes[sceneIdx].dialogue?.[dIdx]?.characterId
+            )
+          )
+          
+          if (needsDialogueMigration) {
+            console.log('[Load Project] Migrating dialogue to add characterId')
+            try {
+              await fetch('/api/projects', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  id: projectId,
+                  metadata: {
+                    ...proj.metadata,
+                    visionPhase: {
+                      ...visionPhase,
+                      scenes: scenesWithCharacterIds,
+                      script: visionPhase.script ? {
+                        ...visionPhase.script,
+                        script: {
+                          ...visionPhase.script.script,
+                          scenes: scenesWithCharacterIds
+                        }
+                      } : undefined
+                    }
+                  }
+                })
+              })
+              console.log('[Load Project] Dialogue characterId migrated successfully')
+            } catch (error) {
+              console.warn('[Load Project] Failed to save dialogue characterId:', error)
+            }
+          }
+          
+          setScenes(scenesWithCharacterIds)
         }
         
         // Load narration voice setting
@@ -1344,16 +1436,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (!scene) return
 
     try {
-      const text = audioType === 'narration' ? scene.narration : 
-        scene.dialogue?.find((d: any) => d.character === characterName)?.line
+      const dialogueLine = audioType === 'dialogue' ? 
+        scene.dialogue?.find((d: any) => d.character === characterName) : null
+      
+      const text = audioType === 'narration' ? scene.narration : dialogueLine?.line
       
       if (!text) {
         try { const { toast } = require('sonner'); toast.error('No text found to generate audio') } catch {}
         return
       }
 
-      const voiceConfig = audioType === 'narration' ? narrationVoice : 
-        characters.find(c => c.name.toLowerCase() === characterName?.toLowerCase())?.voiceConfig
+      // Primary: Match by ID (most reliable)
+      // Fallback: Case-insensitive name (for legacy projects)
+      const character = audioType === 'narration' ? null :
+        (dialogueLine?.characterId ? 
+          characters.find(c => c.id === dialogueLine.characterId) :
+          characters.find(c => c.name.toLowerCase() === characterName?.toLowerCase())
+        )
+      
+      const voiceConfig = audioType === 'narration' ? narrationVoice : character?.voiceConfig
 
       console.log('[Generate Scene Audio] Voice config determined:', { voiceConfig, audioType })
 

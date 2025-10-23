@@ -110,12 +110,18 @@ export async function POST(req: NextRequest) {
               
               for (const dialogueLine of scene.dialogue) {
                 console.log(`[Batch Audio] Processing dialogue for character: "${dialogueLine.character}"`)
-                const character = characters.find((c: any) => 
-                  c.name.toLowerCase() === dialogueLine.character.toLowerCase()
-                )
+                
+                // Primary: Match by ID (most reliable)
+                // Fallback: Case-insensitive name (for legacy projects)
+                const character = dialogueLine.characterId
+                  ? characters.find((c: any) => c.id === dialogueLine.characterId)
+                  : characters.find((c: any) => c.name.toLowerCase() === dialogueLine.character.toLowerCase())
+                
                 console.log(`[Batch Audio] Found character:`, character ? {
+                  id: character.id,
                   name: character.name,
                   matchedWith: dialogueLine.character,
+                  matchedBy: dialogueLine.characterId ? 'ID' : 'name',
                   hasVoiceConfig: !!character.voiceConfig,
                   voiceConfig: character.voiceConfig
                 } : 'NOT FOUND')
@@ -130,7 +136,8 @@ export async function POST(req: NextRequest) {
                   continue
                 }
                 
-                console.log(`[Batch Audio] Generating dialogue for ${dialogueLine.character} in scene ${i + 1}`)
+                // CRITICAL: Use character.voiceConfig, NOT narrationVoice
+                console.log(`[Batch Audio] Generating dialogue with voice:`, character.voiceConfig)
                 const dialogueResult = await fetch(`${baseUrl}/api/vision/generate-scene-audio`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -144,6 +151,7 @@ export async function POST(req: NextRequest) {
                   }),
                 })
                 const dialogueData = await dialogueResult.json()
+                console.log(`[Batch Audio] Dialogue result:`, dialogueData.success ? 'SUCCESS' : `FAILED: ${dialogueData.error}`)
                 if (dialogueData.success) dialogueCount++
                 results.push(dialogueData)
               }
