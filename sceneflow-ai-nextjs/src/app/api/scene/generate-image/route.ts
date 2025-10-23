@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
         
         // Fallback: treat as name for legacy
         return characters.find((c: any) => c.name === charId)
-      }).filter((c: any) => c != null && c.referenceImage)  // Only keep chars with reference images
+      }).filter((c: any) => c != null)  // Universal filter below will handle reference image check
 
       console.log('[Scene Image] Loaded character objects:', characterObjects.length)
     }
