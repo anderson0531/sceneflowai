@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
         
         // Fallback: treat as name for legacy
         return characters.find((c: any) => c.name === charId)
-      }).filter(Boolean)
+      }).filter((c: any) => c != null && c.referenceImage)  // Only keep chars with reference images
 
       console.log('[Scene Image] Loaded character objects:', characterObjects.length)
     }
@@ -125,11 +125,16 @@ export async function POST(req: NextRequest) {
 
       // Determine which character to validate (prefer character mentioned in action/visualDesc)
       let primaryCharForValidation = characterObjects[0]
+
+      // ✅ ADD: Skip validation if no valid character
+      if (!primaryCharForValidation || !primaryCharForValidation.referenceImage) {
+        console.log('[Scene Image] Skipping validation - no character with reference image')
+      } else {
       
       const sceneText = `${fullSceneContext || ''}`.toLowerCase()
       for (const char of characterObjects) {
-        if (char.name && sceneText.includes(char.name.toLowerCase())) {
-          // This character is mentioned in the scene, use them for validation
+        if (char && char.name && char.referenceImage && sceneText.includes(char.name.toLowerCase())) {
+          // ✅ Added char && char.referenceImage check
           primaryCharForValidation = char
           console.log(`[Scene Image] Validating against ${char.name} (featured in scene)`)
           break
@@ -154,6 +159,7 @@ export async function POST(req: NextRequest) {
       } catch (error) {
         console.error('[Scene Image] Validation failed:', error)
       }
+      } // Close the else block
     }
 
     // Prepare response based on validation results
