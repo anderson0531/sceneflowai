@@ -318,6 +318,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             ...c,
             role: c.role || 'supporting'
           }))
+          
+          // ADD DETAILED LOGGING FOR CHARACTERS
+          console.log('[Load Project] Loaded characters:', charactersWithRole.map((c: any) => ({
+            name: c.name,
+            hasVoiceConfig: !!c.voiceConfig,
+            voiceConfig: c.voiceConfig
+          })))
+          
           setCharacters(charactersWithRole)
         }
         if (visionPhase.scenes) {
@@ -1183,9 +1191,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     // Check if all characters have voices
     const charactersWithoutVoice = characters.filter(c => !c.voiceConfig)
     if (charactersWithoutVoice.length > 0) {
+      console.warn('[Generate All Audio] Characters without voices:', charactersWithoutVoice.map(c => c.name))
       try { 
         const { toast } = require('sonner')
-        toast.error(`Please assign voices to: ${charactersWithoutVoice.map(c => c.name).join(', ')}`)
+        const charNames = charactersWithoutVoice.map(c => c.name).join(', ')
+        toast.error(`Please assign voices to these characters: ${charNames}`, {
+          duration: 10000 // Show for 10 seconds
+        })
       } catch {}
       return
     }
@@ -1234,7 +1246,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               } else if (data.type === 'complete') {
                 try { 
                   const { toast } = require('sonner')
-                  toast.success(`Generated ${data.narrationCount} narration + ${data.dialogueCount} dialogue audio files!`)
+                  const msg = `Generated ${data.narrationCount} narration + ${data.dialogueCount} dialogue audio files!`
+                  
+                  if (data.skipped && data.skipped.length > 0) {
+                    const skippedChars = [...new Set(data.skipped.map((s: any) => s.character))].join(', ')
+                    toast.warning(`${msg}\n\nSkipped dialogue for: ${skippedChars} (no voice assigned)`, {
+                      duration: 8000
+                    })
+                  } else {
+                    toast.success(msg)
+                  }
                 } catch {}
                 await loadProject()
               } else if (data.type === 'error') {

@@ -35,6 +35,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Narration voice not configured' }, { status: 400 })
     }
 
+    // ADD DETAILED LOGGING
+    console.log(`[Batch Audio] Loaded ${characters.length} characters from project`)
+    console.log(`[Batch Audio] Characters:`, characters.map((c: any) => ({
+      name: c.name,
+      hasVoiceConfig: !!c.voiceConfig,
+      voiceConfig: c.voiceConfig
+    })))
+
+    // Log all unique dialogue characters
+    const allDialogueCharacters = new Set()
+    scenes.forEach((scene: any) => {
+      scene.dialogue?.forEach((d: any) => {
+        allDialogueCharacters.add(d.character)
+      })
+    })
+    console.log(`[Batch Audio] Unique dialogue characters in script:`, Array.from(allDialogueCharacters))
+
     console.log(`[Batch Audio] Generating audio for ${scenes.length} scenes`)
 
     const encoder = new TextEncoder()
@@ -92,13 +109,20 @@ export async function POST(req: NextRequest) {
               })
               
               for (const dialogueLine of scene.dialogue) {
+                console.log(`[Batch Audio] Processing dialogue for character: "${dialogueLine.character}"`)
                 const character = characters.find((c: any) => c.name === dialogueLine.character)
+                console.log(`[Batch Audio] Found character:`, character ? {
+                  name: character.name,
+                  hasVoiceConfig: !!character.voiceConfig,
+                  voiceConfig: character.voiceConfig
+                } : 'NOT FOUND')
+                
                 if (!character?.voiceConfig) {
-                  console.warn(`[Batch Audio] No voice for ${dialogueLine.character}`)
+                  console.warn(`[Batch Audio] No voice for ${dialogueLine.character} - skipping dialogue`)
                   skippedDialogue.push({
                     scene: i + 1,
                     character: dialogueLine.character,
-                    reason: 'No voice assigned'
+                    reason: character ? 'No voice assigned' : 'Character not found'
                   })
                   continue
                 }
