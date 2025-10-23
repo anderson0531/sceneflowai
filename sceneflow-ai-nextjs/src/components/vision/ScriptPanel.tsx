@@ -37,9 +37,11 @@ interface ScriptPanelProps {
     dismissed?: boolean
   }>
   onDismissValidationWarning?: (sceneIdx: number) => void
+  onPlayAudio?: (audioUrl: string, label: string) => void
+  onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string) => void
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [editMode, setEditMode] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -499,49 +501,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     }
   }
 
-  const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string) => {
-    const scene = scenes[sceneIdx]
-    if (!scene) return
-
-    try {
-      const text = audioType === 'narration' ? scene.narration : 
-        scene.dialogue?.find((d: any) => d.character === characterName)?.line
-      
-      if (!text) return
-
-      const response = await fetch('/api/vision/generate-scene-audio', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          sceneIndex: sceneIdx,
-          audioType,
-          text,
-          characterName
-        }),
-      })
-
-      const data = await response.json()
-      if (data.success) {
-        // Reload the script to get updated audio URLs
-        if (onScriptChange) {
-          const updatedScript = { ...script }
-          if (updatedScript.script?.scenes) {
-            updatedScript.script.scenes[sceneIdx] = {
-              ...updatedScript.script.scenes[sceneIdx],
-              [audioType === 'narration' ? 'narrationAudioUrl' : 'dialogueAudio']: 
-                audioType === 'narration' ? data.audioUrl : 
-                [...(updatedScript.script.scenes[sceneIdx].dialogueAudio || []), 
-                 { character: characterName, audioUrl: data.audioUrl }]
-            }
-          }
-          onScriptChange(updatedScript)
-        }
-      }
-    } catch (error) {
-      console.error('[Generate Scene Audio] Error:', error)
-    }
-  }
 
   const handleOpenSceneBuilder = (sceneIdx: number) => {
     setSceneBuilderIdx(sceneIdx)
@@ -766,7 +725,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   generateAndPlaySFX={generateAndPlaySFX}
                   generateAndPlayMusic={generateAndPlayMusic}
                   onPlayAudio={handlePlayAudio}
-                  onGenerateSceneAudio={handleGenerateSceneAudio}
+                  onGenerateSceneAudio={onGenerateSceneAudio}
                   playingAudio={playingAudio}
                 />
               ))
