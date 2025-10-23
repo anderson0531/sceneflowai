@@ -28,8 +28,11 @@ export async function POST(req: NextRequest) {
     let project = null
     let characterObjects = selectedCharacters
 
-    console.log('[Scene Image] DEBUG - selectedCharacters type:', typeof selectedCharacters[0])
-    console.log('[Scene Image] DEBUG - selectedCharacters[0]:', JSON.stringify(selectedCharacters[0]).substring(0, 200))
+    // Filter out null/undefined values immediately
+    characterObjects = characterObjects.filter((c: any) => c != null)
+
+    console.log('[Scene Image] DEBUG - selectedCharacters type:', characterObjects[0] ? typeof characterObjects[0] : 'empty array')
+    console.log('[Scene Image] DEBUG - selectedCharacters[0]:', characterObjects[0] ? JSON.stringify(characterObjects[0]).substring(0, 200) : 'none')
     console.log('[Scene Image] DEBUG - projectId:', projectId)
 
     if (projectId) {
@@ -41,14 +44,13 @@ export async function POST(req: NextRequest) {
       }
 
       // ALWAYS load characters from database if we have a projectId
-      // This ensures we get the correct reference image properties
-      if (selectedCharacters.length > 0) {
+      if (characterObjects.length > 0) {
         const characters = project.metadata?.visionPhase?.characters || []
         console.log('[Scene Image] DEBUG - characters in project:', characters.length)
         
         // If selectedCharacters are IDs (strings), match them
-        if (typeof selectedCharacters[0] === 'string') {
-          characterObjects = selectedCharacters.map((charId: string) => {
+        if (typeof characterObjects[0] === 'string') {
+          characterObjects = characterObjects.map((charId: string) => {
             const byId = characters.find((c: any) => c.id === charId)
             if (byId) return byId
             return characters.find((c: any) => c.name === charId)
@@ -56,9 +58,10 @@ export async function POST(req: NextRequest) {
           
           console.log('[Scene Image] Loaded character objects by ID:', characterObjects.length)
         } 
-        // If selectedCharacters are already objects, reload them from DB to ensure correct properties
-        else {
-          characterObjects = selectedCharacters.map((char: any) => {
+        // If selectedCharacters are already objects, reload them from DB
+        else if (typeof characterObjects[0] === 'object') {
+          characterObjects = characterObjects.map((char: any) => {
+            if (!char || !char.id) return null  // Safety check
             const byId = characters.find((c: any) => c.id === char.id)
             if (byId) return byId
             return characters.find((c: any) => c.name === char.name)
@@ -67,7 +70,7 @@ export async function POST(req: NextRequest) {
           console.log('[Scene Image] Reloaded character objects from DB:', characterObjects.length)
         }
         
-        // DEBUG: Log what properties the character objects have
+        // DEBUG: Log character properties
         if (characterObjects.length > 0) {
           console.log('[Scene Image] DEBUG - First character keys:', Object.keys(characterObjects[0]))
           console.log('[Scene Image] DEBUG - Has referenceImage:', !!characterObjects[0].referenceImage)
