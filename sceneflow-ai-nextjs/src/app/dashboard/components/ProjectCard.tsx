@@ -56,7 +56,7 @@ interface ProjectCardProps {
   className?: string
   onDuplicate?: (projectId: string) => void
   onArchive?: (projectId: string) => void
-  onDelete?: (projectId: string) => void
+  onDelete?: (projectId: string, projectTitle: string) => void
 }
 
 export function ProjectCard({ project, className = '', onDuplicate, onArchive, onDelete }: ProjectCardProps) {
@@ -388,7 +388,7 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
                       onClick={(e) => { 
                         e.stopPropagation()
                         e.preventDefault()
-                        onDelete(project.id)
+                        onDelete(project.id, project.title)
                       }}
                       className="text-red-400 hover:text-red-300 hover:bg-red-900/20 focus:text-red-300 focus:bg-red-900/20"
                     >

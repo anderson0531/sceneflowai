@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/Button'
 import { Plus, Search, Grid3x3, List, FolderOpen } from 'lucide-react'
 import Link from 'next/link'
+import { DeleteConfirmationDialog } from '@/components/ui/DeleteConfirmationDialog'
 
 export const dynamic = 'force-dynamic'
 
@@ -61,6 +62,11 @@ export default function ProjectsPage() {
   const [filterStatus, setFilterStatus] = useState('all')
   const [sortBy, setSortBy] = useState('recent')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  
+  // Delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [projectToDelete, setProjectToDelete] = useState<{ id: string; title: string } | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const getUserId = () => {
     if (typeof window !== 'undefined') {
@@ -171,40 +177,50 @@ export default function ProjectsPage() {
     }
   }
 
-  const handleDelete = async (projectId: string) => {
+  const handleDelete = (projectId: string, projectTitle: string) => {
+    setProjectToDelete({ id: projectId, title: projectTitle })
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!projectToDelete) return
+    
+    setIsDeleting(true)
     const timestamp = new Date().toISOString()
-    console.log(`[${timestamp}] [handleDelete] Confirm dialog shown for project:`, projectId)
-    
-    if (!confirm('Are you sure you want to delete this project? This cannot be undone.')) {
-      console.log(`[${timestamp}] [handleDelete] User cancelled deletion`)
-      return
-    }
-    
-    console.log(`[${timestamp}] [handleDelete] User confirmed deletion`)
+    console.log(`[${timestamp}] [confirmDelete] User confirmed deletion for project:`, projectToDelete.id)
     
     try {
-      console.log(`[${timestamp}] [handleDelete] Sending DELETE request to /api/projects/${projectId}`)
-      const res = await fetch(`/api/projects/${projectId}`, {
+      console.log(`[${timestamp}] [confirmDelete] Sending DELETE request to /api/projects/${projectToDelete.id}`)
+      const res = await fetch(`/api/projects/${projectToDelete.id}`, {
         method: 'DELETE'
       })
       
-      console.log(`[${timestamp}] [handleDelete] Response status:`, res.status, res.statusText)
+      console.log(`[${timestamp}] [confirmDelete] Response status:`, res.status, res.statusText)
       
       const data = await res.json()
-      console.log(`[${timestamp}] [handleDelete] Response data:`, data)
+      console.log(`[${timestamp}] [confirmDelete] Response data:`, data)
       
       if (res.ok && data.success) {
-        console.log(`[${timestamp}] [handleDelete] Delete successful, calling loadProjects()`)
+        console.log(`[${timestamp}] [confirmDelete] Delete successful, calling loadProjects()`)
         await loadProjects()
-        console.log(`[${timestamp}] [handleDelete] loadProjects() completed`)
+        console.log(`[${timestamp}] [confirmDelete] loadProjects() completed`)
         try { const { toast } = require('sonner'); toast.success('Project deleted') } catch {}
       } else {
         throw new Error(data.error || 'Delete failed')
       }
     } catch (error: any) {
-      console.error(`[${timestamp}] [handleDelete] Error:`, error)
+      console.error(`[${timestamp}] [confirmDelete] Error:`, error)
       try { const { toast } = require('sonner'); toast.error(error.message || 'Failed to delete project') } catch {}
+    } finally {
+      setIsDeleting(false)
+      setDeleteDialogOpen(false)
+      setProjectToDelete(null)
     }
+  }
+
+  const cancelDelete = () => {
+    setDeleteDialogOpen(false)
+    setProjectToDelete(null)
   }
 
   // Filter and sort logic
@@ -373,6 +389,15 @@ export default function ProjectsPage() {
           </div>
         )}
       </div>
+      
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        isOpen={deleteDialogOpen}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        projectTitle={projectToDelete?.title || ''}
+        isDeleting={isDeleting}
+      />
     </div>
   )
 }

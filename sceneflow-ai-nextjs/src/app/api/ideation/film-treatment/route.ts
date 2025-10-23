@@ -99,11 +99,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Google Gemini API key not configured' }, { status: 500 })
     }
 
-    console.log('🎬 Film Treatment Generation - Input length:', input.length)
 
     // Derive core concept if not provided
     if (!coreConcept) {
-      console.log('🧠 Deriving core concept (not provided) ...')
       coreConcept = await analyzeCoreConcept(input, { targetAudience, keyMessage, tone, genre, duration }, apiKey)
     }
 
@@ -131,17 +129,6 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // LOG WHAT WE'RE ACTUALLY RETURNING
-    console.log('[Film Treatment API] Returning response:', {
-      variantCount: variants.length,
-      firstVariant: {
-        hasBeats: !!variants[0]?.beats,
-        beatsCount: Array.isArray(variants[0]?.beats) ? variants[0].beats.length : 0,
-        hasDuration: !!variants[0]?.total_duration_seconds,
-        durationValue: variants[0]?.total_duration_seconds,
-        formatLength: variants[0]?.format_length
-      }
-    })
 
     const responseData = {
       success: true,
@@ -150,14 +137,6 @@ export async function POST(request: NextRequest) {
       message: 'Film treatment variants generated successfully'
     }
 
-    console.log('[Film Treatment API] RESPONSE DATA:', JSON.stringify({
-      variantsCount: responseData.variants.length,
-      firstVariantKeys: Object.keys(responseData.variants[0]),
-      hasBeats: !!responseData.variants[0].beats,
-      hasTotalDuration: !!responseData.variants[0].total_duration_seconds,
-      beatsValue: responseData.variants[0].beats,
-      totalDurationValue: responseData.variants[0].total_duration_seconds
-    }, null, 2))
 
     return NextResponse.json(responseData)
 
@@ -213,7 +192,6 @@ async function generateFilmTreatment(
     throw new Error('No response from Gemini API')
   }
 
-  console.log('🎬 Gemini Film Treatment Response:', generatedText)
 
   const parsedRaw = safeParseJsonFromText(generatedText)
   const parsed = repairTreatment(parsedRaw)
@@ -301,22 +279,7 @@ async function generateFilmTreatment(
     total_duration_seconds: totalDurationSeconds
   }
   
-  // LOG THE COMPLETE VARIANT BEFORE RETURNING
-  console.log('[Film Treatment] Generated variant:', {
-    title: parsed.title,
-    beatsCount: normalizedBeats?.length || 0,
-    estimatedDurationMinutes: targetMinutes,
-    total_duration_seconds: totalDurationSeconds,
-    format_length: `${totalDurationSeconds} seconds`
-  })
   
-  console.log('[generateFilmTreatment] RETURNING:', {
-    hasBeats: !!result.beats,
-    beatsCount: Array.isArray(result.beats) ? result.beats.length : 0,
-    hasTotalDuration: !!result.total_duration_seconds,
-    totalDuration: result.total_duration_seconds,
-    resultKeys: Object.keys(result)
-  })
   
   return result
 }

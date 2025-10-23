@@ -196,19 +196,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     console.log('[Character Voice] Updating:', { characterId, voiceConfig })
     console.log('[Character Voice] Current characters:', characters.map(c => ({ id: c.id, name: c.name })))
     
-    // Convert characterId to index (since CharacterLibrary uses index as fallback)
-    const charIndex = parseInt(characterId, 10)
-    console.log('[Character Voice] Using character index:', charIndex)
+    // Find character by ID (not by index!)
+    const characterIndex = characters.findIndex(c => c.id === characterId)
+    
+    if (characterIndex === -1) {
+      console.error('[Character Voice] Character not found with ID:', characterId)
+      try { 
+        const { toast } = require('sonner')
+        toast.error('Character not found')
+      } catch {}
+      return
+    }
+    
+    console.log('[Character Voice] Found character at index:', characterIndex)
     
     const updatedCharacters = characters.map((char, idx) => 
-      idx === charIndex
+      idx === characterIndex
         ? { ...char, voiceConfig }
         : char
     )
     
-    console.log('[Character Voice] Updated characters:', updatedCharacters)
-    console.log('[Character Voice] Character at index', charIndex, ':', updatedCharacters[charIndex])
-    console.log('[Character Voice] voiceConfig applied:', updatedCharacters[charIndex]?.voiceConfig)
+    console.log('[Character Voice] Updated character:', updatedCharacters[characterIndex])
     setCharacters(updatedCharacters)
     
     if (project) {
