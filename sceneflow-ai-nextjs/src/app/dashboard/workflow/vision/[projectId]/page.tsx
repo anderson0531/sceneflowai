@@ -11,7 +11,7 @@ import { ScriptPlayer } from '@/components/vision/ScriptPlayer'
 import { ImageQualitySelector } from '@/components/vision/ImageQualitySelector'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
 import { Button } from '@/components/ui/Button'
-import { Save, Share2, ArrowRight, Play, Volume2 } from 'lucide-react'
+import { Save, Share2, ArrowRight, Play, Volume2, Image as ImageIcon } from 'lucide-react'
 import { findSceneCharacters } from '../../../../../lib/character/matching'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -101,6 +101,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Image quality setting
   const [imageQuality, setImageQuality] = useState<'max' | 'auto'>('auto')
   const [ttsProvider, setTtsProvider] = useState<'google' | 'elevenlabs'>('google')
+  
+  // Batch image generation state
+  const [isGeneratingAllImages, setIsGeneratingAllImages] = useState(false)
+  const [imageProgress, setImageProgress] = useState<{
+    scene: number
+    total: number
+    status: string
+    sceneHeading?: string
+  } | null>(null)
   
   // Handle quality setting change
   const handleQualityChange = async (quality: 'max' | 'auto') => {
@@ -1548,6 +1557,101 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  // Handle generate all scene images
+  const handleGenerateAllImages = async () => {
+    if (!projectId || !script?.script?.scenes || script.script.scenes.length === 0) {
+      try { const { toast } = require('sonner'); toast.error('No scenes to generate images for') } catch {}
+      return
+    }
+
+    setIsGeneratingAllImages(true)
+    setImageProgress({ scene: 0, total: script.script.scenes.length, status: 'starting' })
+
+    try {
+      const response = await fetch('/api/vision/generate-all-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          imageQuality
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to start batch image generation')
+      }
+
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+
+      if (!reader) {
+        throw new Error('No response stream')
+      }
+
+      // Read SSE stream
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value)
+        const lines = chunk.split('\n')
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = JSON.parse(line.slice(6))
+
+            if (data.type === 'progress') {
+              setImageProgress({
+                scene: data.scene,
+                total: data.total,
+                status: data.status,
+                sceneHeading: data.sceneHeading
+              })
+            } else if (data.type === 'complete') {
+              setImageProgress(null)
+              
+              const skippedMsg = data.skipped?.length > 0
+                ? `\n\nSkipped ${data.skipped.length} scenes:\n${data.skipped.map((s: any) => `Scene ${s.scene}: ${s.reason}`).join('\n')}`
+                : ''
+              
+              try { 
+                const { toast } = require('sonner')
+                toast.success(`Generated ${data.generatedCount} of ${data.totalScenes} scene images!${skippedMsg}`, {
+                  duration: 8000
+                })
+              } catch {}
+              
+              // Reload project to get updated image URLs
+              let retries = 3
+              while (retries > 0) {
+                try {
+                  await loadProject()
+                  break
+                } catch (error) {
+                  retries--
+                  if (retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, 1000))
+                  } else {
+                    try { const { toast } = require('sonner'); toast.warning('Images generated but page reload failed. Please refresh manually.') } catch {}
+                  }
+                }
+              }
+            } else if (data.type === 'error') {
+              try { const { toast } = require('sonner'); toast.error(`Batch generation failed: ${data.error}`) } catch {}
+              setImageProgress(null)
+            }
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('Batch image generation error:', error)
+      try { const { toast } = require('sonner'); toast.error('Failed to generate images') } catch {}
+    } finally {
+      setIsGeneratingAllImages(false)
+      setImageProgress(null)
+    }
+  }
+
   const handleExport = () => {
     console.log('Export Vision')
   }
@@ -1625,6 +1729,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             >
               <Volume2 className="w-4 h-4" />
               {isGeneratingAudio ? 'Generating Audio...' : 'Generate All Audio'}
+            </Button>
+            <Button 
+              onClick={handleGenerateAllImages}
+              disabled={isGeneratingAllImages || !script?.script?.scenes}
+              className="flex items-center gap-2"
+            >
+              <ImageIcon className="w-4 h-4" />
+              {isGeneratingAllImages ? 'Generating Images...' : 'Generate All Images'}
             </Button>
             <Button 
               variant="outline" 
@@ -1779,6 +1891,37 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 />
               </div>
               <p className="text-sm text-gray-400">{audioProgress.status}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Generation Progress */}
+      {imageProgress && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-gray-900 border border-gray-700 rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-200 mb-4">
+              Generating Scene Images
+            </h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-400">Scene {imageProgress.scene} of {imageProgress.total}</span>
+                <span className="text-gray-400">
+                  {Math.round((imageProgress.scene / imageProgress.total) * 100)}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-800 rounded-full h-2">
+                <div 
+                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${(imageProgress.scene / imageProgress.total) * 100}%` }}
+                />
+              </div>
+              {imageProgress.sceneHeading && (
+                <p className="text-xs text-gray-400 truncate">
+                  {imageProgress.sceneHeading}
+                </p>
+              )}
+              <p className="text-sm text-gray-400">Status: {imageProgress.status}</p>
             </div>
           </div>
         </div>

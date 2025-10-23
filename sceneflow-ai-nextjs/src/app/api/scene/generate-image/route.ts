@@ -4,6 +4,8 @@ import { uploadImageToBlob } from '@/lib/storage/blob'
 import { prepareBase64References } from '@/lib/imagen/base64References'
 import { optimizePromptForImagen } from '@/lib/imagen/promptOptimizer'
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
+import Project from '../../../../models/Project'
+import { sequelize } from '../../../../config/database'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -12,7 +14,9 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const {
-      sceneContext,
+      projectId,
+      sceneIndex,
+      scenePrompt,
       selectedCharacters = [],
       quality = 'auto' // NEW parameter
     } = body
@@ -20,13 +24,39 @@ export async function POST(req: NextRequest) {
     console.log('[Scene Image] Generating scene image')
     console.log('[Scene Image] Selected characters:', selectedCharacters.length)
 
+    // Load project to get character data if character IDs are provided
+    let characterObjects = selectedCharacters
+    if (projectId && selectedCharacters.length > 0 && typeof selectedCharacters[0] === 'string') {
+      // Character IDs provided, need to load from database
+      await sequelize.authenticate()
+      const project = await Project.findByPk(projectId)
+      
+      if (!project) {
+        return NextResponse.json({ success: false, error: 'Project not found' }, { status: 404 })
+      }
+
+      const characters = project.metadata?.visionPhase?.characters || []
+      
+      // Match characters by ID (primary) or name (fallback)
+      characterObjects = selectedCharacters.map((charId: string) => {
+        // Try ID match first
+        const byId = characters.find((c: any) => c.id === charId)
+        if (byId) return byId
+        
+        // Fallback: treat as name for legacy
+        return characters.find((c: any) => c.name === charId)
+      }).filter(Boolean)
+
+      console.log('[Scene Image] Loaded character objects:', characterObjects.length)
+    }
+
     // Prepare Base64 character references
-    const base64References = await prepareBase64References(selectedCharacters)
+    const base64References = await prepareBase64References(characterObjects)
     
     // Build clean prompt from scene description with ALL character references
     const optimizedPrompt = optimizePromptForImagen({
-      sceneAction: sceneContext?.action || '',
-      visualDescription: sceneContext?.visualDescription || '',
+      sceneAction: scenePrompt || '',
+      visualDescription: scenePrompt || '',
       characterReferences: base64References.map(ref => ({
         referenceId: ref.referenceId,
         name: ref.name,
@@ -59,14 +89,14 @@ export async function POST(req: NextRequest) {
 
     // Validate character likeness if references were used
     let validation: any = null
-    if (base64References.length > 0 && selectedCharacters.length > 0) {
+    if (base64References.length > 0 && characterObjects.length > 0) {
       console.log('[Scene Image] Validating character likeness...')
 
       // Determine which character to validate (prefer character mentioned in action/visualDesc)
-      let primaryCharForValidation = selectedCharacters[0]
+      let primaryCharForValidation = characterObjects[0]
       
-      const sceneText = `${sceneContext?.action || ''} ${sceneContext?.visualDescription || ''}`.toLowerCase()
-      for (const char of selectedCharacters) {
+      const sceneText = `${scenePrompt || ''}`.toLowerCase()
+      for (const char of characterObjects) {
         if (char.name && sceneText.includes(char.name.toLowerCase())) {
           // This character is mentioned in the scene, use them for validation
           primaryCharForValidation = char
