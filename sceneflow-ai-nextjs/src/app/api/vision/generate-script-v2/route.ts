@@ -7,233 +7,265 @@ export const runtime = 'nodejs'
 export const maxDuration = 300  // 5 minutes for large script generation (requires Vercel Pro)
 
 export async function POST(request: NextRequest) {
-  try {
-    const { projectId } = await request.json()
+  const encoder = new TextEncoder()
+  
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        const { projectId } = await request.json()
+        
+        if (!projectId) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+            type: 'error', 
+            error: 'projectId required' 
+          })}\n\n`))
+          controller.close()
+          return
+        }
+
+        await sequelize.authenticate()
+        const project = await Project.findByPk(projectId)
+        
+        if (!project) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+            type: 'error', 
+            error: 'Project not found' 
+          })}\n\n`))
+          controller.close()
+          return
+        }
+
+        const treatment = project.metadata?.filmTreatmentVariant
+        if (!treatment) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+            type: 'error', 
+            error: 'No film treatment found' 
+          })}\n\n`))
+          controller.close()
+          return
+        }
+
+        const apiKey = process.env.GOOGLE_GEMINI_API_KEY
+        if (!apiKey) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+            type: 'error', 
+            error: 'API key not configured' 
+          })}\n\n`))
+          controller.close()
+          return
+        }
+
+        // Calculate scene targets
+        const duration = project.duration || 300
+        const minScenes = Math.floor(duration / 90)
+        const maxScenes = Math.floor(duration / 20)
+        const suggestedScenes = Math.ceil(duration / 53)
+        
+        console.log(`[Script Gen V2] Target: ${duration}s - Scene range: ${minScenes}-${maxScenes} (suggested: ${suggestedScenes})`)
+
+        // Load existing characters
+        let existingCharacters = (project.metadata?.visionPhase?.characters || []).map((c: any) => ({
+          ...c,
+          id: c.id || uuidv4()
+        }))
     
-    if (!projectId) {
-      return NextResponse.json({ success: false, error: 'projectId required' }, { status: 400 })
-    }
+        if (existingCharacters.length === 0 && treatment.character_descriptions) {
+          existingCharacters = treatment.character_descriptions.map((c: any) => ({
+            ...c,
+            id: c.id || uuidv4(),
+            version: 1,
+            lastModified: new Date().toISOString(),
+            referenceImage: c.referenceImage || null,
+            generating: false,
+          }))
+          
+          await project.update({
+            metadata: {
+              ...project.metadata,
+              visionPhase: {
+                ...(project.metadata?.visionPhase || {}),
+                characters: existingCharacters,
+              }
+            }
+          })
+          
+          console.log(`[Script Gen V2] Auto-synced ${existingCharacters.length} characters from Film Treatment`)
+        }
 
-    await sequelize.authenticate()
-    const project = await Project.findByPk(projectId)
-    
-    if (!project) {
-      return NextResponse.json({ success: false, error: 'Project not found' }, { status: 404 })
-    }
+        const BATCH_SIZE = 30
+        const INITIAL_BATCH_SIZE = Math.min(15, suggestedScenes)
+        let actualTotalScenes = suggestedScenes
+        let allScenes: any[] = []
 
-    const treatment = project.metadata?.filmTreatmentVariant
-    if (!treatment) {
-      return NextResponse.json({ success: false, error: 'No film treatment found' }, { status: 400 })
-    }
+        // BATCH 1: Generate first batch
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+          type: 'progress',
+          status: 'Generating first batch of scenes...',
+          batch: 1,
+          scenesGenerated: 0,
+          totalScenes: suggestedScenes
+        })}\n\n`))
 
-    const apiKey = process.env.GOOGLE_GEMINI_API_KEY
-    if (!apiKey) {
-      return NextResponse.json({ success: false, error: 'API key not configured' }, { status: 500 })
-    }
-
-    // Variable scene count - AI decides based on content
-    const duration = project.duration || 300
-    const minScenes = Math.floor(duration / 90)   // Conservative (scenes avg 90s)
-    const maxScenes = Math.floor(duration / 20)   // Aggressive (scenes avg 20s)  
-    const suggestedScenes = Math.ceil(duration / 53)  // Realistic: 53s avg per scene (user empirical data)
-    
-    console.log(`[Script Gen V2] Target: ${duration}s - Scene range: ${minScenes}-${maxScenes} (suggested: ${suggestedScenes})`)
-
-    // Load existing characters BEFORE generating script
-    // Priority: visionPhase.characters (user-refined) > treatment.character_descriptions (AI-generated)
-    let existingCharacters = (project.metadata?.visionPhase?.characters || []).map((c: any) => ({
-      ...c,
-      id: c.id || uuidv4() // Ensure all characters have UUIDs
-    }))
-    
-    // If no vision phase characters, sync from treatment
-    if (existingCharacters.length === 0 && treatment.character_descriptions) {
-      existingCharacters = treatment.character_descriptions.map((c: any) => ({
-        ...c,
-        id: c.id || uuidv4(), // Assign UUID if missing
-        version: 1,
-        lastModified: new Date().toISOString(),
-        referenceImage: c.referenceImage || null,
-        generating: false,
-      }))
-      
-      // Auto-save to vision phase
-      await project.update({
-        metadata: {
-          ...project.metadata,
-          visionPhase: {
-            ...(project.metadata?.visionPhase || {}),
-            characters: existingCharacters,
+        console.log(`[Script Gen V2] Batch 1: Generating first ${INITIAL_BATCH_SIZE} scenes...`)
+        
+        const batch1Prompt = buildBatch1Prompt(treatment, 1, INITIAL_BATCH_SIZE, minScenes, maxScenes, suggestedScenes, duration, [], existingCharacters)
+        const batch1Response = await callGemini(apiKey, batch1Prompt)
+        const batch1Data = parseBatch1(batch1Response, 1, INITIAL_BATCH_SIZE)
+        
+        if (batch1Data.totalScenes && batch1Data.totalScenes >= minScenes && batch1Data.totalScenes <= maxScenes) {
+          actualTotalScenes = batch1Data.totalScenes
+          console.log(`[Script Gen V2] AI determined ${actualTotalScenes} total scenes`)
+          
+          const deviation = Math.abs(actualTotalScenes - suggestedScenes)
+          if (deviation > suggestedScenes * 0.3) {
+            console.warn(`[Script Gen V2] AI chose ${actualTotalScenes}, but suggested is ${suggestedScenes}. Overriding.`)
+            actualTotalScenes = suggestedScenes
           }
         }
-      })
-      
-      console.log(`[Script Gen V2] Auto-synced ${existingCharacters.length} characters from Film Treatment`)
-    } else {
-      console.log(`[Script Gen V2] Using ${existingCharacters.length} characters from Vision Phase`)
-    }
-
-    // Scale batch size based on story duration
-    const BATCH_SIZE = 30  // Max scenes per batch to avoid timeout
-    const INITIAL_BATCH_SIZE = Math.min(15, suggestedScenes)  // First batch
-    let actualTotalScenes = suggestedScenes
-    let allScenes: any[] = []
-
-    // BATCH 1: Generate first batch, AI determines total scene count
-    console.log(`[Script Gen V2] Batch 1: Generating first ${INITIAL_BATCH_SIZE} scenes (AI will determine total)...`)
-    
-    const batch1Prompt = buildBatch1Prompt(treatment, 1, INITIAL_BATCH_SIZE, minScenes, maxScenes, suggestedScenes, duration, [], existingCharacters)
-    const batch1Response = await callGemini(apiKey, batch1Prompt)
-    const batch1Data = parseBatch1(batch1Response, 1, INITIAL_BATCH_SIZE)
-    
-    // Extract AI's determined total
-    if (batch1Data.totalScenes && batch1Data.totalScenes >= minScenes && batch1Data.totalScenes <= maxScenes) {
-      actualTotalScenes = batch1Data.totalScenes
-      console.log(`[Script Gen V2] AI determined ${actualTotalScenes} total scenes`)
-      
-      // OVERRIDE: If AI chose value significantly different from suggested, use suggested
-      const deviation = Math.abs(actualTotalScenes - suggestedScenes)
-      if (deviation > suggestedScenes * 0.3) {  // >30% deviation
-        console.warn(`[Script Gen V2] AI chose ${actualTotalScenes}, but suggested is ${suggestedScenes}. Overriding.`)
-        actualTotalScenes = suggestedScenes
-      }
-    } else {
-      console.log(`[Script Gen V2] Using suggested ${actualTotalScenes} scenes (AI total out of range or not provided)`)
-    }
-    
-    allScenes.push(...batch1Data.scenes)
-    console.log(`[Script Gen V2] Batch 1 complete: ${batch1Data.scenes.length} scenes`)
-    
-    // MULTI-BATCH: Generate remaining scenes in chunks
-    let remainingScenes = actualTotalScenes - allScenes.length
-    let batchNumber = 2
-    
-    while (remainingScenes > 0) {
-      const batchSize = Math.min(BATCH_SIZE, remainingScenes)
-      const startScene = allScenes.length + 1
-      const endScene = startScene + batchSize - 1
-      
-      console.log(`[Script Gen V2] Batch ${batchNumber}: Generating scenes ${startScene}-${endScene} (${batchSize} scenes)...`)
-      
-      const batchPrompt = buildBatch2Prompt(treatment, startScene, actualTotalScenes, duration, allScenes, existingCharacters)
-      const batchResponse = await callGemini(apiKey, batchPrompt)
-      const batchData = parseScenes(batchResponse, startScene, endScene)
-      
-      allScenes.push(...batchData.scenes)
-      console.log(`[Script Gen V2] Batch ${batchNumber} complete: ${batchData.scenes.length} scenes (total: ${allScenes.length})`)
-      
-      remainingScenes = actualTotalScenes - allScenes.length
-      batchNumber++
-      
-      // Safety: Prevent infinite loop
-      if (batchNumber > 10) {
-        console.error(`[Script Gen V2] Too many batches (${batchNumber}), stopping generation`)
-        break
-      }
-    }
-    
-    // Validation and logging
-    const totalEstimatedDuration = allScenes.reduce((sum: number, s: any) => sum + (s.duration || 0), 0)
-    const durationAccuracy = ((totalEstimatedDuration / duration) * 100).toFixed(1)
-    
-    console.log(`[Script Gen V2] Generation complete:`)
-    console.log(`  - Scenes: ${allScenes.length} (suggested ${suggestedScenes})`)
-    console.log(`  - Estimated: ${totalEstimatedDuration}s vs Target: ${duration}s`)
-    console.log(`  - Accuracy: ${durationAccuracy}%`)
-    
-    if (Math.abs(totalEstimatedDuration - duration) / duration > 0.15) {
-      console.warn(`[Script Gen V2] Duration accuracy >15% off - may need regeneration`)
-    }
-
-    // Extract characters that appear in dialogue (for validation)
-    const dialogueChars = extractCharacters(allScenes)
-    
-    // Normalize existing character names for comparison
-    const existingCharNamesNormalized = existingCharacters.map((c: any) => 
-      normalizeCharacterName(c.name || '')
-    )
-    
-    // Find NEW characters that appeared in dialogue but aren't in Film Treatment
-    const newChars = dialogueChars.filter((c: any) => 
-      !existingCharNamesNormalized.includes(normalizeCharacterName(c.name || ''))
-    )
-    
-    // Combine: existing (with all Film Treatment details) + any new ones
-    const allCharacters = [
-      ...existingCharacters,  // Keep Film Treatment characters with appearance, demeanor, clothing
-      ...newChars.map((c: any) => ({
-        ...c,
-        id: uuidv4(), // Assign UUID to new characters
-        role: c.role || 'supporting', // Default to supporting if no role specified
-        imagePrompt: `Professional character portrait: ${c.name}, ${c.description}, photorealistic, high detail, studio lighting, neutral background, character design, 8K quality`,
-        referenceImage: null,
-        generating: false
-      }))
-    ]
-
-    console.log(`[Script Gen V2] Characters: ${existingCharacters.length} from Film Treatment + ${newChars.length} new from dialogue (${allCharacters.length} total)`)
-    
-    if (newChars.length > 0) {
-      console.warn(`[Script Gen V2] WARNING: Script introduced ${newChars.length} characters not in Film Treatment:`, newChars.map((c: any) => c.name))
-    }
-
-    // Embed characterId in dialogue for reliable matching
-    const scenesWithCharacterIds = allScenes.map((scene: any) => ({
-      ...scene,
-      dialogue: scene.dialogue?.map((d: any) => {
-        if (!d.character) return d
         
-        // Find character by name (case-insensitive fallback for legacy)
-        const character = allCharacters.find((c: any) => 
-          c.name.toLowerCase() === d.character.toLowerCase()
+        allScenes.push(...batch1Data.scenes)
+        console.log(`[Script Gen V2] Batch 1 complete: ${batch1Data.scenes.length} scenes`)
+        
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+          type: 'progress',
+          status: `Generated ${allScenes.length} scenes...`,
+          batch: 1,
+          scenesGenerated: allScenes.length,
+          totalScenes: actualTotalScenes
+        })}\n\n`))
+    
+        // MULTI-BATCH: Generate remaining scenes
+        let remainingScenes = actualTotalScenes - allScenes.length
+        let batchNumber = 2
+        
+        while (remainingScenes > 0) {
+          const batchSize = Math.min(BATCH_SIZE, remainingScenes)
+          const startScene = allScenes.length + 1
+          const endScene = startScene + batchSize - 1
+          
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            type: 'progress',
+            status: `Generating scenes ${startScene}-${endScene}...`,
+            batch: batchNumber,
+            scenesGenerated: allScenes.length,
+            totalScenes: actualTotalScenes
+          })}\n\n`))
+          
+          console.log(`[Script Gen V2] Batch ${batchNumber}: Generating scenes ${startScene}-${endScene}...`)
+          
+          const batchPrompt = buildBatch2Prompt(treatment, startScene, actualTotalScenes, duration, allScenes, existingCharacters)
+          const batchResponse = await callGemini(apiKey, batchPrompt)
+          const batchData = parseScenes(batchResponse, startScene, endScene)
+          
+          allScenes.push(...batchData.scenes)
+          console.log(`[Script Gen V2] Batch ${batchNumber} complete: ${batchData.scenes.length} scenes (total: ${allScenes.length})`)
+          
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            type: 'progress',
+            status: `Generated ${allScenes.length} of ${actualTotalScenes} scenes...`,
+            batch: batchNumber,
+            scenesGenerated: allScenes.length,
+            totalScenes: actualTotalScenes
+          })}\n\n`))
+          
+          remainingScenes = actualTotalScenes - allScenes.length
+          batchNumber++
+          
+          if (batchNumber > 10) {
+            console.error(`[Script Gen V2] Too many batches (${batchNumber}), stopping generation`)
+            break
+          }
+        }
+    
+        // Process characters and embed IDs (existing logic)
+        const dialogueChars = extractCharacters(allScenes)
+        const existingCharNamesNormalized = existingCharacters.map((c: any) => 
+          normalizeCharacterName(c.name || '')
+        )
+        const newChars = dialogueChars.filter((c: any) => 
+          !existingCharNamesNormalized.includes(normalizeCharacterName(c.name || ''))
         )
         
-        return {
-          ...d,
-          characterId: character?.id // Embed UUID for reliable matching
+        const allCharacters = [
+          ...existingCharacters,
+          ...newChars.map((c: any) => ({
+            ...c,
+            id: uuidv4(),
+            role: c.role || 'supporting',
+            imagePrompt: `Professional character portrait: ${c.name}, ${c.description}, photorealistic, high detail, studio lighting, neutral background, character design, 8K quality`,
+            referenceImage: null,
+            generating: false
+          }))
+        ]
+
+        // Embed characterId in dialogue
+        const scenesWithCharacterIds = allScenes.map((scene: any) => ({
+          ...scene,
+          dialogue: scene.dialogue?.map((d: any) => {
+            if (!d.character) return d
+            const character = allCharacters.find((c: any) => 
+              c.name.toLowerCase() === d.character.toLowerCase()
+            )
+            return {
+              ...d,
+              characterId: character?.id
+            }
+          })
+        }))
+
+        const totalEstimatedDuration = allScenes.reduce((sum: number, s: any) => sum + (s.duration || 0), 0)
+        
+        const script = {
+          title: treatment.title,
+          logline: treatment.logline,
+          script: { scenes: scenesWithCharacterIds },
+          characters: allCharacters,
+          totalDuration: totalEstimatedDuration
         }
-      })
-    }))
 
-    // Build final script
-    const script = {
-      title: treatment.title,
-      logline: treatment.logline,
-      script: { scenes: scenesWithCharacterIds }, // Use scenes with embedded characterId
-      characters: allCharacters,  // Film Treatment characters + any new ones
-      totalDuration: totalEstimatedDuration  // Use accurate estimated duration
-    }
+        // Save to project
+        const existingVisionPhase = project.metadata?.visionPhase || {}
+        await project.update({
+          metadata: {
+            ...project.metadata,
+            visionPhase: {
+              ...existingVisionPhase,
+              script,
+              scriptGenerated: true,
+              characters: allCharacters,
+              scenes: scenesWithCharacterIds
+            }
+          }
+        })
 
-    // Save to project (preserve existing visionPhase data)
-    const existingVisionPhase = project.metadata?.visionPhase || {}
-    await project.update({
-      metadata: {
-        ...project.metadata,
-        visionPhase: {
-          ...existingVisionPhase,
+        // Send completion
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+          type: 'complete',
           script,
-          scriptGenerated: true,
-          characters: allCharacters,  // Update with combined characters
-          scenes: scenesWithCharacterIds  // Update with generated scenes (with characterId)
-        }
+          totalScenes: allScenes.length,
+          totalDuration: totalEstimatedDuration
+        })}\n\n`))
+        
+        controller.close()
+        
+      } catch (error: any) {
+        console.error('[Script Gen V2] Error:', error)
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+          type: 'error',
+          error: error.message
+        })}\n\n`))
+        controller.close()
       }
-    })
+    }
+  })
 
-    console.log(`[Script Gen V2] === FINAL RESULT ===`)
-    console.log(`[Script Gen V2] Returning ${allScenes.length} scenes to client`)
-    console.log(`[Script Gen V2] Scene numbers: ${allScenes.map((s: any) => s.sceneNumber).join(', ')}`)
-    console.log(`[Script Gen V2] First scene: ${JSON.stringify(allScenes[0]).substring(0, 100)}`)
-    console.log(`[Script Gen V2] Last scene: ${JSON.stringify(allScenes[allScenes.length - 1]).substring(0, 100)}`)
-
-    return NextResponse.json({ success: true, script })
-    
-  } catch (error: any) {
-    console.error('[Script Gen V2] Error:', error)
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message 
-    }, { status: 500 })
-  }
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    },
+  })
 }
 
 function buildBatch1Prompt(treatment: any, start: number, end: number, min: number, max: number, suggested: number, targetDuration: number, prev: any[], characters: any[]) {

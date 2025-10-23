@@ -83,7 +83,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [isPlayerOpen, setIsPlayerOpen] = useState(false)
   const [voiceAssignments, setVoiceAssignments] = useState<Record<string, any>>({})
   const [generationProgress, setGenerationProgress] = useState({
-    script: { complete: false, progress: 0 },
+    script: { 
+      complete: false, 
+      progress: 0,
+      status: '',
+      scenesGenerated: 0,
+      totalScenes: 0,
+      batch: 0
+    },
     characters: { complete: false, progress: 0, total: 0 },
     scenes: { complete: false, progress: 0, total: 0 }
   })
@@ -109,6 +116,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     total: number
     status: string
     sceneHeading?: string
+  } | null>(null)
+
+  // Script generation progress modal state
+  const [scriptProgress, setScriptProgress] = useState<{
+    status: string
+    scenesGenerated: number
+    totalScenes: number
+    batch?: number
   } | null>(null)
   
   // Handle quality setting change
@@ -496,7 +511,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         setGenerationProgress({
           script: { 
             complete: visionPhase.scriptGenerated || false, 
-            progress: visionPhase.scriptGenerated ? 100 : 0 
+            progress: visionPhase.scriptGenerated ? 100 : 0,
+            status: visionPhase.scriptGenerated ? 'Complete' : '',
+            scenesGenerated: visionPhase.scriptGenerated ? (visionPhase.scenes?.length || 0) : 0,
+            totalScenes: visionPhase.scenes?.length || 0,
+            batch: 0
           },
           characters: { 
             complete: visionPhase.charactersGenerated || false, 
@@ -560,29 +579,96 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   const generateScript = async (proj: Project): Promise<{ characters: any[], scenes: any[] } | null> => {
     try {
-      console.log('[Vision] Generating script (text only)...')
-      setGenerationProgress(prev => ({ ...prev, script: { complete: false, progress: 0 } }))
-      
-      const res = await fetch('/api/vision/generate-script-v2', {
+      console.log('[Vision] Generating script with progress tracking...')
+      setGenerationProgress(prev => ({ 
+        ...prev, 
+        script: { complete: false, progress: 10, status: 'Starting...', scenesGenerated: 0, totalScenes: 0, batch: 0 }
+      }))
+      setScriptProgress({
+        status: 'Starting script generation...',
+        scenesGenerated: 0,
+        totalScenes: 0
+      })
+
+      const response = await fetch('/api/vision/generate-script-v2', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: proj.id })
+        body: JSON.stringify({ projectId: proj.id }),
       })
-      
-      if (!res.ok) {
+
+      if (!response.ok) {
         throw new Error('Script generation failed')
       }
-      
-      const data = await res.json()
-      const freshCharacters = data.script?.characters || []
-      const freshScenes = data.script?.script?.scenes || []
-      
-      setScript(data.script)
-      setGenerationProgress(prev => ({ ...prev, script: { complete: true, progress: 100 } }))
-      
-      return { characters: freshCharacters, scenes: freshScenes }
+
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+
+      if (!reader) {
+        throw new Error('No response stream')
+      }
+
+      let scriptData: any = null
+
+      // Read SSE stream
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value)
+        const lines = chunk.split('\n')
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6))
+
+              if (data.type === 'progress') {
+                // Update progress based on scenes generated
+                const progress = Math.min(90, 10 + (data.scenesGenerated / data.totalScenes) * 80)
+                setGenerationProgress(prev => ({ 
+                  ...prev, 
+                  script: { 
+                    complete: false, 
+                    progress,
+                    status: data.status,
+                    scenesGenerated: data.scenesGenerated,
+                    totalScenes: data.totalScenes,
+                    batch: data.batch
+                  }
+                }))
+                setScriptProgress({
+                  status: data.status,
+                  scenesGenerated: data.scenesGenerated,
+                  totalScenes: data.totalScenes,
+                  batch: data.batch
+                })
+                console.log(`[Vision] ${data.status} (${data.scenesGenerated}/${data.totalScenes})`)
+              } else if (data.type === 'complete') {
+                scriptData = {
+                  characters: data.script.characters,
+                  scenes: data.script.script.scenes
+                }
+                setGenerationProgress(prev => ({ 
+                  ...prev, 
+                  script: { complete: true, progress: 100, status: 'Complete', scenesGenerated: data.scenesGenerated, totalScenes: data.totalScenes, batch: data.batch }
+                }))
+                setScriptProgress(null) // Hide modal
+                console.log(`[Vision] Script generation complete: ${data.totalScenes} scenes, ${data.totalDuration}s`)
+              } else if (data.type === 'error') {
+                setScriptProgress(null) // Hide modal on error
+                throw new Error(data.error)
+              }
+            } catch (e) {
+              console.error('[Vision] Parse error:', e)
+            }
+          }
+        }
+      }
+
+      return scriptData
     } catch (error) {
       console.error('[Vision] Script error:', error)
+      setScriptProgress(null) // Hide modal on error
       throw error
     }
   }
@@ -1922,6 +2008,54 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 </p>
               )}
               <p className="text-sm text-gray-400">Status: {imageProgress.status}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Script Generation Progress - Full Screen Blocking Modal */}
+      {scriptProgress && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-gray-900 border border-gray-700 rounded-lg p-8 max-w-lg w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 mx-auto mb-4">
+                <div className="w-full h-full border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+              <h3 className="text-2xl font-semibold text-gray-200 mb-2">
+                Generating Script
+              </h3>
+              <p className="text-gray-400">
+                This may take 60+ seconds. Please don't close this window.
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-400">
+                  Scene {scriptProgress.scenesGenerated} of {scriptProgress.totalScenes}
+                </span>
+                <span className="text-gray-400">
+                  {scriptProgress.totalScenes > 0 ? Math.round((scriptProgress.scenesGenerated / scriptProgress.totalScenes) * 100) : 0}%
+                </span>
+              </div>
+              
+              <div className="w-full bg-gray-800 rounded-full h-3">
+                <div 
+                  className="bg-blue-500 h-3 rounded-full transition-all duration-500"
+                  style={{ 
+                    width: scriptProgress.totalScenes > 0 
+                      ? `${(scriptProgress.scenesGenerated / scriptProgress.totalScenes) * 100}%` 
+                      : '0%' 
+                  }}
+                />
+              </div>
+              
+              <div className="text-center">
+                <p className="text-sm text-gray-300 mb-1">{scriptProgress.status}</p>
+                {scriptProgress.batch && (
+                  <p className="text-xs text-gray-500">Batch {scriptProgress.batch}</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
