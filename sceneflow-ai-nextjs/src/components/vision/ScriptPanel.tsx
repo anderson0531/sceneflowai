@@ -745,6 +745,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             setSceneBuilderOpen(false)
             setSceneBuilderIdx(null)
           }}
+          isGenerating={generatingImageForScene === sceneBuilderIdx}
         />
       )}
 

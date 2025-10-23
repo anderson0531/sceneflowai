@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Copy, Check, Sparkles, Info } from 'lucide-react'
+import { Copy, Check, Sparkles, Info, Loader2 } from 'lucide-react'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { findSceneCharacters } from '../../lib/character/matching'
 
@@ -40,6 +40,7 @@ interface ScenePromptBuilderProps {
     subject?: string
   }>
   onGenerateImage: (selectedCharacters: any[]) => void
+  isGenerating?: boolean
 }
 
 export function ScenePromptBuilder({
@@ -47,7 +48,8 @@ export function ScenePromptBuilder({
   onClose,
   scene,
   availableCharacters = [],
-  onGenerateImage
+  onGenerateImage,
+  isGenerating = false
 }: ScenePromptBuilderProps) {
   const [mode, setMode] = useState<'guided' | 'advanced'>('guided')
   const [structure, setStructure] = useState<ScenePromptStructure>({
@@ -648,9 +650,22 @@ export function ScenePromptBuilder({
             {constructedPrompt || <span className="text-gray-500 italic">Fill in the fields above to build your prompt...</span>}
           </div>
           <div className="flex gap-2 mt-2">
-            <Button onClick={handleGenerateScene} className="flex-1 bg-purple-600 hover:bg-purple-700">
-              <Sparkles className="w-4 h-4 mr-2" />
-              Generate Scene Image
+            <Button 
+              onClick={handleGenerateScene} 
+              disabled={isGenerating}
+              className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Generate Scene Image
+                </>
+              )}
             </Button>
             <Button onClick={handleCopy} variant="outline" className="px-3">
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
