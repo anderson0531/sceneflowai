@@ -643,17 +643,40 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   batch: data.batch
                 })
                 console.log(`[Vision] ${data.status} (${data.scenesGenerated}/${data.totalScenes})`)
+              } else if (data.type === 'warning') {
+                console.warn(`[Vision] Warning: ${data.message}`)
+                try {
+                  const { toast } = require('sonner')
+                  toast.warning(data.message, { duration: 10000 })
+                } catch {}
               } else if (data.type === 'complete') {
                 scriptData = {
                   characters: data.script.characters,
                   scenes: data.script.script.scenes
                 }
+                
+                // Show warning if partial generation
+                if (data.partial) {
+                  console.warn(`[Vision] Partial generation: ${data.totalScenes}/${data.expectedScenes} scenes`)
+                  try {
+                    const { toast } = require('sonner')
+                    toast.warning(`Script generated with ${data.totalScenes} of ${data.expectedScenes} scenes. You can regenerate to get the remaining scenes.`, { duration: 12000 })
+                  } catch {}
+                }
+                
                 setGenerationProgress(prev => ({ 
                   ...prev, 
-                  script: { complete: true, progress: 100, status: 'Complete', scenesGenerated: data.scenesGenerated, totalScenes: data.totalScenes, batch: data.batch }
+                  script: { 
+                    complete: true, 
+                    progress: 100, 
+                    status: data.partial ? 'Partial' : 'Complete',
+                    scenesGenerated: data.totalScenes,
+                    totalScenes: data.expectedScenes || data.totalScenes,
+                    batch: 0
+                  }
                 }))
                 setScriptProgress(null) // Hide modal
-                console.log(`[Vision] Script generation complete: ${data.totalScenes} scenes, ${data.totalDuration}s`)
+                console.log(`[Vision] Script generation complete: ${data.totalScenes} scenes`)
               } else if (data.type === 'error') {
                 setScriptProgress(null) // Hide modal on error
                 throw new Error(data.error)

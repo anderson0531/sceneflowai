@@ -92,8 +92,9 @@ export async function POST(request: NextRequest) {
           console.log(`[Script Gen V2] Auto-synced ${existingCharacters.length} characters from Film Treatment`)
         }
 
-        const BATCH_SIZE = 30
+        const BATCH_SIZE = 20  // Reduced from 30 for faster processing
         const INITIAL_BATCH_SIZE = Math.min(15, suggestedScenes)
+        const MAX_BATCH_RETRIES = 3
         let actualTotalScenes = suggestedScenes
         let allScenes: any[] = []
 
@@ -134,9 +135,10 @@ export async function POST(request: NextRequest) {
           totalScenes: actualTotalScenes
         })}\n\n`))
     
-        // MULTI-BATCH: Generate remaining scenes
+        // MULTI-BATCH: Generate remaining scenes with retry logic
         let remainingScenes = actualTotalScenes - allScenes.length
         let batchNumber = 2
+        let batchRetries = 0
         
         while (remainingScenes > 0) {
           const batchSize = Math.min(BATCH_SIZE, remainingScenes)
@@ -153,24 +155,59 @@ export async function POST(request: NextRequest) {
           
           console.log(`[Script Gen V2] Batch ${batchNumber}: Generating scenes ${startScene}-${endScene}...`)
           
-          const batchPrompt = buildBatch2Prompt(treatment, startScene, actualTotalScenes, duration, allScenes, existingCharacters)
-          const batchResponse = await callGemini(apiKey, batchPrompt)
-          const batchData = parseScenes(batchResponse, startScene, endScene)
+          try {
+            const batchPrompt = buildBatch2Prompt(treatment, startScene, actualTotalScenes, duration, allScenes, existingCharacters)
+            const batchResponse = await callGemini(apiKey, batchPrompt)
+            const batchData = parseScenes(batchResponse, startScene, endScene)
+            
+            // Check if batch actually generated scenes
+            if (batchData.scenes.length === 0) {
+              batchRetries++
+              console.warn(`[Script Gen V2] Batch ${batchNumber} generated 0 scenes (retry ${batchRetries}/${MAX_BATCH_RETRIES})`)
+              
+              if (batchRetries >= MAX_BATCH_RETRIES) {
+                console.error(`[Script Gen V2] Max retries reached for batch ${batchNumber}, stopping generation`)
+                // Send warning event
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                  type: 'warning',
+                  message: `Failed to generate remaining scenes after ${MAX_BATCH_RETRIES} attempts. Generated ${allScenes.length} of ${actualTotalScenes} scenes.`
+                })}\n\n`))
+                break
+              }
+              continue // Retry same batch
+            }
+            
+            // Success - reset retry counter and add scenes
+            batchRetries = 0
+            allScenes.push(...batchData.scenes)
+            console.log(`[Script Gen V2] Batch ${batchNumber} complete: ${batchData.scenes.length} scenes (total: ${allScenes.length})`)
+            
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'progress',
+              status: `Generated ${allScenes.length} of ${actualTotalScenes} scenes...`,
+              batch: batchNumber,
+              scenesGenerated: allScenes.length,
+              totalScenes: actualTotalScenes
+            })}\n\n`))
+            
+            remainingScenes = actualTotalScenes - allScenes.length
+            batchNumber++
+            
+          } catch (error: any) {
+            batchRetries++
+            console.error(`[Script Gen V2] Batch ${batchNumber} error (retry ${batchRetries}/${MAX_BATCH_RETRIES}):`, error.message)
+            
+            if (batchRetries >= MAX_BATCH_RETRIES) {
+              console.error(`[Script Gen V2] Max retries reached, stopping generation`)
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                type: 'warning',
+                message: `Failed to generate remaining scenes. Generated ${allScenes.length} of ${actualTotalScenes} scenes.`
+              })}\n\n`))
+              break
+            }
+          }
           
-          allScenes.push(...batchData.scenes)
-          console.log(`[Script Gen V2] Batch ${batchNumber} complete: ${batchData.scenes.length} scenes (total: ${allScenes.length})`)
-          
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-            type: 'progress',
-            status: `Generated ${allScenes.length} of ${actualTotalScenes} scenes...`,
-            batch: batchNumber,
-            scenesGenerated: allScenes.length,
-            totalScenes: actualTotalScenes
-          })}\n\n`))
-          
-          remainingScenes = actualTotalScenes - allScenes.length
-          batchNumber++
-          
+          // Safety: Prevent infinite loop
           if (batchNumber > 10) {
             console.error(`[Script Gen V2] Too many batches (${batchNumber}), stopping generation`)
             break
@@ -238,12 +275,15 @@ export async function POST(request: NextRequest) {
           }
         })
 
-        // Send completion
+        // Send completion with partial status
+        const isPartial = allScenes.length < actualTotalScenes
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({
           type: 'complete',
           script,
           totalScenes: allScenes.length,
-          totalDuration: totalEstimatedDuration
+          totalDuration: totalEstimatedDuration,
+          partial: isPartial,
+          expectedScenes: actualTotalScenes
         })}\n\n`))
         
         controller.close()
@@ -483,36 +523,38 @@ function sanitizeJsonString(jsonStr: string): string {
     console.error('[Sanitize] Original error:', firstError.message)
     console.error('[Sanitize] First 200 chars:', cleaned.substring(0, 200))
     
-    // Second attempt: Fix control characters within string values only
-    // This regex finds strings and replaces literal control chars
+    // Enhanced sanitization approach
     try {
-      // Match string values in JSON (between quotes, handling escaped quotes)
-      const sanitized = cleaned.replace(
-        /"((?:[^"\\]|\\.)*)"/g,
-        (match, stringContent) => {
-          // Only sanitize the content inside the string
-          const fixed = stringContent
-            .replace(/\r\n/g, '\\n')
-            .replace(/\r/g, '\\n')
-            .replace(/\n/g, '\\n')
-            .replace(/\t/g, '\\t')
-            // Don't replace if already escaped
-            .replace(/([^\\])\\n/g, '$1\\n')
-            .replace(/([^\\])\\t/g, '$1\\t')
-            .replace(/([^\\])\\r/g, '$1\\r')
-          
-          return `"${fixed}"`
-        }
-      )
+      // Remove control characters (ASCII 0-31 except tab, newline, carriage return)
+      cleaned = cleaned.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, '')
       
-      // Third attempt: try parsing the sanitized version
-      JSON.parse(sanitized)
-      return sanitized
+      // Fix common JSON issues
+      cleaned = cleaned
+        .replace(/,\s*([}\]])/g, '$1') // Remove trailing commas
+        .replace(/([{,])\s*([}\]])/g, '$1"":$2') // Fix empty values
+        .trim()
+      
+      // If JSON is truncated, try to close it properly
+      const openBraces = (cleaned.match(/{/g) || []).length
+      const closeBraces = (cleaned.match(/}/g) || []).length
+      const openBrackets = (cleaned.match(/\[/g) || []).length
+      const closeBrackets = (cleaned.match(/\]/g) || []).length
+      
+      // Add missing closing braces/brackets
+      while (openBraces > closeBraces) {
+        cleaned += '}'
+      }
+      while (openBrackets > closeBrackets) {
+        cleaned += ']'
+      }
+      
+      // Try parsing the enhanced version
+      JSON.parse(cleaned)
+      return cleaned
     } catch (secondError: any) {
-      console.error('[Sanitize] After sanitization:', secondError.message)
+      console.error('[Sanitize] After enhanced sanitization:', secondError.message)
       
       // Final fallback: Try more aggressive approach
-      // Replace any literal control characters with spaces as last resort
       try {
         const aggressive = cleaned.replace(
           /"((?:[^"\\]|\\.)*)"/g,
