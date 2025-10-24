@@ -690,7 +690,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   <span className="text-gray-500 dark:text-gray-400">Voice</span>
                   <div className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
                     <Volume2 className="w-3.5 h-3.5" />
-                    <span>{scenes.filter((s: any) => s.narrationAudio).length}/{scenes.length}</span>
+                    <span>{scenes.filter((s: any) => s.narrationAudioUrl).length}/{scenes.length}</span>
                   </div>
                 </div>
                 <div>
@@ -928,11 +928,11 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
             {/* Voice Indicator (Narration/Dialogue) */}
             <div 
               className={`flex items-center justify-center w-5 h-5 rounded ${
-                scene.narrationAudio 
+                scene.narrationAudioUrl 
                   ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
               }`}
-              title={scene.narrationAudio ? 'Voice audio generated' : 'No voice audio'}
+              title={scene.narrationAudioUrl ? 'Voice audio generated' : 'No voice audio'}
             >
               <Volume2 className="w-3 h-3" />
             </div>
