@@ -36,7 +36,7 @@ export function SceneDisplay({ scene, sceneNumber, totalScenes, isLoading, showC
 
       {/* Caption Overlay */}
       {showCaptions && (
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-8">
+        <div className="absolute bottom-20 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-8 pb-6">
           <div className="max-w-4xl mx-auto text-center">
             {/* Narration Caption */}
             {scene.narration && (

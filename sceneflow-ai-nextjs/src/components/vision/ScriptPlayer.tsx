@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { X, Play, Pause, SkipBack, SkipForward, Volume2, Settings } from 'lucide-react'
+import { X, Play, Pause, SkipBack, SkipForward, Volume2, Subtitles } from 'lucide-react'
 import { SceneDisplay } from './SceneDisplay'
 import { PlaybackControls } from './PlaybackControls'
 import { VoiceAssignmentPanel } from './VoiceAssignmentPanel'
@@ -147,6 +147,9 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           })
         }
         
+        // Small natural pause after narration
+        await new Promise(resolve => setTimeout(resolve, 500))
+        
         // Play dialogue audios sequentially
         if (scene.dialogueAudio && scene.dialogueAudio.length > 0) {
           for (const dialogue of scene.dialogueAudio) {
@@ -158,20 +161,25 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
               
               await audioRef.current.play()
               
+              // Wait for dialogue to finish
               await new Promise<void>((resolve) => {
                 if (audioRef.current) {
                   audioRef.current.onended = () => resolve()
                 }
               })
+              
+              // Small pause between dialogue lines
+              await new Promise(resolve => setTimeout(resolve, 300))
             }
           }
         }
         
         setIsLoadingAudio(false)
         
-        // Auto-advance to next scene
+        // Auto-advance to next scene (only if still playing)
         if (playerState.isPlaying) {
-          setTimeout(() => nextScene(), 1000)
+          // Immediate advance - no artificial delay needed
+          nextScene()
         }
         return
       }
@@ -345,14 +353,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
             }`}
             title="Toggle Captions (C)"
           >
-            <Settings className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => setPlayerState(prev => ({ ...prev, showVoicePanel: !prev.showVoicePanel }))}
-            className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors"
-            title="Voice Settings (V)"
-          >
-            <Volume2 className="w-5 h-5" />
+            <Subtitles className="w-5 h-5" />
           </button>
           <button
             onClick={onClose}
