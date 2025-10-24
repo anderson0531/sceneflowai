@@ -9,9 +9,11 @@ interface SceneDisplayProps {
   totalScenes: number
   isLoading: boolean
   showCaptions: boolean
+  translatedNarration?: string
+  translatedDialogue?: string[]
 }
 
-export function SceneDisplay({ scene, sceneNumber, totalScenes, isLoading, showCaptions }: SceneDisplayProps) {
+export function SceneDisplay({ scene, sceneNumber, totalScenes, isLoading, showCaptions, translatedNarration, translatedDialogue }: SceneDisplayProps) {
   if (!scene) {
     return (
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
@@ -38,26 +40,29 @@ export function SceneDisplay({ scene, sceneNumber, totalScenes, isLoading, showC
       {showCaptions && (
         <div className="absolute bottom-20 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-8 pb-6">
           <div className="max-w-4xl mx-auto text-center">
-            {/* Narration Caption */}
-            {scene.narration && (
+            {/* Narration Caption - use translated if available */}
+            {(translatedNarration || scene.narration) && (
               <div className="text-xl md:text-2xl text-white leading-relaxed mb-6 opacity-0 animate-[fadeIn_0.5s_ease-in-out_forwards]">
-                {scene.narration}
+                {translatedNarration || scene.narration}
               </div>
             )}
 
-            {/* Dialogue Captions */}
+            {/* Dialogue Captions - use translated if available */}
             {scene.dialogue && scene.dialogue.length > 0 && (
               <div className="space-y-4">
-                {scene.dialogue.slice(0, 2).map((d: any, idx: number) => (
-                  <div key={idx} className="opacity-0 animate-[fadeIn_0.5s_ease-in-out_forwards]" style={{ animationDelay: `${idx * 0.5}s` }}>
-                    <div className="text-xl md:text-2xl text-white font-light italic leading-relaxed mb-2">
-                      "{d.line}"
+                {scene.dialogue.slice(0, 2).map((d: any, idx: number) => {
+                  const displayText = translatedDialogue?.[idx] || d.line
+                  return (
+                    <div key={idx} className="opacity-0 animate-[fadeIn_0.5s_ease-in-out_forwards]" style={{ animationDelay: `${idx * 0.5}s` }}>
+                      <div className="text-xl md:text-2xl text-white font-light italic leading-relaxed mb-2">
+                        "{displayText}"
+                      </div>
+                      <div className="text-sm text-gray-300">
+                        — {d.character}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-300">
-                      — {d.character}
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
 

@@ -46,6 +46,28 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   const [showCaptions, setShowCaptions] = useState(true)
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Language translation state
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('en') // Default: English
+  const [translationCache, setTranslationCache] = useState<Map<string, {text: string, audio: string}>>(new Map())
+  const [currentTranslatedNarration, setCurrentTranslatedNarration] = useState<string | undefined>()
+  const [currentTranslatedDialogue, setCurrentTranslatedDialogue] = useState<string[] | undefined>()
+
+  // Supported languages with their Google TTS voice codes
+  const SUPPORTED_LANGUAGES = [
+    { code: 'en', name: 'English', voice: 'en-US-Neural2-F' },
+    { code: 'es', name: 'Spanish', voice: 'es-ES-Neural2-A' },
+    { code: 'fr', name: 'French', voice: 'fr-FR-Neural2-A' },
+    { code: 'de', name: 'German', voice: 'de-DE-Neural2-A' },
+    { code: 'it', name: 'Italian', voice: 'it-IT-Neural2-A' },
+    { code: 'pt', name: 'Portuguese', voice: 'pt-BR-Neural2-A' },
+    { code: 'zh', name: 'Chinese (Mandarin)', voice: 'cmn-CN-Wavenet-A' },
+    { code: 'ja', name: 'Japanese', voice: 'ja-JP-Neural2-B' },
+    { code: 'ko', name: 'Korean', voice: 'ko-KR-Neural2-A' },
+    { code: 'hi', name: 'Hindi', voice: 'hi-IN-Neural2-A' },
+    { code: 'ar', name: 'Arabic', voice: 'ar-XA-Wavenet-A' },
+    { code: 'ru', name: 'Russian', voice: 'ru-RU-Wavenet-A' }
+  ]
+
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [currentAudioUrl, setCurrentAudioUrl] = useState<string | null>(null)
   const [isLoadingAudio, setIsLoadingAudio] = useState(false)
@@ -119,6 +141,88 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [playerState.currentSceneIndex, scenes.length, resetControlsTimeout])
 
+  // Translation helper function
+  const translateAndGenerateAudio = async (text: string, sceneIdx: number, audioType: 'narration' | 'dialogue', characterIdx?: number): Promise<string> => {
+    // If English, skip translation
+    if (selectedLanguage === 'en') {
+      // Use pre-generated MP3 if available
+      const scene = scenes[sceneIdx]
+      if (audioType === 'narration' && scene.narrationAudioUrl) {
+        return scene.narrationAudioUrl
+      }
+      if (audioType === 'dialogue' && characterIdx !== undefined && scene.dialogueAudio?.[characterIdx]?.audioUrl) {
+        return scene.dialogueAudio[characterIdx].audioUrl
+      }
+    }
+
+    // Create cache key
+    const cacheKey = `${sceneIdx}-${audioType}-${characterIdx || 0}-${selectedLanguage}`
+    
+    // Check cache
+    const cached = translationCache.get(cacheKey)
+    if (cached) {
+      console.log('[Translation] Using cached audio for', cacheKey)
+      return cached.audio
+    }
+
+    try {
+      console.log('[Translation] Translating text to', selectedLanguage)
+      
+      // Step 1: Translate text
+      const translateResponse = await fetch('/api/translate/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          targetLanguage: selectedLanguage,
+          sourceLanguage: 'en'
+        })
+      })
+
+      if (!translateResponse.ok) {
+        throw new Error('Translation failed')
+      }
+
+      const { translatedText } = await translateResponse.json()
+      console.log('[Translation] Translated:', text.substring(0, 50), '→', translatedText.substring(0, 50))
+
+      // Step 2: Generate TTS in target language
+      const languageConfig = SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)
+      const voiceId = languageConfig?.voice || 'en-US-Neural2-F'
+
+      const ttsResponse = await fetch('/api/tts/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: translatedText,
+          voiceId
+        })
+      })
+
+      if (!ttsResponse.ok) {
+        throw new Error('TTS generation failed')
+      }
+
+      // Convert response to blob URL
+      const audioBlob = await ttsResponse.blob()
+      const audioUrl = URL.createObjectURL(audioBlob)
+
+      // Cache the result
+      setTranslationCache(prev => {
+        const newCache = new Map(prev)
+        newCache.set(cacheKey, { text: translatedText, audio: audioUrl })
+        return newCache
+      })
+
+      console.log('[Translation] Audio generated and cached')
+      return audioUrl
+
+    } catch (error) {
+      console.error('[Translation] Error:', error)
+      throw error
+    }
+  }
+
   // Generate and play audio for current scene
   const playSceneAudio = useCallback(async (sceneIndex: number) => {
     if (sceneIndex < 0 || sceneIndex >= scenes.length) return
@@ -127,7 +231,82 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     setIsLoadingAudio(true)
 
     try {
-      // CHECK FOR PRE-GENERATED AUDIO FIRST
+      // If translation enabled (non-English), use dynamic generation
+      if (selectedLanguage !== 'en') {
+        console.log('[Player] Using translation mode for', selectedLanguage)
+        
+        // Clear previous translated text
+        setCurrentTranslatedNarration(undefined)
+        setCurrentTranslatedDialogue(undefined)
+        
+        // Translate and play narration
+        if (scene.narration) {
+          const audioUrl = await translateAndGenerateAudio(scene.narration, sceneIndex, 'narration')
+          // Get translated text from cache for captions
+          const cacheKey = `${sceneIndex}-narration-0-${selectedLanguage}`
+          const cached = translationCache.get(cacheKey)
+          if (cached) {
+            setCurrentTranslatedNarration(cached.text)
+          }
+          
+          if (audioRef.current) {
+            audioRef.current.src = audioUrl
+            audioRef.current.playbackRate = playerState.playbackSpeed
+            audioRef.current.volume = playerState.volume
+            await audioRef.current.play()
+            setIsLoadingAudio(false)
+            
+            await new Promise<void>((resolve) => {
+              if (audioRef.current) {
+                audioRef.current.onended = () => resolve()
+              }
+            })
+          }
+        }
+
+        // Small pause
+        await new Promise(resolve => setTimeout(resolve, 500))
+
+        // Translate and play dialogue
+        if (scene.dialogue && scene.dialogue.length > 0) {
+          const translatedDialogue: string[] = []
+          for (let i = 0; i < scene.dialogue.length; i++) {
+            const dialogue = scene.dialogue[i]
+            const audioUrl = await translateAndGenerateAudio(dialogue.line, sceneIndex, 'dialogue', i)
+            
+            // Get translated text from cache for captions
+            const cacheKey = `${sceneIndex}-dialogue-${i}-${selectedLanguage}`
+            const cached = translationCache.get(cacheKey)
+            if (cached) {
+              translatedDialogue[i] = cached.text
+            }
+            
+            if (audioRef.current) {
+              audioRef.current.src = audioUrl
+              audioRef.current.playbackRate = playerState.playbackSpeed
+              audioRef.current.volume = playerState.volume
+              await audioRef.current.play()
+              
+              await new Promise<void>((resolve) => {
+                if (audioRef.current) {
+                  audioRef.current.onended = () => resolve()
+                }
+              })
+              
+              await new Promise(resolve => setTimeout(resolve, 300))
+            }
+          }
+          setCurrentTranslatedDialogue(translatedDialogue)
+        }
+
+        // Auto-advance
+        if (playerState.isPlaying) {
+          nextScene()
+        }
+        return
+      }
+
+      // CHECK FOR PRE-GENERATED AUDIO FIRST (English mode)
       if (scene.narrationAudioUrl) {
         console.log('[Player] Using pre-generated audio for scene', sceneIndex + 1)
         
@@ -245,7 +424,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         setTimeout(() => nextScene(), 2000)
       }
     }
-  }, [scenes, playerState.isPlaying, playerState.playbackSpeed, playerState.volume])
+  }, [scenes, playerState.isPlaying, playerState.playbackSpeed, playerState.volume, selectedLanguage, translationCache])
 
 
   // Play/pause audio when state changes
@@ -344,6 +523,22 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           >
             <Subtitles className="w-5 h-5" />
           </button>
+          <select
+            value={selectedLanguage}
+            onChange={(e) => {
+              setSelectedLanguage(e.target.value)
+              // Clear cache when language changes
+              setTranslationCache(new Map())
+            }}
+            className="px-3 py-1 rounded-lg bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-colors text-sm"
+            title="Select Language"
+          >
+            {SUPPORTED_LANGUAGES.map(lang => (
+              <option key={lang.code} value={lang.code} className="bg-gray-800 text-white">
+                {lang.name}
+              </option>
+            ))}
+          </select>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors"
@@ -366,6 +561,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
             totalScenes={scenes.length}
             isLoading={isLoadingAudio}
             showCaptions={showCaptions}
+            translatedNarration={currentTranslatedNarration}
+            translatedDialogue={currentTranslatedDialogue}
           />
         </div>
 
