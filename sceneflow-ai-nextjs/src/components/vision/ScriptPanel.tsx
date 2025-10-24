@@ -609,7 +609,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Play Full Script</p>
+                  <p>Open Screening Room</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
