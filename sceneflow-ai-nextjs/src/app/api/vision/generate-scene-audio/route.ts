@@ -38,6 +38,9 @@ export async function POST(req: NextRequest) {
       hasVoiceConfig: !!voiceConfig 
     })
 
+    // DEBUG: Log the received voiceConfig details
+    console.log('[Scene Audio] Received voiceConfig:', voiceConfig)
+
     if (!projectId || sceneIndex === undefined || !text || !voiceConfig) {
       const missingFields = []
       if (!projectId) missingFields.push('projectId')
