@@ -63,6 +63,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     { code: 'zh', name: 'Chinese (Mandarin)', voice: 'cmn-CN-Wavenet-A' },
     { code: 'ja', name: 'Japanese', voice: 'ja-JP-Neural2-B' },
     { code: 'ko', name: 'Korean', voice: 'ko-KR-Neural2-A' },
+    { code: 'th', name: 'Thai', voice: 'th-TH-Neural2-C' },
     { code: 'hi', name: 'Hindi', voice: 'hi-IN-Neural2-A' },
     { code: 'ar', name: 'Arabic', voice: 'ar-XA-Wavenet-A' },
     { code: 'ru', name: 'Russian', voice: 'ru-RU-Wavenet-A' }
