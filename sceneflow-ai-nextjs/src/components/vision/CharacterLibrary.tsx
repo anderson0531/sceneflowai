@@ -31,6 +31,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
   const [expandedSections, setExpandedSections] = useState<Record<string, string | null>>({})
   const [needsReupload, setNeedsReupload] = useState<Record<string, boolean>>({})
   const [showProTips, setShowProTips] = useState(false)
+  const [voiceSectionExpanded, setVoiceSectionExpanded] = useState<Record<string, boolean>>({})
   
   // Detect low-resolution images that need re-upload
   useEffect(() => {
@@ -58,6 +59,13 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
     setExpandedSections(prev => ({
       ...prev,
       [charId]: prev[charId] === key ? null : key
+    }))
+  }
+  
+  const handleToggleVoiceSection = (charId: string) => {
+    setVoiceSectionExpanded(prev => ({
+      ...prev,
+      [charId]: !prev[charId]
     }))
   }
   
@@ -241,6 +249,8 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                 onToggleExpand={handleToggleSection}
                 onUpdateCharacterVoice={onUpdateCharacterVoice}
                 ttsProvider={ttsProvider}
+                voiceSectionExpanded={voiceSectionExpanded[charId] || false}
+                onToggleVoiceSection={() => handleToggleVoiceSection(charId)}
               />
             )
           })}
@@ -347,9 +357,11 @@ interface CharacterCardProps {
   onToggleExpand?: (charId: string, section: 'coreIdentity' | 'appearance') => void
   onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void
   ttsProvider: 'google' | 'elevenlabs'  // ADD THIS
+  voiceSectionExpanded?: boolean
+  onToggleVoiceSection?: () => void
 }
 
-function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, onOpenBuilder, onAnalyze, analyzingImage, prompt, onPromptChange, isGenerating, expandedCharId, onToggleExpand, onUpdateCharacterVoice, ttsProvider }: CharacterCardProps) {
+function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, onOpenBuilder, onAnalyze, analyzingImage, prompt, onPromptChange, isGenerating, expandedCharId, onToggleExpand, onUpdateCharacterVoice, ttsProvider, voiceSectionExpanded, onToggleVoiceSection }: CharacterCardProps) {
   const hasImage = !!character.referenceImage
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
@@ -400,8 +412,9 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
         )}
       </div>
       
-      {/* Character Info */}
+      {/* Character Info Section - Reorganized */}
       <div className="p-3 bg-white dark:bg-gray-800 space-y-2">
+        {/* Name & Role */}
         <div>
           <div className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">{character.name || 'Unnamed'}</div>
           <div className="text-xs text-gray-600 dark:text-gray-400 truncate">{character.role || 'Character'}</div>
@@ -420,6 +433,7 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
           </div>
         )}
         
+        {/* Warnings */}
         {/* Low Resolution Warning */}
         {character.referenceImage && character.referenceImage.startsWith('data:') && (() => {
           const base64Length = character.referenceImage.split(',')[1]?.length || 0
@@ -475,7 +489,7 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
           </div>
         )}
         
-        {/* Character Attributes */}
+        {/* Character Attributes - Collapsible */}
         {(character.subject || character.ethnicity || character.keyFeature) && (
           <div className="space-y-1">
             <button
@@ -538,6 +552,7 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
           </div>
         )}
         
+        {/* Description */}
         {character.description && (
           <div className="text-xs text-gray-500 dark:text-gray-400 italic border-t border-gray-200 dark:border-gray-700 pt-1.5">
             {character.description}
@@ -545,7 +560,55 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
         )}
       </div>
       
-      {/* Controls Section - Below character info, NOT overlaying */}
+      {/* Voice Selector Section - NEW: Collapsible */}
+      {onUpdateCharacterVoice && (
+        <div className="border-t border-gray-200 dark:border-gray-700">
+          <button 
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggleVoiceSection?.()
+            }}
+            className="w-full px-3 py-2 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          >
+            <span className="text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
+              <Volume2 className="w-3 h-3" />
+              Character Voice
+              {!character.voiceConfig && (
+                <span className="ml-1 text-xs px-1.5 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded">
+                  Required
+                </span>
+              )}
+            </span>
+            <ChevronDown className={`w-4 h-4 transition-transform text-gray-400 ${voiceSectionExpanded ? 'rotate-180' : ''}`} />
+          </button>
+          
+          {voiceSectionExpanded && (
+            <div className="px-3 pb-3 space-y-2">
+              <VoiceSelector
+                provider={ttsProvider}
+                selectedVoiceId={character.voiceConfig?.voiceId || ''}
+                onSelectVoice={(voiceId, voiceName) => {
+                  console.log('[VoiceSelector] Selected:', { voiceId, voiceName, characterId })
+                  onUpdateCharacterVoice?.(characterId, {
+                    provider: ttsProvider,
+                    voiceId,
+                    voiceName
+                  })
+                }}
+                compact={true}
+              />
+              {character.voiceConfig && (
+                <div className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                  <Check className="w-3 h-3" />
+                  {character.voiceConfig.voiceName}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* Main Controls Section - ANCHORED AT BOTTOM */}
       <div className="p-2 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
         {/* Status indicator */}
         {hasImage && !isApproved && (
@@ -563,7 +626,7 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
               onOpenBuilder()
             }}
             disabled={isGenerating}
-            className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+            className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-purple-400 dark:hover:border-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
             title="Edit Character Prompt"
           >
             <Settings className="w-4 h-4" />
@@ -572,7 +635,7 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
           <button
             onClick={(e) => { e.stopPropagation(); onGenerate(prompt); }}
             disabled={isGenerating || !prompt.trim()}
-            className="p-2 rounded-lg bg-purple-600 border border-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+            className="p-2 rounded-lg bg-gradient-to-br from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
             title={hasImage ? "Regenerate character image" : "Generate character image"}
           >
             {isGenerating ? (
@@ -583,7 +646,7 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
           </button>
           
           <label 
-            className={`p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 transition-all shadow-sm ${isGenerating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            className={`p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-purple-400 dark:hover:border-purple-500 transition-all shadow-sm ${isGenerating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             title="Upload reference image"
           >
             <Upload className="w-4 h-4" />
@@ -610,7 +673,7 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
                   }
                 }}
                 disabled={isGenerating || analyzingImage}
-                className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-purple-400 dark:hover:border-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
                 title="Analyze image to extract attributes"
               >
                 {analyzingImage ? (
@@ -627,7 +690,7 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
                     onApprove()
                   }}
                   disabled={isGenerating}
-                  className="p-2 rounded-lg bg-green-600 border border-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                  className="p-2 rounded-lg bg-gradient-to-br from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
                   title="Approve character image"
                 >
                   <Check className="w-4 h-4" />
@@ -636,42 +699,6 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
             </>
           )}
         </div>
-        
-        {/* Character Voice Selector */}
-        {onUpdateCharacterVoice && (
-          <div 
-            className="mt-3 border-t border-gray-700 pt-3"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <label className="text-xs text-gray-400 mb-2 block flex items-center gap-1">
-              <Volume2 className="w-3 h-3" />
-              Character Voice
-              {!character.voiceConfig && (
-                <span className="ml-auto text-xs px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded">
-                  Required for audio
-                </span>
-              )}
-            </label>
-            <VoiceSelector
-              provider={ttsProvider}
-              selectedVoiceId={character.voiceConfig?.voiceId || ''}
-              onSelectVoice={(voiceId, voiceName) => {
-                console.log('[VoiceSelector] Selected:', { voiceId, voiceName, characterId })
-                onUpdateCharacterVoice?.(characterId, {
-                  provider: ttsProvider,
-                  voiceId,
-                  voiceName
-                })
-              }}
-              compact={true}
-            />
-            {character.voiceConfig && (
-              <div className="text-xs text-green-400 mt-1">
-                ✓ {character.voiceConfig.voiceName}
-              </div>
-            )}
-          </div>
-        )}
       </div>
       
       {/* Regenerate button for approved images - top-right corner */}
