@@ -206,7 +206,7 @@ async function updateSceneAudio(
       }
     } else {
       // Dialogue audio
-      const dialogueAudio = s.dialogueAudio || []
+      const dialogueAudio = [...(s.dialogueAudio || [])]
       const existingIndex = dialogueAudio.findIndex((d: any) => d.character === characterName)
       
       if (existingIndex >= 0) {
