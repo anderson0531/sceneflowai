@@ -527,22 +527,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         </div>
         
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Voice Selector */}
-          {enabled && voices.length > 0 && (
-            <Select value={selectedVoiceId} onValueChange={setSelectedVoiceId}>
-              <SelectTrigger className="h-9 text-sm min-w-[160px]">
-                <Volume2 className="w-4 h-4 mr-1" />
-                <SelectValue placeholder="Voice" />
-              </SelectTrigger>
-              <SelectContent>
-                {voices.map((v) => (
-                  <SelectItem key={v.id} value={v.id} className="text-sm">
-                    {v.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
           
           {/* Stop button if playing */}
           {loadingSceneId !== null && (
@@ -557,32 +541,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             </Button>
           )}
           
-          {/* Full Script Playback Controls */}
-          {scenes.length > 0 && enabled && (
-            <>
-              {!isPlayingAll ? (
-                <Button
-                  size="sm"
-                  onClick={playAllScenes}
-                  className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-1"
-                >
-                  <Play className="w-4 h-4" />
-                  <span className="hidden sm:inline">Play Full Script</span>
-                  <span className="sm:hidden">Play All</span>
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  onClick={stopAllAudio}
-                  className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-1"
-                >
-                  <StopCircle className="w-4 h-4" />
-                  <span className="hidden sm:inline">Stop All</span>
-                  <span className="sm:hidden">Stop</span>
-                </Button>
-              )}
-            </>
-          )}
           
           {scenes.some((s: any) => !s.isExpanded) && onExpandAllScenes && (
             <Button
