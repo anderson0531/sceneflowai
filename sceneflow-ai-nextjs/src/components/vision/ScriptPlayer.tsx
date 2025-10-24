@@ -185,6 +185,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       }
       
       // FALLBACK: Generate audio on-the-fly (existing code)
+      console.warn('[Player] ⚠️ No pre-generated audio found! This will make expensive API calls.')
+      console.warn('[Player] Please generate audio for all scenes before using Screening Room.')
       console.log('[Player] No pre-generated audio, generating on-the-fly for scene', sceneIndex + 1)
       
       // Build narration text from action
@@ -246,21 +248,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     }
   }, [scenes, playerState.isPlaying, playerState.playbackSpeed, playerState.volume])
 
-  // Handle audio end - auto-advance to next scene
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    const handleEnded = () => {
-      console.log('[Player] Audio ended, auto-advancing')
-      if (playerState.isPlaying) {
-        nextScene()
-      }
-    }
-
-    audio.addEventListener('ended', handleEnded)
-    return () => audio.removeEventListener('ended', handleEnded)
-  }, [playerState.isPlaying, playerState.currentSceneIndex, scenes.length])
 
   // Play/pause audio when state changes
   useEffect(() => {
@@ -276,10 +263,13 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   }
 
   const nextScene = () => {
+    console.log('[Player] nextScene called - advancing from', playerState.currentSceneIndex)
     setPlayerState(prev => {
       const nextIndex = prev.currentSceneIndex + 1
+      console.log('[Player] Advancing to scene', nextIndex)
       if (nextIndex >= scenes.length) {
         // End of script
+        console.log('[Player] End of script reached')
         return { ...prev, isPlaying: false, currentSceneIndex: scenes.length - 1 }
       }
       return { ...prev, currentSceneIndex: nextIndex }
