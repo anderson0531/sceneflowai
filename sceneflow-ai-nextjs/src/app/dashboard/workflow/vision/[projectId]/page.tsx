@@ -11,6 +11,7 @@ import { ScriptPlayer } from '@/components/vision/ScriptPlayer'
 import { ImageQualitySelector } from '@/components/vision/ImageQualitySelector'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
 import { Button } from '@/components/ui/Button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Save, Share2, ArrowRight, Play, Volume2, Image as ImageIcon } from 'lucide-react'
 import { findSceneCharacters } from '../../../../../lib/character/matching'
 import { v4 as uuidv4 } from 'uuid'
@@ -1881,45 +1882,89 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               value={imageQuality}
               onChange={handleQualityChange}
             />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
             <Button 
-              onClick={handleGenerateAllAudio}
-              disabled={isGeneratingAudio}
-              className="flex items-center gap-2"
-            >
-              <Volume2 className="w-4 h-4" />
-              {isGeneratingAudio ? 'Generating Audio...' : 'Generate All Audio'}
-            </Button>
-            <Button 
-              onClick={handleGenerateAllImages}
-              disabled={isGeneratingAllImages || !script?.script?.scenes}
-              className="flex items-center gap-2"
-            >
-              <ImageIcon className="w-4 h-4" />
-              {isGeneratingAllImages ? 'Generating Images...' : 'Generate All Images'}
-            </Button>
-            <Button 
+                    onClick={handleGenerateAllAudio}
+                    disabled={isGeneratingAudio}
+                    size="icon"
               variant="outline" 
-              size="sm" 
-              className="flex items-center gap-2"
-              onClick={() => setIsPlayerOpen(true)}
-              disabled={!script || !script.script?.scenes || script.script.scenes.length === 0}
-            >
-              <Play className="w-4 h-4" />
-              <span className="hidden sm:inline">Play Script</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex items-center gap-2"
+                  >
+                    <Volume2 className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isGeneratingAudio ? 'Generating Audio...' : 'Generate All Audio'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={handleGenerateAllImages}
+                    disabled={isGeneratingAllImages || !script?.script?.scenes}
+                    size="icon"
+                    variant="outline"
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isGeneratingAllImages ? 'Generating Images...' : 'Generate All Images'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={() => setIsPlayerOpen(true)}
+                    disabled={!script || !script.script?.scenes || script.script.scenes.length === 0}
+                  >
+                    <Play className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Play Full Script</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
               onClick={handleSaveProject}
             >
               <Save className="w-4 h-4" />
-              <span className="hidden sm:inline">Save Draft</span>
             </Button>
-            <Button variant="outline" size="sm" className="flex items-center gap-2" onClick={handleShare}>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Save Project</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={handleShare}
+                  >
               <Share2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Share</span>
             </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Share Project</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </>
         }
       />
