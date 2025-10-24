@@ -12,7 +12,7 @@ import { ImageQualitySelector } from '@/components/vision/ImageQualitySelector'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Save, Share2, ArrowRight, Play, Volume2, Image as ImageIcon } from 'lucide-react'
+import { Save, Share2, ArrowRight, Play, Volume2, Image as ImageIcon, Copy, Check, X } from 'lucide-react'
 import { findSceneCharacters } from '../../../../../lib/character/matching'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -119,6 +119,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Generation lock mechanism to prevent race conditions
   const [generatingAudioLocks, setGeneratingAudioLocks] = useState<Set<string>>(new Set())
+  
+  // Share functionality state
+  const [isSharing, setIsSharing] = useState(false)
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
   
   // Image quality setting
   const [imageQuality, setImageQuality] = useState<'max' | 'auto'>('auto')
@@ -1932,8 +1937,56 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     console.log('Export Vision')
   }
 
-  const handleShare = () => {
-    console.log('Share Vision')
+  const handleShare = async () => {
+    if (!project) {
+      console.error('[Share] No project available')
+      return
+    }
+    
+    setIsSharing(true)
+    try {
+      const response = await fetch('/api/vision/create-share-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: project.id })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        setShareUrl(data.shareUrl)
+        console.log('[Share] Share link created:', data.shareUrl)
+      } else {
+        throw new Error(data.error || 'Failed to create share link')
+      }
+    } catch (error) {
+      console.error('[Share] Error:', error)
+      try {
+        const { toast } = require('sonner')
+        toast.error('Failed to create share link. Please try again.')
+      } catch {}
+    } finally {
+      setIsSharing(false)
+    }
+  }
+
+  const copyToClipboard = async () => {
+    if (shareUrl) {
+      try {
+        await navigator.clipboard.writeText(shareUrl)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+        try {
+          const { toast } = require('sonner')
+          toast.success('Link copied to clipboard!')
+        } catch {}
+      } catch (error) {
+        console.error('[Copy] Error:', error)
+        try {
+          const { toast } = require('sonner')
+          toast.error('Failed to copy link. Please copy manually.')
+        } catch {}
+      }
+    }
   }
 
   const handleSaveProject = async () => {
@@ -2021,6 +2074,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     variant="outline" 
                     size="icon"
                     onClick={handleShare}
+                    disabled={isSharing}
+                    className={isSharing ? 'opacity-50' : ''}
                   >
               <Share2 className="w-4 h-4" />
             </Button>
@@ -2243,6 +2298,59 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Modal */}
+      {shareUrl && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Share Screening Room
+              </h3>
+              <button
+                onClick={() => setShareUrl(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Anyone with this link can view your Screening Room presentation. 
+              They won't need a Sceneflow account.
+            </p>
+            
+            <div className="flex items-center gap-2 mb-4">
+              <input
+                type="text"
+                value={shareUrl}
+                readOnly
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              />
+              <button
+                onClick={copyToClipboard}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-2"
+              >
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+            
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              <p>• Viewers can watch with full audio and translations</p>
+              <p>• They cannot edit or download your project</p>
+              <p>• You can disable this link anytime</p>
+            </div>
+            
+            <button
+              onClick={() => setShareUrl(null)}
+              className="w-full mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
