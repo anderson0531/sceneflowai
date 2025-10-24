@@ -83,7 +83,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       const newSet = new Set(prev)
       if (newSet.has(sceneIdx)) {
         newSet.delete(sceneIdx)
-      } else if (newSet.size < 3) {
+      } else if (newSet.size < 5) {
         newSet.add(sceneIdx)
       }
       return newSet
@@ -94,7 +94,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     const unselected = scenes
       .map((_: any, idx: number) => idx)
       .filter((idx: number) => !selectedScenes.has(idx) && !scenes[idx].imageUrl)
-      .slice(0, 3)
+      .slice(0, 5)
     
     setSelectedScenes(new Set(unselected))
   }
@@ -102,8 +102,18 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const handleGenerateBatch = async () => {
     setIsGeneratingBatch(true)
     
-    for (const sceneIdx of Array.from(selectedScenes)) {
+    const scenesToGenerate = Array.from(selectedScenes)
+    
+    for (let i = 0; i < scenesToGenerate.length; i++) {
+      const sceneIdx = scenesToGenerate[i]
+      
+      // Generate the scene
       await onGenerateSceneImage?.(sceneIdx)
+      
+      // Add 5-second delay between generations (except after the last one)
+      if (i < scenesToGenerate.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 5000))
+      }
     }
     
     setSelectedScenes(new Set())
@@ -608,7 +618,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Batch Generation</span>
               <span className="text-xs text-gray-500 dark:text-gray-400">
-                ({selectedScenes.size}/3 selected)
+                ({selectedScenes.size}/5 selected)
               </span>
             </div>
             
@@ -629,7 +639,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 onClick={selectNextFive}
                 className="text-gray-600 dark:text-gray-400"
               >
-                Select Next 3
+                Select Next 5
               </Button>
               
               <Button
@@ -652,7 +662,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           
           {selectedScenes.size > 0 && (
             <div className="text-xs text-gray-600 dark:text-gray-400">
-              💡 Tip: Generating up to 3 scenes at a time respects API quotas and provides optimal performance
+              💡 Tip: Generating up to 5 scenes at a time respects API quotas and provides optimal performance
             </div>
           )}
         </div>
@@ -767,7 +777,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   playingAudio={playingAudio}
                   isSelectedForBatch={selectedScenes.has(idx)}
                   onToggleBatchSelection={() => toggleSceneSelection(idx)}
-                  canSelectForBatch={selectedScenes.size < 3 || selectedScenes.has(idx)}
+                  canSelectForBatch={selectedScenes.size < 5 || selectedScenes.has(idx)}
                 />
               ))
             )}
