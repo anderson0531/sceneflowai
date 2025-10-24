@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
@@ -1150,6 +1150,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                         onPlayAudio?.(scene.narrationAudioUrl, 'narration')
                       }}
                       className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
+                      title="Play Narration"
                     >
                       {playingAudio === scene.narrationAudioUrl ? (
                         <Pause className="w-4 h-4" />
@@ -1157,10 +1158,35 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                         <Play className="w-4 h-4" />
                       )}
                     </button>
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        if (!onGenerateSceneAudio) return
+                        
+                        setGeneratingDialogue?.({ sceneIdx, character: '__narration__' })
+                        try {
+                          await onGenerateSceneAudio(sceneIdx, 'narration')
+                        } catch (error) {
+                          console.error('[ScriptPanel] Narration regeneration failed:', error)
+                        } finally {
+                          setGeneratingDialogue?.(null)
+                        }
+                      }}
+                      disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__'}
+                      className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded disabled:opacity-50"
+                      title="Regenerate Narration Audio"
+                    >
+                      {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__' ? (
+                        <Loader className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4" />
+                      )}
+                    </button>
                     <a
                       href={scene.narrationAudioUrl}
                       download
                       className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
+                      title="Download Narration"
                     >
                       <Download className="w-4 h-4" />
                     </a>
@@ -1255,6 +1281,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                             onPlayAudio?.(audioEntry.audioUrl, d.character)
                           }}
                           className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                          title="Play Dialogue"
                         >
                           {playingAudio === audioEntry.audioUrl ? (
                             <Pause className="w-4 h-4" />
@@ -1262,10 +1289,35 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                             <Play className="w-4 h-4" />
                           )}
                         </button>
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation()
+                            if (!onGenerateSceneAudio) return
+                            
+                            setGeneratingDialogue?.({ sceneIdx, character: d.character })
+                            try {
+                              await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character)
+                            } catch (error) {
+                              console.error('[ScriptPanel] Dialogue regeneration failed:', error)
+                            } finally {
+                              setGeneratingDialogue?.(null)
+                            }
+                          }}
+                          disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character}
+                          className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-50"
+                          title="Regenerate Dialogue Audio"
+                        >
+                          {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character ? (
+                            <Loader className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <RefreshCw className="w-4 h-4" />
+                          )}
+                        </button>
                         <a
                           href={audioEntry.audioUrl}
                           download
                           className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                          title="Download Dialogue"
                         >
                           <Download className="w-4 h-4" />
                         </a>

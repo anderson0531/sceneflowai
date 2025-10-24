@@ -117,6 +117,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     dialogueCount?: number
   } | null>(null)
   
+  // Generation lock mechanism to prevent race conditions
+  const [generatingAudioLocks, setGeneratingAudioLocks] = useState<Set<string>>(new Set())
+  
   // Image quality setting
   const [imageQuality, setImageQuality] = useState<'max' | 'auto'>('auto')
   const [ttsProvider, setTtsProvider] = useState<'google' | 'elevenlabs'>('google')
@@ -1597,15 +1600,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   // Handle generate scene audio
   const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string) => {
-    console.log('[Generate Scene Audio] Button clicked!', { sceneIdx, audioType, characterName })
-    console.log('[Generate Scene Audio] Called with:', { sceneIdx, audioType, characterName })
-    console.log('[Generate Scene Audio] Current narrationVoice:', narrationVoice)
-    console.log('[Generate Scene Audio] Current characters:', characters.map(c => ({ name: c.name, hasVoice: !!c.voiceConfig })))
+    console.log('[Generate Scene Audio] START:', { sceneIdx, audioType, characterName })
     
     const scene = script?.script?.scenes?.[sceneIdx]
-    if (!scene) return
+    if (!scene) {
+      console.error('[Generate Scene Audio] Scene not found')
+      return
+    }
+
+    // Add a lock mechanism to prevent concurrent dialogue generations
+    const lockKey = `${sceneIdx}-${characterName || 'narration'}`
+    if (generatingAudioLocks.has(lockKey)) {
+      console.warn('[Generate Scene Audio] Already generating for:', lockKey)
+      return
+    }
+    
+    setGeneratingAudioLocks(prev => new Set(prev).add(lockKey))
 
     try {
+      // Critical: Ensure character name is passed for dialogue
+      if (audioType === 'dialogue' && !characterName) {
+        console.error('[Generate Scene Audio] Character name required for dialogue')
+        throw new Error('Character name required for dialogue generation')
+      }
       const dialogueLine = audioType === 'dialogue' ? 
         scene.dialogue?.find((d: any) => d.character === characterName) : null
       
@@ -1684,6 +1701,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return
       }
 
+      console.log('[Generate Scene Audio] API Request:', {
+        projectId,
+        sceneIndex: sceneIdx,
+        audioType,
+        text: text.substring(0, 50),
+        voiceId: voiceConfig.voiceId,
+        characterName // CRITICAL: Must be passed
+      })
+
       const response = await fetch('/api/vision/generate-scene-audio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1759,6 +1785,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     } catch (error) {
       console.error('[Generate Scene Audio] Error:', error)
       try { const { toast } = require('sonner'); toast.error('Failed to generate audio') } catch {}
+    } finally {
+      // Clean up the lock
+      setGeneratingAudioLocks(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(lockKey)
+        return newSet
+      })
     }
   }
 
