@@ -6,8 +6,9 @@ export const dynamic = 'force-dynamic'
 const GOOGLE_VOICES = [
   // Studio voices (Premium quality - ElevenLabs comparable)
   { name: 'en-US-Studio-O', languageCode: 'en-US', gender: 'FEMALE', type: 'Studio', displayName: 'Sophia (Studio)' },
-  { name: 'en-US-Studio-Q', languageCode: 'en-US', gender: 'FEMALE', type: 'Studio', displayName: 'Emma (Studio)' },
+  { name: 'en-US-Neural2-C', languageCode: 'en-US', gender: 'FEMALE', type: 'Neural2', displayName: 'Emma (Neural2)' },
   { name: 'en-US-Studio-M', languageCode: 'en-US', gender: 'MALE', type: 'Studio', displayName: 'Marcus (Studio)' },
+  { name: 'en-US-Studio-Q', languageCode: 'en-US', gender: 'MALE', type: 'Studio', displayName: 'Quinn (Studio)' },
 ]
 
 export async function GET(_req: NextRequest) {

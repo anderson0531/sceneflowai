@@ -1586,16 +1586,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       const voiceConfig = audioType === 'narration' ? narrationVoice : character?.voiceConfig
 
-      // DEBUG: Character lookup and voice config analysis
-      console.log('[DEBUG] Character lookup:', {
-        audioType,
-        characterName,
-        foundCharacter: character,
-        characterVoiceConfig: character?.voiceConfig,
-        narrationVoice,
-        finalVoiceConfig: voiceConfig
-      })
-
       console.log('[Generate Scene Audio] Voice config determined:', { voiceConfig, audioType })
 
       if (!voiceConfig) {
