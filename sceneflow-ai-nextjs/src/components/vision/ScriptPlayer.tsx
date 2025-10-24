@@ -138,6 +138,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           audioRef.current.volume = playerState.volume
           
           await audioRef.current.play()
+          setIsLoadingAudio(false) // ✅ Clear immediately after play starts
           
           // Wait for narration to finish
           await new Promise<void>((resolve) => {
@@ -173,8 +174,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
             }
           }
         }
-        
-        setIsLoadingAudio(false)
         
         // Auto-advance to next scene (only if still playing)
         if (playerState.isPlaying) {
