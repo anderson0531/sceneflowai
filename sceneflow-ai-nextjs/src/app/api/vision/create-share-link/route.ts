@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://sceneflow.ai'}/share/screening-room/${shareToken}`
+    const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://sceneflow-ai-nextjs.vercel.app'}/share/screening-room/${shareToken}`
 
     console.log(`[Create Share Link] Created share link for project ${projectId}: ${shareUrl}`)
 
