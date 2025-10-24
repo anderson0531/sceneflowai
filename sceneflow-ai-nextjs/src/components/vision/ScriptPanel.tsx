@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
@@ -609,7 +609,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 </div>
               </div>
               
-              <div className="grid grid-cols-3 gap-4 text-sm">
+              <div className="grid grid-cols-5 gap-3 text-sm">
                 <div>
                   <span className="text-gray-500 dark:text-gray-400">Duration</span>
                   <div className="font-medium text-gray-900 dark:text-gray-100">
@@ -626,6 +626,20 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   <span className="text-gray-500 dark:text-gray-400">Avg Scene</span>
                   <div className="font-medium text-gray-900 dark:text-gray-100">
                     {scenes.length > 0 ? Math.floor((script.totalDuration || 0) / scenes.length) : 0}s
+                  </div>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Images</span>
+                  <div className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>{scenes.filter((s: any) => s.imageUrl).length}/{scenes.length}</span>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Audio</span>
+                  <div className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
+                    <Volume2 className="w-3.5 h-3.5" />
+                    <span>{scenes.filter((s: any) => s.narrationAudio).length}/{scenes.length}</span>
                   </div>
                 </div>
               </div>
@@ -838,6 +852,34 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
         <div className="flex items-center gap-2">
           <ChevronRight className={`w-4 h-4 transition-transform text-gray-500 dark:text-gray-400 ${isOpen ? 'rotate-90' : ''}`} />
           <span className="text-sm font-medium text-gray-900 dark:text-gray-100">SCENE {sceneNumber}</span>
+          
+          {/* Asset Indicators */}
+          <div className="flex items-center gap-1">
+            {/* Image Indicator */}
+            <div 
+              className={`flex items-center justify-center w-5 h-5 rounded ${
+                scene.imageUrl 
+                  ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
+              }`}
+              title={scene.imageUrl ? 'Scene image generated' : 'No scene image'}
+            >
+              <Camera className="w-3 h-3" />
+            </div>
+            
+            {/* Audio Indicator */}
+            <div 
+              className={`flex items-center justify-center w-5 h-5 rounded ${
+                scene.narrationAudio 
+                  ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
+              }`}
+              title={scene.narrationAudio ? 'Scene audio generated' : 'No scene audio'}
+            >
+              <Volume2 className="w-3 h-3" />
+            </div>
+          </div>
+          
           {scene.heading && (
             <span className="text-sm text-gray-600 dark:text-gray-400">{scene.heading}</span>
           )}
