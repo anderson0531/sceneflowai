@@ -64,6 +64,13 @@ export function findMatchingCharacter(
   return bestMatch
 }
 
+// Add exclusion list for common titles/words
+const EXCLUDED_WORDS = new Set([
+  'dr', 'doctor', 'mr', 'mrs', 'ms', 'miss', 'prof', 'professor',
+  'captain', 'lieutenant', 'sergeant', 'officer', 'detective',
+  'the', 'and', 'but', 'or', 'a', 'an', 'in', 'on', 'at', 'to', 'from'
+])
+
 /**
  * Find all matching characters for a scene
  */
@@ -76,31 +83,39 @@ export function findSceneCharacters(
   const foundCharacters = new Set<Character>()
   const normalized = sceneText.toLowerCase()
 
-  // Extract potential character references from scene text
-  // Look for capitalized names or character names in dialogue
-  const potentialNames = new Set<string>()
-  
-  // Pattern 1: All caps words (BRIAN, ANDERSON)
-  const capsWords = sceneText.match(/\b[A-Z]{2,}\b/g) || []
-  capsWords.forEach(word => potentialNames.add(word))
-  
-  // Pattern 2: Capitalized words (Brian, Anderson)
-  const capWords = sceneText.match(/\b[A-Z][a-z]+\b/g) || []
-  capWords.forEach(word => potentialNames.add(word))
-  
-  // Pattern 3: Check for full character names in text
+  // Strategy 1: Match FULL character names only (highest confidence)
   availableCharacters.forEach(char => {
-    if (normalized.includes(char.name.toLowerCase())) {
+    const fullName = char.name.toLowerCase()
+    if (normalized.includes(fullName)) {
       foundCharacters.add(char)
     }
   })
 
-  // Match potential names to characters
-  potentialNames.forEach(name => {
-    const match = findMatchingCharacter(name, availableCharacters)
-    if (match) foundCharacters.add(match)
-  })
+  // Strategy 2: Match dialogue attributions (e.g., "BRIAN:" or "Brian:")
+  const dialoguePattern = /^([A-Z][A-Za-z\s]+):/gm
+  const dialogueMatches = sceneText.matchAll(dialoguePattern)
+  
+  for (const match of dialogueMatches) {
+    const speakerName = match[1].trim()
+    const character = findMatchingCharacter(speakerName, availableCharacters)
+    if (character) foundCharacters.add(character)
+  }
 
+  // Strategy 3: Only if no matches found, try first names (with exclusions)
+  if (foundCharacters.size === 0) {
+    availableCharacters.forEach(char => {
+      const firstName = char.name.split(/\s+/)[0].toLowerCase()
+      
+      // Skip if excluded word or too short
+      if (EXCLUDED_WORDS.has(firstName) || firstName.length < 3) return
+      
+      // Only match if first name appears as standalone word
+      const wordBoundaryRegex = new RegExp(`\\b${firstName}\\b`, 'i')
+      if (wordBoundaryRegex.test(sceneText)) {
+        foundCharacters.add(char)
+      }
+    })
+  }
 
   return Array.from(foundCharacters)
 }

@@ -65,12 +65,49 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // Warning expansion state - track which scene warnings are expanded
   const [warningExpanded, setWarningExpanded] = useState<Record<number, boolean>>({})
   
+  // Batch selection state
+  const [selectedScenes, setSelectedScenes] = useState<Set<number>>(new Set())
+  const [isGeneratingBatch, setIsGeneratingBatch] = useState(false)
+  
   // Toggle warning expansion for a specific scene
   const toggleWarningExpanded = (sceneIdx: number) => {
     setWarningExpanded(prev => ({
       ...prev,
       [sceneIdx]: !prev[sceneIdx]
     }))
+  }
+  
+  // Batch selection handlers
+  const toggleSceneSelection = (sceneIdx: number) => {
+    setSelectedScenes(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(sceneIdx)) {
+        newSet.delete(sceneIdx)
+      } else if (newSet.size < 5) {
+        newSet.add(sceneIdx)
+      }
+      return newSet
+    })
+  }
+
+  const selectNextFive = () => {
+    const unselected = scenes
+      .map((_: any, idx: number) => idx)
+      .filter((idx: number) => !selectedScenes.has(idx) && !scenes[idx].imageUrl)
+      .slice(0, 5)
+    
+    setSelectedScenes(new Set(unselected))
+  }
+
+  const handleGenerateBatch = async () => {
+    setIsGeneratingBatch(true)
+    
+    for (const sceneIdx of Array.from(selectedScenes)) {
+      await onGenerateSceneImage?.(sceneIdx)
+    }
+    
+    setSelectedScenes(new Set())
+    setIsGeneratingBatch(false)
   }
   
   // Set warnings as expanded by default when they first appear
@@ -564,6 +601,63 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         </div>
       </div>
       
+      {/* Batch Generation Controls */}
+      {scenes.length > 0 && (
+        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Batch Generation</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ({selectedScenes.size}/5 selected)
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setSelectedScenes(new Set())}
+                disabled={selectedScenes.size === 0}
+                className="text-gray-600 dark:text-gray-400"
+              >
+                Clear Selection
+              </Button>
+              
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={selectNextFive}
+                className="text-gray-600 dark:text-gray-400"
+              >
+                Select Next 5
+              </Button>
+              
+              <Button
+                size="sm"
+                onClick={handleGenerateBatch}
+                disabled={selectedScenes.size === 0 || isGeneratingBatch}
+                className="bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50"
+              >
+                {isGeneratingBatch ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin mr-2" />
+                    Generating...
+                  </>
+                ) : (
+                  <>Generate {selectedScenes.size} Scene{selectedScenes.size !== 1 ? 's' : ''}</>
+                )}
+              </Button>
+            </div>
+          </div>
+          
+          {selectedScenes.size > 0 && (
+            <div className="text-xs text-gray-600 dark:text-gray-400">
+              💡 Tip: Generating up to 5 scenes at a time respects API quotas and provides optimal performance
+            </div>
+          )}
+        </div>
+      )}
+      
       {/* Script Content */}
       <div className="flex-1 overflow-y-auto">
         {!script || isGenerating ? (
@@ -671,6 +765,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   onPlayAudio={handlePlayAudio}
                   onGenerateSceneAudio={onGenerateSceneAudio}
                   playingAudio={playingAudio}
+                  isSelectedForBatch={selectedScenes.has(idx)}
+                  onToggleBatchSelection={() => toggleSceneSelection(idx)}
+                  canSelectForBatch={selectedScenes.size < 5 || selectedScenes.has(idx)}
                 />
               ))
             )}
@@ -774,9 +871,13 @@ interface SceneCardProps {
   onPlayAudio?: (audioUrl: string, label: string) => void
   onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string) => void
   playingAudio?: string | null
+  // Batch selection props
+  isSelectedForBatch?: boolean
+  onToggleBatchSelection?: () => void
+  canSelectForBatch?: boolean
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio }: SceneCardProps) {
+function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, isSelectedForBatch, onToggleBatchSelection, canSelectForBatch }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
   
@@ -827,6 +928,16 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
         className="flex items-center justify-between cursor-pointer mb-3"
       >
         <div className="flex items-center gap-2">
+          {onToggleBatchSelection && (
+            <input
+              type="checkbox"
+              checked={isSelectedForBatch || false}
+              onChange={onToggleBatchSelection}
+              disabled={!canSelectForBatch}
+              className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 disabled:opacity-50"
+              onClick={(e) => e.stopPropagation()}
+            />
+          )}
           <ChevronRight className={`w-4 h-4 transition-transform text-gray-500 dark:text-gray-400 ${isOpen ? 'rotate-90' : ''}`} />
           <span className="text-sm font-medium text-gray-900 dark:text-gray-100">SCENE {sceneNumber}</span>
           {scene.heading && (
@@ -883,20 +994,6 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                 title="Open prompt builder"
               >
                 <Wand2 className="w-3 h-3" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleGenerateImage}
-                disabled={isGeneratingImage}
-                className="h-6 w-6 p-0 text-gray-500 hover:text-purple-600 hover:bg-purple-50 dark:text-gray-400 dark:hover:text-purple-400 dark:hover:bg-purple-900/20"
-                title={scene.imageUrl ? "Regenerate scene image" : "Generate scene image"}
-              >
-                {isGeneratingImage ? (
-                  <Loader className="w-3 h-3 animate-spin" />
-                ) : (
-                  <ImageIcon className="w-3 h-3" />
-                )}
               </Button>
             </>
           )}
