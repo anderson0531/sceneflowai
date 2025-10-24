@@ -5,6 +5,7 @@ import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as 
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { getCuratedElevenVoices, type CuratedVoice } from '@/lib/tts/voices'
 import { ScenePromptBuilder } from './ScenePromptBuilder'
 import ScenePromptDrawer from './ScenePromptDrawer'
@@ -39,9 +40,13 @@ interface ScriptPanelProps {
   onDismissValidationWarning?: (sceneIdx: number) => void
   onPlayAudio?: (audioUrl: string, label: string) => void
   onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string) => void
+  // NEW: Props for Production Script Header
+  onGenerateAllAudio?: () => void
+  isGeneratingAudio?: boolean
+  onPlayScript?: () => void
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [editMode, setEditMode] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -565,6 +570,52 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         </div>
       </div>
       
+      {/* Production Script Header */}
+      {script && !editMode && (
+        <div className="border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50">
+          <div className="flex items-center gap-2">
+            <FileText className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Production Script</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={onGenerateAllAudio}
+                    disabled={isGeneratingAudio}
+                    size="icon"
+                    variant="outline"
+                  >
+                    <Volume2 className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isGeneratingAudio ? 'Generating Audio...' : 'Generate All Audio'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={onPlayScript}
+                    disabled={!script || !scenes || scenes.length === 0}
+                  >
+                    <Play className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Play Full Script</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+      )}
       
       {/* Script Content */}
       <div className="flex-1 overflow-y-auto">
@@ -609,7 +660,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 </div>
               </div>
               
-              <div className="grid grid-cols-5 gap-3 text-sm">
+              <div className="grid grid-cols-6 gap-3 text-sm">
                 <div>
                   <span className="text-gray-500 dark:text-gray-400">Duration</span>
                   <div className="font-medium text-gray-900 dark:text-gray-100">
@@ -636,10 +687,17 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   </div>
                 </div>
                 <div>
-                  <span className="text-gray-500 dark:text-gray-400">Audio</span>
+                  <span className="text-gray-500 dark:text-gray-400">Voice</span>
                   <div className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
                     <Volume2 className="w-3.5 h-3.5" />
                     <span>{scenes.filter((s: any) => s.narrationAudio).length}/{scenes.length}</span>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Sound</span>
+                  <div className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
+                    <Music className="w-3.5 h-3.5" />
+                    <span>{scenes.filter((s: any) => s.musicAudio).length}/{scenes.length}</span>
                   </div>
                 </div>
               </div>
@@ -867,16 +925,28 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
               <Camera className="w-3 h-3" />
             </div>
             
-            {/* Audio Indicator */}
+            {/* Voice Indicator (Narration/Dialogue) */}
             <div 
               className={`flex items-center justify-center w-5 h-5 rounded ${
                 scene.narrationAudio 
                   ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
               }`}
-              title={scene.narrationAudio ? 'Scene audio generated' : 'No scene audio'}
+              title={scene.narrationAudio ? 'Voice audio generated' : 'No voice audio'}
             >
               <Volume2 className="w-3 h-3" />
+            </div>
+            
+            {/* Sound Indicator (SFX/Music) */}
+            <div 
+              className={`flex items-center justify-center w-5 h-5 rounded ${
+                scene.musicAudio 
+                  ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
+              }`}
+              title={scene.musicAudio ? 'Sound/Music generated' : 'No sound/music'}
+            >
+              <Music className="w-3 h-3" />
             </div>
           </div>
           

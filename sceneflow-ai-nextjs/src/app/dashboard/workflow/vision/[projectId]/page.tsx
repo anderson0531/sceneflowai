@@ -1913,57 +1913,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-            <Button 
-                    onClick={handleGenerateAllAudio}
-                    disabled={isGeneratingAudio}
-                    size="icon"
-              variant="outline" 
-                  >
-                    <Volume2 className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{isGeneratingAudio ? 'Generating Audio...' : 'Generate All Audio'}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    onClick={handleGenerateAllImages}
-                    disabled={isGeneratingAllImages || !script?.script?.scenes}
-                    size="icon"
-                    variant="outline"
-                  >
-                    <ImageIcon className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{isGeneratingAllImages ? 'Generating Images...' : 'Generate All Images'}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    onClick={() => setIsPlayerOpen(true)}
-                    disabled={!script || !script.script?.scenes || script.script.scenes.length === 0}
-                  >
-                    <Play className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Play Full Script</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
                   <Button 
                     variant="outline" 
                     size="icon"
@@ -2014,6 +1963,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             validationInfo={validationInfo}
             onDismissValidationWarning={handleDismissValidationWarning}
             onGenerateSceneAudio={handleGenerateSceneAudio}
+            onGenerateAllAudio={handleGenerateAllAudio}
+            isGeneratingAudio={isGeneratingAudio}
+            onPlayScript={() => setIsPlayerOpen(true)}
           />
         </div>
         
