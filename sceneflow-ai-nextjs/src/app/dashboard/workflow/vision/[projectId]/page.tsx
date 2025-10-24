@@ -269,7 +269,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         dismissed: true
       }
     }))
-    console.log(`[Validation] Warning dismissed for scene ${sceneIdx}`)
   }
 
   useEffect(() => {
@@ -603,11 +602,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projectId: proj.id }),
       })
-
+      
       if (!response.ok) {
         throw new Error('Script generation failed')
       }
-
+      
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
 
@@ -942,9 +941,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       
       // Update character with the Blob URL and analysis results
-      const updatedCharacters = characters.map(char => {
-        const charId = char.id || characters.indexOf(char).toString()
-        return charId === characterId 
+        const updatedCharacters = characters.map(char => {
+          const charId = char.id || characters.indexOf(char).toString()
+          return charId === characterId 
           ? { 
               ...char, 
               referenceImage: blobUrl,  // Vercel Blob URL for UI display
@@ -962,10 +961,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 keyFeature: analysisData.keyFeature || char.keyFeature
               } : {})
             }
-          : char
-      })
-      
-      setCharacters(updatedCharacters)
+            : char
+        })
+        
+        setCharacters(updatedCharacters)
       
       console.log('[Character Upload] Updated character details:', updatedCharacters.map(c => ({
         name: c.name,
@@ -974,36 +973,36 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         gcsUrl: c.referenceImageGCS?.substring(0, 50) || 'none',
         hasAppearanceDesc: !!c.appearanceDescription
       })))
-      
-      // Persist to project metadata
-      try {
-        const existingMetadata = project?.metadata || {}
-        const existingVisionPhase = existingMetadata.visionPhase || {}
         
-        await fetch(`/api/projects`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: projectId,
-            metadata: {
-              ...existingMetadata,
-              visionPhase: {
-                ...existingVisionPhase,
-                characters: updatedCharacters
+        // Persist to project metadata
+        try {
+          const existingMetadata = project?.metadata || {}
+          const existingVisionPhase = existingMetadata.visionPhase || {}
+          
+          await fetch(`/api/projects`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: projectId,
+              metadata: {
+                ...existingMetadata,
+                visionPhase: {
+                  ...existingVisionPhase,
+                  characters: updatedCharacters
+                }
               }
-            }
+            })
           })
-        })
         console.log('[Character Upload] ✓ Saved to project metadata with GCS URL')
         
         // Reload project to ensure fresh character data is available for scene generation
         console.log('[Character Upload] Reloading project to refresh character data...')
         await loadProject()
         console.log('[Character Upload] ✓ Project reloaded with fresh character data')
-      } catch (saveError) {
-        console.error('Failed to save uploaded character to project:', saveError)
-      }
-      
+        } catch (saveError) {
+          console.error('Failed to save uploaded character to project:', saveError)
+        }
+        
       setUploadingRef(prev => ({ ...prev, [characterId]: false }))
       
       const successMessage = analysisData?.success 
@@ -1169,7 +1168,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               }
             })
           })
-          console.log('[Scene Image] Saved to project metadata')
         } catch (saveError) {
           console.error('Failed to save scene to project:', saveError)
         }
@@ -1313,33 +1311,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
     
     try {
-      console.log('[Scene Image] handleGenerateSceneImage called with:', {
-        sceneIdx,
-        selectedCharactersCount: selectedCharacters?.length || 0,
-        selectedCharactersAreObjects: selectedCharacters?.[0] && typeof selectedCharacters[0] === 'object',
-        selectedCharactersRaw: JSON.stringify(selectedCharacters).substring(0, 500)
-      })
-      
       // Check if selectedCharacters are already full objects (from Scene Prompt Builder)
       let sceneCharacters: any[] = []
       
       if (selectedCharacters && selectedCharacters.length > 0) {
         // Check if they're already full character objects
         if (typeof selectedCharacters[0] === 'object' && selectedCharacters[0].name) {
-          console.log('[Scene Image] Using pre-selected character objects from Scene Prompt Builder')
           sceneCharacters = selectedCharacters
         } else {
           // They're character names (strings), need to map to full objects
-          console.log('[Scene Image] Mapping character names to full objects')
           sceneCharacters = selectedCharacters.map((charName: string) => {
-            const char = characters.find((c: any) => c.name === charName)
+        const char = characters.find((c: any) => c.name === charName)
             return char || null
           }).filter(Boolean)
         }
       } else {
         // Auto-detect characters from scene using smart matching
-        console.log('[Scene Image] Auto-detecting characters from scene')
-        
         // Use smart matching to find characters in scene
         const sceneText = [
           scene.heading || '',
@@ -1349,30 +1336,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         ].join(' ')
         
         sceneCharacters = findSceneCharacters(sceneText, characters)
-        
-        console.log('[Scene Image] Auto-detected characters:', 
-          sceneCharacters.map(c => c.name).join(', ')
-        )
       }
-      
-      console.log('[Scene Image] Final sceneCharacters array:', sceneCharacters.map((c: any) => ({
-        name: c.name,
-        hasGCS: !!c.referenceImageGCS,
-        hasAppearance: !!c.appearanceDescription
-      })))
-      
-      console.log('[Scene Image] sceneCharacters FULL objects:', sceneCharacters.map(c => ({
-        name: c?.name,
-        id: c?.id,
-        hasId: c?.id !== undefined && c?.id !== null,
-        allKeys: c ? Object.keys(c) : []
-      })))
-      
-      console.log('[Scene Image] About to send to API:', {
-        characterIds: sceneCharacters.map(c => c?.id || 'NULL'),
-        characterNames: sceneCharacters.map(c => c?.name || 'NULL'),
-        hasNulls: sceneCharacters.some(c => c === null)
-      })
       
       const response = await fetch('/api/scene/generate-image', {
         method: 'POST',

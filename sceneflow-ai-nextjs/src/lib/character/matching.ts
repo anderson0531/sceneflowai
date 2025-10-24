@@ -11,10 +11,6 @@ export function findMatchingCharacter(
   searchName: string,
   availableCharacters: Character[]
 ): Character | null {
-  console.log(`[Character Matching] Searching for: "${searchName}"`)
-  console.log(`[Character Matching] Available characters:`, 
-    availableCharacters.map(c => `${c.name} (${c.role || 'no role'})`).join(', ')
-  )
 
   if (!searchName || availableCharacters.length === 0) return null
 
@@ -25,7 +21,6 @@ export function findMatchingCharacter(
     c => c.name.toLowerCase() === normalized
   )
   if (exactMatch) {
-    console.log(`[Character Matching] ✓ Exact match: "${searchName}" → "${exactMatch.name}"`)
     return exactMatch
   }
 
@@ -44,11 +39,9 @@ export function findMatchingCharacter(
   let matches = fullNameMatches.length > 0 ? fullNameMatches : firstNameMatches
   
   if (matches.length === 0) {
-    console.log(`[Character Matching] ✗ No match found for "${searchName}"`)
     return null
   }
   if (matches.length === 1) {
-    console.log(`[Character Matching] ✓ Single match: "${searchName}" → "${matches[0].name}"`)
     return matches[0]
   }
   
@@ -61,7 +54,6 @@ export function findMatchingCharacter(
       c.role?.toLowerCase() === role
     )
     if (roleMatch) {
-      console.log(`[Character Matching] ✓ Role-based match: "${searchName}" → "${roleMatch.name}" (${roleMatch.role})`)
       return roleMatch
     }
   }
@@ -69,7 +61,6 @@ export function findMatchingCharacter(
   // If no role-based priority, return the first match with longest name
   // (assumes more specific name is more likely correct: "Brian Anderson Sr" over "Brian")
   const bestMatch = matches.sort((a, b) => b.name.length - a.name.length)[0]
-  console.log(`[Character Matching] ✓ Length-based match: "${searchName}" → "${bestMatch.name}" (longest name)`)
   return bestMatch
 }
 
@@ -110,9 +101,6 @@ export function findSceneCharacters(
     if (match) foundCharacters.add(match)
   })
 
-  console.log(`[Character Matching] Found ${foundCharacters.size} characters in scene:`, 
-    Array.from(foundCharacters).map(c => c.name).join(', ')
-  )
 
   return Array.from(foundCharacters)
 }
