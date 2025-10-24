@@ -64,6 +64,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [playingAudio, setPlayingAudio] = useState<string | null>(null)
   const individualAudioRef = useRef<HTMLAudioElement | null>(null)
   
+  // Dialogue generation state
+  const [generatingDialogue, setGeneratingDialogue] = useState<{sceneIdx: number, character: string} | null>(null)
+  
   // Image generation state
   const [generatingImageForScene, setGeneratingImageForScene] = useState<number | null>(null)
   
@@ -745,6 +748,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   onPlayAudio={handlePlayAudio}
                   onGenerateSceneAudio={onGenerateSceneAudio}
                   playingAudio={playingAudio}
+                  generatingDialogue={generatingDialogue}
+                  setGeneratingDialogue={setGeneratingDialogue}
                 />
               ))
             )}
@@ -848,9 +853,11 @@ interface SceneCardProps {
   onPlayAudio?: (audioUrl: string, label: string) => void
   onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string) => void
   playingAudio?: string | null
+  generatingDialogue?: {sceneIdx: number, character: string} | null
+  setGeneratingDialogue?: (state: {sceneIdx: number, character: string} | null) => void
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio }: SceneCardProps) {
+function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
   
@@ -1265,14 +1272,36 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                       </div>
                     ) : (
                       <button
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           e.stopPropagation()
                           console.log('[ScriptPanel] Generate dialogue clicked:', { sceneIdx, character: d.character })
-                          onGenerateSceneAudio?.(sceneIdx, 'dialogue', d.character)
+                          
+                          if (!onGenerateSceneAudio) {
+                            console.error('[ScriptPanel] onGenerateSceneAudio is not defined!')
+                            return
+                          }
+                          
+                          setGeneratingDialogue?.({ sceneIdx, character: d.character })
+                          
+                          try {
+                            await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character)
+                          } catch (error) {
+                            console.error('[ScriptPanel] Dialogue generation failed:', error)
+                          } finally {
+                            setGeneratingDialogue?.(null)
+                          }
                         }}
-                        className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
+                        disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character}
+                        className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50"
                       >
-                        Generate
+                        {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character ? (
+                          <div className="flex items-center gap-1">
+                            <Loader className="w-3 h-3 animate-spin" />
+                            Generating...
+                          </div>
+                        ) : (
+                          'Generate'
+                        )}
                       </button>
                     )}
                   </div>

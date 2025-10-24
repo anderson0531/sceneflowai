@@ -16,6 +16,17 @@ import { Save, Share2, ArrowRight, Play, Volume2, Image as ImageIcon } from 'luc
 import { findSceneCharacters } from '../../../../../lib/character/matching'
 import { v4 as uuidv4 } from 'uuid'
 
+// Helper function to normalize character names by removing screenplay annotations
+const normalizeCharacterName = (name: string): string => {
+  if (!name) return ''
+  
+  // Remove common screenplay annotations:
+  // (V.O.), (O.S.), (CONT'D), (V.O. - from video), etc.
+  return name
+    .replace(/\s*\([^)]*\)\s*/g, '') // Remove anything in parentheses
+    .trim()
+}
+
 interface VoiceConfig {
   provider: 'elevenlabs' | 'google'
   voiceId: string
@@ -1606,12 +1617,47 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       // Primary: Match by ID (most reliable)
-      // Fallback: Case-insensitive name (for legacy projects)
+      // Fallback: Case-insensitive name with normalization (for legacy projects)
       const character = audioType === 'narration' ? null :
         (dialogueLine?.characterId ? 
           characters.find(c => c.id === dialogueLine.characterId) :
-          characters.find(c => c.name.toLowerCase() === characterName?.toLowerCase())
+          // Use normalized names for matching
+          characters.find(c => 
+            normalizeCharacterName(c.name.toLowerCase()) === normalizeCharacterName(characterName?.toLowerCase() || '')
+          )
         )
+
+      // ADD: Debug logging with normalized names
+      if (audioType === 'dialogue') {
+        const normalizedSearchName = normalizeCharacterName(characterName || '')
+        console.log('[Generate Scene Audio] Character lookup:', {
+          originalName: characterName,
+          normalizedName: normalizedSearchName,
+          dialogueCharacterId: dialogueLine?.characterId,
+          foundCharacter: character ? { id: character.id, name: character.name } : null,
+          hasVoiceConfig: !!character?.voiceConfig,
+          allCharacters: characters.map(c => ({ 
+            id: c.id, 
+            name: c.name, 
+            normalizedName: normalizeCharacterName(c.name),
+            hasVoice: !!c.voiceConfig 
+          }))
+        })
+        
+        if (!character) {
+          console.error('[Generate Scene Audio] Character not found after normalization:', {
+            original: characterName,
+            normalized: normalizedSearchName
+          })
+          try { 
+            const { toast } = require('sonner')
+            toast.error(`Character "${normalizedSearchName}" not found. Please check character names match in Character Library.`, {
+              duration: 8000
+            })
+          } catch {}
+          return
+        }
+      }
       
       const voiceConfig = audioType === 'narration' ? narrationVoice : character?.voiceConfig
 
@@ -1620,11 +1666,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (!voiceConfig) {
         // Show specific error message based on audio type
         if (audioType === 'narration') {
-          console.log('[Generate Scene Audio] No narration voice found - showing error toast')
-          try { const { toast } = require('sonner'); toast.error('Please select a narration voice first') } catch {}
+          console.error('[Generate Scene Audio] No narration voice configured')
+          try { 
+            const { toast } = require('sonner')
+            toast.error('Please select a narration voice in the sidebar before generating audio')
+          } catch {}
         } else {
-          console.log('[Generate Scene Audio] No character voice found - showing error toast')
-          try { const { toast } = require('sonner'); toast.error(`Please assign a voice to character "${characterName}" in the Character Library`) } catch {}
+          const normalizedName = normalizeCharacterName(characterName || '')
+          console.error('[Generate Scene Audio] No voice configured for character:', normalizedName)
+          try { 
+            const { toast } = require('sonner')
+            toast.error(`No voice assigned to ${normalizedName}. Please assign a voice in the Character Library.`, {
+              duration: 8000
+            })
+          } catch {}
         }
         return
       }
