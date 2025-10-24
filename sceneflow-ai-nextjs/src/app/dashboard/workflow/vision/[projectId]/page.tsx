@@ -1432,9 +1432,37 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       })
       
       try { const { toast } = require('sonner'); toast.success('Scene image generated!') } catch {}
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to generate scene image:', error)
-      try { const { toast } = require('sonner'); toast.error('Failed to generate image') } catch {}
+      
+      // Check for quota error
+      if (error.message?.includes('quota') || error.message?.includes('RESOURCE_EXHAUSTED')) {
+        try { 
+          const { toast } = require('sonner')
+          toast.error(
+            <div className="space-y-2">
+              <div className="font-semibold">Image Generation Quota Exceeded</div>
+              <div className="text-sm">
+                Google Cloud has rate limits on image generation. Please:
+              </div>
+              <ul className="text-sm list-disc pl-4 space-y-1">
+                <li>Wait 30-60 seconds before trying again</li>
+                <li>Generate one scene at a time</li>
+                <li>Consider using Auto quality for faster generation</li>
+              </ul>
+              <button 
+                onClick={() => handleGenerateSceneImage(sceneIdx)}
+                className="mt-2 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded"
+              >
+                Retry Generation
+              </button>
+            </div>,
+            { duration: 10000, position: 'top-center' }
+          )
+        } catch {}
+      } else {
+        try { const { toast } = require('sonner'); toast.error(`Failed to generate scene image: ${error.message}`) } catch {}
+      }
     }
   }
 
