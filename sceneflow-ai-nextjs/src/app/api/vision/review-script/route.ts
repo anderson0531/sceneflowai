@@ -130,17 +130,32 @@ Format as JSON with this exact structure:
   )
 
   if (!response.ok) {
+    const errorText = await response.text()
+    console.error('[Director Review] API error:', response.status, errorText)
     throw new Error(`Gemini API error: ${response.status}`)
   }
 
   const data = await response.json()
+  
+  // Log the full response structure for debugging
+  console.log('[Director Review] Full API response:', JSON.stringify(data, null, 2))
+  console.log('[Director Review] Candidates:', data.candidates)
+  console.log('[Director Review] First candidate:', data.candidates?.[0])
+  
+  // Check for safety ratings or blocked content
+  if (data.candidates?.[0]?.finishReason === 'SAFETY') {
+    console.error('[Director Review] Content blocked by safety filters:', data.candidates[0].safetyRatings)
+    throw new Error('Content blocked by safety filters. Please try with different script content.')
+  }
+  
   const reviewText = data.candidates?.[0]?.content?.parts?.[0]?.text
 
   if (!reviewText) {
-    throw new Error('No review generated')
+    console.error('[Director Review] No text in response. Full candidate:', JSON.stringify(data.candidates?.[0], null, 2))
+    throw new Error('No review generated - empty response from Gemini')
   }
 
-  console.log('[Director Review] Raw response:', reviewText.substring(0, 200))
+  console.log('[Director Review] Raw response text:', reviewText.substring(0, 200))
 
   // Extract JSON from markdown code blocks if present
   let jsonText = reviewText.trim()
@@ -237,17 +252,32 @@ Format as JSON with this exact structure:
   )
 
   if (!response.ok) {
+    const errorText = await response.text()
+    console.error('[Audience Review] API error:', response.status, errorText)
     throw new Error(`Gemini API error: ${response.status}`)
   }
 
   const data = await response.json()
+  
+  // Log the full response structure for debugging
+  console.log('[Audience Review] Full API response:', JSON.stringify(data, null, 2))
+  console.log('[Audience Review] Candidates:', data.candidates)
+  console.log('[Audience Review] First candidate:', data.candidates?.[0])
+  
+  // Check for safety ratings or blocked content
+  if (data.candidates?.[0]?.finishReason === 'SAFETY') {
+    console.error('[Audience Review] Content blocked by safety filters:', data.candidates[0].safetyRatings)
+    throw new Error('Content blocked by safety filters. Please try with different script content.')
+  }
+  
   const reviewText = data.candidates?.[0]?.content?.parts?.[0]?.text
 
   if (!reviewText) {
-    throw new Error('No review generated')
+    console.error('[Audience Review] No text in response. Full candidate:', JSON.stringify(data.candidates?.[0], null, 2))
+    throw new Error('No review generated - empty response from Gemini')
   }
 
-  console.log('[Audience Review] Raw response:', reviewText.substring(0, 200))
+  console.log('[Audience Review] Raw response text:', reviewText.substring(0, 200))
 
   // Extract JSON from markdown code blocks if present
   let jsonText = reviewText.trim()
