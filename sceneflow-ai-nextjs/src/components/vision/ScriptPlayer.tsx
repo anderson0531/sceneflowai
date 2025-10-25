@@ -143,16 +143,16 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   }, [playerState.currentSceneIndex, scenes.length, resetControlsTimeout])
 
   // Translation helper function
-  const translateAndGenerateAudio = async (text: string, sceneIdx: number, audioType: 'narration' | 'dialogue', characterIdx?: number): Promise<string> => {
+  const translateAndGenerateAudio = async (text: string, sceneIdx: number, audioType: 'narration' | 'dialogue', characterIdx?: number): Promise<{ audioUrl: string, translatedText: string }> => {
     // If English, skip translation
     if (selectedLanguage === 'en') {
       // Use pre-generated MP3 if available
       const scene = scenes[sceneIdx]
       if (audioType === 'narration' && scene.narrationAudioUrl) {
-        return scene.narrationAudioUrl
+        return { audioUrl: scene.narrationAudioUrl, translatedText: text }
       }
       if (audioType === 'dialogue' && characterIdx !== undefined && scene.dialogueAudio?.[characterIdx]?.audioUrl) {
-        return scene.dialogueAudio[characterIdx].audioUrl
+        return { audioUrl: scene.dialogueAudio[characterIdx].audioUrl, translatedText: text }
       }
     }
 
@@ -163,7 +163,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     const cached = translationCache.get(cacheKey)
     if (cached) {
       console.log('[Translation] Using cached audio for', cacheKey)
-      return cached.audio
+      return { audioUrl: cached.audio, translatedText: cached.text }
     }
 
     try {
@@ -217,7 +217,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       })
 
       console.log('[Translation] Audio generated and cached')
-      return audioUrl
+      return { audioUrl, translatedText }
 
     } catch (error) {
       console.error('[Translation] Error:', error)
@@ -243,13 +243,9 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         
         // Translate and play narration
         if (scene.narration) {
-          const audioUrl = await translateAndGenerateAudio(scene.narration, sceneIndex, 'narration')
-          // Get translated text from cache for captions
-          const cacheKey = `${sceneIndex}-narration-0-${selectedLanguage}`
-          const cached = translationCache.get(cacheKey)
-          if (cached) {
-            setCurrentTranslatedNarration(cached.text)
-          }
+          const { audioUrl, translatedText } = await translateAndGenerateAudio(scene.narration, sceneIndex, 'narration')
+          // Set translated text for captions
+          setCurrentTranslatedNarration(translatedText)
           
           if (audioRef.current) {
             audioRef.current.src = audioUrl
@@ -274,14 +270,10 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           const translatedDialogue: string[] = []
           for (let i = 0; i < scene.dialogue.length; i++) {
             const dialogue = scene.dialogue[i]
-            const audioUrl = await translateAndGenerateAudio(dialogue.line, sceneIndex, 'dialogue', i)
+            const { audioUrl, translatedText } = await translateAndGenerateAudio(dialogue.line, sceneIndex, 'dialogue', i)
             
-            // Get translated text from cache for captions
-            const cacheKey = `${sceneIndex}-dialogue-${i}-${selectedLanguage}`
-            const cached = translationCache.get(cacheKey)
-            if (cached) {
-              translatedDialogue[i] = cached.text
-            }
+            // Set translated text for captions
+            translatedDialogue[i] = translatedText
             
             if (audioRef.current) {
               audioRef.current.src = audioUrl
