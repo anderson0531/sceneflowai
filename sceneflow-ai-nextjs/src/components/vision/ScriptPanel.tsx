@@ -48,6 +48,9 @@ interface ScriptPanelProps {
   onGenerateAllAudio?: () => void
   isGeneratingAudio?: boolean
   onPlayScript?: () => void
+  // NEW: TTS Provider props
+  ttsProvider?: 'google' | 'elevenlabs'
+  onTtsProviderChange?: (provider: 'google' | 'elevenlabs') => void
   // NEW: Scene management callbacks
   onAddScene?: (afterIndex?: number) => void
   onDeleteScene?: (sceneIndex: number) => void
@@ -180,7 +183,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, ...props }: any) {
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, ttsProvider = 'google', onTtsProviderChange, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [editMode, setEditMode] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -948,42 +951,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         </div>
       )}
 
-      {/* Voice Selection Section - Collapsible */}
-      {script && !editMode && enabled && voices.length > 0 && (
-        <div className="border-b border-gray-200 dark:border-gray-700 px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
-          <button
-            onClick={() => setShowVoiceSelection(!showVoiceSelection)}
-            className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-          >
-            <ChevronRight className={`w-4 h-4 transition-transform ${showVoiceSelection ? 'rotate-90' : ''}`} />
-            <Volume2 className="w-4 h-4" />
-            <span>Narration Voice</span>
-            {selectedVoiceId && (
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                ({voices.find(v => v.id === selectedVoiceId)?.name || 'Selected'})
-              </span>
-            )}
-          </button>
-          
-          {showVoiceSelection && (
-            <div className="mt-2 ml-6">
-              <Select value={selectedVoiceId} onValueChange={setSelectedVoiceId}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select narration voice" />
-                </SelectTrigger>
-                <SelectContent>
-                  {voices.map((voice) => (
-                    <SelectItem key={voice.id} value={voice.id}>
-                      {voice.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        </div>
-      )}
-
+      
       {/* Production Script Header */}
       {script && !editMode && (
         <div className="border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50">
@@ -1009,6 +977,27 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+            
+            {/* TTS Provider Selection */}
+            <Select value={ttsProvider} onValueChange={onTtsProviderChange}>
+              <SelectTrigger className="w-[140px] h-9">
+                <SelectValue placeholder="TTS Provider" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="google">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs">🔊</span>
+                    <span>Google TTS</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="elevenlabs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs">🎙️</span>
+                    <span>ElevenLabs</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
             
             <TooltipProvider>
               <Tooltip>

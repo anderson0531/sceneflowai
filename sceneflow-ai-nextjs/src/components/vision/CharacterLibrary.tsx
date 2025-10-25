@@ -208,7 +208,17 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
         </div>
       ) : (
         <div className={`${compact ? 'space-y-3' : 'grid grid-cols-2 lg:grid-cols-3 gap-4'}`}>
-          {characters.map((char, idx) => {
+          {/* Narrator Character Card - Always show first */}
+          {characters.find(char => char.type === 'narrator') && (
+            <NarratorCharacterCard
+              character={characters.find(char => char.type === 'narrator')!}
+              onUpdateCharacterVoice={onUpdateCharacterVoice}
+              ttsProvider={ttsProvider}
+            />
+          )}
+          
+          {/* Regular Character Cards */}
+          {characters.filter(char => char.type !== 'narrator').map((char, idx) => {
             const charId = char.id || idx.toString()
             // Use saved imagePrompt if available, otherwise generate default
             const savedPrompt = char.imagePrompt
@@ -713,6 +723,88 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
           </button>
         </div>
       )}
+    </div>
+  )
+}
+
+// Narrator Character Card Component
+interface NarratorCharacterCardProps {
+  character: any
+  onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void
+  ttsProvider: 'google' | 'elevenlabs'
+}
+
+function NarratorCharacterCard({ character, onUpdateCharacterVoice, ttsProvider }: NarratorCharacterCardProps) {
+  const [voiceSectionExpanded, setVoiceSectionExpanded] = useState(false)
+  
+  return (
+    <div className="bg-white dark:bg-gray-900 rounded-lg border border-indigo-200 dark:border-indigo-800 overflow-hidden">
+      <div className="p-4">
+        <div className="flex items-start gap-4">
+          {/* Icon instead of image */}
+          <div className="w-20 h-20 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
+            <Volume2 className="w-10 h-10 text-indigo-600 dark:text-indigo-400" />
+          </div>
+          
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {character.name}
+              </h3>
+              <span className="px-2 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-medium rounded">
+                Voice Only
+              </span>
+            </div>
+            
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+              {character.description}
+            </p>
+            
+            {/* Voice Selection */}
+            <div className="space-y-2">
+              <button
+                onClick={() => setVoiceSectionExpanded(!voiceSectionExpanded)}
+                className="flex items-center justify-between w-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <Volume2 className="w-4 h-4" />
+                  Character Voice
+                  {!character.voiceConfig && (
+                    <span className="ml-1 text-xs px-1.5 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded">
+                      Required
+                    </span>
+                  )}
+                </span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${voiceSectionExpanded ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {voiceSectionExpanded && (
+                <div className="space-y-2">
+                  <VoiceSelector
+                    provider={ttsProvider}
+                    selectedVoiceId={character.voiceConfig?.voiceId || ''}
+                    onSelectVoice={(voiceId, voiceName) => {
+                      console.log('[Narrator Voice] Selected:', { voiceId, voiceName, characterId: character.id })
+                      onUpdateCharacterVoice?.(character.id, {
+                        provider: ttsProvider,
+                        voiceId,
+                        voiceName
+                      })
+                    }}
+                    compact={true}
+                  />
+                  {character.voiceConfig && (
+                    <div className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                      <Check className="w-3 h-3" />
+                      {character.voiceConfig.voiceName}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

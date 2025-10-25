@@ -28,6 +28,28 @@ const normalizeCharacterName = (name: string): string => {
     .trim()
 }
 
+// Helper function to ensure narrator character exists
+const ensureNarratorCharacter = (characters: Character[], narrationVoice?: VoiceConfig): Character => {
+  const existingNarrator = characters.find(char => char.type === 'narrator')
+  
+  if (existingNarrator) {
+    return existingNarrator
+  }
+  
+  // Create new narrator character
+  return {
+    id: 'narrator-1',
+    name: 'Narrator',
+    description: 'Storytelling voice for scene narration',
+    type: 'narrator',
+    voiceConfig: narrationVoice || {
+      provider: 'google',
+      voiceName: 'Marcus (Studio)',
+      voiceId: 'en-US-Studio-M'
+    }
+  }
+}
+
 interface VoiceConfig {
   provider: 'elevenlabs' | 'google'
   voiceId: string
@@ -44,6 +66,7 @@ interface Character {
   name: string
   description: string
   role?: 'protagonist' | 'main' | 'supporting'
+  type?: 'character' | 'narrator' // NEW: character type
   referenceImage?: string
   appearanceDescription?: string
   // NEW: Voice assignment
@@ -246,6 +269,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     
     console.log('[Character Voice] Updated character:', updatedCharacters[characterIndex])
     setCharacters(updatedCharacters)
+    
+    // If this is the narrator character, also update the narration voice
+    const updatedCharacter = updatedCharacters[characterIndex]
+    if (updatedCharacter.type === 'narrator') {
+      console.log('[Character Voice] Updating narration voice from narrator character')
+      setNarrationVoice(voiceConfig)
+    }
     
     if (project) {
       const updatedProject = {
@@ -565,7 +595,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           }
 
-          setCharacters(charactersWithIds)
+          // Ensure narrator character exists
+          const narratorCharacter = ensureNarratorCharacter(charactersWithIds, narrationVoice || undefined)
+          const charactersWithNarrator = charactersWithIds.some(c => c.type === 'narrator') 
+            ? charactersWithIds 
+            : [...charactersWithIds, narratorCharacter]
+          
+          setCharacters(charactersWithNarrator)
         }
         if (visionPhase.scenes) {
           // MIGRATION: Add characterId to dialogue if missing
@@ -2460,6 +2496,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             onGenerateAllAudio={handleGenerateAllAudio}
             isGeneratingAudio={isGeneratingAudio}
             onPlayScript={() => setIsPlayerOpen(true)}
+            ttsProvider={ttsProvider}
+            onTtsProviderChange={setTtsProvider}
             onAddScene={handleAddScene}
             onDeleteScene={handleDeleteScene}
             onReorderScenes={handleReorderScenes}
