@@ -2053,8 +2053,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       isExpanded: true
     }
     
-    // Use deep clone to preserve all nested fields
-    const updatedScenes = JSON.parse(JSON.stringify(scenes))
+    // Use shallow copy to preserve object references and avoid breaking ORM
+    const updatedScenes = [...scenes]
     const insertIndex = afterIndex !== undefined ? afterIndex + 1 : scenes.length
     updatedScenes.splice(insertIndex, 0, newScene)
     
@@ -2108,8 +2108,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       dialogueCount: s.dialogue?.length || 0
     })))
     
-    // Use deep clone to preserve all nested fields
-    const updatedScenes = JSON.parse(JSON.stringify(scenes)).filter((_: any, idx: number) => idx !== sceneIndex)
+    // Use shallow copy to preserve object references and avoid breaking ORM
+    const updatedScenes = scenes.filter((_: any, idx: number) => idx !== sceneIndex)
     
     // Renumber scenes
     updatedScenes.forEach((scene: any, idx: number) => {
@@ -2155,8 +2155,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       dialogueCount: s.dialogue?.length || 0
     })))
     
-    // Use deep clone to preserve all nested fields
-    const updatedScenes = JSON.parse(JSON.stringify(scenes))
+    // Use shallow copy to preserve object references and avoid breaking ORM
+    const updatedScenes = [...scenes]
     const [movedScene] = updatedScenes.splice(startIndex, 1)
     updatedScenes.splice(endIndex, 0, movedScene)
     
