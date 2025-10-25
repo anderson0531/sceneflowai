@@ -332,6 +332,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const proj = data.project || data
       setProject(proj)
       
+      // DEBUG: Log loaded scene assets
+      const loadedScenes = proj.metadata?.visionPhase?.scenes || []
+      console.log('[loadProject] Loaded scenes with assets:', loadedScenes.map((s: any, idx: number) => ({
+        idx,
+        sceneNumber: s.sceneNumber,
+        hasImage: !!s.imageUrl,
+        hasNarration: !!s.narrationAudioUrl,
+        hasMusic: !!s.musicAudio
+      })))
+      
       // Load image quality setting from project metadata
       if (proj.metadata?.imageQuality) {
         setImageQuality(proj.metadata.imageQuality)
@@ -2022,6 +2032,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const handleAddScene = async (afterIndex?: number) => {
     if (!script) return
     
+    // DEBUG: Log assets before adding
+    console.log('[handleAddScene] Assets before:', scenes.map((s, idx) => ({
+      idx,
+      sceneNumber: s.sceneNumber,
+      hasImage: !!s.imageUrl,
+      hasNarration: !!s.narrationAudioUrl,
+      hasMusic: !!s.musicAudio,
+      dialogueCount: s.dialogue?.length || 0
+    })))
+    
     const newScene = {
       sceneNumber: (afterIndex !== undefined ? afterIndex + 2 : scenes.length + 1),
       heading: `INT. NEW LOCATION - DAY`,
@@ -2033,14 +2053,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       isExpanded: true
     }
     
-    const updatedScenes = [...scenes]
+    // Use deep clone to preserve all nested fields
+    const updatedScenes = JSON.parse(JSON.stringify(scenes))
     const insertIndex = afterIndex !== undefined ? afterIndex + 1 : scenes.length
     updatedScenes.splice(insertIndex, 0, newScene)
     
     // Renumber scenes
-    updatedScenes.forEach((scene, idx) => {
+    updatedScenes.forEach((scene: any, idx: number) => {
       scene.sceneNumber = idx + 1
     })
+    
+    // DEBUG: Log assets after adding and renumbering
+    console.log('[handleAddScene] Assets after:', updatedScenes.map((s: any, idx: number) => ({
+      idx,
+      sceneNumber: s.sceneNumber,
+      hasImage: !!s.imageUrl,
+      hasNarration: !!s.narrationAudioUrl,
+      hasMusic: !!s.musicAudio,
+      dialogueCount: s.dialogue?.length || 0
+    })))
     
     try {
       // Save to database FIRST
@@ -2067,12 +2098,33 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return
     }
     
-    const updatedScenes = scenes.filter((_: any, idx: number) => idx !== sceneIndex)
+    // DEBUG: Log assets before deletion
+    console.log('[handleDeleteScene] Assets before:', scenes.map((s, idx) => ({
+      idx,
+      sceneNumber: s.sceneNumber,
+      hasImage: !!s.imageUrl,
+      hasNarration: !!s.narrationAudioUrl,
+      hasMusic: !!s.musicAudio,
+      dialogueCount: s.dialogue?.length || 0
+    })))
+    
+    // Use deep clone to preserve all nested fields
+    const updatedScenes = JSON.parse(JSON.stringify(scenes)).filter((_: any, idx: number) => idx !== sceneIndex)
     
     // Renumber scenes
     updatedScenes.forEach((scene: any, idx: number) => {
       scene.sceneNumber = idx + 1
     })
+    
+    // DEBUG: Log assets after deletion and renumbering
+    console.log('[handleDeleteScene] Assets after:', updatedScenes.map((s: any, idx: number) => ({
+      idx,
+      sceneNumber: s.sceneNumber,
+      hasImage: !!s.imageUrl,
+      hasNarration: !!s.narrationAudioUrl,
+      hasMusic: !!s.musicAudio,
+      dialogueCount: s.dialogue?.length || 0
+    })))
     
     try {
       // Save to database FIRST
@@ -2093,7 +2145,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const handleReorderScenes = async (startIndex: number, endIndex: number) => {
     if (!script) return
     
-    const updatedScenes = [...scenes]
+    // DEBUG: Log assets before reordering
+    console.log('[handleReorderScenes] Assets before:', scenes.map((s, idx) => ({
+      idx,
+      sceneNumber: s.sceneNumber,
+      hasImage: !!s.imageUrl,
+      hasNarration: !!s.narrationAudioUrl,
+      hasMusic: !!s.musicAudio,
+      dialogueCount: s.dialogue?.length || 0
+    })))
+    
+    // Use deep clone to preserve all nested fields
+    const updatedScenes = JSON.parse(JSON.stringify(scenes))
     const [movedScene] = updatedScenes.splice(startIndex, 1)
     updatedScenes.splice(endIndex, 0, movedScene)
     
@@ -2101,6 +2164,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     updatedScenes.forEach((scene: any, idx: number) => {
       scene.sceneNumber = idx + 1
     })
+    
+    // DEBUG: Log assets after reordering and renumbering
+    console.log('[handleReorderScenes] Assets after:', updatedScenes.map((s: any, idx: number) => ({
+      idx,
+      sceneNumber: s.sceneNumber,
+      hasImage: !!s.imageUrl,
+      hasNarration: !!s.narrationAudioUrl,
+      hasMusic: !!s.musicAudio,
+      dialogueCount: s.dialogue?.length || 0
+    })))
     
     try {
       // Save to database FIRST
@@ -2121,6 +2194,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Helper function to save scenes to database
   const saveScenesToDatabase = async (updatedScenes: any[]) => {
     try {
+      // DEBUG: Log what we're about to save
+      console.log('[saveScenesToDatabase] Saving scenes with assets:', updatedScenes.map((s, idx) => ({
+        idx,
+        sceneNumber: s.sceneNumber,
+        hasImage: !!s.imageUrl,
+        hasNarration: !!s.narrationAudioUrl,
+        hasMusic: !!s.musicAudio,
+        imageUrl: s.imageUrl?.substring(0, 50) + '...',
+        narrationUrl: s.narrationAudioUrl?.substring(0, 50) + '...'
+      })))
+      
       const existingMetadata = project?.metadata || {}
       const existingVisionPhase = existingMetadata.visionPhase || {}
       
