@@ -305,6 +305,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     try {
       // Add cache-busting to force fresh data from database
       const cacheBuster = `?id=${projectId}&_t=${Date.now()}`
+      console.log('[Load Project] Fetching with cache-buster:', cacheBuster)
       const res = await fetch(`/api/projects${cacheBuster}`, {
         cache: 'no-store',
         headers: {
@@ -330,6 +331,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const data = await res.json()
       
       const proj = data.project || data
+      console.log('[Load Project] Loaded project data:', {
+        projectId: proj.id,
+        sceneCount: proj.metadata?.visionPhase?.scenes?.length || 0,
+        scenes: proj.metadata?.visionPhase?.scenes?.slice(0, 3).map((s: any) => s.sceneNumber) || []
+      })
       
       setProject(proj)
       
