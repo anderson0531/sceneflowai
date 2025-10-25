@@ -2010,6 +2010,142 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  // Scene management handlers
+  const handleAddScene = async (afterIndex?: number) => {
+    if (!script) return
+    
+    const newScene = {
+      sceneNumber: (afterIndex !== undefined ? afterIndex + 2 : scenes.length + 1),
+      heading: `INT. NEW LOCATION - DAY`,
+      action: 'Description of what happens in this scene.',
+      dialogue: [],
+      narration: '',
+      visualDescription: '',
+      imagePrompt: '',
+      isExpanded: true
+    }
+    
+    const updatedScenes = [...scenes]
+    const insertIndex = afterIndex !== undefined ? afterIndex + 1 : scenes.length
+    updatedScenes.splice(insertIndex, 0, newScene)
+    
+    // Renumber scenes
+    updatedScenes.forEach((scene, idx) => {
+      scene.sceneNumber = idx + 1
+    })
+    
+    // Update script
+    const updatedScript = {
+      ...script,
+      scenes: updatedScenes
+    }
+    
+    setScript(updatedScript)
+    
+    // Save to database
+    await saveScenesToDatabase(updatedScenes)
+    
+    try {
+      const { toast } = require('sonner')
+      toast.success('Scene added!')
+    } catch {}
+  }
+
+  const handleDeleteScene = async (sceneIndex: number) => {
+    if (!script || scenes.length <= 1) {
+      try {
+        const { toast } = require('sonner')
+        toast.error('Cannot delete the last scene')
+      } catch {}
+      return
+    }
+    
+    const updatedScenes = scenes.filter((_: any, idx: number) => idx !== sceneIndex)
+    
+    // Renumber scenes
+    updatedScenes.forEach((scene: any, idx: number) => {
+      scene.sceneNumber = idx + 1
+    })
+    
+    // Update script
+    const updatedScript = {
+      ...script,
+      scenes: updatedScenes
+    }
+    
+    setScript(updatedScript)
+    
+    // Save to database
+    await saveScenesToDatabase(updatedScenes)
+    
+    try {
+      const { toast } = require('sonner')
+      toast.success('Scene deleted')
+    } catch {}
+  }
+
+  const handleReorderScenes = async (startIndex: number, endIndex: number) => {
+    if (!script) return
+    
+    const updatedScenes = [...scenes]
+    const [movedScene] = updatedScenes.splice(startIndex, 1)
+    updatedScenes.splice(endIndex, 0, movedScene)
+    
+    // Renumber scenes
+    updatedScenes.forEach((scene: any, idx: number) => {
+      scene.sceneNumber = idx + 1
+    })
+    
+    // Update script
+    const updatedScript = {
+      ...script,
+      scenes: updatedScenes
+    }
+    
+    setScript(updatedScript)
+    
+    // Save to database
+    await saveScenesToDatabase(updatedScenes)
+    
+    try {
+      const { toast } = require('sonner')
+      toast.success('Scenes reordered')
+    } catch {}
+  }
+
+  // Helper function to save scenes to database
+  const saveScenesToDatabase = async (updatedScenes: any[]) => {
+    try {
+      const existingMetadata = project?.metadata || {}
+      const existingVisionPhase = existingMetadata.visionPhase || {}
+      
+      await fetch(`/api/projects`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: projectId,
+          metadata: {
+            ...existingMetadata,
+            visionPhase: {
+              ...existingVisionPhase,
+              script: {
+                ...script,
+                scenes: updatedScenes
+              },
+              scenes: updatedScenes
+            }
+          }
+        })
+      })
+    } catch (error) {
+      console.error('Failed to save scenes:', error)
+      try {
+        const { toast } = require('sonner')
+        toast.error('Failed to save changes')
+      } catch {}
+    }
+  }
+
   const getUserId = () => {
     if (typeof window !== 'undefined') {
       let userId = localStorage.getItem('authUserId')
@@ -2109,6 +2245,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             onGenerateAllAudio={handleGenerateAllAudio}
             isGeneratingAudio={isGeneratingAudio}
             onPlayScript={() => setIsPlayerOpen(true)}
+            onAddScene={handleAddScene}
+            onDeleteScene={handleDeleteScene}
+            onReorderScenes={handleReorderScenes}
           />
         </div>
         

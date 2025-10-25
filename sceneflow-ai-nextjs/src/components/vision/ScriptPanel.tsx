@@ -1,12 +1,15 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { getCuratedElevenVoices, type CuratedVoice } from '@/lib/tts/voices'
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { ScenePromptBuilder } from './ScenePromptBuilder'
 import ScenePromptDrawer from './ScenePromptDrawer'
 import { AudioMixer, type AudioTrack } from './AudioMixer'
@@ -44,6 +47,10 @@ interface ScriptPanelProps {
   onGenerateAllAudio?: () => void
   isGeneratingAudio?: boolean
   onPlayScript?: () => void
+  // NEW: Scene management callbacks
+  onAddScene?: (afterIndex?: number) => void
+  onDeleteScene?: (sceneIndex: number) => void
+  onReorderScenes?: (startIndex: number, endIndex: number) => void
 }
 
 // Calculate scene duration based on audio, buffer, and video clips
@@ -99,7 +106,29 @@ function formatDuration(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript }: ScriptPanelProps) {
+// Sortable Scene Card Wrapper for drag-and-drop
+function SortableSceneCard({ id, ...props }: any) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <SceneCard {...props} dragHandleProps={listeners} />
+    </div>
+  )
+}
+
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [editMode, setEditMode] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -119,6 +148,24 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   
   // Dialogue generation state
   const [generatingDialogue, setGeneratingDialogue] = useState<{sceneIdx: number, character: string} | null>(null)
+  
+  // Drag and drop functionality
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event
+    
+    if (active.id !== over.id) {
+      const oldIndex = scenes.findIndex((s: any, idx: number) => idx === active.id)
+      const newIndex = scenes.findIndex((s: any, idx: number) => idx === over.id)
+      onReorderScenes?.(oldIndex, newIndex)
+    }
+  }
   
   // Image generation state
   const [generatingImageForScene, setGeneratingImageForScene] = useState<number | null>(null)
@@ -652,6 +699,16 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               </Tooltip>
             </TooltipProvider>
             
+            <Button
+              onClick={() => onAddScene?.()}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Scene
+            </Button>
+            
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -771,44 +828,58 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 </p>
               </div>
             ) : (
-              scenes.map((scene: any, idx: number) => {
-                const timelineStart = scenes.slice(0, idx).reduce((total: number, s: any) => total + calculateSceneDuration(s), 0)
-                return (
-                <SceneCard 
-                  key={idx}
-                  scene={scene}
-                  sceneNumber={idx + 1}
-                  isSelected={selectedScene === idx}
-                  onClick={() => setSelectedScene(idx)}
-                  onExpand={onExpandScene}
-                  isExpanding={expandingScenes.has(scene.sceneNumber)}
-                  onPlayScene={playScene}
-                  isPlaying={loadingSceneId === idx}
-                  audioEnabled={enabled}
-                  sceneIdx={idx}
-                  timelineStart={timelineStart}
-                  onGenerateImage={handleGenerateImage}
-                  isGeneratingImage={generatingImageForScene === idx}
-                  onOpenPromptBuilder={handleOpenSceneBuilder}
-                  onOpenPromptDrawer={handleOpenSceneDrawer}
-                  scenePrompt={scenePrompts[idx]}
-                  onPromptChange={(sceneIdx, prompt) => setScenePrompts(prev => ({ ...prev, [sceneIdx]: prompt }))}
-                  validationWarning={validationWarnings[idx]}
-                  validationInfo={validationInfo[idx]}
-                  isWarningExpanded={warningExpanded[idx] || false}
-                  onToggleWarningExpanded={() => toggleWarningExpanded(idx)}
-                  onDismissValidationWarning={() => onDismissValidationWarning?.(idx)}
-                  parseScriptForAudio={parseScriptForAudio}
-                  generateAndPlaySFX={generateAndPlaySFX}
-                  generateAndPlayMusic={generateAndPlayMusic}
-                  onPlayAudio={handlePlayAudio}
-                  onGenerateSceneAudio={onGenerateSceneAudio}
-                  playingAudio={playingAudio}
-                  generatingDialogue={generatingDialogue}
-                  setGeneratingDialogue={setGeneratingDialogue}
-                />
-                )
-              })
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={scenes.map((_: any, idx: number) => idx)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {scenes.map((scene: any, idx: number) => {
+                    const timelineStart = scenes.slice(0, idx).reduce((total: number, s: any) => total + calculateSceneDuration(s), 0)
+                    return (
+                    <SortableSceneCard
+                      key={idx}
+                      id={idx}
+                      scene={scene}
+                      sceneNumber={idx + 1}
+                      isSelected={selectedScene === idx}
+                      onClick={() => setSelectedScene(idx)}
+                      onExpand={onExpandScene}
+                      isExpanding={expandingScenes.has(scene.sceneNumber)}
+                      onPlayScene={playScene}
+                      isPlaying={loadingSceneId === idx}
+                      audioEnabled={enabled}
+                      sceneIdx={idx}
+                      timelineStart={timelineStart}
+                      onGenerateImage={handleGenerateImage}
+                      isGeneratingImage={generatingImageForScene === idx}
+                      onOpenPromptBuilder={handleOpenSceneBuilder}
+                      onOpenPromptDrawer={handleOpenSceneDrawer}
+                      scenePrompt={scenePrompts[idx]}
+                      onPromptChange={(sceneIdx: number, prompt: string) => setScenePrompts(prev => ({ ...prev, [sceneIdx]: prompt }))}
+                      validationWarning={validationWarnings[idx]}
+                      validationInfo={validationInfo[idx]}
+                      isWarningExpanded={warningExpanded[idx] || false}
+                      onToggleWarningExpanded={() => toggleWarningExpanded(idx)}
+                      onDismissValidationWarning={() => onDismissValidationWarning?.(idx)}
+                      parseScriptForAudio={parseScriptForAudio}
+                      generateAndPlaySFX={generateAndPlaySFX}
+                      generateAndPlayMusic={generateAndPlayMusic}
+                      onPlayAudio={handlePlayAudio}
+                      onGenerateSceneAudio={onGenerateSceneAudio}
+                      playingAudio={playingAudio}
+                      generatingDialogue={generatingDialogue}
+                      setGeneratingDialogue={setGeneratingDialogue}
+                      onAddScene={onAddScene}
+                      onDeleteScene={onDeleteScene}
+                    />
+                    )
+                  })}
+                </SortableContext>
+              </DndContext>
             )}
           </div>
         )}
@@ -913,9 +984,12 @@ interface SceneCardProps {
   generatingDialogue?: {sceneIdx: number, character: string} | null
   setGeneratingDialogue?: (state: {sceneIdx: number, character: string} | null) => void
   timelineStart?: number
+  dragHandleProps?: any
+  onAddScene?: (afterIndex?: number) => void
+  onDeleteScene?: (sceneIndex: number) => void
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart }: SceneCardProps) {
+function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart, dragHandleProps, onAddScene, onDeleteScene }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
   
@@ -994,6 +1068,58 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
           <span className="text-xs text-gray-400">
             @{formatDuration(timelineStart || 0)}
           </span>
+          
+          {/* Scene Actions */}
+          <div className="flex items-center gap-1">
+            {/* Add Scene After */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onAddScene?.(sceneIdx)
+                    }}
+                    className="p-1 hover:bg-blue-100 dark:hover:bg-blue-900 rounded text-blue-600 dark:text-blue-400"
+                    title="Add scene after this one"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Add scene after</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Delete Scene */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (confirm('Delete this scene? This cannot be undone.')) {
+                        onDeleteScene?.(sceneIdx)
+                      }
+                    }}
+                    className="p-1 hover:bg-red-100 dark:hover:bg-red-900 rounded text-red-600 dark:text-red-400"
+                    title="Delete scene"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Delete scene</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Drag Handle */}
+            <div
+              className="p-1 cursor-move text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              title="Drag to reorder"
+              {...(dragHandleProps || {})}
+            >
+              <GripVertical className="w-4 h-4" />
+            </div>
+          </div>
           
           {/* Asset Indicators */}
           <div className="flex items-center gap-1">
