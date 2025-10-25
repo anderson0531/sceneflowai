@@ -2047,6 +2047,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         scenes: updatedScenes
       }
       setScript(updatedScript)
+      setScenes(updatedScenes) // NEW: Also update scenes state for UI
       
       console.log('[Vision] handleAddScene - Success!')
       try {
@@ -2088,6 +2089,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         scenes: updatedScenes
       }
       setScript(updatedScript)
+      setScenes(updatedScenes) // NEW: Also update scenes state for UI
       
       console.log('[Vision] handleDeleteScene - Success!')
       try {
@@ -2125,6 +2127,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         scenes: updatedScenes
       }
       setScript(updatedScript)
+      setScenes(updatedScenes) // NEW: Also update scenes state for UI
       
       console.log('[Vision] handleReorderScenes - Success!')
       try {
