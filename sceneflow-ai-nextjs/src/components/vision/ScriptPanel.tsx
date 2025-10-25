@@ -48,9 +48,6 @@ interface ScriptPanelProps {
   onGenerateAllAudio?: () => void
   isGeneratingAudio?: boolean
   onPlayScript?: () => void
-  // NEW: TTS Provider props
-  ttsProvider?: 'google' | 'elevenlabs'
-  onTtsProviderChange?: (provider: 'google' | 'elevenlabs') => void
   // NEW: Scene management callbacks
   onAddScene?: (afterIndex?: number) => void
   onDeleteScene?: (sceneIndex: number) => void
@@ -183,7 +180,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, ...props }: any) {
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, ttsProvider = 'google', onTtsProviderChange, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [editMode, setEditMode] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -206,6 +203,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   
   // Voice selection visibility state
   const [showVoiceSelection, setShowVoiceSelection] = useState(false)
+  
+  // Script overview visibility state
+  const [showScriptOverview, setShowScriptOverview] = useState(true)
   
   // Drag and drop functionality
   const sensors = useSensors(
@@ -735,16 +735,25 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       {script && !editMode && (
         <div className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
           <div className="px-4 py-4">
-            {/* Header */}
-            <div className="flex items-center gap-2 mb-4">
-              <BarChart3 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-                Script Overview
-              </h3>
+            {/* Header with Toggle */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-sf-primary" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Script Overview</h3>
+              </div>
+              <button
+                onClick={() => setShowScriptOverview(!showScriptOverview)}
+                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+              >
+                <ChevronDown className={`w-5 h-5 transition-transform ${showScriptOverview ? '' : 'rotate-180'}`} />
+              </button>
             </div>
             
-            {/* Statistics Grid - 2 rows x 3 columns */}
-            <div className="grid grid-cols-3 gap-3 mb-4">
+            {/* Collapsible Content */}
+            {showScriptOverview && (
+              <>
+                {/* Statistics Grid - 2 rows x 3 columns */}
+                <div className="grid grid-cols-3 gap-3 mb-4">
               {/* Row 1 */}
               {/* Scenes */}
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
@@ -947,6 +956,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 </div>
               )}
             </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -978,26 +989,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               </Tooltip>
             </TooltipProvider>
             
-            {/* TTS Provider Selection */}
-            <Select value={ttsProvider} onValueChange={onTtsProviderChange}>
-              <SelectTrigger className="w-[140px] h-9">
-                <SelectValue placeholder="TTS Provider" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="google">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs">🔊</span>
-                    <span>Google TTS</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="elevenlabs">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs">🎙️</span>
-                    <span>ElevenLabs</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
             
             <TooltipProvider>
               <Tooltip>
