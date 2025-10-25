@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Save, Share2, ArrowRight, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info } from 'lucide-react'
 import ScriptReviewModal from '@/components/vision/ScriptReviewModal'
+import { SceneEditorModal } from '@/components/vision/SceneEditorModal'
 import { findSceneCharacters } from '../../../../../lib/character/matching'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -413,6 +414,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [isGeneratingReviews, setIsGeneratingReviews] = useState(false)
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [reviewsOutdated, setReviewsOutdated] = useState(false)
+  
+  // Scene editor state
+  const [editingSceneIndex, setEditingSceneIndex] = useState<number | null>(null)
+  const [isSceneEditorOpen, setIsSceneEditorOpen] = useState(false)
   const [generationProgress, setGenerationProgress] = useState({
     script: { 
       complete: false, 
@@ -2644,6 +2649,38 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  // Scene editor handlers
+  const handleEditScene = (sceneIndex: number) => {
+    setEditingSceneIndex(sceneIndex)
+    setIsSceneEditorOpen(true)
+  }
+
+  const handleApplySceneChanges = (sceneIndex: number, revisedScene: any) => {
+    if (!script) return
+
+    const updatedScenes = [...(script.script?.scenes || [])]
+    updatedScenes[sceneIndex] = revisedScene
+
+    // Update the script with the revised scene
+    setScript({
+      ...script,
+      script: {
+        ...script.script,
+        scenes: updatedScenes
+      }
+    })
+
+    // Close the editor
+    setIsSceneEditorOpen(false)
+    setEditingSceneIndex(null)
+
+    // Show success message
+    try {
+      const { toast } = require('sonner')
+      toast.success('Scene updated successfully')
+    } catch {}
+  }
+
   // Helper function to save scenes to database
   const saveScenesToDatabase = async (updatedScenes: any[]) => {
     try {
@@ -2817,6 +2854,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             onAddScene={handleAddScene}
             onDeleteScene={handleDeleteScene}
             onReorderScenes={handleReorderScenes}
+            onEditScene={handleEditScene}
             directorScore={directorReview?.overallScore}
             audienceScore={audienceReview?.overallScore}
             onGenerateReviews={handleGenerateReviews}
@@ -2868,6 +2906,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         onRegenerate={handleGenerateReviews}
         isGenerating={isGeneratingReviews}
       />
+
+      {/* Scene Editor Modal */}
+      {editingSceneIndex !== null && script?.script?.scenes?.[editingSceneIndex] && (
+        <SceneEditorModal
+          isOpen={isSceneEditorOpen}
+          onClose={() => {
+            setIsSceneEditorOpen(false)
+            setEditingSceneIndex(null)
+          }}
+          scene={script.script.scenes[editingSceneIndex]}
+          sceneIndex={editingSceneIndex}
+          projectId={projectId}
+          characters={characters}
+          previousScene={editingSceneIndex > 0 ? script.script.scenes[editingSceneIndex - 1] : undefined}
+          nextScene={editingSceneIndex < script.script.scenes.length - 1 ? script.script.scenes[editingSceneIndex + 1] : undefined}
+          onApplyChanges={handleApplySceneChanges}
+        />
+      )}
 
       {/* Audio Generation Progress */}
       {audioProgress && (

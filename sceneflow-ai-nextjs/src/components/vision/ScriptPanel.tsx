@@ -58,6 +58,8 @@ interface ScriptPanelProps {
   onGenerateReviews?: () => void
   isGeneratingReviews?: boolean
   onShowReviews?: () => void
+  // NEW: Scene editing props
+  onEditScene?: (sceneIndex: number) => void
 }
 
 // Stoplight color system for scores
@@ -154,7 +156,7 @@ function formatTotalDuration(scenes: any[]): string {
 }
 
 // Sortable Scene Card Wrapper for drag-and-drop
-function SortableSceneCard({ id, onAddScene, onDeleteScene, ...props }: any) {
+function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, ...props }: any) {
   const {
     attributes,
     listeners,
@@ -174,13 +176,14 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, ...props }: any) {
         {...props} 
         onAddScene={onAddScene}
         onDeleteScene={onDeleteScene}
+        onEditScene={onEditScene}
         dragHandleProps={listeners} 
       />
     </div>
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [editMode, setEditMode] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -1093,6 +1096,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       setGeneratingDialogue={setGeneratingDialogue}
                       onAddScene={onAddScene}
                       onDeleteScene={onDeleteScene}
+                      onEditScene={onEditScene}
                 />
                     )
                   })}
@@ -1205,9 +1209,10 @@ interface SceneCardProps {
   dragHandleProps?: any
   onAddScene?: (afterIndex?: number) => void
   onDeleteScene?: (sceneIndex: number) => void
+  onEditScene?: (sceneIndex: number) => void
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart, dragHandleProps, onAddScene, onDeleteScene }: SceneCardProps) {
+function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart, dragHandleProps, onAddScene, onDeleteScene, onEditScene }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
   
@@ -1488,6 +1493,26 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>Quick generate</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                {/* Edit Scene */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (onEditScene) {
+                            onEditScene(sceneIdx)
+                          }
+                        }}
+                        className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded transition-colors"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Edit scene</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
