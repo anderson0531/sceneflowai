@@ -60,12 +60,26 @@ export async function POST(req: NextRequest) {
     }
 
     console.log('[Scene Analysis] Analyzing scene:', sceneIndex, 'for project:', projectId)
+    console.log('[Scene Analysis] Scene data:', JSON.stringify(scene, null, 2))
+    console.log('[Scene Analysis] API Key present:', !!process.env.GOOGLE_GEMINI_API_KEY)
 
     // Generate both director and audience analysis
-    const [directorAnalysis, audienceAnalysis] = await Promise.all([
-      generateDirectorAnalysis(scene, context),
-      generateAudienceAnalysis(scene, context)
-    ])
+    let directorAnalysis, audienceAnalysis
+    try {
+      [directorAnalysis, audienceAnalysis] = await Promise.all([
+        generateDirectorAnalysis(scene, context),
+        generateAudienceAnalysis(scene, context)
+      ])
+    } catch (error) {
+      console.error('[Scene Analysis] Generation error:', error)
+      return NextResponse.json(
+        { 
+          error: 'Failed to generate scene analysis', 
+          details: error instanceof Error ? error.message : 'Unknown error'
+        },
+        { status: 500 }
+      )
+    }
 
     // Generate quick fixes
     const quickFixes = generateQuickFixes(scene)
@@ -177,7 +191,9 @@ Focus on practical, implementable suggestions that a director would give to impr
   )
 
   if (!response.ok) {
-    throw new Error(`Gemini API error: ${response.status}`)
+    const errorText = await response.text()
+    console.error('[Scene Analysis] Gemini API error:', response.status, errorText)
+    throw new Error(`Gemini API error: ${response.status} - ${errorText}`)
   }
 
   const data = await response.json()
@@ -275,7 +291,9 @@ Focus on what audiences will love and what will make them more engaged with the 
   )
 
   if (!response.ok) {
-    throw new Error(`Gemini API error: ${response.status}`)
+    const errorText = await response.text()
+    console.error('[Scene Analysis] Gemini API error:', response.status, errorText)
+    throw new Error(`Gemini API error: ${response.status} - ${errorText}`)
   }
 
   const data = await response.json()

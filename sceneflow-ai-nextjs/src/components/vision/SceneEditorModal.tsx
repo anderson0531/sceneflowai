@@ -235,7 +235,9 @@ export function SceneEditorModal({
           <div className="flex items-center justify-between">
             <div>
               <DialogTitle>Edit Scene {sceneIndex + 1}</DialogTitle>
-              <DialogDescription>{scene.heading || 'Untitled Scene'}</DialogDescription>
+              <DialogDescription>
+                {typeof scene.heading === 'string' ? scene.heading : (scene.heading?.text || 'Untitled Scene')}
+              </DialogDescription>
             </div>
             <div className="flex items-center gap-2">
               {sceneAnalysis && (
@@ -298,9 +300,20 @@ export function SceneEditorModal({
                     onApplyQuickFix={handleApplyQuickFix}
                   />
                 ) : (
-                  <div className="flex items-center justify-center py-8 text-gray-500">
-                    <AlertCircle className="w-6 h-6 mr-2" />
-                    <span>Failed to load recommendations</span>
+                  <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+                    <AlertCircle className="w-8 h-8 mb-2 text-red-500" />
+                    <span className="font-medium">Failed to load recommendations</span>
+                    <p className="text-xs text-center mt-2 max-w-sm">
+                      The AI analysis service may be unavailable. Please try again or use Direct Edit mode.
+                    </p>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={analyzeScene}
+                      className="mt-4"
+                    >
+                      Retry Analysis
+                    </Button>
                   </div>
                 )}
               </TabsContent>
