@@ -46,6 +46,58 @@ interface ScriptPanelProps {
   onPlayScript?: () => void
 }
 
+// Calculate scene duration based on audio, buffer, and video clips
+function calculateSceneDuration(scene: any): number {
+  // 1. Calculate audio duration (D_audio)
+  // Average speaking rate: 150 words per minute (WPM)
+  let totalWords = 0
+  
+  // Count words in narration
+  if (scene.narration || scene.action) {
+    const narrationText = scene.narration || scene.action || ''
+    totalWords += narrationText.split(/\s+/).filter((w: string) => w.length > 0).length
+  }
+  
+  // Count words in dialogue
+  if (scene.dialogue && Array.isArray(scene.dialogue)) {
+    scene.dialogue.forEach((d: any) => {
+      if (d.line) {
+        totalWords += d.line.split(/\s+/).filter((w: string) => w.length > 0).length
+      }
+    })
+  }
+  
+  // Convert words to seconds at 150 WPM
+  const audioDuration = (totalWords / 150) * 60
+  
+  // 2. Calculate buffer time (D_buffer)
+  // Estimate 2-4 seconds for non-vocal actions
+  // Use scene description length as a proxy for action complexity
+  const descriptionLength = (scene.action || scene.visualDescription || '').length
+  let bufferTime = 2 // Minimum 2 seconds
+  if (descriptionLength > 100) bufferTime = 3
+  if (descriptionLength > 200) bufferTime = 4
+  if (descriptionLength > 300) bufferTime = 5
+  
+  // 3. Calculate required duration
+  const requiredDuration = audioDuration + bufferTime
+  
+  // 4. Calculate number of 8-second video clips needed
+  const videoCount = Math.ceil(requiredDuration / 8)
+  
+  // 5. Calculate final scene duration
+  const sceneDuration = audioDuration + bufferTime + (videoCount * 0.5)
+  
+  return Math.round(sceneDuration)
+}
+
+// Format duration as MM:SS
+function formatDuration(seconds: number): string {
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
 export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [editMode, setEditMode] = useState(false)
@@ -667,7 +719,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 <div>
                   <span className="text-gray-500 dark:text-gray-400">Duration</span>
                   <div className="font-medium text-gray-900 dark:text-gray-100">
-                    {Math.floor((script.totalDuration || 0) / 60)} min
+                    {formatDuration(scenes.reduce((total: number, s: any) => total + calculateSceneDuration(s), 0))}
                   </div>
                 </div>
                 <div>
@@ -917,6 +969,21 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
         <div className="flex items-center gap-2">
           <ChevronRight className={`w-4 h-4 transition-transform text-gray-500 dark:text-gray-400 ${isOpen ? 'rotate-90' : ''}`} />
           <span className="text-sm font-medium text-gray-900 dark:text-gray-100">SCENE {sceneNumber}</span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-xs text-gray-500 dark:text-gray-400 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded cursor-help">
+                  {formatDuration(calculateSceneDuration(scene))}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <div className="text-xs">
+                  <p>Estimated scene duration</p>
+                  <p className="text-gray-400">Based on audio + visuals</p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           
           {/* Asset Indicators */}
           <div className="flex items-center gap-1">
