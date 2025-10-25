@@ -13,6 +13,7 @@ import { VoiceSelector } from '@/components/tts/VoiceSelector'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Save, Share2, ArrowRight, Play, Volume2, Image as ImageIcon, Copy, Check, X } from 'lucide-react'
+import ScriptReviewModal from '@/components/vision/ScriptReviewModal'
 import { findSceneCharacters } from '../../../../../lib/character/matching'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -94,6 +95,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }>>({})
   const [isPlayerOpen, setIsPlayerOpen] = useState(false)
   const [voiceAssignments, setVoiceAssignments] = useState<Record<string, any>>({})
+  
+  // Script review state
+  const [directorReview, setDirectorReview] = useState<any>(null)
+  const [audienceReview, setAudienceReview] = useState<any>(null)
+  const [isGeneratingReviews, setIsGeneratingReviews] = useState(false)
+  const [showReviewModal, setShowReviewModal] = useState(false)
+  const [reviewsOutdated, setReviewsOutdated] = useState(false)
   const [generationProgress, setGenerationProgress] = useState({
     script: { 
       complete: false, 
@@ -301,6 +309,93 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }, [projectId, mounted])
 
+  // Script review functions
+  const handleGenerateReviews = async () => {
+    if (!script || !projectId) return
+    
+    setIsGeneratingReviews(true)
+    try {
+      const response = await fetch('/api/vision/review-script', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          script: {
+            title: script.title,
+            logline: script.logline,
+            scenes: script.script?.scenes || [],
+            characters: characters
+          }
+        })
+      })
+
+      if (!response.ok) throw new Error('Failed to generate reviews')
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        setDirectorReview(data.director)
+        setAudienceReview(data.audience)
+        setReviewsOutdated(false)
+        
+        // Save reviews to project metadata
+        if (project) {
+          const updatedProject = {
+            ...project,
+            metadata: {
+              ...project.metadata,
+              visionPhase: {
+                ...project.metadata?.visionPhase,
+                reviews: {
+                  director: data.director,
+                  audience: data.audience,
+                  lastUpdated: data.generatedAt,
+                  scriptHash: generateScriptHash(script)
+                }
+              }
+            }
+          }
+          
+          await fetch(`/api/projects/${projectId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              metadata: updatedProject.metadata
+            })
+          })
+        }
+        
+        try {
+          const { toast } = require('sonner')
+          toast.success('Script reviews generated successfully!')
+        } catch {}
+      }
+    } catch (error) {
+      console.error('[Script Review] Error:', error)
+      try {
+        const { toast } = require('sonner')
+        toast.error('Failed to generate script reviews')
+      } catch {}
+    } finally {
+      setIsGeneratingReviews(false)
+    }
+  }
+
+  const generateScriptHash = (script: any): string => {
+    // Simple hash based on script content for change detection
+    const content = JSON.stringify({
+      title: script?.title,
+      logline: script?.logline,
+      scenes: script?.script?.scenes?.map((s: any) => ({
+        heading: s.heading,
+        action: s.action,
+        narration: s.narration,
+        dialogue: s.dialogue
+      }))
+    })
+    return btoa(content).slice(0, 16)
+  }
+
   const loadProject = async () => {
     try {
       // Add cache-busting to force fresh data from database
@@ -368,6 +463,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           })
           setScript(visionPhase.script)
         }
+        
+        // Load existing reviews
+        if (visionPhase.reviews) {
+          setDirectorReview(visionPhase.reviews.director || null)
+          setAudienceReview(visionPhase.reviews.audience || null)
+          setReviewsOutdated(false)
+        }
+        
         // Process characters first (needed for dialogue migration)
         let charactersWithIds: any[] = []
         if (visionPhase.characters) {
@@ -2360,6 +2463,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             onAddScene={handleAddScene}
             onDeleteScene={handleDeleteScene}
             onReorderScenes={handleReorderScenes}
+            directorScore={directorReview?.overallScore}
+            audienceScore={audienceReview?.overallScore}
+            onGenerateReviews={handleGenerateReviews}
+            isGeneratingReviews={isGeneratingReviews}
+            onShowReviews={() => setShowReviewModal(true)}
           />
         </div>
         
@@ -2447,6 +2555,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           onClose={() => setIsPlayerOpen(false)}
         />
       )}
+
+      {/* Script Review Modal */}
+      <ScriptReviewModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        directorReview={directorReview}
+        audienceReview={audienceReview}
+        onRegenerate={handleGenerateReviews}
+        isGenerating={isGeneratingReviews}
+      />
 
       {/* Audio Generation Progress */}
       {audioProgress && (

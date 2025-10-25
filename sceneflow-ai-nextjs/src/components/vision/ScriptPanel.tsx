@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +13,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { ScenePromptBuilder } from './ScenePromptBuilder'
 import ScenePromptDrawer from './ScenePromptDrawer'
 import { AudioMixer, type AudioTrack } from './AudioMixer'
+import ScriptReviewModal from './ScriptReviewModal'
 
 interface ScriptPanelProps {
   script: any
@@ -51,6 +52,20 @@ interface ScriptPanelProps {
   onAddScene?: (afterIndex?: number) => void
   onDeleteScene?: (sceneIndex: number) => void
   onReorderScenes?: (startIndex: number, endIndex: number) => void
+  // NEW: Script review props
+  directorScore?: number
+  audienceScore?: number
+  onGenerateReviews?: () => void
+  isGeneratingReviews?: boolean
+  onShowReviews?: () => void
+}
+
+// Color coding for scores
+function getScoreColor(score: number): string {
+  if (score >= 90) return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+  if (score >= 75) return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+  if (score >= 60) return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+  return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
 }
 
 // Calculate scene duration based on audio, buffer, and video clips
@@ -133,7 +148,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, ...props }: any) {
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [editMode, setEditMode] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -703,6 +718,71 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+            
+            {/* Script Ratings */}
+            {(directorScore || audienceScore) && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-800">
+                {directorScore && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={onShowReviews}
+                          className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${getScoreColor(directorScore)}`}
+                        >
+                          <Film className="w-3.5 h-3.5" />
+                          <span className="text-sm font-semibold">{directorScore}</span>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Director Rating</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                
+                {audienceScore && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={onShowReviews}
+                          className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${getScoreColor(audienceScore)}`}
+                        >
+                          <Users className="w-3.5 h-3.5" />
+                          <span className="text-sm font-semibold">{audienceScore}</span>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Audience Rating</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onShowReviews}
+                  className="text-xs"
+                >
+                  View Reviews
+                </Button>
+              </div>
+            )}
+
+            {/* Generate Reviews Button (if no reviews exist) */}
+            {!directorScore && !audienceScore && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onGenerateReviews}
+                disabled={isGeneratingReviews}
+              >
+                {isGeneratingReviews ? (
+                  <Loader className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Star className="w-4 h-4" />
+                )}
+                Get Script Review
+              </Button>
+            )}
             
             <TooltipProvider>
               <Tooltip>
