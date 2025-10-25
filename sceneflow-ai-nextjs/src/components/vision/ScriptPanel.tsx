@@ -1048,197 +1048,258 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
       } ${isOutline ? 'bg-yellow-50 dark:bg-yellow-950/20' : ''}`}
     >
-      {/* Collapsible Header */}
-      <div 
-        onClick={toggleOpen}
-        className="flex items-center justify-between cursor-pointer mb-3"
-      >
-        <div className="flex items-center gap-2">
-          <ChevronRight className={`w-4 h-4 transition-transform text-gray-500 dark:text-gray-400 ${isOpen ? 'rotate-90' : ''}`} />
-          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">SCENE {sceneNumber}</span>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="text-xs text-gray-500 dark:text-gray-400 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded cursor-help">
-                  {formatDuration(calculateSceneDuration(scene))}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <div className="text-xs">
-                  <p>Duration: {formatDuration(calculateSceneDuration(scene))}</p>
-                  <p>Starts at: {formatDuration(timelineStart || 0)}</p>
-                  <p className="text-gray-400 mt-1">Rounded to 8-second clips</p>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <span className="text-xs text-gray-400">
-            @{formatDuration(timelineStart || 0)}
-          </span>
+      {/* Collapsible Header - NEW TWO-ROW LAYOUT */}
+      <div className="space-y-2 mb-3">
+        {/* Row 1: Scene Info + Status Indicators */}
+        <div 
+          onClick={toggleOpen}
+          className="flex items-center justify-between cursor-pointer"
+        >
+          {/* Left: Scene Info */}
+          <div className="flex items-center gap-2">
+            <ChevronRight className={`w-4 h-4 transition-transform text-gray-500 dark:text-gray-400 ${isOpen ? 'rotate-90' : ''}`} />
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">SCENE {sceneNumber}</span>
+            
+            {/* Duration Badge */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded cursor-help">
+                    {formatDuration(calculateSceneDuration(scene))}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="text-xs">
+                    <p>Duration: {formatDuration(calculateSceneDuration(scene))}</p>
+                    <p>Starts at: {formatDuration(timelineStart || 0)}</p>
+                    <p className="text-gray-400 mt-1">Rounded to 8-second clips</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            {/* Timeline Start */}
+            <span className="text-xs text-gray-400">
+              @{formatDuration(timelineStart || 0)}
+            </span>
+          </div>
           
-          {/* Scene Actions */}
+          {/* Right: Status Indicators - Grouped with subtle background */}
+          <div 
+            className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-gray-50 dark:bg-gray-800/50"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Image Indicator */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div 
+                    className={`flex items-center justify-center w-6 h-6 rounded ${
+                      scene.imageUrl 
+                        ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
+                    }`}
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {scene.imageUrl ? 'Scene image generated' : 'No scene image'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            {/* Voice Indicator */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div 
+                    className={`flex items-center justify-center w-6 h-6 rounded ${
+                      scene.narrationAudioUrl 
+                        ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
+                    }`}
+                  >
+                    <Volume2 className="w-3.5 h-3.5" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {scene.narrationAudioUrl ? 'Voice audio generated' : 'No voice audio'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            {/* Sound Indicator */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div 
+                    className={`flex items-center justify-center w-6 h-6 rounded ${
+                      scene.musicAudio 
+                        ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
+                    }`}
+                  >
+                    <Music className="w-3.5 h-3.5" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {scene.musicAudio ? 'Sound/Music generated' : 'No sound/music'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+        
+        {/* Row 2: Scene Heading + Action Controls */}
+        <div className="flex items-center justify-between pl-6">
+          {/* Left: Scene Heading */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            {scene.heading && (
+              <span className="text-sm text-gray-600 dark:text-gray-400 truncate">{scene.heading}</span>
+            )}
+            {scene.duration && (
+              <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">{scene.duration}s</span>
+            )}
+            {isOutline && (
+              <span className="text-xs px-2 py-0.5 rounded bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 flex-shrink-0">
+                Outline
+              </span>
+            )}
+          </div>
+          
+          {/* Right: Action Controls - Grouped */}
           <div 
             className="flex items-center gap-1"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Add Scene After */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onAddScene?.(sceneIdx)
-                    }}
-                    className="p-1 hover:bg-blue-100 dark:hover:bg-blue-900 rounded text-blue-600 dark:text-blue-400"
-                    title="Add scene after this one"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>Add scene after</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            {/* Delete Scene */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      if (confirm('Delete this scene? This cannot be undone.')) {
-                        onDeleteScene?.(sceneIdx)
-                      }
-                    }}
-                    className="p-1 hover:bg-red-100 dark:hover:bg-red-900 rounded text-red-600 dark:text-red-400"
-                    title="Delete scene"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>Delete scene</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            {/* Drag Handle */}
-            <div
-              className="p-1 cursor-move text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              title="Drag to reorder"
-              {...(dragHandleProps || {})}
-            >
-              <GripVertical className="w-4 h-4" />
-            </div>
-          </div>
-          
-          {/* Asset Indicators */}
-          <div className="flex items-center gap-1">
-            {/* Image Indicator */}
-            <div 
-              className={`flex items-center justify-center w-5 h-5 rounded ${
-                scene.imageUrl 
-                  ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
-              }`}
-              title={scene.imageUrl ? 'Scene image generated' : 'No scene image'}
-            >
-              <Camera className="w-3 h-3" />
-            </div>
-            
-            {/* Voice Indicator (Narration/Dialogue) */}
-            <div 
-              className={`flex items-center justify-center w-5 h-5 rounded ${
-                scene.narrationAudioUrl 
-                  ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
-              }`}
-              title={scene.narrationAudioUrl ? 'Voice audio generated' : 'No voice audio'}
-            >
-              <Volume2 className="w-3 h-3" />
-            </div>
-            
-            {/* Sound Indicator (SFX/Music) */}
-            <div 
-              className={`flex items-center justify-center w-5 h-5 rounded ${
-                scene.musicAudio 
-                  ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
-              }`}
-              title={scene.musicAudio ? 'Sound/Music generated' : 'No sound/music'}
-            >
-              <Music className="w-3 h-3" />
-            </div>
-          </div>
-          
-          {scene.heading && (
-            <span className="text-sm text-gray-600 dark:text-gray-400">{scene.heading}</span>
-          )}
-          {scene.duration && (
-            <span className="text-xs text-gray-400 dark:text-gray-500">{scene.duration}s</span>
-          )}
-          {isOutline && (
-            <span className="text-xs px-2 py-0.5 rounded bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200">
-              Outline
-            </span>
-          )}
-          
-          {/* Audio Play Button */}
-          {audioEnabled && !isOutline && (
-            <Button
-              size="sm"
-              onClick={handlePlay}
-              disabled={isPlaying}
-              className="h-6 w-6 p-0 rounded-full bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50"
-              title="Play scene narration"
-            >
-              {isPlaying ? (
-                <Loader className="w-3 h-3 animate-spin" />
-              ) : (
-                <Play className="w-3 h-3" />
-              )}
-            </Button>
-          )}
-        </div>
-        
-        <div className="flex gap-2">
-          {isOutline && onExpand && (
-            <Button
-              size="sm"
-              onClick={handleExpand}
-              disabled={isExpanding}
-              className="bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50 text-xs px-2 py-1 h-auto"
-            >
-              {isExpanding ? <Loader className="w-3 h-3 animate-spin" /> : 'Generate'}
-            </Button>
-          )}
-          
-          {/* Generate Image Buttons (for expanded scenes) */}
-          {!isOutline && onGenerateImage && scene.visualDescription && (
-            <>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleOpenBuilder}
-                disabled={isGeneratingImage}
-                className="h-6 w-6 p-0 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:text-gray-400 dark:hover:text-indigo-400 dark:hover:bg-indigo-900/20"
-                title="Open prompt builder"
-              >
-                <Wand2 className="w-3 h-3" />
-              </Button>
+            {/* Scene Management Actions */}
+            <div className="flex items-center gap-0.5 mr-2">
+              {/* Drag Handle */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      className="p-1.5 cursor-move text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+                      {...(dragHandleProps || {})}
+                    >
+                      <GripVertical className="w-4 h-4" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>Drag to reorder</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               
-              {/* Quick Generation Button */}
+              {/* Add Scene */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onAddScene?.(sceneIdx)
+                      }}
+                      className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900 rounded text-blue-600 dark:text-blue-400 transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Add scene after</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
+              {/* Delete Scene */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (confirm('Delete this scene? This cannot be undone.')) {
+                          onDeleteScene?.(sceneIdx)
+                        }
+                      }}
+                      className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900 rounded text-red-600 dark:text-red-400 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Delete scene</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            
+            {/* Generation Actions (only for expanded scenes) */}
+            {!isOutline && onGenerateImage && scene.visualDescription && (
+              <div className="flex items-center gap-0.5 mr-2">
+                {/* Prompt Builder */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={handleOpenBuilder}
+                        disabled={isGeneratingImage}
+                        className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:text-gray-400 dark:hover:text-indigo-400 dark:hover:bg-indigo-900/20 rounded transition-colors disabled:opacity-50"
+                      >
+                        <Wand2 className="w-4 h-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Open prompt builder</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                
+                {/* Quick Generate */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={handleQuickGenerate}
+                        disabled={isGeneratingImage}
+                        className="p-1.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 dark:text-gray-400 dark:hover:text-purple-400 dark:hover:bg-purple-900/20 rounded transition-colors disabled:opacity-50"
+                      >
+                        <Zap className="w-4 h-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Quick generate</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            )}
+            
+            {/* Play Button */}
+            {audioEnabled && !isOutline && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={handlePlay}
+                      disabled={isPlaying}
+                      className="p-1.5 rounded-full bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50 transition-colors"
+                    >
+                      {isPlaying ? (
+                        <Loader className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Play className="w-4 h-4" />
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Play scene</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            
+            {/* Generate Button (for outline scenes) */}
+            {isOutline && onExpand && (
               <Button
                 size="sm"
-                variant="ghost"
-                onClick={handleQuickGenerate}
-                disabled={isGeneratingImage}
-                className="h-6 w-6 p-0 text-gray-500 hover:text-purple-600 hover:bg-purple-50 dark:text-gray-400 dark:hover:text-purple-400 dark:hover:bg-purple-900/20"
-                title="Quick generate (auto-selects characters)"
+                onClick={handleExpand}
+                disabled={isExpanding}
+                className="bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50 text-xs px-3 py-1 h-auto"
               >
-                <Zap className="w-3 h-3" />
+                {isExpanding ? <Loader className="w-3 h-3 animate-spin" /> : 'Generate'}
               </Button>
-            </>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
