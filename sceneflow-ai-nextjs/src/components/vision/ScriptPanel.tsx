@@ -88,7 +88,8 @@ function calculateSceneDuration(scene: any): number {
   // 5. Calculate final scene duration
   const sceneDuration = audioDuration + bufferTime + (videoCount * 0.5)
   
-  return Math.round(sceneDuration)
+  // Round up to nearest multiple of 8 (for 8-second video clips)
+  return Math.ceil(sceneDuration / 8) * 8
 }
 
 // Format duration as MM:SS
@@ -770,7 +771,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 </p>
               </div>
             ) : (
-              scenes.map((scene: any, idx: number) => (
+              scenes.map((scene: any, idx: number) => {
+                const timelineStart = scenes.slice(0, idx).reduce((total: number, s: any) => total + calculateSceneDuration(s), 0)
+                return (
                 <SceneCard 
                   key={idx}
                   scene={scene}
@@ -783,6 +786,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   isPlaying={loadingSceneId === idx}
                   audioEnabled={enabled}
                   sceneIdx={idx}
+                  timelineStart={timelineStart}
                   onGenerateImage={handleGenerateImage}
                   isGeneratingImage={generatingImageForScene === idx}
                   onOpenPromptBuilder={handleOpenSceneBuilder}
@@ -803,7 +807,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   generatingDialogue={generatingDialogue}
                   setGeneratingDialogue={setGeneratingDialogue}
                 />
-              ))
+                )
+              })
             )}
           </div>
         )}
@@ -907,9 +912,10 @@ interface SceneCardProps {
   playingAudio?: string | null
   generatingDialogue?: {sceneIdx: number, character: string} | null
   setGeneratingDialogue?: (state: {sceneIdx: number, character: string} | null) => void
+  timelineStart?: number
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue }: SceneCardProps) {
+function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
   
@@ -978,12 +984,16 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
               </TooltipTrigger>
               <TooltipContent>
                 <div className="text-xs">
-                  <p>Estimated scene duration</p>
-                  <p className="text-gray-400">Based on audio + visuals</p>
+                  <p>Duration: {formatDuration(calculateSceneDuration(scene))}</p>
+                  <p>Starts at: {formatDuration(timelineStart || 0)}</p>
+                  <p className="text-gray-400 mt-1">Rounded to 8-second clips</p>
                 </div>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          <span className="text-xs text-gray-400">
+            @{formatDuration(timelineStart || 0)}
+          </span>
           
           {/* Asset Indicators */}
           <div className="flex items-center gap-1">
