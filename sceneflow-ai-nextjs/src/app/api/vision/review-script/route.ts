@@ -123,7 +123,7 @@ Format as JSON with this exact structure:
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 2048
+          maxOutputTokens: 8192
         }
       })
     }
@@ -245,7 +245,7 @@ Format as JSON with this exact structure:
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 2048
+          maxOutputTokens: 8192
         }
       })
     }
