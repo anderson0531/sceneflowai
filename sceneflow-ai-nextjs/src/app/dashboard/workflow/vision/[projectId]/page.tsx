@@ -2012,6 +2012,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   // Scene management handlers
   const handleAddScene = async (afterIndex?: number) => {
+    console.log('[Vision] handleAddScene called:', afterIndex)
     if (!script) return
     
     const newScene = {
@@ -2052,6 +2053,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   const handleDeleteScene = async (sceneIndex: number) => {
+    console.log('[Vision] handleDeleteScene called:', sceneIndex)
     if (!script || scenes.length <= 1) {
       try {
         const { toast } = require('sonner')
@@ -2085,6 +2087,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   const handleReorderScenes = async (startIndex: number, endIndex: number) => {
+    console.log('[Vision] handleReorderScenes called:', startIndex, endIndex)
     if (!script) return
     
     const updatedScenes = [...scenes]

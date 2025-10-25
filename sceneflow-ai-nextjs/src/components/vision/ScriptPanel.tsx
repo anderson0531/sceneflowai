@@ -107,7 +107,7 @@ function formatDuration(seconds: number): string {
 }
 
 // Sortable Scene Card Wrapper for drag-and-drop
-function SortableSceneCard({ id, ...props }: any) {
+function SortableSceneCard({ id, onAddScene, onDeleteScene, ...props }: any) {
   const {
     attributes,
     listeners,
@@ -121,9 +121,20 @@ function SortableSceneCard({ id, ...props }: any) {
     transition,
   }
 
+  console.log('[SortableSceneCard] Props:', { 
+    id, 
+    hasOnAddScene: !!onAddScene, 
+    hasOnDeleteScene: !!onDeleteScene 
+  })
+
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
-      <SceneCard {...props} dragHandleProps={listeners} />
+      <SceneCard 
+        {...props} 
+        onAddScene={onAddScene}
+        onDeleteScene={onDeleteScene}
+        dragHandleProps={listeners} 
+      />
     </div>
   )
 }
@@ -700,7 +711,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             </TooltipProvider>
             
             <Button
-              onClick={() => onAddScene?.()}
+              onClick={() => {
+                console.log('[ScriptPanel] Header Add Scene clicked, onAddScene:', !!onAddScene)
+                onAddScene?.()
+              }}
               variant="outline"
               size="sm"
               className="flex items-center gap-2"
@@ -1070,7 +1084,10 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
           </span>
           
           {/* Scene Actions */}
-          <div className="flex items-center gap-1">
+          <div 
+            className="flex items-center gap-1"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Add Scene After */}
             <TooltipProvider>
               <Tooltip>
@@ -1078,6 +1095,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
+                      console.log('[SceneCard] Add scene clicked:', sceneIdx, 'onAddScene:', !!onAddScene)
                       onAddScene?.(sceneIdx)
                     }}
                     className="p-1 hover:bg-blue-100 dark:hover:bg-blue-900 rounded text-blue-600 dark:text-blue-400"
@@ -1097,6 +1115,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
+                      console.log('[SceneCard] Delete scene clicked:', sceneIdx, 'onDeleteScene:', !!onDeleteScene)
                       if (confirm('Delete this scene? This cannot be undone.')) {
                         onDeleteScene?.(sceneIdx)
                       }
