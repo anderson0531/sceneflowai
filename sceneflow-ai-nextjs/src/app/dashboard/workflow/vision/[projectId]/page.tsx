@@ -2162,7 +2162,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           visionPhase: {
             ...existingVisionPhase,
             script: {
-              ...script,
               scenes: updatedScenes
             },
             scenes: updatedScenes
