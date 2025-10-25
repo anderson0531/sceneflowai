@@ -204,11 +204,21 @@ Focus on practical, implementable suggestions that a director would give to impr
   }
 
   // Extract JSON from markdown code blocks if present
+  console.log('[Director Analysis] Raw response text:', analysisText.substring(0, 200))
   let jsonText = analysisText.trim()
+
+  // Try multiple extraction methods
   const codeBlockMatch = jsonText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
   if (codeBlockMatch) {
     jsonText = codeBlockMatch[1].trim()
+    console.log('[Director Analysis] Extracted from code block')
+  } else if (jsonText.startsWith('```')) {
+    // Fallback: manually strip code block markers
+    jsonText = jsonText.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '').trim()
+    console.log('[Director Analysis] Manually stripped code blocks')
   }
+
+  console.log('[Director Analysis] JSON to parse:', jsonText.substring(0, 200))
 
   try {
     const analysis = JSON.parse(jsonText)
@@ -218,6 +228,7 @@ Focus on practical, implementable suggestions that a director would give to impr
     }
   } catch (parseError) {
     console.error('[Director Analysis] JSON parse error:', parseError)
+    console.error('[Director Analysis] Failed to parse text:', jsonText)
     throw new Error('Failed to parse director analysis JSON')
   }
 }
@@ -304,11 +315,21 @@ Focus on what audiences will love and what will make them more engaged with the 
   }
 
   // Extract JSON from markdown code blocks if present
+  console.log('[Audience Analysis] Raw response text:', analysisText.substring(0, 200))
   let jsonText = analysisText.trim()
+
+  // Try multiple extraction methods
   const codeBlockMatch = jsonText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
   if (codeBlockMatch) {
     jsonText = codeBlockMatch[1].trim()
+    console.log('[Audience Analysis] Extracted from code block')
+  } else if (jsonText.startsWith('```')) {
+    // Fallback: manually strip code block markers
+    jsonText = jsonText.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '').trim()
+    console.log('[Audience Analysis] Manually stripped code blocks')
   }
+
+  console.log('[Audience Analysis] JSON to parse:', jsonText.substring(0, 200))
 
   try {
     const analysis = JSON.parse(jsonText)
@@ -318,6 +339,7 @@ Focus on what audiences will love and what will make them more engaged with the 
     }
   } catch (parseError) {
     console.error('[Audience Analysis] JSON parse error:', parseError)
+    console.error('[Audience Analysis] Failed to parse text:', jsonText)
     throw new Error('Failed to parse audience analysis JSON')
   }
 }
