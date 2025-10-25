@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X, ChevronDown, Check, Settings, Sparkles, Lightbulb, AlertTriangle, Info, Volume2 } from 'lucide-react'
+import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X, ChevronDown, Check, Settings, Sparkles, Lightbulb, AlertTriangle, Info, Volume2, ImageIcon } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { CharacterPromptBuilder } from '@/components/blueprint/CharacterPromptBuilder'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
@@ -376,229 +376,143 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
   const isAppearanceExpanded = expandedCharId === `${characterId}-appear`
+  const [showAdvanced, setShowAdvanced] = useState(false)
+  
   return (
-    <div 
-      onClick={onClick}
-      className={`group relative rounded-lg border overflow-hidden cursor-pointer transition-all ${
-        isSelected 
-          ? 'border-sf-primary ring-2 ring-sf-primary' 
-          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-      }`}
-    >
-      {/* Character Image */}
-      <div 
-        className="aspect-square bg-gray-100 dark:bg-gray-800 relative cursor-pointer hover:opacity-90 transition-opacity"
-        onClick={(e) => {
-          e.stopPropagation()
-          if (character.referenceImage) {
-            // TODO: Pass setZoomedImage from parent
-            console.log('Zoom image:', character.referenceImage)
-          }
-        }}
-        title={character.referenceImage ? "Click to enlarge" : undefined}
-      >
+    <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all overflow-hidden">
+      {/* Image Section */}
+      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800">
         {character.referenceImage ? (
-          <img 
-            src={character.referenceImage} 
-            alt={character.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center">
-            <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-2xl text-gray-400 dark:text-gray-500 mb-2">
-              {character.name?.[0] || '?'}
+          <>
+            <img 
+              src={character.referenceImage} 
+              alt={character.name}
+              className="w-full h-full object-cover"
+            />
+            {/* Overlay controls - only show on hover */}
+            <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all opacity-0 hover:opacity-100 flex items-center justify-center gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onRegenerate()
+                }}
+                className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm"
+                title="Regenerate image"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
+              <label className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm cursor-pointer">
+                <Upload className="w-4 h-4" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    e.stopPropagation()
+                    const file = e.target.files?.[0]
+                    if (file) onUpload(file)
+                  }}
+                />
+              </label>
             </div>
-            <span className="text-xs text-gray-500 dark:text-gray-400">No image</span>
+          </>
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-4">
+            <ImageIcon className="w-12 h-12 text-gray-400" />
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onGenerate(prompt)
+                }} 
+                disabled={isGenerating}
+              >
+                {isGenerating ? <Loader className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+                Generate
+              </Button>
+              <label className="cursor-pointer">
+                <Button size="sm" variant="outline">
+                  <Upload className="w-4 h-4" />
+                </Button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    e.stopPropagation()
+                    const file = e.target.files?.[0]
+                    if (file) onUpload(file)
+                  }}
+                />
+              </label>
+            </div>
           </div>
         )}
         
-        {/* Prominent loading overlay */}
+        {/* Status Badge - Top Right */}
+        {character.voiceConfig && (
+          <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+            <Check className="w-3 h-3" />
+            Ready
+          </div>
+        )}
+        
+        {/* Loading overlay */}
         {isGenerating && (
-          <div className="absolute inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-10">
-            <Loader className="w-12 h-12 animate-spin text-blue-400 mb-3" />
-            <span className="text-sm text-white font-medium">Generating Image...</span>
-            <span className="text-xs text-gray-300 mt-1">Please wait</span>
+          <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-10">
+            <Loader className="w-8 h-8 animate-spin text-white mb-2" />
+            <span className="text-sm text-white font-medium">Generating...</span>
           </div>
         )}
       </div>
       
-      {/* Character Info Section - Reorganized */}
-      <div className="p-3 bg-white dark:bg-gray-800 space-y-2">
-        {/* Name & Role */}
+      {/* Info Section */}
+      <div className="p-4 space-y-3">
+        {/* Header */}
         <div>
-          <div className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">{character.name || 'Unnamed'}</div>
-          <div className="text-xs text-gray-600 dark:text-gray-400 truncate">{character.role || 'Character'}</div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
+            {character.name || 'Unnamed'}
+          </h3>
+          {character.role && (
+            <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              {character.role}
+            </span>
+          )}
         </div>
         
-        {/* Voice Status Badge */}
-        {character.voiceConfig ? (
-          <div className="flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded text-xs">
-            <Check className="w-3 h-3 text-green-600 dark:text-green-400" />
-            <span className="text-green-700 dark:text-green-300 font-medium">Voice: {character.voiceConfig.voiceName}</span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-1 px-2 py-1 bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded text-xs">
-            <Volume2 className="w-3 h-3 text-red-600 dark:text-red-400" />
-            <span className="text-red-700 dark:text-red-300 font-medium">Voice Required</span>
-          </div>
-        )}
-        
-        {/* Warnings */}
-        {/* Low Resolution Warning */}
-        {character.referenceImage && character.referenceImage.startsWith('data:') && (() => {
-          const base64Length = character.referenceImage.split(',')[1]?.length || 0
-          const estimatedKB = (base64Length * 0.75) / 1024
-          
-          if (estimatedKB < 50) {
-            return (
-              <div className="p-2 bg-amber-500/20 border border-amber-500/50 rounded text-xs text-amber-200">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <div className="font-semibold">Low Resolution Detected</div>
-                    <div className="text-amber-300/80 mt-0.5">
-                      This character uses a compressed image ({estimatedKB.toFixed(0)}KB). 
-                      Re-upload a higher resolution image (512x512+ recommended) for accurate character generation.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )
-          }
-          return null
-        })()}
-        
-        {/* Missing GCS Reference Warning */}
-        {character.referenceImage && !character.referenceImageGCS && (
-          <div className="p-2 bg-blue-500/20 border border-blue-500/50 rounded text-xs text-blue-200">
-            <div className="flex items-start gap-2">
-              <Lightbulb className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <div>
-                <div className="font-semibold">Re-upload Required</div>
-                <div className="text-blue-300/80 mt-0.5">
-                  This reference image needs to be re-uploaded to Google Cloud Storage for optimal Imagen 3 character consistency. 
-                  Please upload the image again.
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Missing Appearance Description Tip */}
-        {character.referenceImageGCS && !character.appearanceDescription && (
-          <div className="p-2 bg-purple-500/20 border border-purple-500/50 rounded text-xs text-purple-200">
-            <div className="flex items-start gap-2">
-              <Lightbulb className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <div>
-                <div className="font-semibold">Pro Tip</div>
-                <div className="text-purple-300/80 mt-0.5">
-                  Click "Analyze" to auto-generate an appearance description for better character consistency.
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Character Attributes - Collapsible */}
-        {(character.subject || character.ethnicity || character.keyFeature) && (
-          <div className="space-y-1">
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onToggleExpand?.(characterId, 'coreIdentity')
-              }}
-              className="flex items-center justify-between w-full text-xs font-semibold text-purple-400 dark:text-purple-300 hover:text-purple-300 dark:hover:text-purple-200 transition-colors"
-            >
-              <span>Core Identity</span>
-              <ChevronDown className={`w-3 h-3 transition-transform ${isCoreExpanded ? 'rotate-180' : ''}`} />
-            </button>
-            {isCoreExpanded && (
-              <div className="text-xs text-gray-600 dark:text-gray-300 space-y-0.5">
-                {character.subject && (
-                  <div><span className="text-gray-400">Subject:</span> {character.subject}</div>
-                )}
-                {character.ethnicity && (
-                  <div><span className="text-gray-400">Ethnicity:</span> {character.ethnicity}</div>
-                )}
-                {character.keyFeature && (
-                  <div><span className="text-gray-400">Key Feature:</span> {character.keyFeature}</div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-        
-        {(character.hairStyle || character.hairColor || character.eyeColor || character.expression || character.build) && (
-          <div className="space-y-1">
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onToggleExpand?.(characterId, 'appearance')
-              }}
-              className="flex items-center justify-between w-full text-xs font-semibold text-blue-400 dark:text-blue-300 hover:text-blue-300 dark:hover:text-blue-200 transition-colors"
-            >
-              <span>Appearance</span>
-              <ChevronDown className={`w-3 h-3 transition-transform ${isAppearanceExpanded ? 'rotate-180' : ''}`} />
-            </button>
-            {isAppearanceExpanded && (
-              <div className="text-xs text-gray-600 dark:text-gray-300 space-y-0.5">
-                {character.hairStyle && (
-                  <div><span className="text-gray-400">Hair Style:</span> {character.hairStyle}</div>
-                )}
-                {character.hairColor && (
-                  <div><span className="text-gray-400">Hair Color:</span> {character.hairColor}</div>
-                )}
-                {character.eyeColor && (
-                  <div><span className="text-gray-400">Eyes:</span> {character.eyeColor}</div>
-                )}
-                {character.expression && (
-                  <div><span className="text-gray-400">Expression:</span> {character.expression}</div>
-                )}
-                {character.build && (
-                  <div><span className="text-gray-400">Build:</span> {character.build}</div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-        
         {/* Description */}
-        {character.description && (
-          <div className="text-xs text-gray-500 dark:text-gray-400 italic border-t border-gray-200 dark:border-gray-700 pt-1.5">
-            {character.description}
-          </div>
-        )}
-      </div>
-      
-      {/* Voice Selector Section - NEW: Collapsible */}
-      {onUpdateCharacterVoice && (
-        <div className="border-t border-gray-200 dark:border-gray-700">
-          <button 
+        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+          {character.description}
+        </p>
+        
+        {/* Voice Section - Collapsible */}
+        <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+          <button
             onClick={(e) => {
               e.stopPropagation()
               onToggleVoiceSection?.()
             }}
-            className="w-full px-3 py-2 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            className="flex items-center justify-between w-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
           >
-            <span className="text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
-              <Volume2 className="w-3 h-3" />
-              Character Voice
+            <span className="flex items-center gap-2">
+              <Volume2 className="w-4 h-4" />
+              Voice
               {!character.voiceConfig && (
-                <span className="ml-1 text-xs px-1.5 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded">
+                <span className="text-xs px-1.5 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded">
                   Required
                 </span>
               )}
             </span>
-            <ChevronDown className={`w-4 h-4 transition-transform text-gray-400 ${voiceSectionExpanded ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-4 h-4 transition-transform ${voiceSectionExpanded ? 'rotate-180' : ''}`} />
           </button>
           
           {voiceSectionExpanded && (
-            <div className="px-3 pb-3 space-y-2">
+            <div className="mt-3 space-y-2">
               <VoiceSelector
                 provider={ttsProvider}
                 selectedVoiceId={character.voiceConfig?.voiceId || ''}
                 onSelectVoice={(voiceId, voiceName) => {
-                  console.log('[VoiceSelector] Selected:', { voiceId, voiceName, characterId })
                   onUpdateCharacterVoice?.(characterId, {
                     provider: ttsProvider,
                     voiceId,
@@ -616,113 +530,136 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
             </div>
           )}
         </div>
-      )}
-      
-      {/* Main Controls Section - ANCHORED AT BOTTOM */}
-      <div className="p-2 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
-        {/* Status indicator */}
-        {hasImage && !isApproved && (
-          <div className="text-[10px] text-yellow-600 dark:text-yellow-400 mb-2 flex items-center gap-1">
-            <span className="inline-block w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
-            Pending approval
-          </div>
-        )}
         
-        {/* Icon-based action buttons */}
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onOpenBuilder()
-            }}
-            disabled={isGenerating}
-            className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-purple-400 dark:hover:border-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
-            title="Edit Character Prompt"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
-          
-          <button
-            onClick={(e) => { e.stopPropagation(); onGenerate(prompt); }}
-            disabled={isGenerating || !prompt.trim()}
-            className="p-2 rounded-lg bg-gradient-to-br from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
-            title={hasImage ? "Regenerate character image" : "Generate character image"}
-          >
-            {isGenerating ? (
-              <Loader className="w-4 h-4 animate-spin" />
-            ) : (
-              <Sparkles className="w-4 h-4" />
-            )}
-          </button>
-          
-          <label 
-            className={`p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-purple-400 dark:hover:border-purple-500 transition-all shadow-sm ${isGenerating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-            title="Upload reference image"
-          >
-            <Upload className="w-4 h-4" />
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              disabled={isGenerating}
-              onChange={(e) => {
-                e.stopPropagation()
-                const file = e.target.files?.[0]
-                if (file) onUpload(file)
-              }}
-            />
-          </label>
-          
-          {hasImage && (
-            <>
-              <button
-                onClick={(e) => { 
-                  e.stopPropagation()
-                  if (onAnalyze && character.referenceImage) {
-                    onAnalyze(characterId, character.referenceImage, character.name)
-                  }
-                }}
-                disabled={isGenerating || analyzingImage}
-                className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-purple-400 dark:hover:border-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
-                title="Analyze image to extract attributes"
-              >
-                {analyzingImage ? (
-                  <Loader className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Scan className="w-4 h-4" />
+        {/* Advanced Options - Collapsible */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            setShowAdvanced(!showAdvanced)
+          }}
+          className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1"
+        >
+          <Settings className="w-3 h-3" />
+          Advanced Options
+          <ChevronDown className={`w-3 h-3 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+        </button>
+        
+        {showAdvanced && (
+          <div className="space-y-2 pt-2">
+            {/* Character Attributes */}
+            {(character.subject || character.ethnicity || character.keyFeature) && (
+              <div className="space-y-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onToggleExpand?.(characterId, 'coreIdentity')
+                  }}
+                  className="flex items-center justify-between w-full text-xs font-semibold text-purple-400 dark:text-purple-300 hover:text-purple-300 dark:hover:text-purple-200 transition-colors"
+                >
+                  <span>Core Identity</span>
+                  <ChevronDown className={`w-3 h-3 transition-transform ${isCoreExpanded ? 'rotate-180' : ''}`} />
+                </button>
+                {isCoreExpanded && (
+                  <div className="text-xs text-gray-600 dark:text-gray-300 space-y-0.5">
+                    {character.subject && (
+                      <div><span className="text-gray-400">Subject:</span> {character.subject}</div>
+                    )}
+                    {character.ethnicity && (
+                      <div><span className="text-gray-400">Ethnicity:</span> {character.ethnicity}</div>
+                    )}
+                    {character.keyFeature && (
+                      <div><span className="text-gray-400">Key Feature:</span> {character.keyFeature}</div>
+                    )}
+                  </div>
                 )}
+              </div>
+            )}
+            
+            {(character.hairStyle || character.hairColor || character.eyeColor || character.expression || character.build) && (
+              <div className="space-y-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onToggleExpand?.(characterId, 'appearance')
+                  }}
+                  className="flex items-center justify-between w-full text-xs font-semibold text-blue-400 dark:text-blue-300 hover:text-blue-300 dark:hover:text-blue-200 transition-colors"
+                >
+                  <span>Appearance</span>
+                  <ChevronDown className={`w-3 h-3 transition-transform ${isAppearanceExpanded ? 'rotate-180' : ''}`} />
+                </button>
+                {isAppearanceExpanded && (
+                  <div className="text-xs text-gray-600 dark:text-gray-300 space-y-0.5">
+                    {character.hairStyle && (
+                      <div><span className="text-gray-400">Hair Style:</span> {character.hairStyle}</div>
+                    )}
+                    {character.hairColor && (
+                      <div><span className="text-gray-400">Hair Color:</span> {character.hairColor}</div>
+                    )}
+                    {character.eyeColor && (
+                      <div><span className="text-gray-400">Eyes:</span> {character.eyeColor}</div>
+                    )}
+                    {character.expression && (
+                      <div><span className="text-gray-400">Expression:</span> {character.expression}</div>
+                    )}
+                    {character.build && (
+                      <div><span className="text-gray-400">Build:</span> {character.build}</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Action Buttons */}
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onOpenBuilder()
+                }}
+                disabled={isGenerating}
+                className="flex-1 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <Settings className="w-3 h-3 inline mr-1" />
+                Edit Prompt
               </button>
               
-              {!isApproved && (
+              {hasImage && (
+                <button
+                  onClick={(e) => { 
+                    e.stopPropagation()
+                    if (onAnalyze && character.referenceImage) {
+                      onAnalyze(characterId, character.referenceImage, character.name)
+                    }
+                  }}
+                  disabled={isGenerating || analyzingImage}
+                  className="flex-1 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {analyzingImage ? (
+                    <Loader className="w-3 h-3 inline mr-1 animate-spin" />
+                  ) : (
+                    <Scan className="w-3 h-3 inline mr-1" />
+                  )}
+                  Analyze
+                </button>
+              )}
+              
+              {hasImage && !isApproved && (
                 <button
                   onClick={(e) => { 
                     e.stopPropagation()
                     onApprove()
                   }}
                   disabled={isGenerating}
-                  className="p-2 rounded-lg bg-gradient-to-br from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
-                  title="Approve character image"
+                  className="flex-1 px-3 py-2 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  <Check className="w-4 h-4" />
+                  <Check className="w-3 h-3 inline mr-1" />
+                  Approve
                 </button>
               )}
-            </>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
       </div>
-      
-      {/* Regenerate button for approved images - top-right corner */}
-      {isApproved && (
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
-            className="p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            title="Regenerate character"
-          >
-            <RefreshCw className="w-4 h-4 text-gray-700 dark:text-gray-300" />
-          </button>
-        </div>
-      )}
     </div>
   )
 }
@@ -738,71 +675,66 @@ function NarratorCharacterCard({ character, onUpdateCharacterVoice, ttsProvider 
   const [voiceSectionExpanded, setVoiceSectionExpanded] = useState(false)
   
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg border border-indigo-200 dark:border-indigo-800 overflow-hidden">
+    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800 overflow-hidden">
       <div className="p-4">
-        <div className="flex items-start gap-4">
-          {/* Icon instead of image */}
-          <div className="w-20 h-20 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
-            <Volume2 className="w-10 h-10 text-indigo-600 dark:text-indigo-400" />
+        {/* Header with badge */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Volume2 className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              {character.name}
+            </h3>
           </div>
-          
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                {character.name}
-              </h3>
-              <span className="px-2 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-medium rounded">
-                Voice Only
-              </span>
-            </div>
-            
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-              {character.description}
-            </p>
-            
-            {/* Voice Selection */}
-            <div className="space-y-2">
-              <button
-                onClick={() => setVoiceSectionExpanded(!voiceSectionExpanded)}
-                className="flex items-center justify-between w-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-              >
-                <span className="flex items-center gap-2">
-                  <Volume2 className="w-4 h-4" />
-                  Character Voice
-                  {!character.voiceConfig && (
-                    <span className="ml-1 text-xs px-1.5 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded">
-                      Required
-                    </span>
-                  )}
+          <span className="px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs font-medium rounded-full">
+            Narration
+          </span>
+        </div>
+        
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          {character.description}
+        </p>
+        
+        {/* Voice Selection */}
+        <div className="space-y-2">
+          <button
+            onClick={() => setVoiceSectionExpanded(!voiceSectionExpanded)}
+            className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-800/50 rounded-lg transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              <Volume2 className="w-4 h-4" />
+              Voice Settings
+              {!character.voiceConfig && (
+                <span className="ml-1 text-xs px-1.5 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded">
+                  Required
                 </span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${voiceSectionExpanded ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {voiceSectionExpanded && (
-                <div className="space-y-2">
-                  <VoiceSelector
-                    provider={ttsProvider}
-                    selectedVoiceId={character.voiceConfig?.voiceId || ''}
-                    onSelectVoice={(voiceId, voiceName) => {
-                      console.log('[Narrator Voice] Selected:', { voiceId, voiceName, characterId: character.id })
-                      onUpdateCharacterVoice?.(character.id, {
-                        provider: ttsProvider,
-                        voiceId,
-                        voiceName
-                      })
-                    }}
-                    compact={true}
-                  />
-                  {character.voiceConfig && (
-                    <div className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                      <Check className="w-3 h-3" />
-                      {character.voiceConfig.voiceName}
-                    </div>
-                  )}
+              )}
+            </span>
+            <ChevronDown className={`w-4 h-4 transition-transform ${voiceSectionExpanded ? 'rotate-180' : ''}`} />
+          </button>
+          
+          {voiceSectionExpanded && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 space-y-2">
+              <VoiceSelector
+                provider={ttsProvider}
+                selectedVoiceId={character.voiceConfig?.voiceId || ''}
+                onSelectVoice={(voiceId, voiceName) => {
+                  console.log('[Narrator Voice] Selected:', { voiceId, voiceName, characterId: character.id })
+                  onUpdateCharacterVoice?.(character.id, {
+                    provider: ttsProvider,
+                    voiceId,
+                    voiceName
+                  })
+                }}
+                compact={true}
+              />
+              {character.voiceConfig && (
+                <div className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                  <Check className="w-3 h-3" />
+                  {character.voiceConfig.voiceName}
                 </div>
               )}
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
