@@ -62,21 +62,21 @@ interface ScriptPanelProps {
 
 // Stoplight color system for scores
 function getStoplightTextColor(score: number): string {
-  if (score >= 75) return 'text-green-600 dark:text-green-400'  // Green: Good
-  if (score >= 60) return 'text-yellow-600 dark:text-yellow-400'  // Yellow: Fair
+  if (score >= 85) return 'text-green-600 dark:text-green-400'  // Green: Good
+  if (score >= 75) return 'text-yellow-600 dark:text-yellow-400'  // Yellow: Fair
   return 'text-red-600 dark:text-red-400'  // Red: Needs Work
 }
 
 function getStoplightBgColor(score: number): string {
-  if (score >= 75) return 'bg-green-500'  // Green
-  if (score >= 60) return 'bg-yellow-500'  // Yellow
+  if (score >= 85) return 'bg-green-500'  // Green
+  if (score >= 75) return 'bg-yellow-500'  // Yellow
   return 'bg-red-500'  // Red
 }
 
 function getScoreLabel(score: number): string {
   if (score >= 90) return 'Excellent'
-  if (score >= 75) return 'Good'
-  if (score >= 60) return 'Fair'
+  if (score >= 85) return 'Good'
+  if (score >= 75) return 'Fair'
   return 'Needs Work'
 }
 
@@ -909,7 +909,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           </div>
         </div>
       )}
-
+      
       {/* Production Script Header */}
       {script && !editMode && (
         <div className="border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50">
@@ -1068,41 +1068,41 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                     const timelineStart = scenes.slice(0, idx).reduce((total: number, s: any) => total + calculateSceneDuration(s), 0)
                     return (
                     <SortableSceneCard
-                      key={idx}
+                  key={idx}
                       id={idx}
-                      scene={scene}
-                      sceneNumber={idx + 1}
-                      isSelected={selectedScene === idx}
-                      onClick={() => setSelectedScene(idx)}
-                      onExpand={onExpandScene}
-                      isExpanding={expandingScenes.has(scene.sceneNumber)}
-                      onPlayScene={playScene}
-                      isPlaying={loadingSceneId === idx}
-                      audioEnabled={enabled}
-                      sceneIdx={idx}
+                  scene={scene}
+                  sceneNumber={idx + 1}
+                  isSelected={selectedScene === idx}
+                  onClick={() => setSelectedScene(idx)}
+                  onExpand={onExpandScene}
+                  isExpanding={expandingScenes.has(scene.sceneNumber)}
+                  onPlayScene={playScene}
+                  isPlaying={loadingSceneId === idx}
+                  audioEnabled={enabled}
+                  sceneIdx={idx}
                       timelineStart={timelineStart}
-                      onGenerateImage={handleGenerateImage}
-                      isGeneratingImage={generatingImageForScene === idx}
-                      onOpenPromptBuilder={handleOpenSceneBuilder}
-                      onOpenPromptDrawer={handleOpenSceneDrawer}
-                      scenePrompt={scenePrompts[idx]}
+                  onGenerateImage={handleGenerateImage}
+                  isGeneratingImage={generatingImageForScene === idx}
+                  onOpenPromptBuilder={handleOpenSceneBuilder}
+                  onOpenPromptDrawer={handleOpenSceneDrawer}
+                  scenePrompt={scenePrompts[idx]}
                       onPromptChange={(sceneIdx: number, prompt: string) => setScenePrompts(prev => ({ ...prev, [sceneIdx]: prompt }))}
-                      validationWarning={validationWarnings[idx]}
-                      validationInfo={validationInfo[idx]}
-                      isWarningExpanded={warningExpanded[idx] || false}
-                      onToggleWarningExpanded={() => toggleWarningExpanded(idx)}
-                      onDismissValidationWarning={() => onDismissValidationWarning?.(idx)}
-                      parseScriptForAudio={parseScriptForAudio}
-                      generateAndPlaySFX={generateAndPlaySFX}
-                      generateAndPlayMusic={generateAndPlayMusic}
-                      onPlayAudio={handlePlayAudio}
-                      onGenerateSceneAudio={onGenerateSceneAudio}
-                      playingAudio={playingAudio}
+                  validationWarning={validationWarnings[idx]}
+                  validationInfo={validationInfo[idx]}
+                  isWarningExpanded={warningExpanded[idx] || false}
+                  onToggleWarningExpanded={() => toggleWarningExpanded(idx)}
+                  onDismissValidationWarning={() => onDismissValidationWarning?.(idx)}
+                  parseScriptForAudio={parseScriptForAudio}
+                  generateAndPlaySFX={generateAndPlaySFX}
+                  generateAndPlayMusic={generateAndPlayMusic}
+                  onPlayAudio={handlePlayAudio}
+                  onGenerateSceneAudio={onGenerateSceneAudio}
+                  playingAudio={playingAudio}
                       generatingDialogue={generatingDialogue}
                       setGeneratingDialogue={setGeneratingDialogue}
                       onAddScene={onAddScene}
                       onDeleteScene={onDeleteScene}
-                    />
+                />
                     )
                   })}
                 </SortableContext>
@@ -1271,15 +1271,15 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
       {/* Collapsible Header - NEW TWO-ROW LAYOUT */}
       <div className="space-y-2 mb-3">
         {/* Row 1: Scene Info + Status Indicators */}
-        <div 
-          onClick={toggleOpen}
+      <div 
+        onClick={toggleOpen}
           className="flex items-center justify-between cursor-pointer"
-        >
+      >
           {/* Left: Scene Info */}
-          <div className="flex items-center gap-2">
-            <ChevronRight className={`w-4 h-4 transition-transform text-gray-500 dark:text-gray-400 ${isOpen ? 'rotate-90' : ''}`} />
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">SCENE {sceneNumber}</span>
-            
+        <div className="flex items-center gap-2">
+          <ChevronRight className={`w-4 h-4 transition-transform text-gray-500 dark:text-gray-400 ${isOpen ? 'rotate-90' : ''}`} />
+          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">SCENE {sceneNumber}</span>
+          
             {/* Duration Badge */}
             <TooltipProvider>
               <Tooltip>
@@ -1313,15 +1313,15 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div 
+            <div 
                     className={`flex items-center justify-center w-6 h-6 rounded ${
-                      scene.imageUrl 
-                        ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
-                    }`}
-                  >
+                scene.imageUrl 
+                  ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
+              }`}
+            >
                     <Camera className="w-3.5 h-3.5" />
-                  </div>
+            </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   {scene.imageUrl ? 'Scene image generated' : 'No scene image'}
@@ -1336,12 +1336,12 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                   <div 
                     className={`flex items-center justify-center w-6 h-6 rounded ${
                       scene.narrationAudioUrl 
-                        ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
-                    }`}
-                  >
+                  ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
+              }`}
+            >
                     <Volume2 className="w-3.5 h-3.5" />
-                  </div>
+            </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   {scene.narrationAudioUrl ? 'Voice audio generated' : 'No voice audio'}
@@ -1355,10 +1355,10 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                 <TooltipTrigger asChild>
                   <div 
                     className={`flex items-center justify-center w-6 h-6 rounded ${
-                      scene.musicAudio 
-                        ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
-                    }`}
+                scene.musicAudio 
+                  ? 'bg-green-500/20 text-green-600 dark:text-green-400' 
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
+              }`}
                   >
                     <Music className="w-3.5 h-3.5" />
                   </div>
@@ -1368,24 +1368,24 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+            </div>
           </div>
-        </div>
-        
+          
         {/* Row 2: Scene Heading + Action Controls */}
         <div className="flex items-center justify-between pl-6">
           {/* Left: Scene Heading */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            {scene.heading && (
+          {scene.heading && (
               <span className="text-sm text-gray-600 dark:text-gray-400 truncate">{scene.heading}</span>
-            )}
-            {scene.duration && (
+          )}
+          {scene.duration && (
               <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">{scene.duration}s</span>
-            )}
-            {isOutline && (
+          )}
+          {isOutline && (
               <span className="text-xs px-2 py-0.5 rounded bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 flex-shrink-0">
-                Outline
-              </span>
-            )}
+              Outline
+            </span>
+          )}
           </div>
           
           {/* Right: Action Controls - Grouped */}
@@ -1487,16 +1487,16 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
             )}
             
             {/* Play Button */}
-            {audioEnabled && !isOutline && (
+          {audioEnabled && !isOutline && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={handlePlay}
-                      disabled={isPlaying}
+              onClick={handlePlay}
+              disabled={isPlaying}
                       className="p-1.5 rounded-full bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50 transition-colors"
-                    >
-                      {isPlaying ? (
+            >
+              {isPlaying ? (
                         <Loader className="w-4 h-4 animate-spin" />
                       ) : (
                         <Play className="w-4 h-4" />
@@ -1509,16 +1509,16 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
             )}
             
             {/* Generate Button (for outline scenes) */}
-            {isOutline && onExpand && (
-              <Button
-                size="sm"
-                onClick={handleExpand}
-                disabled={isExpanding}
+          {isOutline && onExpand && (
+            <Button
+              size="sm"
+              onClick={handleExpand}
+              disabled={isExpanding}
                 className="bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50 text-xs px-3 py-1 h-auto"
-              >
-                {isExpanding ? <Loader className="w-3 h-3 animate-spin" /> : 'Generate'}
-              </Button>
-            )}
+            >
+              {isExpanding ? <Loader className="w-3 h-3 animate-spin" /> : 'Generate'}
+            </Button>
+          )}
           </div>
         </div>
       </div>
