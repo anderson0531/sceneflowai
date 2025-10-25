@@ -2041,13 +2041,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Save to database FIRST
       await saveScenesToDatabase(updatedScenes)
       
-      // Only update local state after successful save
-      const updatedScript = {
-        ...script,
-        scenes: updatedScenes
-      }
-      setScript(updatedScript)
-      setScenes(updatedScenes) // NEW: Also update scenes state for UI
+      // Reload project from database to ensure UI matches database state
+      console.log('[Vision] handleAddScene - Reloading project from database...')
+      await loadProject()
       
       console.log('[Vision] handleAddScene - Success!')
       try {
@@ -2083,13 +2079,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Save to database FIRST
       await saveScenesToDatabase(updatedScenes)
       
-      // Only update local state after successful save
-      const updatedScript = {
-        ...script,
-        scenes: updatedScenes
-      }
-      setScript(updatedScript)
-      setScenes(updatedScenes) // NEW: Also update scenes state for UI
+      // Reload project from database to ensure UI matches database state
+      console.log('[Vision] handleDeleteScene - Reloading project from database...')
+      await loadProject()
       
       console.log('[Vision] handleDeleteScene - Success!')
       try {
@@ -2121,13 +2113,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Save to database FIRST
       await saveScenesToDatabase(updatedScenes)
       
-      // Only update local state after successful save
-      const updatedScript = {
-        ...script,
-        scenes: updatedScenes
-      }
-      setScript(updatedScript)
-      setScenes(updatedScenes) // NEW: Also update scenes state for UI
+      // Reload project from database to ensure UI matches database state
+      console.log('[Vision] handleReorderScenes - Reloading project from database...')
+      await loadProject()
       
       console.log('[Vision] handleReorderScenes - Success!')
       try {
