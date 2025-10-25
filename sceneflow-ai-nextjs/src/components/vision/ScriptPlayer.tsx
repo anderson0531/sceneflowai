@@ -54,19 +54,19 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
 
   // Supported languages with their Google TTS voice codes
   const SUPPORTED_LANGUAGES = [
-    { code: 'en', name: 'English', voice: 'en-US-Neural2-F' },
-    { code: 'es', name: 'Spanish', voice: 'es-ES-Neural2-A' },
-    { code: 'fr', name: 'French', voice: 'fr-FR-Neural2-A' },
-    { code: 'de', name: 'German', voice: 'de-DE-Neural2-A' },
-    { code: 'it', name: 'Italian', voice: 'it-IT-Neural2-A' },
-    { code: 'pt', name: 'Portuguese', voice: 'pt-BR-Neural2-A' },
-    { code: 'zh', name: 'Chinese (Mandarin)', voice: 'cmn-CN-Wavenet-A' },
-    { code: 'ja', name: 'Japanese', voice: 'ja-JP-Neural2-B' },
-    { code: 'ko', name: 'Korean', voice: 'ko-KR-Neural2-A' },
-    { code: 'th', name: 'Thai', voice: 'th-TH-Neural2-C' },
-    { code: 'hi', name: 'Hindi', voice: 'hi-IN-Neural2-A' },
-    { code: 'ar', name: 'Arabic', voice: 'ar-XA-Wavenet-A' },
-    { code: 'ru', name: 'Russian', voice: 'ru-RU-Wavenet-A' }
+    { code: 'en', name: 'English', voice: 'en-US-Studio-M' },  // Marcus (Studio)
+    { code: 'es', name: 'Spanish', voice: 'es-ES-Neural2-B' },  // Male voice
+    { code: 'fr', name: 'French', voice: 'fr-FR-Neural2-B' },   // Male voice
+    { code: 'de', name: 'German', voice: 'de-DE-Neural2-B' },   // Male voice
+    { code: 'it', name: 'Italian', voice: 'it-IT-Neural2-C' },  // Male voice
+    { code: 'pt', name: 'Portuguese', voice: 'pt-BR-Neural2-B' }, // Male voice
+    { code: 'zh', name: 'Chinese (Mandarin)', voice: 'cmn-CN-Wavenet-B' }, // Male voice
+    { code: 'ja', name: 'Japanese', voice: 'ja-JP-Neural2-C' }, // Male voice
+    { code: 'ko', name: 'Korean', voice: 'ko-KR-Neural2-C' },   // Male voice
+    { code: 'th', name: 'Thai', voice: 'th-TH-Neural2-C' },     // Male voice (already correct)
+    { code: 'hi', name: 'Hindi', voice: 'hi-IN-Neural2-B' },    // Male voice
+    { code: 'ar', name: 'Arabic', voice: 'ar-XA-Wavenet-B' },   // Male voice
+    { code: 'ru', name: 'Russian', voice: 'ru-RU-Wavenet-B' }   // Male voice
   ]
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -212,6 +212,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       setTranslationCache(prev => {
         const newCache = new Map(prev)
         newCache.set(cacheKey, { text: translatedText, audio: audioUrl })
+        console.log('[Translation] Cached:', cacheKey, '→', translatedText.substring(0, 50))
         return newCache
       })
 
