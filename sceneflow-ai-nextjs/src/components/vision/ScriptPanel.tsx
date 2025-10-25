@@ -769,19 +769,27 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
             {/* Generate Reviews Button (if no reviews exist) */}
             {!directorScore && !audienceScore && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onGenerateReviews}
-                disabled={isGeneratingReviews}
-              >
-                {isGeneratingReviews ? (
-                  <Loader className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Star className="w-4 h-4" />
-                )}
-                Get Script Review
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={onGenerateReviews}
+                      disabled={isGeneratingReviews}
+                    >
+                      {isGeneratingReviews ? (
+                        <Loader className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Star className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Get Script Review</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             
             <TooltipProvider>
