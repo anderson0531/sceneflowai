@@ -173,7 +173,9 @@ Format as JSON with this exact structure:
   ]
 }
 
-Focus on practical, implementable suggestions that a director would give to improve the scene.`
+Focus on practical, implementable suggestions that a director would give to improve the scene.
+
+IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maximum.`
 
   console.log('[Director Analysis] Sending prompt (first 500 chars):', prompt.substring(0, 500))
   console.log('[Director Analysis] API endpoint:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`)
@@ -187,7 +189,7 @@ Focus on practical, implementable suggestions that a director would give to impr
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 4096
+          maxOutputTokens: 8192  // Doubled to accommodate longer responses
         }
       })
     }
@@ -226,6 +228,12 @@ Focus on practical, implementable suggestions that a director would give to impr
     throw new Error('Analysis blocked by content safety filters')
   }
 
+  // Check if response was truncated
+  if (data.candidates?.[0]?.finishReason === 'MAX_TOKENS') {
+    console.warn('[Director Analysis] Response truncated due to MAX_TOKENS')
+    console.warn('[Director Analysis] Usage:', data.usageMetadata)
+  }
+
   // Extract JSON from markdown code blocks if present
   console.log('[Director Analysis] Raw response text:', analysisText.substring(0, 200))
   let jsonText = analysisText.trim()
@@ -243,6 +251,32 @@ Focus on practical, implementable suggestions that a director would give to impr
 
   console.log('[Director Analysis] JSON to parse:', jsonText.substring(0, 200))
 
+  // Try to repair truncated JSON if needed
+  if (data.candidates?.[0]?.finishReason === 'MAX_TOKENS' && !jsonText.trim().endsWith('}')) {
+    console.log('[Director Analysis] Attempting to repair truncated JSON')
+    // Count open braces/brackets and close them
+    const openBraces = (jsonText.match(/{/g) || []).length
+    const closeBraces = (jsonText.match(/}/g) || []).length
+    const openBrackets = (jsonText.match(/\[/g) || []).length
+    const closeBrackets = (jsonText.match(/\]/g) || []).length
+    
+    // Close any open strings
+    const quoteCount = (jsonText.match(/"/g) || []).length
+    if (quoteCount % 2 !== 0) {
+      jsonText += '"'
+    }
+    
+    // Close open brackets and braces
+    for (let i = 0; i < (openBrackets - closeBrackets); i++) {
+      jsonText += ']'
+    }
+    for (let i = 0; i < (openBraces - closeBraces); i++) {
+      jsonText += '}'
+    }
+    
+    console.log('[Director Analysis] Repaired JSON (last 200 chars):', jsonText.slice(-200))
+  }
+
   try {
     const analysis = JSON.parse(jsonText)
     return {
@@ -252,7 +286,25 @@ Focus on practical, implementable suggestions that a director would give to impr
   } catch (parseError) {
     console.error('[Director Analysis] JSON parse error:', parseError)
     console.error('[Director Analysis] Failed to parse text:', jsonText)
-    throw new Error('Failed to parse director analysis JSON')
+    
+    // Return minimal valid response instead of failing completely
+    console.warn('[Director Analysis] Returning fallback response due to parse error')
+    return {
+      score: 70,
+      recommendations: [
+        {
+          id: 'fallback-1',
+          category: 'clarity',
+          priority: 'medium',
+          title: 'Scene Analysis Unavailable',
+          description: 'The AI analysis could not be completed. Please try again or use Direct Edit mode.',
+          before: '',
+          after: '',
+          rationale: 'Analysis service temporarily unavailable',
+          impact: 'N/A'
+        }
+      ]
+    }
   }
 }
 
@@ -307,7 +359,9 @@ Format as JSON with this exact structure:
   ]
 }
 
-Focus on what audiences will love and what will make them more engaged with the story.`
+Focus on what audiences will love and what will make them more engaged with the story.
+
+IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maximum.`
 
   console.log('[Audience Analysis] Sending prompt (first 500 chars):', prompt.substring(0, 500))
   console.log('[Audience Analysis] API endpoint:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`)
@@ -321,7 +375,7 @@ Focus on what audiences will love and what will make them more engaged with the 
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 4096
+          maxOutputTokens: 8192  // Doubled to accommodate longer responses
         }
       })
     }
@@ -360,6 +414,12 @@ Focus on what audiences will love and what will make them more engaged with the 
     throw new Error('Analysis blocked by content safety filters')
   }
 
+  // Check if response was truncated
+  if (data.candidates?.[0]?.finishReason === 'MAX_TOKENS') {
+    console.warn('[Audience Analysis] Response truncated due to MAX_TOKENS')
+    console.warn('[Audience Analysis] Usage:', data.usageMetadata)
+  }
+
   // Extract JSON from markdown code blocks if present
   console.log('[Audience Analysis] Raw response text:', analysisText.substring(0, 200))
   let jsonText = analysisText.trim()
@@ -377,6 +437,32 @@ Focus on what audiences will love and what will make them more engaged with the 
 
   console.log('[Audience Analysis] JSON to parse:', jsonText.substring(0, 200))
 
+  // Try to repair truncated JSON if needed
+  if (data.candidates?.[0]?.finishReason === 'MAX_TOKENS' && !jsonText.trim().endsWith('}')) {
+    console.log('[Audience Analysis] Attempting to repair truncated JSON')
+    // Count open braces/brackets and close them
+    const openBraces = (jsonText.match(/{/g) || []).length
+    const closeBraces = (jsonText.match(/}/g) || []).length
+    const openBrackets = (jsonText.match(/\[/g) || []).length
+    const closeBrackets = (jsonText.match(/\]/g) || []).length
+    
+    // Close any open strings
+    const quoteCount = (jsonText.match(/"/g) || []).length
+    if (quoteCount % 2 !== 0) {
+      jsonText += '"'
+    }
+    
+    // Close open brackets and braces
+    for (let i = 0; i < (openBrackets - closeBrackets); i++) {
+      jsonText += ']'
+    }
+    for (let i = 0; i < (openBraces - closeBraces); i++) {
+      jsonText += '}'
+    }
+    
+    console.log('[Audience Analysis] Repaired JSON (last 200 chars):', jsonText.slice(-200))
+  }
+
   try {
     const analysis = JSON.parse(jsonText)
     return {
@@ -386,7 +472,25 @@ Focus on what audiences will love and what will make them more engaged with the 
   } catch (parseError) {
     console.error('[Audience Analysis] JSON parse error:', parseError)
     console.error('[Audience Analysis] Failed to parse text:', jsonText)
-    throw new Error('Failed to parse audience analysis JSON')
+    
+    // Return minimal valid response instead of failing completely
+    console.warn('[Audience Analysis] Returning fallback response due to parse error')
+    return {
+      score: 70,
+      recommendations: [
+        {
+          id: 'fallback-1',
+          category: 'clarity',
+          priority: 'medium',
+          title: 'Scene Analysis Unavailable',
+          description: 'The AI analysis could not be completed. Please try again or use Direct Edit mode.',
+          before: '',
+          after: '',
+          rationale: 'Analysis service temporarily unavailable',
+          impact: 'N/A'
+        }
+      ]
+    }
   }
 }
 
