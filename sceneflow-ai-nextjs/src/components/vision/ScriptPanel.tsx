@@ -737,8 +737,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               </h3>
             </div>
             
-            {/* Statistics Grid */}
+            {/* Statistics Grid - 2 rows x 3 columns */}
             <div className="grid grid-cols-3 gap-3 mb-4">
+              {/* Row 1 */}
               {/* Scenes */}
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-2 mb-1">
@@ -769,6 +770,40 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 </div>
                 <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   {formatTotalDuration(scenes)}
+                </div>
+              </div>
+              
+              {/* Row 2 */}
+              {/* Images */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 mb-1">
+                  <Camera className="w-4 h-4 text-green-500" />
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Images</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {scenes.filter((s: any) => s.imageUrl).length}/{scenes.length}
+                </div>
+              </div>
+              
+              {/* Voice */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 mb-1">
+                  <Volume2 className="w-4 h-4 text-indigo-500" />
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Voice</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {scenes.filter((s: any) => s.narrationAudioUrl).length}/{scenes.length}
+                </div>
+              </div>
+              
+              {/* Videos (NEW) */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 mb-1">
+                  <Play className="w-4 h-4 text-pink-500" />
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Videos</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {scenes.filter((s: any) => s.videoUrl).length}/{scenes.length}
                 </div>
               </div>
             </div>
@@ -979,69 +1014,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           />
         ) : (
           <div className="p-4 space-y-6">
-            {/* Script Details Card */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-lg border border-blue-200 dark:border-blue-800 p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
-                    {script.title}
-                  </h3>
-                  {script.logline && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 italic">
-                      {script.logline}
-                    </p>
-                  )}
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {scenes.length}
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Scenes</div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-6 gap-3 text-sm">
-                <div>
-                  <span className="text-gray-500 dark:text-gray-400">Duration</span>
-                  <div className="font-medium text-gray-900 dark:text-gray-100">
-                    {formatDuration(scenes.reduce((total: number, s: any) => total + calculateSceneDuration(s), 0))}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-gray-500 dark:text-gray-400">Characters</span>
-                  <div className="font-medium text-gray-900 dark:text-gray-100">
-                    {(script.characters || []).length}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-gray-500 dark:text-gray-400">Avg Scene</span>
-                  <div className="font-medium text-gray-900 dark:text-gray-100">
-                    {scenes.length > 0 ? Math.floor((script.totalDuration || 0) / scenes.length) : 0}s
-                  </div>
-                </div>
-                <div>
-                  <span className="text-gray-500 dark:text-gray-400">Images</span>
-                  <div className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
-                    <Camera className="w-3.5 h-3.5" />
-                    <span>{scenes.filter((s: any) => s.imageUrl).length}/{scenes.length}</span>
-                  </div>
-                </div>
-                <div>
-                  <span className="text-gray-500 dark:text-gray-400">Voice</span>
-                  <div className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
-                    <Volume2 className="w-3.5 h-3.5" />
-                    <span>{scenes.filter((s: any) => s.narrationAudioUrl).length}/{scenes.length}</span>
-                  </div>
-                </div>
-                <div>
-                  <span className="text-gray-500 dark:text-gray-400">Sound</span>
-                  <div className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
-                    <Music className="w-3.5 h-3.5" />
-                    <span>{scenes.filter((s: any) => s.musicAudio).length}/{scenes.length}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
             
             {/* Scenes */}
             {scenes.length === 0 ? (
