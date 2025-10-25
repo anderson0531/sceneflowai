@@ -303,7 +303,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   const loadProject = async () => {
     try {
-      const res = await fetch(`/api/projects?id=${projectId}`)
+      // Add cache-busting to force fresh data from database
+      const cacheBuster = `?id=${projectId}&_t=${Date.now()}`
+      const res = await fetch(`/api/projects${cacheBuster}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      })
       
       if (!res.ok) {
         const errorText = await res.text()
@@ -2041,11 +2050,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Save to database FIRST
       await saveScenesToDatabase(updatedScenes)
       
-    // Reload project from database to ensure UI matches database state
-    console.log('[Vision] handleAddScene - Reloading project from database...')
-    // Add small delay to ensure database write has propagated
-    await new Promise(resolve => setTimeout(resolve, 500))
-    await loadProject()
+      // Reload project from database to ensure UI matches database state
+      console.log('[Vision] handleAddScene - Reloading project from database...')
+      await loadProject()
       
       console.log('[Vision] handleAddScene - Success!')
       try {
@@ -2081,11 +2088,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Save to database FIRST
       await saveScenesToDatabase(updatedScenes)
       
-    // Reload project from database to ensure UI matches database state
-    console.log('[Vision] handleDeleteScene - Reloading project from database...')
-    // Add small delay to ensure database write has propagated
-    await new Promise(resolve => setTimeout(resolve, 500))
-    await loadProject()
+      // Reload project from database to ensure UI matches database state
+      console.log('[Vision] handleDeleteScene - Reloading project from database...')
+      await loadProject()
       
       console.log('[Vision] handleDeleteScene - Success!')
       try {
@@ -2117,11 +2122,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Save to database FIRST
       await saveScenesToDatabase(updatedScenes)
       
-    // Reload project from database to ensure UI matches database state
-    console.log('[Vision] handleReorderScenes - Reloading project from database...')
-    // Add small delay to ensure database write has propagated
-    await new Promise(resolve => setTimeout(resolve, 500))
-    await loadProject()
+      // Reload project from database to ensure UI matches database state
+      console.log('[Vision] handleReorderScenes - Reloading project from database...')
+      await loadProject()
       
       console.log('[Vision] handleReorderScenes - Success!')
       try {
