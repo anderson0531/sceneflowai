@@ -175,6 +175,9 @@ Format as JSON with this exact structure:
 
 Focus on practical, implementable suggestions that a director would give to improve the scene.`
 
+  console.log('[Director Analysis] Sending prompt (first 500 chars):', prompt.substring(0, 500))
+  console.log('[Director Analysis] API endpoint:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`)
+
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
     {
@@ -197,10 +200,30 @@ Focus on practical, implementable suggestions that a director would give to impr
   }
 
   const data = await response.json()
+  console.log('[Director Analysis] Full API response:', JSON.stringify(data, null, 2))
+  console.log('[Director Analysis] Candidates:', data.candidates)
+  console.log('[Director Analysis] First candidate:', data.candidates?.[0])
+
   const analysisText = data.candidates?.[0]?.content?.parts?.[0]?.text
 
   if (!analysisText) {
+    console.error('[Director Analysis] No text found in response')
+    console.error('[Director Analysis] Response structure:', {
+      hasCandidates: !!data.candidates,
+      candidatesLength: data.candidates?.length,
+      firstCandidate: data.candidates?.[0],
+      hasContent: !!data.candidates?.[0]?.content,
+      hasParts: !!data.candidates?.[0]?.content?.parts,
+      partsLength: data.candidates?.[0]?.content?.parts?.length
+    })
     throw new Error('No analysis generated from Gemini')
+  }
+
+  // Check if response was blocked by safety filters
+  if (data.candidates?.[0]?.finishReason === 'SAFETY') {
+    console.error('[Director Analysis] Response blocked by safety filters')
+    console.error('[Director Analysis] Safety ratings:', data.candidates[0].safetyRatings)
+    throw new Error('Analysis blocked by content safety filters')
   }
 
   // Extract JSON from markdown code blocks if present
@@ -286,6 +309,9 @@ Format as JSON with this exact structure:
 
 Focus on what audiences will love and what will make them more engaged with the story.`
 
+  console.log('[Audience Analysis] Sending prompt (first 500 chars):', prompt.substring(0, 500))
+  console.log('[Audience Analysis] API endpoint:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`)
+
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
     {
@@ -308,10 +334,30 @@ Focus on what audiences will love and what will make them more engaged with the 
   }
 
   const data = await response.json()
+  console.log('[Audience Analysis] Full API response:', JSON.stringify(data, null, 2))
+  console.log('[Audience Analysis] Candidates:', data.candidates)
+  console.log('[Audience Analysis] First candidate:', data.candidates?.[0])
+
   const analysisText = data.candidates?.[0]?.content?.parts?.[0]?.text
 
   if (!analysisText) {
+    console.error('[Audience Analysis] No text found in response')
+    console.error('[Audience Analysis] Response structure:', {
+      hasCandidates: !!data.candidates,
+      candidatesLength: data.candidates?.length,
+      firstCandidate: data.candidates?.[0],
+      hasContent: !!data.candidates?.[0]?.content,
+      hasParts: !!data.candidates?.[0]?.content?.parts,
+      partsLength: data.candidates?.[0]?.content?.parts?.length
+    })
     throw new Error('No analysis generated from Gemini')
+  }
+
+  // Check if response was blocked by safety filters
+  if (data.candidates?.[0]?.finishReason === 'SAFETY') {
+    console.error('[Audience Analysis] Response blocked by safety filters')
+    console.error('[Audience Analysis] Safety ratings:', data.candidates[0].safetyRatings)
+    throw new Error('Analysis blocked by content safety filters')
   }
 
   // Extract JSON from markdown code blocks if present
