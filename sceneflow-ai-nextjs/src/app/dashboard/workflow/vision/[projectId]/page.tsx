@@ -2035,21 +2035,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       scene.sceneNumber = idx + 1
     })
     
-    // Update script
-    const updatedScript = {
-      ...script,
-      scenes: updatedScenes
-    }
-    
-    setScript(updatedScript)
-    
-    // Save to database
-    await saveScenesToDatabase(updatedScenes)
+    console.log('[Vision] handleAddScene - Saving to database...')
     
     try {
-      const { toast } = require('sonner')
-      toast.success('Scene added!')
-    } catch {}
+      // Save to database FIRST
+      await saveScenesToDatabase(updatedScenes)
+      
+      // Only update local state after successful save
+      const updatedScript = {
+        ...script,
+        scenes: updatedScenes
+      }
+      setScript(updatedScript)
+      
+      console.log('[Vision] handleAddScene - Success!')
+      try {
+        const { toast } = require('sonner')
+        toast.success('Scene added!')
+      } catch {}
+    } catch (error) {
+      console.error('[Vision] handleAddScene - Failed:', error)
+      // Don't update local state if save failed
+    }
   }
 
   const handleDeleteScene = async (sceneIndex: number) => {
@@ -2069,21 +2076,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       scene.sceneNumber = idx + 1
     })
     
-    // Update script
-    const updatedScript = {
-      ...script,
-      scenes: updatedScenes
-    }
-    
-    setScript(updatedScript)
-    
-    // Save to database
-    await saveScenesToDatabase(updatedScenes)
+    console.log('[Vision] handleDeleteScene - Saving to database...')
     
     try {
-      const { toast } = require('sonner')
-      toast.success('Scene deleted')
-    } catch {}
+      // Save to database FIRST
+      await saveScenesToDatabase(updatedScenes)
+      
+      // Only update local state after successful save
+      const updatedScript = {
+        ...script,
+        scenes: updatedScenes
+      }
+      setScript(updatedScript)
+      
+      console.log('[Vision] handleDeleteScene - Success!')
+      try {
+        const { toast } = require('sonner')
+        toast.success('Scene deleted')
+      } catch {}
+    } catch (error) {
+      console.error('[Vision] handleDeleteScene - Failed:', error)
+      // Don't update local state if save failed
+    }
   }
 
   const handleReorderScenes = async (startIndex: number, endIndex: number) => {
@@ -2099,53 +2113,83 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       scene.sceneNumber = idx + 1
     })
     
-    // Update script
-    const updatedScript = {
-      ...script,
-      scenes: updatedScenes
-    }
-    
-    setScript(updatedScript)
-    
-    // Save to database
-    await saveScenesToDatabase(updatedScenes)
+    console.log('[Vision] handleReorderScenes - Saving to database...')
     
     try {
-      const { toast } = require('sonner')
-      toast.success('Scenes reordered')
-    } catch {}
+      // Save to database FIRST
+      await saveScenesToDatabase(updatedScenes)
+      
+      // Only update local state after successful save
+      const updatedScript = {
+        ...script,
+        scenes: updatedScenes
+      }
+      setScript(updatedScript)
+      
+      console.log('[Vision] handleReorderScenes - Success!')
+      try {
+        const { toast } = require('sonner')
+        toast.success('Scenes reordered')
+      } catch {}
+    } catch (error) {
+      console.error('[Vision] handleReorderScenes - Failed:', error)
+      // Don't update local state if save failed
+    }
   }
 
   // Helper function to save scenes to database
   const saveScenesToDatabase = async (updatedScenes: any[]) => {
     try {
+      console.log('[saveScenesToDatabase] Starting save...', {
+        projectId,
+        sceneCount: updatedScenes.length,
+        firstSceneNumber: updatedScenes[0]?.sceneNumber
+      })
+      
       const existingMetadata = project?.metadata || {}
       const existingVisionPhase = existingMetadata.visionPhase || {}
       
-      await fetch(`/api/projects`, {
+      const payload = {
+        id: projectId,
+        metadata: {
+          ...existingMetadata,
+          visionPhase: {
+            ...existingVisionPhase,
+            script: {
+              ...script,
+              scenes: updatedScenes
+            },
+            scenes: updatedScenes
+          }
+        }
+      }
+      
+      console.log('[saveScenesToDatabase] Payload:', JSON.stringify(payload, null, 2))
+      
+      const response = await fetch(`/api/projects`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: projectId,
-          metadata: {
-            ...existingMetadata,
-            visionPhase: {
-              ...existingVisionPhase,
-              script: {
-                ...script,
-                scenes: updatedScenes
-              },
-              scenes: updatedScenes
-            }
-          }
-        })
+        body: JSON.stringify(payload)
       })
+      
+      console.log('[saveScenesToDatabase] Response status:', response.status)
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('[saveScenesToDatabase] Error response:', errorText)
+        throw new Error(`Failed to save: ${response.status} ${errorText}`)
+      }
+      
+      const result = await response.json()
+      console.log('[saveScenesToDatabase] Success:', result)
+      
     } catch (error) {
-      console.error('Failed to save scenes:', error)
+      console.error('[saveScenesToDatabase] Failed to save scenes:', error)
       try {
         const { toast } = require('sonner')
-        toast.error('Failed to save changes')
+        toast.error(`Failed to save changes: ${error instanceof Error ? error.message : 'Unknown error'}`)
       } catch {}
+      throw error // Re-throw to let caller know it failed
     }
   }
 
