@@ -201,6 +201,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // Dialogue generation state
   const [generatingDialogue, setGeneratingDialogue] = useState<{sceneIdx: number, character: string} | null>(null)
   
+  // Voice selection visibility state
+  const [showVoiceSelection, setShowVoiceSelection] = useState(false)
+  
   // Drag and drop functionality
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -803,7 +806,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Videos</span>
                 </div>
                 <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {scenes.filter((s: any) => s.videoUrl).length}/{scenes.length}
+                  {Math.ceil(scenes.reduce((total: number, s: any) => total + calculateSceneDuration(s), 0) / 8)}
                 </div>
               </div>
             </div>
@@ -944,7 +947,43 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           </div>
         </div>
       )}
-      
+
+      {/* Voice Selection Section - Collapsible */}
+      {script && !editMode && enabled && voices.length > 0 && (
+        <div className="border-b border-gray-200 dark:border-gray-700 px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
+          <button
+            onClick={() => setShowVoiceSelection(!showVoiceSelection)}
+            className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+          >
+            <ChevronRight className={`w-4 h-4 transition-transform ${showVoiceSelection ? 'rotate-90' : ''}`} />
+            <Volume2 className="w-4 h-4" />
+            <span>Narration Voice</span>
+            {selectedVoiceId && (
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ({voices.find(v => v.id === selectedVoiceId)?.name || 'Selected'})
+              </span>
+            )}
+          </button>
+          
+          {showVoiceSelection && (
+            <div className="mt-2 ml-6">
+              <Select value={selectedVoiceId} onValueChange={setSelectedVoiceId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select narration voice" />
+                </SelectTrigger>
+                <SelectContent>
+                  {voices.map((voice) => (
+                    <SelectItem key={voice.id} value={voice.id}>
+                      {voice.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Production Script Header */}
       {script && !editMode && (
         <div className="border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50">
@@ -1264,8 +1303,24 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                   <div className="text-xs">
                     <p>Duration: {formatDuration(calculateSceneDuration(scene))}</p>
                     <p>Starts at: {formatDuration(timelineStart || 0)}</p>
+                    <p>Est. Videos: {Math.ceil(calculateSceneDuration(scene) / 8)}</p>
                     <p className="text-gray-400 mt-1">Rounded to 8-second clips</p>
                   </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            {/* Estimated Videos Badge (NEW) */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-xs text-gray-400 flex items-center gap-1">
+                    <Play className="w-3 h-3" />
+                    {Math.ceil(calculateSceneDuration(scene) / 8)}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Estimated 8-second video clips needed</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
