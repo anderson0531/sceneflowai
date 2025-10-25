@@ -73,7 +73,9 @@ export function PreviewPanel({ originalScene, previewScene, isGenerating, change
         <div>
           <h4 className="text-sm font-medium text-gray-500 mb-1">SCENE HEADING</h4>
           <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold">{previewScene.heading || 'Untitled Scene'}</p>
+            <p className="text-sm font-semibold">
+              {typeof previewScene.heading === 'string' ? previewScene.heading : previewScene.heading?.text || 'Untitled Scene'}
+            </p>
             {originalScene.heading !== previewScene.heading && (
               <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
                 Changed
@@ -127,7 +129,9 @@ export function PreviewPanel({ originalScene, previewScene, isGenerating, change
             <div className="space-y-2">
               {previewScene.dialogue.map((line: any, index: number) => {
                 const originalLine = originalScene.dialogue?.[index]
-                const isChanged = !originalLine || originalLine.text !== line.text
+                const originalText = originalLine?.line || originalLine?.text || ''
+                const newText = line.line || line.text || ''
+                const isChanged = !originalLine || originalText !== newText
                 
                 return (
                   <div key={index} className="text-sm relative">
@@ -135,7 +139,7 @@ export function PreviewPanel({ originalScene, previewScene, isGenerating, change
                       {line.character}:
                     </span>
                     <span className="ml-2 text-gray-700 dark:text-gray-300">
-                      {line.text}
+                      {line.line || line.text || ''}
                     </span>
                     {isChanged && (
                       <Badge variant="outline" className="ml-2 text-xs bg-green-50 text-green-700 border-green-200">
@@ -158,7 +162,7 @@ export function PreviewPanel({ originalScene, previewScene, isGenerating, change
             </h4>
             <div className="relative">
               <p className="text-sm text-gray-700 dark:text-gray-300">
-                {previewScene.music}
+                {typeof previewScene.music === 'string' ? previewScene.music : previewScene.music?.description || ''}
               </p>
               {originalScene.music !== previewScene.music && (
                 <Badge variant="outline" className="absolute -top-1 -right-1 text-xs bg-green-50 text-green-700 border-green-200">
@@ -177,11 +181,14 @@ export function PreviewPanel({ originalScene, previewScene, isGenerating, change
               SOUND EFFECTS
             </h4>
             <div className="flex flex-wrap gap-1 relative">
-              {previewScene.sfx.map((effect: string, index: number) => (
-                <Badge key={index} variant="secondary" className="text-xs">
-                  {effect}
-                </Badge>
-              ))}
+              {previewScene.sfx.map((effect: any, index: number) => {
+                const effectText = typeof effect === 'string' ? effect : effect?.description || ''
+                return (
+                  <Badge key={index} variant="secondary" className="text-xs">
+                    {effectText}
+                  </Badge>
+                )
+              })}
               {JSON.stringify(originalScene.sfx) !== JSON.stringify(previewScene.sfx) && (
                 <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
                   Changed

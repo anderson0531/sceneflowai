@@ -16,7 +16,9 @@ export function CurrentScenePanel({ scene }: CurrentScenePanelProps) {
         {/* Scene Header */}
         <div className="mb-4">
           <h4 className="text-sm font-medium text-gray-500 mb-1">SCENE HEADING</h4>
-          <p className="text-sm font-semibold">{scene.heading || 'Untitled Scene'}</p>
+          <p className="text-sm font-semibold">
+            {typeof scene.heading === 'string' ? scene.heading : scene.heading?.text || 'Untitled Scene'}
+          </p>
         </div>
 
         {/* Action Description */}
@@ -54,7 +56,7 @@ export function CurrentScenePanel({ scene }: CurrentScenePanelProps) {
                     {line.character}:
                   </span>
                   <span className="ml-2 text-gray-700 dark:text-gray-300">
-                    {line.text}
+                    {line.line || line.text || ''}
                   </span>
                 </div>
               ))}
@@ -70,7 +72,7 @@ export function CurrentScenePanel({ scene }: CurrentScenePanelProps) {
               MUSIC
             </h4>
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              {scene.music}
+              {typeof scene.music === 'string' ? scene.music : scene.music?.description || ''}
             </p>
           </div>
         )}
@@ -83,11 +85,14 @@ export function CurrentScenePanel({ scene }: CurrentScenePanelProps) {
               SOUND EFFECTS
             </h4>
             <div className="flex flex-wrap gap-1">
-              {scene.sfx.map((effect: string, index: number) => (
-                <Badge key={index} variant="secondary" className="text-xs">
-                  {effect}
-                </Badge>
-              ))}
+              {scene.sfx.map((effect: any, index: number) => {
+                const effectText = typeof effect === 'string' ? effect : effect?.description || ''
+                return (
+                  <Badge key={index} variant="secondary" className="text-xs">
+                    {effectText}
+                  </Badge>
+                )
+              })}
             </div>
           </div>
         )}
