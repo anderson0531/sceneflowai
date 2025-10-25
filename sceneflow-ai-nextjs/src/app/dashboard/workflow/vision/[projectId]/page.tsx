@@ -332,14 +332,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const proj = data.project || data
       setProject(proj)
       
-      // DEBUG: Log loaded scene assets
-      const loadedScenes = proj.metadata?.visionPhase?.scenes || []
-      console.log('[loadProject] Loaded scenes with assets:', loadedScenes.map((s: any, idx: number) => ({
-        idx,
+      // DEBUG: Log loaded scene assets from BOTH locations
+      const loadedScenesFromVisionPhase = proj.metadata?.visionPhase?.scenes || []
+      const loadedScenesFromScript = proj.metadata?.visionPhase?.script?.script?.scenes || []
+
+      console.log('[loadProject] Scenes from visionPhase.scenes:', loadedScenesFromVisionPhase.slice(0, 3).map((s: any) => ({
         sceneNumber: s.sceneNumber,
         hasImage: !!s.imageUrl,
         hasNarration: !!s.narrationAudioUrl,
-        hasMusic: !!s.musicAudio
+        imageUrl: s.imageUrl?.substring(0, 50)
+      })))
+
+      console.log('[loadProject] Scenes from visionPhase.script.script.scenes:', loadedScenesFromScript.slice(0, 3).map((s: any) => ({
+        sceneNumber: s.sceneNumber,
+        hasImage: !!s.imageUrl,
+        hasNarration: !!s.narrationAudioUrl,
+        imageUrl: s.imageUrl?.substring(0, 50)
       })))
       
       // Load image quality setting from project metadata
@@ -351,6 +359,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const visionPhase = proj.metadata?.visionPhase
       if (visionPhase) {
         if (visionPhase.script) {
+          console.log('[loadProject] Setting script with structure:', {
+            hasTitle: !!visionPhase.script.title,
+            hasNestedScript: !!visionPhase.script.script,
+            nestedScenesCount: visionPhase.script.script?.scenes?.length || 0,
+            firstSceneHasImage: !!visionPhase.script.script?.scenes?.[0]?.imageUrl
+          })
           setScript(visionPhase.script)
         }
         // Process characters first (needed for dialogue migration)
