@@ -140,8 +140,26 @@ Format as JSON with this exact structure:
     throw new Error('No review generated')
   }
 
+  console.log('[Director Review] Raw response:', reviewText.substring(0, 200))
+
+  // Extract JSON from markdown code blocks if present
+  let jsonText = reviewText.trim()
+  
+  // Remove markdown code blocks (```json ... ``` or ``` ... ```)
+  const codeBlockMatch = jsonText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
+  if (codeBlockMatch) {
+    jsonText = codeBlockMatch[1].trim()
+  }
+
   // Parse JSON response
-  const review = JSON.parse(reviewText)
+  let review
+  try {
+    review = JSON.parse(jsonText)
+  } catch (parseError) {
+    console.error('[Director Review] JSON parse error:', parseError)
+    console.error('[Director Review] Failed to parse:', jsonText.substring(0, 500))
+    throw new Error('Failed to parse director review JSON')
+  }
   
   return {
     ...review,
@@ -229,8 +247,26 @@ Format as JSON with this exact structure:
     throw new Error('No review generated')
   }
 
+  console.log('[Audience Review] Raw response:', reviewText.substring(0, 200))
+
+  // Extract JSON from markdown code blocks if present
+  let jsonText = reviewText.trim()
+  
+  // Remove markdown code blocks (```json ... ``` or ``` ... ```)
+  const codeBlockMatch = jsonText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
+  if (codeBlockMatch) {
+    jsonText = codeBlockMatch[1].trim()
+  }
+
   // Parse JSON response
-  const review = JSON.parse(reviewText)
+  let review
+  try {
+    review = JSON.parse(jsonText)
+  } catch (parseError) {
+    console.error('[Audience Review] JSON parse error:', parseError)
+    console.error('[Audience Review] Failed to parse:', jsonText.substring(0, 500))
+    throw new Error('Failed to parse audience review JSON')
+  }
   
   return {
     ...review,
