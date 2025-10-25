@@ -121,12 +121,6 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, ...props }: any) {
     transition,
   }
 
-  console.log('[SortableSceneCard] Props:', { 
-    id, 
-    hasOnAddScene: !!onAddScene, 
-    hasOnDeleteScene: !!onDeleteScene 
-  })
-
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
       <SceneCard 
@@ -712,7 +706,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             
             <Button
               onClick={() => {
-                console.log('[ScriptPanel] Header Add Scene clicked, onAddScene:', !!onAddScene)
                 onAddScene?.()
               }}
               variant="outline"
@@ -1095,7 +1088,6 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      console.log('[SceneCard] Add scene clicked:', sceneIdx, 'onAddScene:', !!onAddScene)
                       onAddScene?.(sceneIdx)
                     }}
                     className="p-1 hover:bg-blue-100 dark:hover:bg-blue-900 rounded text-blue-600 dark:text-blue-400"
@@ -1115,7 +1107,6 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      console.log('[SceneCard] Delete scene clicked:', sceneIdx, 'onDeleteScene:', !!onDeleteScene)
                       if (confirm('Delete this scene? This cannot be undone.')) {
                         onDeleteScene?.(sceneIdx)
                       }

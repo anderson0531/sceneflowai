@@ -305,7 +305,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     try {
       // Add cache-busting to force fresh data from database
       const cacheBuster = `?id=${projectId}&_t=${Date.now()}`
-      console.log('[Load Project] Fetching with cache-buster:', cacheBuster)
       const res = await fetch(`/api/projects${cacheBuster}`, {
         cache: 'no-store',
         headers: {
@@ -331,12 +330,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const data = await res.json()
       
       const proj = data.project || data
-      console.log('[Load Project] Loaded project data:', {
-        projectId: proj.id,
-        sceneCount: proj.metadata?.visionPhase?.scenes?.length || 0,
-        scenes: proj.metadata?.visionPhase?.scenes?.slice(0, 3).map((s: any) => s.sceneNumber) || []
-      })
-      
       setProject(proj)
       
       // Load image quality setting from project metadata
@@ -2027,7 +2020,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   // Scene management handlers
   const handleAddScene = async (afterIndex?: number) => {
-    console.log('[Vision] handleAddScene called:', afterIndex)
     if (!script) return
     
     const newScene = {
@@ -2050,17 +2042,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       scene.sceneNumber = idx + 1
     })
     
-    console.log('[Vision] handleAddScene - Saving to database...')
-    
     try {
       // Save to database FIRST
       await saveScenesToDatabase(updatedScenes)
       
       // Reload project from database to ensure UI matches database state
-      console.log('[Vision] handleAddScene - Reloading project from database...')
       await loadProject()
-      
-      console.log('[Vision] handleAddScene - Success!')
       try {
         const { toast } = require('sonner')
         toast.success('Scene added!')
@@ -2072,7 +2059,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   const handleDeleteScene = async (sceneIndex: number) => {
-    console.log('[Vision] handleDeleteScene called:', sceneIndex)
     if (!script || scenes.length <= 1) {
       try {
         const { toast } = require('sonner')
@@ -2088,17 +2074,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       scene.sceneNumber = idx + 1
     })
     
-    console.log('[Vision] handleDeleteScene - Saving to database...')
-    
     try {
       // Save to database FIRST
       await saveScenesToDatabase(updatedScenes)
       
       // Reload project from database to ensure UI matches database state
-      console.log('[Vision] handleDeleteScene - Reloading project from database...')
       await loadProject()
-      
-      console.log('[Vision] handleDeleteScene - Success!')
       try {
         const { toast } = require('sonner')
         toast.success('Scene deleted')
@@ -2110,7 +2091,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   const handleReorderScenes = async (startIndex: number, endIndex: number) => {
-    console.log('[Vision] handleReorderScenes called:', startIndex, endIndex)
     if (!script) return
     
     const updatedScenes = [...scenes]
@@ -2122,17 +2102,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       scene.sceneNumber = idx + 1
     })
     
-    console.log('[Vision] handleReorderScenes - Saving to database...')
-    
     try {
       // Save to database FIRST
       await saveScenesToDatabase(updatedScenes)
       
       // Reload project from database to ensure UI matches database state
-      console.log('[Vision] handleReorderScenes - Reloading project from database...')
       await loadProject()
-      
-      console.log('[Vision] handleReorderScenes - Success!')
       try {
         const { toast } = require('sonner')
         toast.success('Scenes reordered')
@@ -2146,12 +2121,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Helper function to save scenes to database
   const saveScenesToDatabase = async (updatedScenes: any[]) => {
     try {
-      console.log('[saveScenesToDatabase] Starting save...', {
-        projectId,
-        sceneCount: updatedScenes.length,
-        firstSceneNumber: updatedScenes[0]?.sceneNumber
-      })
-      
       const existingMetadata = project?.metadata || {}
       const existingVisionPhase = existingMetadata.visionPhase || {}
       
@@ -2173,15 +2142,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       }
       
-      console.log('[saveScenesToDatabase] Payload:', JSON.stringify(payload, null, 2))
-      
       const response = await fetch(`/api/projects`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
-      
-      console.log('[saveScenesToDatabase] Response status:', response.status)
       
       if (!response.ok) {
         const errorText = await response.text()
@@ -2190,7 +2155,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       
       const result = await response.json()
-      console.log('[saveScenesToDatabase] Success:', result)
       
     } catch (error) {
       console.error('[saveScenesToDatabase] Failed to save scenes:', error)
