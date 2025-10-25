@@ -363,7 +363,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             hasTitle: !!visionPhase.script.title,
             hasNestedScript: !!visionPhase.script.script,
             nestedScenesCount: visionPhase.script.script?.scenes?.length || 0,
-            firstSceneHasImage: !!visionPhase.script.script?.scenes?.[0]?.imageUrl
+            firstSceneHasImage: !!visionPhase.script.script?.scenes?.[0]?.imageUrl,
+            firstSceneImageUrl: visionPhase.script.script?.scenes?.[0]?.imageUrl?.substring(0, 100)
           })
           setScript(visionPhase.script)
         }
@@ -2046,18 +2047,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const handleAddScene = async (afterIndex?: number) => {
     if (!script) return
     
+    // Ensure we're working with the full scene objects from script.script.scenes
+    const currentScenes = script?.script?.scenes || []
+    
     // DEBUG: Log assets before adding
-    console.log('[handleAddScene] Assets before:', scenes.map((s, idx) => ({
-      idx,
+    console.log('[handleAddScene] Assets BEFORE:', currentScenes.slice(0, 3).map((s: any) => ({
       sceneNumber: s.sceneNumber,
       hasImage: !!s.imageUrl,
-      hasNarration: !!s.narrationAudioUrl,
-      hasMusic: !!s.musicAudio,
-      dialogueCount: s.dialogue?.length || 0
+      imageUrl: s.imageUrl?.substring(0, 100)
     })))
     
     const newScene = {
-      sceneNumber: (afterIndex !== undefined ? afterIndex + 2 : scenes.length + 1),
+      sceneNumber: (afterIndex !== undefined ? afterIndex + 2 : currentScenes.length + 1),
       heading: `INT. NEW LOCATION - DAY`,
       action: 'Description of what happens in this scene.',
       dialogue: [],
@@ -2068,8 +2069,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
     
     // Use shallow copy to preserve object references and avoid breaking ORM
-    const updatedScenes = [...scenes]
-    const insertIndex = afterIndex !== undefined ? afterIndex + 1 : scenes.length
+    const updatedScenes = [...currentScenes]
+    const insertIndex = afterIndex !== undefined ? afterIndex + 1 : currentScenes.length
     updatedScenes.splice(insertIndex, 0, newScene)
     
     // Renumber scenes
@@ -2078,13 +2079,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     })
     
     // DEBUG: Log assets after adding and renumbering
-    console.log('[handleAddScene] Assets after:', updatedScenes.map((s: any, idx: number) => ({
-      idx,
+    console.log('[handleAddScene] Assets AFTER:', updatedScenes.slice(0, 3).map((s: any) => ({
       sceneNumber: s.sceneNumber,
       hasImage: !!s.imageUrl,
-      hasNarration: !!s.narrationAudioUrl,
-      hasMusic: !!s.musicAudio,
-      dialogueCount: s.dialogue?.length || 0
+      imageUrl: s.imageUrl?.substring(0, 100)
     })))
     
     try {
@@ -2104,7 +2102,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   const handleDeleteScene = async (sceneIndex: number) => {
-    if (!script || scenes.length <= 1) {
+    if (!script) return
+    
+    // Ensure we're working with the full scene objects from script.script.scenes
+    const currentScenes = script?.script?.scenes || []
+    
+    if (currentScenes.length <= 1) {
       try {
         const { toast } = require('sonner')
         toast.error('Cannot delete the last scene')
@@ -2113,17 +2116,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
     
     // DEBUG: Log assets before deletion
-    console.log('[handleDeleteScene] Assets before:', scenes.map((s, idx) => ({
-      idx,
+    console.log('[handleDeleteScene] Assets BEFORE:', currentScenes.slice(0, 3).map((s: any) => ({
       sceneNumber: s.sceneNumber,
       hasImage: !!s.imageUrl,
-      hasNarration: !!s.narrationAudioUrl,
-      hasMusic: !!s.musicAudio,
-      dialogueCount: s.dialogue?.length || 0
+      imageUrl: s.imageUrl?.substring(0, 100)
     })))
     
     // Use shallow copy to preserve object references and avoid breaking ORM
-    const updatedScenes = scenes.filter((_: any, idx: number) => idx !== sceneIndex)
+    const updatedScenes = currentScenes.filter((_: any, idx: number) => idx !== sceneIndex)
     
     // Renumber scenes
     updatedScenes.forEach((scene: any, idx: number) => {
@@ -2131,13 +2131,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     })
     
     // DEBUG: Log assets after deletion and renumbering
-    console.log('[handleDeleteScene] Assets after:', updatedScenes.map((s: any, idx: number) => ({
-      idx,
+    console.log('[handleDeleteScene] Assets AFTER:', updatedScenes.slice(0, 3).map((s: any) => ({
       sceneNumber: s.sceneNumber,
       hasImage: !!s.imageUrl,
-      hasNarration: !!s.narrationAudioUrl,
-      hasMusic: !!s.musicAudio,
-      dialogueCount: s.dialogue?.length || 0
+      imageUrl: s.imageUrl?.substring(0, 100)
     })))
     
     try {
@@ -2159,18 +2156,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const handleReorderScenes = async (startIndex: number, endIndex: number) => {
     if (!script) return
     
+    // Ensure we're working with the full scene objects from script.script.scenes
+    const currentScenes = script?.script?.scenes || []
+    
     // DEBUG: Log assets before reordering
-    console.log('[handleReorderScenes] Assets before:', scenes.map((s, idx) => ({
-      idx,
+    console.log('[handleReorderScenes] Assets BEFORE:', currentScenes.slice(0, 3).map((s: any) => ({
       sceneNumber: s.sceneNumber,
       hasImage: !!s.imageUrl,
-      hasNarration: !!s.narrationAudioUrl,
-      hasMusic: !!s.musicAudio,
-      dialogueCount: s.dialogue?.length || 0
+      imageUrl: s.imageUrl?.substring(0, 100)
     })))
     
     // Use shallow copy to preserve object references and avoid breaking ORM
-    const updatedScenes = [...scenes]
+    const updatedScenes = [...currentScenes]
     const [movedScene] = updatedScenes.splice(startIndex, 1)
     updatedScenes.splice(endIndex, 0, movedScene)
     
@@ -2180,13 +2177,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     })
     
     // DEBUG: Log assets after reordering and renumbering
-    console.log('[handleReorderScenes] Assets after:', updatedScenes.map((s: any, idx: number) => ({
-      idx,
+    console.log('[handleReorderScenes] Assets AFTER:', updatedScenes.slice(0, 3).map((s: any) => ({
       sceneNumber: s.sceneNumber,
       hasImage: !!s.imageUrl,
-      hasNarration: !!s.narrationAudioUrl,
-      hasMusic: !!s.musicAudio,
-      dialogueCount: s.dialogue?.length || 0
+      imageUrl: s.imageUrl?.substring(0, 100)
     })))
     
     try {
