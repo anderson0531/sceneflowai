@@ -1707,7 +1707,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
           
           {/* Image Generation Buttons - Above Narration */}
           {onGenerateImage && scene.visualDescription && (
-            <div className="mb-3 flex items-center justify-start gap-2">
+            <div className="mb-3 flex items-center justify-end gap-2">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
