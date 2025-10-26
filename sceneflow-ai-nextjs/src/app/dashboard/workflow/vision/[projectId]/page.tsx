@@ -2927,7 +2927,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       {/* Build Version Badge */}
       <div className="fixed top-20 right-4 z-50 bg-blue-500 text-white text-xs px-3 py-1.5 rounded-lg shadow-lg font-mono flex items-center gap-2">
         <span className="opacity-75">Build:</span>
-        <span className="font-bold">895406d</span>
+        <span className="font-bold">df26281</span>
       </div>
       
       <ContextBar
