@@ -14,7 +14,6 @@ import { ScenePromptBuilder } from './ScenePromptBuilder'
 import ScenePromptDrawer from './ScenePromptDrawer'
 import { AudioMixer, type AudioTrack } from './AudioMixer'
 import ScriptReviewModal from './ScriptReviewModal'
-import { findMatchingCharacter } from '@/lib/character/matching'
 
 interface ScriptPanelProps {
   script: any
@@ -44,8 +43,7 @@ interface ScriptPanelProps {
   }>
   onDismissValidationWarning?: (sceneIdx: number) => void
   onPlayAudio?: (audioUrl: string, label: string) => void
-  onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number) => void
-  onUpdateDialogueCharacter?: (sceneIdx: number, dialogueIdx: number, characterId: string) => void
+  onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string) => void
   // NEW: Props for Production Script Header
   onGenerateAllAudio?: () => void
   isGeneratingAudio?: boolean
@@ -162,7 +160,7 @@ function formatTotalDuration(scenes: any[]): string {
 }
 
 // Sortable Scene Card Wrapper for drag-and-drop
-function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, characters, onUpdateDialogueCharacter, ...props }: any) {
+function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, ...props }: any) {
   const {
     attributes,
     listeners,
@@ -186,15 +184,13 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
         onGenerateSceneScore={onGenerateSceneScore}
         generatingScoreFor={generatingScoreFor}
         getScoreColorClass={getScoreColorClass}
-        dragHandleProps={listeners}
-        characters={characters}
-        onUpdateDialogueCharacter={onUpdateDialogueCharacter}
+        dragHandleProps={listeners} 
       />
     </div>
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onUpdateDialogueCharacter, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [editMode, setEditMode] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -1209,9 +1205,7 @@ interface SceneCardProps {
   generateAndPlayMusic?: (description: string, duration?: number) => Promise<void>
   // Individual audio playback
   onPlayAudio?: (audioUrl: string, label: string) => void
-  onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number) => void
-  characters?: Array<{ id: string; name: string; [key: string]: any }>
-  onUpdateDialogueCharacter?: (sceneIdx: number, dialogueIdx: number, characterId: string) => void
+  onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string) => void
   playingAudio?: string | null
   generatingDialogue?: {sceneIdx: number, character: string} | null
   setGeneratingDialogue?: (state: {sceneIdx: number, character: string} | null) => void
@@ -1227,7 +1221,7 @@ interface SceneCardProps {
   onStopAudio?: () => void
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, characters, onUpdateDialogueCharacter, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart, dragHandleProps, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onStopAudio }: SceneCardProps) {
+function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart, dragHandleProps, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onStopAudio }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
   
@@ -1878,56 +1872,16 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
           
           {!isOutline && scene.dialogue && scene.dialogue.length > 0 && (
             <div className="space-y-2">
-              {scene.dialogue.map((d: any, dialogueIdx: number) => {
-                const audioEntry = scene.dialogueAudio?.find((a: any) => a.character === d.character && a.dialogueIndex === dialogueIdx)
-                
-                // Get assigned character (priority: manual > auto-matched > smart-matched)
-                let assignedChar = null
-                if (d.assignedCharacterId) {
-                  // Manual assignment
-                  assignedChar = characters?.find(c => c.id === d.assignedCharacterId)
-                } else if (d.characterId) {
-                  // Auto-matched during script generation
-                  assignedChar = characters?.find(c => c.id === d.characterId)
-                } else {
-                  // Fallback: Smart fuzzy matching (same as image prompt)
-                  assignedChar = findMatchingCharacter(d.character, characters || [])
-                }
-                
-                const isUnmatched = !assignedChar
-                
+              {scene.dialogue.map((d: any, i: number) => {
+                const audioEntry = scene.dialogueAudio?.find((a: any) => a.character === d.character)
                 return (
-                  <div key={dialogueIdx} className="flex items-start gap-2">
+                  <div key={i} className="flex items-start gap-2">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        {/* Character Assignment Dropdown */}
-                        <select
-                          value={assignedChar?.id || ''}
-                          onChange={(e) => onUpdateDialogueCharacter?.(sceneIdx, dialogueIdx, e.target.value)}
-                          className={`text-sm font-medium px-2 py-1 rounded border ${
-                            isUnmatched 
-                              ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
-                              : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
-                          }`}
-                          title={isUnmatched ? `Character "${d.character}" not matched - please assign` : `Assigned to ${assignedChar?.name || ''}`}
-                        >
-                          <option value="">-- Assign Character --</option>
-                          {characters?.map(char => (
-                            <option key={char.id} value={char.id}>
-                              {char.name}
-                            </option>
-                          ))}
-                        </select>
-                        
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{d.character}</div>
                         {audioEntry?.audioUrl && (
                           <span className="text-xs px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded">
                             ✓
-                          </span>
-                        )}
-                        
-                        {isUnmatched && (
-                          <span className="text-xs px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded" title="No character assigned">
-                            !
                           </span>
                         )}
                       </div>
@@ -1956,7 +1910,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                             
                             setGeneratingDialogue?.({ sceneIdx, character: d.character })
                             try {
-                              await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, dialogueIdx)
+                              await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character)
                             } catch (error) {
                               console.error('[ScriptPanel] Dialogue regeneration failed:', error)
                             } finally {

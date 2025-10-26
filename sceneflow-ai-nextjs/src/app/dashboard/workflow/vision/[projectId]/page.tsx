@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Save, Share2, ArrowRight, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info } from 'lucide-react'
 import ScriptReviewModal from '@/components/vision/ScriptReviewModal'
 import { SceneEditorModal } from '@/components/vision/SceneEditorModal'
-import { findSceneCharacters, findMatchingCharacter } from '../../../../../lib/character/matching'
+import { findSceneCharacters } from '../../../../../lib/character/matching'
 import { v4 as uuidv4 } from 'uuid'
 
 // Scene Analysis interface for score generation
@@ -2150,8 +2150,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   // Handle generate scene audio
-  const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number) => {
-    console.log('[Generate Scene Audio] START:', { sceneIdx, audioType, characterName, dialogueIndex })
+  const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string) => {
+    console.log('[Generate Scene Audio] START:', { sceneIdx, audioType, characterName })
     
     const scene = script?.script?.scenes?.[sceneIdx]
     if (!scene) {
@@ -2160,7 +2160,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
 
     // Add a lock mechanism to prevent concurrent dialogue generations
-    const lockKey = `${sceneIdx}-${characterName || 'narration'}-${dialogueIndex ?? 'all'}`
+    const lockKey = `${sceneIdx}-${characterName || 'narration'}`
     if (generatingAudioLocks.has(lockKey)) {
       console.warn('[Generate Scene Audio] Already generating for:', lockKey)
       return
@@ -2174,11 +2174,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         console.error('[Generate Scene Audio] Character name required for dialogue')
         throw new Error('Character name required for dialogue generation')
       }
-      
-      // Use specific dialogue index if provided, otherwise find first match
-      const dialogueLine = audioType === 'dialogue' && dialogueIndex !== undefined ? 
-        scene.dialogue?.[dialogueIndex] : 
-        audioType === 'dialogue' ? 
+      const dialogueLine = audioType === 'dialogue' ? 
         scene.dialogue?.find((d: any) => d.character === characterName) : null
       
       const text = audioType === 'narration' ? scene.narration : dialogueLine?.line
@@ -2188,16 +2184,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return
       }
 
-      // Character matching with priority: manual assignment > auto-matched ID > smart fuzzy matching
+      // Primary: Match by ID (most reliable)
+      // Fallback: Case-insensitive name with normalization (for legacy projects)
       const character = audioType === 'narration' ? null :
-        (dialogueLine?.assignedCharacterId ? 
-          // Manual assignment takes priority
-          characters.find(c => c.id === dialogueLine.assignedCharacterId) :
-          dialogueLine?.characterId ? 
-          // Auto-matched by ID (from script generation)
+        (dialogueLine?.characterId ? 
           characters.find(c => c.id === dialogueLine.characterId) :
-          // Fallback: Smart fuzzy matching (same as image prompt)
-          findMatchingCharacter(characterName || '', characters)
+          // Use normalized names for matching
+          characters.find(c => 
+            normalizeCharacterName(c.name.toLowerCase()) === normalizeCharacterName(characterName?.toLowerCase() || '')
+          )
         )
 
       // ADD: Debug logging with normalized names
@@ -2763,38 +2758,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  const handleUpdateDialogueCharacter = async (sceneIdx: number, dialogueIdx: number, characterId: string) => {
-    if (!script?.script?.scenes) return
-    
-    const updatedScenes = [...script.script.scenes]
-    const scene = updatedScenes[sceneIdx]
-    
-    if (!scene.dialogue?.[dialogueIdx]) return
-    
-    // Update dialogue with manual character assignment
-    scene.dialogue[dialogueIdx] = {
-      ...scene.dialogue[dialogueIdx],
-      assignedCharacterId: characterId  // Manual assignment overrides auto-match
-    }
-    
-    // Save to database
-    await saveScenesToDatabase(updatedScenes)
-    
-    // Update local state
-    setScript({
-      ...script,
-      script: {
-        ...script.script,
-        scenes: updatedScenes
-      }
-    })
-    
-    try {
-      const { toast } = require('sonner')
-      toast.success('Character assignment updated')
-    } catch {}
-  }
-
   // Scene score generation handler
   const handleGenerateSceneScore = async (sceneIndex: number) => {
     if (!script || !script.script?.scenes) return
@@ -3054,7 +3017,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             onGenerateSceneAudio={handleGenerateSceneAudio}
             onGenerateAllAudio={handleGenerateAllAudio}
             isGeneratingAudio={isGeneratingAudio}
-            onUpdateDialogueCharacter={handleUpdateDialogueCharacter}
             onPlayScript={() => setIsPlayerOpen(true)}
             onAddScene={handleAddScene}
             onDeleteScene={handleDeleteScene}
