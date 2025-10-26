@@ -238,7 +238,7 @@ export function SceneEditorModal({
     return 'bg-red-500'
   }
 
-  const hasRecommendations = selectedRecommendations.length > 0 || customInstruction.trim()
+  const hasChanges = selectedRecommendations.length > 0 || customInstruction.trim()
 
   if (!scene) return null
 
@@ -254,26 +254,6 @@ export function SceneEditorModal({
               </DialogDescription>
             </div>
             <div className="flex items-center gap-2">
-              {!sceneAnalysis ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => analyzeScene()}
-                  disabled={isAnalyzing}
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader className="w-3 h-3 animate-spin mr-2" />
-                      Analyzing...
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="w-3 h-3 mr-2" />
-                      Generate Scene Score
-                    </>
-                  )}
-                </Button>
-              ) : null}
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -305,17 +285,42 @@ export function SceneEditorModal({
             
             {/* Right: Recommendations & Instructions */}
             <div className="overflow-y-auto">
-              <Tabs defaultValue="recommendations">
+              <Tabs defaultValue="instructions">
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="recommendations">
-                    Flow Suggestions ({(sceneAnalysis?.directorRecommendations?.length || 0) + (sceneAnalysis?.audienceRecommendations?.length || 0)})
-                  </TabsTrigger>
                   <TabsTrigger value="instructions">
-                    Direct Edit
+                    Instructions
+                  </TabsTrigger>
+                  <TabsTrigger value="recommendations">
+                    Ask Flow ({(sceneAnalysis?.directorRecommendations?.length || 0) + (sceneAnalysis?.audienceRecommendations?.length || 0)})
                   </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="recommendations">
+                  {/* Add Generate button at top */}
+                  {!sceneAnalysis && (
+                    <div className="mb-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => analyzeScene()}
+                        disabled={isAnalyzing}
+                        className="w-full"
+                      >
+                        {isAnalyzing ? (
+                          <>
+                            <Loader className="w-3 h-3 animate-spin mr-2" />
+                            Analyzing...
+                          </>
+                        ) : (
+                          <>
+                            <Wand2 className="w-3 h-3 mr-2" />
+                            Generate
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                  
                   {isAnalyzing ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader className="w-6 h-6 animate-spin mr-2" />
@@ -332,10 +337,10 @@ export function SceneEditorModal({
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-                      <AlertCircle className="w-8 h-8 mb-2 text-red-500" />
-                      <span className="font-medium">No Flow suggestions available</span>
+                      <AlertCircle className="w-8 h-8 mb-2 text-blue-500" />
+                      <span className="font-medium">Ready for Flow suggestions</span>
                       <p className="text-xs text-center mt-2 max-w-sm">
-                        Click "Generate Scene Score" to get Flow Assistant recommendations.
+                        Click "Generate" above to get Flow Assistant recommendations for this scene.
                       </p>
                     </div>
                   )}
@@ -375,7 +380,7 @@ export function SceneEditorModal({
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                {selectedRecommendations.length} suggestion{selectedRecommendations.length !== 1 ? 's' : ''} selected
+                {hasChanges ? `${selectedRecommendations.length} suggestion${selectedRecommendations.length !== 1 ? 's' : ''} selected` : 'No changes selected'}
               </span>
             </div>
             
@@ -384,7 +389,7 @@ export function SceneEditorModal({
                 <>
                   <Button
                     onClick={handleGeneratePreview}
-                    disabled={isGenerating || !hasRecommendations || isAnalyzing}
+                    disabled={isGenerating || !hasChanges || isAnalyzing}
                   >
                     {isGenerating ? (
                       <>
@@ -394,7 +399,7 @@ export function SceneEditorModal({
                     ) : (
                       <>
                         <Eye className="w-4 h-4 mr-2" />
-                        Preview Changes
+                        Generate Preview
                       </>
                     )}
                   </Button>
