@@ -782,7 +782,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         dialogue: s.dialogue
       }))
     })
-    return btoa(content).slice(0, 16)
+    
+    // Simple string hash function that works with Unicode
+    let hash = 0
+    for (let i = 0; i < content.length; i++) {
+      const char = content.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash // Convert to 32bit integer
+    }
+    return Math.abs(hash).toString(36).slice(0, 16)
   }
 
   const loadProject = async () => {
