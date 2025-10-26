@@ -229,6 +229,19 @@ CRITICAL DIALOGUE RULES:
 - Example: If character is "Brian Anderson Sr", dialogue MUST be "BRIAN ANDERSON SR:" not "BRIAN:" or "Brian:"
 - Character names in dialogue must match the character list EXACTLY (case-insensitive is acceptable but use consistent formatting)
 
+DIALOGUE INFLECTION AND EMOTION (CRITICAL FOR TTS):
+- Add emotion/inflection tags in brackets BEFORE the dialogue text
+- Examples: [excitedly], [whispering], [sadly], [thoughtfully], [angrily], [nervously]
+- Use SSML pause tags for dramatic timing: <break time="1.0s" />
+- Use ellipses (...) for hesitation or trailing off
+- Use dashes (—) for interruptions or abrupt pauses
+- Capitalize words for EMPHASIS
+- Examples:
+  * "BRIAN ANDERSON SR: [excitedly] I can't believe it!"
+  * "MINT: [whispering] Don't tell anyone. <break time="0.5s" /> It's our secret."
+  * "BRIAN ANDERSON SR: [thoughtfully] I... I'm not sure about this."
+  * "MINT: [sadly] I wish things were different—" [interrupted]
+
 CRITICAL REQUIREMENTS:
 1. Generate a COMPLETE, CONTINUOUS script with ${sceneCount} scenes
 2. Each scene must have: heading, action, dialogue, visual description

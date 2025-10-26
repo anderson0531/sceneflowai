@@ -341,6 +341,14 @@ CRITICAL DIALOGUE RULES:
 - Example: If character is "Brian Anderson Sr", dialogue MUST be "BRIAN ANDERSON SR:" not "BRIAN:" or "Brian:"
 - Character names in dialogue must match the character list EXACTLY (case-insensitive is acceptable but use consistent formatting)
 
+DIALOGUE INFLECTION AND EMOTION (CRITICAL FOR TTS):
+- Add emotion/inflection tags in brackets BEFORE the dialogue text
+- Common tags: [excitedly], [whispering], [sadly], [thoughtfully], [angrily], [nervously], [cheerfully], [urgently]
+- Use SSML pause tags: <break time="1.0s" /> (seconds) or <break time="500ms" /> (milliseconds)
+- Use ellipses (...) for hesitation
+- Use dashes (—) for interruptions
+- Capitalize for EMPHASIS
+
 SCENE PLANNING:
 - Total target: ${targetDuration}s (±10% is fine)
 - REQUIRED total scenes: ${suggested} scenes (you MUST use ${suggested}, can adjust ±2 if absolutely necessary for story flow)
@@ -440,6 +448,7 @@ ${characterList}
 
 CRITICAL: Use ONLY the defined characters above (${characters.map((c: any) => c.name).join(', ')}).
 CRITICAL DIALOGUE: Use EXACT character names - do NOT abbreviate or modify them (e.g., "BRIAN ANDERSON SR:" not "BRIAN:").
+ADD EMOTION TAGS: Include [emotion] tags and <break time="Xs" /> pauses for expressive TTS.
 
 PREVIOUS SCENES (${prevScenes.length} so far, ${prevDuration}s total):
 ${prevScenes.slice(-3).map((s: any) => `${s.sceneNumber}. ${s.heading} (${s.duration}s): ${s.action.substring(0, 80)}...`).join('\n')}

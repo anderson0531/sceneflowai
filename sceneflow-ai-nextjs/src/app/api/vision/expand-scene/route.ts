@@ -201,6 +201,13 @@ CRITICAL DIALOGUE RULES:
 - Example: If character is "Brian Anderson Sr", dialogue MUST be "BRIAN ANDERSON SR:" not "BRIAN:" or "Brian:"
 - Character names in dialogue must match the character list EXACTLY
 
+DIALOGUE INFLECTION AND EMOTION (CRITICAL FOR TTS):
+- Add emotion/inflection tags in brackets: [excitedly], [whispering], [sadly], [thoughtfully]
+- Use SSML pauses: <break time="1.0s" />
+- Use ellipses (...) for hesitation, dashes (—) for interruptions
+- Capitalize words for EMPHASIS
+- Example: "BRIAN: [thoughtfully] I... <break time="0.5s" /> I think you're right."
+
 ${beatContext}
 
 ${sceneHistory}
