@@ -1278,77 +1278,20 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
       } ${isOutline ? 'bg-yellow-50 dark:bg-yellow-950/20' : ''}`}
     >
-      {/* Collapsible Header - THREE-ROW LAYOUT */}
-      <div className="space-y-2 mb-3">
-        {/* Row 1: Card Controls + Scene Info + Status Indicators */}
-      <div 
-        onClick={toggleOpen}
-          className="flex items-start justify-between cursor-pointer"
-      >
-          {/* Left: Card Controls Column + Scene Info */}
-        <div className="flex items-start gap-3">
-          {/* Vertical Card Controls Column */}
-          <div className="flex flex-col items-center gap-1 pt-0.5">
+      {/* Collapsible Header - OPTIMIZED FOUR-ROW LAYOUT */}
+      <div className="mb-3">
+        {/* Row 1: Chevron + Scene Number + Status Indicators */}
+        <div 
+          onClick={toggleOpen}
+          className="flex items-center justify-between cursor-pointer"
+        >
+          <div className="flex items-center gap-4">
+            {/* Chevron Control */}
             <ChevronRight className={`w-4 h-4 transition-transform text-gray-500 dark:text-gray-400 ${isOpen ? 'rotate-90' : ''}`} />
             
-            {/* Drag Handle */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div
-                    className="p-1 cursor-move text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-                    {...(dragHandleProps || {})}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <GripVertical className="w-3 h-3" />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Drag to reorder</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
-            {/* Add Scene */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onAddScene?.(sceneIdx)
-                    }}
-                    className="p-1 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded transition-colors"
-                  >
-                    <Plus className="w-3 h-3" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Add scene after</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
-            {/* Delete Scene */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      if (confirm('Delete this scene? This cannot be undone.')) {
-                        onDeleteScene?.(sceneIdx)
-                      }
-                    }}
-                    className="p-1 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded transition-colors"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Delete scene</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          
-          {/* Scene Info */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">SCENE {sceneNumber}</span>
+            {/* Scene Info Content */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">SCENE {sceneNumber}</span>
           
             {/* Duration Badge */}
             <TooltipProvider>
@@ -1456,21 +1399,39 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
             </div>
           </div>
           
-        {/* Row 2: Scene Heading + Primary Action */}
-        <div className="flex items-center justify-between pl-6">
-          {/* Left: Scene Heading */}
+        {/* Row 2: Drag + Scene Heading + Play Button */}
+        <div className="flex items-center gap-4">
+          {/* Drag Control */}
+          <div className="w-4 flex justify-center">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    className="p-1 cursor-move text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+                    {...(dragHandleProps || {})}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <GripVertical className="w-3 h-3" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Drag to reorder</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          
+          {/* Scene Heading Content */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
-          {scene.heading && (
+            {scene.heading && (
               <span className="text-sm text-gray-600 dark:text-gray-400 truncate">{scene.heading}</span>
-          )}
-          {scene.duration && (
+            )}
+            {scene.duration && (
               <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">{scene.duration}s</span>
-          )}
-          {isOutline && (
+            )}
+            {isOutline && (
               <span className="text-xs px-2 py-0.5 rounded bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 flex-shrink-0">
-              Outline
-            </span>
-          )}
+                Outline
+              </span>
+            )}
           </div>
           
           {/* Right: Primary Play Action */}
@@ -1479,18 +1440,17 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-              onClick={handlePlay}
-              disabled={isPlaying}
-                    className="p-2 rounded-full bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50 transition-all shadow-sm hover:shadow-md"
-            >
-              {isPlaying ? (
-                      <Loader className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Play className="w-4 h-4" />
-                    )}
+                    onClick={handlePlay}
+                    disabled={isPlaying}
+                    className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded transition-colors"
+                  >
+                    {isPlaying ? <Square className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                    {isPlaying ? 'Stop' : 'Play'}
                   </button>
                 </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Play scene</TooltipContent>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                  {isPlaying ? 'Stop audio playback' : 'Play scene audio'}
+                </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           )}
@@ -1508,10 +1468,31 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
           )}
         </div>
         
-        {/* Row 3: Action Controls - Grouped by Function */}
+        {/* Row 3: Add + Image/Scene Controls */}
         {!isOutline && (
-          <div className="flex items-center justify-between pl-6 pt-2 border-t border-gray-100 dark:border-gray-800">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4 pt-2 border-t border-gray-100 dark:border-gray-800">
+            {/* Add Control */}
+            <div className="w-4 flex justify-center">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onAddScene?.(sceneIdx)
+                      }}
+                      className="p-1 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded transition-colors"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Add scene after</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            
+            {/* Action Controls Content */}
+            <div className="flex items-center gap-3 flex-1">
               {/* Image Generation Group */}
               {onGenerateImage && scene.visualDescription && (
                 <div className="flex items-center gap-1">
@@ -1641,6 +1622,34 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
             </div>
           </div>
         )}
+        
+        {/* Row 4: Delete + Reserved Space */}
+        <div className="flex items-center gap-4">
+          {/* Delete Control */}
+          <div className="w-4 flex justify-center">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (confirm('Delete this scene? This cannot be undone.')) {
+                        onDeleteScene?.(sceneIdx)
+                      }
+                    }}
+                    className="p-1 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded transition-colors"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Delete scene</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          
+          {/* Reserved for future content */}
+          <div className="flex-1" />
+        </div>
       </div>
 
       {/* Collapsible Content */}
