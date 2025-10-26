@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
@@ -1532,45 +1532,8 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
               </TooltipProvider>
             </div>
             
-            {/* Right Content: Image Tools + Play with Left Padding */}
-            <div className="flex items-center justify-between flex-1 pl-4">
-              {/* Left: Image Generation Tools */}
-              <div className="flex items-center gap-2">
-                {onGenerateImage && scene.visualDescription && (
-                  <>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                onClick={handleOpenBuilder}
-                disabled={isGeneratingImage}
-                            className="p-2 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-lg transition-colors disabled:opacity-50"
-                          >
-                            <Wand2 className="w-5 h-5" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Open prompt builder</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                onClick={handleQuickGenerate}
-                disabled={isGeneratingImage}
-                            className="p-2 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-lg transition-colors disabled:opacity-50"
-                          >
-                            <Zap className="w-5 h-5" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Quick generate image</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-            </>
-          )}
-        </div>
-              
+            {/* Right Content: Edit and Play with Left Padding */}
+            <div className="flex items-center justify-end flex-1 pl-4">
               {/* Right: Edit + Play Scene Button */}
               <div className="flex items-center gap-2">
                 {/* Edit Scene Button */}
@@ -1739,6 +1702,42 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                 alt={scene.heading}
                 className="w-full h-auto object-cover"
               />
+              {/* Image Generation Buttons below Image */}
+              {onGenerateImage && scene.visualDescription && (
+                <div className="flex items-center justify-center gap-2 p-2 bg-gray-50 dark:bg-gray-800">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={handleOpenBuilder}
+                          disabled={isGeneratingImage}
+                          className="flex items-center gap-1.5 px-2 py-1 text-xs text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded transition-colors disabled:opacity-50"
+                        >
+                          <Image className="w-3.5 h-3.5" />
+                          <span>Build</span>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Build image prompt</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={handleQuickGenerate}
+                          disabled={isGeneratingImage}
+                          className="flex items-center gap-1.5 px-2 py-1 text-xs text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded transition-colors disabled:opacity-50"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Generate</span>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Quick generate image</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              )}
             </div>
           )}
           
