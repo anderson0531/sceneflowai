@@ -1484,10 +1484,10 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                             }
                           }}
                           disabled={generatingScoreFor === sceneIdx}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold shadow-sm transition-all ${
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
                             scene.scoreAnalysis 
-                              ? `${getScoreColorClass ? getScoreColorClass(scene.scoreAnalysis.overallScore) : 'bg-gray-100 text-gray-800'} hover:opacity-90` 
-                              : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                              ? `${getScoreColorClass ? getScoreColorClass(scene.scoreAnalysis.overallScore) : 'bg-gray-100 text-gray-800'} shadow-sm hover:opacity-90` 
+                              : 'border border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20 dark:hover:border-blue-700'
                           } disabled:opacity-50 disabled:cursor-not-allowed`}
                         >
                           {generatingScoreFor === sceneIdx ? (
