@@ -20,6 +20,32 @@ import { SceneEditorModal } from '@/components/vision/SceneEditorModal'
 import { findSceneCharacters } from '../../../../../lib/character/matching'
 import { v4 as uuidv4 } from 'uuid'
 
+// Scene Analysis interface for score generation
+interface SceneAnalysis {
+  overallScore: number
+  directorScore: number
+  audienceScore: number
+  generatedAt: string
+  recommendations: any[]
+}
+
+// Scene interface with score analysis
+interface Scene {
+  id?: string
+  heading?: string | { text: string }
+  visualDescription?: string
+  narration?: string
+  dialogue?: any[]
+  music?: string | { description: string }
+  sfx?: any[]
+  imageUrl?: string
+  narrationAudioUrl?: string
+  musicAudio?: string
+  duration?: number
+  scoreAnalysis?: SceneAnalysis
+  [key: string]: any
+}
+
 // Helper function to normalize character names by removing screenplay annotations
 const normalizeCharacterName = (name: string): string => {
   if (!name) return ''
@@ -392,7 +418,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [project, setProject] = useState<Project | null>(null)
   const [script, setScript] = useState<any>(null)
   const [characters, setCharacters] = useState<any[]>([])
-  const [scenes, setScenes] = useState<any[]>([])
+  const [scenes, setScenes] = useState<Scene[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [uploadingRef, setUploadingRef] = useState<Record<string, boolean>>({})
   const [validationWarnings, setValidationWarnings] = useState<Record<number, string>>({})
@@ -418,6 +444,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Scene editor state
   const [editingSceneIndex, setEditingSceneIndex] = useState<number | null>(null)
   const [isSceneEditorOpen, setIsSceneEditorOpen] = useState(false)
+  
+  // Scene score generation state
+  const [generatingScoreFor, setGeneratingScoreFor] = useState<number | null>(null)
   const [generationProgress, setGenerationProgress] = useState({
     script: { 
       complete: false, 
@@ -2695,7 +2724,89 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  // Helper function to save scenes to database
+  // Scene score generation handler
+  const handleGenerateSceneScore = async (sceneIndex: number) => {
+    if (!script || !script.script?.scenes) return
+    
+    setGeneratingScoreFor(sceneIndex)
+    try {
+      const scene = script.script.scenes[sceneIndex]
+      const response = await fetch('/api/vision/analyze-scene', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex,
+          scene,
+          context: {
+            previousScene: script.script.scenes[sceneIndex - 1],
+            nextScene: script.script.scenes[sceneIndex + 1],
+            characters
+          }
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to analyze scene')
+      }
+      
+      const data = await response.json()
+      
+      // Update scene with score
+      const updatedScenes = [...script.script.scenes]
+      updatedScenes[sceneIndex] = {
+        ...scene,
+        scoreAnalysis: {
+          overallScore: data.analysis.overallScore,
+          directorScore: data.analysis.directorScore || data.analysis.overallScore,
+          audienceScore: data.analysis.audienceScore || data.analysis.overallScore,
+          generatedAt: new Date().toISOString(),
+          recommendations: [
+            ...data.analysis.directorRecommendations,
+            ...data.analysis.audienceRecommendations
+          ]
+        }
+      }
+      
+      // Save to database
+      await saveScenesToDatabase(updatedScenes)
+      
+      // Update local state
+      setScript({
+        ...script,
+        script: {
+          ...script.script,
+          scenes: updatedScenes
+        }
+      })
+      
+      // Show success message
+      try {
+        const { toast } = require('sonner')
+        toast.success('Scene score generated')
+      } catch {}
+      
+    } catch (error) {
+      console.error('[Vision] Failed to generate scene score:', error)
+      try {
+        const { toast } = require('sonner')
+        toast.error('Failed to generate scene score')
+      } catch {}
+    } finally {
+      setGeneratingScoreFor(null)
+    }
+  }
+
+  // Helper function to get score color class
+  const getScoreColorClass = (score: number): string => {
+    if (score >= 85) {
+      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+    } else if (score >= 75) {
+      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+    } else {
+      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+    }
+  }
   const saveScenesToDatabase = async (updatedScenes: any[]) => {
     try {
       // DEBUG: Log what we're about to save
@@ -2869,6 +2980,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             onDeleteScene={handleDeleteScene}
             onReorderScenes={handleReorderScenes}
             onEditScene={handleEditScene}
+            onGenerateSceneScore={handleGenerateSceneScore}
+            generatingScoreFor={generatingScoreFor}
+            getScoreColorClass={getScoreColorClass}
             directorScore={directorReview?.overallScore}
             audienceScore={audienceReview?.overallScore}
             onGenerateReviews={handleGenerateReviews}

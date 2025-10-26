@@ -46,6 +46,8 @@ interface SceneAnalysisResponse {
   audienceRecommendations: Recommendation[]
   quickFixes: QuickFix[]
   overallScore: number
+  directorScore: number
+  audienceScore: number
 }
 
 export async function POST(req: NextRequest) {
@@ -93,7 +95,9 @@ export async function POST(req: NextRequest) {
       directorRecommendations: directorAnalysis.recommendations,
       audienceRecommendations: audienceAnalysis.recommendations,
       quickFixes,
-      overallScore
+      overallScore,
+      directorScore: directorAnalysis.score,
+      audienceScore: audienceAnalysis.score
     }
 
     return NextResponse.json({

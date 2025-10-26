@@ -60,6 +60,10 @@ interface ScriptPanelProps {
   onShowReviews?: () => void
   // NEW: Scene editing props
   onEditScene?: (sceneIndex: number) => void
+  // NEW: Scene score generation props
+  onGenerateSceneScore?: (sceneIndex: number) => void
+  generatingScoreFor?: number | null
+  getScoreColorClass?: (score: number) => string
 }
 
 // Stoplight color system for scores
@@ -156,7 +160,7 @@ function formatTotalDuration(scenes: any[]): string {
 }
 
 // Sortable Scene Card Wrapper for drag-and-drop
-function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, ...props }: any) {
+function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, ...props }: any) {
   const {
     attributes,
     listeners,
@@ -177,13 +181,16 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, ...prop
         onAddScene={onAddScene}
         onDeleteScene={onDeleteScene}
         onEditScene={onEditScene}
+        onGenerateSceneScore={onGenerateSceneScore}
+        generatingScoreFor={generatingScoreFor}
+        getScoreColorClass={getScoreColorClass}
         dragHandleProps={listeners} 
       />
     </div>
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [editMode, setEditMode] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -1097,6 +1104,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       onAddScene={onAddScene}
                       onDeleteScene={onDeleteScene}
                       onEditScene={onEditScene}
+                      onGenerateSceneScore={onGenerateSceneScore}
+                      generatingScoreFor={generatingScoreFor}
+                      getScoreColorClass={getScoreColorClass}
                 />
                     )
                   })}
@@ -1210,9 +1220,13 @@ interface SceneCardProps {
   onAddScene?: (afterIndex?: number) => void
   onDeleteScene?: (sceneIndex: number) => void
   onEditScene?: (sceneIndex: number) => void
+  // NEW: Scene score generation props
+  onGenerateSceneScore?: (sceneIndex: number) => void
+  generatingScoreFor?: number | null
+  getScoreColorClass?: (score: number) => string
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart, dragHandleProps, onAddScene, onDeleteScene, onEditScene }: SceneCardProps) {
+function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart, dragHandleProps, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
   
@@ -1378,6 +1392,72 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+            
+            {/* NEW: Score Display */}
+            {scene.scoreAnalysis ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onGenerateSceneScore?.(sceneIdx)
+                      }}
+                      disabled={generatingScoreFor === sceneIdx}
+                      className={`
+                        px-2 py-1 rounded text-xs font-medium transition-colors border
+                        ${getScoreColorClass ? getScoreColorClass(scene.scoreAnalysis.overallScore) : 'bg-gray-100 text-gray-800'}
+                        hover:opacity-80 disabled:opacity-50
+                      `}
+                    >
+                      {generatingScoreFor === sceneIdx ? (
+                        <Loader className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <>⭐ {scene.scoreAnalysis.overallScore}/100</>
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="text-xs space-y-1">
+                      <p className="font-semibold">Scene Quality Score</p>
+                      <p>Director: {scene.scoreAnalysis.directorScore}/100</p>
+                      <p>Audience: {scene.scoreAnalysis.audienceScore}/100</p>
+                      <p className="text-gray-400 mt-2">Click to regenerate</p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onGenerateSceneScore?.(sceneIdx)
+                      }}
+                      disabled={generatingScoreFor === sceneIdx}
+                      className="px-2 py-1 rounded text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-gray-300 dark:border-gray-600 disabled:opacity-50"
+                    >
+                      {generatingScoreFor === sceneIdx ? (
+                        <>
+                          <Loader className="w-3 h-3 animate-spin inline mr-1" />
+                          Analyzing...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3 h-3 inline mr-1" />
+                          Score
+                        </>
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Generate quality score for this scene</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
             </div>
           </div>
           
