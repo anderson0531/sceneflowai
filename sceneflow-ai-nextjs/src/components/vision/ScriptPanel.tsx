@@ -718,6 +718,47 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             </Button>
           )}
           
+          {/* Generate All Audio Button */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  onClick={onGenerateAllAudio}
+                  disabled={isGeneratingAudio}
+                  size="sm"
+                  variant="outline"
+                  className="flex items-center gap-1"
+                >
+                  <Volume2 className="w-4 h-4" />
+                  <span>Generate</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                <p>{isGeneratingAudio ? 'Generating Audio...' : 'Generate All Audio'}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          {/* Screening Room Button */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={onPlayScript}
+                  disabled={!script || !scenes || scenes.length === 0}
+                  className="flex items-center gap-1"
+                >
+                  <Play className="w-4 h-4" />
+                  <span>Screening</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                <p>Open Screening Room</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           
           {scenes.some((s: any) => !s.isExpanded) && onExpandAllScenes && (
             <Button
@@ -747,10 +788,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           <div className="px-4 py-4">
             {/* Header with Toggle */}
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-sf-primary" />
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Script Overview</h3>
-              </div>
+          </div>
               <button
                 onClick={() => setShowScriptOverview(!showScriptOverview)}
                 className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
@@ -836,7 +877,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             {/* Script Reviews Section */}
             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
                   <Star className="w-4 h-4 text-yellow-500" />
                   <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                     Script Reviews
@@ -847,14 +888,14 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 <div className="flex items-center gap-2">
                   {(directorScore || audienceScore) && (
                     <>
-                      <Button
+                  <Button 
                         variant="ghost"
                         size="sm"
                         onClick={onShowReviews}
                         className="text-xs"
                       >
                         View Full Reviews
-                      </Button>
+                  </Button>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -872,8 +913,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   )}
                   
                   {!directorScore && !audienceScore && (
-                    <Button
-                      variant="outline"
+                  <Button 
+                    variant="outline" 
                       size="sm"
                       onClick={onGenerateReviews}
                       disabled={isGeneratingReviews}
@@ -884,7 +925,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                         <Star className="w-4 h-4" />
                       )}
                       Generate Reviews
-                    </Button>
+                  </Button>
                   )}
                 </div>
               </div>
@@ -922,9 +963,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                             {getScoreLabel(directorScore)}
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  )}
+          </div>
+        </div>
+      )}
                   
                   {/* Audience Score */}
                   {audienceScore && (
@@ -972,54 +1013,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         </div>
       )}
 
-      
-      {/* Production Script Header */}
-      {script && !editMode && (
-        <div className="border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50">
-          <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Production Script</h3>
-          </div>
-          <div className="flex items-center gap-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    onClick={onGenerateAllAudio}
-                    disabled={isGeneratingAudio}
-                    size="icon"
-                    variant="outline"
-                  >
-                    <Volume2 className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                  <p>{isGeneratingAudio ? 'Generating Audio...' : 'Generate All Audio'}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
-            
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    onClick={onPlayScript}
-                    disabled={!script || !scenes || scenes.length === 0}
-                  >
-                    <Play className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                  <p>Open Screening Room</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        </div>
-      )}
       
       {/* Script Content */}
       <div className="flex-1 overflow-y-auto">
@@ -1239,7 +1232,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
   
   const handlePlay = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (onPlayScene && !isPlaying) {
+    if (onPlayScene) {
       await onPlayScene(sceneIdx)
     }
   }
