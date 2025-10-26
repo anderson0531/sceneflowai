@@ -236,11 +236,12 @@ DIALOGUE INFLECTION AND EMOTION (CRITICAL FOR TTS):
 - Use ellipses (...) for hesitation or trailing off
 - Use dashes (—) for interruptions or abrupt pauses
 - Capitalize words for EMPHASIS
+- The "line" field should contain ONLY the dialogue text with emotion tags, NOT the character name
 - Examples:
-  * "BRIAN ANDERSON SR: [excitedly] I can't believe it!"
-  * "MINT: [whispering] Don't tell anyone. <break time="0.5s" /> It's our secret."
-  * "BRIAN ANDERSON SR: [thoughtfully] I... I'm not sure about this."
-  * "MINT: [sadly] I wish things were different—" [interrupted]
+  * {"character": "BRIAN ANDERSON SR", "line": "[excitedly] I can't believe it!"}
+  * {"character": "MINT", "line": "[whispering] Don't tell anyone. <break time="0.5s" /> It's our secret."}
+  * {"character": "BRIAN ANDERSON SR", "line": "[thoughtfully] I... I'm not sure about this."}
+  * {"character": "MINT", "line": "[sadly] I wish things were different—"}
 
 CRITICAL REQUIREMENTS:
 1. Generate a COMPLETE, CONTINUOUS script with ${sceneCount} scenes

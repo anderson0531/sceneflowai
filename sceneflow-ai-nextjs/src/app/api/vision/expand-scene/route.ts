@@ -206,7 +206,8 @@ DIALOGUE INFLECTION AND EMOTION (CRITICAL FOR TTS):
 - Use SSML pauses: <break time="1.0s" />
 - Use ellipses (...) for hesitation, dashes (—) for interruptions
 - Capitalize words for EMPHASIS
-- Example: "BRIAN: [thoughtfully] I... <break time="0.5s" /> I think you're right."
+- CRITICAL: "line" field contains ONLY dialogue + emotion tags, NOT character name
+- Example: {"character": "BRIAN", "line": "[thoughtfully] I... <break time=\"0.5s\" /> I think you're right."}
 
 ${beatContext}
 

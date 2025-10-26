@@ -348,6 +348,8 @@ DIALOGUE INFLECTION AND EMOTION (CRITICAL FOR TTS):
 - Use ellipses (...) for hesitation
 - Use dashes (—) for interruptions
 - Capitalize for EMPHASIS
+- CRITICAL: The "line" field contains ONLY dialogue text + emotion tags, NOT the character name
+- Example: {"character": "BRIAN ANDERSON SR", "line": "[excitedly] I can't believe it!"}
 
 SCENE PLANNING:
 - Total target: ${targetDuration}s (±10% is fine)
@@ -447,8 +449,8 @@ Synopsis: ${treatment.synopsis || treatment.content}
 ${characterList}
 
 CRITICAL: Use ONLY the defined characters above (${characters.map((c: any) => c.name).join(', ')}).
-CRITICAL DIALOGUE: Use EXACT character names - do NOT abbreviate or modify them (e.g., "BRIAN ANDERSON SR:" not "BRIAN:").
-ADD EMOTION TAGS: Include [emotion] tags and <break time="Xs" /> pauses for expressive TTS.
+CRITICAL DIALOGUE: Use EXACT character names in the "character" field - do NOT include them in the "line" field.
+ADD EMOTION TAGS: Start each "line" with [emotion] tags and use <break time="Xs" /> pauses for expressive TTS.
 
 PREVIOUS SCENES (${prevScenes.length} so far, ${prevDuration}s total):
 ${prevScenes.slice(-3).map((s: any) => `${s.sceneNumber}. ${s.heading} (${s.duration}s): ${s.action.substring(0, 80)}...`).join('\n')}
