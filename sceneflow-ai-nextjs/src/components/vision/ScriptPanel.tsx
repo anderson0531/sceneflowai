@@ -1576,59 +1576,59 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                   </Tooltip>
                 </TooltipProvider>
 
-                {/* Score Display + Generate Button Group */}
-                <div className="flex items-center gap-1.5">
-                  {/* Score Badge - Display Only (if exists) */}
-                  {scene.scoreAnalysis && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className={`
-                            flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold shadow-sm
-                            ${getScoreColorClass ? getScoreColorClass(scene.scoreAnalysis.overallScore) : 'bg-gray-100 text-gray-800'}
-                          `}>
+                {/* Combined Score Badge/Button */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (onGenerateSceneScore) {
+                            onGenerateSceneScore(sceneIdx)
+                          }
+                        }}
+                        disabled={generatingScoreFor === sceneIdx}
+                        className={`
+                          flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-semibold shadow-sm transition-all
+                          ${scene.scoreAnalysis 
+                            ? `${getScoreColorClass ? getScoreColorClass(scene.scoreAnalysis.overallScore) : 'bg-gray-100 text-gray-800'} hover:opacity-90` 
+                            : 'bg-gray-100 text-gray-600 hover:bg-purple-50 hover:text-purple-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-purple-900/20 dark:hover:text-purple-400'
+                          }
+                          disabled:opacity-50 disabled:cursor-not-allowed
+                        `}
+                      >
+                        {generatingScoreFor === sceneIdx ? (
+                          <>
+                            <Loader className="w-4 h-4 animate-spin" />
+                            <span>Analyzing...</span>
+                          </>
+                        ) : scene.scoreAnalysis ? (
+                          <>
                             <Star className="w-4 h-4 fill-current" />
                             <span>{scene.scoreAnalysis.overallScore}</span>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                          <div className="text-xs space-y-1">
-                            <p className="font-semibold">Scene Quality Score</p>
-                            <p>Director: {scene.scoreAnalysis.directorScore}/100</p>
-                            <p>Audience: {scene.scoreAnalysis.audienceScore}/100</p>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                  
-                  {/* Generate/Regenerate Score Button */}
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            if (onGenerateSceneScore) {
-                              onGenerateSceneScore(sceneIdx)
-                            }
-                          }}
-                          disabled={generatingScoreFor === sceneIdx}
-                          className="p-1.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 dark:text-gray-400 dark:hover:text-purple-400 dark:hover:bg-purple-900/20 rounded transition-colors disabled:opacity-50"
-                        >
-                          {generatingScoreFor === sceneIdx ? (
-                            <Loader className="w-4 h-4 animate-spin" />
-                          ) : (
+                          </>
+                        ) : (
+                          <>
                             <Star className="w-4 h-4" />
-                          )}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                        {scene.scoreAnalysis ? 'Regenerate scene score' : 'Generate scene score'}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
+                            <span>Score</span>
+                          </>
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                      {scene.scoreAnalysis ? (
+                        <div className="text-xs space-y-1">
+                          <p className="font-semibold">Scene Quality Score</p>
+                          <p>Director: {scene.scoreAnalysis.directorScore}/100</p>
+                          <p>Audience: {scene.scoreAnalysis.audienceScore}/100</p>
+                          <p className="text-gray-400 mt-2">Click to regenerate</p>
+                        </div>
+                      ) : (
+                        <p className="text-xs">Generate quality score for this scene</p>
+                      )}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
           </div>
