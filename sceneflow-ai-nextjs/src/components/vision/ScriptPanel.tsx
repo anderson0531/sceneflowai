@@ -1464,7 +1464,8 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                           }}
                           className="flex items-center gap-1.5 px-3 py-1.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit className="w-5 h-5" />
+                          <span>Edit</span>
                         </button>
                       </TooltipTrigger>
                       <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Edit scene</TooltipContent>
@@ -1599,7 +1600,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                         className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg transition-colors font-medium"
                       >
                         {isPlaying ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                        <span>{isPlaying ? 'Stop' : 'Play Scene'}</span>
+                        <span>{isPlaying ? 'Stop' : 'Play'}</span>
                       </button>
                     </TooltipTrigger>
                     <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
