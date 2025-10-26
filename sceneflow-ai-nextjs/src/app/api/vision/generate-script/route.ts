@@ -219,15 +219,21 @@ ${Array.isArray(beatSheet) && beatSheet.length > 0 ?
   : 'No beats provided - create logical story progression'
 }
 
-CHARACTERS:
+CHARACTERS (USE THESE EXACT NAMES IN DIALOGUE):
 ${characters.map((c: any) => `${c.name} (${c.role}): ${c.description || ''}`).join('\n') || 'Extract characters from story'}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CRITICAL DIALOGUE RULES:
+- Use ONLY the EXACT character names from the list above
+- DO NOT abbreviate, modify, or create variations of character names
+- Example: If character is "Brian Anderson Sr", dialogue MUST be "BRIAN ANDERSON SR:" not "BRIAN:" or "Brian:"
+- Character names in dialogue must match the character list EXACTLY (case-insensitive is acceptable but use consistent formatting)
 
 CRITICAL REQUIREMENTS:
 1. Generate a COMPLETE, CONTINUOUS script with ${sceneCount} scenes
 2. Each scene must have: heading, action, dialogue, visual description
 3. Stay 100% faithful to the logline, synopsis, and beat structure
-4. Use ONLY the characters defined above
+4. Use ONLY the exact character names defined above - do not modify them
 5. Write in industry-standard screenplay format
 6. Ensure smooth transitions between scenes
 7. Maintain consistent pacing aligned with beat structure

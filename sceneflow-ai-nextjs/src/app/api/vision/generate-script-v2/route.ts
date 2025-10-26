@@ -335,6 +335,12 @@ CRITICAL CHARACTER RULE:
 - Match character names EXACTLY as defined
 - Maintain character descriptions and traits from Film Treatment
 
+CRITICAL DIALOGUE RULES:
+- Use ONLY the EXACT character names from the list above
+- DO NOT abbreviate, modify, or create variations of character names
+- Example: If character is "Brian Anderson Sr", dialogue MUST be "BRIAN ANDERSON SR:" not "BRIAN:" or "Brian:"
+- Character names in dialogue must match the character list EXACTLY (case-insensitive is acceptable but use consistent formatting)
+
 SCENE PLANNING:
 - Total target: ${targetDuration}s (±10% is fine)
 - REQUIRED total scenes: ${suggested} scenes (you MUST use ${suggested}, can adjust ±2 if absolutely necessary for story flow)
@@ -433,6 +439,7 @@ Synopsis: ${treatment.synopsis || treatment.content}
 ${characterList}
 
 CRITICAL: Use ONLY the defined characters above (${characters.map((c: any) => c.name).join(', ')}).
+CRITICAL DIALOGUE: Use EXACT character names - do NOT abbreviate or modify them (e.g., "BRIAN ANDERSON SR:" not "BRIAN:").
 
 PREVIOUS SCENES (${prevScenes.length} so far, ${prevDuration}s total):
 ${prevScenes.slice(-3).map((s: any) => `${s.sceneNumber}. ${s.heading} (${s.duration}s): ${s.action.substring(0, 80)}...`).join('\n')}

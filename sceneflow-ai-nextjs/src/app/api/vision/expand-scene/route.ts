@@ -192,8 +192,14 @@ Synopsis:
 ${storyBible.synopsis || 'Follow the treatment closely'}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-CHARACTER BIBLE (maintain consistency):
+CHARACTERS (USE THESE EXACT NAMES IN DIALOGUE):
   ${characterBible}
+
+CRITICAL DIALOGUE RULES:
+- Use ONLY the EXACT character names from the list above
+- DO NOT abbreviate, modify, or create variations of character names
+- Example: If character is "Brian Anderson Sr", dialogue MUST be "BRIAN ANDERSON SR:" not "BRIAN:" or "Brian:"
+- Character names in dialogue must match the character list EXACTLY
 
 ${beatContext}
 
@@ -207,7 +213,7 @@ Duration: ${outline.duration}s
 
 STRICT REQUIREMENTS:
 1. Stay 100% faithful to the logline and synopsis above
-2. Use ONLY the characters defined in the character bible
+2. Use ONLY the exact character names defined in the character list - do not modify them
 3. Maintain continuity with previous scenes
 4. Align with the current story beat's intent
 5. Do NOT introduce new plot elements not in the treatment
