@@ -1281,19 +1281,19 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
       {/* Collapsible Header - OPTIMIZED FOUR-ROW LAYOUT */}
       <div className="mb-3">
         {/* Row 1: Chevron + Scene Number + Status Indicators */}
-        <div 
-          onClick={toggleOpen}
-          className="flex items-center cursor-pointer"
-        >
+      <div 
+        onClick={toggleOpen}
+          className="flex items-center cursor-pointer py-1.5"
+      >
           {/* Left Column: Chevron Control with Background + Border */}
           <div className="flex items-center justify-center w-12 pr-4 border-r border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30 h-full">
-            <ChevronRight className={`w-4 h-4 transition-transform text-gray-500 dark:text-gray-400 ${isOpen ? 'rotate-90' : ''}`} />
+          <ChevronRight className={`w-4 h-4 transition-transform text-gray-500 dark:text-gray-400 ${isOpen ? 'rotate-90' : ''}`} />
           </div>
           
           {/* Right Content: Scene Info + Status with Left Padding */}
           <div className="flex items-center justify-between flex-1 pl-4">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">SCENE {sceneNumber}</span>
+          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">SCENE {sceneNumber}</span>
           
               {/* Duration Badge */}
               <TooltipProvider>
@@ -1353,8 +1353,8 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                         ? 'bg-green-50 border-green-300 text-green-600 dark:bg-green-900/20 dark:border-green-700 dark:text-green-400' 
                         : 'bg-white border-gray-300 text-gray-400 dark:bg-gray-800 dark:border-gray-600'
                     }`}>
-                <Camera className="w-3 h-3" />
-              </div>
+              <Camera className="w-3 h-3" />
+            </div>
                   </TooltipTrigger>
                   <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
                     {scene.imageUrl ? 'Image generated' : 'No image'}
@@ -1371,8 +1371,8 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                         ? 'bg-green-50 border-green-300 text-green-600 dark:bg-green-900/20 dark:border-green-700 dark:text-green-400' 
                         : 'bg-white border-gray-300 text-gray-400 dark:bg-gray-800 dark:border-gray-600'
                     }`}>
-                <Volume2 className="w-3 h-3" />
-              </div>
+              <Volume2 className="w-3 h-3" />
+            </div>
                   </TooltipTrigger>
                   <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
                     {scene.narrationAudioUrl ? 'Voice generated' : 'No voice'}
@@ -1385,11 +1385,11 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className={`flex items-center justify-center w-5 h-5 rounded border ${
-                  scene.musicAudio 
+                scene.musicAudio 
                         ? 'bg-green-50 border-green-300 text-green-600 dark:bg-green-900/20 dark:border-green-700 dark:text-green-400' 
                         : 'bg-white border-gray-300 text-gray-400 dark:bg-gray-800 dark:border-gray-600'
                     }`}>
-                <Music className="w-3 h-3" />
+              <Music className="w-3 h-3" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
@@ -1398,11 +1398,11 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                 </Tooltip>
               </TooltipProvider>
             </div>
+            </div>
           </div>
-        </div>
           
         {/* Row 2: Drag + Scene Heading + Edit/Score */}
-        <div className="flex items-center">
+        <div className="flex items-center py-1.5">
           {/* Left Column: Drag Control with Background + Border */}
           <div className="flex items-center justify-center w-12 pr-4 border-r border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30">
             <TooltipProvider>
@@ -1425,33 +1425,33 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
           <div className="flex items-center justify-between flex-1 pl-4">
             {/* Scene Heading Content */}
             <div className="flex items-center gap-2 min-w-0">
-              {scene.heading && (
+          {scene.heading && (
                 <span className="text-sm text-gray-600 dark:text-gray-400 truncate">{scene.heading}</span>
-              )}
-              {scene.duration && (
+          )}
+          {scene.duration && (
                 <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">{scene.duration}s</span>
-              )}
-              {isOutline && (
+          )}
+          {isOutline && (
                 <span className="text-xs px-2 py-0.5 rounded bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 flex-shrink-0">
-                  Outline
-                </span>
-              )}
-            </div>
-            
+              Outline
+            </span>
+          )}
+        </div>
+        
             {/* Right: Primary Scene Actions */}
             <div className="flex items-center gap-2">
               {/* Generate Button (for outline scenes) */}
-              {isOutline && onExpand && (
-                <Button
-                  size="sm"
-                  onClick={handleExpand}
-                  disabled={isExpanding}
+          {isOutline && onExpand && (
+            <Button
+              size="sm"
+              onClick={handleExpand}
+              disabled={isExpanding}
                   className="bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50 text-xs px-3 py-1 h-auto"
-                >
-                  {isExpanding ? <Loader className="w-3 h-3 animate-spin" /> : 'Generate'}
-                </Button>
-              )}
-              
+            >
+              {isExpanding ? <Loader className="w-3 h-3 animate-spin" /> : 'Generate'}
+            </Button>
+          )}
+          
               {!isOutline && (
                 <>
                   {/* Edit Scene Button */}
@@ -1463,7 +1463,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                             e.stopPropagation()
                             if (onEditScene) onEditScene(sceneIdx)
                           }}
-                          className="p-2 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
@@ -1530,7 +1530,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
         
         {/* Row 3: Add + Image/Scene Controls */}
         {!isOutline && (
-          <div className="flex items-center pt-2 border-t border-gray-100 dark:border-gray-800">
+          <div className="flex items-center py-1.5 pt-2 border-t border-gray-100 dark:border-gray-800">
             {/* Left Column: Add Control with Background + Border */}
             <div className="flex items-center justify-center w-12 pr-4 border-r border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30">
               <TooltipProvider>
@@ -1561,8 +1561,8 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <button
-                            onClick={handleOpenBuilder}
-                            disabled={isGeneratingImage}
+                onClick={handleOpenBuilder}
+                disabled={isGeneratingImage}
                             className="p-2 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-lg transition-colors disabled:opacity-50"
                           >
                             <Wand2 className="w-5 h-5" />
@@ -1576,8 +1576,8 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <button
-                            onClick={handleQuickGenerate}
-                            disabled={isGeneratingImage}
+                onClick={handleQuickGenerate}
+                disabled={isGeneratingImage}
                             className="p-2 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-lg transition-colors disabled:opacity-50"
                           >
                             <Zap className="w-5 h-5" />
@@ -1586,9 +1586,9 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                         <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Quick generate image</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                  </>
-                )}
-              </div>
+            </>
+          )}
+        </div>
               
               {/* Right: Play Scene Button */}
               {audioEnabled && !isOutline && (
@@ -1615,7 +1615,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
         )}
         
         {/* Row 4: Delete + Reserved Space */}
-        <div className="flex items-center">
+        <div className="flex items-center py-1.5">
           {/* Left Column: Delete Control with Background + Border */}
           <div className="flex items-center justify-center w-12 pr-4 border-r border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30">
             <TooltipProvider>
