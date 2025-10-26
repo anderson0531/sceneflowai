@@ -2765,6 +2765,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     setGeneratingScoreFor(sceneIndex)
     try {
       const scene = script.script.scenes[sceneIndex]
+      
+      // Get previous analysis if it exists
+      const previousAnalysis = scene.scoreAnalysis ? {
+        score: scene.scoreAnalysis.overallScore || scene.scoreAnalysis.directorScore,
+        appliedRecommendations: scene.appliedRecommendations || []
+      } : undefined
+      
       const response = await fetch('/api/vision/analyze-scene', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2775,7 +2782,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           context: {
             previousScene: script.script.scenes[sceneIndex - 1],
             nextScene: script.script.scenes[sceneIndex + 1],
-            characters
+            characters,
+            previousAnalysis  // Pass previous analysis context
           }
         })
       })

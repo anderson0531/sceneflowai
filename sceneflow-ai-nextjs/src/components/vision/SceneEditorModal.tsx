@@ -199,8 +199,14 @@ export function SceneEditorModal({
     setRevisionHistory(newHistory)
     setCurrentHistoryIndex(newHistory.length - 1)
 
+    // Store which recommendations were applied for future scoring context
+    const revisedSceneWithMetadata = {
+      ...previewScene,
+      appliedRecommendations: selectedRecommendations  // Track applied recommendations
+    }
+
     // Apply changes
-    onApplyChanges(sceneIndex, previewScene)
+    onApplyChanges(sceneIndex, revisedSceneWithMetadata)
     onClose()
   }
 

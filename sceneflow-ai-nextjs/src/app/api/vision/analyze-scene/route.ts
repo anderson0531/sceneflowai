@@ -19,6 +19,11 @@ interface SceneAnalysisRequest {
     nextScene?: any
     characters: any[]
     scriptReview?: { director: any; audience: any }
+    // Previous analysis context for scoring consistency
+    previousAnalysis?: {
+      score: number
+      appliedRecommendations?: string[]
+    }
   }
 }
 
@@ -129,7 +134,22 @@ async function generateDirectorAnalysis(scene: any, context: any): Promise<{
     `Next: ${context.nextScene.heading || 'Untitled'} - ${context.nextScene.action?.substring(0, 100) || 'No action'}...` : 
     'No next scene'
 
+  // Add context about previous analysis if available
+  const previousScoreContext = context.previousAnalysis ? `
+PREVIOUS ANALYSIS:
+- Previous Score: ${context.previousAnalysis.score}/100
+- Applied Recommendations: ${context.previousAnalysis.appliedRecommendations?.length || 0} recommendations were applied
+${context.previousAnalysis.appliedRecommendations?.length ? `- The user has already implemented your previous suggestions, so acknowledge improvements` : ''}
+
+SCORING GUIDELINES:
+- If recommendations were applied, score should generally improve or stay similar
+- Only decrease score if NEW critical issues are discovered
+- Acknowledge improvements from applied recommendations in your analysis
+` : ''
+
   const prompt = `You are an expert film director analyzing a scene. Provide specific, actionable recommendations for improvement.
+
+${previousScoreContext}
 
 SCENE TO ANALYZE:
 Heading: ${scene.heading || 'Untitled Scene'}
@@ -321,7 +341,22 @@ async function generateAudienceAnalysis(scene: any, context: any): Promise<{
 
   const dialogueText = scene.dialogue?.map((d: any) => `${d.character}: ${d.text}`).join('\n') || 'No dialogue'
 
+  // Add context about previous analysis if available
+  const previousScoreContext = context.previousAnalysis ? `
+PREVIOUS ANALYSIS:
+- Previous Score: ${context.previousAnalysis.score}/100
+- Applied Recommendations: ${context.previousAnalysis.appliedRecommendations?.length || 0} recommendations were applied
+${context.previousAnalysis.appliedRecommendations?.length ? `- The user has already implemented your previous suggestions, so acknowledge improvements` : ''}
+
+SCORING GUIDELINES:
+- If recommendations were applied, score should generally improve or stay similar
+- Only decrease score if NEW critical issues are discovered
+- Acknowledge improvements from applied recommendations in your analysis
+` : ''
+
   const prompt = `You are a film critic representing audience perspective. Analyze this scene for entertainment value and emotional impact.
+
+${previousScoreContext}
 
 SCENE TO ANALYZE:
 Heading: ${scene.heading || 'Untitled Scene'}
