@@ -1434,26 +1434,77 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
             )}
           </div>
           
-          {/* Right: Primary Play Action */}
-          {audioEnabled && !isOutline && (
+          {/* Right: Primary Scene Actions */}
+          <div className="flex items-center gap-2">
+            {/* Edit Scene Button */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    onClick={handlePlay}
-                    disabled={isPlaying}
-                    className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (onEditScene) onEditScene(sceneIdx)
+                    }}
+                    className="p-2 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                   >
-                    {isPlaying ? <Square className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                    {isPlaying ? 'Stop' : 'Play'}
+                    <Edit className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Edit scene</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Score Badge/Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (onGenerateSceneScore) {
+                        onGenerateSceneScore(sceneIdx)
+                      }
+                    }}
+                    disabled={generatingScoreFor === sceneIdx}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold shadow-sm transition-all ${
+                      scene.scoreAnalysis 
+                        ? `${getScoreColorClass ? getScoreColorClass(scene.scoreAnalysis.overallScore) : 'bg-gray-100 text-gray-800'} hover:opacity-90` 
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {generatingScoreFor === sceneIdx ? (
+                      <>
+                        <Loader className="w-4 h-4 animate-spin" />
+                        <span>Analyzing...</span>
+                      </>
+                    ) : scene.scoreAnalysis ? (
+                      <>
+                        <Star className="w-4 h-4 fill-current" />
+                        <span>{scene.scoreAnalysis.overallScore}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Star className="w-4 h-4" />
+                        <span>Score</span>
+                      </>
+                    )}
                   </button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                  {isPlaying ? 'Stop audio playback' : 'Play scene audio'}
+                  {scene.scoreAnalysis ? (
+                    <div className="text-xs space-y-1">
+                      <p className="font-semibold">Scene Quality Score</p>
+                      <p>Director: {scene.scoreAnalysis.directorScore}/100</p>
+                      <p>Audience: {scene.scoreAnalysis.audienceScore}/100</p>
+                      <p className="text-gray-400 mt-2">Click to regenerate</p>
+                    </div>
+                  ) : (
+                    <p className="text-xs">Generate quality score</p>
+                  )}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          )}
+          </div>
           
           {/* Generate Button (for outline scenes) */}
           {isOutline && onExpand && (
@@ -1492,133 +1543,64 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
             </div>
             
             {/* Action Controls Content */}
-            <div className="flex items-center gap-3 flex-1">
-              {/* Image Generation Group */}
-              {onGenerateImage && scene.visualDescription && (
-                <div className="flex items-center gap-1">
-                  <span className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium mr-1">
-                    Image
-                  </span>
-                  
-                  {/* Prompt Builder */}
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                onClick={handleOpenBuilder}
-                disabled={isGeneratingImage}
-                          className="p-1.5 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded transition-colors disabled:opacity-50"
-                        >
-                          <Wand2 className="w-4 h-4" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Prompt builder</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  
-                  {/* Quick Generate */}
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                onClick={handleQuickGenerate}
-                disabled={isGeneratingImage}
-                          className="p-1.5 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded transition-colors disabled:opacity-50"
-                        >
-                          <Zap className="w-4 h-4" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Quick generate</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              )}
+            <div className="flex items-center justify-between flex-1">
+              {/* Left: Image Generation Tools (no label) */}
+              <div className="flex items-center gap-2">
+                {onGenerateImage && scene.visualDescription && (
+                  <>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={handleOpenBuilder}
+                            disabled={isGeneratingImage}
+                            className="p-2 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            <Wand2 className="w-5 h-5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Open prompt builder</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={handleQuickGenerate}
+                            disabled={isGeneratingImage}
+                            className="p-2 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            <Zap className="w-5 h-5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Quick generate image</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </>
+                )}
+              </div>
               
-              {/* Divider */}
-              {onGenerateImage && scene.visualDescription && (
-                <div className="w-px h-5 bg-gray-200 dark:bg-gray-700" />
-              )}
-              
-              {/* Scene Management Group */}
-              <div className="flex items-center gap-1">
-                <span className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium mr-1">
-                  Scene
-                </span>
-                
-                {/* Edit Scene */}
+              {/* Right: Play Scene Button */}
+              {audioEnabled && !isOutline && (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (onEditScene) {
-                            onEditScene(sceneIdx)
-                          }
-                        }}
-                        className="p-1.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded transition-colors"
+                        onClick={handlePlay}
+                        disabled={isPlaying}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg transition-colors font-medium"
                       >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Edit scene</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                {/* Combined Score Badge/Button */}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (onGenerateSceneScore) {
-                            onGenerateSceneScore(sceneIdx)
-                          }
-                        }}
-                        disabled={generatingScoreFor === sceneIdx}
-                        className={`
-                          flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-semibold shadow-sm transition-all
-                          ${scene.scoreAnalysis 
-                            ? `${getScoreColorClass ? getScoreColorClass(scene.scoreAnalysis.overallScore) : 'bg-gray-100 text-gray-800'} hover:opacity-90` 
-                            : 'bg-gray-100 text-gray-600 hover:bg-purple-50 hover:text-purple-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-purple-900/20 dark:hover:text-purple-400'
-                          }
-                          disabled:opacity-50 disabled:cursor-not-allowed
-                        `}
-                      >
-                        {generatingScoreFor === sceneIdx ? (
-                          <>
-                            <Loader className="w-4 h-4 animate-spin" />
-                            <span>Analyzing...</span>
-                          </>
-                        ) : scene.scoreAnalysis ? (
-                          <>
-                            <Star className="w-4 h-4 fill-current" />
-                            <span>{scene.scoreAnalysis.overallScore}</span>
-                          </>
-                        ) : (
-                          <>
-                            <Star className="w-4 h-4" />
-                            <span>Score</span>
-                          </>
-                        )}
+                        {isPlaying ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                        <span>{isPlaying ? 'Stop' : 'Play Scene'}</span>
                       </button>
                     </TooltipTrigger>
                     <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                      {scene.scoreAnalysis ? (
-                        <div className="text-xs space-y-1">
-                          <p className="font-semibold">Scene Quality Score</p>
-                          <p>Director: {scene.scoreAnalysis.directorScore}/100</p>
-                          <p>Audience: {scene.scoreAnalysis.audienceScore}/100</p>
-                          <p className="text-gray-400 mt-2">Click to regenerate</p>
-                        </div>
-                      ) : (
-                        <p className="text-xs">Generate quality score for this scene</p>
-                      )}
+                      {isPlaying ? 'Stop scene playback' : 'Play complete scene audio'}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-              </div>
+              )}
             </div>
           </div>
         )}
