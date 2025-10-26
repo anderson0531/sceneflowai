@@ -1596,7 +1596,6 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                     <TooltipTrigger asChild>
                       <button
                         onClick={handlePlay}
-                        disabled={isPlaying}
                         className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg transition-colors font-medium"
                       >
                         {isPlaying ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
