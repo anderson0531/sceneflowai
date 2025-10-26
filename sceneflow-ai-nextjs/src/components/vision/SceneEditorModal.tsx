@@ -135,7 +135,10 @@ export function SceneEditorModal({
   }
 
   const handleGeneratePreview = async () => {
-    if (!sceneAnalysis) return
+    // Allow preview generation with custom instruction even without analysis
+    if (!sceneAnalysis && !customInstruction.trim()) {
+      return // Only block if neither analysis nor custom instruction exists
+    }
 
     setIsGenerating(true)
     setIsGeneratingPreview(true)
