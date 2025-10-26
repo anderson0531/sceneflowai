@@ -71,6 +71,8 @@ export function SceneEditorModal({
   const [isGenerating, setIsGenerating] = useState(false)
   const [revisionHistory, setRevisionHistory] = useState<any[]>([])
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState(-1)
+  const [showPreview, setShowPreview] = useState(false)
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false)
   const [showLoadingOverlay, setShowLoadingOverlay] = useState(false)
   
   // Preservation options
@@ -79,19 +81,20 @@ export function SceneEditorModal({
   const [preserveMusic, setPreserveMusic] = useState(false)
   const [preserveSfx, setPreserveSfx] = useState(false)
 
-  // Initialize analysis when modal opens
+  // Initialize analysis when modal opens - REMOVED AUTO-ANALYSIS
   useEffect(() => {
     if (isOpen && scene) {
-      analyzeScene()
-      // Save initial state to history
+      // Don't auto-analyze, wait for user
       setRevisionHistory([scene])
       setCurrentHistoryIndex(0)
+      setSceneAnalysis(null)
+      setShowPreview(false)
     }
   }, [isOpen, scene])
 
   const analyzeScene = async () => {
     setIsAnalyzing(true)
-    setShowLoadingOverlay(true)  // NEW: Show overlay
+    setShowLoadingOverlay(true)
     try {
       const response = await fetch('/api/vision/analyze-scene', {
         method: 'POST',
@@ -124,10 +127,10 @@ export function SceneEditorModal({
         .map(r => r.id)
       setSelectedRecommendations(highPriority)
     } catch (error) {
-      console.error('Failed to analyze scene:', error)
+      console.error('[Scene Editor] Failed to analyze scene:', error)
     } finally {
       setIsAnalyzing(false)
-      setShowLoadingOverlay(false)  // NEW: Hide overlay
+      setShowLoadingOverlay(false)
     }
   }
 
@@ -135,6 +138,7 @@ export function SceneEditorModal({
     if (!sceneAnalysis) return
 
     setIsGenerating(true)
+    setIsGeneratingPreview(true)
     try {
       const revisionMode = selectedRecommendations.length > 0 && customInstruction 
         ? 'hybrid' 
@@ -173,10 +177,14 @@ export function SceneEditorModal({
 
       const data = await response.json()
       setPreviewScene(data.revisedScene)
+      
+      // Switch to preview mode
+      setShowPreview(true)
     } catch (error) {
-      console.error('Failed to generate preview:', error)
+      console.error('[Scene Editor] Failed to generate preview:', error)
     } finally {
       setIsGenerating(false)
+      setIsGeneratingPreview(false)
     }
   }
 
@@ -210,11 +218,14 @@ export function SceneEditorModal({
   }
 
   const handleToggleRecommendation = (recommendationId: string) => {
-    setSelectedRecommendations(prev => 
-      prev.includes(recommendationId)
+    console.log('[Scene Editor] Toggling recommendation:', recommendationId)
+    setSelectedRecommendations(prev => {
+      const newSelection = prev.includes(recommendationId)
         ? prev.filter(id => id !== recommendationId)
         : [...prev, recommendationId]
-    )
+      console.log('[Scene Editor] New selection:', newSelection)
+      return newSelection
+    })
   }
 
   const handleApplyQuickFix = (quickFix: QuickFix) => {
@@ -243,11 +254,26 @@ export function SceneEditorModal({
               </DialogDescription>
             </div>
             <div className="flex items-center gap-2">
-              {sceneAnalysis && (
-                <Badge className={`${getScoreColor(sceneAnalysis.overallScore)} text-white`}>
-                  Score: {sceneAnalysis.overallScore}/100
-                </Badge>
-              )}
+              {!sceneAnalysis ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => analyzeScene()}
+                  disabled={isAnalyzing}
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Loader className="w-3 h-3 animate-spin mr-2" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-3 h-3 mr-2" />
+                      Generate Scene Score
+                    </>
+                  )}
+                </Button>
+              ) : null}
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -268,70 +294,73 @@ export function SceneEditorModal({
           </div>
         </DialogHeader>
 
-        {/* Three-Panel Layout */}
-        <div className="grid grid-cols-3 gap-4 h-[calc(90vh-200px)]">
-          {/* Left Panel: Current Scene */}
-          <div className="col-span-1 overflow-y-auto">
-            <CurrentScenePanel scene={scene} />
-          </div>
+        {/* Two-Column Layout with Preview Mode */}
+        {!showPreview ? (
+          // Edit Mode: Two columns
+          <div className="grid grid-cols-2 gap-6 h-[calc(90vh-200px)]">
+            {/* Left: Current Scene */}
+            <div className="overflow-y-auto">
+              <CurrentScenePanel scene={scene} />
+            </div>
+            
+            {/* Right: Recommendations & Instructions */}
+            <div className="overflow-y-auto">
+              <Tabs defaultValue="recommendations">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="recommendations">
+                    Flow Suggestions ({(sceneAnalysis?.directorRecommendations?.length || 0) + (sceneAnalysis?.audienceRecommendations?.length || 0)})
+                  </TabsTrigger>
+                  <TabsTrigger value="instructions">
+                    Direct Edit
+                  </TabsTrigger>
+                </TabsList>
 
-          {/* Middle Panel: Recommendations & Instructions */}
-          <div className="col-span-1 overflow-y-auto">
-            <Tabs defaultValue="recommendations">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="recommendations">
-                  AI Suggestions ({(sceneAnalysis?.directorRecommendations?.length || 0) + (sceneAnalysis?.audienceRecommendations?.length || 0)})
-                </TabsTrigger>
-                <TabsTrigger value="instructions">
-                  Direct Edit
-                </TabsTrigger>
-              </TabsList>
+                <TabsContent value="recommendations">
+                  {isAnalyzing ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader className="w-6 h-6 animate-spin mr-2" />
+                      <span>Your Flow Assistant is analyzing the scene...</span>
+                    </div>
+                  ) : sceneAnalysis ? (
+                    <RecommendationsPanel
+                      directorRecs={sceneAnalysis.directorRecommendations}
+                      audienceRecs={sceneAnalysis.audienceRecommendations}
+                      quickFixes={sceneAnalysis.quickFixes}
+                      selectedRecs={selectedRecommendations}
+                      onToggleRec={handleToggleRecommendation}
+                      onApplyQuickFix={handleApplyQuickFix}
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+                      <AlertCircle className="w-8 h-8 mb-2 text-red-500" />
+                      <span className="font-medium">No Flow suggestions available</span>
+                      <p className="text-xs text-center mt-2 max-w-sm">
+                        Click "Generate Scene Score" to get Flow Assistant recommendations.
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
 
-              <TabsContent value="recommendations">
-                {isAnalyzing ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader className="w-6 h-6 animate-spin mr-2" />
-                    <span>Analyzing scene...</span>
-                  </div>
-                ) : sceneAnalysis ? (
-                  <RecommendationsPanel
-                    directorRecs={sceneAnalysis.directorRecommendations}
-                    audienceRecs={sceneAnalysis.audienceRecommendations}
-                    quickFixes={sceneAnalysis.quickFixes}
-                    selectedRecs={selectedRecommendations}
-                    onToggleRec={handleToggleRecommendation}
-                    onApplyQuickFix={handleApplyQuickFix}
+                <TabsContent value="instructions">
+                  <InstructionsPanel
+                    instruction={customInstruction}
+                    onInstructionChange={setCustomInstruction}
                   />
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-                    <AlertCircle className="w-8 h-8 mb-2 text-red-500" />
-                    <span className="font-medium">Failed to load recommendations</span>
-                    <p className="text-xs text-center mt-2 max-w-sm">
-                      The AI analysis service may be unavailable. Please try again or use Direct Edit mode.
-                    </p>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={analyzeScene}
-                      className="mt-4"
-                    >
-                      Retry Analysis
-                    </Button>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="instructions">
-                <InstructionsPanel
-                  instruction={customInstruction}
-                  onInstructionChange={setCustomInstruction}
-                />
-              </TabsContent>
-            </Tabs>
+                </TabsContent>
+              </Tabs>
+            </div>
           </div>
-
-          {/* Right Panel: Preview */}
-          <div className="col-span-1 overflow-y-auto">
+        ) : (
+          // Preview Mode: Single column
+          <div className="h-[calc(90vh-200px)] overflow-y-auto">
+            <div className="mb-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowPreview(false)}
+              >
+                ← Back to Edit
+              </Button>
+            </div>
             <PreviewPanel
               originalScene={scene}
               previewScene={previewScene}
@@ -339,71 +368,49 @@ export function SceneEditorModal({
               changes={selectedRecommendations}
             />
           </div>
-        </div>
+        )}
 
         {/* Footer Actions */}
         <DialogFooter>
           <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="preserve-narration"
-                  checked={preserveNarration}
-                  onCheckedChange={setPreserveNarration}
-                />
-                <label htmlFor="preserve-narration" className="text-sm">
-                  Preserve narration
-                </label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="preserve-dialogue"
-                  checked={preserveDialogue}
-                  onCheckedChange={setPreserveDialogue}
-                />
-                <label htmlFor="preserve-dialogue" className="text-sm">
-                  Preserve dialogue
-                </label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="preserve-music"
-                  checked={preserveMusic}
-                  onCheckedChange={setPreserveMusic}
-                />
-                <label htmlFor="preserve-music" className="text-sm">
-                  Preserve music/SFX
-                </label>
-              </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {selectedRecommendations.length} suggestion{selectedRecommendations.length !== 1 ? 's' : ''} selected
+              </span>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleGeneratePreview}
-                disabled={isGenerating || !hasRecommendations || isAnalyzing}  // Add isAnalyzing
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader className="w-4 h-4 animate-spin mr-2" />
-                    Generating Preview...
-                  </>
-                ) : (
-                  <>
-                    <Eye className="w-4 h-4 mr-2" />
-                    Preview Changes
-                  </>
-                )}
-              </Button>
-              <Button
-                onClick={handleApplyChanges}
-                disabled={!previewScene || isGenerating || isAnalyzing}  // Add isAnalyzing
-                className="bg-sf-primary"
-              >
-                <Check className="w-4 h-4 mr-2" />
-                Apply Changes
-              </Button>
+            
+            <div className="flex items-center gap-2">
+              {!showPreview ? (
+                <>
+                  <Button
+                    onClick={handleGeneratePreview}
+                    disabled={isGenerating || !hasRecommendations || isAnalyzing}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader className="w-4 h-4 animate-spin mr-2" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-4 h-4 mr-2" />
+                        Preview Changes
+                      </>
+                    )}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={handleApplyChanges}
+                    disabled={!previewScene || isGenerating}
+                    className="bg-sf-primary"
+                  >
+                    <Check className="w-4 h-4 mr-2" />
+                    Apply Changes
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </DialogFooter>
@@ -419,10 +426,10 @@ export function SceneEditorModal({
                 </div>
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                Analyzing Scene with AI
+                Analyzing Scene with Flow Assistant
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                Our AI is analyzing your scene from both director and audience perspectives...
+                Your Flow Assistant is analyzing the scene...
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-500">
                 This typically takes 10-30 seconds. Please wait.
@@ -432,6 +439,26 @@ export function SceneEditorModal({
                 <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
                 <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
               </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Preview Loading Overlay */}
+        {isGeneratingPreview && (
+          <div className="absolute inset-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className="text-center max-w-md px-6">
+              <div className="relative mb-6">
+                <Loader className="w-16 h-16 animate-spin mx-auto text-blue-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                Generating Preview
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Your Flow Assistant is generating the preview...
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                This may take 10-15 seconds
+              </p>
             </div>
           </div>
         )}

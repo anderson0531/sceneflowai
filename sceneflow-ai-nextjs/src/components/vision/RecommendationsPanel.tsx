@@ -64,6 +64,32 @@ export function RecommendationsPanel({
 
   return (
     <div className="space-y-4">
+      {/* Header with Select All/Clear All */}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold">Flow Suggestions</h3>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              const allIds = [...directorRecs, ...audienceRecs].map(r => r.id)
+              // Toggle based on current state
+              if (selectedRecs.length === allIds.length) {
+                // Clear all
+                allIds.forEach(id => onToggleRec(id))
+              } else {
+                // Select all
+                allIds.filter(id => !selectedRecs.includes(id)).forEach(id => onToggleRec(id))
+              }
+            }}
+            className="text-xs"
+          >
+            {selectedRecs.length === [...directorRecs, ...audienceRecs].length 
+              ? 'Clear All' 
+              : 'Select All'}
+          </Button>
+        </div>
+      </div>
       {/* Quick Fixes */}
       {quickFixes.length > 0 && (
         <div>
@@ -170,13 +196,16 @@ function RecommendationCard({
   getCategoryIcon
 }: RecommendationCardProps) {
   return (
-    <div className={`
-      p-3 rounded-lg border transition-all cursor-pointer
-      ${isSelected 
-        ? 'border-sf-primary bg-sf-primary/5 ring-2 ring-sf-primary' 
-        : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
-      }
-    `}>
+    <div 
+      className={`
+        p-3 rounded-lg border transition-all cursor-pointer
+        ${isSelected 
+          ? 'border-sf-primary bg-sf-primary/5 ring-2 ring-sf-primary' 
+          : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+        }
+      `}
+      onClick={onToggle}
+    >
       <div className="flex items-start gap-2">
         <Checkbox
           checked={isSelected}
