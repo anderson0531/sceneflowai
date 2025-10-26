@@ -77,7 +77,7 @@ export function PreviewPanel({ originalScene, previewScene, isGenerating, change
               {typeof previewScene.heading === 'string' ? previewScene.heading : previewScene.heading?.text || 'Untitled Scene'}
             </p>
             {originalScene.heading !== previewScene.heading && (
-              <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+              <Badge variant="outline" className="text-xs bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700">
                 Changed
               </Badge>
             )}
@@ -92,7 +92,7 @@ export function PreviewPanel({ originalScene, previewScene, isGenerating, change
               {previewScene.action || 'No action description'}
             </p>
             {originalScene.action !== previewScene.action && (
-              <Badge variant="outline" className="absolute -top-1 -right-1 text-xs bg-green-50 text-green-700 border-green-200">
+              <Badge variant="outline" className="absolute -top-1 -right-1 text-xs bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700">
                 Changed
               </Badge>
             )}
@@ -111,7 +111,7 @@ export function PreviewPanel({ originalScene, previewScene, isGenerating, change
                 {previewScene.narration}
               </p>
               {originalScene.narration !== previewScene.narration && (
-                <Badge variant="outline" className="absolute -top-1 -right-1 text-xs bg-green-50 text-green-700 border-green-200">
+                <Badge variant="outline" className="absolute -top-1 -right-1 text-xs bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700">
                   Changed
                 </Badge>
               )}
@@ -142,7 +142,7 @@ export function PreviewPanel({ originalScene, previewScene, isGenerating, change
                       {line.line || line.text || ''}
                     </span>
                     {isChanged && (
-                      <Badge variant="outline" className="ml-2 text-xs bg-green-50 text-green-700 border-green-200">
+                      <Badge variant="outline" className="ml-2 text-xs bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700">
                         Changed
                       </Badge>
                     )}
@@ -165,7 +165,7 @@ export function PreviewPanel({ originalScene, previewScene, isGenerating, change
                 {typeof previewScene.music === 'string' ? previewScene.music : previewScene.music?.description || ''}
               </p>
               {originalScene.music !== previewScene.music && (
-                <Badge variant="outline" className="absolute -top-1 -right-1 text-xs bg-green-50 text-green-700 border-green-200">
+                <Badge variant="outline" className="absolute -top-1 -right-1 text-xs bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700">
                   Changed
                 </Badge>
               )}
@@ -190,7 +190,7 @@ export function PreviewPanel({ originalScene, previewScene, isGenerating, change
                 )
               })}
               {JSON.stringify(originalScene.sfx) !== JSON.stringify(previewScene.sfx) && (
-                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                <Badge variant="outline" className="text-xs bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700">
                   Changed
                 </Badge>
               )}
@@ -208,7 +208,7 @@ export function PreviewPanel({ originalScene, previewScene, isGenerating, change
                 {Math.round(previewScene.duration / 8) * 8}s
               </span>
               {originalScene.duration !== previewScene.duration && (
-                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                <Badge variant="outline" className="text-xs bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700">
                   Updated
                 </Badge>
               )}

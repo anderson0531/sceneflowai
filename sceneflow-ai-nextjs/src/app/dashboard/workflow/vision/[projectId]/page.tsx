@@ -2655,30 +2655,44 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     setIsSceneEditorOpen(true)
   }
 
-  const handleApplySceneChanges = (sceneIndex: number, revisedScene: any) => {
+  const handleApplySceneChanges = async (sceneIndex: number, revisedScene: any) => {
     if (!script) return
 
     const updatedScenes = [...(script.script?.scenes || [])]
     updatedScenes[sceneIndex] = revisedScene
 
-    // Update the script with the revised scene
-    setScript({
-      ...script,
-      script: {
-        ...script.script,
-        scenes: updatedScenes
-      }
-    })
-
-    // Close the editor
-    setIsSceneEditorOpen(false)
-    setEditingSceneIndex(null)
-
-    // Show success message
+    // Save to database FIRST
     try {
-      const { toast } = require('sonner')
-      toast.success('Scene updated successfully')
-    } catch {}
+      await saveScenesToDatabase(updatedScenes)
+      
+      // Then update local state
+      setScript({
+        ...script,
+        script: {
+          ...script.script,
+          scenes: updatedScenes
+        }
+      })
+
+      // Close the editor
+      setIsSceneEditorOpen(false)
+      setEditingSceneIndex(null)
+
+      // Show success message
+      try {
+        const { toast } = require('sonner')
+        toast.success('Scene changes applied successfully')
+      } catch {}
+      
+      // Reload project to ensure consistency
+      await loadProject()
+    } catch (error) {
+      console.error('[Vision] Failed to save scene changes:', error)
+      try {
+        const { toast } = require('sonner')
+        toast.error('Failed to save scene changes')
+      } catch {}
+    }
   }
 
   // Helper function to save scenes to database

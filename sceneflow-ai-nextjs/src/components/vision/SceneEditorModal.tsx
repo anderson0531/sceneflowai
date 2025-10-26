@@ -71,6 +71,7 @@ export function SceneEditorModal({
   const [isGenerating, setIsGenerating] = useState(false)
   const [revisionHistory, setRevisionHistory] = useState<any[]>([])
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState(-1)
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(false)
   
   // Preservation options
   const [preserveNarration, setPreserveNarration] = useState(false)
@@ -90,6 +91,7 @@ export function SceneEditorModal({
 
   const analyzeScene = async () => {
     setIsAnalyzing(true)
+    setShowLoadingOverlay(true)  // NEW: Show overlay
     try {
       const response = await fetch('/api/vision/analyze-scene', {
         method: 'POST',
@@ -125,6 +127,7 @@ export function SceneEditorModal({
       console.error('Failed to analyze scene:', error)
     } finally {
       setIsAnalyzing(false)
+      setShowLoadingOverlay(false)  // NEW: Hide overlay
     }
   }
 
@@ -379,7 +382,7 @@ export function SceneEditorModal({
               </Button>
               <Button
                 onClick={handleGeneratePreview}
-                disabled={isGenerating || !hasRecommendations}
+                disabled={isGenerating || !hasRecommendations || isAnalyzing}  // Add isAnalyzing
               >
                 {isGenerating ? (
                   <>
@@ -395,7 +398,7 @@ export function SceneEditorModal({
               </Button>
               <Button
                 onClick={handleApplyChanges}
-                disabled={!previewScene || isGenerating}
+                disabled={!previewScene || isGenerating || isAnalyzing}  // Add isAnalyzing
                 className="bg-sf-primary"
               >
                 <Check className="w-4 h-4 mr-2" />
@@ -404,6 +407,34 @@ export function SceneEditorModal({
             </div>
           </div>
         </DialogFooter>
+        
+        {/* Loading Overlay - Blocks UI during analysis */}
+        {showLoadingOverlay && (
+          <div className="absolute inset-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className="text-center max-w-md px-6">
+              <div className="relative mb-6">
+                <Loader className="w-16 h-16 animate-spin mx-auto text-blue-600" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full border-4 border-blue-200 dark:border-blue-800 animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                Analyzing Scene with AI
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                Our AI is analyzing your scene from both director and audience perspectives...
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">
+                This typically takes 10-30 seconds. Please wait.
+              </p>
+              <div className="mt-6 flex items-center justify-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )
