@@ -993,7 +993,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                     <Volume2 className="w-4 h-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
                   <p>{isGeneratingAudio ? 'Generating Audio...' : 'Generate All Audio'}</p>
                 </TooltipContent>
               </Tooltip>
@@ -1012,7 +1012,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                     <Play className="w-4 h-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
                   <p>Open Screening Room</p>
                 </TooltipContent>
               </Tooltip>
@@ -1298,7 +1298,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                     {formatDuration(calculateSceneDuration(scene))}
                   </span>
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
                   <div className="text-xs">
                     <p>Duration: {formatDuration(calculateSceneDuration(scene))}</p>
                     <p>Starts at: {formatDuration(timelineStart || 0)}</p>
@@ -1318,7 +1318,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                     {Math.ceil(calculateSceneDuration(scene) / 8)}
                   </span>
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
                   <p className="text-xs">Estimated 8-second video clips needed</p>
                 </TooltipContent>
               </Tooltip>
@@ -1351,7 +1351,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
               <Camera className="w-3 h-3" />
             </div>
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
                   {scene.imageUrl ? 'Image generated' : 'No image'}
                 </TooltipContent>
               </Tooltip>
@@ -1369,7 +1369,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
               <Volume2 className="w-3 h-3" />
             </div>
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
                   {scene.narrationAudioUrl ? 'Voice generated' : 'No voice'}
                 </TooltipContent>
               </Tooltip>
@@ -1387,76 +1387,37 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
               <Music className="w-3 h-3" />
                   </div>
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
                   {scene.musicAudio ? 'Music generated' : 'No music'}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
             
-            {/* NEW: Score Display */}
-            {scene.scoreAnalysis ? (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onGenerateSceneScore?.(sceneIdx)
-                      }}
-                      disabled={generatingScoreFor === sceneIdx}
-                      className={`
-                        px-2 py-1 rounded text-xs font-medium transition-colors border
+            {/* NEW: Score Badge (Display Only) */}
+            {scene.scoreAnalysis && (
+              <>
+                <div className="h-5 w-px bg-gray-300 dark:bg-gray-600 mx-1" />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className={`
+                        flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border
                         ${getScoreColorClass ? getScoreColorClass(scene.scoreAnalysis.overallScore) : 'bg-gray-100 text-gray-800'}
-                        hover:opacity-80 disabled:opacity-50
-                      `}
-                    >
-                      {generatingScoreFor === sceneIdx ? (
-                        <Loader className="w-3 h-3 animate-spin" />
-                      ) : (
-                        <>⭐ {scene.scoreAnalysis.overallScore}/100</>
-                      )}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <div className="text-xs space-y-1">
-                      <p className="font-semibold">Scene Quality Score</p>
-                      <p>Director: {scene.scoreAnalysis.directorScore}/100</p>
-                      <p>Audience: {scene.scoreAnalysis.audienceScore}/100</p>
-                      <p className="text-gray-400 mt-2">Click to regenerate</p>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            ) : (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onGenerateSceneScore?.(sceneIdx)
-                      }}
-                      disabled={generatingScoreFor === sceneIdx}
-                      className="px-2 py-1 rounded text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-gray-300 dark:border-gray-600 disabled:opacity-50"
-                    >
-                      {generatingScoreFor === sceneIdx ? (
-                        <>
-                          <Loader className="w-3 h-3 animate-spin inline mr-1" />
-                          Analyzing...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-3 h-3 inline mr-1" />
-                          Score
-                        </>
-                      )}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">Generate quality score for this scene</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+                      `}>
+                        <Star className="w-3 h-3" />
+                        {scene.scoreAnalysis.overallScore}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                      <div className="text-xs space-y-1">
+                        <p className="font-semibold">Scene Quality Score</p>
+                        <p>Director: {scene.scoreAnalysis.directorScore}/100</p>
+                        <p>Audience: {scene.scoreAnalysis.audienceScore}/100</p>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </>
             )}
             </div>
           </div>
@@ -1495,7 +1456,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                     )}
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>Play scene</TooltipContent>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Play scene</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           )}
@@ -1536,7 +1497,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                           <Wand2 className="w-4 h-4" />
                         </button>
                       </TooltipTrigger>
-                      <TooltipContent>Prompt builder</TooltipContent>
+                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Prompt builder</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                   
@@ -1552,7 +1513,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                           <Zap className="w-4 h-4" />
                         </button>
                       </TooltipTrigger>
-                      <TooltipContent>Quick generate</TooltipContent>
+                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Quick generate</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
@@ -1580,7 +1541,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                         <GripVertical className="w-4 h-4" />
         </div>
                     </TooltipTrigger>
-                    <TooltipContent>Drag to reorder</TooltipContent>
+                    <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Drag to reorder</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
                 
@@ -1598,7 +1559,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                         <Plus className="w-4 h-4" />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent>Add scene after</TooltipContent>
+                    <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Add scene after</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
                 
@@ -1618,7 +1579,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent>Delete scene</TooltipContent>
+                    <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Delete scene</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
                 
@@ -1638,7 +1599,34 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                         <Edit className="w-4 h-4" />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent>Edit scene</TooltipContent>
+                    <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Edit scene</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                {/* NEW: Generate/Regenerate Score */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (onGenerateSceneScore) {
+                            onGenerateSceneScore(sceneIdx)
+                          }
+                        }}
+                        disabled={generatingScoreFor === sceneIdx}
+                        className="p-1.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 dark:text-gray-400 dark:hover:text-purple-400 dark:hover:bg-purple-900/20 rounded transition-colors disabled:opacity-50"
+                      >
+                        {generatingScoreFor === sceneIdx ? (
+                          <Loader className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Star className="w-4 h-4" />
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                      {scene.scoreAnalysis ? 'Regenerate scene score' : 'Generate scene score'}
+                    </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
