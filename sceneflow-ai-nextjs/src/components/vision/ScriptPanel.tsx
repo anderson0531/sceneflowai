@@ -689,7 +689,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0 bg-gray-50 dark:bg-gray-900/50">
         <div className="flex items-center gap-3">
           <FileText className="w-5 h-5 text-sf-primary" />
-          <h2 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-gray-100">Production Script</h2>
+          <h2 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-gray-100 leading-none">Production Script</h2>
           {scenes.length > 0 && (
             <span className="text-xs px-2 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30 font-medium">
               {scenes.length} {scenes.length === 1 ? 'Scene' : 'Scenes'}
@@ -790,7 +790,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-sf-primary" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Script Overview</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-none">Script Overview</h3>
           </div>
               <button
                 onClick={() => setShowScriptOverview(!showScriptOverview)}
