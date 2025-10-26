@@ -1451,28 +1451,9 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
             </Button>
           )}
           
-              {!isOutline && (
-                <>
-                  {/* Edit Scene Button */}
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            if (onEditScene) onEditScene(sceneIdx)
-                          }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                        >
-                          <Edit className="w-5 h-5" />
-                          <span>Edit</span>
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Edit scene</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  {/* Score Badge/Button */}
+          {!isOutline && (
+            <>
+              {/* Score Badge/Button */}
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -1590,25 +1571,47 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
           )}
         </div>
               
-              {/* Right: Play Scene Button */}
-              {audioEnabled && !isOutline && (
+              {/* Right: Edit + Play Scene Button */}
+              <div className="flex items-center gap-2">
+                {/* Edit Scene Button */}
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
-                        onClick={handlePlay}
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg transition-colors font-medium"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (onEditScene) onEditScene(sceneIdx)
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                       >
-                        {isPlaying ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                        <span>{isPlaying ? 'Stop' : 'Play'}</span>
+                        <Edit className="w-5 h-5" />
+                        <span>Edit</span>
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                      {isPlaying ? 'Stop scene playback' : 'Play complete scene audio'}
-                    </TooltipContent>
+                    <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Edit scene</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-              )}
+
+                {/* Play Button */}
+                {audioEnabled && !isOutline && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={handlePlay}
+                          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg transition-colors font-medium"
+                        >
+                          {isPlaying ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                          <span>{isPlaying ? 'Stop' : 'Play'}</span>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                        {isPlaying ? 'Stop scene playback' : 'Play complete scene audio'}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
             </div>
           </div>
         )}
