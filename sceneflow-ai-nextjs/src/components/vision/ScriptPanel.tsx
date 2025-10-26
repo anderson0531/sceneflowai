@@ -1392,33 +1392,6 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            
-            {/* NEW: Score Badge (Display Only) */}
-            {scene.scoreAnalysis && (
-              <>
-                <div className="h-5 w-px bg-gray-300 dark:bg-gray-600 mx-1" />
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className={`
-                        flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border
-                        ${getScoreColorClass ? getScoreColorClass(scene.scoreAnalysis.overallScore) : 'bg-gray-100 text-gray-800'}
-                      `}>
-                        <Star className="w-3 h-3" />
-                        {scene.scoreAnalysis.overallScore}
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                      <div className="text-xs space-y-1">
-                        <p className="font-semibold">Scene Quality Score</p>
-                        <p>Director: {scene.scoreAnalysis.directorScore}/100</p>
-                        <p>Audience: {scene.scoreAnalysis.audienceScore}/100</p>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </>
-            )}
             </div>
           </div>
           
@@ -1603,32 +1576,59 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                   </Tooltip>
                 </TooltipProvider>
 
-                {/* NEW: Generate/Regenerate Score */}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (onGenerateSceneScore) {
-                            onGenerateSceneScore(sceneIdx)
-                          }
-                        }}
-                        disabled={generatingScoreFor === sceneIdx}
-                        className="p-1.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 dark:text-gray-400 dark:hover:text-purple-400 dark:hover:bg-purple-900/20 rounded transition-colors disabled:opacity-50"
-                      >
-                        {generatingScoreFor === sceneIdx ? (
-                          <Loader className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Star className="w-4 h-4" />
-                        )}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                      {scene.scoreAnalysis ? 'Regenerate scene score' : 'Generate scene score'}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                {/* Score Display + Generate Button Group */}
+                <div className="flex items-center gap-1.5">
+                  {/* Score Badge - Display Only (if exists) */}
+                  {scene.scoreAnalysis && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className={`
+                            flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold shadow-sm
+                            ${getScoreColorClass ? getScoreColorClass(scene.scoreAnalysis.overallScore) : 'bg-gray-100 text-gray-800'}
+                          `}>
+                            <Star className="w-4 h-4 fill-current" />
+                            <span>{scene.scoreAnalysis.overallScore}</span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                          <div className="text-xs space-y-1">
+                            <p className="font-semibold">Scene Quality Score</p>
+                            <p>Director: {scene.scoreAnalysis.directorScore}/100</p>
+                            <p>Audience: {scene.scoreAnalysis.audienceScore}/100</p>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  
+                  {/* Generate/Regenerate Score Button */}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (onGenerateSceneScore) {
+                              onGenerateSceneScore(sceneIdx)
+                            }
+                          }}
+                          disabled={generatingScoreFor === sceneIdx}
+                          className="p-1.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 dark:text-gray-400 dark:hover:text-purple-400 dark:hover:bg-purple-900/20 rounded transition-colors disabled:opacity-50"
+                        >
+                          {generatingScoreFor === sceneIdx ? (
+                            <Loader className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Star className="w-4 h-4" />
+                          )}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                        {scene.scoreAnalysis ? 'Regenerate scene score' : 'Generate scene score'}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
               </div>
             </div>
           </div>

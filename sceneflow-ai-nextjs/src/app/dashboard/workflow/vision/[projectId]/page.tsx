@@ -2800,11 +2800,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Helper function to get score color class
   const getScoreColorClass = (score: number): string => {
     if (score >= 85) {
-      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+      return 'bg-green-500 text-white dark:bg-green-600'
     } else if (score >= 75) {
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+      return 'bg-yellow-500 text-white dark:bg-yellow-600'
     } else {
-      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+      return 'bg-red-500 text-white dark:bg-red-600'
     }
   }
   const saveScenesToDatabase = async (updatedScenes: any[]) => {
