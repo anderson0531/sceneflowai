@@ -106,7 +106,7 @@ async function generateRevisedScene({
     }
   }).filter(Boolean).join('. ')
 
-  const dialogueText = currentScene.dialogue?.map((d: any) => `${d.character}: ${d.text}`).join('\n') || 'No dialogue'
+  const dialogueText = currentScene.dialogue?.map((d: any) => `${d.character}: ${d.line || d.text || ''}`).join('\n') || 'No dialogue'
   const characterNames = context.characters?.map((c: any) => c.name).join(', ') || 'No characters'
 
   const prompt = `You are a professional screenwriter revising a scene. Revise the scene according to the instructions while maintaining continuity and character consistency.
@@ -145,7 +145,7 @@ Output the revised scene as JSON with this exact structure:
   "action": "Revised action description with improved visual storytelling",
   "narration": "Revised narration (if not preserved)",
   "dialogue": [
-    {"character": "Character Name", "text": "Revised dialogue text"}
+    {"character": "Character Name", "line": "Revised dialogue text"}
   ],
   "music": "Revised music specification (if not preserved)",
   "sfx": ["Revised sound effect 1", "Revised sound effect 2"]
@@ -162,7 +162,7 @@ Focus on making the scene more engaging, clear, and emotionally impactful while 
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 4096
+          maxOutputTokens: 8192  // Doubled to accommodate longer responses
         }
       })
     }
@@ -173,6 +173,9 @@ Focus on making the scene more engaging, clear, and emotionally impactful while 
   }
 
   const data = await response.json()
+  console.log('[Scene Revision] API response received, finishReason:', data.candidates?.[0]?.finishReason)
+  console.log('[Scene Revision] Usage metadata:', data.usageMetadata)
+
   const revisedText = data.candidates?.[0]?.content?.parts?.[0]?.text
 
   if (!revisedText) {
@@ -180,10 +183,46 @@ Focus on making the scene more engaging, clear, and emotionally impactful while 
   }
 
   // Extract JSON from markdown code blocks if present
+  console.log('[Scene Revision] Raw response text:', revisedText.substring(0, 200))
   let jsonText = revisedText.trim()
+
+  // Try multiple extraction methods
   const codeBlockMatch = jsonText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
   if (codeBlockMatch) {
     jsonText = codeBlockMatch[1].trim()
+    console.log('[Scene Revision] Extracted from code block')
+  } else if (jsonText.startsWith('```')) {
+    // Fallback: manually strip code block markers
+    jsonText = jsonText.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '').trim()
+    console.log('[Scene Revision] Manually stripped code blocks')
+  }
+
+  console.log('[Scene Revision] JSON to parse:', jsonText.substring(0, 200))
+
+  // Try to repair truncated JSON if needed
+  if (data.candidates?.[0]?.finishReason === 'MAX_TOKENS' && !jsonText.trim().endsWith('}')) {
+    console.log('[Scene Revision] Attempting to repair truncated JSON')
+    // Count open braces/brackets and close them
+    const openBraces = (jsonText.match(/{/g) || []).length
+    const closeBraces = (jsonText.match(/}/g) || []).length
+    const openBrackets = (jsonText.match(/\[/g) || []).length
+    const closeBrackets = (jsonText.match(/\]/g) || []).length
+    
+    // Close any open strings
+    const quoteCount = (jsonText.match(/"/g) || []).length
+    if (quoteCount % 2 !== 0) {
+      jsonText += '"'
+    }
+    
+    // Close open brackets and braces
+    for (let i = 0; i < (openBrackets - closeBrackets); i++) {
+      jsonText += ']'
+    }
+    for (let i = 0; i < (openBraces - closeBraces); i++) {
+      jsonText += '}'
+    }
+    
+    console.log('[Scene Revision] Repaired JSON (last 200 chars):', jsonText.slice(-200))
   }
 
   try {
@@ -206,8 +245,15 @@ Focus on making the scene more engaging, clear, and emotionally impactful while 
     }
 
     return finalScene
-  } catch (parseError) {
-    console.error('[Scene Revision] JSON parse error:', parseError)
-    throw new Error('Failed to parse revised scene JSON')
+} catch (parseError) {
+  console.error('[Scene Revision] JSON parse error:', parseError)
+  console.error('[Scene Revision] Failed to parse text:', jsonText)
+  
+  // Return current scene with a warning instead of failing completely
+  console.warn('[Scene Revision] Returning original scene due to parse error')
+  return {
+    ...currentScene,
+    _revisionError: 'Scene revision failed - returned original scene'
   }
+}
 }
