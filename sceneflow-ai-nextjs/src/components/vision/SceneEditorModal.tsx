@@ -360,7 +360,7 @@ export function SceneEditorModal({
           </div>
         ) : (
           // Preview Mode: Single column
-          <div className="h-[calc(90vh-200px)] overflow-y-auto">
+          <div className="h-[calc(90vh-200px)] overflow-y-auto overflow-x-hidden max-w-full">
             <div className="mb-4">
               <Button
                 variant="outline"

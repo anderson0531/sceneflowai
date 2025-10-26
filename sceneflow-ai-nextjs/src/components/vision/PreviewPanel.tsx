@@ -44,7 +44,7 @@ export function PreviewPanel({ originalScene, previewScene, isGenerating, change
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Preview Changes</h3>
         {changes.length > 0 && (
@@ -88,7 +88,7 @@ export function PreviewPanel({ originalScene, previewScene, isGenerating, change
         <div>
           <h4 className="text-sm font-medium text-gray-500 mb-1">ACTION</h4>
           <div className="relative">
-            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed break-words">
               {previewScene.action || 'No action description'}
             </p>
             {originalScene.action !== previewScene.action && (
@@ -107,7 +107,7 @@ export function PreviewPanel({ originalScene, previewScene, isGenerating, change
               NARRATION
             </h4>
             <div className="relative">
-              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed break-words">
                 {previewScene.narration}
               </p>
               {originalScene.narration !== previewScene.narration && (
@@ -138,7 +138,7 @@ export function PreviewPanel({ originalScene, previewScene, isGenerating, change
                     <span className="font-semibold text-blue-600 dark:text-blue-400">
                       {line.character}:
                     </span>
-                    <span className="ml-2 text-gray-700 dark:text-gray-300">
+                    <span className="ml-2 text-gray-700 dark:text-gray-300 break-words">
                       {line.line || line.text || ''}
                     </span>
                     {isChanged && (
@@ -161,7 +161,7 @@ export function PreviewPanel({ originalScene, previewScene, isGenerating, change
               MUSIC
             </h4>
             <div className="relative">
-              <p className="text-sm text-gray-700 dark:text-gray-300">
+              <p className="text-sm text-gray-700 dark:text-gray-300 break-words">
                 {typeof previewScene.music === 'string' ? previewScene.music : previewScene.music?.description || ''}
               </p>
               {originalScene.music !== previewScene.music && (
