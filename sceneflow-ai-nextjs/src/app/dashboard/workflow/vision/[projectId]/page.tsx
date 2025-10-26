@@ -741,8 +741,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           setAudienceReview(data.audience)
           setReviewsOutdated(false)
           
-          // Reload project to ensure state is synchronized
-          await loadProject()
+          console.log('[Script Review] State updated with new reviews:', {
+            directorScore: data.director?.overallScore,
+            audienceScore: data.audience?.overallScore
+          })
+          
+          // No need to reload project - reviews are already in state and saved to DB
         } else {
           // If no project in state, still update local state
           setDirectorReview(data.director)
