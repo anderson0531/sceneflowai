@@ -697,47 +697,69 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const data = await response.json()
       
       if (data.success) {
-        setDirectorReview(data.director)
-        setAudienceReview(data.audience)
-        setReviewsOutdated(false)
+        console.log('[Script Review] Reviews generated successfully:', {
+          directorScore: data.director?.overallScore,
+          audienceScore: data.audience?.overallScore
+        })
         
-        // Save reviews to project metadata
+        // Save reviews to project metadata BEFORE updating local state
         if (project) {
-          const updatedProject = {
-            ...project,
-            metadata: {
-              ...project.metadata,
-              visionPhase: {
-                ...project.metadata?.visionPhase,
-                reviews: {
-                  director: data.director,
-                  audience: data.audience,
-                  lastUpdated: data.generatedAt,
-                  scriptHash: generateScriptHash(script)
-                }
+          const updatedMetadata = {
+            ...project.metadata,
+            visionPhase: {
+              ...project.metadata?.visionPhase,
+              reviews: {
+                director: data.director,
+                audience: data.audience,
+                lastUpdated: data.generatedAt,
+                scriptHash: generateScriptHash(script)
               }
             }
           }
           
-          await fetch(`/api/projects/${projectId}`, {
+          console.log('[Script Review] Saving reviews to database...')
+          
+          const saveResponse = await fetch(`/api/projects/${projectId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              metadata: updatedProject.metadata
+              metadata: updatedMetadata
             })
           })
+          
+          if (!saveResponse.ok) {
+            const errorText = await saveResponse.text()
+            console.error('[Script Review] Failed to save reviews:', errorText)
+            throw new Error('Failed to save reviews to database')
+          }
+          
+          const saveData = await saveResponse.json()
+          console.log('[Script Review] Reviews saved successfully to database')
+          
+          // Update local state only after successful save
+          setDirectorReview(data.director)
+          setAudienceReview(data.audience)
+          setReviewsOutdated(false)
+          
+          // Reload project to ensure state is synchronized
+          await loadProject()
+        } else {
+          // If no project in state, still update local state
+          setDirectorReview(data.director)
+          setAudienceReview(data.audience)
+          setReviewsOutdated(false)
         }
         
         try {
           const { toast } = require('sonner')
-          toast.success('Script reviews generated successfully!')
+          toast.success('Script reviews generated and saved successfully!')
         } catch {}
       }
     } catch (error) {
       console.error('[Script Review] Error:', error)
       try {
         const { toast } = require('sonner')
-        toast.error('Failed to generate script reviews')
+        toast.error(error instanceof Error ? error.message : 'Failed to generate script reviews')
       } catch {}
     } finally {
       setIsGeneratingReviews(false)
