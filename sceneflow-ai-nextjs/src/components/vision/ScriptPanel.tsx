@@ -790,12 +790,12 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           <div className="px-4 py-4">
             {/* Header with Toggle */}
             <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <BarChart3 className="w-6 h-6 text-sf-primary" />
                 <div className="flex items-center h-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-none">Script Overview</h3>
-          </div>
-          </div>
+                </div>
+              </div>
               <button
                 onClick={() => setShowScriptOverview(!showScriptOverview)}
                 className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
