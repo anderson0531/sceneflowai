@@ -788,10 +788,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           <div className="px-4 py-4">
             {/* Header with Toggle */}
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
                 <BarChart3 className="w-6 h-6 text-sf-primary" />
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">Script Overview</h3>
-              </div>
+          </div>
               <button
                 onClick={() => setShowScriptOverview(!showScriptOverview)}
                 className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
@@ -1100,6 +1100,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       onGenerateSceneScore={onGenerateSceneScore}
                       generatingScoreFor={generatingScoreFor}
                       getScoreColorClass={getScoreColorClass}
+                      onStopAudio={stopAudio}
                 />
                     )
                   })}
@@ -1217,9 +1218,10 @@ interface SceneCardProps {
   onGenerateSceneScore?: (sceneIndex: number) => void
   generatingScoreFor?: number | null
   getScoreColorClass?: (score: number) => string
+  onStopAudio?: () => void
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart, dragHandleProps, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass }: SceneCardProps) {
+function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart, dragHandleProps, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onStopAudio }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
   
@@ -1232,7 +1234,11 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
   
   const handlePlay = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (onPlayScene) {
+    if (isPlaying) {
+      if (onStopAudio) {
+        onStopAudio()
+      }
+    } else if (onPlayScene) {
       await onPlayScene(sceneIdx)
     }
   }
