@@ -1425,7 +1425,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
             {/* Scene Heading Content */}
             <div className="flex items-center gap-2 min-w-0">
           {scene.heading && (
-                <span className="text-sm text-gray-600 dark:text-gray-400 truncate">{scene.heading}</span>
+                <span className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{scene.heading}</span>
           )}
           {scene.duration && (
                 <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">{scene.duration}s</span>
@@ -1702,47 +1702,44 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                 alt={scene.heading}
                 className="w-full h-auto object-cover"
               />
-              {/* Image Generation Buttons below Image */}
-              {onGenerateImage && scene.visualDescription && (
-                <div className="flex items-center justify-center gap-2 p-2 bg-gray-50 dark:bg-gray-800">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={handleOpenBuilder}
-                          disabled={isGeneratingImage}
-                          className="flex items-center gap-1.5 px-2 py-1 text-xs text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded transition-colors disabled:opacity-50"
-                        >
-                          <Image className="w-3.5 h-3.5" />
-                          <span>Build</span>
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Build image prompt</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={handleQuickGenerate}
-                          disabled={isGeneratingImage}
-                          className="flex items-center gap-1.5 px-2 py-1 text-xs text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded transition-colors disabled:opacity-50"
-                        >
-                          <Sparkles className="w-3.5 h-3.5" />
-                          <span>Generate</span>
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Quick generate image</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              )}
             </div>
           )}
           
-          {scene.heading && (
-            <div className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{scene.heading}</div>
+          {/* Image Generation Buttons - Above Narration */}
+          {onGenerateImage && scene.visualDescription && (
+            <div className="mb-3 flex items-center justify-start gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={handleOpenBuilder}
+                      disabled={isGeneratingImage}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-lg transition-colors disabled:opacity-50 border border-purple-200 dark:border-purple-800"
+                    >
+                      <Image className="w-4 h-4" />
+                      <span>Build</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Build image prompt</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={handleQuickGenerate}
+                      disabled={isGeneratingImage}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-lg transition-colors disabled:opacity-50 border border-purple-200 dark:border-purple-800"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      <span>Generate</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Quick generate image</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           )}
           
           {/* Narration (if available) */}
