@@ -15,6 +15,7 @@ import ScenePromptDrawer from './ScenePromptDrawer'
 import { AudioMixer, type AudioTrack } from './AudioMixer'
 import ScriptReviewModal from './ScriptReviewModal'
 import SceneReviewModal from './SceneReviewModal'
+import { ScriptEditorModal } from './ScriptEditorModal'
 
 interface ScriptPanelProps {
   script: any
@@ -241,9 +242,8 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 
 export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
-  const [editMode, setEditMode] = useState(false)
+  const [showScriptEditor, setShowScriptEditor] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
-  const [scriptText, setScriptText] = useState('')
   
   // Audio playback state
   const [voices, setVoices] = useState<Array<CuratedVoice>>([])
@@ -827,16 +827,16 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setEditMode(!editMode)}
+            onClick={() => setShowScriptEditor(true)}
           >
-            {editMode ? <Eye className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
-            <span>{editMode ? 'Preview' : 'Edit'}</span>
+            <Edit className="w-4 h-4" />
+            <span>Edit Script</span>
           </Button>
         </div>
       </div>
       
       {/* Script Summary Panel */}
-      {script && !editMode && (
+      {script && (
         <div className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
           <div className="px-4 py-4">
             {/* Header with Toggle */}
@@ -1080,13 +1080,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               <p>No script generated yet</p>
             )}
           </div>
-        ) : editMode ? (
-          <textarea 
-            value={scriptText || JSON.stringify(script, null, 2)}
-            onChange={(e) => setScriptText(e.target.value)}
-            className="w-full h-full p-4 font-mono text-sm resize-none focus:outline-none bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-            placeholder="Edit your script here..."
-          />
         ) : (
           <div className="p-4 space-y-6">
             
@@ -1184,6 +1177,25 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             }
           }}
           isGenerating={generatingScoreFor === selectedSceneForReview}
+        />
+      )}
+
+      {/* Script Editor Modal */}
+      {showScriptEditor && (
+        <ScriptEditorModal
+          isOpen={showScriptEditor}
+          onClose={() => setShowScriptEditor(false)}
+          script={script?.script || script}
+          projectId={projectId || ''}
+          characters={characters}
+          onApplyChanges={(revisedScript) => {
+            const updatedScript = {
+              ...script,
+              script: revisedScript
+            }
+            onScriptChange(updatedScript)
+            setShowScriptEditor(false)
+          }}
         />
       )}
 
