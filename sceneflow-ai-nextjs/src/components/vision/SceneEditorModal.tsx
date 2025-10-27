@@ -7,11 +7,12 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
-import { Loader, Eye, Check, Undo, Redo, Film, Users, Edit, Wand2, AlertCircle } from 'lucide-react'
+import { Loader, Eye, Check, Undo, Redo, Film, Users, Edit, Wand2, AlertCircle, Sparkles } from 'lucide-react'
 import { RecommendationsPanel } from './RecommendationsPanel'
 import { InstructionsPanel } from './InstructionsPanel'
 import { PreviewPanel } from './PreviewPanel'
 import { CurrentScenePanel } from './CurrentScenePanel'
+import { SceneComparisonPanel } from './SceneComparisonPanel'
 
 interface Recommendation {
   id: string
@@ -81,6 +82,11 @@ export function SceneEditorModal({
   const [preserveMusic, setPreserveMusic] = useState(false)
   const [preserveSfx, setPreserveSfx] = useState(false)
 
+  // Optimization state
+  const [optimizedScene, setOptimizedScene] = useState<any | null>(null)
+  const [changesSummary, setChangesSummary] = useState<any[]>([])
+  const [showComparison, setShowComparison] = useState(false)
+
   // Initialize analysis when modal opens - REMOVED AUTO-ANALYSIS
   useEffect(() => {
     if (isOpen && scene) {
@@ -130,6 +136,51 @@ export function SceneEditorModal({
       console.error('[Scene Editor] Failed to analyze scene:', error)
     } finally {
       setIsAnalyzing(false)
+      setShowLoadingOverlay(false)
+    }
+  }
+
+  const optimizeScene = async () => {
+    setIsGenerating(true)
+    setShowLoadingOverlay(true)
+    
+    try {
+      const response = await fetch('/api/vision/optimize-scene', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          scene: revisionHistory[currentHistoryIndex],
+          context: {
+            previousScene,
+            nextScene,
+            characters
+          }
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to optimize scene')
+      }
+
+      const data = await response.json()
+      
+      setOptimizedScene(data.optimizedScene)
+      setChangesSummary(data.changesSummary || [])
+      
+      // Add to revision history
+      const newHistory = [...revisionHistory.slice(0, currentHistoryIndex + 1), data.optimizedScene]
+      setRevisionHistory(newHistory)
+      setCurrentHistoryIndex(newHistory.length - 1)
+      
+      // Set preview to optimized scene
+      setPreviewScene(data.optimizedScene)
+      setShowPreview(true)
+      
+    } catch (error) {
+      console.error('[Scene Editor] Failed to optimize scene:', error)
+    } finally {
+      setIsGenerating(false)
       setShowLoadingOverlay(false)
     }
   }
@@ -305,52 +356,91 @@ export function SceneEditorModal({
                 </TabsList>
 
                 <TabsContent value="recommendations">
-                  {/* Add Generate button at top */}
-                  {!sceneAnalysis && (
-                    <div className="mb-4">
+                  {!optimizedScene && !changesSummary.length ? (
+                    <div className="space-y-4">
                       <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => analyzeScene()}
-                        disabled={isAnalyzing}
-                        className="w-full"
+                        variant="default"
+                        size="default"
+                        onClick={() => optimizeScene()}
+                        disabled={isGenerating}
+                        className="w-full flex items-center justify-center gap-2"
                       >
-                        {isAnalyzing ? (
+                        {isGenerating ? (
                           <>
-                            <Loader className="w-3 h-3 animate-spin mr-2" />
-                            Analyzing...
+                            <Loader className="w-4 h-4 animate-spin" />
+                            Optimizing Scene...
                           </>
                         ) : (
                           <>
-                            <Wand2 className="w-3 h-3 mr-2" />
-                            Generate
+                            <Sparkles className="w-4 h-4" />
+                            Optimize Scene
                           </>
                         )}
                       </Button>
+
+                      <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                        <div className="text-sm">
+                          <p className="font-medium text-blue-900 dark:text-blue-100">Holistic Scene Optimization</p>
+                          <p className="text-blue-700 dark:text-blue-300 mt-1">
+                            Your Flow Assistant will analyze the scene from both director and audience perspectives, 
+                            then generate a fully optimized version with detailed explanations of what changed and why.
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                  
-                  {isAnalyzing ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader className="w-6 h-6 animate-spin mr-2" />
-                      <span>Your Flow Assistant is analyzing the scene...</span>
-                    </div>
-                  ) : sceneAnalysis ? (
-                    <RecommendationsPanel
-                      directorRecs={sceneAnalysis.directorRecommendations}
-                      audienceRecs={sceneAnalysis.audienceRecommendations}
-                      quickFixes={sceneAnalysis.quickFixes}
-                      selectedRecs={selectedRecommendations}
-                      onToggleRec={handleToggleRecommendation}
-                      onApplyQuickFix={handleApplyQuickFix}
-                    />
                   ) : (
-                    <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-                      <AlertCircle className="w-8 h-8 mb-2 text-blue-500" />
-                      <span className="font-medium">Ready for Flow suggestions</span>
-                      <p className="text-xs text-center mt-2 max-w-sm">
-                        Click "Generate" above to get Flow Assistant recommendations for this scene.
-                      </p>
+                    <div className="space-y-4">
+                      {/* Changes Summary */}
+                      {changesSummary.length > 0 && (
+                        <div>
+                          <h3 className="text-sm font-semibold mb-3">Summary of Changes and Rationale</h3>
+                          <div className="space-y-3">
+                            {changesSummary.map((change: any, idx: number) => (
+                              <div key={idx} className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                                <h4 className="font-medium text-sm mb-2">{idx + 1}. {change.category}</h4>
+                                <div className="text-xs space-y-2">
+                                  <div>
+                                    <Badge variant="outline" className="mr-2">Changes</Badge>
+                                    <p className="text-gray-700 dark:text-gray-300 mt-1">{change.changes}</p>
+                                  </div>
+                                  {change.rationaleDirector && (
+                                    <div>
+                                      <Badge variant="outline" className="mr-2">
+                                        <Film className="w-3 h-3 inline mr-1" />
+                                        Director
+                                      </Badge>
+                                      <p className="text-gray-700 dark:text-gray-300 mt-1">{change.rationaleDirector}</p>
+                                    </div>
+                                  )}
+                                  {change.rationaleAudience && (
+                                    <div>
+                                      <Badge variant="outline" className="mr-2">
+                                        <Users className="w-3 h-3 inline mr-1" />
+                                        Audience
+                                      </Badge>
+                                      <p className="text-gray-700 dark:text-gray-300 mt-1">{change.rationaleAudience}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* View Side-by-Side Button */}
+                      {optimizedScene && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowComparison(!showComparison)}
+                          className="w-full"
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          {showComparison ? 'Hide' : 'View'} Side-by-Side Comparison
+                        </Button>
+                      )}
                     </div>
                   )}
                 </TabsContent>
@@ -375,12 +465,21 @@ export function SceneEditorModal({
                 ← Back to Edit
               </Button>
             </div>
-            <PreviewPanel
-              originalScene={scene}
-              previewScene={previewScene}
-              isGenerating={isGenerating}
-              changes={selectedRecommendations}
-            />
+            
+            {showComparison && optimizedScene ? (
+              <SceneComparisonPanel
+                originalScene={scene}
+                optimizedScene={optimizedScene}
+                changesSummary={changesSummary}
+              />
+            ) : (
+              <PreviewPanel
+                originalScene={scene}
+                previewScene={previewScene}
+                isGenerating={isGenerating}
+                changes={selectedRecommendations}
+              />
+            )}
           </div>
         )}
 
