@@ -479,6 +479,11 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
               {character.role}
             </span>
           )}
+          {character.aliases && Array.isArray(character.aliases) && character.aliases.length > 1 && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">
+              Also matches: {character.aliases.filter((a: string) => a !== character.name).join(', ')}
+            </p>
+          )}
         </div>
         
         {/* Description */}

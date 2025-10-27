@@ -125,6 +125,8 @@ Characters: ${characterNames}
 Previous Scene: ${context.previousScene?.heading || 'None'}
 Next Scene: ${context.nextScene?.heading || 'None'}
 
+CRITICAL: Maintain EXACT character names from the character list. Do not abbreviate or modify names.
+
 REVISION INSTRUCTIONS:
 ${revisionInstruction}
 
@@ -132,12 +134,13 @@ ${preserveInstructions ? `PRESERVATION REQUIREMENTS: ${preserveInstructions}` : 
 
 REQUIREMENTS:
 1. Maintain the same scene structure and format
-2. Keep character names and basic plot points consistent
-3. Improve the specified elements while preserving others
-4. Ensure smooth transitions from previous scene and to next scene
-5. Make dialogue natural and character-appropriate
-6. Enhance visual storytelling and emotional impact
-7. Keep the scene length appropriate (not too short, not too long)
+2. Use EXACT character names as provided - no abbreviations or variations
+3. Keep basic plot points consistent
+4. Improve the specified elements while preserving others
+5. Ensure smooth transitions from previous scene and to next scene
+6. Make dialogue natural and character-appropriate
+7. Enhance visual storytelling and emotional impact
+8. Keep the scene length appropriate (not too short, not too long)
 
 Output the revised scene as JSON with this exact structure:
 {

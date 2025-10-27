@@ -195,11 +195,12 @@ ${storyBible.synopsis || 'Follow the treatment closely'}
 CHARACTERS (USE THESE EXACT NAMES IN DIALOGUE):
   ${characterBible}
 
-CRITICAL DIALOGUE RULES:
+CRITICAL CHARACTER RULES:
 - Use ONLY the EXACT character names from the list above
-- DO NOT abbreviate, modify, or create variations of character names
-- Example: If character is "Brian Anderson Sr", dialogue MUST be "BRIAN ANDERSON SR:" not "BRIAN:" or "Brian:"
-- Character names in dialogue must match the character list EXACTLY
+- Names are in Title Case (e.g., "Brian Anderson Sr", "Dr. Sarah Martinez")
+- DO NOT abbreviate, modify, or create variations
+- "Brian Anderson Sr" must stay "Brian Anderson Sr" - never "Brian", "Anderson", or "BRIAN"
+- Match names exactly as listed
 
 DIALOGUE INFLECTION AND EMOTION (CRITICAL FOR TTS):
 - Add emotion/inflection tags in brackets: [excitedly], [whispering], [sadly], [thoughtfully]

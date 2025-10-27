@@ -131,8 +131,8 @@ export async function analyzeBlueprintV2(req: V2BlueprintRequestType): Promise<{
     "visual_language": string[],
     "estimated_duration": string,
     "character_breakdown": {
-      "main": [{ "name": string, "role": string, "description": string, "motivations"?: string[], "arc"?: string, "concrete_details"?: string[] }],
-      "supporting"?: [{ "name": string, "role": string, "description": string, "motivations"?: string[], "concrete_details"?: string[] }]
+      "main": [{ "name": string (CRITICAL: Full name in Title Case, e.g., "Brian Anderson Sr", "Dr. Sarah Martinez"), "role": string, "description": string, "motivations"?: string[], "arc"?: string, "concrete_details"?: string[] }],
+      "supporting"?: [{ "name": string (CRITICAL: Full name in Title Case), "role": string, "description": string, "motivations"?: string[], "concrete_details"?: string[] }]
     }
   },
   "characters": [{ "name": string, "role": "Protagonist" | "Antagonist" | "Supporting" | "Narrator" | "Expert" | "Host", "description": string, "importance": "High" | "Medium" | "Low", "key_traits"?: string[] }],
@@ -162,6 +162,14 @@ OUTPUT REQUIREMENTS:
  - For characters, include at least 3 well-differentiated entries with roles relevant to the format (e.g., Host, Expert, Subject) and 1–2 sentences of description each.
  - For beats, produce at least 4 beats per act for 3-Act/Series/Documentary and 5–7 for 5-Act; each beat must include scene_elements.visual/audio/narrative_point. Add key_elements (3–6) and duration_seconds.
  - Ensure treatment.target_audience fields and arrays (genre, tone_style, visual_language) are always present and informative.
+
+CHARACTER NAMING REQUIREMENTS (CRITICAL):
+- Use FULL character names in Title Case (e.g., "Brian Anderson Sr", "Dr. Sarah Martinez")
+- NO abbreviations or nicknames as primary names
+- Be consistent: use exact same spelling throughout
+- Include suffixes if applicable (Sr, Jr, III)
+- Avoid ALL CAPS or lowercase
+- Character names must be unique and clearly identify each person
 
 INPUT:\n${req.input}`
 

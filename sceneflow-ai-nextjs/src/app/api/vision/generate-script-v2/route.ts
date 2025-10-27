@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { v4 as uuidv4 } from 'uuid'
+import { toCanonicalName, generateAliases, matchCharacter } from '@/lib/character/canonical'
+import { validateCharacterNames, autoCorrectCharacterNames } from '@/lib/character/validation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300  // 5 minutes for large script generation (requires Vercel Pro)
@@ -63,16 +65,20 @@ export async function POST(request: NextRequest) {
         
         console.log(`[Script Gen V2] Target: ${duration}s - Scene range: ${minScenes}-${maxScenes} (suggested: ${suggestedScenes})`)
 
-        // Load existing characters
+        // Load existing characters and enhance with canonical format and aliases
         let existingCharacters = (project.metadata?.visionPhase?.characters || []).map((c: any) => ({
           ...c,
-          id: c.id || uuidv4()
+          id: c.id || uuidv4(),
+          name: toCanonicalName(c.name || c.displayName || ''), // Normalize to canonical format
+          aliases: generateAliases(toCanonicalName(c.name || c.displayName || ''))
         }))
     
         if (existingCharacters.length === 0 && treatment.character_descriptions) {
           existingCharacters = treatment.character_descriptions.map((c: any) => ({
             ...c,
             id: c.id || uuidv4(),
+            name: toCanonicalName(c.name || ''), // Normalize to canonical format
+            aliases: generateAliases(toCanonicalName(c.name || '')),
             version: 1,
             lastModified: new Date().toISOString(),
             referenceImage: c.referenceImage || null,
@@ -228,6 +234,8 @@ export async function POST(request: NextRequest) {
           ...newChars.map((c: any) => ({
             ...c,
             id: uuidv4(),
+            name: toCanonicalName(c.name || ''), // Normalize to canonical format
+            aliases: generateAliases(toCanonicalName(c.name || '')),
             role: c.role || 'supporting',
             imagePrompt: `Professional character portrait: ${c.name}, ${c.description}, photorealistic, high detail, studio lighting, neutral background, character design, 8K quality`,
             referenceImage: null,
@@ -235,16 +243,38 @@ export async function POST(request: NextRequest) {
           }))
         ]
 
-        // Embed characterId in dialogue
+        // Validate and auto-correct character names
+        const validation = validateCharacterNames(allScenes, allCharacters)
+        if (!validation.valid) {
+          console.warn('[Script Gen V2] Character name mismatches detected:', validation.mismatches.slice(0, 5))
+          allScenes = autoCorrectCharacterNames(allScenes, allCharacters)
+          console.log('[Script Gen V2] Auto-corrected character names to canonical format')
+        }
+
+        // Embed characterId in dialogue using canonical matching
         const scenesWithCharacterIds = allScenes.map((scene: any) => ({
           ...scene,
           dialogue: scene.dialogue?.map((d: any) => {
             if (!d.character) return d
-            const character = allCharacters.find((c: any) => 
-              c.name.toLowerCase() === d.character.toLowerCase()
+            
+            // Try exact match first
+            let character = allCharacters.find((c: any) => 
+              toCanonicalName(c.name) === toCanonicalName(d.character)
             )
+            
+            // Fallback: Try alias matching
+            if (!character) {
+              character = matchCharacter(d.character, allCharacters)
+            }
+            
+            // Log mismatches for debugging
+            if (!character) {
+              console.warn(`[Character Match] No match for "${d.character}" in scene ${scene.sceneNumber}`)
+            }
+            
             return {
               ...d,
+              character: character ? character.name : d.character, // Normalize to canonical
               characterId: character?.id
             }
           })
@@ -329,17 +359,20 @@ Genre: ${treatment.genre}
 Tone: ${treatment.tone}
 ${characterList}
 
-CRITICAL CHARACTER RULE:
-- Use ONLY the characters listed above (${characters.map((c: any) => c.name).join(', ')})
-- DO NOT invent new characters unless absolutely necessary (e.g., waiter, passerby with 1 line)
-- Match character names EXACTLY as defined
-- Maintain character descriptions and traits from Film Treatment
+CRITICAL CHARACTER RULES:
+- The character list below defines the ONLY approved characters
+- Character names are formatted in Title Case (e.g., "Brian Anderson Sr", "Dr. Sarah Martinez")
+- Use EXACT names in dialogue - NO variations, abbreviations, or nicknames
+- "Brian Anderson Sr" ≠ "Brian" ≠ "BRIAN" ≠ "Anderson"
+- Match names character-for-character (case-insensitive acceptable in JSON, but use Title Case)
+- DO NOT invent new characters unless absolutely necessary (minor roles: waiter, passerby with 1 line)
 
 CRITICAL DIALOGUE RULES:
 - Use ONLY the EXACT character names from the list above
-- DO NOT abbreviate, modify, or create variations of character names
-- Example: If character is "Brian Anderson Sr", dialogue MUST be "BRIAN ANDERSON SR:" not "BRIAN:" or "Brian:"
-- Character names in dialogue must match the character list EXACTLY (case-insensitive is acceptable but use consistent formatting)
+- Character names in dialogue MUST match exactly: use the full canonical name
+- NO abbreviations or short forms ("Brian Anderson Sr" never becomes "Brian")
+- Character names in the "character" field must be identical to the character list
+- Example: If character is "Brian Anderson Sr", dialogue MUST use "Brian Anderson Sr" exactly
 
 DIALOGUE INFLECTION AND EMOTION (CRITICAL FOR TTS):
 - Add emotion/inflection tags in brackets BEFORE the dialogue text
@@ -458,7 +491,13 @@ Logline: ${treatment.logline}
 Synopsis: ${treatment.synopsis || treatment.content}
 ${characterList}
 
-CRITICAL: Use ONLY the defined characters above (${characters.map((c: any) => c.name).join(', ')}).
+CRITICAL CHARACTER RULES:
+- Use ONLY these approved characters: ${characters.map((c: any) => c.name).join(', ')}
+- Names are in Title Case - use them EXACTLY
+- NO abbreviations: "Brian Anderson Sr" not "Brian"
+- Match character names exactly as listed in the character list
+- DO NOT invent new dialogue speakers
+
 CRITICAL DIALOGUE: Use EXACT character names in the "character" field - do NOT include them in the "line" field.
 ADD EMOTION TAGS: Start each "line" with [emotion] tags and use <break time="Xs" /> pauses for expressive TTS.
 
@@ -781,16 +820,8 @@ function parseScenes(response: string, start: number, end: number): any {
 function normalizeCharacterName(name: string): string {
   if (!name) return ''
   
-  // Remove voice-over indicators: (V.O.), (O.S.), (O.C.), (CONT'D)
-  let normalized = name.replace(/\s*\([^)]*\)\s*/g, '').trim()
-  
-  // Convert to uppercase for case-insensitive comparison
-  normalized = normalized.toUpperCase()
-  
-  // Remove extra whitespace
-  normalized = normalized.replace(/\s+/g, ' ')
-  
-  return normalized
+  // Use canonical normalization
+  return toCanonicalName(name).toUpperCase()
 }
 
 function extractCharacters(scenes: any[]): any[] {
