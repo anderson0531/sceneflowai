@@ -65,8 +65,19 @@ export async function POST(req: NextRequest) {
       original: text.substring(0, 100),
       optimized: optimized.text.substring(0, 100),
       cues: optimized.cues,
-      reduction: `${optimized.originalLength} -> ${optimized.optimizedLength} chars`
+      reduction: `${optimized.originalLength} -> ${optimized.optimizedLength} chars`,
+      isSpeakable: optimized.isSpeakable
     })
+
+    // Check if text is speakable (not just stage directions)
+    if (!optimized.isSpeakable) {
+      console.log('[Scene Audio] Skipping TTS - text is not speakable (stage directions only)')
+      return NextResponse.json({
+        success: false,
+        error: 'Text contains only stage directions and cannot be spoken',
+        audioUrl: null
+      }, { status: 200 }) // Return 200 (success) but indicate no audio was generated
+    }
 
     // Generate audio using specified provider with optimized text
     const audioBuffer = await generateAudio(optimized.text, voiceConfig)

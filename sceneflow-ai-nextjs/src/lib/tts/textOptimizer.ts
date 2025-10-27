@@ -13,6 +13,7 @@ export interface OptimizedText {
   cues: string[]
   originalLength: number
   optimizedLength: number
+  isSpeakable: boolean  // NEW: indicates if text contains speakable content
 }
 
 /**
@@ -90,21 +91,26 @@ export function optimizeTextForTTS(input: string): OptimizedText {
   
   const optimizedLength = optimized.length
   
+  // Check if result is speakable (has actual content)
+  const isSpeakable = optimized.trim().length > 0
+  
   // Log if significant changes were made
   if (originalLength !== optimizedLength || cues.length > 0) {
     console.log('[TTS Optimizer]', {
       originalLength,
       optimizedLength,
       reduction: originalLength - optimizedLength,
-      cues: cues.length > 0 ? cues : 'none'
+      cues: cues.length > 0 ? cues : 'none',
+      isSpeakable
     })
   }
   
   return {
-    text: optimized,
+    text: isSpeakable ? optimized : input, // Fallback to original if empty
     cues,
     originalLength,
-    optimizedLength
+    optimizedLength,
+    isSpeakable
   }
 }
 
