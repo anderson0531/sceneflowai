@@ -153,9 +153,17 @@ async function generateFilmTreatment(
   input: string,
   coreConcept: CoreConceptData,
   context: any,
-  apiKey: string
+  apiKey: string,
+  attempt: number = 1
 ): Promise<FilmTreatmentItem> {
+  const maxAttempts = 2 // Allow 1 retry
   const targetMinutes = context?.targetMinutes || 20
+  
+  // Add stricter JSON formatting instruction on retry
+  const retryHint = attempt > 1 
+    ? '\n\nCRITICAL: Previous response had JSON errors. Ensure ALL arrays use commas between elements, ALL strings are properly escaped, and NO control characters exist in strings.'
+    : ''
+  
   const prompt = buildTreatmentPrompt({
     input,
     coreConcept,
@@ -165,7 +173,7 @@ async function generateFilmTreatment(
     context,
     beatStructure: context?.beatStructure ? { label: BEAT_STRUCTURES[context.beatStructure as BeatStructureKey]?.label, beats: (BEAT_STRUCTURES[context.beatStructure as BeatStructureKey]?.beats || []).map(b => ({ title: b.title })) } : null,
     persona: (context as any)?.persona ?? null
-  }) + strictJsonPromptSuffix
+  }) + retryHint + strictJsonPromptSuffix
 
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
     method: 'POST',
@@ -192,96 +200,111 @@ async function generateFilmTreatment(
     throw new Error('No response from Gemini API')
   }
 
-
-  const parsedRaw = safeParseJsonFromText(generatedText)
-  const parsed = repairTreatment(parsedRaw)
-  // Normalize beats to target duration if model deviates
-  const beats = Array.isArray(parsed.beats) ? parsed.beats : []
-  const normalizedBeats = normalizeDuration(
-    beats.map((b: any) => ({ title: b.title || 'Segment', summary: b.intent || '', minutes: Number(b.minutes) || 1 })),
-    targetMinutes
-  )
-  const filmTreatmentText = (parsed as any).film_treatment || parsed.synopsis || 'Comprehensive film treatment'
-  
-  // Calculate total duration from beats (in seconds)
-  const totalDurationSeconds = normalizedBeats.reduce((sum: number, b: any) => sum + ((b.minutes || 1) * 60), 0)
-  
-  // Prepare the result object
-  const result = {
-    // Legacy minimal
-    film_treatment: filmTreatmentText,
-    visual_style: parsed.visual_style || parsed.style || 'Professional visual style',
-    tone_description: parsed.tone_description || parsed.tone || 'Engaging and informative tone',
-    target_audience: parsed.target_audience || 'General audience',
-
-    // Structured
-    title: parsed.title,
-    logline: parsed.logline,
-    genre: parsed.genre,
-    format_length: `${totalDurationSeconds} seconds`,
-    author_writer: 'Google Gemini 2.5 Flash',
-    date: new Date().toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    }),
-
-    synopsis: parsed.synopsis,
-    setting: parsed.setting,
-    protagonist: parsed.protagonist,
-    antagonist: parsed.antagonist,
-    act_breakdown: (parsed as any).act_breakdown,
-
-    tone: parsed.tone,
-    style: parsed.style,
-    themes: parsed.themes,
-    mood_references: parsed.mood_references,
-
-    character_descriptions: Array.isArray((parsed as any).character_descriptions)
-      ? ((parsed as any).character_descriptions as any[]).map((c: any) => ({
-          name: String(c?.name || ''),
-          role: String(c?.role || 'supporting'),
-          subject: String(c?.subject || c?.name || ''),
-          ethnicity: String(c?.ethnicity || ''),
-          keyFeature: String(c?.keyFeature || ''),
-          hairStyle: String(c?.hairStyle || ''),
-          hairColor: String(c?.hairColor || ''),
-          eyeColor: String(c?.eyeColor || ''),
-          expression: String(c?.expression || ''),
-          build: String(c?.build || ''),
-          description: String(c?.description || ''),
-          imagePrompt: c?.imagePrompt || c?.image_prompt ? String(c.imagePrompt || c.image_prompt) : undefined,
-          referenceImage: null,
-          generating: false,
-          version: 1,
-          lastModified: new Date().toISOString(),
-        }))
-      : undefined,
+  try {
+    const parsedRaw = safeParseJsonFromText(generatedText)
+    const parsed = repairTreatment(parsedRaw)
     
-    scene_descriptions: Array.isArray((parsed as any).scene_descriptions)
-      ? ((parsed as any).scene_descriptions as any[]).map((s: any) => ({
-          name: String(s?.name || ''),
-          type: String(s?.type || 'INT'),
-          location: String(s?.location || ''),
-          atmosphere: String(s?.atmosphere || ''),
-          furniture_props: String(s?.furniture_props || '')
-        }))
-      : undefined,
+    // Normalize beats to target duration if model deviates
+    const beats = Array.isArray(parsed.beats) ? parsed.beats : []
+    const normalizedBeats = normalizeDuration(
+      beats.map((b: any) => ({ title: b.title || 'Segment', summary: b.intent || '', minutes: Number(b.minutes) || 1 })),
+      targetMinutes
+    )
+    const filmTreatmentText = (parsed as any).film_treatment || parsed.synopsis || 'Comprehensive film treatment'
     
-    // Embed summarized beats and estimate
-    beats: normalizedBeats.map((b: any, i: number) => ({
-      title: beats[i]?.title || b.title,
-      intent: beats[i]?.intent,
-      minutes: b.minutes,
-      synopsis: beats[i]?.synopsis
-    })),
-    estimatedDurationMinutes: targetMinutes,
-    total_duration_seconds: totalDurationSeconds
+    // Calculate total duration from beats (in seconds)
+    const totalDurationSeconds = normalizedBeats.reduce((sum: number, b: any) => sum + ((b.minutes || 1) * 60), 0)
+    
+    // Prepare the result object
+    const result = {
+      // Legacy minimal
+      film_treatment: filmTreatmentText,
+      visual_style: parsed.visual_style || parsed.style || 'Professional visual style',
+      tone_description: parsed.tone_description || parsed.tone || 'Engaging and informative tone',
+      target_audience: parsed.target_audience || 'General audience',
+
+      // Structured
+      title: parsed.title,
+      logline: parsed.logline,
+      genre: parsed.genre,
+      format_length: `${totalDurationSeconds} seconds`,
+      author_writer: 'Google Gemini 2.5 Flash',
+      date: new Date().toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }),
+
+      synopsis: parsed.synopsis,
+      setting: parsed.setting,
+      protagonist: parsed.protagonist,
+      antagonist: parsed.antagonist,
+      act_breakdown: (parsed as any).act_breakdown,
+
+      tone: parsed.tone,
+      style: parsed.style,
+      themes: parsed.themes,
+      mood_references: parsed.mood_references,
+
+      character_descriptions: Array.isArray((parsed as any).character_descriptions)
+        ? ((parsed as any).character_descriptions as any[]).map((c: any) => ({
+            name: String(c?.name || ''),
+            role: String(c?.role || 'supporting'),
+            subject: String(c?.subject || c?.name || ''),
+            ethnicity: String(c?.ethnicity || ''),
+            keyFeature: String(c?.keyFeature || ''),
+            hairStyle: String(c?.hairStyle || ''),
+            hairColor: String(c?.hairColor || ''),
+            eyeColor: String(c?.eyeColor || ''),
+            expression: String(c?.expression || ''),
+            build: String(c?.build || ''),
+            description: String(c?.description || ''),
+            imagePrompt: c?.imagePrompt || c?.image_prompt ? String(c.imagePrompt || c.image_prompt) : undefined,
+            referenceImage: null,
+            generating: false,
+            version: 1,
+            lastModified: new Date().toISOString(),
+          }))
+        : undefined,
+      
+      scene_descriptions: Array.isArray((parsed as any).scene_descriptions)
+        ? ((parsed as any).scene_descriptions as any[]).map((s: any) => ({
+            name: String(s?.name || ''),
+            type: String(s?.type || 'INT'),
+            location: String(s?.location || ''),
+            atmosphere: String(s?.atmosphere || ''),
+            furniture_props: String(s?.furniture_props || '')
+          }))
+        : undefined,
+      
+      // Embed summarized beats and estimate
+      beats: normalizedBeats.map((b: any, i: number) => ({
+        title: beats[i]?.title || b.title,
+        intent: beats[i]?.intent,
+        minutes: b.minutes,
+        synopsis: beats[i]?.synopsis
+      })),
+      estimatedDurationMinutes: targetMinutes,
+      total_duration_seconds: totalDurationSeconds
+    }
+    
+    return result
+    
+  } catch (parseError: any) {
+    // Retry on JSON parse errors if attempts remaining
+    if (attempt < maxAttempts) {
+      console.warn(`[Film Treatment] JSON parse failed on attempt ${attempt}, retrying...`)
+      return generateFilmTreatment(input, coreConcept, context, apiKey, attempt + 1)
+    }
+    
+    // Log the error with context
+    console.error('[Film Treatment] JSON parse failed after all attempts:', {
+      error: parseError.message,
+      attempt,
+      textPreview: generatedText.substring(0, 500)
+    })
+    throw parseError
   }
-  
-  
-  
-  return result
 }
 
 async function analyzeCoreConcept(
