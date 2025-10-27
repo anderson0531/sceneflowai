@@ -192,7 +192,7 @@ export function TreatmentCard() {
     return () => window.removeEventListener('keydown', handler)
   }, [active, variants])
 
-  // If variants exist, render tabs; else show single treatment (current behavior)
+  // If variants exist, render treatment; else show single treatment
   if (Array.isArray(variants) && variants.length > 0 && active) {
     const activeVariant = variants.find(v => v.id === active) || variants[0]
     const withinWindow = Date.now() - (appliedAt || 0) < 2000
@@ -218,23 +218,12 @@ export function TreatmentCard() {
     return (
       <Card className="mt-4 border-gray-700/60 bg-gray-900/60">
         <CardHeader>
-          <CardTitle className="text-white">Film Treatment Variants</CardTitle>
+          <CardTitle className="text-white">Film Treatment</CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs value={active || undefined} onValueChange={(val)=>selectTreatmentVariant(val)} className="w-full">
+          <div className="w-full">
             <div className="sticky top-0 z-10 bg-gray-900/80 backdrop-blur supports-[backdrop-filter]:bg-gray-900/60 rounded-md">
-              <div className="flex items-center justify-between gap-3 py-2">
-                <TabsList className="flex-1 mx-1">
-                  {variants.slice(0, 3).map(v => {
-                    const dotColor = v.id === 'A' ? 'bg-blue-500' : v.id === 'B' ? 'bg-purple-500' : 'bg-emerald-500'
-                    return (
-                      <TabsTrigger key={v.id} value={v.id} className="gap-2">
-                        <span className={`h-2 w-2 rounded-full ${dotColor}`} aria-hidden></span>
-                        {v.label || v.id}
-                      </TabsTrigger>
-                    )
-                  })}
-                </TabsList>
+              <div className="flex items-center justify-end gap-3 py-2">
                 {/* Variant Actions Toolbar */}
                 {(() => {
                   const v = variants.find(x => x.id === active) || variants[0]
@@ -521,22 +510,23 @@ export function TreatmentCard() {
                     </TooltipProvider>
                   )
                 })()}
-                {/* Removed inline Voice/Narration controls; moved to popover above */}
               </div>
             </div>
-            {Array.isArray(variants) ? variants.slice(0, 3).map(v => (
-              <TabsContent key={v.id} value={v.id} className="mt-3">
-                {(() => {
-                  const accent = v.id === 'A' ? 'border-blue-500' : v.id === 'B' ? 'border-purple-500' : 'border-emerald-500'
-                  const badge = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs'
-                  const badgeGenre = `${badge} border-gray-700 bg-gray-800/60 text-gray-200`
-                  const badgeFormat = `${badge} border-gray-700 bg-gray-800/60 text-gray-200`
-                  const badgeAudience = `${badge} border-gray-700 bg-gray-800/60 text-gray-200`
-                  return (
+            {/* Display single treatment content */}
+            <div className="mt-3">
+            {(() => {
+              const v = variants[0]
+              if (!v) return null
+              const accent = v.id === 'A' ? 'border-blue-500' : v.id === 'B' ? 'border-purple-500' : 'border-emerald-500'
+              const badge = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs'
+              const badgeGenre = `${badge} border-gray-700 bg-gray-800/60 text-gray-200`
+              const badgeFormat = `${badge} border-gray-700 bg-gray-800/60 text-gray-200`
+              const badgeAudience = `${badge} border-gray-700 bg-gray-800/60 text-gray-200`
+              return (
                 <div className="space-y-5 text-sm text-gray-200">
                   {/* Callout */}
                   <div className={`p-3 rounded-md border-l-4 ${accent} bg-gray-900/50`}> 
-                    <div className={`text-base font-semibold ${v.id===activeVariant.id ? flashIf('title') : ''}`}>{v.title || 'Concept Variant ' + (v.label || v.id)}</div>
+                    <div className={`text-base font-semibold ${v.id===activeVariant.id ? flashIf('title') : ''}`}>{v.title || 'Film Treatment'}</div>
                     {v.logline ? (
                       <div className={`mt-1 text-gray-300 leading-6 ${v.id===activeVariant.id ? flashIf('logline') : ''}`}>{v.logline}</div>
                     ) : null}
@@ -685,12 +675,11 @@ export function TreatmentCard() {
                       </div>
                     </div>
                   ) : null}
-                </div>
+                  </div>
                   )
                 })()}
-              </TabsContent>
-            )) : null}
-          </Tabs>
+            </div>
+          </div>
         </CardContent>
         <VariantEditorDrawer
           open={editorOpen}
