@@ -5,8 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Loader, Edit, Wand2, Check, AlertTriangle, Eye } from 'lucide-react'
-import { ScriptComparisonPanel } from './ScriptComparisonPanel'
+import { Loader, Edit, Wand2, Check, Eye, Sparkles } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 
 interface ScriptEditorModalProps {
@@ -75,6 +75,13 @@ export function ScriptEditorModal({
   const [optimizedScript, setOptimizedScript] = useState<any | null>(null)
   const [changesSummary, setChangesSummary] = useState<any[]>([])
   const [showComparison, setShowComparison] = useState(false)
+  
+  // Multi-select state
+  const [selectedOptimizations, setSelectedOptimizations] = useState<string[]>([])
+  const [recommendations, setRecommendations] = useState<any[]>([])
+  const [selectedRecommendations, setSelectedRecommendations] = useState<string[]>([])
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [selectedScenes, setSelectedScenes] = useState<number[]>([])
 
   // Reset state when modal opens
   useEffect(() => {
@@ -85,12 +92,55 @@ export function ScriptEditorModal({
       setOptimizedScript(null)
       setChangesSummary([])
       setShowComparison(false)
+      setSelectedOptimizations([])
+      setRecommendations([])
+      setSelectedRecommendations([])
+      setSelectedScenes([])
     }
   }, [isOpen])
 
-  const handleOptimize = async () => {
-    if (!customInstruction.trim()) {
-      toast.error('Please enter an instruction')
+  // Auto-update custom instructions when selections change
+  useEffect(() => {
+    const selectedTexts = SCRIPT_INSTRUCTION_TEMPLATES
+      .filter(t => selectedOptimizations.includes(t.id))
+      .map(t => t.text)
+    
+    if (selectedTexts.length > 0) {
+      setCustomInstruction(selectedTexts.join('\n\n'))
+    }
+  }, [selectedOptimizations])
+
+  const handleAnalyze = async () => {
+    setIsAnalyzing(true)
+    try {
+      const response = await fetch('/api/vision/analyze-script', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          script,
+          characters
+        })
+      })
+      
+      if (!response.ok) throw new Error('Analysis failed')
+      
+      const data = await response.json()
+      setRecommendations(data.recommendations || [])
+      toast.success('Script analysis complete')
+    } catch (error: any) {
+      console.error('[Script Analysis] Error:', error)
+      toast.error(error.message || 'Failed to analyze script')
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
+  const handleGeneratePreview = async () => {
+    let instruction = customInstruction.trim()
+    
+    if (!instruction && selectedOptimizations.length === 0) {
+      toast.error('Please select optimizations or enter custom instructions')
       return
     }
     
@@ -102,36 +152,69 @@ export function ScriptEditorModal({
         body: JSON.stringify({
           projectId,
           script,
-          instruction: customInstruction,
+          instruction,
           characters
         })
       })
       
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Optimization failed' }))
-        throw new Error(error.error || 'Optimization failed')
-      }
+      if (!response.ok) throw new Error('Optimization failed')
       
       const data = await response.json()
       setOptimizedScript(data.optimizedScript)
       setChangesSummary(data.changesSummary || [])
       setShowComparison(true)
-      setTab('instructions') // Show comparison on instructions tab
-      toast.success('Script optimized successfully')
+      
+      // Auto-select all scenes initially
+      if (data.optimizedScript?.scenes) {
+        setSelectedScenes(data.optimizedScript.scenes.map((_: any, idx: number) => idx))
+      }
+      
+      toast.success('Preview generated successfully')
     } catch (error: any) {
       console.error('[Script Optimization] Error:', error)
-      toast.error(error.message || 'Failed to optimize script')
+      toast.error(error.message || 'Failed to generate preview')
     } finally {
       setIsOptimizing(false)
     }
   }
 
-  const handleApply = () => {
-    if (optimizedScript) {
-      onApplyChanges(optimizedScript)
-      toast.success('Script updated successfully')
-      onClose()
+  const handleGeneratePreviewFromRecommendations = async () => {
+    if (selectedRecommendations.length === 0) {
+      toast.error('Please select at least one recommendation')
+      return
     }
+    
+    // Build instruction from selected recommendations
+    const instruction = recommendations
+      .filter(r => selectedRecommendations.includes(r.id))
+      .map(r => `${r.title}: ${r.description}`)
+      .join('\n\n')
+    
+    setCustomInstruction(instruction)
+    await handleGeneratePreview()
+  }
+
+  const handleApply = () => {
+    if (!optimizedScript || selectedScenes.length === 0) {
+      toast.error('Please select at least one scene to apply')
+      return
+    }
+    
+    // Merge optimized scenes with original, only for selected indices
+    const mergedScenes = script.scenes.map((originalScene: any, idx: number) => {
+      if (selectedScenes.includes(idx) && optimizedScript.scenes[idx]) {
+        return optimizedScript.scenes[idx]
+      }
+      return originalScene
+    })
+    
+    const updatedScript = {
+      scenes: mergedScenes
+    }
+    
+    onApplyChanges(updatedScript)
+    toast.success(`Applied changes to ${selectedScenes.length} scene(s)`)
+    onClose()
   }
 
   return (
@@ -160,11 +243,121 @@ export function ScriptEditorModal({
             {tab === 'instructions' && (
               <div className="space-y-6">
                 {showComparison && optimizedScript ? (
-                  <ScriptComparisonPanel
-                    originalScript={script}
-                    optimizedScript={optimizedScript}
-                    changesSummary={changesSummary}
-                  />
+                  <div className="space-y-6">
+                    {/* Summary */}
+                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                      <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-3">
+                        Optimization Summary
+                      </h3>
+                      <div className="space-y-2">
+                        {changesSummary.map((change, idx) => (
+                          <div key={idx} className="text-sm">
+                            <div className="font-medium text-blue-800 dark:text-blue-200">
+                              {change.category}
+                            </div>
+                            <div className="text-gray-700 dark:text-gray-300 text-xs mt-1">
+                              {change.changes}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Select/Deselect All */}
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                        Scene Changes ({selectedScenes.length} selected)
+                      </h3>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setSelectedScenes(optimizedScript.scenes.map((_: any, idx: number) => idx))}
+                        >
+                          Select All
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setSelectedScenes([])}
+                        >
+                          Deselect All
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {/* Scene Comparisons */}
+                    <div className="space-y-4">
+                      {optimizedScript.scenes?.map((optimizedScene: any, idx: number) => {
+                        const originalScene = script.scenes?.[idx]
+                        if (!originalScene) return null
+                        
+                        const isSelected = selectedScenes.includes(idx)
+                        
+                        return (
+                          <div
+                            key={idx}
+                            className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                              isSelected
+                                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500'
+                                : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-300'
+                            }`}
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedScenes(prev => prev.filter(i => i !== idx))
+                              } else {
+                                setSelectedScenes(prev => [...prev, idx])
+                              }
+                            }}
+                          >
+                            <div className="flex items-start gap-3">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => {}}
+                                className="mt-1"
+                              />
+                              <div className="flex-1">
+                                <div className="font-medium mb-2 text-gray-900 dark:text-gray-100">
+                                  Scene {idx + 1}: {optimizedScene.heading || 'Untitled'}
+                                </div>
+                                
+                                {/* Before/After Comparison */}
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                  <div>
+                                    <div className="text-xs font-medium text-gray-500 mb-1">Before</div>
+                                    <div className="text-gray-700 dark:text-gray-300 text-xs">
+                                      <div className="mb-1">
+                                        <span className="font-medium">Narration:</span>{' '}
+                                        {originalScene.narration?.substring(0, 100) || 'None'}...
+                                      </div>
+                                      <div>
+                                        <span className="font-medium">Dialogue:</span>{' '}
+                                        {originalScene.dialogue?.length || 0} lines
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xs font-medium text-blue-500 mb-1">After</div>
+                                    <div className="text-gray-900 dark:text-gray-100 text-xs">
+                                      <div className="mb-1">
+                                        <span className="font-medium">Narration:</span>{' '}
+                                        {optimizedScene.narration?.substring(0, 100) || 'None'}...
+                                      </div>
+                                      <div>
+                                        <span className="font-medium">Dialogue:</span>{' '}
+                                        {optimizedScene.dialogue?.length || 0} lines
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
                 ) : (
                   <>
                     {/* Template Instructions */}
@@ -178,16 +371,27 @@ export function ScriptEditorModal({
                           <Button
                             key={template.id}
                             size="sm"
-                            variant="outline"
-                            onClick={() => setCustomInstruction(template.text)}
-                            className="justify-start text-left h-auto py-3 px-3 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            variant={selectedOptimizations.includes(template.id) ? "default" : "outline"}
+                            onClick={() => {
+                              if (selectedOptimizations.includes(template.id)) {
+                                setSelectedOptimizations(prev => prev.filter(id => id !== template.id))
+                              } else {
+                                setSelectedOptimizations(prev => [...prev, template.id])
+                              }
+                            }}
+                            className={`justify-start text-left h-auto py-3 px-3 ${
+                              selectedOptimizations.includes(template.id) 
+                                ? 'bg-blue-600 text-white hover:bg-blue-500' 
+                                : 'hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                            }`}
                           >
                             <div className="flex items-start gap-2 w-full">
+                              {selectedOptimizations.includes(template.id) && (
+                                <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                              )}
                               <Edit className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                               <div className="text-left">
-                                <div className="font-medium text-xs text-gray-900 dark:text-gray-100">
-                                  {template.label}
-                                </div>
+                                <div className="font-medium text-xs">{template.label}</div>
                               </div>
                             </div>
                           </Button>
@@ -205,7 +409,6 @@ export function ScriptEditorModal({
                         value={customInstruction}
                         onChange={(e) => setCustomInstruction(e.target.value)}
                         placeholder="Describe how you want to optimize your script...
-
 Examples:
 • Make the pacing more dynamic and cut unnecessary scenes
 • Strengthen the emotional arc and character development
@@ -218,16 +421,24 @@ Examples:
                       </p>
                     </div>
 
-                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-                      <h4 className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                        💡 Pro Tips
-                      </h4>
-                      <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
-                        <li>• Focus on the overall narrative structure, not individual scenes</li>
-                        <li>• Mention the specific tone or mood you want to achieve</li>
-                        <li>• Reference character arcs or plot points that need strengthening</li>
-                        <li>• Consider the viewing experience as a whole</li>
-                      </ul>
+                    <div className="flex gap-3 justify-end">
+                      <Button
+                        onClick={handleGeneratePreview}
+                        disabled={isOptimizing || (!customInstruction.trim() && selectedOptimizations.length === 0)}
+                        className="bg-blue-600 hover:bg-blue-500 text-white px-6"
+                      >
+                        {isOptimizing ? (
+                          <>
+                            <Loader className="w-4 h-4 mr-2 animate-spin" />
+                            Generating Preview...
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="w-4 h-4 mr-2" />
+                            Generate Preview
+                          </>
+                        )}
+                      </Button>
                     </div>
                   </>
                 )}
@@ -240,51 +451,104 @@ Examples:
                   <div className="flex items-start gap-3">
                     <Wand2 className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
                     <div>
-                      <h3 className="text-sm font-semibold text-white mb-1">AI-Powered Script Optimization</h3>
+                      <h3 className="text-sm font-semibold text-white mb-1">AI-Powered Script Analysis</h3>
                       <p className="text-xs text-gray-300 leading-relaxed">
-                        Describe what you'd like to optimize and our AI will holistically improve your entire script while preserving its essence.
+                        Let AI analyze your script and provide specific optimization recommendations.
                       </p>
                     </div>
                   </div>
                 </div>
                 
-                <div>
-                  <label className="text-xs font-medium text-gray-300 mb-2 block">Optimization Instructions</label>
-                  <Textarea
-                    value={customInstruction}
-                    onChange={(e) => setCustomInstruction(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-600 bg-gray-900 text-white placeholder:text-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all resize-none"
-                    rows={6}
-                    placeholder="Examples:
-• Optimize the pacing to eliminate lag and improve flow
-• Strengthen character arcs and ensure consistent development
-• Unify visual style and improve visual storytelling
-• Polish all dialogue for authenticity and subtext"
-                  />
-                  <div className="mt-2 text-xs text-gray-400">
-                    💡 Tip: Be specific about what to optimize and what to preserve
-                  </div>
-                </div>
-                
-                <div className="flex gap-3 justify-end pt-2">
+                <div className="flex gap-3 justify-end">
                   <Button
-                    onClick={handleOptimize}
-                    disabled={isOptimizing || !customInstruction.trim()}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed px-6"
+                    onClick={handleAnalyze}
+                    disabled={isAnalyzing}
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white shadow-lg disabled:opacity-50 px-6"
                   >
-                    {isOptimizing ? (
+                    {isAnalyzing ? (
                       <>
                         <Loader className="w-4 h-4 mr-2 animate-spin" />
-                        Optimizing...
+                        Analyzing...
                       </>
                     ) : (
                       <>
-                        <Wand2 className="w-4 h-4 mr-2" />
-                        Optimize Script
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Analyze Script
                       </>
                     )}
                   </Button>
                 </div>
+                
+                {/* Recommendations List */}
+                {recommendations.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      Recommendations
+                    </h3>
+                    {recommendations.map((rec) => (
+                      <div
+                        key={rec.id}
+                        className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                          selectedRecommendations.includes(rec.id)
+                            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500'
+                            : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-300'
+                        }`}
+                        onClick={() => {
+                          if (selectedRecommendations.includes(rec.id)) {
+                            setSelectedRecommendations(prev => prev.filter(id => id !== rec.id))
+                          } else {
+                            setSelectedRecommendations(prev => [...prev, rec.id])
+                          }
+                        }}
+                      >
+                        <div className="flex items-start gap-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedRecommendations.includes(rec.id)}
+                            onChange={() => {}}
+                            className="mt-1"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-sm text-gray-900 dark:text-gray-100">
+                              {rec.title}
+                            </div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                              {rec.description}
+                            </div>
+                            <div className="flex gap-2 mt-2">
+                              <Badge variant={rec.priority === 'high' ? 'destructive' : 'secondary'}>
+                                {rec.priority}
+                              </Badge>
+                              <Badge variant="outline">{rec.category}</Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {selectedRecommendations.length > 0 && (
+                  <div className="flex gap-3 justify-end pt-2">
+                    <Button
+                      onClick={handleGeneratePreviewFromRecommendations}
+                      disabled={isOptimizing}
+                      className="bg-purple-600 hover:bg-purple-500 text-white px-6"
+                    >
+                      {isOptimizing ? (
+                        <>
+                          <Loader className="w-4 h-4 mr-2 animate-spin" />
+                          Generating Preview...
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-4 h-4 mr-2" />
+                          Generate Preview
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -293,18 +557,19 @@ Examples:
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button
-              onClick={handleApply}
-              disabled={!optimizedScript || isOptimizing}
-              className="bg-blue-600 hover:bg-blue-500 text-white"
-            >
-              <Check className="w-4 h-4 mr-2" />
-              Apply Changes
-            </Button>
+            {showComparison && (
+              <Button
+                onClick={handleApply}
+                disabled={!optimizedScript || isOptimizing || selectedScenes.length === 0}
+                className="bg-blue-600 hover:bg-blue-500 text-white"
+              >
+                <Check className="w-4 h-4 mr-2" />
+                Apply {selectedScenes.length} Scene(s)
+              </Button>
+            )}
           </DialogFooter>
         </Tabs>
       </DialogContent>
     </Dialog>
   )
 }
-
