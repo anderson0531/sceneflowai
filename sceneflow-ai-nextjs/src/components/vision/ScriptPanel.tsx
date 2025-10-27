@@ -226,7 +226,8 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
         onGenerateSceneScore={onGenerateSceneScore}
         generatingScoreFor={generatingScoreFor}
         getScoreColorClass={getScoreColorClass}
-        dragHandleProps={listeners} 
+        dragHandleProps={listeners}
+        onOpenSceneReview={props.onOpenSceneReview}
       />
     </div>
   )
@@ -1147,6 +1148,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       generatingScoreFor={generatingScoreFor}
                       getScoreColorClass={getScoreColorClass}
                       onStopAudio={stopAudio}
+                      onOpenSceneReview={(sceneIdx: number) => {
+                        setSelectedSceneForReview(sceneIdx)
+                        setShowSceneReviewModal(true)
+                      }}
                 />
                     )
                   })}
@@ -1284,9 +1289,11 @@ interface SceneCardProps {
   generatingScoreFor?: number | null
   getScoreColorClass?: (score: number) => string
   onStopAudio?: () => void
+  // NEW: Scene review modal props
+  onOpenSceneReview?: (sceneIdx: number) => void
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart, dragHandleProps, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onStopAudio }: SceneCardProps) {
+function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart, dragHandleProps, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onStopAudio, onOpenSceneReview }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
   
@@ -1525,12 +1532,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            // If score exists, show review modal immediately for instant feedback
-                            if (scene.scoreAnalysis) {
-                              setSelectedSceneForReview(sceneIdx)
-                              setShowSceneReviewModal(true)
-                            }
-                            // Always trigger score generation/regeneration
+                            // ONLY trigger score generation/regeneration
                             if (onGenerateSceneScore) {
                               onGenerateSceneScore(sceneIdx)
                             }
@@ -1566,14 +1568,37 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                             <p className="font-semibold">Scene Quality Score</p>
                             <p>Director: {scene.scoreAnalysis.directorScore}/100</p>
                             <p>Audience: {scene.scoreAnalysis.audienceScore}/100</p>
-                            <p className="text-gray-400 mt-2">Click to regenerate & view details</p>
+                            <p className="text-gray-400 mt-2">Click to regenerate score</p>
                           </div>
                         ) : (
-                          <p className="text-xs">Generate quality score</p>
+                          <p className="text-xs">Generate scene quality score</p>
                         )}
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
+              
+                  {/* View Review Button - Only visible when score exists */}
+                  {scene.scoreAnalysis && onOpenSceneReview && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onOpenSceneReview(sceneIdx)
+                            }}
+                            className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded transition-colors"
+                          >
+                            <BarChart3 className="w-3.5 h-3.5" />
+                            <span>View Review</span>
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                          <p className="text-xs">View detailed scene analysis</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                 </>
               )}
             </div>
