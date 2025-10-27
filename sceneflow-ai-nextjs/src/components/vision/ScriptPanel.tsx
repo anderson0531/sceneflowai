@@ -1484,13 +1484,14 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
+                            // Always trigger score generation/regeneration
+                            if (onGenerateSceneScore) {
+                              onGenerateSceneScore(sceneIdx)
+                            }
+                            // If score exists, also show review modal
                             if (scene.scoreAnalysis) {
-                              // If score exists, show review modal
                               setSelectedSceneForReview(sceneIdx)
                               setShowSceneReviewModal(true)
-                            } else if (onGenerateSceneScore) {
-                              // If no score, generate one
-                              onGenerateSceneScore(sceneIdx)
                             }
                           }}
                           disabled={generatingScoreFor === sceneIdx}
@@ -1524,7 +1525,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                             <p className="font-semibold">Scene Quality Score</p>
                             <p>Director: {scene.scoreAnalysis.directorScore}/100</p>
                             <p>Audience: {scene.scoreAnalysis.audienceScore}/100</p>
-                            <p className="text-gray-400 mt-2">Click to view detailed review</p>
+                            <p className="text-gray-400 mt-2">Click to regenerate & view details</p>
                           </div>
                         ) : (
                           <p className="text-xs">Generate quality score</p>
