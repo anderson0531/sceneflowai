@@ -27,30 +27,39 @@ type SimpleBlueprint = {
 }
 
 function toPrompt(input: string) {
-  return `You are a senior development producer. Produce a COMPLETE, SPECIFIC blueprint JSON for the INPUT below.
-Return ONLY JSON matching this exact shape (no prose):
+  return `Generate a captivating Film Treatment as JSON.
+
+SCHEMA:
 {
   "title": string,
-  "logline": string,
-  "synopsis": string, // <= 60 words
-  "structure": "Series Structure" | "Documentary Structure" | "3-Act Structure" | "5-Act Structure",
-  "genre": string[], // 2-4 specific sub-genres
-  "tone": string[], // 3-6 vivid adjectives
-  "visual_language": string[], // 4-6 concrete techniques (macro, handheld market scenes, etc.)
+  "logline": string (one sentence hook),
+  "synopsis": string (max 60 words),
+  "structure": "3-Act Structure" | "5-Act Structure" | "Documentary Structure" | "Series Structure",
+  "genre": string[] (2-4 specific sub-genres),
+  "tone": string[] (3-6 vivid adjectives),
+  "visual_language": string[] (4-6 concrete techniques),
   "audience": {
     "primary_demographic": string,
     "psychographics": string,
     "viewing_context": string
   },
-  "beats": [{ "act": string, "beat_title": string, "scene": string, "duration_seconds"?: number }]
+  "beats": [
+    {
+      "act": string,
+      "beat_title": string,
+      "scene": string (rich sensory detail),
+      "duration_seconds": number
+    }
+  ]
 }
 
-HARD RULES:
-- NO placeholders like "Unspecified"; infer values.
-- beats: include at least 10 beats total with concrete sensory scenes.
-- Keep output consistent and self-contained.
+RULES:
+- Generate 6-8 compelling beats with strong narrative arc
+- Prioritize memorable characters and emotional hooks
+- NO placeholders - infer all values
+- Return ONLY valid JSON
 
-INPUT:\n${input}`
+INPUT: ${input}`
 }
 
 function stripCodeFences(text: string): string {
@@ -94,6 +103,8 @@ export async function POST(req: NextRequest) {
 
     const provider = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY ? 'gemini' : 'openai'
     const model = provider === 'gemini' ? (process.env.GEMINI_MODEL || 'gemini-2.5-flash') : (process.env.OPENAI_MODEL || 'gpt-4.1')
+    
+    console.log(`[Blueprint V3] Generating ${variantsRequested} variant(s) - model: ${model}`)
     const prompt = toPrompt(input)
 
     async function generateOne(): Promise<SimpleBlueprint> {
@@ -123,7 +134,7 @@ export async function POST(req: NextRequest) {
 
     // Generate with retries until we reach the requested variant count (cap extra attempts)
     const target = variantsRequested
-    const maxAttempts = target + 3
+    const maxAttempts = target + 1  // Only 1 retry max for speed
     const results: SimpleBlueprint[] = []
     let attempts = 0
     while (results.length < target && attempts < maxAttempts) {

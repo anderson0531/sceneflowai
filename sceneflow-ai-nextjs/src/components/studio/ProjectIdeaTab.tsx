@@ -466,7 +466,7 @@ export default function ProjectIdeaTab() {
     setGenError('');
     setIsGeneratingIdeas(true);
     setGenProgress(10);
-    setGenStatus(inputMode === 'topic' ? 'Generating Project Idea' : 'Generating Film Treatment');
+    setGenStatus('Crafting Film Treatment...');
     try {
       setGenError('');
       // Call v1 Blueprint API
@@ -487,15 +487,15 @@ export default function ProjectIdeaTab() {
       let reducedTried = false
       try {
         // Try v3 simplified pipeline first (explicitly request 1 variant)
-        response = await postWithTimeout('/api/v3/blueprint/analyze/', { input: baseText, variants: 1 }, 180000)
+        response = await postWithTimeout(`/api/v3/blueprint/analyze/?_v=${Date.now()}`, { input: baseText, variants: 1 }, 180000)
       } catch (e) {
-        // Fallback to v2, then v1
-        console.warn('v3 blueprint aborted or failed, falling back to v2:', e)
+        // Fallback to v2 with explicit variants=1 (NO V1 fallback - it doesn't support variants control)
+        console.warn('v3 blueprint failed, falling back to v2 with explicit variants=1:', e)
         try {
-          response = await postWithTimeout('/api/v2/blueprint/analyze/', baseBody, 180000)
+          response = await postWithTimeout('/api/v2/blueprint/analyze/', { ...baseBody, variants: 1 }, 180000)
         } catch (e2) {
-          console.warn('v2 blueprint aborted or failed, falling back to v1:', e2)
-          response = await postWithTimeout('/api/v1/blueprint/analyze/', baseBody, 180000)
+          // NO V1 FALLBACK - it doesn't support variants control
+          throw new Error('Blueprint generation failed after v3 and v2 attempts')
         }
       }
       if (!response) {
