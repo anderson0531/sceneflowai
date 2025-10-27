@@ -246,13 +246,66 @@ Remember: You are EXPANDING an approved treatment, not creating a new story. Sta
     const response = await callGeminiWithRetry(apiKey, prompt, 16000, 1)
     const scene = JSON.parse(response)
     
+    // Helper function to extract SFX from dialogue
+    const extractSFXFromDialogue = (sceneData: any): any => {
+      if (!sceneData.dialogue || !Array.isArray(sceneData.dialogue) || sceneData.dialogue.length === 0) {
+        return sceneData
+      }
+      
+      const sfxKeywords = [
+        'HUM', 'SOUND', 'NOISE', 'BEEP', 'BUZZ', 'CLICK', 'RING', 'BANG', 
+        'CRASH', 'THUD', 'WHOOSH', 'RUSTLE', 'CREAK', 'SLAM', 'WHISTLE', 
+        'ECHO', 'RUMBLE', 'DISTANT', 'APPROACHING', 'FADING', 'HISSING',
+        'DRIPPING', 'SCRAPING', 'FOOTSTEPS', 'KNOCKING', 'TAPPING'
+      ]
+      
+      const extractedSFX: Array<{time: number, description: string}> = []
+      const cleanedDialogue: Array<any> = []
+      
+      sceneData.dialogue.forEach((d: any) => {
+        const line = (d.line || '').trim()
+        const isWrappedInParens = /^\(.*\)$/.test(line)
+        
+        if (!isWrappedInParens) {
+          cleanedDialogue.push(d)
+          return
+        }
+        
+        const upperLine = line.toUpperCase()
+        const containsSFXKeyword = sfxKeywords.some(keyword => upperLine.includes(keyword))
+        const hasQuotationMarks = line.includes('"') || line.includes("'")
+        const hasConversationalWords = /\b(I|you|we|they|my|your|our|their|yes|no|okay|please|thank|sorry|hello|hi|hey|what|when|where|why|how)\b/i.test(line)
+        
+        if (containsSFXKeyword && !hasQuotationMarks && !hasConversationalWords) {
+          const description = line.replace(/^\(|\)$/g, '').trim()
+          extractedSFX.push({ time: 0, description })
+          console.log(`[SFX Extraction] Moved from dialogue (${d.character}) to SFX: "${description}"`)
+        } else {
+          cleanedDialogue.push(d)
+        }
+      })
+      
+      if (extractedSFX.length > 0) {
+        return {
+          ...sceneData,
+          dialogue: cleanedDialogue,
+          sfx: [...(sceneData.sfx || []), ...extractedSFX]
+        }
+      }
+      
+      return sceneData
+    }
+    
+    // Extract SFX from dialogue (post-processing fix)
+    const processedScene = extractSFXFromDialogue(scene)
+    
     // Add story bible reference for future edits
-    scene._storyBibleRef = {
+    processedScene._storyBibleRef = {
       beat: currentBeat?.title,
       logline: storyBible.logline
     }
     
-    return scene
+    return processedScene
   } catch (error) {
     console.error(`[Scene Expand] Failed to expand scene ${sceneNumber}:`, error)
     // Return basic scene if expansion fails

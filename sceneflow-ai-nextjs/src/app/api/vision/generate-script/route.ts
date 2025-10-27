@@ -411,22 +411,78 @@ Generate COMPLETE scenes with full dialogue and action.`
 
     console.log(`[Script Gen] All batches complete: ${allScenes.length} total scenes`)
 
+    // Helper function to extract SFX from dialogue
+    const extractSFXFromDialogue = (scene: any): any => {
+      if (!scene.dialogue || !Array.isArray(scene.dialogue) || scene.dialogue.length === 0) {
+        return scene
+      }
+      
+      const sfxKeywords = [
+        'HUM', 'SOUND', 'NOISE', 'BEEP', 'BUZZ', 'CLICK', 'RING', 'BANG', 
+        'CRASH', 'THUD', 'WHOOSH', 'RUSTLE', 'CREAK', 'SLAM', 'WHISTLE', 
+        'ECHO', 'RUMBLE', 'DISTANT', 'APPROACHING', 'FADING', 'HISSING',
+        'DRIPPING', 'SCRAPING', 'FOOTSTEPS', 'KNOCKING', 'TAPPING'
+      ]
+      
+      const extractedSFX: Array<{time: number, description: string}> = []
+      const cleanedDialogue: Array<any> = []
+      
+      scene.dialogue.forEach((d: any) => {
+        const line = (d.line || '').trim()
+        const isWrappedInParens = /^\(.*\)$/.test(line)
+        
+        if (!isWrappedInParens) {
+          cleanedDialogue.push(d)
+          return
+        }
+        
+        const upperLine = line.toUpperCase()
+        const containsSFXKeyword = sfxKeywords.some(keyword => upperLine.includes(keyword))
+        const hasQuotationMarks = line.includes('"') || line.includes("'")
+        const hasConversationalWords = /\b(I|you|we|they|my|your|our|their|yes|no|okay|please|thank|sorry|hello|hi|hey|what|when|where|why|how)\b/i.test(line)
+        
+        if (containsSFXKeyword && !hasQuotationMarks && !hasConversationalWords) {
+          const description = line.replace(/^\(|\)$/g, '').trim()
+          extractedSFX.push({ time: 0, description })
+          console.log(`[SFX Extraction] Moved from dialogue (${d.character}) to SFX: "${description}"`)
+        } else {
+          cleanedDialogue.push(d)
+        }
+      })
+      
+      if (extractedSFX.length > 0) {
+        return {
+          ...scene,
+          dialogue: cleanedDialogue,
+          sfx: [...(scene.sfx || []), ...extractedSFX]
+        }
+      }
+      
+      return scene
+    }
+
     // Convert full scenes to scene objects with dialogue and action (already expanded)
-    const outlineScenes = allScenes.map((scene: any, idx: number) => ({
-      sceneNumber: idx + 1,
-      beat: scene.beat || 'Unknown Beat',
-      heading: scene.heading || `SCENE ${idx + 1}`,
-      action: scene.action || scene.summary || 'Scene content',
-      dialogue: Array.isArray(scene.dialogue) ? scene.dialogue : [],
-      visualDescription: scene.visualDescription || scene.action || 'Cinematic shot',
-      purpose: scene.purpose || 'Advance story',
-      duration: scene.duration || Math.floor(targetDuration / sceneCount),
-      transition: scene.transition || 'CUT TO',
-      characters: Array.isArray(scene.characters) ? scene.characters : [],
-      isExpanded: true, // Already fully generated with dialogue and action
-      // Preserve summary for reference
-      _outline: { summary: scene.action?.substring(0, 150) || scene.heading }
-    }))
+    const outlineScenes = allScenes.map((scene: any, idx: number) => {
+      const mappedScene = {
+        sceneNumber: idx + 1,
+        beat: scene.beat || 'Unknown Beat',
+        heading: scene.heading || `SCENE ${idx + 1}`,
+        action: scene.action || scene.summary || 'Scene content',
+        dialogue: Array.isArray(scene.dialogue) ? scene.dialogue : [],
+        visualDescription: scene.visualDescription || scene.action || 'Cinematic shot',
+        purpose: scene.purpose || 'Advance story',
+        duration: scene.duration || Math.floor(targetDuration / sceneCount),
+        transition: scene.transition || 'CUT TO',
+        characters: Array.isArray(scene.characters) ? scene.characters : [],
+        isExpanded: true, // Already fully generated with dialogue and action
+        // Preserve summary for reference
+        _outline: { summary: scene.action?.substring(0, 150) || scene.heading },
+        sfx: scene.sfx || []
+      }
+      
+      // Extract SFX from dialogue (post-processing fix)
+      return extractSFXFromDialogue(mappedScene)
+    })
 
     console.log(`[Script Gen] Returning ${outlineScenes.length} fully expanded scenes with dialogue`)
 

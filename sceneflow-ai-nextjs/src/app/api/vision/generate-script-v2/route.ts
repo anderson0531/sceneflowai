@@ -607,6 +607,76 @@ function sanitizeJsonString(jsonStr: string): string {
   }
 }
 
+/**
+ * Detects and extracts SFX entries that were incorrectly placed in dialogue array
+ * 
+ * Detection criteria:
+ * - Entire line wrapped in parentheses: (text)
+ * - Contains sound-related keywords
+ * - Does NOT contain conversational dialogue patterns
+ */
+function extractSFXFromDialogue(scene: any): any {
+  if (!scene.dialogue || !Array.isArray(scene.dialogue) || scene.dialogue.length === 0) {
+    return scene
+  }
+  
+  // Keywords that indicate sound effects (not dialogue)
+  const sfxKeywords = [
+    'HUM', 'SOUND', 'NOISE', 'BEEP', 'BUZZ', 'CLICK', 'RING', 'BANG', 
+    'CRASH', 'THUD', 'WHOOSH', 'RUSTLE', 'CREAK', 'SLAM', 'WHISTLE', 
+    'ECHO', 'RUMBLE', 'DISTANT', 'APPROACHING', 'FADING', 'HISSING',
+    'DRIPPING', 'SCRAPING', 'FOOTSTEPS', 'KNOCKING', 'TAPPING'
+  ]
+  
+  const extractedSFX: Array<{time: number, description: string}> = []
+  const cleanedDialogue: Array<any> = []
+  
+  scene.dialogue.forEach((d: any) => {
+    const line = (d.line || '').trim()
+    
+    // Check 1: Is the entire line wrapped in parentheses?
+    const isWrappedInParens = /^\(.*\)$/.test(line)
+    
+    if (!isWrappedInParens) {
+      // Not wrapped in parens -> keep as dialogue
+      cleanedDialogue.push(d)
+      return
+    }
+    
+    // Check 2: Contains SFX keywords?
+    const upperLine = line.toUpperCase()
+    const containsSFXKeyword = sfxKeywords.some(keyword => upperLine.includes(keyword))
+    
+    // Check 3: Does NOT look like actual dialogue
+    const hasQuotationMarks = line.includes('"') || line.includes("'")
+    const hasConversationalWords = /\b(I|you|we|they|my|your|our|their|yes|no|okay|please|thank|sorry|hello|hi|hey|what|when|where|why|how)\b/i.test(line)
+    
+    // If it's wrapped in parens, has SFX keywords, and doesn't look like dialogue -> it's SFX
+    if (containsSFXKeyword && !hasQuotationMarks && !hasConversationalWords) {
+      const description = line.replace(/^\(|\)$/g, '').trim()
+      extractedSFX.push({
+        time: 0,  // Default to start of scene
+        description
+      })
+      console.log(`[SFX Extraction] Moved from dialogue (${d.character}) to SFX: "${description}"`)
+    } else {
+      // Keep as dialogue
+      cleanedDialogue.push(d)
+    }
+  })
+  
+  // Only update if we actually extracted something
+  if (extractedSFX.length > 0) {
+    return {
+      ...scene,
+      dialogue: cleanedDialogue,
+      sfx: [...(scene.sfx || []), ...extractedSFX]
+    }
+  }
+  
+  return scene
+}
+
 function parseBatch1(response: string, start: number, end: number): any {
   try {
     const cleaned = sanitizeJsonString(response)
@@ -616,24 +686,29 @@ function parseBatch1(response: string, start: number, end: number): any {
         return {
           totalScenes: parsed.totalScenes || null,
           estimatedTotalDuration: parsed.estimatedTotalDuration || 0,
-          scenes: (parsed.scenes || []).map((s: any, idx: number) => ({
-            sceneNumber: start + idx,
-            heading: s.heading || `SCENE ${start + idx}`,
-            action: s.action || 'Scene content',
-            narration: s.narration || '',  // NEW: Preserve captivating narration
-            dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
-            visualDescription: s.visualDescription || s.action || 'Cinematic shot',
-            duration: s.duration || 30,  // Use AI's realistic estimate
-            sfx: Array.isArray(s.sfx) ? s.sfx.map((sfx: any) => ({
-              time: sfx.time || 0,
-              description: sfx.description || ''
-            })) : [],
-            music: s.music ? {
-              description: s.music.description || '',
-              duration: s.music.duration
-            } : undefined,
-            isExpanded: true
-          }))
+          scenes: (parsed.scenes || []).map((s: any, idx: number) => {
+            const scene = {
+              sceneNumber: start + idx,
+              heading: s.heading || `SCENE ${start + idx}`,
+              action: s.action || 'Scene content',
+              narration: s.narration || '',  // NEW: Preserve captivating narration
+              dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
+              visualDescription: s.visualDescription || s.action || 'Cinematic shot',
+              duration: s.duration || 30,  // Use AI's realistic estimate
+              sfx: Array.isArray(s.sfx) ? s.sfx.map((sfx: any) => ({
+                time: sfx.time || 0,
+                description: sfx.description || ''
+              })) : [],
+              music: s.music ? {
+                description: s.music.description || '',
+                duration: s.music.duration
+              } : undefined,
+              isExpanded: true
+            }
+            
+            // Extract SFX from dialogue (post-processing fix)
+            return extractSFXFromDialogue(scene)
+          })
         }
   } catch (error) {
     console.error('[Parse Batch 1] Error:', error)
@@ -654,25 +729,30 @@ function parseScenes(response: string, start: number, end: number): any {
     
     // Batch 2+ returns just scenes array
       return {
-        scenes: scenes.map((s: any, idx: number) => ({
-          sceneNumber: start + idx,
-          heading: s.heading || `SCENE ${start + idx}`,
-          characters: s.characters || [],  // CRITICAL: Preserve characters array from AI
-          action: s.action || 'Scene content',
-          narration: s.narration || '',  // NEW: Preserve captivating narration
-          dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
-          visualDescription: s.visualDescription || s.action || 'Cinematic shot',
-          duration: s.duration || 30,  // Use AI's realistic estimate
-          sfx: Array.isArray(s.sfx) ? s.sfx.map((sfx: any) => ({
-            time: sfx.time || 0,
-            description: sfx.description || ''
-          })) : [],
-          music: s.music ? {
-            description: s.music.description || '',
-            duration: s.music.duration
-          } : undefined,
-          isExpanded: true
-        }))
+        scenes: scenes.map((s: any, idx: number) => {
+          const scene = {
+            sceneNumber: start + idx,
+            heading: s.heading || `SCENE ${start + idx}`,
+            characters: s.characters || [],  // CRITICAL: Preserve characters array from AI
+            action: s.action || 'Scene content',
+            narration: s.narration || '',  // NEW: Preserve captivating narration
+            dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
+            visualDescription: s.visualDescription || s.action || 'Cinematic shot',
+            duration: s.duration || 30,  // Use AI's realistic estimate
+            sfx: Array.isArray(s.sfx) ? s.sfx.map((sfx: any) => ({
+              time: sfx.time || 0,
+              description: sfx.description || ''
+            })) : [],
+            music: s.music ? {
+              description: s.music.description || '',
+              duration: s.music.duration
+            } : undefined,
+            isExpanded: true
+          }
+          
+          // Extract SFX from dialogue (post-processing fix)
+          return extractSFXFromDialogue(scene)
+        })
       }
   } catch (error) {
     console.error('[Parse Scenes] Error:', error)
