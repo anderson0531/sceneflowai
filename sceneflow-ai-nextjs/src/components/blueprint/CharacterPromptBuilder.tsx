@@ -176,13 +176,13 @@ export function CharacterPromptBuilder({
       if (!isOpen && isCurrentlyGenerating) return
       onClose()
     }}>
-      <DialogContent className="max-w-3xl max-h-[90vh] bg-gray-900 text-white border-gray-700 relative flex flex-col">
+      <DialogContent className="max-w-3xl max-h-[90vh] bg-gray-900 text-white border-gray-700 flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-white">Character Prompt Builder - {characterName}</DialogTitle>
         </DialogHeader>
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto px-6 py-4">
         <Tabs value={mode} onValueChange={(v) => setMode(v as any)}>
           <TabsList className="w-full">
             <TabsTrigger value="guided" className="flex-1">Guided Mode</TabsTrigger>
@@ -190,7 +190,7 @@ export function CharacterPromptBuilder({
           </TabsList>
 
           {/* Guided Mode */}
-          <TabsContent value="guided" className="space-y-4 mt-4">
+          <TabsContent value="guided" className="space-y-4">
             {/* Core Identity */}
             <div className="space-y-3 p-3 rounded border border-gray-700 bg-gray-800/50">
               <h3 className="text-sm font-semibold text-gray-200">Core Identity</h3>
