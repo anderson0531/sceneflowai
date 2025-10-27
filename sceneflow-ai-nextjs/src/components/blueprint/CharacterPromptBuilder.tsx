@@ -176,11 +176,13 @@ export function CharacterPromptBuilder({
       if (!isOpen && isCurrentlyGenerating) return
       onClose()
     }}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-gray-900 text-white border-gray-700 relative">
+      <DialogContent className="max-w-3xl max-h-[90vh] bg-gray-900 text-white border-gray-700 relative flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-white">Character Prompt Builder - {characterName}</DialogTitle>
         </DialogHeader>
 
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto">
         <Tabs value={mode} onValueChange={(v) => setMode(v as any)}>
           <TabsList className="w-full">
             <TabsTrigger value="guided" className="flex-1">Guided Mode</TabsTrigger>
@@ -419,14 +421,15 @@ export function CharacterPromptBuilder({
             </details>
           </TabsContent>
         </Tabs>
+        </div>
 
-        {/* Live Prompt Preview */}
-        <div className="sticky bottom-0 bg-gray-900 border-t border-gray-700 p-3 -mx-6 -mb-6">
-          <label className="text-xs text-gray-400 block mb-1">Generated Prompt</label>
-          <div className="text-sm text-gray-200 p-2 bg-gray-800 rounded border border-gray-700 max-h-32 overflow-y-auto leading-relaxed">
+        {/* Fixed Footer - Always Visible */}
+        <div className="border-t border-gray-700 p-4 bg-gray-900">
+          <label className="text-xs text-gray-400 block mb-2">Generated Prompt</label>
+          <div className="text-sm text-gray-200 p-3 bg-gray-800 rounded border border-gray-700 max-h-32 overflow-y-auto leading-relaxed">
             {constructedPrompt || <span className="text-gray-500 italic">Fill in the fields above to build your prompt...</span>}
           </div>
-          <div className="flex gap-2 mt-2">
+          <div className="flex gap-2 mt-3">
             <Button 
               onClick={handleApply} 
               className="flex-1"
