@@ -14,6 +14,7 @@ import { ScenePromptBuilder } from './ScenePromptBuilder'
 import ScenePromptDrawer from './ScenePromptDrawer'
 import { AudioMixer, type AudioTrack } from './AudioMixer'
 import ScriptReviewModal from './ScriptReviewModal'
+import SceneReviewModal from './SceneReviewModal'
 
 interface ScriptPanelProps {
   script: any
@@ -216,6 +217,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   
   // Script overview visibility state
   const [showScriptOverview, setShowScriptOverview] = useState(true)
+  
+  // Scene review modal state
+  const [showSceneReviewModal, setShowSceneReviewModal] = useState(false)
+  const [selectedSceneForReview, setSelectedSceneForReview] = useState<number | null>(null)
   
   // Drag and drop functionality
   const sensors = useSensors(
@@ -1111,6 +1116,25 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         )}
       </div>
 
+      {/* Scene Review Modal */}
+      {showSceneReviewModal && selectedSceneForReview !== null && (
+        <SceneReviewModal
+          isOpen={showSceneReviewModal}
+          onClose={() => {
+            setShowSceneReviewModal(false)
+            setSelectedSceneForReview(null)
+          }}
+          sceneNumber={selectedSceneForReview + 1}
+          sceneReview={scenes[selectedSceneForReview]?.scoreAnalysis?.review || null}
+          onRegenerate={() => {
+            if (onGenerateSceneScore) {
+              onGenerateSceneScore(selectedSceneForReview)
+            }
+          }}
+          isGenerating={generatingScoreFor === selectedSceneForReview}
+        />
+      )}
+
       {/* Scene Prompt Builder Modal */}
       {sceneBuilderIdx !== null && (
         <ScenePromptBuilder
@@ -1460,14 +1484,19 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            if (onGenerateSceneScore) {
+                            if (scene.scoreAnalysis) {
+                              // If score exists, show review modal
+                              setSelectedSceneForReview(sceneIdx)
+                              setShowSceneReviewModal(true)
+                            } else if (onGenerateSceneScore) {
+                              // If no score, generate one
                               onGenerateSceneScore(sceneIdx)
                             }
                           }}
                           disabled={generatingScoreFor === sceneIdx}
                           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
                             scene.scoreAnalysis 
-                              ? `${getScoreColorClass ? getScoreColorClass(scene.scoreAnalysis.overallScore) : 'bg-gray-100 text-gray-800'} shadow-sm hover:opacity-90` 
+                              ? `${getScoreColorClass ? getScoreColorClass(scene.scoreAnalysis.overallScore) : 'bg-gray-100 text-gray-800'} shadow-sm hover:opacity-90 cursor-pointer` 
                               : 'border border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20 dark:hover:border-blue-700'
                           } disabled:opacity-50 disabled:cursor-not-allowed`}
                         >
@@ -1495,7 +1524,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                             <p className="font-semibold">Scene Quality Score</p>
                             <p>Director: {scene.scoreAnalysis.directorScore}/100</p>
                             <p>Audience: {scene.scoreAnalysis.audienceScore}/100</p>
-                            <p className="text-gray-400 mt-2">Click to regenerate</p>
+                            <p className="text-gray-400 mt-2">Click to view detailed review</p>
                           </div>
                         ) : (
                           <p className="text-xs">Generate quality score</p>
