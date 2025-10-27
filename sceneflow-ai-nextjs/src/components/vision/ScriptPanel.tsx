@@ -67,6 +67,47 @@ interface ScriptPanelProps {
   getScoreColorClass?: (score: number) => string
 }
 
+// Transform score analysis data to review format
+function transformScoreToReview(scoreAnalysis: any): any {
+  if (!scoreAnalysis) return null
+  
+  const recommendations = scoreAnalysis.recommendations || []
+  
+  // Extract category scores
+  const categories = [
+    { name: "Director Perspective", score: scoreAnalysis.directorScore || scoreAnalysis.overallScore },
+    { name: "Audience Perspective", score: scoreAnalysis.audienceScore || scoreAnalysis.overallScore }
+  ]
+  
+  // Generate analysis summary from recommendations
+  const analysis = recommendations.length > 0
+    ? recommendations.map((r: any) => r.description || r.title || r.rationale).join(' ')
+    : `Scene scored ${scoreAnalysis.overallScore}/100. Director perspective: ${scoreAnalysis.directorScore}/100, Audience perspective: ${scoreAnalysis.audienceScore}/100.`
+  
+  // Map recommendations by priority
+  const improvements = recommendations
+    .filter((r: any) => r.priority === 'high' || r.priority === 'medium')
+    .map((r: any) => r.title || r.description)
+  
+  const strengths = recommendations
+    .filter((r: any) => r.priority === 'low')
+    .map((r: any) => r.title || r.description)
+  
+  const recommendationTexts = recommendations
+    .map((r: any) => r.rationale || r.impact || r.title)
+    .filter((text: any) => text && text.length > 0)
+  
+  return {
+    overallScore: scoreAnalysis.overallScore,
+    categories,
+    analysis,
+    strengths: strengths.length > 0 ? strengths : ['Scene structure is well-formed'],
+    improvements: improvements.length > 0 ? improvements : ['Consider adding more visual detail'],
+    recommendations: recommendationTexts.length > 0 ? recommendationTexts : ['Review and enhance scene elements for better storytelling'],
+    generatedAt: scoreAnalysis.generatedAt || new Date().toISOString()
+  }
+}
+
 // Stoplight color system for scores
 function getStoplightTextColor(score: number): string {
   if (score >= 85) return 'text-green-600 dark:text-green-400'  // Green: Good
@@ -1125,7 +1166,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             setSelectedSceneForReview(null)
           }}
           sceneNumber={selectedSceneForReview + 1}
-          sceneReview={scenes[selectedSceneForReview]?.scoreAnalysis?.review || null}
+          sceneReview={transformScoreToReview(scenes[selectedSceneForReview]?.scoreAnalysis) || null}
           onRegenerate={() => {
             if (onGenerateSceneScore) {
               onGenerateSceneScore(selectedSceneForReview)
@@ -1484,14 +1525,14 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            // Always trigger score generation/regeneration
-                            if (onGenerateSceneScore) {
-                              onGenerateSceneScore(sceneIdx)
-                            }
-                            // If score exists, also show review modal
+                            // If score exists, show review modal immediately for instant feedback
                             if (scene.scoreAnalysis) {
                               setSelectedSceneForReview(sceneIdx)
                               setShowSceneReviewModal(true)
+                            }
+                            // Always trigger score generation/regeneration
+                            if (onGenerateSceneScore) {
+                              onGenerateSceneScore(sceneIdx)
                             }
                           }}
                           disabled={generatingScoreFor === sceneIdx}
