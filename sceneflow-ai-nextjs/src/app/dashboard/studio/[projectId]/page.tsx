@@ -188,10 +188,11 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
       startProgress()
       lastInputRef.current = text.trim()
       setLastInput(text.trim()) // Store for collapsed view
+      console.log('[Blueprint Studio] Generating 1 variant with model: gemini')
       const res = await fetch('/api/ideation/film-treatment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input: text, variants: 3, provider: 'gemini', format, targetMinutes, rigor: opts?.rigor ?? rigor, beatStructure, persona: opts?.persona })
+        body: JSON.stringify({ input: text, variants: 1, provider: 'gemini', format, targetMinutes, rigor: opts?.rigor ?? rigor, beatStructure, persona: opts?.persona })
       })
       const json = await res.json().catch(() => null)
       if (json?.success) {
@@ -508,7 +509,7 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
               </div>
             )}
           </div>
-          <GeneratingOverlay visible={isGen} title="Generating treatment variants…" progress={genProgress} />
+          <GeneratingOverlay visible={isGen} title="Crafting Film Treatment..." progress={genProgress} />
         </main>
       </div>
     </div>

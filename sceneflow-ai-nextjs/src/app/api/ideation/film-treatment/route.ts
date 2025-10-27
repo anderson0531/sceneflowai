@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     const body: FilmTreatmentRequest = await request.json()
     const { input, targetAudience, keyMessage, tone, genre, duration, platform } = body
     let { coreConcept } = body
-    const variantsCount = Math.max(1, Math.min(body.variants || 3, 5))
+    const variantsCount = Math.max(1, Math.min(body.variants || 1, 5))
     const format = body.format || 'documentary'
     const targetMinutes = body.targetMinutes || analyzeDuration(input, 20)
 
