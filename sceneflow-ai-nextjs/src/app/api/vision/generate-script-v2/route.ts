@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { v4 as uuidv4 } from 'uuid'
-import { toCanonicalName, generateAliases, matchCharacter } from '@/lib/character/canonical'
-import { validateCharacterNames, autoCorrectCharacterNames } from '@/lib/character/validation'
+import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300  // 5 minutes for large script generation (requires Vercel Pro)
@@ -65,12 +64,11 @@ export async function POST(request: NextRequest) {
         
         console.log(`[Script Gen V2] Target: ${duration}s - Scene range: ${minScenes}-${maxScenes} (suggested: ${suggestedScenes})`)
 
-        // Load existing characters and enhance with canonical format and aliases
+        // Load existing characters - defer alias generation for memory optimization
         let existingCharacters = (project.metadata?.visionPhase?.characters || []).map((c: any) => ({
           ...c,
           id: c.id || uuidv4(),
-          name: toCanonicalName(c.name || c.displayName || ''), // Normalize to canonical format
-          aliases: generateAliases(toCanonicalName(c.name || c.displayName || ''))
+          name: toCanonicalName(c.name || c.displayName || '') // Normalize to canonical format
         }))
     
         if (existingCharacters.length === 0 && treatment.character_descriptions) {
@@ -78,7 +76,6 @@ export async function POST(request: NextRequest) {
             ...c,
             id: c.id || uuidv4(),
             name: toCanonicalName(c.name || ''), // Normalize to canonical format
-            aliases: generateAliases(toCanonicalName(c.name || '')),
             version: 1,
             lastModified: new Date().toISOString(),
             referenceImage: c.referenceImage || null,
@@ -186,7 +183,15 @@ export async function POST(request: NextRequest) {
             // Success - reset retry counter and add scenes
             batchRetries = 0
             allScenes.push(...batchData.scenes)
-            console.log(`[Script Gen V2] Batch ${batchNumber} complete: ${batchData.scenes.length} scenes (total: ${allScenes.length})`)
+            
+            // Monitor dialogue verbosity
+            const avgDialogueLength = batchData.scenes.reduce((sum: number, s: any) => {
+              const dialogueChars = s.dialogue?.reduce((dSum: number, d: any) => 
+                dSum + (d.line?.length || 0), 0) || 0
+              return sum + dialogueChars
+            }, 0) / batchData.scenes.length
+            
+            console.log(`[Script Gen V2] Batch ${batchNumber} complete: ${batchData.scenes.length} scenes (total: ${allScenes.length}), avg dialogue: ${Math.round(avgDialogueLength)} chars`)
             
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
               type: 'progress',
@@ -235,7 +240,6 @@ export async function POST(request: NextRequest) {
             ...c,
             id: uuidv4(),
             name: toCanonicalName(c.name || ''), // Normalize to canonical format
-            aliases: generateAliases(toCanonicalName(c.name || '')),
             role: c.role || 'supporting',
             imagePrompt: `Professional character portrait: ${c.name}, ${c.description}, photorealistic, high detail, studio lighting, neutral background, character design, 8K quality`,
             referenceImage: null,
@@ -243,13 +247,8 @@ export async function POST(request: NextRequest) {
           }))
         ]
 
-        // Validate and auto-correct character names
-        const validation = validateCharacterNames(allScenes, allCharacters)
-        if (!validation.valid) {
-          console.warn('[Script Gen V2] Character name mismatches detected:', validation.mismatches.slice(0, 5))
-          allScenes = autoCorrectCharacterNames(allScenes, allCharacters)
-          console.log('[Script Gen V2] Auto-corrected character names to canonical format')
-        }
+        // Character name validation is now handled during embedding step (below)
+        // Removing separate validation to reduce memory overhead
 
         // Embed characterId in dialogue using canonical matching
         const scenesWithCharacterIds = allScenes.map((scene: any) => ({
@@ -257,18 +256,25 @@ export async function POST(request: NextRequest) {
           dialogue: scene.dialogue?.map((d: any) => {
             if (!d.character) return d
             
+            const normalizedDialogueName = toCanonicalName(d.character)
+            
             // Try exact match first
             let character = allCharacters.find((c: any) => 
-              toCanonicalName(c.name) === toCanonicalName(d.character)
+              toCanonicalName(c.name) === normalizedDialogueName
             )
             
-            // Fallback: Try alias matching
+            // Fallback: Generate aliases on-demand and match
             if (!character) {
-              character = matchCharacter(d.character, allCharacters)
+              character = allCharacters.find((c: any) => {
+                const aliases = generateAliases(toCanonicalName(c.name))
+                return aliases.some(alias => 
+                  toCanonicalName(alias) === normalizedDialogueName
+                )
+              })
             }
             
-            // Log mismatches for debugging
-            if (!character) {
+            // Log mismatches for debugging (less verbose in production)
+            if (!character && process.env.NODE_ENV === 'development') {
               console.warn(`[Character Match] No match for "${d.character}" in scene ${scene.sceneNumber}`)
             }
             
@@ -593,71 +599,57 @@ function sanitizeJsonString(jsonStr: string): string {
     JSON.parse(cleaned)
     return cleaned
   } catch (firstError: any) {
-    console.error('[Sanitize] Original error:', firstError.message)
-    console.error('[Sanitize] First 200 chars:', cleaned.substring(0, 200))
+    // Only log in development
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[Sanitize] Cleaning JSON:', firstError.message.substring(0, 100))
+    }
     
-    // Enhanced sanitization approach
     try {
-      // Remove control characters (ASCII 0-31 except tab, newline, carriage return)
-      cleaned = cleaned.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, '')
+      // STEP 1: Remove/escape control characters first (before other fixes)
+      cleaned = cleaned.replace(
+        /"((?:[^"\\]|\\.)*)"/g,
+        (match, stringContent) => {
+          const fixed = stringContent
+            .split('')
+            .map((char: string) => {
+              const code = char.charCodeAt(0)
+              // Replace literal control chars (ASCII 0-31 except valid escapes)
+              if (code < 32) {
+                if (code === 9) return '\\t'   // tab
+                if (code === 10) return '\\n'  // newline
+                if (code === 13) return '\\r'  // carriage return
+                return ' ' // Replace other control chars with space
+              }
+              return char
+            })
+            .join('')
+          return `"${fixed}"`
+        }
+      )
       
-      // Fix common JSON issues
+      // STEP 2: Standard JSON fixes
       cleaned = cleaned
-        .replace(/,\s*([}\]])/g, '$1') // Remove trailing commas
-        .replace(/([{,])\s*([}\]])/g, '$1"":$2') // Fix empty values
+        .replace(/,\s*([}\]])/g, '$1') // trailing commas
+        .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, '') // any remaining control chars
         .trim()
       
-      // If JSON is truncated, try to close it properly
+      // STEP 3: Balance braces/brackets
       const openBraces = (cleaned.match(/{/g) || []).length
       const closeBraces = (cleaned.match(/}/g) || []).length
       const openBrackets = (cleaned.match(/\[/g) || []).length
       const closeBrackets = (cleaned.match(/\]/g) || []).length
       
-      // Add missing closing braces/brackets
-      while (openBraces > closeBraces) {
-        cleaned += '}'
-      }
-      while (openBrackets > closeBrackets) {
-        cleaned += ']'
-      }
+      while (openBraces > closeBraces) cleaned += '}'
+      while (openBrackets > closeBrackets) cleaned += ']'
       
-      // Try parsing the enhanced version
+      // Try parsing the cleaned version
       JSON.parse(cleaned)
       return cleaned
-    } catch (secondError: any) {
-      console.error('[Sanitize] After enhanced sanitization:', secondError.message)
       
-      // Final fallback: Try more aggressive approach
-      try {
-        const aggressive = cleaned.replace(
-          /"((?:[^"\\]|\\.)*)"/g,
-          (match, stringContent) => {
-            // Replace any literal control chars with escaped versions
-            const fixed = stringContent
-              .split('')
-              .map((char: string) => {
-                const code = char.charCodeAt(0)
-                if (code < 32 && code !== 9 && code !== 10 && code !== 13) {
-                  return ' ' // Replace with space
-                }
-                if (code === 9) return '\\t'
-                if (code === 10) return '\\n'
-                if (code === 13) return '\\r'
-                return char
-              })
-              .join('')
-            
-            return `"${fixed}"`
-          }
-        )
-        
-        JSON.parse(aggressive)
-        return aggressive
-      } catch (finalError: any) {
-        console.error('[Sanitize] Final attempt failed:', finalError.message)
-        // Return original as last resort
-        return cleaned
-      }
+    } catch (secondError: any) {
+      // Only log severe errors in production
+      console.error('[Sanitize] Failed to clean JSON after multiple attempts')
+      throw secondError // Re-throw to trigger retry logic
     }
   }
 }

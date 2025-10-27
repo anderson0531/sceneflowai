@@ -1,0 +1,9 @@
+{
+  "functions": {
+    "src/app/api/vision/generate-script-v2/route.ts": {
+      "memory": 3008,
+      "maxDuration": 300
+    }
+  }
+}
+
