@@ -22,11 +22,12 @@ interface AudioGenerationRequest {
   text: string
   voiceConfig: VoiceConfig
   characterName?: string // For dialogue
+  dialogueIndex?: number // For dialogue - index of the dialog line in the scene
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, sceneIndex, audioType, text, voiceConfig, characterName } = await req.json()
+    const { projectId, sceneIndex, audioType, text, voiceConfig, characterName, dialogueIndex } = await req.json()
 
     // Log the request for debugging
     console.log('[Scene Audio] Request:', { 
@@ -34,6 +35,7 @@ export async function POST(req: NextRequest) {
       sceneIndex, 
       audioType, 
       characterName,
+      dialogueIndex,
       hasText: !!text,
       hasVoiceConfig: !!voiceConfig 
     })
@@ -72,13 +74,14 @@ export async function POST(req: NextRequest) {
     console.log(`[Scene Audio] Uploaded to Blob:`, blob.url)
 
     // Update scene in project metadata
-    await updateSceneAudio(projectId, sceneIndex, audioType, blob.url, characterName)
+    await updateSceneAudio(projectId, sceneIndex, audioType, blob.url, characterName, dialogueIndex)
 
     return NextResponse.json({
       success: true,
       audioUrl: blob.url,
       audioType,
-      characterName
+      characterName,
+      dialogueIndex
     })
   } catch (error: any) {
     console.error('[Scene Audio] Error:', error)
@@ -174,7 +177,8 @@ async function updateSceneAudio(
   sceneIndex: number,
   audioType: 'narration' | 'dialogue',
   audioUrl: string,
-  characterName?: string
+  characterName?: string,
+  dialogueIndex?: number
 ) {
   await sequelize.authenticate()
   const project = await Project.findByPk(projectId)
@@ -205,14 +209,16 @@ async function updateSceneAudio(
         narrationAudioGeneratedAt: new Date().toISOString(),
       }
     } else {
-      // Dialogue audio
+      // Dialogue audio - match by both character and dialogueIndex
       const dialogueAudio = [...(s.dialogueAudio || [])]
-      const existingIndex = dialogueAudio.findIndex((d: any) => d.character === characterName)
+      const existingIndex = dialogueAudio.findIndex((d: any) => 
+        d.character === characterName && d.dialogueIndex === dialogueIndex
+      )
       
       if (existingIndex >= 0) {
-        dialogueAudio[existingIndex] = { character: characterName, audioUrl }
+        dialogueAudio[existingIndex] = { character: characterName, dialogueIndex, audioUrl }
       } else {
-        dialogueAudio.push({ character: characterName, audioUrl })
+        dialogueAudio.push({ character: characterName, dialogueIndex, audioUrl })
       }
 
       return {

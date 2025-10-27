@@ -43,7 +43,7 @@ interface ScriptPanelProps {
   }>
   onDismissValidationWarning?: (sceneIdx: number) => void
   onPlayAudio?: (audioUrl: string, label: string) => void
-  onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string) => void
+  onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number) => void
   // NEW: Props for Production Script Header
   onGenerateAllAudio?: () => void
   isGeneratingAudio?: boolean
@@ -209,7 +209,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const individualAudioRef = useRef<HTMLAudioElement | null>(null)
   
   // Dialogue generation state
-  const [generatingDialogue, setGeneratingDialogue] = useState<{sceneIdx: number, character: string} | null>(null)
+  const [generatingDialogue, setGeneratingDialogue] = useState<{sceneIdx: number, character: string, dialogueIndex?: number} | null>(null)
   
   // Voice selection visibility state
   const [showVoiceSelection, setShowVoiceSelection] = useState(false)
@@ -1205,10 +1205,10 @@ interface SceneCardProps {
   generateAndPlayMusic?: (description: string, duration?: number) => Promise<void>
   // Individual audio playback
   onPlayAudio?: (audioUrl: string, label: string) => void
-  onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string) => void
+  onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number) => void
   playingAudio?: string | null
-  generatingDialogue?: {sceneIdx: number, character: string} | null
-  setGeneratingDialogue?: (state: {sceneIdx: number, character: string} | null) => void
+  generatingDialogue?: {sceneIdx: number, character: string, dialogueIndex?: number} | null
+  setGeneratingDialogue?: (state: {sceneIdx: number, character: string, dialogueIndex?: number} | null) => void
   timelineStart?: number
   dragHandleProps?: any
   onAddScene?: (afterIndex?: number) => void
@@ -1873,7 +1873,10 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
           {!isOutline && scene.dialogue && scene.dialogue.length > 0 && (
             <div className="space-y-2">
               {scene.dialogue.map((d: any, i: number) => {
-                const audioEntry = scene.dialogueAudio?.find((a: any) => a.character === d.character)
+                // Match audio by both character and dialogueIndex
+                const audioEntry = scene.dialogueAudio?.find((a: any) => 
+                  a.character === d.character && a.dialogueIndex === i
+                )
                 return (
                   <div key={i} className="flex items-start gap-2">
                     <div className="flex-1">
@@ -1908,20 +1911,20 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                             e.stopPropagation()
                             if (!onGenerateSceneAudio) return
                             
-                            setGeneratingDialogue?.({ sceneIdx, character: d.character })
+                            setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
                             try {
-                              await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character)
+                              await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i)
                             } catch (error) {
                               console.error('[ScriptPanel] Dialogue regeneration failed:', error)
                             } finally {
                               setGeneratingDialogue?.(null)
                             }
                           }}
-                          disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character}
+                          disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character && generatingDialogue?.dialogueIndex === i}
                           className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-50"
                           title="Regenerate Dialogue Audio"
                         >
-                          {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character ? (
+                          {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character && generatingDialogue?.dialogueIndex === i ? (
                             <Loader className="w-4 h-4 animate-spin" />
                           ) : (
                             <RefreshCw className="w-4 h-4" />
@@ -1940,27 +1943,27 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                       <button
                         onClick={async (e) => {
                           e.stopPropagation()
-                          console.log('[ScriptPanel] Generate dialogue clicked:', { sceneIdx, character: d.character })
+                          console.log('[ScriptPanel] Generate dialogue clicked:', { sceneIdx, character: d.character, dialogueIndex: i })
                           
                           if (!onGenerateSceneAudio) {
                             console.error('[ScriptPanel] onGenerateSceneAudio is not defined!')
                             return
                           }
                           
-                          setGeneratingDialogue?.({ sceneIdx, character: d.character })
+                          setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
                           
                           try {
-                            await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character)
+                            await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i)
                           } catch (error) {
                             console.error('[ScriptPanel] Dialogue generation failed:', error)
                           } finally {
                             setGeneratingDialogue?.(null)
                           }
                         }}
-                        disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character}
+                        disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character && generatingDialogue?.dialogueIndex === i}
                         className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50"
                       >
-                        {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character ? (
+                        {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character && generatingDialogue?.dialogueIndex === i ? (
                           <div className="flex items-center gap-1">
                             <Loader className="w-3 h-3 animate-spin" />
                             Generating...

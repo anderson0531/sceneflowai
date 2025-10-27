@@ -108,8 +108,9 @@ export async function POST(req: NextRequest) {
                 dialogueCount: scene.dialogue.length
               })
               
-              for (const dialogueLine of scene.dialogue) {
-                console.log(`[Batch Audio] Processing dialogue for character: "${dialogueLine.character}"`)
+              for (let dialogueIndex = 0; dialogueIndex < scene.dialogue.length; dialogueIndex++) {
+                const dialogueLine = scene.dialogue[dialogueIndex]
+                console.log(`[Batch Audio] Processing dialogue ${dialogueIndex + 1}/${scene.dialogue.length} for character: "${dialogueLine.character}"`)
                 
                 // Primary: Match by ID (most reliable)
                 // Fallback: Case-insensitive name (for legacy projects)
@@ -148,6 +149,7 @@ export async function POST(req: NextRequest) {
                     text: dialogueLine.line,
                     voiceConfig: character.voiceConfig,
                     characterName: dialogueLine.character,
+                    dialogueIndex
                   }),
                 })
                 const dialogueData = await dialogueResult.json()

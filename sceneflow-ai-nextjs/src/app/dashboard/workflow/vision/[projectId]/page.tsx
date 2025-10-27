@@ -2150,8 +2150,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   // Handle generate scene audio
-  const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string) => {
-    console.log('[Generate Scene Audio] START:', { sceneIdx, audioType, characterName })
+  const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number) => {
+    console.log('[Generate Scene Audio] START:', { sceneIdx, audioType, characterName, dialogueIndex })
     
     const scene = script?.script?.scenes?.[sceneIdx]
     if (!scene) {
@@ -2160,7 +2160,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
 
     // Add a lock mechanism to prevent concurrent dialogue generations
-    const lockKey = `${sceneIdx}-${characterName || 'narration'}`
+    const lockKey = `${sceneIdx}-${audioType === 'dialogue' ? `${characterName}-${dialogueIndex}` : 'narration'}`
     if (generatingAudioLocks.has(lockKey)) {
       console.warn('[Generate Scene Audio] Already generating for:', lockKey)
       return
@@ -2174,8 +2174,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         console.error('[Generate Scene Audio] Character name required for dialogue')
         throw new Error('Character name required for dialogue generation')
       }
-      const dialogueLine = audioType === 'dialogue' ? 
-        scene.dialogue?.find((d: any) => d.character === characterName) : null
+      
+      // For dialogue, find the specific line by index if provided
+      let dialogueLine = null
+      if (audioType === 'dialogue') {
+        if (dialogueIndex !== undefined) {
+          // Find by index for precise matching
+          dialogueLine = scene.dialogue?.[dialogueIndex]
+        } else {
+          // Fallback: find by character name (first match)
+          dialogueLine = scene.dialogue?.find((d: any) => d.character === characterName)
+        }
+      }
       
       const text = audioType === 'narration' ? scene.narration : dialogueLine?.line
       
@@ -2258,7 +2268,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         audioType,
         text: text.substring(0, 50),
         voiceId: voiceConfig.voiceId,
-        characterName // CRITICAL: Must be passed
+        characterName, // CRITICAL: Must be passed
+        dialogueIndex
       })
 
       const response = await fetch('/api/vision/generate-scene-audio', {
@@ -2270,7 +2281,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           audioType,
           text,
           voiceConfig,
-          characterName
+          characterName,
+          dialogueIndex
         }),
       })
 
@@ -2288,14 +2300,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 narrationAudioUrl: data.audioUrl
               }
             } else if (audioType === 'dialogue' && characterName) {
-              // Handle dialogue audio
+              // Handle dialogue audio - match by both character and dialogueIndex
               const dialogueAudio = updated.script.scenes[sceneIdx].dialogueAudio || []
-              const existingIndex = dialogueAudio.findIndex((d: any) => d.character === characterName)
+              const existingIndex = dialogueAudio.findIndex((d: any) => 
+                d.character === characterName && d.dialogueIndex === dialogueIndex
+              )
               
               if (existingIndex >= 0) {
-                dialogueAudio[existingIndex] = { character: characterName, audioUrl: data.audioUrl }
+                dialogueAudio[existingIndex] = { character: characterName, dialogueIndex, audioUrl: data.audioUrl }
               } else {
-                dialogueAudio.push({ character: characterName, audioUrl: data.audioUrl })
+                dialogueAudio.push({ character: characterName, dialogueIndex, audioUrl: data.audioUrl })
               }
               
               updated.script.scenes[sceneIdx] = {
