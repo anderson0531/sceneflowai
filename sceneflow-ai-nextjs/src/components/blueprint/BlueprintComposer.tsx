@@ -140,7 +140,14 @@ export function BlueprintComposer({
           ref={textareaRef as any}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Tell us about your video project... Who is it for? What's the goal and tone? Paste a script or brief if you have one."
+          placeholder="Describe your video project in detail...
+
+Examples:
+• A 15-minute documentary about urban farming in Detroit
+• Training video for new employees on workplace safety protocols  
+• YouTube explainer on the history of cryptocurrency
+
+Include: target audience, key message, tone (professional/casual/inspiring), and any specific requirements."
           className="min-h-[260px] text-base"
         />
         {/* Examples removed to reduce clutter */}
@@ -163,12 +170,12 @@ export function BlueprintComposer({
           {isGenerating ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Generating
+              Generating Blueprint...
             </>
           ) : (
             <>
               <Sparkles className="h-4 w-4 mr-2" />
-              Generate
+              Generate Blueprint
             </>
           )}
         </Button>
