@@ -357,20 +357,30 @@ SCENE PLANNING:
 - Generate first ${end} scenes now
 
 DURATION ESTIMATION (CRITICAL):
-Calculate REALISTIC duration based on SPEECH TIME (narration + dialogue):
-- Narration: ~150 words per minute (WPM) = 0.4s per word
-- Dialogue: ~130 words per minute (natural speech) = 0.46s per word
-- Add 2-5s setup/transition time per scene
+Calculate REALISTIC duration using this verified formula:
 
-Formula: 
-  duration = (narration_words * 0.4) + (dialogue_words * 0.46) + (setup_time: 2-5s)
+1. Count TOTAL words (narration + all dialogue combined)
+2. Speech time: (total_words / 150) * 60 seconds (150 WPM for all speech)
+3. Buffer time based on scene complexity:
+   - Simple scenes (action < 100 chars): +2s
+   - Medium scenes (action 100-200 chars): +3s
+   - Complex scenes (action 200-300 chars): +4s
+   - Very complex (action > 300 chars): +5s
+4. Video clip overhead: Math.ceil((speech_time + buffer) / 8) * 0.5s
+5. Round up to nearest multiple of 8 (for 8-second video clips)
 
-Examples:
-- Narration (30 words) + 1 dialogue (15 words) + setup (3s) = 12s + 7s + 3s = 22s
-- Narration (50 words) + 3 dialogues (40 words total) + setup (5s) = 20s + 18s + 5s = 43s
-- Narration (80 words) + 6 dialogues (90 words total) + action (10s) = 32s + 41s + 10s = 83s
+Formula:
+  speech_duration = (total_words / 150) * 60
+  required_duration = speech_duration + buffer
+  video_clips = Math.ceil(required_duration / 8)
+  scene_duration = Math.ceil((speech_duration + buffer + (video_clips * 0.5)) / 8) * 8
 
-CRITICAL: Estimate duration based on actual word count of narration and dialogue, not arbitrary numbers.
+Examples (showing total word count):
+- 75 words, simple: (75/150*60) + 2 + (7*0.5) = 30 + 2 + 3.5 = 40s (rounded to 40s)
+- 150 words, medium: (150/150*60) + 3 + (8*0.5) = 60 + 3 + 4 = 72s (rounded to 72s)
+- 300 words, complex: (300/150*60) + 4 + (16*0.5) = 120 + 4 + 8 = 136s (rounded to 136s)
+
+CRITICAL: Use TOTAL word count from narration + dialogue. Base buffer on action description length.
 
 Return JSON:
 {
@@ -462,11 +472,17 @@ DURATION TARGET:
 - Total target: ${targetDuration}s (±10%)
 
 DURATION ESTIMATION (CRITICAL):
-Calculate based on SPEECH TIME (narration + dialogue):
-- Narration: ~150 WPM = 0.4s per word
-- Dialogue: ~130 WPM = 0.46s per word
-- Formula: (narration_words * 0.4) + (dialogue_words * 0.46) + (setup: 2-5s)
-- Base estimates on actual word count
+Use this verified formula matching production calculations:
+
+1. Count TOTAL words (narration + all dialogue)
+2. Speech: (total_words / 150) * 60 seconds (150 WPM)
+3. Buffer: 2-5s based on action description length
+4. Video clips: Math.ceil((speech + buffer) / 8) * 0.5s
+5. Round to nearest 8 (for 8-second clips)
+
+Formula: Math.ceil((speech_duration + buffer + (video_clips * 0.5)) / 8) * 8
+
+Base estimates on TOTAL word count, not separate narration/dialogue rates.
 
 Return JSON array:
 [
