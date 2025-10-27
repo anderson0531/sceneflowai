@@ -73,37 +73,43 @@ function transformScoreToReview(scoreAnalysis: any): any {
   
   const recommendations = scoreAnalysis.recommendations || []
   
+  // Filter out fallback recommendations (identified by ID pattern or specific titles)
+  const validRecommendations = recommendations.filter((r: any) => 
+    !r.id?.startsWith('fallback-') && 
+    r.title !== 'Scene Analysis Unavailable'
+  )
+  
   // Extract category scores
   const categories = [
     { name: "Director Perspective", score: scoreAnalysis.directorScore || scoreAnalysis.overallScore },
     { name: "Audience Perspective", score: scoreAnalysis.audienceScore || scoreAnalysis.overallScore }
   ]
   
-  // Generate analysis summary from recommendations
-  const analysis = recommendations.length > 0
-    ? recommendations.map((r: any) => r.description || r.title || r.rationale).join(' ')
+  // Generate analysis summary from valid recommendations
+  const analysis = validRecommendations.length > 0
+    ? validRecommendations.map((r: any) => r.description || r.title || r.rationale).join(' ')
     : `Scene scored ${scoreAnalysis.overallScore}/100. Director perspective: ${scoreAnalysis.directorScore}/100, Audience perspective: ${scoreAnalysis.audienceScore}/100.`
   
-  // Map recommendations by priority
-  const improvements = recommendations
+  // Map recommendations by priority (using valid recommendations only)
+  const improvements = validRecommendations
     .filter((r: any) => r.priority === 'high' || r.priority === 'medium')
     .map((r: any) => r.title || r.description)
   
-  const strengths = recommendations
+  const strengths = validRecommendations
     .filter((r: any) => r.priority === 'low')
     .map((r: any) => r.title || r.description)
   
-  const recommendationTexts = recommendations
+  const recommendationTexts = validRecommendations
     .map((r: any) => r.rationale || r.impact || r.title)
-    .filter((text: any) => text && text.length > 0)
+    .filter((text: any) => text && text.length > 0 && text !== 'N/A')
   
   return {
     overallScore: scoreAnalysis.overallScore,
     categories,
     analysis,
     strengths: strengths.length > 0 ? strengths : ['Scene structure is well-formed'],
-    improvements: improvements.length > 0 ? improvements : ['Consider adding more visual detail'],
-    recommendations: recommendationTexts.length > 0 ? recommendationTexts : ['Review and enhance scene elements for better storytelling'],
+    improvements: improvements.length > 0 ? improvements : ['No specific improvements identified'],
+    recommendations: recommendationTexts.length > 0 ? recommendationTexts : ['Scene meets basic quality standards'],
     generatedAt: scoreAnalysis.generatedAt || new Date().toISOString()
   }
 }
