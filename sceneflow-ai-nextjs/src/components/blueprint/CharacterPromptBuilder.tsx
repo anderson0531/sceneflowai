@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/Button'
-import { Sparkles, Copy, Check } from 'lucide-react'
+import { Sparkles, Copy, Check, Loader } from 'lucide-react'
 import { artStylePresets, shotTypes } from '@/constants/artStylePresets'
 
 interface PromptStructure {
@@ -30,7 +30,8 @@ interface CharacterPromptBuilderProps {
   initialPrompt?: string
   initialStructure?: Partial<PromptStructure>
   characterName?: string
-  onApply: (prompt: string, structure: PromptStructure) => void
+  onApply: (prompt: string, structure: PromptStructure) => void | Promise<void>
+  isGenerating?: boolean
 }
 
 export function CharacterPromptBuilder({
@@ -39,7 +40,8 @@ export function CharacterPromptBuilder({
   initialPrompt = '',
   initialStructure,
   characterName = 'Character',
-  onApply
+  onApply,
+  isGenerating = false
 }: CharacterPromptBuilderProps) {
   const [mode, setMode] = useState<'guided' | 'advanced'>('guided')
   const [structure, setStructure] = useState<PromptStructure>({
@@ -61,6 +63,7 @@ export function CharacterPromptBuilder({
   const [enhancing, setEnhancing] = useState<string | null>(null)
   const [suggestions, setSuggestions] = useState<Record<string, string[]>>({})
   const [copied, setCopied] = useState(false)
+  const [isGeneratingInternal, setIsGeneratingInternal] = useState(false)
 
   // Update structure when initialStructure prop changes (e.g., different character selected)
   useEffect(() => {
@@ -148,10 +151,18 @@ export function CharacterPromptBuilder({
     }
   }
 
-  const handleApply = () => {
-    onApply(constructedPrompt, structure)
-    onClose()
+  const handleApply = async () => {
+    setIsGeneratingInternal(true)
+    try {
+      await onApply(constructedPrompt, structure)
+    } catch (error) {
+      console.error('[Character Prompt Builder] Apply failed:', error)
+    } finally {
+      setIsGeneratingInternal(false)
+    }
   }
+
+  const isCurrentlyGenerating = isGenerating || isGeneratingInternal
 
   const handleCopy = async () => {
     await navigator.clipboard?.writeText(constructedPrompt)
@@ -160,8 +171,12 @@ export function CharacterPromptBuilder({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-gray-900 text-white border-gray-700">
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      // Prevent closing during generation
+      if (!isOpen && isCurrentlyGenerating) return
+      onClose()
+    }}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-gray-900 text-white border-gray-700 relative">
         <DialogHeader>
           <DialogTitle className="text-white">Character Prompt Builder - {characterName}</DialogTitle>
         </DialogHeader>
@@ -412,14 +427,40 @@ export function CharacterPromptBuilder({
             {constructedPrompt || <span className="text-gray-500 italic">Fill in the fields above to build your prompt...</span>}
           </div>
           <div className="flex gap-2 mt-2">
-            <Button onClick={handleApply} className="flex-1">
-              Apply Prompt
+            <Button 
+              onClick={handleApply} 
+              className="flex-1"
+              disabled={isCurrentlyGenerating}
+            >
+              {isCurrentlyGenerating ? (
+                <>
+                  <Loader className="w-4 h-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                'Apply & Generate'
+              )}
             </Button>
-            <Button onClick={handleCopy} variant="outline" className="px-3">
+            <Button 
+              onClick={handleCopy} 
+              variant="outline" 
+              className="px-3"
+              disabled={isCurrentlyGenerating}
+            >
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             </Button>
           </div>
         </div>
+
+        {/* Loading Overlay */}
+        {isCurrentlyGenerating && (
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
+            <div className="bg-gray-800 rounded-lg p-6 shadow-xl">
+              <Loader className="w-8 h-8 animate-spin mx-auto mb-3 text-blue-500" />
+              <p className="text-sm text-gray-200">Generating character image...</p>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

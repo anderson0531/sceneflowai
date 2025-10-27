@@ -309,9 +309,23 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
             initialPrompt={charPrompts[builderCharId] || character?.imagePrompt || ''}
             initialStructure={initialStructure}
             characterName={character?.name || 'Character'}
-            onApply={(prompt, structure) => {
+            isGenerating={generatingChars.has(builderCharId)}
+            onApply={async (prompt, structure) => {
               setCharPrompts(prev => ({ ...prev, [builderCharId]: prompt }))
               setBuilderOpen(false)
+              
+              // Trigger image generation with the new prompt
+              setGeneratingChars(prev => new Set(prev).add(builderCharId))
+              try {
+                await onGenerateCharacter(builderCharId, prompt)
+              } finally {
+                setGeneratingChars(prev => {
+                  const newSet = new Set(prev)
+                  newSet.delete(builderCharId)
+                  return newSet
+                })
+              }
+              
               // Reset builder state for next use
               setTimeout(() => setBuilderCharId(null), 300)
             }}
