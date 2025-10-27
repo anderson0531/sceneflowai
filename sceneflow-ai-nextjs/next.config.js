@@ -15,7 +15,6 @@ const nextConfig = {
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
     NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || require('./package.json').version,
-    NODE_OPTIONS: '--max-old-space-size=3072', // 3GB for memory-intensive operations
   },
   serverExternalPackages: ['pg', 'pg-hstore', 'sequelize'],
   typescript: {

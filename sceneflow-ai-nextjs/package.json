@@ -7,7 +7,9 @@
         },
         "scripts": {
                 "dev": "next dev --turbopack",
+                "dev:memory": "NODE_OPTIONS='--max-old-space-size=3072' next dev --turbopack",
                 "build": "next build",
+                "build:memory": "NODE_OPTIONS='--max-old-space-size=3072' next build",
                 "start": "next start",
                 "lint": "next lint",
                 "setup:database": "echo 'Database setup scripts removed during cleanup'",
