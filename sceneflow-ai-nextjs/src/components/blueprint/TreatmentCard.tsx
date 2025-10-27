@@ -216,9 +216,9 @@ export function TreatmentCard() {
     })()
     const flashIf = (key: string) => (wasJustAppliedActive && changedKeys.has(key) ? 'flash-highlight' : '')
     return (
-      <Card className="mt-4 border-gray-700/60 bg-gray-900/60">
+      <Card className="mt-4 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
         <CardHeader>
-          <CardTitle className="text-white">Film Treatment</CardTitle>
+          <CardTitle className="text-gray-900 dark:text-gray-100">Treatment</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="w-full">
@@ -519,16 +519,16 @@ export function TreatmentCard() {
               if (!v) return null
               const accent = v.id === 'A' ? 'border-blue-500' : v.id === 'B' ? 'border-purple-500' : 'border-emerald-500'
               const badge = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs'
-              const badgeGenre = `${badge} border-gray-700 bg-gray-800/60 text-gray-200`
-              const badgeFormat = `${badge} border-gray-700 bg-gray-800/60 text-gray-200`
-              const badgeAudience = `${badge} border-gray-700 bg-gray-800/60 text-gray-200`
+              const badgeGenre = `${badge} border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300`
+              const badgeFormat = `${badge} border-purple-200 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300`
+              const badgeAudience = `${badge} border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300`
               return (
-                <div className="space-y-5 text-sm text-gray-200">
+                <div className="space-y-5 text-sm">
                   {/* Callout */}
-                  <div className={`p-3 rounded-md border-l-4 ${accent} bg-gray-900/50`}> 
-                    <div className={`text-base font-semibold ${v.id===activeVariant.id ? flashIf('title') : ''}`}>{v.title || 'Film Treatment'}</div>
+                  <div className={`p-4 rounded-lg border-l-4 ${accent} bg-gray-50 dark:bg-gray-800/50`}> 
+                    <div className={`text-lg font-bold text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? flashIf('title') : ''}`}>{v.title || 'Treatment'}</div>
                     {v.logline ? (
-                      <div className={`mt-1 text-gray-300 leading-6 ${v.id===activeVariant.id ? flashIf('logline') : ''}`}>{v.logline}</div>
+                      <div className={`mt-2 text-base text-gray-700 dark:text-gray-300 leading-relaxed ${v.id===activeVariant.id ? flashIf('logline') : ''}`}>{v.logline}</div>
                     ) : null}
                     {!enabled && (
                       <div className="mt-2 text-xs text-gray-400 inline-flex items-center gap-1" title="Set ELEVENLABS_API_KEY to enable audio previews">
@@ -538,88 +538,88 @@ export function TreatmentCard() {
                   </div>
                   {/* Core Identifying Information */}
                   <div className="space-y-1">
-                    <div className="text-xs text-gray-400">Core Identifying Information</div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 rounded border border-gray-700/60 bg-gray-900/40">
+                    <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Core Identifying Information</div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                       <div>
-                        <div className="text-xs text-gray-400">Title</div>
-                        <div className={`text-gray-200 ${v.id===activeVariant.id ? flashIf('title') : ''}`}>{v.title || '—'}</div>
+                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Title</div>
+                        <div className={`text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? flashIf('title') : ''}`}>{v.title || '—'}</div>
                       </div>
                       <div>
-                        <div className="text-xs text-gray-400">Genre</div>
-                        <div className={`text-gray-200 ${v.id===activeVariant.id ? flashIf('genre') : ''}`}>
+                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Genre</div>
+                        <div className={`${v.id===activeVariant.id ? flashIf('genre') : ''}`}>
                           {v.genre ? <span className={badgeGenre}>{v.genre}</span> : '—'}
                         </div>
                       </div>
                       <div>
-                        <div className="text-xs text-gray-400">Format/Length</div>
-                        <div className={`text-gray-200 ${v.id===activeVariant.id ? flashIf('format_length') : ''}`}>
+                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Format/Length</div>
+                        <div className={`${v.id===activeVariant.id ? flashIf('format_length') : ''}`}>
                           {v.format_length ? <span className={badgeFormat}>{v.format_length}</span> : '—'}
                         </div>
                       </div>
                       <div className="md:col-span-3">
-                        <div className="text-xs text-gray-400">Logline</div>
-                        <div className={`text-gray-200 whitespace-pre-wrap leading-6 ${v.id===activeVariant.id ? flashIf('logline') : ''}`}>{v.logline || '—'}</div>
+                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Logline</div>
+                        <div className={`text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed ${v.id===activeVariant.id ? flashIf('logline') : ''}`}>{v.logline || '—'}</div>
                       </div>
                       <div>
-                        <div className="text-xs text-gray-400">Target Audience</div>
-                        <div className={`text-gray-200 ${v.id===activeVariant.id ? flashIf('target_audience') : ''}`}>
+                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Target Audience</div>
+                        <div className={`${v.id===activeVariant.id ? flashIf('target_audience') : ''}`}>
                           {v.target_audience ? <span className={badgeAudience}>{v.target_audience}</span> : '—'}
                         </div>
                       </div>
                       <div>
-                        <div className="text-xs text-gray-400">Author/Writer</div>
-                        <div className={`text-gray-200 ${v.id===activeVariant.id ? flashIf('author_writer') : ''}`}>{v.author_writer || '—'}</div>
+                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Author/Writer</div>
+                        <div className={`text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? flashIf('author_writer') : ''}`}>{v.author_writer || '—'}</div>
                       </div>
                       <div>
-                        <div className="text-xs text-gray-400">Date</div>
-                        <div className={`text-gray-200 font-mono ${v.id===activeVariant.id ? flashIf('date') : ''}`}>{v.date || '—'}</div>
+                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Date</div>
+                        <div className={`text-gray-900 dark:text-gray-100 font-mono ${v.id===activeVariant.id ? flashIf('date') : ''}`}>{v.date || '—'}</div>
                       </div>
                     </div>
                   </div>
 
                   {/* Narrative Structure & Plot */}
                   <div className="space-y-1">
-                    <div className="text-xs text-gray-400">Story Setup</div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 rounded border border-gray-700/60 bg-gray-900/40">
+                    <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Story Setup</div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                       <div>
-                        <div className="text-xs text-gray-400">Setting</div>
-                        <div className={`text-gray-200 ${v.id===activeVariant.id ? flashIf('setting') : ''}`}>{v.setting || '—'}</div>
+                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Setting</div>
+                        <div className={`text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? flashIf('setting') : ''}`}>{v.setting || '—'}</div>
                       </div>
                       <div>
-                        <div className="text-xs text-gray-400">Protagonist</div>
-                        <div className={`text-gray-200 ${v.id===activeVariant.id ? flashIf('protagonist') : ''}`}>{v.protagonist || '—'}</div>
+                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Protagonist</div>
+                        <div className={`text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? flashIf('protagonist') : ''}`}>{v.protagonist || '—'}</div>
                       </div>
                       <div>
-                        <div className="text-xs text-gray-400">Antagonist / Conflict</div>
-                        <div className={`text-gray-200 ${v.id===activeVariant.id ? flashIf('antagonist') : ''}`}>{v.antagonist || '—'}</div>
+                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Antagonist / Conflict</div>
+                        <div className={`text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? flashIf('antagonist') : ''}`}>{v.antagonist || '—'}</div>
                       </div>
                     </div>
                   </div>
 
                   {/* Tone, Style, & Themes */}
                   <div className="space-y-1">
-                    <div className="text-xs text-gray-400">Tone, Style, & Themes</div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 rounded border border-gray-700/60 bg-gray-900/40">
+                    <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Tone, Style, & Themes</div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                       <div>
-                        <div className="text-xs text-gray-400">Tone</div>
-                        <div className={`text-gray-200 ${v.id===activeVariant.id ? (flashIf('tone_description') || flashIf('tone')) : ''}`}>{v.tone_description || v.tone || '—'}</div>
+                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Tone</div>
+                        <div className={`text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? (flashIf('tone_description') || flashIf('tone')) : ''}`}>{v.tone_description || v.tone || '—'}</div>
                       </div>
                       <div>
-                        <div className="text-xs text-gray-400">Style / Visual Style</div>
-                        <div className={`text-gray-200 ${v.id===activeVariant.id ? (flashIf('style') || flashIf('visual_style')) : ''}`}>{v.style || v.visual_style || '—'}</div>
+                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Style / Visual Style</div>
+                        <div className={`text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? (flashIf('style') || flashIf('visual_style')) : ''}`}>{v.style || v.visual_style || '—'}</div>
                       </div>
                       <div>
-                        <div className="text-xs text-gray-400">Themes</div>
-                        <div className={`text-gray-200 flex flex-wrap gap-2 ${v.id===activeVariant.id ? flashIf('themes') : ''}`}>
+                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Themes</div>
+                        <div className={`flex flex-wrap gap-2 ${v.id===activeVariant.id ? flashIf('themes') : ''}`}>
                           {Array.isArray(v.themes) ? v.themes.map((t: string, i: number) => (
-                            <span key={`${t}-${i}`} className="px-2 py-0.5 rounded-full bg-gray-800/60 border border-gray-700 text-xs">{t}</span>
+                            <span key={`${t}-${i}`} className="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-xs">{t}</span>
                           )) : (v.themes || '—')}
                         </div>
                       </div>
                       {Array.isArray(v.mood_references) && v.mood_references.length > 0 ? (
                         <div className="md:col-span-3">
-                          <div className="text-xs text-gray-400">Mood / References</div>
-                          <div className="text-gray-200">{v.mood_references.join(', ')}</div>
+                          <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Mood / References</div>
+                          <div className="text-gray-900 dark:text-gray-100">{v.mood_references.join(', ')}</div>
                         </div>
                       ) : null}
                     </div>
@@ -627,24 +627,24 @@ export function TreatmentCard() {
 
                   {/* Beats & Runtime */}
                   <div className="space-y-1">
-                    <div className="text-xs text-gray-400">Beats & Runtime</div>
-                    <div className="space-y-3 p-4 rounded border border-gray-700/60 bg-gray-900/40">
+                    <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Beats & Runtime</div>
+                    <div className="space-y-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                       <div>
-                        <div className="text-xs text-gray-400">Synopsis</div>
-                        <div className={`text-gray-200 whitespace-pre-wrap leading-7 ${v.id===activeVariant.id ? (flashIf('synopsis') || flashIf('content')) : ''}`}>{v.synopsis || v.content || '—'}</div>
+                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Synopsis</div>
+                        <div className={`text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed ${v.id===activeVariant.id ? (flashIf('synopsis') || flashIf('content')) : ''}`}>{v.synopsis || v.content || '—'}</div>
                       </div>
                       {Array.isArray((v as any).beats) && (v as any).beats.length > 0 ? (
                         <div className="space-y-2">
                           {(v as any).beats.map((b: any, idx: number) => (
-                            <div key={idx} className={`p-2 rounded border border-gray-800 bg-gray-900/50 ${v.id===activeVariant.id ? flashIf('beats') : ''}`}>
+                            <div key={idx} className={`p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 ${v.id===activeVariant.id ? flashIf('beats') : ''}`}>
                               <div className="flex items-start justify-between gap-3">
                                 <div>
-                                  <div className="text-sm text-white font-medium">{b.title || `Beat ${idx+1}`}</div>
-                                  {b.intent && <div className="text-xs text-gray-400 mt-0.5">{b.intent}</div>}
+                                  <div className="text-sm text-gray-900 dark:text-gray-100 font-medium">{b.title || `Beat ${idx+1}`}</div>
+                                  {b.intent && <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{b.intent}</div>}
                                 </div>
-                                <div className="shrink-0 text-xs px-2 py-0.5 rounded bg-gray-800 text-gray-200 border border-gray-700">{Number(b.minutes||0).toFixed(2)} m</div>
+                                <div className="shrink-0 text-xs px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 font-medium">{Number(b.minutes||0).toFixed(2)} m</div>
                               </div>
-                              {b.synopsis && <div className="text-sm text-gray-200 mt-1 whitespace-pre-wrap leading-6">{b.synopsis}</div>}
+                              {b.synopsis && <div className="text-sm text-gray-700 dark:text-gray-300 mt-2 whitespace-pre-wrap leading-relaxed">{b.synopsis}</div>}
                             </div>
                           ))}
                         </div>
@@ -655,22 +655,22 @@ export function TreatmentCard() {
                   {/* Characters - Simple Preview */}
                   {Array.isArray(v.character_descriptions) && v.character_descriptions.length > 0 ? (
                     <div className="space-y-1">
-                      <div className="text-xs text-gray-400 flex items-center gap-2">
+                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-2">
                         <Users className="w-3 h-3" />
                         Characters ({v.character_descriptions.length})
                       </div>
-                      <div className="flex flex-wrap gap-2 p-3 rounded border border-gray-700/60 bg-gray-900/40">
+                      <div className="flex flex-wrap gap-2 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                         {v.character_descriptions.map((c, idx) => (
                           <div 
                             key={idx} 
-                            className="px-2.5 py-1 text-xs rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1.5"
+                            className="px-2.5 py-1 text-xs rounded-full bg-purple-50 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30 flex items-center gap-1.5"
                           >
                             {c.name}
-                            {c.role && <span className="text-purple-400/60">· {c.role}</span>}
+                            {c.role && <span className="text-purple-600 dark:text-purple-400/60">· {c.role}</span>}
                           </div>
                         ))}
                       </div>
-                      <div className="text-xs text-gray-400 italic mt-2 px-3">
+                      <div className="text-xs text-gray-600 dark:text-gray-400 italic mt-2 px-3">
                         💡 Characters will be refined with images and detailed attributes in the Vision phase
                       </div>
                     </div>
