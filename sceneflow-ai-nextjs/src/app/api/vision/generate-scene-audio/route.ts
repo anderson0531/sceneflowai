@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { put } from '@vercel/blob'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
+import { optimizeTextForTTS } from '../../../../lib/tts/textOptimizer'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -58,8 +59,17 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Scene Audio] Generating ${audioType} for scene ${sceneIndex}`)
 
-    // Generate audio using specified provider
-    const audioBuffer = await generateAudio(text, voiceConfig)
+    // Optimize text for TTS (remove stage directions, clean up)
+    const optimized = optimizeTextForTTS(text)
+    console.log('[Scene Audio] Text optimization:', {
+      original: text.substring(0, 100),
+      optimized: optimized.text.substring(0, 100),
+      cues: optimized.cues,
+      reduction: `${optimized.originalLength} -> ${optimized.optimizedLength} chars`
+    })
+
+    // Generate audio using specified provider with optimized text
+    const audioBuffer = await generateAudio(optimized.text, voiceConfig)
 
     // Upload to Vercel Blob
     const fileName = characterName

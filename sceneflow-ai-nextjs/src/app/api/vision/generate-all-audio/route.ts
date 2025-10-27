@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
+import { optimizeTextForTTS } from '../../../../lib/tts/textOptimizer'
 
 export const maxDuration = 300 // 5 minutes for batch generation
 export const runtime = 'nodejs'
@@ -82,6 +83,10 @@ export async function POST(req: NextRequest) {
             // Generate narration
             if (scene.narration) {
               console.log(`[Batch Audio] Generating narration for scene ${i + 1}`)
+              
+              // Optimize narration text
+              const optimizedNarration = optimizeTextForTTS(scene.narration)
+              
               const narrationResult = await fetch(`${baseUrl}/api/vision/generate-scene-audio`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -89,7 +94,7 @@ export async function POST(req: NextRequest) {
                   projectId,
                   sceneIndex: i,
                   audioType: 'narration',
-                  text: scene.narration,
+                  text: optimizedNarration.text,
                   voiceConfig: narrationVoice,
                 }),
               })
@@ -139,6 +144,10 @@ export async function POST(req: NextRequest) {
                 
                 // CRITICAL: Use character.voiceConfig, NOT narrationVoice
                 console.log(`[Batch Audio] Generating dialogue with voice:`, character.voiceConfig)
+                
+                // Optimize dialogue text for TTS
+                const optimizedDialogue = optimizeTextForTTS(dialogueLine.line)
+                
                 const dialogueResult = await fetch(`${baseUrl}/api/vision/generate-scene-audio`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -146,7 +155,7 @@ export async function POST(req: NextRequest) {
                     projectId,
                     sceneIndex: i,
                     audioType: 'dialogue',
-                    text: dialogueLine.line,
+                    text: optimizedDialogue.text,
                     voiceConfig: character.voiceConfig,
                     characterName: dialogueLine.character,
                     dialogueIndex
