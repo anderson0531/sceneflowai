@@ -466,7 +466,7 @@ export default function ProjectIdeaTab() {
     setGenError('');
     setIsGeneratingIdeas(true);
     setGenProgress(10);
-    setGenStatus(inputMode === 'topic' ? 'Generating Project Ideas' : 'Generating Film Treatment');
+    setGenStatus(inputMode === 'topic' ? 'Generating Project Idea' : 'Generating Film Treatment');
     try {
       setGenError('');
       // Call v1 Blueprint API
@@ -480,14 +480,14 @@ export default function ProjectIdeaTab() {
         tone: 'Professional',
         platform: 'Multi-platform',
         variantHint: inputMode as 'topic' | 'story',
-        variants: 3,
+        variants: 1,
         detailMode: 'narrative'
       };
       let response: Response
       let reducedTried = false
       try {
-        // Try v3 simplified pipeline first (explicitly request 3 variants)
-        response = await postWithTimeout('/api/v3/blueprint/analyze/', { input: baseText, variants: 3 }, 180000)
+        // Try v3 simplified pipeline first (explicitly request 1 variant)
+        response = await postWithTimeout('/api/v3/blueprint/analyze/', { input: baseText, variants: 1 }, 180000)
       } catch (e) {
         // Fallback to v2, then v1
         console.warn('v3 blueprint aborted or failed, falling back to v2:', e)

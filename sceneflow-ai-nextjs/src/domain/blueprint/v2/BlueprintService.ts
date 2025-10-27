@@ -105,7 +105,7 @@ export async function analyzeBlueprintV2(req: V2BlueprintRequestType): Promise<{
   })()
   const model = req.model || (provider === 'openai'
     ? (process.env.OPENAI_MODEL || 'gpt-4.1')
-    : (process.env.GEMINI_MODEL || 'gemini-2.5-pro'))
+    : (process.env.GEMINI_MODEL || 'gemini-2.5-flash'))
 
   const modeHint = req.variantHint ? `\nMODE_HINT: ${req.variantHint}` : ''
   const narrativeIntro = req.detailMode === 'narrative' ? `\nOUTPUT STYLE: high-detail narrative. Use rich, concrete language, and fill arrays with 3–5 items.` : ''
@@ -211,7 +211,7 @@ export async function analyzeBlueprintV2Batch(req: V2BlueprintRequestType): Prom
   })()
   const model = req.model || (provider === 'openai' ? (process.env.OPENAI_MODEL || 'gpt-4.1') : (process.env.GEMINI_MODEL || 'gemini-2.5-flash'))
 
-  const count = Math.min(Math.max(req.variants || 2, 2), 4)
+  const count = Math.min(Math.max(req.variants || 1, 1), 4)
   const modeHint = req.variantHint ? `\nMODE_HINT: ${req.variantHint}` : ''
   const prompt = `You are a professional story ideation system. Return ONLY JSON with this shape:${modeHint}
 

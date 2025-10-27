@@ -89,11 +89,11 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const input = String(body?.input || '')
-    const variantsRequested = Math.max(1, Math.min(5, Number(body?.variants || 3)))
+    const variantsRequested = Math.max(1, Math.min(5, Number(body?.variants || 1)))
     if (!input) return NextResponse.json({ success: false, error: 'Missing input' }, { status: 400 })
 
     const provider = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY ? 'gemini' : 'openai'
-    const model = provider === 'gemini' ? (process.env.GEMINI_MODEL || 'gemini-2.5-pro') : (process.env.OPENAI_MODEL || 'gpt-4.1')
+    const model = provider === 'gemini' ? (process.env.GEMINI_MODEL || 'gemini-2.5-flash') : (process.env.OPENAI_MODEL || 'gpt-4.1')
     const prompt = toPrompt(input)
 
     async function generateOne(): Promise<SimpleBlueprint> {
