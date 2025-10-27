@@ -1,4 +1,6 @@
-import { Editframe } from '@editframe/editframe-js'
+// Editframe dependency removed - provider not supported
+// Please use RunwayML, Stability AI, or Google Veo instead
+type Editframe = any
 
 export interface VideoClip {
   id: string
@@ -64,15 +66,7 @@ export class SparkStudioService {
    * Initialize Editframe client
    */
   private async initEditframe(apiKey: string): Promise<void> {
-    try {
-      this.editframeClient = new Editframe({
-        apiKey,
-        host: process.env.EDITFRAME_HOST || 'https://api.editframe.com'
-      })
-    } catch (error) {
-      console.error('Failed to initialize Editframe client:', error)
-      throw new Error('Editframe initialization failed')
-    }
+    throw new Error('Editframe provider is not supported. Please use RunwayML, Stability AI, or Google Veo.')
   }
 
   /**
@@ -128,51 +122,7 @@ export class SparkStudioService {
    * Generate video using Editframe
    */
   private async generateWithEditframe(clip: VideoClip, settings: GenerationSettings): Promise<VideoClip> {
-    if (!this.editframeClient) {
-      throw new Error('Editframe client not initialized')
-    }
-
-    try {
-      // Create video composition
-      const composition = await this.editframeClient.createComposition({
-        width: this.getResolutionWidth(settings.quality),
-        height: this.getResolutionHeight(settings.quality),
-        fps: parseInt(settings.frameRate),
-        duration: clip.duration,
-        format: settings.format
-      })
-
-      // Add text overlay for the prompt
-      await composition.addText({
-        text: clip.prompt,
-        x: 'center',
-        y: 'center',
-        fontSize: 24,
-        color: '#ffffff',
-        backgroundColor: 'rgba(0,0,0,0.7)',
-        padding: 20
-      })
-
-      // Generate the video
-      clip.progress = 50
-      const result = await composition.generate()
-
-      // Update clip with results
-      clip.status = 'completed'
-      clip.progress = 100
-      clip.videoUrl = result.url
-      clip.thumbnailUrl = result.thumbnailUrl
-      clip.metadata = {
-        width: this.getResolutionWidth(settings.quality),
-        height: this.getResolutionHeight(settings.quality),
-        fps: parseInt(settings.frameRate),
-        format: settings.format
-      }
-
-      return clip
-    } catch (error) {
-      throw new Error(`Editframe generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    }
+    throw new Error('Editframe provider is not supported. Please use RunwayML, Stability AI, or Google Veo.')
   }
 
   /**
@@ -360,50 +310,7 @@ export class SparkStudioService {
     clips: VideoClip[],
     settings: GenerationSettings
   ): Promise<VideoAssemblyJob> {
-    if (!this.editframeClient) {
-      throw new Error('Editframe client not initialized')
-    }
-
-    try {
-      // Create composition for final assembly
-      const totalDuration = clips.reduce((sum, clip) => sum + clip.duration, 0)
-      
-      const composition = await this.editframeClient.createComposition({
-        width: this.getResolutionWidth(settings.quality),
-        height: this.getResolutionHeight(settings.quality),
-        fps: parseInt(settings.frameRate),
-        duration: totalDuration,
-        format: settings.format
-      })
-
-      // Add clips sequentially
-      let currentTime = 0
-      for (const clip of clips) {
-        if (clip.videoUrl) {
-          await composition.addVideo({
-            source: clip.videoUrl,
-            start: currentTime,
-            duration: clip.duration
-          })
-          currentTime += clip.duration
-        }
-      }
-
-      // Generate final video
-      job.progress = 80
-      const result = await composition.generate()
-
-      // Update job with results
-      job.status = 'completed'
-      job.progress = 100
-      job.finalVideoUrl = result.url
-      job.thumbnailUrl = result.thumbnailUrl
-      job.updatedAt = new Date()
-
-      return job
-    } catch (error) {
-      throw new Error(`Editframe assembly failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    }
+    throw new Error('Editframe provider is not supported. Please use RunwayML, Stability AI, or Google Veo.')
   }
 
   /**
