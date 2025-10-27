@@ -689,13 +689,6 @@ export function TreatmentCard() {
             try { (useGuideStore.getState() as any).updateTreatmentVariant(activeVariant.id, patch) } catch {}
             setEditorOpen(false)
           }}
-          onSaveAsNew={(draft) => {
-            try {
-              (useGuideStore.getState() as any).addTreatmentVariant(draft)
-              ;(useGuideStore.getState() as any).selectTreatmentVariant(draft.id)
-            } catch {}
-            setEditorOpen(false)
-          }}
         />
         {/* Owner Collaboration Panel */}
         <OwnerCollabPanel

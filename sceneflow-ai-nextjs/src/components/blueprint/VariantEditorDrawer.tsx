@@ -24,11 +24,10 @@ type Props = {
   variant: Variant | null
   onClose: () => void
   onApply: (patch: Partial<Variant>) => void
-  onSaveAsNew: (draft: Variant) => void
 }
 
-export default function VariantEditorDrawer({ open, variant, onClose, onApply, onSaveAsNew }: Props) {
-  const [tab, setTab] = useState<'edit'|'ai'|'review'>('edit')
+export default function VariantEditorDrawer({ open, variant, onClose, onApply }: Props) {
+  const [tab, setTab] = useState<'edit'|'flow'>('edit')
   const [draft, setDraft] = useState<(Partial<Variant> & { id?: string }) | null>(null)
   const [aiInstr, setAiInstr] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
@@ -39,16 +38,6 @@ export default function VariantEditorDrawer({ open, variant, onClose, onApply, o
   const { markJustApplied } = useGuideStore() as any
   const [split, setSplit] = useState<number>(50)
   const draggingRef = useRef<boolean>(false)
-  function mapDraftToInputText(d: any, fallback: any): string {
-    const title = (d?.title || fallback?.title) ? `${d?.title || fallback?.title}\n\n` : ''
-    const logline = (d?.logline || fallback?.logline) ? `Logline: ${d?.logline || fallback?.logline}\n\n` : ''
-    const body = String(d?.synopsis || d?.content || fallback?.synopsis || fallback?.content || '')
-    return `${title}${logline}${body}`.trim()
-  }
-  function sendToComposer(text: string, opts?: { generate?: boolean }) {
-    const detail = { text, focus: true, generate: Boolean(opts?.generate) }
-    window.dispatchEvent(new CustomEvent('sf:set-composer', { detail }))
-  }
 
   useEffect(() => {
     if (!open) return
@@ -79,7 +68,7 @@ export default function VariantEditorDrawer({ open, variant, onClose, onApply, o
       const json = await res.json().catch(() => null)
       if (json?.success && json?.draft) {
         setDraft({ ...(draft || {} as any), ...json.draft })
-        setTab('review')
+        setTab('edit')
       }
     } catch {}
     stop()
@@ -109,20 +98,15 @@ export default function VariantEditorDrawer({ open, variant, onClose, onApply, o
         if (!draft || !variant) return
         onApply(draft)
         ;(useGuideStore.getState() as any).markJustApplied?.(variant.id)
-        setAppliedMessage('Applied to variant')
+        setAppliedMessage('Treatment updated')
         setTimeout(()=>setAppliedMessage(''), 1500)
         dirtyRef.current = false
-        toast('Edits applied', { action: { label: 'Undo', onClick: () => (useGuideStore.getState() as any).undoLastEdit() } })
-      } else if ((e.shiftKey && isCmd && (e.key.toLowerCase() === 's'))) {
-        e.preventDefault()
-        if (!draft || !variant) return
-        onSaveAsNew({ ...(variant as any), ...(draft as any), id: `${variant?.id || 'V'}'` })
-        toast('Saved as new variant')
+        toast('Treatment updated', { action: { label: 'Undo', onClick: () => (useGuideStore.getState() as any).undoLastEdit() } })
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [open, draft, variant, onApply, onSaveAsNew])
+  }, [open, draft, variant, onApply])
 
   useEffect(() => {
     function onMove(e: MouseEvent) {
@@ -162,8 +146,8 @@ export default function VariantEditorDrawer({ open, variant, onClose, onApply, o
         <div className="flex flex-col h-[calc(100dvh-56px)]">
           {/* Tabs */}
           <div className="px-6 sm:px-8 pb-2 border-b border-gray-800 flex items-center gap-2">
-            {(['edit','ai','review'] as const).map(k => (
-              <button key={k} onClick={()=>setTab(k)} className={`text-sm px-3 py-1.5 rounded ${tab===k? 'bg-gray-800 text-white':'text-gray-300 hover:bg-gray-800/60'}`}>{k==='edit'?'Direct Edit':k==='ai'?'AI Assist':'Review'}</button>
+            {(['edit','flow'] as const).map(k => (
+              <button key={k} onClick={()=>setTab(k)} className={`text-sm px-3 py-1.5 rounded ${tab===k? 'bg-gray-800 text-white':'text-gray-300 hover:bg-gray-800/60'}`}>{k==='edit'?'Edit':'Flow Assist'}</button>
             ))}
             <div className="ml-auto text-xs text-gray-400">{progress>0 && progress<100 ? `Refining… ${progress}%` : aiLoading ? 'Finalizing…' : ''}</div>
           </div>
@@ -235,7 +219,7 @@ export default function VariantEditorDrawer({ open, variant, onClose, onApply, o
               </>
             )}
 
-            {tab==='ai' && (
+            {tab==='flow' && (
               <div className="space-y-3">
                 <div>
                   <div className="text-xs text-gray-400 mb-1">What should change?</div>
@@ -246,29 +230,24 @@ export default function VariantEditorDrawer({ open, variant, onClose, onApply, o
                 </div>
               </div>
             )}
-
-            {tab==='review' && (
-              <div className="space-y-3">
-                <div className="text-xs text-gray-400">Preview</div>
-                <div className="space-y-2 p-3 rounded border border-gray-800 bg-gray-900/50">
-                  <div className="text-base font-semibold text-white">{draft?.title || variant?.title || 'Untitled'}</div>
-                  <div className="text-gray-300">{draft?.logline || variant?.logline || '—'}</div>
-                  <div className="text-gray-200 whitespace-pre-wrap leading-7">{draft?.synopsis || draft?.content || variant?.synopsis || variant?.content || '—'}</div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Footer */}
           <div className="px-6 sm:px-8 py-4 border-t border-gray-800 flex items-center justify-between sticky bottom-0 bg-gray-950">
-            <div className="text-xs text-gray-400"></div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={()=>{ if (dirtyRef.current && !confirm('Discard unsaved changes?')) return; onClose() }} className="border-gray-700 text-gray-200">Close</Button>
-              <Button onClick={()=> { if(!draft || !variant) return; onApply(draft); (useGuideStore.getState() as any).markJustApplied?.(variant.id); setAppliedMessage('Applied to variant'); setTimeout(()=>setAppliedMessage(''), 1500); dirtyRef.current = false; toast('Edits applied', { action: { label: 'Undo', onClick: () => (useGuideStore.getState() as any).undoLastEdit() } }); }} className="bg-blue-600 hover:bg-blue-500 text-white" title="Cmd/Ctrl+Enter">Apply to Variant</Button>
-              <Button onClick={()=> { if(!draft || !variant) return; onSaveAsNew({ ...(variant as any), ...(draft as any), id: `${variant?.id || 'V'}'` }); toast('Saved as new variant') }} className="bg-emerald-600 hover:bg-emerald-500 text-white" title="Shift+Cmd/Ctrl+S">Save as New</Button>
-              <Button onClick={()=> { if(!draft) return; sendToComposer(mapDraftToInputText(draft, variant), { generate: false }); toast('Copied to input. Click Generate.') }} className="bg-gray-700 hover:bg-gray-600 text-white">Use as input</Button>
-              <Button onClick={()=> { if(!draft) return; sendToComposer(mapDraftToInputText(draft, variant), { generate: true }); toast('Generating from draft…') }} className="bg-sf-primary hover:bg-sf-accent text-sf-background">Regenerate now</Button>
-            </div>
+            <Button 
+              variant="outline" 
+              onClick={()=>{ if (dirtyRef.current && !confirm('Discard unsaved changes?')) return; onClose() }} 
+              className="border-gray-700 text-gray-200"
+            >
+              Close
+            </Button>
+            <Button 
+              onClick={()=> { if(!draft || !variant) return; onApply(draft); (useGuideStore.getState() as any).markJustApplied?.(variant.id); setAppliedMessage('Treatment updated'); setTimeout(()=>setAppliedMessage(''), 1500); dirtyRef.current = false; toast('Treatment updated', { action: { label: 'Undo', onClick: () => (useGuideStore.getState() as any).undoLastEdit() } }); }} 
+              className="bg-blue-600 hover:bg-blue-500 text-white"
+              title="Cmd/Ctrl+Enter"
+            >
+              Update Treatment
+            </Button>
           </div>
         </div>
       </DialogContent>
