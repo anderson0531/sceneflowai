@@ -286,13 +286,13 @@ export function ScenePromptBuilder({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] bg-gray-900 text-white border-gray-700 flex flex-col relative">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl h-[85vh] bg-gray-900 text-white border-gray-700 flex flex-col overflow-hidden relative">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-white">Scene Prompt Builder - {scene?.heading || `Scene ${scene?.sceneNumber || ''}`}</DialogTitle>
         </DialogHeader>
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
         <Tabs value={mode} onValueChange={handleModeChange}>
           <TabsList className="w-full">
             <TabsTrigger value="guided" className="flex-1 relative">
