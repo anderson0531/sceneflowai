@@ -62,7 +62,7 @@ export function ScenePromptBuilder({
     lighting: 'natural',
     characters: [],
     characterActions: '',
-    artStyle: 'photorealistic',
+    artStyle: 'concept-art',
     additionalDetails: '',
     negativePrompt: 'blurry, low quality, distorted, poor composition'
   })
@@ -550,8 +550,16 @@ export function ScenePromptBuilder({
                     }`}
                     title={style.description}
                   >
-                    <div className="aspect-square bg-gray-700 rounded mb-1 flex items-center justify-center text-2xl">
-                      {style.name[0]}
+                    <div className="aspect-square bg-gray-700 rounded mb-1 flex items-center justify-center overflow-hidden">
+                      {style.thumbnail ? (
+                        <img 
+                          src={style.thumbnail} 
+                          alt={style.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-2xl text-gray-400">{style.name[0]}</span>
+                      )}
                     </div>
                     <div className="text-[10px] text-gray-300 truncate">{style.name}</div>
                   </button>
