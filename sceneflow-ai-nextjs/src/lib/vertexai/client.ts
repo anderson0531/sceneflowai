@@ -72,7 +72,7 @@ export async function callVertexAIImagen(
   // Use capability model when references are provided (supports subject customization)
   // Otherwise use standard models
   const model = options.referenceImages && options.referenceImages.length > 0
-    ? 'imagen-3.0-capability-002'  // Capability model for references
+    ? 'imagegeneration@006'  // Capability model for subject customization
     : options.quality === 'max'
       ? 'imagen-4.0-ultra-generate-001'  // Imagen 4 Ultra
       : 'imagen-3.0-generate-002'         // Imagen 3 (default)
