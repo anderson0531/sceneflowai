@@ -73,10 +73,26 @@ export async function prepareBase64References(
         .jpeg({ quality: 90 })
         .toBuffer()
       
+      // Get metadata to verify dimensions and format
+      const metadata = await sharp(resizedBuffer).metadata()
+      console.log(`[Base64 Ref] ${char.name} metadata:`, {
+        format: metadata.format,
+        width: metadata.width,
+        height: metadata.height,
+        channels: metadata.channels,
+        hasAlpha: metadata.hasAlpha
+      })
+      
       const base64 = resizedBuffer.toString('base64')
       const finalSizeKB = Math.round(resizedBuffer.byteLength / 1024)
       
       console.log(`[Base64 Ref] ${char.name}: ${originalSizeKB}KB → ${finalSizeKB}KB (resized to 1024x1024)`)
+      
+      // Verify base64 encoding
+      console.log(`[Base64 Ref] First 100 chars of base64:`, base64.substring(0, 100))
+      console.log(`[Base64 Ref] Last 50 chars of base64:`, base64.substring(base64.length - 50))
+      console.log(`[Base64 Ref] Base64 length:`, base64.length)
+      console.log(`[Base64 Ref] Contains data URL prefix:`, base64.startsWith('data:'))
 
       references.push({
         referenceId: i + 1,

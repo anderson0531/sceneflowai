@@ -114,6 +114,14 @@ export async function callVertexAIImagen(
     console.log(`[Vertex AI] Reference size: ${base64SizeKB}KB`)
     console.log('[Vertex AI] Reference description:', firstRef.subjectDescription?.substring(0, 60))
     console.log('[Vertex AI] Full subjectDescription for reference 1:', requestBody.parameters.referenceImages[0].subjectImageConfig.subjectDescription)
+    
+    // Validate base64 format
+    const firstBase64 = requestBody.parameters.referenceImages[0].base64Encoded
+    console.log('[Vertex AI] Base64 validation:')
+    console.log('  - Length:', firstBase64.length)
+    console.log('  - Starts with data URL?:', firstBase64.startsWith('data:'))
+    console.log('  - First 80 chars:', firstBase64.substring(0, 80))
+    console.log('  - Appears valid?:', /^[A-Za-z0-9+/]+=*$/.test(firstBase64.substring(0, 100)))
   }
   
   // Log request size for debugging
