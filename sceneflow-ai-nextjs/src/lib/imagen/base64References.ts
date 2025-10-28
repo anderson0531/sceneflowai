@@ -13,32 +13,15 @@ export interface Base64CharacterReference {
 }
 
 /**
- * Build enhanced subject description with essential context
- * Excludes expressions that might conflict with scene descriptions
+ * Build enhanced subject description with explicit matching directive
  */
 function buildEnhancedSubjectDescription(char: any): string {
-  // Provide essential descriptive context for the reference image
-  // but exclude expressions that might conflict with scene descriptions
+  // Start with explicit matching directive
   const baseDescription = char.appearanceDescription || 
     `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
   
-  // Remove expression-related phrases that could conflict with scene
-  const cleanedDescription = baseDescription
-    // Remove expression phrases (including "and a" connector)
-    .replace(/\b(with a |and a )?(friendly|warm|stern|weary|tired|happy|sad) (smile|expression|face)\.?/gi, '')
-    // Clean up dangling connectors at the end
-    .replace(/,?\s+(and a|with a|and|with)\s*\.?$/gi, '.')
-    // Remove multiple periods
-    .replace(/\.{2,}/g, '.')
-    // Remove trailing period
-    .replace(/\.\s*$/, '')
-    .trim()
-  
-  // Log the final cleaned description
-  console.log(`[Base64 Ref] ${baseDescription.substring(0, 50)}... - cleaned description:`, cleanedDescription)
-  console.log(`[Base64 Ref] Description length:`, cleanedDescription.length)
-  
-  return cleanedDescription
+  // Add explicit matching instruction
+  return `Match this person's facial features exactly: ${baseDescription}. Maintain exact likeness including face shape, age, expression, and all distinctive features.`
 }
 
 /**
