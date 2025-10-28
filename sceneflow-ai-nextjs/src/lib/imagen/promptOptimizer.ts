@@ -23,31 +23,43 @@ export function optimizePromptForImagen(params: OptimizePromptParams): string {
   
   console.log('[Prompt Optimizer] Cleaned scene action:', cleanedAction.substring(0, 100))
   
-  // If character references exist, tag character names in the scene with [referenceId]
+  // If character references exist, build optimized prompt
   if (params.characterReferences && params.characterReferences.length > 0) {
-    // Tag each character name in the cleaned action with their reference ID
-    params.characterReferences.forEach(ref => {
-      const namePattern = new RegExp(`\\b${ref.name}\\b`, 'gi')
-      cleanedAction = cleanedAction.replace(namePattern, `${ref.name} [${ref.referenceId}]`)
-    })
+    // Extract expression hints from scene description if present
+    const expressionMatch = cleanedAction.match(/\b(weary|tired|happy|sad|angry|concerned|determined|hopeful|worried)\s+face\b/i)
+    const expressionHint = expressionMatch ? `, expression (${expressionMatch[1].toLowerCase()})` : ''
     
-    // Build character descriptions
-    const characterDescriptions = params.characterReferences
-      .map(ref => `[${ref.referenceId}] ${ref.name}: ${ref.description}`)
-      .join('\n')
+    // Build character reference WITHOUT redundant facial descriptions
+    const characterReferences = params.characterReferences
+      .map(ref => `[${ref.referenceId}] ${ref.name}`)
+      .join(', ')
     
-    const prompt = `${characterDescriptions}
+    // Build CRITICAL directive as first instruction
+    const criticalDirective = `CRITICAL: Replicate the person in reference image [${params.characterReferences[0].referenceId}] exactly. Match facial features, age${expressionHint}, and all distinctive characteristics with absolute precision. Do not deviate from the reference image for character appearance.`
+    
+    // Segment the scene if it contains transitions (then, followed by, etc.)
+    let segmentedScene = cleanedAction
+    if (cleanedAction.includes('then') || cleanedAction.includes('followed by')) {
+      // Split into numbered segments
+      const segments = cleanedAction
+        .split(/,?\s+then\s+|,?\s+followed by\s+/)
+        .map((seg, idx) => `${idx + 1}. ${seg.trim()}`)
+        .join('\n')
+      segmentedScene = segments
+    }
+    
+    const prompt = `${characterReferences}
+${criticalDirective}
 
-CRITICAL: Use the reference image as the absolute source of truth for the character's appearance. Match age, facial structure, expression, and all features exactly as shown in the reference image. The reference image takes absolute priority over any scene descriptions.
-
-Scene: ${cleanedAction}
+Scene:
+${segmentedScene}
 
 Style: Photorealistic, cinematic lighting, 8K resolution, sharp focus, professional photography, realistic human proportions, natural adult appearance.`
 
-    console.log('[Prompt Optimizer] Built prompt with', params.characterReferences.length, 'character references')
-    console.log('[Prompt Optimizer] Final prompt structure:')
-    console.log('[Prompt Optimizer] - Character descriptions first:', characterDescriptions.substring(0, 100))
-    console.log('[Prompt Optimizer] - Scene description second:', cleanedAction.substring(0, 100))
+    console.log('[Prompt Optimizer] Built optimized prompt with', params.characterReferences.length, 'character references')
+    console.log('[Prompt Optimizer] - Removed redundant facial descriptions')
+    console.log('[Prompt Optimizer] - Front-loaded CRITICAL directive')
+    console.log('[Prompt Optimizer] - Segmented scene:', segmentedScene.includes('\n') ? 'yes' : 'no')
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
     console.log(prompt)
     console.log('[Prompt Optimizer] ===== END FULL PROMPT =====')

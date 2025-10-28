@@ -16,12 +16,9 @@ export interface Base64CharacterReference {
  * Build enhanced subject description with explicit matching directive
  */
 function buildEnhancedSubjectDescription(char: any): string {
-  // Start with explicit matching directive
-  const baseDescription = char.appearanceDescription || 
-    `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
-  
-  // Add explicit matching instruction
-  return `Match this person's facial features exactly: ${baseDescription}. Maintain exact likeness including face shape, age, expression, and all distinctive features.`
+  // For Imagen 3 with reference images, keep subjectDescription minimal
+  // The actual matching is handled by the main prompt's CRITICAL directive
+  return `Reference character for exact replication`
 }
 
 /**
