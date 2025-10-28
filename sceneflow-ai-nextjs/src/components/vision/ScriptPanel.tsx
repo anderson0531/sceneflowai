@@ -1217,12 +1217,12 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             ethnicity: c.ethnicity,
             subject: c.subject
           }))}
-          onGenerateImage={async (selectedCharacters) => {
+          onGenerateImage={(selectedCharacters) => {
+            // Fire and forget - don't await, let ScenePromptBuilder handle its own closing
             if (onGenerateSceneImage) {
-              await onGenerateSceneImage(sceneBuilderIdx, selectedCharacters)
+              onGenerateSceneImage(sceneBuilderIdx, selectedCharacters)
             }
-            setSceneBuilderOpen(false)
-            setSceneBuilderIdx(null)
+            // Don't close here - ScenePromptBuilder will close itself and show toast
           }}
           isGenerating={generatingImageForScene === sceneBuilderIdx}
         />

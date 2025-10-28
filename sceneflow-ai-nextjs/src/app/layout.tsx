@@ -9,6 +9,7 @@ import InstallPrompt from '@/components/pwa/InstallPrompt'
 import { ConditionalLayout } from '@/components/layout/ConditionalLayout'
 import { GlobalHeader } from '@/components/layout/GlobalHeader'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
+import { Toaster } from 'sonner'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -77,6 +78,7 @@ export default function RootLayout({
             <GlobalHeader />
             <ConditionalLayout>{children}</ConditionalLayout>
             <InstallPrompt />
+            <Toaster />
           </AuthSessionProvider>
         </ThemeProvider>
       </body>
