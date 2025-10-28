@@ -265,6 +265,18 @@ export function ScenePromptBuilder({
     }
     
     onGenerateImage(promptData)
+    
+    // Show toast notification that generation has started
+    try {
+      const { toast } = require('sonner')
+      toast.success('Scene image generation started', {
+        description: 'Generating your scene image. This may take 10-15 seconds.',
+        duration: 4000
+      })
+    } catch (error) {
+      console.log('[Scene Prompt Builder] Toast notification not available')
+    }
+    
     onClose()
   }
 

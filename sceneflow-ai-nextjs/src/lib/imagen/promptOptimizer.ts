@@ -33,32 +33,19 @@ export function optimizePromptForImagen(params: OptimizePromptParams): string {
   console.log('[Prompt Optimizer] Using art style:', params.artStyle || 'photorealistic')
   console.log('[Prompt Optimizer] Cleaned scene action:', cleanedAction.substring(0, 100))
   
-  // If character references exist, tag character names in the scene with [referenceId]
+  // If character references exist, weave them naturally into the scene
   if (params.characterReferences && params.characterReferences.length > 0) {
-    // Tag each character name in the cleaned action with their reference ID
-    params.characterReferences.forEach(ref => {
-      const namePattern = new RegExp(`\\b${ref.name}\\b`, 'gi')
-      cleanedAction = cleanedAction.replace(namePattern, `${ref.name} [${ref.referenceId}]`)
-    })
+    // Build integrated character descriptions
+    const integratedPrompt = integrateCharactersIntoScene(
+      cleanedAction, 
+      params.characterReferences
+    )
     
-    // Build character descriptions (physical only, no emotions)
-    const characterDescriptions = params.characterReferences
-      .map(ref => `Character [${ref.referenceId}] (${ref.name}): Physical appearance: ${ref.description}.`)
-      .join('\n\n')
-    
-    const prompt = `SCENE COMPOSITION (PRIMARY):
-${cleanedAction}
+    const prompt = `${integratedPrompt}
 
-CHARACTERS - Physical Appearance Only:
-${characterDescriptions}
+${visualStyle}`
 
-Important: Character expressions and emotions should match the scene context above.
-
-VISUAL STYLE: ${visualStyle}`
-
-    console.log('[Prompt Optimizer] Built prompt with', params.characterReferences.length, 'character references')
-    console.log('[Prompt Optimizer] Scene composition:', cleanedAction.substring(0, 150))
-    console.log('[Prompt Optimizer] Character descriptions:', characterDescriptions.substring(0, 200))
+    console.log('[Prompt Optimizer] Built naturally integrated prompt with', params.characterReferences.length, 'characters')
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
     console.log(prompt)
     console.log('[Prompt Optimizer] ===== END FULL PROMPT =====')
@@ -68,7 +55,37 @@ VISUAL STYLE: ${visualStyle}`
   // No character reference - simple scene description
   return `${cleanedAction}
 
-VISUAL STYLE: ${visualStyle}`.trim()
+${visualStyle}`.trim()
+}
+
+/**
+ * Integrate character descriptions naturally into scene context
+ * Instead of separate sections, weave character details where they're mentioned
+ */
+function integrateCharactersIntoScene(
+  sceneAction: string,
+  characterReferences: Array<{ referenceId: number; name: string; description: string }>
+): string {
+  let integrated = sceneAction
+  
+  // For each character, find their first mention and inject their description
+  characterReferences.forEach(ref => {
+    // Match character name (case insensitive, word boundary)
+    const namePattern = new RegExp(`\\b(${ref.name})\\b`, 'i')
+    const match = integrated.match(namePattern)
+    
+    if (match) {
+      // Found character mention - inject description right after
+      const characterWithDescription = `${match[1]} (${ref.description})`
+      integrated = integrated.replace(namePattern, characterWithDescription)
+    } else {
+      // Character not explicitly mentioned in scene - add them at the start
+      const characterIntro = `${ref.name} (${ref.description}) is present. `
+      integrated = characterIntro + integrated
+    }
+  })
+  
+  return integrated
 }
 
 /**

@@ -56,10 +56,8 @@ export async function POST(req: NextRequest) {
       quality = 'auto'
     } = body
     
-    // Handle both legacy (array) and new (object with characters) formats
-    const characterArray = Array.isArray(selectedCharacters) 
-      ? selectedCharacters 
-      : characters || []
+    // Handle both legacy (selectedCharacters) and new (characters) formats
+    const characterArray = characters || selectedCharacters || []
 
     console.log('[Scene Image] Generating scene image')
     console.log('[Scene Image] Selected characters:', characterArray.length)
