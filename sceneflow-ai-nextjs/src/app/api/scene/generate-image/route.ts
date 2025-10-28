@@ -9,6 +9,32 @@ import { sequelize } from '../../../../config/database'
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
+/**
+ * Strip emotional descriptors from character descriptions
+ * Keeps only physical characteristics, lets scene drive emotions
+ */
+function stripEmotionalDescriptors(description: string): string {
+  // Remove common emotional/expression terms
+  const emotionalTerms = [
+    /\b(friendly|warm|cheerful|happy|sad|worried|confident|stern|serious|welcoming|inviting)\s+(smile|expression|demeanor|look|face)\b/gi,
+    /\bsmiling\b/gi,
+    /\bfrowning\b/gi,
+    /\b(with\s+a\s+)?(happy|sad|worried|confident|friendly|stern|serious|warm|cheerful|weary|tired|energetic|excited)\s+(expression|look|demeanor|face|appearance)\b/gi,
+    /\band\s+a\s+(smile|frown|grin|smirk)\b/gi,
+    /\bappears\s+(happy|sad|worried|confident|tired|energetic)\b/gi,
+  ]
+  
+  let cleaned = description
+  emotionalTerms.forEach(pattern => {
+    cleaned = cleaned.replace(pattern, '')
+  })
+  
+  // Clean up double spaces and punctuation
+  cleaned = cleaned.replace(/\s{2,}/g, ' ').replace(/\s+\./g, '.').trim()
+  
+  return cleaned
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -125,8 +151,11 @@ export async function POST(req: NextRequest) {
     // Build character references using visionDescription (preferred) or fallback descriptions
     const characterReferences = characterObjects.map((char: any, idx: number) => {
       // Prefer Gemini Vision description over manual description
-      const description = char.visionDescription || char.appearanceDescription || 
+      const rawDescription = char.visionDescription || char.appearanceDescription || 
         `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
+      
+      // Strip emotional descriptors - let scene drive emotions
+      const description = stripEmotionalDescriptors(rawDescription)
       
       console.log(`[Scene Image] Using ${char.visionDescription ? 'Gemini Vision' : 'manual'} description for ${char.name}`)
       

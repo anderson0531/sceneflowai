@@ -24,19 +24,25 @@ export async function analyzeCharacterImage(imageUrl: string, characterName: str
     ? 'image/jpeg' 
     : 'image/png'
 
-  const prompt = `Analyze this character portrait and provide a DETAILED, PRECISE physical description optimized for AI image generation.
+  const prompt = `Analyze this character portrait and extract ONLY the permanent physical characteristics for AI image generation. DO NOT include expressions, emotions, or moods.
 
-Focus on these specific details:
-1. Ethnicity and skin tone (be very specific)
+INCLUDE these physical traits:
+1. Ethnicity and skin tone (be specific)
 2. Age (exact range, e.g., "late 50s", "early 40s")
 3. Facial structure (face shape, bone structure, cheekbones, jawline)
 4. Hair: style, color, texture, grooming (or "bald" if no hair)
 5. Facial hair: style, color, length, grooming (or "clean-shaven" if none)
-6. Eyes: color, shape, expression, distinctive features
-7. Distinctive features: wrinkles, scars, moles, expression lines
-8. Build and physique visible in frame
+6. Eyes: color, shape (NOT expression)
+7. Distinctive permanent features: wrinkles, scars, moles, facial lines
+8. Build and physique
 
-Respond with a single, detailed paragraph (3-4 sentences). Use precise, visual language. Avoid vague terms like "middle-aged" or "average build" - be specific.`
+DO NOT INCLUDE:
+- Expressions (smiling, frowning, serious, etc.)
+- Emotions (happy, sad, worried, confident, etc.)
+- Moods (friendly, stern, cheerful, etc.)
+- Temporary states (tired, energetic, etc.)
+
+Respond with a neutral, emotion-free physical description (3-4 sentences). Focus on unchanging characteristics only. Use precise, specific language.`
 
   const result = await model.generateContent([
     prompt,
