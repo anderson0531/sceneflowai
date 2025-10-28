@@ -112,6 +112,24 @@ export async function prepareBase64References(
         description: buildEnhancedSubjectDescription(char)
       })
       
+      // Verify the base64 can be decoded back to valid image data
+      try {
+        const testBuffer = Buffer.from(base64, 'base64')
+        const testMetadata = await sharp(testBuffer).metadata()
+        console.log(`[Base64 Ref] ${char.name} - Verification test:`, {
+          canDecode: true,
+          decodedFormat: testMetadata.format,
+          decodedWidth: testMetadata.width,
+          decodedHeight: testMetadata.height,
+          matchesOriginal: testMetadata.format === metadata.format && 
+                          testMetadata.width === metadata.width && 
+                          testMetadata.height === metadata.height
+        })
+      } catch (verifyError) {
+        console.error(`[Base64 Ref] ${char.name} - VERIFICATION FAILED:`, verifyError)
+        console.error(`[Base64 Ref] This base64 image cannot be decoded - Vertex AI will fail to use it`)
+      }
+      
     } catch (error) {
       console.error(`[Base64 Ref] Error preparing ${char.name}:`, error)
     }
