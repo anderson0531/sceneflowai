@@ -250,7 +250,16 @@ export async function POST(request: NextRequest) {
         // Character name validation is now handled during embedding step (below)
         // Removing separate validation to reduce memory overhead
 
-        // Embed characterId in dialogue using canonical matching
+        // Embed characterId in dialogue using canonical matching (with memory optimization)
+        // Cache aliases per character to avoid regenerating repeatedly
+        const aliasCache = new Map<string, string[]>()
+        const getCachedAliases = (canonicalName: string): string[] => {
+          if (!aliasCache.has(canonicalName)) {
+            aliasCache.set(canonicalName, generateAliases(canonicalName))
+          }
+          return aliasCache.get(canonicalName)!
+        }
+        
         const scenesWithCharacterIds = allScenes.map((scene: any) => ({
           ...scene,
           dialogue: scene.dialogue?.map((d: any) => {
@@ -263,28 +272,26 @@ export async function POST(request: NextRequest) {
               toCanonicalName(c.name) === normalizedDialogueName
             )
             
-            // Fallback: Generate aliases on-demand and match
+            // Fallback: Use cached aliases for matching
             if (!character) {
               character = allCharacters.find((c: any) => {
-                const aliases = generateAliases(toCanonicalName(c.name))
+                const aliases = getCachedAliases(toCanonicalName(c.name))
                 return aliases.some(alias => 
                   toCanonicalName(alias) === normalizedDialogueName
                 )
               })
             }
             
-            // Log mismatches for debugging (less verbose in production)
-            if (!character && process.env.NODE_ENV === 'development') {
-              console.warn(`[Character Match] No match for "${d.character}" in scene ${scene.sceneNumber}`)
-            }
-            
             return {
               ...d,
-              character: character ? character.name : d.character, // Normalize to canonical
+              character: character ? character.name : d.character,
               characterId: character?.id
             }
           })
         }))
+        
+        // Clear cache to free memory
+        aliasCache.clear()
 
         const totalEstimatedDuration = allScenes.reduce((sum: number, s: any) => sum + (s.duration || 0), 0)
         
