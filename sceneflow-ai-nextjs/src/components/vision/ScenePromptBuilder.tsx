@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
 import { Copy, Check, Sparkles, Info, Loader2 } from 'lucide-react'
-import { toast } from 'sonner'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { findSceneCharacters } from '../../lib/character/matching'
 
@@ -266,16 +265,8 @@ export function ScenePromptBuilder({
     }
     
     onGenerateImage(promptData)
-    
-    // Show toast notification that generation has started
-    console.log('[ScenePromptBuilder] About to show toast')
-    toast.success('Scene image generation started', {
-      description: 'Generating your scene image. This may take 10-15 seconds.',
-      duration: 4000
-    })
-    console.log('[ScenePromptBuilder] Toast called')
-    
-    onClose()
+    // Don't close - let the loading overlay show while generating
+    // Modal will close when parent updates the isGenerating prop to false
   }
 
   const handleCopy = async () => {
@@ -691,12 +682,28 @@ export function ScenePromptBuilder({
           </div>
         </div>
 
-        {/* Loading Overlay */}
+        {/* Loading Overlay - Freeze screen during generation */}
         {isGenerating && (
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
-            <div className="bg-gray-800 rounded-lg p-6 shadow-xl">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-purple-500" />
-              <p className="text-sm text-gray-200 text-center">Generating scene image...</p>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center rounded-lg">
+            <div className="bg-gray-900 border-2 border-purple-500 rounded-xl p-8 shadow-2xl flex flex-col items-center max-w-sm">
+              <div className="relative mb-4">
+                <Loader2 className="w-16 h-16 animate-spin text-purple-500" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full border-4 border-purple-300 animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Generating Scene Image</h3>
+              <p className="text-sm text-gray-300 text-center">
+                Creating your scene visualization...
+              </p>
+              <p className="text-xs text-gray-400 mt-2">
+                This may take 10-15 seconds
+              </p>
+              <div className="mt-4 flex items-center gap-2">
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              </div>
             </div>
           </div>
         )}
