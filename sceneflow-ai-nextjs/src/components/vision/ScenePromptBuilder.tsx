@@ -286,11 +286,13 @@ export function ScenePromptBuilder({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-900 text-white border-gray-700 relative">
+      <DialogContent className="max-w-4xl max-h-[90vh] bg-gray-900 text-white border-gray-700 flex flex-col relative">
         <DialogHeader>
           <DialogTitle className="text-white">Scene Prompt Builder - {scene?.heading || `Scene ${scene?.sceneNumber || ''}`}</DialogTitle>
         </DialogHeader>
 
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto">
         <Tabs value={mode} onValueChange={handleModeChange}>
           <TabsList className="w-full">
             <TabsTrigger value="guided" className="flex-1 relative">
@@ -629,10 +631,11 @@ export function ScenePromptBuilder({
             </div>
           </TabsContent>
         </Tabs>
+        </div>
 
-        {/* Live Prompt Preview */}
-        <div className="sticky bottom-0 bg-gray-900 border-t border-gray-700 p-3 -mx-6 -mb-6">
-          <div className="flex items-center justify-between mb-1">
+        {/* Fixed Footer - Always Visible */}
+        <div className="border-t border-gray-700 p-4 bg-gray-900">
+          <div className="flex items-center justify-between mb-2">
             <label className="text-xs text-gray-400">
               {mode === 'guided' 
                 ? (isPromptEdited ? 'Edited Prompt' : 'Auto-Crafted Prompt')
