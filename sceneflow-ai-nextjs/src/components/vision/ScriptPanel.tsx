@@ -2105,11 +2105,26 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
       
       {/* Generation Lock Screen */}
       {isGeneratingImage && (
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-20 flex items-center justify-center rounded-lg">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-xl flex flex-col items-center">
-            <Loader className="w-12 h-12 animate-spin text-purple-600 mb-3" />
-            <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">Generating Scene Image</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Please wait, this may take 10-20 seconds...</p>
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center rounded-lg">
+          <div className="bg-gray-900 border-2 border-purple-500 rounded-xl p-8 shadow-2xl flex flex-col items-center max-w-sm">
+            <div className="relative mb-4">
+              <Loader className="w-16 h-16 animate-spin text-purple-500" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full border-4 border-purple-300 animate-pulse"></div>
+              </div>
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Generating Scene Image</h3>
+            <p className="text-sm text-gray-300 text-center">
+              Creating your scene visualization...
+            </p>
+            <p className="text-xs text-gray-400 mt-2">
+              This may take 10-15 seconds
+            </p>
+            <div className="mt-4 flex items-center gap-2">
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            </div>
           </div>
         </div>
       )}
