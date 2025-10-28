@@ -28,6 +28,10 @@ function buildEnhancedSubjectDescription(char: any): string {
     .replace(/\.\s*$/, '') // Remove trailing period
     .trim()
   
+  // Log the final cleaned description
+  console.log(`[Base64 Ref] ${baseDescription.substring(0, 50)}... - cleaned description:`, cleanedDescription)
+  console.log(`[Base64 Ref] Description length:`, cleanedDescription.length)
+  
   return cleanedDescription
 }
 
@@ -65,12 +69,13 @@ export async function prepareBase64References(
       
       // Resize to higher resolution (1024x1024) with high quality
       // This preserves more facial detail for accurate character matching
+      // Using PNG instead of JPEG for better compatibility with Vertex AI reference images
       const resizedBuffer = await sharp(Buffer.from(arrayBuffer))
         .resize(1024, 1024, {
           fit: 'cover',
           position: 'center'
         })
-        .jpeg({ quality: 90 })
+        .png({ compressionLevel: 6 })
         .toBuffer()
       
       // Get metadata to verify dimensions and format
