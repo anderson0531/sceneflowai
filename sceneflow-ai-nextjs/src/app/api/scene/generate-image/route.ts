@@ -45,21 +45,32 @@ export async function POST(req: NextRequest) {
     const {
       projectId,
       sceneIndex,
-      scenePrompt,
-      selectedCharacters = [],
-      quality = 'auto' // NEW parameter
+      scenePrompt,           // Legacy support
+      customPrompt,          // NEW: From prompt builder
+      artStyle,              // NEW: User's art style selection
+      shotType,              // NEW: Camera framing
+      cameraAngle,           // NEW: Camera angle
+      lighting,              // NEW: Lighting selection
+      characters,            // NEW: From prompt data object
+      selectedCharacters = [], // Legacy support - array or extracted from object
+      quality = 'auto'
     } = body
+    
+    // Handle both legacy (array) and new (object with characters) formats
+    const characterArray = Array.isArray(selectedCharacters) 
+      ? selectedCharacters 
+      : characters || []
 
     console.log('[Scene Image] Generating scene image')
-    console.log('[Scene Image] Selected characters:', selectedCharacters.length)
-    console.log('[Scene Image] Raw selectedCharacters:', JSON.stringify(selectedCharacters))
+    console.log('[Scene Image] Selected characters:', characterArray.length)
+    console.log('[Scene Image] Raw selectedCharacters:', JSON.stringify(characterArray))
 
     // Single unified project load for both character and scene data
     let project = null
-    let characterObjects = selectedCharacters
+    let characterObjects = characterArray
 
     // Filter out null/undefined values immediately
-    const beforeFilterCount = selectedCharacters.length
+    const beforeFilterCount = characterArray.length
     characterObjects = characterObjects.filter((c: any) => c != null)
     const afterFilterCount = characterObjects.length
 
@@ -181,7 +192,9 @@ export async function POST(req: NextRequest) {
     const optimizedPrompt = optimizePromptForImagen({
       sceneAction: fullSceneContext,
       visualDescription: fullSceneContext,
-      characterReferences: characterReferences
+      characterReferences: characterReferences,
+      artStyle: artStyle || 'photorealistic',  // NEW: User's art style selection
+      customPrompt: customPrompt              // NEW: User-crafted prompt (if using custom, skip optimization)
     })
 
     console.log('[Scene Image] Optimized prompt preview:', optimizedPrompt.substring(0, 150))

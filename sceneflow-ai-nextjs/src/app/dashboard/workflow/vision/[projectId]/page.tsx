@@ -1868,7 +1868,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     console.log('Regenerate scene:', sceneIndex)
   }
 
-  const handleGenerateSceneImage = async (sceneIdx: number, selectedCharacters?: any[]) => {
+  const handleGenerateSceneImage = async (sceneIdx: number, selectedCharacters?: any[] | any) => {
     const scene = script?.script?.scenes?.[sceneIdx]
     if (!scene || !scene.visualDescription) {
       console.warn('No visual description available for scene', sceneIdx)
@@ -1877,19 +1877,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
     
     try {
-      // Check if selectedCharacters are already full objects (from Scene Prompt Builder)
+      // Check if we received prompt data object (from Scene Prompt Builder)
       let sceneCharacters: any[] = []
+      let promptData: any = {}
       
-      if (selectedCharacters && selectedCharacters.length > 0) {
-        // Check if they're already full character objects
-        if (typeof selectedCharacters[0] === 'object' && selectedCharacters[0].name) {
+      if (selectedCharacters && typeof selectedCharacters === 'object') {
+        // Check if it's a prompt data object from Scene Prompt Builder
+        if (selectedCharacters.characters && Array.isArray(selectedCharacters.characters)) {
+          promptData = selectedCharacters  // Contains customPrompt, artStyle, shotType, etc.
+          sceneCharacters = selectedCharacters.characters
+        } else if (Array.isArray(selectedCharacters)) {
+          // Legacy: Just character array
           sceneCharacters = selectedCharacters
         } else {
-          // They're character names (strings), need to map to full objects
-          sceneCharacters = selectedCharacters.map((charName: string) => {
-        const char = characters.find((c: any) => c.name === charName)
-            return char || null
-          }).filter(Boolean)
+          // Single character object
+          sceneCharacters = [selectedCharacters]
         }
       } else {
         // Auto-detect characters from scene using smart matching
@@ -1908,10 +1910,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          projectId: projectId,           // ✅ ADD THIS
-          sceneIndex: sceneIdx,           // ✅ ADD THIS
-          scenePrompt: scene.visualDescription || scene.action || scene.heading,  // ✅ ADD THIS as fallback
-          selectedCharacters: sceneCharacters,  // Send full character objects
+          projectId: projectId,
+          sceneIndex: sceneIdx,
+          scenePrompt: scene.visualDescription || scene.action || scene.heading,
+          // NEW: Pass prompt builder data
+          customPrompt: promptData.customPrompt,
+          artStyle: promptData.artStyle,
+          shotType: promptData.shotType,
+          cameraAngle: promptData.cameraAngle,
+          lighting: promptData.lighting,
+          characters: sceneCharacters,  // Characters array
           quality: imageQuality
         })
       })

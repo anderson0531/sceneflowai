@@ -3,9 +3,13 @@
  * Focuses ONLY on visual scene description + character reference
  */
 
+import { artStylePresets } from '@/constants/artStylePresets'
+
 interface OptimizePromptParams {
   sceneAction: string
   visualDescription: string
+  artStyle?: string          // NEW: User's art style selection
+  customPrompt?: string      // NEW: User-crafted prompt
   characterReferences?: Array<{
     referenceId: number
     name: string
@@ -18,9 +22,21 @@ interface OptimizePromptParams {
  * Removes ALL audio/non-visual noise and constructs simple, focused prompt
  */
 export function optimizePromptForImagen(params: OptimizePromptParams): string {
+  // If custom prompt is provided (from Advanced mode), use it directly
+  if (params.customPrompt) {
+    console.log('[Prompt Optimizer] Using custom prompt from user')
+    return params.customPrompt
+  }
+  
+  // Get art style from presets or default to photorealistic
+  const selectedStyle = artStylePresets.find(s => s.id === params.artStyle) || 
+    artStylePresets.find(s => s.id === 'photorealistic')!
+  const visualStyle = selectedStyle.promptSuffix
+  
   // Clean the scene action - remove ALL audio and non-visual elements
   let cleanedAction = cleanSceneForVisuals(params.sceneAction, params.visualDescription)
   
+  console.log('[Prompt Optimizer] Using art style:', params.artStyle || 'photorealistic')
   console.log('[Prompt Optimizer] Cleaned scene action:', cleanedAction.substring(0, 100))
   
   // If character references exist, tag character names in the scene with [referenceId]
@@ -44,7 +60,7 @@ ${characterDescriptions}
 
 Important: Character expressions and emotions should match the scene context above.
 
-VISUAL STYLE: Photorealistic, cinematic lighting, 8K resolution, sharp focus, professional photography, realistic human proportions, natural depth of field.`
+VISUAL STYLE: ${visualStyle}`
 
     console.log('[Prompt Optimizer] Built prompt with', params.characterReferences.length, 'character references')
     console.log('[Prompt Optimizer] Scene composition:', cleanedAction.substring(0, 150))
@@ -58,7 +74,7 @@ VISUAL STYLE: Photorealistic, cinematic lighting, 8K resolution, sharp focus, pr
   // No character reference - simple scene description
   return `${cleanedAction}
 
-Style: Photorealistic, cinematic lighting, 8K resolution, sharp focus, professional photography.`.trim()
+VISUAL STYLE: ${visualStyle}`.trim()
 }
 
 /**

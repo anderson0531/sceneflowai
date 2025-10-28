@@ -39,7 +39,7 @@ interface ScenePromptBuilderProps {
     ethnicity?: string
     subject?: string
   }>
-  onGenerateImage: (selectedCharacters: any[]) => void
+  onGenerateImage: (selectedCharacters: any[] | any) => void
   isGenerating?: boolean
 }
 
@@ -254,8 +254,17 @@ export function ScenePromptBuilder({
       })
       .filter(Boolean)
     
-    // Only pass selected characters - API will build the prompt from scene description
-    onGenerateImage(selectedCharacterObjects)
+    // Pass prompt builder selections to API
+    const promptData = {
+      characters: selectedCharacterObjects,
+      customPrompt: constructedPrompt,     // User's crafted prompt
+      artStyle: structure.artStyle,        // Selected art style
+      shotType: structure.shotType,        // Camera framing
+      cameraAngle: structure.cameraAngle,  // Camera angle
+      lighting: structure.lighting         // Lighting selection
+    }
+    
+    onGenerateImage(promptData)
     onClose()
   }
 
