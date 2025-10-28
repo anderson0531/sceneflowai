@@ -111,6 +111,7 @@ export async function callVertexAIImagen(
     console.log('[Vertex AI] Using', options.referenceImages.length, 'Base64 reference images')
     console.log(`[Vertex AI] Reference size: ${base64SizeKB}KB`)
     console.log('[Vertex AI] Reference description:', firstRef.subjectDescription?.substring(0, 60))
+    console.log('[Vertex AI] Full subjectDescription for reference 1:', requestBody.parameters.referenceImages[0].subjectImageConfig.subjectDescription)
   }
   
   // Log request size for debugging

@@ -146,6 +146,7 @@ export async function POST(req: NextRequest) {
       aspectRatio: '16:9',
       numberOfImages: 1,
       quality: quality, // Pass quality setting
+      negativePrompt: 'wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager',
       referenceImages: base64References.map(ref => ({
         referenceId: ref.referenceId,
         base64Image: ref.base64Image,

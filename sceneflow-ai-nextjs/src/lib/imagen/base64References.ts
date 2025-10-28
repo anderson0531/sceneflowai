@@ -13,6 +13,18 @@ export interface Base64CharacterReference {
 }
 
 /**
+ * Build enhanced subject description with explicit matching directive
+ */
+function buildEnhancedSubjectDescription(char: any): string {
+  // Start with explicit matching directive
+  const baseDescription = char.appearanceDescription || 
+    `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
+  
+  // Add explicit matching instruction
+  return `Match this person's facial features exactly: ${baseDescription}. Maintain exact likeness including face shape, age, expression, and all distinctive features.`
+}
+
+/**
  * Fetch character reference images and convert to Base64
  * Resizes to moderate resolution to avoid token limits
  */
@@ -44,26 +56,26 @@ export async function prepareBase64References(
       const arrayBuffer = await response.arrayBuffer()
       const originalSizeKB = Math.round(arrayBuffer.byteLength / 1024)
       
-      // Resize to moderate resolution (512x512) with good quality
-      // This balances detail retention with token limits
+      // Resize to higher resolution (1024x1024) with high quality
+      // This preserves more facial detail for accurate character matching
       const resizedBuffer = await sharp(Buffer.from(arrayBuffer))
-        .resize(512, 512, {
+        .resize(1024, 1024, {
           fit: 'cover',
           position: 'center'
         })
-        .jpeg({ quality: 85 })
+        .jpeg({ quality: 90 })
         .toBuffer()
       
       const base64 = resizedBuffer.toString('base64')
       const finalSizeKB = Math.round(resizedBuffer.byteLength / 1024)
       
-      console.log(`[Base64 Ref] ${char.name}: ${originalSizeKB}KB → ${finalSizeKB}KB (resized to 512x512)`)
+      console.log(`[Base64 Ref] ${char.name}: ${originalSizeKB}KB → ${finalSizeKB}KB (resized to 1024x1024)`)
 
       references.push({
         referenceId: i + 1,
         name: char.name,
         base64Image: base64,
-        description: char.appearanceDescription || `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
+        description: buildEnhancedSubjectDescription(char)
       })
       
     } catch (error) {

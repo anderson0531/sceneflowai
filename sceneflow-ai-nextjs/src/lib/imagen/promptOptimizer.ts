@@ -33,16 +33,21 @@ export function optimizePromptForImagen(params: OptimizePromptParams): string {
     
     // Build character descriptions
     const characterDescriptions = params.characterReferences
-      .map(ref => `Character [${ref.referenceId}] (${ref.name}): ${ref.description}`)
+      .map(ref => `[${ref.referenceId}] ${ref.name}: ${ref.description}`)
       .join('\n')
     
-    const prompt = `${cleanedAction}
+    const prompt = `${characterDescriptions}
 
-${characterDescriptions}
+Scene: ${cleanedAction}
+
+IMPORTANT: Match the reference image facial features precisely. Maintain exact age, expression, and likeness.
 
 Style: Photorealistic, cinematic lighting, 8K resolution, sharp focus, professional photography, realistic human proportions, natural adult appearance.`
 
     console.log('[Prompt Optimizer] Built prompt with', params.characterReferences.length, 'character references')
+    console.log('[Prompt Optimizer] Final prompt structure:')
+    console.log('[Prompt Optimizer] - Character descriptions first:', characterDescriptions.substring(0, 100))
+    console.log('[Prompt Optimizer] - Scene description second:', cleanedAction.substring(0, 100))
     return prompt.trim()
   }
   
