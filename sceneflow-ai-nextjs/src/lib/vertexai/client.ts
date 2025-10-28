@@ -92,6 +92,8 @@ export async function callVertexAIImagen(
       personGeneration: 'allow_adult' // Default setting - allows adults but not celebrities
     }
   }
+  
+  console.log('[Vertex AI] Negative prompt:', requestBody.parameters.negativePrompt || '(none)')
 
   // Add reference images if provided (using Base64)
   if (options.referenceImages && options.referenceImages.length > 0) {
@@ -118,6 +120,24 @@ export async function callVertexAIImagen(
   const requestBodyStr = JSON.stringify(requestBody)
   const requestSizeKB = Math.round(requestBodyStr.length / 1024)
   console.log(`[Vertex AI] Total request size: ${requestSizeKB}KB`)
+
+  // Log full request for debugging (excluding large base64 data)
+  const debugRequest = {
+    ...requestBody,
+    instances: requestBody.instances,
+    parameters: {
+      ...requestBody.parameters,
+      referenceImages: requestBody.parameters.referenceImages?.map((ref: any) => ({
+        referenceId: ref.referenceId,
+        referenceType: ref.referenceType,
+        base64Size: `${Math.round((ref.base64Encoded?.length || 0) / 1024)}KB`,
+        subjectImageConfig: ref.subjectImageConfig
+      }))
+    }
+  }
+  console.log('[Vertex AI] ===== FULL REQUEST BODY =====')
+  console.log(JSON.stringify(debugRequest, null, 2))
+  console.log('[Vertex AI] ===== END REQUEST BODY =====')
 
   const response = await fetch(endpoint, {
     method: 'POST',

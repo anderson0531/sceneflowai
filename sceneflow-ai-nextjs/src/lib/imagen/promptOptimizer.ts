@@ -38,9 +38,9 @@ export function optimizePromptForImagen(params: OptimizePromptParams): string {
     
     const prompt = `${characterDescriptions}
 
-Scene: ${cleanedAction}
+CRITICAL: Use the reference image as the absolute source of truth for the character's appearance. Match age, facial structure, expression, and all features exactly as shown in the reference image. The reference image takes absolute priority over any scene descriptions.
 
-IMPORTANT: Match the reference image facial features precisely. Maintain exact age, expression, and likeness.
+Scene: ${cleanedAction}
 
 Style: Photorealistic, cinematic lighting, 8K resolution, sharp focus, professional photography, realistic human proportions, natural adult appearance.`
 
@@ -48,6 +48,9 @@ Style: Photorealistic, cinematic lighting, 8K resolution, sharp focus, professio
     console.log('[Prompt Optimizer] Final prompt structure:')
     console.log('[Prompt Optimizer] - Character descriptions first:', characterDescriptions.substring(0, 100))
     console.log('[Prompt Optimizer] - Scene description second:', cleanedAction.substring(0, 100))
+    console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
+    console.log(prompt)
+    console.log('[Prompt Optimizer] ===== END FULL PROMPT =====')
     return prompt.trim()
   }
   
