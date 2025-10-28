@@ -141,18 +141,35 @@ export async function POST(req: NextRequest) {
 
     console.log('[Scene Image] Optimized prompt preview:', optimizedPrompt.substring(0, 150))
 
-    // Generate with Vertex AI Imagen 3 using Base64 references
+    // Generate with Vertex AI Imagen 3
+    // Prefer GCS URIs over Base64 for efficiency
+    const referenceImages = characterObjects.map((char: any, idx: number) => {
+      const matchingRef = base64References.find(r => r.referenceId === idx + 1)
+      
+      // Use GCS URL if available (preferred), otherwise use Base64
+      if (char.referenceImageGCS && char.referenceImageGCS.startsWith('gs://')) {
+        console.log(`[Scene Image] Using GCS URI for ${char.name}:`, char.referenceImageGCS)
+        return {
+          referenceId: idx + 1,
+          gcsUri: char.referenceImageGCS,
+          subjectDescription: matchingRef?.description || `Character ${idx + 1}`
+        }
+      } else {
+        console.log(`[Scene Image] Using Base64 for ${char.name} (GCS not available)`)
+        return {
+          referenceId: idx + 1,
+          base64Image: matchingRef?.base64Image,
+          subjectDescription: matchingRef?.description || `Character ${idx + 1}`
+        }
+      }
+    })
+
     const base64Image = await callVertexAIImagen(optimizedPrompt, {
       aspectRatio: '16:9',
       numberOfImages: 1,
       quality: quality, // Pass quality setting
       negativePrompt: 'wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager',
-      referenceImages: base64References.map(ref => ({
-        referenceId: ref.referenceId,
-        base64Image: ref.base64Image,
-        referenceType: 'REFERENCE_TYPE_SUBJECT' as const,
-        subjectDescription: ref.description
-      }))
+      referenceImages
     })
 
     // Upload to Vercel Blob storage

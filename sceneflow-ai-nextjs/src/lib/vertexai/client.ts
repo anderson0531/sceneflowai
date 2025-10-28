@@ -53,7 +53,8 @@ export async function callVertexAIImagen(
     quality?: 'max' | 'auto' // NEW parameter
     referenceImages?: Array<{
       referenceId: number
-      base64Image: string
+      base64Image?: string        // For Base64 (fallback)
+      gcsUri?: string             // For GCS URLs (preferred)
       referenceType?: 'REFERENCE_TYPE_SUBJECT'
       subjectDescription?: string
     }>
@@ -95,30 +96,48 @@ export async function callVertexAIImagen(
   
   console.log('[Vertex AI] Negative prompt:', requestBody.parameters.negativePrompt || '(none)')
 
-  // Add reference images if provided (using Base64)
-  // Using Google's official API format: bytesBase64Encoded and flat subjectDescription
+  // Add reference images if provided
+  // Prefer GCS URLs over Base64 for efficiency
   if (options.referenceImages && options.referenceImages.length > 0) {
-    requestBody.parameters.referenceImages = options.referenceImages.map(ref => ({
-      referenceId: ref.referenceId.toString(),  // Ensure string format
-      bytesBase64Encoded: ref.base64Image,      // Correct field name per Google docs
-      subjectDescription: ref.subjectDescription || `Character ${ref.referenceId}`  // Top-level, not nested
-    }))
+    requestBody.parameters.referenceImages = options.referenceImages.map(ref => {
+      // Use GCS URL if available (preferred), otherwise fall back to Base64
+      if (ref.gcsUri) {
+        console.log(`[Vertex AI] Using GCS URI for reference ${ref.referenceId}:`, ref.gcsUri)
+        return {
+          referenceId: ref.referenceId.toString(),
+          referenceUri: ref.gcsUri,  // GCS format: gs://bucket/path
+          subjectDescription: ref.subjectDescription || `Character ${ref.referenceId}`
+        }
+      } else if (ref.base64Image) {
+        console.log(`[Vertex AI] Using Base64 for reference ${ref.referenceId} (GCS not available)`)
+        return {
+          referenceId: ref.referenceId.toString(),
+          bytesBase64Encoded: ref.base64Image,
+          subjectDescription: ref.subjectDescription || `Character ${ref.referenceId}`
+        }
+      } else {
+        throw new Error(`Reference ${ref.referenceId} has neither gcsUri nor base64Image`)
+      }
+    })
     
     const firstRef = options.referenceImages[0]
-    const base64SizeKB = Math.round((firstRef.base64Image.length * 0.75) / 1024)
-    
-    console.log('[Vertex AI] Using', options.referenceImages.length, 'Base64 reference images')
-    console.log(`[Vertex AI] Reference size: ${base64SizeKB}KB`)
+    console.log('[Vertex AI] Using', options.referenceImages.length, 'reference images')
+    console.log('[Vertex AI] Reference method:', firstRef.gcsUri ? 'GCS URI' : 'Base64')
     console.log('[Vertex AI] Reference description:', firstRef.subjectDescription?.substring(0, 60))
-    console.log('[Vertex AI] Full subjectDescription for reference 1:', requestBody.parameters.referenceImages[0].subjectDescription)
     
-    // Validate base64 format
-    const firstBase64 = requestBody.parameters.referenceImages[0].bytesBase64Encoded
-    console.log('[Vertex AI] Base64 validation:')
-    console.log('  - Length:', firstBase64.length)
-    console.log('  - Starts with data URL?:', firstBase64.startsWith('data:'))
-    console.log('  - First 80 chars:', firstBase64.substring(0, 80))
-    console.log('  - Appears valid?:', /^[A-Za-z0-9+/]+=*$/.test(firstBase64.substring(0, 100)))
+    if (firstRef.gcsUri) {
+      console.log('[Vertex AI] GCS URI:', firstRef.gcsUri)
+    } else if (firstRef.base64Image) {
+      const base64SizeKB = Math.round((firstRef.base64Image.length * 0.75) / 1024)
+      console.log(`[Vertex AI] Base64 size: ${base64SizeKB}KB`)
+      // Validate base64 format
+      const firstBase64 = firstRef.base64Image
+      console.log('[Vertex AI] Base64 validation:')
+      console.log('  - Length:', firstBase64.length)
+      console.log('  - Starts with data URL?:', firstBase64.startsWith('data:'))
+      console.log('  - First 80 chars:', firstBase64.substring(0, 80))
+      console.log('  - Appears valid?:', /^[A-Za-z0-9+/]+=*$/.test(firstBase64.substring(0, 100)))
+    }
   }
   
   // Log request size for debugging
@@ -134,7 +153,8 @@ export async function callVertexAIImagen(
       ...requestBody.parameters,
       referenceImages: requestBody.parameters.referenceImages?.map((ref: any) => ({
         referenceId: ref.referenceId,
-        base64Size: `${Math.round((ref.bytesBase64Encoded?.length || 0) / 1024)}KB`,
+        referenceUri: ref.referenceUri || 'N/A',
+        base64Size: ref.bytesBase64Encoded ? `${Math.round((ref.bytesBase64Encoded?.length || 0) / 1024)}KB` : 'N/A',
         subjectDescription: ref.subjectDescription
       }))
     }
