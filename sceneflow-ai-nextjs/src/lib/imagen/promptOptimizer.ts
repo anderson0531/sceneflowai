@@ -22,12 +22,6 @@ interface OptimizePromptParams {
  * Removes ALL audio/non-visual noise and constructs simple, focused prompt
  */
 export function optimizePromptForImagen(params: OptimizePromptParams): string {
-  // If custom prompt is provided (from Advanced mode), use it directly
-  if (params.customPrompt) {
-    console.log('[Prompt Optimizer] Using custom prompt from user')
-    return params.customPrompt
-  }
-  
   // Get art style from presets or default to photorealistic
   const selectedStyle = artStylePresets.find(s => s.id === params.artStyle) || 
     artStylePresets.find(s => s.id === 'photorealistic')!

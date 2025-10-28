@@ -286,7 +286,7 @@ export function ScenePromptBuilder({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-900 text-white border-gray-700">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-900 text-white border-gray-700 relative">
         <DialogHeader>
           <DialogTitle className="text-white">Scene Prompt Builder - {scene?.heading || `Scene ${scene?.sceneNumber || ''}`}</DialogTitle>
         </DialogHeader>
@@ -677,6 +677,16 @@ export function ScenePromptBuilder({
             </Button>
           </div>
         </div>
+
+        {/* Loading Overlay */}
+        {isGenerating && (
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
+            <div className="bg-gray-800 rounded-lg p-6 shadow-xl">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-purple-500" />
+              <p className="text-sm text-gray-200 text-center">Generating scene image...</p>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )
