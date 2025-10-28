@@ -415,19 +415,27 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
-              <label className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm cursor-pointer">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const input = document.getElementById(`upload-${characterId}`) as HTMLInputElement
+                  input?.click()
+                }}
+                className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm cursor-pointer"
+              >
                 <Upload className="w-4 h-4" />
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    e.stopPropagation()
-                    const file = e.target.files?.[0]
-                    if (file) onUpload(file)
-                  }}
-                />
-              </label>
+              </button>
+              <input
+                id={`upload-${characterId}`}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  e.stopPropagation()
+                  const file = e.target.files?.[0]
+                  if (file) onUpload(file)
+                }}
+              />
             </div>
           </>
         ) : (
@@ -445,21 +453,28 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
                 {isGenerating ? <Loader className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
                 Generate
               </Button>
-              <label className="cursor-pointer">
-                <Button size="sm" variant="outline">
-                  <Upload className="w-4 h-4" />
-                </Button>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    e.stopPropagation()
-                    const file = e.target.files?.[0]
-                    if (file) onUpload(file)
-                  }}
-                />
-              </label>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const input = document.getElementById(`upload-${characterId}`) as HTMLInputElement
+                  input?.click()
+                }}
+              >
+                <Upload className="w-4 h-4" />
+              </Button>
+              <input
+                id={`upload-${characterId}`}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  e.stopPropagation()
+                  const file = e.target.files?.[0]
+                  if (file) onUpload(file)
+                }}
+              />
             </div>
           </div>
         )}
