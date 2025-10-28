@@ -13,12 +13,22 @@ export interface Base64CharacterReference {
 }
 
 /**
- * Build enhanced subject description with explicit matching directive
+ * Build enhanced subject description with essential context
+ * Excludes expressions that might conflict with scene descriptions
  */
 function buildEnhancedSubjectDescription(char: any): string {
-  // For Imagen 3 with reference images, keep subjectDescription minimal
-  // The actual matching is handled by the main prompt's CRITICAL directive
-  return `Reference character for exact replication`
+  // Provide essential descriptive context for the reference image
+  // but exclude expressions that might conflict with scene descriptions
+  const baseDescription = char.appearanceDescription || 
+    `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
+  
+  // Remove expression-related phrases that could conflict with scene
+  const cleanedDescription = baseDescription
+    .replace(/\b(with a )?(friendly|warm|stern|weary|tired|happy|sad) (smile|expression|face)\b/gi, '')
+    .replace(/\.\s*$/, '') // Remove trailing period
+    .trim()
+  
+  return cleanedDescription
 }
 
 /**
