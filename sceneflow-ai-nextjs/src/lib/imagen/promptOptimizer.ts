@@ -31,18 +31,32 @@ export function optimizePromptForImagen(params: OptimizePromptParams): string {
       cleanedAction = cleanedAction.replace(namePattern, `${ref.name} [${ref.referenceId}]`)
     })
     
-    // Build character descriptions
-    const characterDescriptions = params.characterReferences
-      .map(ref => `Character [${ref.referenceId}] (${ref.name}): ${ref.description}`)
-      .join('\n')
+    // Split character descriptions into "likeness" (face structure) and "context" (expression/emotion)
+    const characterLikeness = params.characterReferences
+      .map(ref => `Character [${ref.referenceId}] (${ref.name}): Match this person's exact facial features, bone structure, age, and physical appearance: ${ref.description}.`)
+      .join('\n\n')
+    
+    // Extract emotion/expression from scene action for each character
+    const characterContext = params.characterReferences.map(ref => {
+      const emotionPattern = new RegExp(`${ref.name}[^.!?]*(weary|tired|angry|sad|happy|excited|frowning|smiling|worried|concerned)[^.!?]*[.!?]`, 'i')
+      const emotionMatch = cleanedAction.match(emotionPattern)
+      const sceneEmotion = emotionMatch ? `a ${emotionMatch[1]} expression` : 'a natural expression'
+      return `Character [${ref.referenceId}] displays ${sceneEmotion} appropriate to the scene context.`
+    }).join(' ')
     
     const prompt = `${cleanedAction}
 
-${characterDescriptions}
+REFERENCE LIKENESS (PRIORITY):
+${characterLikeness}
 
-Style: Photorealistic, cinematic lighting, 8K resolution, sharp focus, professional photography, realistic human proportions, natural adult appearance.`
+SCENE CONTEXT (EXPRESSION ONLY):
+${characterContext}
+
+Style: Photorealistic, cinematic lighting, 8K resolution, sharp focus, professional photography, realistic human proportions.`
 
     console.log('[Prompt Optimizer] Built prompt with', params.characterReferences.length, 'character references')
+    console.log('[Prompt Optimizer] Scene emotion extraction:', characterContext.substring(0, 150))
+    console.log('[Prompt Optimizer] Reference descriptions:', characterLikeness.substring(0, 200))
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
     console.log(prompt)
     console.log('[Prompt Optimizer] ===== END FULL PROMPT =====')

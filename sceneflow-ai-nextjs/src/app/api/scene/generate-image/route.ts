@@ -146,13 +146,22 @@ export async function POST(req: NextRequest) {
     const referenceImages = characterObjects.map((char: any, idx: number) => {
       const matchingRef = base64References.find(r => r.referenceId === idx + 1)
       
+      // Build enhanced subject description with age clause (for both GCS and Base64)
+      const buildSubjectDescription = (char: any) => {
+        const baseDescription = char.appearanceDescription || 
+          `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
+        const ageMatch = baseDescription.match(/\b(late\s*)?(\d{1,2})s?\b/i)
+        const ageClause = ageMatch ? ` Exact age: ${ageMatch[0]}, not older, not younger.` : ''
+        return `Match this person's facial features exactly: ${baseDescription}.${ageClause} Maintain exact likeness including face shape, bone structure, and all distinctive features.`
+      }
+      
       // Use GCS URL if available (preferred), otherwise use Base64
       if (char.referenceImageGCS && char.referenceImageGCS.startsWith('gs://')) {
         console.log(`[Scene Image] Using GCS URI for ${char.name}:`, char.referenceImageGCS)
         return {
           referenceId: idx + 1,
           gcsUri: char.referenceImageGCS,
-          subjectDescription: matchingRef?.description || `Character ${idx + 1}`
+          subjectDescription: buildSubjectDescription(char)
         }
       } else {
         console.log(`[Scene Image] Using Base64 for ${char.name} (GCS not available)`)
@@ -168,7 +177,7 @@ export async function POST(req: NextRequest) {
       aspectRatio: '16:9',
       numberOfImages: 1,
       quality: quality, // Pass quality setting
-      negativePrompt: 'wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager',
+      negativePrompt: 'elderly appearance, deeply wrinkled, aged beyond reference, geriatric, wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager, youthful appearance',
       referenceImages
     })
 

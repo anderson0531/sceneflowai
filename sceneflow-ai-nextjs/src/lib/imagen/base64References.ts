@@ -13,15 +13,19 @@ export interface Base64CharacterReference {
 }
 
 /**
- * Build enhanced subject description with explicit matching directive
+ * Build enhanced subject description with explicit matching directive and age clause
  */
 function buildEnhancedSubjectDescription(char: any): string {
   // Start with explicit matching directive
   const baseDescription = char.appearanceDescription || 
     `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
   
-  // Add explicit matching instruction
-  return `Match this person's facial features exactly: ${baseDescription}. Maintain exact likeness including face shape, age, expression, and all distinctive features.`
+  // Extract age if present (e.g., "late 50s", "60s", "40s")
+  const ageMatch = baseDescription.match(/\b(late\s*)?(\d{1,2})s?\b/i)
+  const ageClause = ageMatch ? ` Exact age: ${ageMatch[0]}, not older, not younger.` : ''
+  
+  // Add explicit matching instruction with age enforcement
+  return `Match this person's facial features exactly: ${baseDescription}.${ageClause} Maintain exact likeness including face shape, bone structure, and all distinctive features.`
 }
 
 /**
