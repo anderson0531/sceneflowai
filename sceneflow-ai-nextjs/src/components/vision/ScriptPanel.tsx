@@ -16,6 +16,7 @@ import { AudioMixer, type AudioTrack } from './AudioMixer'
 import ScriptReviewModal from './ScriptReviewModal'
 import SceneReviewModal from './SceneReviewModal'
 import { ScriptEditorModal } from './ScriptEditorModal'
+import { toast } from 'sonner'
 
 interface ScriptPanelProps {
   script: any
@@ -695,6 +696,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const handleGenerateImage = async (sceneIdx: number) => {
     if (!onGenerateSceneImage) return
     setGeneratingImageForScene(sceneIdx)
+    
+    // Show toast notification
+    toast.success('Scene image generation started', {
+      description: 'Generating scene image. This may take 10-15 seconds.',
+      duration: 4000
+    })
+    
     try {
       // Pass undefined for selectedCharacters - the API will extract from scene
       await onGenerateSceneImage(sceneIdx, undefined)
