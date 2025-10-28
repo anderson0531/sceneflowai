@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
 import { Copy, Check, Sparkles, Info, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { findSceneCharacters } from '../../lib/character/matching'
 
@@ -267,15 +268,12 @@ export function ScenePromptBuilder({
     onGenerateImage(promptData)
     
     // Show toast notification that generation has started
-    try {
-      const { toast } = require('sonner')
-      toast.success('Scene image generation started', {
-        description: 'Generating your scene image. This may take 10-15 seconds.',
-        duration: 4000
-      })
-    } catch (error) {
-      console.log('[Scene Prompt Builder] Toast notification not available')
-    }
+    console.log('[ScenePromptBuilder] About to show toast')
+    toast.success('Scene image generation started', {
+      description: 'Generating your scene image. This may take 10-15 seconds.',
+      duration: 4000
+    })
+    console.log('[ScenePromptBuilder] Toast called')
     
     onClose()
   }
