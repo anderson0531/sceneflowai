@@ -10,7 +10,6 @@ import { ConditionalLayout } from '@/components/layout/ConditionalLayout'
 import { GlobalHeader } from '@/components/layout/GlobalHeader'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { Toaster } from 'sonner'
-import 'sonner/dist/sonner.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
