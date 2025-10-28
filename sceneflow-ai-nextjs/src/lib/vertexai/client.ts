@@ -96,15 +96,12 @@ export async function callVertexAIImagen(
   console.log('[Vertex AI] Negative prompt:', requestBody.parameters.negativePrompt || '(none)')
 
   // Add reference images if provided (using Base64)
+  // Using Google's official API format: bytesBase64Encoded and flat subjectDescription
   if (options.referenceImages && options.referenceImages.length > 0) {
     requestBody.parameters.referenceImages = options.referenceImages.map(ref => ({
-      referenceId: ref.referenceId,
-      base64Encoded: ref.base64Image,
-      referenceType: ref.referenceType || 'REFERENCE_TYPE_SUBJECT',
-      subjectImageConfig: {
-        subjectDescription: ref.subjectDescription || `Character ${ref.referenceId}`,
-        subjectType: 'SUBJECT_TYPE_PERSON'
-      }
+      referenceId: ref.referenceId.toString(),  // Ensure string format
+      bytesBase64Encoded: ref.base64Image,      // Correct field name per Google docs
+      subjectDescription: ref.subjectDescription || `Character ${ref.referenceId}`  // Top-level, not nested
     }))
     
     const firstRef = options.referenceImages[0]
@@ -113,10 +110,10 @@ export async function callVertexAIImagen(
     console.log('[Vertex AI] Using', options.referenceImages.length, 'Base64 reference images')
     console.log(`[Vertex AI] Reference size: ${base64SizeKB}KB`)
     console.log('[Vertex AI] Reference description:', firstRef.subjectDescription?.substring(0, 60))
-    console.log('[Vertex AI] Full subjectDescription for reference 1:', requestBody.parameters.referenceImages[0].subjectImageConfig.subjectDescription)
+    console.log('[Vertex AI] Full subjectDescription for reference 1:', requestBody.parameters.referenceImages[0].subjectDescription)
     
     // Validate base64 format
-    const firstBase64 = requestBody.parameters.referenceImages[0].base64Encoded
+    const firstBase64 = requestBody.parameters.referenceImages[0].bytesBase64Encoded
     console.log('[Vertex AI] Base64 validation:')
     console.log('  - Length:', firstBase64.length)
     console.log('  - Starts with data URL?:', firstBase64.startsWith('data:'))
@@ -137,9 +134,8 @@ export async function callVertexAIImagen(
       ...requestBody.parameters,
       referenceImages: requestBody.parameters.referenceImages?.map((ref: any) => ({
         referenceId: ref.referenceId,
-        referenceType: ref.referenceType,
-        base64Size: `${Math.round((ref.base64Encoded?.length || 0) / 1024)}KB`,
-        subjectImageConfig: ref.subjectImageConfig
+        base64Size: `${Math.round((ref.bytesBase64Encoded?.length || 0) / 1024)}KB`,
+        subjectDescription: ref.subjectDescription
       }))
     }
   }
