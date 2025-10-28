@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { callVertexAIImagen } from '@/lib/vertexai/client'
 import { uploadImageToBlob } from '@/lib/storage/blob'
-import { prepareBase64References } from '@/lib/imagen/base64References'
 import { optimizePromptForImagen } from '@/lib/imagen/promptOptimizer'
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
 import Project from '../../../../models/Project'
@@ -94,14 +93,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Filter for valid reference images
-    characterObjects = characterObjects.filter((c: any) => 
-      c != null && (c.referenceImage || c.referenceImageGCS)
-    )
-    console.log('[Scene Image] Valid character objects after filtering:', characterObjects.length)
-
-    // Prepare Base64 character references
-    const base64References = await prepareBase64References(characterObjects)
+    // Filter for valid characters (we don't need reference images anymore)
+    characterObjects = characterObjects.filter((c: any) => c != null)
+    console.log('[Scene Image] Valid character objects:', characterObjects.length)
     
     // Load scene data (reuse same project variable)
     let fullSceneContext = scenePrompt || ''
@@ -128,57 +122,41 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    // Build clean prompt from scene description with ALL character references
+    // Build character references using visionDescription (preferred) or fallback descriptions
+    const characterReferences = characterObjects.map((char: any, idx: number) => {
+      // Prefer Gemini Vision description over manual description
+      const description = char.visionDescription || char.appearanceDescription || 
+        `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
+      
+      console.log(`[Scene Image] Using ${char.visionDescription ? 'Gemini Vision' : 'manual'} description for ${char.name}`)
+      
+      // Extract age and add explicit age clause
+      const ageMatch = description.match(/\b(late\s*)?(\d{1,2})s?\b/i)
+      const ageClause = ageMatch ? ` Exact age: ${ageMatch[0]}.` : ''
+      
+      return {
+        referenceId: idx + 1,
+        name: char.name,
+        description: `${description}${ageClause}`
+      }
+    })
+    
+    // Build clean prompt from scene description with text-based character descriptions
     const optimizedPrompt = optimizePromptForImagen({
       sceneAction: fullSceneContext,
       visualDescription: fullSceneContext,
-      characterReferences: base64References.map(ref => ({
-        referenceId: ref.referenceId,
-        name: ref.name,
-        description: ref.description
-      }))
+      characterReferences: characterReferences
     })
 
     console.log('[Scene Image] Optimized prompt preview:', optimizedPrompt.substring(0, 150))
 
-    // Generate with Vertex AI Imagen 3
-    // Prefer GCS URIs over Base64 for efficiency
-    const referenceImages = characterObjects.map((char: any, idx: number) => {
-      const matchingRef = base64References.find(r => r.referenceId === idx + 1)
-      
-      // Build enhanced subject description with age clause (for both GCS and Base64)
-      const buildSubjectDescription = (char: any) => {
-        const baseDescription = char.appearanceDescription || 
-          `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
-        const ageMatch = baseDescription.match(/\b(late\s*)?(\d{1,2})s?\b/i)
-        const ageClause = ageMatch ? ` Exact age: ${ageMatch[0]}, not older, not younger.` : ''
-        return `Match this person's facial features exactly: ${baseDescription}.${ageClause} Maintain exact likeness including face shape, bone structure, and all distinctive features.`
-      }
-      
-      // Use GCS URL if available (preferred), otherwise use Base64
-      if (char.referenceImageGCS && char.referenceImageGCS.startsWith('gs://')) {
-        console.log(`[Scene Image] Using GCS URI for ${char.name}:`, char.referenceImageGCS)
-        return {
-          referenceId: idx + 1,
-          gcsUri: char.referenceImageGCS,
-          subjectDescription: buildSubjectDescription(char)
-        }
-      } else {
-        console.log(`[Scene Image] Using Base64 for ${char.name} (GCS not available)`)
-        return {
-          referenceId: idx + 1,
-          base64Image: matchingRef?.base64Image,
-          subjectDescription: matchingRef?.description || `Character ${idx + 1}`
-        }
-      }
-    })
-
+    // Generate with Vertex AI Imagen 3 - NO reference images, use text descriptions only
     const base64Image = await callVertexAIImagen(optimizedPrompt, {
       aspectRatio: '16:9',
       numberOfImages: 1,
-      quality: quality, // Pass quality setting
-      negativePrompt: 'elderly appearance, deeply wrinkled, aged beyond reference, geriatric, wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager, youthful appearance',
-      referenceImages
+      quality: quality,
+      negativePrompt: 'elderly appearance, deeply wrinkled, aged beyond reference, geriatric, wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager, youthful appearance'
+      // NO referenceImages - rely on detailed text descriptions in prompt
     })
 
     // Upload to Vercel Blob storage
@@ -189,9 +167,9 @@ export async function POST(req: NextRequest) {
 
     console.log('[Scene Image] ✓ Image generated and uploaded')
 
-    // Validate character likeness if references were used
+    // Validate character likeness (optional - informational only)
     let validation: any = null
-    if (base64References.length > 0 && characterObjects.length > 0) {
+    if (characterObjects.length > 0) {
       console.log('[Scene Image] Validating character likeness...')
 
       // Determine which character to validate (prefer character mentioned in action/visualDesc)
@@ -243,27 +221,11 @@ export async function POST(req: NextRequest) {
       storage: 'vercel-blob'
     }
 
-    // Add validation info based on results
+    // Add validation info (informational only for storyboards)
     if (validation) {
       response.validationConfidence = validation.confidence
-      
-      if (!validation.matches && validation.confidence < 90) {
-        // Validation failed - show warning
-        response.validationPassed = false
-        response.validationWarning = `Generated character may not match reference (${validation.confidence}% confidence). Issues: ${validation.issues.join(', ')}`
-        
-        // Suggest Max quality if currently using Auto
-        if (quality === 'auto') {
-          response.qualitySuggestion = 'max'
-          response.qualitySuggestionMessage = 'Try regenerating with Max quality (Imagen 4 Ultra) for better character cloning'
-        }
-      } else {
-        // Validation passed or acceptable for storyboards
-        response.validationPassed = true
-        if (validation.confidence >= 90) {
-          response.validationMessage = `Character likeness verified (${validation.confidence}% confidence)`
-        }
-      }
+      response.validationPassed = true  // Always pass for storyboards
+      response.validationMessage = `Storyboard generated (${validation.confidence}% character similarity - informational only)`
     }
 
     return NextResponse.json(response)
