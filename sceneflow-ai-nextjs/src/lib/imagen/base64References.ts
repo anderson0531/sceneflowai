@@ -24,8 +24,14 @@ function buildEnhancedSubjectDescription(char: any): string {
   
   // Remove expression-related phrases that could conflict with scene
   const cleanedDescription = baseDescription
-    .replace(/\b(with a )?(friendly|warm|stern|weary|tired|happy|sad) (smile|expression|face)\b/gi, '')
-    .replace(/\.\s*$/, '') // Remove trailing period
+    // Remove expression phrases (including "and a" connector)
+    .replace(/\b(with a |and a )?(friendly|warm|stern|weary|tired|happy|sad) (smile|expression|face)\.?/gi, '')
+    // Clean up dangling connectors at the end
+    .replace(/,?\s+(and a|with a|and|with)\s*\.?$/gi, '.')
+    // Remove multiple periods
+    .replace(/\.{2,}/g, '.')
+    // Remove trailing period
+    .replace(/\.\s*$/, '')
     .trim()
   
   // Log the final cleaned description
