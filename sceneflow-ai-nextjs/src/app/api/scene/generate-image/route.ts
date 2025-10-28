@@ -186,51 +186,13 @@ export async function POST(req: NextRequest) {
 
     console.log('[Scene Image] Optimized prompt preview:', optimizedPrompt.substring(0, 150))
 
-    // Try reference images first (optimal UX), fallback to text-based descriptions
-    const hasReferenceImages = characterObjects.some((char: any) => 
-      char.referenceImageGCS || char.referenceImage
-    )
-
-    let base64Image
-    if (hasReferenceImages) {
-      console.log('[Scene Image] Using reference images (capability model)')
-      
-      // Build reference images array for capability model
-      const referenceImages = characterObjects.map((char: any, idx: number) => {
-        const rawDescription = char.visionDescription || char.appearanceDescription || 
-          `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
-        const description = stripEmotionalDescriptors(rawDescription)
-        
-        // Extract age and add explicit age clause
-        const ageMatch = description.match(/\b(late\s*)?(\d{1,2})s?\b/i)
-        const ageClause = ageMatch ? ` Exact age: ${ageMatch[0]}.` : ''
-        
-        return {
-          referenceId: idx + 1,
-          gcsUri: char.referenceImageGCS,  // Prefer GCS URI
-          base64Image: !char.referenceImageGCS && char.referenceImage ? char.referenceImage : undefined,  // Fallback to base64
-          subjectDescription: `${description}${ageClause}`,
-          subjectType: 'SUBJECT_TYPE_PERSON' as const
-        }
-      })
-      
-      base64Image = await callVertexAIImagen(optimizedPrompt, {
-        aspectRatio: '16:9',
-        numberOfImages: 1,
-        quality: quality,
-        negativePrompt: 'elderly appearance, deeply wrinkled, aged beyond reference, geriatric, wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager, youthful appearance',
-        referenceImages  // Pass references to trigger capability model
-      })
-    } else {
-      console.log('[Scene Image] Fallback to text-based descriptions (no references available)')
-      
-      base64Image = await callVertexAIImagen(optimizedPrompt, {
-        aspectRatio: '16:9',
-        numberOfImages: 1,
-        quality: quality,
-        negativePrompt: 'elderly appearance, deeply wrinkled, aged beyond reference, geriatric, wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager, youthful appearance'
-      })
-    }
+    // Generate with Vertex AI Imagen 3 - Use text descriptions only (proven to work better)
+    const base64Image = await callVertexAIImagen(optimizedPrompt, {
+      aspectRatio: '16:9',
+      numberOfImages: 1,
+      quality: quality,
+      negativePrompt: 'elderly appearance, deeply wrinkled, aged beyond reference, geriatric, wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager, youthful appearance'
+    })
 
     // Upload to Vercel Blob storage
     const imageUrl = await uploadImageToBlob(
