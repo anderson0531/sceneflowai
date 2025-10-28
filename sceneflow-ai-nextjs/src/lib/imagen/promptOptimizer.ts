@@ -95,6 +95,10 @@ function cleanSceneForVisuals(action: string, visualDesc: string): string {
     return name.toLowerCase().replace(/\b\w/g, (l: string) => l.toUpperCase())
   })
   
+  // Remove age descriptors from character mentions
+  // "BRIAN ANDERSON SR., mid-sixties, sits" → "Brian Anderson Sr. sits"
+  cleaned = cleaned.replace(/,\s*(mid-|late\s+|early\s+)?(sixties|fifties|forties|thirties|twenties|\d{2}s?),/gi, ',')
+  
   // Clean up punctuation and whitespace
   cleaned = cleaned.replace(/\s*,\s*,/g, ',')        // Remove double commas
   cleaned = cleaned.replace(/\s{2,}/g, ' ')          // Normalize spaces

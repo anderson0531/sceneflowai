@@ -16,12 +16,16 @@ export const maxDuration = 60
 function stripEmotionalDescriptors(description: string): string {
   // Remove common emotional/expression terms
   const emotionalTerms = [
-    /\b(friendly|warm|cheerful|happy|sad|worried|confident|stern|serious|welcoming|inviting)\s+(smile|expression|demeanor|look|face)\b/gi,
-    /\bsmiling\b/gi,
-    /\bfrowning\b/gi,
-    /\b(with\s+a\s+)?(happy|sad|worried|confident|friendly|stern|serious|warm|cheerful|weary|tired|energetic|excited)\s+(expression|look|demeanor|face|appearance)\b/gi,
-    /\band\s+a\s+(smile|frown|grin|smirk)\b/gi,
-    /\bappears\s+(happy|sad|worried|confident|tired|energetic)\b/gi,
+    // "friendly smile", "warm expression", "wide smile", etc.
+    /\b(friendly|warm|cheerful|happy|sad|worried|confident|stern|serious|welcoming|inviting|wide|bright|broad)\s+(smile|expression|demeanor|look|face|grin)\b/gi,
+    // "smiling", "frowning", "grinning", "beaming"
+    /\b(smiling|frowning|grinning|beaming)\b/gi,
+    // "with a happy expression", "with a smile", "and a wide smile"
+    /\b(with|and)\s+a\s+(happy|sad|worried|confident|friendly|stern|serious|warm|cheerful|weary|tired|energetic|excited|wide|bright|broad)?\s*(smile|expression|look|demeanor|face|appearance|frown|grin|smirk)\b/gi,
+    // "and a smile", ", a smile"
+    /[,\s]+(and\s+)?a\s+(smile|frown|grin|smirk)\b/gi,
+    // "appears happy", "looks tired"
+    /\b(appears|looks|seems)\s+(happy|sad|worried|confident|tired|energetic|friendly|stern|serious|cheerful)\b/gi,
   ]
   
   let cleaned = description
@@ -131,19 +135,22 @@ export async function POST(req: NextRequest) {
       const scene = scenes[sceneIndex]
       
       if (scene) {
-        // Build comprehensive scene description from multiple fields
-        fullSceneContext = scene.visualDescription || 
-                          scene.action || 
-                          scene.heading || 
-                          scenePrompt || 
-                          ''
+        // Prefer action (detailed) over visualDescription (camera-focused)
+        // Combine both if they're different for maximum context
+        fullSceneContext = scene.action || scene.visualDescription || scene.heading || scenePrompt || ''
+
+        // If both action and visualDescription exist and are different, combine them
+        if (scene.action && scene.visualDescription && scene.action !== scene.visualDescription) {
+          fullSceneContext = `${scene.action} ${scene.visualDescription}`
+        }
         
         console.log('[Scene Image] Using scene data:', {
           hasVisualDescription: !!scene.visualDescription,
           hasAction: !!scene.action,
           hasHeading: !!scene.heading,
           contextLength: fullSceneContext.length,
-          sceneIndex: sceneIndex
+          sceneIndex: sceneIndex,
+          combinedFields: !!(scene.action && scene.visualDescription && scene.action !== scene.visualDescription)
         })
       }
     }
