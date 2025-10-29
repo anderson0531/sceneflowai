@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X, ChevronDown, Check, Settings, Sparkles, Lightbulb, AlertTriangle, Info, Volume2, ImageIcon } from 'lucide-react'
+import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X, ChevronDown, Check, Settings, Sparkles, Lightbulb, AlertTriangle, Info, Volume2, ImageIcon, Edit } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { CharacterPromptBuilder } from '@/components/blueprint/CharacterPromptBuilder'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
@@ -15,11 +15,12 @@ interface CharacterLibraryProps {
   onApproveCharacter: (characterId: string) => void
   onUpdateCharacterAttributes?: (characterId: string, attributes: any) => void
   onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void
+  onUpdateCharacterAppearance?: (characterId: string, description: string) => void
   ttsProvider: 'google' | 'elevenlabs'  // ADD THIS
   compact?: boolean
 }
 
-export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, ttsProvider, compact = false }: CharacterLibraryProps) {
+export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, ttsProvider, compact = false }: CharacterLibraryProps) {
   const [selectedChar, setSelectedChar] = useState<string | null>(null)
   const [charPrompts, setCharPrompts] = useState<Record<string, string>>({})
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(new Set())
@@ -258,6 +259,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                 expandedCharId={expandedSections[charId]}
                 onToggleExpand={handleToggleSection}
                 onUpdateCharacterVoice={onUpdateCharacterVoice}
+                onUpdateAppearance={onUpdateCharacterAppearance}
                 ttsProvider={ttsProvider}
                 voiceSectionExpanded={voiceSectionExpanded[charId] || false}
                 onToggleVoiceSection={() => handleToggleVoiceSection(charId)}
@@ -380,17 +382,52 @@ interface CharacterCardProps {
   expandedCharId?: string | null
   onToggleExpand?: (charId: string, section: 'coreIdentity' | 'appearance') => void
   onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void
+  onUpdateAppearance?: (characterId: string, description: string) => void
   ttsProvider: 'google' | 'elevenlabs'  // ADD THIS
   voiceSectionExpanded?: boolean
   onToggleVoiceSection?: () => void
 }
 
-function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, onOpenBuilder, onAnalyze, analyzingImage, prompt, onPromptChange, isGenerating, expandedCharId, onToggleExpand, onUpdateCharacterVoice, ttsProvider, voiceSectionExpanded, onToggleVoiceSection }: CharacterCardProps) {
+function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, onOpenBuilder, onAnalyze, analyzingImage, prompt, onPromptChange, isGenerating, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, ttsProvider, voiceSectionExpanded, onToggleVoiceSection }: CharacterCardProps) {
   const hasImage = !!character.referenceImage
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
   const isAppearanceExpanded = expandedCharId === `${characterId}-appear`
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [editingAppearance, setEditingAppearance] = useState(false)
+  const [appearanceText, setAppearanceText] = useState('')
+  
+  // Helper function to generate fallback description from attributes
+  const generateFallbackDescription = (character: any): string => {
+    const parts = []
+    
+    // Core Identity
+    if (character.ethnicity) parts.push(character.ethnicity)
+    if (character.keyFeature) parts.push(character.keyFeature)
+    
+    // Physical Appearance
+    if (character.build) parts.push(character.build)
+    if (character.hairColor && character.hairStyle) {
+      parts.push(`${character.hairColor} ${character.hairStyle} hair`)
+    } else if (character.hairStyle) {
+      parts.push(`${character.hairStyle} hair`)
+    } else if (character.hairColor) {
+      parts.push(`${character.hairColor} hair`)
+    }
+    if (character.eyeColor) parts.push(`${character.eyeColor} eyes`)
+    if (character.expression) parts.push(character.expression)
+    
+    return parts.length > 0 
+      ? parts.join(', ') 
+      : 'Click to add appearance description for scene generation'
+  }
+  
+  const handleSaveAppearance = async () => {
+    if (appearanceText.trim() && onUpdateAppearance) {
+      await onUpdateAppearance(characterId, appearanceText.trim())
+      setEditingAppearance(false)
+    }
+  }
   
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all overflow-hidden">
@@ -580,68 +617,84 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
         
         {showAdvanced && (
           <div className="space-y-2 pt-2">
-            {/* Character Attributes */}
-            {(character.subject || character.ethnicity || character.keyFeature) && (
-              <div className="space-y-1">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onToggleExpand?.(characterId, 'coreIdentity')
-                  }}
-                  className="flex items-center justify-between w-full text-xs font-semibold text-purple-400 dark:text-purple-300 hover:text-purple-300 dark:hover:text-purple-200 transition-colors"
-                >
-                  <span>Core Identity</span>
-                  <ChevronDown className={`w-3 h-3 transition-transform ${isCoreExpanded ? 'rotate-180' : ''}`} />
-                </button>
-                {isCoreExpanded && (
-                  <div className="text-xs text-gray-600 dark:text-gray-300 space-y-0.5">
-                    {character.subject && (
-                      <div><span className="text-gray-400">Subject:</span> {character.subject}</div>
-                    )}
-                    {character.ethnicity && (
-                      <div><span className="text-gray-400">Ethnicity:</span> {character.ethnicity}</div>
-                    )}
-                    {character.keyFeature && (
-                      <div><span className="text-gray-400">Key Feature:</span> {character.keyFeature}</div>
-                    )}
-                  </div>
+            {/* Appearance Description - Editable (Replaces Core Identity & Appearance) */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Appearance Description
+                  </span>
+                  <span className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+                    For Scene Images
+                  </span>
+                </div>
+                {!editingAppearance ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setEditingAppearance(true)
+                      setAppearanceText(character.appearanceDescription || generateFallbackDescription(character))
+                    }}
+                    className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1"
+                  >
+                    <Edit className="w-3 h-3" />
+                    Edit
+                  </button>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setEditingAppearance(false)
+                      setAppearanceText('')
+                    }}
+                    className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                  >
+                    Cancel
+                  </button>
                 )}
               </div>
-            )}
-            
-            {(character.hairStyle || character.hairColor || character.eyeColor || character.expression || character.build) && (
-              <div className="space-y-1">
-                <button
+              
+              {editingAppearance ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={appearanceText}
+                    onChange={(e) => {
+                      e.stopPropagation()
+                      setAppearanceText(e.target.value)
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows={5}
+                    placeholder="Describe physical appearance (e.g., ethnicity, build, hair, eyes, distinctive features)..."
+                  />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleSaveAppearance()
+                    }}
+                    className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                  >
+                    <Check className="w-3 h-3 inline mr-1" />
+                    Save Description
+                  </button>
+                </div>
+              ) : (
+                <div 
                   onClick={(e) => {
                     e.stopPropagation()
-                    onToggleExpand?.(characterId, 'appearance')
+                    setEditingAppearance(true)
+                    setAppearanceText(character.appearanceDescription || generateFallbackDescription(character))
                   }}
-                  className="flex items-center justify-between w-full text-xs font-semibold text-blue-400 dark:text-blue-300 hover:text-blue-300 dark:hover:text-blue-200 transition-colors"
+                  className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed p-2 bg-gray-50 dark:bg-gray-800/50 rounded border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer transition-colors"
                 >
-                  <span>Appearance</span>
-                  <ChevronDown className={`w-3 h-3 transition-transform ${isAppearanceExpanded ? 'rotate-180' : ''}`} />
-                </button>
-                {isAppearanceExpanded && (
-                  <div className="text-xs text-gray-600 dark:text-gray-300 space-y-0.5">
-                    {character.hairStyle && (
-                      <div><span className="text-gray-400">Hair Style:</span> {character.hairStyle}</div>
-                    )}
-                    {character.hairColor && (
-                      <div><span className="text-gray-400">Hair Color:</span> {character.hairColor}</div>
-                    )}
-                    {character.eyeColor && (
-                      <div><span className="text-gray-400">Eyes:</span> {character.eyeColor}</div>
-                    )}
-                    {character.expression && (
-                      <div><span className="text-gray-400">Expression:</span> {character.expression}</div>
-                    )}
-                    {character.build && (
-                      <div><span className="text-gray-400">Build:</span> {character.build}</div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
+                  {character.appearanceDescription || generateFallbackDescription(character)}
+                </div>
+              )}
+              
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 italic">
+                This description is used to generate consistent character appearances in scene images.
+              </p>
+            </div>
             
             {/* Action Buttons */}
             <div className="flex gap-2 pt-2">
