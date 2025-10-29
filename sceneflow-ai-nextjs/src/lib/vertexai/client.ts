@@ -94,51 +94,50 @@ export async function callVertexAIImagen(
     prompt: prompt
   }
 
-  // Check if prompt already contains reference image URL (GCS or HTTPS - Gemini Chat style)
-  // If it does, don't send structured referenceImages array to avoid conflicts
-  const promptHasReferenceURL = 
-    prompt.includes('GCS URL: gs://') || 
-    prompt.includes('gs://') ||
-    prompt.includes('in the style of the reference image URL:') ||
-    (prompt.includes('in the style of the reference image') && prompt.includes('https://'))
-  
-  // Add reference images if provided AND prompt doesn't already reference URL
-  // (Gemini Chat uses prompt text only, not structured array)
-  if (options.referenceImages && options.referenceImages.length > 0 && !promptHasReferenceURL) {
-    instance.referenceImages = options.referenceImages.map((ref, idx) => {
-      if (ref.gcsUri) {
-        // Use GCS URI (preferred - no size limits)
-        return {
-          referenceId: ref.referenceId || idx + 1,
-          referenceImage: {
-            gcsUri: ref.gcsUri
-          },
-          referenceType: ref.referenceType || 'REFERENCE_TYPE_SUBJECT',
-          subjectConfig: {
-            subjectType: ref.subjectType || 'SUBJECT_TYPE_PERSON',
-            subjectDescription: ref.subjectDescription || ''
-          }
-        }
-      } else if (ref.base64Image) {
-        // Fallback to Base64
-        return {
-          referenceId: ref.referenceId || idx + 1,
-          referenceImage: {
-            bytesBase64Encoded: ref.base64Image.replace(/^data:image\/[^;]+;base64,/, '')
-          },
-          referenceType: ref.referenceType || 'REFERENCE_TYPE_SUBJECT',
-          subjectConfig: {
-            subjectType: ref.subjectType || 'SUBJECT_TYPE_PERSON',
-            subjectDescription: ref.subjectDescription || ''
-          }
-        }
-      }
-      return null
-    }).filter(Boolean)
+  // Always send structured referenceImages array when GCS URIs are provided
+  // Imagen 4 Subject Customization requires structured format, not URLs in prompt text
+  if (options.referenceImages && options.referenceImages.length > 0) {
+    // Check if we have GCS URIs (preferred for structured array)
+    const hasGcsUris = options.referenceImages.some(ref => ref.gcsUri)
     
-    console.log(`[Vertex AI] Using ${instance.referenceImages.length} reference images (structured array)`)
-  } else if (promptHasReferenceURL) {
-    console.log(`[Vertex AI] Prompt contains reference image URL - using prompt text only (matching Gemini Chat behavior)`)
+    if (hasGcsUris) {
+      instance.referenceImages = options.referenceImages
+        .filter(ref => ref.gcsUri) // Only include references with GCS URIs
+        .map((ref, idx) => {
+          return {
+            referenceId: ref.referenceId || idx + 1,
+            referenceImage: {
+              gcsUri: ref.gcsUri!
+            },
+            referenceType: ref.referenceType || 'REFERENCE_TYPE_SUBJECT',
+            subjectConfig: {
+              subjectType: ref.subjectType || 'SUBJECT_TYPE_PERSON',
+              subjectDescription: ref.subjectDescription || ''
+            }
+          }
+        })
+      
+      console.log(`[Vertex AI] Using ${instance.referenceImages.length} reference images (structured array with GCS URIs)`)
+    } else if (options.referenceImages.some(ref => ref.base64Image)) {
+      // Fallback to Base64 if no GCS URIs available
+      instance.referenceImages = options.referenceImages
+        .filter(ref => ref.base64Image)
+        .map((ref, idx) => {
+          return {
+            referenceId: ref.referenceId || idx + 1,
+            referenceImage: {
+              bytesBase64Encoded: ref.base64Image!.replace(/^data:image\/[^;]+;base64,/, '')
+            },
+            referenceType: ref.referenceType || 'REFERENCE_TYPE_SUBJECT',
+            subjectConfig: {
+              subjectType: ref.subjectType || 'SUBJECT_TYPE_PERSON',
+              subjectDescription: ref.subjectDescription || ''
+            }
+          }
+        })
+      
+      console.log(`[Vertex AI] Using ${instance.referenceImages.length} reference images (structured array with Base64)`)
+    }
   }
 
   const requestBody: any = {
@@ -153,9 +152,8 @@ export async function callVertexAIImagen(
     }
   }
   
-  // Add reference images to parameters if provided AND not already in prompt text
-  // (Don't send structured array if prompt contains URL - match Gemini Chat behavior)
-  if (instance.referenceImages && instance.referenceImages.length > 0 && !promptHasReferenceURL) {
+  // Add reference images to parameters (structured array format required for Imagen 4 Subject Customization)
+  if (instance.referenceImages && instance.referenceImages.length > 0) {
     requestBody.parameters.referenceImages = instance.referenceImages
   }
   

@@ -39,13 +39,10 @@ export function optimizePromptForImagen(params: OptimizePromptParams): string {
   console.log('[Prompt Optimizer] Cleaned scene action:', cleanedAction.substring(0, 100))
   
   if (hasReferences) {
-    // REFERENCE MODE: Character name FIRST with explicit "in the style of reference" instruction
+    // REFERENCE MODE: Reference character by name (structured array will handle the actual reference image)
+    // Note: Imagen 4 Subject Customization requires structured array format, not URLs in prompt text
     const referenceText = params.characterReferences!.map((ref, idx) => {
-      // Use HTTPS URL if provided (preferred - works in prompts), otherwise fallback to GCS or description
-      const imageUrl = ref.imageUrl || ref.gcsUri || ref.description
-      const urlType = ref.imageUrl ? 'URL' : (ref.gcsUri ? 'GCS URL' : '')
-      
-      return `${ref.name.toUpperCase()} in the style of the reference image ${urlType}: ${imageUrl}.`
+      return `Character ${ref.name.toUpperCase()} appears in this scene.`
     }).join('\n')
     
     // Replace character name at start of scene with pronoun + ethnicity (matching working Gemini Chat format)
