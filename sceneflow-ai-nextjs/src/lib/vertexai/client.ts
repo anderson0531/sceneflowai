@@ -131,7 +131,7 @@ export async function callVertexAIImagen(
   }
 
   const requestBody: any = {
-    instances: [instance],
+    instances: [{ prompt: prompt }],
     parameters: {
       model, // Use selected model
       sampleCount: options.numberOfImages || 1,
@@ -140,6 +140,11 @@ export async function callVertexAIImagen(
       safetySetting: 'block_only_high', // Renamed from 'block_few' in Imagen 3
       personGeneration: 'allow_adult' // Default setting - allows adults but not celebrities
     }
+  }
+  
+  // Add reference images to parameters if provided
+  if (instance.referenceImages && instance.referenceImages.length > 0) {
+    requestBody.parameters.referenceImages = instance.referenceImages
   }
   
   console.log('[Vertex AI] Negative prompt:', requestBody.parameters.negativePrompt || '(none)')
