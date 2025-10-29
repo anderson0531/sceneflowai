@@ -20,10 +20,25 @@ export async function POST(req: NextRequest) {
     // Ensure database connection
     await sequelize.authenticate()
     
+    // Get actual user UUID (session.user.id might be email in demo mode)
+    let userId = session.user.id
+    
+    // Check if userId is email format (not UUID)
+    const isEmail = userId.includes('@')
+    if (isEmail) {
+      // Look up user by email to get UUID
+      const User = (await import('@/models/User')).default
+      const user = await User.findOne({ where: { email: userId } })
+      if (!user) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      }
+      userId = user.id
+    }
+    
     const project = await Project.findOne({ 
       where: { 
         id: projectId, 
-        user_id: session.user.id 
+        user_id: userId 
       } 
     })
     
