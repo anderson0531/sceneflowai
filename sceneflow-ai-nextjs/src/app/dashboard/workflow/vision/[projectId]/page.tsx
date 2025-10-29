@@ -654,30 +654,39 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Handle character appearance description update
   const handleUpdateCharacterAppearance = async (characterId: string, newDescription: string) => {
     try {
-      const response = await fetch('/api/character/update-appearance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId: projectId,
-          characterId,
-          appearanceDescription: newDescription
-        })
-      })
-      
-      if (!response.ok) throw new Error('Failed to update appearance')
-      
-      // Update local state
-      setCharacters(prev => prev.map(char => {
+      // Update local state first
+      const updatedCharacters = characters.map(char => {
         const charId = char.id || characters.indexOf(char).toString()
         return charId === characterId 
           ? { ...char, appearanceDescription: newDescription }
           : char
-      }))
+      })
       
-      try { 
-        const { toast } = require('sonner')
-        toast.success('Appearance description updated')
-      } catch {}
+      setCharacters(updatedCharacters)
+      
+      // Save to database using existing projects API
+      if (project) {
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: {
+              ...project.metadata,
+              visionPhase: {
+                ...project.metadata?.visionPhase,
+                characters: updatedCharacters
+              }
+            }
+          })
+        })
+        
+        if (!response.ok) throw new Error('Failed to update appearance')
+        
+        try { 
+          const { toast } = require('sonner')
+          toast.success('Appearance description updated')
+        } catch {}
+      }
     } catch (error) {
       console.error('[Update Appearance] Error:', error)
       try { 
