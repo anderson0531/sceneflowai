@@ -22,6 +22,91 @@ interface OptimizePromptParams {
 }
 
 /**
+ * Detect sanitization changes by comparing original and sanitized text
+ * Returns array of change objects with original, sanitized, and reason
+ */
+export function detectSanitizationChanges(original: string, sanitized: string): Array<{ original: string; sanitized: string; reason: string }> {
+  const changes: Array<{ original: string; sanitized: string; reason: string }> = []
+  
+  if (original === sanitized) return changes
+  
+  // Pattern: original text → sanitized text
+  // Check these in order of specificity (most specific first)
+  const patterns = [
+    { 
+      pattern: /\bframed\s+photo\s+of\s+four\s+young\s+boys(?:,\s*his\s+sons)?\b/gi, 
+      expectedSanitized: 'framed photo of four young men',
+      reason: 'Child safety filter: "young boys" in framed photo changed to "young men"'
+    },
+    { 
+      pattern: /\bframed\s+photo\s+of\s+(\w+\s+)?boys\b/gi,
+      expectedSanitized: (match: string) => match.replace(/\bboys\b/gi, 'young men'),
+      reason: 'Child safety filter: "boys" in framed photo changed to "young men"'
+    },
+    { 
+      pattern: /\bfour\s+young\s+boys(?:,\s*his\s+sons)?\b/gi, 
+      expectedSanitized: 'four young men',
+      reason: 'Child safety filter: "four young boys" changed to "four young men"'
+    },
+    { 
+      pattern: /\byoung\s+boys(?:,\s*his\s+sons)?\b/gi, 
+      expectedSanitized: 'young men',
+      reason: 'Child safety filter: "young boys" changed to "young men"'
+    },
+    { 
+      pattern: /\bboys,\s*his\s+sons\b/gi,
+      expectedSanitized: 'young men, his sons',
+      reason: 'Child safety filter: "boys" changed to "young men" (family relationship preserved)'
+    },
+    { 
+      pattern: /\bchildren\b/gi, 
+      expectedSanitized: 'adults',
+      reason: 'Child safety filter: "children" changed to "adults"'
+    },
+    { 
+      pattern: /\bkids\b/gi, 
+      expectedSanitized: 'young adults',
+      reason: 'Child safety filter: "kids" changed to "young adults"'
+    }
+  ]
+  
+  // Check each pattern against original text
+  patterns.forEach(({ pattern, expectedSanitized, reason }) => {
+    let regex = new RegExp(pattern.source, pattern.flags)
+    let match
+    const matches: RegExpMatchArray[] = []
+    
+    // Find all matches
+    while ((match = regex.exec(original)) !== null) {
+      matches.push(match)
+      // Prevent infinite loops
+      if (regex.lastIndex === 0) break
+    }
+    
+    matches.forEach(m => {
+      const originalText = m[0]
+      // Check if this was actually changed in sanitized text
+      const sanitizedVersion = typeof expectedSanitized === 'function' 
+        ? expectedSanitized(originalText)
+        : expectedSanitized
+      
+      // Verify the change actually exists in sanitized text
+      if (sanitized.includes(sanitizedVersion) && !sanitized.includes(originalText)) {
+        if (!changes.some(c => c.original === originalText)) {
+          changes.push({
+            original: originalText,
+            sanitized: sanitizedVersion,
+            reason
+          })
+        }
+      }
+    })
+  })
+  
+  return changes
+}
+
+/**
  * Sanitize child-related terms to avoid triggering Imagen 4 child safety filter (error 58061214)
  * Replaces child-related language with adult equivalents when personGeneration is set to 'allow_adult'
  */
@@ -59,7 +144,15 @@ function sanitizeChildTerms(text: string): string {
  * Build clean Imagen prompt from scene description
  * Removes ALL audio/non-visual noise and constructs simple, focused prompt
  */
-export function optimizePromptForImagen(params: OptimizePromptParams): string {
+export interface OptimizedPromptResult {
+  prompt: string
+  sanitizationChanges?: Array<{ original: string; sanitized: string; reason: string }>
+  originalPrompt?: string
+}
+
+export function optimizePromptForImagen(params: OptimizePromptParams): string;
+export function optimizePromptForImagen(params: OptimizePromptParams, returnDetails: boolean): OptimizedPromptResult;
+export function optimizePromptForImagen(params: OptimizePromptParams, returnDetails?: boolean): string | OptimizedPromptResult {
   const hasReferences = params.characterReferences && params.characterReferences.length > 0
   
   // Get art style
@@ -70,8 +163,17 @@ export function optimizePromptForImagen(params: OptimizePromptParams): string {
   // Clean the scene action
   let cleanedAction = cleanSceneForVisuals(params.sceneAction, params.visualDescription)
   
+  // Track sanitization changes if details requested
+  let sanitizationChanges: Array<{ original: string; sanitized: string; reason: string }> | undefined
+  const originalCleaned = cleanedAction
+  
   // Sanitize child-related terms to avoid triggering safety filters
   cleanedAction = sanitizeChildTerms(cleanedAction)
+  
+  // Detect changes if details requested
+  if (returnDetails) {
+    sanitizationChanges = detectSanitizationChanges(originalCleaned, cleanedAction)
+  }
   
   console.log('[Prompt Optimizer] Using art style:', params.artStyle || 'photorealistic')
   console.log('[Prompt Optimizer] Cleaned scene action:', cleanedAction.substring(0, 100))
@@ -134,6 +236,14 @@ export function optimizePromptForImagen(params: OptimizePromptParams): string {
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
     console.log(prompt)
     console.log('[Prompt Optimizer] ===== END FULL PROMPT =====')
+    
+    if (returnDetails) {
+      return {
+        prompt: prompt.trim(),
+        sanitizationChanges,
+        originalPrompt: params.sceneAction || params.visualDescription
+      }
+    }
     return prompt.trim()
   } else {
     // TEXT-ONLY MODE: Include character descriptions in prompt
@@ -151,6 +261,14 @@ ${visualStyle}`
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
     console.log(prompt)
     console.log('[Prompt Optimizer] ===== END FULL PROMPT =====')
+    
+    if (returnDetails) {
+      return {
+        prompt: prompt.trim(),
+        sanitizationChanges,
+        originalPrompt: params.sceneAction || params.visualDescription
+      }
+    }
     return prompt.trim()
   }
 }

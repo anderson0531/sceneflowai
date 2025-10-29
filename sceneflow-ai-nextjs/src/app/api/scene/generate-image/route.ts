@@ -217,13 +217,39 @@ export async function POST(req: NextRequest) {
     })
     
     // Build clean prompt from scene description with text-based character descriptions
-    const optimizedPrompt = optimizePromptForImagen({
-      sceneAction: fullSceneContext,
-      visualDescription: fullSceneContext,
-      characterReferences: characterReferences,
-      artStyle: artStyle || 'photorealistic',  // NEW: User's art style selection
-      customPrompt: customPrompt              // NEW: User-crafted prompt (if using custom, skip optimization)
-    })
+    // If customPrompt exists, it's already optimized/edited by user in Prompt Builder
+    // We still need to apply character references if not already included
+    let optimizedPrompt: string
+    if (customPrompt && customPrompt.trim()) {
+      // User provided a custom prompt (likely from Prompt Builder, already optimized and possibly edited)
+      // Only re-optimize if character references aren't already in the prompt
+      const hasCharacterReferences = characterReferences.length > 0 && 
+        characterReferences.some((ref: { name: string }) => customPrompt.includes(ref.name.toUpperCase()) || customPrompt.includes(ref.name))
+      
+      if (hasCharacterReferences || characterReferences.length === 0) {
+        // Character references already included or no references, use custom prompt as-is
+        optimizedPrompt = customPrompt
+        console.log('[Scene Image] Using custom prompt from Prompt Builder (preserving user edits)')
+      } else {
+        // Need to add character references, but preserve user's edits
+        optimizedPrompt = optimizePromptForImagen({
+          sceneAction: customPrompt,  // Use custom prompt as base (preserves user edits)
+          visualDescription: customPrompt,
+          characterReferences: characterReferences,
+          artStyle: artStyle || 'photorealistic'
+        })
+        console.log('[Scene Image] Added character references to user-edited prompt')
+      }
+    } else {
+      // Use scene description and optimize
+      optimizedPrompt = optimizePromptForImagen({
+        sceneAction: fullSceneContext,
+        visualDescription: fullSceneContext,
+        characterReferences: characterReferences,
+        artStyle: artStyle || 'photorealistic'
+      })
+      console.log('[Scene Image] Optimized scene description prompt')
+    }
 
     console.log('[Scene Image] Optimized prompt preview:', optimizedPrompt.substring(0, 150))
 

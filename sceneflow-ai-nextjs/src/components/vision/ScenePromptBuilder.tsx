@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Copy, Check, Sparkles, Info, Loader2 } from 'lucide-react'
+import { Copy, Check, Sparkles, Info, Loader2, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { findSceneCharacters } from '../../lib/character/matching'
+import { optimizePromptForImagen, type OptimizedPromptResult } from '@/lib/imagen/promptOptimizer'
 
 interface ScenePromptStructure {
   location: string
@@ -70,7 +71,16 @@ export function ScenePromptBuilder({
   const [advancedPrompt, setAdvancedPrompt] = useState('')
   const [copied, setCopied] = useState(false)
   
-  // New state for editable prompt
+  // New state for optimized prompts and sanitization
+  const [optimizedPrompt, setOptimizedPrompt] = useState('')
+  const [optimizedPromptDetails, setOptimizedPromptDetails] = useState<OptimizedPromptResult | null>(null)
+  const [originalPrompt, setOriginalPrompt] = useState('')
+  const [sanitizationChanges, setSanitizationChanges] = useState<Array<{ original: string; sanitized: string; reason: string }>>([])
+  const [showPreview, setShowPreview] = useState(false)
+  const [editedOptimizedPrompt, setEditedOptimizedPrompt] = useState('')
+  const [isOptimizedPromptEdited, setIsOptimizedPromptEdited] = useState(false)
+  
+  // Legacy state for backward compatibility
   const [editedPrompt, setEditedPrompt] = useState('')
   const [isPromptEdited, setIsPromptEdited] = useState(false)
 
@@ -149,16 +159,21 @@ export function ScenePromptBuilder({
     setStructure(prev => ({ ...prev, ...updates }))
   }, [open, scene, availableCharacters])
 
-  // Sync guided prompt to advanced mode when switching
+  // Sync optimized prompt to advanced mode when switching
   useEffect(() => {
-    if (mode === 'advanced' && !advancedPrompt) {
-      // If switching to advanced and it's empty, populate with guided prompt
-      const guidedPrompt = isPromptEdited ? editedPrompt : constructPrompt()
-      if (guidedPrompt) {
-        setAdvancedPrompt(guidedPrompt)
+    if (mode === 'advanced') {
+      // If switching to advanced, populate with optimized prompt (from guided) or current advancedPrompt
+      if (!advancedPrompt && optimizedPrompt) {
+        setAdvancedPrompt(isOptimizedPromptEdited ? editedOptimizedPrompt : optimizedPrompt)
+      } else if (!advancedPrompt) {
+        // Fallback to constructed prompt
+        const guidedPrompt = isPromptEdited ? editedPrompt : constructPrompt()
+        if (guidedPrompt) {
+          setAdvancedPrompt(guidedPrompt)
+        }
       }
     }
-  }, [mode])
+  }, [mode, optimizedPrompt, advancedPrompt, isOptimizedPromptEdited, editedOptimizedPrompt, isPromptEdited, editedPrompt])
 
   // Reset editing state when dialog opens/closes
   useEffect(() => {
@@ -167,8 +182,77 @@ export function ScenePromptBuilder({
       setIsPromptEdited(false)
       setEditedPrompt('')
       setAdvancedPrompt('')
+      setOptimizedPrompt('')
+      setOptimizedPromptDetails(null)
+      setSanitizationChanges([])
+      setEditedOptimizedPrompt('')
+      setIsOptimizedPromptEdited(false)
     }
   }, [open])
+
+  // Optimize prompt when structure changes (Guided Mode)
+  useEffect(() => {
+    if (!open || mode !== 'guided') return
+    
+    const basePrompt = isPromptEdited ? editedPrompt : constructPrompt()
+    if (!basePrompt.trim()) return
+    
+    // Build character references for optimization
+    const selectedCharacterObjects = structure.characters
+      .map(charName => availableCharacters.find(c => c.name === charName))
+      .filter(Boolean)
+    
+    const characterReferences = selectedCharacterObjects.map((char, idx) => {
+      const keyFeatures: string[] = []
+      
+      // Extract key features similar to API route
+      if (char?.appearanceDescription) {
+        // Try to extract hair style, key features from description
+        if (char.appearanceDescription.toLowerCase().includes('bald')) {
+          keyFeatures.push('bald head')
+        }
+        if (char.appearanceDescription.toLowerCase().includes('beard')) {
+          keyFeatures.push(char.appearanceDescription.match(/[\w\s]+beard/i)?.[0] || 'beard')
+        }
+      }
+      
+      return {
+        referenceId: idx + 1,
+        name: char?.name || '',
+        description: char?.appearanceDescription || char?.description || '',
+        gcsUri: char?.referenceImageGCS,
+        imageUrl: char?.referenceImage,
+        ethnicity: char?.ethnicity,
+        keyFeatures: keyFeatures.length > 0 ? keyFeatures : undefined
+      }
+    })
+    
+    // Optimize the prompt
+    try {
+      const result = optimizePromptForImagen({
+        sceneAction: basePrompt,
+        visualDescription: basePrompt,
+        characterReferences: characterReferences.length > 0 ? characterReferences : undefined,
+        artStyle: structure.artStyle
+      }, true) as OptimizedPromptResult
+      
+      setOptimizedPrompt(result.prompt)
+      setOptimizedPromptDetails(result)
+      setOriginalPrompt(result.originalPrompt || basePrompt)
+      setSanitizationChanges(result.sanitizationChanges || [])
+      
+      // Reset edited optimized prompt when prompt regenerates
+      if (!isOptimizedPromptEdited) {
+        setEditedOptimizedPrompt(result.prompt)
+      }
+    } catch (error) {
+      console.error('[Scene Prompt Builder] Failed to optimize prompt:', error)
+      // Fallback to base prompt
+      setOptimizedPrompt(basePrompt)
+      setOriginalPrompt(basePrompt)
+      setSanitizationChanges([])
+    }
+  }, [structure, mode, open, isPromptEdited, editedPrompt, availableCharacters, isOptimizedPromptEdited])
 
   // Construct prompt from structure
   const constructPrompt = (): string => {
@@ -241,9 +325,17 @@ export function ScenePromptBuilder({
     return parts.filter(Boolean).join(', ')
   }
 
-  const constructedPrompt = mode === 'guided' 
-    ? (isPromptEdited ? editedPrompt : constructPrompt())
-    : advancedPrompt
+  // Get the final prompt to use for generation
+  const getFinalPrompt = (): string => {
+    if (mode === 'advanced') {
+      return advancedPrompt
+    } else {
+      // In guided mode, use optimized prompt (edited if user modified it)
+      return isOptimizedPromptEdited ? editedOptimizedPrompt : optimizedPrompt || (isPromptEdited ? editedPrompt : constructPrompt())
+    }
+  }
+
+  const constructedPrompt = getFinalPrompt()
 
   const handleGenerateScene = () => {
     // Pass full character objects (not just names) so API gets referenceImageGCS
@@ -255,13 +347,15 @@ export function ScenePromptBuilder({
       .filter(Boolean)
     
     // Pass prompt builder selections to API
+    // Use optimized prompt, but allow user edits
+    const finalPrompt = getFinalPrompt()
     const promptData = {
       characters: selectedCharacterObjects,
-      customPrompt: constructedPrompt,     // User's crafted prompt
-      artStyle: structure.artStyle,        // Selected art style
+      customPrompt: finalPrompt,           // Final prompt (optimized + user edits)
+      artStyle: structure.artStyle,         // Selected art style
       shotType: structure.shotType,        // Camera framing
-      cameraAngle: structure.cameraAngle,  // Camera angle
-      lighting: structure.lighting         // Lighting selection
+      cameraAngle: structure.cameraAngle,   // Camera angle
+      lighting: structure.lighting          // Lighting selection
     }
     
     onGenerateImage(promptData)
@@ -278,9 +372,14 @@ export function ScenePromptBuilder({
   const handleModeChange = (newMode: string) => {
     const mode = newMode as 'guided' | 'advanced'
     if (mode === 'advanced') {
-      // When switching to advanced, populate with current crafted prompt
-      const currentPrompt = isPromptEdited ? editedPrompt : constructPrompt()
-      setAdvancedPrompt(currentPrompt)
+      // When switching to advanced, populate with optimized prompt if available
+      if (optimizedPrompt) {
+        setAdvancedPrompt(isOptimizedPromptEdited ? editedOptimizedPrompt : optimizedPrompt)
+      } else {
+        // Fallback to current crafted prompt
+        const currentPrompt = isPromptEdited ? editedPrompt : constructPrompt()
+        setAdvancedPrompt(currentPrompt)
+      }
     }
     setMode(mode)
   }
@@ -579,53 +678,193 @@ export function ScenePromptBuilder({
               />
             </div>
 
-            {/* Crafted Prompt - Editable */}
+            {/* Optimized Prompt Preview - Editable */}
             <div className="space-y-3 p-3 rounded border border-gray-700 bg-gray-800/50">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-200">Crafted Prompt</h3>
-                {isPromptEdited && (
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-gray-200">Optimized Prompt</h3>
+                  {sanitizationChanges.length > 0 && (
+                    <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">
+                      {sanitizationChanges.length} sanitization change{sanitizationChanges.length > 1 ? 's' : ''}
+                    </span>
+                  )}
+                  {optimizedPrompt && (
+                    <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded">
+                      Auto-optimized
+                    </span>
+                  )}
+                </div>
+                {isOptimizedPromptEdited && (
                   <button
                     onClick={() => {
-                      setEditedPrompt(constructPrompt())
-                      setIsPromptEdited(false)
+                      setEditedOptimizedPrompt(optimizedPrompt)
+                      setIsOptimizedPromptEdited(false)
                     }}
                     className="text-xs text-blue-400 hover:text-blue-300"
                   >
-                    Reset to Auto-Crafted
+                    Reset to Auto-Optimized
                   </button>
                 )}
               </div>
+              
+              {/* Sanitization Changes Indicator */}
+              {sanitizationChanges.length > 0 && (
+                <div className="p-2 bg-yellow-500/10 border border-yellow-500/30 rounded text-xs">
+                  <div className="flex items-start gap-2 mb-1">
+                    <AlertCircle className="w-3 h-3 text-yellow-400 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-yellow-400 font-medium mb-1">Sanitization Applied:</p>
+                      {sanitizationChanges.map((change, idx) => (
+                        <div key={idx} className="text-yellow-300/80 mb-1">
+                          • <span className="line-through">{change.original}</span> → <span className="font-medium">{change.sanitized}</span>
+                          <span className="text-yellow-400/60 ml-1">({change.reason})</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <Textarea
-                value={isPromptEdited ? editedPrompt : constructPrompt()}
+                value={isOptimizedPromptEdited ? editedOptimizedPrompt : optimizedPrompt || (isPromptEdited ? editedPrompt : constructPrompt())}
                 onChange={(e) => {
-                  setEditedPrompt(e.target.value)
-                  setIsPromptEdited(true)
+                  setEditedOptimizedPrompt(e.target.value)
+                  setIsOptimizedPromptEdited(true)
                 }}
                 rows={6}
                 className="resize-vertical text-sm"
-                placeholder="Your crafted prompt will appear here..."
+                placeholder="Optimized prompt will appear here..."
               />
-              <p className="text-xs text-gray-400">
-                {isPromptEdited ? (
-                  <span className="text-amber-400">✏️ Prompt manually edited</span>
-                ) : (
-                  <span>💡 Auto-crafted from selections above. Edit directly if needed.</span>
-                )}
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-400">
+                  {isOptimizedPromptEdited ? (
+                    <span className="text-amber-400">✏️ Optimized prompt manually edited</span>
+                  ) : optimizedPrompt ? (
+                    <span>✅ Auto-optimized from your settings (sanitized for safety + character references)</span>
+                  ) : (
+                    <span>💡 Auto-crafted from selections above. Will be optimized when you select characters.</span>
+                  )}
+                </p>
+                <button
+                  onClick={() => setShowPreview(!showPreview)}
+                  className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                >
+                  {showPreview ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  {showPreview ? 'Hide' : 'Show'} Preview
+                </button>
+              </div>
+              
+              {/* Collapsible Preview Section */}
+              {showPreview && (
+                <div className="mt-2 p-3 bg-gray-900/50 rounded border border-gray-600 space-y-2">
+                  <div className="text-xs">
+                    <p className="text-gray-400 mb-1">Original Scene:</p>
+                    <p className="text-gray-300 text-xs bg-gray-800 p-2 rounded">{originalPrompt || 'N/A'}</p>
+                  </div>
+                  {optimizedPromptDetails && (
+                    <div className="text-xs">
+                      <p className="text-gray-400 mb-1">Applied Settings:</p>
+                      <ul className="text-gray-300 text-xs space-y-0.5 ml-2">
+                        <li>• Art Style: {artStylePresets.find(s => s.id === structure.artStyle)?.name || structure.artStyle}</li>
+                        <li>• Shot Type: {structure.shotType}</li>
+                        <li>• Camera Angle: {structure.cameraAngle}</li>
+                        <li>• Lighting: {structure.lighting}</li>
+                        {structure.characters.length > 0 && (
+                          <li>• Characters: {structure.characters.length} selected with reference matching</li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </TabsContent>
 
           {/* Advanced Mode */}
           <TabsContent value="advanced" className="space-y-4 mt-4">
+            {/* Preview Section - Collapsible */}
+            <div className="space-y-3 p-3 rounded border border-gray-700 bg-gray-800/50">
+              <button
+                onClick={() => setShowPreview(!showPreview)}
+                className="flex items-center justify-between w-full text-left"
+              >
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-gray-200">Preview & Settings</h3>
+                  {sanitizationChanges.length > 0 && (
+                    <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">
+                      {sanitizationChanges.length} change{sanitizationChanges.length > 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+                {showPreview ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+              </button>
+              
+              {showPreview && (
+                <div className="space-y-3 pt-2 border-t border-gray-700">
+                  {originalPrompt && (
+                    <div className="text-xs">
+                      <p className="text-gray-400 mb-1">Original Scene Description:</p>
+                      <p className="text-gray-300 text-xs bg-gray-900 p-2 rounded whitespace-pre-wrap">{originalPrompt}</p>
+                    </div>
+                  )}
+                  
+                  {sanitizationChanges.length > 0 && (
+                    <div className="p-2 bg-yellow-500/10 border border-yellow-500/30 rounded text-xs">
+                      <div className="flex items-start gap-2 mb-1">
+                        <AlertCircle className="w-3 h-3 text-yellow-400 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <p className="text-yellow-400 font-medium mb-1">Sanitization Changes:</p>
+                          {sanitizationChanges.map((change, idx) => (
+                            <div key={idx} className="text-yellow-300/80 mb-1">
+                              • <span className="line-through">{change.original}</span> → <span className="font-medium">{change.sanitized}</span>
+                              <span className="text-yellow-400/60 ml-1">({change.reason})</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {optimizedPromptDetails && (
+                    <div className="text-xs">
+                      <p className="text-gray-400 mb-1">Applied Settings:</p>
+                      <ul className="text-gray-300 text-xs space-y-0.5 ml-2 bg-gray-900 p-2 rounded">
+                        <li>• Art Style: {artStylePresets.find(s => s.id === structure.artStyle)?.name || structure.artStyle}</li>
+                        <li>• Shot Type: {structure.shotType}</li>
+                        <li>• Camera Angle: {structure.cameraAngle}</li>
+                        <li>• Lighting: {structure.lighting}</li>
+                        <li>• Location: {structure.location || 'Not specified'}</li>
+                        <li>• Time of Day: {structure.timeOfDay}</li>
+                        {structure.characters.length > 0 && (
+                          <li>• Characters: {structure.characters.length} selected {structure.characters.some(c => availableCharacters.find(ac => ac.name === c)?.referenceImage) ? 'with reference images' : ''}</li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Optimized Prompt - Editable */}
             <div>
-              <label className="text-xs text-gray-400 mb-1 block">Scene Prompt</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs text-gray-400">Optimized Scene Prompt (Editable)</label>
+                {optimizedPrompt && advancedPrompt === optimizedPrompt && (
+                  <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded">
+                    Using optimized version
+                  </span>
+                )}
+              </div>
               <Textarea
                 value={advancedPrompt}
                 onChange={(e) => setAdvancedPrompt(e.target.value)}
                 rows={12}
-                placeholder="Wide shot of a beach at sunrise, golden hour lighting..."
+                placeholder="Optimized prompt will appear here. You can edit it to add details like ethnicity in framed photos (e.g., 'four young African American men, his sons')..."
                 className="resize-vertical"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                💡 Tip: This is the final prompt that will be sent to the image generator. You can edit details like ethnicity in framed photos here.
+              </p>
             </div>
 
             <div>
