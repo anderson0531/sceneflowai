@@ -1,44 +1,37 @@
-# Fix Imagen 4 Reference Image Linking in Prompt
+# Fix Scene Description to Use Pronouns
 
 ## Problem
 
-The API request succeeds, but Imagen 4 **ignores the reference images** because the prompt doesn't explicitly tell the model to USE the reference for the character.
-
-**Current prompt:**
+**Current (generating wrong ethnicity):**
 ```
+BRIAN ANDERSON SR. in the style of the reference image GCS URL: gs://...
 Scene: BRIAN ANDERSON SR., sits hunched over...
-Featuring: Brian Anderson Sr.
 ```
 
-**Problem:** The model doesn't know to link "Brian Anderson Sr." to the reference image. It treats references as metadata and generates based on text only.
+**Working format (from Gemini Chat):**
+```
+BRIAN ANDERSON SR. in the style of the reference image GCS URL: gs://...
+Scene: He sits hunched over...
+```
 
-**Result:** 30% confidence, ethnicity mismatch.
+**Key difference:** Scene description repeats the character name "BRIAN ANDERSON SR.," but should use pronoun "He" instead.
 
 ## Solution
 
-Update the prompt to explicitly mention the character matches the provided reference image.
+1. Keep the GCS URL in the prompt text (this works in Gemini Chat)
+2. Replace character name in scene description with pronoun ("He" for single character)
+3. Keep referenceImages array in parameters for API structure
 
-**File:** `src/lib/imagen/promptOptimizer.ts`
+**Updated prompt structure:**
 
-Update REFERENCE MODE to explicitly state the character should match the reference:
-
-```typescript
-const prompt = `Scene: ${cleanedAction}
-    
-Character Brian Anderson Sr. matches the provided reference image.
-
-${visualStyle}`
 ```
-
-Or more explicitly:
-```typescript
-const prompt = `Scene: ${cleanedAction}
-    
-The character ${characterNames} should exactly match the provided reference image in facial features, ethnicity, and physical appearance.
-
-${visualStyle}`
+BRIAN ANDERSON SR. in the style of the reference image GCS URL: gs://sceneflow-character-refs/characters/brian-anderson-sr-1761633490809.jpg.
+Scene: He sits hunched over...
+Qualifiers: photorealistic, professional photography, 8K resolution, studio lighting, sharp focus
 ```
 
 ## Implementation
 
-Update the REFERENCE MODE prompt in `optimizePromptForImagen` function to add explicit instruction to match the reference.
+Update `src/lib/imagen/promptOptimizer.ts` to:
+1. Replace character name at start of scene description with pronoun
+2. If multiple characters, handle appropriately

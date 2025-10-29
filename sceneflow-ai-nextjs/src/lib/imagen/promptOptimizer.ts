@@ -45,7 +45,19 @@ export function optimizePromptForImagen(params: OptimizePromptParams): string {
       return `${ref.name.toUpperCase()} in the style of the reference image GCS URL: ${gcsUri}.`
     }).join('\n')
     
-    const prompt = `${referenceText}\nScene: ${cleanedAction}\nQualifiers: ${visualStyle}`
+    // Replace character name at start of scene with pronoun (matching working Gemini Chat format)
+    let sceneDescription = cleanedAction
+    params.characterReferences!.forEach(ref => {
+      // Escape special regex characters in name
+      const escapedName = ref.name.toUpperCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      // Match character name at start of scene (case insensitive, followed by comma/period)
+      const namePattern = new RegExp(`^${escapedName}[,\\.]?\\s+`, 'i')
+      if (namePattern.test(sceneDescription)) {
+        sceneDescription = sceneDescription.replace(namePattern, 'He ')
+      }
+    })
+    
+    const prompt = `${referenceText}\nScene: ${sceneDescription}\nQualifiers: ${visualStyle}`
     
     console.log('[Prompt Optimizer] Using REFERENCE MODE with', params.characterReferences!.length, 'character(s)')
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
