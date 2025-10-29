@@ -180,13 +180,39 @@ export async function POST(req: NextRequest) {
       const ageMatch = description.match(/\b(late\s*)?(\d{1,2})s?\b/i)
       const ageClause = ageMatch ? ` Exact age: ${ageMatch[0]}.` : ''
       
+      // Extract key physical features to emphasize in prompt
+      const keyFeatures: string[] = []
+      
+      // Prioritize key features: hairStyle (especially "Bald"), keyFeature, hairColor
+      if (char.hairStyle) {
+        if (char.hairStyle.toLowerCase() === 'bald') {
+          keyFeatures.push('bald head')
+        } else if (char.hairColor && char.hairStyle) {
+          keyFeatures.push(`${char.hairColor} ${char.hairStyle} hair`)
+        } else {
+          keyFeatures.push(`${char.hairStyle} hair`)
+        }
+      }
+      
+      if (char.keyFeature) {
+        keyFeatures.push(char.keyFeature)
+      }
+      
+      if (char.ethnicity && !keyFeatures.some(f => f.toLowerCase().includes(char.ethnicity.toLowerCase()))) {
+        // Only add ethnicity if not already mentioned
+        keyFeatures.push(char.ethnicity)
+      }
+      
+      console.log(`[Scene Image] Extracted key features for ${char.name}:`, keyFeatures)
+      
       return {
         referenceId: idx + 1,
         name: char.name,
         description: `${description}${ageClause}`,
         imageUrl: char.referenceImage,      // HTTPS URL for prompt text (preferred - works in prompts)
         gcsUri: char.referenceImageGCS,     // GCS URI for structured array (if needed)
-        ethnicity: char.ethnicity           // For ethnicity injection in scene description
+        ethnicity: char.ethnicity,           // For ethnicity injection in scene description
+        keyFeatures: keyFeatures.length > 0 ? keyFeatures : undefined  // Key physical characteristics
       }
     })
     
@@ -215,12 +241,44 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Scene Image] Using ${gcsReferences.length} character references with GCS`)
 
+    // Build character-specific negative prompts based on reference characteristics
+    const baseNegativePrompt = 'elderly appearance, deeply wrinkled, aged beyond reference, geriatric, wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager, youthful appearance'
+    
+    const characterSpecificNegatives: string[] = []
+    characterObjects.forEach((char: any) => {
+      // If reference is bald, exclude hair
+      if (char.hairStyle && char.hairStyle.toLowerCase() === 'bald') {
+        characterSpecificNegatives.push('hair', 'full head of hair', 'long hair', 'short hair')
+      }
+      
+      // If reference has beard, exclude clean-shaven
+      if (char.keyFeature && char.keyFeature.toLowerCase().includes('beard')) {
+        characterSpecificNegatives.push('clean-shaven', 'no facial hair', 'shaved')
+      }
+      
+      // If reference shows specific expression, exclude opposite states that would change appearance
+      // This is handled by the base negative prompt already, but we can add more specific ones
+      if (char.appearanceDescription && char.appearanceDescription.toLowerCase().includes('smile')) {
+        characterSpecificNegatives.push('frowning', 'sad expression', 'angry expression')
+      }
+    })
+    
+    // Combine base negative prompt with character-specific ones
+    const negativePromptParts = [baseNegativePrompt]
+    if (characterSpecificNegatives.length > 0) {
+      const uniqueNegatives = [...new Set(characterSpecificNegatives)] // Remove duplicates
+      negativePromptParts.push(...uniqueNegatives)
+    }
+    const finalNegativePrompt = negativePromptParts.join(', ')
+    
+    console.log(`[Scene Image] Negative prompt includes ${characterSpecificNegatives.length} character-specific exclusions`)
+
     // Generate with Vertex AI Imagen 3 (with character references)
     const base64Image = await callVertexAIImagen(optimizedPrompt, {
       aspectRatio: '16:9',
       numberOfImages: 1,
       quality: quality,
-      negativePrompt: 'elderly appearance, deeply wrinkled, aged beyond reference, geriatric, wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager, youthful appearance',
+      negativePrompt: finalNegativePrompt,
       referenceImages: gcsReferences.length > 0 ? gcsReferences : undefined,
       personGeneration: personGeneration || 'allow_adult' // Default to 'allow_adult' for backward compatibility
     })

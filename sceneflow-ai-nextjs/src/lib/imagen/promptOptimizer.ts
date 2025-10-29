@@ -17,6 +17,7 @@ interface OptimizePromptParams {
     gcsUri?: string          // GCS URI for structured array
     imageUrl?: string         // HTTPS URL for prompt text (preferred)
     ethnicity?: string        // NEW: For ethnicity injection
+    keyFeatures?: string[]    // NEW: Key physical characteristics to emphasize
   }>
 }
 
@@ -78,8 +79,20 @@ export function optimizePromptForImagen(params: OptimizePromptParams): string {
   if (hasReferences) {
     // REFERENCE MODE: Reference character by name (structured array will handle the actual reference image)
     // Note: Imagen 4 Subject Customization requires structured array format, not URLs in prompt text
+    
+    // Build enhanced reference text with key physical characteristics
     const referenceText = params.characterReferences!.map((ref, idx) => {
-      return `Character ${ref.name.toUpperCase()} appears in this scene.`
+      let refLine = `Character ${ref.name.toUpperCase()} appears in this scene.`
+      
+      // Add key physical characteristics if provided
+      if (ref.keyFeatures && ref.keyFeatures.length > 0) {
+        const featuresList = ref.keyFeatures.join(', ')
+        refLine += ` MUST match their reference image exactly, especially: ${featuresList}.`
+      } else {
+        refLine += ` MUST match their reference image exactly.`
+      }
+      
+      return refLine
     }).join('\n')
     
     // Replace character name at start of scene with pronoun + ethnicity (matching working Gemini Chat format)
@@ -97,12 +110,25 @@ export function optimizePromptForImagen(params: OptimizePromptParams): string {
       }
     })
     
+    // Build critical matching instructions with key features
+    const keyFeaturesList = params.characterReferences!
+      .filter(ref => ref.keyFeatures && ref.keyFeatures.length > 0)
+      .flatMap(ref => ref.keyFeatures!)
+      .filter((feature, index, self) => self.indexOf(feature) === index) // Remove duplicates
+    
+    let matchingInstructions = ''
+    if (keyFeaturesList.length > 0) {
+      matchingInstructions = `\n\nCRITICAL: The character${params.characterReferences!.length > 1 ? 's' : ''} MUST match their reference image${params.characterReferences!.length > 1 ? 's' : ''} exactly. Key features to preserve:\n- ${keyFeaturesList.join('\n- ')}\n\nReference image appearance takes priority over scene emotional state descriptions.`
+    } else {
+      matchingInstructions = `\n\nCRITICAL: The character${params.characterReferences!.length > 1 ? 's' : ''} MUST match their reference image${params.characterReferences!.length > 1 ? 's' : ''} exactly. Reference image appearance takes priority over scene emotional state descriptions.`
+    }
+    
     // NOTE: Child-related terms are sanitized (e.g., "young boys" → "young men") to avoid
     // triggering Imagen 4's child safety filter (error 58061214) when personGeneration is 'allow_adult'.
     // Family relationship terms like "his sons" remain to preserve context, but age qualifiers
     // are adjusted to adult-oriented language while main character ethnicity is preserved.
     
-    const prompt = `${referenceText}\nScene: ${sceneDescription}\nQualifiers: ${visualStyle}`
+    const prompt = `${referenceText}\nScene: ${sceneDescription}${matchingInstructions}\nQualifiers: ${visualStyle}`
     
     console.log('[Prompt Optimizer] Using REFERENCE MODE with', params.characterReferences!.length, 'character(s)')
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
