@@ -14,7 +14,9 @@ interface OptimizePromptParams {
     referenceId?: number
     name: string
     description: string
-    gcsUri?: string          // NEW: GCS URI for reference image
+    gcsUri?: string          // GCS URI for structured array
+    imageUrl?: string         // HTTPS URL for prompt text (preferred)
+    ethnicity?: string        // NEW: For ethnicity injection
   }>
 }
 
@@ -39,23 +41,44 @@ export function optimizePromptForImagen(params: OptimizePromptParams): string {
   if (hasReferences) {
     // REFERENCE MODE: Character name FIRST with explicit "in the style of reference" instruction
     const referenceText = params.characterReferences!.map((ref, idx) => {
-      // Use GCS URI if provided, otherwise fallback to description
-      const gcsUri = ref.gcsUri || ref.description
+      // Use HTTPS URL if provided (preferred - works in prompts), otherwise fallback to GCS or description
+      const imageUrl = ref.imageUrl || ref.gcsUri || ref.description
+      const urlType = ref.imageUrl ? 'URL' : (ref.gcsUri ? 'GCS URL' : '')
       
-      return `${ref.name.toUpperCase()} in the style of the reference image GCS URL: ${gcsUri}.`
+      return `${ref.name.toUpperCase()} in the style of the reference image ${urlType}: ${imageUrl}.`
     }).join('\n')
     
-    // Replace character name at start of scene with pronoun (matching working Gemini Chat format)
+    // Replace character name at start of scene with pronoun + ethnicity (matching working Gemini Chat format)
     let sceneDescription = cleanedAction
+    const mainReference = params.characterReferences![0] // Primary character with reference image
+    
     params.characterReferences!.forEach(ref => {
       // Escape special regex characters in name
       const escapedName = ref.name.toUpperCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      // Match character name at start of scene (case insensitive, followed by comma/period)
-      const namePattern = new RegExp(`^${escapedName}[,\\.]?\\s+`, 'i')
+      // Match character name at start of scene (case insensitive, followed by comma/period/space)
+      const namePattern = new RegExp(`^${escapedName}[,\\.]?\\s*`, 'i')
       if (namePattern.test(sceneDescription)) {
-        sceneDescription = sceneDescription.replace(namePattern, 'He ')
+        // Inject ethnicity when replacing name with pronoun
+        const ethnicityText = ref.ethnicity ? `The ${ref.ethnicity} man` : 'He'
+        sceneDescription = sceneDescription.replace(namePattern, `${ethnicityText} `)
       }
     })
+    
+    // Inject ethnicity for children/family members
+    if (mainReference?.ethnicity) {
+      // Match patterns like "four young boys", "his sons", "the children", etc.
+      sceneDescription = sceneDescription.replace(/\b(four|several|many|some|a few)\s+(young\s+)?(boys?|girls?|children?|kids?)\b/gi, (match, count, young, noun) => {
+        return `${count} ${young || ''}${mainReference.ethnicity} ${noun}`.replace(/\s+/g, ' ').trim()
+      })
+      
+      sceneDescription = sceneDescription.replace(/\b(his|her|their)\s+(sons?|daughters?|children?|kids?)\b/gi, (match, pronoun, noun) => {
+        return `${pronoun} ${mainReference.ethnicity} ${noun}`
+      })
+      
+      sceneDescription = sceneDescription.replace(/\b(the|his|her)\s+(young\s+)?(boys?|girls?|children?|kids?)\b/gi, (match, article, young, noun) => {
+        return `${article} ${young || ''}${mainReference.ethnicity} ${noun}`.replace(/\s+/g, ' ').trim()
+      })
+    }
     
     const prompt = `${referenceText}\nScene: ${sceneDescription}\nQualifiers: ${visualStyle}`
     

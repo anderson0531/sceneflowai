@@ -183,7 +183,9 @@ export async function POST(req: NextRequest) {
         referenceId: idx + 1,
         name: char.name,
         description: `${description}${ageClause}`,
-        gcsUri: char.referenceImageGCS  // Include GCS URI if available
+        imageUrl: char.referenceImage,      // HTTPS URL for prompt text (preferred - works in prompts)
+        gcsUri: char.referenceImageGCS,     // GCS URI for structured array (if needed)
+        ethnicity: char.ethnicity           // For ethnicity injection in scene description
       }
     })
     
