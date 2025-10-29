@@ -89,6 +89,9 @@ Return JSON:
 
 Be specific and actionable. Reference actual scenes when possible.`
 
+  console.log('[Script Analysis] Sending prompt (first 500 chars):', prompt.substring(0, 500))
+  console.log('[Script Analysis] API endpoint:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`)
+
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
     {
@@ -98,21 +101,84 @@ Be specific and actionable. Reference actual scenes when possible.`
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 4096
-        }
+          maxOutputTokens: 8192  // Increased to accommodate longer responses
+        },
+        safetySettings: [
+          {
+            category: 'HARM_CATEGORY_HARASSMENT',
+            threshold: 'BLOCK_MEDIUM_AND_ABOVE'
+          },
+          {
+            category: 'HARM_CATEGORY_HATE_SPEECH',
+            threshold: 'BLOCK_MEDIUM_AND_ABOVE'
+          },
+          {
+            category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+            threshold: 'BLOCK_MEDIUM_AND_ABOVE'
+          },
+          {
+            category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+            threshold: 'BLOCK_MEDIUM_AND_ABOVE'
+          }
+        ]
       })
     }
   )
   
   if (!response.ok) {
-    throw new Error(`Gemini API error: ${response.status}`)
+    const errorText = await response.text()
+    console.error('[Script Analysis] Gemini API error:', response.status, errorText)
+    throw new Error(`Gemini API error: ${response.status} - ${errorText}`)
   }
   
   const data = await response.json()
+  console.log('[Script Analysis] Full API response:', JSON.stringify(data, null, 2))
+  console.log('[Script Analysis] Candidates:', data.candidates)
+  console.log('[Script Analysis] First candidate:', data.candidates?.[0])
+
   const analysisText = data.candidates?.[0]?.content?.parts?.[0]?.text
-  
+
   if (!analysisText) {
-    throw new Error('No analysis generated')
+    console.error('[Script Analysis] No text found in response')
+    console.error('[Script Analysis] Response structure:', {
+      hasCandidates: !!data.candidates,
+      candidatesLength: data.candidates?.length,
+      firstCandidate: data.candidates?.[0],
+      hasContent: !!data.candidates?.[0]?.content,
+      hasParts: !!data.candidates?.[0]?.content?.parts,
+      partsLength: data.candidates?.[0]?.content?.parts?.length,
+      finishReason: data.candidates?.[0]?.finishReason,
+      safetyRatings: data.candidates?.[0]?.safetyRatings
+    })
+    
+    // Check if response was blocked by safety filters
+    if (data.candidates?.[0]?.finishReason === 'SAFETY') {
+      console.error('[Script Analysis] Response blocked by safety filters')
+      console.error('[Script Analysis] Safety ratings:', data.candidates[0].safetyRatings)
+      throw new Error('Analysis blocked by content safety filters. Please adjust script content and try again.')
+    }
+
+    // Check for other finish reasons
+    const finishReason = data.candidates?.[0]?.finishReason
+    if (finishReason && finishReason !== 'STOP') {
+      console.error('[Script Analysis] Response finished with reason:', finishReason)
+      throw new Error(`Analysis generation failed: ${finishReason}. Please try again or reduce script size.`)
+    }
+    
+    throw new Error('No analysis generated from Gemini API. Check logs for details.')
+  }
+
+  // Check if response was blocked by safety filters (additional check after text exists)
+  if (data.candidates?.[0]?.finishReason === 'SAFETY') {
+    console.error('[Script Analysis] Response blocked by safety filters')
+    console.error('[Script Analysis] Safety ratings:', data.candidates[0].safetyRatings)
+    throw new Error('Analysis blocked by content safety filters')
+  }
+
+  // Check if response was truncated
+  if (data.candidates?.[0]?.finishReason === 'MAX_TOKENS') {
+    console.warn('[Script Analysis] Response truncated due to MAX_TOKENS')
+    console.warn('[Script Analysis] Usage:', data.usageMetadata)
   }
   
   // Extract JSON
@@ -122,7 +188,13 @@ Be specific and actionable. Reference actual scenes when possible.`
     jsonText = codeBlockMatch[1].trim()
   }
   
-  const analysis = JSON.parse(jsonText)
-  return analysis.recommendations || []
+  try {
+    const analysis = JSON.parse(jsonText)
+    return analysis.recommendations || []
+  } catch (parseError) {
+    console.error('[Script Analysis] JSON parse error:', parseError)
+    console.error('[Script Analysis] Text to parse:', jsonText.substring(0, 500))
+    throw new Error('Failed to parse analysis response as JSON. The AI response may be malformed.')
+  }
 }
 
