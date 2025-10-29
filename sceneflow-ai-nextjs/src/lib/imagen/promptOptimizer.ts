@@ -11,9 +11,10 @@ interface OptimizePromptParams {
   artStyle?: string          // NEW: User's art style selection
   customPrompt?: string      // NEW: User-crafted prompt
   characterReferences?: Array<{
-    referenceId: number
+    referenceId?: number
     name: string
     description: string
+    gcsUri?: string          // NEW: GCS URI for reference image
   }>
 }
 
@@ -36,13 +37,15 @@ export function optimizePromptForImagen(params: OptimizePromptParams): string {
   console.log('[Prompt Optimizer] Cleaned scene action:', cleanedAction.substring(0, 100))
   
   if (hasReferences) {
-    // REFERENCE MODE: Focus on scene composition, explicitly link character to reference
-    const characterNames = params.characterReferences!.map(ref => ref.name).join(', ')
-    const prompt = `Scene: ${cleanedAction}
+    // REFERENCE MODE: Character name FIRST with explicit "in the style of reference" instruction
+    const referenceText = params.characterReferences!.map((ref, idx) => {
+      // Use GCS URI if provided, otherwise fallback to description
+      const gcsUri = ref.gcsUri || ref.description
+      
+      return `${ref.name.toUpperCase()} in the style of the reference image GCS URL: ${gcsUri}.`
+    }).join('\n')
     
-The character ${characterNames} should exactly match the provided reference image in facial features, ethnicity, and physical appearance.
-
-${visualStyle}`
+    const prompt = `${referenceText}\nScene: ${cleanedAction}\nQualifiers: ${visualStyle}`
     
     console.log('[Prompt Optimizer] Using REFERENCE MODE with', params.characterReferences!.length, 'character(s)')
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
@@ -75,7 +78,7 @@ ${visualStyle}`
  */
 function integrateCharactersIntoScene(
   sceneAction: string,
-  characterReferences: Array<{ referenceId: number; name: string; description: string }>
+  characterReferences: Array<{ referenceId?: number; name: string; description: string; gcsUri?: string }>
 ): string {
   let integrated = sceneAction
   

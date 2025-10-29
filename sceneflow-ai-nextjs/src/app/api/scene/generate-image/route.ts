@@ -182,7 +182,8 @@ export async function POST(req: NextRequest) {
       return {
         referenceId: idx + 1,
         name: char.name,
-        description: `${description}${ageClause}`
+        description: `${description}${ageClause}`,
+        gcsUri: char.referenceImageGCS  // Include GCS URI if available
       }
     })
     
