@@ -730,6 +730,40 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
                 </button>
               )}
               
+              {/* GCS Diagnostic Button */}
+              {character.referenceImageGCS && (
+                <button
+                  onClick={async (e) => { 
+                    e.stopPropagation()
+                    try {
+                      const response = await fetch('/api/diagnostic/verify-gcs-access', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ gcsUri: character.referenceImageGCS })
+                      })
+                      
+                      const result = await response.json()
+                      console.log('[GCS Diagnostic] Result:', result)
+                      
+                      if (result.success) {
+                        toast.success(`GCS Access Verified`, {
+                          description: `Bucket: ${result.bucketAccessible ? '✅' : '❌'}, File: ${result.fileAccessible ? '✅' : '❌'}, Signed URL: ${result.signedUrlGenerated ? '✅' : '❌'}`
+                        })
+                      } else {
+                        toast.error(`GCS Access Failed: ${result.error}`)
+                      }
+                    } catch (error) {
+                      console.error('[GCS Diagnostic] Error:', error)
+                      toast.error('GCS diagnostic failed')
+                    }
+                  }}
+                  className="flex-1 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  <AlertTriangle className="w-3 h-3 inline mr-1" />
+                  Test GCS
+                </button>
+              )}
+              
               {hasImage && !isApproved && (
                 <button
                   onClick={(e) => { 
