@@ -50,7 +50,6 @@ export function optimizePromptForImagen(params: OptimizePromptParams): string {
     
     // Replace character name at start of scene with pronoun + ethnicity (matching working Gemini Chat format)
     let sceneDescription = cleanedAction
-    const mainReference = params.characterReferences![0] // Primary character with reference image
     
     params.characterReferences!.forEach(ref => {
       // Escape special regex characters in name
@@ -64,21 +63,9 @@ export function optimizePromptForImagen(params: OptimizePromptParams): string {
       }
     })
     
-    // Inject ethnicity for children/family members
-    if (mainReference?.ethnicity) {
-      // Match patterns like "four young boys", "his sons", "the children", etc.
-      sceneDescription = sceneDescription.replace(/\b(four|several|many|some|a few)\s+(young\s+)?(boys?|girls?|children?|kids?)\b/gi, (match, count, young, noun) => {
-        return `${count} ${young || ''}${mainReference.ethnicity} ${noun}`.replace(/\s+/g, ' ').trim()
-      })
-      
-      sceneDescription = sceneDescription.replace(/\b(his|her|their)\s+(sons?|daughters?|children?|kids?)\b/gi, (match, pronoun, noun) => {
-        return `${pronoun} ${mainReference.ethnicity} ${noun}`
-      })
-      
-      sceneDescription = sceneDescription.replace(/\b(the|his|her)\s+(young\s+)?(boys?|girls?|children?|kids?)\b/gi, (match, article, young, noun) => {
-        return `${article} ${young || ''}${mainReference.ethnicity} ${noun}`.replace(/\s+/g, ' ').trim()
-      })
-    }
+    // NOTE: Removed ethnicity injection for children/family members to avoid overly explicit prompts
+    // that trigger Imagen 4's safety filter. Children references remain natural (e.g., "his sons")
+    // while main character ethnicity is preserved (e.g., "The African American man")
     
     const prompt = `${referenceText}\nScene: ${sceneDescription}\nQualifiers: ${visualStyle}`
     
