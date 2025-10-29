@@ -51,6 +51,7 @@ export async function callVertexAIImagen(
     numberOfImages?: number
     negativePrompt?: string
     quality?: 'max' | 'auto' // NEW parameter
+    personGeneration?: 'allow_adult' | 'allow_all' | 'dont_allow' // NEW: Control person/face generation safety
     referenceImages?: Array<{
       referenceId: number
       base64Image?: string        // For Base64 (fallback)
@@ -140,6 +141,16 @@ export async function callVertexAIImagen(
     }
   }
 
+  // Use provided personGeneration or default to 'allow_adult'
+  const personGeneration = options.personGeneration || 'allow_adult'
+  
+  if (personGeneration !== 'allow_adult') {
+    console.log(`[Vertex AI] Using custom personGeneration setting: ${personGeneration}`)
+    if (personGeneration === 'allow_all') {
+      console.warn('[Vertex AI] ⚠️  personGeneration set to "allow_all" - this requires Google Cloud allowlist approval')
+    }
+  }
+  
   const requestBody: any = {
     instances: [{ prompt: prompt }],
     parameters: {
@@ -148,7 +159,7 @@ export async function callVertexAIImagen(
       aspectRatio: options.aspectRatio || '16:9',
       negativePrompt: options.negativePrompt || '',
       safetySetting: 'block_only_high', // Renamed from 'block_few' in Imagen 3
-      personGeneration: 'allow_adult' // Default setting - allows adults but not celebrities
+      personGeneration: personGeneration // Configurable setting - default allows adults but not children
     }
   }
   

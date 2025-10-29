@@ -53,7 +53,8 @@ export async function POST(req: NextRequest) {
       lighting,              // NEW: Lighting selection
       characters,            // NEW: From prompt data object
       selectedCharacters = [], // Legacy support - array or extracted from object
-      quality = 'auto'
+      quality = 'auto',
+      personGeneration       // NEW: Optional personGeneration setting (default: 'allow_adult')
     } = body
     
     // Handle both legacy (selectedCharacters) and new (characters) formats
@@ -220,7 +221,8 @@ export async function POST(req: NextRequest) {
       numberOfImages: 1,
       quality: quality,
       negativePrompt: 'elderly appearance, deeply wrinkled, aged beyond reference, geriatric, wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager, youthful appearance',
-      referenceImages: gcsReferences.length > 0 ? gcsReferences : undefined
+      referenceImages: gcsReferences.length > 0 ? gcsReferences : undefined,
+      personGeneration: personGeneration || 'allow_adult' // Default to 'allow_adult' for backward compatibility
     })
 
     // Upload to Vercel Blob storage
