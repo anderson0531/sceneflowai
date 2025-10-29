@@ -94,13 +94,17 @@ export async function callVertexAIImagen(
     prompt: prompt
   }
 
-  // Check if prompt already contains GCS URL reference (Gemini Chat style)
+  // Check if prompt already contains reference image URL (GCS or HTTPS - Gemini Chat style)
   // If it does, don't send structured referenceImages array to avoid conflicts
-  const promptHasGCSReference = prompt.includes('GCS URL: gs://') || prompt.includes('gs://')
+  const promptHasReferenceURL = 
+    prompt.includes('GCS URL: gs://') || 
+    prompt.includes('gs://') ||
+    prompt.includes('in the style of the reference image URL:') ||
+    (prompt.includes('in the style of the reference image') && prompt.includes('https://'))
   
-  // Add reference images if provided AND prompt doesn't already reference GCS URL
+  // Add reference images if provided AND prompt doesn't already reference URL
   // (Gemini Chat uses prompt text only, not structured array)
-  if (options.referenceImages && options.referenceImages.length > 0 && !promptHasGCSReference) {
+  if (options.referenceImages && options.referenceImages.length > 0 && !promptHasReferenceURL) {
     instance.referenceImages = options.referenceImages.map((ref, idx) => {
       if (ref.gcsUri) {
         // Use GCS URI (preferred - no size limits)
@@ -133,8 +137,8 @@ export async function callVertexAIImagen(
     }).filter(Boolean)
     
     console.log(`[Vertex AI] Using ${instance.referenceImages.length} reference images (structured array)`)
-  } else if (promptHasGCSReference) {
-    console.log(`[Vertex AI] Prompt contains GCS URL reference - using prompt text only (matching Gemini Chat behavior)`)
+  } else if (promptHasReferenceURL) {
+    console.log(`[Vertex AI] Prompt contains reference image URL - using prompt text only (matching Gemini Chat behavior)`)
   }
 
   const requestBody: any = {
@@ -150,8 +154,8 @@ export async function callVertexAIImagen(
   }
   
   // Add reference images to parameters if provided AND not already in prompt text
-  // (Don't send structured array if prompt contains GCS URL - match Gemini Chat behavior)
-  if (instance.referenceImages && instance.referenceImages.length > 0) {
+  // (Don't send structured array if prompt contains URL - match Gemini Chat behavior)
+  if (instance.referenceImages && instance.referenceImages.length > 0 && !promptHasReferenceURL) {
     requestBody.parameters.referenceImages = instance.referenceImages
   }
   
@@ -186,12 +190,15 @@ export async function callVertexAIImagen(
   
   console.log('[Vertex AI] Response structure:', {
     hasPredictions: !!data?.predictions,
-    predictionCount: data?.predictions?.length || 0
+    predictionCount: data?.predictions?.length || 0,
+    firstPredictionKeys: data?.predictions?.[0] ? Object.keys(data.predictions[0]) : null
   })
   
   // Extract base64 image from response
   const imageBytes = data?.predictions?.[0]?.bytesBase64Encoded
   if (!imageBytes) {
+    console.error('[Vertex AI] Full response data:', JSON.stringify(data, null, 2))
+    console.error('[Vertex AI] First prediction:', JSON.stringify(data?.predictions?.[0], null, 2))
     throw new Error('No image data in Vertex AI response')
   }
 
