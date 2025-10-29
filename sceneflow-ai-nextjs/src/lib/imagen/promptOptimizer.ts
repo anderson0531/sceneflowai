@@ -36,11 +36,11 @@ export function optimizePromptForImagen(params: OptimizePromptParams): string {
   console.log('[Prompt Optimizer] Cleaned scene action:', cleanedAction.substring(0, 100))
   
   if (hasReferences) {
-    // REFERENCE MODE: Focus on scene composition, let references handle character appearance
+    // REFERENCE MODE: Focus on scene composition, explicitly link character to reference
     const characterNames = params.characterReferences!.map(ref => ref.name).join(', ')
     const prompt = `Scene: ${cleanedAction}
     
-Featuring: ${characterNames}
+The character ${characterNames} should exactly match the provided reference image in facial features, ethnicity, and physical appearance.
 
 ${visualStyle}`
     
