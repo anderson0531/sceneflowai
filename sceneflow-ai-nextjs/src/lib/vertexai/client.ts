@@ -68,10 +68,18 @@ export async function callVertexAIImagen(
     throw new Error('GCP_PROJECT_ID not configured')
   }
 
-  // Determine model based on quality only
-  const model = options.quality === 'max'
-    ? 'imagen-4.0-ultra-generate-001'  // Imagen 4 Ultra
-    : 'imagen-3.0-generate-002'         // Imagen 3 (default)
+  // Determine model based on quality and whether references are provided
+  let model: string
+
+  if (options.referenceImages && options.referenceImages.length > 0) {
+    // Reference images require Imagen 4 (Subject Customization)
+    model = 'imagen-4.0-ultra-generate-001'
+    console.log('[Vertex AI] Using Imagen 4 for reference image support')
+  } else if (options.quality === 'max') {
+    model = 'imagen-4.0-ultra-generate-001'  // Imagen 4 Ultra
+  } else {
+    model = 'imagen-3.0-generate-002'         // Imagen 3 (default)
+  }
   
   console.log(`[Vertex AI] Generating image with ${model} (${options.quality || 'auto'} quality)...`)
   console.log('[Vertex AI] Project:', projectId, 'Region:', region)
