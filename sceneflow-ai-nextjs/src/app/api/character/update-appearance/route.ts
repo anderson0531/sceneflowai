@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import Project from '@/models/Project'
+import User from '@/models/User'
 import { sequelize } from '@/config/database'
+
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,7 +31,6 @@ export async function POST(req: NextRequest) {
     const isEmail = userId.includes('@')
     if (isEmail) {
       // Look up user by email to get UUID
-      const User = (await import('@/models/User')).default
       const user = await User.findOne({ where: { email: userId } })
       if (!user) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 })
