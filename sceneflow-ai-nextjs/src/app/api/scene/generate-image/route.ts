@@ -197,12 +197,27 @@ export async function POST(req: NextRequest) {
 
     console.log('[Scene Image] Optimized prompt preview:', optimizedPrompt.substring(0, 150))
 
-    // Generate with Vertex AI Imagen 3 - Use text descriptions only (proven to work better)
+    // Build character references using GCS URIs
+    const gcsReferences = characterObjects
+      .filter((c: any) => c.referenceImageGCS) // Filter for GCS references
+      .map((char: any, idx: number) => ({
+        referenceId: idx + 1,
+        gcsUri: char.referenceImageGCS,
+        referenceType: 'REFERENCE_TYPE_SUBJECT' as const,
+        subjectType: 'SUBJECT_TYPE_PERSON' as const,
+        subjectDescription: char.appearanceDescription || 
+          `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
+      }))
+
+    console.log(`[Scene Image] Using ${gcsReferences.length} character references with GCS`)
+
+    // Generate with Vertex AI Imagen 3 (with character references)
     const base64Image = await callVertexAIImagen(optimizedPrompt, {
       aspectRatio: '16:9',
       numberOfImages: 1,
       quality: quality,
-      negativePrompt: 'elderly appearance, deeply wrinkled, aged beyond reference, geriatric, wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager, youthful appearance'
+      negativePrompt: 'elderly appearance, deeply wrinkled, aged beyond reference, geriatric, wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager, youthful appearance',
+      referenceImages: gcsReferences.length > 0 ? gcsReferences : undefined
     })
 
     // Upload to Vercel Blob storage

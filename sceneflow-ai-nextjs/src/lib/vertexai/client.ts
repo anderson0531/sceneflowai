@@ -81,9 +81,45 @@ export async function callVertexAIImagen(
   // Vertex AI endpoint with selected model
   const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${model}:predict`
   
-  // Build request payload (standard Imagen model)
-  const instance = {
+  // Build request payload
+  const instance: any = {
     prompt: prompt
+  }
+
+  // Add reference images if provided (GCS URIs preferred over Base64)
+  if (options.referenceImages && options.referenceImages.length > 0) {
+    instance.referenceImages = options.referenceImages.map((ref, idx) => {
+      if (ref.gcsUri) {
+        // Use GCS URI (preferred - no size limits)
+        return {
+          referenceId: ref.referenceId || idx + 1,
+          referenceImage: {
+            gcsUri: ref.gcsUri
+          },
+          referenceType: ref.referenceType || 'REFERENCE_TYPE_SUBJECT',
+          subjectConfig: {
+            subjectType: ref.subjectType || 'SUBJECT_TYPE_PERSON',
+            subjectDescription: ref.subjectDescription || ''
+          }
+        }
+      } else if (ref.base64Image) {
+        // Fallback to Base64
+        return {
+          referenceId: ref.referenceId || idx + 1,
+          referenceImage: {
+            bytesBase64Encoded: ref.base64Image.replace(/^data:image\/[^;]+;base64,/, '')
+          },
+          referenceType: ref.referenceType || 'REFERENCE_TYPE_SUBJECT',
+          subjectConfig: {
+            subjectType: ref.subjectType || 'SUBJECT_TYPE_PERSON',
+            subjectDescription: ref.subjectDescription || ''
+          }
+        }
+      }
+      return null
+    }).filter(Boolean)
+    
+    console.log(`[Vertex AI] Using ${instance.referenceImages.length} reference images`)
   }
 
   const requestBody: any = {

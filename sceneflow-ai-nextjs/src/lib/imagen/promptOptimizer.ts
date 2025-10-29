@@ -22,40 +22,51 @@ interface OptimizePromptParams {
  * Removes ALL audio/non-visual noise and constructs simple, focused prompt
  */
 export function optimizePromptForImagen(params: OptimizePromptParams): string {
-  // Get art style from presets or default to photorealistic
+  const hasReferences = params.characterReferences && params.characterReferences.length > 0
+  
+  // Get art style
   const selectedStyle = artStylePresets.find(s => s.id === params.artStyle) || 
     artStylePresets.find(s => s.id === 'photorealistic')!
   const visualStyle = selectedStyle.promptSuffix
   
-  // Clean the scene action - remove ALL audio and non-visual elements
+  // Clean the scene action
   let cleanedAction = cleanSceneForVisuals(params.sceneAction, params.visualDescription)
   
   console.log('[Prompt Optimizer] Using art style:', params.artStyle || 'photorealistic')
   console.log('[Prompt Optimizer] Cleaned scene action:', cleanedAction.substring(0, 100))
   
-  // If character references exist, weave them naturally into the scene
-  if (params.characterReferences && params.characterReferences.length > 0) {
+  if (hasReferences) {
+    // REFERENCE MODE: Focus on scene composition, let references handle character appearance
+    const characterNames = params.characterReferences!.map(ref => ref.name).join(', ')
+    const prompt = `Scene: ${cleanedAction}
+    
+Featuring: ${characterNames}
+
+${visualStyle}`
+    
+    console.log('[Prompt Optimizer] Using REFERENCE MODE with', params.characterReferences!.length, 'character(s)')
+    console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
+    console.log(prompt)
+    console.log('[Prompt Optimizer] ===== END FULL PROMPT =====')
+    return prompt.trim()
+  } else {
+    // TEXT-ONLY MODE: Include character descriptions in prompt
     // Build integrated character descriptions
     const integratedPrompt = integrateCharactersIntoScene(
       cleanedAction, 
-      params.characterReferences
+      params.characterReferences || []
     )
     
     const prompt = `${integratedPrompt}
 
 ${visualStyle}`
 
-    console.log('[Prompt Optimizer] Built naturally integrated prompt with', params.characterReferences.length, 'characters')
+    console.log('[Prompt Optimizer] Built naturally integrated prompt with', params.characterReferences?.length || 0, 'characters')
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
     console.log(prompt)
     console.log('[Prompt Optimizer] ===== END FULL PROMPT =====')
     return prompt.trim()
   }
-  
-  // No character reference - simple scene description
-  return `${cleanedAction}
-
-${visualStyle}`.trim()
 }
 
 /**
