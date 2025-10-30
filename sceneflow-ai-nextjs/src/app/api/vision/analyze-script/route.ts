@@ -45,7 +45,7 @@ async function analyzeScript(script: any, characters: any[]) {
     return `Scene ${idx + 1}: ${scene.heading || 'Untitled'} (${duration}s, ${dialogueCount} dialogue)`
   }).join('\n') || 'No scenes'
   
-  const prompt = `You are an expert script doctor. Analyze this script and provide specific, actionable recommendations for improvement.
+  const prompt = `You are an expert script doctor. Analyze this script and provide 4–8 specific, actionable recommendations.
 
 SCRIPT OVERVIEW:
 Total Scenes: ${script.scenes?.length || 0}
@@ -57,32 +57,28 @@ ${sceneSummaries}
 FULL SCRIPT:
 ${JSON.stringify(script, null, 2)}
 
-ANALYSIS TASK:
-Identify 4-8 specific issues or opportunities for improvement. Focus on:
-- Pacing problems (scenes too long/short, uneven flow)
-- Character development gaps or inconsistencies
-- Weak dialogue or on-the-nose exposition
-- Missing emotional beats or unclear motivations
-- Visual storytelling opportunities
-- Scene transitions that need smoothing
-- Tone inconsistencies
-- Structural issues
+OUTPUT REQUIREMENTS:
+- For each recommendation, produce the following clearly delimited sections using these exact tags:
+  [Problem]: One short paragraph describing the issue.
+  [Impact]: One short paragraph explaining why it matters.
+  [Solution]: 2–4 concrete actions the writer should take (numbered list preferred).
+  [Examples]: 1–3 brief examples referencing specific scenes/lines.
 
-For each recommendation, provide:
-- A clear, specific title
-- Detailed description of the issue
-- Priority (high, medium, low)
-- Category (pacing, dialogue, character, visual, structure, tone, emotion)
-
-Return JSON:
+IMPORTANT:
+- Do not include additional prose between sections.
+- Keep each section concise and readable with natural line breaks.
+- If you also return JSON, ensure it matches this schema exactly:
 {
   "recommendations": [
     {
-      "id": "rec-1",
-      "title": "Strengthen Act 2 turning point",
-      "description": "Scene 5 lacks a clear decision point for the protagonist. Add a moment where they must choose between two conflicting values.",
-      "priority": "high",
-      "category": "structure"
+      "id": "string",
+      "title": "string",
+      "priority": "high" | "medium" | "low",
+      "category": "pacing" | "dialogue" | "character" | "visual" | "structure" | "tone" | "emotion" | "clarity",
+      "problem": "string",
+      "impact": "string",
+      "actions": ["string", "string"],
+      "examples": ["string", "string"]
     }
   ]
 }

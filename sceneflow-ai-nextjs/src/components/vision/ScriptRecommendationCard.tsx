@@ -95,10 +95,10 @@ export function ScriptRecommendationCard({ rec, selected, onToggle }: ScriptReco
             </div>
           )}
 
-          {/* Actions */}
+          {/* Solution */}
           {parsed.actions.length > 0 && (
             <div>
-              <div className="text-[11px] font-semibold text-gray-800 dark:text-gray-200 mb-1">Actionable</div>
+              <div className="text-[11px] font-semibold text-gray-800 dark:text-gray-200 mb-1">Solution</div>
               <ol className="list-decimal ml-5 space-y-1">
                 {parsed.actions.map((a, idx) => (
                   <li key={idx} className="text-xs text-gray-600 dark:text-gray-400">{a}</li>
