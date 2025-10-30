@@ -170,8 +170,8 @@ export function ScriptEditorModal({
       return
     }
     
-    setIsOptimizing(true)
     try {
+      setIsOptimizing(true)
       await execute(async () => {
         let response = await fetch('/api/vision/optimize-script', {
           method: 'POST',

@@ -169,7 +169,7 @@ ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce si
   console.log('[Script Optimization] Calling Gemini API...')
   
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -177,7 +177,7 @@ ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce si
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.1,
-          maxOutputTokens: compact ? 2048 : 8192,
+          maxOutputTokens: 8192,
           responseMimeType: 'application/json'
         }
       })

@@ -80,10 +80,10 @@ OUTPUT REQUIREMENTS:
 `
 
   console.log('[Script Analysis] Sending prompt (first 500 chars):', prompt.substring(0, 500))
-  console.log('[Script Analysis] API endpoint:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`)
+  console.log('[Script Analysis] API endpoint:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent`)
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -91,7 +91,7 @@ OUTPUT REQUIREMENTS:
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.1,
-          maxOutputTokens: compact ? 512 : 768,
+          maxOutputTokens: 2048,
           responseMimeType: 'application/json'
         },
         safetySettings: [
