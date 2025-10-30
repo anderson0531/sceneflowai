@@ -221,8 +221,16 @@ CRITICAL:
           out += c
           esc = true
         } else if (c === '"') {
-          out += c
-          inStr = false
+          // Heuristic: if a quote appears in the middle of a sentence (next non-space isn't , ] } or \n), treat it as a content quote and escape it
+          let j = i + 1
+          while (j < chars.length && /\s/.test(chars[j])) j++
+          const nxt = chars[j]
+          if (nxt && ![',', ']', '}', '\n'].includes(nxt)) {
+            out += '\\"' // keep string open, escape the quote
+          } else {
+            out += '"'
+            inStr = false
+          }
         } else if (c === '\n') {
           out += '\\n'
         } else if (c === '\t') {
@@ -239,6 +247,8 @@ CRITICAL:
         }
       }
     }
+    // If JSON ended while still in a string, close it
+    if (inStr) out += '"'
     return out
   }
 
