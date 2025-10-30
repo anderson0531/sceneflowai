@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function analyzeScript(script: any, characters: any[], compact: boolean) {
+async function analyzeScript(script: any, characters: any[], compact: boolean): Promise<any[]> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) throw new Error('Google API key not configured')
   
@@ -149,16 +149,58 @@ Be specific and actionable. Reference actual scenes when possible.`
     throw new Error('No analysis generated')
   }
 
-  // Try JSON first (code fence or raw)
+  const finish = data.candidates?.[0]?.finishReason
+
+  // Try JSON first (code fence, raw, or balanced)
+  const extractBalancedJson = (text: string): string => {
+    const start = text.indexOf('{')
+    if (start === -1) return ''
+    const chars = Array.from(text)
+    let depth = 0
+    let inStr = false
+    let esc = false
+    for (let i = start; i < chars.length; i++) {
+      const c = chars[i]
+      if (inStr) {
+        if (esc) { esc = false }
+        else if (c === '\\') { esc = true }
+        else if (c === '"') { inStr = false }
+      } else {
+        if (c === '"') inStr = true
+        else if (c === '{') depth++
+        else if (c === '}') {
+          depth--
+          if (depth === 0) return chars.slice(start, i + 1).join('')
+        }
+      }
+    }
+    return depth > 0 ? chars.slice(start).join('') + '}'.repeat(depth) : ''
+  }
+
+  const normalizeForJson = (input: string): string => {
+    let s = input.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+    s = s
+      .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+      .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+      .replace(/[\u2013\u2014]/g, '-')
+    s = s.replace(/,\s*(\]|\})/g, '$1')
+    return s
+  }
+
   try {
     const fence = analysisText.match(/```json\s*([\s\S]*?)\s*```/i)
     const rawJson = fence ? fence[1] : (analysisText.trim().startsWith('{') ? analysisText : '')
-    if (rawJson) {
-      const parsed = JSON.parse(rawJson)
+    const candidate = rawJson || extractBalancedJson(analysisText)
+    if (candidate) {
+      const parsed = JSON.parse(normalizeForJson(candidate))
       return parsed?.recommendations || []
     }
   } catch (e) {
-    // fall through to tagged parsing
+    // If the model hit token limit, retry once with compact mode
+    if (finish === 'MAX_TOKENS' && !compact) {
+      console.warn('[Script Analysis] MAX_TOKENS reached. Retrying with compact prompt...')
+      return await analyzeScript(script, characters, true)
+    }
     console.warn('[Script Analysis] JSON parsing failed, falling back to tagged sections')
   }
 
