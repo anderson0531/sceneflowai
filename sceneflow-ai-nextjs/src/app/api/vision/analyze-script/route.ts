@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-export const maxDuration = 60
+export const maxDuration = 120
 export const runtime = 'nodejs'
 
 interface AnalyzeScriptRequest {
   projectId: string
   script: any
   characters: any[]
+  compact?: boolean
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, script, characters }: AnalyzeScriptRequest = await req.json()
+    const { projectId, script, characters, compact }: AnalyzeScriptRequest = await req.json()
     
     if (!projectId || !script) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
     
     console.log('[Script Analysis] Analyzing script for project:', projectId)
     
-    const recommendations = await analyzeScript(script, characters)
+    const recommendations = await analyzeScript(script, characters, !!compact)
     
     return NextResponse.json({
       success: true,
@@ -28,18 +29,21 @@ export async function POST(req: NextRequest) {
     })
   } catch (error: any) {
     console.error('[Script Analysis] Error:', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to analyze script' },
-      { status: 500 }
-    )
+    const msg = String(error?.message || '')
+    const isTimeout = msg.includes('fetch failed') || msg.toLowerCase().includes('timeout')
+    const status = isTimeout ? 504 : 500
+    const diagnosticId = `ana-${Date.now()}`
+    if (isTimeout) console.error('[Script Analysis] Diagnostic ID:', diagnosticId)
+    return NextResponse.json({ error: msg || 'Failed to analyze script', diagnosticId }, { status })
   }
 }
 
-async function analyzeScript(script: any, characters: any[]) {
+async function analyzeScript(script: any, characters: any[], compact: boolean) {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) throw new Error('Google API key not configured')
   
-  const sceneSummaries = script.scenes?.map((scene: any, idx: number) => {
+  const limit = compact ? 12 : script.scenes?.length || 0
+  const sceneSummaries = (script.scenes || []).slice(0, limit).map((scene: any, idx: number) => {
     const dialogueCount = scene.dialogue?.length || 0
     const duration = scene.duration || 0
     return `Scene ${idx + 1}: ${scene.heading || 'Untitled'} (${duration}s, ${dialogueCount} dialogue)`
@@ -53,9 +57,6 @@ Characters: ${characters?.map((c: any) => c.name).join(', ') || 'None'}
 
 SCENES:
 ${sceneSummaries}
-
-FULL SCRIPT:
-${JSON.stringify(script, null, 2)}
 
 OUTPUT REQUIREMENTS:
 - For each recommendation, produce the following clearly delimited sections using these exact tags:
@@ -96,8 +97,9 @@ Be specific and actionable. Reference actual scenes when possible.`
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 8192  // Increased to accommodate longer responses
+          temperature: 0.2,
+          maxOutputTokens: compact ? 2048 : 4096,
+          responseMimeType: 'application/json'
         },
         safetySettings: [
           {

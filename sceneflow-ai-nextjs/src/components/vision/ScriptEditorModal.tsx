@@ -129,12 +129,24 @@ export function ScriptEditorModal({
     setIsAnalyzing(true)
     try {
       await execute(async () => {
-        const response = await fetch('/api/vision/analyze-script', {
+        let response = await fetch('/api/vision/analyze-script', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ projectId, script, characters })
         })
-        if (!response.ok) throw new Error('Analysis failed')
+        if (!response.ok) {
+          if (response.status === 504) {
+            const msg = 'Analysis took too long; retrying compact analysis...'
+            console.warn('[Script Analysis] 504 timeout. ' + msg)
+            toast.message(msg)
+            response = await fetch('/api/vision/analyze-script', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ projectId, script, characters, compact: true })
+            })
+          }
+          if (!response.ok) throw new Error('Analysis failed')
+        }
         const data = await response.json()
         setRecommendations(data.recommendations || [])
         toast.success('Script analysis complete')
