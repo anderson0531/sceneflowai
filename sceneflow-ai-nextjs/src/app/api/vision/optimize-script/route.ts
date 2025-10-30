@@ -26,7 +26,19 @@ export async function POST(req: NextRequest) {
     console.log('[Script Optimization] Instruction:', instruction)
     console.log('[Script Optimization] Scene count:', script.scenes?.length || 0)
     
-    const result = await optimizeScript(script, instruction, characters, !!compact)
+    let result: any
+    try {
+      result = await optimizeScript(script, instruction, characters, !!compact)
+    } catch (e: any) {
+      const msg = String(e?.message || '')
+      const parseErr = msg.includes('Failed to parse optimization response') || msg.includes('no JSON found')
+      if (parseErr && !compact) {
+        console.warn('[Script Optimization] Parse failed. Retrying compact...')
+        result = await optimizeScript(script, instruction, characters, true)
+      } else {
+        throw e
+      }
+    }
     
     return NextResponse.json({
       success: true,
@@ -51,7 +63,7 @@ async function optimizeScript(script: any, instruction: string, characters: any[
   if (!apiKey) throw new Error('Google API key not configured')
   
   // Build condensed script summary for context
-  const sceneSummaries = script.scenes?.map((scene: any, idx: number) => {
+  const sceneSummaries = (script.scenes || []).slice(0, compact ? 8 : (script.scenes?.length || 0)).map((scene: any, idx: number) => {
     const dialogueCount = scene.dialogue?.length || 0
     const duration = scene.duration || 0
     return `Scene ${idx + 1}: ${scene.heading || 'Untitled'} (${duration}s, ${dialogueCount} dialogue lines)`
@@ -75,11 +87,10 @@ CURRENT SCRIPT OVERVIEW:
 Total Scenes: ${script.scenes?.length || 0}
 Characters: ${characterList}
 
-SCENES:
+SCENES (${compact ? 'first 8' : 'all'}):
 ${sceneSummaries}
 
-FULL SCRIPT (JSON):
-${JSON.stringify(script, null, 2)}
+${compact ? '' : `FULL SCRIPT (JSON):\n${JSON.stringify(script, null, 2)}`}
 
 OPTIMIZATION TASK:
 Based on the user's instruction, optimize the ENTIRE script holistically. Consider:
@@ -165,8 +176,8 @@ ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce si
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: compact ? 8192 : 16384,
+          temperature: 0.1,
+          maxOutputTokens: compact ? 2048 : 8192,
           responseMimeType: 'application/json'
         }
       })
@@ -306,6 +317,15 @@ ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce si
     } catch (e2) {
       console.error('[Script Optimization] JSON parse error (after repair):', e2)
       console.error('[Script Optimization] Text attempted (head):', jsonCandidate.substring(0, 500))
+      // As a minimal fallback, return original script with changesSummary note
+      if (compact) {
+        return {
+          optimizedScript: script,
+          changesSummary: [
+            { category: 'Stability', changes: 'Returned original due to model truncation', rationale: 'Will refine in a subsequent compact pass' }
+          ]
+        }
+      }
       throw new Error('Failed to parse optimization response')
     }
   }

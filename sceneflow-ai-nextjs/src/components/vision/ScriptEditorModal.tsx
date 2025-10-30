@@ -219,7 +219,17 @@ export function ScriptEditorModal({
     // Build instruction from selected recommendations
     const instruction = recommendations
       .filter(r => selectedRecommendations.includes(r.id))
-      .map(r => `${r.title}: ${r.description}`)
+      .map((r: any) => {
+        const title = (r.title || '').trim()
+        const actions = Array.isArray(r.actions) ? r.actions.filter(Boolean).slice(0, 2) : []
+        const oneLiner = (r.rationaleOneLiner || r.problem || '').toString().trim()
+        const parts: string[] = []
+        if (title) parts.push(title)
+        if (oneLiner) parts.push(oneLiner)
+        if (actions.length) parts.push('Actions: ' + actions.join(' | '))
+        return parts.join(' — ')
+      })
+      .filter((s: string) => s && s.toLowerCase() !== 'undefined')
       .join('\n\n')
     
     setCustomInstruction(instruction)
