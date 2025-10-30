@@ -13,13 +13,18 @@ type JobState = {
   error?: string
 }
 
-export const jobs: Record<string, JobState> = {}
+const getJobs = (): Record<string, JobState> => {
+  const g = globalThis as any
+  if (!g.SF_BATCH_JOBS) g.SF_BATCH_JOBS = {}
+  return g.SF_BATCH_JOBS as Record<string, JobState>
+}
 
 export async function POST(req: NextRequest) {
   try {
     const { projectId, script, characters, pass } = await req.json()
     if (!projectId || !script) return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    const jobs = getJobs()
     jobs[jobId] = { total: script.scenes?.length || 0, completed: 0, currentScene: 0, lastMessage: 'Queued' }
 
     const apiKey = process.env.GOOGLE_GEMINI_API_KEY as string
@@ -36,16 +41,19 @@ export async function POST(req: NextRequest) {
           characters,
           pass,
           onProgress: ({ total, index, message }) => {
+            const jobs = getJobs()
             jobs[jobId].total = total
             jobs[jobId].currentScene = index
             jobs[jobId].completed = index
             jobs[jobId].lastMessage = message
           }
         })
+        const jobs = getJobs()
         jobs[jobId].result = result
         jobs[jobId].completed = jobs[jobId].total
         jobs[jobId].lastMessage = 'Completed'
       } catch (e: any) {
+        const jobs = getJobs()
         jobs[jobId].error = e?.message || 'Batch failed'
         jobs[jobId].lastMessage = 'Failed'
       }

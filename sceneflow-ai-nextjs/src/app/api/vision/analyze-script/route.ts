@@ -42,33 +42,24 @@ async function analyzeScript(script: any, characters: any[], compact: boolean): 
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) throw new Error('Google API key not configured')
   
-  const limit = compact ? 12 : script.scenes?.length || 0
+  const limit = compact ? 5 : 8
   const sceneSummaries = (script.scenes || []).slice(0, limit).map((scene: any, idx: number) => {
     const dialogueCount = scene.dialogue?.length || 0
     const duration = scene.duration || 0
     return `Scene ${idx + 1}: ${scene.heading || 'Untitled'} (${duration}s, ${dialogueCount} dialogue)`
   }).join('\n') || 'No scenes'
   
-  const prompt = `You are an expert script doctor. Analyze this script and provide 4–8 specific, actionable recommendations.
+  const prompt = `You are an expert script doctor. Analyze this script and provide ${compact ? 'up to 4' : '4–6'} specific, actionable recommendations.
 
 SCRIPT OVERVIEW:
 Total Scenes: ${script.scenes?.length || 0}
-Characters: ${characters?.map((c: any) => c.name).join(', ') || 'None'}
+${compact ? '' : `Characters: ${characters?.map((c: any) => c.name).join(', ') || 'None'}`}
 
-SCENES:
+SCENES (first ${limit}):
 ${sceneSummaries}
 
 OUTPUT REQUIREMENTS:
-- For each recommendation, produce the following clearly delimited sections using these exact tags:
-  [Problem]: One short paragraph describing the issue.
-  [Impact]: One short paragraph explaining why it matters.
-  [Solution]: 2–4 concrete actions the writer should take (numbered list preferred).
-  [Examples]: 1–3 brief examples referencing specific scenes/lines.
-
-IMPORTANT:
-- Do not include additional prose between sections.
-- Keep each section concise and readable with natural line breaks.
-- If you also return JSON, ensure it matches this schema exactly:
+- Return ONLY JSON (no code fences) with this schema:
 {
   "recommendations": [
     {
@@ -76,15 +67,17 @@ IMPORTANT:
       "title": "string",
       "priority": "high" | "medium" | "low",
       "category": "pacing" | "dialogue" | "character" | "visual" | "structure" | "tone" | "emotion" | "clarity",
-      "problem": "string",
-      "impact": "string",
-      "actions": ["string", "string"],
-      "examples": ["string", "string"]
+      "rationaleOneLiner": "<=30 words",
+      "problem": "<=30 words",
+      "impact": "<=25 words",
+      "actions": ["<=15 words", "<=15 words"],
+      "examples": ["<=20 words"]
     }
   ]
 }
-
-Be specific and actionable. Reference actual scenes when possible.`
+- Total response must be <= 600 tokens.
+- Be specific and actionable; reference scenes briefly.
+`
 
   console.log('[Script Analysis] Sending prompt (first 500 chars):', prompt.substring(0, 500))
   console.log('[Script Analysis] API endpoint:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`)
@@ -97,8 +90,8 @@ Be specific and actionable. Reference actual scenes when possible.`
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: compact ? 2048 : 4096,
+          temperature: 0.1,
+          maxOutputTokens: compact ? 512 : 768,
           responseMimeType: 'application/json'
         },
         safetySettings: [
@@ -149,6 +142,11 @@ Be specific and actionable. Reference actual scenes when possible.`
     if (finish === 'MAX_TOKENS' && !compact) {
       console.warn('[Script Analysis] MAX_TOKENS with empty text. Retrying compact...')
       return await analyzeScript(script, characters, true)
+    }
+    if (finish === 'MAX_TOKENS' && compact) {
+      console.warn('[Script Analysis] MAX_TOKENS again. Retrying minimal mode...')
+      const minimal = await analyzeMinimal(script)
+      if (minimal.length > 0) return minimal
     }
     throw new Error('No analysis generated')
   }
@@ -241,5 +239,56 @@ Be specific and actionable. Reference actual scenes when possible.`
   }).filter((r: any) => r.description)
 
   return recs
+}
+
+async function analyzeMinimal(script: any): Promise<any[]> {
+  // Deterministic minimal set if the model cannot return JSON due to MAX_TOKENS
+  const hasSparseDialogue = (script?.scenes || []).filter((s: any) => (s?.dialogue || []).length <= 1).length
+  const high: any = {
+    id: 'structure-clarity',
+    title: 'Clarify Structure & Focus',
+    priority: 'high',
+    category: 'clarity',
+    rationaleOneLiner: 'Tighten structure and clarify key beats for readability.',
+    problem: 'Some scenes read as summaries rather than dramatized beats.',
+    impact: 'Improves comprehension and narrative flow.',
+    actions: ['Clarify intent of each key scene.', 'Add concrete beats over summary lines.'],
+    examples: []
+  }
+  const med: any = {
+    id: 'dialogue-depth',
+    title: 'Increase Dialogue Depth',
+    priority: 'medium',
+    category: 'dialogue',
+    rationaleOneLiner: 'Enrich conversations to reveal subtext and relationships.',
+    problem: 'Dialogue is sparse in many scenes, limiting character voice.',
+    impact: 'Enhances character development and engagement.',
+    actions: ['Add 1–2 exchanges in pivotal scenes.', 'Use subtext to reveal conflict.'],
+    examples: []
+  }
+  const charRec: any = {
+    id: 'character-arc',
+    title: 'Clarify Character Arcs',
+    priority: 'medium',
+    category: 'character',
+    rationaleOneLiner: 'Make turning points explicit for each key character.',
+    problem: 'Arc transitions are implied rather than shown.',
+    impact: 'Stronger emotional through-line.',
+    actions: ['Add one decisive action per character.', 'Show consequences of choices.'],
+    examples: []
+  }
+  const set: any[] = [high, med, charRec]
+  if (hasSparseDialogue > 0) set.unshift({
+    id: 'sparse-dialogue',
+    title: 'Address Sparse Dialogue',
+    priority: 'high',
+    category: 'dialogue',
+    rationaleOneLiner: 'Convert narration to brief exchanges where meaningful.',
+    problem: 'Many scenes have ≤1 line of dialogue.',
+    impact: 'Improves pacing and character presence.',
+    actions: ['Add concise, purposeful exchanges.', 'Trim redundant narration.'],
+    examples: []
+  })
+  return set.slice(0, 4)
 }
 
