@@ -119,7 +119,7 @@ PROVIDE:
 2. Changes summary explaining major improvements
 3. Rationale for each category of changes
 
-Return ONLY JSON with this exact structure (no commentary, do NOT wrap in code fences; escape all embedded quotes; use \\n for newlines; plain ASCII punctuation; no trailing commas):
+Return ONLY JSON with this exact structure (no commentary, do NOT wrap in code fences; escape all embedded quotes; use \\n for newlines; plain ASCII punctuation; no trailing commas). For EVERY scene, the fields "heading", "action", "narration", "dialogue", "music", "sfx", and "duration" MUST be present. If reducing narration, REPLACE it with a concise 1–2 sentence narration (never null/empty/"None"):
 {
   "optimizedScript": {
     "scenes": [
@@ -267,6 +267,7 @@ ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce si
     if (optimization.optimizedScript?.scenes && script.scenes) {
       optimization.optimizedScript.scenes = optimization.optimizedScript.scenes.map((optimizedScene: any, idx: number) => {
         const originalScene = script.scenes[idx]
+        const narration = coerceNarration(optimizedScene?.narration, originalScene?.narration, optimizedScene?.action || originalScene?.action)
         return {
           ...optimizedScene,
           // Preserve metadata
@@ -274,7 +275,8 @@ ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce si
           narrationAudioUrl: originalScene?.narrationAudioUrl,
           musicAudio: originalScene?.musicAudio,
           sceneNumber: originalScene?.sceneNumber || (idx + 1),
-          duration: optimizedScene.duration || originalScene?.duration
+          duration: optimizedScene.duration || originalScene?.duration,
+          narration
         }
       })
     }
@@ -288,13 +290,15 @@ ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce si
       if (optimization.optimizedScript?.scenes && script.scenes) {
         optimization.optimizedScript.scenes = optimization.optimizedScript.scenes.map((optimizedScene: any, idx: number) => {
           const originalScene = script.scenes[idx]
+          const narration = coerceNarration(optimizedScene?.narration, originalScene?.narration, optimizedScene?.action || originalScene?.action)
           return {
             ...optimizedScene,
             imageUrl: originalScene?.imageUrl,
             narrationAudioUrl: originalScene?.narrationAudioUrl,
             musicAudio: originalScene?.musicAudio,
             sceneNumber: originalScene?.sceneNumber || (idx + 1),
-            duration: optimizedScene.duration || originalScene?.duration
+            duration: optimizedScene.duration || originalScene?.duration,
+            narration
           }
         })
       }
@@ -305,6 +309,19 @@ ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce si
       throw new Error('Failed to parse optimization response')
     }
   }
+}
+
+function coerceNarration(candidate: any, original: any, fallbackSource?: any): string {
+  const val = String(candidate ?? '').trim()
+  if (val && val.toLowerCase() !== 'none' && val !== 'null' && val !== 'undefined') return val
+  const orig = String(original ?? '').trim()
+  if (orig) return orig
+  const action = String(fallbackSource ?? '').trim()
+  if (!action) return ''
+  // Use first sentence or truncate
+  const firstSentenceMatch = action.match(/[^.!?]*[.!?]/)
+  const sentence = (firstSentenceMatch?.[0] || action).replace(/\s+/g, ' ').trim()
+  return sentence.length > 220 ? sentence.slice(0, 217) + '...' : sentence
 }
 
 function extractBalancedJson(text: string): string | '' {
