@@ -145,7 +145,10 @@ Return ONLY JSON with this exact structure (no commentary, do NOT wrap in code f
   ]
 }
 
-CRITICAL: Maintain ALL scene metadata (duration, imageUrl, etc.) from the original. Only optimize content (heading, action, narration, dialogue, music, sfx).`
+CRITICAL:
+- Maintain ALL scene metadata (duration, imageUrl, etc.) from the original. Only optimize content (heading, action, narration, dialogue, music, sfx).
+- All string values MUST be valid JSON strings. Escape quotes and newlines (use \\n for line breaks). Do NOT include raw line breaks inside JSON strings.
+`
 
   console.log('[Script Optimization] Calling Gemini API...')
   
@@ -197,6 +200,48 @@ CRITICAL: Maintain ALL scene metadata (duration, imageUrl, etc.) from the origin
     throw new Error('Failed to parse optimization response: no JSON found')
   }
 
+  // Attempt parse; on failure, apply light repairs for common model issues
+  const normalizeForJson = (input: string): string => {
+    // Normalize newlines
+    let s = input.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+    // Remove trailing commas before ] or }
+    s = s.replace(/,\s*(\]|\})/g, '$1')
+    // Escape newlines occurring inside JSON strings
+    const chars = Array.from(s)
+    let out = ''
+    let inStr = false
+    let esc = false
+    for (let i = 0; i < chars.length; i++) {
+      const c = chars[i]
+      if (inStr) {
+        if (esc) {
+          out += c
+          esc = false
+        } else if (c === '\\') {
+          out += c
+          esc = true
+        } else if (c === '"') {
+          out += c
+          inStr = false
+        } else if (c === '\n') {
+          out += '\\n'
+        } else if (c === '\t') {
+          out += '\\t'
+        } else {
+          out += c
+        }
+      } else {
+        if (c === '"') {
+          out += c
+          inStr = true
+        } else {
+          out += c
+        }
+      }
+    }
+    return out
+  }
+
   try {
     const optimization = JSON.parse(jsonCandidate)
     
@@ -218,9 +263,29 @@ CRITICAL: Maintain ALL scene metadata (duration, imageUrl, etc.) from the origin
     
     return optimization
   } catch (parseError) {
-    console.error('[Script Optimization] JSON parse error:', parseError)
-    console.error('[Script Optimization] Text attempted:', jsonCandidate.substring(0, 500))
-    throw new Error('Failed to parse optimization response')
+    console.warn('[Script Optimization] JSON parse error on first attempt, applying repairs...')
+    const repaired = normalizeForJson(jsonCandidate)
+    try {
+      const optimization = JSON.parse(repaired)
+      if (optimization.optimizedScript?.scenes && script.scenes) {
+        optimization.optimizedScript.scenes = optimization.optimizedScript.scenes.map((optimizedScene: any, idx: number) => {
+          const originalScene = script.scenes[idx]
+          return {
+            ...optimizedScene,
+            imageUrl: originalScene?.imageUrl,
+            narrationAudioUrl: originalScene?.narrationAudioUrl,
+            musicAudio: originalScene?.musicAudio,
+            sceneNumber: originalScene?.sceneNumber || (idx + 1),
+            duration: optimizedScene.duration || originalScene?.duration
+          }
+        })
+      }
+      return optimization
+    } catch (e2) {
+      console.error('[Script Optimization] JSON parse error (after repair):', e2)
+      console.error('[Script Optimization] Text attempted (head):', jsonCandidate.substring(0, 500))
+      throw new Error('Failed to parse optimization response')
+    }
   }
 }
 
