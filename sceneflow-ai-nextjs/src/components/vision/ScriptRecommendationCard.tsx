@@ -69,13 +69,24 @@ export function ScriptRecommendationCard({ rec, selected, onToggle }: ScriptReco
 
           {/* Problem */}
           {parsed.problem && (
-            <p className="text-xs text-gray-700 dark:text-gray-300 mb-2 leading-relaxed">{parsed.problem}</p>
+            <div className="mb-2">
+              <div className="text-[11px] font-semibold text-gray-800 dark:text-gray-200 mb-0.5">Problem</div>
+              <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">{parsed.problem}</p>
+            </div>
+          )}
+
+          {/* Effect */}
+          {parsed.effect && (
+            <div className="mb-2">
+              <div className="text-[11px] font-semibold text-gray-800 dark:text-gray-200 mb-0.5">Effect</div>
+              <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">{parsed.effect}</p>
+            </div>
           )}
 
           {/* Examples */}
           {parsed.examples.length > 0 && (
             <div className="mb-2">
-              <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 mb-1">Examples</div>
+              <div className="text-[11px] font-semibold text-gray-800 dark:text-gray-200 mb-1">Examples</div>
               <ul className="list-disc ml-5 space-y-1">
                 {parsed.examples.map((ex, idx) => (
                   <li key={idx} className="text-xs text-gray-600 dark:text-gray-400">{ex}</li>
@@ -87,7 +98,7 @@ export function ScriptRecommendationCard({ rec, selected, onToggle }: ScriptReco
           {/* Actions */}
           {parsed.actions.length > 0 && (
             <div>
-              <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 mb-1">Actionable Recommendations</div>
+              <div className="text-[11px] font-semibold text-gray-800 dark:text-gray-200 mb-1">Actionable</div>
               <ol className="list-decimal ml-5 space-y-1">
                 {parsed.actions.map((a, idx) => (
                   <li key={idx} className="text-xs text-gray-600 dark:text-gray-400">{a}</li>

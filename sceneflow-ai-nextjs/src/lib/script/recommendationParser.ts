@@ -1,5 +1,6 @@
 export interface ParsedRecommendation {
   problem: string
+  effect?: string
   examples: string[]
   actions: string[]
 }
@@ -10,10 +11,25 @@ export interface ParsedRecommendation {
  */
 export function parseRecommendationText(text: string): ParsedRecommendation {
   if (!text) {
-    return { problem: '', examples: [], actions: [] }
+    return { problem: '', effect: undefined, examples: [], actions: [] }
   }
 
   let working = text.trim()
+
+  // Extract Effect section (handles **Effect:** or similar)
+  let effect: string | undefined
+  const effectHeader = /(\*\*\s*)?effect(\s*\*\*)?\s*:/i
+  if (effectHeader.test(working)) {
+    const parts = working.split(effectHeader)
+    // parts format: [before, (match groups...), afterEffect]
+    // Reconstruct problem+examples source from 'before' + remaining after afterEffect removed later
+    const tail = parts[parts.length - 1].trim()
+    // Effect generally ends before next known header like Actionable or Examples
+    const untilNext = tail.split(/(\*\*\s*)?(actionable\s+recommendations?|examples?)(\s*\*\*)?\s*:/i)[0]
+    effect = untilNext.replace(/\*\*/g, '').trim()
+    // Remove effect portion from working to avoid duplication
+    working = working.replace(effectHeader, 'Effect:').replace(`Effect:${tail}`, '').trim()
+  }
 
   // Extract Example Scenes section (handles **Example Scenes:** or similar)
   const examples: string[] = []
@@ -57,7 +73,10 @@ export function parseRecommendationText(text: string): ParsedRecommendation {
   // Remaining working string is the problem statement (strip bold markers)
   const problem = working.replace(/\*\*/g, '').trim()
 
-  return { problem, examples, actions }
+  // Limit examples to max 3 for readability
+  const limitedExamples = examples.slice(0, 3)
+
+  return { problem, effect, examples: limitedExamples, actions }
 }
 
 
