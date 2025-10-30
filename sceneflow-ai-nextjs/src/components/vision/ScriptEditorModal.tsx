@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Loader, Edit, Wand2, Check, Eye, Sparkles } from 'lucide-react'
+import ScriptRecommendationCard from './ScriptRecommendationCard'
+import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 
@@ -82,6 +84,8 @@ export function ScriptEditorModal({
   const [selectedRecommendations, setSelectedRecommendations] = useState<string[]>([])
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [selectedScenes, setSelectedScenes] = useState<number[]>([])
+  const [filterPriority, setFilterPriority] = useState<'all' | 'high' | 'medium' | 'low'>('all')
+  const [filterCategory, setFilterCategory] = useState<'all' | 'pacing' | 'dialogue' | 'visual' | 'character' | 'clarity' | 'emotion'>('all')
 
   // Reset state when modal opens
   useEffect(() => {
@@ -109,6 +113,15 @@ export function ScriptEditorModal({
       setCustomInstruction(selectedTexts.join('\n\n'))
     }
   }, [selectedOptimizations])
+
+  // Auto-trigger analysis when user opens Flow Assist tab, if not already analyzed
+  useEffect(() => {
+    if (tab === 'flow' && !isAnalyzing && (recommendations?.length || 0) === 0) {
+      // Trigger once per open
+      handleAnalyze()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab])
 
   const handleAnalyze = async () => {
     setIsAnalyzing(true)
@@ -468,63 +481,82 @@ Examples:
                     {isAnalyzing ? (
                       <>
                         <Loader className="w-4 h-4 mr-2 animate-spin" />
-                        Analyzing...
+                        Recommending...
                       </>
                     ) : (
                       <>
                         <Sparkles className="w-4 h-4 mr-2" />
-                        Analyze Script
+                        Recommend
                       </>
                     )}
                   </Button>
                 </div>
                 
-                {/* Recommendations List */}
+                {/* Recommendations Controls + List */}
                 {recommendations.length > 0 && (
                   <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                      Recommendations
-                    </h3>
-                    {recommendations.map((rec) => (
-                      <div
-                        key={rec.id}
-                        className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                          selectedRecommendations.includes(rec.id)
-                            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500'
-                            : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-300'
-                        }`}
-                        onClick={() => {
-                          if (selectedRecommendations.includes(rec.id)) {
-                            setSelectedRecommendations(prev => prev.filter(id => id !== rec.id))
-                          } else {
-                            setSelectedRecommendations(prev => [...prev, rec.id])
-                          }
-                        }}
-                      >
-                        <div className="flex items-start gap-2">
-                          <input
-                            type="checkbox"
-                            checked={selectedRecommendations.includes(rec.id)}
-                            onChange={() => {}}
-                            className="mt-1"
-                          />
-                          <div className="flex-1">
-                            <div className="font-medium text-sm text-gray-900 dark:text-gray-100">
-                              {rec.title}
-                            </div>
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                              {rec.description}
-                            </div>
-                            <div className="flex gap-2 mt-2">
-                              <Badge variant={rec.priority === 'high' ? 'destructive' : 'secondary'}>
-                                {rec.priority}
-                              </Badge>
-                              <Badge variant="outline">{rec.category}</Badge>
-                            </div>
-                          </div>
-                        </div>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Recommendations</h3>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-xs"
+                          onClick={() => {
+                            if (selectedRecommendations.length === recommendations.length) {
+                              setSelectedRecommendations([])
+                            } else {
+                              setSelectedRecommendations(recommendations.map((r: any) => r.id))
+                            }
+                          }}
+                        >
+                          {selectedRecommendations.length === recommendations.length ? 'Clear All' : 'Select All'}
+                        </Button>
+                        <select
+                          className="text-xs bg-transparent border rounded px-2 py-1"
+                          value={filterPriority}
+                          onChange={(e) => setFilterPriority(e.target.value as any)}
+                        >
+                          <option value="all">All Priorities</option>
+                          <option value="high">High</option>
+                          <option value="medium">Medium</option>
+                          <option value="low">Low</option>
+                        </select>
+                        <select
+                          className="text-xs bg-transparent border rounded px-2 py-1"
+                          value={filterCategory}
+                          onChange={(e) => setFilterCategory(e.target.value as any)}
+                        >
+                          <option value="all">All Categories</option>
+                          <option value="pacing">Pacing</option>
+                          <option value="dialogue">Dialogue</option>
+                          <option value="visual">Visual</option>
+                          <option value="character">Character</option>
+                          <option value="clarity">Clarity</option>
+                          <option value="emotion">Emotion</option>
+                        </select>
                       </div>
-                    ))}
+                    </div>
+
+                    <div className="space-y-2">
+                      {recommendations
+                        .filter((r: any) => filterPriority === 'all' || (r.priority || '').toLowerCase() === filterPriority)
+                        .filter((r: any) => filterCategory === 'all' || (r.category || '').toLowerCase() === filterCategory)
+                        .map((rec: any) => (
+                          <ScriptRecommendationCard
+                            key={rec.id}
+                            rec={rec}
+                            selected={selectedRecommendations.includes(rec.id)}
+                            onToggle={() => {
+                              if (selectedRecommendations.includes(rec.id)) {
+                                setSelectedRecommendations(prev => prev.filter(id => id !== rec.id))
+                              } else {
+                                setSelectedRecommendations(prev => [...prev, rec.id])
+                              }
+                            }}
+                          />
+                      ))}
+                    </div>
                   </div>
                 )}
 
