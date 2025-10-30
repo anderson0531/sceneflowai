@@ -8,7 +8,8 @@
     "build": "npm --prefix sceneflow-ai-nextjs run build",
     "start": "npm --prefix sceneflow-ai-nextjs run start",
     "lint": "npm --prefix sceneflow-ai-nextjs run lint",
-    "deploy": "cd sceneflow-ai-nextjs && npx vercel --prod"
+    "deploy": "cd sceneflow-ai-nextjs && npx vercel --prod",
+    "deploy:prod": "node scripts/deploy-verify.js"
   },
   "keywords": [
     "ai",
