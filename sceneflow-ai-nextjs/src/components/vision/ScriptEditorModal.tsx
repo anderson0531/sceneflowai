@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Loader, Edit, Wand2, Check, Eye, Sparkles } from 'lucide-react'
+import { Loader, Edit, Wand2, Check, Eye, Sparkles, Clapperboard } from 'lucide-react'
 import ScriptRecommendationCard from './ScriptRecommendationCard'
 import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
@@ -176,6 +176,7 @@ export function ScriptEditorModal({
       setOptimizedScript(data.optimizedScript)
       setChangesSummary(data.changesSummary || [])
       setShowComparison(true)
+      setTab('instructions')
       
       // Auto-select all scenes initially
       if (data.optimizedScript?.scenes) {
@@ -242,13 +243,13 @@ export function ScriptEditorModal({
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="instructions">
+            <TabsTrigger value="instructions" className="flex items-center">
               <Edit className="w-4 h-4 mr-2" />
-              Instructions
+              Your Direction
             </TabsTrigger>
-            <TabsTrigger value="flow">
-              <Wand2 className="w-4 h-4 mr-2" />
-              Flow Assist
+            <TabsTrigger value="flow" className="flex items-center">
+              <Clapperboard className="w-4 h-4 mr-2" />
+              Flow Direction
             </TabsTrigger>
           </TabsList>
 
@@ -462,7 +463,7 @@ Examples:
               <div className="space-y-4">
                 <div className="p-4 rounded-lg bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-purple-500/20">
                   <div className="flex items-start gap-3">
-                    <Wand2 className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
+                    <Clapperboard className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
                     <div>
                       <h3 className="text-sm font-semibold text-white mb-1">AI-Powered Script Analysis</h3>
                       <p className="text-xs text-gray-300 leading-relaxed">
@@ -495,6 +496,10 @@ Examples:
                 {/* Recommendations Controls + List */}
                 {recommendations.length > 0 && (
                   <div className="space-y-3">
+                    {/* Explainer */}
+                    <div className="text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded p-3">
+                      These Flow Direction recommendations highlight issues (Problem), why they matter (Impact), and concrete fixes (Solution), with examples. Select the suggestions you want, then Generate Preview.
+                    </div>
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Recommendations</h3>
                       <div className="flex items-center gap-2">
