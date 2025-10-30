@@ -107,7 +107,7 @@ PROVIDE:
 2. Changes summary explaining major improvements
 3. Rationale for each category of changes
 
-Return JSON with this exact structure:
+Return ONLY JSON with this exact structure (no commentary, do NOT wrap in code fences):
 {
   "optimizedScript": {
     "scenes": [
@@ -170,15 +170,28 @@ CRITICAL: Maintain ALL scene metadata (duration, imageUrl, etc.) from the origin
     throw new Error('No optimization generated from Gemini')
   }
   
-  // Extract JSON from markdown code blocks
-  let jsonText = analysisText.trim()
-  const codeBlockMatch = jsonText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
-  if (codeBlockMatch) {
-    jsonText = codeBlockMatch[1].trim()
+  // Robust JSON extraction: prefer code-fenced JSON, else raw, else first {...}
+  let jsonCandidate = ''
+  const fence = analysisText.match(/```json\s*([\s\S]*?)\s*```/i)
+  if (fence && fence[1]) {
+    jsonCandidate = fence[1].trim()
+  } else if (analysisText.trim().startsWith('{')) {
+    jsonCandidate = analysisText.trim()
+  } else {
+    const start = analysisText.indexOf('{')
+    const end = analysisText.lastIndexOf('}')
+    if (start !== -1 && end !== -1 && end > start) {
+      jsonCandidate = analysisText.slice(start, end + 1)
+    }
   }
-  
+
+  if (!jsonCandidate) {
+    console.error('[Script Optimization] No JSON found in response. Raw:', analysisText.substring(0, 500))
+    throw new Error('Failed to parse optimization response: no JSON found')
+  }
+
   try {
-    const optimization = JSON.parse(jsonText)
+    const optimization = JSON.parse(jsonCandidate)
     
     // Preserve metadata from original scenes
     if (optimization.optimizedScript?.scenes && script.scenes) {
@@ -199,6 +212,7 @@ CRITICAL: Maintain ALL scene metadata (duration, imageUrl, etc.) from the origin
     return optimization
   } catch (parseError) {
     console.error('[Script Optimization] JSON parse error:', parseError)
+    console.error('[Script Optimization] Text attempted:', jsonCandidate.substring(0, 500))
     throw new Error('Failed to parse optimization response')
   }
 }
