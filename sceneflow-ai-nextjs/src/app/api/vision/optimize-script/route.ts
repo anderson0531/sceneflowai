@@ -53,11 +53,18 @@ async function optimizeScript(script: any, instruction: string, characters: any[
   }).join('\n') || 'No scenes'
   
   const characterList = characters?.map((c: any) => c.name).join(', ') || 'No characters'
+
+  // Sanitize instruction to avoid undefined lines
+  const normalizedInstruction = String(instruction || '')
+    .split(/\r?\n/)
+    .map(line => (line || '').trim())
+    .filter(line => line && line.toLowerCase() !== 'undefined')
+    .join('\n') || 'Improve clarity, pacing, character depth, and visual storytelling across the script.'
   
   const prompt = `You are an expert screenwriter and script doctor. Optimize this entire script based on the user's instruction.
 
 USER INSTRUCTION:
-${instruction}
+${normalizedInstruction}
 
 CURRENT SCRIPT OVERVIEW:
 Total Scenes: ${script.scenes?.length || 0}

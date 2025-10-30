@@ -132,65 +132,66 @@ Be specific and actionable. Reference actual scenes when possible.`
   console.log('[Script Analysis] Candidates:', data.candidates)
   console.log('[Script Analysis] First candidate:', data.candidates?.[0])
 
-  const analysisText = data.candidates?.[0]?.content?.parts?.[0]?.text
+  const parts = (data.candidates || [])
+    .map((c: any) => c?.content?.parts?.[0]?.text)
+    .filter((t: any) => typeof t === 'string' && t.trim().length > 0)
+  const analysisText = parts[0] || ''
 
   if (!analysisText) {
-    console.error('[Script Analysis] No text found in response')
-    console.error('[Script Analysis] Response structure:', {
-      hasCandidates: !!data.candidates,
-      candidatesLength: data.candidates?.length,
-      firstCandidate: data.candidates?.[0],
-      hasContent: !!data.candidates?.[0]?.content,
-      hasParts: !!data.candidates?.[0]?.content?.parts,
-      partsLength: data.candidates?.[0]?.content?.parts?.length,
-      finishReason: data.candidates?.[0]?.finishReason,
-      safetyRatings: data.candidates?.[0]?.safetyRatings
-    })
-    
-    // Check if response was blocked by safety filters
-    if (data.candidates?.[0]?.finishReason === 'SAFETY') {
-      console.error('[Script Analysis] Response blocked by safety filters')
-      console.error('[Script Analysis] Safety ratings:', data.candidates[0].safetyRatings)
-      throw new Error('Analysis blocked by content safety filters. Please adjust script content and try again.')
+    // Safety/finish reason diagnostics
+    const finish = data.candidates?.[0]?.finishReason
+    if (finish === 'SAFETY') {
+      console.error('[Script Analysis] Response blocked by safety filters', data.candidates?.[0]?.safetyRatings)
+      throw new Error('Analysis blocked by content safety filters')
     }
-
-    // Check for other finish reasons
-    const finishReason = data.candidates?.[0]?.finishReason
-    if (finishReason && finishReason !== 'STOP') {
-      console.error('[Script Analysis] Response finished with reason:', finishReason)
-      throw new Error(`Analysis generation failed: ${finishReason}. Please try again or reduce script size.`)
-    }
-    
-    throw new Error('No analysis generated from Gemini API. Check logs for details.')
+    throw new Error('No analysis generated')
   }
 
-  // Check if response was blocked by safety filters (additional check after text exists)
-  if (data.candidates?.[0]?.finishReason === 'SAFETY') {
-    console.error('[Script Analysis] Response blocked by safety filters')
-    console.error('[Script Analysis] Safety ratings:', data.candidates[0].safetyRatings)
-    throw new Error('Analysis blocked by content safety filters')
-  }
-
-  // Check if response was truncated
-  if (data.candidates?.[0]?.finishReason === 'MAX_TOKENS') {
-    console.warn('[Script Analysis] Response truncated due to MAX_TOKENS')
-    console.warn('[Script Analysis] Usage:', data.usageMetadata)
-  }
-  
-  // Extract JSON
-  let jsonText = analysisText.trim()
-  const codeBlockMatch = jsonText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
-  if (codeBlockMatch) {
-    jsonText = codeBlockMatch[1].trim()
-  }
-  
+  // Try JSON first (code fence or raw)
   try {
-    const analysis = JSON.parse(jsonText)
-    return analysis.recommendations || []
-  } catch (parseError) {
-    console.error('[Script Analysis] JSON parse error:', parseError)
-    console.error('[Script Analysis] Text to parse:', jsonText.substring(0, 500))
-    throw new Error('Failed to parse analysis response as JSON. The AI response may be malformed.')
+    const fence = analysisText.match(/```json\s*([\s\S]*?)\s*```/i)
+    const rawJson = fence ? fence[1] : (analysisText.trim().startsWith('{') ? analysisText : '')
+    if (rawJson) {
+      const parsed = JSON.parse(rawJson)
+      return parsed?.recommendations || []
+    }
+  } catch (e) {
+    // fall through to tagged parsing
+    console.warn('[Script Analysis] JSON parsing failed, falling back to tagged sections')
   }
+
+  // Tagged fallback: split by [Problem]
+  const blocks: string[] = analysisText.split(/\n\s*\[Problem\]\s*:\s*/i).map((s: string) => s.trim()).filter(Boolean)
+  const toList = (src: string): string[] => {
+    if (!src) return []
+    const numbered = src.match(/\n?\s*\d+\.[\s\S]*?(?=\n\s*\d+\.|$)/g)
+    if (numbered) return numbered.map(i => i.replace(/^\s*\d+\.\s*/, '').trim()).filter(Boolean)
+    return src.split(/\n\s*-\s+|\n\*\s+|\n+/).map(x => x.trim()).filter(Boolean)
+  }
+  const recs = blocks.map((block: string, idx: number) => {
+    const problem = block.split(/\n\s*\[Impact\]\s*:/i)[0]?.replace(/^\s*\[?Problem\]?\s*:\s*/i, '').trim()
+    const impactMatch = block.match(/\[Impact\]\s*:\s*([\s\S]*?)(?=\n\s*\[[A-Za-z]+\]\s*:|$)/i)
+    const solutionMatch = block.match(/\[Solution\]\s*:\s*([\s\S]*?)(?=\n\s*\[[A-Za-z]+\]\s*:|$)/i)
+    const examplesMatch = block.match(/\[Examples?\]\s*:\s*([\s\S]*?)(?=\n\s*\[[A-Za-z]+\]\s*:|$)/i)
+    const impact = (impactMatch?.[1] || '').trim()
+    const actions = toList((solutionMatch?.[1] || '').trim())
+    const examples = toList((examplesMatch?.[1] || '').trim()).slice(0, 3)
+
+    const descriptionSections: string[] = []
+    if (problem) descriptionSections.push(`[Problem]: ${problem}`)
+    if (impact) descriptionSections.push(`[Impact]: ${impact}`)
+    if (actions.length) descriptionSections.push('[Solution]:\n' + actions.map((a, i) => `${i + 1}. ${a}`).join('\n'))
+    if (examples.length) descriptionSections.push('[Examples]:\n' + examples.map(e => `- ${e}`).join('\n'))
+
+    return {
+      id: `rec-${idx + 1}`,
+      title: (problem?.match(/^[^.?!]+[.?!]?/)?.[0] || 'Recommendation').trim(),
+      description: descriptionSections.join('\n\n'),
+      priority: 'medium',
+      category: 'clarity'
+    }
+  }).filter((r: any) => r.description)
+
+  return recs
 }
 
