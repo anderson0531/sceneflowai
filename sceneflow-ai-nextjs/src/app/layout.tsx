@@ -10,6 +10,7 @@ import { ConditionalLayout } from '@/components/layout/ConditionalLayout'
 import { GlobalHeader } from '@/components/layout/GlobalHeader'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { Toaster } from 'sonner'
+import ProcessingOverlay from '../components/ProcessingOverlay'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -79,6 +80,7 @@ export default function RootLayout({
             <ConditionalLayout>{children}</ConditionalLayout>
             <InstallPrompt />
             <Toaster position="top-right" richColors />
+            <ProcessingOverlay />
           </AuthSessionProvider>
         </ThemeProvider>
       </body>

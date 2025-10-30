@@ -10,6 +10,7 @@ import ScriptRecommendationCard from './ScriptRecommendationCard'
 import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
+import { useProcessWithOverlay } from '../../hooks/useProcessWithOverlay'
 
 interface ScriptEditorModalProps {
   isOpen: boolean
@@ -86,6 +87,7 @@ export function ScriptEditorModal({
   const [selectedScenes, setSelectedScenes] = useState<number[]>([])
   const [filterPriority, setFilterPriority] = useState<'all' | 'high' | 'medium' | 'low'>('all')
   const [filterCategory, setFilterCategory] = useState<'all' | 'pacing' | 'dialogue' | 'visual' | 'character' | 'clarity' | 'emotion'>('all')
+  const { execute } = useProcessWithOverlay()
 
   // Reset state when modal opens
   useEffect(() => {
@@ -126,21 +128,17 @@ export function ScriptEditorModal({
   const handleAnalyze = async () => {
     setIsAnalyzing(true)
     try {
-      const response = await fetch('/api/vision/analyze-script', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          script,
-          characters
+      await execute(async () => {
+        const response = await fetch('/api/vision/analyze-script', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId, script, characters })
         })
-      })
-      
-      if (!response.ok) throw new Error('Analysis failed')
-      
-      const data = await response.json()
-      setRecommendations(data.recommendations || [])
-      toast.success('Script analysis complete')
+        if (!response.ok) throw new Error('Analysis failed')
+        const data = await response.json()
+        setRecommendations(data.recommendations || [])
+        toast.success('Script analysis complete')
+      }, { message: 'Analyzing your script and preparing Flow Direction recommendations...', estimatedDuration: 15 })
     } catch (error: any) {
       console.error('[Script Analysis] Error:', error)
       toast.error(error.message || 'Failed to analyze script')
@@ -159,31 +157,36 @@ export function ScriptEditorModal({
     
     setIsOptimizing(true)
     try {
-      const response = await fetch('/api/vision/optimize-script', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          script,
-          instruction,
-          characters
+      await execute(async () => {
+        let response = await fetch('/api/vision/optimize-script', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId, script, instruction, characters })
         })
-      })
-      
-      if (!response.ok) throw new Error('Optimization failed')
-      
-      const data = await response.json()
-      setOptimizedScript(data.optimizedScript)
-      setChangesSummary(data.changesSummary || [])
-      setShowComparison(true)
-      setTab('instructions')
-      
-      // Auto-select all scenes initially
-      if (data.optimizedScript?.scenes) {
-        setSelectedScenes(data.optimizedScript.scenes.map((_: any, idx: number) => idx))
-      }
-      
-      toast.success('Preview generated successfully')
+        if (!response.ok) {
+          if (response.status === 422) {
+            // Retry with compact response to avoid truncation/parse issues
+            const msg = 'Preview was large; retrying compact version...'
+            console.warn('[Script Optimization] 422 from server. ' + msg)
+            toast.message(msg)
+            response = await fetch('/api/vision/optimize-script', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ projectId, script, instruction, characters, compact: true })
+            })
+          }
+          if (!response.ok) throw new Error('Optimization failed')
+        }
+        const data = await response.json()
+        setOptimizedScript(data.optimizedScript)
+        setChangesSummary(data.changesSummary || [])
+        setShowComparison(true)
+        setTab('instructions')
+        if (data.optimizedScript?.scenes) {
+          setSelectedScenes(data.optimizedScript.scenes.map((_: any, idx: number) => idx))
+        }
+        toast.success('Preview generated successfully')
+      }, { message: 'Generating your preview with optimized scenes...', estimatedDuration: 25 })
     } catch (error: any) {
       console.error('[Script Optimization] Error:', error)
       toast.error(error.message || 'Failed to generate preview')

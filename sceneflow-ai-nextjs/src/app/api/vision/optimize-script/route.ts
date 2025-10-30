@@ -8,11 +8,12 @@ interface OptimizeScriptRequest {
   script: any  // { scenes: Scene[] }
   instruction: string
   characters: any[]
+  compact?: boolean
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, script, instruction, characters }: OptimizeScriptRequest = await req.json()
+    const { projectId, script, instruction, characters, compact }: OptimizeScriptRequest = await req.json()
     
     if (!projectId || !script || !instruction) {
       return NextResponse.json(
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
     console.log('[Script Optimization] Instruction:', instruction)
     console.log('[Script Optimization] Scene count:', script.scenes?.length || 0)
     
-    const result = await optimizeScript(script, instruction, characters)
+    const result = await optimizeScript(script, instruction, characters, !!compact)
     
     return NextResponse.json({
       success: true,
@@ -34,14 +35,18 @@ export async function POST(req: NextRequest) {
     })
   } catch (error: any) {
     console.error('[Script Optimization] Error:', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to optimize script' },
-      { status: 500 }
-    )
+    const msg = String(error?.message || '')
+    const isParse = msg.includes('Failed to parse optimization response') || msg.includes('no JSON found')
+    const status = isParse ? 422 : 500
+    const diagnosticId = `opt-${Date.now()}`
+    if (isParse) {
+      console.error('[Script Optimization] Diagnostic ID:', diagnosticId)
+    }
+    return NextResponse.json({ error: msg || 'Failed to optimize script', diagnosticId }, { status })
   }
 }
 
-async function optimizeScript(script: any, instruction: string, characters: any[]) {
+async function optimizeScript(script: any, instruction: string, characters: any[], compact: boolean) {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) throw new Error('Google API key not configured')
   
@@ -110,11 +115,11 @@ Based on the user's instruction, optimize the ENTIRE script holistically. Consid
    - Visual clarity
 
 PROVIDE:
-1. Complete optimized script (all scenes with all elements)
+1. Complete optimized script ${compact ? '(limit to first 12 scenes to keep response size manageable)' : '(all scenes with all elements)'}
 2. Changes summary explaining major improvements
 3. Rationale for each category of changes
 
-Return ONLY JSON with this exact structure (no commentary, do NOT wrap in code fences):
+Return ONLY JSON with this exact structure (no commentary, do NOT wrap in code fences; escape all embedded quotes; use \\n for newlines; plain ASCII punctuation; no trailing commas):
 {
   "optimizedScript": {
     "scenes": [
@@ -148,7 +153,7 @@ Return ONLY JSON with this exact structure (no commentary, do NOT wrap in code f
 CRITICAL:
 - Maintain ALL scene metadata (duration, imageUrl, etc.) from the original. Only optimize content (heading, action, narration, dialogue, music, sfx).
 - All string values MUST be valid JSON strings. Escape quotes and newlines (use \\n for line breaks). Do NOT include raw line breaks inside JSON strings.
-`
+${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce size.\n' : ''}`
 
   console.log('[Script Optimization] Calling Gemini API...')
   
@@ -160,8 +165,9 @@ CRITICAL:
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 16384 // Larger for full script
+          temperature: 0.2,
+          maxOutputTokens: compact ? 8192 : 16384,
+          responseMimeType: 'application/json'
         }
       })
     }
@@ -180,7 +186,7 @@ CRITICAL:
     throw new Error('No optimization generated from Gemini')
   }
   
-  // Robust JSON extraction: prefer code-fenced JSON, else raw, else first {...}
+  // Robust JSON extraction: prefer code-fenced JSON, else raw, else balanced {...}
   let jsonCandidate = ''
   const fence = analysisText.match(/```json\s*([\s\S]*?)\s*```/i)
   if (fence && fence[1]) {
@@ -188,11 +194,8 @@ CRITICAL:
   } else if (analysisText.trim().startsWith('{')) {
     jsonCandidate = analysisText.trim()
   } else {
-    const start = analysisText.indexOf('{')
-    const end = analysisText.lastIndexOf('}')
-    if (start !== -1 && end !== -1 && end > start) {
-      jsonCandidate = analysisText.slice(start, end + 1)
-    }
+    const balanced = extractBalancedJson(analysisText)
+    if (balanced) jsonCandidate = balanced
   }
 
   if (!jsonCandidate) {
@@ -204,6 +207,11 @@ CRITICAL:
   const normalizeForJson = (input: string): string => {
     // Normalize newlines
     let s = input.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+    // Normalize smart quotes/dashes to ASCII
+    s = s
+      .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+      .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+      .replace(/[\u2013\u2014]/g, '-')
     // Remove trailing commas before ] or }
     s = s.replace(/,\s*(\]|\})/g, '$1')
     // Escape newlines occurring inside JSON strings
@@ -297,5 +305,39 @@ CRITICAL:
       throw new Error('Failed to parse optimization response')
     }
   }
+}
+
+function extractBalancedJson(text: string): string | '' {
+  const start = text.indexOf('{')
+  if (start === -1) return ''
+  const chars = Array.from(text)
+  let depth = 0
+  let inStr = false
+  let esc = false
+  for (let i = start; i < chars.length; i++) {
+    const c = chars[i]
+    if (inStr) {
+      if (esc) {
+        esc = false
+      } else if (c === '\\') {
+        esc = true
+      } else if (c === '"') {
+        inStr = false
+      }
+    } else {
+      if (c === '"') inStr = true
+      else if (c === '{') depth++
+      else if (c === '}') {
+        depth--
+        if (depth === 0) {
+          return chars.slice(start, i + 1).join('')
+        }
+      }
+    }
+  }
+  if (depth > 0) {
+    return chars.slice(start).join('') + '}'.repeat(depth)
+  }
+  return ''
 }
 
