@@ -63,7 +63,7 @@ async function optimizeScript(script: any, instruction: string, characters: any[
   if (!apiKey) throw new Error('Google API key not configured')
   
   // Build condensed script summary for context
-  const sceneSummaries = (script.scenes || []).slice(0, compact ? 8 : (script.scenes?.length || 0)).map((scene: any, idx: number) => {
+  const sceneSummaries = (script.scenes || []).slice(0, compact ? 8 : Math.min((script.scenes?.length || 0), 16)).map((scene: any, idx: number) => {
     const dialogueCount = scene.dialogue?.length || 0
     const duration = scene.duration || 0
     return `Scene ${idx + 1}: ${scene.heading || 'Untitled'} (${duration}s, ${dialogueCount} dialogue lines)`
@@ -90,7 +90,7 @@ Characters: ${characterList}
 SCENES (${compact ? 'first 8' : 'all'}):
 ${sceneSummaries}
 
-${compact ? '' : `FULL SCRIPT (JSON):\n${JSON.stringify(script, null, 2)}`}
+${''}
 
 OPTIMIZATION TASK:
 Based on the user's instruction, optimize the ENTIRE script holistically. Consider:
@@ -276,10 +276,11 @@ ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce si
     
     // Preserve metadata from original scenes
     if (optimization.optimizedScript?.scenes && script.scenes) {
+      let anyChange = false
       optimization.optimizedScript.scenes = optimization.optimizedScript.scenes.map((optimizedScene: any, idx: number) => {
         const originalScene = script.scenes[idx]
         const narration = coerceNarration(optimizedScene?.narration, originalScene?.narration, optimizedScene?.action || originalScene?.action)
-        return {
+        const merged = {
           ...optimizedScene,
           // Preserve metadata
           imageUrl: originalScene?.imageUrl,
@@ -289,7 +290,18 @@ ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce si
           duration: optimizedScene.duration || originalScene?.duration,
           narration
         }
+        const { summary, changed } = effectSummary(originalScene, merged)
+        if (changed) anyChange = true
+        return { ...merged, effectSummary: summary }
       })
+      if (!anyChange) {
+        optimization.changesSummary = optimization.changesSummary || []
+        optimization.changesSummary.unshift({
+          category: 'No-op',
+          changes: 'Model returned no substantive changes. Original preserved.',
+          rationale: 'Try a narrower instruction or run Batch pass for targeted updates.'
+        })
+      }
     }
     
     return optimization
@@ -299,10 +311,11 @@ ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce si
     try {
       const optimization = JSON.parse(repaired)
       if (optimization.optimizedScript?.scenes && script.scenes) {
+        let anyChange = false
         optimization.optimizedScript.scenes = optimization.optimizedScript.scenes.map((optimizedScene: any, idx: number) => {
           const originalScene = script.scenes[idx]
           const narration = coerceNarration(optimizedScene?.narration, originalScene?.narration, optimizedScene?.action || originalScene?.action)
-          return {
+          const merged = {
             ...optimizedScene,
             imageUrl: originalScene?.imageUrl,
             narrationAudioUrl: originalScene?.narrationAudioUrl,
@@ -311,7 +324,18 @@ ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce si
             duration: optimizedScene.duration || originalScene?.duration,
             narration
           }
+          const { summary, changed } = effectSummary(originalScene, merged)
+          if (changed) anyChange = true
+          return { ...merged, effectSummary: summary }
         })
+        if (!anyChange) {
+          optimization.changesSummary = optimization.changesSummary || []
+          optimization.changesSummary.unshift({
+            category: 'No-op',
+            changes: 'Model returned no substantive changes. Original preserved.',
+            rationale: 'Try a narrower instruction or run Batch pass for targeted updates.'
+          })
+        }
       }
       return optimization
     } catch (e2) {
@@ -376,5 +400,22 @@ function extractBalancedJson(text: string): string | '' {
     return chars.slice(start).join('') + '}'.repeat(depth)
   }
   return ''
+}
+
+function effectSummary(original: any, revised: any): { summary: string; changed: boolean } {
+  const effects: string[] = []
+  let changed = false
+  const safe = (s: any) => (String(s || '').trim())
+  if (safe(original.heading) !== safe(revised.heading)) { effects.push('heading'); changed = true }
+  if (safe(original.narration) !== safe(revised.narration)) { effects.push('narration'); changed = true }
+  if (safe(original.action) !== safe(revised.action)) { effects.push('action'); changed = true }
+  const d0 = Array.isArray(original.dialogue) ? original.dialogue.length : 0
+  const d1 = Array.isArray(revised.dialogue) ? revised.dialogue.length : 0
+  if (d0 !== d1) { effects.push(`dialogue ${d1 >= d0 ? '+' : ''}${d1 - d0}`); changed = true }
+  const sfx0 = Array.isArray(original.sfx) ? original.sfx.length : 0
+  const sfx1 = Array.isArray(revised.sfx) ? revised.sfx.length : 0
+  if (sfx0 !== sfx1) { effects.push(`sfx ${sfx1 >= sfx0 ? '+' : ''}${sfx1 - sfx0}`); changed = true }
+  const summary = effects.length ? effects.join(', ') : 'no visible changes'
+  return { summary, changed }
 }
 

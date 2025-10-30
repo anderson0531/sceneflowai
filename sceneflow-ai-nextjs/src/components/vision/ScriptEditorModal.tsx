@@ -195,8 +195,29 @@ export function ScriptEditorModal({
         const data = await response.json()
         setOptimizedScript(data.optimizedScript)
         setChangesSummary(data.changesSummary || [])
-        setShowComparison(true)
-        setTab('instructions')
+        // Determine if any scene changed; if not, notify and keep comparison hidden
+        const anyChanged = (() => {
+          try {
+            const original = script?.scenes || []
+            const revised = data.optimizedScript?.scenes || []
+            for (let i = 0; i < Math.min(original.length, revised.length); i++) {
+              const o = original[i], r = revised[i]
+              const n0 = (o?.narration || '').trim(), n1 = (r?.narration || '').trim()
+              const a0 = (o?.action || '').trim(), a1 = (r?.action || '').trim()
+              const d0 = Array.isArray(o?.dialogue) ? o.dialogue.length : 0
+              const d1 = Array.isArray(r?.dialogue) ? r.dialogue.length : 0
+              if (n0 !== n1 || a0 !== a1 || d0 !== d1 || (o?.heading || '') !== (r?.heading || '')) return true
+            }
+            return false
+          } catch { return false }
+        })()
+        if (!anyChanged) {
+          toast.message('No changes returned for the current instruction.')
+          setShowComparison(false)
+        } else {
+          setShowComparison(true)
+          setTab('instructions')
+        }
         if (data.optimizedScript?.scenes) {
           setSelectedScenes(data.optimizedScript.scenes.map((_: any, idx: number) => idx))
         }
@@ -204,7 +225,13 @@ export function ScriptEditorModal({
       }, { message: 'Generating your preview with optimized scenes...', estimatedDuration: 25 })
     } catch (error: any) {
       console.error('[Script Optimization] Error:', error)
-      toast.error(error.message || 'Failed to generate preview')
+      try {
+        const body = await (error?.response?.json?.() || Promise.resolve(null))
+        if (body?.diagnosticId) toast.error(`Failed to generate preview (id: ${body.diagnosticId})`)
+        else toast.error(error.message || 'Failed to generate preview')
+      } catch {
+        toast.error(error.message || 'Failed to generate preview')
+      }
     } finally {
       setIsOptimizing(false)
     }
@@ -436,8 +463,13 @@ export function ScriptEditorModal({
                                 className="mt-1"
                               />
                               <div className="flex-1">
-                                <div className="font-medium mb-2 text-gray-900 dark:text-gray-100">
-                                  Scene {idx + 1}: {optimizedScene.heading || 'Untitled'}
+                                <div className="font-medium mb-2 text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                  <span>Scene {idx + 1}: {optimizedScene.heading || 'Untitled'}</span>
+                                  {optimizedScene.effectSummary && (
+                                    <span className="text-[11px] px-2 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">
+                                      {optimizedScene.effectSummary}
+                                    </span>
+                                  )}
                                 </div>
                                 
                                 {/* Before/After Comparison */}
