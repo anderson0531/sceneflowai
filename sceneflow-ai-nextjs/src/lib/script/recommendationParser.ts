@@ -1,4 +1,11 @@
 export interface ParsedRecommendation {
+  // Compact view fields
+  title?: string
+  priority?: string
+  category?: string
+  rationaleOneLiner?: string
+  effectSummary?: string
+  // Full details for disclosure
   problem: string
   effect?: string
   examples: string[]
@@ -26,6 +33,11 @@ export function parseRecommendationText(text: string): ParsedRecommendation {
       const first = parsed?.recommendations?.[0]
       if (first) {
         return {
+          title: String(first.title || ''),
+          priority: String(first.priority || ''),
+          category: String(first.category || ''),
+          rationaleOneLiner: String(first.rationaleOneLiner || first.impact || ''),
+          effectSummary: String(first.effectSummary || ''),
           problem: (first.problem || '').toString().trim(),
           effect: (first.impact || '').toString().trim() || undefined,
           examples: Array.isArray(first.examples) ? first.examples.slice(0, 3).map((x: any) => String(x)) : [],
@@ -65,6 +77,11 @@ export function parseRecommendationText(text: string): ParsedRecommendation {
 
   if (prob.value || imp.value || sol.value || ex.value) {
     return {
+      title: undefined,
+      priority: undefined,
+      category: undefined,
+      rationaleOneLiner: (imp.value || '').split(/\n/)[0]?.slice(0, 140) || undefined,
+      effectSummary: undefined,
       problem: prob.value.replace(/\*\*/g, '').trim(),
       effect: imp.value.replace(/\*\*/g, '').trim() || undefined,
       actions: toList(sol.value),
