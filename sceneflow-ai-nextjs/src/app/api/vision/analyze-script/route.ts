@@ -146,6 +146,10 @@ Be specific and actionable. Reference actual scenes when possible.`
       console.error('[Script Analysis] Response blocked by safety filters', data.candidates?.[0]?.safetyRatings)
       throw new Error('Analysis blocked by content safety filters')
     }
+    if (finish === 'MAX_TOKENS' && !compact) {
+      console.warn('[Script Analysis] MAX_TOKENS with empty text. Retrying compact...')
+      return await analyzeScript(script, characters, true)
+    }
     throw new Error('No analysis generated')
   }
 

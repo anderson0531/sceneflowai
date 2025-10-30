@@ -17,7 +17,7 @@ export const jobs: Record<string, JobState> = {}
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, script, characters } = await req.json()
+    const { projectId, script, characters, pass } = await req.json()
     if (!projectId || !script) return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     jobs[jobId] = { total: script.scenes?.length || 0, completed: 0, currentScene: 0, lastMessage: 'Queued' }
@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
           fetchImpl,
           script,
           characters,
+          pass,
           onProgress: ({ total, index, message }) => {
             jobs[jobId].total = total
             jobs[jobId].currentScene = index

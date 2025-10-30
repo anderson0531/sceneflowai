@@ -13,9 +13,10 @@ export async function runBatchOptimize(params: {
   fetchImpl: FetchFn
   script: any
   characters: any[]
+  pass?: { priority?: 'high' | 'medium' | 'low', categories?: string[] }
   onProgress?: (info: { total: number, index: number, message: string }) => void
 }): Promise<BatchResult> {
-  const { apiKey, fetchImpl, script, characters, onProgress } = params
+  const { apiKey, fetchImpl, script, characters, pass, onProgress } = params
   const total = (script?.scenes || []).length
   const bible = buildCharacterBible(characters, script)
   let synopsis = buildInitialSynopsis(script)
@@ -29,14 +30,14 @@ export async function runBatchOptimize(params: {
     const prevB = outScenes[i - 2]
     const contextPrev = [prevB, prevA].filter(Boolean)
 
-    const prompt = buildScenePrompt({ bible, synopsis, contextPrev, current })
+    const prompt = buildScenePrompt({ bible, synopsis, contextPrev, current, pass })
     const scene = await callGeminiForScene({ apiKey, fetchImpl, prompt })
-    const merged = mergeScene(current, scene, i)
+    const merged = mergeScene(current, scene, i, pass)
     outScenes[i] = merged
     synopsis = updateSynopsis(synopsis, merged, i)
     changes.push({
       category: 'Scene',
-      changes: `Scene ${i + 1} updated (heading/narration/dialogue may be revised).`,
+      changes: `Scene ${i + 1} updated (pass: ${pass?.priority || 'n/a'} ${pass?.categories?.join('+') || ''}).`,
       rationale: 'Maintain continuity with rolling synopsis and character bible.'
     })
   }
@@ -44,10 +45,11 @@ export async function runBatchOptimize(params: {
   return { optimizedScript: { scenes: outScenes }, changesSummary: changes }
 }
 
-function buildScenePrompt(input: { bible: string, synopsis: string, contextPrev: any[], current: any }): string {
-  const { bible, synopsis, contextPrev, current } = input
+function buildScenePrompt(input: { bible: string, synopsis: string, contextPrev: any[], current: any, pass?: { priority?: 'high' | 'medium' | 'low', categories?: string[] } }): string {
+  const { bible, synopsis, contextPrev, current, pass } = input
   const prevText = contextPrev.map((s, idx) => `PREVIOUS ${idx + 1}:
 ${JSON.stringify(minimalScene(s), null, 2)}`).join('\n\n')
+  const passHeader = buildPassHeader(pass)
   return `You are an expert screenwriter. Optimize the CURRENT scene while preserving global continuity.
 
 ${bible}
@@ -55,6 +57,8 @@ ${bible}
 ${synopsis}
 
 ${prevText}
+
+${passHeader}
 
 CURRENT:
 ${JSON.stringify(minimalScene(current), null, 2)}
@@ -109,9 +113,10 @@ function minimalScene(scene: any) {
   }
 }
 
-function mergeScene(original: any, revised: any, idx: number) {
+function mergeScene(original: any, revised: any, idx: number, pass?: { priority?: 'high' | 'medium' | 'low', categories?: string[] }) {
   const narration = coerceNarration(revised?.narration, original?.narration, revised?.action || original?.action)
-  return {
+  const freezeStructure = pass && pass.priority !== 'high' && !(pass.categories || []).includes('structure')
+  const out = {
     ...revised,
     imageUrl: original?.imageUrl,
     narrationAudioUrl: original?.narrationAudioUrl,
@@ -120,6 +125,11 @@ function mergeScene(original: any, revised: any, idx: number) {
     duration: revised?.duration || original?.duration,
     narration
   }
+  if (freezeStructure) {
+    out.heading = original?.heading
+    out.duration = original?.duration
+  }
+  return out
 }
 
 function coerceNarration(candidate: any, original: any, fallbackSource?: any): string {
@@ -132,6 +142,19 @@ function coerceNarration(candidate: any, original: any, fallbackSource?: any): s
   const m = action.match(/[^.!?]*[.!?]/)
   const sentence = (m?.[0] || action).replace(/\s+/g, ' ').trim()
   return sentence.length > 220 ? sentence.slice(0, 217) + '…' : sentence
+}
+
+function buildPassHeader(pass?: { priority?: 'high' | 'medium' | 'low', categories?: string[] }): string {
+  if (!pass) return 'PASS: general improvements'
+  const cats = (pass.categories || []).map(c => c.toUpperCase()).join(', ')
+  const pri = pass.priority ? pass.priority.toUpperCase() : 'GENERAL'
+  const freezeNote = pass.priority !== 'high' && !(pass.categories || []).includes('structure')
+    ? '\n- Do NOT change structure (scene heading, duration, order) in this pass.'
+    : ''
+  return `PASS:
+- Priority: ${pri}
+- Categories: ${cats || 'ALL'}${freezeNote}
+- Apply ONLY changes in the listed categories.`
 }
 
 function balanced(text: string): string {

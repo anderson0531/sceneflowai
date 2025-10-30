@@ -88,6 +88,9 @@ export function ScriptEditorModal({
   const [filterPriority, setFilterPriority] = useState<'all' | 'high' | 'medium' | 'low'>('all')
   const [filterCategory, setFilterCategory] = useState<'all' | 'pacing' | 'dialogue' | 'visual' | 'character' | 'clarity' | 'emotion'>('all')
   const { execute } = useProcessWithOverlay()
+  // Batch pass selector
+  const [batchPriority, setBatchPriority] = useState<'high' | 'medium' | 'low'>('high')
+  const [batchCategories, setBatchCategories] = useState<string[]>(['structure'])
 
   // Reset state when modal opens
   useEffect(() => {
@@ -230,7 +233,7 @@ export function ScriptEditorModal({
         const startRes = await fetch('/api/vision/optimize-script/batch', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ projectId, script, characters })
+          body: JSON.stringify({ projectId, script, characters, pass: { priority: batchPriority, categories: batchCategories } })
         })
         if (!startRes.ok) throw new Error('Failed to start batch optimization')
         const { jobId } = await startRes.json()
@@ -334,6 +337,37 @@ export function ScriptEditorModal({
                             </div>
                           </div>
                         ))}
+                      </div>
+                    </div>
+                    {/* Batch Pass Selector */}
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs text-gray-600 dark:text-gray-400">Batch pass: apply only selected categories, ordered by priority.</div>
+                      <div className="flex items-center gap-2">
+                        <select
+                          className="text-xs bg-transparent border rounded px-2 py-1"
+                          value={batchPriority}
+                          onChange={(e) => setBatchPriority(e.target.value as any)}
+                        >
+                          <option value="high">High</option>
+                          <option value="medium">Medium</option>
+                          <option value="low">Low</option>
+                        </select>
+                        <select
+                          multiple
+                          className="text-xs bg-transparent border rounded px-2 py-1"
+                          value={batchCategories}
+                          onChange={(e) => {
+                            const opts = Array.from(e.target.selectedOptions).map(o => o.value)
+                            setBatchCategories(opts)
+                          }}
+                        >
+                          <option value="structure">Structure</option>
+                          <option value="character">Character</option>
+                          <option value="dialogue">Dialogue</option>
+                          <option value="tone">Tone</option>
+                          <option value="visual">Visual</option>
+                          <option value="clarity">Clarity</option>
+                        </select>
                       </div>
                     </div>
                     
