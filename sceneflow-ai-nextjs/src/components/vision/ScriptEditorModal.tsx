@@ -223,6 +223,51 @@ export function ScriptEditorModal({
     await handleGeneratePreview()
   }
 
+  const handleBatchOptimize = async () => {
+    setIsOptimizing(true)
+    try {
+      await execute(async () => {
+        const startRes = await fetch('/api/vision/optimize-script/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId, script, characters })
+        })
+        if (!startRes.ok) throw new Error('Failed to start batch optimization')
+        const { jobId } = await startRes.json()
+
+        // Poll
+        let done = false
+        let attempts = 0
+        while (!done && attempts < 300) { // up to ~5 minutes at 1s interval
+          await new Promise(r => setTimeout(r, 1000))
+          const st = await fetch(`/api/vision/optimize-script/batch/status?jobId=${encodeURIComponent(jobId)}`)
+          if (!st.ok) throw new Error('Batch status failed')
+          const data = await st.json()
+          done = !!data.done
+          attempts++
+          if (data.error) throw new Error(data.error)
+          if (done && data.result) {
+            setOptimizedScript(data.result.optimizedScript)
+            setChangesSummary(data.result.changesSummary || [])
+            setShowComparison(true)
+            setTab('instructions')
+            if (data.result.optimizedScript?.scenes) {
+              setSelectedScenes(data.result.optimizedScript.scenes.map((_: any, idx: number) => idx))
+            }
+            toast.success('Batch optimization complete')
+            break
+          }
+        }
+        if (!done) throw new Error('Batch optimization timed out')
+      }, { message: 'Batch optimizing your script scene by scene...', estimatedDuration: 120 })
+    } catch (e: any) {
+      console.error('[Batch Optimize] Error:', e)
+      toast.error(e?.message || 'Batch optimization failed')
+    } finally {
+      setIsOptimizing(false)
+    }
+  }
+
   const handleApply = () => {
     if (!optimizedScript || selectedScenes.length === 0) {
       toast.error('Please select at least one scene to apply')
@@ -465,6 +510,23 @@ Examples:
                           <>
                             <Eye className="w-4 h-4 mr-2" />
                             Generate Preview
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        onClick={handleBatchOptimize}
+                        disabled={isOptimizing}
+                        className="bg-purple-600 hover:bg-purple-500 text-white px-6"
+                      >
+                        {isOptimizing ? (
+                          <>
+                            <Loader className="w-4 h-4 mr-2 animate-spin" />
+                            Batch Optimizing...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Batch Optimize
                           </>
                         )}
                       </Button>
