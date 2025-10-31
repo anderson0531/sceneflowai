@@ -697,12 +697,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     if (!onGenerateSceneImage) return
     setGeneratingImageForScene(sceneIdx)
     
-    // Show toast notification
-    toast.success('Scene image generation started', {
-      description: 'Generating scene image. This may take 10-15 seconds.',
-      duration: 4000
-    })
-    
     try {
       // Pass undefined for selectedCharacters - the API will extract from scene
       await onGenerateSceneImage(sceneIdx, undefined)
@@ -778,28 +772,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               <span className="hidden sm:inline">Stop</span>
             </Button>
           )}
-          
-          {/* Generate All Audio Button */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  onClick={onGenerateAllAudio}
-                  disabled={isGeneratingAudio}
-                  size="sm"
-                  variant="outline"
-                  className="flex items-center gap-1"
-                >
-                  <Volume2 className="w-4 h-4" />
-                  <span>Generate</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                <p>{isGeneratingAudio ? 'Generating Audio...' : 'Generate All Audio'}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
           {/* Screening Room Button */}
           <TooltipProvider>
             <Tooltip>
@@ -825,6 +797,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             variant="outline"
             size="sm"
             onClick={() => setShowScriptEditor(true)}
+            className="flex items-center gap-2"
           >
             <Clapperboard className="w-4 h-4" />
             <span>Director</span>

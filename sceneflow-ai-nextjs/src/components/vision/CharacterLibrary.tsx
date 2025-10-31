@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X, ChevronDown, Check, Settings, Sparkles, Lightbulb, AlertTriangle, Info, Volume2, ImageIcon, Edit, Trash2 } from 'lucide-react'
+import { Users, Plus, RefreshCw, Loader, Wand2, Upload, X, ChevronDown, Check, Settings, Sparkles, Lightbulb, Info, Volume2, ImageIcon, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { CharacterPromptBuilder } from '@/components/blueprint/CharacterPromptBuilder'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
@@ -24,11 +24,9 @@ interface CharacterLibraryProps {
 
 export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onAddCharacter, onRemoveCharacter, ttsProvider, compact = false }: CharacterLibraryProps) {
   const [selectedChar, setSelectedChar] = useState<string | null>(null)
-  const [charPrompts, setCharPrompts] = useState<Record<string, string>>({})
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(new Set())
   const [builderOpen, setBuilderOpen] = useState(false)
   const [builderCharId, setBuilderCharId] = useState<string | null>(null)
-  const [analyzingImage, setAnalyzingImage] = useState<Record<string, boolean>>({})
   const [uploadingRef, setUploadingRef] = useState<Record<string, boolean>>({})
   const [zoomedImage, setZoomedImage] = useState<{url: string; name: string} | null>(null)
   const [expandedSections, setExpandedSections] = useState<Record<string, string | null>>({})
@@ -134,46 +132,6 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
     img.src = objectUrl
   }
   
-  const handleAnalyzeImage = async (characterId: string, imageUrl: string, characterName: string) => {
-    setAnalyzingImage(prev => ({ ...prev, [characterId]: true }))
-    
-    try {
-      const res = await fetch('/api/character/analyze-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl, characterName })
-      })
-      
-      const data = await res.json()
-      if (data.success) {
-        // Extract attributes (API returns them at top level, not nested)
-        const { success, ...attributes } = data
-        console.log('[Analyze Image] Extracted attributes:', attributes)
-        
-        // Update character attributes via parent callback
-        if (onUpdateCharacterAttributes) {
-          await onUpdateCharacterAttributes(characterName, attributes)
-        }
-        
-        try { 
-          const { toast } = require('sonner')
-          toast.success('Character attributes extracted and updated!')
-        } catch {}
-      } else {
-        throw new Error(data.error || 'Analysis failed')
-      }
-    } catch (error) {
-      console.error('[Analyze Image] Error:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Failed to analyze'
-      try { 
-        const { toast } = require('sonner')
-        toast.error(errorMessage)
-      } catch {}
-    } finally {
-      setAnalyzingImage(prev => ({ ...prev, [characterId]: false }))
-    }
-  }
-  
   return (
     <div className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 ${compact ? 'p-4' : 'p-6'} h-full overflow-y-auto`}>
       <div className={`flex items-center justify-between ${compact ? 'mb-4' : 'mb-6'}`}>
@@ -195,24 +153,6 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
             <Info className="w-4 h-4" />
           </button>
         </div>
-        
-        {!compact && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex items-center gap-1"
-            onClick={() => {
-              if (onAddCharacter) {
-                setBuilderCharId('NEW')
-                setBuilderOpen(true)
-              }
-            }}
-            disabled={!onAddCharacter}
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Add Character</span>
-          </Button>
-        )}
       </div>
       
       {characters.length === 0 ? (
@@ -222,6 +162,22 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
         </div>
       ) : (
         <div className={`${compact ? 'space-y-3' : 'grid grid-cols-2 lg:grid-cols-3 gap-4'}`}>
+          {/* Add Character Button - Above Narrator card */}
+          {onAddCharacter && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-2 justify-center min-h-[100px] border-dashed border-2 hover:border-solid"
+              onClick={() => {
+                setBuilderCharId('NEW')
+                setBuilderOpen(true)
+              }}
+            >
+              <Plus className="w-5 h-5" />
+              <span>Add Character</span>
+            </Button>
+          )}
+          
           {/* Narrator Character Card - Always show first */}
           {characters.find(char => char.type === 'narrator') && (
             <NarratorCharacterCard
@@ -260,14 +216,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                 }}
                 onUpload={(file) => onUploadCharacter(charId, file)}
                 onApprove={() => onApproveCharacter(charId)}
-                onOpenBuilder={() => {
-                  setBuilderCharId(charId)
-                  setBuilderOpen(true)
-                }}
-                onAnalyze={handleAnalyzeImage}
-                analyzingImage={analyzingImage[charId]}
-                prompt={charPrompts[charId] || savedPrompt || defaultPrompt}
-                onPromptChange={(prompt) => setCharPrompts(prev => ({ ...prev, [charId]: prompt }))}
+                prompt={savedPrompt || defaultPrompt}
                 isGenerating={generatingChars.has(charId)}
                 expandedCharId={expandedSections[charId]}
                 onToggleExpand={handleToggleSection}
@@ -304,77 +253,47 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
         </div>
       )}
       
-      {/* Prompt Builder Modal */}
-      {builderCharId && (() => {
-        const isNewCharacter = builderCharId === 'NEW'
-        const character = isNewCharacter ? null : characters.find((c, idx) => (c.id || idx.toString()) === builderCharId)
-        const initialStructure = character ? {
-          subject: character.subject || character.name || '',
-          ethnicity: character.ethnicity || '',
-          keyFeature: character.keyFeature || '',
-          hairStyle: character.hairStyle || '',
-          hairColor: character.hairColor || '',
-          eyeColor: character.eyeColor || '',
-          eyeExpression: character.expression || '',
-          build: character.build || '',
-        } : undefined
-        
-        return (
-          <CharacterPromptBuilder
-            open={builderOpen}
-            onClose={() => {
-              setBuilderOpen(false)
-              setBuilderCharId(null)
-            }}
-            initialPrompt={isNewCharacter ? '' : (charPrompts[builderCharId] || character?.imagePrompt || '')}
-            initialStructure={initialStructure}
-            characterName={character?.name || 'New Character'}
-            isGenerating={generatingChars.has(builderCharId)}
-            onApply={async (prompt, structure) => {
-              setCharPrompts(prev => ({ ...prev, [builderCharId]: prompt }))
-              setBuilderOpen(false)
-              
-              if (isNewCharacter && onAddCharacter) {
-                // Extract character name from structure (subject field)
-                const characterName = structure.subject || 'Character'
-                
-                // Create new character data
-                const newCharacterData = {
-                  name: characterName,
-                  subject: structure.subject,
-                  ethnicity: structure.ethnicity,
-                  keyFeature: structure.keyFeature,
-                  hairStyle: structure.hairStyle,
-                  hairColor: structure.hairColor,
-                  eyeColor: structure.eyeColor,
-                  expression: structure.eyeExpression,
-                  build: structure.build,
-                  description: `${structure.keyFeature}. ${structure.ethnicity}.`,
-                  role: 'supporting',
-                  imagePrompt: prompt
-                }
-                
-                await onAddCharacter(newCharacterData)
-              } else if (onGenerateCharacter) {
-                // Trigger image generation with the new prompt
-                setGeneratingChars(prev => new Set(prev).add(builderCharId))
-                try {
-                  await onGenerateCharacter(builderCharId, prompt)
-                } finally {
-                  setGeneratingChars(prev => {
-                    const newSet = new Set(prev)
-                    newSet.delete(builderCharId)
-                    return newSet
-                  })
-                }
-              }
-              
-              // Reset builder state for next use
-              setTimeout(() => setBuilderCharId(null), 300)
-            }}
-          />
-        )
-      })()}
+      {/* Prompt Builder Modal - Only for NEW characters */}
+      {builderCharId === 'NEW' && onAddCharacter && (
+        <CharacterPromptBuilder
+          open={builderOpen}
+          onClose={() => {
+            setBuilderOpen(false)
+            setBuilderCharId(null)
+          }}
+          initialPrompt=""
+          initialStructure={undefined}
+          characterName="New Character"
+          isGenerating={generatingChars.has('NEW')}
+          onApply={async (prompt, structure) => {
+            setBuilderOpen(false)
+            
+            // Extract character name from structure (subject field)
+            const characterName = structure.subject || 'Character'
+            
+            // Create new character data
+            const newCharacterData = {
+              name: characterName,
+              subject: structure.subject,
+              ethnicity: structure.ethnicity,
+              keyFeature: structure.keyFeature,
+              hairStyle: structure.hairStyle,
+              hairColor: structure.hairColor,
+              eyeColor: structure.eyeColor,
+              expression: structure.eyeExpression,
+              build: structure.build,
+              description: `${structure.keyFeature}. ${structure.ethnicity}.`,
+              role: 'supporting',
+              imagePrompt: prompt
+            }
+            
+            await onAddCharacter(newCharacterData)
+            
+            // Reset builder state for next use
+            setTimeout(() => setBuilderCharId(null), 300)
+          }}
+        />
+      )}
       
       {/* Image Zoom Modal */}
       {zoomedImage && (
@@ -414,23 +333,19 @@ interface CharacterCardProps {
   onGenerate: (prompt: string) => void
   onUpload: (file: File) => void
   onApprove: () => void
-  onOpenBuilder: () => void
-  onAnalyze?: (characterId: string, imageUrl: string, characterName: string) => void
-  analyzingImage?: boolean
   prompt: string
-  onPromptChange: (prompt: string) => void
   isGenerating: boolean
   expandedCharId?: string | null
   onToggleExpand?: (charId: string, section: 'coreIdentity' | 'appearance') => void
   onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void
   onUpdateAppearance?: (characterId: string, description: string) => void
   onRemove?: () => void
-  ttsProvider: 'google' | 'elevenlabs'  // ADD THIS
+  ttsProvider: 'google' | 'elevenlabs'
   voiceSectionExpanded?: boolean
   onToggleVoiceSection?: () => void
 }
 
-function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, onOpenBuilder, onAnalyze, analyzingImage, prompt, onPromptChange, isGenerating, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onRemove, ttsProvider, voiceSectionExpanded, onToggleVoiceSection }: CharacterCardProps) {
+function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onRemove, ttsProvider, voiceSectionExpanded, onToggleVoiceSection }: CharacterCardProps) {
   const hasImage = !!character.referenceImage
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
@@ -756,71 +671,6 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
             
             {/* Action Buttons */}
             <div className="flex gap-2 pt-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onOpenBuilder()
-                }}
-                disabled={isGenerating}
-                className="flex-1 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
-              >
-                <Settings className="w-3 h-3 inline mr-1" />
-                Edit Prompt
-              </button>
-              
-              {hasImage && (
-                <button
-                  onClick={(e) => { 
-                    e.stopPropagation()
-                    if (onAnalyze && character.referenceImage) {
-                      onAnalyze(characterId, character.referenceImage, character.name)
-                    }
-                  }}
-                  disabled={isGenerating || analyzingImage}
-                  className="flex-1 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
-                >
-                  {analyzingImage ? (
-                    <Loader className="w-3 h-3 inline mr-1 animate-spin" />
-                  ) : (
-                    <Scan className="w-3 h-3 inline mr-1" />
-                  )}
-                  Analyze
-                </button>
-              )}
-              
-              {/* GCS Diagnostic Button */}
-              {character.referenceImageGCS && (
-                <button
-                  onClick={async (e) => { 
-                    e.stopPropagation()
-                    try {
-                      const response = await fetch('/api/diagnostic/verify-gcs-access', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ gcsUri: character.referenceImageGCS })
-                      })
-                      
-                      const result = await response.json()
-                      console.log('[GCS Diagnostic] Result:', result)
-                      
-                      if (result.success) {
-                        toast.success(`GCS Access Verified`, {
-                          description: `Bucket: ${result.bucketAccessible ? '✅' : '❌'}, File: ${result.fileAccessible ? '✅' : '❌'}, Signed URL: ${result.signedUrlGenerated ? '✅' : '❌'}`
-                        })
-                      } else {
-                        toast.error(`GCS Access Failed: ${result.error}`)
-                      }
-                    } catch (error) {
-                      console.error('[GCS Diagnostic] Error:', error)
-                      toast.error('GCS diagnostic failed')
-                    }
-                  }}
-                  className="flex-1 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                >
-                  <AlertTriangle className="w-3 h-3 inline mr-1" />
-                  Test GCS
-                </button>
-              )}
               
               {hasImage && !isApproved && (
                 <button
