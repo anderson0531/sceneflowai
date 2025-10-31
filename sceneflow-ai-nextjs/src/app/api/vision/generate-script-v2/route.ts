@@ -95,7 +95,13 @@ export async function POST(request: NextRequest) {
           console.log(`[Script Gen V2] Auto-synced ${existingCharacters.length} characters from Film Treatment`)
         }
 
-        const BATCH_SIZE = 20  // Reduced from 30 for faster processing
+        // Calculate dynamic batch size based on remaining scenes
+        const calculateBatchSize = (remaining: number): number => {
+          if (remaining <= 10) return remaining
+          if (remaining <= 30) return Math.min(10, remaining)
+          return Math.min(15, remaining) // Max 15 for large batches
+        }
+        
         const INITIAL_BATCH_SIZE = Math.min(15, suggestedScenes)
         const MAX_BATCH_RETRIES = 3
         let actualTotalScenes = suggestedScenes
@@ -148,9 +154,10 @@ export async function POST(request: NextRequest) {
         let remainingScenes = actualTotalScenes - allScenes.length
         let batchNumber = 2
         let batchRetries = 0
+        let totalPrevDuration = allScenes.reduce((sum, s) => sum + (s.duration || 0), 0)
         
         while (remainingScenes > 0) {
-          const batchSize = Math.min(BATCH_SIZE, remainingScenes)
+          const batchSize = calculateBatchSize(remainingScenes)
           const startScene = allScenes.length + 1
           const endScene = startScene + batchSize - 1
           
@@ -167,7 +174,7 @@ export async function POST(request: NextRequest) {
           try {
             // Create lightweight scene summary for prompt (keep last 3 only)
             const prevScenesForPrompt = allScenes.slice(-3)
-            const batchPrompt = buildBatch2Prompt(treatment, startScene, actualTotalScenes, duration, prevScenesForPrompt, existingCharacters)
+            const batchPrompt = buildBatch2Prompt(treatment, startScene, actualTotalScenes, duration, prevScenesForPrompt, allScenes.length, totalPrevDuration, existingCharacters)
             let batchResponse = await callGemini(apiKey, batchPrompt)
             let batchData = parseScenes(batchResponse, startScene, endScene)
             
@@ -195,6 +202,9 @@ export async function POST(request: NextRequest) {
             batchRetries = 0
             allScenes.push(...batchData.scenes)
             
+            // Update total duration
+            totalPrevDuration += batchData.scenes.reduce((sum: number, s: any) => sum + (s.duration || 0), 0)
+            
             // Monitor dialogue verbosity
             const avgDialogueLength = batchData.scenes.reduce((sum: number, s: any) => {
               const dialogueChars = s.dialogue?.reduce((dSum: number, d: any) => 
@@ -214,6 +224,12 @@ export async function POST(request: NextRequest) {
             
             // Release batch data to free memory
             batchData = null
+            
+            // Force garbage collection if available and allow GC to run
+            if (global.gc) {
+              global.gc()
+            }
+            await new Promise(resolve => setTimeout(resolve, 100))
             
             remainingScenes = actualTotalScenes - allScenes.length
             batchNumber++
@@ -500,9 +516,8 @@ CRITICAL:
 Generate first ${end} scenes with realistic durations.`
 }
 
-function buildBatch2Prompt(treatment: any, start: number, total: number, targetDuration: number, prevScenes: any[], characters: any[]) {
-  const remaining = total - prevScenes.length
-  const prevDuration = prevScenes.reduce((sum: number, s: any) => sum + (s.duration || 0), 0)
+function buildBatch2Prompt(treatment: any, start: number, total: number, targetDuration: number, prevScenes: any[], totalPrevScenes: number, prevDuration: number, characters: any[]) {
+  const remaining = total - totalPrevScenes
   const remainingDuration = targetDuration - prevDuration
   const avgNeeded = Math.floor(remainingDuration / remaining)
   
