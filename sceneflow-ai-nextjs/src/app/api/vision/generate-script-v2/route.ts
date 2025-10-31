@@ -192,15 +192,36 @@ export async function POST(request: NextRequest) {
               console.warn(`[Script Gen V2] Batch ${batchNumber} generated 0 scenes (retry ${batchRetries}/${MAX_BATCH_RETRIES})`)
               
               if (batchRetries >= MAX_BATCH_RETRIES) {
-                console.error(`[Script Gen V2] Max retries reached for batch ${batchNumber}, stopping generation`)
-                // Send warning event
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                  type: 'warning',
-                  message: `Failed to generate remaining scenes after ${MAX_BATCH_RETRIES} attempts. Generated ${allScenes.length} of ${actualTotalScenes} scenes.`
-                })}\n\n`))
-                break
+                // NEW: Try single-scene fallback before giving up
+                console.log(`[Script Gen V2] Attempting single-scene fallback for batch ${batchNumber}...`)
+                
+                try {
+                  const singleScenePrompt = buildBatch2Prompt(treatment, startScene, actualTotalScenes, duration, prevScenesForPrompt, allScenes.length, totalPrevDuration, existingCharacters)
+                    .replace(`Generate scenes ${startScene}-${endScene}`, `Generate ONLY scene ${startScene}`)
+                    .replace(`final ${batchSize} scenes`, `ONLY this 1 scene`)
+                  
+                  let singleResponse = await callGemini(apiKey, singleScenePrompt)
+                  let singleData = parseScenes(singleResponse, startScene, startScene)
+                  singleResponse = ''
+                  
+                  if (singleData.scenes.length > 0) {
+                    console.log(`[Script Gen V2] Single-scene fallback succeeded: 1 scene`)
+                    batchData = singleData
+                    batchRetries = 0  // Reset retries for next batch
+                  } else {
+                    throw new Error('Single-scene fallback failed')
+                  }
+                } catch (fallbackError: any) {
+                  console.error(`[Script Gen V2] Single-scene fallback failed:`, fallbackError.message)
+                  console.error(`[Script Gen V2] Max retries reached for batch ${batchNumber}, stopping generation`)
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                    type: 'warning',
+                    message: `Failed to generate remaining scenes after ${MAX_BATCH_RETRIES} attempts. Generated ${allScenes.length} of ${actualTotalScenes} scenes.`
+                  })}\n\n`))
+                  break
+                }
               }
-              continue // Retry same batch
+              continue // Retry same batch or continue with fallback result
             }
             
             // Success - reset retry counter and add scenes
@@ -663,7 +684,7 @@ Complete the script with accurate duration estimates.`
 
 async function callGemini(apiKey: string, prompt: string): Promise<string> {
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -671,8 +692,7 @@ async function callGemini(apiKey: string, prompt: string): Promise<string> {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.3,
-          maxOutputTokens: 8192,
-          responseMimeType: 'application/json'
+          maxOutputTokens: 16384
         }
       })
     }
