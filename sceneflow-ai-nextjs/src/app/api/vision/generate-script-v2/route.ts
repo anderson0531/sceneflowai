@@ -661,6 +661,68 @@ function sanitizeJsonString(jsonStr: string): string {
       return cleaned
     } catch {}
     
+    // Check if response looks truncated (ends mid-structure)
+    const endsWithComma = /,\s*$/.test(cleaned)
+    const endsWithColon = /:\s*$/.test(cleaned)
+    const endsWithOpenBrace = /[{\[]\s*$/.test(cleaned)
+
+    if (endsWithComma || endsWithColon || endsWithOpenBrace) {
+      console.warn('[Sanitize] Response appears truncated, removing incomplete structure')
+      // Remove the incomplete trailing structure
+      cleaned = cleaned.replace(/,\s*$/, '')
+      cleaned = cleaned.replace(/:\s*$/, ': ""')
+      cleaned = cleaned.replace(/[{\[]\s*$/, '')
+    }
+    
+    // Try again after truncation fix
+    try {
+      JSON.parse(cleaned)
+      return cleaned
+    } catch {}
+    
+    // Handle unterminated strings (common with truncated responses)
+    const lastQuoteIndex = cleaned.lastIndexOf('"')
+    const hasUnclosedString = lastQuoteIndex !== -1 && (cleaned.match(/"/g) || []).length % 2 !== 0
+
+    if (hasUnclosedString) {
+      // Find the last properly closed structure before the unterminated string
+      let truncateAt = lastQuoteIndex
+      
+      // Look backwards for the last comma or opening brace before this quote
+      for (let i = lastQuoteIndex - 1; i >= 0; i--) {
+        if (cleaned[i] === ',' || cleaned[i] === '{' || cleaned[i] === '[') {
+          truncateAt = i
+          break
+        }
+      }
+      
+      // Truncate at that point and close the structure
+      cleaned = cleaned.substring(0, truncateAt)
+      console.warn('[Sanitize] Truncated unterminated string at position', lastQuoteIndex)
+    }
+    
+    // Try again after unterminated string fix
+    try {
+      JSON.parse(cleaned)
+      return cleaned
+    } catch {}
+    
+    // Fix unescaped newlines in strings (lightweight, targeted approach)
+    // This regex is much simpler and won't cause memory issues
+    cleaned = cleaned.replace(/"([^"]*?)(\r?\n)([^"]*?)"/g, (match, before, newline, after) => {
+      // Only process if this looks like an error (newline in middle of string content)
+      if (before && after) {
+        return `"${before}\\n${after}"`
+      }
+      return match
+    })
+    
+    // Try again after newline fix
+    try {
+      JSON.parse(cleaned)
+      return cleaned
+    } catch {}
+    
     // HEAVY FIX: Only if lightweight fixes didn't work
     // Process control characters in strings
     cleaned = cleaned.replace(
