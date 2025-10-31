@@ -649,19 +649,16 @@ function sanitizeJsonString(jsonStr: string): string {
   
   // SLOW PATH: Only run if needed
   try {
-    // Early fix: Remove control characters ONLY in string values
-    // Do this BEFORE any other structural fixes
+    // CRITICAL: Remove control chars from ENTIRE response first
+    // This handles control chars in property names, not just string values
+    cleaned = cleaned.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, ' ')
+    
+    // Now do proper escaping for any control chars in string values
     cleaned = cleaned.replace(
       /"([^"\\]|\\.)*"/g,  // Match complete strings
       (match) => {
-        // Replace control chars only in the matched string content
-        return match.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, (char: string) => {
-          const code = char.charCodeAt(0)
-          if (code === 9) return '\\t'  // tab → escaped
-          if (code === 10) return '\\n' // newline → escaped
-          if (code === 13) return '\\r' // cr → escaped
-          return '' // Remove other control chars
-        })
+        // Escape common control sequences within strings
+        return match.replace(/([\\])/g, '\\\\')  // Escape backslashes first
       }
     )
     

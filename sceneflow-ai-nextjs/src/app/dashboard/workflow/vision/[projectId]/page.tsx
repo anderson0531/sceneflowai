@@ -1261,8 +1261,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // ONLY generate script text (not images)
       if (!visionPhase?.scriptGenerated) {
-        // Generate script (returns empty data, reloads from DB)
-        await generateScript(proj)
+        // Wrap with execute for blocking overlay
+        await execute(
+          async () => {
+            await generateScript(proj)
+          },
+          { 
+            message: 'Generating script... This may take 2-3 minutes.',
+            estimatedDuration: 120 
+          }
+        )
         
         // Script data is now loaded via loadProject() in the complete handler
         // No need to set characters/scenes here as they're loaded from DB
