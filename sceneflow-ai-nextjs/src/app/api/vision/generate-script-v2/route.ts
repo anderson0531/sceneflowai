@@ -696,9 +696,18 @@ function sanitizeJsonString(jsonStr: string): string {
         }
       }
       
-      // Truncate at that point and close the structure
+      // Truncate at that point
       cleaned = cleaned.substring(0, truncateAt)
       console.warn('[Sanitize] Truncated unterminated string at position', lastQuoteIndex)
+      
+      // Immediately balance braces/brackets after truncation
+      const openBraces = (cleaned.match(/{/g) || []).length
+      const closeBraces = (cleaned.match(/}/g) || []).length
+      const openBrackets = (cleaned.match(/\[/g) || []).length
+      const closeBrackets = (cleaned.match(/\]/g) || []).length
+      
+      if (openBraces > closeBraces) cleaned += '}'.repeat(openBraces - closeBraces)
+      if (openBrackets > closeBrackets) cleaned += ']'.repeat(openBrackets - closeBrackets)
     }
     
     // Try again after unterminated string fix
