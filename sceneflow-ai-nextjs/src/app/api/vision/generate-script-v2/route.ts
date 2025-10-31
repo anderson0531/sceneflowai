@@ -755,25 +755,28 @@ function sanitizeJsonString(jsonStr: string): string {
     console.log('[Sanitize] Raw first 200 chars:', cleaned.substring(0, 200))
     console.log('[Sanitize] Starts with:', cleaned.charAt(0), 'Code:', cleaned.charCodeAt(0))
     
-    // CRITICAL: Remove control chars from ENTIRE response first
-    // This handles control chars in property names, not just string values
-    cleaned = cleaned.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, ' ')
-    
-    // Now do proper escaping for any control chars in string values
+    // STEP 1: Fix control characters in strings FIRST (most critical)
     cleaned = cleaned.replace(
-      /"([^"\\]|\\.)*"/g,  // Match complete strings
-      (match) => {
-        // Escape common control sequences within strings
-        return match.replace(/([\\])/g, '\\\\')  // Escape backslashes first
+      /"((?:[^"\\]|\\.)*)"/g,  // Match JSON strings (with escapes)
+      (match, stringContent) => {
+        // Escape control characters within the string content
+        const fixed = stringContent
+          .replace(/\\/g, '\\\\')      // Escape backslashes first
+          .replace(/\n/g, '\\n')        // Escape newlines
+          .replace(/\r/g, '\\r')        // Escape carriage returns
+          .replace(/\t/g, '\\t')        // Escape tabs
+          .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, '') // Remove other control chars
+        
+        return `"${fixed}"`
       }
     )
     
-    // Remove trailing commas first (lightweight fix)
+    // STEP 2: Remove trailing commas (lightweight fix)
     cleaned = cleaned
       .replace(/,\s*([}\]])/g, '$1')
       .trim()
     
-    // Try again after lightweight fixes
+    // Try parse after these two critical fixes
     try {
       JSON.parse(cleaned)
       return cleaned
