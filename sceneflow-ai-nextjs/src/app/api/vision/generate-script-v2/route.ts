@@ -113,8 +113,11 @@ export async function POST(request: NextRequest) {
         console.log(`[Script Gen V2] Batch 1: Generating first ${INITIAL_BATCH_SIZE} scenes...`)
         
         const batch1Prompt = buildBatch1Prompt(treatment, 1, INITIAL_BATCH_SIZE, minScenes, maxScenes, suggestedScenes, duration, [], existingCharacters)
-        const batch1Response = await callGemini(apiKey, batch1Prompt)
-        const batch1Data = parseBatch1(batch1Response, 1, INITIAL_BATCH_SIZE)
+        let batch1Response = await callGemini(apiKey, batch1Prompt)
+        let batch1Data = parseBatch1(batch1Response, 1, INITIAL_BATCH_SIZE)
+        
+        // Release memory immediately after parsing
+        batch1Response = ''
         
         if (batch1Data.totalScenes && batch1Data.totalScenes >= minScenes && batch1Data.totalScenes <= maxScenes) {
           actualTotalScenes = batch1Data.totalScenes
@@ -129,6 +132,9 @@ export async function POST(request: NextRequest) {
         
         allScenes.push(...batch1Data.scenes)
         console.log(`[Script Gen V2] Batch 1 complete: ${batch1Data.scenes.length} scenes`)
+        
+        // Release batch1Data reference
+        batch1Data = null
         
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({
           type: 'progress',
@@ -159,9 +165,14 @@ export async function POST(request: NextRequest) {
           console.log(`[Script Gen V2] Batch ${batchNumber}: Generating scenes ${startScene}-${endScene}...`)
           
           try {
-            const batchPrompt = buildBatch2Prompt(treatment, startScene, actualTotalScenes, duration, allScenes, existingCharacters)
-            const batchResponse = await callGemini(apiKey, batchPrompt)
-            const batchData = parseScenes(batchResponse, startScene, endScene)
+            // Create lightweight scene summary for prompt (keep last 3 only)
+            const prevScenesForPrompt = allScenes.slice(-3)
+            const batchPrompt = buildBatch2Prompt(treatment, startScene, actualTotalScenes, duration, prevScenesForPrompt, existingCharacters)
+            let batchResponse = await callGemini(apiKey, batchPrompt)
+            let batchData = parseScenes(batchResponse, startScene, endScene)
+            
+            // Release memory immediately after parsing
+            batchResponse = ''
             
             // Check if batch actually generated scenes
             if (batchData.scenes.length === 0) {
@@ -200,6 +211,9 @@ export async function POST(request: NextRequest) {
               scenesGenerated: allScenes.length,
               totalScenes: actualTotalScenes
             })}\n\n`))
+            
+            // Release batch data to free memory
+            batchData = null
             
             remainingScenes = actualTotalScenes - allScenes.length
             batchNumber++
