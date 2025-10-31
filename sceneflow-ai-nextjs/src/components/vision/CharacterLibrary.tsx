@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X, ChevronDown, Check, Settings, Sparkles, Lightbulb, AlertTriangle, Info, Volume2, ImageIcon, Edit } from 'lucide-react'
+import { Users, Plus, RefreshCw, Loader, Wand2, Upload, Scan, X, ChevronDown, Check, Settings, Sparkles, Lightbulb, AlertTriangle, Info, Volume2, ImageIcon, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { CharacterPromptBuilder } from '@/components/blueprint/CharacterPromptBuilder'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
@@ -16,11 +16,13 @@ interface CharacterLibraryProps {
   onUpdateCharacterAttributes?: (characterId: string, attributes: any) => void
   onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void
   onUpdateCharacterAppearance?: (characterId: string, description: string) => void
+  onAddCharacter?: (characterData: any) => void
+  onRemoveCharacter?: (characterName: string) => void
   ttsProvider: 'google' | 'elevenlabs'  // ADD THIS
   compact?: boolean
 }
 
-export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, ttsProvider, compact = false }: CharacterLibraryProps) {
+export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onAddCharacter, onRemoveCharacter, ttsProvider, compact = false }: CharacterLibraryProps) {
   const [selectedChar, setSelectedChar] = useState<string | null>(null)
   const [charPrompts, setCharPrompts] = useState<Record<string, string>>({})
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(new Set())
@@ -195,7 +197,18 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
         </div>
         
         {!compact && (
-          <Button variant="outline" size="sm" className="flex items-center gap-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={() => {
+              if (onAddCharacter) {
+                setBuilderCharId('NEW')
+                setBuilderOpen(true)
+              }
+            }}
+            disabled={!onAddCharacter}
+          >
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">Add Character</span>
           </Button>
@@ -260,6 +273,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                 onToggleExpand={handleToggleSection}
                 onUpdateCharacterVoice={onUpdateCharacterVoice}
                 onUpdateAppearance={onUpdateCharacterAppearance}
+                onRemove={() => onRemoveCharacter?.(char.name)}
                 ttsProvider={ttsProvider}
                 voiceSectionExpanded={voiceSectionExpanded[charId] || false}
                 onToggleVoiceSection={() => handleToggleVoiceSection(charId)}
@@ -292,7 +306,8 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
       
       {/* Prompt Builder Modal */}
       {builderCharId && (() => {
-        const character = characters.find((c, idx) => (c.id || idx.toString()) === builderCharId)
+        const isNewCharacter = builderCharId === 'NEW'
+        const character = isNewCharacter ? null : characters.find((c, idx) => (c.id || idx.toString()) === builderCharId)
         const initialStructure = character ? {
           subject: character.subject || character.name || '',
           ethnicity: character.ethnicity || '',
@@ -307,25 +322,51 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
         return (
           <CharacterPromptBuilder
             open={builderOpen}
-            onClose={() => setBuilderOpen(false)}
-            initialPrompt={charPrompts[builderCharId] || character?.imagePrompt || ''}
+            onClose={() => {
+              setBuilderOpen(false)
+              setBuilderCharId(null)
+            }}
+            initialPrompt={isNewCharacter ? '' : (charPrompts[builderCharId] || character?.imagePrompt || '')}
             initialStructure={initialStructure}
-            characterName={character?.name || 'Character'}
+            characterName={character?.name || 'New Character'}
             isGenerating={generatingChars.has(builderCharId)}
             onApply={async (prompt, structure) => {
               setCharPrompts(prev => ({ ...prev, [builderCharId]: prompt }))
               setBuilderOpen(false)
               
-              // Trigger image generation with the new prompt
-              setGeneratingChars(prev => new Set(prev).add(builderCharId))
-              try {
-                await onGenerateCharacter(builderCharId, prompt)
-              } finally {
-                setGeneratingChars(prev => {
-                  const newSet = new Set(prev)
-                  newSet.delete(builderCharId)
-                  return newSet
-                })
+              if (isNewCharacter && onAddCharacter) {
+                // Extract character name from structure (subject field)
+                const characterName = structure.subject || 'Character'
+                
+                // Create new character data
+                const newCharacterData = {
+                  name: characterName,
+                  subject: structure.subject,
+                  ethnicity: structure.ethnicity,
+                  keyFeature: structure.keyFeature,
+                  hairStyle: structure.hairStyle,
+                  hairColor: structure.hairColor,
+                  eyeColor: structure.eyeColor,
+                  expression: structure.eyeExpression,
+                  build: structure.build,
+                  description: `${structure.keyFeature}. ${structure.ethnicity}.`,
+                  role: 'supporting',
+                  imagePrompt: prompt
+                }
+                
+                await onAddCharacter(newCharacterData)
+              } else if (onGenerateCharacter) {
+                // Trigger image generation with the new prompt
+                setGeneratingChars(prev => new Set(prev).add(builderCharId))
+                try {
+                  await onGenerateCharacter(builderCharId, prompt)
+                } finally {
+                  setGeneratingChars(prev => {
+                    const newSet = new Set(prev)
+                    newSet.delete(builderCharId)
+                    return newSet
+                  })
+                }
               }
               
               // Reset builder state for next use
@@ -383,12 +424,13 @@ interface CharacterCardProps {
   onToggleExpand?: (charId: string, section: 'coreIdentity' | 'appearance') => void
   onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void
   onUpdateAppearance?: (characterId: string, description: string) => void
+  onRemove?: () => void
   ttsProvider: 'google' | 'elevenlabs'  // ADD THIS
   voiceSectionExpanded?: boolean
   onToggleVoiceSection?: () => void
 }
 
-function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, onOpenBuilder, onAnalyze, analyzingImage, prompt, onPromptChange, isGenerating, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, ttsProvider, voiceSectionExpanded, onToggleVoiceSection }: CharacterCardProps) {
+function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, onOpenBuilder, onAnalyze, analyzingImage, prompt, onPromptChange, isGenerating, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onRemove, ttsProvider, voiceSectionExpanded, onToggleVoiceSection }: CharacterCardProps) {
   const hasImage = !!character.referenceImage
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
@@ -537,9 +579,25 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
       <div className="p-4 space-y-3">
         {/* Header */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
-            {character.name || 'Unnamed'}
-          </h3>
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              {character.name || 'Unnamed'}
+            </h3>
+            {onRemove && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (window.confirm(`Remove ${character.name}?`)) {
+                    onRemove()
+                  }
+                }}
+                className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors"
+                title="Remove character"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
           {character.role && (
             <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
               {character.role}

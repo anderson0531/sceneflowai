@@ -1912,6 +1912,69 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  const handleAddCharacter = async (characterData: any) => {
+    try {
+      console.log('[Vision] Adding character:', characterData)
+      
+      const response = await fetch('/api/vision/characters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          character: characterData
+        })
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to add character')
+      }
+      
+      // Reload project to get updated characters
+      await loadProject()
+      
+      try {
+        const { toast } = require('sonner')
+        toast.success('Character added successfully!')
+      } catch {}
+    } catch (error) {
+      console.error('[Vision] Error adding character:', error)
+      try {
+        const { toast } = require('sonner')
+        toast.error('Failed to add character')
+      } catch {}
+    }
+  }
+
+  const handleRemoveCharacter = async (characterName: string) => {
+    try {
+      console.log('[Vision] Removing character:', characterName)
+      
+      const response = await fetch(`/api/vision/characters?projectId=${projectId}&characterName=${encodeURIComponent(characterName)}`, {
+        method: 'DELETE'
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to remove character')
+      }
+      
+      // Reload project to get updated characters
+      await loadProject()
+      
+      try {
+        const { toast } = require('sonner')
+        toast.success('Character removed successfully!')
+      } catch {}
+    } catch (error) {
+      console.error('[Vision] Error removing character:', error)
+      try {
+        const { toast } = require('sonner')
+        toast.error('Failed to remove character')
+      } catch {}
+    }
+  }
+
   const handleRegenerateScene = async (sceneIndex: number) => {
     // Implement scene regeneration
     console.log('Regenerate scene:', sceneIndex)
@@ -3117,6 +3180,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             onUpdateCharacterAttributes={handleUpdateCharacterAttributes}
             onUpdateCharacterVoice={handleUpdateCharacterVoice}
             onUpdateCharacterAppearance={handleUpdateCharacterAppearance}
+            onAddCharacter={handleAddCharacter}
+            onRemoveCharacter={handleRemoveCharacter}
             ttsProvider={ttsProvider}
             compact={true}
           />

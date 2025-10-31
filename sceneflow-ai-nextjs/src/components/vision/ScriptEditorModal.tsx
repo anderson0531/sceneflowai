@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { useProcessWithOverlay } from '../../hooks/useProcessWithOverlay'
+import { detectCharacterChanges } from '@/lib/character/detection'
 
 interface ScriptEditorModalProps {
   isOpen: boolean
@@ -324,6 +325,17 @@ export function ScriptEditorModal({
     
     const updatedScript = {
       scenes: mergedScenes
+    }
+    
+    // Detect character changes
+    const characterChanges = detectCharacterChanges(mergedScenes, characters)
+    
+    // Notify about character changes
+    if (characterChanges.new.length > 0) {
+      toast.message(`Found ${characterChanges.new.length} new character(s): ${characterChanges.new.map(c => c.name).join(', ')}. Add them in the Character Library.`)
+    }
+    if (characterChanges.removed.length > 0) {
+      toast.message(`${characterChanges.removed.length} character(s) no longer appear: ${characterChanges.removed.map(c => c.name).join(', ')}. Consider removing them.`)
     }
     
     onApplyChanges(updatedScript)
