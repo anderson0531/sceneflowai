@@ -1,4 +1,4 @@
-import { BeatSchema } from '@/lib/treatment/validate'
+// Beat interfaces defined locally for self-contained module
 
 export interface Beat {
   title: string
