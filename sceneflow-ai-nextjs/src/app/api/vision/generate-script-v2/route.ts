@@ -181,6 +181,12 @@ export async function POST(request: NextRequest) {
             // Release memory immediately after parsing
             batchResponse = ''
             
+            // Log memory usage in development
+            if (process.env.NODE_ENV === 'development') {
+              const memUsage = process.memoryUsage()
+              console.log(`[Memory] Batch ${batchNumber}: ${Math.round(memUsage.heapUsed / 1024 / 1024)}MB used, ${Math.round(memUsage.heapTotal / 1024 / 1024)}MB total`)
+            }
+            
             // Check if batch actually generated scenes
             if (batchData.scenes.length === 0) {
               batchRetries++
@@ -623,70 +629,76 @@ async function callGemini(apiKey: string, prompt: string): Promise<string> {
   }
 
   const data = await response.json()
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  
+  return text
 }
 
 function sanitizeJsonString(jsonStr: string): string {
   // Remove markdown code fences
   let cleaned = jsonStr.replace(/```json\n?|```/g, '').trim()
   
-  // First attempt: try to parse as-is
+  // First attempt: try to parse as-is (FAST PATH)
   try {
     JSON.parse(cleaned)
-    return cleaned
+    return cleaned  // Success - return immediately without heavy processing
   } catch (firstError: any) {
-    // Only log in development
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('[Sanitize] Cleaning JSON:', firstError.message.substring(0, 100))
-    }
+    // Only proceed with heavy sanitization if parse failed
+    console.warn('[Sanitize] Initial parse failed, applying fixes:', firstError.message.substring(0, 100))
+  }
+  
+  // SLOW PATH: Only run if needed
+  try {
+    // Remove trailing commas first (lightweight fix)
+    cleaned = cleaned
+      .replace(/,\s*([}\]])/g, '$1')
+      .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, '')
+      .trim()
     
+    // Try again after lightweight fixes
     try {
-      // STEP 1: Remove/escape control characters first (before other fixes)
-      cleaned = cleaned.replace(
-        /"((?:[^"\\]|\\.)*)"/g,
-        (match, stringContent) => {
-          const fixed = stringContent
-            .split('')
-            .map((char: string) => {
-              const code = char.charCodeAt(0)
-              // Replace literal control chars (ASCII 0-31 except valid escapes)
-              if (code < 32) {
-                if (code === 9) return '\\t'   // tab
-                if (code === 10) return '\\n'  // newline
-                if (code === 13) return '\\r'  // carriage return
-                return ' ' // Replace other control chars with space
-              }
-              return char
-            })
-            .join('')
-          return `"${fixed}"`
-        }
-      )
-      
-      // STEP 2: Standard JSON fixes
-      cleaned = cleaned
-        .replace(/,\s*([}\]])/g, '$1') // trailing commas
-        .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, '') // any remaining control chars
-        .trim()
-      
-      // STEP 3: Balance braces/brackets
-      const openBraces = (cleaned.match(/{/g) || []).length
-      const closeBraces = (cleaned.match(/}/g) || []).length
-      const openBrackets = (cleaned.match(/\[/g) || []).length
-      const closeBrackets = (cleaned.match(/\]/g) || []).length
-      
-      while (openBraces > closeBraces) cleaned += '}'
-      while (openBrackets > closeBrackets) cleaned += ']'
-      
-      // Try parsing the cleaned version
       JSON.parse(cleaned)
       return cleaned
-      
-    } catch (secondError: any) {
-      // Only log severe errors in production
-      console.error('[Sanitize] Failed to clean JSON after multiple attempts')
-      throw secondError // Re-throw to trigger retry logic
-    }
+    } catch {}
+    
+    // HEAVY FIX: Only if lightweight fixes didn't work
+    // Process control characters in strings
+    cleaned = cleaned.replace(
+      /"((?:[^"\\]|\\.){0,5000})"/g,  // Add length limit to prevent catastrophic backtracking
+      (match, stringContent) => {
+        if (stringContent.length > 5000) {
+          // Truncate extremely long strings to prevent memory issues
+          stringContent = stringContent.substring(0, 5000) + '...'
+        }
+        
+        const fixed = stringContent
+          .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, (char: string) => {
+            const code = char.charCodeAt(0)
+            if (code === 9) return '\\t'
+            if (code === 10) return '\\n'
+            if (code === 13) return '\\r'
+            return ' '
+          })
+        
+        return `"${fixed}"`
+      }
+    )
+    
+    // Balance braces/brackets
+    const openBraces = (cleaned.match(/{/g) || []).length
+    const closeBraces = (cleaned.match(/}/g) || []).length
+    const openBrackets = (cleaned.match(/\[/g) || []).length
+    const closeBrackets = (cleaned.match(/\]/g) || []).length
+    
+    if (openBraces > closeBraces) cleaned += '}'.repeat(openBraces - closeBraces)
+    if (openBrackets > closeBrackets) cleaned += ']'.repeat(openBrackets - closeBrackets)
+    
+    JSON.parse(cleaned)
+    return cleaned
+    
+  } catch (secondError: any) {
+    console.error('[Sanitize] Failed after all attempts')
+    throw secondError
   }
 }
 
