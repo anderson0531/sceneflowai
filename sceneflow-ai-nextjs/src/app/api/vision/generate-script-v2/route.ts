@@ -684,15 +684,6 @@ function sanitizeJsonString(jsonStr: string): string {
       cleaned = cleaned.replace(/,\s*$/, '')
       cleaned = cleaned.replace(/:\s*$/, ': ""')
       cleaned = cleaned.replace(/[{\[]\s*$/, '')
-      
-      // IMMEDIATELY balance braces/brackets after truncation
-      const openBraces = (cleaned.match(/{/g) || []).length
-      const closeBraces = (cleaned.match(/}/g) || []).length
-      const openBrackets = (cleaned.match(/\[/g) || []).length
-      const closeBrackets = (cleaned.match(/\]/g) || []).length
-      
-      if (openBraces > closeBraces) cleaned += '}'.repeat(openBraces - closeBraces)
-      if (openBrackets > closeBrackets) cleaned += ']'.repeat(openBrackets - closeBrackets)
     }
     
     // Try again after truncation fix
@@ -720,15 +711,6 @@ function sanitizeJsonString(jsonStr: string): string {
       // Truncate at that point
       cleaned = cleaned.substring(0, truncateAt)
       console.warn('[Sanitize] Truncated unterminated string at position', lastQuoteIndex)
-      
-      // Immediately balance braces/brackets after truncation
-      const openBraces = (cleaned.match(/{/g) || []).length
-      const closeBraces = (cleaned.match(/}/g) || []).length
-      const openBrackets = (cleaned.match(/\[/g) || []).length
-      const closeBrackets = (cleaned.match(/\]/g) || []).length
-      
-      if (openBraces > closeBraces) cleaned += '}'.repeat(openBraces - closeBraces)
-      if (openBrackets > closeBrackets) cleaned += ']'.repeat(openBrackets - closeBrackets)
     }
     
     // Try again after unterminated string fix
@@ -748,6 +730,22 @@ function sanitizeJsonString(jsonStr: string): string {
     })
     
     // Try again after newline fix
+    try {
+      JSON.parse(cleaned)
+      return cleaned
+    } catch {}
+    
+    // FINAL STEP: Balance all braces/brackets
+    // This runs after all truncation/string fixes
+    const finalOpenBraces = (cleaned.match(/{/g) || []).length
+    const finalCloseBraces = (cleaned.match(/}/g) || []).length
+    const finalOpenBrackets = (cleaned.match(/\[/g) || []).length
+    const finalCloseBrackets = (cleaned.match(/\]/g) || []).length
+    
+    if (finalOpenBraces > finalCloseBraces) cleaned += '}'.repeat(finalOpenBraces - finalCloseBraces)
+    if (finalOpenBrackets > finalCloseBrackets) cleaned += ']'.repeat(finalOpenBrackets - finalCloseBrackets)
+    
+    // Try final parse before heavy fixes
     try {
       JSON.parse(cleaned)
       return cleaned
@@ -776,14 +774,14 @@ function sanitizeJsonString(jsonStr: string): string {
       }
     )
     
-    // Balance braces/brackets
-    const openBraces = (cleaned.match(/{/g) || []).length
-    const closeBraces = (cleaned.match(/}/g) || []).length
-    const openBrackets = (cleaned.match(/\[/g) || []).length
-    const closeBrackets = (cleaned.match(/\]/g) || []).length
+    // Final balance after heavy fixes
+    const heavyOpenBraces = (cleaned.match(/{/g) || []).length
+    const heavyCloseBraces = (cleaned.match(/}/g) || []).length
+    const heavyOpenBrackets = (cleaned.match(/\[/g) || []).length
+    const heavyCloseBrackets = (cleaned.match(/\]/g) || []).length
     
-    if (openBraces > closeBraces) cleaned += '}'.repeat(openBraces - closeBraces)
-    if (openBrackets > closeBrackets) cleaned += ']'.repeat(openBrackets - closeBrackets)
+    if (heavyOpenBraces > heavyCloseBraces) cleaned += '}'.repeat(heavyOpenBraces - heavyCloseBraces)
+    if (heavyOpenBrackets > heavyCloseBrackets) cleaned += ']'.repeat(heavyOpenBrackets - heavyCloseBrackets)
     
     JSON.parse(cleaned)
     return cleaned
