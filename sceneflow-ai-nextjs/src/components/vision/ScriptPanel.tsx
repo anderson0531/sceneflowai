@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Clapperboard } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
@@ -821,24 +821,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             </Tooltip>
           </TooltipProvider>
           
-          {scenes.some((s: any) => !s.isExpanded) && onExpandAllScenes && (
-            <Button
-              size="sm"
-              onClick={onExpandAllScenes}
-              disabled={isGenerating}
-              className="bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Generate All</span>
-            </Button>
-          )}
           <Button
             variant="outline"
             size="sm"
             onClick={() => setShowScriptEditor(true)}
           >
-            <Edit className="w-4 h-4" />
-            <span>Edit Script</span>
+            <Clapperboard className="w-4 h-4" />
+            <span>Director</span>
           </Button>
         </div>
       </div>

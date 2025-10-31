@@ -286,6 +286,7 @@ ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce si
           imageUrl: originalScene?.imageUrl,
           narrationAudioUrl: originalScene?.narrationAudioUrl,
           musicAudio: originalScene?.musicAudio,
+          visualDescription: originalScene?.visualDescription,
           sceneNumber: originalScene?.sceneNumber || (idx + 1),
           duration: optimizedScene.duration || originalScene?.duration,
           narration
@@ -320,6 +321,7 @@ ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce si
             imageUrl: originalScene?.imageUrl,
             narrationAudioUrl: originalScene?.narrationAudioUrl,
             musicAudio: originalScene?.musicAudio,
+            visualDescription: originalScene?.visualDescription,
             sceneNumber: originalScene?.sceneNumber || (idx + 1),
             duration: optimizedScene.duration || originalScene?.duration,
             narration
