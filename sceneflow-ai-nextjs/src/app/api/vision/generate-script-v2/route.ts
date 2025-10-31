@@ -99,10 +99,10 @@ export async function POST(request: NextRequest) {
         const calculateBatchSize = (remaining: number): number => {
           if (remaining <= 10) return remaining
           if (remaining <= 30) return Math.min(10, remaining)
-          return Math.min(15, remaining) // Max 15 for large batches
+          return Math.min(10, remaining) // Max 10 for all batches
         }
         
-        const INITIAL_BATCH_SIZE = Math.min(15, suggestedScenes)
+        const INITIAL_BATCH_SIZE = Math.min(10, suggestedScenes)
         const MAX_BATCH_RETRIES = 3
         let actualTotalScenes = suggestedScenes
         let allScenes: any[] = []
@@ -649,6 +649,16 @@ function sanitizeJsonString(jsonStr: string): string {
   
   // SLOW PATH: Only run if needed
   try {
+    // Early fix: Remove control characters that break JSON parsing
+    // Do this BEFORE any other structural fixes
+    cleaned = cleaned.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, (char: string) => {
+      const code = char.charCodeAt(0)
+      if (code === 9) return ' '  // tab → space
+      if (code === 10) return ' ' // newline → space (will be fixed properly later in strings)
+      if (code === 13) return ' ' // carriage return → space
+      return '' // Remove other control chars
+    })
+    
     // Remove trailing commas first (lightweight fix)
     cleaned = cleaned
       .replace(/,\s*([}\]])/g, '$1')
