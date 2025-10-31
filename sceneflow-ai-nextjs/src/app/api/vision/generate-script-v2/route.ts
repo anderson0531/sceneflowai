@@ -684,6 +684,15 @@ function sanitizeJsonString(jsonStr: string): string {
       cleaned = cleaned.replace(/,\s*$/, '')
       cleaned = cleaned.replace(/:\s*$/, ': ""')
       cleaned = cleaned.replace(/[{\[]\s*$/, '')
+      
+      // IMMEDIATELY balance braces/brackets after truncation
+      const openBraces = (cleaned.match(/{/g) || []).length
+      const closeBraces = (cleaned.match(/}/g) || []).length
+      const openBrackets = (cleaned.match(/\[/g) || []).length
+      const closeBrackets = (cleaned.match(/\]/g) || []).length
+      
+      if (openBraces > closeBraces) cleaned += '}'.repeat(openBraces - closeBraces)
+      if (openBrackets > closeBrackets) cleaned += ']'.repeat(openBrackets - closeBrackets)
     }
     
     // Try again after truncation fix
