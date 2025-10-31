@@ -19,6 +19,7 @@ import ScriptReviewModal from '@/components/vision/ScriptReviewModal'
 import { SceneEditorModal } from '@/components/vision/SceneEditorModal'
 import { findSceneCharacters } from '../../../../../lib/character/matching'
 import { v4 as uuidv4 } from 'uuid'
+import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 
 // Scene Analysis interface for score generation
 interface SceneAnalysis {
@@ -414,6 +415,7 @@ function BYOKSettingsPanel({ isOpen, onClose, settings, onUpdateSettings, projec
 export default function VisionPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params)
   const router = useRouter()
+  const { execute } = useProcessWithOverlay()
   const [mounted, setMounted] = useState(false)
   const [project, setProject] = useState<Project | null>(null)
   const [script, setScript] = useState<any>(null)
@@ -723,87 +725,89 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     
     setIsGeneratingReviews(true)
     try {
-      const response = await fetch('/api/vision/review-script', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          script: {
-            title: script.title,
-            logline: script.logline,
-            scenes: script.script?.scenes || [],
-            characters: characters
-          }
-        })
-      })
-
-      if (!response.ok) throw new Error('Failed to generate reviews')
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        console.log('[Script Review] Reviews generated successfully:', {
-          directorScore: data.director?.overallScore,
-          audienceScore: data.audience?.overallScore
-        })
-        
-        // Save reviews to project metadata BEFORE updating local state
-        if (project) {
-          const updatedMetadata = {
-            ...project.metadata,
-            visionPhase: {
-              ...project.metadata?.visionPhase,
-              reviews: {
-                director: data.director,
-                audience: data.audience,
-                lastUpdated: data.generatedAt,
-                scriptHash: generateScriptHash(script)
-              }
+      await execute(async () => {
+        const response = await fetch('/api/vision/review-script', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId,
+            script: {
+              title: script.title,
+              logline: script.logline,
+              scenes: script.script?.scenes || [],
+              characters: characters
             }
-          }
-          
-          console.log('[Script Review] Saving reviews to database...')
-          
-          const saveResponse = await fetch(`/api/projects/${projectId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              metadata: updatedMetadata
-            })
           })
-          
-          if (!saveResponse.ok) {
-            const errorText = await saveResponse.text()
-            console.error('[Script Review] Failed to save reviews:', errorText)
-            throw new Error('Failed to save reviews to database')
-          }
-          
-          const saveData = await saveResponse.json()
-          console.log('[Script Review] Reviews saved successfully to database')
-          
-          // Update local state only after successful save
-          setDirectorReview(data.director)
-          setAudienceReview(data.audience)
-          setReviewsOutdated(false)
-          
-          console.log('[Script Review] State updated with new reviews:', {
+        })
+
+        if (!response.ok) throw new Error('Failed to generate reviews')
+        
+        const data = await response.json()
+        
+        if (data.success) {
+          console.log('[Script Review] Reviews generated successfully:', {
             directorScore: data.director?.overallScore,
             audienceScore: data.audience?.overallScore
           })
           
-          // No need to reload project - reviews are already in state and saved to DB
-        } else {
-          // If no project in state, still update local state
-          setDirectorReview(data.director)
-          setAudienceReview(data.audience)
-          setReviewsOutdated(false)
+          // Save reviews to project metadata BEFORE updating local state
+          if (project) {
+            const updatedMetadata = {
+              ...project.metadata,
+              visionPhase: {
+                ...project.metadata?.visionPhase,
+                reviews: {
+                  director: data.director,
+                  audience: data.audience,
+                  lastUpdated: data.generatedAt,
+                  scriptHash: generateScriptHash(script)
+                }
+              }
+            }
+            
+            console.log('[Script Review] Saving reviews to database...')
+            
+            const saveResponse = await fetch(`/api/projects/${projectId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                metadata: updatedMetadata
+              })
+            })
+            
+            if (!saveResponse.ok) {
+              const errorText = await saveResponse.text()
+              console.error('[Script Review] Failed to save reviews:', errorText)
+              throw new Error('Failed to save reviews to database')
+            }
+            
+            const saveData = await saveResponse.json()
+            console.log('[Script Review] Reviews saved successfully to database')
+            
+            // Update local state only after successful save
+            setDirectorReview(data.director)
+            setAudienceReview(data.audience)
+            setReviewsOutdated(false)
+            
+            console.log('[Script Review] State updated with new reviews:', {
+              directorScore: data.director?.overallScore,
+              audienceScore: data.audience?.overallScore
+            })
+            
+            // No need to reload project - reviews are already in state and saved to DB
+          } else {
+            // If no project in state, still update local state
+            setDirectorReview(data.director)
+            setAudienceReview(data.audience)
+            setReviewsOutdated(false)
+          }
+          
+          try {
+            const { toast } = require('sonner')
+            toast.success('Script reviews generated and saved successfully!')
+          } catch {}
         }
-        
-        try {
-          const { toast } = require('sonner')
-          toast.success('Script reviews generated and saved successfully!')
-        } catch {}
-      }
+      }, { message: 'Generating director and audience reviews...', estimatedDuration: 25 })
     } catch (error) {
       console.error('[Script Review] Error:', error)
       try {

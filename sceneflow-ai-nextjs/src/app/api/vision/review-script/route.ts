@@ -67,10 +67,18 @@ async function generateDirectorReview(script: any): Promise<Review> {
   const sceneCount = script.scenes?.length || 0
   const characterCount = script.characters?.length || 0
   
-  // Extract scene summaries for analysis
-  const sceneSummaries = script.scenes?.map((scene: any, idx: number) => 
-    `Scene ${idx + 1}: ${scene.heading || 'Untitled'} - ${scene.action?.substring(0, 100) || 'No action'}...`
-  ).join('\n') || 'No scenes available'
+  // Extract full scene content for analysis
+  const sceneSummaries = script.scenes?.map((scene: any, idx: number) => {
+    const heading = scene.heading || 'Untitled'
+    const action = scene.action || 'No action'
+    const narration = scene.narration || ''
+    const dialogueLines = (scene.dialogue || []).slice(0, 3).map((d: any) => 
+      `${d.character || 'UNKNOWN'}: ${d.line || ''}`
+    ).join('\n  ')
+    const hasMoreDialogue = (scene.dialogue?.length || 0) > 3
+    
+    return `Scene ${idx + 1}: ${heading}\nAction: ${action}\n${narration ? `Narration: ${narration}\n` : ''}${dialogueLines ? `Dialogue:\n  ${dialogueLines}${hasMoreDialogue ? '\n  ...' : ''}\n` : ''}`
+  }).join('\n---\n') || 'No scenes available'
 
   const prompt = `You are an expert film director reviewing a screenplay. Analyze this script from a professional filmmaking perspective.
 
@@ -80,7 +88,7 @@ Script Details:
 - Scenes: ${sceneCount}
 - Characters: ${characterCount}
 
-Scene Summaries:
+Scene Content:
 ${sceneSummaries}
 
 Evaluate these aspects (score each 1-100):
@@ -189,10 +197,18 @@ async function generateAudienceReview(script: any): Promise<Review> {
   const sceneCount = script.scenes?.length || 0
   const characterCount = script.characters?.length || 0
   
-  // Extract scene summaries for analysis
-  const sceneSummaries = script.scenes?.map((scene: any, idx: number) => 
-    `Scene ${idx + 1}: ${scene.heading || 'Untitled'} - ${scene.action?.substring(0, 100) || 'No action'}...`
-  ).join('\n') || 'No scenes available'
+  // Extract full scene content for analysis
+  const sceneSummaries = script.scenes?.map((scene: any, idx: number) => {
+    const heading = scene.heading || 'Untitled'
+    const action = scene.action || 'No action'
+    const narration = scene.narration || ''
+    const dialogueLines = (scene.dialogue || []).slice(0, 3).map((d: any) => 
+      `${d.character || 'UNKNOWN'}: ${d.line || ''}`
+    ).join('\n  ')
+    const hasMoreDialogue = (scene.dialogue?.length || 0) > 3
+    
+    return `Scene ${idx + 1}: ${heading}\nAction: ${action}\n${narration ? `Narration: ${narration}\n` : ''}${dialogueLines ? `Dialogue:\n  ${dialogueLines}${hasMoreDialogue ? '\n  ...' : ''}\n` : ''}`
+  }).join('\n---\n') || 'No scenes available'
 
   const prompt = `You are a film critic representing audience perspective. Review this screenplay for entertainment value and emotional impact.
 
@@ -202,7 +218,7 @@ Script Details:
 - Scenes: ${sceneCount}
 - Characters: ${characterCount}
 
-Scene Summaries:
+Scene Content:
 ${sceneSummaries}
 
 Evaluate these aspects (score each 1-100):
