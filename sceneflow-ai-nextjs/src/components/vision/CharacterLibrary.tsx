@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react'
 import { Users, Plus, RefreshCw, Loader, Wand2, Upload, X, ChevronDown, Check, Settings, Sparkles, Lightbulb, Info, Volume2, ImageIcon, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { CharacterPromptBuilder } from '@/components/blueprint/CharacterPromptBuilder'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
 import { toast } from 'sonner'
 
@@ -16,17 +15,17 @@ interface CharacterLibraryProps {
   onUpdateCharacterAttributes?: (characterId: string, attributes: any) => void
   onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void
   onUpdateCharacterAppearance?: (characterId: string, description: string) => void
+  onUpdateCharacterName?: (characterId: string, name: string) => void
+  onUpdateCharacterRole?: (characterId: string, role: string) => void
   onAddCharacter?: (characterData: any) => void
   onRemoveCharacter?: (characterName: string) => void
-  ttsProvider: 'google' | 'elevenlabs'  // ADD THIS
+  ttsProvider: 'google' | 'elevenlabs'
   compact?: boolean
 }
 
-export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onAddCharacter, onRemoveCharacter, ttsProvider, compact = false }: CharacterLibraryProps) {
+export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onAddCharacter, onRemoveCharacter, ttsProvider, compact = false }: CharacterLibraryProps) {
   const [selectedChar, setSelectedChar] = useState<string | null>(null)
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(new Set())
-  const [builderOpen, setBuilderOpen] = useState(false)
-  const [builderCharId, setBuilderCharId] = useState<string | null>(null)
   const [uploadingRef, setUploadingRef] = useState<Record<string, boolean>>({})
   const [zoomedImage, setZoomedImage] = useState<{url: string; name: string} | null>(null)
   const [expandedSections, setExpandedSections] = useState<Record<string, string | null>>({})
@@ -167,13 +166,14 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
             <Button 
               variant="outline" 
               size="sm" 
-              className="flex items-center gap-2 justify-center min-h-[100px] border-dashed border-2 hover:border-solid"
-              onClick={() => {
-                setBuilderCharId('NEW')
-                setBuilderOpen(true)
-              }}
+              className="flex items-center gap-2 bg-blue-50 dark:bg-blue-950 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900"
+              onClick={() => onAddCharacter({
+                name: 'New Character',
+                role: 'supporting',
+                appearanceDescription: ''
+              })}
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-4 h-4" />
               <span>Add Character</span>
             </Button>
           )}
@@ -190,9 +190,8 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
           {/* Regular Character Cards */}
           {characters.filter(char => char.type !== 'narrator').map((char, idx) => {
             const charId = char.id || idx.toString()
-            // Use saved imagePrompt if available, otherwise generate default
-            const savedPrompt = char.imagePrompt
-            const defaultPrompt = `Professional character portrait of ${char.name}: ${char.description || char.role || 'character'}`
+            // Use appearanceDescription for image generation, fallback to saved imagePrompt or default
+            const appearancePrompt = char.appearanceDescription || char.imagePrompt || `${char.name || 'Character'}`
             return (
               <CharacterCard
                 key={charId}
@@ -201,10 +200,12 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                 isSelected={selectedChar === charId}
                 onClick={() => setSelectedChar(charId)}
                 onRegenerate={() => onRegenerateCharacter(charId)}
-                onGenerate={async (prompt) => {
+                onGenerate={async () => {
                   setGeneratingChars(prev => new Set(prev).add(charId))
                   try {
-                    await onGenerateCharacter(charId, prompt)
+                    // Use appearance description as prompt for generation
+                    const promptToUse = char.appearanceDescription || `${char.name || 'Character'}`
+                    await onGenerateCharacter(charId, promptToUse)
                   } finally {
                     // Clear loading state after generation completes
                     setGeneratingChars(prev => {
@@ -216,12 +217,14 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                 }}
                 onUpload={(file) => onUploadCharacter(charId, file)}
                 onApprove={() => onApproveCharacter(charId)}
-                prompt={savedPrompt || defaultPrompt}
+                prompt={appearancePrompt}
                 isGenerating={generatingChars.has(charId)}
                 expandedCharId={expandedSections[charId]}
                 onToggleExpand={handleToggleSection}
                 onUpdateCharacterVoice={onUpdateCharacterVoice}
                 onUpdateAppearance={onUpdateCharacterAppearance}
+                onUpdateCharacterName={onUpdateCharacterName}
+                onUpdateCharacterRole={onUpdateCharacterRole}
                 onRemove={() => onRemoveCharacter?.(char.name)}
                 ttsProvider={ttsProvider}
                 voiceSectionExpanded={voiceSectionExpanded[charId] || false}
@@ -251,48 +254,6 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
             </div>
           </div>
         </div>
-      )}
-      
-      {/* Prompt Builder Modal - Only for NEW characters */}
-      {builderCharId === 'NEW' && onAddCharacter && (
-        <CharacterPromptBuilder
-          open={builderOpen}
-          onClose={() => {
-            setBuilderOpen(false)
-            setBuilderCharId(null)
-          }}
-          initialPrompt=""
-          initialStructure={undefined}
-          characterName="New Character"
-          isGenerating={generatingChars.has('NEW')}
-          onApply={async (prompt, structure) => {
-            setBuilderOpen(false)
-            
-            // Extract character name from structure (subject field)
-            const characterName = structure.subject || 'Character'
-            
-            // Create new character data
-            const newCharacterData = {
-              name: characterName,
-              subject: structure.subject,
-              ethnicity: structure.ethnicity,
-              keyFeature: structure.keyFeature,
-              hairStyle: structure.hairStyle,
-              hairColor: structure.hairColor,
-              eyeColor: structure.eyeColor,
-              expression: structure.eyeExpression,
-              build: structure.build,
-              description: `${structure.keyFeature}. ${structure.ethnicity}.`,
-              role: 'supporting',
-              imagePrompt: prompt
-            }
-            
-            await onAddCharacter(newCharacterData)
-            
-            // Reset builder state for next use
-            setTimeout(() => setBuilderCharId(null), 300)
-          }}
-        />
       )}
       
       {/* Image Zoom Modal */}
@@ -330,7 +291,7 @@ interface CharacterCardProps {
   isSelected: boolean
   onClick: () => void
   onRegenerate: () => void
-  onGenerate: (prompt: string) => void
+  onGenerate: () => void
   onUpload: (file: File) => void
   onApprove: () => void
   prompt: string
@@ -339,13 +300,15 @@ interface CharacterCardProps {
   onToggleExpand?: (charId: string, section: 'coreIdentity' | 'appearance') => void
   onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void
   onUpdateAppearance?: (characterId: string, description: string) => void
+  onUpdateCharacterName?: (characterId: string, name: string) => void
+  onUpdateCharacterRole?: (characterId: string, role: string) => void
   onRemove?: () => void
   ttsProvider: 'google' | 'elevenlabs'
   voiceSectionExpanded?: boolean
   onToggleVoiceSection?: () => void
 }
 
-function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onRemove, ttsProvider, voiceSectionExpanded, onToggleVoiceSection }: CharacterCardProps) {
+function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onRemove, ttsProvider, voiceSectionExpanded, onToggleVoiceSection }: CharacterCardProps) {
   const hasImage = !!character.referenceImage
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
@@ -353,6 +316,9 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [editingAppearance, setEditingAppearance] = useState(false)
   const [appearanceText, setAppearanceText] = useState('')
+  const [editingName, setEditingName] = useState(false)
+  const [nameText, setNameText] = useState('')
+  const [editingRole, setEditingRole] = useState(false)
   
   // Helper function to generate fallback description from attributes
   const generateFallbackDescription = (character: any): string => {
@@ -383,6 +349,20 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
     if (appearanceText.trim() && onUpdateAppearance) {
       await onUpdateAppearance(characterId, appearanceText.trim())
       setEditingAppearance(false)
+    }
+  }
+  
+  const handleSaveName = async () => {
+    if (nameText.trim() && onUpdateCharacterName) {
+      await onUpdateCharacterName(characterId, nameText.trim())
+      setEditingName(false)
+    }
+  }
+  
+  const handleSaveRole = async () => {
+    if (onUpdateCharacterRole) {
+      await onUpdateCharacterRole(characterId, (document.getElementById(`role-select-${characterId}`) as HTMLSelectElement)?.value || 'supporting')
+      setEditingRole(false)
     }
   }
   
@@ -440,7 +420,7 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
                 size="sm" 
                 onClick={(e) => {
                   e.stopPropagation()
-                  onGenerate(prompt)
+                  onGenerate()
                 }} 
                 disabled={isGenerating}
               >
@@ -495,28 +475,123 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
         {/* Header */}
         <div>
           <div className="flex items-start justify-between gap-2 mb-1">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {character.name || 'Unnamed'}
-            </h3>
-            {onRemove && (
+            {editingName ? (
+              <div className="flex-1 flex gap-2">
+                <input
+                  type="text"
+                  value={nameText}
+                  onChange={(e) => setNameText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSaveName()
+                    if (e.key === 'Escape') {
+                      setEditingName(false)
+                      setNameText('')
+                    }
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex-1 px-2 py-1 text-lg font-semibold border border-blue-500 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleSaveName()
+                  }}
+                  className="p-1 text-green-600 dark:text-green-400"
+                >
+                  <Check className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setEditingName(false)
+                    setNameText('')
+                  }}
+                  className="p-1 text-red-600 dark:text-red-400"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <h3 
+                  className="text-lg font-semibold text-gray-900 dark:text-gray-100 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 flex-1"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (onUpdateCharacterName) {
+                      setEditingName(true)
+                      setNameText(character.name || '')
+                    }
+                  }}
+                  title={onUpdateCharacterName ? "Click to edit name" : ""}
+                >
+                  {character.name || 'Unnamed'}
+                </h3>
+                {onRemove && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (window.confirm(`Remove ${character.name}?`)) {
+                        onRemove()
+                      }
+                    }}
+                    className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors"
+                    title="Remove character"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+          {editingRole ? (
+            <div className="flex gap-2 items-center">
+              <select
+                id={`role-select-${characterId}`}
+                defaultValue={character.role || 'supporting'}
+                onClick={(e) => e.stopPropagation()}
+                className="text-xs px-2 py-1 border border-blue-500 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 uppercase tracking-wide"
+              >
+                <option value="lead">Lead</option>
+                <option value="supporting">Supporting</option>
+                <option value="minor">Minor</option>
+              </select>
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  if (window.confirm(`Remove ${character.name}?`)) {
-                    onRemove()
-                  }
+                  handleSaveRole()
                 }}
-                className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors"
-                title="Remove character"
+                className="p-0.5 text-green-600 dark:text-green-400"
               >
-                <Trash2 className="w-4 h-4" />
+                <Check className="w-3 h-3" />
               </button>
-            )}
-          </div>
-          {character.role && (
-            <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-              {character.role}
-            </span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setEditingRole(false)
+                }}
+                className="p-0.5 text-red-600 dark:text-red-400"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ) : (
+            <>
+              {character.role && (
+                <span 
+                  className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (onUpdateCharacterRole) {
+                      setEditingRole(true)
+                    }
+                  }}
+                  title={onUpdateCharacterRole ? "Click to edit role" : ""}
+                >
+                  {character.role}
+                </span>
+              )}
+            </>
           )}
           {character.aliases && Array.isArray(character.aliases) && character.aliases.length > 1 && (
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">

@@ -698,6 +698,96 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
   
+  // Handle character name update
+  const handleUpdateCharacterName = async (characterId: string, newName: string) => {
+    try {
+      // Update local state first
+      const updatedCharacters = characters.map(char => {
+        const charId = char.id || characters.indexOf(char).toString()
+        return charId === characterId 
+          ? { ...char, name: newName }
+          : char
+      })
+      
+      setCharacters(updatedCharacters)
+      
+      // Save to database using existing projects API
+      if (project) {
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: {
+              ...project.metadata,
+              visionPhase: {
+                ...project.metadata?.visionPhase,
+                characters: updatedCharacters
+              }
+            }
+          })
+        })
+        
+        if (!response.ok) throw new Error('Failed to update name')
+        
+        try { 
+          const { toast } = require('sonner')
+          toast.success('Character name updated')
+        } catch {}
+      }
+    } catch (error) {
+      console.error('[Update Name] Error:', error)
+      try { 
+        const { toast } = require('sonner')
+        toast.error('Failed to update character name')
+      } catch {}
+    }
+  }
+  
+  // Handle character role update
+  const handleUpdateCharacterRole = async (characterId: string, newRole: string) => {
+    try {
+      // Update local state first
+      const updatedCharacters = characters.map(char => {
+        const charId = char.id || characters.indexOf(char).toString()
+        return charId === characterId 
+          ? { ...char, role: newRole }
+          : char
+      })
+      
+      setCharacters(updatedCharacters)
+      
+      // Save to database using existing projects API
+      if (project) {
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: {
+              ...project.metadata,
+              visionPhase: {
+                ...project.metadata?.visionPhase,
+                characters: updatedCharacters
+              }
+            }
+          })
+        })
+        
+        if (!response.ok) throw new Error('Failed to update role')
+        
+        try { 
+          const { toast } = require('sonner')
+          toast.success('Character role updated')
+        } catch {}
+      }
+    } catch (error) {
+      console.error('[Update Role] Error:', error)
+      try { 
+        const { toast } = require('sonner')
+        toast.error('Failed to update character role')
+      } catch {}
+    }
+  }
+  
   // Handle validation warning dismiss
   const handleDismissValidationWarning = (sceneIdx: number) => {
     setValidationInfo(prev => ({
@@ -3180,6 +3270,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             onUpdateCharacterAttributes={handleUpdateCharacterAttributes}
             onUpdateCharacterVoice={handleUpdateCharacterVoice}
             onUpdateCharacterAppearance={handleUpdateCharacterAppearance}
+            onUpdateCharacterName={handleUpdateCharacterName}
+            onUpdateCharacterRole={handleUpdateCharacterRole}
             onAddCharacter={handleAddCharacter}
             onRemoveCharacter={handleRemoveCharacter}
             ttsProvider={ttsProvider}

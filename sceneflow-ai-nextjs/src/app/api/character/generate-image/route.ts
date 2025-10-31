@@ -51,12 +51,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
     }
 
-    // Enhance prompt for character portrait
+    // Enhance prompt for character portrait - always head and shoulders
     const enhancedPrompt = `${finalPrompt}
 
 Style: Professional character portrait, photorealistic, high detail
 Quality: 8K resolution, studio lighting, sharp focus
-Composition: Portrait orientation, neutral background, character-focused
+Composition: Head and shoulders portrait, neutral background, character-focused
 Camera: 85mm portrait lens, shallow depth of field
 Lighting: Soft natural lighting, professional photography`
 
