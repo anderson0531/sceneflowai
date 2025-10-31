@@ -5,7 +5,7 @@ import { useCue } from '@/store/useCueStore';
 import { Button } from '@/components/ui/Button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { SparklesIcon, Eye, RefreshCw, Clapperboard } from 'lucide-react';
+import { SparklesIcon, Eye, RefreshCw, Clapperboard, Lightbulb, Users, Award, ChevronDown } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { OutlineEditor } from '@/components/studio/OutlineEditor';
 import ScriptViewer from '@/components/studio/ScriptViewer';
@@ -44,6 +44,7 @@ export function TreatmentTab() {
   const [isAssessing, setIsAssessing] = useState(false);
   const [assessmentOpen, setAssessmentOpen] = useState(false);
   const [assessmentText, setAssessmentText] = useState('');
+  const [showReasoning, setShowReasoning] = useState(false);
 
   interface ParsedAssessment {
     header: {
@@ -840,10 +841,95 @@ export function TreatmentTab() {
             </div>
           )}
           
+          {/* Narrative Reasoning */}
+          {(treatment as any).narrative_reasoning && (
+            <div className="mt-6 border-t border-gray-700/50 pt-6">
+              <button
+                onClick={() => setShowReasoning(!showReasoning)}
+                className="flex items-center justify-between w-full text-left"
+              >
+                <div className="flex items-center gap-2">
+                  <Lightbulb className="w-5 h-5 text-amber-500" />
+                  <h3 className="text-lg font-semibold text-white">
+                    AI Narrative Reasoning
+                  </h3>
+                  <span className="text-xs text-gray-400">
+                    Why the AI made these storytelling choices
+                  </span>
+                </div>
+                <ChevronDown className={`w-5 h-5 transition-transform ${showReasoning ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {showReasoning && (treatment as any).narrative_reasoning && (
+                <div className="mt-4 space-y-4">
+                  {/* Character Focus */}
+                  <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      Character Focus
+                    </h4>
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      {(treatment as any).narrative_reasoning.character_focus}
+                    </p>
+                  </div>
+                  
+                  {/* Key Decisions */}
+                  {(treatment as any).narrative_reasoning.key_decisions && Array.isArray((treatment as any).narrative_reasoning.key_decisions) && (treatment as any).narrative_reasoning.key_decisions.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-white flex items-center gap-2">
+                        <SparklesIcon className="w-4 h-4 text-purple-500" />
+                        Key Creative Decisions
+                      </h4>
+                      {(treatment as any).narrative_reasoning.key_decisions.map((decision: any, idx: number) => (
+                        <div key={idx} className="p-4 bg-purple-50 dark:bg-purple-950 rounded-lg border-l-4 border-purple-500">
+                          <div className="font-medium text-purple-900 dark:text-purple-100 mb-1">
+                            {decision.decision}
+                          </div>
+                          <div className="text-sm text-purple-800 dark:text-purple-200 mb-2">
+                            <strong>Why:</strong> {decision.why}
+                          </div>
+                          <div className="text-sm text-purple-700 dark:text-purple-300 italic">
+                            <strong>Impact:</strong> {decision.impact}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Story Strengths */}
+                  {(treatment as any).narrative_reasoning.story_strengths && (
+                    <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                      <h4 className="font-semibold text-green-900 dark:text-green-100 mb-2 flex items-center gap-2">
+                        <Award className="w-4 h-4" />
+                        Story Strengths
+                      </h4>
+                      <p className="text-sm text-green-800 dark:text-green-200">
+                        {(treatment as any).narrative_reasoning.story_strengths}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* User Adjustments */}
+                  {(treatment as any).narrative_reasoning.user_adjustments && (
+                    <div className="p-4 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">
+                      <h4 className="font-semibold text-amber-900 dark:text-amber-100 mb-2 flex items-center gap-2">
+                        <RefreshCw className="w-4 h-4" />
+                        Want Different Emphasis?
+                      </h4>
+                      <p className="text-sm text-amber-800 dark:text-amber-200">
+                        {(treatment as any).narrative_reasoning.user_adjustments}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          
           {/* Additional fields - handle any other fields dynamically */}
           {Object.entries(treatment).map(([key, value]) => {
             // Skip fields we've already handled
-            const handledFields = ['title', 'logline', 'synopsis', 'targetAudience', 'genre', 'duration', 'themes', 'structure'];
+            const handledFields = ['title', 'logline', 'synopsis', 'targetAudience', 'genre', 'duration', 'themes', 'structure', 'narrative_reasoning'];
             if (handledFields.includes(key)) return null;
             
             return (

@@ -65,6 +65,18 @@ interface FilmTreatmentItem {
   estimatedDurationMinutes?: number
   beats?: Array<{ title: string; intent?: string; minutes: number; synopsis?: string }>
   total_duration_seconds?: number
+  
+  // Narrative reasoning
+  narrative_reasoning?: {
+    character_focus: string
+    key_decisions: Array<{
+      decision: string
+      why: string
+      impact: string
+    }>
+    story_strengths: string
+    user_adjustments: string
+  }
 }
 
 interface FilmTreatmentResponse {
@@ -285,7 +297,21 @@ async function generateFilmTreatment(
         synopsis: beats[i]?.synopsis
       })),
       estimatedDurationMinutes: targetMinutes,
-      total_duration_seconds: totalDurationSeconds
+      total_duration_seconds: totalDurationSeconds,
+      
+      // Narrative reasoning
+      narrative_reasoning: (parsed as any).narrative_reasoning ? {
+        character_focus: String((parsed as any).narrative_reasoning.character_focus || ''),
+        key_decisions: Array.isArray((parsed as any).narrative_reasoning.key_decisions) 
+          ? ((parsed as any).narrative_reasoning.key_decisions as any[]).map((d: any) => ({
+              decision: String(d.decision || ''),
+              why: String(d.why || ''),
+              impact: String(d.impact || '')
+            }))
+          : [],
+        story_strengths: String((parsed as any).narrative_reasoning.story_strengths || ''),
+        user_adjustments: String((parsed as any).narrative_reasoning.user_adjustments || '')
+      } : undefined
     }
     
     return result

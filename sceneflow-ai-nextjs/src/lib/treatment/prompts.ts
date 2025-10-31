@@ -23,6 +23,13 @@ TARGET RUNTIME: ~${targetMinutes} minutes (±10%).
 PRIORITIES: ${formatBlock.priorities}
 ${personaBlock}${structureBlock}
 
+STORYTELLING OPTIMIZATION (PRIMARY GOAL):
+- Prioritize narrative coherence, emotional resonance, dramatic structure
+- Make bold creative decisions: combine characters, elevate subplots, shift focus
+- Emphasize elements that strengthen themes and character arcs
+- Omit/minimize elements that dilute narrative power
+- Optimize for maximum storytelling impact, not input preservation
+
 INPUT:
 ${input}
 
@@ -96,15 +103,39 @@ SCHEMA:
   ],
   "visual_style": "string",
   "audio_direction": "string",
-  "broll_suggestions": ["string"]
+  "broll_suggestions": ["string"],
+  
+  "narrative_reasoning": {
+    "character_focus": "Who is the protagonist and why? How do supporting characters serve the arc?",
+    "key_decisions": [
+      {
+        "decision": "Major creative choice made (e.g., combined characters, elevated plot point)",
+        "why": "Narrative justification (why this strengthens the story)",
+        "impact": "Effect on emotional arc, pacing, or thematic resonance"
+      }
+    ],
+    "story_strengths": "What makes this treatment compelling? Key structural and thematic strengths.",
+    "user_adjustments": "Specific guidance on how user can modify input for different emphasis"
+  }
 }
+
+NARRATIVE REASONING (REQUIRED):
+Explain your creative decisions in "narrative_reasoning" field:
+1. character_focus: Who is the protagonist? Why? How do supporting characters serve the arc?
+2. key_decisions: List 2-4 major creative choices with WHY (narrative justification) and IMPACT (effect)
+3. story_strengths: What makes this treatment compelling?
+4. user_adjustments: How can user modify input for different emphasis?
+
+Be specific and confident. Example:
+"Combined Jordan and Michael into single arc for narrative efficiency. Their shared anxiety/disability creates powerful parallel to protagonist's struggles, strengthening thematic resonance. Impact: Tighter focus, more emotional payoff."
 
 CRITICAL: 
 - Generate 3-5 detailed character_descriptions (protagonist + supporting characters)
 - Each character MUST have complete attributes: subject, ethnicity, keyFeature, hairStyle, hairColor, eyeColor, expression, build
 - Generate 3-5 detailed scene_descriptions (key locations)
 - All details must be SPECIFIC and VISUAL for precise image generation
-- Character attributes must be detailed enough to recreate consistent character images across all scenes`
+- Character attributes must be detailed enough to recreate consistent character images across all scenes
+- Generate treatment with BOLD storytelling choices and CLEAR reasoning`
 }
 
 function formatLabel(f: Format): string {
