@@ -97,11 +97,11 @@ export async function POST(request: NextRequest) {
 
         // Calculate dynamic batch size based on remaining scenes
         const calculateBatchSize = (remaining: number): number => {
-          if (remaining <= 5) return remaining
-          return Math.min(5, remaining) // Max 5 for all batches
+          if (remaining <= 3) return remaining
+          return Math.min(3, remaining) // Max 3 for all batches
         }
         
-        const INITIAL_BATCH_SIZE = Math.min(5, suggestedScenes)
+        const INITIAL_BATCH_SIZE = Math.min(3, suggestedScenes)
         const MAX_BATCH_RETRIES = 3
         let actualTotalScenes = suggestedScenes
         let allScenes: any[] = []
@@ -633,7 +633,7 @@ async function callGemini(apiKey: string, prompt: string): Promise<string> {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.3,
-          maxOutputTokens: 16384,
+          maxOutputTokens: 8192,
           responseMimeType: 'application/json'
         }
       })
@@ -648,6 +648,29 @@ async function callGemini(apiKey: string, prompt: string): Promise<string> {
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
   
   return text
+}
+
+function* streamParseScenes(jsonText: string): Generator<any[], void, unknown> {
+  // Try to extract complete scenes from partial JSON
+  // Look for "scenes" array patterns in the JSON
+  const scenePattern = /"scenes":\s*\[\s*((?:"[^"]+"|\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}|\d+|true|false|null)(?:,\s*(?:"[^"]+"|\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}|\d+|true|false|null))*)\s*\]/
+  
+  let lastIndex = 0
+  while (lastIndex < jsonText.length) {
+    const match = jsonText.slice(lastIndex).match(scenePattern)
+    if (!match) break
+    
+    try {
+      const scenesJson = `[${match[1]}]`
+      const scenes = JSON.parse(scenesJson)
+      if (Array.isArray(scenes) && scenes.length > 0) {
+        yield scenes
+      }
+    } catch {
+      // Partial match or invalid JSON, continue
+    }
+    lastIndex += (match.index || 0) + match[0].length
+  }
 }
 
 function sanitizeJsonString(jsonStr: string): string {
@@ -879,86 +902,116 @@ function extractSFXFromDialogue(scene: any): any {
 }
 
 function parseBatch1(response: string, start: number, end: number): any {
+  let parsed: any
+  let parsedScenes: any[] = []
+  
   try {
+    // Try full parse first
     const cleaned = sanitizeJsonString(response)
-    const parsed = JSON.parse(cleaned)
+    parsed = JSON.parse(cleaned)
+    parsedScenes = parsed.scenes || []
+  } catch (parseError: any) {
+    console.warn('[Parse Batch 1] Full parse failed, attempting incremental extraction...', parseError.message.substring(0, 100))
     
-    // Batch 1 returns object with totalScenes and scenes
-        return {
-          totalScenes: parsed.totalScenes || null,
-          estimatedTotalDuration: parsed.estimatedTotalDuration || 0,
-          scenes: (parsed.scenes || []).map((s: any, idx: number) => {
-            const scene = {
-              sceneNumber: start + idx,
-              heading: s.heading || `SCENE ${start + idx}`,
-              action: s.action || 'Scene content',
-              narration: s.narration || '',  // NEW: Preserve captivating narration
-              dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
-              visualDescription: s.visualDescription || s.action || 'Cinematic shot',
-              duration: s.duration || 30,  // Use AI's realistic estimate
-              sfx: Array.isArray(s.sfx) ? s.sfx.map((sfx: any) => ({
-                time: sfx.time || 0,
-                description: sfx.description || ''
-              })) : [],
-              music: s.music ? {
-                description: s.music.description || '',
-                duration: s.music.duration
-              } : undefined,
-              isExpanded: true
-            }
-            
-            // Extract SFX from dialogue (post-processing fix)
-            return extractSFXFromDialogue(scene)
-          })
-        }
-  } catch (error) {
-    console.error('[Parse Batch 1] Error:', error)
-    // Fallback
-    return {
-      totalScenes: null,
-      estimatedTotalDuration: 0,
-      scenes: []
+    // Extract as many complete scenes as possible
+    for (const sceneChunk of streamParseScenes(response)) {
+      parsedScenes.push(...sceneChunk)
     }
+    
+    if (parsedScenes.length === 0) {
+      console.error('[Parse Batch 1] No scenes recovered via incremental parsing')
+      return {
+        totalScenes: null,
+        estimatedTotalDuration: 0,
+        scenes: []
+      }
+    }
+    
+    console.log(`[Parse Batch 1] Recovered ${parsedScenes.length} scenes via incremental parsing`)
+    parsed = { scenes: parsedScenes }
+  }
+  
+  // Batch 1 returns object with totalScenes and scenes
+  return {
+    totalScenes: parsed.totalScenes || null,
+    estimatedTotalDuration: parsed.estimatedTotalDuration || 0,
+    scenes: (parsedScenes || []).map((s: any, idx: number) => {
+      const scene = {
+        sceneNumber: start + idx,
+        heading: s.heading || `SCENE ${start + idx}`,
+        action: s.action || 'Scene content',
+        narration: s.narration || '',  // NEW: Preserve captivating narration
+        dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
+        visualDescription: s.visualDescription || s.action || 'Cinematic shot',
+        duration: s.duration || 30,  // Use AI's realistic estimate
+        sfx: Array.isArray(s.sfx) ? s.sfx.map((sfx: any) => ({
+          time: sfx.time || 0,
+          description: sfx.description || ''
+        })) : [],
+        music: s.music ? {
+          description: s.music.description || '',
+          duration: s.music.duration
+        } : undefined,
+        isExpanded: true
+      }
+      
+      // Extract SFX from dialogue (post-processing fix)
+      return extractSFXFromDialogue(scene)
+    })
   }
 }
 
 function parseScenes(response: string, start: number, end: number): any {
+  let parsed: any
+  let parsedScenes: any[] = []
+  
   try {
+    // Try full parse first
     const cleaned = sanitizeJsonString(response)
-    const parsed = JSON.parse(cleaned)
-    const scenes = Array.isArray(parsed) ? parsed : (parsed.scenes || [])
+    parsed = JSON.parse(cleaned)
+    parsedScenes = Array.isArray(parsed) ? parsed : (parsed.scenes || [])
+  } catch (parseError: any) {
+    console.warn('[Parse Scenes] Full parse failed, attempting incremental extraction...', parseError.message.substring(0, 100))
     
-    // Batch 2+ returns just scenes array
-      return {
-        scenes: scenes.map((s: any, idx: number) => {
-          const scene = {
-            sceneNumber: start + idx,
-            heading: s.heading || `SCENE ${start + idx}`,
-            characters: s.characters || [],  // CRITICAL: Preserve characters array from AI
-            action: s.action || 'Scene content',
-            narration: s.narration || '',  // NEW: Preserve captivating narration
-            dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
-            visualDescription: s.visualDescription || s.action || 'Cinematic shot',
-            duration: s.duration || 30,  // Use AI's realistic estimate
-            sfx: Array.isArray(s.sfx) ? s.sfx.map((sfx: any) => ({
-              time: sfx.time || 0,
-              description: sfx.description || ''
-            })) : [],
-            music: s.music ? {
-              description: s.music.description || '',
-              duration: s.music.duration
-            } : undefined,
-            isExpanded: true
-          }
-          
-          // Extract SFX from dialogue (post-processing fix)
-          return extractSFXFromDialogue(scene)
-        })
+    // Extract as many complete scenes as possible
+    for (const sceneChunk of streamParseScenes(response)) {
+      parsedScenes.push(...sceneChunk)
+    }
+    
+    if (parsedScenes.length === 0) {
+      console.error('[Parse Scenes] No scenes recovered via incremental parsing')
+      return { scenes: [] }
+    }
+    
+    console.log(`[Parse Scenes] Recovered ${parsedScenes.length} scenes via incremental parsing`)
+  }
+  
+  // Batch 2+ returns just scenes array
+  return {
+    scenes: parsedScenes.map((s: any, idx: number) => {
+      const scene = {
+        sceneNumber: start + idx,
+        heading: s.heading || `SCENE ${start + idx}`,
+        characters: s.characters || [],  // CRITICAL: Preserve characters array from AI
+        action: s.action || 'Scene content',
+        narration: s.narration || '',  // NEW: Preserve captivating narration
+        dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
+        visualDescription: s.visualDescription || s.action || 'Cinematic shot',
+        duration: s.duration || 30,  // Use AI's realistic estimate
+        sfx: Array.isArray(s.sfx) ? s.sfx.map((sfx: any) => ({
+          time: sfx.time || 0,
+          description: sfx.description || ''
+        })) : [],
+        music: s.music ? {
+          description: s.music.description || '',
+          duration: s.music.duration
+        } : undefined,
+        isExpanded: true
       }
-  } catch (error) {
-    console.error('[Parse Scenes] Error:', error)
-    // Fallback
-    return { scenes: [] }
+      
+      // Extract SFX from dialogue (post-processing fix)
+      return extractSFXFromDialogue(scene)
+    })
   }
 }
 
