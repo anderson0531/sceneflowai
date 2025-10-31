@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 
 export const runtime = 'nodejs'
-export const maxDuration = 300  // 5 minutes for large script generation (requires Vercel Pro)
+export const maxDuration = 600  // 10 minutes for large script generation (requires Vercel Pro)
 
 export async function POST(request: NextRequest) {
   const encoder = new TextEncoder()
@@ -705,6 +705,11 @@ async function callGemini(apiKey: string, prompt: string): Promise<string> {
   const data = await response.json()
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
   
+  // Debug logging - first 500 chars
+  console.log('[Gemini Response] First 500 chars:', text.substring(0, 500))
+  console.log('[Gemini Response] Last 500 chars:', text.substring(Math.max(0, text.length - 500)))
+  console.log('[Gemini Response] Total length:', text.length)
+  
   return text
 }
 
@@ -746,6 +751,10 @@ function sanitizeJsonString(jsonStr: string): string {
   
   // SLOW PATH: Only run if needed
   try {
+    // Debug what we're working with
+    console.log('[Sanitize] Raw first 200 chars:', cleaned.substring(0, 200))
+    console.log('[Sanitize] Starts with:', cleaned.charAt(0), 'Code:', cleaned.charCodeAt(0))
+    
     // CRITICAL: Remove control chars from ENTIRE response first
     // This handles control chars in property names, not just string values
     cleaned = cleaned.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, ' ')
