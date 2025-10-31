@@ -652,7 +652,6 @@ function sanitizeJsonString(jsonStr: string): string {
     // Remove trailing commas first (lightweight fix)
     cleaned = cleaned
       .replace(/,\s*([}\]])/g, '$1')
-      .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, '')
       .trim()
     
     // Try again after lightweight fixes
