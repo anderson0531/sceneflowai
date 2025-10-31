@@ -97,12 +97,11 @@ export async function POST(request: NextRequest) {
 
         // Calculate dynamic batch size based on remaining scenes
         const calculateBatchSize = (remaining: number): number => {
-          if (remaining <= 10) return remaining
-          if (remaining <= 30) return Math.min(10, remaining)
-          return Math.min(10, remaining) // Max 10 for all batches
+          if (remaining <= 5) return remaining
+          return Math.min(5, remaining) // Max 5 for all batches
         }
         
-        const INITIAL_BATCH_SIZE = Math.min(10, suggestedScenes)
+        const INITIAL_BATCH_SIZE = Math.min(5, suggestedScenes)
         const MAX_BATCH_RETRIES = 3
         let actualTotalScenes = suggestedScenes
         let allScenes: any[] = []
@@ -513,6 +512,14 @@ AUDIO FIELD REQUIREMENTS:
 - music: Also store as object for advanced features
 - Keep descriptions short (e.g., "car horn", "glass breaking", "suspenseful strings")
 
+CRITICAL JSON FORMATTING RULES:
+- Return ONLY valid JSON - no markdown, no explanations
+- Property names MUST be double-quoted
+- String values MUST be properly escaped
+- NO control characters (tabs, newlines) except in escaped form (\\n, \\t)
+- NO trailing commas
+- Validate JSON structure before returning
+
 CRITICAL:
 1. Determine total scene count that best fits ${targetDuration}s story
 2. Estimate accurate durations (don't use arbitrary numbers)
@@ -598,6 +605,14 @@ SCRIPT FORMAT REQUIREMENTS (CRITICAL):
 - Add separate "Music: [description]" line for background music
 - Keep audio descriptions concise
 
+CRITICAL JSON FORMATTING RULES:
+- Return ONLY valid JSON - no markdown, no explanations
+- Property names MUST be double-quoted
+- String values MUST be properly escaped
+- NO control characters (tabs, newlines) except in escaped form (\\n, \\t)
+- NO trailing commas
+- Validate JSON structure before returning
+
 FOCUS ON:
 1. Quality, engaging writing
 2. Natural dialogue
@@ -610,15 +625,16 @@ Complete the script with accurate duration estimates.`
 
 async function callGemini(apiKey: string, prompt: string): Promise<string> {
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 16384
+          temperature: 0.3,
+          maxOutputTokens: 16384,
+          responseMimeType: 'application/json'
         }
       })
     }
