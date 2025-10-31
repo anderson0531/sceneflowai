@@ -436,6 +436,14 @@ SCENE PLANNING:
 - Total target: ${targetDuration}s (±10% is fine)
 - REQUIRED total scenes: ${suggested} scenes (you MUST use ${suggested}, can adjust ±2 if absolutely necessary for story flow)
 - Generate first ${end} scenes now
+- Average scene: ~${Math.ceil(targetDuration / suggested)}s
+
+DURATION GUIDELINES:
+- Short scene (24s): ~15-20 words narration + 30-40 words dialogue
+- Medium scene (40s): ~30-40 words narration + 60-80 words dialogue  
+- Long scene (56s): ~50-60 words narration + 100-120 words dialogue
+
+Target average: ~${Math.ceil(targetDuration / suggested)}s = ~${Math.ceil((targetDuration / suggested) * 150 / 60)} total words per scene
 
 DURATION ESTIMATION (CRITICAL):
 Calculate REALISTIC duration using this verified formula:
@@ -482,6 +490,12 @@ Return JSON:
     }
   ]
 }
+
+CRITICAL DURATION REQUIREMENTS:
+- Each scene must have sufficient narration + dialogue to meet duration targets
+- DO NOT write short, sparse scenes - be descriptive and engaging
+- Aim for ~${Math.ceil((targetDuration / suggested) * 150 / 60)} words per scene average
+- Longer scenes (with more dialogue) are better than many short scenes
 
 NARRATION REQUIREMENTS (CRITICAL):
 - Each scene MUST include a "narration" field with captivating voiceover narration (1-2 sentences)
@@ -565,18 +579,42 @@ DURATION TARGET:
 - Estimate realistically based on actual content
 - Total target: ${targetDuration}s (±10%)
 
-DURATION ESTIMATION (CRITICAL):
-Use this verified formula matching production calculations:
+DURATION ESTIMATION FORMULA (FOLLOW EXACTLY):
 
-1. Count TOTAL words (narration + all dialogue)
-2. Speech: (total_words / 150) * 60 seconds (150 WPM)
-3. Buffer: 2-5s based on action description length
-4. Video clips: Math.ceil((speech + buffer) / 8) * 0.5s
-5. Round to nearest 8 (for 8-second clips)
+Step 1: Count total words
+- Count ALL words in narration text
+- Count ALL words in all dialogue lines
+- total_words = narration_words + dialogue_words
 
-Formula: Math.ceil((speech_duration + buffer + (video_clips * 0.5)) / 8) * 8
+Step 2: Calculate audio duration
+- audio_duration = (total_words / 150) * 60 seconds
+- (150 words per minute speech rate)
 
-Base estimates on TOTAL word count, not separate narration/dialogue rates.
+Step 3: Add buffer for actions
+- If action description < 100 chars: buffer = 2s
+- If action description 100-200 chars: buffer = 3s
+- If action description 200-300 chars: buffer = 4s
+- If action description > 300 chars: buffer = 5s
+
+Step 4: Calculate video clips needed
+- required_duration = audio_duration + buffer
+- video_count = Math.ceil(required_duration / 8)
+
+Step 5: Calculate final scene duration
+- scene_duration = audio_duration + buffer + (video_count * 0.5)
+- ROUND UP to nearest multiple of 8
+
+Example:
+- Narration: 30 words, Dialogue: 45 words = 75 total
+- Audio: (75 / 150) * 60 = 30s
+- Buffer: 3s (medium action)
+- Required: 30 + 3 = 33s
+- Videos: Math.ceil(33 / 8) = 5 clips
+- Scene: 30 + 3 + (5 * 0.5) = 35.5s
+- FINAL: Math.ceil(35.5 / 8) * 8 = 40s
+
+CRITICAL: Write MORE dialogue and narration to reach target durations.
+Average ${avgNeeded}s per scene requires ~${Math.ceil(avgNeeded * 150 / 60)} words per scene.
 
 Return JSON array:
 [
