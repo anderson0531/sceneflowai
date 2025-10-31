@@ -755,21 +755,57 @@ function sanitizeJsonString(jsonStr: string): string {
     console.log('[Sanitize] Raw first 200 chars:', cleaned.substring(0, 200))
     console.log('[Sanitize] Starts with:', cleaned.charAt(0), 'Code:', cleaned.charCodeAt(0))
     
-    // STEP 1: Fix control characters in strings FIRST (most critical)
-    cleaned = cleaned.replace(
-      /"((?:[^"\\]|\\.)*)"/g,  // Match JSON strings (with escapes)
-      (match, stringContent) => {
-        // Escape control characters within the string content
-        const fixed = stringContent
-          .replace(/\\/g, '\\\\')      // Escape backslashes first
-          .replace(/\n/g, '\\n')        // Escape newlines
-          .replace(/\r/g, '\\r')        // Escape carriage returns
-          .replace(/\t/g, '\\t')        // Escape tabs
-          .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, '') // Remove other control chars
-        
-        return `"${fixed}"`
+    // STEP 1: Fix control characters in strings using state machine (most critical)
+    let result = ''
+    let inString = false
+    let escaped = false
+    
+    for (let i = 0; i < cleaned.length; i++) {
+      const char = cleaned[i]
+      const code = cleaned.charCodeAt(i)
+      
+      // Handle escape sequences
+      if (escaped) {
+        result += char
+        escaped = false
+        continue
       }
-    )
+      
+      // Check for backslash (escape character)
+      if (char === '\\' && inString) {
+        result += char
+        escaped = true
+        continue
+      }
+      
+      // Check for quotes (string delimiters)
+      if (char === '"') {
+        inString = !inString
+        result += char
+        continue
+      }
+      
+      // Inside a string: escape control characters
+      if (inString) {
+        if (char === '\n') {
+          result += '\\n'
+        } else if (char === '\r') {
+          result += '\\r'
+        } else if (char === '\t') {
+          result += '\\t'
+        } else if (code >= 0x00 && code <= 0x1F && code !== 0x09 && code !== 0x0A && code !== 0x0D) {
+          // Skip other control characters (don't include them)
+          continue
+        } else {
+          result += char
+        }
+      } else {
+        // Outside strings: keep everything as-is (including formatting newlines)
+        result += char
+      }
+    }
+    
+    cleaned = result
     
     // STEP 2: Remove trailing commas (lightweight fix)
     cleaned = cleaned
@@ -777,10 +813,14 @@ function sanitizeJsonString(jsonStr: string): string {
       .trim()
     
     // Try parse after these two critical fixes
+    console.log('[Sanitize] After control char fix, first 200:', cleaned.substring(0, 200))
     try {
       JSON.parse(cleaned)
+      console.log('[Sanitize] SUCCESS after control char fix')
       return cleaned
-    } catch {}
+    } catch (err: any) {
+      console.warn('[Sanitize] Still failed after control char fix:', err.message.substring(0, 100))
+    }
     
     // Check if response looks truncated (ends mid-structure)
     const endsWithComma = /,\s*$/.test(cleaned)
