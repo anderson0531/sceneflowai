@@ -1993,12 +1993,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     try {
       console.log('[Vision] Adding character:', characterData)
       
+      // Ensure character has an ID
+      const characterWithId = {
+        ...characterData,
+        id: characterData.id || uuidv4()
+      }
+      
       const response = await fetch('/api/vision/characters', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId,
-          character: characterData
+          character: characterWithId
         })
       })
       
@@ -2007,18 +2013,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         throw new Error(error.error || 'Failed to add character')
       }
       
+      const { toast } = require('sonner')
+      toast.success('Character added successfully!')
+      
       // Reload project to get updated characters
       await loadProject()
       
-      try {
-        const { toast } = require('sonner')
-        toast.success('Character added successfully!')
-      } catch {}
-    } catch (error) {
+      console.log('[Vision] Character added and project reloaded')
+    } catch (error: any) {
       console.error('[Vision] Error adding character:', error)
       try {
         const { toast } = require('sonner')
-        toast.error('Failed to add character')
+        toast.error(error.message || 'Failed to add character')
       } catch {}
     }
   }
