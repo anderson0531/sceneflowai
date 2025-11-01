@@ -49,6 +49,7 @@
                 "fountain-js": "^1.2.4",
                 "framer-motion": "^12.23.12",
                 "google-auth-library": "^9.11.0",
+                "inngest": "^3.44.4",
                 "jsonwebtoken": "^9.0.2",
                 "jszip": "^3.10.1",
                 "lodash": "^4.17.21",

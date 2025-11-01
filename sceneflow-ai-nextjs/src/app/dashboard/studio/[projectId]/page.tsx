@@ -162,7 +162,7 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
 
   // Duration controls state
   const [format, setFormat] = useState<'youtube'|'short_film'|'documentary'|'education'|'training'>('documentary')
-  const [targetMinutes, setTargetMinutes] = useState<number>(20)
+  const [filmType, setFilmType] = useState<'short_film'|'featurette'|'feature_length'|'micro_short'|'epic'>('short_film')
   const [rigor] = useState<'fast'|'balanced'|'thorough'>('thorough')
   const [beatStructure, setBeatStructure] = useState<'three_act'|'save_the_cat'|'heros_journey'|'mini_doc'|'instructional'>(()=>{
     if (format==='documentary' || format==='youtube') return 'mini_doc'
@@ -192,7 +192,7 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
       const res = await fetch('/api/ideation/film-treatment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input: text, variants: 1, provider: 'gemini', format, targetMinutes, rigor: opts?.rigor ?? rigor, beatStructure, persona: opts?.persona })
+        body: JSON.stringify({ input: text, variants: 1, provider: 'gemini', format, filmType, rigor: opts?.rigor ?? rigor, beatStructure, persona: opts?.persona })
       })
       const json = await res.json().catch(() => null)
       if (json?.success) {
@@ -251,9 +251,8 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
     }
   }
 
-  const quickAdjust = async (mins: number) => {
-    const m = Math.max(5, Math.min(60, Math.floor(mins)))
-    setTargetMinutes(m)
+  const quickFilmType = async (type: 'short_film'|'featurette'|'feature_length'|'micro_short'|'epic') => {
+    setFilmType(type)
     if (!lastInputRef.current) return
     await onGenerate(lastInputRef.current)
   }
@@ -358,44 +357,23 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
                         </Select>
                       </div>
                       
-                      {/* Target Minutes */}
+                      {/* Film Type */}
                       <div>
                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                          Target Duration (minutes)
+                          Film Type
                         </label>
-                        <Input 
-                          type="number" 
-                          value={targetMinutes} 
-                          onChange={(e)=> setTargetMinutes(() => {
-                            const v = Number(e.target.value)
-                            if (!Number.isFinite(v)) return 20
-                            return Math.max(5, Math.min(60, Math.floor(v)))
-                          })} 
-                          className="w-full"
-                          min={5}
-                          max={60}
-                        />
-                      </div>
-                    </div>
-                    
-                    {/* Quick Duration Presets */}
-                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs text-gray-500 dark:text-gray-400">Quick presets:</span>
-                        {[5, 10, 15, 20, 30, 45, 60].map(m => (
-                          <button 
-                            key={m} 
-                            type="button" 
-                            onClick={()=>setTargetMinutes(m)} 
-                            className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-                              m===targetMinutes
-                                ? 'bg-blue-500/10 text-blue-400 border-blue-500/30 font-medium' 
-                                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'
-                            }`}
-                          >
-                            {m}m
-                          </button>
-                        ))}
+                        <Select value={filmType} onValueChange={(v)=>setFilmType(v as any)}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select film type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="micro_short">Micro Short (1-5 min)</SelectItem>
+                            <SelectItem value="short_film">Short Film (5-15 min)</SelectItem>
+                            <SelectItem value="featurette">Featurette (15-40 min)</SelectItem>
+                            <SelectItem value="feature_length">Feature Length (40-90 min)</SelectItem>
+                            <SelectItem value="epic">Epic (90+ min)</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>
@@ -441,22 +419,28 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
                   </span>
                 </div>
                 
-                {/* Duration Adjustment Controls */}
+                {/* Film Type Controls */}
                 <div className="mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Adjust to:</span>
-                    {[10,15,20,25,30,45,60,90,120].map(m => (
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Regenerate as:</span>
+                    {[
+                      { value: 'micro_short', label: 'Micro' },
+                      { value: 'short_film', label: 'Short' },
+                      { value: 'featurette', label: 'Featurette' },
+                      { value: 'feature_length', label: 'Feature' },
+                      { value: 'epic', label: 'Epic' }
+                    ].map(ft => (
                       <button 
-                        key={m} 
+                        key={ft.value} 
                         type="button" 
-                        onClick={()=>quickAdjust(m)} 
+                        onClick={()=>quickFilmType(ft.value as any)} 
                         className={`text-xs px-2.5 py-1 rounded-md border transition-colors ${
-                          m===targetMinutes
+                          ft.value===filmType
                             ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' 
                             : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                       >
-                        {m}m
+                        {ft.label}
                       </button>
                     ))}
                   </div>

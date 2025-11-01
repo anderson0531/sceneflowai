@@ -20,7 +20,8 @@ interface FilmTreatmentRequest {
   duration?: number
   platform?: string
   format?: 'youtube'|'short_film'|'documentary'|'education'|'training'
-  targetMinutes?: number
+  targetMinutes?: number  // Legacy, kept for backward compatibility
+  filmType?: 'micro_short'|'short_film'|'featurette'|'feature_length'|'epic'
   rigor?: 'fast'|'balanced'|'thorough'
   beatStructure?: BeatStructureKey
   variants?: number // default 3
@@ -93,6 +94,18 @@ interface CoreConceptData {
   narrative_structure: string
 }
 
+// Map film type to target minutes estimate
+function getFilmTypeMinutes(filmType?: string): number {
+  switch (filmType) {
+    case 'micro_short': return 3  // 1-5 min average
+    case 'short_film': return 10  // 5-15 min average
+    case 'featurette': return 25  // 15-40 min average
+    case 'feature_length': return 65  // 40-90 min average
+    case 'epic': return 120  // 90+ min average
+    default: return 20  // fallback
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body: FilmTreatmentRequest = await request.json()
@@ -100,7 +113,10 @@ export async function POST(request: NextRequest) {
     let { coreConcept } = body
     const variantsCount = Math.max(1, Math.min(body.variants || 1, 5))
     const format = body.format || 'documentary'
-    const targetMinutes = body.targetMinutes || analyzeDuration(input, 20)
+    // Prefer filmType over targetMinutes, but fall back to analyzeDuration if neither provided
+    const targetMinutes = body.filmType 
+      ? getFilmTypeMinutes(body.filmType)
+      : (body.targetMinutes || analyzeDuration(input, 20))
 
     if (!input) {
       return NextResponse.json({ success: false, message: 'Input content is required' }, { status: 400 })
@@ -187,7 +203,7 @@ async function generateFilmTreatment(
     persona: (context as any)?.persona ?? null
   }) + retryHint + strictJsonPromptSuffix
 
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${apiKey}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
