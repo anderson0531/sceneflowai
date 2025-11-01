@@ -218,47 +218,7 @@ async function generateFilmTreatment(
       generationConfig: {
         temperature: 0.3,
         responseMimeType: 'application/json',
-        responseSchema: {
-          type: 'object',
-          properties: {
-            // Flattened structure: narrative_reasoning fields at top level
-            character_focus: { type: 'string' },
-            key_decisions: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  decision: { type: 'string' },
-                  why: { type: 'string' },
-                  impact: { type: 'string' }
-                }
-              }
-            },
-            story_strengths: { type: 'string' },
-            user_adjustments: { type: 'string' },
-
-            // Original top-level properties
-            title: { type: 'string' },
-            logline: { type: 'string' },
-            synopsis: { type: 'string' },
-            genre: { type: 'string' },
-
-            // Fixed array definitions with items
-            beats: {
-              type: 'array',
-              items: { type: 'object' }
-            },
-            character_descriptions: {
-              type: 'array',
-              items: { type: 'object' }
-            },
-            scene_descriptions: {
-              type: 'array',
-              items: { type: 'object' }
-            }
-          },
-          required: ['character_focus', 'key_decisions', 'story_strengths', 'user_adjustments', 'title', 'logline', 'synopsis', 'beats']
-        }
+        // responseSchema removed to prevent 400 Bad Request error
       }
     }),
   })

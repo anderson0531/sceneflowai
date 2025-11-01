@@ -58,18 +58,16 @@ SCHEMA:
 {
   "estimatedDurationMinutes": ${targetMinutes},
   
-  "narrative_reasoning": {
-    "character_focus": "Who is the protagonist and why? How do supporting characters serve the arc?",
-    "key_decisions": [
-      {
-        "decision": "Major creative choice made",
-        "why": "Narrative justification",
-        "impact": "Effect on emotional arc, pacing, or thematic resonance"
-      }
-    ],
-    "story_strengths": "What makes this treatment compelling?",
-    "user_adjustments": "How can user modify input for different emphasis?"
-  },
+  "character_focus": "Who is the protagonist and why? How do supporting characters serve the arc?",
+  "key_decisions": [
+    {
+      "decision": "Major creative choice made",
+      "why": "Narrative justification",
+      "impact": "Effect on emotional arc, pacing, or thematic resonance"
+    }
+  ],
+  "story_strengths": "What makes this treatment compelling?",
+  "user_adjustments": "How can user modify input for different emphasis?",
   
   "title": "Proposed title",
   "logline": "One- or two-sentence hook",
