@@ -223,14 +223,12 @@ async function generateFilmTreatment(
           properties: {
             narrative_reasoning: {
               type: 'object',
-              required: ['character_focus', 'key_decisions', 'story_strengths', 'user_adjustments'],
               properties: {
                 character_focus: { type: 'string' },
                 key_decisions: {
                   type: 'array',
                   items: {
                     type: 'object',
-                    required: ['decision', 'why', 'impact'],
                     properties: {
                       decision: { type: 'string' },
                       why: { type: 'string' },
