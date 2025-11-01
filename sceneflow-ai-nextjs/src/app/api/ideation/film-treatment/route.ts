@@ -216,8 +216,40 @@ async function generateFilmTreatment(
         }]
       }],
       generationConfig: {
-        temperature: 0.7,
-        responseMimeType: 'application/json'
+        temperature: 0.3,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: 'object',
+          properties: {
+            narrative_reasoning: {
+              type: 'object',
+              properties: {
+                character_focus: { type: 'string' },
+                key_decisions: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      decision: { type: 'string' },
+                      why: { type: 'string' },
+                      impact: { type: 'string' }
+                    }
+                  }
+                },
+                story_strengths: { type: 'string' },
+                user_adjustments: { type: 'string' }
+              }
+            },
+            title: { type: 'string' },
+            logline: { type: 'string' },
+            synopsis: { type: 'string' },
+            genre: { type: 'string' },
+            beats: { type: 'array' },
+            character_descriptions: { type: 'array' },
+            scene_descriptions: { type: 'array' }
+          },
+          required: ['narrative_reasoning', 'title', 'logline', 'synopsis', 'beats']
+        }
       }
     }),
   })
@@ -320,7 +352,7 @@ async function generateFilmTreatment(
       estimatedDurationMinutes: targetMinutes,
       total_duration_seconds: totalDurationSeconds,
       
-      // Narrative reasoning
+      // Narrative reasoning - always return an object
       narrative_reasoning: (parsed as any).narrative_reasoning ? {
         character_focus: String((parsed as any).narrative_reasoning.character_focus || ''),
         key_decisions: Array.isArray((parsed as any).narrative_reasoning.key_decisions) 
@@ -332,7 +364,12 @@ async function generateFilmTreatment(
           : [],
         story_strengths: String((parsed as any).narrative_reasoning.story_strengths || ''),
         user_adjustments: String((parsed as any).narrative_reasoning.user_adjustments || '')
-      } : undefined
+      } : {
+        character_focus: 'Not provided by AI',
+        key_decisions: [],
+        story_strengths: 'Not provided by AI',
+        user_adjustments: 'Regenerate the treatment to see AI reasoning'
+      }
     }
     
     console.log('[Film Treatment] narrative_reasoning present:', !!(parsed as any).narrative_reasoning)

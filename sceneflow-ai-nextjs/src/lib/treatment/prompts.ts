@@ -47,11 +47,12 @@ CONTEXT:
 - Style Hint: ${styleHint || 'N/A'}
 
 OUTPUT RULES:
-- Return ONLY valid JSON matching the schema below.
+- **YOU MUST RETURN** a single, valid JSON object matching the schema below.
+- **DO NOT** add any conversational text, markdown formatting, or explanations outside the JSON.
+- **THE "narrative_reasoning" FIELD IS MANDATORY.** It must be the first field in your JSON output.
 - Beat durations MUST sum to ~${targetMinutes} minutes (±10%).
 - Be concise and engaging. Avoid fluff.
-- Do NOT use placeholders like "General audience"; provide a concrete audience description (e.g., "aspiring product designers age 18–30").
-- **CRITICAL: The "narrative_reasoning" field is MANDATORY. Do NOT omit it.**
+- Do NOT use placeholders like "General audience"; provide concrete descriptions.
 
 SCHEMA:
 {
@@ -121,30 +122,24 @@ SCHEMA:
   "broll_suggestions": ["string"]
 }
 
-NARRATIVE REASONING (REQUIRED - DO NOT SKIP):
-This field is MANDATORY. Explain your creative decisions:
-1. character_focus: Who is the protagonist? Why? How do supporting characters serve the arc?
-2. key_decisions: List 2-4 major creative choices with WHY and IMPACT
-3. story_strengths: What makes this treatment compelling?
-4. user_adjustments: How can user modify input for different emphasis?
-
-EXAMPLE narrative_reasoning:
+COMPLETE OUTPUT EXAMPLE:
 {
-  "character_focus": "Brian Anderson is the protagonist because his journey from corporate burnout to creative fulfillment embodies the core transformation. Supporting characters (mentor Sarah, colleague Marcus) serve as catalysts and mirrors for his internal conflict.",
-  "key_decisions": [
-    {
-      "decision": "Combined Jordan and Michael into single character arc",
-      "why": "Their shared anxiety/disability creates powerful parallel to protagonist's struggles",
-      "impact": "Tighter focus, stronger thematic resonance, more emotional payoff"
-    },
-    {
-      "decision": "Elevated the 'midnight coding session' from background detail to climactic beat",
-      "why": "This moment crystallizes the protagonist's transformation and commitment",
-      "impact": "Creates powerful visual metaphor, strengthens Act 2 turning point"
-    }
-  ],
-  "story_strengths": "Strong character arc with clear stakes, relatable conflict, satisfying resolution. Visual storytelling opportunities in contrasting corporate/creative environments.",
-  "user_adjustments": "To emphasize family dynamics more, add Sarah's perspective as a parallel storyline. To focus on technical journey, expand the coding/problem-solving sequences."
+  "narrative_reasoning": {
+    "character_focus": "Sarah Chen is the protagonist because her journey from self-doubt to confidence embodies the transformation theme.",
+    "key_decisions": [
+      {
+        "decision": "Made the mentor a former failure rather than a success",
+        "why": "Creates deeper empathy and shows that failure is part of growth",
+        "impact": "Strengthens the theme and makes the mentor more relatable"
+      }
+    ],
+    "story_strengths": "Clear emotional arc with universal themes of perseverance and self-discovery.",
+    "user_adjustments": "To emphasize technical skills, expand the training sequences. To focus on relationships, add more mentor-student dialogue."
+  },
+  "title": "Rising from Ashes",
+  "logline": "A young entrepreneur learns that failure is the foundation of success.",
+  "synopsis": "A compelling story of personal growth and overcoming challenges.",
+  "beats": [...]
 }
 
 CRITICAL: 

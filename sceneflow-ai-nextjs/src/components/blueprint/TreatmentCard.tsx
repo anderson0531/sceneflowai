@@ -728,66 +728,77 @@ export function TreatmentCard() {
                         <ChevronDown className={`w-5 h-5 transition-transform ${showReasoning ? 'rotate-180' : ''}`} />
                       </button>
                       
-                      {showReasoning && (v as any).narrative_reasoning && (
+                      {showReasoning && (
                         <div className="mt-4 space-y-4">
-                          {/* Character Focus */}
-                          <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-                            <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
-                              <Users className="w-4 h-4" />
-                              Character Focus
-                            </h4>
-                            <p className="text-sm text-blue-800 dark:text-blue-200">
-                              {(v as any).narrative_reasoning.character_focus}
-                            </p>
-                          </div>
-                          
-                          {/* Key Decisions */}
-                          {(v as any).narrative_reasoning.key_decisions && Array.isArray((v as any).narrative_reasoning.key_decisions) && (v as any).narrative_reasoning.key_decisions.length > 0 && (
-                            <div className="space-y-3">
-                              <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                                <SparklesIcon className="w-4 h-4 text-purple-500" />
-                                Key Creative Decisions
-                              </h4>
-                              {(v as any).narrative_reasoning.key_decisions.map((decision: any, idx: number) => (
-                                <div key={idx} className="p-4 bg-purple-50 dark:bg-purple-950 rounded-lg border-l-4 border-purple-500">
-                                  <div className="font-medium text-purple-900 dark:text-purple-100 mb-1">
-                                    {decision.decision}
-                                  </div>
-                                  <div className="text-sm text-purple-800 dark:text-purple-200 mb-2">
-                                    <strong>Why:</strong> {decision.why}
-                                  </div>
-                                  <div className="text-sm text-purple-700 dark:text-purple-300 italic">
-                                    <strong>Impact:</strong> {decision.impact}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          
-                          {/* Story Strengths */}
-                          {(v as any).narrative_reasoning.story_strengths && (
-                            <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
-                              <h4 className="font-semibold text-green-900 dark:text-green-100 mb-2 flex items-center gap-2">
-                                <Award className="w-4 h-4" />
-                                Story Strengths
-                              </h4>
-                              <p className="text-sm text-green-800 dark:text-green-200">
-                                {(v as any).narrative_reasoning.story_strengths}
-                              </p>
-                            </div>
-                          )}
-                          
-                          {/* User Adjustments */}
-                          {(v as any).narrative_reasoning.user_adjustments && (
+                          {/* Show message if reasoning is empty */}
+                          {!(v as any).narrative_reasoning.character_focus && !(v as any).narrative_reasoning.story_strengths ? (
                             <div className="p-4 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">
-                              <h4 className="font-semibold text-amber-900 dark:text-amber-100 mb-2 flex items-center gap-2">
-                                <RefreshCw className="w-4 h-4" />
-                                Want Different Emphasis?
-                              </h4>
                               <p className="text-sm text-amber-800 dark:text-amber-200">
-                                {(v as any).narrative_reasoning.user_adjustments}
+                                The AI did not provide narrative reasoning for this treatment. Try regenerating to see the AI's creative decisions.
                               </p>
                             </div>
+                          ) : (
+                            <>
+                              {/* Character Focus */}
+                              <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                                <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
+                                  <Users className="w-4 h-4" />
+                                  Character Focus
+                                </h4>
+                                <p className="text-sm text-blue-800 dark:text-blue-200">
+                                  {(v as any).narrative_reasoning.character_focus}
+                                </p>
+                              </div>
+                              
+                              {/* Key Decisions */}
+                              {(v as any).narrative_reasoning.key_decisions && Array.isArray((v as any).narrative_reasoning.key_decisions) && (v as any).narrative_reasoning.key_decisions.length > 0 && (
+                                <div className="space-y-3">
+                                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                    <SparklesIcon className="w-4 h-4 text-purple-500" />
+                                    Key Creative Decisions
+                                  </h4>
+                                  {(v as any).narrative_reasoning.key_decisions.map((decision: any, idx: number) => (
+                                    <div key={idx} className="p-4 bg-purple-50 dark:bg-purple-950 rounded-lg border-l-4 border-purple-500">
+                                      <div className="font-medium text-purple-900 dark:text-purple-100 mb-1">
+                                        {decision.decision}
+                                      </div>
+                                      <div className="text-sm text-purple-800 dark:text-purple-200 mb-2">
+                                        <strong>Why:</strong> {decision.why}
+                                      </div>
+                                      <div className="text-sm text-purple-700 dark:text-purple-300 italic">
+                                        <strong>Impact:</strong> {decision.impact}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              
+                              {/* Story Strengths */}
+                              {(v as any).narrative_reasoning.story_strengths && (
+                                <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                                  <h4 className="font-semibold text-green-900 dark:text-green-100 mb-2 flex items-center gap-2">
+                                    <Award className="w-4 h-4" />
+                                    Story Strengths
+                                  </h4>
+                                  <p className="text-sm text-green-800 dark:text-green-200">
+                                    {(v as any).narrative_reasoning.story_strengths}
+                                  </p>
+                                </div>
+                              )}
+                              
+                              {/* User Adjustments */}
+                              {(v as any).narrative_reasoning.user_adjustments && (
+                                <div className="p-4 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">
+                                  <h4 className="font-semibold text-amber-900 dark:text-amber-100 mb-2 flex items-center gap-2">
+                                    <RefreshCw className="w-4 h-4" />
+                                    Want Different Emphasis?
+                                  </h4>
+                                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                                    {(v as any).narrative_reasoning.user_adjustments}
+                                  </p>
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                       )}
