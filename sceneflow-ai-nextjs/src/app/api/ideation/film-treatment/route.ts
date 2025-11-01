@@ -331,6 +331,11 @@ async function generateFilmTreatment(
       } : undefined
     }
     
+    console.log('[Film Treatment] narrative_reasoning present:', !!(parsed as any).narrative_reasoning)
+    if ((parsed as any).narrative_reasoning) {
+      console.log('[Film Treatment] narrative_reasoning data:', JSON.stringify((parsed as any).narrative_reasoning, null, 2))
+    }
+    
     return result
     
   } catch (parseError: any) {

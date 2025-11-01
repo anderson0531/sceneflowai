@@ -234,6 +234,14 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
             estimatedDurationMinutes: v.estimatedDurationMinutes,  // CRITICAL: Include estimate!
             narrative_reasoning: v.narrative_reasoning  // Include narrative reasoning
           })))
+          
+          // Log narrative reasoning for each variant
+          variants.forEach((v: any) => {
+            console.log('[Blueprint] Variant narrative_reasoning:', v.narrative_reasoning ? 'Present' : 'Missing')
+            if (v.narrative_reasoning) {
+              console.log('[Blueprint] narrative_reasoning data:', v.narrative_reasoning)
+            }
+          })
         }
         const treatment = json?.data?.film_treatment || ''
         if (treatment) updateTreatment(String(treatment))
@@ -265,6 +273,20 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
     if (!lastInputRef.current) return
     await onGenerate(lastInputRef.current)
   }
+
+  // Listen for regenerate events from TreatmentCard
+  useEffect(() => {
+    const handleRegenerate = (e: CustomEvent) => {
+      const newFilmType = e.detail?.filmType
+      if (newFilmType && lastInput) {
+        setFilmType(newFilmType)
+        // Trigger regeneration
+        onGenerate(lastInput)
+      }
+    }
+    window.addEventListener('sf:regenerate-treatment' as any, handleRegenerate as any)
+    return () => window.removeEventListener('sf:regenerate-treatment' as any, handleRegenerate as any)
+  }, [lastInput])
 
   return (
     <div className="flex flex-col h-full bg-gray-950 text-white overflow-hidden">
@@ -416,64 +438,6 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
             </div>
             
             <TreatmentCard />
-            
-            {/* Beats Panel - Vision style */}
-            {beatsView.length > 0 && (
-              <div className="mt-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <BarChart3 className="w-5 h-5 text-orange-500" />
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Story Beats</h3>
-                  <span className="text-xs px-2 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30 font-medium">
-                    ≈ {estimatedRuntime ?? beatsView.reduce((s,b)=>s + (b.minutes||0),0)} min
-                  </span>
-                </div>
-                
-                {/* Film Type Controls */}
-                <div className="mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Regenerate as:</span>
-                    {[
-                      { value: 'micro_short', label: 'Micro' },
-                      { value: 'short_film', label: 'Short' },
-                      { value: 'featurette', label: 'Featurette' },
-                      { value: 'feature_length', label: 'Feature' },
-                      { value: 'epic', label: 'Epic' }
-                    ].map(ft => (
-                      <button 
-                        key={ft.value} 
-                        type="button" 
-                        onClick={()=>quickFilmType(ft.value as any)} 
-                        className={`text-xs px-2.5 py-1 rounded-md border transition-colors ${
-                          ft.value===filmType
-                            ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' 
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'
-                        }`}
-                      >
-                        {ft.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Beats List */}
-                <div className="space-y-2">
-                  {beatsView.map((b,i)=> (
-                    <div 
-                      key={`${b.title}-${i}`} 
-                      className="flex items-start justify-between gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700"
-                    >
-                      <div className="flex-1">
-                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{b.title}</div>
-                        {b.intent && <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{b.intent}</div>}
-                      </div>
-                      <div className="shrink-0 px-2 py-1 rounded-md bg-blue-500/10 text-blue-400 text-xs font-medium border border-blue-500/30">
-                        {Number(b.minutes||0).toFixed(1)} min
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
             
             {/* Continue to Vision CTA - Only show after treatment is generated */}
             {(guide as any).treatmentVariants && Array.isArray((guide as any).treatmentVariants) && (guide as any).treatmentVariants.length > 0 && (
