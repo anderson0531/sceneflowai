@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/Input";
-import { DownloadIcon, Edit, ChevronUp, Save, Settings, FileText, BarChart3, ChevronRight, Check } from "lucide-react";
+import { DownloadIcon, Edit, ChevronUp, Save, Settings, FileText, BarChart3, ChevronRight, Check, HelpCircle } from "lucide-react";
 import { useGuideStore } from "@/store/useGuideStore";
 import { useStore } from '@/store/useStore'
 import { useCue } from "@/store/useCueStore";
@@ -32,6 +32,7 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
   const { currentProject, setCurrentProject, setBeats } = useStore();
   const [isNewProject, setIsNewProject] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [showStructureHelp, setShowStructureHelp] = useState(false);
   // Single-phase view (Film Concept) – Vision exists as its own page
 
   const isProjectCreated = !!(guide.filmTreatment && guide.filmTreatment.trim() !== '' && guide.title && guide.title !== 'Untitled Project');
@@ -344,9 +345,18 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
                 <>
                   {/* Configuration Section - Vision page style */}
                   <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <Settings className="w-5 h-5 text-blue-500" />
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Project Configuration</h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <Settings className="w-5 h-5 text-blue-500" />
+                        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Film Structure</h3>
+                      </div>
+                      <button
+                        onClick={() => setShowStructureHelp(true)}
+                        className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        title="Learn about Film Structure options"
+                      >
+                        <HelpCircle className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                      </button>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -469,6 +479,187 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
           <GeneratingOverlay visible={isGen} title="Crafting Film Treatment..." progress={genProgress} />
         </main>
       </div>
+
+      {/* Film Structure Help Overlay */}
+      {showStructureHelp && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowStructureHelp(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Settings className="w-6 h-6 text-blue-500" />
+                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Film Structure Guide</h2>
+              </div>
+              <button
+                onClick={() => setShowStructureHelp(false)}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <span className="text-2xl text-gray-500 dark:text-gray-400">×</span>
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              {/* Introduction */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  Film Structure settings guide the AI in generating your Film Treatment. These choices determine the narrative framework, pacing, and overall approach to your story.
+                </p>
+              </div>
+
+              {/* Format Section */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                  Format
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  Defines the delivery platform and content style, which influences tone, pacing, and structural priorities.
+                </p>
+                <div className="space-y-3">
+                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                    <div className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">YouTube</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Optimized for retention and engagement. Includes strong opening hooks, clear segments, and calls-to-action. Best for educational content, vlogs, and tutorials.
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                    <div className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Short Film</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Cinematic three-act structure with character tension and emotional arcs. Focuses on visual storytelling and dramatic pacing.
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                    <div className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Documentary</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Compelling narrative arc with strong voiceover plan and visual motifs. Emphasizes real-world storytelling and audience engagement cues.
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                    <div className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Education</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Clear learning objectives with scaffolded sections. Includes recaps and quick assessments. Ideal for instructional content.
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                    <div className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Training</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Task-oriented modules with demonstrations, checkpoints, and practice prompts. Designed for skill-building and procedural content.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Beat Structure Section */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                  Beat Structure
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  The narrative framework that shapes your story's progression. Each structure provides specific beats (story milestones) that guide the AI's treatment generation.
+                </p>
+                <div className="space-y-3">
+                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                    <div className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Three-Act</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Classic structure: Setup → Confrontation → Resolution. Universal framework suitable for most narrative content. Includes 8 beats from opening hook to final resolution.
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                    <div className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Save the Cat</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Blake Snyder's 15-beat structure. Highly detailed with specific emotional beats (Opening Image, Theme Stated, Break into Two, All Is Lost, etc.). Ideal for character-driven stories.
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                    <div className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Hero's Journey</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Joseph Campbell's mythic structure with 12 stages (Ordinary World, Call to Adventure, Trials, Return with Elixir). Perfect for transformation and adventure narratives.
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                    <div className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Mini-Doc</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Streamlined 6-beat documentary structure: Hook → Context → Journey → Climax → Reflection → CTA. Optimized for short-form non-fiction content.
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                    <div className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Instructional</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Learning-focused 7-beat structure: Introduction → Learning Objectives → Core Content → Practice → Assessment → Summary → Next Steps. Best for educational and training content.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Film Type Section */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                  Film Type
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  Defines the target length category, which influences pacing, depth, and narrative scope. The AI prioritizes storytelling quality over rigid duration constraints.
+                </p>
+                <div className="space-y-3">
+                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                    <div className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Micro Short (1-5 min)</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Ultra-concise storytelling. Single concept or moment. Ideal for social media, quick tutorials, or impactful vignettes.
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                    <div className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Short Film (5-15 min)</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Focused narrative with clear beginning, middle, and end. Room for character development and emotional arc. Festival-standard length.
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                    <div className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Featurette (15-40 min)</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Extended storytelling with subplots and deeper character exploration. Suitable for documentaries, educational series episodes, or mini-features.
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                    <div className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Feature Length (40-90 min)</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Full cinematic experience with complex narrative, multiple character arcs, and thematic depth. Standard theatrical or streaming length.
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                    <div className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">Epic (90+ min)</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Expansive storytelling with multiple storylines, ensemble casts, and rich world-building. Requires substantial narrative scope and production resources.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* How It Affects Treatment */}
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">How This Affects Your Film Treatment</h3>
+                <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span><strong>Format</strong> determines the tone, pacing style, and whether to include CTAs or learning objectives.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span><strong>Beat Structure</strong> provides the narrative skeleton—the AI generates story beats matching your chosen framework.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span><strong>Film Type</strong> guides pacing and narrative scope. The AI prioritizes storytelling strength over exact duration.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span>The AI may make <strong>creative decisions</strong> (combining characters, emphasizing themes) to strengthen the narrative—check the "Narrative Reasoning" section in your treatment to understand these choices.</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
