@@ -221,34 +221,43 @@ async function generateFilmTreatment(
         responseSchema: {
           type: 'object',
           properties: {
-            narrative_reasoning: {
-              type: 'object',
-              properties: {
-                character_focus: { type: 'string' },
-                key_decisions: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      decision: { type: 'string' },
-                      why: { type: 'string' },
-                      impact: { type: 'string' }
-                    }
-                  }
-                },
-                story_strengths: { type: 'string' },
-                user_adjustments: { type: 'string' }
+            // Flattened structure: narrative_reasoning fields at top level
+            character_focus: { type: 'string' },
+            key_decisions: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  decision: { type: 'string' },
+                  why: { type: 'string' },
+                  impact: { type: 'string' }
+                }
               }
             },
+            story_strengths: { type: 'string' },
+            user_adjustments: { type: 'string' },
+
+            // Original top-level properties
             title: { type: 'string' },
             logline: { type: 'string' },
             synopsis: { type: 'string' },
             genre: { type: 'string' },
-            beats: { type: 'array' },
-            character_descriptions: { type: 'array' },
-            scene_descriptions: { type: 'array' }
+
+            // Fixed array definitions with items
+            beats: {
+              type: 'array',
+              items: { type: 'object' }
+            },
+            character_descriptions: {
+              type: 'array',
+              items: { type: 'object' }
+            },
+            scene_descriptions: {
+              type: 'array',
+              items: { type: 'object' }
+            }
           },
-          required: ['narrative_reasoning', 'title', 'logline', 'synopsis', 'beats']
+          required: ['character_focus', 'key_decisions', 'story_strengths', 'user_adjustments', 'title', 'logline', 'synopsis', 'beats']
         }
       }
     }),
@@ -352,29 +361,29 @@ async function generateFilmTreatment(
       estimatedDurationMinutes: targetMinutes,
       total_duration_seconds: totalDurationSeconds,
       
-      // Narrative reasoning - always return an object
-      narrative_reasoning: (parsed as any).narrative_reasoning ? {
-        character_focus: String((parsed as any).narrative_reasoning.character_focus || ''),
-        key_decisions: Array.isArray((parsed as any).narrative_reasoning.key_decisions) 
-          ? ((parsed as any).narrative_reasoning.key_decisions as any[]).map((d: any) => ({
+      // Narrative reasoning - now flattened at root level
+      narrative_reasoning: {
+        character_focus: String((parsed as any).character_focus || 'Not provided by AI'),
+        key_decisions: Array.isArray((parsed as any).key_decisions) 
+          ? ((parsed as any).key_decisions as any[]).map((d: any) => ({
               decision: String(d.decision || ''),
               why: String(d.why || ''),
               impact: String(d.impact || '')
             }))
           : [],
-        story_strengths: String((parsed as any).narrative_reasoning.story_strengths || ''),
-        user_adjustments: String((parsed as any).narrative_reasoning.user_adjustments || '')
-      } : {
-        character_focus: 'Not provided by AI',
-        key_decisions: [],
-        story_strengths: 'Not provided by AI',
-        user_adjustments: 'Regenerate the treatment to see AI reasoning'
+        story_strengths: String((parsed as any).story_strengths || 'Not provided by AI'),
+        user_adjustments: String((parsed as any).user_adjustments || 'Regenerate the treatment to see AI reasoning')
       }
     }
     
-    console.log('[Film Treatment] narrative_reasoning present:', !!(parsed as any).narrative_reasoning)
-    if ((parsed as any).narrative_reasoning) {
-      console.log('[Film Treatment] narrative_reasoning data:', JSON.stringify((parsed as any).narrative_reasoning, null, 2))
+    console.log('[Film Treatment] narrative_reasoning fields present:', !!((parsed as any).character_focus || (parsed as any).story_strengths))
+    if ((parsed as any).character_focus || (parsed as any).story_strengths) {
+      console.log('[Film Treatment] narrative_reasoning data:', JSON.stringify({
+        character_focus: (parsed as any).character_focus,
+        key_decisions: (parsed as any).key_decisions,
+        story_strengths: (parsed as any).story_strengths,
+        user_adjustments: (parsed as any).user_adjustments
+      }, null, 2))
     }
     
     return result

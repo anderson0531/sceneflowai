@@ -49,7 +49,7 @@ CONTEXT:
 OUTPUT RULES:
 - **YOU MUST RETURN** a single, valid JSON object matching the schema below.
 - **DO NOT** add any conversational text, markdown formatting, or explanations outside the JSON.
-- **THE "narrative_reasoning" FIELD IS MANDATORY.** It must be the first field in your JSON output.
+- **THE NARRATIVE REASONING FIELDS ARE MANDATORY:** character_focus, key_decisions, story_strengths, and user_adjustments must be the first fields in your JSON output.
 - Beat durations MUST sum to ~${targetMinutes} minutes (±10%).
 - Be concise and engaging. Avoid fluff.
 - Do NOT use placeholders like "General audience"; provide concrete descriptions.
@@ -124,18 +124,16 @@ SCHEMA:
 
 COMPLETE OUTPUT EXAMPLE:
 {
-  "narrative_reasoning": {
-    "character_focus": "Sarah Chen is the protagonist because her journey from self-doubt to confidence embodies the transformation theme.",
-    "key_decisions": [
-      {
-        "decision": "Made the mentor a former failure rather than a success",
-        "why": "Creates deeper empathy and shows that failure is part of growth",
-        "impact": "Strengthens the theme and makes the mentor more relatable"
-      }
-    ],
-    "story_strengths": "Clear emotional arc with universal themes of perseverance and self-discovery.",
-    "user_adjustments": "To emphasize technical skills, expand the training sequences. To focus on relationships, add more mentor-student dialogue."
-  },
+  "character_focus": "Sarah Chen is the protagonist because her journey from self-doubt to confidence embodies the transformation theme.",
+  "key_decisions": [
+    {
+      "decision": "Made the mentor a former failure rather than a success",
+      "why": "Creates deeper empathy and shows that failure is part of growth",
+      "impact": "Strengthens the theme and makes the mentor more relatable"
+    }
+  ],
+  "story_strengths": "Clear emotional arc with universal themes of perseverance and self-discovery.",
+  "user_adjustments": "To emphasize technical skills, expand the training sequences. To focus on relationships, add more mentor-student dialogue.",
   "title": "Rising from Ashes",
   "logline": "A young entrepreneur learns that failure is the foundation of success.",
   "synopsis": "A compelling story of personal growth and overcoming challenges.",
