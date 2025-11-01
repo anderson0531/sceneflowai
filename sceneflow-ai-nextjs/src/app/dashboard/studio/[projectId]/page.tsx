@@ -223,7 +223,8 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
             character_descriptions: v.character_descriptions,
             beats: v.beats,  // CRITICAL: Include beats array!
             total_duration_seconds: v.total_duration_seconds,  // CRITICAL: Include duration!
-            estimatedDurationMinutes: v.estimatedDurationMinutes  // CRITICAL: Include estimate!
+            estimatedDurationMinutes: v.estimatedDurationMinutes,  // CRITICAL: Include estimate!
+            narrative_reasoning: v.narrative_reasoning  // Include narrative reasoning
           })))
         }
         const treatment = json?.data?.film_treatment || ''
