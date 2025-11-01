@@ -97,6 +97,13 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
     }
   };
 
+  // Set default userName in localStorage for testing
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('userName')) {
+      localStorage.setItem('userName', 'Brian Anderson')
+    }
+  }, [])
+
   // Init with Cue for new projects
   useEffect(() => {
     if (params.projectId.startsWith('new-project') && !isNewProject) {
@@ -189,10 +196,11 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
       lastInputRef.current = text.trim()
       setLastInput(text.trim()) // Store for collapsed view
       console.log('[Blueprint Studio] Generating 1 variant with model: gemini')
+      const userName = typeof window !== 'undefined' ? localStorage.getItem('userName') || 'User' : 'User'
       const res = await fetch('/api/ideation/film-treatment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input: text, variants: 1, provider: 'gemini', format, filmType, rigor: opts?.rigor ?? rigor, beatStructure, persona: opts?.persona })
+        body: JSON.stringify({ input: text, variants: 1, provider: 'gemini', format, filmType, rigor: opts?.rigor ?? rigor, beatStructure, persona: opts?.persona, userName })
       })
       const json = await res.json().catch(() => null)
       if (json?.success) {

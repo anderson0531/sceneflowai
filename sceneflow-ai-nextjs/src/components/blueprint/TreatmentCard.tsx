@@ -37,7 +37,7 @@ export function TreatmentCard() {
     generating?: boolean;
     version?: number;
     lastModified?: string;
-  }>; beats?: Array<{ title: string; intent?: string; minutes: number; synopsis?: string }>; total_duration_seconds?: number; estimatedDurationMinutes?: number; }> | undefined
+  }>; beats?: Array<{ title: string; intent?: string; minutes: number; synopsis?: string }>; total_duration_seconds?: number; estimatedDurationMinutes?: number; narrative_reasoning?: { character_focus: string; key_decisions: Array<{ decision: string; why: string; impact: string }>; story_strengths: string; user_adjustments: string }; }> | undefined
   const selectedId = (guide as any)?.selectedTreatmentId as string | undefined
 
   // Top-level hooks (must not be conditional)
@@ -568,7 +568,7 @@ export function TreatmentCard() {
                         </div>
                       </div>
                       <div>
-                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Author/Writer</div>
+                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Created By</div>
                         <div className={`text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? flashIf('author_writer') : ''}`}>{v.author_writer || '—'}</div>
                       </div>
                       <div>

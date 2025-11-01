@@ -25,6 +25,7 @@ interface FilmTreatmentRequest {
   rigor?: 'fast'|'balanced'|'thorough'
   beatStructure?: BeatStructureKey
   variants?: number // default 3
+  userName?: string  // User's name for "Created By" field
 }
 
 interface FilmTreatmentItem {
@@ -109,7 +110,7 @@ function getFilmTypeMinutes(filmType?: string): number {
 export async function POST(request: NextRequest) {
   try {
     const body: FilmTreatmentRequest = await request.json()
-    const { input, targetAudience, keyMessage, tone, genre, duration, platform } = body
+    const { input, targetAudience, keyMessage, tone, genre, duration, platform, userName } = body
     let { coreConcept } = body
     const variantsCount = Math.max(1, Math.min(body.variants || 1, 5))
     const format = body.format || 'documentary'
@@ -140,7 +141,7 @@ export async function POST(request: NextRequest) {
       { id: 'C', label: 'C', styleHint: 'Energetic, bold, high-contrast visuals, rhythmic editing' },
     ].slice(0, variantsCount)
 
-    const context = { targetAudience, keyMessage, tone, genre, duration, platform, format, targetMinutes, beatStructure: body.beatStructure }
+    const context = { targetAudience, keyMessage, tone, genre, duration, platform, format, targetMinutes, beatStructure: body.beatStructure, userName }
 
     // Generate variants serially (keeps logs clearer); can parallelize later if needed
     const variants: Array<{ id: string; label: string } & FilmTreatmentItem> = []
@@ -256,7 +257,7 @@ async function generateFilmTreatment(
       logline: parsed.logline,
       genre: parsed.genre,
       format_length: `${totalDurationSeconds} seconds`,
-      author_writer: 'Google Gemini 2.5 Flash',
+      author_writer: context?.userName || 'User',
       date: new Date().toLocaleString('en-US', {
         year: 'numeric',
         month: 'short',
