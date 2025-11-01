@@ -51,10 +51,25 @@ OUTPUT RULES:
 - Beat durations MUST sum to ~${targetMinutes} minutes (±10%).
 - Be concise and engaging. Avoid fluff.
 - Do NOT use placeholders like "General audience"; provide a concrete audience description (e.g., "aspiring product designers age 18–30").
+- **CRITICAL: The "narrative_reasoning" field is MANDATORY. Do NOT omit it.**
 
 SCHEMA:
 {
   "estimatedDurationMinutes": ${targetMinutes},
+  
+  "narrative_reasoning": {
+    "character_focus": "Who is the protagonist and why? How do supporting characters serve the arc?",
+    "key_decisions": [
+      {
+        "decision": "Major creative choice made",
+        "why": "Narrative justification",
+        "impact": "Effect on emotional arc, pacing, or thematic resonance"
+      }
+    ],
+    "story_strengths": "What makes this treatment compelling?",
+    "user_adjustments": "How can user modify input for different emphasis?"
+  },
+  
   "title": "Proposed title",
   "logline": "One- or two-sentence hook",
   "genre": "Genre",
@@ -103,31 +118,34 @@ SCHEMA:
   ],
   "visual_style": "string",
   "audio_direction": "string",
-  "broll_suggestions": ["string"],
-  
-  "narrative_reasoning": {
-    "character_focus": "Who is the protagonist and why? How do supporting characters serve the arc?",
-    "key_decisions": [
-      {
-        "decision": "Major creative choice made (e.g., combined characters, elevated plot point)",
-        "why": "Narrative justification (why this strengthens the story)",
-        "impact": "Effect on emotional arc, pacing, or thematic resonance"
-      }
-    ],
-    "story_strengths": "What makes this treatment compelling? Key structural and thematic strengths.",
-    "user_adjustments": "Specific guidance on how user can modify input for different emphasis"
-  }
+  "broll_suggestions": ["string"]
 }
 
-NARRATIVE REASONING (REQUIRED):
-Explain your creative decisions in "narrative_reasoning" field:
+NARRATIVE REASONING (REQUIRED - DO NOT SKIP):
+This field is MANDATORY. Explain your creative decisions:
 1. character_focus: Who is the protagonist? Why? How do supporting characters serve the arc?
-2. key_decisions: List 2-4 major creative choices with WHY (narrative justification) and IMPACT (effect)
+2. key_decisions: List 2-4 major creative choices with WHY and IMPACT
 3. story_strengths: What makes this treatment compelling?
 4. user_adjustments: How can user modify input for different emphasis?
 
-Be specific and confident. Example:
-"Combined Jordan and Michael into single arc for narrative efficiency. Their shared anxiety/disability creates powerful parallel to protagonist's struggles, strengthening thematic resonance. Impact: Tighter focus, more emotional payoff."
+EXAMPLE narrative_reasoning:
+{
+  "character_focus": "Brian Anderson is the protagonist because his journey from corporate burnout to creative fulfillment embodies the core transformation. Supporting characters (mentor Sarah, colleague Marcus) serve as catalysts and mirrors for his internal conflict.",
+  "key_decisions": [
+    {
+      "decision": "Combined Jordan and Michael into single character arc",
+      "why": "Their shared anxiety/disability creates powerful parallel to protagonist's struggles",
+      "impact": "Tighter focus, stronger thematic resonance, more emotional payoff"
+    },
+    {
+      "decision": "Elevated the 'midnight coding session' from background detail to climactic beat",
+      "why": "This moment crystallizes the protagonist's transformation and commitment",
+      "impact": "Creates powerful visual metaphor, strengthens Act 2 turning point"
+    }
+  ],
+  "story_strengths": "Strong character arc with clear stakes, relatable conflict, satisfying resolution. Visual storytelling opportunities in contrasting corporate/creative environments.",
+  "user_adjustments": "To emphasize family dynamics more, add Sarah's perspective as a parallel storyline. To focus on technical journey, expand the coding/problem-solving sequences."
+}
 
 CRITICAL: 
 - Generate 3-5 detailed character_descriptions (protagonist + supporting characters)

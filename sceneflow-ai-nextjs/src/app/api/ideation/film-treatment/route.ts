@@ -214,7 +214,55 @@ async function generateFilmTreatment(
         parts: [{
           text: prompt
         }]
-      }]
+      }],
+      generationConfig: {
+        temperature: 0.7,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: 'object',
+          properties: {
+            narrative_reasoning: {
+              type: 'object',
+              required: ['character_focus', 'key_decisions', 'story_strengths', 'user_adjustments'],
+              properties: {
+                character_focus: { type: 'string' },
+                key_decisions: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    required: ['decision', 'why', 'impact'],
+                    properties: {
+                      decision: { type: 'string' },
+                      why: { type: 'string' },
+                      impact: { type: 'string' }
+                    }
+                  }
+                },
+                story_strengths: { type: 'string' },
+                user_adjustments: { type: 'string' }
+              }
+            },
+            title: { type: 'string' },
+            logline: { type: 'string' },
+            synopsis: { type: 'string' },
+            beats: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  title: { type: 'string' },
+                  intent: { type: 'string' },
+                  synopsis: { type: 'string' },
+                  minutes: { type: 'number' }
+                }
+              }
+            },
+            character_descriptions: { type: 'array' },
+            scene_descriptions: { type: 'array' }
+          },
+          required: ['narrative_reasoning', 'title', 'logline', 'synopsis', 'beats']
+        }
+      }
     }),
   })
 
