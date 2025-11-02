@@ -85,15 +85,19 @@ export const ScriptRenderer = React.forwardRef<HTMLDivElement, RendererProps>(({
                 )}
                 
                 {/* Dialogue */}
-                {scene.dialogue?.map((d, dIndex) => (
-                  <div key={dIndex} className="mb-4">
-                    <p className="mt-4 mb-0 ml-[35%] !text-black">{d.character.toUpperCase()}</p>
-                    {d.parenthetical && (
-                      <p className="mb-0 ml-[30%] !text-black">({d.parenthetical})</p>
-                    )}
-                    <p className="mb-0 ml-[25%] mr-[15%] whitespace-pre-wrap !text-black">{d.text}</p>
-                  </div>
-                ))}
+                {scene.dialogue?.map((d: any, dIndex: number) => {
+                  // Handle both 'text' and 'line' fields (data uses 'line')
+                  const dialogueText = d.text || d.line || ''
+                  return (
+                    <div key={dIndex} className="mb-4">
+                      <p className="mt-4 mb-0 ml-[35%] !text-black">{d.character.toUpperCase()}</p>
+                      {d.parenthetical && (
+                        <p className="mb-0 ml-[30%] !text-black">({d.parenthetical})</p>
+                      )}
+                      <p className="mb-0 ml-[25%] mr-[15%] whitespace-pre-wrap !text-black">{dialogueText}</p>
+                    </div>
+                  )
+                })}
               </div>
             ))}
           </div>
