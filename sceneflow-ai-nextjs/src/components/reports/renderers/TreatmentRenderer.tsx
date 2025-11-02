@@ -7,8 +7,49 @@ interface RendererProps {
 
 export const TreatmentRenderer = React.forwardRef<HTMLDivElement, RendererProps>(({ data }, ref) => {
   return (
-    <div ref={ref} className="report-container p-8 font-serif !text-gray-900 bg-white">
-      <h1 className="text-3xl font-bold text-center mb-2 !text-black">{data.title || 'Untitled'}</h1>
+    <div ref={ref} className="report-wrapper">
+      <style>{`
+        @media print {
+          @page {
+            size: letter;
+            margin: 0.75in 1in 0.75in 1in;
+          }
+          
+          .report-header {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 10pt;
+            color: #666 !important;
+            margin-bottom: 0.5in;
+          }
+          
+          .report-footer {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 10pt;
+            color: #666 !important;
+            margin-top: 0.5in;
+          }
+          
+          .print-only {
+            display: none;
+          }
+        }
+        
+        @media print {
+          .print-only {
+            display: block;
+          }
+        }
+      `}</style>
+      <div className="print-only report-header">
+        <span>{data.title || 'Untitled'} - Film Treatment</span>
+        <span>Page <span className="page-number"></span></span>
+      </div>
+      <div className="report-container p-8 font-serif !text-gray-900 bg-white">
+        <h1 className="text-3xl font-bold text-center mb-2 !text-black">{data.title || 'Untitled'}</h1>
       {data.author_writer && <p className="text-center !text-gray-600 mb-1">by {data.author_writer}</p>}
       {data.date && <p className="text-center !text-gray-500 text-sm mb-10">{data.date}</p>}
       
@@ -67,6 +108,11 @@ export const TreatmentRenderer = React.forwardRef<HTMLDivElement, RendererProps>
           <p className="!text-gray-900">{data.tone}</p>
         </section>
       )}
+      </div>
+      <div className="print-only report-footer">
+        <span>SceneFlow AI: Accelerate Your Vision</span>
+        <span><span className="page-number"></span></span>
+      </div>
     </div>
   )
 })
