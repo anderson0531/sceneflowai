@@ -54,14 +54,14 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
   const handlePrint = useReactToPrint({
     contentRef: contentRef,
     documentTitle: documentTitle,
-    onBeforePrint: () => {
+    onBeforePrint: async () => {
       console.log('[ReportPreview] Starting print...')
       console.log('[ReportPreview] contentRef.current:', contentRef.current)
       if (!contentRef.current) {
         console.error('[ReportPreview] Content ref is null')
       }
     },
-    onAfterPrint: () => {
+    onAfterPrint: async () => {
       console.log('[ReportPreview] Print completed')
     },
     onPrintError: (errorLocation, error) => {
