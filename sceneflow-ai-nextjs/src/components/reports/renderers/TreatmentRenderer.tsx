@@ -45,13 +45,12 @@ export const TreatmentRenderer = React.forwardRef<HTMLDivElement, RendererProps>
         }
       `}</style>
       <div className="print-only report-header">
-        <span>{data.title || 'Untitled'} - Film Treatment</span>
-        <span>Page <span className="page-number"></span></span>
+        <span>{data.title || 'Untitled'}</span>
+        <span>{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
       </div>
       <div className="report-container p-8 font-serif !text-gray-900 bg-white">
         <h1 className="text-3xl font-bold text-center mb-2 !text-black">{data.title || 'Untitled'}</h1>
       {data.author_writer && <p className="text-center !text-gray-600 mb-1">by {data.author_writer}</p>}
-      {data.date && <p className="text-center !text-gray-500 text-sm mb-10">{data.date}</p>}
       
       {data.logline && (
         <section className="mb-8">
@@ -111,7 +110,7 @@ export const TreatmentRenderer = React.forwardRef<HTMLDivElement, RendererProps>
       </div>
       <div className="print-only report-footer">
         <span>SceneFlow AI: Accelerate Your Vision</span>
-        <span><span className="page-number"></span></span>
+        <span>Page <span className="page-number"></span></span>
       </div>
     </div>
   )

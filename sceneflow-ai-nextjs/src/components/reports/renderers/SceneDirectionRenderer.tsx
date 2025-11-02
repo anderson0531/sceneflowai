@@ -45,8 +45,8 @@ export const SceneDirectionRenderer = React.forwardRef<HTMLDivElement, RendererP
         }
       `}</style>
       <div className="print-only report-header">
-        <span>{data.title} - Scene Direction</span>
-        <span>Page <span className="page-number"></span></span>
+        <span>{data.title}</span>
+        <span>{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
       </div>
       <div className="report-container p-8 font-sans !text-gray-900 bg-white">
         <h1 className="text-3xl font-bold text-center mb-10 !text-black">{data.title} - Scene Direction</h1>
@@ -97,7 +97,7 @@ export const SceneDirectionRenderer = React.forwardRef<HTMLDivElement, RendererP
       </div>
       <div className="print-only report-footer">
         <span>SceneFlow AI: Accelerate Your Vision</span>
-        <span><span className="page-number"></span></span>
+        <span>Page <span className="page-number"></span></span>
       </div>
     </div>
   )

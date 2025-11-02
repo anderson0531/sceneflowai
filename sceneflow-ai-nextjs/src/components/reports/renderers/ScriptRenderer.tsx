@@ -72,8 +72,8 @@ export const ScriptRenderer = React.forwardRef<HTMLDivElement, RendererProps>(({
         }
       `}</style>
       <div className="print-only script-header">
-        <span>{data.title || 'Untitled'} - Professional Script</span>
-        <span>Page <span className="page-number"></span></span>
+        <span>{data.title || 'Untitled'}</span>
+        <span>{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
       </div>
       <div className="script-content">
         <div className="report-container script-format p-8 font-mono !text-black bg-white text-sm">
@@ -119,7 +119,7 @@ export const ScriptRenderer = React.forwardRef<HTMLDivElement, RendererProps>(({
       </div>
       <div className="print-only script-footer">
         <span>SceneFlow AI: Accelerate Your Vision</span>
-        <span><span className="page-number"></span></span>
+        <span>Page <span className="page-number"></span></span>
       </div>
     </div>
   )
