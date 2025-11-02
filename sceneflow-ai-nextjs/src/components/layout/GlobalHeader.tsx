@@ -27,8 +27,8 @@ export function GlobalHeader() {
 
   useEffect(() => {}, [status])
 
-  // Hide global header on public collaboration pages for a distraction-free reviewer UX
-  if (pathname?.startsWith('/c/')) {
+  // Hide global header on landing page and public collaboration pages for a distraction-free UX
+  if (pathname === '/' || pathname?.startsWith('/c/')) {
     return null
   }
 

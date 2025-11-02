@@ -3,6 +3,7 @@
 // Use the new global header from app layout; remove legacy header here
 import dynamic from 'next/dynamic'
 import { HeroSection } from './components/HeroSection'
+import { TrustSignals } from './components/TrustSignals'
 import { SocialProof } from './components/SocialProof'
 const ProblemSolution = dynamic(() => import('./components/ProblemSolution').then(m => m.ProblemSolution), { ssr: false })
 const DemocratizationSection = dynamic(() => import('./components/DemocratizationSection').then(m => m.DemocratizationSection), { ssr: false })
@@ -19,6 +20,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-gray-950 text-white">
       {/* GlobalHeader is rendered by root layout; removing duplicate header here */}
       <HeroSection />
+      <TrustSignals />
       <SocialProof />
       <ProblemSolution />
       <DemocratizationSection />

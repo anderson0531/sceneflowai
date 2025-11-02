@@ -338,11 +338,20 @@ export function Pricing() {
                   </motion.div>
                 )}
 
-                <button className={`w-full py-4 rounded-lg font-semibold transition-all duration-200 ${
-                  tier.special === 'Trial'
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-sf-background'
-                    : 'bg-gray-700 hover:bg-gray-600 text-white'
-                }`}>
+                <button 
+                  onClick={() => {
+                    if (tier.special === 'Trial') {
+                      window.location.href = '/?signup=1&plan=trial'
+                    } else {
+                      window.location.href = `/?signup=1&plan=${tier.name.toLowerCase().replace(/\s/g, '-')}`
+                    }
+                  }}
+                  className={`w-full py-4 rounded-lg font-semibold transition-all duration-200 ${
+                    tier.special === 'Trial'
+                      ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-sf-background'
+                      : 'bg-gray-700 hover:bg-gray-600 text-white'
+                  }`}
+                >
                   {tier.special === 'Trial' ? tier.cta : `Start ${tier.name} Plan`}
                 </button>
               </motion.div>
@@ -436,11 +445,16 @@ export function Pricing() {
                   </motion.div>
                 )}
 
-                <button className={`w-full py-3 rounded-lg font-semibold transition-all duration-200 ${
-                  tier.popular
-                    ? 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white'
-                    : 'bg-gray-700 hover:bg-gray-600 text-white'
-                }`}>
+                <button 
+                  onClick={() => {
+                    window.location.href = `/?signup=1&plan=${tier.name.toLowerCase().replace(/\s/g, '-')}`
+                  }}
+                  className={`w-full py-3 rounded-lg font-semibold transition-all duration-200 ${
+                    tier.popular
+                      ? 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white'
+                      : 'bg-gray-700 hover:bg-gray-600 text-white'
+                  }`}
+                >
                   Start {tier.name} Plan
                 </button>
               </motion.div>

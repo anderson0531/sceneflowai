@@ -10,11 +10,12 @@ interface ConditionalLayoutProps {
 export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
   
-  // Check if this is a collaboration page (legacy and new)
+  // Check if this is a collaboration page (legacy and new) or landing page
   const isCollaborationPage = pathname.startsWith('/collaborate/') || pathname.startsWith('/c/');
+  const isLandingPage = pathname === '/';
   
-  if (isCollaborationPage) {
-    // For collaboration pages, render without sidebar
+  if (isCollaborationPage || isLandingPage) {
+    // For collaboration pages and landing page, render without sidebar
     return <>{children}</>;
   }
   
