@@ -53,7 +53,7 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
   }, [projectName, type])
   
   const handlePrint = useReactToPrint({
-    content: () => contentRef.current,
+    contentRef: contentRef,
     documentTitle: getDocumentTitle(),
     onBeforePrint: () => {
       console.log('[ReportPreview] Starting print...')
@@ -90,7 +90,22 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
     `,
   })
   
-  const handleDownload = handlePrint
+  // Wrap handlers to prevent Promise expectations
+  const handlePrintClick = () => {
+    try {
+      handlePrint()
+    } catch (error) {
+      console.error('[ReportPreview] Print failed:', error)
+    }
+  }
+
+  const handleDownloadClick = () => {
+    try {
+      handlePrint()
+    } catch (error) {
+      console.error('[ReportPreview] Download failed:', error)
+    }
+  }
   
   const defaultTrigger = (
     <Button variant="secondary">
@@ -113,11 +128,11 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
         </div>
         
         <DialogFooter className="p-6 border-t">
-          <Button variant="outline" onClick={handlePrint}>
+          <Button variant="outline" onClick={handlePrintClick}>
             <Printer className="w-4 h-4 mr-2" />
             Print
           </Button>
-          <Button onClick={handleDownload}>
+          <Button onClick={handleDownloadClick}>
             <Download className="w-4 h-4 mr-2" />
             Download (PDF)
           </Button>
