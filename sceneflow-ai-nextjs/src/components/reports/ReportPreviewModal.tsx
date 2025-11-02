@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useCallback } from 'react'
+import React, { useRef, useEffect } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog'
@@ -48,15 +48,15 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
   
   const RendererComponent = RENDERER_MAP[type] || FallbackRenderer
   
-  const getDocumentTitle = useCallback(() => {
-    return `${projectName}_${type.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}`
-  }, [projectName, type])
+  // Simplify documentTitle - don't call function, pass string directly
+  const documentTitle = `${projectName}_${type.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}`
   
   const handlePrint = useReactToPrint({
     contentRef: contentRef,
-    documentTitle: getDocumentTitle(),
+    documentTitle: documentTitle,
     onBeforePrint: () => {
       console.log('[ReportPreview] Starting print...')
+      console.log('[ReportPreview] contentRef.current:', contentRef.current)
       if (!contentRef.current) {
         console.error('[ReportPreview] Content ref is null')
       }
@@ -90,20 +90,58 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
     `,
   })
   
+  // Add debug useEffect
+  useEffect(() => {
+    console.log('[ReportPreview] handlePrint is:', handlePrint)
+    console.log('[ReportPreview] contentRef.current:', contentRef.current)
+  }, [handlePrint])
+  
   // Wrap handlers to prevent Promise expectations
   const handlePrintClick = () => {
+    console.log('[ReportPreview] handlePrint:', handlePrint)
+    console.log('[ReportPreview] contentRef.current:', contentRef.current)
+    
+    if (!handlePrint) {
+      console.error('[ReportPreview] handlePrint is undefined!')
+      alert('Print function is not available. Please try refreshing the page.')
+      return
+    }
+    
+    if (!contentRef.current) {
+      console.error('[ReportPreview] Content ref is null!')
+      alert('Content is not ready for printing.')
+      return
+    }
+    
     try {
       handlePrint()
-    } catch (error) {
+    } catch (error: any) {
       console.error('[ReportPreview] Print failed:', error)
+      alert(`Print failed: ${error.message}`)
     }
   }
 
   const handleDownloadClick = () => {
+    console.log('[ReportPreview] handlePrint:', handlePrint)
+    console.log('[ReportPreview] contentRef.current:', contentRef.current)
+    
+    if (!handlePrint) {
+      console.error('[ReportPreview] handlePrint is undefined!')
+      alert('Download function is not available. Please try refreshing the page.')
+      return
+    }
+    
+    if (!contentRef.current) {
+      console.error('[ReportPreview] Content ref is null!')
+      alert('Content is not ready for downloading.')
+      return
+    }
+    
     try {
       handlePrint()
-    } catch (error) {
+    } catch (error: any) {
       console.error('[ReportPreview] Download failed:', error)
+      alert(`Download failed: ${error.message}`)
     }
   }
   
