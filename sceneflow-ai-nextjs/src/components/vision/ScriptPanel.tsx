@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Clapperboard, Printer } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Clapperboard, Printer, Video as VideoIcon } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
@@ -53,6 +53,7 @@ interface ScriptPanelProps {
   onGenerateAllAudio?: () => void
   isGeneratingAudio?: boolean
   onPlayScript?: () => void
+  onOpenAnimaticsStudio?: () => void
   // NEW: Scene management callbacks
   onAddScene?: (afterIndex?: number) => void
   onDeleteScene?: (sceneIndex: number) => void
@@ -243,7 +244,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [showScriptEditor, setShowScriptEditor] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -792,6 +793,27 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               </TooltipTrigger>
               <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
                 <p>Open Screening Room</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          {/* Animatics Studio Button */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={onOpenAnimaticsStudio}
+                  disabled={!script || !scenes || scenes.length === 0}
+                  className="flex items-center gap-1"
+                >
+                  <VideoIcon className="w-4 h-4" />
+                  <span>Animatics</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                <p>Open Animatics Studio</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

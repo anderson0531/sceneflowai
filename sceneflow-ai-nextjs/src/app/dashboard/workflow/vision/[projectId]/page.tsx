@@ -9,6 +9,7 @@ import { CharacterLibrary } from '@/components/vision/CharacterLibrary'
 import { SceneGallery } from '@/components/vision/SceneGallery'
 import { GenerationProgress } from '@/components/vision/GenerationProgress'
 import { ScreeningRoom } from '@/components/vision/ScriptPlayer'
+import { AnimaticsStudio } from '@/components/vision/AnimaticsStudio'
 import { ImageQualitySelector } from '@/components/vision/ImageQualitySelector'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
 import { Button } from '@/components/ui/Button'
@@ -435,6 +436,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     dismissed?: boolean
   }>>({})
   const [isPlayerOpen, setIsPlayerOpen] = useState(false)
+  const [showAnimaticsStudio, setShowAnimaticsStudio] = useState(false)
   const [voiceAssignments, setVoiceAssignments] = useState<Record<string, any>>({})
   
   // Script review state
@@ -3236,6 +3238,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             onGenerateAllAudio={handleGenerateAllAudio}
             isGeneratingAudio={isGeneratingAudio}
             onPlayScript={() => setIsPlayerOpen(true)}
+            onOpenAnimaticsStudio={() => setShowAnimaticsStudio(true)}
             onAddScene={handleAddScene}
             onDeleteScene={handleDeleteScene}
             onReorderScenes={handleReorderScenes}
@@ -3287,6 +3290,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           script={script}
           characters={characters}
           onClose={() => setIsPlayerOpen(false)}
+        />
+      )}
+
+      {/* Animatics Studio (Full-screen overlay) */}
+      {showAnimaticsStudio && scenes && (
+        <AnimaticsStudio
+          scenes={scenes}
+          onClose={() => setShowAnimaticsStudio(false)}
         />
       )}
 

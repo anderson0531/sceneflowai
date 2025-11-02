@@ -1,0 +1,2 @@
+export { VideoComposition } from './VideoComposition';
+
