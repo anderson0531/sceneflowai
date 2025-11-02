@@ -7,13 +7,13 @@ interface RendererProps {
 
 export const StoryboardRenderer = React.forwardRef<HTMLDivElement, RendererProps>(({ data }, ref) => {
   return (
-    <div ref={ref} className="report-container p-8 font-sans text-gray-900 bg-white">
-      <h1 className="text-3xl font-bold text-center mb-10">{data.title} - Storyboard</h1>
+    <div ref={ref} className="report-container p-8 font-sans !text-gray-900 bg-white">
+      <h1 className="text-3xl font-bold text-center mb-10 !text-black">{data.title} - Storyboard</h1>
       
       <div className="grid grid-cols-2 gap-6">
         {data.frames.map((frame, index) => (
-          <div key={index} className="border p-4 print:break-inside-avoid">
-            <h3 className="font-bold mb-2">Scene {frame.sceneNumber}</h3>
+          <div key={index} className="border border-gray-300 p-4 print:break-inside-avoid">
+            <h3 className="font-bold mb-2 !text-black">Scene {frame.sceneNumber}</h3>
             
             {frame.imageUrl && (
               <div className="relative w-full aspect-video bg-gray-100 mb-2">
@@ -26,14 +26,14 @@ export const StoryboardRenderer = React.forwardRef<HTMLDivElement, RendererProps
             )}
             
             {frame.visualDescription && (
-              <p className="text-sm mb-2">{frame.visualDescription}</p>
+              <p className="text-sm mb-2 !text-gray-900">{frame.visualDescription}</p>
             )}
             
-            <div className="text-xs text-gray-600 space-y-1">
-              {frame.shotType && <p><strong>Shot:</strong> {frame.shotType}</p>}
-              {frame.cameraAngle && <p><strong>Camera:</strong> {frame.cameraAngle}</p>}
-              {frame.lighting && <p><strong>Lighting:</strong> {frame.lighting}</p>}
-              {frame.duration && <p><strong>Duration:</strong> {frame.duration}s</p>}
+            <div className="text-xs !text-gray-600 space-y-1">
+              {frame.shotType && <p><strong className="!text-black">Shot:</strong> {frame.shotType}</p>}
+              {frame.cameraAngle && <p><strong className="!text-black">Camera:</strong> {frame.cameraAngle}</p>}
+              {frame.lighting && <p><strong className="!text-black">Lighting:</strong> {frame.lighting}</p>}
+              {frame.duration && <p><strong className="!text-black">Duration:</strong> {frame.duration}s</p>}
             </div>
           </div>
         ))}
