@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Clapperboard } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Clapperboard, Printer } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
@@ -17,6 +17,8 @@ import ScriptReviewModal from './ScriptReviewModal'
 import SceneReviewModal from './SceneReviewModal'
 import { ScriptEditorModal } from './ScriptEditorModal'
 import { toast } from 'sonner'
+import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
+import { ReportType } from '@/lib/types/reports'
 
 interface ScriptPanelProps {
   script: any
@@ -245,6 +247,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [showScriptEditor, setShowScriptEditor] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
+  const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
   
   // Audio playback state
   const [voices, setVoices] = useState<Array<CuratedVoice>>([])
@@ -802,6 +805,19 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             <Clapperboard className="w-4 h-4" />
             <span>Director</span>
           </Button>
+          
+          {/* Preview/Print Button */}
+          {script && scenes && scenes.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setReportPreviewOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Printer className="w-4 h-4" />
+              <span>Preview</span>
+            </Button>
+          )}
         </div>
       </div>
       
@@ -1218,6 +1234,17 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               detail: { sceneNumber, imageUrl }
             }))
           }}
+        />
+      )}
+      
+      {/* Report Preview Modal */}
+      {script && (
+        <ReportPreviewModal
+          type={ReportType.PROFESSIONAL_SCRIPT}
+          data={script as any}
+          projectName={script.title || 'Untitled Script'}
+          open={reportPreviewOpen}
+          onOpenChange={setReportPreviewOpen}
         />
       )}
       

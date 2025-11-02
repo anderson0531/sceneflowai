@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useGuideStore } from '@/store/useGuideStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Play, Square, Volume2, Share2, PencilLine, MoreHorizontal, ChevronDown, MessageSquare, ArrowRight, Loader2, Wand2, X, Users, Lightbulb, SparklesIcon, Award, RefreshCw } from 'lucide-react'
+import { Play, Square, Volume2, Share2, PencilLine, MoreHorizontal, ChevronDown, MessageSquare, ArrowRight, Loader2, Wand2, X, Users, Lightbulb, SparklesIcon, Award, RefreshCw, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import VariantEditorDrawer from './VariantEditorDrawer'
 import OwnerCollabPanel from '@/components/studio/OwnerCollabPanel'
 import { getCuratedElevenVoices, type CuratedVoice } from '@/lib/tts/voices'
+import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
+import { ReportType } from '@/lib/types/reports'
 
 export function TreatmentCard() {
   const router = useRouter()
@@ -55,6 +57,7 @@ export function TreatmentCard() {
   const [collabOpen, setCollabOpen] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [showReasoning, setShowReasoning] = useState(false)
+  const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
   // zoomedImage removed - now in Vision phase
   function mapVariantToInputText(v: any): string {
     const title = v?.title ? `${v.title}\n\n` : ''
@@ -373,6 +376,25 @@ export function TreatmentCard() {
                           </TooltipTrigger>
                           <TooltipContent>Edit (E)</TooltipContent>
                         </Tooltip>
+
+                        {/* Preview/Print */}
+                        {activeVariant && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                aria-label="Preview and print"
+                                onClick={() => setReportPreviewOpen(true)}
+                                className="h-8 px-2 border border-gray-700 text-gray-200 hover:bg-gray-800 hidden md:inline-flex"
+                                variant="outline"
+                                size="sm"
+                              >
+                                <FileText className="h-4 w-4" />
+                                <span className="hidden md:inline ml-1.5">Preview</span>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Preview & Print</TooltipContent>
+                          </Tooltip>
+                        )}
 
                         {/* Film Type Regenerate */}
                         <div className="hidden md:flex items-center gap-1 border-l border-gray-700 pl-2 ml-2">
@@ -820,6 +842,16 @@ export function TreatmentCard() {
             setEditorOpen(false)
           }}
         />
+        {/* Report Preview Modal */}
+        {activeVariant && (
+          <ReportPreviewModal
+            type={ReportType.FILM_TREATMENT}
+            data={activeVariant as any}
+            projectName={guide.title || 'Untitled Project'}
+            open={reportPreviewOpen}
+            onOpenChange={setReportPreviewOpen}
+          />
+        )}
         {/* Owner Collaboration Panel */}
         <OwnerCollabPanel
           open={collabOpen}
