@@ -9,6 +9,32 @@ export const ScriptRenderer = React.forwardRef<HTMLDivElement, RendererProps>(({
   return (
     <div ref={ref} className="script-wrapper">
       <style>{`
+        /* Header and footer styles - visible by default for preview */
+        .script-header {
+          display: flex;
+          justify-content: space-between;
+          width: 100%;
+          font-family: 'Courier New', monospace;
+          font-size: 10pt;
+          color: #666 !important;
+          margin-bottom: 0.5in;
+        }
+        
+        .script-footer {
+          display: flex;
+          justify-content: space-between;
+          width: 100%;
+          font-family: 'Courier New', monospace;
+          font-size: 10pt;
+          color: #666 !important;
+          margin-top: 0.5in;
+        }
+        
+        .script-content {
+          padding-top: 0.75in;
+          padding-bottom: 0.75in;
+        }
+        
         @media print {
           @page {
             size: letter;
@@ -20,47 +46,6 @@ export const ScriptRenderer = React.forwardRef<HTMLDivElement, RendererProps>(({
             position: relative;
           }
           
-          /* Header with title + report type on left, page number on right */
-          .script-header {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            font-family: 'Courier New', monospace;
-            font-size: 10pt;
-            color: #666 !important;
-            margin-bottom: 0.5in;
-          }
-          
-          /* Footer with branding on left, page number on right */
-          .script-footer {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            font-family: 'Courier New', monospace;
-            font-size: 10pt;
-            color: #666 !important;
-            margin-top: 0.5in;
-          }
-          
-          .script-content {
-            padding-top: 0.75in;
-            padding-bottom: 0.75in;
-          }
-          
-          /* Hidden for screen, shown in print */
-          .print-only {
-            display: none;
-          }
-        }
-        
-        @media print {
-          .print-only {
-            display: block;
-          }
-        }
-        
-        /* Page breaks */
-        @media print {
           .scene-block {
             page-break-inside: avoid;
             margin-bottom: 1.5em;
@@ -71,7 +56,7 @@ export const ScriptRenderer = React.forwardRef<HTMLDivElement, RendererProps>(({
           }
         }
       `}</style>
-      <div className="print-only script-header">
+      <div className="script-header">
         <span>{data.title || 'Untitled'}</span>
         <span>{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
       </div>
@@ -117,7 +102,7 @@ export const ScriptRenderer = React.forwardRef<HTMLDivElement, RendererProps>(({
           ))}
         </div>
       </div>
-      <div className="print-only script-footer">
+      <div className="script-footer">
         <span>SceneFlow AI: Accelerate Your Vision</span>
         <span>Page <span className="page-number"></span></span>
       </div>
