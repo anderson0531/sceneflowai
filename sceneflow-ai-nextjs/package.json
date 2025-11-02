@@ -67,6 +67,7 @@
                 "react-dom": "19.1.0",
                 "react-dropzone": "^14.3.8",
                 "react-resizable-panels": "^3.0.5",
+                "react-to-print": "^3.2.0",
                 "sequelize": "^6.37.7",
                 "sharp": "^0.34.4",
                 "shotstack-sdk": "^0.2.9",

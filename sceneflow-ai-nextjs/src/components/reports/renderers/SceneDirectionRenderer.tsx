@@ -1,0 +1,61 @@
+import { SceneDirectionData } from '@/lib/types/reports'
+import React from 'react'
+
+interface RendererProps {
+  data: SceneDirectionData
+}
+
+export const SceneDirectionRenderer = React.forwardRef<HTMLDivElement, RendererProps>(({ data }, ref) => {
+  return (
+    <div ref={ref} className="report-container p-8 font-sans text-gray-900 bg-white">
+      <h1 className="text-3xl font-bold text-center mb-10">{data.title} - Scene Direction</h1>
+      
+      {data.scenes.map((scene, index) => (
+        <div key={index} className="mb-8 pb-6 border-b print:break-inside-avoid">
+          <h2 className="text-xl font-bold mb-3">Scene {scene.sceneNumber}</h2>
+          {scene.heading && <p className="font-semibold mb-2">{scene.heading}</p>}
+          
+          {scene.visualDescription && (
+            <p className="mb-4 whitespace-pre-wrap">{scene.visualDescription}</p>
+          )}
+          
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            {scene.shotType && (
+              <div>
+                <strong className="text-gray-700">Shot Type:</strong>
+                <p>{scene.shotType}</p>
+              </div>
+            )}
+            {scene.cameraAngle && (
+              <div>
+                <strong className="text-gray-700">Camera Angle:</strong>
+                <p>{scene.cameraAngle}</p>
+              </div>
+            )}
+            {scene.lighting && (
+              <div>
+                <strong className="text-gray-700">Lighting:</strong>
+                <p>{scene.lighting}</p>
+              </div>
+            )}
+            {scene.mood && (
+              <div>
+                <strong className="text-gray-700">Mood:</strong>
+                <p>{scene.mood}</p>
+              </div>
+            )}
+            {scene.duration && (
+              <div>
+                <strong className="text-gray-700">Duration:</strong>
+                <p>{scene.duration}s</p>
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+})
+
+SceneDirectionRenderer.displayName = 'SceneDirectionRenderer'
+
