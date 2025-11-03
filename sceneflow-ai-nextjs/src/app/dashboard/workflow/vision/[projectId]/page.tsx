@@ -940,7 +940,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     return Math.abs(hash).toString(36).slice(0, 16)
   }
 
-  const loadProject = async () => {
+  const loadProject = async (skipAutoGeneration: boolean = false) => {
     try {
       // Add cache-busting to force fresh data from database
       const cacheBuster = `?id=${projectId}&_t=${Date.now()}`
@@ -1278,15 +1278,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }
         })
         
-        // Check if generation is complete
-        if (!visionPhase.scriptGenerated || !visionPhase.charactersGenerated || !visionPhase.scenesGenerated) {
+        // Check if generation is complete (skip if explicitly requested)
+        if (!skipAutoGeneration && (!visionPhase.scriptGenerated || !visionPhase.charactersGenerated || !visionPhase.scenesGenerated)) {
           // Defer generation until after hydration to prevent hydration mismatch
           setTimeout(() => initiateGeneration(proj), 100)
         }
       } else {
-        // No Vision data yet, start generation
-        // Defer generation until after hydration to prevent hydration mismatch
-        setTimeout(() => initiateGeneration(proj), 100)
+        // No Vision data yet, start generation (skip if explicitly requested)
+        if (!skipAutoGeneration) {
+          // Defer generation until after hydration to prevent hydration mismatch
+          setTimeout(() => initiateGeneration(proj), 100)
+        }
       }
     } catch (error) {
       console.error('Failed to load project:', error)
@@ -2361,11 +2363,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   }
                 } catch {}
                 
-                // Retry logic for project reload after batch audio generation
+                // Retry logic for project reload after batch audio generation (skip auto-generation to prevent script regeneration bug)
                 let retries = 3
                 while (retries > 0) {
                   try {
-                    await loadProject()
+                    await loadProject(true) // Skip auto-generation to prevent accidental script regeneration
                     break // Success!
                   } catch (error) {
                     retries--
@@ -2570,27 +2572,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         
         try { const { toast } = require('sonner'); toast.success('Audio generated!') } catch {}
         
-        // Retry logic for project reload
-        let retries = 3
-        while (retries > 0) {
-          try {
-            await loadProject()
-            break // Success!
-          } catch (error) {
-            retries--
-            console.warn(`[Audio] Project reload failed, ${retries} retries left`)
-            if (retries > 0) {
-              await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1s before retry
-            } else {
-              console.error('[Audio] All retries exhausted')
-              try { const { toast } = require('sonner'); toast.warning('Audio saved but page reload failed. Please refresh manually.') } catch {}
-            }
-          }
-        }
-        
-        // Debug logging after reload
-        console.log('[Audio] Reloaded project, checking scene audio URLs:')
-        console.log('[Audio] Scene', sceneIdx, 'narrationAudioUrl:', script?.script?.scenes?.[sceneIdx]?.narrationAudioUrl)
+        // Audio URL already updated in state - no need to reload entire project
+        console.log('[Audio] Audio generated and state updated successfully')
       } else {
         try { const { toast } = require('sonner'); toast.error(data.error || 'Failed to generate audio') } catch {}
       }
