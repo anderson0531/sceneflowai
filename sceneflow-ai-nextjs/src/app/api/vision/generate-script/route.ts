@@ -232,19 +232,18 @@ CRITICAL DIALOGUE RULES:
 DIALOGUE INFLECTION AND EMOTION (CRITICAL FOR TTS):
 - Add emotion/inflection tags in PARENTHESES (not brackets) for stage directions
 - Examples: (excitedly), (whispering), (sadly), (thoughtfully), (angrily), (nervously)
-- Use SSML pause tags for dramatic timing: <break time="1.0s" />
-- Use ellipses (...) for hesitation or trailing off
-- Use dashes (—) for interruptions or abrupt pauses
+- Use ellipses (...) for pauses or hesitation
+- Use dashes (—) for interruptions or abrupt stops
 - Capitalize words for EMPHASIS
 - The stage direction should come BEFORE the spoken text
 - Stage directions are implicit prompts interpreted by the AI model - keep them simple and clear
 - The "line" field should contain ONLY the dialogue text with emotion tags, NOT the character name
 - Examples:
   * {"character": "BRIAN ANDERSON SR", "line": "(excitedly) I can't believe it!"}
-  * {"character": "MINT", "line": "(whispering) Don't tell anyone. <break time='0.5s' /> It's our secret."}
+  * {"character": "MINT", "line": "(whispering) Don't tell anyone... It's our secret."}
   * {"character": "BRIAN ANDERSON SR", "line": "(thoughtfully) I... I'm not sure about this."}
   * {"character": "MINT", "line": "(sadly) I wish things were different—"}
-  * {"character": "BRIAN ANDERSON SR", "line": "(to himself, whispering) <break time='1s' /> It's time. <break time='500ms' /> It has to be."}
+  * {"character": "BRIAN ANDERSON SR", "line": "(to himself, whispering) ...It's time. It has to be."}
 
 CRITICAL REQUIREMENTS:
 1. Generate a COMPLETE, CONTINUOUS script with ${sceneCount} scenes

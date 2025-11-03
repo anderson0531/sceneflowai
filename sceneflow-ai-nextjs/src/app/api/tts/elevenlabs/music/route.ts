@@ -21,12 +21,12 @@ export async function POST(request: NextRequest) {
     const durationSeconds = duration || 30  // Default 30 seconds for background music
     console.log('[Music] Generating background music:', text, 'Duration:', durationSeconds)
 
-    const url = 'https://api.elevenlabs.io/v1/music-generation'
+    const url = 'https://api.elevenlabs.io/v1/music'
     
     const body = {
-      text,
-      duration_seconds: durationSeconds,
-      prompt_influence: 0.5  // Balanced influence for music generation
+      prompt: text,
+      music_length_ms: durationSeconds * 1000,  // Convert to milliseconds
+      model_id: 'music_v1'
     }
 
     const response = await fetch(url, {

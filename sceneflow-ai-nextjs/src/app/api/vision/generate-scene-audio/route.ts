@@ -125,45 +125,33 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig): 
   const apiKey = process.env.ELEVENLABS_API_KEY
   if (!apiKey) throw new Error('ElevenLabs API key not configured')
 
-  // Check if text contains SSML tags or parenthetical stage directions
-  const containsSSML = text.includes('<break') || 
-                       text.includes('<speak') ||
-                       /\([^)]+\)/.test(text) // Has (stage direction)
+  // Check if text contains parenthetical stage directions
+  // Note: ElevenLabs doesn't support SSML tags like <break> - only implicit prompts
+  const hasStageDirections = /\([^)]+\)/.test(text)
 
-  console.log('[Scene Audio] SSML detected:', containsSSML)
+  console.log('[Scene Audio] Stage directions detected:', hasStageDirections, 'Text:', text.substring(0, 100))
 
-  // Choose endpoint based on content
-  const endpoint = containsSSML 
-    ? `https://api.elevenlabs.io/v1/text-to-speech/${voiceConfig.voiceId}/ssml`
-    : `https://api.elevenlabs.io/v1/text-to-speech/${voiceConfig.voiceId}`
-  
-  const textToSend = containsSSML && !text.trim().startsWith('<speak>') 
-    ? `<speak>${text}</speak>` 
-    : text
+  // Always use standard endpoint (ElevenLabs doesn't have a separate SSML endpoint)
+  const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceConfig.voiceId}?optimize_streaming_latency=0&output_format=mp3_44100_128`
 
-  console.log('[Scene Audio] Using endpoint:', containsSSML ? 'SSML' : 'standard', 'Text:', textToSend.substring(0, 100))
-
-  const response = await fetch(
-    `${endpoint}?optimize_streaming_latency=0&output_format=mp3_44100_128`,
-    {
-      method: 'POST',
-      headers: {
-        'xi-api-key': apiKey,
-        'Content-Type': 'application/json',
-        Accept: 'audio/mpeg',
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'xi-api-key': apiKey,
+      'Content-Type': 'application/json',
+      Accept: 'audio/mpeg',
+    },
+    body: JSON.stringify({
+      text: text, // Pass text as-is (ElevenLabs handles parenthetical stage directions natively)
+      model_id: hasStageDirections ? 'eleven_multilingual_v2' : 'eleven_monolingual_v1', // Use multilingual_v2 for stage directions
+      voice_settings: {
+        stability: voiceConfig.stability || 0.5,
+        similarity_boost: voiceConfig.similarityBoost || 0.75,
+        style: hasStageDirections ? 0.5 : undefined,
+        use_speaker_boost: hasStageDirections ? true : undefined,
       },
-      body: JSON.stringify({
-        text: textToSend,
-        model_id: containsSSML ? 'eleven_multilingual_v2' : 'eleven_monolingual_v1', // Use multilingual_v2 for SSML
-        voice_settings: {
-          stability: voiceConfig.stability || 0.5,
-          similarity_boost: voiceConfig.similarityBoost || 0.75,
-          style: containsSSML ? 0.5 : undefined,
-          use_speaker_boost: containsSSML ? true : undefined,
-        },
-      }),
-    }
-  )
+    }),
+  })
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => 'Unknown error')

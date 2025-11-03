@@ -212,13 +212,13 @@ export async function POST(request: NextRequest) {
                   }
                 } catch (fallbackError: any) {
                   console.error(`[Script Gen V2] Single-scene fallback failed:`, fallbackError.message)
-                  console.error(`[Script Gen V2] Max retries reached for batch ${batchNumber}, stopping generation`)
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                    type: 'warning',
-                    message: `Failed to generate remaining scenes after ${MAX_BATCH_RETRIES} attempts. Generated ${allScenes.length} of ${actualTotalScenes} scenes.`
-                  })}\n\n`))
-                  break
-                }
+                console.error(`[Script Gen V2] Max retries reached for batch ${batchNumber}, stopping generation`)
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                  type: 'warning',
+                  message: `Failed to generate remaining scenes after ${MAX_BATCH_RETRIES} attempts. Generated ${allScenes.length} of ${actualTotalScenes} scenes.`
+                })}\n\n`))
+                break
+              }
               }
               continue // Retry same batch or continue with fallback result
             }
@@ -445,17 +445,16 @@ CRITICAL DIALOGUE RULES:
 DIALOGUE INFLECTION AND EMOTION (CRITICAL FOR TTS):
 - Add emotion/inflection tags in PARENTHESES (not brackets) for stage directions
 - Common tags: (excitedly), (whispering), (sadly), (thoughtfully), (angrily), (nervously), (cheerfully), (urgently)
-- Use SSML pause tags: <break time="1.0s" /> (seconds) or <break time="500ms" /> (milliseconds)
-- Use ellipses (...) for hesitation
-- Use dashes (—) for interruptions
+- Use ellipses (...) for hesitation or pauses
+- Use dashes (—) for interruptions or abrupt stops
 - Capitalize for EMPHASIS
 - The stage direction should come BEFORE the spoken text
 - Stage directions are implicit prompts interpreted by the AI model - keep them simple and clear
 - CRITICAL: The "line" field contains ONLY dialogue text + emotion tags, NOT the character name
 - Examples:
   * {"character": "BRIAN ANDERSON SR", "line": "(excitedly) I can't believe it!"}
-  * {"character": "MINT", "line": "(whispering) Don't tell anyone. <break time='0.5s' /> It's our secret."}
-  * {"character": "BRIAN ANDERSON SR", "line": "(to himself, whispering) <break time='1s' /> It's time. <break time='500ms' /> It has to be."}
+  * {"character": "MINT", "line": "(whispering) Don't tell anyone... It's our secret."}
+  * {"character": "BRIAN ANDERSON SR", "line": "(to himself, whispering) ...It's time. It has to be."}
 
 SCENE PLANNING:
 - Total target: ${targetDuration}s (±10% is fine)
@@ -598,9 +597,9 @@ CRITICAL CHARACTER RULES:
 CRITICAL DIALOGUE: Use EXACT character names in the "character" field - do NOT include them in the "line" field.
 DIALOGUE EMOTION (FOR TTS):
 - Start each "line" with (emotion) tags in PARENTHESES (e.g., (excitedly), (whispering), (sadly))
-- Use <break time="Xs" /> pauses for dramatic timing (e.g., <break time="1s" /> or <break time="500ms" />)
+- Use ellipses (...) for pauses or hesitation
 - Stage directions are implicit prompts - keep them simple and clear
-- Example: {"character": "NAME", "line": "(sadly) <break time='1s' /> I can't believe it."}
+- Example: {"character": "NAME", "line": "(sadly) ...I can't believe it."}
 
 PREVIOUS SCENES (${prevScenes.length} so far, ${prevDuration}s total):
 ${prevScenes.slice(-3).map((s: any) => `${s.sceneNumber}. ${s.heading} (${s.duration}s): ${s.action.substring(0, 80)}...`).join('\n')}
@@ -999,27 +998,27 @@ function sanitizeJsonString(jsonStr: string): string {
     
     // HEAVY FIX: Only if lightweight fixes didn't work
     // Process control characters in strings
-    cleaned = cleaned.replace(
+      cleaned = cleaned.replace(
       /"((?:[^"\\]|\\.){0,5000})"/g,  // Add length limit to prevent catastrophic backtracking
-      (match, stringContent) => {
+        (match, stringContent) => {
         if (stringContent.length > 5000) {
           // Truncate extremely long strings to prevent memory issues
           stringContent = stringContent.substring(0, 5000) + '...'
         }
         
-        const fixed = stringContent
+          const fixed = stringContent
           .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, (char: string) => {
-            const code = char.charCodeAt(0)
+              const code = char.charCodeAt(0)
             if (code === 9) return '\\t'
             if (code === 10) return '\\n'
             if (code === 13) return '\\r'
             return ' '
           })
         
-        return `"${fixed}"`
-      }
-    )
-    
+          return `"${fixed}"`
+        }
+      )
+      
     // Final balance after heavy fixes
     const heavyOpenBraces = (cleaned.match(/{/g) || []).length
     const heavyCloseBraces = (cleaned.match(/}/g) || []).length
@@ -1029,10 +1028,10 @@ function sanitizeJsonString(jsonStr: string): string {
     if (heavyOpenBraces > heavyCloseBraces) cleaned += '}'.repeat(heavyOpenBraces - heavyCloseBraces)
     if (heavyOpenBrackets > heavyCloseBrackets) cleaned += ']'.repeat(heavyOpenBrackets - heavyCloseBrackets)
     
-    JSON.parse(cleaned)
-    return cleaned
-    
-  } catch (secondError: any) {
+      JSON.parse(cleaned)
+      return cleaned
+      
+    } catch (secondError: any) {
     console.error('[Sanitize] Failed after all attempts')
     throw secondError
   }
@@ -1137,34 +1136,34 @@ function parseBatch1(response: string, start: number, end: number): any {
     console.log(`[Parse Batch 1] Recovered ${parsedScenes.length} scenes via incremental parsing`)
     parsed = { scenes: parsedScenes }
   }
-  
-  // Batch 1 returns object with totalScenes and scenes
-  return {
-    totalScenes: parsed.totalScenes || null,
-    estimatedTotalDuration: parsed.estimatedTotalDuration || 0,
+    
+    // Batch 1 returns object with totalScenes and scenes
+        return {
+          totalScenes: parsed.totalScenes || null,
+          estimatedTotalDuration: parsed.estimatedTotalDuration || 0,
     scenes: (parsedScenes || []).map((s: any, idx: number) => {
-      const scene = {
-        sceneNumber: start + idx,
-        heading: s.heading || `SCENE ${start + idx}`,
-        action: s.action || 'Scene content',
-        narration: s.narration || '',  // NEW: Preserve captivating narration
-        dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
-        visualDescription: s.visualDescription || s.action || 'Cinematic shot',
-        duration: s.duration || 30,  // Use AI's realistic estimate
-        sfx: Array.isArray(s.sfx) ? s.sfx.map((sfx: any) => ({
-          time: sfx.time || 0,
-          description: sfx.description || ''
-        })) : [],
-        music: s.music ? {
-          description: s.music.description || '',
-          duration: s.music.duration
-        } : undefined,
-        isExpanded: true
-      }
-      
-      // Extract SFX from dialogue (post-processing fix)
-      return extractSFXFromDialogue(scene)
-    })
+            const scene = {
+              sceneNumber: start + idx,
+              heading: s.heading || `SCENE ${start + idx}`,
+              action: s.action || 'Scene content',
+              narration: s.narration || '',  // NEW: Preserve captivating narration
+              dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
+              visualDescription: s.visualDescription || s.action || 'Cinematic shot',
+              duration: s.duration || 30,  // Use AI's realistic estimate
+              sfx: Array.isArray(s.sfx) ? s.sfx.map((sfx: any) => ({
+                time: sfx.time || 0,
+                description: sfx.description || ''
+              })) : [],
+              music: s.music ? {
+                description: s.music.description || '',
+                duration: s.music.duration
+              } : undefined,
+              isExpanded: true
+            }
+            
+            // Extract SFX from dialogue (post-processing fix)
+            return extractSFXFromDialogue(scene)
+          })
   }
 }
 
@@ -1304,33 +1303,33 @@ function parseScenes(response: string, start: number, end: number): any {
     
     console.log(`[Parse Scenes] Recovered ${parsedScenes.length} scenes via incremental parsing`)
   }
-  
-  // Batch 2+ returns just scenes array
-  return {
+    
+    // Batch 2+ returns just scenes array
+      return {
     scenes: parsedScenes.map((s: any, idx: number) => {
-      const scene = {
-        sceneNumber: start + idx,
-        heading: s.heading || `SCENE ${start + idx}`,
-        characters: s.characters || [],  // CRITICAL: Preserve characters array from AI
-        action: s.action || 'Scene content',
-        narration: s.narration || '',  // NEW: Preserve captivating narration
-        dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
-        visualDescription: s.visualDescription || s.action || 'Cinematic shot',
-        duration: s.duration || 30,  // Use AI's realistic estimate
-        sfx: Array.isArray(s.sfx) ? s.sfx.map((sfx: any) => ({
-          time: sfx.time || 0,
-          description: sfx.description || ''
-        })) : [],
-        music: s.music ? {
-          description: s.music.description || '',
-          duration: s.music.duration
-        } : undefined,
-        isExpanded: true
-      }
-      
-      // Extract SFX from dialogue (post-processing fix)
-      return extractSFXFromDialogue(scene)
-    })
+          const scene = {
+            sceneNumber: start + idx,
+            heading: s.heading || `SCENE ${start + idx}`,
+            characters: s.characters || [],  // CRITICAL: Preserve characters array from AI
+            action: s.action || 'Scene content',
+            narration: s.narration || '',  // NEW: Preserve captivating narration
+            dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
+            visualDescription: s.visualDescription || s.action || 'Cinematic shot',
+            duration: s.duration || 30,  // Use AI's realistic estimate
+            sfx: Array.isArray(s.sfx) ? s.sfx.map((sfx: any) => ({
+              time: sfx.time || 0,
+              description: sfx.description || ''
+            })) : [],
+            music: s.music ? {
+              description: s.music.description || '',
+              duration: s.music.duration
+            } : undefined,
+            isExpanded: true
+          }
+          
+          // Extract SFX from dialogue (post-processing fix)
+          return extractSFXFromDialogue(scene)
+        })
   }
 }
 

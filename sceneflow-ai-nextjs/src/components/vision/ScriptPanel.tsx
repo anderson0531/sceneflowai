@@ -407,20 +407,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     for (const t of texts) {
       if (queueAbortRef.current.abort) break
       
-      // Detect if text needs SSML endpoint
-      const needsSSML = t.includes('<break') || 
-                        t.includes('<speak') || 
-                        /\([^)]+\)/.test(t) // Has (stage direction)
+      // Always use standard endpoint (ElevenLabs handles stage directions natively)
+      console.log('[ScriptPanel] Generating audio for text:', t.substring(0, 100))
       
-      const endpoint = needsSSML ? '/api/tts/elevenlabs/ssml' : '/api/tts/elevenlabs'
-      const textToSend = needsSSML && !t.trim().startsWith('<speak>') ? `<speak>${t}</speak>` : t
-      
-      console.log('[ScriptPanel] Using endpoint:', endpoint, 'for text:', textToSend.substring(0, 100))
-      
-      const resp = await fetch(endpoint, {
+      const resp = await fetch('/api/tts/elevenlabs', {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: textToSend, voiceId: selectedVoiceId || voices[0]?.id })
+        body: JSON.stringify({ text: t, voiceId: selectedVoiceId || voices[0]?.id })
       })
       if (!resp.ok) throw new Error('TTS failed')
       const blob = await resp.blob()
