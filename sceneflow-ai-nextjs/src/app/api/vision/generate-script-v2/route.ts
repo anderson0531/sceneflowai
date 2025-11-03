@@ -692,7 +692,7 @@ async function callGemini(apiKey: string, prompt: string): Promise<string> {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 16384
+          maxOutputTokens: 32768  // Increased to handle larger batch responses (Gemini 2.5 Pro supports up to 65536)
         }
       })
     }
@@ -833,6 +833,92 @@ function sanitizeJsonString(jsonStr: string): string {
       cleaned = cleaned.replace(/,\s*$/, '')
       cleaned = cleaned.replace(/:\s*$/, ': ""')
       cleaned = cleaned.replace(/[{\[]\s*$/, '')
+      
+      // Count unclosed braces/brackets to close them properly
+      let openBraces = 0
+      let openBrackets = 0
+      let inString = false
+      let escaped = false
+      
+      for (let i = 0; i < cleaned.length; i++) {
+        const char = cleaned[i]
+        
+        if (escaped) {
+          escaped = false
+          continue
+        }
+        
+        if (char === '\\') {
+          escaped = true
+          continue
+        }
+        
+        if (char === '"') {
+          inString = !inString
+          continue
+        }
+        
+        if (!inString) {
+          if (char === '{') openBraces++
+          if (char === '}') openBraces--
+          if (char === '[') openBrackets++
+          if (char === ']') openBrackets--
+        }
+      }
+      
+      // Remove any trailing incomplete object/array
+      let lastCompleteIdx = cleaned.lastIndexOf('}')
+      if (lastCompleteIdx > 0) {
+        const beforeClose = cleaned.substring(0, lastCompleteIdx + 1)
+        const afterClose = cleaned.substring(lastCompleteIdx + 1).trim()
+        
+        // If there's incomplete data after last }, remove it
+        if (afterClose && afterClose !== ',' && !afterClose.match(/^[\s,]*[\]}]$/)) {
+          console.log('[Sanitize] Removing incomplete data after last complete object')
+          cleaned = beforeClose
+          
+          // Recalculate braces/brackets after truncation
+          openBraces = 0
+          openBrackets = 0
+          inString = false
+          escaped = false
+          
+          for (let i = 0; i < cleaned.length; i++) {
+            const char = cleaned[i]
+            
+            if (escaped) {
+              escaped = false
+              continue
+            }
+            
+            if (char === '\\') {
+              escaped = true
+              continue
+            }
+            
+            if (char === '"') {
+              inString = !inString
+              continue
+            }
+            
+            if (!inString) {
+              if (char === '{') openBraces++
+              if (char === '}') openBraces--
+              if (char === '[') openBrackets++
+              if (char === ']') openBrackets--
+            }
+          }
+        }
+      }
+      
+      // Close unclosed structures
+      console.log('[Sanitize] Unclosed braces:', openBraces, 'brackets:', openBrackets)
+      for (let i = 0; i < openBrackets; i++) {
+        cleaned += ']'
+      }
+      for (let i = 0; i < openBraces; i++) {
+        cleaned += '}'
+      }
     }
     
     // Try again after truncation fix
@@ -1083,9 +1169,64 @@ function parseScenes(response: string, start: number, end: number): any {
   } catch (parseError: any) {
     console.warn('[Parse Scenes] Full parse failed, attempting incremental extraction...', parseError.message.substring(0, 100))
     
-    // Extract as many complete scenes as possible
-    for (const sceneChunk of streamParseScenes(response)) {
-      parsedScenes.push(...sceneChunk)
+    // Enhanced scene-by-scene extraction for truncated responses
+    try {
+      const extractedScenes: any[] = []
+      
+      // Pattern to match complete scene objects
+      const scenePattern = /\{\s*"sceneNumber"\s*:\s*\d+[^}]*?\}/gs
+      const matches = response.matchAll(scenePattern)
+      
+      for (const match of matches) {
+        try {
+          let sceneText = match[0]
+          
+          // Check if the scene ends with an incomplete string value
+          const quoteCount = (sceneText.match(/(?<!\\)"/g) || []).length
+          if (quoteCount % 2 !== 0) {
+            // Unclosed string, try to close it
+            const lastQuoteIdx = sceneText.lastIndexOf('"')
+            const beforeLastQuote = sceneText.substring(0, lastQuoteIdx)
+            const lastColon = beforeLastQuote.lastIndexOf(':')
+            
+            if (lastColon > 0) {
+              // Close the string value and the object
+              sceneText = sceneText.substring(0, lastQuoteIdx) + '"}'
+            }
+          }
+          
+          if (!sceneText.endsWith('}')) {
+            continue // Skip if not a complete object
+          }
+          
+          const scene = JSON.parse(sceneText)
+          if (scene.sceneNumber >= start && scene.sceneNumber <= end) {
+            extractedScenes.push(scene)
+            console.log(`[Parse Scenes] Extracted scene ${scene.sceneNumber} incrementally`)
+          }
+        } catch (sceneErr) {
+          // Skip invalid scenes
+          continue
+        }
+      }
+      
+      if (extractedScenes.length > 0) {
+        // Sort by sceneNumber before returning
+        extractedScenes.sort((a, b) => a.sceneNumber - b.sceneNumber)
+        parsedScenes = extractedScenes
+        console.log(`[Parse Scenes] Recovered ${extractedScenes.length} scenes via enhanced extraction`)
+      } else {
+        // Fallback to original streamParseScenes if enhanced extraction found nothing
+        for (const sceneChunk of streamParseScenes(response)) {
+          parsedScenes.push(...sceneChunk)
+        }
+      }
+    } catch (extractError) {
+      console.error('[Parse Scenes] Enhanced extraction failed, trying stream parse:', extractError)
+      // Fallback to stream parse
+      for (const sceneChunk of streamParseScenes(response)) {
+        parsedScenes.push(...sceneChunk)
+      }
     }
     
     if (parsedScenes.length === 0) {
