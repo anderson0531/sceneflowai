@@ -408,7 +408,7 @@ export default function VariantEditorDrawer({ open, variant, onClose, onApply }:
                     <SelectContent>
                       <SelectItem value="micro_short">
                         <div>
-                          <div className="font-semibold">Micro (< 5 min)</div>
+                          <div className="font-semibold">Micro (&lt; 5 min)</div>
                           <div className="text-xs text-gray-400">Short-form content, social media, quick narratives</div>
                         </div>
                       </SelectItem>
