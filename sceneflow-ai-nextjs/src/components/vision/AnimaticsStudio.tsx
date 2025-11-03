@@ -18,21 +18,33 @@ export function AnimaticsStudio({ scenes, onClose }: AnimaticsStudioProps) {
   const [exportError, setExportError] = useState<string | null>(null);
   
   useEffect(() => {
-    // Initialize project from storyboard scenes
-    const assets = scenes.map((scene, idx) => ({
-      id: `asset-${idx}`,
-      type: 'image' as const,
-      src: scene.imageUrl,
-      durationInFrames: 150, // 5 seconds at 30fps
-      title: `Scene ${scene.sceneNumber}`,
-      metadata: {}
-    }));
+    // Filter and initialize project from storyboard scenes with valid images
+    const validAssets = scenes
+      .filter(scene => scene.imageUrl && scene.imageUrl.trim() !== '')
+      .map((scene, idx) => ({
+        id: `asset-${idx}`,
+        type: 'image' as const,
+        src: scene.imageUrl,
+        durationInFrames: 150, // 5 seconds at 30fps
+        title: `Scene ${scene.sceneNumber}`,
+        metadata: {}
+      }));
+    
+    console.log('[AnimaticsStudio] Total scenes:', scenes.length);
+    console.log('[AnimaticsStudio] Valid assets:', validAssets.length);
+    console.log('[AnimaticsStudio] Asset URLs:', validAssets.map(a => a.src));
+    
+    // Don't load if no valid assets
+    if (validAssets.length === 0) {
+      console.warn('[AnimaticsStudio] No scenes with valid images found');
+      return;
+    }
     
     const videoTrack = {
       id: 'video-track-1',
       type: 'video' as const,
       name: 'Video',
-      clips: assets.map((asset, idx) => ({
+      clips: validAssets.map((asset, idx) => ({
         id: `clip-${idx}`,
         assetId: asset.id,
         trackId: 'video-track-1',
@@ -52,8 +64,8 @@ export function AnimaticsStudio({ scenes, onClose }: AnimaticsStudioProps) {
       fps: 30,
       width: 1920,
       height: 1080,
-      durationInFrames: assets.length * 150,
-      assets,
+      durationInFrames: validAssets.length * 150,
+      assets: validAssets,
       tracks: [videoTrack],
       currentFrame: 0,
       zoom: 1
@@ -61,6 +73,9 @@ export function AnimaticsStudio({ scenes, onClose }: AnimaticsStudioProps) {
     
     return () => resetProject();
   }, [scenes, loadProject, resetProject]);
+  
+  // Check if we have valid assets to display
+  const hasValidAssets = scenes.some(scene => scene.imageUrl && scene.imageUrl.trim() !== '');
   
   const handleExport = async () => {
     setIsExporting(true);
@@ -93,6 +108,19 @@ export function AnimaticsStudio({ scenes, onClose }: AnimaticsStudioProps) {
       setIsExporting(false);
     }
   };
+  
+  // Show empty state if no valid images
+  if (!hasValidAssets) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+        <div className="text-center max-w-md px-8">
+          <p className="text-white text-xl mb-3 font-semibold">No storyboard images available</p>
+          <p className="text-gray-400 text-sm mb-8">Generate storyboard images first to use the Animatics Studio</p>
+          <Button onClick={onClose} variant="default">Close</Button>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="fixed inset-0 z-50 bg-black">

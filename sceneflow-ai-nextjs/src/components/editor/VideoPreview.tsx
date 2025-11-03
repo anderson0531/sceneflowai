@@ -21,8 +21,8 @@ export function VideoPreview() {
   }
   
   return (
-    <div className="w-full h-full bg-black flex items-center justify-center p-4">
-      <div className="w-full h-full flex items-center justify-center">
+    <div className="w-full h-full bg-black flex items-center justify-center">
+      <div className="relative w-full h-full">
         <Player
           component={VideoComposition}
           durationInFrames={durationInFrames}
@@ -32,10 +32,7 @@ export function VideoPreview() {
           controls
           style={{ 
             width: '100%', 
-            height: '100%',
-            maxWidth: '100%',
-            maxHeight: '100%',
-            objectFit: 'contain'
+            height: '100%'
           }}
           inputProps={{}}
           onFrameUpdate={setCurrentFrame}
