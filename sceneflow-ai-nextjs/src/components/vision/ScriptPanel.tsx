@@ -465,7 +465,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       const response = await fetch('/api/tts/elevenlabs/sound-effects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: sfx.description, duration: 2.0 })
+        body: JSON.stringify({ text: typeof sfx === 'string' ? sfx : sfx.description, duration: 2.0 })
       })
 
       if (!response.ok) {
@@ -497,7 +497,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       const response = await fetch('/api/tts/elevenlabs/music', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: music.description, duration })
+        body: JSON.stringify({ text: typeof music === 'string' ? music : music.description, duration })
       })
 
       if (!response.ok) {
@@ -661,7 +661,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // Quick play Music (generate and play immediately)
   const generateAndPlayMusic = async (description: string, duration: number = 30) => {
     try {
-      const response = await fetch('/api/tts/google/music', {
+      const response = await fetch('/api/tts/elevenlabs/music', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: description, duration })
@@ -1151,6 +1151,12 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                         setSelectedSceneForReview(sceneIdx)
                         setShowSceneReviewModal(true)
                       }}
+                      generatingMusic={generatingMusic}
+                      setGeneratingMusic={setGeneratingMusic}
+                      generatingSFX={generatingSFX}
+                      setGeneratingSFX={setGeneratingSFX}
+                      generateMusic={generateMusic}
+                      generateSFX={generateSFX}
                 />
                     )
                   })}
@@ -1322,9 +1328,17 @@ interface SceneCardProps {
   onStopAudio?: () => void
   // NEW: Scene review modal props
   onOpenSceneReview?: (sceneIdx: number) => void
+  // NEW: Music and SFX generation props
+  generatingMusic?: number | null
+  setGeneratingMusic?: (state: number | null) => void
+  generatingSFX?: {sceneIdx: number, sfxIdx: number} | null
+  setGeneratingSFX?: (state: {sceneIdx: number, sfxIdx: number} | null) => void
+  // Functions for generating and saving audio
+  generateMusic?: (sceneIdx: number) => Promise<void>
+  generateSFX?: (sceneIdx: number, sfxIdx: number) => Promise<void>
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart, dragHandleProps, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onStopAudio, onOpenSceneReview }: SceneCardProps) {
+function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart, dragHandleProps, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onStopAudio, onOpenSceneReview, generatingMusic, setGeneratingMusic, generatingSFX, setGeneratingSFX, generateMusic, generateSFX }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
   
@@ -2023,6 +2037,204 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                         )}
                       </button>
                     )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+          
+          {/* Music (if available) */}
+          {scene.music && (
+            <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Music className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">Background Music</span>
+                  {scene.musicAudio && (
+                    <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
+                      <Volume2 className="w-3 h-3" />
+                      Audio Ready
+                    </span>
+                  )}
+                </div>
+                {scene.musicAudio ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onPlayAudio?.(scene.musicAudio, 'music')
+                      }}
+                      className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
+                      title="Play Music"
+                    >
+                      {playingAudio === scene.musicAudio ? (
+                        <Pause className="w-4 h-4" />
+                      ) : (
+                        <Play className="w-4 h-4" />
+                      )}
+                    </button>
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        setGeneratingMusic?.(sceneIdx)
+                        try {
+                          await generateMusic(sceneIdx)
+                        } catch (error) {
+                          console.error('[ScriptPanel] Music regeneration failed:', error)
+                        } finally {
+                          setGeneratingMusic?.(null)
+                        }
+                      }}
+                      disabled={generatingMusic === sceneIdx}
+                      className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded disabled:opacity-50"
+                      title="Regenerate Music"
+                    >
+                      {generatingMusic === sceneIdx ? (
+                        <Loader className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4" />
+                      )}
+                    </button>
+                    <a
+                      href={scene.musicAudio}
+                      download
+                      className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
+                      title="Download Music"
+                    >
+                      <Download className="w-4 h-4" />
+                    </a>
+                  </div>
+                ) : (
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation()
+                      setGeneratingMusic?.(sceneIdx)
+                      try {
+                        await generateMusic(sceneIdx)
+                      } catch (error) {
+                        console.error('[ScriptPanel] Music generation failed:', error)
+                      } finally {
+                        setGeneratingMusic?.(null)
+                      }
+                    }}
+                    disabled={generatingMusic === sceneIdx}
+                    className="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-50"
+                  >
+                    {generatingMusic === sceneIdx ? (
+                      <div className="flex items-center gap-1">
+                        <Loader className="w-3 h-3 animate-spin" />
+                        Generating...
+                      </div>
+                    ) : (
+                      'Generate'
+                    )}
+                  </button>
+                )}
+              </div>
+              <div className="text-sm text-gray-700 dark:text-gray-300 italic">
+                {typeof scene.music === 'string' ? scene.music : scene.music.description}
+              </div>
+            </div>
+          )}
+          
+          {/* SFX (if available) */}
+          {scene.sfx && Array.isArray(scene.sfx) && scene.sfx.length > 0 && (
+            <div className="mt-3 space-y-2">
+              <div className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Sound Effects ({scene.sfx.length})
+              </div>
+              {scene.sfx.map((sfx: any, sfxIdx: number) => {
+                const sfxAudio = scene.sfxAudio?.[sfxIdx]
+                return (
+                  <div key={sfxIdx} className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <VolumeIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                        <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">SFX {sfxIdx + 1}</span>
+                        {sfxAudio && (
+                          <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
+                            <Volume2 className="w-3 h-3" />
+                            Audio Ready
+                          </span>
+                        )}
+                      </div>
+                      {sfxAudio ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onPlayAudio?.(sfxAudio, `sfx-${sfxIdx}`)
+                            }}
+                            className="p-1 hover:bg-amber-200 dark:hover:bg-amber-800 rounded"
+                            title="Play SFX"
+                          >
+                            {playingAudio === sfxAudio ? (
+                              <Pause className="w-4 h-4" />
+                            ) : (
+                              <Play className="w-4 h-4" />
+                            )}
+                          </button>
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              setGeneratingSFX?.({ sceneIdx, sfxIdx })
+                              try {
+                                await generateSFX(sceneIdx, sfxIdx)
+                              } catch (error) {
+                                console.error('[ScriptPanel] SFX regeneration failed:', error)
+                              } finally {
+                                setGeneratingSFX?.(null)
+                              }
+                            }}
+                            disabled={generatingSFX?.sceneIdx === sceneIdx && generatingSFX?.sfxIdx === sfxIdx}
+                            className="p-1 hover:bg-amber-200 dark:hover:bg-amber-800 rounded disabled:opacity-50"
+                            title="Regenerate SFX"
+                          >
+                            {generatingSFX?.sceneIdx === sceneIdx && generatingSFX?.sfxIdx === sfxIdx ? (
+                              <Loader className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <RefreshCw className="w-4 h-4" />
+                            )}
+                          </button>
+                          <a
+                            href={sfxAudio}
+                            download
+                            className="p-1 hover:bg-amber-200 dark:hover:bg-amber-800 rounded"
+                            title="Download SFX"
+                          >
+                            <Download className="w-4 h-4" />
+                          </a>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation()
+                            setGeneratingSFX?.({ sceneIdx, sfxIdx })
+                            try {
+                              await generateSFX(sceneIdx, sfxIdx)
+                            } catch (error) {
+                              console.error('[ScriptPanel] SFX generation failed:', error)
+                            } finally {
+                              setGeneratingSFX?.(null)
+                            }
+                          }}
+                          disabled={generatingSFX?.sceneIdx === sceneIdx && generatingSFX?.sfxIdx === sfxIdx}
+                          className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded disabled:opacity-50"
+                        >
+                          {generatingSFX?.sceneIdx === sceneIdx && generatingSFX?.sfxIdx === sfxIdx ? (
+                            <div className="flex items-center gap-1">
+                              <Loader className="w-3 h-3 animate-spin" />
+                              Generating...
+                            </div>
+                          ) : (
+                            'Generate'
+                          )}
+                        </button>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-700 dark:text-gray-300 italic">
+                      {typeof sfx === 'string' ? sfx : sfx.description}
+                    </div>
                   </div>
                 )
               })}
