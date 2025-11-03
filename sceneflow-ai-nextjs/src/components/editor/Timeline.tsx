@@ -11,6 +11,8 @@ function TimelineClip({ clip, track }: { clip: Clip; track: Track }) {
     id: clip.id,
     data: { clip, trackId: track.id }
   });
+  const [showPreview, setShowPreview] = React.useState(false);
+  const asset = useEditorStore(state => state.assets.find(a => a.id === clip.assetId));
   
   const style = {
     transform: CSS.Translate.toString(transform),
@@ -19,14 +21,31 @@ function TimelineClip({ clip, track }: { clip: Clip; track: Track }) {
   };
   
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...listeners}
-      {...attributes}
-      className="absolute h-12 bg-blue-500 rounded border border-blue-700 cursor-move hover:bg-blue-600"
-    >
-      <span className="text-xs text-white p-1 truncate">{clip.id}</span>
+    <div className="relative">
+      <div
+        ref={setNodeRef}
+        style={style}
+        {...listeners}
+        {...attributes}
+        onMouseEnter={() => setShowPreview(true)}
+        onMouseLeave={() => setShowPreview(false)}
+        className="absolute h-12 bg-blue-500 rounded border border-blue-700 cursor-move hover:bg-blue-600"
+      >
+        <span className="text-xs text-white p-1 truncate">{clip.id}</span>
+      </div>
+      
+      {showPreview && asset && asset.type === 'image' && (
+        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+          <img 
+            src={asset.src} 
+            className="w-32 h-18 object-cover rounded border-2 border-white shadow-lg" 
+            alt={asset.title}
+          />
+          <div className="text-xs text-white bg-black/80 px-2 py-1 rounded mt-1 text-center">
+            {asset.title}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -13,9 +13,10 @@ interface AnimaticsStudioProps {
 }
 
 export function AnimaticsStudio({ scenes, onClose }: AnimaticsStudioProps) {
-  const { loadProject, resetProject } = useEditorStore();
+  const { loadProject, resetProject, currentFrame, durationInFrames, setCurrentFrame } = useEditorStore();
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [showShortcuts, setShowShortcuts] = useState(true);
   
   useEffect(() => {
     // Filter and initialize project from storyboard scenes with valid images
@@ -73,6 +74,40 @@ export function AnimaticsStudio({ scenes, onClose }: AnimaticsStudioProps) {
     
     return () => resetProject();
   }, [scenes, loadProject, resetProject]);
+  
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Only handle shortcuts when modal is open and not typing in input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      
+      if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        setCurrentFrame(Math.max(0, currentFrame - 30)); // Jump back 1 second
+      }
+      if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        setCurrentFrame(Math.min(durationInFrames, currentFrame + 30)); // Jump forward 1 second
+      }
+      if (e.code === 'Home') {
+        e.preventDefault();
+        setCurrentFrame(0); // Jump to start
+      }
+      if (e.code === 'End') {
+        e.preventDefault();
+        setCurrentFrame(durationInFrames); // Jump to end
+      }
+      if (e.key === '?') {
+        e.preventDefault();
+        setShowShortcuts(!showShortcuts); // Toggle shortcuts legend
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [currentFrame, durationInFrames, setCurrentFrame]);
   
   // Check if we have valid assets to display
   const hasValidAssets = scenes.some(scene => scene.imageUrl && scene.imageUrl.trim() !== '');
@@ -160,8 +195,20 @@ export function AnimaticsStudio({ scenes, onClose }: AnimaticsStudioProps) {
         
         {/* Preview - constrained height to prevent overflow */}
         <div className="flex-1 min-h-0 flex overflow-hidden">
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden relative">
             <VideoPreview />
+            
+            {/* Keyboard Shortcuts Legend */}
+            {showShortcuts && (
+              <div className="absolute bottom-4 left-4 bg-black/80 backdrop-blur-sm text-white text-xs p-3 rounded-lg border border-white/10 shadow-lg z-10">
+                <div className="font-semibold mb-2">Keyboard Shortcuts</div>
+                <div className="space-y-1">
+                  <div><kbd className="bg-gray-700 px-1.5 py-0.5 rounded">←</kbd>/<kbd className="bg-gray-700 px-1.5 py-0.5 rounded">→</kbd> Jump 1s</div>
+                  <div><kbd className="bg-gray-700 px-1.5 py-0.5 rounded">Home</kbd>/<kbd className="bg-gray-700 px-1.5 py-0.5 rounded">End</kbd> Start/End</div>
+                  <div><kbd className="bg-gray-700 px-1.5 py-0.5 rounded">?</kbd> Toggle shortcuts</div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         
