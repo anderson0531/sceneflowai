@@ -9,11 +9,11 @@ interface GenerateSFXParams {
 }
 
 /**
- * Generate narration or dialogue audio using Google TTS
+ * Generate narration or dialogue audio using ElevenLabs TTS
  * Returns blob URL and estimated duration
  */
 export async function generateTTSAudio(params: GenerateTTSParams): Promise<{ mp3Url: string; duration: number }> {
-  const response = await fetch('/api/tts/google', {
+  const response = await fetch('/api/tts/elevenlabs', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -100,10 +100,10 @@ export async function generateSFXAudio(params: GenerateSFXParams): Promise<{ mp3
 }
 
 /**
- * Generate background music (placeholder - Google Lyria not available)
+ * Generate background music using ElevenLabs
  */
 export async function generateMusicAudio(description: string, duration: number): Promise<{ mp3Url: string; duration: number }> {
-  const response = await fetch('/api/tts/google/music', {
+  const response = await fetch('/api/tts/elevenlabs/music', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -113,8 +113,8 @@ export async function generateMusicAudio(description: string, duration: number):
   })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Music generation not available' }))
-    throw new Error(error.error || 'Music generation not yet available')
+    const error = await response.json().catch(() => ({ error: 'Music generation failed' }))
+    throw new Error(error.error || 'Music generation failed')
   }
 
   const blob = await response.blob()

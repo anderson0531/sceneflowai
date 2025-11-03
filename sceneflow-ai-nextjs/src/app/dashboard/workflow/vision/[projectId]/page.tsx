@@ -75,9 +75,9 @@ const ensureNarratorCharacter = (characters: Character[], narrationVoice?: Voice
     description: 'Storytelling voice for scene narration',
     type: 'narrator',
     voiceConfig: narrationVoice || {
-      provider: 'google',
-      voiceName: 'Marcus (Studio)',
-      voiceId: 'en-US-Studio-M'
+      provider: 'elevenlabs',
+      voiceName: 'Adam',
+      voiceId: 'pNInz6obpgDQGcFmaJgB'
     }
   }
 }
@@ -485,15 +485,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Image quality setting
   const [imageQuality, setImageQuality] = useState<'max' | 'auto'>('auto')
-  const [ttsProvider, setTtsProvider] = useState<'google' | 'elevenlabs'>('google')
+  const [ttsProvider, setTtsProvider] = useState<'google' | 'elevenlabs'>('elevenlabs')
   
   // BYOK Settings
   const [showBYOKSettings, setShowBYOKSettings] = useState(false)
   const [byokSettings, setBYOKSettings] = useState<BYOKSettings>({
     imageProvider: 'google',
     imageModel: 'imagen-3.0-generate-001',
-    audioProvider: 'google',
-    audioModel: 'studio',
+    audioProvider: 'elevenlabs',
+    audioModel: 'eleven_multilingual_v2',
     videoProvider: 'runway',
     videoModel: 'gen3-alpha'
   })

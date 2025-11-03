@@ -341,12 +341,12 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
   const scenes = script?.script?.scenes || []
 
-  // Fetch Google voices
+  // Fetch ElevenLabs voices
   useEffect(() => {
     let mounted = true
     ;(async () => {
       try {
-        const res = await fetch('/api/tts/google/voices', { cache: 'no-store' })
+        const res = await fetch('/api/tts/elevenlabs/voices', { cache: 'no-store' })
         const data = await res.json().catch(() => null)
         if (!mounted) return
         if (data?.enabled && Array.isArray(data.voices) && data.voices.length > 0) {
@@ -406,7 +406,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     queueAbortRef.current.abort = false
     for (const t of texts) {
       if (queueAbortRef.current.abort) break
-      const resp = await fetch('/api/tts/google', {
+      const resp = await fetch('/api/tts/elevenlabs', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: t, voiceId: selectedVoiceId || voices[0]?.id })
       })
@@ -494,7 +494,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     setGeneratingMusic(sceneIdx)
     try {
       const duration = scene.duration || 30
-      const response = await fetch('/api/tts/google/music', {
+      const response = await fetch('/api/tts/elevenlabs/music', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: music.description, duration })
@@ -502,14 +502,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
       if (!response.ok) {
         const error = await response.json()
-        
-        // Handle 501 (Not Implemented) for Lyria API
-        if (response.status === 501) {
-          alert('Music generation is coming soon! Google Lyria RealTime API is currently in experimental preview.')
-          setGeneratingMusic(null)
-          return
-        }
-        
         throw new Error(error.details || 'Music generation failed')
       }
 
