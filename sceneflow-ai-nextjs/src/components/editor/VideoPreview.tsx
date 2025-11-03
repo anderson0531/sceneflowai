@@ -21,20 +21,28 @@ export function VideoPreview() {
   }
   
   return (
-    <div className="w-full h-full bg-black flex items-center justify-center">
-      <Player
-        component={VideoComposition}
-        durationInFrames={durationInFrames}
-        compositionWidth={width}
-        compositionHeight={height}
-        fps={fps}
-        controls
-        style={{ width: '100%', maxHeight: '100%' }}
-        inputProps={{}}
-        onFrameUpdate={setCurrentFrame}
-        initialFrame={currentFrame}
-        acknowledgeRemotionLicense
-      />
+    <div className="w-full h-full bg-black flex items-center justify-center p-4">
+      <div className="w-full h-full flex items-center justify-center">
+        <Player
+          component={VideoComposition}
+          durationInFrames={durationInFrames}
+          compositionWidth={width}
+          compositionHeight={height}
+          fps={fps}
+          controls
+          style={{ 
+            width: '100%', 
+            height: '100%',
+            maxWidth: '100%',
+            maxHeight: '100%',
+            objectFit: 'contain'
+          }}
+          inputProps={{}}
+          onFrameUpdate={setCurrentFrame}
+          initialFrame={currentFrame}
+          acknowledgeRemotionLicense
+        />
+      </div>
     </div>
   );
 }

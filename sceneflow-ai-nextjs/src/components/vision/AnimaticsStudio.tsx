@@ -1,10 +1,11 @@
 'use client';
 
-import { X } from 'lucide-react';
+import { X, Download, Loader } from 'lucide-react';
 import { VideoPreview } from '@/components/editor/VideoPreview';
 import { Timeline } from '@/components/editor/Timeline';
 import { useEditorStore } from '@/store/editorStore';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/Button';
 
 interface AnimaticsStudioProps {
   scenes: any[];
@@ -13,6 +14,8 @@ interface AnimaticsStudioProps {
 
 export function AnimaticsStudio({ scenes, onClose }: AnimaticsStudioProps) {
   const { loadProject, resetProject } = useEditorStore();
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   
   useEffect(() => {
     // Initialize project from storyboard scenes
@@ -59,29 +62,83 @@ export function AnimaticsStudio({ scenes, onClose }: AnimaticsStudioProps) {
     return () => resetProject();
   }, [scenes, loadProject, resetProject]);
   
+  const handleExport = async () => {
+    setIsExporting(true);
+    setExportError(null);
+    
+    try {
+      const response = await fetch('/api/editor/render', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: 'animatics-project' })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+      
+      const { videoUrl, message } = await response.json();
+      
+      if (videoUrl && videoUrl !== 'https://placeholder-video-url.example.com') {
+        // Open video in new tab or trigger download
+        window.open(videoUrl, '_blank');
+      } else {
+        // Show message for placeholder implementation
+        alert(message || 'Video rendering is being implemented. This feature will be available soon.');
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      setExportError('Failed to export video. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+  
   return (
     <div className="fixed inset-0 z-50 bg-black">
       <div className="flex flex-col h-full">
         {/* Header */}
         <div className="h-16 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4">
           <h2 className="text-xl font-bold text-white">Animatics Studio</h2>
-          <button 
-            onClick={onClose} 
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
+          <div className="flex items-center gap-3">
+            {exportError && (
+              <span className="text-red-400 text-sm">{exportError}</span>
+            )}
+            <Button
+              onClick={handleExport}
+              disabled={isExporting}
+              className="flex items-center gap-2"
+            >
+              {isExporting ? (
+                <>
+                  <Loader className="w-4 h-4 animate-spin" />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" />
+                  Export MP4
+                </>
+              )}
+            </Button>
+            <button 
+              onClick={onClose} 
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
         </div>
         
-        {/* Preview */}
-        <div className="flex-1 flex">
-          <div className="flex-1">
+        {/* Preview - constrained height to prevent overflow */}
+        <div className="flex-1 min-h-0 flex overflow-hidden">
+          <div className="flex-1 overflow-hidden">
             <VideoPreview />
           </div>
         </div>
         
-        {/* Timeline */}
-        <div className="h-64 border-t border-gray-800">
+        {/* Timeline - reduced height for better visibility */}
+        <div className="h-48 border-t border-gray-800 flex-shrink-0">
           <Timeline />
         </div>
       </div>
