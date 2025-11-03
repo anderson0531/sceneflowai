@@ -97,11 +97,11 @@ export async function POST(request: NextRequest) {
 
         // Calculate dynamic batch size based on remaining scenes
         const calculateBatchSize = (remaining: number): number => {
-          if (remaining <= 3) return remaining
-          return Math.min(3, remaining) // Max 3 for all batches
+          if (remaining <= 10) return remaining
+          return Math.min(10, remaining) // Max 10 for all batches
         }
         
-        const INITIAL_BATCH_SIZE = Math.min(3, suggestedScenes)
+        const INITIAL_BATCH_SIZE = Math.min(10, suggestedScenes)
         const MAX_BATCH_RETRIES = 3
         let actualTotalScenes = suggestedScenes
         let allScenes: any[] = []
@@ -273,9 +273,9 @@ export async function POST(request: NextRequest) {
             }
           }
           
-          // Safety: Prevent infinite loop
-          if (batchNumber > 10) {
-            console.error(`[Script Gen V2] Too many batches (${batchNumber}), stopping generation`)
+          // Safety: Prevent infinite loop (allow up to 100 batches for very large projects)
+          if (batchNumber > 100) {
+            console.error(`[Script Gen V2] Excessive batches (${batchNumber}), stopping generation. This indicates a logic error.`)
             break
           }
         }

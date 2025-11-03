@@ -119,6 +119,14 @@ export async function POST(request: NextRequest) {
       ? getFilmTypeMinutes(body.filmType)
       : (body.targetMinutes || analyzeDuration(input, 20))
 
+    // Cap duration at 180 minutes (3 hours) as reasonable maximum
+    const MAX_DURATION_MINUTES = 180
+    const cappedTargetMinutes = Math.min(targetMinutes, MAX_DURATION_MINUTES)
+
+    if (targetMinutes > MAX_DURATION_MINUTES) {
+      console.warn(`[Film Treatment] Duration ${targetMinutes}min exceeds maximum ${MAX_DURATION_MINUTES}min, capping to ${MAX_DURATION_MINUTES}min`)
+    }
+
     if (!input) {
       return NextResponse.json({ success: false, message: 'Input content is required' }, { status: 400 })
     }
@@ -141,7 +149,7 @@ export async function POST(request: NextRequest) {
       { id: 'C', label: 'C', styleHint: 'Energetic, bold, high-contrast visuals, rhythmic editing' },
     ].slice(0, variantsCount)
 
-    const context = { targetAudience, keyMessage, tone, genre, duration, platform, format, targetMinutes, beatStructure: body.beatStructure, userName }
+    const context = { targetAudience, keyMessage, tone, genre, duration, platform, format, targetMinutes: cappedTargetMinutes, beatStructure: body.beatStructure, userName }
 
     // Generate variants serially (keeps logs clearer); can parallelize later if needed
     const variants: Array<{ id: string; label: string } & FilmTreatmentItem> = []
