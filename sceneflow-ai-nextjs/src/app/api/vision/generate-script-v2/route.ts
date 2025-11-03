@@ -1169,60 +1169,117 @@ function parseScenes(response: string, start: number, end: number): any {
   } catch (parseError: any) {
     console.warn('[Parse Scenes] Full parse failed, attempting incremental extraction...', parseError.message.substring(0, 100))
     
-    // Enhanced scene-by-scene extraction for truncated responses
+    // Extract scenes using brace counting for proper nesting
     try {
       const extractedScenes: any[] = []
       
-      // Pattern to match complete scene objects
-      const scenePattern = /\{\s*"sceneNumber"\s*:\s*\d+[^}]*?\}/gs
-      const matches = response.matchAll(scenePattern)
+      // Find all positions where scenes start
+      const sceneStartPattern = /"sceneNumber"\s*:\s*(\d+)/g
+      let match: RegExpExecArray | null
       
-      for (const match of matches) {
-        try {
-          let sceneText = match[0]
+      while ((match = sceneStartPattern.exec(response)) !== null) {
+        const sceneNumber = parseInt(match[1])
+        const startPos = match.index
+        
+        // Find the opening brace before "sceneNumber"
+        let openBracePos = startPos
+        while (openBracePos > 0 && response[openBracePos] !== '{') {
+          openBracePos--
+        }
+        
+        if (openBracePos < 0 || response[openBracePos] !== '{') {
+          continue // No opening brace found
+        }
+        
+        // Count braces to find the matching closing brace
+        let braceCount = 0
+        let inString = false
+        let escaped = false
+        let endPos = openBracePos
+        
+        for (let i = openBracePos; i < response.length; i++) {
+          const char = response[i]
           
-          // Check if the scene ends with an incomplete string value
-          const quoteCount = (sceneText.match(/(?<!\\)"/g) || []).length
-          if (quoteCount % 2 !== 0) {
-            // Unclosed string, try to close it
-            const lastQuoteIdx = sceneText.lastIndexOf('"')
-            const beforeLastQuote = sceneText.substring(0, lastQuoteIdx)
-            const lastColon = beforeLastQuote.lastIndexOf(':')
-            
-            if (lastColon > 0) {
-              // Close the string value and the object
-              sceneText = sceneText.substring(0, lastQuoteIdx) + '"}'
+          // Handle escape sequences
+          if (escaped) {
+            escaped = false
+            continue
+          }
+          
+          if (char === '\\') {
+            escaped = true
+            continue
+          }
+          
+          // Handle string delimiters
+          if (char === '"') {
+            inString = !inString
+            continue
+          }
+          
+          // Only count braces outside of strings
+          if (!inString) {
+            if (char === '{') {
+              braceCount++
+            } else if (char === '}') {
+              braceCount--
+              
+              // Found the matching closing brace
+              if (braceCount === 0) {
+                endPos = i + 1
+                break
+              }
             }
           }
+        }
+        
+        // Extract the complete scene object
+        if (braceCount === 0 && endPos > openBracePos) {
+          const sceneText = response.substring(openBracePos, endPos)
           
-          if (!sceneText.endsWith('}')) {
-            continue // Skip if not a complete object
+          try {
+            const scene = JSON.parse(sceneText)
+            
+            // Validate scene has required fields
+            if (scene.sceneNumber && scene.sceneNumber >= start && scene.sceneNumber <= end) {
+              extractedScenes.push(scene)
+              console.log(`[Parse Scenes] Extracted scene ${scene.sceneNumber} (${sceneText.length} chars)`)
+            }
+          } catch (parseErr) {
+            console.warn(`[Parse Scenes] Failed to parse scene at position ${openBracePos}:`, parseErr)
+            // Try to sanitize this specific scene
+            try {
+              const sanitized = sanitizeJsonString(sceneText)
+              const scene = JSON.parse(sanitized)
+              if (scene.sceneNumber && scene.sceneNumber >= start && scene.sceneNumber <= end) {
+                extractedScenes.push(scene)
+                console.log(`[Parse Scenes] Extracted scene ${scene.sceneNumber} after sanitization`)
+              }
+            } catch {
+              // Skip invalid scenes
+              continue
+            }
           }
-          
-          const scene = JSON.parse(sceneText)
-          if (scene.sceneNumber >= start && scene.sceneNumber <= end) {
-            extractedScenes.push(scene)
-            console.log(`[Parse Scenes] Extracted scene ${scene.sceneNumber} incrementally`)
-          }
-        } catch (sceneErr) {
-          // Skip invalid scenes
-          continue
         }
       }
       
       if (extractedScenes.length > 0) {
-        // Sort by sceneNumber before returning
-        extractedScenes.sort((a, b) => a.sceneNumber - b.sceneNumber)
-        parsedScenes = extractedScenes
-        console.log(`[Parse Scenes] Recovered ${extractedScenes.length} scenes via enhanced extraction`)
+        // Sort by sceneNumber and remove duplicates
+        const uniqueScenes = Array.from(
+          new Map(extractedScenes.map(s => [s.sceneNumber, s])).values()
+        ).sort((a, b) => a.sceneNumber - b.sceneNumber)
+        
+        parsedScenes = uniqueScenes
+        console.log(`[Parse Scenes] Recovered ${uniqueScenes.length} scenes via brace-counting extraction`)
       } else {
-        // Fallback to original streamParseScenes if enhanced extraction found nothing
+        // Fallback to original streamParseScenes
+        console.warn('[Parse Scenes] Brace-counting extraction found nothing, trying stream parse')
         for (const sceneChunk of streamParseScenes(response)) {
           parsedScenes.push(...sceneChunk)
         }
       }
     } catch (extractError) {
-      console.error('[Parse Scenes] Enhanced extraction failed, trying stream parse:', extractError)
+      console.error('[Parse Scenes] Brace-counting extraction failed, trying stream parse:', extractError)
       // Fallback to stream parse
       for (const sceneChunk of streamParseScenes(response)) {
         parsedScenes.push(...sceneChunk)
