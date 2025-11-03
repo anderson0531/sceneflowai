@@ -27,6 +27,9 @@ export function toCanonicalName(input: string): string {
   // Remove screenplay annotations: (V.O.), (O.S.), (O.C.), (CONT'D)
   let clean = input.replace(/\s*\([^)]*\)\s*/g, '').trim()
   
+  // Remove ALL extra whitespace (consolidate multiple spaces into one)
+  clean = clean.replace(/\s+/g, ' ').trim()
+  
   // Convert to Title Case
   clean = clean
     .toLowerCase()

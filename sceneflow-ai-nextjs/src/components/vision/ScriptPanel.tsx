@@ -561,9 +561,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     const updatedScenes = [...scenes]
     
     if (audioType === 'sfx' && sfxIdx !== undefined) {
-      // Ensure sfx array exists and has enough elements
+      // Ensure sfx array exists
       if (!updatedScenes[sceneIdx].sfx) updatedScenes[sceneIdx].sfx = []
-      // Handle both string and object formats
+      
+      // Update sfx item with audioUrl
       if (typeof updatedScenes[sceneIdx].sfx[sfxIdx] === 'string') {
         updatedScenes[sceneIdx].sfx[sfxIdx] = {
           description: updatedScenes[sceneIdx].sfx[sfxIdx],
@@ -575,6 +576,12 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           audioUrl
         }
       }
+      
+      // ALSO set sfxAudio array for UI display (parallel structure to dialogueAudio)
+      if (!updatedScenes[sceneIdx].sfxAudio) {
+        updatedScenes[sceneIdx].sfxAudio = []
+      }
+      updatedScenes[sceneIdx].sfxAudio[sfxIdx] = audioUrl
     } else if (audioType === 'music') {
       // Set musicAudio property (not music.audioUrl)
       updatedScenes[sceneIdx].musicAudio = audioUrl
@@ -1930,12 +1937,25 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                   </div>
                 ) : (
                   <button
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.stopPropagation()
-                        onGenerateSceneAudio?.(sceneIdx, 'narration')
+                      if (!onGenerateSceneAudio) return
+                      
+                      setGeneratingDialogue?.({ sceneIdx, character: '__narration__' })
+                      try {
+                        await onGenerateSceneAudio(sceneIdx, 'narration')
+                      } catch (error) {
+                        console.error('[ScriptPanel] Narration generation failed:', error)
+                      } finally {
+                        setGeneratingDialogue?.(null)
+                      }
                     }}
-                    className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
+                    disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__'}
+                    className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
                   >
+                    {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__' ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : null}
                     Generate Audio
                   </button>
                 )}

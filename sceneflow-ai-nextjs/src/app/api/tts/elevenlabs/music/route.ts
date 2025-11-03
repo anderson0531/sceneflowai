@@ -19,12 +19,15 @@ export async function POST(request: NextRequest) {
     }
 
     const durationSeconds = duration || 30  // Default 30 seconds for background music
-    console.log('[Music] Generating background music:', text, 'Duration:', durationSeconds)
+    
+    // Prefix prompt with "cinematic" to ensure appropriate music style
+    const cinematicPrompt = `Cinematic background music: ${text}`
+    console.log('[Music] Generating cinematic music:', cinematicPrompt, 'Duration:', durationSeconds)
 
     const url = 'https://api.elevenlabs.io/v1/music'
     
     const body = {
-      prompt: text,
+      prompt: cinematicPrompt,
       music_length_ms: durationSeconds * 1000,  // Convert to milliseconds
       model_id: 'music_v1'
     }
