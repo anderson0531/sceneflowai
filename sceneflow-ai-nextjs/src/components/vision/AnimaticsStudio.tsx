@@ -94,12 +94,12 @@ export function AnimaticsStudio({ scenes, onClose }: AnimaticsStudioProps) {
       
       const { videoUrl, message } = await response.json();
       
-      if (videoUrl && videoUrl !== 'https://placeholder-video-url.example.com') {
+      if (videoUrl && videoUrl !== 'https://placeholder-video-url.example.com' && videoUrl !== null) {
         // Open video in new tab or trigger download
         window.open(videoUrl, '_blank');
-      } else {
+      } else if (message) {
         // Show message for placeholder implementation
-        alert(message || 'Video rendering is being implemented. This feature will be available soon.');
+        alert(message);
       }
     } catch (error) {
       console.error('Export error:', error);
