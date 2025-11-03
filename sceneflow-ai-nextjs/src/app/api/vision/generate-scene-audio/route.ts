@@ -125,26 +125,49 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig): 
   const apiKey = process.env.ELEVENLABS_API_KEY
   if (!apiKey) throw new Error('ElevenLabs API key not configured')
 
+  // Check if text contains SSML tags or parenthetical stage directions
+  const containsSSML = text.includes('<break') || 
+                       text.includes('<speak') ||
+                       /\([^)]+\)/.test(text) // Has (stage direction)
+
+  console.log('[Scene Audio] SSML detected:', containsSSML)
+
+  // Choose endpoint based on content
+  const endpoint = containsSSML 
+    ? `https://api.elevenlabs.io/v1/text-to-speech/${voiceConfig.voiceId}/ssml`
+    : `https://api.elevenlabs.io/v1/text-to-speech/${voiceConfig.voiceId}`
+  
+  const textToSend = containsSSML && !text.trim().startsWith('<speak>') 
+    ? `<speak>${text}</speak>` 
+    : text
+
+  console.log('[Scene Audio] Using endpoint:', containsSSML ? 'SSML' : 'standard', 'Text:', textToSend.substring(0, 100))
+
   const response = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${voiceConfig.voiceId}`,
+    `${endpoint}?optimize_streaming_latency=0&output_format=mp3_44100_128`,
     {
       method: 'POST',
       headers: {
         'xi-api-key': apiKey,
         'Content-Type': 'application/json',
+        Accept: 'audio/mpeg',
       },
       body: JSON.stringify({
-        text,
-        model_id: 'eleven_monolingual_v1',
+        text: textToSend,
+        model_id: containsSSML ? 'eleven_multilingual_v2' : 'eleven_monolingual_v1', // Use multilingual_v2 for SSML
         voice_settings: {
           stability: voiceConfig.stability || 0.5,
           similarity_boost: voiceConfig.similarityBoost || 0.75,
+          style: containsSSML ? 0.5 : undefined,
+          use_speaker_boost: containsSSML ? true : undefined,
         },
       }),
     }
   )
 
   if (!response.ok) {
+    const errorText = await response.text().catch(() => 'Unknown error')
+    console.error('[Scene Audio] ElevenLabs API failed:', response.status, errorText)
     throw new Error(`ElevenLabs API error: ${response.status}`)
   }
 

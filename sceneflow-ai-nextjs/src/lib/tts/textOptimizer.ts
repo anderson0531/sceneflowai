@@ -17,21 +17,18 @@ export interface OptimizedText {
 }
 
 /**
- * Removes parenthetical stage directions from dialogue text
+ * Removes OLD [bracket] stage directions only (deprecated format)
+ * KEEPS parenthetical (stage direction) tags - they're valid SSML implicit prompts
+ * Keep SSML tags like <break time="1s" />
  */
 function removeStageDirections(text: string): string {
-  // Match parentheticals that contain action descriptions
-  // Pattern: (text inside parentheses) - but be careful not to remove legitimate speech in parentheses
-  // We'll match common stage direction patterns
+  let cleaned = text
   
-  // Remove standalone parentheticals at the start or end of lines
-  let cleaned = text.replace(/^\s*\([^)]*\)\s*/g, '') // Start of line
-  cleaned = cleaned.replace(/\s*\([^)]*\)\s*$/g, '') // End of line
+  // Remove ONLY bracketed emotion/inflection cues: [sadly], [whispers], etc. (old format)
+  cleaned = cleaned.replace(/\[([^\]]+)\]/g, '')
   
-  // Remove parentheticals in the middle that look like stage directions
-  // Common patterns: "(delivery cue)", "(voice quality)", "(emotion)"
-  const stageDirectionPattern = /\([^)]*(?:voice|whisper|shout|excited|sad|angry|happy|nervous|relief|hoarse|choked|firm|desperate|grateful|quickly|slowly)[^)]*\)/gi
-  cleaned = cleaned.replace(stageDirectionPattern, '')
+  // DO NOT remove parenthetical stage directions - they are valid for SSML
+  // Parentheses like (whispering) are implicit prompts for eleven_multilingual_v2
   
   return cleaned
 }

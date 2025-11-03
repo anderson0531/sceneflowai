@@ -443,14 +443,19 @@ CRITICAL DIALOGUE RULES:
 - Example: If character is "Brian Anderson Sr", dialogue MUST use "Brian Anderson Sr" exactly
 
 DIALOGUE INFLECTION AND EMOTION (CRITICAL FOR TTS):
-- Add emotion/inflection tags in brackets BEFORE the dialogue text
-- Common tags: [excitedly], [whispering], [sadly], [thoughtfully], [angrily], [nervously], [cheerfully], [urgently]
+- Add emotion/inflection tags in PARENTHESES (not brackets) for stage directions
+- Common tags: (excitedly), (whispering), (sadly), (thoughtfully), (angrily), (nervously), (cheerfully), (urgently)
 - Use SSML pause tags: <break time="1.0s" /> (seconds) or <break time="500ms" /> (milliseconds)
 - Use ellipses (...) for hesitation
 - Use dashes (—) for interruptions
 - Capitalize for EMPHASIS
+- The stage direction should come BEFORE the spoken text
+- Stage directions are implicit prompts interpreted by the AI model - keep them simple and clear
 - CRITICAL: The "line" field contains ONLY dialogue text + emotion tags, NOT the character name
-- Example: {"character": "BRIAN ANDERSON SR", "line": "[excitedly] I can't believe it!"}
+- Examples:
+  * {"character": "BRIAN ANDERSON SR", "line": "(excitedly) I can't believe it!"}
+  * {"character": "MINT", "line": "(whispering) Don't tell anyone. <break time='0.5s' /> It's our secret."}
+  * {"character": "BRIAN ANDERSON SR", "line": "(to himself, whispering) <break time='1s' /> It's time. <break time='500ms' /> It has to be."}
 
 SCENE PLANNING:
 - Total target: ${targetDuration}s (±10% is fine)
@@ -500,7 +505,7 @@ Return JSON:
       "sceneNumber": 1,
       "heading": "INT. LOCATION - TIME",
       "characters": ["Character Name 1", "Character Name 2"],  // CRITICAL: List all characters in this scene
-      "action": "SOUND of gentle sizzling, a timer beeps. CLOSE UP on character's hands. They move across the room.\n\nSFX: Gentle sizzling, timer beeps\n\nMusic: Soft upbeat piano",
+      "action": "SOUND of gentle sizzling, a timer beeps. CLOSE UP on character's hands. They move across the room.\n\nSFX: Gentle kitchen sizzling with rhythmic timer beep creating anticipation\n\nMusic: Soft upbeat piano melody with warm, inviting tones suggesting morning optimism",
       "narration": "In the quiet hours before dawn, a dream takes shape in flour and fire.",  // NEW: Captivating voiceover narration
       "dialogue": [{"character": "NAME", "line": "..."}],
       "visualDescription": "Camera, lighting",
@@ -533,18 +538,21 @@ SCRIPT FORMAT REQUIREMENTS (CRITICAL):
 - After the main action, add separate labeled lines for audio:
   * "SFX: [description of sound effects]" on its own line
   * "Music: [description of background music]" on its own line
-- Keep audio descriptions concise and specific
+- Keep audio descriptions concise but emotionally evocative
 - Example action format:
   "SOUND of gentle sizzling, a timer beeps. CLOSE UP on Mint's hands, deftly shaping dough, dusting flour.
   
-  SFX: Gentle sizzling, timer beeps
+  SFX: Gentle kitchen sizzling with rhythmic timer beep creating anticipation
   
-  Music: Soft upbeat piano"
+  Music: Soft upbeat piano melody with warm, inviting tones suggesting morning optimism"
 
-AUDIO FIELD REQUIREMENTS:
-- sfx: Also store as array with timing for playback synchronization
-- music: Also store as object for advanced features
-- Keep descriptions short (e.g., "car horn", "glass breaking", "suspenseful strings")
+AUDIO FIELD REQUIREMENTS (CRITICAL FOR MOOD AND EMOTION):
+- sfx: Array with timing - be specific about the sound quality and emotional impact
+  * Examples: "Deep, resonant car horn echoing through empty streets", "Sharp glass breaking with cascading shards", "Distant thunder rumbling ominously"
+- music: Object for advanced features - describe the mood, instrumentation, tempo, and emotional intent
+  * Examples: "Melancholic piano with slow, deliberate notes building tension", "Upbeat acoustic guitar with hopeful undertones", "Dark orchestral strings creating a sense of foreboding"
+- Think cinematically: music and SFX should enhance the emotional storytelling
+- Descriptions should be 10-20 words, balancing specificity with creative interpretation
 
 CRITICAL JSON FORMATTING RULES:
 - Return ONLY valid JSON - no markdown, no explanations
@@ -588,7 +596,11 @@ CRITICAL CHARACTER RULES:
 - DO NOT invent new dialogue speakers
 
 CRITICAL DIALOGUE: Use EXACT character names in the "character" field - do NOT include them in the "line" field.
-ADD EMOTION TAGS: Start each "line" with [emotion] tags and use <break time="Xs" /> pauses for expressive TTS.
+DIALOGUE EMOTION (FOR TTS):
+- Start each "line" with (emotion) tags in PARENTHESES (e.g., (excitedly), (whispering), (sadly))
+- Use <break time="Xs" /> pauses for dramatic timing (e.g., <break time="1s" /> or <break time="500ms" />)
+- Stage directions are implicit prompts - keep them simple and clear
+- Example: {"character": "NAME", "line": "(sadly) <break time='1s' /> I can't believe it."}
 
 PREVIOUS SCENES (${prevScenes.length} so far, ${prevDuration}s total):
 ${prevScenes.slice(-3).map((s: any) => `${s.sceneNumber}. ${s.heading} (${s.duration}s): ${s.action.substring(0, 80)}...`).join('\n')}

@@ -203,12 +203,14 @@ CRITICAL CHARACTER RULES:
 - Match names exactly as listed
 
 DIALOGUE INFLECTION AND EMOTION (CRITICAL FOR TTS):
-- Add emotion/inflection tags in brackets: [excitedly], [whispering], [sadly], [thoughtfully]
+- Add emotion/inflection tags in PARENTHESES (not brackets): (excitedly), (whispering), (sadly), (thoughtfully)
 - Use SSML pauses: <break time="1.0s" />
 - Use ellipses (...) for hesitation, dashes (—) for interruptions
 - Capitalize words for EMPHASIS
+- The stage direction should come BEFORE the spoken text
+- Stage directions are implicit prompts interpreted by the AI model - keep them simple and clear
 - CRITICAL: "line" field contains ONLY dialogue + emotion tags, NOT character name
-- Example: {"character": "BRIAN", "line": "[thoughtfully] I... <break time=\"0.5s\" /> I think you're right."}
+- Example: {"character": "BRIAN", "line": "(thoughtfully) I... <break time='0.5s' /> I think you're right."}
 
 ${beatContext}
 
