@@ -46,28 +46,52 @@ CONTEXT:
 - Genre: ${context?.genre || 'Documentary'}
 - Style Hint: ${styleHint || 'N/A'}
 
-OUTPUT RULES:
-- **YOU MUST RETURN** a single, valid JSON object matching the schema below.
-- **DO NOT** add any conversational text, markdown formatting, or explanations outside the JSON.
-- **THE NARRATIVE REASONING FIELDS ARE MANDATORY:** character_focus, key_decisions, story_strengths, and user_adjustments must be the first fields in your JSON output.
-- Beat durations MUST sum to ~${targetMinutes} minutes (±10%).
-- Be concise and engaging. Avoid fluff.
-- Do NOT use placeholders like "General audience"; provide concrete descriptions.
+OUTPUT RULES - CRITICAL:
+1. **START YOUR JSON WITH THESE 4 REQUIRED FIELDS** (in this exact order):
+   - character_focus (string, 2-3 sentences, REQUIRED)
+   - key_decisions (array with 2-4 decision objects, REQUIRED)
+   - story_strengths (string, 2-3 sentences, REQUIRED)
+   - user_adjustments (string, 2-3 sentences, REQUIRED)
 
-SCHEMA:
+2. **THEN ADD ALL OTHER FIELDS** following the schema below
+
+3. **DO NOT SKIP** the 4 required narrative reasoning fields - they MUST appear first in your JSON
+
+4. Return ONLY valid JSON - no markdown, no explanations, no text outside the JSON object
+
+5. Beat durations MUST sum to ~${targetMinutes} minutes (±10%)
+
+6. Be concise and engaging. Avoid fluff.
+
+7. Do NOT use placeholders like "General audience"; provide concrete descriptions.
+
+STEP 1: BEFORE GENERATING ANYTHING ELSE, THINK ABOUT:
+- Who is the protagonist and why did you choose them?
+- What 2-4 major creative decisions did you make?
+- What makes this treatment compelling?
+- How can the user adjust the input for different results?
+
+STEP 2: START YOUR JSON OUTPUT WITH THESE 4 FIELDS FIRST, THEN ADD ALL OTHER FIELDS.
+
+SCHEMA - GENERATE IN THIS EXACT ORDER:
 {
-  "estimatedDurationMinutes": ${targetMinutes},
-  
-  "character_focus": "Who is the protagonist and why? How do supporting characters serve the arc?",
+  "character_focus": "REQUIRED: Who is the protagonist and why? How do supporting characters serve the arc? (2-3 sentences)",
   "key_decisions": [
     {
-      "decision": "Major creative choice made",
-      "why": "Narrative justification",
-      "impact": "Effect on emotional arc, pacing, or thematic resonance"
+      "decision": "REQUIRED: Major creative choice made",
+      "why": "REQUIRED: Narrative justification",
+      "impact": "REQUIRED: Effect on emotional arc, pacing, or thematic resonance"
+    },
+    {
+      "decision": "Another major decision",
+      "why": "Why it was made",
+      "impact": "What it achieves"
     }
   ],
-  "story_strengths": "What makes this treatment compelling?",
-  "user_adjustments": "How can user modify input for different emphasis?",
+  "story_strengths": "REQUIRED: What makes this treatment compelling? (2-3 sentences)",
+  "user_adjustments": "REQUIRED: How can user modify input for different emphasis? (2-3 sentences)",
+  
+  "estimatedDurationMinutes": ${targetMinutes},
   
   "title": "Proposed title",
   "logline": "One- or two-sentence hook",
