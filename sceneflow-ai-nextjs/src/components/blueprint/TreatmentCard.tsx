@@ -83,13 +83,18 @@ export function TreatmentCard() {
     let mounted = true
     ;(async () => {
       try {
-        // Use ElevenLabs curated voices
-        const elevenVoices = getCuratedElevenVoices()
+        // Fetch ElevenLabs voices from API
+        const res = await fetch('/api/tts/elevenlabs/voices', { cache: 'no-store' })
+        const data = await res.json().catch(() => null)
         if (!mounted) return
-        if (elevenVoices && elevenVoices.length > 0) {
+        if (data?.enabled && Array.isArray(data.voices) && data.voices.length > 0) {
+          const formattedVoices = data.voices.map((v: any) => ({ 
+            id: v.id, 
+            name: v.name 
+          }))
           setEnabled(true)
-          setVoices(elevenVoices)
-          setSelectedVoiceId(elevenVoices[0].id)
+          setVoices(formattedVoices)
+          setSelectedVoiceId(data.voices[0].id)
         } else {
           setEnabled(false)
           setVoices([])
