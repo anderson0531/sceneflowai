@@ -18,7 +18,16 @@ export function AnimaticsStudio({ scenes, onClose }: AnimaticsStudioProps) {
   const [exportError, setExportError] = useState<string | null>(null);
   const [showShortcuts, setShowShortcuts] = useState(true);
   
+  // Check if we have valid assets BEFORE any rendering
+  const hasValidAssets = scenes.some(scene => scene.imageUrl && scene.imageUrl.trim() !== '');
+  
   useEffect(() => {
+    // Don't load if no valid assets
+    if (!hasValidAssets) {
+      console.warn('[AnimaticsStudio] No scenes with valid images found');
+      return;
+    }
+    
     // Filter and initialize project from storyboard scenes with valid images
     const validAssets = scenes
       .filter(scene => scene.imageUrl && scene.imageUrl.trim() !== '')
@@ -34,12 +43,6 @@ export function AnimaticsStudio({ scenes, onClose }: AnimaticsStudioProps) {
     console.log('[AnimaticsStudio] Total scenes:', scenes.length);
     console.log('[AnimaticsStudio] Valid assets:', validAssets.length);
     console.log('[AnimaticsStudio] Asset URLs:', validAssets.map(a => a.src));
-    
-    // Don't load if no valid assets
-    if (validAssets.length === 0) {
-      console.warn('[AnimaticsStudio] No scenes with valid images found');
-      return;
-    }
     
     const videoTrack = {
       id: 'video-track-1',
@@ -73,7 +76,7 @@ export function AnimaticsStudio({ scenes, onClose }: AnimaticsStudioProps) {
     });
     
     return () => resetProject();
-  }, [scenes, loadProject, resetProject]);
+  }, [scenes, loadProject, resetProject, hasValidAssets]);
   
   // Keyboard shortcuts
   useEffect(() => {
@@ -107,10 +110,7 @@ export function AnimaticsStudio({ scenes, onClose }: AnimaticsStudioProps) {
     
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentFrame, durationInFrames, setCurrentFrame]);
-  
-  // Check if we have valid assets to display
-  const hasValidAssets = scenes.some(scene => scene.imageUrl && scene.imageUrl.trim() !== '');
+  }, [currentFrame, durationInFrames, setCurrentFrame, showShortcuts]);
   
   const handleExport = async () => {
     setIsExporting(true);
