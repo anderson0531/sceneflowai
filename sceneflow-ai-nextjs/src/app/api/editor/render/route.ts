@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { uploadGeneratedVideo } from '@/lib/storage/upload';
 
 export const maxDuration = 300; // 5 minutes max
 
@@ -9,19 +8,19 @@ export async function POST(req: NextRequest) {
     
     console.log('[Render] Render request received for project:', projectId);
     
-    // TODO: Implement full Remotion rendering
-    // This requires:
-    // 1. Install @remotion/bundler and @remotion/renderer packages
-    // 2. Bundle the Remotion composition server-side
-    // 3. Use Remotion's renderMedia API to generate MP4
-    // 4. Upload to Vercel Blob storage
+    // Server-side video rendering is not currently feasible on Vercel because:
+    // 1. Remotion's renderMedia API requires headless Chrome/Puppeteer
+    // 2. Vercel serverless functions cannot run headless browsers
+    // 3. Remotion Lambda requires AWS infrastructure setup (S3, Lambda, IAM roles)
     // 
-    // For now, return a placeholder since server-side rendering requires
-    // additional infrastructure setup (browser automation on Vercel serverless)
+    // Alternative approaches:
+    // - Client-side recording would require browser APIs not available in Remotion Player
+    // - Local Remotion Studio for high-quality exports (requires user installation)
+    // - Future: AWS Lambda integration for scalable server-side rendering
     
     return NextResponse.json({ 
       videoUrl: null,
-      message: 'Video rendering is not yet implemented. This feature requires additional infrastructure setup for server-side video generation. The Animatics Studio currently supports real-time preview only.'
+      message: 'MP4 export is not yet available in the browser. For now, use the Animatics Studio preview to review your sequence. Server-side rendering requires AWS Lambda infrastructure (coming soon).'
     });
   } catch (error) {
     console.error('[Render] Error:', error);
