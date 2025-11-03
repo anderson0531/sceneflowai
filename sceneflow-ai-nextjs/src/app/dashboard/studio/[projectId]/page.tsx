@@ -289,6 +289,50 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
     return () => window.removeEventListener('sf:regenerate-treatment' as any, handleRegenerate as any)
   }, [lastInput])
 
+  // Handle Approve & Generate Script (footer button)
+  const handleApproveAndGenerate = async () => {
+    try {
+      const variants = (guide as any)?.treatmentVariants as Array<any>
+      if (!variants || variants.length === 0) {
+        try { const { toast } = require('sonner'); toast.error('No treatment to approve') } catch {}
+        return
+      }
+      
+      const selectedId = (guide as any)?.selectedTreatmentId as string | undefined
+      const v = variants.find(x => x.id === selectedId) || variants[0]
+      
+      // Get or create user ID
+      let userId = localStorage.getItem('authUserId')
+      if (!userId) {
+        userId = crypto.randomUUID()
+        localStorage.setItem('authUserId', userId)
+      }
+      
+      // Create project from Film Treatment variant
+      const res = await fetch('/api/projects/from-variant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          variant: v
+        })
+      })
+      
+      const data = await res.json()
+      
+      if (data.success && data.project) {
+        try { const { toast } = require('sonner'); toast('Creating Vision...') } catch {}
+        // Navigate to Vision page
+        router.push(`/dashboard/workflow/vision/${data.project.id}`)
+      } else {
+        try { const { toast } = require('sonner'); toast.error('Failed to create project') } catch {}
+      }
+    } catch (e) {
+      console.error('Vision creation error:', e)
+      try { const { toast } = require('sonner'); toast.error('Failed to create Vision') } catch {}
+    }
+  }
+
   return (
     <div className="flex flex-col h-full bg-gray-950 text-white overflow-hidden">
       <div className="flex-1 flex flex-col min-w-0">
@@ -458,18 +502,18 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
                       <Check className="w-5 h-5 text-green-400" />
                     </div>
                     <div>
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Blueprint Complete!</h3>
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Treatment Ready</h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
-                        Continue to Vision to generate your production script
+                        Approve this treatment and generate your production script
                       </p>
                     </div>
                   </div>
                   <Button
-                    onClick={() => router.push(`/dashboard/workflow/vision/${params.projectId}`)}
+                    onClick={handleApproveAndGenerate}
                     size="default"
                     className="bg-sf-primary text-white hover:bg-sf-accent flex items-center gap-2"
                   >
-                    <span>Continue to Vision</span>
+                    <span>Approve & Generate Script</span>
                     <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>

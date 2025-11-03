@@ -137,7 +137,7 @@ export function TreatmentCard() {
     queueAbortRef.current.abort = false
     for (const t of texts) {
       if (queueAbortRef.current.abort) break
-      const resp = await fetch('/api/tts/google', {
+      const resp = await fetch('/api/tts/elevenlabs', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: t, voiceId: selectedVoiceId || voices[0]?.id })
       })
@@ -506,12 +506,12 @@ export function TreatmentCard() {
                           </DropdownMenu>
                         </div>
 
-                        {/* Start Vision - moved to end */}
+                        {/* Approve & Generate Script - moved to end */}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
                               aria-busy={isCreatingVision}
-                              aria-label="Start Vision"
+                              aria-label="Approve & Generate Script"
                               onClick={handleStartVision}
                               disabled={isCreatingVision}
                               className="h-8 px-2 bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50"
@@ -523,11 +523,11 @@ export function TreatmentCard() {
                                 <ArrowRight className="h-4 w-4" />
                               )}
                               <span className="hidden md:inline ml-1.5">
-                                {isCreatingVision ? 'Creating...' : 'Start Vision'}
+                                {isCreatingVision ? 'Creating...' : 'Approve & Generate Script'}
                               </span>
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Create project & generate script + visuals</TooltipContent>
+                          <TooltipContent>Approve treatment & generate script + visuals</TooltipContent>
                         </Tooltip>
                       </div>
                     </TooltipProvider>
