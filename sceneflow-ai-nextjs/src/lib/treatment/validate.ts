@@ -7,6 +7,12 @@ const BeatSchema = z.object({
   minutes: z.coerce.number().min(0.25).catch(1),
 })
 
+const DecisionSchema = z.object({
+  decision: z.string(),
+  why: z.string(),
+  impact: z.string(),
+})
+
 const TreatmentSchema = z.object({
   title: z.string().optional(),
   logline: z.string().optional(),
@@ -49,6 +55,12 @@ const TreatmentSchema = z.object({
       })
     )
     .optional(),
+  
+  // Narrative reasoning fields (REQUIRED by prompt but optional in schema for backwards compatibility)
+  character_focus: z.string().optional(),
+  key_decisions: z.array(DecisionSchema).optional(),
+  story_strengths: z.string().optional(),
+  user_adjustments: z.string().optional(),
 })
 
 export type RepairedTreatment = z.infer<typeof TreatmentSchema>
