@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Textarea } from '../../components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { Button } from '../../components/ui/Button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '../../components/ui/tooltip'
 import { InspirationDrawer } from './InspirationDrawer'
@@ -19,25 +18,11 @@ export function BlueprintComposer({
 }) {
   const [text, setText] = useState('')
   const [persona] = useState<'Narrator'|'Director'>('Director')
-  const [model, setModel] = useState('auto')
-  const [showAdvanced, setShowAdvanced] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [inspirationOpen, setInspirationOpen] = useState(false)
   const { supported: sttSupported, isSecure, permission, isRecording, transcript, error: sttError, start, stop, setTranscript } = useSpeechRecognition()
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
-
-  const creditForModel = (m: string) => {
-    switch (m) {
-      case 'gpt4':
-      case 'claude':
-        return '~2 credits'
-      case 'gemini':
-      case 'auto':
-      default:
-        return '~1 credit'
-    }
-  }
 
   // Removed inline examples for simplicity
 
@@ -46,7 +31,7 @@ export function BlueprintComposer({
     trackCta({ event: 'blueprint_generate_clicked' })
     try {
       setIsGenerating(true)
-      await onGenerate(text.trim(), { persona, model })
+      await onGenerate(text.trim(), { persona, model: 'gemini-2.5-pro' })
     } catch (e: any) {
       setErrorMsg(e?.message || 'Generation failed')
     } finally {
@@ -63,7 +48,7 @@ export function BlueprintComposer({
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [text, persona, model])
+  }, [text, persona])
 
   // Append live transcript while recording
   useEffect(() => {
@@ -117,25 +102,7 @@ export function BlueprintComposer({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          {/* Advanced moved next to Generate */}
         </div>
-        {showAdvanced && (
-          <div className="flex gap-2 items-center text-xs text-gray-300">
-            <div className="shrink-0">Model:</div>
-            <Select value={model} onValueChange={setModel}>
-              <SelectTrigger className="w-56"><SelectValue placeholder="Auto (Best value)" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="auto">Auto (Best value)</SelectItem>
-                <SelectItem value="gemini">Gemini</SelectItem>
-                <SelectItem value="gpt4">GPT‑4</SelectItem>
-                <SelectItem value="claude">Claude</SelectItem>
-              </SelectContent>
-            </Select>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-800 text-gray-300 border border-gray-700/70">
-              Managed model — credits apply
-            </span>
-          </div>
-        )}
         <Textarea
           ref={textareaRef as any}
           value={text}
@@ -154,17 +121,6 @@ Include: target audience, key message, tone (professional/casual/inspiring), and
       </div>
       
       <div className="flex items-center justify-end gap-2">
-        {/* Advanced toggle */}
-        <Button
-          type="button"
-          onClick={() => setShowAdvanced(v => !v)}
-          variant="outline"
-          size="default"
-          className="border-gray-700 text-gray-200 hover:bg-gray-800"
-          aria-expanded={showAdvanced}
-        >
-          {showAdvanced ? 'Advanced ▲' : 'Advanced ▼'}
-        </Button>
         <Button variant="outline" onClick={() => setText('')} className="border-gray-700 text-gray-200">Clear</Button>
         <Button onClick={handleGen} disabled={!text.trim() || isGenerating} className="bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50 disabled:cursor-not-allowed">
           {isGenerating ? (
@@ -191,25 +147,6 @@ Include: target audience, key message, tone (professional/casual/inspiring), and
         <div className="mt-2 text-xs text-amber-300 bg-amber-900/20 border border-amber-800 rounded px-2 py-1">
           {!isSecure ? 'Microphone requires HTTPS or localhost.' : !sttSupported ? 'Voice input is not supported in this browser. Try Chrome or Edge.' : `Mic error: ${String(sttError)}`}
           {permission && permission !== 'granted' ? ` (Permission: ${permission})` : ''}
-        </div>
-      )}
-
-      {/* Advanced under primary action */}
-      {showAdvanced && (
-        <div className="mt-2 flex items-center justify-end gap-2 text-xs text-gray-300">
-          <div className="shrink-0">Model:</div>
-          <Select value={model} onValueChange={setModel}>
-            <SelectTrigger className="w-56"><SelectValue placeholder="Auto (Best value)" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="auto">Auto (Best value)</SelectItem>
-              <SelectItem value="gemini">Gemini</SelectItem>
-              <SelectItem value="gpt4">GPT‑4</SelectItem>
-              <SelectItem value="claude">Claude</SelectItem>
-            </SelectContent>
-          </Select>
-          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-800 text-gray-300 border border-gray-700/70">
-            Managed model — credits apply
-          </span>
         </div>
       )}
 

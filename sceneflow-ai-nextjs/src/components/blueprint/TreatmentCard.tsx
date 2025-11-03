@@ -396,30 +396,6 @@ export function TreatmentCard() {
                           </Tooltip>
                         )}
 
-                        {/* Film Type Regenerate */}
-                        <div className="hidden md:flex items-center gap-1 border-l border-gray-700 pl-2 ml-2">
-                          <span className="text-xs text-gray-400 mr-1">Regenerate:</span>
-                          {[
-                            { value: 'micro_short', label: 'Micro' },
-                            { value: 'short_film', label: 'Short' },
-                            { value: 'featurette', label: 'Featurette' },
-                            { value: 'feature_length', label: 'Feature' },
-                            { value: 'epic', label: 'Epic' }
-                          ].map(ft => (
-                            <button 
-                              key={ft.value} 
-                              type="button" 
-                              onClick={() => {
-                                const event = new CustomEvent('sf:regenerate-treatment', { detail: { filmType: ft.value } })
-                                window.dispatchEvent(event)
-                              }}
-                              className="text-xs px-2 py-1 rounded-md border border-gray-700 text-gray-300 hover:bg-gray-800 hover:border-gray-600 transition-colors"
-                            >
-                              {ft.label}
-                            </button>
-                          ))}
-                        </div>
-
                         {/* Overflow on small screens only (Share, Edit) */}
                         <div className="md:hidden">
                           <DropdownMenu>

@@ -3,9 +3,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Button } from '../ui/Button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { toast } from 'sonner'
 import { useGuideStore } from '@/store/useGuideStore'
-import { PencilLine, Wand2, X, Check, Loader2 } from 'lucide-react'
+import { PencilLine, Wand2, X, Check, Loader2, Film } from 'lucide-react'
 
 type Variant = {
   id: string
@@ -28,7 +29,7 @@ type Props = {
 }
 
 export default function VariantEditorDrawer({ open, variant, onClose, onApply }: Props) {
-  const [tab, setTab] = useState<'edit'|'flow'>('edit')
+  const [tab, setTab] = useState<'edit'|'flow'|'filmType'>('edit')
   const [draft, setDraft] = useState<(Partial<Variant> & { id?: string }) | null>(null)
   const [aiInstr, setAiInstr] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
@@ -146,7 +147,7 @@ export default function VariantEditorDrawer({ open, variant, onClose, onApply }:
         <div className="flex flex-col h-[calc(100dvh-56px)]">
           {/* Tabs */}
           <div className="px-6 sm:px-8 pb-3 border-b border-gray-700 flex items-center gap-3">
-            {(['edit','flow'] as const).map(k => (
+            {(['edit','flow','filmType'] as const).map(k => (
               <button 
                 key={k}
                 onClick={()=>setTab(k)} 
@@ -161,10 +162,15 @@ export default function VariantEditorDrawer({ open, variant, onClose, onApply }:
                     <PencilLine className="w-4 h-4 inline-block mr-1.5" />
                     Edit
                   </>
-                ) : (
+                ) : k==='flow' ? (
                   <>
                     <Wand2 className="w-4 h-4 inline-block mr-1.5" />
                     Flow Assist
+                  </>
+                ) : (
+                  <>
+                    <Film className="w-4 h-4 inline-block mr-1.5" />
+                    Film Type
                   </>
                 )}
                 {tab===k && <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-blue-500" />}
@@ -368,6 +374,73 @@ export default function VariantEditorDrawer({ open, variant, onClose, onApply }:
                       </>
                     )}
                   </Button>
+                </div>
+              </div>
+            )}
+
+            {tab==='filmType' && (
+              <div className="space-y-4">
+                {/* Header with icon and description */}
+                <div className="p-4 rounded-lg bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20">
+                  <div className="flex items-start gap-3">
+                    <Film className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h3 className="text-sm font-semibold text-white mb-1">Regenerate with Different Film Type</h3>
+                      <p className="text-xs text-gray-300 leading-relaxed">
+                        Change the length and structure of your treatment by selecting a different film format. This will regenerate the entire treatment.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Film type selector */}
+                <div className="space-y-3">
+                  <label className="text-xs font-medium text-gray-300 mb-2 block">Select Film Type</label>
+                  <Select onValueChange={(value) => {
+                    if (window.confirm('This will regenerate the entire treatment with the new film type. Continue?')) {
+                      window.dispatchEvent(new CustomEvent('sf:regenerate-treatment', { detail: { filmType: value } }))
+                      onClose()
+                    }
+                  }}>
+                    <SelectTrigger className="w-full border-gray-600 bg-gray-900 text-white">
+                      <SelectValue placeholder="Choose a film type..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="micro_short">
+                        <div>
+                          <div className="font-semibold">Micro (< 5 min)</div>
+                          <div className="text-xs text-gray-400">Short-form content, social media, quick narratives</div>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="short_film">
+                        <div>
+                          <div className="font-semibold">Short (5-30 min)</div>
+                          <div className="text-xs text-gray-400">Festival shorts, web series episodes, concise storytelling</div>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="featurette">
+                        <div>
+                          <div className="font-semibold">Featurette (30-60 min)</div>
+                          <div className="text-xs text-gray-400">Mid-length documentaries, educational content, extended narratives</div>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="feature_length">
+                        <div>
+                          <div className="font-semibold">Feature (60-120 min)</div>
+                          <div className="text-xs text-gray-400">Full-length films, comprehensive documentaries, theatrical releases</div>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="epic">
+                        <div>
+                          <div className="font-semibold">Epic (120-180 min)</div>
+                          <div className="text-xs text-gray-400">Extended features, serialized content, immersive experiences</div>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="mt-2 text-xs text-amber-400">
+                    ⚠️ Warning: All current edits will be lost when regenerating
+                  </div>
                 </div>
               </div>
             )}
