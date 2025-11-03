@@ -561,11 +561,23 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     const updatedScenes = [...scenes]
     
     if (audioType === 'sfx' && sfxIdx !== undefined) {
+      // Ensure sfx array exists and has enough elements
       if (!updatedScenes[sceneIdx].sfx) updatedScenes[sceneIdx].sfx = []
-      updatedScenes[sceneIdx].sfx[sfxIdx].audioUrl = audioUrl
+      // Handle both string and object formats
+      if (typeof updatedScenes[sceneIdx].sfx[sfxIdx] === 'string') {
+        updatedScenes[sceneIdx].sfx[sfxIdx] = {
+          description: updatedScenes[sceneIdx].sfx[sfxIdx],
+          audioUrl
+        }
+      } else {
+        updatedScenes[sceneIdx].sfx[sfxIdx] = {
+          ...updatedScenes[sceneIdx].sfx[sfxIdx],
+          audioUrl
+        }
+      }
     } else if (audioType === 'music') {
-      if (!updatedScenes[sceneIdx].music) updatedScenes[sceneIdx].music = { description: '' }
-      updatedScenes[sceneIdx].music.audioUrl = audioUrl
+      // Set musicAudio property (not music.audioUrl)
+      updatedScenes[sceneIdx].musicAudio = audioUrl
     }
 
     // Update local state

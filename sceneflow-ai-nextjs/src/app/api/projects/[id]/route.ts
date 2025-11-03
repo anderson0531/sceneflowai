@@ -17,10 +17,34 @@ export async function PUT(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
     
-    // Update project fields
+    // Update project fields - deep merge metadata to preserve existing nested data
+    const existingMetadata = project.metadata || {}
+    let mergedMetadata = body.metadata ? { ...existingMetadata } : existingMetadata
+    
+    if (body.metadata) {
+      // Shallow merge all top-level properties
+      mergedMetadata = { ...existingMetadata, ...body.metadata }
+      
+      // Deep merge visionPhase if it exists in both
+      if (body.metadata.visionPhase && existingMetadata.visionPhase) {
+        mergedMetadata.visionPhase = {
+          ...existingMetadata.visionPhase,
+          ...body.metadata.visionPhase
+        }
+        
+        // Deep merge script if it exists in both
+        if (body.metadata.visionPhase.script && existingMetadata.visionPhase.script) {
+          mergedMetadata.visionPhase.script = {
+            ...existingMetadata.visionPhase.script,
+            ...body.metadata.visionPhase.script
+          }
+        }
+      }
+    }
+    
     await project.update({
       ...body,
-      metadata: body.metadata || project.metadata
+      metadata: mergedMetadata
     })
     
     return NextResponse.json({ success: true, project })
