@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
           try {
             // Create lightweight scene summary for prompt (keep last 3 only)
             const prevScenesForPrompt = allScenes.slice(-3)
-            const batchPrompt = buildBatch2Prompt(treatment, startScene, actualTotalScenes, duration, prevScenesForPrompt, allScenes.length, totalPrevDuration, existingCharacters)
+            const batchPrompt = buildBatch2Prompt(treatment, startScene, endScene, actualTotalScenes, duration, prevScenesForPrompt, allScenes.length, totalPrevDuration, existingCharacters)
             let batchResponse = await callGemini(apiKey, batchPrompt)
             let batchData = parseScenes(batchResponse, startScene, endScene)
             
@@ -196,9 +196,8 @@ export async function POST(request: NextRequest) {
                 console.log(`[Script Gen V2] Attempting single-scene fallback for batch ${batchNumber}...`)
                 
                 try {
-                  const singleScenePrompt = buildBatch2Prompt(treatment, startScene, actualTotalScenes, duration, prevScenesForPrompt, allScenes.length, totalPrevDuration, existingCharacters)
-                    .replace(`Generate scenes ${startScene}-${endScene}`, `Generate ONLY scene ${startScene}`)
-                    .replace(`final ${batchSize} scenes`, `ONLY this 1 scene`)
+                  const singleScenePrompt = buildBatch2Prompt(treatment, startScene, startScene, actualTotalScenes, duration, prevScenesForPrompt, allScenes.length, totalPrevDuration, existingCharacters)
+                    .replace(`Generate scenes ${startScene}-${startScene} (batch of 1 scenes)`, `Generate ONLY scene ${startScene}`)
                   
                   let singleResponse = await callGemini(apiKey, singleScenePrompt)
                   let singleData = parseScenes(singleResponse, startScene, startScene)
@@ -564,16 +563,16 @@ CRITICAL:
 Generate first ${end} scenes with realistic durations.`
 }
 
-function buildBatch2Prompt(treatment: any, start: number, total: number, targetDuration: number, prevScenes: any[], totalPrevScenes: number, prevDuration: number, characters: any[]) {
-  const remaining = total - totalPrevScenes
+function buildBatch2Prompt(treatment: any, start: number, end: number, total: number, targetDuration: number, prevScenes: any[], totalPrevScenes: number, prevDuration: number, characters: any[]) {
+  const batchSize = end - start + 1
   const remainingDuration = targetDuration - prevDuration
-  const avgNeeded = Math.floor(remainingDuration / remaining)
+  const avgNeeded = Math.floor(remainingDuration / (total - totalPrevScenes))
   
   const characterList = characters.length > 0
     ? `\n\nDEFINED CHARACTERS (USE ONLY THESE):\n${characters.map((c: any) => `${c.name} (${c.role || 'character'}): ${c.description || ''}`).join('\n')}`
     : ''
   
-  return `Generate scenes ${start}-${total} (final ${remaining} scenes) of a ${total}-scene script.
+  return `Generate scenes ${start}-${end} (batch of ${batchSize} scenes) for a ${total}-scene script.
 
 TREATMENT:
 Title: ${treatment.title}
@@ -595,7 +594,7 @@ PREVIOUS SCENES (${prevScenes.length} so far, ${prevDuration}s total):
 ${prevScenes.slice(-3).map((s: any) => `${s.sceneNumber}. ${s.heading} (${s.duration}s): ${s.action.substring(0, 80)}...`).join('\n')}
 
 DURATION TARGET:
-- Remaining: ~${remainingDuration}s for ${remaining} scenes
+- Remaining in script: ~${remainingDuration}s for ${total - totalPrevScenes} scenes
 - Average needed: ~${avgNeeded}s per scene (flexible guidance)
 - Estimate realistically based on actual content
 - Total target: ${targetDuration}s (±10%)
