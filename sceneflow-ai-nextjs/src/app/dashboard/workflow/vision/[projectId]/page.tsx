@@ -544,6 +544,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     console.log('[Narration Voice] Setting narration voice:', voiceConfig)
     setNarrationVoice(voiceConfig)
     
+    // Sync to narrator character (single source of truth)
+    const narratorIndex = characters.findIndex(c => c.type === 'narrator')
+    let updatedCharacters = characters
+    if (narratorIndex >= 0) {
+      updatedCharacters = characters.map((c, i) => 
+        i === narratorIndex ? { ...c, voiceConfig } : c
+      )
+      setCharacters(updatedCharacters)
+      console.log('[Narration Voice] Synced to narrator character')
+    }
+    
     if (project) {
       const updatedProject = {
         ...project,
@@ -551,7 +562,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           ...project.metadata,
           visionPhase: {
             ...project.metadata?.visionPhase,
-            narrationVoice: voiceConfig
+            narrationVoice: voiceConfig,
+            characters: updatedCharacters
           }
         }
       }
@@ -1111,6 +1123,37 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             : [...charactersWithIds, narratorCharacter]
           
           setCharacters(charactersWithNarrator)
+          
+          // Sync narration voice from narrator character (single source of truth)
+          const narratorChar = charactersWithNarrator.find(c => c.type === 'narrator')
+          if (narratorChar?.voiceConfig) {
+            const finalNarratorVoice = narratorChar.voiceConfig
+            console.log('[Load Project] Syncing narration voice from narrator character:', finalNarratorVoice)
+            setNarrationVoice(finalNarratorVoice)
+            
+            // Save to visionPhase.narrationVoice for backward compatibility
+            if (!visionPhase.narrationVoice || visionPhase.narrationVoice.voiceId !== narratorChar.voiceConfig.voiceId) {
+              try {
+                await fetch('/api/projects', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    id: projectId,
+                    metadata: {
+                      ...proj.metadata,
+                      visionPhase: {
+                        ...visionPhase,
+                        narrationVoice: narratorChar.voiceConfig
+                      }
+                    }
+                  })
+                })
+                console.log('[Load Project] Narration voice synced to database')
+              } catch (error) {
+                console.warn('[Load Project] Failed to sync narration voice:', error)
+              }
+            }
+          }
         }
         if (visionPhase.scenes) {
           // MIGRATION: Add characterId to dialogue if missing
@@ -1171,8 +1214,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           setScenes(scenesWithCharacterIds)
         }
         
-        // Load narration voice setting
-        if (visionPhase.narrationVoice) {
+        // Handle case where there are no characters but narrationVoice exists
+        if (!visionPhase.characters && visionPhase.narrationVoice) {
           let correctedNarrationVoice = visionPhase.narrationVoice
           
           // FIX: Detect and correct provider mismatch for narration voice
@@ -1211,8 +1254,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }
           
           setNarrationVoice(correctedNarrationVoice)
-        } else {
-          setNarrationVoice(null)
         }
         
         // Update generation progress to reflect saved state
