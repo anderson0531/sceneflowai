@@ -83,17 +83,13 @@ export function TreatmentCard() {
     let mounted = true
     ;(async () => {
       try {
-        const res = await fetch('/api/tts/google/voices', { cache: 'no-store' })
-        const data = await res.json().catch(() => null)
+        // Use ElevenLabs curated voices
+        const elevenVoices = getCuratedElevenVoices()
         if (!mounted) return
-        if (data?.enabled && Array.isArray(data.voices) && data.voices.length > 0) {
-          const formattedVoices = data.voices.map((v: any) => ({ 
-            id: v.id, 
-            name: v.name 
-          }))
+        if (elevenVoices && elevenVoices.length > 0) {
           setEnabled(true)
-          setVoices(formattedVoices)
-          setSelectedVoiceId(data.voices[0].id)
+          setVoices(elevenVoices)
+          setSelectedVoiceId(elevenVoices[0].id)
         } else {
           setEnabled(false)
           setVoices([])
