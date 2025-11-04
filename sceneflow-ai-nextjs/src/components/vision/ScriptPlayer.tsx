@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { X, Play, Pause, SkipBack, SkipForward, Volume2, Subtitles } from 'lucide-react'
+import { X, Play, Pause, SkipBack, SkipForward, Volume2, Subtitles, Download } from 'lucide-react'
 import { SceneDisplay } from './SceneDisplay'
 import { PlaybackControls } from './PlaybackControls'
 import { VoiceAssignmentPanel } from './VoiceAssignmentPanel'
@@ -22,6 +22,7 @@ interface PlayerState {
   volume: number
   musicVolume: number
   autoAdvance: boolean
+  kenBurnsIntensity: 'subtle' | 'medium' | 'dramatic'
   showVoicePanel: boolean
   voiceAssignments: {
     narrator: string
@@ -39,6 +40,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     volume: 1.0,
     musicVolume: 0.3, // 30% default volume for music
     autoAdvance: true, // Auto-advance enabled by default
+    kenBurnsIntensity: 'medium', // Default Ken Burns intensity
     showVoicePanel: false,
     voiceAssignments: {
       narrator: 'en-US-Studio-O', // Default: Sophia
@@ -544,7 +546,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
             }
             
                         // Music loops, so we use scene duration or max calculated duration
-            // If only music exists (no other audio), ensure we wait for at least music duration                                                                
+            // If only music exists (no other audio), ensure we wait for at least music duration                                                                  
             const sceneDuration = scene.duration || Math.max(maxDuration, musicDuration || 30)                                                                  
             const waitTime = Math.max(sceneDuration * 1000, maxDuration * 1000, musicDuration * 1000) + 100 // Reduced buffer to 100ms                                 
             console.log('[Player] Calculated wait time:', waitTime, 'ms (sceneDuration:', sceneDuration, 'maxDuration:', maxDuration, 'musicDuration:', musicDuration, ')')                                                                     
@@ -801,6 +803,14 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
             ))}
           </select>
           <button
+            disabled
+            className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Coming Soon: Export to MP4"
+          >
+            <Download className="w-5 h-5" />
+            <span className="hidden sm:inline text-sm">MP4</span>
+          </button>
+          <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors"
             title="Exit Screening Room (ESC)"
@@ -824,6 +834,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
             showCaptions={showCaptions}
             translatedNarration={currentTranslatedNarration}
             translatedDialogue={currentTranslatedDialogue}
+            kenBurnsIntensity={playerState.kenBurnsIntensity}
           />
         </div>
 
@@ -852,6 +863,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           playbackSpeed={playerState.playbackSpeed}
           musicVolume={playerState.musicVolume}
           autoAdvance={playerState.autoAdvance}
+          kenBurnsIntensity={playerState.kenBurnsIntensity}
           onTogglePlay={togglePlayPause}
           onPrevious={previousScene}
           onNext={nextScene}
@@ -865,6 +877,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
             }
           }}
           onAutoAdvanceToggle={() => setPlayerState(prev => ({ ...prev, autoAdvance: !prev.autoAdvance }))}
+          onKenBurnsIntensityChange={(intensity) => setPlayerState(prev => ({ ...prev, kenBurnsIntensity: intensity }))}
           isLoading={isLoadingAudio}
         />
       </div>

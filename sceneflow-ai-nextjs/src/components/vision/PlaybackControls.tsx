@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import { Play, Pause, SkipBack, SkipForward, Loader, Music, PlayCircle } from 'lucide-react'
+import { Play, Pause, SkipBack, SkipForward, Loader, Music, PlayCircle, Sparkles } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface PlaybackControlsProps {
   isPlaying: boolean
@@ -10,6 +11,7 @@ interface PlaybackControlsProps {
   playbackSpeed: number
   musicVolume: number
   autoAdvance: boolean
+  kenBurnsIntensity?: 'subtle' | 'medium' | 'dramatic'
   onTogglePlay: () => void
   onPrevious: () => void
   onNext: () => void
@@ -17,6 +19,7 @@ interface PlaybackControlsProps {
   onSpeedChange: (speed: number) => void
   onMusicVolumeChange: (volume: number) => void
   onAutoAdvanceToggle: () => void
+  onKenBurnsIntensityChange?: (intensity: 'subtle' | 'medium' | 'dramatic') => void
   isLoading: boolean
 }
 
@@ -27,6 +30,7 @@ export function PlaybackControls({
   playbackSpeed,
   musicVolume,
   autoAdvance,
+  kenBurnsIntensity = 'medium',
   onTogglePlay,
   onPrevious,
   onNext,
@@ -34,6 +38,7 @@ export function PlaybackControls({
   onSpeedChange,
   onMusicVolumeChange,
   onAutoAdvanceToggle,
+  onKenBurnsIntensityChange,
   isLoading
 }: PlaybackControlsProps) {
   const [isDragging, setIsDragging] = useState(false)
@@ -188,6 +193,24 @@ export function PlaybackControls({
           />
           <span className="text-xs text-gray-400 w-8">{Math.round(musicVolume * 100)}%</span>
         </div>
+
+        {/* Ken Burns Intensity Control */}
+        {onKenBurnsIntensityChange && (
+          <div className="ml-4 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-gray-400" />
+            <span className="text-sm text-gray-400">Motion:</span>
+            <Select value={kenBurnsIntensity} onValueChange={(value: 'subtle' | 'medium' | 'dramatic') => onKenBurnsIntensityChange(value)}>
+              <SelectTrigger className="w-24 h-8 bg-gray-800 text-white text-sm border border-gray-700">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="subtle">Subtle</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="dramatic">Dramatic</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         {/* Auto-Advance Toggle */}
         <button

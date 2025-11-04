@@ -852,10 +852,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   className="flex items-center gap-1"
                 >
                   <Play className="w-4 h-4" />
-                  <span>Screening</span>
+                  <span>Screen</span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">                                                       
+              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
                 <p>Open Screening Room</p>
               </TooltipContent>
             </Tooltip>
@@ -881,7 +881,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                     ) : (
                       <>
                         <Volume2 className="w-4 h-4" />
-                        <span className="hidden sm:inline">Generate All Audio</span>
+                        <span className="hidden sm:inline">Generate All</span>
                       </>
                     )}
                   </Button>
@@ -921,7 +921,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             className="flex items-center gap-2"
           >
             <Clapperboard className="w-4 h-4" />
-            <span>Director</span>
+            <span>Review</span>
           </Button>
           
           {/* Preview/Print Button */}
@@ -933,7 +933,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               className="flex items-center gap-2"
             >
               <Printer className="w-4 h-4" />
-              <span>Preview</span>
+              <span>Script</span>
             </Button>
           )}
         </div>
@@ -2195,7 +2195,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                         e.stopPropagation()
                         setGeneratingMusic?.(sceneIdx)
                         try {
-                          await generateMusic(sceneIdx)
+                          await generateMusic?.(sceneIdx)
                         } catch (error) {
                           console.error('[ScriptPanel] Music regeneration failed:', error)
                         } finally {
@@ -2227,7 +2227,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                       e.stopPropagation()
                       setGeneratingMusic?.(sceneIdx)
                       try {
-                        await generateMusic(sceneIdx)
+                        await generateMusic?.(sceneIdx)
                       } catch (error) {
                         console.error('[ScriptPanel] Music generation failed:', error)
                       } finally {
@@ -2296,7 +2296,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                               e.stopPropagation()
                               setGeneratingSFX?.({ sceneIdx, sfxIdx })
                               try {
-                                await generateSFX(sceneIdx, sfxIdx)
+                                await generateSFX?.(sceneIdx, sfxIdx)
                               } catch (error) {
                                 console.error('[ScriptPanel] SFX regeneration failed:', error)
                               } finally {
@@ -2328,7 +2328,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                             e.stopPropagation()
                             setGeneratingSFX?.({ sceneIdx, sfxIdx })
                             try {
-                              await generateSFX(sceneIdx, sfxIdx)
+                              await generateSFX?.(sceneIdx, sfxIdx)
                             } catch (error) {
                               console.error('[ScriptPanel] SFX generation failed:', error)
                             } finally {
