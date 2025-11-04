@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Clapperboard, Printer, Video as VideoIcon } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Clapperboard, Printer, Video as VideoIcon, Info } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
@@ -19,6 +19,7 @@ import { ScriptEditorModal } from './ScriptEditorModal'
 import { toast } from 'sonner'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType } from '@/lib/types/reports'
+import { VideoCostEstimator } from './VideoCostEstimator'
 
 interface ScriptPanelProps {
   script: any
@@ -70,6 +71,9 @@ interface ScriptPanelProps {
   onGenerateSceneScore?: (sceneIndex: number) => void
   generatingScoreFor?: number | null
   getScoreColorClass?: (score: number) => string
+  // NEW: BYOK props for cost calculator
+  hasBYOK?: boolean
+  onOpenBYOK?: () => void
 }
 
 // Transform score analysis data to review format
@@ -258,7 +262,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [showScriptEditor, setShowScriptEditor] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -1021,17 +1025,42 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 </div>
               </div>
               
-              {/* Videos (NEW) */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                            {/* Est. Clips */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">                                            
                 <div className="flex items-center gap-2 mb-1">
-                  <Play className="w-4 h-4 text-pink-500" />
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Videos</span>
+                  <Film className="w-4 h-4 text-pink-500" />
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Est. Clips</span>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="w-3 h-3 text-gray-400" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p className="text-xs">
+                          Estimated number of 10-second video clips needed based on scene duration.
+                          Each scene may require multiple clips.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {Math.ceil(scenes.reduce((total: number, s: any) => total + calculateSceneDuration(s), 0) / 8)}
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">                                                                           
+                  {Math.ceil(scenes.reduce((total: number, s: any) => total + calculateSceneDuration(s), 0) / 8)}                                               
                 </div>
               </div>
             </div>
+            
+            {/* Video Cost Estimator */}
+            {scenes.length > 0 && (
+              <div className="mt-4">
+                <VideoCostEstimator 
+                  clipCount={Math.ceil(scenes.reduce((total: number, s: any) => total + calculateSceneDuration(s), 0) / 8)}
+                  provider="runway_gen4"
+                  hasBYOK={hasBYOK}
+                  onOpenBYOK={onOpenBYOK}
+                />
+              </div>
+            )}
             
             {/* Script Reviews Section */}
             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">

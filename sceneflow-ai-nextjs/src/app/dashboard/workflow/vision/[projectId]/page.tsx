@@ -3545,7 +3545,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 px-6 py-4">
         {/* Main: Script with Scene Cards */}
         <div className="overflow-y-auto">
-          <ScriptPanel 
+                    <ScriptPanel 
             script={script}
             onScriptChange={setScript}
             isGenerating={isGenerating}
@@ -3554,7 +3554,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             onGenerateSceneImage={handleGenerateSceneImage}
             characters={characters}
             projectId={projectId}
-            visualStyle={project?.tone || project?.metadata?.filmTreatmentVariant?.tone}
+            visualStyle={project?.tone || project?.metadata?.filmTreatmentVariant?.tone}                                                                        
             validationWarnings={validationWarnings}
             validationInfo={validationInfo}
             onDismissValidationWarning={handleDismissValidationWarning}
@@ -3575,6 +3575,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             onGenerateReviews={handleGenerateReviews}
             isGeneratingReviews={isGeneratingReviews}
             onShowReviews={() => setShowReviewModal(true)}
+            hasBYOK={!!byokSettings?.videoProvider}
+            onOpenBYOK={() => setShowBYOKSettings(true)}
           />
         </div>
         
