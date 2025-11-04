@@ -16,10 +16,11 @@ import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Save, Share2, ArrowRight, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info } from 'lucide-react'
+import { Save, Share2, ArrowRight, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users } from 'lucide-react'
 import ScriptReviewModal from '@/components/vision/ScriptReviewModal'
 import { SceneEditorModal } from '@/components/vision/SceneEditorModal'
 import { findSceneCharacters } from '../../../../../lib/character/matching'
+import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 import { v4 as uuidv4 } from 'uuid'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 
@@ -447,8 +448,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [reviewsOutdated, setReviewsOutdated] = useState(false)
   
   // Scene editor state
-  const [editingSceneIndex, setEditingSceneIndex] = useState<number | null>(null)
+    const [editingSceneIndex, setEditingSceneIndex] = useState<number | null>(null)                                                                               
   const [isSceneEditorOpen, setIsSceneEditorOpen] = useState(false)
+  
+  // Character deletion dialog state
+  const [deletionDialogOpen, setDeletionDialogOpen] = useState(false)
+  const [deletionCharacter, setDeletionCharacter] = useState<{id: string, name: string} | null>(null)
+  const [affectedDialogueCount, setAffectedDialogueCount] = useState(0)
+  const [deletionAction, setDeletionAction] = useState<'clear' | 'reassign' | null>(null)
+  const [reassignmentCharacterId, setReassignmentCharacterId] = useState<string>('')
+  
+  // Character merge dialog state
+  const [mergeDialogOpen, setMergeDialogOpen] = useState(false)
+  const [mergePrimaryCharId, setMergePrimaryCharId] = useState<string>('')
+  const [mergeDuplicateCharIds, setMergeDuplicateCharIds] = useState<string[]>([])
   
   // Scene score generation state
   const [generatingScoreFor, setGeneratingScoreFor] = useState<number | null>(null)
@@ -2075,11 +2088,141 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  const handleRemoveCharacter = async (characterName: string) => {
+    const handleRemoveCharacter = async (characterName: string) => {
     try {
       console.log('[Vision] Removing character:', characterName)
       
-      const response = await fetch(`/api/vision/characters?projectId=${projectId}&characterName=${encodeURIComponent(characterName)}`, {
+      // Find the character by name to get its ID
+      const characterToDelete = characters.find(c => 
+        toCanonicalName(c.name) === toCanonicalName(characterName) || c.name === characterName
+      )
+      
+      if (!characterToDelete) {
+        try { 
+          const { toast } = require('sonner')
+          toast.error('Character not found')
+        } catch {}
+        return
+      }
+      
+      // Check for dialogue references
+      const affectedScenes = script?.script?.scenes?.filter((scene: any) => 
+        scene.dialogue?.some((d: any) => d.characterId === characterToDelete.id)
+      ) || []
+      
+      const dialogueCount = affectedScenes.reduce((count: number, scene: any) => 
+        count + (scene.dialogue?.filter((d: any) => d.characterId === characterToDelete.id).length || 0), 0
+      )
+      
+      if (dialogueCount > 0) {
+        // Show warning dialog with options
+        setDeletionCharacter({ id: characterToDelete.id, name: characterToDelete.name })
+        setAffectedDialogueCount(dialogueCount)
+        setDeletionAction(null)
+        setReassignmentCharacterId('')
+        setDeletionDialogOpen(true)
+        return
+      }
+      
+      // No dialogue references - proceed with deletion directly
+      await performCharacterDeletion(characterToDelete.id, null, null)
+    } catch (error) {
+      console.error('[Vision] Error removing character:', error)
+      try {
+        const { toast } = require('sonner')
+        toast.error('Failed to remove character')
+      } catch {}
+    }
+  }
+  
+  // Helper function to actually perform the character deletion
+  const performCharacterDeletion = async (
+    characterId: string, 
+    action: 'clear' | 'reassign' | null,
+    reassignmentCharId: string | null
+  ) => {
+    try {
+      const characterToDelete = characters.find(c => c.id === characterId)
+      if (!characterToDelete) return
+      
+      // If reassigning, update dialogue references first
+      if (action === 'reassign' && reassignmentCharId) {
+        const replacementChar = characters.find(c => c.id === reassignmentCharId)
+        if (!replacementChar) {
+          try { 
+            const { toast } = require('sonner')
+            toast.error('Replacement character not found')
+          } catch {}
+          return
+        }
+        
+        // Update all dialogue references
+        const updatedScenes = script.script.scenes.map((scene: any) => ({
+          ...scene,
+          dialogue: scene.dialogue?.map((d: any) => 
+            d.characterId === characterId 
+              ? { ...d, characterId: reassignmentCharId, character: replacementChar.name }
+              : d
+          )
+        }))
+        
+        // Save updated scenes
+        await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: {
+              ...project?.metadata,
+              visionPhase: {
+                ...project?.metadata?.visionPhase,
+                scenes: updatedScenes,
+                script: { ...script.script, scenes: updatedScenes }
+              }
+            }
+          })
+        })
+        
+        // Update local state
+        setScript((prev: any) => ({
+          ...prev,
+          script: { ...prev.script, scenes: updatedScenes }
+        }))
+      } else if (action === 'clear') {
+        // Clear characterId from affected dialogue lines
+        const updatedScenes = script.script.scenes.map((scene: any) => ({
+          ...scene,
+          dialogue: scene.dialogue?.map((d: any) => 
+            d.characterId === characterId 
+              ? { ...d, characterId: undefined }
+              : d
+          )
+        }))
+        
+        // Save updated scenes
+        await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: {
+              ...project?.metadata,
+              visionPhase: {
+                ...project?.metadata?.visionPhase,
+                scenes: updatedScenes,
+                script: { ...script.script, scenes: updatedScenes }
+              }
+            }
+          })
+        })
+        
+        // Update local state
+        setScript((prev: any) => ({
+          ...prev,
+          script: { ...prev.script, scenes: updatedScenes }
+        }))
+      }
+      
+      // Now delete the character
+      const response = await fetch(`/api/vision/characters?projectId=${projectId}&characterName=${encodeURIComponent(characterToDelete.name)}`, {                        
         method: 'DELETE'
       })
       
@@ -2089,17 +2232,140 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       
       // Reload project to get updated characters
-      await loadProject()
+      await loadProject(true) // Skip auto-generation
+      
+      // Close dialog
+      setDeletionDialogOpen(false)
+      setDeletionCharacter(null)
+      setAffectedDialogueCount(0)
+      setDeletionAction(null)
+      setReassignmentCharacterId('')
       
       try {
         const { toast } = require('sonner')
-        toast.success('Character removed successfully!')
+        toast.success(`Character removed successfully${action === 'reassign' ? ' and dialogue reassigned' : action === 'clear' ? ' - dialogue will match by name' : ''}!`)
       } catch {}
     } catch (error) {
-      console.error('[Vision] Error removing character:', error)
+      console.error('[Vision] Error performing character deletion:', error)
       try {
         const { toast } = require('sonner')
         toast.error('Failed to remove character')
+      } catch {}
+    }
+  }
+  
+  // Handler for deletion dialog actions
+  const handleDeletionDialogAction = async () => {
+    if (!deletionCharacter) return
+    
+    if (deletionAction === null) {
+      // User hasn't selected an action yet
+      try { 
+        const { toast } = require('sonner')
+        toast.error('Please select an option')
+      } catch {}
+      return
+    }
+    
+    if (deletionAction === 'reassign' && !reassignmentCharacterId) {
+      try { 
+        const { toast } = require('sonner')
+        toast.error('Please select a character to reassign dialogue to')
+      } catch {}
+      return
+    }
+    
+    await performCharacterDeletion(
+      deletionCharacter.id,
+      deletionAction,
+      deletionAction === 'reassign' ? reassignmentCharacterId : null
+    )
+  }
+  
+  // Helper function to find potential duplicate characters
+  const findPotentialDuplicates = (characters: any[]): any[][] => {
+    const groups = new Map<string, any[]>()
+    
+    characters.forEach(char => {
+      // Skip narrator characters
+      if (char.type === 'narrator') return
+      
+      const canonical = toCanonicalName(char.name)
+      if (!groups.has(canonical)) {
+        groups.set(canonical, [])
+      }
+      groups.get(canonical)!.push(char)
+    })
+    
+    // Return groups with 2+ characters (potential duplicates)
+    return Array.from(groups.values()).filter(group => group.length > 1)
+  }
+  
+  // Handler to merge duplicate characters
+  const handleMergeCharacters = async (primaryCharId: string, duplicateCharIds: string[]) => {
+    try {
+      const primaryChar = characters.find(c => c.id === primaryCharId)
+      if (!primaryChar) {
+        try { 
+          const { toast } = require('sonner')
+          toast.error('Primary character not found')
+        } catch {}
+        return
+      }
+      
+      // Update all dialogue references from duplicates to primary
+      const updatedScenes = script?.script?.scenes?.map((scene: any) => ({
+        ...scene,
+        dialogue: scene.dialogue?.map((d: any) => 
+          duplicateCharIds.includes(d.characterId)
+            ? { ...d, characterId: primaryCharId, character: primaryChar.name }
+            : d
+        )
+      })) || []
+      
+      // Remove duplicate characters
+      const updatedCharacters = characters.filter(c => 
+        !duplicateCharIds.includes(c.id)
+      )
+      
+      // Save to project
+      await fetch(`/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          metadata: {
+            ...project?.metadata,
+            visionPhase: {
+              ...project?.metadata?.visionPhase,
+              characters: updatedCharacters,
+              scenes: updatedScenes,
+              script: { ...script.script, scenes: updatedScenes }
+            }
+          }
+        })
+      })
+      
+      // Update local state
+      setCharacters(updatedCharacters)
+      setScript((prev: any) => ({
+        ...prev,
+        script: { ...prev.script, scenes: updatedScenes }
+      }))
+      
+      // Close merge dialog
+      setMergeDialogOpen(false)
+      setMergePrimaryCharId('')
+      setMergeDuplicateCharIds([])
+      
+      try {
+        const { toast } = require('sonner')
+        toast.success(`Merged ${duplicateCharIds.length} duplicate(s) into ${primaryChar.name}`)
+      } catch {}
+    } catch (error) {
+      console.error('[Vision] Error merging characters:', error)
+      try {
+        const { toast } = require('sonner')
+        toast.error('Failed to merge characters')
       } catch {}
     }
   }
@@ -2443,30 +2709,48 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return
       }
 
-      // Primary: Match by ID (most reliable)
-      // Fallback: Case-insensitive name with normalization (for legacy projects)
-      const character = audioType === 'narration' ? null :
+            // Primary: Match by ID (most reliable)
+      let character = audioType === 'narration' ? null :
         (dialogueLine?.characterId ? 
           characters.find(c => c.id === dialogueLine.characterId) :
-          // Use normalized names for matching
-          characters.find(c => 
-            normalizeCharacterName(c.name.toLowerCase()) === normalizeCharacterName(characterName?.toLowerCase() || '')
-          )
+          null
         )
+      
+      // Enhanced fallback matching if ID lookup fails
+      if (!character && audioType === 'dialogue' && characterName) {
+        const canonicalSearchName = toCanonicalName(characterName)
+        
+        // Try exact canonical match first
+        const exactMatch = characters.find(c => 
+          toCanonicalName(c.name) === canonicalSearchName
+        )
+        
+        if (exactMatch) {
+          character = exactMatch
+        } else {
+          // Try alias matching
+          character = characters.find(c => {
+            const aliases = generateAliases(toCanonicalName(c.name))
+            return aliases.some(alias => 
+              toCanonicalName(alias) === canonicalSearchName
+            )
+          })
+        }
+      }
 
-      // ADD: Debug logging with normalized names
+            // ADD: Debug logging with normalized names
       if (audioType === 'dialogue') {
-        const normalizedSearchName = normalizeCharacterName(characterName || '')
+        const normalizedSearchName = toCanonicalName(characterName || '')
         console.log('[Generate Scene Audio] Character lookup:', {
           originalName: characterName,
           normalizedName: normalizedSearchName,
           dialogueCharacterId: dialogueLine?.characterId,
-          foundCharacter: character ? { id: character.id, name: character.name } : null,
+          foundCharacter: character ? { id: character.id, name: character.name } : null,                                                                        
           hasVoiceConfig: !!character?.voiceConfig,
           allCharacters: characters.map(c => ({ 
             id: c.id, 
             name: c.name, 
-            normalizedName: normalizeCharacterName(c.name),
+            normalizedName: toCanonicalName(c.name),
             hasVoice: !!c.voiceConfig 
           }))
         })
@@ -3280,6 +3564,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         
         {/* Right Sidebar: Characters */}
         <div className="overflow-y-auto">
+          {/* Merge Duplicates Button */}
+          {findPotentialDuplicates(characters).length > 0 && (
+            <div className="mb-4 px-2">
+              <Button
+                onClick={() => {
+                  const duplicates = findPotentialDuplicates(characters)
+                  if (duplicates.length > 0) {
+                    // Auto-select first group for merge
+                    setMergePrimaryCharId(duplicates[0][0].id)
+                    setMergeDuplicateCharIds(duplicates[0].slice(1).map((c: any) => c.id))
+                    setMergeDialogOpen(true)
+                  }
+                }}
+                variant="outline"
+                className="w-full text-amber-600 border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Merge Duplicates ({findPotentialDuplicates(characters).reduce((sum, group) => sum + group.length - 1, 0)} duplicate{findPotentialDuplicates(characters).reduce((sum, group) => sum + group.length - 1, 0) !== 1 ? 's' : ''})
+              </Button>
+            </div>
+          )}
+          
           {/* Narration Voice Selector */}
           
           <CharacterLibrary 
@@ -3472,6 +3778,212 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         project={project}
         projectId={projectId}
       />
+      
+      {/* Character Deletion Warning Dialog */}
+      <Dialog open={deletionDialogOpen} onOpenChange={setDeletionDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Character with Dialogue</DialogTitle>
+            <DialogDescription>
+              The character "{deletionCharacter?.name}" has {affectedDialogueCount} dialogue line{affectedDialogueCount !== 1 ? 's' : ''} in the script. 
+              What would you like to do with these dialogue lines?
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Action Selection */}
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  setDeletionAction('clear')
+                  setReassignmentCharacterId('')
+                }}
+                className={`w-full text-left p-3 rounded-lg border-2 transition-colors ${
+                  deletionAction === 'clear'
+                    ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                }`}
+              >
+                <div className="font-semibold text-gray-900 dark:text-gray-100">
+                  Clear Character IDs
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Remove character IDs from dialogue lines. The dialogue will match characters by name using the improved fallback matching.
+                </div>
+              </button>
+              
+              <button
+                onClick={() => setDeletionAction('reassign')}
+                className={`w-full text-left p-3 rounded-lg border-2 transition-colors ${
+                  deletionAction === 'reassign'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                }`}
+              >
+                <div className="font-semibold text-gray-900 dark:text-gray-100">
+                  Reassign to Another Character
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Assign all dialogue lines to a different character.
+                </div>
+              </button>
+              
+              {deletionAction === 'reassign' && (
+                <div className="ml-4 mt-2">
+                  <Select
+                    value={reassignmentCharacterId}
+                    onValueChange={setReassignmentCharacterId}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select character to reassign to" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {characters
+                        .filter(c => c.id !== deletionCharacter?.id && c.type !== 'narrator')
+                        .map(char => (
+                          <SelectItem key={char.id} value={char.id}>
+                            {char.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeletionDialogOpen(false)
+                setDeletionCharacter(null)
+                setAffectedDialogueCount(0)
+                setDeletionAction(null)
+                setReassignmentCharacterId('')
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeletionDialogAction}
+              disabled={!deletionAction || (deletionAction === 'reassign' && !reassignmentCharacterId)}
+              className={
+                deletionAction === 'clear' 
+                  ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }
+            >
+              {deletionAction === 'reassign' ? 'Reassign & Delete' : deletionAction === 'clear' ? 'Clear IDs & Delete' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Character Merge Dialog */}
+      <Dialog open={mergeDialogOpen} onOpenChange={setMergeDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Merge Duplicate Characters</DialogTitle>
+            <DialogDescription>
+              Select which character to keep and which duplicates to merge into it.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {(() => {
+              const duplicates = findPotentialDuplicates(characters)
+              const currentGroup = duplicates.find(group => 
+                group.some(c => c.id === mergePrimaryCharId || mergeDuplicateCharIds.includes(c.id))
+              ) || []
+              
+              if (currentGroup.length === 0) return null
+              
+              return (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      Keep this character:
+                    </label>
+                    <Select
+                      value={mergePrimaryCharId}
+                      onValueChange={(value) => {
+                        setMergePrimaryCharId(value)
+                        // Update duplicates to be all others in the group
+                        setMergeDuplicateCharIds(
+                          currentGroup.filter(c => c.id !== value).map(c => c.id)
+                        )
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {currentGroup.map(char => (
+                          <SelectItem key={char.id} value={char.id}>
+                            {char.name}
+                            {char.voiceConfig && (
+                              <span className="ml-2 text-xs text-gray-500">(has voice)</span>
+                            )}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      Will be merged (duplicates):
+                    </label>
+                    <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                      {mergeDuplicateCharIds.length === 0 ? (
+                        <p className="text-sm text-gray-500">No duplicates to merge</p>
+                      ) : (
+                        <ul className="space-y-1">
+                          {currentGroup
+                            .filter(c => mergeDuplicateCharIds.includes(c.id))
+                            .map(char => (
+                              <li key={char.id} className="text-sm text-gray-700 dark:text-gray-300">
+                                • {char.name}
+                              </li>
+                            ))}
+                        </ul>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      All dialogue lines from duplicate characters will be assigned to the primary character.
+                    </p>
+                  </div>
+                </>
+              )
+            })()}
+          </div>
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setMergeDialogOpen(false)
+                setMergePrimaryCharId('')
+                setMergeDuplicateCharIds([])
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (mergePrimaryCharId && mergeDuplicateCharIds.length > 0) {
+                  handleMergeCharacters(mergePrimaryCharId, mergeDuplicateCharIds)
+                }
+              }}
+              disabled={!mergePrimaryCharId || mergeDuplicateCharIds.length === 0}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Merge Characters
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

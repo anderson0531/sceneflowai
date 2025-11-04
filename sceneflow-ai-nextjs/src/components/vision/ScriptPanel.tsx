@@ -460,7 +460,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   }
 
   // Audio generation functions
-  const generateSFX = async (sceneIdx: number, sfxIdx: number) => {
+    const generateSFX = async (sceneIdx: number, sfxIdx: number) => {
     const scene = scenes[sceneIdx]
     const sfx = scene?.sfx?.[sfxIdx]
     if (!sfx) return
@@ -470,7 +470,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       const response = await fetch('/api/tts/elevenlabs/sound-effects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: typeof sfx === 'string' ? sfx : sfx.description, duration: 2.0 })
+        body: JSON.stringify({ text: typeof sfx === 'string' ? sfx : sfx.description, duration: 2.0 })                                                          
       })
 
       if (!response.ok) {
@@ -479,9 +479,26 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       }
 
       const blob = await response.blob()
-      const audioUrl = URL.createObjectURL(blob)
       
-      // Update scene with audio URL
+      // Upload to blob storage for persistence
+      const formData = new FormData()
+      const fileName = `sfx-${projectId || 'temp'}-scene-${sceneIdx}-sfx-${sfxIdx}-${Date.now()}.mp3`
+      formData.append('file', blob, fileName)
+      
+      const uploadResponse = await fetch('/api/audio/upload', {
+        method: 'POST',
+        body: formData
+      })
+      
+      if (!uploadResponse.ok) {
+        const error = await uploadResponse.json()
+        throw new Error(error.details || 'Failed to save SFX audio')
+      }
+      
+      const uploadData = await uploadResponse.json()
+      const audioUrl = uploadData.audioUrl
+      
+      // Update scene with persistent audio URL
       await saveSceneAudio(sceneIdx, 'sfx', audioUrl, sfxIdx)
     } catch (error: any) {
       console.error('[SFX Generation] Error:', error)
@@ -491,7 +508,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     }
   }
 
-  const generateMusic = async (sceneIdx: number) => {
+    const generateMusic = async (sceneIdx: number) => {
     const scene = scenes[sceneIdx]
     const music = scene?.music
     if (!music) return
@@ -502,7 +519,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       const response = await fetch('/api/tts/elevenlabs/music', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: typeof music === 'string' ? music : music.description, duration })
+        body: JSON.stringify({ text: typeof music === 'string' ? music : music.description, duration })                                                         
       })
 
       if (!response.ok) {
@@ -511,9 +528,26 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       }
 
       const blob = await response.blob()
-      const audioUrl = URL.createObjectURL(blob)
       
-      // Update scene with audio URL
+      // Upload to blob storage for persistence
+      const formData = new FormData()
+      const fileName = `music-${projectId || 'temp'}-scene-${sceneIdx}-${Date.now()}.mp3`
+      formData.append('file', blob, fileName)
+      
+      const uploadResponse = await fetch('/api/audio/upload', {
+        method: 'POST',
+        body: formData
+      })
+      
+      if (!uploadResponse.ok) {
+        const error = await uploadResponse.json()
+        throw new Error(error.details || 'Failed to save music audio')
+      }
+      
+      const uploadData = await uploadResponse.json()
+      const audioUrl = uploadData.audioUrl
+      
+      // Update scene with persistent audio URL
       await saveSceneAudio(sceneIdx, 'music', audioUrl)
     } catch (error: any) {
       console.error('[Music Generation] Error:', error)

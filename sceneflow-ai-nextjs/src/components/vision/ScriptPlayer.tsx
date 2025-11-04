@@ -5,6 +5,8 @@ import { X, Play, Pause, SkipBack, SkipForward, Volume2, Subtitles } from 'lucid
 import { SceneDisplay } from './SceneDisplay'
 import { PlaybackControls } from './PlaybackControls'
 import { VoiceAssignmentPanel } from './VoiceAssignmentPanel'
+import { WebAudioMixer, SceneAudioConfig, AudioSource } from '@/lib/audio/webAudioMixer'
+import { getAudioDuration } from '@/lib/audio/audioDuration'
 
 interface ScreeningRoomProps {
   script: any
@@ -72,6 +74,20 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [currentAudioUrl, setCurrentAudioUrl] = useState<string | null>(null)
   const [isLoadingAudio, setIsLoadingAudio] = useState(false)
+  const audioMixerRef = useRef<WebAudioMixer | null>(null)
+  
+  // Initialize Web Audio Mixer
+  useEffect(() => {
+    audioMixerRef.current = new WebAudioMixer()
+    
+    return () => {
+      // Cleanup on unmount
+      if (audioMixerRef.current) {
+        audioMixerRef.current.dispose()
+        audioMixerRef.current = null
+      }
+    }
+  }, [])
 
   // Auto-hide controls logic
   const resetControlsTimeout = useCallback(() => {
@@ -225,6 +241,103 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     }
   }
 
+  /**
+   * Calculate audio timeline for a scene
+   * Returns timing information for concurrent playback
+   */
+  const calculateAudioTimeline = async (scene: any): Promise<SceneAudioConfig> => {
+    const config: SceneAudioConfig = {}
+    let currentTime = 0
+    
+    // Debug logging
+    console.log('[Timeline] Calculating audio timeline for scene:', {
+      hasMusic: !!scene.musicAudio,
+      musicUrl: scene.musicAudio,
+      hasNarration: !!scene.narrationAudioUrl,
+      hasDialogue: !!(scene.dialogueAudio && scene.dialogueAudio.length > 0),
+      dialogueCount: scene.dialogueAudio?.length || 0,
+      hasSFX: !!(scene.sfxAudio && scene.sfxAudio.length > 0),
+      sfxCount: scene.sfxAudio?.length || 0,
+      sfxUrls: scene.sfxAudio
+    })
+    
+    // Music starts at scene beginning (concurrent with everything)
+    if (scene.musicAudio) {
+      config.music = scene.musicAudio
+      console.log('[Timeline] Added music:', scene.musicAudio)
+    }
+    
+    // Narration starts at scene beginning (concurrent with music)
+    if (scene.narrationAudioUrl) {
+      config.narration = scene.narrationAudioUrl
+      // Calculate narration duration for dialogue timing
+      try {
+        const narrationDuration = await getAudioDuration(scene.narrationAudioUrl)
+        currentTime = narrationDuration + 0.5 // Add 500ms pause after narration
+      } catch (error) {
+        console.warn('[Timeline] Failed to get narration duration, using default:', error)
+        currentTime = 5 // Default 5 seconds
+      }
+    }
+    
+    // Dialogue follows narration sequentially
+    if (scene.dialogueAudio && scene.dialogueAudio.length > 0) {
+      config.dialogue = []
+      
+      for (const dialogue of scene.dialogueAudio) {
+        if (dialogue.audioUrl) {
+          config.dialogue.push({
+            url: dialogue.audioUrl,
+            startTime: currentTime
+          })
+          
+          // Calculate duration for next dialogue timing
+          try {
+            const dialogueDuration = await getAudioDuration(dialogue.audioUrl)
+            currentTime += dialogueDuration + 0.3 // Add 300ms pause between dialogue lines
+          } catch (error) {
+            console.warn('[Timeline] Failed to get dialogue duration, using default:', error)
+            currentTime += 3 // Default 3 seconds per dialogue
+          }
+        }
+      }
+    }
+    
+    // SFX - use specified time or calculate sequential position
+    if (scene.sfxAudio && scene.sfxAudio.length > 0) {
+      config.sfx = []
+      
+      // Loop through sfxAudio array directly (not scene.sfx which might be empty)
+      scene.sfxAudio.forEach((sfxUrl: string, idx: number) => {
+        if (sfxUrl) {
+          // Get metadata from scene.sfx if available
+          const sfxDef = scene.sfx?.[idx] || {}
+          // Use specified time if available, otherwise use current calculated time
+          const sfxTime = sfxDef.time !== undefined ? sfxDef.time : currentTime
+          config.sfx!.push({
+            url: sfxUrl,
+            startTime: sfxTime
+          })
+          console.log('[Timeline] Added SFX:', { url: sfxUrl, startTime: sfxTime, idx })
+          
+          // If sequential, update currentTime
+          if (sfxDef.time === undefined) {
+            currentTime += 2 // Default 2 seconds for SFX
+          }
+        }
+      })
+    }
+    
+    console.log('[Timeline] Final config:', {
+      hasMusic: !!config.music,
+      hasNarration: !!config.narration,
+      dialogueCount: config.dialogue?.length || 0,
+      sfxCount: config.sfx?.length || 0
+    })
+    
+    return config
+  }
+
   // Generate and play audio for current scene
   const playSceneAudio = useCallback(async (sceneIndex: number) => {
     if (sceneIndex < 0 || sceneIndex >= scenes.length) return
@@ -300,57 +413,131 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         return
       }
 
-      // CHECK FOR PRE-GENERATED AUDIO FIRST (English mode)
-      if (scene.narrationAudioUrl) {
-        console.log('[Player] Using pre-generated audio for scene', sceneIndex + 1)
+            // CHECK FOR PRE-GENERATED AUDIO FIRST (English mode with Web Audio Mixer)
+      // Check if scene has any pre-generated audio (narration, music, dialogue, or SFX)
+      const hasPreGeneratedAudio = scene.narrationAudioUrl || 
+                                   scene.musicAudio || 
+                                   (scene.dialogueAudio && scene.dialogueAudio.length > 0) ||
+                                   (scene.sfxAudio && scene.sfxAudio.length > 0)
+      
+      if (hasPreGeneratedAudio) {
+        console.log('[Player] Using pre-generated audio with Web Audio Mixer for scene', sceneIndex + 1, {
+          narration: !!scene.narrationAudioUrl,
+          music: !!scene.musicAudio,
+          dialogue: !!(scene.dialogueAudio && scene.dialogueAudio.length > 0),
+          sfx: !!(scene.sfxAudio && scene.sfxAudio.length > 0)
+        })
         
-        // Play narration
-        if (audioRef.current) {
-          audioRef.current.src = scene.narrationAudioUrl
-          audioRef.current.playbackRate = playerState.playbackSpeed
-          audioRef.current.volume = playerState.volume
-          
-          await audioRef.current.play()
-          setIsLoadingAudio(false) // ✅ Clear immediately after play starts
-          
-          // Wait for narration to finish
-          await new Promise<void>((resolve) => {
-            if (audioRef.current) {
-              audioRef.current.onended = () => resolve()
-            }
-          })
+        // Fade out and stop any currently playing audio
+        if (audioMixerRef.current && audioMixerRef.current.getPlaying()) {
+          await audioMixerRef.current.fadeOut(1000) // 1 second fade out
+          audioMixerRef.current.stop()
         }
         
-        // Small natural pause after narration
-        await new Promise(resolve => setTimeout(resolve, 500))
+        // Calculate audio timeline for concurrent playback
+        const audioConfig = await calculateAudioTimeline(scene)
         
-        // Play dialogue audios sequentially
-        if (scene.dialogueAudio && scene.dialogueAudio.length > 0) {
-          for (const dialogue of scene.dialogueAudio) {
-            if (dialogue.audioUrl && audioRef.current) {
-              console.log('[Player] Playing dialogue for', dialogue.character)
-              audioRef.current.src = dialogue.audioUrl
-              audioRef.current.playbackRate = playerState.playbackSpeed
-              audioRef.current.volume = playerState.volume
-              
-              await audioRef.current.play()
-              
-              // Wait for dialogue to finish
-              await new Promise<void>((resolve) => {
-                if (audioRef.current) {
-                  audioRef.current.onended = () => resolve()
-                }
-              })
-              
-              // Small pause between dialogue lines
-              await new Promise(resolve => setTimeout(resolve, 300))
+        // Check if we have any audio to play
+        if (!audioConfig.music && !audioConfig.narration && 
+            (!audioConfig.dialogue || audioConfig.dialogue.length === 0) &&
+            (!audioConfig.sfx || audioConfig.sfx.length === 0)) {
+          console.warn('[Player] No audio available in calculated config for scene', sceneIndex + 1, 'Config:', audioConfig)
+          setIsLoadingAudio(false)
+          if (playerState.isPlaying) {
+            setTimeout(() => nextScene(), 2000)
+          }
+          return
+        }
+        
+        console.log('[Player] Audio config validated, proceeding to play:', {
+          music: !!audioConfig.music,
+          narration: !!audioConfig.narration,
+          dialogueCount: audioConfig.dialogue?.length || 0,
+          sfxCount: audioConfig.sfx?.length || 0
+        })
+        
+        setIsLoadingAudio(false) // Clear loading state
+        
+                // Play scene with Web Audio Mixer (concurrent playback)
+        if (audioMixerRef.current) {
+          try {
+            console.log('[Player] Playing scene with Web Audio Mixer, config:', audioConfig)
+            await audioMixerRef.current.playScene(audioConfig)
+            
+            // Wait for playback to complete
+            // Calculate maximum scene duration
+            let maxDuration = 0
+            
+            // Check narration duration
+            if (audioConfig.narration) {
+              try {
+                const duration = await getAudioDuration(audioConfig.narration)
+                maxDuration = Math.max(maxDuration, duration)
+                console.log('[Player] Narration duration:', duration)
+              } catch (error) {
+                console.warn('[Player] Failed to get narration duration:', error)                                                                               
+              }
             }
+            
+            // Check dialogue durations
+            if (audioConfig.dialogue) {
+              for (const dialogue of audioConfig.dialogue) {
+                try {
+                  const duration = await getAudioDuration(dialogue.url)
+                  maxDuration = Math.max(maxDuration, dialogue.startTime + duration)
+                  console.log('[Player] Dialogue duration:', duration, 'at', dialogue.startTime)
+                } catch (error) {
+                  console.warn('[Player] Failed to get dialogue duration:', error)                                                                              
+                }
+              }
+            }
+            
+            // Check SFX durations
+            if (audioConfig.sfx) {
+              for (const sfx of audioConfig.sfx) {
+                try {
+                  const duration = await getAudioDuration(sfx.url)
+                  maxDuration = Math.max(maxDuration, sfx.startTime + duration)
+                  console.log('[Player] SFX duration:', duration, 'at', sfx.startTime)
+                } catch (error) {
+                  console.warn('[Player] Failed to get SFX duration:', error)
+                }
+              }
+            }
+            
+            // Check music duration (if music exists, use scene duration or music duration)
+            let musicDuration = 0
+            if (audioConfig.music) {
+              try {
+                musicDuration = await getAudioDuration(audioConfig.music)
+                console.log('[Player] Music duration:', musicDuration, '(will loop)')
+              } catch (error) {
+                console.warn('[Player] Failed to get music duration:', error)
+              }
+            }
+            
+            // Music loops, so we use scene duration or max calculated duration
+            // If only music exists (no other audio), ensure we wait for at least music duration
+            const sceneDuration = scene.duration || Math.max(maxDuration, musicDuration || 30)
+            const waitTime = Math.max(sceneDuration * 1000, maxDuration * 1000, musicDuration * 1000) + 500 // Add 500ms buffer
+            console.log('[Player] Calculated wait time:', waitTime, 'ms (sceneDuration:', sceneDuration, 'maxDuration:', maxDuration, 'musicDuration:', musicDuration, ')')
+            
+            // Wait for scene playback to complete
+            await new Promise(resolve => setTimeout(resolve, waitTime))
+            
+          } catch (error) {
+            console.error('[Player] Web Audio Mixer error:', error)
+            setIsLoadingAudio(false)
+            // Fallback to old method on error
+            if (playerState.isPlaying) {
+              setTimeout(() => nextScene(), 2000)
+            }
+            return
           }
         }
         
         // Auto-advance to next scene (only if still playing)
         if (playerState.isPlaying) {
-          // Immediate advance - no artificial delay needed
           nextScene()
         }
         return
@@ -425,8 +612,14 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   useEffect(() => {
     if (playerState.isPlaying && !isLoadingAudio) {
       playSceneAudio(playerState.currentSceneIndex)
-    } else if (!playerState.isPlaying && audioRef.current) {
-      audioRef.current.pause()
+    } else if (!playerState.isPlaying) {
+      // Pause/stop both HTMLAudioElement and Web Audio Mixer
+      if (audioRef.current) {
+        audioRef.current.pause()
+      }
+      if (audioMixerRef.current) {
+        audioMixerRef.current.stop()
+      }
     }
   }, [playerState.isPlaying, playerState.currentSceneIndex, playSceneAudio])
 
