@@ -956,8 +956,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const loadProject = async (skipAutoGeneration: boolean = false) => {
     try {
       // Add cache-busting to force fresh data from database
-      const cacheBuster = `?id=${projectId}&_t=${Date.now()}`
-      const res = await fetch(`/api/projects${cacheBuster}`, {
+      const cacheBuster = `?_t=${Date.now()}`
+      const res = await fetch(`/api/projects/${projectId}${cacheBuster}`, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
