@@ -2,6 +2,48 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    
+    await sequelize.authenticate()
+    
+    const project = await Project.findByPk(id)
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    }
+    
+    // Return project with formatted fields (matching /api/projects route format)
+    const response = NextResponse.json({ 
+      success: true, 
+      project: {
+        id: project.id,
+        title: project.title,
+        description: project.description || '',
+        currentStep: project.current_step || 'ideation',
+        progress: project.step_progress?.overall || 0,
+        status: project.status || 'draft',
+        createdAt: project.created_at,
+        updatedAt: project.updated_at,
+        completedSteps: Object.entries(project.step_progress || {})
+          .filter(([_, v]) => v === 100)
+          .map(([k]) => k),
+        metadata: project.metadata || {}
+      }
+    })
+    
+    // Add cache control headers
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+    return response
+  } catch (error) {
+    console.error('[Projects GET by ID] Error:', error)
+    return NextResponse.json({ error: 'Failed to load project' }, { status: 500 })
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
