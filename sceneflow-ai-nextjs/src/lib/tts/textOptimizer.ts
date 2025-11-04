@@ -17,19 +17,23 @@ export interface OptimizedText {
 }
 
 /**
- * Preserves [bracket] audio tags for ElevenLabs v3 models
- * v3 models (eleven_turbo_v2_5) support [instruction] bracket syntax
- * Only removes malformed or problematic tags if needed
+ * Removes stage directions and audio tags from text
+ * Removes [bracket] audio tags since eleven_turbo_v2_5 doesn't support them
+ * and would read them aloud as text instead of interpreting them as instructions
+ * Also removes traditional parentheses stage directions
  */
 function removeStageDirections(text: string): string {
   let cleaned = text
   
-  // DO NOT remove square brackets - they are audio tags for ElevenLabs v3
-  // v3 models (eleven_turbo_v2_5) support [whispering], [excitedly], etc.
-  // These are interpreted as instructions, not spoken text
+  // Remove audio tags in square brackets [instruction]
+  // ElevenLabs Turbo v2.5 doesn't support these, so remove to prevent them being spoken
+  cleaned = cleaned.replace(/\[([^\]]+)\]/g, '')
   
-  // Only clean up obviously malformed tags (e.g., nested brackets that would break parsing)
-  // This is a minimal cleanup - preserve valid [audio tag] syntax
+  // Remove traditional stage directions in parentheses (instruction)
+  cleaned = cleaned.replace(/\(([^)]+)\)/g, '')
+  
+  // Clean up extra whitespace from removed tags
+  cleaned = cleaned.replace(/\s+/g, ' ').trim()
   
   return cleaned
 }
