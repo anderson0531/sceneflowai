@@ -3619,6 +3619,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             onRemoveCharacter={handleRemoveCharacter}
             ttsProvider={ttsProvider}
             compact={true}
+            uploadingRef={uploadingRef}
           />
         </div>
       </div>

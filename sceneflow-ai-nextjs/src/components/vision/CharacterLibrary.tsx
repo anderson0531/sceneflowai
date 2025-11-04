@@ -21,9 +21,10 @@ interface CharacterLibraryProps {
   onRemoveCharacter?: (characterName: string) => void
   ttsProvider: 'google' | 'elevenlabs'
   compact?: boolean
+  uploadingRef?: Record<string, boolean>
 }
 
-export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onAddCharacter, onRemoveCharacter, ttsProvider, compact = false }: CharacterLibraryProps) {
+export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onAddCharacter, onRemoveCharacter, ttsProvider, compact = false, uploadingRef = {} }: CharacterLibraryProps) {
   const [selectedChar, setSelectedChar] = useState<string | null>(null)
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(new Set())
   const [uploadingRef, setUploadingRef] = useState<Record<string, boolean>>({})
@@ -219,6 +220,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                 onApprove={() => onApproveCharacter(charId)}
                 prompt={appearancePrompt}
                 isGenerating={generatingChars.has(charId)}
+                isUploading={uploadingRef[charId] || false}
                 expandedCharId={expandedSections[charId]}
                 onToggleExpand={handleToggleSection}
                 onUpdateCharacterVoice={onUpdateCharacterVoice}
@@ -296,8 +298,9 @@ interface CharacterCardProps {
   onApprove: () => void
   prompt: string
   isGenerating: boolean
+  isUploading?: boolean
   expandedCharId?: string | null
-  onToggleExpand?: (charId: string, section: 'coreIdentity' | 'appearance') => void
+  onToggleExpand?: (charId: string, section: 'coreIdentity' | 'appearance') => void                                                                             
   onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void
   onUpdateAppearance?: (characterId: string, description: string) => void
   onUpdateCharacterName?: (characterId: string, name: string) => void
@@ -308,7 +311,7 @@ interface CharacterCardProps {
   onToggleVoiceSection?: () => void
 }
 
-function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onRemove, ttsProvider, voiceSectionExpanded, onToggleVoiceSection }: CharacterCardProps) {
+function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, isUploading = false, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onRemove, ttsProvider, voiceSectionExpanded, onToggleVoiceSection }: CharacterCardProps) {
   const hasImage = !!character.referenceImage
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
@@ -389,23 +392,28 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
-              <button 
+                            <button 
                 onClick={(e) => {
                   e.stopPropagation()
-                  const input = document.getElementById(`upload-${characterId}`) as HTMLInputElement
+                  if (isUploading) return
+                  const input = document.getElementById(`upload-${characterId}`) as HTMLInputElement                                                            
                   input?.click()
                 }}
-                className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm cursor-pointer"
+                disabled={isUploading}
+                className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"                                                    
+                title={isUploading ? 'Uploading...' : 'Upload image'}
               >
-                <Upload className="w-4 h-4" />
+                {isUploading ? <Loader className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
               </button>
               <input
                 id={`upload-${characterId}`}
                 type="file"
                 accept="image/*"
                 className="hidden"
+                disabled={isUploading}
                 onChange={(e) => {
                   e.stopPropagation()
+                  if (isUploading) return
                   const file = e.target.files?.[0]
                   if (file) onUpload(file)
                 }}
@@ -427,24 +435,28 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
                 {isGenerating ? <Loader className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
                 Generate
               </Button>
-              <Button 
+                            <Button 
                 size="sm" 
                 variant="outline"
                 onClick={(e) => {
                   e.stopPropagation()
-                  const input = document.getElementById(`upload-${characterId}`) as HTMLInputElement
+                  if (isUploading) return
+                  const input = document.getElementById(`upload-${characterId}`) as HTMLInputElement                                                            
                   input?.click()
                 }}
+                disabled={isUploading || isGenerating}
               >
-                <Upload className="w-4 h-4" />
+                {isUploading ? <Loader className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
               </Button>
               <input
                 id={`upload-${characterId}`}
                 type="file"
                 accept="image/*"
                 className="hidden"
+                disabled={isUploading}
                 onChange={(e) => {
                   e.stopPropagation()
+                  if (isUploading) return
                   const file = e.target.files?.[0]
                   if (file) onUpload(file)
                 }}
@@ -461,11 +473,13 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
           </div>
         )}
         
-        {/* Loading overlay */}
-        {isGenerating && (
-          <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-10">
+                {/* Loading overlay */}
+        {(isGenerating || isUploading) && (
+          <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-10">                                                         
             <Loader className="w-8 h-8 animate-spin text-white mb-2" />
-            <span className="text-sm text-white font-medium">Generating...</span>
+            <span className="text-sm text-white font-medium">
+              {isUploading ? 'Uploading...' : 'Generating...'}
+            </span>                                                                               
           </div>
         )}
       </div>
