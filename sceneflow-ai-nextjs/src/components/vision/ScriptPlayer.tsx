@@ -20,6 +20,8 @@ interface PlayerState {
   currentSceneIndex: number
   playbackSpeed: number
   volume: number
+  musicVolume: number
+  autoAdvance: boolean
   showVoicePanel: boolean
   voiceAssignments: {
     narrator: string
@@ -35,6 +37,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     currentSceneIndex: initialScene,
     playbackSpeed: 1.0,
     volume: 1.0,
+    musicVolume: 0.3, // 30% default volume for music
+    autoAdvance: true, // Auto-advance enabled by default
     showVoicePanel: false,
     voiceAssignments: {
       narrator: 'en-US-Studio-O', // Default: Sophia
@@ -406,19 +410,28 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           setCurrentTranslatedDialogue(translatedDialogue)
         }
 
-        // Auto-advance
-        if (playerState.isPlaying) {
+        // Auto-advance (only if auto-advance enabled)
+        if (playerState.isPlaying && playerState.autoAdvance) {
           nextScene()
         }
         return
       }
 
-            // CHECK FOR PRE-GENERATED AUDIO FIRST (English mode with Web Audio Mixer)
+                  // CHECK FOR PRE-GENERATED AUDIO FIRST (English mode with Web Audio Mixer)                                                                          
       // Check if scene has any pre-generated audio (narration, music, dialogue, or SFX)
-      const hasPreGeneratedAudio = scene.narrationAudioUrl || 
-                                   scene.musicAudio || 
-                                   (scene.dialogueAudio && scene.dialogueAudio.length > 0) ||
-                                   (scene.sfxAudio && scene.sfxAudio.length > 0)
+      // Only consider audio URLs that are HTTP(S) URLs (persistent), not blob URLs (temporary)
+      const hasValidNarration = scene.narrationAudioUrl && 
+                                (scene.narrationAudioUrl.startsWith('http://') || scene.narrationAudioUrl.startsWith('https://'))
+      const hasValidMusic = scene.musicAudio && 
+                           (scene.musicAudio.startsWith('http://') || scene.musicAudio.startsWith('https://'))
+      const hasValidDialogue = scene.dialogueAudio && scene.dialogueAudio.length > 0 &&
+                              scene.dialogueAudio.some((d: any) => d.audioUrl && 
+                                (d.audioUrl.startsWith('http://') || d.audioUrl.startsWith('https://')))
+      const hasValidSFX = scene.sfxAudio && scene.sfxAudio.length > 0 &&
+                         scene.sfxAudio.some((url: string) => url && 
+                           (url.startsWith('http://') || url.startsWith('https://')))
+      
+      const hasPreGeneratedAudio = hasValidNarration || hasValidMusic || hasValidDialogue || hasValidSFX
       
       if (hasPreGeneratedAudio) {
         console.log('[Player] Using pre-generated audio with Web Audio Mixer for scene', sceneIndex + 1, {
@@ -437,14 +450,25 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         // Calculate audio timeline for concurrent playback
         const audioConfig = await calculateAudioTimeline(scene)
         
-        // Check if we have any audio to play
+                // Check if we have any audio to play
         if (!audioConfig.music && !audioConfig.narration && 
             (!audioConfig.dialogue || audioConfig.dialogue.length === 0) &&
             (!audioConfig.sfx || audioConfig.sfx.length === 0)) {
-          console.warn('[Player] No audio available in calculated config for scene', sceneIndex + 1, 'Config:', audioConfig)
+          console.warn('[Player] No audio available in calculated config for scene', sceneIndex + 1, 'Config:', audioConfig)                                    
           setIsLoadingAudio(false)
+          
+          // Minimum scene display time (3 seconds) even if no audio
+          const minDisplayTime = 3000
+          const sceneDuration = (scene.duration || 5) * 1000
+          const waitTime = Math.max(minDisplayTime, sceneDuration)
+          
           if (playerState.isPlaying) {
-            setTimeout(() => nextScene(), 2000)
+            setTimeout(() => {
+              // Only auto-advance if still playing and not manually paused
+              if (playerState.isPlaying && playerState.autoAdvance !== false) {
+                nextScene()
+              }
+            }, waitTime)
           }
           return
         }
@@ -456,12 +480,15 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           sfxCount: audioConfig.sfx?.length || 0
         })
         
-        setIsLoadingAudio(false) // Clear loading state
+                setIsLoadingAudio(false) // Clear loading state
         
                 // Play scene with Web Audio Mixer (concurrent playback)
         if (audioMixerRef.current) {
           try {
-            console.log('[Player] Playing scene with Web Audio Mixer, config:', audioConfig)
+            // Set music volume before playing
+            audioMixerRef.current.setVolume('music', playerState.musicVolume)
+            
+            console.log('[Player] Playing scene with Web Audio Mixer, config:', audioConfig, 'musicVolume:', playerState.musicVolume)                                                                    
             await audioMixerRef.current.playScene(audioConfig)
             
             // Wait for playback to complete
@@ -516,11 +543,11 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
               }
             }
             
-            // Music loops, so we use scene duration or max calculated duration
-            // If only music exists (no other audio), ensure we wait for at least music duration
-            const sceneDuration = scene.duration || Math.max(maxDuration, musicDuration || 30)
-            const waitTime = Math.max(sceneDuration * 1000, maxDuration * 1000, musicDuration * 1000) + 500 // Add 500ms buffer
-            console.log('[Player] Calculated wait time:', waitTime, 'ms (sceneDuration:', sceneDuration, 'maxDuration:', maxDuration, 'musicDuration:', musicDuration, ')')
+                        // Music loops, so we use scene duration or max calculated duration
+            // If only music exists (no other audio), ensure we wait for at least music duration                                                                
+            const sceneDuration = scene.duration || Math.max(maxDuration, musicDuration || 30)                                                                  
+            const waitTime = Math.max(sceneDuration * 1000, maxDuration * 1000, musicDuration * 1000) + 100 // Reduced buffer to 100ms                                 
+            console.log('[Player] Calculated wait time:', waitTime, 'ms (sceneDuration:', sceneDuration, 'maxDuration:', maxDuration, 'musicDuration:', musicDuration, ')')                                                                     
             
             // Wait for scene playback to complete
             await new Promise(resolve => setTimeout(resolve, waitTime))
@@ -529,24 +556,42 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
             console.error('[Player] Web Audio Mixer error:', error)
             setIsLoadingAudio(false)
             // Fallback to old method on error
+            const minDisplayTime = 3000
+            const sceneDuration = (scene.duration || 5) * 1000
+            const waitTime = Math.max(minDisplayTime, sceneDuration)
+            
             if (playerState.isPlaying) {
-              setTimeout(() => nextScene(), 2000)
+              setTimeout(() => {
+                if (playerState.isPlaying && playerState.autoAdvance) {
+                  nextScene()
+                }
+              }, waitTime)
             }
             return
           }
         }
         
-        // Auto-advance to next scene (only if still playing)
-        if (playerState.isPlaying) {
+        // Auto-advance to next scene (only if still playing and auto-advance enabled)
+        if (playerState.isPlaying && playerState.autoAdvance) {
           nextScene()
         }
         return
       }
       
-      // FALLBACK: Generate audio on-the-fly (existing code)
-      console.warn('[Player] ⚠️ No pre-generated audio found! This will make expensive API calls.')
-      console.warn('[Player] Please generate audio for all scenes before using Screening Room.')
-      console.log('[Player] No pre-generated audio, generating on-the-fly for scene', sceneIndex + 1)
+            // FALLBACK: Generate audio on-the-fly (existing code)
+      console.warn('[Player] ⚠️ No pre-generated audio found! This will make expensive API calls.')                                                              
+      console.warn('[Player] Please generate audio for all scenes before using Screening Room.')                                                                
+      console.log('[Player] Audio check results for scene', sceneIndex + 1, ':', {
+        narrationAudioUrl: scene.narrationAudioUrl ? (scene.narrationAudioUrl.startsWith('blob:') ? 'blob URL (temporary)' : 'persistent URL') : 'none',
+        musicAudio: scene.musicAudio ? (scene.musicAudio.startsWith('blob:') ? 'blob URL (temporary)' : 'persistent URL') : 'none',
+        dialogueAudioCount: scene.dialogueAudio?.length || 0,
+        sfxAudioCount: scene.sfxAudio?.length || 0,
+        hasValidNarration,
+        hasValidMusic,
+        hasValidDialogue,
+        hasValidSFX
+      })
+      console.log('[Player] Generating on-the-fly for scene', sceneIndex + 1)
       
       // Build narration text from action
       const narrationText = scene.action || scene.visualDescription || ''
@@ -562,9 +607,19 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       if (!fullText) {
         console.log('[Player] No text for scene', sceneIndex)
         setIsLoadingAudio(false)
+        // Minimum scene display time (3 seconds) even if no text
+        const minDisplayTime = 3000
+        const sceneDuration = (scene.duration || 5) * 1000
+        const waitTime = Math.max(minDisplayTime, sceneDuration)
+        
         // Auto-advance to next scene if no audio
         if (playerState.isPlaying) {
-          setTimeout(() => nextScene(), 2000)
+          setTimeout(() => {
+            // Only auto-advance if still playing and auto-advance is enabled
+            if (playerState.isPlaying && playerState.autoAdvance !== false) {
+              nextScene()
+            }
+          }, waitTime)
         }
         return
       }
@@ -600,18 +655,37 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       console.error('[Player] Audio error:', error)
       setIsLoadingAudio(false)
       
-      // Auto-advance even on error
+      // Minimum scene display time even on error
+      const minDisplayTime = 3000
+      const sceneDuration = (scene.duration || 5) * 1000
+      const waitTime = Math.max(minDisplayTime, sceneDuration)
+      
+      // Auto-advance even on error (only if auto-advance enabled)
       if (playerState.isPlaying) {
-        setTimeout(() => nextScene(), 2000)
+        setTimeout(() => {
+          if (playerState.isPlaying && playerState.autoAdvance !== false) {
+            nextScene()
+          }
+        }, waitTime)
       }
     }
   }, [scenes, playerState.isPlaying, playerState.playbackSpeed, playerState.volume, selectedLanguage, translationCache])
 
 
+  // Track if this is the first play to prevent immediate skipping
+  const isFirstPlayRef = useRef(true)
+
   // Play/pause audio when state changes
   useEffect(() => {
     if (playerState.isPlaying && !isLoadingAudio) {
-      playSceneAudio(playerState.currentSceneIndex)
+      // On first play, ensure we stay on the initial scene
+      if (isFirstPlayRef.current) {
+        isFirstPlayRef.current = false
+        // Force play from the initial scene index, not currentSceneIndex which might have changed
+        playSceneAudio(initialScene)
+      } else {
+        playSceneAudio(playerState.currentSceneIndex)
+      }
     } else if (!playerState.isPlaying) {
       // Pause/stop both HTMLAudioElement and Web Audio Mixer
       if (audioRef.current) {
@@ -621,7 +695,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         audioMixerRef.current.stop()
       }
     }
-  }, [playerState.isPlaying, playerState.currentSceneIndex, playSceneAudio])
+  }, [playerState.isPlaying, playerState.currentSceneIndex, playSceneAudio, initialScene])
 
   const togglePlayPause = () => {
     setPlayerState(prev => ({ ...prev, isPlaying: !prev.isPlaying }))
@@ -771,16 +845,26 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       <div className={`absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 to-transparent transition-opacity duration-300 ${
         showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}>
-        <PlaybackControls
+                <PlaybackControls
           isPlaying={playerState.isPlaying}
           currentSceneIndex={playerState.currentSceneIndex}
           totalScenes={scenes.length}
           playbackSpeed={playerState.playbackSpeed}
+          musicVolume={playerState.musicVolume}
+          autoAdvance={playerState.autoAdvance}
           onTogglePlay={togglePlayPause}
           onPrevious={previousScene}
           onNext={nextScene}
           onJumpToScene={jumpToScene}
           onSpeedChange={(speed) => setPlayerState(prev => ({ ...prev, playbackSpeed: speed }))}
+          onMusicVolumeChange={(volume) => {
+            setPlayerState(prev => ({ ...prev, musicVolume: volume }))
+            // Update music volume in real-time if mixer is active
+            if (audioMixerRef.current) {
+              audioMixerRef.current.setVolume('music', volume)
+            }
+          }}
+          onAutoAdvanceToggle={() => setPlayerState(prev => ({ ...prev, autoAdvance: !prev.autoAdvance }))}
           isLoading={isLoadingAudio}
         />
       </div>

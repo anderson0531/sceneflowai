@@ -86,17 +86,17 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: 'Project not found' }, { status: 404 })
       }
 
+      const allCharacters = project.metadata?.visionPhase?.characters || []
+      console.log('[Scene Image] DEBUG - characters in project:', allCharacters.length)
+      
       // ALWAYS load characters from database if we have a projectId
       if (characterObjects.length > 0) {
-        const characters = project.metadata?.visionPhase?.characters || []
-        console.log('[Scene Image] DEBUG - characters in project:', characters.length)
-        
         // If selectedCharacters are IDs (strings), match them
         if (typeof characterObjects[0] === 'string') {
           characterObjects = characterObjects.map((charId: string) => {
-            const byId = characters.find((c: any) => c.id === charId)
+            const byId = allCharacters.find((c: any) => c.id === charId)
             if (byId) return byId
-            return characters.find((c: any) => c.name === charId)
+            return allCharacters.find((c: any) => c.name === charId)
           }).filter((c: any) => c != null)
           
           console.log('[Scene Image] Loaded character objects by ID:', characterObjects.length)
@@ -108,13 +108,13 @@ export async function POST(req: NextRequest) {
             
             // Try ID match first (if ID exists)
             if (char.id) {
-              const byId = characters.find((c: any) => c.id === char.id)
+              const byId = allCharacters.find((c: any) => c.id === char.id)
               if (byId) return byId
             }
             
             // Fallback to name match
             if (char.name) {
-              const byName = characters.find((c: any) => c.name === char.name)
+              const byName = allCharacters.find((c: any) => c.name === char.name)
               if (byName) return byName
             }
             
@@ -123,12 +123,76 @@ export async function POST(req: NextRequest) {
           
           console.log('[Scene Image] Reloaded character objects from DB:', characterObjects.length)
         }
+      } else if (projectId && typeof sceneIndex === 'number') {
+        // AUTO-DETECT: If no characters provided, try to extract them from the scene
+        console.log('[Scene Image] No characterObjects provided, attempting to auto-detect from scene')
+        const scenes = project.metadata?.visionPhase?.script?.script?.scenes || []
+        const scene = scenes[sceneIndex]
         
-        // DEBUG: Log character properties
-        if (characterObjects.length > 0) {
-          console.log('[Scene Image] DEBUG - First character keys:', Object.keys(characterObjects[0]))
-          console.log('[Scene Image] DEBUG - Has referenceImage:', !!characterObjects[0].referenceImage)
-          console.log('[Scene Image] DEBUG - Has referenceImageGCS:', !!characterObjects[0].referenceImageGCS)
+        if (scene) {
+          // Extract character names from scene (heading, action, dialogue)
+          const sceneText = [
+            scene.heading || '',
+            scene.action || '',
+            scene.visualDescription || '',
+            ...(scene.dialogue || []).map((d: any) => d.character || '')
+          ].join(' ').toLowerCase()
+          
+          // Match character names from scene text
+          const detectedChars = allCharacters.filter((char: any) => {
+            if (!char.name) return false
+            // Check if character name appears in scene text (case-insensitive)
+            const charNameLower = char.name.toLowerCase()
+            return sceneText.includes(charNameLower) || 
+                   // Also check for partial matches (e.g., "Brian Anderson" matches "Brian")
+                   charNameLower.split(' ').some(part => part.length > 2 && sceneText.includes(part))
+          })
+          
+          if (detectedChars.length > 0) {
+            characterObjects = detectedChars
+            console.log(`[Scene Image] Auto-detected ${detectedChars.length} character(s) from scene:`, 
+              detectedChars.map((c: any) => c.name))
+          } else {
+            console.log('[Scene Image] No characters detected in scene text, proceeding without character references')
+          }
+        }
+      }
+      
+      // DEBUG: Log character properties and ensure referenceImageGCS is populated
+      if (characterObjects.length > 0) {
+        console.log('[Scene Image] DEBUG - First character keys:', Object.keys(characterObjects[0]))
+        console.log('[Scene Image] DEBUG - Has referenceImage:', !!characterObjects[0].referenceImage)
+        console.log('[Scene Image] DEBUG - Has referenceImageGCS:', !!characterObjects[0].referenceImageGCS)
+        
+        // Log all characters' reference image status
+        characterObjects.forEach((char: any, idx: number) => {
+          console.log(`[Scene Image] Character ${idx + 1} (${char.name}):`, {
+            hasReferenceImage: !!char.referenceImage,
+            hasReferenceImageGCS: !!char.referenceImageGCS,
+            referenceImageUrl: char.referenceImage ? char.referenceImage.substring(0, 50) + '...' : 'none',
+            referenceImageGCSUrl: char.referenceImageGCS ? char.referenceImageGCS.substring(0, 50) + '...' : 'none'
+          })
+        })
+        
+        // Ensure all characters have referenceImageGCS - if missing but referenceImage exists, 
+        // log warning but continue (GCS URL might be in a different field or needs to be fetched)
+        const missingGCS = characterObjects.filter((c: any) => c.referenceImage && !c.referenceImageGCS)
+        if (missingGCS.length > 0) {
+          console.warn(`[Scene Image] WARNING: ${missingGCS.length} character(s) have referenceImage but missing referenceImageGCS:`, 
+            missingGCS.map((c: any) => c.name))
+          console.warn('[Scene Image] These characters will still be included in prompt text but may not have structured GCS references')
+        }
+      } else if (projectId) {
+        // Even if no characterObjects found, log available characters from project
+        console.log('[Scene Image] DEBUG - No characterObjects found, but project has', allCharacters.length, 'characters')
+        if (allCharacters.length > 0) {
+          allCharacters.forEach((char: any, idx: number) => {
+            console.log(`[Scene Image] Available character ${idx + 1}:`, {
+              name: char.name,
+              hasReferenceImage: !!char.referenceImage,
+              hasReferenceImageGCS: !!char.referenceImageGCS
+            })
+          })
         }
       }
     }
@@ -254,18 +318,42 @@ export async function POST(req: NextRequest) {
     console.log('[Scene Image] Optimized prompt preview:', optimizedPrompt.substring(0, 150))
 
     // Build character references using GCS URIs
-    const gcsReferences = characterObjects
-      .filter((c: any) => c.referenceImageGCS) // Filter for GCS references
-      .map((char: any, idx: number) => ({
-        referenceId: idx + 1,
-        gcsUri: char.referenceImageGCS,
-        referenceType: 'REFERENCE_TYPE_SUBJECT' as const,
-        subjectType: 'SUBJECT_TYPE_PERSON' as const,
-        subjectDescription: char.appearanceDescription || 
-          `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
-      }))
+    // Filter for characters that have GCS references (required for Imagen API structured references)
+    const charactersWithGCS = characterObjects.filter((c: any) => c.referenceImageGCS)
+    const charactersWithoutGCS = characterObjects.filter((c: any) => c.referenceImage && !c.referenceImageGCS)
+    
+    console.log(`[Scene Image] Character reference status:`, {
+      totalCharacters: characterObjects.length,
+      withGCS: charactersWithGCS.length,
+      withoutGCS: charactersWithoutGCS.length,
+      withoutGCSNames: charactersWithoutGCS.map((c: any) => c.name)
+    })
+    
+    if (charactersWithoutGCS.length > 0) {
+      console.warn(`[Scene Image] ${charactersWithoutGCS.length} character(s) will be included in prompt text only (no structured GCS references):`, 
+        charactersWithoutGCS.map((c: any) => c.name))
+      console.warn('[Scene Image] These characters should have referenceImageGCS saved to database for optimal image generation')
+    }
+    
+    const gcsReferences = charactersWithGCS.map((char: any, idx: number) => ({
+      referenceId: idx + 1,
+      gcsUri: char.referenceImageGCS,
+      referenceType: 'REFERENCE_TYPE_SUBJECT' as const,
+      subjectType: 'SUBJECT_TYPE_PERSON' as const,
+      subjectDescription: char.appearanceDescription || 
+        `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
+    }))
 
-    console.log(`[Scene Image] Using ${gcsReferences.length} character references with GCS`)
+    console.log(`[Scene Image] Using ${gcsReferences.length} character references with GCS for structured API call`)
+    if (gcsReferences.length > 0) {
+      gcsReferences.forEach((ref, idx) => {
+        console.log(`[Scene Image] GCS Reference ${idx + 1}:`, {
+          referenceId: ref.referenceId,
+          gcsUri: ref.gcsUri.substring(0, 60) + '...',
+          subjectDescription: ref.subjectDescription.substring(0, 50) + '...'
+        })
+      })
+    }
 
     // Build character-specific negative prompts based on reference characteristics
     const baseNegativePrompt = 'elderly appearance, deeply wrinkled, aged beyond reference, geriatric, wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager, youthful appearance'
