@@ -1076,11 +1076,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
           if (needsSaving) {
             try {
-              await fetch('/api/projects', {
+              await fetch(`/api/projects/${projectId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  id: projectId,
                   metadata: {
                     ...proj.metadata,
                     visionPhase: {
@@ -1109,11 +1108,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           if (needsIdMigration) {
             console.log('[Load Project] Migrating characters to add UUIDs')
             try {
-              await fetch('/api/projects', {
+              await fetch(`/api/projects/${projectId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  id: projectId,
                   metadata: {
                     ...proj.metadata,
                     visionPhase: {
@@ -1144,14 +1142,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             console.log('[Load Project] Syncing narration voice from narrator character:', finalNarratorVoice)
             setNarrationVoice(finalNarratorVoice)
             
-            // Save to visionPhase.narrationVoice for backward compatibility
-            if (!visionPhase.narrationVoice || visionPhase.narrationVoice.voiceId !== narratorChar.voiceConfig.voiceId) {
+                        // Save to visionPhase.narrationVoice for backward compatibility
+            if (!visionPhase.narrationVoice || visionPhase.narrationVoice.voiceId !== narratorChar.voiceConfig.voiceId) {                                       
               try {
-                await fetch('/api/projects', {
+                await fetch(`/api/projects/${projectId}`, {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
-                    id: projectId,
                     metadata: {
                       ...proj.metadata,
                       visionPhase: {
@@ -1197,11 +1194,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           if (needsDialogueMigration) {
             console.log('[Load Project] Migrating dialogue to add characterId')
             try {
-              await fetch('/api/projects', {
+              await fetch(`/api/projects/${projectId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  id: projectId,
                   metadata: {
                     ...proj.metadata,
                     visionPhase: {
@@ -1245,11 +1241,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               
               // Save the corrected narration voice back to database
               try {
-                await fetch('/api/projects', {
+                await fetch(`/api/projects/${projectId}`, {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
-                    id: projectId,
                     metadata: {
                       ...proj.metadata,
                       visionPhase: {
@@ -1730,11 +1725,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const existingMetadata = project?.metadata || {}
           const existingVisionPhase = existingMetadata.visionPhase || {}
           
-          await fetch(`/api/projects`, {
+          await fetch(`/api/projects/${projectId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              id: projectId,
               metadata: {
                 ...existingMetadata,
                 visionPhase: {
@@ -1783,11 +1777,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const existingMetadata = project?.metadata || {}
         const existingVisionPhase = existingMetadata.visionPhase || {}
         
-        await fetch(`/api/projects`, {
+        await fetch(`/api/projects/${projectId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            id: projectId,
             metadata: {
               ...existingMetadata,
               visionPhase: {
@@ -1841,11 +1834,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const existingMetadata = project?.metadata || {}
           const existingVisionPhase = existingMetadata.visionPhase || {}
           
-          await fetch(`/api/projects`, {
+          await fetch(`/api/projects/${projectId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              id: projectId,
               metadata: {
                 ...existingMetadata,
                 visionPhase: {
@@ -1905,11 +1897,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const existingMetadata = project?.metadata || {}
           const existingVisionPhase = existingMetadata.visionPhase || {}
           
-          await fetch(`/api/projects`, {
+          await fetch(`/api/projects/${projectId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              id: projectId,
               metadata: {
                 ...existingMetadata,
                 visionPhase: {
@@ -1954,11 +1945,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const existingMetadata = project?.metadata || {}
           const existingVisionPhase = existingMetadata.visionPhase || {}
           
-          await fetch(`/api/projects`, {
+          await fetch(`/api/projects/${projectId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              id: projectId,
               metadata: {
                 ...existingMetadata,
                 visionPhase: {
@@ -3394,7 +3384,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const existingVisionPhase = existingMetadata.visionPhase || {}
       
       const payload = {
-        id: projectId,
         metadata: {
           ...existingMetadata,
           visionPhase: {
@@ -3411,7 +3400,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       }
       
-      const response = await fetch(`/api/projects`, {
+      const response = await fetch(`/api/projects/${projectId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
