@@ -59,12 +59,12 @@ export class WebAudioMixer {
       const gainNode = this.audioContext!.createGain()
       gainNode.connect(this.masterGain!)
       
-      // Set default volumes
-      if (type === 'music') {
-        gainNode.gain.value = 0.5  // 50% volume for music
-      } else {
-        gainNode.gain.value = 1.0  // 100% volume for other audio
-      }
+                    // Set default volumes
+              if (type === 'music') {
+                gainNode.gain.value = 0.3  // 30% volume for music
+              } else {
+                gainNode.gain.value = 1.0  // 100% volume for other audio
+              }
       
       this.gainNodes.set(type, gainNode)
     })
@@ -127,12 +127,21 @@ export class WebAudioMixer {
     if (this.isPlaying) {
       console.log('[WebAudioMixer] Stopping previous playback')
       this.stop()
+      // Small delay to ensure cleanup completes
+      await new Promise(resolve => setTimeout(resolve, 50))
     }
 
     const context = await this.initAudioContext()
     this.isPlaying = true
     this.sceneStartTime = context.currentTime
     console.log('[WebAudioMixer] Scene start time:', this.sceneStartTime)
+    console.log('[WebAudioMixer] Playing scene with config:', {
+      hasMusic: !!config.music,
+      musicUrl: config.music,
+      hasNarration: !!config.narration,
+      dialogueCount: config.dialogue?.length || 0,
+      sfxCount: config.sfx?.length || 0
+    })
 
     try {
       // Preload all audio files
@@ -165,20 +174,28 @@ export class WebAudioMixer {
       await Promise.all(loadPromises)
       console.log('[WebAudioMixer] All audio files loaded successfully')
 
-      // Play music at scene start (if available)
+            // Play music at scene start (if available)
       if (config.music) {
         const musicBuffer = this.audioBuffers.get(config.music)
         if (musicBuffer) {
-          console.log('[WebAudioMixer] Playing music at 0s, looping')
+          console.log('[WebAudioMixer] Playing music at 0s, looping, buffer duration:', musicBuffer.duration)
+          const musicGain = this.gainNodes.get('music')
+          if (musicGain) {
+            console.log('[WebAudioMixer] Music gain node current volume:', musicGain.gain.value)
+          }
           this.playAudioBuffer(
             musicBuffer,
             'music',
             0,  // Start at scene beginning
             true  // Loop if needed
           )
+          console.log('[WebAudioMixer] Music source started successfully')
         } else {
           console.error('[WebAudioMixer] Music buffer not found for:', config.music)
+          console.error('[WebAudioMixer] Available buffers:', Array.from(this.audioBuffers.keys()))
         }
+      } else {
+        console.log('[WebAudioMixer] No music in config for this scene')
       }
 
       // Play narration at scene start (if available)
@@ -310,15 +327,15 @@ export class WebAudioMixer {
   /**
    * Fade in music over specified duration
    */
-  fadeIn(durationMs: number = 1000): void {
+  fadeIn(durationMs: number = 1000, targetVolume: number = 0.3): void {
     const musicGain = this.gainNodes.get('music')
     if (!musicGain || !this.audioContext) return
 
     const currentTime = this.audioContext.currentTime
 
-    // Start at 0, ramp to 0.5 (50% volume for music)
+    // Start at 0, ramp to targetVolume (default 30% volume for music)
     musicGain.gain.setValueAtTime(0, currentTime)
-    musicGain.gain.linearRampToValueAtTime(0.5, currentTime + (durationMs / 1000))
+    musicGain.gain.linearRampToValueAtTime(targetVolume, currentTime + (durationMs / 1000))
   }
 
   /**

@@ -1,18 +1,22 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import { Play, Pause, SkipBack, SkipForward, Loader } from 'lucide-react'
+import { Play, Pause, SkipBack, SkipForward, Loader, Music, PlayCircle } from 'lucide-react'
 
 interface PlaybackControlsProps {
   isPlaying: boolean
   currentSceneIndex: number
   totalScenes: number
   playbackSpeed: number
+  musicVolume: number
+  autoAdvance: boolean
   onTogglePlay: () => void
   onPrevious: () => void
   onNext: () => void
   onJumpToScene: (sceneIndex: number) => void
   onSpeedChange: (speed: number) => void
+  onMusicVolumeChange: (volume: number) => void
+  onAutoAdvanceToggle: () => void
   isLoading: boolean
 }
 
@@ -21,11 +25,15 @@ export function PlaybackControls({
   currentSceneIndex,
   totalScenes,
   playbackSpeed,
+  musicVolume,
+  autoAdvance,
   onTogglePlay,
   onPrevious,
   onNext,
   onJumpToScene,
   onSpeedChange,
+  onMusicVolumeChange,
+  onAutoAdvanceToggle,
   isLoading
 }: PlaybackControlsProps) {
   const [isDragging, setIsDragging] = useState(false)
@@ -149,13 +157,13 @@ export function PlaybackControls({
           <SkipForward className="w-6 h-6" />
         </button>
 
-        {/* Speed Control */}
+                {/* Speed Control */}
         <div className="ml-4 flex items-center gap-2">
           <span className="text-sm text-gray-400">Speed:</span>
           <select
             value={playbackSpeed}
             onChange={(e) => onSpeedChange(parseFloat(e.target.value))}
-            className="bg-gray-800 text-white text-sm rounded-lg px-3 py-1.5 border border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+            className="bg-gray-800 text-white text-sm rounded-lg px-3 py-1.5 border border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"                                                                        
           >
             {speedOptions.map(speed => (
               <option key={speed} value={speed}>
@@ -164,6 +172,35 @@ export function PlaybackControls({
             ))}
           </select>
         </div>
+
+        {/* Music Volume Control */}
+        <div className="ml-4 flex items-center gap-2">
+          <Music className="w-4 h-4 text-gray-400" />
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            value={musicVolume}
+            onChange={(e) => onMusicVolumeChange(parseFloat(e.target.value))}
+            className="w-24 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+            title={`Music Volume: ${Math.round(musicVolume * 100)}%`}
+          />
+          <span className="text-xs text-gray-400 w-8">{Math.round(musicVolume * 100)}%</span>
+        </div>
+
+        {/* Auto-Advance Toggle */}
+        <button
+          onClick={onAutoAdvanceToggle}
+          className={`ml-4 p-2 rounded-lg transition-all ${
+            autoAdvance 
+              ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+              : 'bg-gray-800 hover:bg-gray-700 text-gray-400'
+          }`}
+          title={autoAdvance ? 'Auto-Advance: ON' : 'Auto-Advance: OFF'}
+        >
+          <PlayCircle className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Keyboard Shortcut Hints */}
