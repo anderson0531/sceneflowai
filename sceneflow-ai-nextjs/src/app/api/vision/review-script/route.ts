@@ -101,25 +101,29 @@ Evaluate these aspects (score each 1-100):
 Provide a comprehensive review with:
 1. Overall Score (1-100) - weighted average of categories
 2. Category scores (1-100 each)
-3. Analysis (2-3 detailed paragraphs about the script's strengths and weaknesses)
+3. Analysis (2-3 detailed paragraphs about the script's strengths and weaknesses)                                                                               
 4. Strengths (3-5 specific bullet points highlighting what works well)
 5. Areas for Improvement (3-5 specific bullet points about what needs work)
 6. Actionable Recommendations (3-5 specific, practical suggestions for improvement)
 
-Format as JSON with this exact structure:
+CRITICAL: Calculate scores based on YOUR ANALYSIS of THIS SCRIPT. 
+The example below shows structure only - DO NOT copy these placeholder values.
+Your scores should reflect the actual quality of this specific screenplay.
+
+Format as JSON with this structure:
 {
-  "overallScore": 85,
+  "overallScore": <your calculated score 1-100>,
   "categories": [
-    {"name": "Story Structure", "score": 82},
-    {"name": "Character Development", "score": 88},
-    {"name": "Pacing & Flow", "score": 79},
-    {"name": "Visual Storytelling", "score": 91},
-    {"name": "Dialogue Quality", "score": 84}
+    {"name": "Story Structure", "score": <your score 1-100>},
+    {"name": "Character Development", "score": <your score 1-100>},
+    {"name": "Pacing & Flow", "score": <your score 1-100>},
+    {"name": "Visual Storytelling", "score": <your score 1-100>},
+    {"name": "Dialogue Quality", "score": <your score 1-100>}
   ],
-  "analysis": "Detailed analysis paragraphs...",
-  "strengths": ["Specific strength 1", "Specific strength 2", "..."],
-  "improvements": ["Specific improvement 1", "Specific improvement 2", "..."],
-  "recommendations": ["Specific recommendation 1", "Specific recommendation 2", "..."]
+  "analysis": "<your detailed analysis>",
+  "strengths": ["<specific strength 1>", "<specific strength 2>", ...],
+  "improvements": ["<specific improvement 1>", "<specific improvement 2>", ...],
+  "recommendations": ["<specific recommendation 1>", "<specific recommendation 2>", ...]
 }`
 
   const response = await fetch(
@@ -236,20 +240,24 @@ Provide a comprehensive review with:
 5. Areas for Improvement (3-5 specific bullet points about audience concerns)
 6. Actionable Recommendations (3-5 specific suggestions to improve audience appeal)
 
-Format as JSON with this exact structure:
+CRITICAL: Calculate scores based on YOUR ANALYSIS of THIS SCRIPT.
+The example below shows structure only - DO NOT copy these placeholder values.
+Your scores should reflect the actual entertainment value of this specific screenplay.
+
+Format as JSON with this structure:
 {
-  "overallScore": 78,
+  "overallScore": <your calculated score 1-100>,
   "categories": [
-    {"name": "Entertainment Value", "score": 82},
-    {"name": "Emotional Impact", "score": 75},
-    {"name": "Clarity & Accessibility", "score": 85},
-    {"name": "Character Relatability", "score": 79},
-    {"name": "Satisfying Payoff", "score": 71}
+    {"name": "Entertainment Value", "score": <your score 1-100>},
+    {"name": "Emotional Impact", "score": <your score 1-100>},
+    {"name": "Clarity & Accessibility", "score": <your score 1-100>},
+    {"name": "Character Relatability", "score": <your score 1-100>},
+    {"name": "Satisfying Payoff", "score": <your score 1-100>}
   ],
-  "analysis": "Detailed analysis paragraphs...",
-  "strengths": ["Specific strength 1", "Specific strength 2", "..."],
-  "improvements": ["Specific improvement 1", "Specific improvement 2", "..."],
-  "recommendations": ["Specific recommendation 1", "Specific recommendation 2", "..."]
+  "analysis": "<your detailed analysis>",
+  "strengths": ["<specific strength 1>", "<specific strength 2>", ...],
+  "improvements": ["<specific improvement 1>", "<specific improvement 2>", ...],
+  "recommendations": ["<specific recommendation 1>", "<specific recommendation 2>", ...]
 }`
 
   const response = await fetch(
