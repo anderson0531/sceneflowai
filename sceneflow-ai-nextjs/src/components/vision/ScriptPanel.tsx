@@ -893,26 +893,28 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             </TooltipProvider>
           )}
           
-          {/* Animatics Studio Button */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={onOpenAnimaticsStudio}
-                  disabled={!script || !scenes || scenes.length === 0}
-                  className="flex items-center gap-1"
-                >
-                  <VideoIcon className="w-4 h-4" />
-                  <span>Animatics</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                <p>Open Animatics Studio</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+                    {/* Animatics Studio Button - HIDDEN */}
+          {false && onOpenAnimaticsStudio && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={onOpenAnimaticsStudio}
+                    disabled={!script || !scenes || scenes.length === 0}
+                    className="flex items-center gap-1"
+                  >
+                    <VideoIcon className="w-4 h-4" />
+                    <span>Animatics</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">                                                       
+                  <p>Open Animatics Studio</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           
           <Button
             variant="outline"

@@ -276,13 +276,13 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     // Narration starts at scene beginning (concurrent with music)
     if (scene.narrationAudioUrl) {
       config.narration = scene.narrationAudioUrl
-      // Calculate narration duration for dialogue timing
+            // Calculate narration duration for dialogue timing
       try {
-        const narrationDuration = await getAudioDuration(scene.narrationAudioUrl)
-        currentTime = narrationDuration + 0.5 // Add 500ms pause after narration
+        const narrationDuration = await getAudioDuration(scene.narrationAudioUrl)                                                                               
+        currentTime = narrationDuration + 3.0 // Add 3-second lag before dialogue starts
       } catch (error) {
-        console.warn('[Timeline] Failed to get narration duration, using default:', error)
-        currentTime = 5 // Default 5 seconds
+        console.warn('[Timeline] Failed to get narration duration, using default:', error)                                                                      
+        currentTime = 8 // Default 8 seconds (5s narration + 3s delay)
       }
     }
     

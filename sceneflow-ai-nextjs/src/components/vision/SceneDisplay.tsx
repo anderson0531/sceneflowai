@@ -25,9 +25,10 @@ export function SceneDisplay({ scene, sceneNumber, totalScenes, isLoading, showC
     )
   }
 
-  // Calculate animation duration from scene duration (default 5 seconds, minimum 3 seconds)
-  const sceneDuration = scene.duration || 5
-  const animationDuration = Math.max(sceneDuration, 3)
+    // Fixed animation duration for consistent Ken Burns effect
+  // Use shorter durations for more visible animation
+  const animationDuration = kenBurnsIntensity === 'subtle' ? 15 : 
+                           kenBurnsIntensity === 'dramatic' ? 10 : 12
 
   // Get animation class name based on intensity
   const animationClass = `ken-burns-${kenBurnsIntensity}`
@@ -41,7 +42,7 @@ export function SceneDisplay({ scene, sceneNumber, totalScenes, isLoading, showC
             transform: scale(1) translate(0, 0);
           }
           to {
-            transform: scale(1.05) translate(-1%, -1%);
+            transform: scale(1.08) translate(-2%, -2%);
           }
         }
 
@@ -50,7 +51,7 @@ export function SceneDisplay({ scene, sceneNumber, totalScenes, isLoading, showC
             transform: scale(1) translate(0, 0);
           }
           to {
-            transform: scale(1.1) translate(-2%, -2%);
+            transform: scale(1.12) translate(-3%, -3%);
           }
         }
 
@@ -59,7 +60,7 @@ export function SceneDisplay({ scene, sceneNumber, totalScenes, isLoading, showC
             transform: scale(1) translate(0, 0);
           }
           to {
-            transform: scale(1.15) translate(-3%, -3%);
+            transform: scale(1.2) translate(-5%, -5%);
           }
         }
 
@@ -83,8 +84,8 @@ export function SceneDisplay({ scene, sceneNumber, totalScenes, isLoading, showC
             className={`absolute inset-0 bg-cover bg-center bg-no-repeat ${animationClass}`}
             style={{ 
               backgroundImage: `url(${scene.imageUrl})`,
-              // Ensure image is larger than container to allow zoom/pan
-              backgroundSize: '110%'
+              // Ensure image is larger than container to allow zoom/pan effect
+              backgroundSize: '120%'
             }}
           />
         ) : (

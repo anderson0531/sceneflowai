@@ -60,11 +60,15 @@ export class WebAudioMixer {
       gainNode.connect(this.masterGain!)
       
                     // Set default volumes
-              if (type === 'music') {
-                gainNode.gain.value = 0.3  // 30% volume for music
-              } else {
-                gainNode.gain.value = 1.0  // 100% volume for other audio
-              }
+      if (type === 'music') {
+        gainNode.gain.value = 0.2  // 20% volume for music
+      } else if (type === 'dialogue') {
+        gainNode.gain.value = 1.5  // 150% volume for dialogue
+      } else if (type === 'narration') {
+        gainNode.gain.value = 1.5  // 150% volume for narration
+      } else {
+        gainNode.gain.value = 1.0  // 100% volume for SFX
+      }
       
       this.gainNodes.set(type, gainNode)
     })
@@ -327,15 +331,15 @@ export class WebAudioMixer {
   /**
    * Fade in music over specified duration
    */
-  fadeIn(durationMs: number = 1000, targetVolume: number = 0.3): void {
+    fadeIn(durationMs: number = 1000, targetVolume: number = 0.2): void {
     const musicGain = this.gainNodes.get('music')
     if (!musicGain || !this.audioContext) return
 
     const currentTime = this.audioContext.currentTime
 
-    // Start at 0, ramp to targetVolume (default 30% volume for music)
+    // Start at 0, ramp to targetVolume (default 20% volume for music)
     musicGain.gain.setValueAtTime(0, currentTime)
-    musicGain.gain.linearRampToValueAtTime(targetVolume, currentTime + (durationMs / 1000))
+    musicGain.gain.linearRampToValueAtTime(targetVolume, currentTime + (durationMs / 1000))                                                                     
   }
 
   /**
