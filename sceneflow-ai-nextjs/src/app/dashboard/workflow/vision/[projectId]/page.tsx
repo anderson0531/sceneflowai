@@ -3620,6 +3620,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             ttsProvider={ttsProvider}
             compact={true}
             uploadingRef={uploadingRef}
+            setUploadingRef={setUploadingRef}
           />
         </div>
       </div>

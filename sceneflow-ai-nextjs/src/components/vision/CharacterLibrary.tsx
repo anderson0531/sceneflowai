@@ -22,12 +22,12 @@ interface CharacterLibraryProps {
   ttsProvider: 'google' | 'elevenlabs'
   compact?: boolean
   uploadingRef?: Record<string, boolean>
+  setUploadingRef?: (updater: (prev: Record<string, boolean>) => Record<string, boolean>) => void
 }
 
-export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onAddCharacter, onRemoveCharacter, ttsProvider, compact = false, uploadingRef = {} }: CharacterLibraryProps) {
+export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onAddCharacter, onRemoveCharacter, ttsProvider, compact = false, uploadingRef = {}, setUploadingRef }: CharacterLibraryProps) {                                
   const [selectedChar, setSelectedChar] = useState<string | null>(null)
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(new Set())
-  const [uploadingRef, setUploadingRef] = useState<Record<string, boolean>>({})
   const [zoomedImage, setZoomedImage] = useState<{url: string; name: string} | null>(null)
   const [expandedSections, setExpandedSections] = useState<Record<string, string | null>>({})
   const [needsReupload, setNeedsReupload] = useState<Record<string, boolean>>({})
@@ -94,7 +94,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
       }
       
       // Proceed with upload
-      setUploadingRef(prev => ({ ...prev, [characterId]: true }))
+      setUploadingRef?.(prev => ({ ...prev, [characterId]: true }))
       
       try {
         const formData = new FormData()
@@ -120,7 +120,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
         const errorMessage = error instanceof Error ? error.message : 'Failed to upload'
         toast.error(errorMessage)
       } finally {
-        setUploadingRef(prev => ({ ...prev, [characterId]: false }))
+        setUploadingRef?.(prev => ({ ...prev, [characterId]: false }))
       }
     }
     
