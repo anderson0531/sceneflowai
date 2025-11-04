@@ -2539,18 +2539,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Handle generate all audio
   const handleGenerateAllAudio = async () => {
     if (!narrationVoice) {
-      try { const { toast } = require('sonner'); toast.error('Please select a narration voice first') } catch {}
+      try { const { toast } = require('sonner'); toast.error('Please select a narration voice first') } catch {}                                                
       return
     }
 
-    // Check if all characters have voices
-    const charactersWithoutVoice = characters.filter(c => !c.voiceConfig)
+    // Check if all characters have voices (exclude narrator)
+    const charactersWithoutVoice = characters.filter(c => c.type !== 'narrator' && !c.voiceConfig)
     if (charactersWithoutVoice.length > 0) {
-      console.warn('[Generate All Audio] Characters without voices:', charactersWithoutVoice.map(c => c.name))
+      console.warn('[Generate All Audio] Characters without voices:', charactersWithoutVoice.map(c => c.name))                                                  
       try { 
         const { toast } = require('sonner')
         const charNames = charactersWithoutVoice.map(c => c.name).join(', ')
-        toast.error(`🎤 Voice Assignment Required\n\n${charNames}\n\nPlease assign voices to all characters before generating audio. Click on each character card to select a voice.`, {
+        toast.error(`🎤 Voice Assignment Required\n\n${charNames}\n\nPlease assign voices to all characters before generating audio. Click on each character card to select a voice.`, {                                                        
           duration: 15000, // Show for 15 seconds
           style: {
             background: '#dc2626',
@@ -2563,95 +2563,122 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return
     }
 
+    const sceneCount = script?.script?.scenes?.length || 0
+    if (sceneCount === 0) {
+      try { const { toast } = require('sonner'); toast.error('No scenes to generate audio for') } catch {}
+      return
+    }
+
+    // Estimate duration: ~30 seconds per scene for all audio types (narration + dialogue + music + SFX)
+    const estimatedDuration = Math.max(60, sceneCount * 30) // Minimum 60 seconds
+
     setIsGeneratingAudio(true)
     setAudioProgress({ current: 0, total: 0, status: 'Starting...' })
     
-    try {
-      const response = await fetch('/api/vision/generate-all-audio', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId }),
-      })
+    await execute(
+      async () => {
+        const response = await fetch('/api/vision/generate-all-audio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            projectId,
+            includeMusic: true,
+            includeSFX: true
+          }),
+        })
 
-      if (!response.body) {
-        throw new Error('No response body')
-      }
+              if (!response.body) {
+          throw new Error('No response body')
+        }
 
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder()
-      let buffer = ''
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
 
-      while (true) {
-        const { done, value } = await reader.read()
-        
-        if (done) break
-        
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n\n')
-        buffer = lines.pop() || ''
-        
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6))
-              
-              if (data.type === 'progress') {
-                setAudioProgress({
-                  current: data.scene,
-                  total: data.total,
-                  status: data.status === 'generating_narration' 
-                    ? 'Generating narration...'
-                    : `Generating dialogue (${data.dialogueCount || 0} lines)...`,
-                  dialogueCount: data.dialogueCount
-                })
-              } else if (data.type === 'complete') {
-                try { 
-                  const { toast } = require('sonner')
-                  const msg = `Generated ${data.narrationCount} narration + ${data.dialogueCount} dialogue audio files!`
-                  
-                  if (data.skipped && data.skipped.length > 0) {
-                    const skippedChars = [...new Set(data.skipped.map((s: any) => s.character))].join(', ')
-                    toast.warning(`${msg}\n\nSkipped dialogue for: ${skippedChars} (no voice assigned)`, {
-                      duration: 8000
-                    })
-                  } else {
-                    toast.success(msg)
-                  }
-                } catch {}
+        while (true) {
+          const { done, value } = await reader.read()
+          
+          if (done) break
+          
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n\n')
+          buffer = lines.pop() || ''
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6))
                 
-                // Retry logic for project reload after batch audio generation (skip auto-generation to prevent script regeneration bug)
-                let retries = 3
-                while (retries > 0) {
-                  try {
-                    await loadProject(true) // Skip auto-generation to prevent accidental script regeneration
-                    break // Success!
-                  } catch (error) {
-                    retries--
-                    console.warn(`[Generate All Audio] Project reload failed, ${retries} retries left`)
-                    if (retries > 0) {
-                      await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1s before retry
+                if (data.type === 'progress') {
+                  setAudioProgress({
+                    current: data.scene,
+                    total: data.total,
+                    status: data.status === 'generating_narration' 
+                      ? 'Generating narration...'
+                      : data.status === 'generating_dialogue'
+                      ? `Generating dialogue (${data.dialogueCount || 0} lines)...`
+                      : data.status === 'generating_music'
+                      ? 'Generating music...'
+                      : data.status === 'generating_sfx'
+                      ? `Generating SFX (${data.sfxCount || 0} sounds)...`
+                      : 'Processing...',                                                                              
+                    dialogueCount: data.dialogueCount
+                  })
+                } else if (data.type === 'complete') {
+                  try { 
+                    const { toast } = require('sonner')
+                    const parts = []
+                    if (data.narrationCount > 0) parts.push(`${data.narrationCount} narration`)
+                    if (data.dialogueCount > 0) parts.push(`${data.dialogueCount} dialogue`)
+                    if (data.musicCount > 0) parts.push(`${data.musicCount} music`)
+                    if (data.sfxCount > 0) parts.push(`${data.sfxCount} SFX`)
+                    const msg = `Generated ${parts.join(', ')} audio file${parts.length > 1 ? 's' : ''}!`                                        
+                    
+                    if (data.skipped && data.skipped.length > 0) {
+                      const skippedChars = [...new Set(data.skipped.map((s: any) => s.character))].join(', ')                                                     
+                      toast.warning(`${msg}\n\nSkipped dialogue for: ${skippedChars} (no voice assigned)`, {                                                      
+                        duration: 8000
+                      })
                     } else {
-                      console.error('[Generate All Audio] All retries exhausted')
-                      try { const { toast } = require('sonner'); toast.warning('Audio generated but page reload failed. Please refresh manually.') } catch {}
+                      toast.success(msg)
+                    }
+                  } catch {}
+                  
+                  // Retry logic for project reload after batch audio generation (skip auto-generation to prevent script regeneration bug)                        
+                  let retries = 3
+                  while (retries > 0) {
+                    try {
+                      await loadProject(true) // Skip auto-generation to prevent accidental script regeneration                                                   
+                      break // Success!
+                    } catch (error) {
+                      retries--
+                      console.warn(`[Generate All Audio] Project reload failed, ${retries} retries left`)                                                         
+                      if (retries > 0) {
+                        await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1s before retry                                                           
+                      } else {
+                        console.error('[Generate All Audio] All retries exhausted')                                                                               
+                        try { const { toast } = require('sonner'); toast.warning('Audio generated but page reload failed. Please refresh manually.') } catch {}   
+                      }
                     }
                   }
+                } else if (data.type === 'error') {
+                  throw new Error(data.message)
                 }
-              } else if (data.type === 'error') {
-                throw new Error(data.message)
+              } catch (e) {
+                console.error('[Audio Progress] Parse error:', e)
               }
-            } catch (e) {
-              console.error('[Audio Progress] Parse error:', e)
             }
           }
         }
+      },
+      {
+        message: `Generating all audio for ${sceneCount} scenes (narration, dialogue, music, and SFX)`,
+        estimatedDuration
       }
-    } catch (error) {
-      console.error('[Generate All Audio] Error:', error)
-      try { const { toast } = require('sonner'); toast.error('Audio generation failed') } catch {}
-    } finally {
-      setIsGeneratingAudio(false)
-      setAudioProgress(null)
-    }
+    )
+    
+    setIsGeneratingAudio(false)
+    setAudioProgress(null)
   }
 
   // Handle generate scene audio

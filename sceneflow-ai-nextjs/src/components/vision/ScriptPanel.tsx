@@ -202,14 +202,28 @@ function formatDuration(seconds: number): string {
 
 // Format total duration for summary panel
 function formatTotalDuration(scenes: any[]): string {
-  const totalSeconds = scenes.reduce((sum, scene) => {
-    return sum + calculateSceneDuration(scene)
-  }, 0)
+  const totalSeconds = scenes.reduce((sum, scene) => sum + calculateSceneDuration(scene), 0)
+  return formatDuration(totalSeconds)
+}
+
+/**
+ * Strip SFX and Music descriptions from scene action text
+ * These are redundantly included and should be displayed separately
+ */
+function stripAudioDescriptions(action: string): string {
+  if (!action) return action
   
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
+  // Remove patterns like "SFX: ...", "MUSIC: ...", "Music: ...", "Sound: ..."
+  // Match case-insensitive and handle various formats
+  let cleaned = action
+    .replace(/\b(SFX|MUSIC|Music|Sound|sound effects?):\s*[^\n]+/gi, '')
+    // Remove standalone lines that are just audio descriptions
+    .replace(/^\s*(SFX|MUSIC|Music|Sound|sound effects?)\s*:.*$/gmi, '')
+    // Clean up multiple consecutive newlines
+    .replace(/\n{2,}/g, '\n')
+    .trim()
   
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+  return cleaned
 }
 
 // Sortable Scene Card Wrapper for drag-and-drop
@@ -460,7 +474,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   }
 
   // Audio generation functions
-    const generateSFX = async (sceneIdx: number, sfxIdx: number) => {
+  const generateSFX = async (sceneIdx: number, sfxIdx: number) => {
     const scene = scenes[sceneIdx]
     const sfx = scene?.sfx?.[sfxIdx]
     if (!sfx) return
@@ -470,7 +484,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       const response = await fetch('/api/tts/elevenlabs/sound-effects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: typeof sfx === 'string' ? sfx : sfx.description, duration: 2.0 })                                                          
+        body: JSON.stringify({ text: typeof sfx === 'string' ? sfx : sfx.description, duration: 2.0 })
       })
 
       if (!response.ok) {
@@ -508,7 +522,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     }
   }
 
-    const generateMusic = async (sceneIdx: number) => {
+  const generateMusic = async (sceneIdx: number) => {
     const scene = scenes[sceneIdx]
     const music = scene?.music
     if (!music) return
@@ -519,7 +533,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       const response = await fetch('/api/tts/elevenlabs/music', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: typeof music === 'string' ? music : music.description, duration })                                                         
+        body: JSON.stringify({ text: typeof music === 'string' ? music : music.description, duration })
       })
 
       if (!response.ok) {
@@ -826,7 +840,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               <span className="hidden sm:inline">Stop</span>
             </Button>
           )}
-          {/* Screening Room Button */}
+                    {/* Screening Room Button */}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -841,11 +855,43 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   <span>Screening</span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">                                                       
                 <p>Open Screening Room</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          
+          {/* Generate All Audio Button */}
+          {onGenerateAllAudio && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={onGenerateAllAudio}
+                    disabled={isGeneratingAudio || !script || !scenes || scenes.length === 0}
+                    className="flex items-center gap-1"
+                  >
+                    {isGeneratingAudio ? (
+                      <>
+                        <Loader className="w-4 h-4 animate-spin" />
+                        <span className="hidden sm:inline">Generating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 className="w-4 h-4" />
+                        <span className="hidden sm:inline">Generate All Audio</span>
+                      </>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                  <p>Generate narration, dialogue, music, and SFX for all scenes</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           
           {/* Animatics Studio Button */}
           <TooltipProvider>
@@ -1769,7 +1815,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
         {/* Row 3: Scene Description */}
         <div className="py-2 px-3 border-b border-gray-100 dark:border-gray-800">
           <p className={`text-sm text-gray-600 dark:text-gray-400 ${isOpen ? 'whitespace-pre-wrap' : 'line-clamp-3'}`}>
-            {scene.action || scene.summary || 'No description available'}
+            {stripAudioDescriptions(scene.action || scene.summary || 'No description available')}
           </p>
         </div>
       </div>
