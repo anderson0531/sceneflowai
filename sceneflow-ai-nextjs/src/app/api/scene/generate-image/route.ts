@@ -80,7 +80,9 @@ export async function POST(req: NextRequest) {
 
     if (projectId) {
       await sequelize.authenticate()
-      project = await Project.findByPk(projectId)
+      project = await Project.findByPk(projectId, {
+        attributes: ['id', 'metadata', 'user_id', 'title', 'status', 'current_step']
+      })
       
       if (!project) {
         return NextResponse.json({ success: false, error: 'Project not found' }, { status: 404 })
