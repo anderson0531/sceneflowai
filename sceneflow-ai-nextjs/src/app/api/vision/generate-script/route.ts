@@ -227,23 +227,37 @@ CRITICAL DIALOGUE RULES:
 - Use ONLY the EXACT character names from the list above
 - DO NOT abbreviate, modify, or create variations of character names
 - Example: If character is "Brian Anderson Sr", dialogue MUST be "BRIAN ANDERSON SR:" not "BRIAN:" or "Brian:"
-- Character names in dialogue must match the character list EXACTLY (case-insensitive is acceptable but use consistent formatting)
+- Character names in dialogue must match the character list EXACTLY (case-insensitive is acceptable but use consistent formatting)                              
 
-DIALOGUE INFLECTION AND EMOTION (CRITICAL FOR TTS):
-- Add emotion/inflection tags in PARENTHESES (not brackets) for stage directions
-- Examples: (excitedly), (whispering), (sadly), (thoughtfully), (angrily), (nervously)
+CHARACTER NAME RULES (CRITICAL):
+1. **In the "character" field**: Use EXACT full names from the character list
+   - Example: {"character": "Brian Anderson Sr", "line": "..."}
+   
+2. **In the "line" field (dialogue text)**: Use NATURAL, CONTEXTUAL names
+   - Characters address each other as they would in real conversation
+   - Use first names, nicknames, titles, or relationship terms (Dad, Mom, Sir, etc.)
+   - Example: {"character": "Brian Anderson Sr", "line": "[calmly] Eric, it's been a while."}
+   - Example: {"character": "Eric Anderson", "line": "[dryly] What is this, Dad? Another attempt?"}
+   
+3. **Addressing characters naturally**:
+   - Family: First names, "Dad", "Mom", "Son", nicknames
+   - Professional: Titles (Dr., Mr./Mrs.) + last name
+   - Friends/Peers: First names or nicknames
+   - Strangers/Formal: Mr./Mrs./Ms. + last name or sir/ma'am
+   
+DO NOT force full character names into dialogue text unnaturally.
+
+DIALOGUE AUDIO TAGS (CRITICAL FOR TTS):
+- Add emotion/inflection instructions in SQUARE BRACKETS: [whispering], [excitedly], [sadly]
 - Use ellipses (...) for pauses or hesitation
-- Use dashes (—) for interruptions or abrupt stops
-- Capitalize words for EMPHASIS
-- The stage direction should come BEFORE the spoken text
-- Stage directions are implicit prompts interpreted by the AI model - keep them simple and clear
-- The "line" field should contain ONLY the dialogue text with emotion tags, NOT the character name
+- Use dashes (—) for interruptions
+- Capitalize for EMPHASIS
+- Audio tags should come BEFORE the spoken text
+- Common tags: [whispering], [shouting], [sadly], [excitedly], [angrily], [nervously], [cheerfully]
 - Examples:
-  * {"character": "BRIAN ANDERSON SR", "line": "(excitedly) I can't believe it!"}
-  * {"character": "MINT", "line": "(whispering) Don't tell anyone... It's our secret."}
-  * {"character": "BRIAN ANDERSON SR", "line": "(thoughtfully) I... I'm not sure about this."}
-  * {"character": "MINT", "line": "(sadly) I wish things were different—"}
-  * {"character": "BRIAN ANDERSON SR", "line": "(to himself, whispering) ...It's time. It has to be."}
+  * {"character": "BRIAN ANDERSON SR", "line": "[excitedly] I can't believe it!"}
+  * {"character": "MINT", "line": "[whispering] Don't tell anyone... It's our secret."}
+  * {"character": "ERIC", "line": "[sadly] I wish things were different—"}
 
 CRITICAL REQUIREMENTS:
 1. Generate a COMPLETE, CONTINUOUS script with ${sceneCount} scenes

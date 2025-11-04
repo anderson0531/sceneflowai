@@ -435,26 +435,35 @@ CRITICAL CHARACTER RULES:
 - Match names character-for-character (case-insensitive acceptable in JSON, but use Title Case)
 - DO NOT invent new characters unless absolutely necessary (minor roles: waiter, passerby with 1 line)
 
-CRITICAL DIALOGUE RULES:
-- Use ONLY the EXACT character names from the list above
-- Character names in dialogue MUST match exactly: use the full canonical name
-- NO abbreviations or short forms ("Brian Anderson Sr" never becomes "Brian")
-- Character names in the "character" field must be identical to the character list
-- Example: If character is "Brian Anderson Sr", dialogue MUST use "Brian Anderson Sr" exactly
+CHARACTER NAME RULES (CRITICAL):
+1. **In the "character" field**: Use EXACT full names from the character list
+   - Example: {"character": "Brian Anderson Sr", "line": "..."}
+   
+2. **In the "line" field (dialogue text)**: Use NATURAL, CONTEXTUAL names
+   - Characters address each other as they would in real conversation
+   - Use first names, nicknames, titles, or relationship terms (Dad, Mom, Sir, etc.)
+   - Example: {"character": "Brian Anderson Sr", "line": "[calmly] Eric, it's been a while."}
+   - Example: {"character": "Eric Anderson", "line": "[dryly] What is this, Dad? Another attempt?"}
+   
+3. **Addressing characters naturally**:
+   - Family: First names, "Dad", "Mom", "Son", nicknames
+   - Professional: Titles (Dr., Mr./Mrs.) + last name
+   - Friends/Peers: First names or nicknames
+   - Strangers/Formal: Mr./Mrs./Ms. + last name or sir/ma'am
+   
+DO NOT force full character names into dialogue text unnaturally.
 
-DIALOGUE INFLECTION AND EMOTION (CRITICAL FOR TTS):
-- Add emotion/inflection tags in PARENTHESES (not brackets) for stage directions
-- Common tags: (excitedly), (whispering), (sadly), (thoughtfully), (angrily), (nervously), (cheerfully), (urgently)
-- Use ellipses (...) for hesitation or pauses
-- Use dashes (—) for interruptions or abrupt stops
+DIALOGUE AUDIO TAGS (CRITICAL FOR TTS):
+- Add emotion/inflection instructions in SQUARE BRACKETS: [whispering], [excitedly], [sadly]
+- Use ellipses (...) for pauses or hesitation
+- Use dashes (—) for interruptions
 - Capitalize for EMPHASIS
-- The stage direction should come BEFORE the spoken text
-- Stage directions are implicit prompts interpreted by the AI model - keep them simple and clear
-- CRITICAL: The "line" field contains ONLY dialogue text + emotion tags, NOT the character name
+- Audio tags should come BEFORE the spoken text
+- Common tags: [whispering], [shouting], [sadly], [excitedly], [angrily], [nervously], [cheerfully]
 - Examples:
-  * {"character": "BRIAN ANDERSON SR", "line": "(excitedly) I can't believe it!"}
-  * {"character": "MINT", "line": "(whispering) Don't tell anyone... It's our secret."}
-  * {"character": "BRIAN ANDERSON SR", "line": "(to himself, whispering) ...It's time. It has to be."}
+  * {"character": "BRIAN ANDERSON SR", "line": "[excitedly] I can't believe it!"}
+  * {"character": "MINT", "line": "[whispering] Don't tell anyone... It's our secret."}
+  * {"character": "ERIC", "line": "[sadly] I wish things were different—"}
 
 SCENE PLANNING:
 - Total target: ${targetDuration}s (±10% is fine)
@@ -588,18 +597,30 @@ Synopsis: ${treatment.synopsis || treatment.content}
 ${characterList}
 
 CRITICAL CHARACTER RULES:
-- Use ONLY these approved characters: ${characters.map((c: any) => c.name).join(', ')}
+- Use ONLY these approved characters: ${characters.map((c: any) => c.name).join(', ')}                                                                          
 - Names are in Title Case - use them EXACTLY
 - NO abbreviations: "Brian Anderson Sr" not "Brian"
 - Match character names exactly as listed in the character list
 - DO NOT invent new dialogue speakers
 
-CRITICAL DIALOGUE: Use EXACT character names in the "character" field - do NOT include them in the "line" field.
-DIALOGUE EMOTION (FOR TTS):
-- Start each "line" with (emotion) tags in PARENTHESES (e.g., (excitedly), (whispering), (sadly))
+CHARACTER NAME RULES (CRITICAL):
+1. **In the "character" field**: Use EXACT full names from the character list
+   - Example: {"character": "Brian Anderson Sr", "line": "..."}
+   
+2. **In the "line" field (dialogue text)**: Use NATURAL, CONTEXTUAL names
+   - Characters address each other as they would in real conversation
+   - Use first names, nicknames, titles, or relationship terms (Dad, Mom, Sir, etc.)
+   - Example: {"character": "Brian Anderson Sr", "line": "[calmly] Eric, it's been a while."}
+   - Example: {"character": "Eric Anderson", "line": "[dryly] What is this, Dad? Another attempt?"}
+   
+DO NOT force full character names into dialogue text unnaturally.
+
+DIALOGUE AUDIO TAGS (CRITICAL FOR TTS):
+- Add emotion/inflection instructions in SQUARE BRACKETS: [whispering], [excitedly], [sadly]
 - Use ellipses (...) for pauses or hesitation
-- Stage directions are implicit prompts - keep them simple and clear
-- Example: {"character": "NAME", "line": "(sadly) ...I can't believe it."}
+- Audio tags should come BEFORE the spoken text
+- Common tags: [whispering], [shouting], [sadly], [excitedly], [angrily], [nervously], [cheerfully]
+- Example: {"character": "NAME", "line": "[sadly] ...I can't believe it."}
 
 PREVIOUS SCENES (${prevScenes.length} so far, ${prevDuration}s total):
 ${prevScenes.slice(-3).map((s: any) => `${s.sceneNumber}. ${s.heading} (${s.duration}s): ${s.action.substring(0, 80)}...`).join('\n')}

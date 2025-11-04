@@ -199,17 +199,35 @@ CRITICAL CHARACTER RULES:
 - Use ONLY the EXACT character names from the list above
 - Names are in Title Case (e.g., "Brian Anderson Sr", "Dr. Sarah Martinez")
 - DO NOT abbreviate, modify, or create variations
-- "Brian Anderson Sr" must stay "Brian Anderson Sr" - never "Brian", "Anderson", or "BRIAN"
+- "Brian Anderson Sr" must stay "Brian Anderson Sr" - never "Brian", "Anderson", or "BRIAN"                                                                     
 - Match names exactly as listed
 
-DIALOGUE INFLECTION AND EMOTION (CRITICAL FOR TTS):
-- Add emotion/inflection tags in PARENTHESES (not brackets): (excitedly), (whispering), (sadly), (thoughtfully)
-- Use ellipses (...) for pauses or hesitation, dashes (—) for interruptions
-- Capitalize words for EMPHASIS
-- The stage direction should come BEFORE the spoken text
-- Stage directions are implicit prompts interpreted by the AI model - keep them simple and clear
-- CRITICAL: "line" field contains ONLY dialogue + emotion tags, NOT character name
-- Example: {"character": "BRIAN", "line": "(thoughtfully) I... I think you're right."}
+CHARACTER NAME RULES (CRITICAL):
+1. **In the "character" field**: Use EXACT full names from the character list
+   - Example: {"character": "Brian Anderson Sr", "line": "..."}
+   
+2. **In the "line" field (dialogue text)**: Use NATURAL, CONTEXTUAL names
+   - Characters address each other as they would in real conversation
+   - Use first names, nicknames, titles, or relationship terms (Dad, Mom, Sir, etc.)
+   - Example: {"character": "Brian Anderson Sr", "line": "[calmly] Eric, it's been a while."}
+   - Example: {"character": "Eric Anderson", "line": "[dryly] What is this, Dad? Another attempt?"}
+   
+3. **Addressing characters naturally**:
+   - Family: First names, "Dad", "Mom", "Son", nicknames
+   - Professional: Titles (Dr., Mr./Mrs.) + last name
+   - Friends/Peers: First names or nicknames
+   - Strangers/Formal: Mr./Mrs./Ms. + last name or sir/ma'am
+   
+DO NOT force full character names into dialogue text unnaturally.
+
+DIALOGUE AUDIO TAGS (CRITICAL FOR TTS):
+- Add emotion/inflection instructions in SQUARE BRACKETS: [whispering], [excitedly], [sadly]
+- Use ellipses (...) for pauses or hesitation
+- Use dashes (—) for interruptions
+- Capitalize for EMPHASIS
+- Audio tags should come BEFORE the spoken text
+- Common tags: [whispering], [shouting], [sadly], [excitedly], [angrily], [nervously], [cheerfully]
+- Example: {"character": "BRIAN", "line": "[thoughtfully] I... I think you're right."}
 
 ${beatContext}
 

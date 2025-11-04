@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     const body = {
       text,
-      model_id: 'eleven_multilingual_v2',
+      model_id: 'eleven_turbo_v2_5', // v3 model supports [audio tags]
       voice_settings: {
         stability: 0.25,
         similarity_boost: 0.8,

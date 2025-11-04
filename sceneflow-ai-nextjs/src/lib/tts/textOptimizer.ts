@@ -17,18 +17,19 @@ export interface OptimizedText {
 }
 
 /**
- * Removes OLD [bracket] stage directions only (deprecated format)
- * KEEPS parenthetical (stage direction) tags - they're valid SSML implicit prompts
- * Keep SSML tags like <break time="1s" />
+ * Preserves [bracket] audio tags for ElevenLabs v3 models
+ * v3 models (eleven_turbo_v2_5) support [instruction] bracket syntax
+ * Only removes malformed or problematic tags if needed
  */
 function removeStageDirections(text: string): string {
   let cleaned = text
   
-  // Remove ONLY bracketed emotion/inflection cues: [sadly], [whispers], etc. (old format)
-  cleaned = cleaned.replace(/\[([^\]]+)\]/g, '')
+  // DO NOT remove square brackets - they are audio tags for ElevenLabs v3
+  // v3 models (eleven_turbo_v2_5) support [whispering], [excitedly], etc.
+  // These are interpreted as instructions, not spoken text
   
-  // DO NOT remove parenthetical stage directions - they are valid for SSML
-  // Parentheses like (whispering) are implicit prompts for eleven_multilingual_v2
+  // Only clean up obviously malformed tags (e.g., nested brackets that would break parsing)
+  // This is a minimal cleanup - preserve valid [audio tag] syntax
   
   return cleaned
 }

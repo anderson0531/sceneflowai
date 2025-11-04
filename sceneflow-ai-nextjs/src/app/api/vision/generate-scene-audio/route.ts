@@ -125,11 +125,11 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig): 
   const apiKey = process.env.ELEVENLABS_API_KEY
   if (!apiKey) throw new Error('ElevenLabs API key not configured')
 
-  // Check if text contains parenthetical stage directions
-  // Note: ElevenLabs doesn't support SSML tags like <break> - only implicit prompts
-  const hasStageDirections = /\([^)]+\)/.test(text)
+  // Check if text contains bracketed audio tags (ElevenLabs v3 format)
+  // v3 models support [instruction] bracket syntax for audio tags
+  const hasAudioTags = /\[[^\]]+\]/.test(text)
 
-  console.log('[Scene Audio] Stage directions detected:', hasStageDirections, 'Text:', text.substring(0, 100))
+  console.log('[Scene Audio] Audio tags detected:', hasAudioTags, 'Text:', text.substring(0, 100))
 
   // Always use standard endpoint (ElevenLabs doesn't have a separate SSML endpoint)
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceConfig.voiceId}?optimize_streaming_latency=0&output_format=mp3_44100_128`
@@ -142,13 +142,13 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig): 
       Accept: 'audio/mpeg',
     },
     body: JSON.stringify({
-      text: text, // Pass text as-is (ElevenLabs handles parenthetical stage directions natively)
-      model_id: hasStageDirections ? 'eleven_multilingual_v2' : 'eleven_monolingual_v1', // Use multilingual_v2 for stage directions
+      text: text, // Pass text as-is (ElevenLabs v3 handles [bracket] audio tags)
+      model_id: 'eleven_turbo_v2_5', // v3 model supports [audio tags]
       voice_settings: {
         stability: voiceConfig.stability || 0.5,
         similarity_boost: voiceConfig.similarityBoost || 0.75,
-        style: hasStageDirections ? 0.5 : undefined,
-        use_speaker_boost: hasStageDirections ? true : undefined,
+        style: hasAudioTags ? 0.5 : undefined,
+        use_speaker_boost: hasAudioTags ? true : undefined,
       },
     }),
   })
