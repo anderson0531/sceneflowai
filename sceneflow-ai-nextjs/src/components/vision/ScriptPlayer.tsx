@@ -347,11 +347,23 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   // Generate and play audio for current scene
   const playSceneAudio = useCallback(async (sceneIndex: number) => {
     if (sceneIndex < 0 || sceneIndex >= scenes.length) return
+    
+    // Check if playback was cancelled before starting
+    if (playbackCancelledRef.current) {
+      console.log('[Player] Playback cancelled for scene', sceneIndex + 1)
+      return
+    }
 
     const scene = scenes[sceneIndex]
     setIsLoadingAudio(true)
 
     try {
+      // Check cancellation before starting translation mode
+      if (playbackCancelledRef.current) {
+        setIsLoadingAudio(false)
+        return
+      }
+      
       // If translation enabled (non-English), use dynamic generation
       if (selectedLanguage !== 'en') {
         console.log('[Player] Using translation mode for', selectedLanguage)
@@ -412,8 +424,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           setCurrentTranslatedDialogue(translatedDialogue)
         }
 
-        // Auto-advance (only if auto-advance enabled)
-        if (playerState.isPlaying && playerState.autoAdvance) {
+        // Auto-advance (only if auto-advance enabled and not manual navigation)
+        if (playerState.isPlaying && playerState.autoAdvance && !isManualNavigationRef.current) {
           nextScene()
         }
         return
@@ -449,8 +461,20 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           audioMixerRef.current.stop()
         }
         
+        // Check cancellation before calculating timeline
+        if (playbackCancelledRef.current) {
+          setIsLoadingAudio(false)
+          return
+        }
+        
         // Calculate audio timeline for concurrent playback
         const audioConfig = await calculateAudioTimeline(scene)
+        
+        // Check cancellation after async calculation
+        if (playbackCancelledRef.current) {
+          setIsLoadingAudio(false)
+          return
+        }
         
                 // Check if we have any audio to play
         if (!audioConfig.music && !audioConfig.narration && 
@@ -466,8 +490,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           
           if (playerState.isPlaying) {
             setTimeout(() => {
-              // Only auto-advance if still playing and not manually paused
-              if (playerState.isPlaying && playerState.autoAdvance !== false) {
+              // Only auto-advance if still playing, not manually paused, and not manual navigation
+              if (playerState.isPlaying && playerState.autoAdvance !== false && !isManualNavigationRef.current) {
                 nextScene()
               }
             }, waitTime)
@@ -481,6 +505,12 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           dialogueCount: audioConfig.dialogue?.length || 0,
           sfxCount: audioConfig.sfx?.length || 0
         })
+        
+        // Check cancellation before starting playback
+        if (playbackCancelledRef.current) {
+          setIsLoadingAudio(false)
+          return
+        }
         
                 setIsLoadingAudio(false) // Clear loading state
         
@@ -551,8 +581,20 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
             const waitTime = Math.max(sceneDuration * 1000, maxDuration * 1000, musicDuration * 1000) + 100 // Reduced buffer to 100ms                                 
             console.log('[Player] Calculated wait time:', waitTime, 'ms (sceneDuration:', sceneDuration, 'maxDuration:', maxDuration, 'musicDuration:', musicDuration, ')')                                                                     
             
+            // Check cancellation before waiting
+            if (playbackCancelledRef.current) {
+              setIsLoadingAudio(false)
+              return
+            }
+            
             // Wait for scene playback to complete
             await new Promise(resolve => setTimeout(resolve, waitTime))
+            
+            // Check cancellation after waiting
+            if (playbackCancelledRef.current) {
+              setIsLoadingAudio(false)
+              return
+            }
             
           } catch (error) {
             console.error('[Player] Web Audio Mixer error:', error)
@@ -564,7 +606,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
             
             if (playerState.isPlaying) {
               setTimeout(() => {
-                if (playerState.isPlaying && playerState.autoAdvance) {
+                if (playerState.isPlaying && playerState.autoAdvance && !isManualNavigationRef.current) {
                   nextScene()
                 }
               }, waitTime)
@@ -573,8 +615,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           }
         }
         
-        // Auto-advance to next scene (only if still playing and auto-advance enabled)
-        if (playerState.isPlaying && playerState.autoAdvance) {
+                // Auto-advance to next scene (only if still playing, auto-advance enabled, and not manual navigation)                                                                          
+        if (playerState.isPlaying && playerState.autoAdvance && !isManualNavigationRef.current) {
           nextScene()
         }
         return
@@ -617,8 +659,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         // Auto-advance to next scene if no audio
         if (playerState.isPlaying) {
           setTimeout(() => {
-            // Only auto-advance if still playing and auto-advance is enabled
-            if (playerState.isPlaying && playerState.autoAdvance !== false) {
+            // Only auto-advance if still playing, auto-advance is enabled, and not manual navigation
+            if (playerState.isPlaying && playerState.autoAdvance !== false && !isManualNavigationRef.current) {
               nextScene()
             }
           }, waitTime)
@@ -662,10 +704,10 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       const sceneDuration = (scene.duration || 5) * 1000
       const waitTime = Math.max(minDisplayTime, sceneDuration)
       
-      // Auto-advance even on error (only if auto-advance enabled)
+      // Auto-advance even on error (only if auto-advance enabled and not manual navigation)
       if (playerState.isPlaying) {
         setTimeout(() => {
-          if (playerState.isPlaying && playerState.autoAdvance !== false) {
+          if (playerState.isPlaying && playerState.autoAdvance !== false && !isManualNavigationRef.current) {
             nextScene()
           }
         }, waitTime)
@@ -676,14 +718,35 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
 
   // Track if this is the first play to prevent immediate skipping
   const isFirstPlayRef = useRef(true)
+  
+  // Track if playback should be cancelled (for preventing race conditions)
+  const playbackCancelledRef = useRef(false)
+  
+  // Track if navigation is manual vs auto-advance (to prevent conflicts)
+  const isManualNavigationRef = useRef(false)
 
-  // Play/pause audio when state changes
+    // Play/pause audio when state changes
   useEffect(() => {
+    // Cancel any ongoing playback when scene changes
+    playbackCancelledRef.current = true
+    
     if (playerState.isPlaying && !isLoadingAudio) {
+      // Stop current audio immediately to prevent overlap
+      if (audioMixerRef.current && audioMixerRef.current.getPlaying()) {
+        audioMixerRef.current.stop()
+      }
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.currentTime = 0
+      }
+      
+      // Reset cancellation flag for new playback
+      playbackCancelledRef.current = false
+      
       // On first play, ensure we stay on the initial scene
       if (isFirstPlayRef.current) {
         isFirstPlayRef.current = false
-        // Force play from the initial scene index, not currentSceneIndex which might have changed
+        // Force play from the initial scene index, not currentSceneIndex which might have changed                                                              
         playSceneAudio(initialScene)
       } else {
         playSceneAudio(playerState.currentSceneIndex)
@@ -703,30 +766,45 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     setPlayerState(prev => ({ ...prev, isPlaying: !prev.isPlaying }))
   }
 
-  const nextScene = () => {
+    const nextScene = () => {
     console.log('[Player] nextScene called - advancing from', playerState.currentSceneIndex)
+    isManualNavigationRef.current = true
     setPlayerState(prev => {
       const nextIndex = prev.currentSceneIndex + 1
       console.log('[Player] Advancing to scene', nextIndex)
       if (nextIndex >= scenes.length) {
         // End of script
         console.log('[Player] End of script reached')
-        return { ...prev, isPlaying: false, currentSceneIndex: scenes.length - 1 }
+        return { ...prev, isPlaying: false, currentSceneIndex: scenes.length - 1 }                                                                              
       }
       return { ...prev, currentSceneIndex: nextIndex }
     })
+    // Reset manual navigation flag after a short delay
+    setTimeout(() => {
+      isManualNavigationRef.current = false
+    }, 100)
   }
 
   const previousScene = () => {
+    isManualNavigationRef.current = true
     setPlayerState(prev => ({
       ...prev,
       currentSceneIndex: Math.max(0, prev.currentSceneIndex - 1)
     }))
+    // Reset manual navigation flag after a short delay
+    setTimeout(() => {
+      isManualNavigationRef.current = false
+    }, 100)
   }
 
   const jumpToScene = (sceneIndex: number) => {
     if (sceneIndex >= 0 && sceneIndex < scenes.length) {
+      isManualNavigationRef.current = true
       setPlayerState(prev => ({ ...prev, currentSceneIndex: sceneIndex }))
+      // Reset manual navigation flag after a short delay
+      setTimeout(() => {
+        isManualNavigationRef.current = false
+      }, 100)
     }
   }
 
