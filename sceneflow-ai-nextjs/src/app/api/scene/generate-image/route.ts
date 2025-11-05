@@ -417,7 +417,7 @@ export async function POST(req: NextRequest) {
 
     // Generate with Vertex AI Imagen 3 (with character references)
     // Add retry logic for reference image access issues
-    let base64Image: string
+    let base64Image: string | null = null
     let generationAttempt = 0
     const maxGenerationAttempts = 2
     
@@ -436,7 +436,9 @@ export async function POST(req: NextRequest) {
         })
         
         // Success - break out of retry loop
-        break
+        if (base64Image) {
+          break
+        }
         
       } catch (error: any) {
         console.error(`[Scene Image] Generation attempt ${generationAttempt} failed:`, error.message)
@@ -467,6 +469,10 @@ export async function POST(req: NextRequest) {
         // If not a reference image error, or max attempts reached, throw
         throw error
       }
+    }
+    
+    if (!base64Image) {
+      throw new Error('Failed to generate image after all retry attempts')
     }
 
     // Upload to Vercel Blob storage
