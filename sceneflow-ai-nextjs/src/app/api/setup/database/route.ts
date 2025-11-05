@@ -18,6 +18,8 @@ import CollabScore from '@/models/CollabScore'
 import CollabComment from '@/models/CollabComment'
 import CollabRecommendation from '@/models/CollabRecommendation'
 import CollabChatMessage from '@/models/CollabChatMessage'
+import RateCard from '@/models/RateCard'
+import SubscriptionTier from '@/models/SubscriptionTier'
 
 export const dynamic = 'force-dynamic'
 
@@ -75,28 +77,36 @@ export async function POST(request: NextRequest) {
     await FeatureUpdate.sync({ force: false })
     logs.push('✅ FeatureUpdate table created')
     
+    logs.push('12. Creating RateCard table...')
+    await RateCard.sync({ force: false })
+    logs.push('✅ RateCard table created')
+    
+    logs.push('13. Creating SubscriptionTier table...')
+    await SubscriptionTier.sync({ force: false })
+    logs.push('✅ SubscriptionTier table created')
+    
     // Collaboration tables - parent first
-    logs.push('12. Creating CollabSession table...')
+    logs.push('14. Creating CollabSession table...')
     await CollabSession.sync({ force: false })
     logs.push('✅ CollabSession table created')
     
-    logs.push('13. Creating CollabParticipant table...')
+    logs.push('15. Creating CollabParticipant table...')
     await CollabParticipant.sync({ force: false })
     logs.push('✅ CollabParticipant table created')
     
-    logs.push('14. Creating CollabScore table...')
+    logs.push('16. Creating CollabScore table...')
     await CollabScore.sync({ force: false })
     logs.push('✅ CollabScore table created')
     
-    logs.push('15. Creating CollabComment table...')
+    logs.push('17. Creating CollabComment table...')
     await CollabComment.sync({ force: false })
     logs.push('✅ CollabComment table created')
     
-    logs.push('16. Creating CollabRecommendation table...')
+    logs.push('18. Creating CollabRecommendation table...')
     await CollabRecommendation.sync({ force: false })
     logs.push('✅ CollabRecommendation table created')
     
-    logs.push('17. Creating CollabChatMessage table...')
+    logs.push('19. Creating CollabChatMessage table...')
     await CollabChatMessage.sync({ force: false })
     logs.push('✅ CollabChatMessage table created')
     
