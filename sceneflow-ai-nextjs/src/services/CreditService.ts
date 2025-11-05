@@ -265,6 +265,68 @@ export class CreditService {
       }
     })
   }
+
+  /**
+   * Grant credits to a user (admin function)
+   * Adds credits to addon_credits (never expire)
+   */
+  static async grantCredits(
+    userId: string,
+    credits: number,
+    reason: string = 'admin_grant',
+    ref?: string | null,
+    meta?: any
+  ): Promise<{ prev: number; next: number; addonCredits: number }> {
+    if (credits <= 0) {
+      throw new Error('Credits amount must be positive')
+    }
+
+    // Resolve user first to get UUID (handles email or UUID)
+    const resolvedUser = await findUserWithAutoMigration(userId)
+    const userUuid = resolvedUser.id
+    // Ensure migration is run before starting transaction
+    await ensureMigrationRan()
+
+    return await sequelize.transaction(async (tx) => {
+      const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
+      if (!user) throw new Error('User not found')
+
+      const prevTotal = Number(user.credits ?? 0)
+      const prevAddonCredits = Number(user.addon_credits || 0)
+
+      // Add credits to addon_credits (never expire)
+      const newAddonCredits = prevAddonCredits + credits
+      user.addon_credits = newAddonCredits
+
+      // Update total credits
+      const subscriptionCredits = Number(user.subscription_credits_monthly || 0)
+      user.credits = newAddonCredits + subscriptionCredits
+
+      await user.save({ transaction: tx })
+
+      // Log the grant in credit ledger
+      await CreditLedger.create({
+        user_id: userUuid,
+        delta_credits: credits,
+        prev_balance: prevTotal,
+        new_balance: Number(user.credits),
+        reason: 'adjustment' as CreditLedger['reason'],
+        credit_type: 'addon',
+        ref: ref || null,
+        meta: {
+          ...(meta || {}),
+          reason,
+          grantedBy: 'admin',
+        },
+      } as any, { transaction: tx })
+
+      return {
+        prev: prevTotal,
+        next: Number(user.credits),
+        addonCredits: newAddonCredits,
+      }
+    })
+  }
 }
 
 
