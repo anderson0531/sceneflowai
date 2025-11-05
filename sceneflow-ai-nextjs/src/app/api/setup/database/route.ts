@@ -22,6 +22,7 @@ import RateCard from '@/models/RateCard'
 import SubscriptionTier from '@/models/SubscriptionTier'
 import { migrateUsersSubscriptionColumns } from '@/lib/database/migrateUsersSubscription'
 import { migrateCreditLedger } from '@/lib/database/migrateCreditLedger'
+import { migrateRateCard } from '@/lib/database/migrateRateCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,6 +48,16 @@ export async function POST(request: NextRequest) {
     logs.push('3. Creating RateCard table...')
     await RateCard.sync({ force: false })
     logs.push('✅ RateCard table created')
+    
+    // Run RateCard migration to ensure ENUM types and table are created
+    logs.push('3a. Running RateCard migration (ENUM types)...')
+    try {
+      await migrateRateCard()
+      logs.push('✅ RateCard migration completed')
+    } catch (error: any) {
+      logs.push(`⚠️ RateCard migration note: ${error.message}`)
+      // Don't fail the setup if migration has issues (ENUMs or table might already exist)
+    }
     
     logs.push('4. Creating User table (with alter to add missing columns)...')
     await User.sync({ alter: true }) // Use alter: true to add missing columns safely

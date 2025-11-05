@@ -1,5 +1,50 @@
 import { RateCard } from '@/models'
 import { Op } from 'sequelize'
+import { migrateRateCard } from '@/lib/database/migrateRateCard'
+
+// Cache to prevent multiple concurrent migrations
+let rateCardMigrationInProgress = false
+let rateCardMigrationCompleted = false
+
+/**
+ * Helper to ensure rate_cards table exists with ENUM types
+ */
+async function ensureRateCardMigrationRan(): Promise<void> {
+  // If migration already completed, skip
+  if (rateCardMigrationCompleted) return
+  
+  // If migration is in progress, wait for it
+  if (rateCardMigrationInProgress) {
+    // Wait up to 10 seconds for migration to complete
+    for (let i = 0; i < 100; i++) {
+      await new Promise(resolve => setTimeout(resolve, 100))
+      if (rateCardMigrationCompleted) return
+    }
+    // Don't throw error, just log warning
+    console.warn('[RateCardService] Rate card migration timeout')
+    return
+  }
+
+  // Run migration
+  rateCardMigrationInProgress = true
+  try {
+    console.log('[RateCardService] Auto-running rate_cards migration...')
+    await migrateRateCard()
+    rateCardMigrationCompleted = true
+    console.log('[RateCardService] Rate card migration completed successfully')
+  } catch (error: any) {
+    rateCardMigrationInProgress = false
+    // If table already exists, mark as completed
+    if (error.message?.includes('already exists') || error.message?.includes('duplicate')) {
+      rateCardMigrationCompleted = true
+      return
+    }
+    console.error('[RateCardService] Rate card migration failed:', error)
+    // Don't throw - let the code continue and handle gracefully
+  } finally {
+    rateCardMigrationInProgress = false
+  }
+}
 
 export class RateCardService {
   /**
@@ -9,6 +54,9 @@ export class RateCardService {
     category: RateCard['service_category'],
     serviceName: string
   ): Promise<RateCard | null> {
+    // Ensure migration is run before querying
+    await ensureRateCardMigrationRan()
+    
     const now = new Date()
     
     return await RateCard.findOne({
@@ -50,6 +98,9 @@ export class RateCardService {
    * Get all active rates (for display)
    */
   static async getAllActiveRates(): Promise<RateCard[]> {
+    // Ensure migration is run before querying
+    await ensureRateCardMigrationRan()
+    
     const now = new Date()
     
     return await RateCard.findAll({
@@ -75,6 +126,9 @@ export class RateCardService {
   static async getRatesByCategory(
     category: RateCard['service_category']
   ): Promise<RateCard[]> {
+    // Ensure migration is run before querying
+    await ensureRateCardMigrationRan()
+    
     const now = new Date()
     
     return await RateCard.findAll({
