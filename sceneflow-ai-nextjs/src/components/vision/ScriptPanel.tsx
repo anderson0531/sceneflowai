@@ -1372,13 +1372,25 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           }}
           scene={scenes[sceneBuilderIdx]}
           availableCharacters={characters.map(c => ({
+            // Pass complete character object with all fields to ensure reference images are included
+            id: c.id,
             name: c.name,
             description: c.description,
             referenceImage: c.referenceImage,
             referenceImageGCS: c.referenceImageGCS,  // Pass GCS URL for Imagen API
             appearanceDescription: c.appearanceDescription,  // Pass appearance description
             ethnicity: c.ethnicity,
-            subject: c.subject
+            subject: c.subject,
+            // Include additional fields that might be needed
+            role: c.role,
+            build: c.build,
+            eyeColor: c.eyeColor,
+            hairColor: c.hairColor,
+            hairStyle: c.hairStyle,
+            expression: c.expression,
+            keyFeature: c.keyFeature,
+            // Spread any other fields that might exist
+            ...(c as any)
           }))}
           onGenerateImage={async (selectedCharacters) => {
             // Start generation (this sets generatingImageForScene)
