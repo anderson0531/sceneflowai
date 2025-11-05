@@ -18,7 +18,7 @@ import SceneReviewModal from './SceneReviewModal'
 import { ScriptEditorModal } from './ScriptEditorModal'
 import { toast } from 'sonner'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
-import { ReportType } from '@/lib/types/reports'
+import { ReportType, StoryboardData, SceneDirectionData } from '@/lib/types/reports'
 import { ProjectCostCalculator } from './ProjectCostCalculator'
 
 interface ScriptPanelProps {
@@ -267,6 +267,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [showScriptEditor, setShowScriptEditor] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
   const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
+  const [storyboardPreviewOpen, setStoryboardPreviewOpen] = useState(false)
+  const [sceneDirectionPreviewOpen, setSceneDirectionPreviewOpen] = useState(false)
   
   // Audio playback state
   const [voices, setVoices] = useState<Array<CuratedVoice>>([])
@@ -930,17 +932,37 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             <span>Review</span>
           </Button>
           
-          {/* Preview/Print Button */}
+          {/* Preview/Print Buttons */}
           {script && scenes && scenes.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setReportPreviewOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Printer className="w-4 h-4" />
-              <span>Script</span>
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setReportPreviewOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Script</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setStoryboardPreviewOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Storyboard</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSceneDirectionPreviewOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Scene Direction</span>
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -1392,15 +1414,54 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         />
       )}
       
-      {/* Report Preview Modal */}
+      {/* Report Preview Modals */}
       {script && (
-        <ReportPreviewModal
-          type={ReportType.PROFESSIONAL_SCRIPT}
-          data={script as any}
-          projectName={script.title || 'Untitled Script'}
-          open={reportPreviewOpen}
-          onOpenChange={setReportPreviewOpen}
-        />
+        <>
+          <ReportPreviewModal
+            type={ReportType.PROFESSIONAL_SCRIPT}
+            data={script as any}
+            projectName={script.title || 'Untitled Script'}
+            open={reportPreviewOpen}
+            onOpenChange={setReportPreviewOpen}
+          />
+          <ReportPreviewModal
+            type={ReportType.STORYBOARD}
+            data={{
+              title: script.title || 'Untitled Script',
+              frames: scenes.map((scene: any, idx: number) => ({
+                sceneNumber: idx + 1,
+                imageUrl: scene.imageUrl,
+                visualDescription: scene.visualDescription || scene.action || scene.summary,
+                shotType: scene.shotType,
+                cameraAngle: scene.cameraAngle,
+                lighting: scene.lighting,
+                duration: scene.duration
+              }))
+            } as StoryboardData}
+            projectName={script.title || 'Untitled Script'}
+            open={storyboardPreviewOpen}
+            onOpenChange={setStoryboardPreviewOpen}
+          />
+          <ReportPreviewModal
+            type={ReportType.SCENE_DIRECTION}
+            data={{
+              title: script.title || 'Untitled Script',
+              scenes: scenes.map((scene: any, idx: number) => ({
+                sceneNumber: idx + 1,
+                heading: scene.heading,
+                visualDescription: scene.visualDescription || scene.action || scene.summary,
+                shotType: scene.shotType,
+                cameraAngle: scene.cameraAngle,
+                lighting: scene.lighting,
+                mood: scene.mood,
+                duration: scene.duration
+              }))
+            } as SceneDirectionData}
+            projectName={script.title || 'Untitled Script'}
+            open={sceneDirectionPreviewOpen}
+            onOpenChange={setSceneDirectionPreviewOpen}
+          />
+        </>
       )}
       
       {/* Hidden audio player for individual audio files */}

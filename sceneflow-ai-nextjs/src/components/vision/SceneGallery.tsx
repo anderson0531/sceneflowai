@@ -1,22 +1,26 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Camera, Grid, List, RefreshCw, Edit, Loader } from 'lucide-react'
+import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
+import { ReportType, StoryboardData } from '@/lib/types/reports'
 
 interface SceneGalleryProps {
   scenes: any[]
   characters: any[]
+  projectTitle?: string
   onRegenerateScene: (sceneIndex: number) => void
   onGenerateScene: (sceneIndex: number, prompt: string) => void
   onUploadScene: (sceneIndex: number, file: File) => void
 }
 
-export function SceneGallery({ scenes, characters, onRegenerateScene, onGenerateScene, onUploadScene }: SceneGalleryProps) {
+export function SceneGallery({ scenes, characters, projectTitle, onRegenerateScene, onGenerateScene, onUploadScene }: SceneGalleryProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'timeline'>('grid')
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
   const [scenePrompts, setScenePrompts] = useState<Record<number, string>>({})
   const [generatingScenes, setGeneratingScenes] = useState<Set<number>>(new Set())
+  const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
   
   // Build smart prompt that includes character references
   const buildScenePrompt = (scene: any, sceneIdx: number): string => {
@@ -61,6 +65,17 @@ export function SceneGallery({ scenes, characters, onRegenerateScene, onGenerate
         </div>
         
         <div className="flex gap-2">
+          {scenes.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setReportPreviewOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Printer className="w-4 h-4" />
+              <span>Storyboard</span>
+            </Button>
+          )}
           <button 
             onClick={() => setViewMode('grid')}
             className={`p-2 rounded transition-colors ${viewMode === 'grid' ? 'bg-gray-100 dark:bg-gray-800 text-sf-primary' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
@@ -120,6 +135,28 @@ export function SceneGallery({ scenes, characters, onRegenerateScene, onGenerate
           scenes={scenes}
           onSceneSelect={setSelectedScene}
           onRegenerateScene={onRegenerateScene}
+        />
+      )}
+      
+      {/* Storyboard Report Preview Modal */}
+      {scenes.length > 0 && (
+        <ReportPreviewModal
+          type={ReportType.STORYBOARD}
+          data={{
+            title: projectTitle || 'Untitled Project',
+            frames: scenes.map((scene, idx) => ({
+              sceneNumber: idx + 1,
+              imageUrl: scene.imageUrl,
+              visualDescription: scene.visualDescription || scene.action || scene.summary,
+              shotType: scene.shotType,
+              cameraAngle: scene.cameraAngle,
+              lighting: scene.lighting,
+              duration: scene.duration
+            }))
+          } as StoryboardData}
+          projectName={projectTitle || 'Untitled Project'}
+          open={reportPreviewOpen}
+          onOpenChange={setReportPreviewOpen}
         />
       )}
     </div>
