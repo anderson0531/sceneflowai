@@ -3,6 +3,7 @@ import '@/models' // Import all models to register them with Sequelize
 import Project from '@/models/Project'
 import User from '@/models/User'
 import { sequelize } from '@/config/database'
+import { SubscriptionService } from '../../services/SubscriptionService'
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic'
@@ -149,6 +150,24 @@ export async function POST(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Missing userId' }, { status: 401 })
     }
+    
+    // Check project limits for user's subscription tier
+    try {
+      const limits = await SubscriptionService.checkProjectLimits(userId)
+      if (!limits.canCreateProject) {
+        return NextResponse.json({
+          success: false,
+          error: 'Project limit reached',
+          message: `Your plan allows max ${limits.maxProjects} active projects. Upgrade to create more.`,
+          currentProjects: limits.currentProjects,
+          maxProjects: limits.maxProjects
+        }, { status: 403 })
+      }
+    } catch (error) {
+      // If limit check fails, log but don't block project creation (fail open)
+      console.warn('[POST /api/projects] Project limit check failed:', error)
+    }
+    
     // Create
     const created = await Project.create({
       user_id: userId,

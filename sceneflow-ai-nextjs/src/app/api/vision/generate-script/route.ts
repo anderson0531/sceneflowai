@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
+import { SubscriptionService } from '@/services/SubscriptionService'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -181,10 +182,41 @@ CRITICAL: Return ONLY the JSON array, no other text.`
       sceneCount = Math.max(25, Math.min(45, sceneCount))
     }
 
-    // Safety cap: Never generate more than 45 scenes regardless of calculation
+        // Safety cap: Never generate more than 45 scenes regardless of calculation
     if (sceneCount > 45) {
-      console.warn(`[Script Gen] Scene count ${sceneCount} exceeds maximum of 45, capping at 45`)
+      console.warn(`[Script Gen] Scene count ${sceneCount} exceeds maximum of 45, capping at 45`)                                                               
       sceneCount = 45
+    }
+
+    // Check scene limits for user's subscription tier
+    try {
+      const userId = (project as any).user_id
+      if (userId) {
+        const sceneLimits = await SubscriptionService.checkSceneLimits(userId, projectId)
+        if (sceneLimits.maxScenes !== null) {
+          // User has a scene limit (Coffee Break tier)
+          if (sceneCount > sceneLimits.maxScenes) {
+            if (sendProgress) {
+              sendProgress({
+                type: 'error',
+                error: 'Scene limit exceeded',
+                message: `Your plan allows max ${sceneLimits.maxScenes} scenes per project. Calculated scenes: ${sceneCount}. Please reduce project duration or upgrade your plan.`,
+                currentScenes: sceneLimits.currentScenes,
+                maxScenes: sceneLimits.maxScenes,
+                calculatedScenes: sceneCount
+              })
+            }
+            throw new Error(`Scene limit exceeded: ${sceneCount} scenes exceeds maximum of ${sceneLimits.maxScenes} for your plan`)
+          }
+        }
+      }
+    } catch (error: any) {
+      // If limit check fails, log but don't block generation (fail open)
+      // Unless it's an explicit limit error, then throw
+      if (error.message?.includes('Scene limit exceeded')) {
+        throw error
+      }
+      console.warn('[Script Gen] Scene limit check failed:', error)
     }
 
     console.log(`[Script Gen] Beat expansion: ${beatsCount} beats → ${sceneCount} scenes (${Math.floor(sceneCount / beatsCount)} scenes per beat)`)

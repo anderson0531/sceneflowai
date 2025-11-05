@@ -3,10 +3,13 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircle, X, Zap, Film, Clapperboard, Users, ChevronDown, ChevronUp } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 export function Pricing() {
   const [isAnnual, setIsAnnual] = useState(false)
   const [expandedPlans, setExpandedPlans] = useState<Record<string, boolean>>({})
+  const [purchasing, setPurchasing] = useState(false)
+  const router = useRouter()
 
   const togglePlan = (planName: string) => {
     setExpandedPlans(prev => ({
@@ -15,7 +18,64 @@ export function Pricing() {
     }))
   }
 
+  const handleCoffeeBreakPurchase = async () => {
+    setPurchasing(true)
+    try {
+      const res = await fetch('/api/subscription/purchase-coffee-break', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      const data = await res.json()
+      
+      if (data.success) {
+        if (data.checkoutUrl) {
+          // Redirect to Stripe checkout
+          window.location.href = data.checkoutUrl
+        } else if (data.redirectUrl) {
+          // Demo mode - redirect to dashboard
+          router.push(data.redirectUrl)
+        }
+      } else {
+        alert(data.message || 'Purchase failed. Please try again.')
+      }
+    } catch (error) {
+      console.error('Purchase error:', error)
+      alert('Failed to initiate purchase. Please try again.')
+    } finally {
+      setPurchasing(false)
+    }
+  }
+
     const pricingTiers = [
+    {
+      name: 'Coffee Break',
+      monthlyPrice: 5,
+      annualPrice: 5, // Same as monthly (one-time)
+      isOneTime: true,
+      description: 'Test Drive SceneFlow AI',
+      tagline: 'For the price of a coffee ☕',
+      credits: '1,000 Credits (one-time)',
+      value: '$10 value for $5',
+      storage: '10 GB',
+      features: [
+        '1,000 credits (never expire)',
+        '50% discount ($10 value)',
+        '10 GB storage',
+        '720p max resolution',
+        'Standard AI models',
+        '3 active projects',
+        '20 scenes per project',
+        'Email support'
+      ],
+      excluded: [
+        'One-time purchase only',
+        'No BYOK access',
+        'Standard processing queue'
+      ],
+      popular: false,
+      color: 'from-amber-500 to-orange-600',
+      badge: 'Best for Testing'
+    },
     {
       name: 'Starter',
       monthlyPrice: 29,
@@ -199,25 +259,46 @@ export function Pricing() {
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold mb-3 text-white">{tier.name}</h3>
                   
-                  {tier.special === 'Trial' ? (
+                                    {tier.special === 'Trial' ? (
                     // Trial Run - Clean Value Proposition
                     <div className="mb-4">
-                      <h4 className="text-lg font-semibold text-sf-accent mb-3">{tier.headline}</h4>
+                      <h4 className="text-lg font-semibold text-sf-accent mb-3">{tier.headline}</h4>                                                            
                       <div className="flex items-baseline justify-center mb-3">
-                        <span className="text-4xl font-bold text-sf-accent">${tier.monthlyPrice}</span>
+                        <span className="text-4xl font-bold text-sf-accent">${tier.monthlyPrice}</span>                                                         
                       </div>
-                      <p className="text-gray-300 text-sm mb-2">{tier.description}</p>
-                      <p className="text-sf-primary font-medium text-sm">{tier.credits}</p>
+                      <p className="text-gray-300 text-sm mb-2">{tier.description}</p>                                                                          
+                      <p className="text-sf-primary font-medium text-sm">{tier.credits}</p>                                                                     
+                    </div>
+                  ) : tier.isOneTime ? (
+                    // Coffee Break - One-time purchase
+                    <div className="mb-4">
+                      {tier.badge && (
+                        <div className="inline-block mb-2">
+                          <div className="bg-gradient-to-r from-amber-500/20 to-orange-600/20 text-amber-400 px-3 py-1 rounded-full text-xs font-semibold border border-amber-500/30">
+                            {tier.badge}
+                          </div>
+                        </div>
+                      )}
+                      <p className="text-lg font-semibold text-amber-400 mb-2">{tier.tagline}</p>
+                      <div className="flex items-baseline justify-center mb-3">
+                        <span className="text-4xl font-bold text-amber-400">${tier.monthlyPrice}</span>                                                         
+                        <span className="text-gray-400 ml-2 text-sm">one-time</span>
+                      </div>
+                      <p className="text-gray-300 text-sm mb-1">{tier.description}</p>                                                                          
+                      <p className="text-sf-primary font-medium text-sm mb-1">{tier.credits}</p>
+                      {tier.value && (
+                        <p className="text-amber-400 font-medium text-xs">{tier.value}</p>
+                      )}
                     </div>
                   ) : (
                     // Regular pricing tiers
                     <div>
                       <div className="flex items-baseline justify-center mb-3">
-                        <span className="text-4xl font-bold text-white">${isAnnual ? tier.annualPrice : tier.monthlyPrice}</span>
+                        <span className="text-4xl font-bold text-white">${isAnnual ? tier.annualPrice : tier.monthlyPrice}</span>                               
                         <span className="text-gray-400 ml-2">/mo</span>
                       </div>
-                      <p className="text-gray-300 text-sm mb-2">{tier.description}</p>
-                      <p className="text-sf-primary font-medium text-sm">{tier.credits}</p>
+                      <p className="text-gray-300 text-sm mb-2">{tier.description}</p>                                                                          
+                      <p className="text-sf-primary font-medium text-sm">{tier.credits}</p>                                                                     
                     </div>
                   )}
                 </div>
@@ -280,21 +361,32 @@ export function Pricing() {
                   </motion.div>
                 )}
 
-                <button 
+                                <button 
                   onClick={() => {
-                    if (tier.special === 'Trial') {
+                    if (tier.isOneTime && tier.name === 'Coffee Break') {
+                      handleCoffeeBreakPurchase()
+                    } else if (tier.special === 'Trial') {
                       window.location.href = '/?signup=1&plan=trial'
                     } else {
-                      window.location.href = `/?signup=1&plan=${tier.name.toLowerCase().replace(/\s/g, '-')}`
+                      window.location.href = `/?signup=1&plan=${tier.name.toLowerCase().replace(/\s/g, '-')}`                                                   
                     }
                   }}
-                  className={`w-full py-4 rounded-lg font-semibold transition-all duration-200 ${
-                    tier.special === 'Trial'
-                      ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-sf-background'
+                  disabled={purchasing && tier.name === 'Coffee Break'}
+                  className={`w-full py-4 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${                                                               
+                    tier.isOneTime && tier.name === 'Coffee Break'
+                      ? 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white'
+                      : tier.special === 'Trial'
+                      ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-sf-background'                           
                       : 'bg-gray-700 hover:bg-gray-600 text-white'
                   }`}
                 >
-                  {tier.special === 'Trial' ? tier.cta : `Start ${tier.name} Plan`}
+                  {purchasing && tier.name === 'Coffee Break' 
+                    ? 'Processing...' 
+                    : tier.isOneTime && tier.name === 'Coffee Break'
+                    ? 'Start Testing'
+                    : tier.special === 'Trial' 
+                    ? tier.cta 
+                    : `Start ${tier.name} Plan`}                                                                             
                 </button>
               </motion.div>
             ))}

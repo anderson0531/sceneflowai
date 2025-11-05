@@ -1,4 +1,4 @@
-import { User, SubscriptionTier, CreditLedger, sequelize } from '@/models'
+import { User, SubscriptionTier, CreditLedger, Project, sequelize } from '@/models'
 import { Op } from 'sequelize'
 
 export interface SubscriptionDetails {
@@ -279,5 +279,118 @@ export class SubscriptionService {
     user.storage_used_gb = currentUsage + additionalGB
 
     await user.save()
+  }
+
+  /**
+   * Check if user can purchase one-time tier
+   */
+  static async canPurchaseOneTimeTier(userId: string, tierName: string): Promise<boolean> {
+    const user = await User.findByPk(userId)
+    if (!user) return false
+    
+    const purchased = user.one_time_tiers_purchased || []
+    return !purchased.includes(tierName)
+  }
+
+  /**
+   * Grant one-time tier credits (1,000 addon credits)
+   */
+  static async grantOneTimeTier(userId: string, tierName: string): Promise<void> {
+    return await sequelize.transaction(async (tx) => {
+      const user = await User.findByPk(userId, { transaction: tx, lock: tx.LOCK.UPDATE })
+      if (!user) throw new Error('User not found')
+      
+      // Check if already purchased
+      const purchased = user.one_time_tiers_purchased || []
+      if (purchased.includes(tierName)) {
+        throw new Error('One-time tier already purchased')
+      }
+      
+      // Add 1,000 addon credits (never expire)
+      const prevAddonCredits = Number(user.addon_credits || 0)
+      const prevTotalCredits = Number(user.credits || 0)
+      
+      user.addon_credits = prevAddonCredits + 1000
+      
+      // Update total credits
+      user.credits = Number(user.addon_credits) + Number(user.subscription_credits_monthly || 0)
+      
+      // Mark tier as purchased
+      user.one_time_tiers_purchased = [...purchased, tierName]
+      
+      await user.save({ transaction: tx })
+      
+      // Log credit grant
+      await CreditLedger.create({
+        user_id: userId,
+        delta_credits: 1000,
+        prev_balance: prevTotalCredits,
+        new_balance: Number(user.credits),
+        reason: 'addon_purchase',
+        credit_type: 'addon',
+        ref: `coffee_break_purchase`,
+        meta: { tier: tierName, amount_paid: 5.00 }
+      } as any, { transaction: tx })
+    })
+  }
+
+  /**
+   * Check project limits for user's tier
+   */
+  static async checkProjectLimits(userId: string): Promise<{ 
+    canCreateProject: boolean
+    currentProjects: number
+    maxProjects: number | null
+  }> {
+    const subscription = await this.getUserSubscription(userId)
+    const tier = subscription.tier
+    
+    if (!tier?.max_projects) {
+      return { canCreateProject: true, currentProjects: 0, maxProjects: null }
+    }
+    
+    const currentProjects = await Project.count({ 
+      where: { 
+        user_id: userId, 
+        status: { [Op.in]: ['draft', 'in_progress'] } 
+      } 
+    })
+    
+    return {
+      canCreateProject: currentProjects < tier.max_projects,
+      currentProjects,
+      maxProjects: tier.max_projects
+    }
+  }
+
+  /**
+   * Check scene limits for user's tier within a project
+   */
+  static async checkSceneLimits(userId: string, projectId: string): Promise<{
+    canAddScene: boolean
+    currentScenes: number
+    maxScenes: number | null
+  }> {
+    const subscription = await this.getUserSubscription(userId)
+    const tier = subscription.tier
+    
+    if (!tier?.max_scenes_per_project) {
+      return { canAddScene: true, currentScenes: 0, maxScenes: null }
+    }
+    
+    const project = await Project.findByPk(projectId)
+    if (!project) throw new Error('Project not found')
+    
+    // Scenes are stored in metadata.script.scenes or metadata.visionPhase.scenes
+    const scenes = project.metadata?.script?.scenes || 
+                   project.metadata?.visionPhase?.scenes || 
+                   []
+    const currentScenes = Array.isArray(scenes) ? scenes.length : 0
+    
+    return {
+      canAddScene: currentScenes < tier.max_scenes_per_project,
+      currentScenes,
+      maxScenes: tier.max_scenes_per_project
+    }
   }
 }

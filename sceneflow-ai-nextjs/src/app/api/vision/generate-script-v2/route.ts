@@ -3,6 +3,7 @@ import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { v4 as uuidv4 } from 'uuid'
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
+import { SubscriptionService } from '../../../../services/SubscriptionService'
 
 export const runtime = 'nodejs'
 export const maxDuration = 600  // 10 minutes for large script generation (requires Vercel Pro)
@@ -60,7 +61,35 @@ export async function POST(request: NextRequest) {
         const duration = project.duration || 300
         const minScenes = Math.floor(duration / 90)
         const maxScenes = Math.floor(duration / 20)
-        const suggestedScenes = Math.ceil(duration / 53)
+        let suggestedScenes = Math.ceil(duration / 53)
+        
+        // Check scene limits for user's subscription tier
+        try {
+          const userId = (project as any).user_id
+          if (userId) {
+            const sceneLimits = await SubscriptionService.checkSceneLimits(userId, projectId)
+            if (sceneLimits.maxScenes !== null) {
+              // User has a scene limit (Coffee Break tier)
+              if (suggestedScenes > sceneLimits.maxScenes) {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+                  type: 'error', 
+                  error: 'Scene limit exceeded',
+                  message: `Your plan allows max ${sceneLimits.maxScenes} scenes per project. Suggested scenes: ${suggestedScenes}. Please reduce project duration or upgrade your plan.`,
+                  currentScenes: sceneLimits.currentScenes,
+                  maxScenes: sceneLimits.maxScenes,
+                  suggestedScenes
+                })}\n\n`))
+                controller.close()
+                return
+              }
+              // Clamp suggested scenes to max
+              suggestedScenes = Math.min(suggestedScenes, sceneLimits.maxScenes)
+            }
+          }
+        } catch (error) {
+          // If limit check fails, log but don't block generation (fail open)
+          console.warn('[Script Gen V2] Scene limit check failed:', error)
+        }
         
         console.log(`[Script Gen V2] Target: ${duration}s - Scene range: ${minScenes}-${maxScenes} (suggested: ${suggestedScenes})`)
 

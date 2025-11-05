@@ -23,12 +23,13 @@ export interface UserAttributes {
   storage_used_gb: number
   stripe_customer_id?: string | null
   stripe_subscription_id?: string | null
+  one_time_tiers_purchased: string[]
   last_login?: Date
   created_at: Date
   updated_at: Date
 }
 
-export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'created_at' | 'updated_at' | 'is_active' | 'email_verified' | 'subscription_status' | 'subscription_credits_monthly' | 'addon_credits' | 'storage_used_gb'> {}
+export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'created_at' | 'updated_at' | 'is_active' | 'email_verified' | 'subscription_status' | 'subscription_credits_monthly' | 'addon_credits' | 'storage_used_gb' | 'one_time_tiers_purchased'> {}
 
 export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {                                                             
   public id!: string
@@ -51,6 +52,7 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
   public storage_used_gb!: number
   public stripe_customer_id?: string | null
   public stripe_subscription_id?: string | null
+  public one_time_tiers_purchased!: string[]
   public last_login?: Date
   public created_at!: Date
   public updated_at!: Date
@@ -171,6 +173,11 @@ User.init(
     stripe_subscription_id: {
       type: DataTypes.STRING(255),
       allowNull: true,
+    },
+    one_time_tiers_purchased: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      allowNull: false,
+      defaultValue: [],
     },
     last_login: {
       type: DataTypes.DATE,
