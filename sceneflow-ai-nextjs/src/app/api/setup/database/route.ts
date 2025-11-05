@@ -20,6 +20,7 @@ import CollabRecommendation from '@/models/CollabRecommendation'
 import CollabChatMessage from '@/models/CollabChatMessage'
 import RateCard from '@/models/RateCard'
 import SubscriptionTier from '@/models/SubscriptionTier'
+import { migrateUsersSubscriptionColumns } from '../../../../scripts/migrate-users-subscription-columns'
 
 export const dynamic = 'force-dynamic'
 
@@ -49,6 +50,16 @@ export async function POST(request: NextRequest) {
     logs.push('4. Creating User table (with alter to add missing columns)...')
     await User.sync({ alter: true }) // Use alter: true to add missing columns safely
     logs.push('✅ User table created/updated')
+    
+    // Also run explicit migration to ensure all subscription columns are added
+    logs.push('4a. Running users subscription columns migration...')
+    try {
+      await migrateUsersSubscriptionColumns()
+      logs.push('✅ Users subscription columns migration completed')
+    } catch (error: any) {
+      logs.push(`⚠️ Migration note: ${error.message}`)
+      // Don't fail the setup if migration has issues (columns might already exist)
+    }
     
     logs.push('5. Creating Project table...')
     await Project.sync({ force: false })
