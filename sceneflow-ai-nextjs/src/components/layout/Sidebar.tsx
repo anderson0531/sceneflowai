@@ -89,9 +89,9 @@ const workflowNav = [
 ]
 
 const settingsNav = [
-  { name: 'Profile', href: '/dashboard', icon: User },
-  { name: 'BYOK Settings', href: '/dashboard', icon: Key },
-  { name: 'Billing & Credits', href: '/dashboard', icon: CreditCard },
+  { name: 'Profile', href: '/dashboard/settings/profile', icon: User },
+  { name: 'BYOK Settings', href: '/dashboard/settings/byok', icon: Key },
+  { name: 'Billing & Credits', href: '/dashboard/settings/billing', icon: CreditCard },
 ]
 
 export function Sidebar() {
