@@ -19,7 +19,7 @@ import { ScriptEditorModal } from './ScriptEditorModal'
 import { toast } from 'sonner'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType } from '@/lib/types/reports'
-import { VideoCostEstimator } from './VideoCostEstimator'
+import { ProjectCostCalculator } from './ProjectCostCalculator'
 
 interface ScriptPanelProps {
   script: any
@@ -1050,12 +1050,12 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               </div>
             </div>
             
-            {/* Video Cost Estimator */}
+            {/* Project Cost Calculator */}
             {scenes.length > 0 && (
               <div className="mt-4">
-                <VideoCostEstimator 
-                  clipCount={Math.ceil(scenes.reduce((total: number, s: any) => total + calculateSceneDuration(s), 0) / 8)}
-                  provider="runway_gen4"
+                <ProjectCostCalculator 
+                  scenes={scenes}
+                  characters={characters}
                   hasBYOK={hasBYOK}
                   onOpenBYOK={onOpenBYOK}
                 />
