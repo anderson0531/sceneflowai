@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { isDemoMode } from '@/lib/env'
 
 // Use relative import to avoid path alias issues in production builds
-import { CreditService } from '../../../../services/CreditService'
+import { CreditService } from '../../../../../services/CreditService'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
