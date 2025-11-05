@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { X, Play, Pause, SkipBack, SkipForward, Volume2, Subtitles, Download } from 'lucide-react'
+import { X, Play, Pause, SkipBack, SkipForward, Volume2, Subtitles, Download, Loader } from 'lucide-react'
 import { SceneDisplay } from './SceneDisplay'
 import { PlaybackControls } from './PlaybackControls'
 import { VoiceAssignmentPanel } from './VoiceAssignmentPanel'
@@ -80,6 +80,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [currentAudioUrl, setCurrentAudioUrl] = useState<string | null>(null)
   const [isLoadingAudio, setIsLoadingAudio] = useState(false)
+  const [isRendering, setIsRendering] = useState(false)
   const audioMixerRef = useRef<WebAudioMixer | null>(null)
   
   // Initialize Web Audio Mixer
@@ -831,6 +832,109 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     }))
   }
 
+  const handleDownloadMP4 = async () => {
+    setIsRendering(true)
+    
+    try {
+      // Prepare scene data for Creatomate
+      const sceneData = scenes.map((scene: any, idx: number) => {
+        // Build dialogue array with start times
+        const dialogue: Array<{ url: string; startTime: number }> = []
+        if (scene.dialogueAudio && Array.isArray(scene.dialogueAudio)) {
+          let dialogueTime = 0
+          // Estimate narration duration for dialogue timing (5 seconds default)
+          if (scene.narrationAudioUrl) {
+            dialogueTime = 5 // Approximate narration duration
+          }
+          
+          scene.dialogueAudio.forEach((d: any) => {
+            if (d.audioUrl) {
+              dialogue.push({
+                url: d.audioUrl,
+                startTime: dialogueTime
+              })
+              dialogueTime += 3 // Approximate 3 seconds per dialogue line
+            }
+          })
+        }
+        
+        // Build SFX array with start times
+        const sfx: Array<{ url: string; startTime: number }> = []
+        if (scene.sfxAudio && Array.isArray(scene.sfxAudio)) {
+          scene.sfxAudio.forEach((sfxUrl: string, sfxIdx: number) => {
+            if (sfxUrl) {
+              const sfxDef = scene.sfx?.[sfxIdx] || {}
+              const sfxTime = sfxDef.time !== undefined ? sfxDef.time : 0
+              sfx.push({
+                url: sfxUrl,
+                startTime: sfxTime
+              })
+            }
+          })
+        }
+        
+        return {
+          sceneNumber: idx + 1,
+          imageUrl: scene.imageUrl || '/images/placeholders/placeholder.svg',
+          duration: scene.duration || 5,
+          audioTracks: {
+            narration: scene.narrationAudioUrl,
+            dialogue: dialogue.length > 0 ? dialogue : undefined,
+            sfx: sfx.length > 0 ? sfx : undefined,
+            music: scene.musicAudio
+          },
+          kenBurnsIntensity: playerState.kenBurnsIntensity
+        }
+      })
+      
+      // Call Creatomate render API
+      const response = await fetch('/api/screening-room/render', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scenes: sceneData,
+          options: {
+            width: 1920,
+            height: 1080,
+            fps: 30,
+            quality: 'high',
+            format: 'mp4'
+          },
+          projectTitle: script?.title || 'Screening Room'
+        })
+      })
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Render failed' }))
+        throw new Error(error.message || `Render failed: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      
+      if (!data.success || !data.videoUrl) {
+        throw new Error(data.message || 'Render failed: No video URL returned')
+      }
+      
+      // Download video from Creatomate URL
+      const a = document.createElement('a')
+      a.href = data.videoUrl
+      a.download = `${(script?.title || 'screening-room').replace(/[^a-z0-9]/gi, '-')}.mp4`
+      a.target = '_blank'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      
+      // Show success message
+      alert(`Video rendered successfully! ${data.creditsCharged ? `(${data.creditsCharged} credits charged)` : ''}`)
+      
+    } catch (error) {
+      console.error('Render failed:', error)
+      alert(`Failed to render video: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setIsRendering(false)
+    }
+  }
+
   const currentScene = scenes[playerState.currentSceneIndex]
 
   return (
@@ -881,12 +985,22 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
             ))}
           </select>
           <button
-            disabled
+            onClick={handleDownloadMP4}
+            disabled={isRendering}
             className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            title="Coming Soon: Export to MP4"
+            title={isRendering ? "Rendering..." : "Export to MP4"}
           >
-            <Download className="w-5 h-5" />
-            <span className="hidden sm:inline text-sm">MP4</span>
+            {isRendering ? (
+              <>
+                <Loader className="w-5 h-5 animate-spin" />
+                <span className="hidden sm:inline text-sm">Rendering...</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-5 h-5" />
+                <span className="hidden sm:inline text-sm">MP4</span>
+              </>
+            )}
           </button>
           <button
             onClick={onClose}

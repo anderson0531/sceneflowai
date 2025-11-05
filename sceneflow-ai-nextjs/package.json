@@ -44,6 +44,7 @@
                 "bcryptjs": "^2.4.3",
                 "class-variance-authority": "^0.7.1",
                 "clsx": "^2.1.1",
+                "creatomate": "^1.2.1",
                 "dotenv": "^17.2.1",
                 "fast-xml-parser": "^5.2.5",
                 "firebase": "^10.13.1",
