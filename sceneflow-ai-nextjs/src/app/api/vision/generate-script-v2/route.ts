@@ -626,7 +626,7 @@ Synopsis: ${treatment.synopsis || treatment.content}
 ${characterList}
 
 CRITICAL CHARACTER RULES:
-- Use ONLY these approved characters: ${characters.map((c: any) => c.name).join(', ')}                                                                          
+- Use ONLY these approved characters: ${characters.map((c: any) => c.name).join(', ')}
 - Names are in Title Case - use them EXACTLY
 - NO abbreviations: "Brian Anderson Sr" not "Brian"
 - Match character names exactly as listed in the character list

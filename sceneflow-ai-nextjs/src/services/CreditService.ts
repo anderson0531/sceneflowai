@@ -1,9 +1,73 @@
 import { sequelize, AIPricing, CreditLedger, User, AIUsage } from '@/models'
+import { migrateUsersSubscriptionColumns } from '@/lib/database/migrateUsersSubscription'
 
 export const CREDIT_VALUE_USD = Number(process.env.CREDIT_VALUE_USD ?? '0.0001')
 export const MARKUP_MULTIPLIER = Number(process.env.MARKUP_MULTIPLIER ?? '4')
 
 export type PricingCategory = 'text' | 'images' | 'tts' | 'whisper' | 'other'
+
+// Cache to prevent multiple concurrent migrations
+let migrationInProgress = false
+let migrationCompleted = false
+
+/**
+ * Helper to check if migration is needed and run it automatically
+ * This catches the "column does not exist" error and runs the migration once
+ */
+async function ensureMigrationRan(): Promise<void> {
+  // If migration already completed, skip
+  if (migrationCompleted) return
+  
+  // If migration is in progress, wait for it
+  if (migrationInProgress) {
+    // Wait up to 10 seconds for migration to complete
+    for (let i = 0; i < 100; i++) {
+      await new Promise(resolve => setTimeout(resolve, 100))
+      if (migrationCompleted) return
+    }
+    throw new Error('Migration timeout - please try again')
+  }
+
+  // Run migration
+  migrationInProgress = true
+  try {
+    console.log('[CreditService] Auto-running users subscription columns migration...')
+    await migrateUsersSubscriptionColumns()
+    migrationCompleted = true
+    console.log('[CreditService] Migration completed successfully')
+  } catch (error: any) {
+    migrationInProgress = false
+    // If columns already exist, mark as completed
+    if (error.message?.includes('already exists') || error.message?.includes('duplicate')) {
+      migrationCompleted = true
+      return
+    }
+    console.error('[CreditService] Migration failed:', error)
+    throw error
+  } finally {
+    migrationInProgress = false
+  }
+}
+
+/**
+ * Wrapper for User.findByPk that auto-runs migration if needed
+ */
+async function findUserWithAutoMigration(userId: string, options?: any) {
+  try {
+    return await User.findByPk(userId, options)
+  } catch (error: any) {
+    // Check if error is due to missing subscription columns
+    if (error?.parent?.code === '42703' || // PostgreSQL undefined_column
+        error?.message?.includes('does not exist') ||
+        error?.message?.includes('subscription_tier_id')) {
+      console.log('[CreditService] Detected missing subscription columns, running migration...')
+      await ensureMigrationRan()
+      // Retry the query after migration
+      return await User.findByPk(userId, options)
+    }
+    throw error
+  }
+}
 
 export class CreditService {
   static async getPricing(provider: 'openai', category: PricingCategory, model: string, variant: string) {
@@ -21,13 +85,15 @@ export class CreditService {
   }
 
   static async ensureCredits(userId: string, minCredits: number): Promise<boolean> {
-    const user = await User.findByPk(userId)
+    const user = await findUserWithAutoMigration(userId)
     if (!user) throw new Error('User not found')
     return Number(user.credits ?? 0) >= minCredits
   }
 
   static async charge(userId: string, chargeCredits: number, reason: CreditLedger['reason'], ref?: string | null, meta?: any) {
     if (chargeCredits <= 0) return
+    // Ensure migration is run before starting transaction
+    await ensureMigrationRan()
     return await sequelize.transaction(async (tx) => {
       const user = await User.findByPk(userId, { transaction: tx, lock: tx.LOCK.UPDATE })
       if (!user) throw new Error('User not found')
@@ -69,7 +135,7 @@ export class CreditService {
     addon_credits: number
     total_credits: number
   }> {
-    const user = await User.findByPk(userId)
+    const user = await findUserWithAutoMigration(userId)
     if (!user) throw new Error('User not found')
 
     return {
@@ -101,6 +167,8 @@ export class CreditService {
       }
     }
 
+    // Ensure migration is run before starting transaction
+    await ensureMigrationRan()
     return await sequelize.transaction(async (tx) => {
       const user = await User.findByPk(userId, { transaction: tx, lock: tx.LOCK.UPDATE })
       if (!user) throw new Error('User not found')
