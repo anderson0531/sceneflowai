@@ -344,49 +344,18 @@ export function ScenePromptBuilder({
     setLocalIsGenerating(true)
     
     // Pass full character objects (not just names) so API gets referenceImageGCS
-    // Use exact name match to ensure correct character is selected
     const selectedCharacterObjects = structure.characters
       .map(charName => {
-        // Try exact name match first (case-insensitive)
-        const found = availableCharacters.find(c => 
-          c.name.toLowerCase().trim() === charName.toLowerCase().trim()
-        )
-        if (found) {
-          console.log(`[Prompt Builder] Matched character: "${charName}" → "${found.name}" (ID: ${found.id || 'no ID'})`)
-          return found
-        }
-        console.warn(`[Prompt Builder] Character "${charName}" not found in availableCharacters`)
-        return null
+        const found = availableCharacters.find(c => c.name === charName)
+        return found
       })
       .filter(Boolean)
-    
-    // Validate that character objects include reference images
-    const charactersWithReferenceImages = selectedCharacterObjects.map((char: any) => {
-      if (!char) return null
-      
-      // Log character data for debugging
-      console.log('[Prompt Builder] Character object:', {
-        name: char.name,
-        hasReferenceImage: !!char.referenceImage,
-        hasReferenceImageGCS: !!char.referenceImageGCS,
-        referenceImageGCS: char.referenceImageGCS ? char.referenceImageGCS.substring(0, 60) + '...' : 'none'
-      })
-      
-      // Validate that reference image data exists
-      if (!char.referenceImageGCS && !char.referenceImage) {
-        console.warn(`[Prompt Builder] WARNING: Character "${char.name}" missing reference image data`)
-      }
-      
-      return char
-    }).filter(Boolean)
-    
-    console.log(`[Prompt Builder] Sending ${charactersWithReferenceImages.length} character(s) with reference images`)
     
     // Pass prompt builder selections to API
     // Use optimized prompt, but allow user edits
     const finalPrompt = getFinalPrompt()
     const promptData = {
-      characters: charactersWithReferenceImages,
+      characters: selectedCharacterObjects,
       customPrompt: finalPrompt,           // Final prompt (optimized + user edits)
       artStyle: structure.artStyle,         // Selected art style
       shotType: structure.shotType,        // Camera framing

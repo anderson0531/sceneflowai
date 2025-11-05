@@ -115,33 +115,16 @@ export async function POST(req: NextRequest) {
               if (byId) return byId
             }
             
-            // Fallback to name match (exact match only)
+            // Fallback to name match
             if (char.name) {
               const byName = allCharacters.find((c: any) => c.name === char.name)
-              if (byName) {
-                console.log(`[Scene Image] Matched character by name: "${char.name}" → "${byName.name}" (ID: ${byName.id})`)
-                return byName
-              } else {
-                console.warn(`[Scene Image] Character "${char.name}" not found in database`)
-              }
+              if (byName) return byName
             }
             
             return null
           }).filter((c: any) => c != null)
           
           console.log('[Scene Image] Reloaded character objects from DB:', characterObjects.length)
-          
-          // Validate that all characters have reference images after reload
-          characterObjects.forEach((char: any, idx: number) => {
-            if (!char.referenceImageGCS && !char.referenceImage) {
-              console.warn(`[Scene Image] WARNING: Character "${char.name}" (index ${idx}) missing reference image after DB reload`)
-            } else {
-              console.log(`[Scene Image] Character "${char.name}" has reference image:`, {
-                hasReferenceImage: !!char.referenceImage,
-                hasReferenceImageGCS: !!char.referenceImageGCS
-              })
-            }
-          })
         }
       } else if (projectId && typeof sceneIndex === 'number') {
         // AUTO-DETECT: If no characters provided, try to extract them from the scene

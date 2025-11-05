@@ -2383,18 +2383,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (selectedCharacters.characters && Array.isArray(selectedCharacters.characters)) {
           promptData = selectedCharacters  // Contains customPrompt, artStyle, shotType, etc.
           sceneCharacters = selectedCharacters.characters
-          
-          // Log character objects from prompt builder for debugging
-          console.log('[Vision Page] Received characters from Prompt Builder:', sceneCharacters.length)
-          sceneCharacters.forEach((char: any, idx: number) => {
-            console.log(`[Vision Page] Character ${idx + 1}:`, {
-              name: char?.name,
-              hasReferenceImage: !!char?.referenceImage,
-              hasReferenceImageGCS: !!char?.referenceImageGCS,
-              referenceImageGCS: char?.referenceImageGCS ? char.referenceImageGCS.substring(0, 60) + '...' : 'none',
-              allKeys: char ? Object.keys(char).join(', ') : 'null'
-            })
-          })
         } else if (Array.isArray(selectedCharacters)) {
           // Legacy: Just character array
           sceneCharacters = selectedCharacters
