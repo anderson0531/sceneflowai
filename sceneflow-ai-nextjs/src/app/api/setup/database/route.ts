@@ -37,53 +37,54 @@ export async function POST(request: NextRequest) {
     // Create tables in dependency order
     // Parent tables first, then child tables
     
-    logs.push('2. Creating User table...')
-    await User.sync({ force: false })
-    logs.push('✅ User table created')
+    // SubscriptionTier must be created before User (User has FK to SubscriptionTier)
+    logs.push('2. Creating SubscriptionTier table...')
+    await SubscriptionTier.sync({ force: false })
+    logs.push('✅ SubscriptionTier table created')
     
-    logs.push('3. Creating Project table...')
-    await Project.sync({ force: false })
-    logs.push('✅ Project table created')
-    
-    logs.push('4. Creating UserProviderConfig table...')
-    await UserProviderConfig.sync({ force: false })
-    logs.push('✅ UserProviderConfig table created')
-    
-    logs.push('5. Creating AIPricing table...')
-    await AIPricing.sync({ force: false })
-    logs.push('✅ AIPricing table created')
-    
-    logs.push('6. Creating CreditLedger table...')
-    await CreditLedger.sync({ force: false })
-    logs.push('✅ CreditLedger table created')
-    
-    logs.push('7. Creating AIUsage table...')
-    await AIUsage.sync({ force: false })
-    logs.push('✅ AIUsage table created')
-    
-    logs.push('8. Creating APIUsageLog table...')
-    await APIUsageLog.sync({ force: false })
-    logs.push('✅ APIUsageLog table created')
-    
-    logs.push('9. Creating PlatformModel table...')
-    await PlatformModel.sync({ force: false })
-    logs.push('✅ PlatformModel table created')
-    
-    logs.push('10. Creating PromptTemplate table...')
-    await PromptTemplate.sync({ force: false })
-    logs.push('✅ PromptTemplate table created')
-    
-    logs.push('11. Creating FeatureUpdate table...')
-    await FeatureUpdate.sync({ force: false })
-    logs.push('✅ FeatureUpdate table created')
-    
-    logs.push('12. Creating RateCard table...')
+    logs.push('3. Creating RateCard table...')
     await RateCard.sync({ force: false })
     logs.push('✅ RateCard table created')
     
-    logs.push('13. Creating SubscriptionTier table...')
-    await SubscriptionTier.sync({ force: false })
-    logs.push('✅ SubscriptionTier table created')
+    logs.push('4. Creating User table (with alter to add missing columns)...')
+    await User.sync({ alter: true }) // Use alter: true to add missing columns safely
+    logs.push('✅ User table created/updated')
+    
+    logs.push('5. Creating Project table...')
+    await Project.sync({ force: false })
+    logs.push('✅ Project table created')
+    
+    logs.push('6. Creating UserProviderConfig table...')
+    await UserProviderConfig.sync({ force: false })
+    logs.push('✅ UserProviderConfig table created')
+    
+    logs.push('7. Creating AIPricing table...')
+    await AIPricing.sync({ force: false })
+    logs.push('✅ AIPricing table created')
+    
+    logs.push('8. Creating CreditLedger table...')
+    await CreditLedger.sync({ force: false })
+    logs.push('✅ CreditLedger table created')
+    
+    logs.push('9. Creating AIUsage table...')
+    await AIUsage.sync({ force: false })
+    logs.push('✅ AIUsage table created')
+    
+    logs.push('10. Creating APIUsageLog table...')
+    await APIUsageLog.sync({ force: false })
+    logs.push('✅ APIUsageLog table created')
+    
+    logs.push('11. Creating PlatformModel table...')
+    await PlatformModel.sync({ force: false })
+    logs.push('✅ PlatformModel table created')
+    
+    logs.push('12. Creating PromptTemplate table...')
+    await PromptTemplate.sync({ force: false })
+    logs.push('✅ PromptTemplate table created')
+    
+    logs.push('13. Creating FeatureUpdate table...')
+    await FeatureUpdate.sync({ force: false })
+    logs.push('✅ FeatureUpdate table created')
     
     // Collaboration tables - parent first
     logs.push('14. Creating CollabSession table...')
