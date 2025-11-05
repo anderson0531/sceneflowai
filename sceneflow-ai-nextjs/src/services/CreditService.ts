@@ -1,5 +1,6 @@
 import { sequelize, AIPricing, CreditLedger, User, AIUsage } from '@/models'
 import { migrateUsersSubscriptionColumns } from '@/lib/database/migrateUsersSubscription'
+import { migrateCreditLedger } from '@/lib/database/migrateCreditLedger'
 import { resolveUser } from '@/lib/userHelper'
 
 export const CREDIT_VALUE_USD = Number(process.env.CREDIT_VALUE_USD ?? '0.0001')
@@ -10,6 +11,8 @@ export type PricingCategory = 'text' | 'images' | 'tts' | 'whisper' | 'other'
 // Cache to prevent multiple concurrent migrations
 let migrationInProgress = false
 let migrationCompleted = false
+let creditLedgerMigrationInProgress = false
+let creditLedgerMigrationCompleted = false
 
 /**
  * Helper to check if migration is needed and run it automatically
@@ -47,6 +50,46 @@ async function ensureMigrationRan(): Promise<void> {
     throw error
   } finally {
     migrationInProgress = false
+  }
+}
+
+/**
+ * Helper to ensure credit_ledger table has credit_type column
+ */
+async function ensureCreditLedgerMigrationRan(): Promise<void> {
+  // If migration already completed, skip
+  if (creditLedgerMigrationCompleted) return
+  
+  // If migration is in progress, wait for it
+  if (creditLedgerMigrationInProgress) {
+    // Wait up to 10 seconds for migration to complete
+    for (let i = 0; i < 100; i++) {
+      await new Promise(resolve => setTimeout(resolve, 100))
+      if (creditLedgerMigrationCompleted) return
+    }
+    // Don't throw error, just log warning
+    console.warn('[CreditService] Credit ledger migration timeout')
+    return
+  }
+
+  // Run migration
+  creditLedgerMigrationInProgress = true
+  try {
+    console.log('[CreditService] Auto-running credit_ledger migration...')
+    await migrateCreditLedger()
+    creditLedgerMigrationCompleted = true
+    console.log('[CreditService] Credit ledger migration completed successfully')
+  } catch (error: any) {
+    creditLedgerMigrationInProgress = false
+    // If column already exists, mark as completed
+    if (error.message?.includes('already exists') || error.message?.includes('duplicate')) {
+      creditLedgerMigrationCompleted = true
+      return
+    }
+    console.error('[CreditService] Credit ledger migration failed:', error)
+    // Don't throw - let the code continue and handle gracefully
+  } finally {
+    creditLedgerMigrationInProgress = false
   }
 }
 
@@ -127,15 +170,38 @@ export class CreditService {
       const next = prev - chargeCredits
       user.credits = next
       await user.save({ transaction: tx })
-      await CreditLedger.create({
-        user_id: userUuid,
-        delta_credits: -chargeCredits,
-        prev_balance: prev,
-        new_balance: next,
-        reason,
-        ref: ref || null,
-        meta: meta || null,
-      } as any, { transaction: tx })
+
+      // Ensure credit_ledger migration is run
+      await ensureCreditLedgerMigrationRan()
+
+      // Log the charge in credit ledger
+      try {
+        await CreditLedger.create({
+          user_id: userUuid,
+          delta_credits: -chargeCredits,
+          prev_balance: prev,
+          new_balance: next,
+          reason,
+          ref: ref || null,
+          meta: meta || null,
+        } as any, { transaction: tx })
+      } catch (error: any) {
+        // If credit_type column doesn't exist, create without it
+        if (error.message?.includes('credit_type') || error.message?.includes('does not exist')) {
+          console.warn('[CreditService] credit_type column not available, creating ledger entry without it')
+          await CreditLedger.create({
+            user_id: userUuid,
+            delta_credits: -chargeCredits,
+            prev_balance: prev,
+            new_balance: next,
+            reason,
+            ref: ref || null,
+            meta: meta || null,
+          } as any, { transaction: tx })
+        } else {
+          throw error
+        }
+      }
       return { prev, next }
     })
   }
@@ -234,6 +300,9 @@ export class CreditService {
 
       await user.save({ transaction: tx })
 
+      // Ensure credit_ledger migration is run
+      await ensureCreditLedgerMigrationRan()
+
       // Determine credit type for ledger
       const creditType: 'addon' | 'subscription' | null = 
         usedAddon > 0 && usedSubscription === 0 ? 'addon' :
@@ -241,21 +310,45 @@ export class CreditService {
         null // Mixed usage
 
       // Log the charge in credit ledger
-      await CreditLedger.create({
-        user_id: userUuid,
-        delta_credits: -credits,
-        prev_balance: prevTotal,
-        new_balance: Number(user.credits),
-        reason,
-        credit_type: creditType,
-        ref: ref || null,
-        meta: {
-          ...(meta || {}),
-          hasBYOK,
-          usedAddon,
-          usedSubscription,
-        },
-      } as any, { transaction: tx })
+      try {
+        await CreditLedger.create({
+          user_id: userUuid,
+          delta_credits: -credits,
+          prev_balance: prevTotal,
+          new_balance: Number(user.credits),
+          reason,
+          credit_type: creditType,
+          ref: ref || null,
+          meta: {
+            ...(meta || {}),
+            hasBYOK,
+            usedAddon,
+            usedSubscription,
+          },
+        } as any, { transaction: tx })
+      } catch (error: any) {
+        // If credit_type column doesn't exist, create without it
+        if (error.message?.includes('credit_type') || error.message?.includes('does not exist')) {
+          console.warn('[CreditService] credit_type column not available, creating ledger entry without it')
+          await CreditLedger.create({
+            user_id: userUuid,
+            delta_credits: -credits,
+            prev_balance: prevTotal,
+            new_balance: Number(user.credits),
+            reason,
+            ref: ref || null,
+            meta: {
+              ...(meta || {}),
+              hasBYOK,
+              usedAddon,
+              usedSubscription,
+              credit_type: creditType, // Store in meta as fallback
+            },
+          } as any, { transaction: tx })
+        } else {
+          throw error
+        }
+      }
 
       return {
         prev: prevTotal,
@@ -304,21 +397,47 @@ export class CreditService {
 
       await user.save({ transaction: tx })
 
+      // Ensure credit_ledger migration is run
+      await ensureCreditLedgerMigrationRan()
+
       // Log the grant in credit ledger
-      await CreditLedger.create({
-        user_id: userUuid,
-        delta_credits: credits,
-        prev_balance: prevTotal,
-        new_balance: Number(user.credits),
-        reason: 'adjustment' as CreditLedger['reason'],
-        credit_type: 'addon',
-        ref: ref || null,
-        meta: {
-          ...(meta || {}),
-          reason,
-          grantedBy: 'admin',
-        },
-      } as any, { transaction: tx })
+      try {
+        await CreditLedger.create({
+          user_id: userUuid,
+          delta_credits: credits,
+          prev_balance: prevTotal,
+          new_balance: Number(user.credits),
+          reason: 'adjustment' as CreditLedger['reason'],
+          credit_type: 'addon',
+          ref: ref || null,
+          meta: {
+            ...(meta || {}),
+            reason,
+            grantedBy: 'admin',
+          },
+        } as any, { transaction: tx })
+      } catch (error: any) {
+        // If credit_type column doesn't exist, create without it
+        if (error.message?.includes('credit_type') || error.message?.includes('does not exist')) {
+          console.warn('[CreditService] credit_type column not available, creating ledger entry without it')
+          await CreditLedger.create({
+            user_id: userUuid,
+            delta_credits: credits,
+            prev_balance: prevTotal,
+            new_balance: Number(user.credits),
+            reason: 'adjustment' as CreditLedger['reason'],
+            ref: ref || null,
+            meta: {
+              ...(meta || {}),
+              reason,
+              grantedBy: 'admin',
+              credit_type: 'addon', // Store in meta as fallback
+            },
+          } as any, { transaction: tx })
+        } else {
+          throw error
+        }
+      }
 
       return {
         prev: prevTotal,

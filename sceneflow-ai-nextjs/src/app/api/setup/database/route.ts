@@ -21,6 +21,7 @@ import CollabChatMessage from '@/models/CollabChatMessage'
 import RateCard from '@/models/RateCard'
 import SubscriptionTier from '@/models/SubscriptionTier'
 import { migrateUsersSubscriptionColumns } from '@/lib/database/migrateUsersSubscription'
+import { migrateCreditLedger } from '@/lib/database/migrateCreditLedger'
 
 export const dynamic = 'force-dynamic'
 
@@ -59,6 +60,16 @@ export async function POST(request: NextRequest) {
     } catch (error: any) {
       logs.push(`⚠️ Migration note: ${error.message}`)
       // Don't fail the setup if migration has issues (columns might already exist)
+    }
+    
+    // Run credit_ledger migration after CreditLedger table is created
+    logs.push('4b. Running credit_ledger migration...')
+    try {
+      await migrateCreditLedger()
+      logs.push('✅ Credit ledger migration completed')
+    } catch (error: any) {
+      logs.push(`⚠️ Credit ledger migration note: ${error.message}`)
+      // Don't fail the setup if migration has issues (column might already exist)
     }
     
     logs.push('5. Creating Project table...')
