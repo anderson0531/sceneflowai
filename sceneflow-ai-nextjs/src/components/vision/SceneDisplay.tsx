@@ -25,67 +25,67 @@ export function SceneDisplay({ scene, sceneNumber, totalScenes, isLoading, showC
     )
   }
 
-    // Fixed animation duration for consistent Ken Burns effect
+    // Fixed animation duration for consistent pan effect
   // Use shorter durations for more visible animation
   const animationDuration = kenBurnsIntensity === 'subtle' ? 15 : 
                            kenBurnsIntensity === 'dramatic' ? 10 : 12
 
   // Get animation class name based on intensity
-  const animationClass = `ken-burns-${kenBurnsIntensity}`
+  const animationClass = `pan-${kenBurnsIntensity}`
 
   return (
     <>
-      {/* Ken Burns Animation Keyframes */}
+      {/* Pan Animation Keyframes */}
       <style jsx>{`
-        @keyframes kenBurnsSubtle {
+        @keyframes panSubtle {
           from {
-            transform: scale(1) translate(0, 0);
+            transform: translate(0, 0);
           }
           to {
-            transform: scale(1.08) translate(-2%, -2%);
+            transform: translate(-3%, -3%);
           }
         }
 
-        @keyframes kenBurnsMedium {
+        @keyframes panMedium {
           from {
-            transform: scale(1) translate(0, 0);
+            transform: translate(0, 0);
           }
           to {
-            transform: scale(1.12) translate(-3%, -3%);
+            transform: translate(-5%, -5%);
           }
         }
 
-        @keyframes kenBurnsDramatic {
+        @keyframes panDramatic {
           from {
-            transform: scale(1) translate(0, 0);
+            transform: translate(0, 0);
           }
           to {
-            transform: scale(1.2) translate(-5%, -5%);
+            transform: translate(-8%, -8%);
           }
         }
 
-        .ken-burns-subtle {
-          animation: kenBurnsSubtle ${animationDuration}s ease-in-out infinite alternate;
+        .pan-subtle {
+          animation: panSubtle ${animationDuration}s ease-in-out infinite alternate;
         }
 
-        .ken-burns-medium {
-          animation: kenBurnsMedium ${animationDuration}s ease-in-out infinite alternate;
+        .pan-medium {
+          animation: panMedium ${animationDuration}s ease-in-out infinite alternate;
         }
 
-        .ken-burns-dramatic {
-          animation: kenBurnsDramatic ${animationDuration}s ease-in-out infinite alternate;
+        .pan-dramatic {
+          animation: panDramatic ${animationDuration}s ease-in-out infinite alternate;
         }
       `}</style>
 
       <div className="absolute inset-0 w-full h-full">
-        {/* Full-Screen Background Image with Ken Burns Effect */}
+        {/* Full-Screen Background Image with Pan Effect */}
         {scene.imageUrl ? (
           <div 
             className={`absolute inset-0 bg-cover bg-center bg-no-repeat ${animationClass}`}
             style={{ 
               backgroundImage: `url(${scene.imageUrl})`,
-              // Ensure image is larger than container to allow zoom/pan effect
-              backgroundSize: '120%'
+              // Ensure image is larger than container to allow pan effect
+              backgroundSize: '110%'
             }}
           />
         ) : (

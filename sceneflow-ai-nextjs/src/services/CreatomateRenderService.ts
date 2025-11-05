@@ -69,10 +69,10 @@ export class CreatomateRenderService {
     let currentTime = 0
     
     for (const scene of scenes) {
-      // Get Ken Burns parameters
-      const kenBurnsParams = this.getKenBurnsParams(scene.kenBurnsIntensity)
+      // Get pan parameters
+      const panParams = this.getPanParams(scene.kenBurnsIntensity)
       
-      // Create image element with Ken Burns animation
+      // Create image element with pan animation
       const imageElement = new Image({
         source: scene.imageUrl,
         time: currentTime,
@@ -83,12 +83,12 @@ export class CreatomateRenderService {
         animations: [
           new Pan({
             scope: 'element',
-            startScale: kenBurnsParams.startScale,
-            startX: kenBurnsParams.startX,
-            startY: kenBurnsParams.startY,
-            endScale: kenBurnsParams.endScale,
-            endX: kenBurnsParams.endX,
-            endY: kenBurnsParams.endY,
+            startScale: panParams.startScale,
+            startX: panParams.startX,
+            startY: panParams.startY,
+            endScale: panParams.endScale,
+            endX: panParams.endX,
+            endY: panParams.endY,
             duration: scene.duration,
             easing: 'linear'
           })
@@ -154,34 +154,35 @@ export class CreatomateRenderService {
     })
   }
   
-  private getKenBurnsParams(intensity: 'subtle' | 'medium' | 'dramatic') {
+  private getPanParams(intensity: 'subtle' | 'medium' | 'dramatic') {
+    // Pan-only effect (no scaling)
     switch (intensity) {
       case 'subtle':
         return {
           startScale: 100,
-          endScale: 110,
+          endScale: 100,
           startX: '0%',
           startY: '0%',
-          endX: '5%',
-          endY: '5%'
+          endX: '-3%',
+          endY: '-3%'
         }
       case 'medium':
         return {
           startScale: 100,
-          endScale: 120,
+          endScale: 100,
           startX: '0%',
           startY: '0%',
-          endX: '10%',
-          endY: '10%'
+          endX: '-5%',
+          endY: '-5%'
         }
       case 'dramatic':
         return {
           startScale: 100,
-          endScale: 130,
+          endScale: 100,
           startX: '0%',
           startY: '0%',
-          endX: '15%',
-          endY: '15%'
+          endX: '-8%',
+          endY: '-8%'
         }
     }
   }

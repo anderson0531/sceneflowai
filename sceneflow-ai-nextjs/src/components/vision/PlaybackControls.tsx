@@ -194,11 +194,11 @@ export function PlaybackControls({
           <span className="text-xs text-gray-400 w-8">{Math.round(musicVolume * 100)}%</span>
         </div>
 
-        {/* Ken Burns Intensity Control */}
+        {/* Pan Intensity Control */}
         {onKenBurnsIntensityChange && (
           <div className="ml-4 flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-400">Motion:</span>
+            <span className="text-sm text-gray-400">Pan:</span>
             <Select value={kenBurnsIntensity} onValueChange={(value: 'subtle' | 'medium' | 'dramatic') => onKenBurnsIntensityChange(value)}>
               <SelectTrigger className="w-24 h-8 bg-gray-800 text-white text-sm border border-gray-700">
                 <SelectValue />
