@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { 
   Settings, 
   Shield, 
@@ -14,8 +15,9 @@ import {
   Key,
   Zap
 } from 'lucide-react'
+import { isAdminEmail } from '@/lib/adminUtils'
 
-const settingsNavItems = [
+const baseSettingsNavItems = [
   {
     name: 'Profile',
     href: '/dashboard/settings/profile',
@@ -61,6 +63,24 @@ export default function SettingsLayout({
 }) {
   const pathname = usePathname()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const { data: session } = useSession()
+  
+  // Build settings nav items with conditional admin section
+  const settingsNavItems = useMemo(() => {
+    const items = [...baseSettingsNavItems]
+    
+    // Add Admin section if user is admin
+    if (session?.user?.email && isAdminEmail(session.user.email)) {
+      items.push({
+        name: 'Admin',
+        href: '/dashboard/settings/admin',
+        icon: Shield,
+        description: 'Admin functions and controls'
+      })
+    }
+    
+    return items
+  }, [session?.user?.email])
 
   return (
     <div className="min-h-screen bg-dark-bg">
