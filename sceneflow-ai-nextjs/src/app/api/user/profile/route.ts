@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { User } from '@/models/User'
 import { Op } from 'sequelize'
+import { resolveUser } from '@/lib/userHelper'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -18,19 +19,16 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Find user by ID or email
-    const user = await User.findOne({
-      where: session.user.id 
-        ? { id: session.user.id }
-        : { email: session.user.email }
-    })
-
-    if (!user) {
+    // Resolve user by ID or email (handles both UUID and email)
+    const userIdOrEmail = session.user.id || session.user.email
+    if (!userIdOrEmail) {
       return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
+        { error: 'Unauthorized' },
+        { status: 401 }
       )
     }
+
+    const user = await resolveUser(userIdOrEmail)
 
     return NextResponse.json({
       user: {
@@ -66,19 +64,16 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    // Find user by ID or email
-    const user = await User.findOne({
-      where: session.user.id 
-        ? { id: session.user.id }
-        : { email: session.user.email }
-    })
-
-    if (!user) {
+    // Resolve user by ID or email (handles both UUID and email)
+    const userIdOrEmail = session.user.id || session.user.email
+    if (!userIdOrEmail) {
       return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
+        { error: 'Unauthorized' },
+        { status: 401 }
       )
     }
+
+    const user = await resolveUser(userIdOrEmail)
 
     const body = await request.json()
     const { first_name, last_name, email, username } = body

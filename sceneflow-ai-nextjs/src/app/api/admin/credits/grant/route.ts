@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { CreditService } from '@/services/CreditService'
 import { isDemoMode } from '@/lib/env'
+
+// Use relative import to avoid path alias issues in production builds
+import { CreditService } from '../../../../services/CreditService'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

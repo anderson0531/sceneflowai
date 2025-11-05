@@ -16,27 +16,54 @@ export class SubscriptionService {
    * Get user's current subscription details
    */
   static async getUserSubscription(userId: string): Promise<SubscriptionDetails> {
-    const resolvedUser = await resolveUser(userId)
-    const user = await User.findByPk(resolvedUser.id, {
-      include: [
-        {
-          model: SubscriptionTier,
-          as: 'subscriptionTier',
-        },
-      ],
-    })
+    try {
+      const resolvedUser = await resolveUser(userId)
+      let user: any
+      
+      try {
+        // Try to include subscription tier (may fail if table doesn't exist)
+        user = await User.findByPk(resolvedUser.id, {
+          include: [
+            {
+              model: SubscriptionTier,
+              as: 'subscriptionTier',
+              required: false, // LEFT JOIN
+            },
+          ],
+        })
+      } catch (error: any) {
+        // If subscription_tiers table doesn't exist, query user without include
+        if (error.message?.includes('subscription_tiers') || error.message?.includes('does not exist')) {
+          console.warn('[SubscriptionService] subscription_tiers table not found, returning default subscription')
+          user = await User.findByPk(resolvedUser.id)
+        } else {
+          throw error
+        }
+      }
 
-    if (!user) {
-      throw new Error('User not found')
-    }
+      if (!user) {
+        throw new Error('User not found')
+      }
 
-    return {
-      tier: (user as any).subscriptionTier || null,
-      status: user.subscription_status,
-      startDate: user.subscription_start_date || null,
-      endDate: user.subscription_end_date || null,
-      monthlyCredits: Number(user.subscription_credits_monthly || 0),
-      creditsExpiresAt: user.subscription_credits_expires_at || null,
+      return {
+        tier: (user as any).subscriptionTier || null,
+        status: user.subscription_status,
+        startDate: user.subscription_start_date || null,
+        endDate: user.subscription_end_date || null,
+        monthlyCredits: Number(user.subscription_credits_monthly || 0),
+        creditsExpiresAt: user.subscription_credits_expires_at || null,
+      }
+    } catch (error: any) {
+      console.error('[SubscriptionService] getUserSubscription error:', error)
+      // Return default subscription if table doesn't exist
+      return {
+        tier: null,
+        status: null,
+        startDate: null,
+        endDate: null,
+        monthlyCredits: 0,
+        creditsExpiresAt: null,
+      }
     }
   }
 
