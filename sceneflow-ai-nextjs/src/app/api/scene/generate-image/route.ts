@@ -3,6 +3,7 @@ import { callVertexAIImagen } from '@/lib/vertexai/client'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen } from '@/lib/imagen/promptOptimizer'
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
+import { waitForGCSURIs, checkGCSURIAccessibility } from '@/lib/storage/gcsAccessibility'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 
@@ -343,7 +344,9 @@ export async function POST(req: NextRequest) {
       referenceType: 'REFERENCE_TYPE_SUBJECT' as const,
       subjectType: 'SUBJECT_TYPE_PERSON' as const,
       subjectDescription: char.appearanceDescription || 
-        `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
+        `${char.ethnicity || ''} ${char.subject || 'person'}`.trim(),
+      // Store HTTPS fallback URL
+      httpsUrl: char.referenceImage
     }))
 
     console.log(`[Scene Image] Using ${gcsReferences.length} character references with GCS for structured API call`)
@@ -355,6 +358,29 @@ export async function POST(req: NextRequest) {
           subjectDescription: ref.subjectDescription.substring(0, 50) + '...'
         })
       })
+    }
+
+    // Pre-flight validation: Wait for GCS URIs to be accessible
+    // This helps avoid race conditions where the image was just uploaded
+    if (gcsReferences.length > 0) {
+      console.log('[Scene Image] Pre-flight validation: Checking GCS URI accessibility...')
+      const gcsUris = gcsReferences.map(ref => ref.gcsUri)
+      
+      try {
+        // Wait for all GCS URIs to be accessible with retries
+        // This adds a small delay (500ms initial) to allow GCS to process the upload
+        const { accessible, failed } = await waitForGCSURIs(gcsUris, 3, 500)
+        
+        if (failed.length > 0) {
+          console.warn(`[Scene Image] ${failed.length} GCS URI(s) may not be accessible:`, failed)
+          console.warn('[Scene Image] Will attempt generation anyway - Vertex AI may handle this gracefully')
+        } else {
+          console.log(`[Scene Image] ✓ All ${accessible.length} GCS URI(s) are accessible`)
+        }
+      } catch (error: any) {
+        console.warn('[Scene Image] Pre-flight validation failed:', error.message)
+        console.warn('[Scene Image] Continuing with generation - Vertex AI will validate access')
+      }
     }
 
     // Build character-specific negative prompts based on reference characteristics
@@ -390,14 +416,58 @@ export async function POST(req: NextRequest) {
     console.log(`[Scene Image] Negative prompt includes ${characterSpecificNegatives.length} character-specific exclusions`)
 
     // Generate with Vertex AI Imagen 3 (with character references)
-    const base64Image = await callVertexAIImagen(optimizedPrompt, {
-      aspectRatio: '16:9',
-      numberOfImages: 1,
-      quality: quality,
-      negativePrompt: finalNegativePrompt,
-      referenceImages: gcsReferences.length > 0 ? gcsReferences : undefined,
-      personGeneration: personGeneration || 'allow_adult' // Default to 'allow_adult' for backward compatibility
-    })
+    // Add retry logic for reference image access issues
+    let base64Image: string
+    let generationAttempt = 0
+    const maxGenerationAttempts = 2
+    
+    while (generationAttempt < maxGenerationAttempts) {
+      try {
+        generationAttempt++
+        console.log(`[Scene Image] Generation attempt ${generationAttempt}/${maxGenerationAttempts}`)
+        
+        base64Image = await callVertexAIImagen(optimizedPrompt, {
+          aspectRatio: '16:9',
+          numberOfImages: 1,
+          quality: quality,
+          negativePrompt: finalNegativePrompt,
+          referenceImages: gcsReferences.length > 0 ? gcsReferences : undefined,
+          personGeneration: personGeneration || 'allow_adult' // Default to 'allow_adult' for backward compatibility
+        })
+        
+        // Success - break out of retry loop
+        break
+        
+      } catch (error: any) {
+        console.error(`[Scene Image] Generation attempt ${generationAttempt} failed:`, error.message)
+        
+        // Check if error is related to reference image access
+        const isReferenceImageError = 
+          error.message?.toLowerCase().includes('reference') ||
+          error.message?.toLowerCase().includes('image') ||
+          error.message?.toLowerCase().includes('not found') ||
+          error.message?.toLowerCase().includes('access') ||
+          error.message?.toLowerCase().includes('permission')
+        
+        if (isReferenceImageError && generationAttempt < maxGenerationAttempts) {
+          // Wait longer before retry (exponential backoff)
+          const retryDelay = 1000 * Math.pow(2, generationAttempt - 1)
+          console.log(`[Scene Image] Reference image access error detected. Retrying after ${retryDelay}ms...`)
+          
+          // Re-check GCS URIs before retry
+          if (gcsReferences.length > 0) {
+            const gcsUris = gcsReferences.map(ref => ref.gcsUri)
+            await waitForGCSURIs(gcsUris, 2, 1000)
+          }
+          
+          await new Promise(resolve => setTimeout(resolve, retryDelay))
+          continue
+        }
+        
+        // If not a reference image error, or max attempts reached, throw
+        throw error
+      }
+    }
 
     // Upload to Vercel Blob storage
     const imageUrl = await uploadImageToBlob(
