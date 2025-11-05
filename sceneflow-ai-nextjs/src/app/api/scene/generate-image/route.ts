@@ -290,8 +290,20 @@ export async function POST(req: NextRequest) {
     if (customPrompt && customPrompt.trim()) {
       // User provided a custom prompt (likely from Prompt Builder, already optimized and possibly edited)
       // Only re-optimize if character references aren't already in the prompt
-      const hasCharacterReferences = characterReferences.length > 0 && 
-        characterReferences.some((ref: { name: string }) => customPrompt.includes(ref.name.toUpperCase()) || customPrompt.includes(ref.name))
+      // Check for actual reference instruction patterns, not just character names
+      const hasCharacterReferences = characterReferences.length > 0 && (() => {
+        // Check for reference instruction patterns that must be present
+        const hasReferencePattern = 
+          // Pattern 1: "Character [NAME] appears in this scene"
+          characterReferences.some((ref: { name: string }) => {
+            const namePattern = new RegExp(`character\\s+${ref.name.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+appears`, 'i')
+            return namePattern.test(customPrompt)
+          }) &&
+          // Pattern 2: "MUST match their reference image"
+          /must\s+match\s+their\s+reference\s+image/i.test(customPrompt)
+        
+        return hasReferencePattern
+      })()
       
       if (hasCharacterReferences || characterReferences.length === 0) {
         // Character references already included or no references, use custom prompt as-is
@@ -305,7 +317,7 @@ export async function POST(req: NextRequest) {
           characterReferences: characterReferences,
           artStyle: artStyle || 'photorealistic'
         })
-        console.log('[Scene Image] Added character references to user-edited prompt')
+        console.log('[Scene Image] Added character references to user-edited prompt (re-optimized)')
       }
     } else {
       // Use scene description and optimize
