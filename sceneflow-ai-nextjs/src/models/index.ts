@@ -15,6 +15,8 @@ import CollabScore from './CollabScore'
 import CollabComment from './CollabComment'
 import CollabRecommendation from './CollabRecommendation'
 import CollabChatMessage from './CollabChatMessage'
+import SubscriptionTier from './SubscriptionTier'
+import RateCard from './RateCard'
 
 // Define model associations
 User.hasMany(Project, {
@@ -37,6 +39,17 @@ User.hasMany(UserProviderConfig, {
 UserProviderConfig.belongsTo(User, {
   foreignKey: 'user_id',
   as: 'user',
+})
+
+// Subscription model associations
+User.belongsTo(SubscriptionTier, {
+  foreignKey: 'subscription_tier_id',
+  as: 'subscriptionTier',
+})
+
+SubscriptionTier.hasMany(User, {
+  foreignKey: 'subscription_tier_id',
+  as: 'users',
 })
 
 // DOL model associations
@@ -83,6 +96,8 @@ export {
   CollabComment,
   CollabRecommendation,
   CollabChatMessage,
+  SubscriptionTier,
+  RateCard,
 }
 
 // Export default for convenience
@@ -104,4 +119,6 @@ export default {
   CollabComment,
   CollabRecommendation,
   CollabChatMessage,
+  SubscriptionTier,
+  RateCard,
 }

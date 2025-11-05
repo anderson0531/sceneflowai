@@ -13,14 +13,24 @@ export interface UserAttributes {
   is_active: boolean
   email_verified: boolean
   credits?: number
+  subscription_tier_id?: string | null // FK to SubscriptionTier
+  subscription_status: 'active' | 'cancelled' | 'expired' | 'trial' | null
+  subscription_start_date?: Date | null
+  subscription_end_date?: Date | null
+  subscription_credits_monthly: number // Bundled credits from subscription
+  subscription_credits_expires_at?: Date | null // Monthly expiry
+  addon_credits: number // Purchased top-up credits (never expire)
+  storage_used_gb: number
+  stripe_customer_id?: string | null
+  stripe_subscription_id?: string | null
   last_login?: Date
   created_at: Date
   updated_at: Date
 }
 
-export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'created_at' | 'updated_at' | 'is_active' | 'email_verified'> {}
+export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'created_at' | 'updated_at' | 'is_active' | 'email_verified' | 'subscription_status' | 'subscription_credits_monthly' | 'addon_credits' | 'storage_used_gb'> {}
 
-export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
+export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {                                                             
   public id!: string
   public email!: string
   public username!: string
@@ -31,6 +41,16 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
   public is_active!: boolean
   public email_verified!: boolean
   public credits?: number
+  public subscription_tier_id?: string | null
+  public subscription_status!: 'active' | 'cancelled' | 'expired' | 'trial' | null
+  public subscription_start_date?: Date | null
+  public subscription_end_date?: Date | null
+  public subscription_credits_monthly!: number
+  public subscription_credits_expires_at?: Date | null
+  public addon_credits!: number
+  public storage_used_gb!: number
+  public stripe_customer_id?: string | null
+  public stripe_subscription_id?: string | null
   public last_login?: Date
   public created_at!: Date
   public updated_at!: Date
@@ -103,6 +123,54 @@ User.init(
       type: DataTypes.BIGINT,
       allowNull: false,
       defaultValue: 0,
+    },
+    subscription_tier_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'subscription_tiers',
+        key: 'id',
+      },
+    },
+    subscription_status: {
+      type: DataTypes.ENUM('active', 'cancelled', 'expired', 'trial'),
+      allowNull: true,
+      defaultValue: null,
+    },
+    subscription_start_date: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    subscription_end_date: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    subscription_credits_monthly: {
+      type: DataTypes.BIGINT,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    subscription_credits_expires_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    addon_credits: {
+      type: DataTypes.BIGINT,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    storage_used_gb: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0,
+    },
+    stripe_customer_id: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    stripe_subscription_id: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
     },
     last_login: {
       type: DataTypes.DATE,

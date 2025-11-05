@@ -15,144 +15,86 @@ export function Pricing() {
     }))
   }
 
-  const pricingTiers = [
+    const pricingTiers = [
     {
-      name: 'Trial Run',
-      monthlyPrice: 5, 
-      annualPrice: 5, 
-      description: 'For Serious Creators', 
-      credits: '50 Credits (One-Time)',
-      headline: 'Unlock Professional Video Production for the Price of a Latte',
-      body: 'Test drive the complete SceneFlow AI video production suite. For just $5, you get 7 days of full access to our Ideation, AI Story Generator, Storyboarding, Scene Direction, Video Generation, Review, and Optimization tools. Experience professional video production workflow.',
-      features: [
-        '7-Day access to Creator features', 
-        '1080p Max rendering', 
-        'Standard Analysis', 
-        'BYOK Generation', 
-        'AI Story Generator (1 story)',
-        'Basic Chapter Management',
-        'Email Support'
-      ],
-      excluded: [
-        '4K Video Generation', 
-        'Advanced Analytics', 
-        'Team Collaboration', 
-        'Priority Support',
-        'Advanced Film Structure Tools'
-      ],
-      popular: false, 
-      color: 'from-green-500 to-emerald-600', 
-      special: 'Trial', 
-      note: 'Why $5? Our professional-grade AI filmmaking tools require significant GPU power. This small fee helps us cover operational costs and ensures dedicated, high-speed access for serious creators.',
-      cta: 'Start My 7-Day Filmmaking Trial ($5)'
-    },
-    {
-      name: 'Creator',
+      name: 'Starter',
       monthlyPrice: 29,
-      annualPrice: 23,
-      description: 'For Solo Creators, Novices',
-      credits: '150 Credits/mo',
+      annualPrice: 24, // ~17% discount (2 months free)
+      description: 'For Hobbyists & Short-Form Creators',
+      credits: '3,000 Credits/mo ($30 value)',
+      storage: '100 GB',
       features: [
-        '1080p Rendering',
-        'Standard Analysis',
-        'BYOK Generation',
-        'Multilingual Support',
-        'AI Story Generator (3 stories/month)',
-        'Basic Chapter Management',
-        'Short Film Support (up to 10 min)',
-        'Email Support',
-        'Basic Templates'
+        '3,000 monthly credits',
+        '100 GB active storage',
+        '1080p max resolution',
+        'Standard AI models',
+        'BYOK access',
+        '1 collaboration seat',
+        'Standard processing',
+        'Email support'
       ],
       excluded: [
-        '4K Video Generation',
-        'Advanced Analytics',
-        'Team Collaboration',
-        'Priority Support',
-        'Medium/Long Film Support'
+        '4K video generation',
+        'Premium AI models',
+        'Priority processing',
+        'Team collaboration'
       ],
       popular: false,
       color: 'from-gray-500 to-gray-600'
     },
     {
-      name: 'Indie Filmmaker',
-      monthlyPrice: 49,
-      annualPrice: 39,
-      description: 'For Indie Filmmakers, Emerging Directors',
-      credits: '300 Credits/mo',
+      name: 'Pro',
+      monthlyPrice: 99,
+      annualPrice: 82, // ~17% discount
+      description: 'For Freelancers & YouTubers',
+      credits: '12,000 Credits/mo ($120 value)',
+      storage: '500 GB',
       features: [
-        '1080p Rendering',
-        'Advanced Multimodal Analysis',
-        'AI Story Generator (8 stories/month)',
-        'Advanced Chapter Management',
-        'Short & Medium Film Support (up to 30 min)',
-        'Professional Story Structures',
-        'Downloadable Direction Packages',
-        'Priority Support',
-        'Advanced Templates',
-        'Film-Specific Workflows'
+        '12,000 monthly credits',
+        '500 GB active storage',
+        '4K video generation',
+        'Premium AI models',
+        'BYOK access',
+        '3 collaboration seats',
+        'Priority queue processing',
+        'Priority support'
       ],
       excluded: [
-        '4K Video Generation',
-        'Team Collaboration',
-        'Feature Film Support',
-        'White-label options'
+        'Beta AI models',
+        'High priority processing',
+        'Dedicated support'
       ],
       popular: true,
-      color: 'from-orange-500 to-red-600'
+      color: 'from-blue-500 to-purple-600'
     },
     {
-      name: 'Feature Film',
-      monthlyPrice: 149,
-      annualPrice: 119,
-      description: 'For Professional Filmmakers, Production Companies',
-      credits: '800 Credits/mo',
+      name: 'Studio',
+      monthlyPrice: 299,
+      annualPrice: 249, // ~17% discount
+      description: 'For Agencies & Production Teams',
+      credits: '40,000 Credits/mo ($400 value)',
+      storage: '2 TB',
       features: [
-        '4K Rendering',
-        'Advanced Multimodal Analysis',
-        'AI Story Generator (20 stories/month)',
-        'Professional Chapter Management',
-        'All Film Lengths Supported',
-        'Advanced Story Structures',
-        '5 Team Members',
-        'Downloadable Direction Packages',
-        'Priority Support',
-        'Advanced Templates',
-        'Analytics Dashboard',
-        'Custom Integrations',
-        'Film Industry Templates'
-      ],
-      excluded: [
-        'Dedicated Account Manager',
-        'White-label options',
-        'API Access'
-      ],
-      popular: false,
-      color: 'from-sf-primary to-sf-accent'
-    },
-    {
-      name: 'Film Studio',
-      monthlyPrice: 399,
-      annualPrice: 319,
-      description: 'For Film Studios, Large Productions',
-      credits: '2000 Credits/mo',
-      features: [
-        'All Feature Film features',
-        'Priority Rendering',
-        'Queue Management',
-        'Unlimited AI Story Generation',
-        'Advanced Team Management',
-        'Dedicated Account Manager',
-        'White-label options',
-        'API Access',
-        'Custom Workflows',
-        'Film Industry Partnerships',
-        'Advanced Analytics',
-        'Custom Film Templates'
+        '40,000 monthly credits',
+        '2 TB active storage',
+        '4K+ video generation',
+        'Premium + Beta AI models',
+        'BYOK with priority config',
+        '10 collaboration seats',
+        'High priority processing',
+        'Dedicated account manager',
+        'API access'
       ],
       excluded: [],
       popular: false,
-      color: 'from-sf-accent to-sf-primary'
+      color: 'from-purple-500 to-pink-600'
     }
+  ]
+
+  const creditPacks = [
+    { credits: 2000, price: 20, bonus: 0, label: 'Basic Pack' },
+    { credits: 5250, price: 50, bonus: 5, label: 'Value Pack' },
+    { credits: 11000, price: 100, bonus: 10, label: 'Pro Pack' }
   ]
 
   const creditExamples = [
