@@ -20,7 +20,7 @@ import CollabRecommendation from '@/models/CollabRecommendation'
 import CollabChatMessage from '@/models/CollabChatMessage'
 import RateCard from '@/models/RateCard'
 import SubscriptionTier from '@/models/SubscriptionTier'
-import { migrateUsersSubscriptionColumns } from '../../../../scripts/migrate-users-subscription-columns'
+import { migrateUsersSubscriptionColumns } from '@/lib/database/migrateUsersSubscription'
 
 export const dynamic = 'force-dynamic'
 

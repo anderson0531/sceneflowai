@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { migrateUsersSubscriptionColumns } from '../../../../../scripts/migrate-users-subscription-columns'
+import { migrateUsersSubscriptionColumns } from '@/lib/database/migrateUsersSubscription'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
