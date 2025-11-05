@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { RateCardService } from '@/services/RateCardService'
+import { RateCardService } from '../../../../services/RateCardService'
 
 /**
  * GET /api/pricing/rate-card

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { AuthService } from '@/services/AuthService'
-import { SubscriptionService } from '@/services/SubscriptionService'
-import { CreditService } from '@/services/CreditService'
+import { authOptions } from '../../../../lib/auth'
+import { AuthService } from '../../../../services/AuthService'
+import { SubscriptionService } from '../../../../services/SubscriptionService'
+import { CreditService } from '../../../../services/CreditService'
 
 /**
  * GET /api/subscription/status
