@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
-import { SubscriptionService } from '@/services/SubscriptionService'
+import { SubscriptionService } from '../../../../services/SubscriptionService'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60

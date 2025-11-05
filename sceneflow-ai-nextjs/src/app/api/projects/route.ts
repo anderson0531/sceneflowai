@@ -3,7 +3,7 @@ import '@/models' // Import all models to register them with Sequelize
 import Project from '@/models/Project'
 import User from '@/models/User'
 import { sequelize } from '@/config/database'
-import { SubscriptionService } from '../../services/SubscriptionService'
+import { SubscriptionService } from '../../../services/SubscriptionService'
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic'
