@@ -1,5 +1,6 @@
 import { sequelize, AIPricing, CreditLedger, User, AIUsage } from '@/models'
 import { migrateUsersSubscriptionColumns } from '@/lib/database/migrateUsersSubscription'
+import { resolveUser } from '@/lib/userHelper'
 
 export const CREDIT_VALUE_USD = Number(process.env.CREDIT_VALUE_USD ?? '0.0001')
 export const MARKUP_MULTIPLIER = Number(process.env.MARKUP_MULTIPLIER ?? '4')
@@ -50,11 +51,17 @@ async function ensureMigrationRan(): Promise<void> {
 }
 
 /**
- * Wrapper for User.findByPk that auto-runs migration if needed
+ * Wrapper for resolving user by UUID or email, with auto-migration if needed
  */
-async function findUserWithAutoMigration(userId: string, options?: any) {
+async function findUserWithAutoMigration(userIdOrEmail: string, options?: any) {
   try {
-    return await User.findByPk(userId, options)
+    // First resolve user (handles UUID or email)
+    const user = await resolveUser(userIdOrEmail)
+    // If options provided and include transaction, fetch with options
+    if (options?.transaction) {
+      return await User.findByPk(user.id, options)
+    }
+    return user
   } catch (error: any) {
     // Check if error is due to missing subscription columns
     if (error?.parent?.code === '42703' || // PostgreSQL undefined_column
@@ -63,7 +70,22 @@ async function findUserWithAutoMigration(userId: string, options?: any) {
       console.log('[CreditService] Detected missing subscription columns, running migration...')
       await ensureMigrationRan()
       // Retry the query after migration
-      return await User.findByPk(userId, options)
+      const user = await resolveUser(userIdOrEmail)
+      if (options?.transaction) {
+        return await User.findByPk(user.id, options)
+      }
+      return user
+    }
+    // Check if error is due to invalid UUID (email passed to findByPk)
+    if (error?.parent?.code === '22P02' || // PostgreSQL invalid input syntax
+        error?.message?.includes('invalid input syntax for type uuid')) {
+      // This shouldn't happen with resolveUser, but handle it gracefully
+      console.log('[CreditService] Invalid UUID format, retrying with resolveUser...')
+      const user = await resolveUser(userIdOrEmail)
+      if (options?.transaction) {
+        return await User.findByPk(user.id, options)
+      }
+      return user
     }
     throw error
   }
@@ -92,10 +114,13 @@ export class CreditService {
 
   static async charge(userId: string, chargeCredits: number, reason: CreditLedger['reason'], ref?: string | null, meta?: any) {
     if (chargeCredits <= 0) return
+    // Resolve user first to get UUID (handles email or UUID)
+    const resolvedUser = await findUserWithAutoMigration(userId)
+    const userUuid = resolvedUser.id
     // Ensure migration is run before starting transaction
     await ensureMigrationRan()
     return await sequelize.transaction(async (tx) => {
-      const user = await User.findByPk(userId, { transaction: tx, lock: tx.LOCK.UPDATE })
+      const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
       if (!user) throw new Error('User not found')
       const prev = Number(user.credits ?? 0)
       if (prev < chargeCredits) throw new Error('INSUFFICIENT_CREDITS')
@@ -103,7 +128,7 @@ export class CreditService {
       user.credits = next
       await user.save({ transaction: tx })
       await CreditLedger.create({
-        user_id: userId,
+        user_id: userUuid,
         delta_credits: -chargeCredits,
         prev_balance: prev,
         new_balance: next,
@@ -167,10 +192,13 @@ export class CreditService {
       }
     }
 
+    // Resolve user first to get UUID (handles email or UUID)
+    const resolvedUser = await findUserWithAutoMigration(userId)
+    const userUuid = resolvedUser.id
     // Ensure migration is run before starting transaction
     await ensureMigrationRan()
     return await sequelize.transaction(async (tx) => {
-      const user = await User.findByPk(userId, { transaction: tx, lock: tx.LOCK.UPDATE })
+      const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
       if (!user) throw new Error('User not found')
 
       const prevTotal = Number(user.credits ?? 0)
@@ -214,7 +242,7 @@ export class CreditService {
 
       // Log the charge in credit ledger
       await CreditLedger.create({
-        user_id: userId,
+        user_id: userUuid,
         delta_credits: -credits,
         prev_balance: prevTotal,
         new_balance: Number(user.credits),

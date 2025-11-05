@@ -1,5 +1,6 @@
 import { User, SubscriptionTier, CreditLedger, Project, sequelize } from '@/models'
 import { Op } from 'sequelize'
+import { resolveUser } from '@/lib/userHelper'
 
 export interface SubscriptionDetails {
   tier: SubscriptionTier | null
@@ -15,7 +16,8 @@ export class SubscriptionService {
    * Get user's current subscription details
    */
   static async getUserSubscription(userId: string): Promise<SubscriptionDetails> {
-    const user = await User.findByPk(userId, {
+    const resolvedUser = await resolveUser(userId)
+    const user = await User.findByPk(resolvedUser.id, {
       include: [
         {
           model: SubscriptionTier,
@@ -42,8 +44,10 @@ export class SubscriptionService {
    * Allocate monthly credits to a user
    */
   static async allocateMonthlyCredits(userId: string): Promise<void> {
+    const resolvedUser = await resolveUser(userId)
+    const userUuid = resolvedUser.id
     return await sequelize.transaction(async (tx) => {
-      const user = await User.findByPk(userId, { transaction: tx, lock: tx.LOCK.UPDATE })
+      const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
       
       if (!user) {
         throw new Error('User not found')
@@ -90,7 +94,7 @@ export class SubscriptionService {
       // Log the allocation in credit ledger
       await CreditLedger.create(
         {
-          user_id: userId,
+          user_id: userUuid,
           delta_credits: creditsToAllocate,
           prev_balance: currentTotalCredits,
           new_balance: Number(user.credits),
@@ -113,8 +117,10 @@ export class SubscriptionService {
    * Expire subscription credits at month end
    */
   static async expireSubscriptionCredits(userId: string): Promise<void> {
+    const resolvedUser = await resolveUser(userId)
+    const userUuid = resolvedUser.id
     return await sequelize.transaction(async (tx) => {
-      const user = await User.findByPk(userId, { transaction: tx, lock: tx.LOCK.UPDATE })
+      const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
       
       if (!user) {
         throw new Error('User not found')
@@ -139,7 +145,7 @@ export class SubscriptionService {
       // Log the expiry in credit ledger
       await CreditLedger.create(
         {
-          user_id: userId,
+          user_id: userUuid,
           delta_credits: -subscriptionCredits,
           prev_balance: prevTotalCredits,
           new_balance: Number(user.credits),
@@ -164,8 +170,10 @@ export class SubscriptionService {
     packSize: number,
     amountPaid: number
   ): Promise<void> {
+    const resolvedUser = await resolveUser(userId)
+    const userUuid = resolvedUser.id
     return await sequelize.transaction(async (tx) => {
-      const user = await User.findByPk(userId, { transaction: tx, lock: tx.LOCK.UPDATE })
+      const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
       
       if (!user) {
         throw new Error('User not found')
@@ -185,7 +193,7 @@ export class SubscriptionService {
       // Log the purchase in credit ledger
       await CreditLedger.create(
         {
-          user_id: userId,
+          user_id: userUuid,
           delta_credits: packSize,
           prev_balance: prevTotalCredits,
           new_balance: Number(user.credits),
@@ -206,7 +214,8 @@ export class SubscriptionService {
    * Check if user has access to a feature
    */
   static async hasFeatureAccess(userId: string, feature: string): Promise<boolean> {
-    const user = await User.findByPk(userId, {
+    const resolvedUser = await resolveUser(userId)
+    const user = await User.findByPk(resolvedUser.id, {
       include: [
         {
           model: SubscriptionTier,
@@ -236,7 +245,8 @@ export class SubscriptionService {
     userId: string,
     additionalGB: number
   ): Promise<boolean> {
-    const user = await User.findByPk(userId, {
+    const resolvedUser = await resolveUser(userId)
+    const user = await User.findByPk(resolvedUser.id, {
       include: [
         {
           model: SubscriptionTier,
@@ -269,7 +279,7 @@ export class SubscriptionService {
     userId: string,
     additionalGB: number
   ): Promise<void> {
-    const user = await User.findByPk(userId)
+    const user = await resolveUser(userId)
 
     if (!user) {
       throw new Error('User not found')
@@ -285,19 +295,24 @@ export class SubscriptionService {
    * Check if user can purchase one-time tier
    */
   static async canPurchaseOneTimeTier(userId: string, tierName: string): Promise<boolean> {
-    const user = await User.findByPk(userId)
-    if (!user) return false
+    try {
+      const user = await resolveUser(userId)
     
-    const purchased = user.one_time_tiers_purchased || []
-    return !purchased.includes(tierName)
+      const purchased = user.one_time_tiers_purchased || []
+      return !purchased.includes(tierName)
+    } catch {
+      return false
+    }
   }
 
   /**
    * Grant one-time tier credits (1,000 addon credits)
    */
   static async grantOneTimeTier(userId: string, tierName: string): Promise<void> {
+    const resolvedUser = await resolveUser(userId)
+    const userUuid = resolvedUser.id
     return await sequelize.transaction(async (tx) => {
-      const user = await User.findByPk(userId, { transaction: tx, lock: tx.LOCK.UPDATE })
+      const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
       if (!user) throw new Error('User not found')
       
       // Check if already purchased
@@ -322,7 +337,7 @@ export class SubscriptionService {
       
       // Log credit grant
       await CreditLedger.create({
-        user_id: userId,
+        user_id: userUuid,
         delta_credits: 1000,
         prev_balance: prevTotalCredits,
         new_balance: Number(user.credits),
@@ -349,9 +364,11 @@ export class SubscriptionService {
       return { canCreateProject: true, currentProjects: 0, maxProjects: null }
     }
     
+    const resolvedUser = await resolveUser(userId)
+    const userUuid = resolvedUser.id
     const currentProjects = await Project.count({ 
       where: { 
-        user_id: userId, 
+        user_id: userUuid, 
         status: { [Op.in]: ['draft', 'in_progress'] } 
       } 
     })
@@ -378,8 +395,14 @@ export class SubscriptionService {
       return { canAddScene: true, currentScenes: 0, maxScenes: null }
     }
     
+    // Note: projectId should already be a UUID, but we resolve user to ensure consistency
+    const resolvedUser = await resolveUser(userId)
     const project = await Project.findByPk(projectId)
     if (!project) throw new Error('Project not found')
+    // Verify project belongs to user
+    if (project.user_id !== resolvedUser.id) {
+      throw new Error('Project does not belong to user')
+    }
     
     // Scenes are stored in metadata.script.scenes or metadata.visionPhase.scenes
     const scenes = project.metadata?.script?.scenes || 
