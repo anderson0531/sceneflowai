@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '../../../../lib/auth'
-import { CreditService } from '../../../../services/CreditService'
-import { isDemoMode } from '../../../../lib/env'
+import { authOptions } from '@/lib/auth'
+import { CreditService } from '@/services/CreditService'
+import { isDemoMode } from '@/lib/env'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
