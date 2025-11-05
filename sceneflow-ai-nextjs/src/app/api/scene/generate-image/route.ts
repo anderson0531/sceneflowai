@@ -368,8 +368,9 @@ export async function POST(req: NextRequest) {
       
       try {
         // Wait for all GCS URIs to be accessible with retries
-        // This adds a small delay (500ms initial) to allow GCS to process the upload
-        const { accessible, failed } = await waitForGCSURIs(gcsUris, 3, 500)
+        // This adds a delay (1000ms initial) to allow GCS to process the upload
+        // Increased from 500ms to 1000ms for better reliability
+        const { accessible, failed } = await waitForGCSURIs(gcsUris, 5, 1000)
         
         if (failed.length > 0) {
           console.warn(`[Scene Image] ${failed.length} GCS URI(s) may not be accessible:`, failed)
@@ -456,10 +457,10 @@ export async function POST(req: NextRequest) {
           const retryDelay = 1000 * Math.pow(2, generationAttempt - 1)
           console.log(`[Scene Image] Reference image access error detected. Retrying after ${retryDelay}ms...`)
           
-          // Re-check GCS URIs before retry
+          // Re-check GCS URIs before retry with longer delay and more retries
           if (gcsReferences.length > 0) {
             const gcsUris = gcsReferences.map(ref => ref.gcsUri)
-            await waitForGCSURIs(gcsUris, 2, 1000)
+            await waitForGCSURIs(gcsUris, 3, 1500)
           }
           
           await new Promise(resolve => setTimeout(resolve, retryDelay))

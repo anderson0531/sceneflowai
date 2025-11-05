@@ -12,8 +12,8 @@
  */
 export async function checkGCSURIAccessibility(
   gcsUri: string,
-  maxRetries: number = 3,
-  initialDelayMs: number = 500
+  maxRetries: number = 5,
+  initialDelayMs: number = 1000
 ): Promise<boolean> {
   if (!gcsUri || !gcsUri.startsWith('gs://')) {
     console.warn('[GCS Accessibility] Invalid GCS URI:', gcsUri)
