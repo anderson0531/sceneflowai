@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { CreatomateRenderService } from '@/services/CreatomateRenderService'
-import { CreditService } from '@/services/CreditService'
+import { CreatomateRenderService } from '../../../../services/CreatomateRenderService'
+import { CreditService } from '../../../../services/CreditService'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60 // Creatomate handles long renders asynchronously
