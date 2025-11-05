@@ -229,42 +229,49 @@ export function Pricing() {
           </div>
         </motion.div>
 
-        {/* Pricing Cards - Two Row Layout */}
-        <div className="space-y-8">
-          {/* Row 1: Trial Run and Creator Plans */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {pricingTiers.slice(0, 2).map((tier, index) => (
-              <motion.div
-                key={tier.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className={`relative rounded-2xl p-8 border-2 transition-all duration-300 ${
-                  tier.special === 'Trial'
-                    ? 'border-green-500 bg-gradient-to-br from-gray-800 to-gray-900'
-                    : 'border-gray-700 bg-gray-800 hover:border-gray-600'
-                }`}
-              >
-                {/* Plan Label - Positioned above title with proper spacing */}
-                {tier.special === 'Trial' && (
-                  <div className="absolute -top-3 left-6">
-                    <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center">
-                      <Zap className="w-3 h-3 mr-1" />
-                      Trial Run
+        {/* Pricing Cards - Single Row Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {pricingTiers.map((tier, index) => (
+            <motion.div
+              key={tier.name}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              className={`relative rounded-2xl p-8 border-2 transition-all duration-300 flex flex-col h-full ${
+                tier.popular
+                  ? 'border-orange-500 bg-gradient-to-br from-gray-800 to-gray-900 scale-105 shadow-2xl'
+                  : tier.special === 'Trial'
+                  ? 'border-green-500 bg-gradient-to-br from-gray-800 to-gray-900'
+                  : 'border-gray-700 bg-gray-800 hover:border-gray-600'
+              }`}
+            >
+                                {/* Plan Label - Positioned above title with proper spacing */}
+                {tier.popular && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-4 py-1 rounded-full text-xs font-semibold flex items-center">
+                      <Film className="w-3 h-3 mr-1" />
+                      Most Popular
+                    </div>
+                  </div>
+                )}
+                {tier.badge && !tier.popular && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <div className="bg-gradient-to-r from-amber-500/20 to-orange-600/20 text-amber-400 px-3 py-1 rounded-full text-xs font-semibold border border-amber-500/30">
+                      {tier.badge}
                     </div>
                   </div>
                 )}
 
-                <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold mb-3 text-white">{tier.name}</h3>
+                <div className="text-center mb-6 flex-shrink-0">
+                  <h3 className="text-xl font-bold mb-3 text-white">{tier.name}</h3>
                   
                                     {tier.special === 'Trial' ? (
                     // Trial Run - Clean Value Proposition
                     <div className="mb-4">
                       <h4 className="text-lg font-semibold text-sf-accent mb-3">{tier.headline}</h4>                                                            
                       <div className="flex items-baseline justify-center mb-3">
-                        <span className="text-4xl font-bold text-sf-accent">${tier.monthlyPrice}</span>                                                         
+                        <span className="text-3xl font-bold text-sf-accent">${tier.monthlyPrice}</span>                                                         
                       </div>
                       <p className="text-gray-300 text-sm mb-2">{tier.description}</p>                                                                          
                       <p className="text-sf-primary font-medium text-sm">{tier.credits}</p>                                                                     
@@ -280,9 +287,9 @@ export function Pricing() {
                         </div>
                       )}
                       <p className="text-lg font-semibold text-amber-400 mb-2">{tier.tagline}</p>
-                      <div className="flex items-baseline justify-center mb-3">
-                        <span className="text-4xl font-bold text-amber-400">${tier.monthlyPrice}</span>                                                         
-                        <span className="text-gray-400 ml-2 text-sm">one-time</span>
+                                            <div className="flex items-baseline justify-center mb-3">
+                        <span className="text-3xl font-bold text-amber-400">${tier.monthlyPrice}</span>                                                         
+                        <span className="text-gray-400 ml-2 text-sm">one-time</span>                                                                            
                       </div>
                       <p className="text-gray-300 text-sm mb-1">{tier.description}</p>                                                                          
                       <p className="text-sf-primary font-medium text-sm mb-1">{tier.credits}</p>
@@ -294,7 +301,7 @@ export function Pricing() {
                     // Regular pricing tiers
                     <div>
                       <div className="flex items-baseline justify-center mb-3">
-                        <span className="text-4xl font-bold text-white">${isAnnual ? tier.annualPrice : tier.monthlyPrice}</span>                               
+                        <span className="text-3xl font-bold text-white">${isAnnual ? tier.annualPrice : tier.monthlyPrice}</span>                               
                         <span className="text-gray-400 ml-2">/mo</span>
                       </div>
                       <p className="text-gray-300 text-sm mb-2">{tier.description}</p>                                                                          
@@ -372,11 +379,13 @@ export function Pricing() {
                     }
                   }}
                   disabled={purchasing && tier.name === 'Coffee Break'}
-                  className={`w-full py-4 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${                                                               
+                  className={`w-full py-3 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-auto ${
                     tier.isOneTime && tier.name === 'Coffee Break'
                       ? 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white'
+                      : tier.popular
+                      ? 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white'
                       : tier.special === 'Trial'
-                      ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-sf-background'                           
+                      ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-sf-background'
                       : 'bg-gray-700 hover:bg-gray-600 text-white'
                   }`}
                 >
@@ -386,115 +395,11 @@ export function Pricing() {
                     ? 'Start Testing'
                     : tier.special === 'Trial' 
                     ? tier.cta 
-                    : `Start ${tier.name} Plan`}                                                                             
+                    : `Start ${tier.name} Plan`}
                 </button>
               </motion.div>
-            ))}
+                        ))}
           </div>
-
-          {/* Row 2: Indie Filmmaker, Feature Film, and Film Studio Plans */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {pricingTiers.slice(2, 5).map((tier, index) => (
-              <motion.div
-                key={tier.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: (index + 2) * 0.1 }}
-                className={`relative rounded-2xl p-6 border-2 transition-all duration-300 ${
-                  tier.popular
-                    ? 'border-orange-500 bg-gradient-to-br from-gray-800 to-gray-900 scale-105 shadow-2xl'
-                    : 'border-gray-700 bg-gray-800 hover:border-gray-600'
-                }`}
-              >
-                {/* Popular Label - Positioned above title with proper spacing */}
-                {tier.popular && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-4 py-1 rounded-full text-xs font-semibold flex items-center">
-                      <Film className="w-3 h-3 mr-1" />
-                      Most Popular
-                    </div>
-                  </div>
-                )}
-
-                <div className="text-center mb-6">
-                  <h3 className="text-xl font-bold mb-3 text-white">{tier.name}</h3>
-                  <div className="flex items-baseline justify-center mb-3">
-                    <span className="text-3xl font-bold text-white">${isAnnual ? tier.annualPrice : tier.monthlyPrice}</span>
-                    <span className="text-gray-400 ml-2">/mo</span>
-                  </div>
-                  <p className="text-gray-300 text-sm mb-2">{tier.description}</p>
-                  <p className="text-sf-primary font-medium text-sm">{tier.credits}</p>
-                </div>
-
-                {/* Show/Hide Controls for Features */}
-                <div className="text-center mb-4">
-                  <button
-                    onClick={() => togglePlan(tier.name)}
-                    className="flex items-center justify-center w-full text-sf-primary hover:text-sf-accent transition-colors duration-200 text-sm font-medium"
-                  >
-                    {expandedPlans[tier.name] ? (
-                      <>
-                        <ChevronUp className="w-4 h-4 mr-1" />
-                        Hide Details
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="w-4 h-4 mr-1" />
-                        Show Details
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {/* Expanded Features Section */}
-                {expandedPlans[tier.name] && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="space-y-4 mb-6"
-                  >
-                    <div className="space-y-3">
-                      <h4 className="font-semibold text-base mb-3 text-white">What&apos;s Included:</h4>
-                      {tier.features.map((feature, featureIndex) => (
-                        <div key={featureIndex} className="flex items-center space-x-3">
-                          <CheckCircle className="w-4 h-4 text-sf-accent flex-shrink-0" />
-                          <span className="text-gray-300 text-sm">{feature}</span>
-                        </div>
-                      ))}
-                      
-                      {tier.excluded.length > 0 && (
-                        <>
-                          <h4 className="font-semibold text-base mb-3 mt-4 text-white">Not Included:</h4>
-                          {tier.excluded.map((feature, featureIndex) => (
-                            <div key={featureIndex} className="flex items-center space-x-3">
-                              <X className="w-4 h-4 text-red-400 flex-shrink-0" />
-                              <span className="text-gray-400 text-sm">{feature}</span>
-                            </div>
-                          ))}
-                        </>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-
-                <button 
-                  onClick={() => {
-                    window.location.href = `/?signup=1&plan=${tier.name.toLowerCase().replace(/\s/g, '-')}`
-                  }}
-                  className={`w-full py-3 rounded-lg font-semibold transition-all duration-200 ${
-                    tier.popular
-                      ? 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white'
-                      : 'bg-gray-700 hover:bg-gray-600 text-white'
-                  }`}
-                >
-                  Start {tier.name} Plan
-                </button>
-              </motion.div>
-            ))}
-          </div>
-        </div>
 
         {/* Credit Usage Examples */}
         <motion.div
