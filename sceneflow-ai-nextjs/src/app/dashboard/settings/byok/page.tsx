@@ -7,7 +7,6 @@ import { Key, CheckCircle, XCircle, Loader, AlertCircle, ExternalLink } from 'lu
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Label } from '@/components/ui/Label'
 import { toast } from 'sonner'
 
 export default function BYOKPage() {
@@ -192,9 +191,9 @@ export default function BYOKPage() {
 
                   <div className="space-y-3">
                     <div>
-                      <Label htmlFor={`${provider.key}-key`} className="text-dark-text text-sm">
+                      <label htmlFor={`${provider.key}-key`} className="text-sm font-medium text-dark-text block">
                         API Key
-                      </Label>
+                      </label>
                       <div className="flex gap-2 mt-1">
                         <Input
                           id={`${provider.key}-key`}

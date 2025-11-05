@@ -6,7 +6,6 @@ import { motion } from 'framer-motion'
 import { User, Mail, UserCircle, Save, Loader } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Label } from '@/components/ui/Label'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { toast } from 'sonner'
 
@@ -140,10 +139,10 @@ export default function ProfilePage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="username" className="text-dark-text flex items-center gap-2">
+                <label htmlFor="username" className="text-sm font-medium text-dark-text flex items-center gap-2">
                   <User className="w-4 h-4" />
                   Username
-                </Label>
+                </label>
                 <Input
                   id="username"
                   name="username"
@@ -156,10 +155,10 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-dark-text flex items-center gap-2">
+                <label htmlFor="email" className="text-sm font-medium text-dark-text flex items-center gap-2">
                   <Mail className="w-4 h-4" />
                   Email Address
-                </Label>
+                </label>
                 <Input
                   id="email"
                   name="email"
@@ -173,9 +172,9 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="first_name" className="text-dark-text">
+                <label htmlFor="first_name" className="text-sm font-medium text-dark-text">
                   First Name
-                </Label>
+                </label>
                 <Input
                   id="first_name"
                   name="first_name"
@@ -188,9 +187,9 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="last_name" className="text-dark-text">
+                <label htmlFor="last_name" className="text-sm font-medium text-dark-text">
                   Last Name
-                </Label>
+                </label>
                 <Input
                   id="last_name"
                   name="last_name"
