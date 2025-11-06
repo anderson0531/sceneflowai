@@ -11,6 +11,7 @@ import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { toast } from 'sonner'
 import { useOverlayStore } from '@/store/useOverlayStore'
 import { getAvailableLanguages, getAudioUrl, getAudioDuration as getStoredAudioDuration } from '@/lib/audio/languageDetection'
+import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 
 interface ScreeningRoomProps {
   script: any
@@ -62,23 +63,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
 
   // Language state - use pre-generated audio files
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en') // Default: English
-  
-  // Supported languages with their Google TTS voice codes
-  const SUPPORTED_LANGUAGES = [
-    { code: 'en', name: 'English', voice: 'en-US-Studio-M' },  // Marcus (Studio)
-    { code: 'es', name: 'Spanish', voice: 'es-ES-Neural2-B' },  // Male voice
-    { code: 'fr', name: 'French', voice: 'fr-FR-Neural2-B' },   // Male voice
-    { code: 'de', name: 'German', voice: 'de-DE-Neural2-B' },   // Male voice
-    { code: 'it', name: 'Italian', voice: 'it-IT-Neural2-C' },  // Male voice
-    { code: 'pt', name: 'Portuguese', voice: 'pt-BR-Neural2-B' }, // Male voice
-    { code: 'zh', name: 'Chinese (Mandarin)', voice: 'cmn-CN-Wavenet-B' }, // Male voice
-    { code: 'ja', name: 'Japanese', voice: 'ja-JP-Neural2-C' }, // Male voice
-    { code: 'ko', name: 'Korean', voice: 'ko-KR-Neural2-C' },   // Male voice
-    { code: 'th', name: 'Thai', voice: 'th-TH-Neural2-C' },     // Male voice (already correct)
-    { code: 'hi', name: 'Hindi', voice: 'hi-IN-Neural2-B' },    // Male voice
-    { code: 'ar', name: 'Arabic', voice: 'ar-XA-Wavenet-B' },   // Male voice
-    { code: 'ru', name: 'Russian', voice: 'ru-RU-Wavenet-B' }   // Male voice
-  ]
   
   // Get available languages from scenes
   const availableLanguages = React.useMemo(() => {

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Clapperboard, Printer, Video as VideoIcon, Info } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Clapperboard, Printer, Video as VideoIcon, Info, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
@@ -20,6 +20,7 @@ import { toast } from 'sonner'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData, SceneDirectionData } from '@/lib/types/reports'
 import { ProjectCostCalculator } from './ProjectCostCalculator'
+import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 
 interface ScriptPanelProps {
   script: any
@@ -361,6 +362,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [isPlayingMixed, setIsPlayingMixed] = useState(false)
   const [isPlayingAll, setIsPlayingAll] = useState(false)
   const playbackAbortRef = useRef(false)
+
+  // Language selection state for multi-language TTS
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('en')
 
   const scenes = script?.script?.scenes || []
 
@@ -870,6 +874,32 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             </Tooltip>
           </TooltipProvider>
           
+          {/* Language Selector */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                    <SelectTrigger className="w-[140px] h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SUPPORTED_LANGUAGES.map(lang => (
+                        <SelectItem key={lang.code} value={lang.code}>
+                          {lang.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                <p>Select language for audio generation</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
           {/* Generate All Audio Button */}
           {onGenerateAllAudio && (
             <TooltipProvider>
@@ -1297,6 +1327,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   generateAndPlayMusic={generateAndPlayMusic}
                   onPlayAudio={handlePlayAudio}
                   onGenerateSceneAudio={onGenerateSceneAudio}
+                  selectedLanguage={selectedLanguage}
                   playingAudio={playingAudio}
                       generatingDialogue={generatingDialogue}
                       setGeneratingDialogue={setGeneratingDialogue}
@@ -1514,7 +1545,8 @@ interface SceneCardProps {
   generateAndPlayMusic?: (description: string, duration?: number) => Promise<void>
   // Individual audio playback
   onPlayAudio?: (audioUrl: string, label: string) => void
-  onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number) => void
+  onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number, language?: string) => void
+  selectedLanguage?: string
   playingAudio?: string | null
   generatingDialogue?: {sceneIdx: number, character: string, dialogueIndex?: number} | null
   setGeneratingDialogue?: (state: {sceneIdx: number, character: string, dialogueIndex?: number} | null) => void
@@ -1543,7 +1575,7 @@ interface SceneCardProps {
   generatingDirectionFor?: number | null
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart, dragHandleProps, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onStopAudio, onOpenSceneReview, generatingMusic, setGeneratingMusic, generatingSFX, setGeneratingSFX, generateMusic, generateSFX, onGenerateSceneDirection, generatingDirectionFor }: SceneCardProps) {
+function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart, dragHandleProps, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onStopAudio, onOpenSceneReview, generatingMusic, setGeneratingMusic, generatingSFX, setGeneratingSFX, generateMusic, generateSFX, onGenerateSceneDirection, generatingDirectionFor, selectedLanguage = 'en' }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
   const [isSceneVisualOpen, setIsSceneVisualOpen] = useState(false)
@@ -2399,7 +2431,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                                 
                                 setGeneratingDialogue?.({ sceneIdx, character: '__narration__' })
                                 try {
-                                  await onGenerateSceneAudio(sceneIdx, 'narration')
+                                  await onGenerateSceneAudio?.(sceneIdx, 'narration', undefined, undefined, selectedLanguage)
                                 } catch (error) {
                                   console.error('[ScriptPanel] Narration regeneration failed:', error)
                                 } finally {
@@ -2433,7 +2465,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                               
                               setGeneratingDialogue?.({ sceneIdx, character: '__narration__' })
                               try {
-                                await onGenerateSceneAudio(sceneIdx, 'narration')
+                                await onGenerateSceneAudio?.(sceneIdx, 'narration', undefined, undefined, selectedLanguage)
                               } catch (error) {
                                 console.error('[ScriptPanel] Narration generation failed:', error)
                               } finally {
@@ -2514,7 +2546,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                                     
                                     setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
                                     try {
-                                      await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i)
+                                      await onGenerateSceneAudio?.(sceneIdx, 'dialogue', d.character, i, selectedLanguage)
                                     } catch (error) {
                                       console.error('[ScriptPanel] Dialogue regeneration failed:', error)
                                     } finally {
@@ -2554,7 +2586,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                                   setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
                                   
                                   try {
-                                    await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i)
+                                    await onGenerateSceneAudio?.(sceneIdx, 'dialogue', d.character, i, selectedLanguage)
                                   } catch (error) {
                                     console.error('[ScriptPanel] Dialogue generation failed:', error)
                                   } finally {
