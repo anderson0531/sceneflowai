@@ -23,13 +23,16 @@ export interface RenderOptions {
 
 export class CreatomateRenderService {
   private client: Client
+  private apiKey: string
   
   constructor(apiKey: string) {
+    this.apiKey = apiKey
     this.client = new Client(apiKey)
   }
   
   /**
    * Submit render job and return renderId immediately (without waiting for completion)
+   * Uses Creatomate REST API directly to create render without waiting
    */
   async submitRender(
     scenes: SceneRenderData[],
@@ -39,26 +42,71 @@ export class CreatomateRenderService {
     // Build Creatomate source (composition)
     const source = this.buildSource(scenes, options)
     
-    // Submit render job with very short timeout to get renderId quickly
-    // Creatomate client returns render object with ID immediately, timeout just controls wait time
-    const renders = await this.client.render({
-      source: source as any,
-      outputFormat: options.format,
-      frameRate: options.fps,
-      maxWidth: options.width,
-      maxHeight: options.height,
-    }, 1) // 1 second timeout = return quickly with renderId (render will still be queued/rendering)
-    
-    if (renders.length === 0) {
-      throw new Error('No renders created')
+    try {
+      // Use Creatomate REST API directly to create render without waiting
+      // This avoids the client library's render() method which waits for completion
+      // Convert source to JSON for API request
+      const sourceJson = JSON.parse(JSON.stringify(source))
+      
+      // Create render via REST API
+      const response = await fetch('https://rest.creatomate.com/v1/renders', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          source: sourceJson,
+          output_format: options.format,
+          frame_rate: options.fps,
+          max_width: options.width,
+          max_height: options.height,
+        }),
+      })
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Creatomate API error: ${response.status} ${errorText}`)
+      }
+      
+      const data = await response.json()
+      
+      // The API returns a render object with an id
+      if (!data.id) {
+        throw new Error('Render created but no renderId in response')
+      }
+      
+      console.log('[Creatomate] Render job created via REST API:', data.id)
+      return data.id
+    } catch (error: any) {
+      console.error('[Creatomate] Error creating render via REST API:', error)
+      
+      // Fallback: Try using client library with a longer timeout
+      try {
+        console.log('[Creatomate] Falling back to client library method...')
+        const renders = await this.client.render({
+          source: source as any,
+          outputFormat: options.format,
+          frameRate: options.fps,
+          maxWidth: options.width,
+          maxHeight: options.height,
+        }, 30) // 30 second timeout as fallback
+        
+        if (renders.length === 0) {
+          throw new Error('No renders created')
+        }
+        
+        const render = renders[0]
+        if (!render.id) {
+          throw new Error('Render submitted but no renderId available')
+        }
+        
+        return render.id
+      } catch (fallbackError: any) {
+        // If both methods fail, throw the original error
+        throw new Error(`Failed to submit render job: ${error?.message || fallbackError?.message || 'Unknown error'}`)
+      }
     }
-    
-    const render = renders[0]
-    if (!render.id) {
-      throw new Error('Render submitted but no renderId available')
-    }
-    
-    return render.id
   }
 
   /**
