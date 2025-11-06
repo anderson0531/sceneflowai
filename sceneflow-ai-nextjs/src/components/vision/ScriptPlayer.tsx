@@ -200,7 +200,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
    * Returns timing information for concurrent playback
    * Uses language-specific audio files and stored durations
    */
-  const calculateAudioTimeline = async (scene: any): Promise<SceneAudioConfig> => {
+  const calculateAudioTimeline = useCallback(async (scene: any): Promise<SceneAudioConfig> => {
     const config: SceneAudioConfig = {}
     let currentTime = 0
     
