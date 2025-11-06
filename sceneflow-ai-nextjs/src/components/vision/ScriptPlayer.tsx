@@ -63,23 +63,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   // Language state - use pre-generated audio files
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en') // Default: English
   
-  // Get available languages from scenes
-  const availableLanguages = React.useMemo(() => {
-    return getAvailableLanguages(scenes)
-  }, [scenes])
-  
-  // Filter supported languages to only show those with audio files
-  const selectableLanguages = React.useMemo(() => {
-    return SUPPORTED_LANGUAGES.filter(lang => availableLanguages.includes(lang.code))
-  }, [availableLanguages])
-  
-  // Set default language to first available if current selection is not available
-  React.useEffect(() => {
-    if (availableLanguages.length > 0 && !availableLanguages.includes(selectedLanguage)) {
-      setSelectedLanguage(availableLanguages[0])
-    }
-  }, [availableLanguages, selectedLanguage])
-
   // Supported languages with their Google TTS voice codes
   const SUPPORTED_LANGUAGES = [
     { code: 'en', name: 'English', voice: 'en-US-Studio-M' },  // Marcus (Studio)
@@ -96,6 +79,23 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     { code: 'ar', name: 'Arabic', voice: 'ar-XA-Wavenet-B' },   // Male voice
     { code: 'ru', name: 'Russian', voice: 'ru-RU-Wavenet-B' }   // Male voice
   ]
+  
+  // Get available languages from scenes
+  const availableLanguages = React.useMemo(() => {
+    return getAvailableLanguages(scenes)
+  }, [scenes])
+  
+  // Filter supported languages to only show those with audio files
+  const selectableLanguages = React.useMemo(() => {
+    return SUPPORTED_LANGUAGES.filter(lang => availableLanguages.includes(lang.code))
+  }, [availableLanguages])
+  
+  // Set default language to first available if current selection is not available
+  React.useEffect(() => {
+    if (availableLanguages.length > 0 && !availableLanguages.includes(selectedLanguage)) {
+      setSelectedLanguage(availableLanguages[0])
+    }
+  }, [availableLanguages, selectedLanguage])
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [currentAudioUrl, setCurrentAudioUrl] = useState<string | null>(null)
