@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Clapperboard, Printer, Video as VideoIcon, Info, Globe } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Clapperboard, Printer, Video as VideoIcon, Info } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
@@ -20,8 +20,9 @@ import { toast } from 'sonner'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData, SceneDirectionData } from '@/lib/types/reports'
 import { ProjectCostCalculator } from './ProjectCostCalculator'
-import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { ExportDialog } from './ExportDialog'
+import { GenerateAudioDialog } from './GenerateAudioDialog'
+import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 
 interface ScriptPanelProps {
   script: any
@@ -51,7 +52,7 @@ interface ScriptPanelProps {
   }>
   onDismissValidationWarning?: (sceneIdx: number) => void
   onPlayAudio?: (audioUrl: string, label: string) => void
-  onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number) => void
+  onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number, language?: string) => void
   // NEW: Props for Production Script Header
   onGenerateAllAudio?: () => void
   isGeneratingAudio?: boolean
@@ -275,6 +276,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [storyboardPreviewOpen, setStoryboardPreviewOpen] = useState(false)
   const [sceneDirectionPreviewOpen, setSceneDirectionPreviewOpen] = useState(false)
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
+  const [generateAudioDialogOpen, setGenerateAudioDialogOpen] = useState(false)
   
   // Audio playback state
   const [voices, setVoices] = useState<Array<CuratedVoice>>([])
@@ -365,10 +367,72 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [isPlayingAll, setIsPlayingAll] = useState(false)
   const playbackAbortRef = useRef(false)
 
-  // Language selection state for multi-language TTS
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('en')
-
   const scenes = script?.script?.scenes || []
+
+  // Handler for generating audio from dialog
+  const handleGenerateAudioFromDialog = async (
+    language: string,
+    audioTypes: { narration: boolean; dialogue: boolean; music: boolean; sfx: boolean }
+  ) => {
+    // If all types are selected and it's English, use the batch generation API (includes music and SFX)
+    if (language === 'en' && audioTypes.narration && audioTypes.dialogue && audioTypes.music && audioTypes.sfx) {
+      if (onGenerateAllAudio) {
+        await onGenerateAllAudio()
+        setGenerateAudioDialogOpen(false)
+        return
+      }
+    }
+
+    // For non-English or partial selection, generate narration and dialogue scene by scene
+    // Note: Music and SFX are language-agnostic and should be generated separately if needed
+    if (!onGenerateSceneAudio) {
+      console.error('onGenerateSceneAudio not provided')
+      toast.error('Audio generation not available')
+      return
+    }
+
+    const scenes = script?.script?.scenes || []
+    
+    // Show warning if music/SFX are selected for non-English
+    if ((audioTypes.music || audioTypes.sfx) && language !== 'en') {
+      toast.warning('Music and SFX will be generated in English only. Generating narration and dialogue in selected language.')
+    }
+    
+    try {
+      for (let sceneIdx = 0; sceneIdx < scenes.length; sceneIdx++) {
+        const scene = scenes[sceneIdx]
+        
+        // Generate narration
+        if (audioTypes.narration && scene.action) {
+          await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined, language)
+        }
+        
+        // Generate dialogue
+        if (audioTypes.dialogue && Array.isArray(scene.dialogue)) {
+          for (let dialogueIdx = 0; dialogueIdx < scene.dialogue.length; dialogueIdx++) {
+            const dialogue = scene.dialogue[dialogueIdx]
+            if (dialogue?.character && dialogue?.text) {
+              await onGenerateSceneAudio(sceneIdx, 'dialogue', dialogue.character, dialogueIdx, language)
+            }
+          }
+        }
+      }
+      
+      // If English and music/SFX selected but not narration/dialogue, use batch API
+      if (language === 'en' && (audioTypes.music || audioTypes.sfx) && !audioTypes.narration && !audioTypes.dialogue) {
+        if (onGenerateAllAudio) {
+          // This will generate all types, but the API should respect what exists
+          await onGenerateAllAudio()
+        }
+      }
+      
+      toast.success(`Audio generation started for ${SUPPORTED_LANGUAGES.find(l => l.code === language)?.name || language}`)
+      setGenerateAudioDialogOpen(false)
+    } catch (error) {
+      console.error('Error generating audio:', error)
+      toast.error('Failed to generate audio. Please try again.')
+    }
+  }
 
   // Fetch ElevenLabs voices
   useEffect(() => {
@@ -855,62 +919,15 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               <span className="hidden sm:inline">Stop</span>
             </Button>
           )}
-                    {/* Screening Room Button */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={onPlayScript}
-                  disabled={!script || !scenes || scenes.length === 0}
-                  className="flex items-center gap-1"
-                >
-                  <Play className="w-4 h-4" />
-                  <span>Screen</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                <p>Open Screening Room</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
-          {/* Language Selector */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                  <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                    <SelectTrigger className="w-[140px] h-8 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SUPPORTED_LANGUAGES.map(lang => (
-                        <SelectItem key={lang.code} value={lang.code}>
-                          {lang.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                <p>Select language for audio generation</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
-          {/* Generate All Audio Button */}
-          {onGenerateAllAudio && (
+          {/* Generate Audio Button */}
+          {(onGenerateAllAudio || onGenerateSceneAudio) && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={onGenerateAllAudio}
+                    onClick={() => setGenerateAudioDialogOpen(true)}
                     disabled={isGeneratingAudio || !script || !scenes || scenes.length === 0}
                     className="flex items-center gap-1"
                   >
@@ -921,64 +938,81 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       </>
                     ) : (
                       <>
-                        <Volume2 className="w-4 h-4" />
-                        <span className="hidden sm:inline">Generate All</span>
+                        <Sparkles className="w-4 h-4" />
+                        <span className="hidden sm:inline">Generate</span>
                       </>
                     )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                  <p>Generate narration, dialogue, music, and SFX for all scenes</p>
+                  <p>Generate audio files for all scenes</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           )}
           
-                    {/* Animatics Studio Button - HIDDEN */}
-          {false && onOpenAnimaticsStudio && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={onOpenAnimaticsStudio}
-                    disabled={!script || !scenes || scenes.length === 0}
-                    className="flex items-center gap-1"
-                  >
-                    <VideoIcon className="w-4 h-4" />
-                    <span>Animatics</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">                                                       
-                  <p>Open Animatics Studio</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowScriptEditor(true)}
-            className="flex items-center gap-2"
-          >
-            <Clapperboard className="w-4 h-4" />
-            <span>Review</span>
-          </Button>
+          {/* Edit Button */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowScriptEditor(true)}
+                  className="flex items-center gap-1"
+                >
+                  <Edit className="w-4 h-4" />
+                  <span className="hidden sm:inline">Edit</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                <p>Edit script</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           
           {/* Export Button */}
           {script && scenes && scenes.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setExportDialogOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              <span>Export</span>
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setExportDialogOpen(true)}
+                    className="flex items-center gap-1"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span className="hidden sm:inline">Export</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                  <p>Export script, storyboard, or scene direction</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
+
+          {/* Preview Button (Screening Room) */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={onPlayScript}
+                  disabled={!script || !scenes || scenes.length === 0}
+                  className="flex items-center gap-1"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span className="hidden sm:inline">Preview</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                <p>Open Screening Room</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
       
@@ -1309,7 +1343,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   generateAndPlayMusic={generateAndPlayMusic}
                   onPlayAudio={handlePlayAudio}
                   onGenerateSceneAudio={onGenerateSceneAudio}
-                  selectedLanguage={selectedLanguage}
+                  selectedLanguage={'en'}
                   playingAudio={playingAudio}
                       generatingDialogue={generatingDialogue}
                       setGeneratingDialogue={setGeneratingDialogue}
@@ -1439,6 +1473,15 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         onExportScript={() => setReportPreviewOpen(true)}
         onExportStoryboard={() => setStoryboardPreviewOpen(true)}
         onExportSceneDirection={() => setSceneDirectionPreviewOpen(true)}
+      />
+      
+      {/* Generate Audio Dialog */}
+      <GenerateAudioDialog
+        open={generateAudioDialogOpen}
+        onOpenChange={setGenerateAudioDialogOpen}
+        script={script}
+        onGenerate={handleGenerateAudioFromDialog}
+        isGenerating={isGeneratingAudio}
       />
       
       {/* Report Preview Modals */}
