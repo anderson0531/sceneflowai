@@ -1,3 +1,5 @@
+import { DetailedSceneDirection } from '@/types/scene-direction'
+
 export enum ReportType {
   FILM_TREATMENT = 'Film Treatment',
   PROFESSIONAL_SCRIPT = 'Professional Script',
@@ -78,6 +80,7 @@ export interface SceneDirectionData {
     lighting?: string
     mood?: string
     duration?: number
+    sceneDirection?: DetailedSceneDirection
   }>
 }
 

@@ -59,12 +59,12 @@ export function ScenePromptBuilder({
     timeOfDay: 'day',
     weather: 'clear',
     atmosphere: 'neutral',
-    shotType: 'wide-shot',
+    shotType: 'medium-close-up',
     cameraAngle: 'eye-level',
     lighting: 'natural',
     characters: [],
     characterActions: '',
-    artStyle: 'concept-art',
+    artStyle: 'photorealistic',
     additionalDetails: '',
     negativePrompt: 'blurry, low quality, distorted, poor composition'
   })
@@ -125,11 +125,17 @@ export function ScenePromptBuilder({
     
     // Camera angles
     if (desc.includes('close up') || desc.includes('close-up')) {
-      updates.shotType = 'close-up'
+      // Check for medium close-up first, then regular close-up
+      if (desc.includes('medium close') || desc.includes('medium-close')) {
+        updates.shotType = 'medium-close-up'
+      } else {
+        updates.shotType = 'close-up'
+      }
     } else if (desc.includes('wide shot') || desc.includes('wide angle') || desc.includes('establishing')) {
       updates.shotType = 'wide-shot'
     } else if (desc.includes('medium')) {
-      updates.shotType = 'medium-shot'
+      // Default to medium-close-up for generic "medium" detections
+      updates.shotType = 'medium-close-up'
     }
     
     if (desc.includes('high angle') || desc.includes('high-angle')) {
@@ -178,7 +184,9 @@ export function ScenePromptBuilder({
     const shotTypes: Record<string, string> = {
       'wide-shot': 'Wide establishing shot',
       'medium-shot': 'Medium shot',
+      'medium-close-up': 'Medium close-up shot',
       'close-up': 'Close-up shot',
+      'extreme-close-up': 'Extreme close-up shot',
       'extreme-wide': 'Extreme wide shot',
       'over-shoulder': 'Over the shoulder shot'
     }

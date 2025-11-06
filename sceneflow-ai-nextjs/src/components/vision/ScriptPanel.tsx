@@ -74,6 +74,9 @@ interface ScriptPanelProps {
   // NEW: BYOK props for cost calculator
   hasBYOK?: boolean
   onOpenBYOK?: () => void
+  // NEW: Scene direction generation props
+  onGenerateSceneDirection?: (sceneIdx: number) => Promise<void>
+  generatingDirectionFor?: number | null
 }
 
 // Transform score analysis data to review format
@@ -1314,6 +1317,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       setGeneratingSFX={setGeneratingSFX}
                       generateMusic={generateMusic}
                       generateSFX={generateSFX}
+                      onGenerateSceneDirection={onGenerateSceneDirection}
+                      generatingDirectionFor={generatingDirectionFor}
                 />
                     )
                   })}
@@ -1454,7 +1459,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 cameraAngle: scene.cameraAngle,
                 lighting: scene.lighting,
                 mood: scene.mood,
-                duration: scene.duration
+                duration: scene.duration,
+                sceneDirection: scene.sceneDirection
               }))
             } as SceneDirectionData}
             projectName={script.title || 'Untitled Script'}
@@ -1532,11 +1538,15 @@ interface SceneCardProps {
   // Functions for generating and saving audio
   generateMusic?: (sceneIdx: number) => Promise<void>
   generateSFX?: (sceneIdx: number, sfxIdx: number) => Promise<void>
+  // NEW: Scene direction generation props
+  onGenerateSceneDirection?: (sceneIdx: number) => Promise<void>
+  generatingDirectionFor?: number | null
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart, dragHandleProps, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onStopAudio, onOpenSceneReview, generatingMusic, setGeneratingMusic, generatingSFX, setGeneratingSFX, generateMusic, generateSFX }: SceneCardProps) {
+function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart, dragHandleProps, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onStopAudio, onOpenSceneReview, generatingMusic, setGeneratingMusic, generatingSFX, setGeneratingSFX, generateMusic, generateSFX, onGenerateSceneDirection, generatingDirectionFor }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
+  const [isSceneDirectionOpen, setIsSceneDirectionOpen] = useState(false)
   
   const handleExpand = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -2041,6 +2051,265 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                   <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Quick generate image</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+            </div>
+          )}
+          
+          {/* Scene Direction Section */}
+          {!isOutline && (
+            <div className="mb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setIsSceneDirectionOpen(!isSceneDirectionOpen)
+                }}
+                className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Film className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Scene Direction</span>
+                </div>
+                <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isSceneDirectionOpen ? 'rotate-90' : ''}`} />
+              </button>
+              
+              {isSceneDirectionOpen && (
+                <div className="mt-3 space-y-4">
+                  {!scene.sceneDirection ? (
+                    <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                        Generate detailed technical directions for live-action film crew including camera, lighting, scene, talent, and audio specifications.
+                      </p>
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          if (onGenerateSceneDirection) {
+                            await onGenerateSceneDirection(sceneIdx)
+                          }
+                        }}
+                        disabled={generatingDirectionFor === sceneIdx}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {generatingDirectionFor === sceneIdx ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Generating...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4" />
+                            <span>Generate Scene Direction</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Camera */}
+                      {scene.sceneDirection.camera && (
+                        <div className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
+                            <Camera className="w-4 h-4" />
+                            Camera
+                          </h4>
+                          <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                            {scene.sceneDirection.camera.shots && scene.sceneDirection.camera.shots.length > 0 && (
+                              <div>
+                                <span className="font-medium">Shots: </span>
+                                <span>{scene.sceneDirection.camera.shots.join(', ')}</span>
+                              </div>
+                            )}
+                            {scene.sceneDirection.camera.angle && (
+                              <div>
+                                <span className="font-medium">Angle: </span>
+                                <span>{scene.sceneDirection.camera.angle}</span>
+                              </div>
+                            )}
+                            {scene.sceneDirection.camera.movement && (
+                              <div>
+                                <span className="font-medium">Movement: </span>
+                                <span>{scene.sceneDirection.camera.movement}</span>
+                              </div>
+                            )}
+                            {scene.sceneDirection.camera.lensChoice && (
+                              <div>
+                                <span className="font-medium">Lens: </span>
+                                <span>{scene.sceneDirection.camera.lensChoice}</span>
+                              </div>
+                            )}
+                            {scene.sceneDirection.camera.focus && (
+                              <div>
+                                <span className="font-medium">Focus: </span>
+                                <span>{scene.sceneDirection.camera.focus}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Lighting */}
+                      {scene.sceneDirection.lighting && (
+                        <div className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
+                            <Zap className="w-4 h-4" />
+                            Lighting
+                          </h4>
+                          <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                            {scene.sceneDirection.lighting.overallMood && (
+                              <div>
+                                <span className="font-medium">Mood: </span>
+                                <span>{scene.sceneDirection.lighting.overallMood}</span>
+                              </div>
+                            )}
+                            {scene.sceneDirection.lighting.timeOfDay && (
+                              <div>
+                                <span className="font-medium">Time of Day: </span>
+                                <span>{scene.sceneDirection.lighting.timeOfDay}</span>
+                              </div>
+                            )}
+                            {scene.sceneDirection.lighting.keyLight && (
+                              <div>
+                                <span className="font-medium">Key Light: </span>
+                                <span>{scene.sceneDirection.lighting.keyLight}</span>
+                              </div>
+                            )}
+                            {scene.sceneDirection.lighting.fillLight && (
+                              <div>
+                                <span className="font-medium">Fill Light: </span>
+                                <span>{scene.sceneDirection.lighting.fillLight}</span>
+                              </div>
+                            )}
+                            {scene.sceneDirection.lighting.backlight && (
+                              <div>
+                                <span className="font-medium">Backlight: </span>
+                                <span>{scene.sceneDirection.lighting.backlight}</span>
+                              </div>
+                            )}
+                            {scene.sceneDirection.lighting.practicals && (
+                              <div>
+                                <span className="font-medium">Practicals: </span>
+                                <span>{scene.sceneDirection.lighting.practicals}</span>
+                              </div>
+                            )}
+                            {scene.sceneDirection.lighting.colorTemperature && (
+                              <div>
+                                <span className="font-medium">Color Temperature: </span>
+                                <span>{scene.sceneDirection.lighting.colorTemperature}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Scene */}
+                      {scene.sceneDirection.scene && (
+                        <div className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
+                            <ImageIcon className="w-4 h-4" />
+                            Scene
+                          </h4>
+                          <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                            {scene.sceneDirection.scene.location && (
+                              <div>
+                                <span className="font-medium">Location: </span>
+                                <span>{scene.sceneDirection.scene.location}</span>
+                              </div>
+                            )}
+                            {scene.sceneDirection.scene.keyProps && scene.sceneDirection.scene.keyProps.length > 0 && (
+                              <div>
+                                <span className="font-medium">Key Props: </span>
+                                <span>{scene.sceneDirection.scene.keyProps.join(', ')}</span>
+                              </div>
+                            )}
+                            {scene.sceneDirection.scene.atmosphere && (
+                              <div>
+                                <span className="font-medium">Atmosphere: </span>
+                                <span>{scene.sceneDirection.scene.atmosphere}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Talent */}
+                      {scene.sceneDirection.talent && (
+                        <div className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
+                            <Users className="w-4 h-4" />
+                            Talent
+                          </h4>
+                          <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                            {scene.sceneDirection.talent.blocking && (
+                              <div>
+                                <span className="font-medium">Blocking: </span>
+                                <span>{scene.sceneDirection.talent.blocking}</span>
+                              </div>
+                            )}
+                            {scene.sceneDirection.talent.keyActions && scene.sceneDirection.talent.keyActions.length > 0 && (
+                              <div>
+                                <span className="font-medium">Key Actions: </span>
+                                <span>{scene.sceneDirection.talent.keyActions.join(', ')}</span>
+                              </div>
+                            )}
+                            {scene.sceneDirection.talent.emotionalBeat && (
+                              <div>
+                                <span className="font-medium">Emotional Beat: </span>
+                                <span>{scene.sceneDirection.talent.emotionalBeat}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Audio */}
+                      {scene.sceneDirection.audio && (
+                        <div className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
+                            <Volume2 className="w-4 h-4" />
+                            Audio
+                          </h4>
+                          <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                            {scene.sceneDirection.audio.priorities && (
+                              <div>
+                                <span className="font-medium">Priorities: </span>
+                                <span>{scene.sceneDirection.audio.priorities}</span>
+                              </div>
+                            )}
+                            {scene.sceneDirection.audio.considerations && (
+                              <div>
+                                <span className="font-medium">Considerations: </span>
+                                <span>{scene.sceneDirection.audio.considerations}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Regenerate Button */}
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          if (onGenerateSceneDirection) {
+                            await onGenerateSceneDirection(sceneIdx)
+                          }
+                        }}
+                        disabled={generatingDirectionFor === sceneIdx}
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {generatingDirectionFor === sceneIdx ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Regenerating...</span>
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="w-4 h-4" />
+                            <span>Regenerate Scene Direction</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
           

@@ -23,6 +23,7 @@ import { findSceneCharacters } from '../../../../../lib/character/matching'
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 import { v4 as uuidv4 } from 'uuid'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
+import { DetailedSceneDirection } from '@/types/scene-direction'
 
 // Scene Analysis interface for score generation
 interface SceneAnalysis {
@@ -47,6 +48,7 @@ interface Scene {
   musicAudio?: string
   duration?: number
   scoreAnalysis?: SceneAnalysis
+  sceneDirection?: DetailedSceneDirection
   [key: string]: any
 }
 
@@ -465,6 +467,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Scene score generation state
   const [generatingScoreFor, setGeneratingScoreFor] = useState<number | null>(null)
+  
+  // Scene direction generation state
+  const [generatingDirectionFor, setGeneratingDirectionFor] = useState<number | null>(null)
   const [generationProgress, setGenerationProgress] = useState({
     script: { 
       complete: false, 
@@ -2537,6 +2542,90 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  // Handle generate scene direction
+  const handleGenerateSceneDirection = async (sceneIdx: number) => {
+    const scene = script?.script?.scenes?.[sceneIdx]
+    if (!scene) {
+      console.warn('No scene data available for scene', sceneIdx)
+      try { const { toast } = require('sonner'); toast.error('Scene data not found') } catch {}
+      return
+    }
+
+    setGeneratingDirectionFor(sceneIdx)
+
+    try {
+      const response = await fetch('/api/scene/generate-direction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex: sceneIdx,
+          scene: {
+            heading: scene.heading,
+            action: scene.action,
+            visualDescription: scene.visualDescription,
+            narration: scene.narration,
+            dialogue: scene.dialogue
+          }
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error || 'Failed to generate scene direction')
+      }
+
+      const data = await response.json()
+      
+      if (!data.success || !data.sceneDirection) {
+        throw new Error(data.error || 'Failed to generate scene direction')
+      }
+
+      // Update local state
+      const updatedScenes = [...(script.script.scenes || [])]
+      updatedScenes[sceneIdx] = {
+        ...updatedScenes[sceneIdx],
+        sceneDirection: data.sceneDirection
+      }
+
+      setScript({
+        ...script,
+        script: {
+          ...script.script,
+          scenes: updatedScenes
+        }
+      })
+
+      // Update project metadata to reflect the change
+      if (project) {
+        const updatedMetadata = {
+          ...project.metadata,
+          visionPhase: {
+            ...project.metadata?.visionPhase,
+            script: {
+              ...script,
+              script: {
+                ...script.script,
+                scenes: updatedScenes
+              }
+            }
+          }
+        }
+        setProject({
+          ...project,
+          metadata: updatedMetadata
+        })
+      }
+
+      try { const { toast } = require('sonner'); toast.success('Scene direction generated!') } catch {}
+    } catch (error: any) {
+      console.error('Failed to generate scene direction:', error)
+      try { const { toast } = require('sonner'); toast.error(`Failed to generate scene direction: ${error.message}`) } catch {}
+    } finally {
+      setGeneratingDirectionFor(null)
+    }
+  }
+
   // Handle generate all audio
   const handleGenerateAllAudio = async () => {
     if (!narrationVoice) {
@@ -3578,6 +3667,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             onShowReviews={() => setShowReviewModal(true)}
             hasBYOK={!!byokSettings?.videoProvider}
             onOpenBYOK={() => setShowBYOKSettings(true)}
+            onGenerateSceneDirection={handleGenerateSceneDirection}
+            generatingDirectionFor={generatingDirectionFor}
           />
         </div>
         
