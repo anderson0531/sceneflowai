@@ -1023,14 +1023,41 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const visionPhase = proj.metadata?.visionPhase
       if (visionPhase) {
         if (visionPhase.script) {
+          // Migrate audio structure if needed
+          const { migrateScriptAudio } = await import('@/lib/audio/audioMigration')
+          const { script: migratedScript, needsMigration } = migrateScriptAudio(visionPhase.script)
+          
+          if (needsMigration) {
+            console.log('[loadProject] Migrating audio structure to multi-language format')
+            // Save migrated script back to database
+            try {
+              await fetch(`/api/projects/${projectId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  metadata: {
+                    ...proj.metadata,
+                    visionPhase: {
+                      ...visionPhase,
+                      script: migratedScript
+                    }
+                  }
+                })
+              })
+              console.log('[loadProject] Audio migration saved successfully')
+            } catch (error) {
+              console.warn('[loadProject] Failed to save audio migration:', error)
+            }
+          }
+          
           console.log('[loadProject] Setting script with structure:', {
-            hasTitle: !!visionPhase.script.title,
-            hasNestedScript: !!visionPhase.script.script,
-            nestedScenesCount: visionPhase.script.script?.scenes?.length || 0,
-            firstSceneHasImage: !!visionPhase.script.script?.scenes?.[0]?.imageUrl,
-            firstSceneImageUrl: visionPhase.script.script?.scenes?.[0]?.imageUrl?.substring(0, 100)
+            hasTitle: !!migratedScript.title,
+            hasNestedScript: !!migratedScript.script,
+            nestedScenesCount: migratedScript.script?.scenes?.length || 0,
+            firstSceneHasImage: !!migratedScript.script?.scenes?.[0]?.imageUrl,
+            firstSceneImageUrl: migratedScript.script?.scenes?.[0]?.imageUrl?.substring(0, 100)
           })
-          setScript(visionPhase.script)
+          setScript(migratedScript)
         }
         
         // Load existing reviews
@@ -2772,7 +2799,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   // Handle generate scene audio
-  const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number) => {
+  const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number, language: string = 'en') => {
     console.log('[Generate Scene Audio] START:', { sceneIdx, audioType, characterName, dialogueIndex })
     
     const scene = script?.script?.scenes?.[sceneIdx]
@@ -2921,6 +2948,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           audioType,
           text,
           voiceConfig,
+          language,
           characterName,
           dialogueIndex
         }),
@@ -2930,32 +2958,77 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (data.success) {
         console.log('[Audio] Audio generated successfully:', data)
         
-        // Update script state immediately with audio URL
+        // Update script state immediately with audio URL (multi-language structure)
         setScript((prevScript: any) => {
           const updated = { ...prevScript }
           if (updated.script?.scenes?.[sceneIdx]) {
+            const scene = { ...updated.script.scenes[sceneIdx] }
+            
             if (audioType === 'narration') {
-              updated.script.scenes[sceneIdx] = {
-                ...updated.script.scenes[sceneIdx],
-                narrationAudioUrl: data.audioUrl
+              // Initialize narrationAudio if it doesn't exist
+              if (!scene.narrationAudio) {
+                scene.narrationAudio = {}
               }
+              
+              // Store language-specific narration audio
+              scene.narrationAudio[language] = {
+                url: data.audioUrl,
+                duration: data.duration || undefined,
+                generatedAt: new Date().toISOString(),
+                voiceId: voiceConfig.voiceId
+              }
+              
+              // Maintain backward compatibility: set narrationAudioUrl for English
+              if (language === 'en') {
+                scene.narrationAudioUrl = data.audioUrl
+                scene.narrationAudioGeneratedAt = new Date().toISOString()
+              }
+              
+              updated.script.scenes[sceneIdx] = scene
             } else if (audioType === 'dialogue' && characterName) {
-              // Handle dialogue audio - match by both character and dialogueIndex
-              const dialogueAudio = updated.script.scenes[sceneIdx].dialogueAudio || []
-              const existingIndex = dialogueAudio.findIndex((d: any) => 
+              // Initialize dialogueAudio object if needed
+              if (!scene.dialogueAudio || Array.isArray(scene.dialogueAudio)) {
+                // Migrate old array format if exists
+                if (Array.isArray(scene.dialogueAudio) && scene.dialogueAudio.length > 0) {
+                  scene.dialogueAudio = { en: scene.dialogueAudio }
+                } else {
+                  scene.dialogueAudio = {}
+                }
+              }
+              
+              // Initialize language array if it doesn't exist
+              if (!scene.dialogueAudio[language]) {
+                scene.dialogueAudio[language] = []
+              }
+              
+              const dialogueArray = [...scene.dialogueAudio[language]]
+              const existingIndex = dialogueArray.findIndex((d: any) => 
                 d.character === characterName && d.dialogueIndex === dialogueIndex
               )
               
-              if (existingIndex >= 0) {
-                dialogueAudio[existingIndex] = { character: characterName, dialogueIndex, audioUrl: data.audioUrl }
-              } else {
-                dialogueAudio.push({ character: characterName, dialogueIndex, audioUrl: data.audioUrl })
+              const dialogueEntry = {
+                character: characterName,
+                dialogueIndex: dialogueIndex!,
+                audioUrl: data.audioUrl,
+                duration: data.duration || undefined,
+                voiceId: voiceConfig.voiceId
               }
               
-              updated.script.scenes[sceneIdx] = {
-                ...updated.script.scenes[sceneIdx],
-                dialogueAudio
+              if (existingIndex >= 0) {
+                dialogueArray[existingIndex] = dialogueEntry
+              } else {
+                dialogueArray.push(dialogueEntry)
               }
+              
+              scene.dialogueAudio[language] = dialogueArray
+              
+              // Maintain backward compatibility: set dialogueAudio array for English
+              if (language === 'en') {
+                scene.dialogueAudio = dialogueArray
+                scene.dialogueAudioGeneratedAt = new Date().toISOString()
+              }
+              
+              updated.script.scenes[sceneIdx] = scene
             }
           }
           return updated

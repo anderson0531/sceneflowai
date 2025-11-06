@@ -10,6 +10,7 @@ import { WebAudioMixer, SceneAudioConfig, AudioSource } from '@/lib/audio/webAud
 import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { toast } from 'sonner'
 import { useOverlayStore } from '@/store/useOverlayStore'
+import { getAvailableLanguages, getAudioUrl, getAudioDuration as getStoredAudioDuration } from '@/lib/audio/languageDetection'
 
 interface ScreeningRoomProps {
   script: any
@@ -59,11 +60,25 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const renderPollIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Language translation state
+  // Language state - use pre-generated audio files
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en') // Default: English
-  const [translationCache, setTranslationCache] = useState<Map<string, {text: string, audio: string}>>(new Map())
-  const [currentTranslatedNarration, setCurrentTranslatedNarration] = useState<string | undefined>()
-  const [currentTranslatedDialogue, setCurrentTranslatedDialogue] = useState<string[] | undefined>()
+  
+  // Get available languages from scenes
+  const availableLanguages = React.useMemo(() => {
+    return getAvailableLanguages(scenes)
+  }, [scenes])
+  
+  // Filter supported languages to only show those with audio files
+  const selectableLanguages = React.useMemo(() => {
+    return SUPPORTED_LANGUAGES.filter(lang => availableLanguages.includes(lang.code))
+  }, [availableLanguages])
+  
+  // Set default language to first available if current selection is not available
+  React.useEffect(() => {
+    if (availableLanguages.length > 0 && !availableLanguages.includes(selectedLanguage)) {
+      setSelectedLanguage(availableLanguages[0])
+    }
+  }, [availableLanguages, selectedLanguage])
 
   // Supported languages with their Google TTS voice codes
   const SUPPORTED_LANGUAGES = [
@@ -175,104 +190,32 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [playerState.currentSceneIndex, scenes.length, resetControlsTimeout])
 
-  // Translation helper function
-  const translateAndGenerateAudio = async (text: string, sceneIdx: number, audioType: 'narration' | 'dialogue', characterIdx?: number): Promise<{ audioUrl: string, translatedText: string }> => {
-    // If English, skip translation
-    if (selectedLanguage === 'en') {
-      // Use pre-generated MP3 if available
-      const scene = scenes[sceneIdx]
-      if (audioType === 'narration' && scene.narrationAudioUrl) {
-        return { audioUrl: scene.narrationAudioUrl, translatedText: text }
-      }
-      if (audioType === 'dialogue' && characterIdx !== undefined && scene.dialogueAudio?.[characterIdx]?.audioUrl) {
-        return { audioUrl: scene.dialogueAudio[characterIdx].audioUrl, translatedText: text }
-      }
-    }
-
-    // Create cache key
-    const cacheKey = `${sceneIdx}-${audioType}-${characterIdx || 0}-${selectedLanguage}`
-    
-    // Check cache
-    const cached = translationCache.get(cacheKey)
-    if (cached) {
-      console.log('[Translation] Using cached audio for', cacheKey)
-      return { audioUrl: cached.audio, translatedText: cached.text }
-    }
-
-    try {
-      console.log('[Translation] Translating text to', selectedLanguage)
-      
-      // Step 1: Translate text
-      const translateResponse = await fetch('/api/translate/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text,
-          targetLanguage: selectedLanguage,
-          sourceLanguage: 'en'
-        })
-      })
-
-      if (!translateResponse.ok) {
-        throw new Error('Translation failed')
-      }
-
-      const { translatedText } = await translateResponse.json()
-      console.log('[Translation] Translated:', text.substring(0, 50), '→', translatedText.substring(0, 50))
-
-      // Step 2: Generate TTS in target language
-      const languageConfig = SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)
-      const voiceId = languageConfig?.voice || 'en-US-Neural2-F'
-
-      const ttsResponse = await fetch('/api/tts/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: translatedText,
-          voiceId
-        })
-      })
-
-      if (!ttsResponse.ok) {
-        throw new Error('TTS generation failed')
-      }
-
-      // Convert response to blob URL
-      const audioBlob = await ttsResponse.blob()
-      const audioUrl = URL.createObjectURL(audioBlob)
-
-      // Cache the result
-      setTranslationCache(prev => {
-        const newCache = new Map(prev)
-        newCache.set(cacheKey, { text: translatedText, audio: audioUrl })
-        console.log('[Translation] Cached:', cacheKey, '→', translatedText.substring(0, 50))
-        return newCache
-      })
-
-      console.log('[Translation] Audio generated and cached')
-      return { audioUrl, translatedText }
-
-    } catch (error) {
-      console.error('[Translation] Error:', error)
-      throw error
-    }
-  }
+  // Get audio URL for selected language (uses pre-generated audio files)
+  const getAudioForLanguage = useCallback((scene: any, language: string, audioType: 'narration' | 'dialogue', dialogueIndex?: number): string | null => {
+    return getAudioUrl(scene, language, audioType, dialogueIndex)
+  }, [])
 
   /**
    * Calculate audio timeline for a scene
    * Returns timing information for concurrent playback
+   * Uses language-specific audio files and stored durations
    */
   const calculateAudioTimeline = async (scene: any): Promise<SceneAudioConfig> => {
     const config: SceneAudioConfig = {}
     let currentTime = 0
     
+    // Get language-specific audio URLs
+    const narrationUrl = getAudioForLanguage(scene, selectedLanguage, 'narration')
+    const dialogueArray = scene.dialogueAudio?.[selectedLanguage] || (selectedLanguage === 'en' ? scene.dialogueAudio : null)
+    
     // Debug logging
-    console.log('[Timeline] Calculating audio timeline for scene:', {
+    console.log('[Timeline] Calculating audio timeline for scene (language:', selectedLanguage, '):', {
       hasMusic: !!scene.musicAudio,
       musicUrl: scene.musicAudio,
-      hasNarration: !!scene.narrationAudioUrl,
-      hasDialogue: !!(scene.dialogueAudio && scene.dialogueAudio.length > 0),
-      dialogueCount: scene.dialogueAudio?.length || 0,
+      hasNarration: !!narrationUrl,
+      narrationUrl,
+      hasDialogue: !!(Array.isArray(dialogueArray) && dialogueArray.length > 0),
+      dialogueCount: Array.isArray(dialogueArray) ? dialogueArray.length : 0,
       hasSFX: !!(scene.sfxAudio && scene.sfxAudio.length > 0),
       sfxCount: scene.sfxAudio?.length || 0,
       sfxUrls: scene.sfxAudio
@@ -285,36 +228,51 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     }
     
     // Narration starts at scene beginning (concurrent with music)
-    if (scene.narrationAudioUrl) {
-      config.narration = scene.narrationAudioUrl
-            // Calculate narration duration for dialogue timing
-      try {
-        const narrationDuration = await getAudioDuration(scene.narrationAudioUrl)                                                                               
-        currentTime = narrationDuration + 3.0 // Add 3-second lag before dialogue starts
-      } catch (error) {
-        console.warn('[Timeline] Failed to get narration duration, using default:', error)                                                                      
-        currentTime = 8 // Default 8 seconds (5s narration + 3s delay)
+    if (narrationUrl) {
+      config.narration = narrationUrl
+      
+      // Use stored duration if available, otherwise calculate
+      const storedDuration = getStoredAudioDuration(scene, selectedLanguage, 'narration')
+      if (storedDuration) {
+        currentTime = storedDuration + 3.0 // Add 3-second lag before dialogue starts
+        console.log('[Timeline] Using stored narration duration:', storedDuration)
+      } else {
+        // Fallback to calculating duration
+        try {
+          const narrationDuration = await getAudioDuration(narrationUrl)                                                                               
+          currentTime = narrationDuration + 3.0 // Add 3-second lag before dialogue starts
+        } catch (error) {
+          console.warn('[Timeline] Failed to get narration duration, using default:', error)                                                                      
+          currentTime = 8 // Default 8 seconds (5s narration + 3s delay)
+        }
       }
     }
     
     // Dialogue follows narration sequentially
-    if (scene.dialogueAudio && scene.dialogueAudio.length > 0) {
+    if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
       config.dialogue = []
       
-      for (const dialogue of scene.dialogueAudio) {
+      for (const dialogue of dialogueArray) {
         if (dialogue.audioUrl) {
           config.dialogue.push({
             url: dialogue.audioUrl,
             startTime: currentTime
           })
           
-          // Calculate duration for next dialogue timing
-          try {
-            const dialogueDuration = await getAudioDuration(dialogue.audioUrl)
-            currentTime += dialogueDuration + 0.3 // Add 300ms pause between dialogue lines
-          } catch (error) {
-            console.warn('[Timeline] Failed to get dialogue duration, using default:', error)
-            currentTime += 3 // Default 3 seconds per dialogue
+          // Use stored duration if available, otherwise calculate
+          const storedDialogueDuration = dialogue.duration
+          if (storedDialogueDuration) {
+            currentTime += storedDialogueDuration + 0.3 // Add 300ms pause between dialogue lines
+            console.log('[Timeline] Using stored dialogue duration:', storedDialogueDuration)
+          } else {
+            // Fallback to calculating duration
+            try {
+              const dialogueDuration = await getAudioDuration(dialogue.audioUrl)
+              currentTime += dialogueDuration + 0.3 // Add 300ms pause between dialogue lines
+            } catch (error) {
+              console.warn('[Timeline] Failed to get dialogue duration, using default:', error)
+              currentTime += 3 // Default 3 seconds per dialogue
+            }
           }
         }
       }
@@ -353,7 +311,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     })
     
     return config
-  }
+  }, [selectedLanguage, getAudioForLanguage])
 
   // Generate and play audio for current scene
   const playSceneAudio = useCallback(async (sceneIndex: number) => {
@@ -375,92 +333,20 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         return
       }
       
-      // If translation enabled (non-English), use dynamic generation
-      if (selectedLanguage !== 'en') {
-        console.log('[Player] Using translation mode for', selectedLanguage)
-        
-        // Clear previous translated text
-        setCurrentTranslatedNarration(undefined)
-        setCurrentTranslatedDialogue(undefined)
-        
-        // Translate and play narration
-        if (scene.narration) {
-          const { audioUrl, translatedText } = await translateAndGenerateAudio(scene.narration, sceneIndex, 'narration')
-          // Set translated text for captions
-          setCurrentTranslatedNarration(translatedText)
-          
-          if (audioRef.current) {
-            audioRef.current.src = audioUrl
-            audioRef.current.playbackRate = playerState.playbackSpeed
-            audioRef.current.volume = playerState.volume
-            await audioRef.current.play()
-            setIsLoadingAudio(false)
-            
-            await new Promise<void>((resolve) => {
-              if (audioRef.current) {
-                audioRef.current.onended = () => resolve()
-              }
-            })
-          }
-        }
-
-        // Small pause
-        await new Promise(resolve => setTimeout(resolve, 500))
-
-        // Translate and play dialogue
-        if (scene.dialogue && scene.dialogue.length > 0) {
-          const translatedDialogue: string[] = []
-          for (let i = 0; i < scene.dialogue.length; i++) {
-            const dialogue = scene.dialogue[i]
-            const { audioUrl, translatedText } = await translateAndGenerateAudio(dialogue.line, sceneIndex, 'dialogue', i)
-            
-            // Set translated text for captions
-            translatedDialogue[i] = translatedText
-            
-            if (audioRef.current) {
-              audioRef.current.src = audioUrl
-              audioRef.current.playbackRate = playerState.playbackSpeed
-              audioRef.current.volume = playerState.volume
-              await audioRef.current.play()
-              
-              await new Promise<void>((resolve) => {
-                if (audioRef.current) {
-                  audioRef.current.onended = () => resolve()
-                }
-              })
-              
-              await new Promise(resolve => setTimeout(resolve, 300))
-            }
-          }
-          setCurrentTranslatedDialogue(translatedDialogue)
-        }
-
-        // Add 3 second delay before advancing to next scene
-        await new Promise(resolve => setTimeout(resolve, 3000))
-        
-        // Check cancellation after delay
-        if (playbackCancelledRef.current) {
-          setIsLoadingAudio(false)
-          return
-        }
-
-        // Auto-advance (only if auto-advance enabled and not manual navigation)
-        if (playerState.isPlaying && playerState.autoAdvance && !isManualNavigationRef.current) {
-          nextScene()
-        }
-        return
-      }
-
-                  // CHECK FOR PRE-GENERATED AUDIO FIRST (English mode with Web Audio Mixer)                                                                          
-      // Check if scene has any pre-generated audio (narration, music, dialogue, or SFX)
-      // Only consider audio URLs that are HTTP(S) URLs (persistent), not blob URLs (temporary)
-      const hasValidNarration = scene.narrationAudioUrl && 
-                                (scene.narrationAudioUrl.startsWith('http://') || scene.narrationAudioUrl.startsWith('https://'))
+      // Use pre-generated audio files for selected language
+      // Check if scene has any pre-generated audio for the selected language
+      const narrationUrl = getAudioForLanguage(scene, selectedLanguage, 'narration')
+      const hasValidNarration = narrationUrl && 
+                                (narrationUrl.startsWith('http://') || narrationUrl.startsWith('https://'))
+      
+      // Check dialogue audio for selected language
+      const dialogueArray = scene.dialogueAudio?.[selectedLanguage] || (selectedLanguage === 'en' ? scene.dialogueAudio : null)
+      const hasValidDialogue = Array.isArray(dialogueArray) && dialogueArray.length > 0 &&
+                              dialogueArray.some((d: any) => d.audioUrl && 
+                                (d.audioUrl.startsWith('http://') || d.audioUrl.startsWith('https://')))
+      
       const hasValidMusic = scene.musicAudio && 
                            (scene.musicAudio.startsWith('http://') || scene.musicAudio.startsWith('https://'))
-      const hasValidDialogue = scene.dialogueAudio && scene.dialogueAudio.length > 0 &&
-                              scene.dialogueAudio.some((d: any) => d.audioUrl && 
-                                (d.audioUrl.startsWith('http://') || d.audioUrl.startsWith('https://')))
       const hasValidSFX = scene.sfxAudio && scene.sfxAudio.length > 0 &&
                          scene.sfxAudio.some((url: string) => url && 
                            (url.startsWith('http://') || url.startsWith('https://')))
@@ -468,10 +354,10 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       const hasPreGeneratedAudio = hasValidNarration || hasValidMusic || hasValidDialogue || hasValidSFX
       
       if (hasPreGeneratedAudio) {
-        console.log('[Player] Using pre-generated audio with Web Audio Mixer for scene', sceneIndex + 1, {
-          narration: !!scene.narrationAudioUrl,
+        console.log('[Player] Using pre-generated audio with Web Audio Mixer for scene', sceneIndex + 1, 'language:', selectedLanguage, {
+          narration: !!narrationUrl,
           music: !!scene.musicAudio,
-          dialogue: !!(scene.dialogueAudio && scene.dialogueAudio.length > 0),
+          dialogue: hasValidDialogue,
           sfx: !!(scene.sfxAudio && scene.sfxAudio.length > 0)
         })
         
@@ -682,7 +568,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         }, waitTime)
       }
     }
-  }, [scenes, playerState.isPlaying, playerState.playbackSpeed, playerState.volume, selectedLanguage, translationCache])
+  }, [scenes, playerState.isPlaying, playerState.playbackSpeed, playerState.volume, selectedLanguage])
 
 
   // Track if this is the first play to prevent immediate skipping
@@ -810,24 +696,29 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     )
     
     try {
-      // Prepare scene data for Creatomate
+      // Prepare scene data for Creatomate using selected language
       const sceneData = scenes.map((scene: any, idx: number) => {
-        // Build dialogue array with start times
+        // Get language-specific audio URLs
+        const narrationUrl = getAudioForLanguage(scene, selectedLanguage, 'narration')
+        const dialogueArray = scene.dialogueAudio?.[selectedLanguage] || (selectedLanguage === 'en' ? scene.dialogueAudio : null)
+        
+        // Build dialogue array with start times using language-specific audio
         const dialogue: Array<{ url: string; startTime: number }> = []
-        if (scene.dialogueAudio && Array.isArray(scene.dialogueAudio)) {
+        if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
           let dialogueTime = 0
-          // Estimate narration duration for dialogue timing (5 seconds default)
-          if (scene.narrationAudioUrl) {
-            dialogueTime = 5 // Approximate narration duration
-          }
+          // Use stored narration duration if available, otherwise estimate
+          const narrationDuration = getStoredAudioDuration(scene, selectedLanguage, 'narration') || 5
+          dialogueTime = narrationDuration + 3.0 // Add 3-second lag before dialogue starts
           
-          scene.dialogueAudio.forEach((d: any) => {
+          dialogueArray.forEach((d: any) => {
             if (d.audioUrl) {
               dialogue.push({
                 url: d.audioUrl,
                 startTime: dialogueTime
               })
-              dialogueTime += 3 // Approximate 3 seconds per dialogue line
+              // Use stored duration if available, otherwise estimate
+              const dialogueDuration = d.duration || 3
+              dialogueTime += dialogueDuration + 0.3 // Add 300ms pause between dialogue lines
             }
           })
         }
@@ -847,12 +738,21 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           })
         }
         
+        // Calculate scene duration based on language-specific audio
+        const narrationDuration = getStoredAudioDuration(scene, selectedLanguage, 'narration')
+        const totalDialogueDuration = Array.isArray(dialogueArray) 
+          ? dialogueArray.reduce((sum: number, d: any) => sum + (d.duration || 3) + 0.3, 0)
+          : 0
+        const sceneDuration = narrationDuration 
+          ? narrationDuration + 3.0 + totalDialogueDuration
+          : (scene.duration || 5)
+        
         return {
           sceneNumber: idx + 1,
           imageUrl: scene.imageUrl || '/images/placeholders/placeholder.svg',
-          duration: scene.duration || 5,
+          duration: sceneDuration,
           audioTracks: {
-            narration: scene.narrationAudioUrl,
+            narration: narrationUrl || undefined,
             dialogue: dialogue.length > 0 ? dialogue : undefined,
             sfx: sfx.length > 0 ? sfx : undefined,
             music: scene.musicAudio
@@ -1034,13 +934,11 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
             value={selectedLanguage}
             onChange={(e) => {
               setSelectedLanguage(e.target.value)
-              // Clear cache when language changes
-              setTranslationCache(new Map())
             }}
             className="px-3 py-1.5 rounded-lg bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-colors text-sm min-h-[44px]"
             title="Select Language"
           >
-            {SUPPORTED_LANGUAGES.map(lang => (
+            {selectableLanguages.map(lang => (
               <option key={lang.code} value={lang.code} className="bg-gray-800 text-white">
                 {lang.name}
               </option>
@@ -1116,11 +1014,10 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         selectedLanguage={selectedLanguage}
         onLanguageChange={(lang) => {
           setSelectedLanguage(lang)
-          setTranslationCache(new Map())
         }}
         onDownloadMP4={handleDownloadMP4}
         isRendering={isRendering}
-        supportedLanguages={SUPPORTED_LANGUAGES}
+        supportedLanguages={selectableLanguages}
       />
 
       {/* Main Content Area */}
@@ -1135,8 +1032,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
             totalScenes={scenes.length}
             isLoading={isLoadingAudio}
             showCaptions={showCaptions}
-            translatedNarration={currentTranslatedNarration}
-            translatedDialogue={currentTranslatedDialogue}
             kenBurnsIntensity={playerState.kenBurnsIntensity}
           />
         </div>

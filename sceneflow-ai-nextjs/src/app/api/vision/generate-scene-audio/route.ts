@@ -3,6 +3,8 @@ import { put } from '@vercel/blob'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { optimizeTextForTTS } from '../../../../lib/tts/textOptimizer'
+import { getElevenLabsVoiceForLanguage } from '../../../../lib/audio/elevenlabsVoices'
+import { getAudioDuration } from '../../../../lib/audio/audioDuration'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -22,19 +24,21 @@ interface AudioGenerationRequest {
   audioType: 'narration' | 'dialogue'
   text: string
   voiceConfig: VoiceConfig
+  language?: string // New: language code (default: 'en')
   characterName?: string // For dialogue
   dialogueIndex?: number // For dialogue - index of the dialog line in the scene
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, sceneIndex, audioType, text, voiceConfig, characterName, dialogueIndex } = await req.json()
+    const { projectId, sceneIndex, audioType, text, voiceConfig, language = 'en', characterName, dialogueIndex } = await req.json()
 
     // Log the request for debugging
     console.log('[Scene Audio] Request:', { 
       projectId, 
       sceneIndex, 
-      audioType, 
+      audioType,
+      language,
       characterName,
       dialogueIndex,
       hasText: !!text,
@@ -57,12 +61,53 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    console.log(`[Scene Audio] Generating ${audioType} for scene ${sceneIndex}`)
+    console.log(`[Scene Audio] Generating ${audioType} for scene ${sceneIndex} in language: ${language}`)
 
-    // Optimize text for TTS (remove stage directions, clean up)
-    const optimized = optimizeTextForTTS(text)
+    // Step 1: Translate text if language is not English
+    let textToGenerate = text
+    if (language !== 'en') {
+      try {
+        console.log('[Scene Audio] Translating text to', language)
+        
+        // Use Google Translate API directly
+        const apiKey = process.env.GOOGLE_API_KEY
+        if (!apiKey) {
+          throw new Error('Google API key not configured for translation')
+        }
+        
+        const translateUrl = `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`
+        const translateResponse = await fetch(translateUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            q: text,
+            target: language,
+            source: 'en',
+            format: 'text'
+          })
+        })
+
+        if (!translateResponse.ok) {
+          const errorText = await translateResponse.text().catch(() => 'Unknown error')
+          throw new Error(`Translation API error: ${translateResponse.status} ${errorText}`)
+        }
+
+        const translateData = await translateResponse.json()
+        textToGenerate = translateData.data.translations[0].translatedText
+        console.log('[Scene Audio] Translation complete:', text.substring(0, 50), '→', textToGenerate.substring(0, 50))
+      } catch (error: any) {
+        console.error('[Scene Audio] Translation error:', error)
+        return NextResponse.json(
+          { error: `Translation failed: ${error.message}` },
+          { status: 500 }
+        )
+      }
+    }
+
+    // Step 2: Optimize text for TTS (remove stage directions, clean up)
+    const optimized = optimizeTextForTTS(textToGenerate)
     console.log('[Scene Audio] Text optimization:', {
-      original: text.substring(0, 100),
+      original: textToGenerate.substring(0, 100),
       optimized: optimized.text.substring(0, 100),
       cues: optimized.cues,
       reduction: `${optimized.originalLength} -> ${optimized.optimizedLength} chars`,
@@ -79,13 +124,37 @@ export async function POST(req: NextRequest) {
       }, { status: 200 }) // Return 200 (success) but indicate no audio was generated
     }
 
-    // Generate audio using specified provider with optimized text
-    const audioBuffer = await generateAudio(optimized.text, voiceConfig)
+    // Step 3: Select appropriate voice for language (if using ElevenLabs)
+    let finalVoiceConfig = { ...voiceConfig }
+    if (voiceConfig.provider === 'elevenlabs') {
+      const languageVoice = getElevenLabsVoiceForLanguage(language, voiceConfig.voiceId)
+      finalVoiceConfig = {
+        ...voiceConfig,
+        voiceId: languageVoice.voiceId
+      }
+      console.log('[Scene Audio] Using ElevenLabs voice for language:', language, languageVoice.voiceName)
+    }
 
-    // Upload to Vercel Blob
+    // Step 4: Generate audio using specified provider with optimized text
+    const audioBuffer = await generateAudio(optimized.text, finalVoiceConfig)
+
+    // Step 5: Get audio duration
+    let audioDuration: number | null = null
+    try {
+      // Upload temporarily to get duration, or estimate
+      // For now, we'll estimate based on text length (rough: ~150 words per minute)
+      const wordCount = optimized.text.split(/\s+/).length
+      audioDuration = (wordCount / 150) * 60
+      console.log('[Scene Audio] Estimated duration:', audioDuration, 'seconds')
+    } catch (error) {
+      console.warn('[Scene Audio] Could not estimate duration:', error)
+    }
+
+    // Step 6: Upload to Vercel Blob
+    const languageSuffix = language !== 'en' ? `-${language}` : ''
     const fileName = characterName
-      ? `audio/${projectId}/scene-${sceneIndex}-${characterName}-${Date.now()}.mp3`
-      : `audio/${projectId}/scene-${sceneIndex}-narration-${Date.now()}.mp3`
+      ? `audio/${projectId}/scene-${sceneIndex}-${characterName}${languageSuffix}-${Date.now()}.mp3`
+      : `audio/${projectId}/scene-${sceneIndex}-narration${languageSuffix}-${Date.now()}.mp3`
 
     const blob = await put(fileName, audioBuffer, {
       access: 'public',
@@ -94,13 +163,25 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Scene Audio] Uploaded to Blob:`, blob.url)
 
-    // Update scene in project metadata
-    await updateSceneAudio(projectId, sceneIndex, audioType, blob.url, characterName, dialogueIndex)
+    // Step 7: Update scene in project metadata with language-specific storage
+    await updateSceneAudio(
+      projectId, 
+      sceneIndex, 
+      audioType, 
+      blob.url, 
+      language,
+      audioDuration,
+      finalVoiceConfig.voiceId,
+      characterName, 
+      dialogueIndex
+    )
 
     return NextResponse.json({
       success: true,
       audioUrl: blob.url,
       audioType,
+      language,
+      duration: audioDuration,
       characterName,
       dialogueIndex
     })
@@ -198,6 +279,9 @@ async function updateSceneAudio(
   sceneIndex: number,
   audioType: 'narration' | 'dialogue',
   audioUrl: string,
+  language: string = 'en',
+  duration?: number | null,
+  voiceId?: string,
   characterName?: string,
   dialogueIndex?: number
 ) {
@@ -216,37 +300,81 @@ async function updateSceneAudio(
     hasScriptScript: !!script.script,
     hasScriptScenes: !!script.scenes,
     hasScriptScriptScenes: !!script.script?.scenes,
-    sceneCount: existingScenes.length
+    sceneCount: existingScenes.length,
+    language
   })
 
   // Update the specific scene
   const updatedScenes = existingScenes.map((s: any, idx: number) => {
     if (idx !== sceneIndex) return s
 
+    const scene = { ...s }
+
     if (audioType === 'narration') {
-      return {
-        ...s,
-        narrationAudioUrl: audioUrl,
-        narrationAudioGeneratedAt: new Date().toISOString(),
+      // Initialize narrationAudio if it doesn't exist
+      if (!scene.narrationAudio) {
+        scene.narrationAudio = {}
       }
+      
+      // Store language-specific narration audio
+      scene.narrationAudio[language] = {
+        url: audioUrl,
+        duration: duration || undefined,
+        generatedAt: new Date().toISOString(),
+        voiceId: voiceId || undefined
+      }
+      
+      // Maintain backward compatibility: set narrationAudioUrl for English
+      if (language === 'en') {
+        scene.narrationAudioUrl = audioUrl
+        scene.narrationAudioGeneratedAt = new Date().toISOString()
+      }
+      
+      return scene
     } else {
-      // Dialogue audio - match by both character and dialogueIndex
-      const dialogueAudio = [...(s.dialogueAudio || [])]
-      const existingIndex = dialogueAudio.findIndex((d: any) => 
+      // Dialogue audio - initialize dialogueAudio object if needed
+      if (!scene.dialogueAudio || Array.isArray(scene.dialogueAudio)) {
+        // Migrate old array format if exists
+        if (Array.isArray(scene.dialogueAudio) && scene.dialogueAudio.length > 0) {
+          scene.dialogueAudio = { en: scene.dialogueAudio }
+        } else {
+          scene.dialogueAudio = {}
+        }
+      }
+      
+      // Initialize language array if it doesn't exist
+      if (!scene.dialogueAudio[language]) {
+        scene.dialogueAudio[language] = []
+      }
+      
+      const dialogueArray = [...scene.dialogueAudio[language]]
+      const existingIndex = dialogueArray.findIndex((d: any) => 
         d.character === characterName && d.dialogueIndex === dialogueIndex
       )
       
+      const dialogueEntry = {
+        character: characterName!,
+        dialogueIndex: dialogueIndex!,
+        audioUrl,
+        duration: duration || undefined,
+        voiceId: voiceId || undefined
+      }
+      
       if (existingIndex >= 0) {
-        dialogueAudio[existingIndex] = { character: characterName, dialogueIndex, audioUrl }
+        dialogueArray[existingIndex] = dialogueEntry
       } else {
-        dialogueAudio.push({ character: characterName, dialogueIndex, audioUrl })
+        dialogueArray.push(dialogueEntry)
       }
-
-      return {
-        ...s,
-        dialogueAudio,
-        dialogueAudioGeneratedAt: new Date().toISOString(),
+      
+      scene.dialogueAudio[language] = dialogueArray
+      
+      // Maintain backward compatibility: set dialogueAudio array for English
+      if (language === 'en') {
+        scene.dialogueAudio = dialogueArray
+        scene.dialogueAudioGeneratedAt = new Date().toISOString()
       }
+      
+      return scene
     }
   })
 
@@ -257,7 +385,8 @@ async function updateSceneAudio(
 
   console.log('[Update Scene Audio] Updating with structure:', {
     hasScriptScript: !!updatedScript.script,
-    hasScriptScenes: !!updatedScript.scenes
+    hasScriptScenes: !!updatedScript.scenes,
+    language
   })
 
   // Update metadata
@@ -271,5 +400,5 @@ async function updateSceneAudio(
     },
   })
   
-  console.log('[Update Scene Audio] Project updated successfully')
+  console.log('[Update Scene Audio] Project updated successfully for language:', language)
 }
