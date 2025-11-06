@@ -2465,7 +2465,16 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                       </div>
                       {scene.dialogue.map((d: any, i: number) => {
                         // Match audio by both character and dialogueIndex
-                        const audioEntry = scene.dialogueAudio?.find((a: any) => 
+                        // Handle both old array format and new object format (keyed by language)
+                        let dialogueAudioArray: any[] = []
+                        if (Array.isArray(scene.dialogueAudio)) {
+                          // Old format: array
+                          dialogueAudioArray = scene.dialogueAudio
+                        } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
+                          // New format: object keyed by language, use 'en' by default
+                          dialogueAudioArray = scene.dialogueAudio['en'] || []
+                        }
+                        const audioEntry = dialogueAudioArray.find((a: any) => 
                           a.character === d.character && a.dialogueIndex === i
                         )
                         return (

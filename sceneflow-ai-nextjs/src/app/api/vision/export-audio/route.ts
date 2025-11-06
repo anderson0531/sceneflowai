@@ -29,15 +29,27 @@ export async function GET(req: NextRequest) {
       projectId,
       projectTitle: project.title,
       exportedAt: new Date().toISOString(),
-      scenes: scenes.map((s: any, idx: number) => ({
-        sceneNumber: idx + 1,
-        heading: s.heading,
-        narrationFile: s.narrationAudioUrl ? `scene-${idx + 1}-narration.mp3` : null,
-        dialogueFiles: s.dialogueAudio?.map((d: any) => ({
-          character: d.character,
-          file: `scene-${idx + 1}-${d.character.replace(/[^a-zA-Z0-9]/g, '_')}.mp3`
-        })) || []
-      }))
+      scenes: scenes.map((s: any, idx: number) => {
+        // Handle both old array format and new object format (keyed by language)
+        let dialogueAudioArray: any[] = []
+        if (Array.isArray(s.dialogueAudio)) {
+          // Old format: array
+          dialogueAudioArray = s.dialogueAudio
+        } else if (s.dialogueAudio && typeof s.dialogueAudio === 'object') {
+          // New format: object keyed by language, use 'en' by default
+          dialogueAudioArray = s.dialogueAudio['en'] || []
+        }
+        
+        return {
+          sceneNumber: idx + 1,
+          heading: s.heading,
+          narrationFile: s.narrationAudioUrl ? `scene-${idx + 1}-narration.mp3` : null,
+          dialogueFiles: dialogueAudioArray.map((d: any) => ({
+            character: d.character,
+            file: `scene-${idx + 1}-${d.character.replace(/[^a-zA-Z0-9]/g, '_')}.mp3`
+          }))
+        }
+      })
     }
     
     archive.append(JSON.stringify(manifest, null, 2), { name: 'manifest.json' })
@@ -58,8 +70,18 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      if (scene.dialogueAudio) {
-        for (const dialogue of scene.dialogueAudio) {
+      // Handle both old array format and new object format (keyed by language)
+      let dialogueAudioArray: any[] = []
+      if (Array.isArray(scene.dialogueAudio)) {
+        // Old format: array
+        dialogueAudioArray = scene.dialogueAudio
+      } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
+        // New format: object keyed by language, use 'en' by default
+        dialogueAudioArray = scene.dialogueAudio['en'] || []
+      }
+      
+      if (dialogueAudioArray.length > 0) {
+        for (const dialogue of dialogueAudioArray) {
           try {
             const response = await fetch(dialogue.audioUrl)
             if (response.ok) {
