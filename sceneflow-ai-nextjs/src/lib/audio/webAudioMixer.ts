@@ -18,6 +18,7 @@ export interface SceneAudioConfig {
   narration?: string  // Narration URL - plays from scene start
   dialogue?: AudioSource[]  // Dialogue with timing
   sfx?: AudioSource[]  // SFX with timing
+  sceneDuration?: number  // Scene duration in seconds (for music-only scenes)
 }
 
 export class WebAudioMixer {
@@ -28,6 +29,8 @@ export class WebAudioMixer {
   private masterGain: GainNode | null = null
   private isPlaying: boolean = false
   private sceneStartTime: number = 0
+  private nonLoopingSources: Map<string, { source: AudioBufferSourceNode, endTime: number }> = new Map()
+  private playbackCompleteResolve: (() => void) | null = null
 
   constructor() {
     // AudioContext will be created on first user interaction (browser autoplay policy)
@@ -119,6 +122,7 @@ export class WebAudioMixer {
 
   /**
    * Play a complete scene with concurrent audio
+   * Returns a Promise that resolves when all non-looping audio completes
    */
   async playScene(config: SceneAudioConfig): Promise<void> {
     console.log('[WebAudioMixer] playScene called with config:', {
@@ -138,6 +142,7 @@ export class WebAudioMixer {
     const context = await this.initAudioContext()
     this.isPlaying = true
     this.sceneStartTime = context.currentTime
+    this.nonLoopingSources.clear()
     console.log('[WebAudioMixer] Scene start time:', this.sceneStartTime)
     console.log('[WebAudioMixer] Playing scene with config:', {
       hasMusic: !!config.music,
@@ -145,6 +150,11 @@ export class WebAudioMixer {
       hasNarration: !!config.narration,
       dialogueCount: config.dialogue?.length || 0,
       sfxCount: config.sfx?.length || 0
+    })
+
+    // Create promise that resolves when all non-looping audio completes
+    const playbackPromise = new Promise<void>((resolve) => {
+      this.playbackCompleteResolve = resolve
     })
 
     try {
@@ -178,7 +188,7 @@ export class WebAudioMixer {
       await Promise.all(loadPromises)
       console.log('[WebAudioMixer] All audio files loaded successfully')
 
-            // Play music at scene start (if available)
+      // Play music at scene start (if available) - music loops, so we don't track it
       if (config.music) {
         const musicBuffer = this.audioBuffers.get(config.music)
         if (musicBuffer) {
@@ -202,7 +212,7 @@ export class WebAudioMixer {
         console.log('[WebAudioMixer] No music in config for this scene')
       }
 
-      // Play narration at scene start (if available)
+      // Play narration at scene start (if available) - narration is non-looping
       if (config.narration) {
         const narrationBuffer = this.audioBuffers.get(config.narration)
         if (narrationBuffer) {
@@ -210,14 +220,15 @@ export class WebAudioMixer {
           this.playAudioBuffer(
             narrationBuffer,
             'narration',
-            0
+            0,
+            false  // Non-looping
           )
         } else {
           console.error('[WebAudioMixer] Narration buffer not found for:', config.narration)
         }
       }
 
-      // Schedule dialogue
+      // Schedule dialogue - dialogue is non-looping
       if (config.dialogue) {
         console.log('[WebAudioMixer] Scheduling', config.dialogue.length, 'dialogue tracks')
         config.dialogue.forEach(d => {
@@ -227,7 +238,8 @@ export class WebAudioMixer {
             this.playAudioBuffer(
               dialogueBuffer,
               'dialogue',
-              d.startTime
+              d.startTime,
+              false  // Non-looping
             )
           } else {
             console.error('[WebAudioMixer] Dialogue buffer not found for:', d.url)
@@ -235,7 +247,7 @@ export class WebAudioMixer {
         })
       }
 
-      // Schedule SFX
+      // Schedule SFX - SFX is non-looping
       if (config.sfx) {
         console.log('[WebAudioMixer] Scheduling', config.sfx.length, 'SFX tracks')
         config.sfx.forEach(s => {
@@ -245,18 +257,42 @@ export class WebAudioMixer {
             this.playAudioBuffer(
               sfxBuffer,
               'sfx',
-              s.startTime
+              s.startTime,
+              false  // Non-looping
             )
           } else {
             console.error('[WebAudioMixer] SFX buffer not found for:', s.url)
           }
         })
       }
+
+      // If no non-looping sources, use scene duration (for music-only scenes)
+      // This handles the case where only music exists (looping)
+      if (this.nonLoopingSources.size === 0) {
+        const sceneDurationMs = (config.sceneDuration || 5) * 1000 // Default 5 seconds if no duration provided
+        console.log('[WebAudioMixer] No non-looping audio sources, using scene duration:', sceneDurationMs, 'ms')
+        // Wait for scene duration before resolving (for music-only scenes)
+        setTimeout(() => {
+          if (this.playbackCompleteResolve) {
+            console.log('[WebAudioMixer] Music-only scene duration completed, resolving promise')
+            this.playbackCompleteResolve()
+            this.playbackCompleteResolve = null
+          }
+        }, sceneDurationMs)
+      }
     } catch (error) {
       console.error('[WebAudioMixer] Error playing scene:', error)
       this.isPlaying = false
+      // Resolve promise on error so playback can continue
+      if (this.playbackCompleteResolve) {
+        this.playbackCompleteResolve()
+        this.playbackCompleteResolve = null
+      }
       throw error
     }
+
+    // Return promise that resolves when all non-looping audio completes
+    return playbackPromise
   }
 
   /**
@@ -287,9 +323,27 @@ export class WebAudioMixer {
     // Calculate absolute start time
     const absoluteStartTime = this.sceneStartTime + startTime
 
+    // Calculate absolute end time for non-looping sources
+    if (!loop) {
+      const absoluteEndTime = absoluteStartTime + buffer.duration
+      this.nonLoopingSources.set(sourceId, { source, endTime: absoluteEndTime })
+      console.log(`[WebAudioMixer] Tracking non-looping ${type} source, will end at`, absoluteEndTime, 's')
+    }
+
     // Handle end of playback
     source.addEventListener('ended', () => {
       this.sources.delete(sourceId)
+      this.nonLoopingSources.delete(sourceId)
+      
+      console.log(`[WebAudioMixer] ${type} source ended, remaining non-looping sources:`, this.nonLoopingSources.size)
+      
+      // Check if all non-looping sources have ended
+      if (this.nonLoopingSources.size === 0 && this.playbackCompleteResolve) {
+        console.log('[WebAudioMixer] All non-looping audio completed, resolving promise')
+        this.playbackCompleteResolve()
+        this.playbackCompleteResolve = null
+      }
+      
       // Check if all sources ended
       if (this.sources.size === 0 && !loop) {
         this.isPlaying = false
@@ -298,10 +352,17 @@ export class WebAudioMixer {
 
     try {
       source.start(absoluteStartTime)
-      console.log(`[WebAudioMixer] Started ${type} audio at`, absoluteStartTime, 's (relative:', startTime, 's)')
+      console.log(`[WebAudioMixer] Started ${type} audio at`, absoluteStartTime, 's (relative:', startTime, 's)', loop ? '(looping)' : '(non-looping)')
     } catch (error) {
       console.error(`[WebAudioMixer] Error starting ${type} audio:`, error)
       this.sources.delete(sourceId)
+      this.nonLoopingSources.delete(sourceId)
+      
+      // Check if this was the last source and resolve if needed
+      if (this.nonLoopingSources.size === 0 && this.playbackCompleteResolve) {
+        this.playbackCompleteResolve()
+        this.playbackCompleteResolve = null
+      }
     }
   }
 
@@ -354,7 +415,14 @@ export class WebAudioMixer {
       }
     })
     this.sources.clear()
+    this.nonLoopingSources.clear()
     this.isPlaying = false
+    
+    // Resolve any pending playback promise when stopped
+    if (this.playbackCompleteResolve) {
+      this.playbackCompleteResolve()
+      this.playbackCompleteResolve = null
+    }
   }
 
   /**

@@ -471,6 +471,9 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         // Calculate audio timeline for concurrent playback
         const audioConfig = await calculateAudioTimeline(scene)
         
+        // Add scene duration to config for music-only scenes
+        audioConfig.sceneDuration = scene.duration || 5
+        
         // Check cancellation after async calculation
         if (playbackCancelledRef.current) {
           setIsLoadingAudio(false)
@@ -514,84 +517,21 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         }
         
                 setIsLoadingAudio(false) // Clear loading state
-        
+                
                 // Play scene with Web Audio Mixer (concurrent playback)
         if (audioMixerRef.current) {
           try {
             // Set music volume before playing
             audioMixerRef.current.setVolume('music', playerState.musicVolume)
             
-            console.log('[Player] Playing scene with Web Audio Mixer, config:', audioConfig, 'musicVolume:', playerState.musicVolume)                                                                    
+            console.log('[Player] Playing scene with Web Audio Mixer, config:', audioConfig, 'musicVolume:', playerState.musicVolume)
+            
+            // Wait for actual audio completion - playScene() returns a promise that resolves when all non-looping audio finishes
             await audioMixerRef.current.playScene(audioConfig)
             
-            // Wait for playback to complete
-            // Calculate maximum scene duration
-            let maxDuration = 0
+            console.log('[Player] Scene audio playback completed')
             
-            // Check narration duration
-            if (audioConfig.narration) {
-              try {
-                const duration = await getAudioDuration(audioConfig.narration)
-                maxDuration = Math.max(maxDuration, duration)
-                console.log('[Player] Narration duration:', duration)
-              } catch (error) {
-                console.warn('[Player] Failed to get narration duration:', error)                                                                               
-              }
-            }
-            
-            // Check dialogue durations
-            if (audioConfig.dialogue) {
-              for (const dialogue of audioConfig.dialogue) {
-                try {
-                  const duration = await getAudioDuration(dialogue.url)
-                  maxDuration = Math.max(maxDuration, dialogue.startTime + duration)
-                  console.log('[Player] Dialogue duration:', duration, 'at', dialogue.startTime)
-                } catch (error) {
-                  console.warn('[Player] Failed to get dialogue duration:', error)                                                                              
-                }
-              }
-            }
-            
-            // Check SFX durations
-            if (audioConfig.sfx) {
-              for (const sfx of audioConfig.sfx) {
-                try {
-                  const duration = await getAudioDuration(sfx.url)
-                  maxDuration = Math.max(maxDuration, sfx.startTime + duration)
-                  console.log('[Player] SFX duration:', duration, 'at', sfx.startTime)
-                } catch (error) {
-                  console.warn('[Player] Failed to get SFX duration:', error)
-                }
-              }
-            }
-            
-            // Check music duration (if music exists, use scene duration or music duration)
-            let musicDuration = 0
-            if (audioConfig.music) {
-              try {
-                musicDuration = await getAudioDuration(audioConfig.music)
-                console.log('[Player] Music duration:', musicDuration, '(will loop)')
-              } catch (error) {
-                console.warn('[Player] Failed to get music duration:', error)
-              }
-            }
-            
-                        // Music loops, so we use scene duration or max calculated duration
-            // If only music exists (no other audio), ensure we wait for at least music duration                                                                  
-            const sceneDuration = scene.duration || Math.max(maxDuration, musicDuration || 30)                                                                  
-            const waitTime = Math.max(sceneDuration * 1000, maxDuration * 1000, musicDuration * 1000) + 100 // Reduced buffer to 100ms                                 
-            console.log('[Player] Calculated wait time:', waitTime, 'ms (sceneDuration:', sceneDuration, 'maxDuration:', maxDuration, 'musicDuration:', musicDuration, ')')                                                                     
-            
-            // Check cancellation before waiting
-            if (playbackCancelledRef.current) {
-              setIsLoadingAudio(false)
-              return
-            }
-            
-            // Wait for scene playback to complete
-            await new Promise(resolve => setTimeout(resolve, waitTime))
-            
-            // Check cancellation after waiting
+            // Check cancellation after audio completes
             if (playbackCancelledRef.current) {
               setIsLoadingAudio(false)
               return
@@ -600,7 +540,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           } catch (error) {
             console.error('[Player] Web Audio Mixer error:', error)
             setIsLoadingAudio(false)
-            // Fallback to old method on error
+            // Fallback to scene duration on error
             const minDisplayTime = 3000
             const sceneDuration = (scene.duration || 5) * 1000
             const waitTime = Math.max(minDisplayTime, sceneDuration)
@@ -616,7 +556,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           }
         }
         
-                // Auto-advance to next scene (only if still playing, auto-advance enabled, and not manual navigation)                                                                          
+                // Auto-advance to next scene immediately after audio completes (only if still playing, auto-advance enabled, and not manual navigation)                                                                          
         if (playerState.isPlaying && playerState.autoAdvance && !isManualNavigationRef.current) {
           nextScene()
         }
