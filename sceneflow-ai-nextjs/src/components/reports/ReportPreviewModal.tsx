@@ -151,9 +151,15 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
     </Button>
   )
   
+  // When controlled (open/onOpenChange provided), don't render DialogTrigger
+  // The trigger buttons should be separate components that call onOpenChange(true)
+  // Only render DialogTrigger for uncontrolled usage (when no open/onOpenChange props)
+  const isControlled = open !== undefined || onOpenChange !== undefined
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>{trigger || defaultTrigger}</DialogTrigger>
+      {!isControlled && trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
+      {!isControlled && !trigger && <DialogTrigger asChild>{defaultTrigger}</DialogTrigger>}
       <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-6 border-b">
           <DialogTitle>Preview: {type}</DialogTitle>
