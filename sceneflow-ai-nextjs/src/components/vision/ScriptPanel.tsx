@@ -21,6 +21,7 @@ import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData, SceneDirectionData } from '@/lib/types/reports'
 import { ProjectCostCalculator } from './ProjectCostCalculator'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
+import { ExportDialog } from './ExportDialog'
 
 interface ScriptPanelProps {
   script: any
@@ -273,6 +274,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
   const [storyboardPreviewOpen, setStoryboardPreviewOpen] = useState(false)
   const [sceneDirectionPreviewOpen, setSceneDirectionPreviewOpen] = useState(false)
+  const [exportDialogOpen, setExportDialogOpen] = useState(false)
   
   // Audio playback state
   const [voices, setVoices] = useState<Array<CuratedVoice>>([])
@@ -965,37 +967,17 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             <span>Review</span>
           </Button>
           
-          {/* Preview/Print Buttons */}
+          {/* Export Button */}
           {script && scenes && scenes.length > 0 && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setReportPreviewOpen(true)}
-                className="flex items-center gap-2"
-              >
-                <Printer className="w-4 h-4" />
-                <span>Script</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setStoryboardPreviewOpen(true)}
-                className="flex items-center gap-2"
-              >
-                <Printer className="w-4 h-4" />
-                <span>Storyboard</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSceneDirectionPreviewOpen(true)}
-                className="flex items-center gap-2"
-              >
-                <Printer className="w-4 h-4" />
-                <span>Scene Direction</span>
-              </Button>
-            </>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setExportDialogOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              <span>Export</span>
+            </Button>
           )}
         </div>
       </div>
@@ -1449,6 +1431,15 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           }}
         />
       )}
+      
+      {/* Export Dialog */}
+      <ExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        onExportScript={() => setReportPreviewOpen(true)}
+        onExportStoryboard={() => setStoryboardPreviewOpen(true)}
+        onExportSceneDirection={() => setSceneDirectionPreviewOpen(true)}
+      />
       
       {/* Report Preview Modals */}
       {script && (
