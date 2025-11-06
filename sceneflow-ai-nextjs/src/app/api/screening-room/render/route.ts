@@ -48,44 +48,49 @@ export async function POST(req: NextRequest) {
     // 6. Initialize Creatomate service
     const renderService = new CreatomateRenderService(apiKey)
 
-    // 7. Start render
-    console.log(`[Creatomate] Starting render for ${scenes.length} scenes (${Math.round(totalDuration)}s, ${creditsRequired} credits)`)
+    // 7. Submit render job (returns immediately with renderId)
+    console.log(`[Creatomate] Submitting render job for ${scenes.length} scenes (${Math.round(totalDuration)}s, ${creditsRequired} credits)`)
     
-    let videoUrl: string
+    let renderId: string
     try {
-      videoUrl = await renderService.renderVideo(scenes, options, projectTitle)
-      console.log(`[Creatomate] Render complete: ${videoUrl}`)
+      renderId = await renderService.submitRender(scenes, options, projectTitle)
+      console.log(`[Creatomate] Render job submitted: ${renderId}`)
     } catch (error: any) {
-      console.error('[Creatomate Render] Render failed:', error)
+      console.error('[Creatomate Render] Render submission failed:', error)
       throw error
     }
 
-    // 8. Charge credits after successful render
+    // 8. Reserve credits (charge will happen when render completes)
+    // For now, we'll charge immediately to prevent credit issues
+    // In the future, we could implement a credit reservation system
     try {
       await CreditService.charge(
         session.user.id, 
         creditsRequired, 
         'ai_usage',
-        videoUrl,
+        `render_${renderId}`,
         { 
           service: 'video_render',
           duration: totalDuration,
           sceneCount: scenes.length,
-          projectTitle
+          projectTitle,
+          renderId,
+          status: 'pending'
         }
       )
-      console.log(`[Creatomate] Charged ${creditsRequired} credits for video render`)
+      console.log(`[Creatomate] Charged ${creditsRequired} credits for video render (pending)`)
     } catch (error: any) {
       console.error('[Creatomate] Failed to charge credits:', error)
-      // Log error but don't fail the request since video is already rendered
+      // If credit charge fails, we should not proceed with render
+      throw new Error('Insufficient credits or payment processing failed')
     }
 
-    // 9. Return video URL
+    // 9. Return renderId for client-side polling
     return NextResponse.json({
       success: true,
-      videoUrl,
+      renderId,
       creditsCharged: creditsRequired,
-      message: 'Video rendered successfully'
+      message: 'Render job submitted successfully. Video will be ready shortly.'
     })
 
   } catch (error: any) {
@@ -97,7 +102,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET endpoint to check render status (for async polling if needed)
+// GET endpoint to check render status (for async polling)
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions as any)
@@ -120,9 +125,17 @@ export async function GET(req: NextRequest) {
     const renderService = new CreatomateRenderService(apiKey)
     const status = await renderService.getRenderStatus(renderId)
 
+    // Get video URL if render is complete
+    let videoUrl = null
+    if (status === 'succeeded') {
+      videoUrl = await renderService.getRenderUrl(renderId)
+    }
+
     return NextResponse.json({
       success: true,
-      status
+      status,
+      videoUrl,
+      renderId
     })
 
   } catch (error: any) {

@@ -7,6 +7,8 @@ import { PlaybackControls } from './PlaybackControls'
 import { VoiceAssignmentPanel } from './VoiceAssignmentPanel'
 import { WebAudioMixer, SceneAudioConfig, AudioSource } from '@/lib/audio/webAudioMixer'
 import { getAudioDuration } from '@/lib/audio/audioDuration'
+import { toast } from 'sonner'
+import { useOverlayStore } from '@/store/useOverlayStore'
 
 interface ScreeningRoomProps {
   script: any
@@ -53,6 +55,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   const [showControls, setShowControls] = useState(true)
   const [showCaptions, setShowCaptions] = useState(true)
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const renderPollIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Language translation state
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en') // Default: English
@@ -92,6 +95,11 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       if (audioMixerRef.current) {
         audioMixerRef.current.dispose()
         audioMixerRef.current = null
+      }
+      // Cleanup polling interval
+      if (renderPollIntervalRef.current) {
+        clearInterval(renderPollIntervalRef.current)
+        renderPollIntervalRef.current = null
       }
     }
   }, [])
@@ -793,6 +801,12 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   const handleDownloadMP4 = async () => {
     setIsRendering(true)
     
+    // Show processing overlay ONLY while submitting render job
+    useOverlayStore.getState().show(
+      'Submitting render job...',
+      30 // 30 seconds max for job submission
+    )
+    
     try {
       // Prepare scene data for Creatomate
       const sceneData = scenes.map((scene: any, idx: number) => {
@@ -845,7 +859,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         }
       })
       
-      // Call Creatomate render API
+      // Submit render job (returns immediately with renderId)
       const response = await fetch('/api/screening-room/render', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -869,27 +883,110 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       
       const data = await response.json()
       
-      if (!data.success || !data.videoUrl) {
-        throw new Error(data.message || 'Render failed: No video URL returned')
+      if (!data.success || !data.renderId) {
+        throw new Error(data.message || 'Failed to submit render job')
       }
       
-      // Download video from Creatomate URL
-      const a = document.createElement('a')
-      a.href = data.videoUrl
-      a.download = `${(script?.title || 'screening-room').replace(/[^a-z0-9]/gi, '-')}.mp4`
-      a.target = '_blank'
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
+      const renderId = data.renderId
+      const projectTitle = (script?.title || 'screening-room').replace(/[^a-z0-9]/gi, '-')
       
-      // Show success message
-      alert(`Video rendered successfully! ${data.creditsCharged ? `(${data.creditsCharged} credits charged)` : ''}`)
+      // Hide overlay - user can now continue using the app
+      useOverlayStore.getState().hide()
+      setIsRendering(false) // Allow button to be enabled again
+      
+      // Show non-blocking notification that render is in progress
+      toast.info('Video render started. You will be notified when it completes.', {
+        duration: 5000
+      })
+      
+      // Poll for render status in background
+      let pollAttempts = 0
+      const maxPollAttempts = 180 // 15 minutes at 5 second intervals
+      
+      // Clear any existing polling interval
+      if (renderPollIntervalRef.current) {
+        clearInterval(renderPollIntervalRef.current)
+      }
+      
+      renderPollIntervalRef.current = setInterval(async () => {
+        pollAttempts++
+        
+        try {
+          const statusResponse = await fetch(`/api/screening-room/render?renderId=${renderId}`)
+          
+          if (!statusResponse.ok) {
+            throw new Error('Failed to check render status')
+          }
+          
+          const statusData = await statusResponse.json()
+          
+          if (statusData.status === 'succeeded' && statusData.videoUrl) {
+            if (renderPollIntervalRef.current) {
+              clearInterval(renderPollIntervalRef.current)
+              renderPollIntervalRef.current = null
+            }
+            
+            // Show success notification with download option
+            toast.success('Video render complete!', {
+              duration: 10000,
+              action: {
+                label: 'Download',
+                onClick: () => {
+                  const a = document.createElement('a')
+                  a.href = statusData.videoUrl
+                  a.download = `${projectTitle}.mp4`
+                  a.target = '_blank'
+                  document.body.appendChild(a)
+                  a.click()
+                  document.body.removeChild(a)
+                }
+              }
+            })
+            
+            // Auto-download after a short delay
+            setTimeout(() => {
+              const a = document.createElement('a')
+              a.href = statusData.videoUrl
+              a.download = `${projectTitle}.mp4`
+              a.target = '_blank'
+              document.body.appendChild(a)
+              a.click()
+              document.body.removeChild(a)
+            }, 1000)
+            
+          } else if (statusData.status === 'failed') {
+            if (renderPollIntervalRef.current) {
+              clearInterval(renderPollIntervalRef.current)
+              renderPollIntervalRef.current = null
+            }
+            toast.error('Video render failed. Please try again.')
+          } else if (pollAttempts >= maxPollAttempts) {
+            if (renderPollIntervalRef.current) {
+              clearInterval(renderPollIntervalRef.current)
+              renderPollIntervalRef.current = null
+            }
+            toast.error('Render timeout - please try again or contact support')
+          }
+          // Continue polling if status is 'queued' or 'rendering'
+        } catch (error) {
+          console.error('[Render Poll] Error checking status:', error)
+          // Don't clear interval on error - continue polling
+          // Only clear if we've exceeded max attempts
+          if (pollAttempts >= maxPollAttempts) {
+            if (renderPollIntervalRef.current) {
+              clearInterval(renderPollIntervalRef.current)
+              renderPollIntervalRef.current = null
+            }
+            toast.error('Error checking render status. Please try again.')
+          }
+        }
+      }, 5000) // Poll every 5 seconds
       
     } catch (error) {
-      console.error('Render failed:', error)
-      alert(`Failed to render video: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    } finally {
+      useOverlayStore.getState().hide()
       setIsRendering(false)
+      console.error('Render submission failed:', error)
+      toast.error(`Failed to submit render job: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 

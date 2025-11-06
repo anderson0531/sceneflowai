@@ -28,6 +28,53 @@ export class CreatomateRenderService {
     this.client = new Client(apiKey)
   }
   
+  /**
+   * Submit render job and return renderId immediately (without waiting for completion)
+   */
+  async submitRender(
+    scenes: SceneRenderData[],
+    options: RenderOptions,
+    projectTitle: string
+  ): Promise<string> {
+    // Build Creatomate source (composition)
+    const source = this.buildSource(scenes, options)
+    
+    // Submit render job with very short timeout to get renderId quickly
+    // Creatomate client returns render object with ID immediately, timeout just controls wait time
+    const renders = await this.client.render({
+      source: source as any,
+      outputFormat: options.format,
+      frameRate: options.fps,
+      maxWidth: options.width,
+      maxHeight: options.height,
+    }, 1) // 1 second timeout = return quickly with renderId (render will still be queued/rendering)
+    
+    if (renders.length === 0) {
+      throw new Error('No renders created')
+    }
+    
+    const render = renders[0]
+    if (!render.id) {
+      throw new Error('Render submitted but no renderId available')
+    }
+    
+    return render.id
+  }
+
+  /**
+   * Get render URL when render is complete
+   */
+  async getRenderUrl(renderId: string): Promise<string | null> {
+    const render = await this.client.fetchRender(renderId)
+    if (render.status === 'succeeded' && render.url) {
+      return render.url
+    }
+    return null
+  }
+
+  /**
+   * Render video and wait for completion (legacy method for backward compatibility)
+   */
   async renderVideo(
     scenes: SceneRenderData[],
     options: RenderOptions,
