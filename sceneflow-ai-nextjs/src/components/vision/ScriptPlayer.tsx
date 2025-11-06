@@ -425,6 +425,15 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           setCurrentTranslatedDialogue(translatedDialogue)
         }
 
+        // Add 3 second delay before advancing to next scene
+        await new Promise(resolve => setTimeout(resolve, 3000))
+        
+        // Check cancellation after delay
+        if (playbackCancelledRef.current) {
+          setIsLoadingAudio(false)
+          return
+        }
+
         // Auto-advance (only if auto-advance enabled and not manual navigation)
         if (playerState.isPlaying && playerState.autoAdvance && !isManualNavigationRef.current) {
           nextScene()
@@ -487,10 +496,10 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           console.warn('[Player] No audio available in calculated config for scene', sceneIndex + 1, 'Config:', audioConfig)                                    
           setIsLoadingAudio(false)
           
-          // Minimum scene display time (3 seconds) even if no audio
+          // Minimum scene display time (3 seconds) even if no audio, plus 3 second delay before advancing
           const minDisplayTime = 3000
           const sceneDuration = (scene.duration || 5) * 1000
-          const waitTime = Math.max(minDisplayTime, sceneDuration)
+          const waitTime = Math.max(minDisplayTime, sceneDuration) + 3000 // Add 3 second delay before advancing
           
           if (playerState.isPlaying) {
             setTimeout(() => {
@@ -537,13 +546,22 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
               return
             }
             
+            // Add 3 second delay before advancing to next scene
+            await new Promise(resolve => setTimeout(resolve, 3000))
+            
+            // Check cancellation after delay
+            if (playbackCancelledRef.current) {
+              setIsLoadingAudio(false)
+              return
+            }
+            
           } catch (error) {
             console.error('[Player] Web Audio Mixer error:', error)
             setIsLoadingAudio(false)
             // Fallback to scene duration on error
             const minDisplayTime = 3000
             const sceneDuration = (scene.duration || 5) * 1000
-            const waitTime = Math.max(minDisplayTime, sceneDuration)
+            const waitTime = Math.max(minDisplayTime, sceneDuration) + 3000 // Add 3 second delay
             
             if (playerState.isPlaying) {
               setTimeout(() => {
@@ -556,7 +574,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           }
         }
         
-                // Auto-advance to next scene immediately after audio completes (only if still playing, auto-advance enabled, and not manual navigation)                                                                          
+                // Auto-advance to next scene after delay (only if still playing, auto-advance enabled, and not manual navigation)                                                                          
         if (playerState.isPlaying && playerState.autoAdvance && !isManualNavigationRef.current) {
           nextScene()
         }
@@ -592,10 +610,10 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       if (!fullText) {
         console.log('[Player] No text for scene', sceneIndex)
         setIsLoadingAudio(false)
-        // Minimum scene display time (3 seconds) even if no text
+        // Minimum scene display time (3 seconds) even if no text, plus 3 second delay before advancing
         const minDisplayTime = 3000
         const sceneDuration = (scene.duration || 5) * 1000
-        const waitTime = Math.max(minDisplayTime, sceneDuration)
+        const waitTime = Math.max(minDisplayTime, sceneDuration) + 3000 // Add 3 second delay before advancing
         
         // Auto-advance to next scene if no audio
         if (playerState.isPlaying) {
@@ -640,10 +658,10 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       console.error('[Player] Audio error:', error)
       setIsLoadingAudio(false)
       
-      // Minimum scene display time even on error
+      // Minimum scene display time even on error, plus 3 second delay before advancing
       const minDisplayTime = 3000
       const sceneDuration = (scene.duration || 5) * 1000
-      const waitTime = Math.max(minDisplayTime, sceneDuration)
+      const waitTime = Math.max(minDisplayTime, sceneDuration) + 3000 // Add 3 second delay before advancing
       
       // Auto-advance even on error (only if auto-advance enabled and not manual navigation)
       if (playerState.isPlaying) {
