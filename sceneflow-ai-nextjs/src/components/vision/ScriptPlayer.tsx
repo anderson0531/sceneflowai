@@ -56,13 +56,18 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
 
   // Auto-hide controls state
   const [showControls, setShowControls] = useState(true)
-  const [showCaptions, setShowCaptions] = useState(true)
+  const [showCaptions, setShowCaptions] = useState(false) // Default to off
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const renderPollIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Language state - use pre-generated audio files
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en') // Default: English
+  
+  // Translation state for captions
+  const [translatedNarration, setTranslatedNarration] = useState<string | null>(null)
+  const [translatedDialogue, setTranslatedDialogue] = useState<string[] | null>(null)
+  const translationCacheRef = useRef<Map<string, { narration?: string; dialogue?: string[] }>>(new Map())
   
   // Get available languages from scenes
   const availableLanguages = React.useMemo(() => {
@@ -80,6 +85,122 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       setSelectedLanguage(availableLanguages[0])
     }
   }, [availableLanguages, selectedLanguage])
+  
+  // Translate captions when language or scene changes
+  useEffect(() => {
+    const currentScene = scenes[playerState.currentSceneIndex]
+    if (!currentScene) {
+      setTranslatedNarration(null)
+      setTranslatedDialogue(null)
+      return
+    }
+    
+    // Check cache first
+    const cacheKey = `${playerState.currentSceneIndex}-${selectedLanguage}`
+    const cached = translationCacheRef.current.get(cacheKey)
+    
+    // If English, use original text (no translation needed)
+    if (selectedLanguage === 'en') {
+      setTranslatedNarration(null)
+      setTranslatedDialogue(null)
+      return
+    }
+    
+    // If cached, use cached translations
+    if (cached) {
+      setTranslatedNarration(cached.narration || null)
+      setTranslatedDialogue(cached.dialogue || null)
+      return
+    }
+    
+    // Translate narration and dialogue
+    const translateCaptions = async () => {
+      try {
+        const translations: { narration?: string; dialogue?: string[] } = {}
+        
+        // Translate narration if it exists
+        if (currentScene.narration) {
+          try {
+            const response = await fetch('/api/translate/google', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                text: currentScene.narration,
+                targetLanguage: selectedLanguage,
+                sourceLanguage: 'en'
+              })
+            })
+            
+            if (response.ok) {
+              const data = await response.json()
+              translations.narration = data.translatedText
+            } else {
+              console.warn('[Captions] Failed to translate narration, using English')
+              translations.narration = currentScene.narration
+            }
+          } catch (error) {
+            console.error('[Captions] Error translating narration:', error)
+            translations.narration = currentScene.narration
+          }
+        }
+        
+        // Translate dialogue if it exists
+        if (currentScene.dialogue && Array.isArray(currentScene.dialogue) && currentScene.dialogue.length > 0) {
+          try {
+            // Translate all dialogue lines
+            const dialogueTexts = currentScene.dialogue.map((d: any) => d.line).filter(Boolean)
+            if (dialogueTexts.length > 0) {
+              // Batch translate all dialogue lines
+              const translationPromises = dialogueTexts.map(async (line: string) => {
+                try {
+                  const response = await fetch('/api/translate/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      text: line,
+                      targetLanguage: selectedLanguage,
+                      sourceLanguage: 'en'
+                    })
+                  })
+                  
+                  if (response.ok) {
+                    const data = await response.json()
+                    return data.translatedText
+                  } else {
+                    console.warn('[Captions] Failed to translate dialogue line, using English')
+                    return line
+                  }
+                } catch (error) {
+                  console.error('[Captions] Error translating dialogue line:', error)
+                  return line
+                }
+              })
+              
+              translations.dialogue = await Promise.all(translationPromises)
+            }
+          } catch (error) {
+            console.error('[Captions] Error translating dialogue:', error)
+            translations.dialogue = currentScene.dialogue.map((d: any) => d.line)
+          }
+        }
+        
+        // Cache translations
+        translationCacheRef.current.set(cacheKey, translations)
+        
+        // Update state
+        setTranslatedNarration(translations.narration || null)
+        setTranslatedDialogue(translations.dialogue || null)
+      } catch (error) {
+        console.error('[Captions] Error in translation flow:', error)
+        // Fallback to English
+        setTranslatedNarration(null)
+        setTranslatedDialogue(null)
+      }
+    }
+    
+    translateCaptions()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedLanguage, playerState.currentSceneIndex])
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [currentAudioUrl, setCurrentAudioUrl] = useState<string | null>(null)
@@ -1016,6 +1137,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
             totalScenes={scenes.length}
             isLoading={isLoadingAudio}
             showCaptions={showCaptions}
+            translatedNarration={translatedNarration || undefined}
+            translatedDialogue={translatedDialogue || undefined}
             kenBurnsIntensity={playerState.kenBurnsIntensity}
           />
         </div>
