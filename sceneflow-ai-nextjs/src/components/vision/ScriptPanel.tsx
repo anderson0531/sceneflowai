@@ -1546,7 +1546,9 @@ interface SceneCardProps {
 function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart, dragHandleProps, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onStopAudio, onOpenSceneReview, generatingMusic, setGeneratingMusic, generatingSFX, setGeneratingSFX, generateMusic, generateSFX, onGenerateSceneDirection, generatingDirectionFor }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
+  const [isSceneVisualOpen, setIsSceneVisualOpen] = useState(false)
   const [isSceneDirectionOpen, setIsSceneDirectionOpen] = useState(false)
+  const [isSceneScriptOpen, setIsSceneScriptOpen] = useState(false)
   
   const handleExpand = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -2006,51 +2008,74 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
             return null
           })()}
           
-          {/* Scene Image - Prominent Storyboard Display */}
-          {!isOutline && scene.imageUrl && (
-            <div className="mb-4 rounded-lg overflow-hidden border-2 border-gray-300 dark:border-gray-600 shadow-md max-w-3xl mx-auto">
-              <img 
-                src={scene.imageUrl} 
-                alt={scene.heading}
-                className="w-full h-auto object-cover"
-              />
-            </div>
-          )}
-          
-          {/* Image Generation Buttons - Above Narration */}
-          {onGenerateImage && scene.visualDescription && (
-            <div className="mb-3 flex items-center justify-end gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={handleOpenBuilder}
-                      disabled={isGeneratingImage}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-lg transition-colors disabled:opacity-50 border border-purple-200 dark:border-purple-800"
-                    >
-                      <Image className="w-4 h-4" />
-                      <span>Build</span>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Build image prompt</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+          {/* Scene Visual Section */}
+          {!isOutline && (
+            <div className="mb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setIsSceneVisualOpen(!isSceneVisualOpen)
+                }}
+                className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Camera className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Scene Visual</span>
+                </div>
+                <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isSceneVisualOpen ? 'rotate-90' : ''}`} />
+              </button>
               
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={handleQuickGenerate}
-                      disabled={isGeneratingImage}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-lg transition-colors disabled:opacity-50 border border-purple-200 dark:border-purple-800"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      <span>Generate</span>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Quick generate image</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              {isSceneVisualOpen && (
+                <div className="mt-3 space-y-4">
+                  {/* Scene Image */}
+                  {scene.imageUrl && (
+                    <div className="rounded-lg overflow-hidden border-2 border-gray-300 dark:border-gray-600 shadow-md max-w-3xl mx-auto">
+                      <img 
+                        src={scene.imageUrl} 
+                        alt={scene.heading}
+                        className="w-full h-auto object-cover"
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Image Generation Buttons */}
+                  {onGenerateImage && scene.visualDescription && (
+                    <div className="flex items-center justify-end gap-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={handleOpenBuilder}
+                              disabled={isGeneratingImage}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-lg transition-colors disabled:opacity-50 border border-purple-200 dark:border-purple-800"
+                            >
+                              <Image className="w-4 h-4" />
+                              <span>Build</span>
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Build image prompt</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={handleQuickGenerate}
+                              disabled={isGeneratingImage}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-lg transition-colors disabled:opacity-50 border border-purple-200 dark:border-purple-800"
+                            >
+                              <Sparkles className="w-4 h-4" />
+                              <span>Generate</span>
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Quick generate image</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
           
@@ -2103,209 +2128,214 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {/* Camera */}
-                      {scene.sceneDirection.camera && (
-                        <div className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
-                            <Camera className="w-4 h-4" />
-                            Camera
-                          </h4>
-                          <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                            {scene.sceneDirection.camera.shots && scene.sceneDirection.camera.shots.length > 0 && (
-                              <div>
-                                <span className="font-medium">Shots: </span>
-                                <span>{scene.sceneDirection.camera.shots.join(', ')}</span>
-                              </div>
-                            )}
-                            {scene.sceneDirection.camera.angle && (
-                              <div>
-                                <span className="font-medium">Angle: </span>
-                                <span>{scene.sceneDirection.camera.angle}</span>
-                              </div>
-                            )}
-                            {scene.sceneDirection.camera.movement && (
-                              <div>
-                                <span className="font-medium">Movement: </span>
-                                <span>{scene.sceneDirection.camera.movement}</span>
-                              </div>
-                            )}
-                            {scene.sceneDirection.camera.lensChoice && (
-                              <div>
-                                <span className="font-medium">Lens: </span>
-                                <span>{scene.sceneDirection.camera.lensChoice}</span>
-                              </div>
-                            )}
-                            {scene.sceneDirection.camera.focus && (
-                              <div>
-                                <span className="font-medium">Focus: </span>
-                                <span>{scene.sceneDirection.camera.focus}</span>
-                              </div>
-                            )}
+                      {/* Technical Details Grid - 2 columns on larger screens */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {/* Camera */}
+                        {scene.sceneDirection.camera && (
+                          <div className="p-3.5 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800/50">
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                              <Camera className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                              Camera
+                            </h4>
+                            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                              {scene.sceneDirection.camera.shots && scene.sceneDirection.camera.shots.length > 0 && (
+                                <div className="pb-2 border-b border-blue-200/50 dark:border-blue-800/30">
+                                  <span className="font-medium text-blue-900 dark:text-blue-300">Shots: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.camera.shots.join(', ')}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.camera.angle && (
+                                <div>
+                                  <span className="font-medium text-blue-900 dark:text-blue-300">Angle: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.camera.angle}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.camera.movement && (
+                                <div>
+                                  <span className="font-medium text-blue-900 dark:text-blue-300">Movement: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.camera.movement}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.camera.lensChoice && (
+                                <div>
+                                  <span className="font-medium text-blue-900 dark:text-blue-300">Lens: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.camera.lensChoice}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.camera.focus && (
+                                <div>
+                                  <span className="font-medium text-blue-900 dark:text-blue-300">Focus: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.camera.focus}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      
-                      {/* Lighting */}
-                      {scene.sceneDirection.lighting && (
-                        <div className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
-                            <Zap className="w-4 h-4" />
-                            Lighting
-                          </h4>
-                          <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                            {scene.sceneDirection.lighting.overallMood && (
-                              <div>
-                                <span className="font-medium">Mood: </span>
-                                <span>{scene.sceneDirection.lighting.overallMood}</span>
-                              </div>
-                            )}
-                            {scene.sceneDirection.lighting.timeOfDay && (
-                              <div>
-                                <span className="font-medium">Time of Day: </span>
-                                <span>{scene.sceneDirection.lighting.timeOfDay}</span>
-                              </div>
-                            )}
-                            {scene.sceneDirection.lighting.keyLight && (
-                              <div>
-                                <span className="font-medium">Key Light: </span>
-                                <span>{scene.sceneDirection.lighting.keyLight}</span>
-                              </div>
-                            )}
-                            {scene.sceneDirection.lighting.fillLight && (
-                              <div>
-                                <span className="font-medium">Fill Light: </span>
-                                <span>{scene.sceneDirection.lighting.fillLight}</span>
-                              </div>
-                            )}
-                            {scene.sceneDirection.lighting.backlight && (
-                              <div>
-                                <span className="font-medium">Backlight: </span>
-                                <span>{scene.sceneDirection.lighting.backlight}</span>
-                              </div>
-                            )}
-                            {scene.sceneDirection.lighting.practicals && (
-                              <div>
-                                <span className="font-medium">Practicals: </span>
-                                <span>{scene.sceneDirection.lighting.practicals}</span>
-                              </div>
-                            )}
-                            {scene.sceneDirection.lighting.colorTemperature && (
-                              <div>
-                                <span className="font-medium">Color Temperature: </span>
-                                <span>{scene.sceneDirection.lighting.colorTemperature}</span>
-                              </div>
-                            )}
+                        )}
+                        
+                        {/* Lighting */}
+                        {scene.sceneDirection.lighting && (
+                          <div className="p-3.5 bg-gradient-to-br from-yellow-50 to-yellow-100/50 dark:from-yellow-950/30 dark:to-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800/50">
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                              <Zap className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+                              Lighting
+                            </h4>
+                            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                              {scene.sceneDirection.lighting.overallMood && (
+                                <div className="pb-2 border-b border-yellow-200/50 dark:border-yellow-800/30">
+                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Mood: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.overallMood}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.lighting.timeOfDay && (
+                                <div>
+                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Time of Day: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.timeOfDay}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.lighting.keyLight && (
+                                <div>
+                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Key Light: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.keyLight}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.lighting.fillLight && (
+                                <div>
+                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Fill Light: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.fillLight}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.lighting.backlight && (
+                                <div>
+                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Backlight: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.backlight}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.lighting.practicals && (
+                                <div>
+                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Practicals: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.practicals}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.lighting.colorTemperature && (
+                                <div>
+                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Color Temp: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.colorTemperature}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      
-                      {/* Scene */}
-                      {scene.sceneDirection.scene && (
-                        <div className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
-                            <ImageIcon className="w-4 h-4" />
-                            Scene
-                          </h4>
-                          <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                            {scene.sceneDirection.scene.location && (
-                              <div>
-                                <span className="font-medium">Location: </span>
-                                <span>{scene.sceneDirection.scene.location}</span>
-                              </div>
-                            )}
-                            {scene.sceneDirection.scene.keyProps && scene.sceneDirection.scene.keyProps.length > 0 && (
-                              <div>
-                                <span className="font-medium">Key Props: </span>
-                                <span>{scene.sceneDirection.scene.keyProps.join(', ')}</span>
-                              </div>
-                            )}
-                            {scene.sceneDirection.scene.atmosphere && (
-                              <div>
-                                <span className="font-medium">Atmosphere: </span>
-                                <span>{scene.sceneDirection.scene.atmosphere}</span>
-                              </div>
-                            )}
+                        )}
+                        
+                        {/* Scene */}
+                        {scene.sceneDirection.scene && (
+                          <div className="p-3.5 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 rounded-lg border border-green-200 dark:border-green-800/50">
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                              <ImageIcon className="w-4 h-4 text-green-600 dark:text-green-400" />
+                              Scene
+                            </h4>
+                            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                              {scene.sceneDirection.scene.location && (
+                                <div className="pb-2 border-b border-green-200/50 dark:border-green-800/30">
+                                  <span className="font-medium text-green-900 dark:text-green-300">Location: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.scene.location}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.scene.keyProps && scene.sceneDirection.scene.keyProps.length > 0 && (
+                                <div>
+                                  <span className="font-medium text-green-900 dark:text-green-300">Key Props: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.scene.keyProps.join(', ')}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.scene.atmosphere && (
+                                <div>
+                                  <span className="font-medium text-green-900 dark:text-green-300">Atmosphere: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.scene.atmosphere}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      
-                      {/* Talent */}
-                      {scene.sceneDirection.talent && (
-                        <div className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
-                            <Users className="w-4 h-4" />
-                            Talent
-                          </h4>
-                          <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                            {scene.sceneDirection.talent.blocking && (
-                              <div>
-                                <span className="font-medium">Blocking: </span>
-                                <span>{scene.sceneDirection.talent.blocking}</span>
-                              </div>
-                            )}
-                            {scene.sceneDirection.talent.keyActions && scene.sceneDirection.talent.keyActions.length > 0 && (
-                              <div>
-                                <span className="font-medium">Key Actions: </span>
-                                <span>{scene.sceneDirection.talent.keyActions.join(', ')}</span>
-                              </div>
-                            )}
-                            {scene.sceneDirection.talent.emotionalBeat && (
-                              <div>
-                                <span className="font-medium">Emotional Beat: </span>
-                                <span>{scene.sceneDirection.talent.emotionalBeat}</span>
-                              </div>
-                            )}
+                        )}
+                        
+                        {/* Talent */}
+                        {scene.sceneDirection.talent && (
+                          <div className="p-3.5 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/30 dark:to-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800/50">
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                              <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                              Talent
+                            </h4>
+                            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                              {scene.sceneDirection.talent.blocking && (
+                                <div className="pb-2 border-b border-purple-200/50 dark:border-purple-800/30">
+                                  <span className="font-medium text-purple-900 dark:text-purple-300">Blocking: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.talent.blocking}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.talent.keyActions && scene.sceneDirection.talent.keyActions.length > 0 && (
+                                <div>
+                                  <span className="font-medium text-purple-900 dark:text-purple-300">Key Actions: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.talent.keyActions.join(', ')}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.talent.emotionalBeat && (
+                                <div>
+                                  <span className="font-medium text-purple-900 dark:text-purple-300">Emotional Beat: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.talent.emotionalBeat}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      
-                      {/* Audio */}
-                      {scene.sceneDirection.audio && (
-                        <div className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
-                            <Volume2 className="w-4 h-4" />
-                            Audio
-                          </h4>
-                          <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                            {scene.sceneDirection.audio.priorities && (
-                              <div>
-                                <span className="font-medium">Priorities: </span>
-                                <span>{scene.sceneDirection.audio.priorities}</span>
-                              </div>
-                            )}
-                            {scene.sceneDirection.audio.considerations && (
-                              <div>
-                                <span className="font-medium">Considerations: </span>
-                                <span>{scene.sceneDirection.audio.considerations}</span>
-                              </div>
-                            )}
+                        )}
+                        
+                        {/* Audio */}
+                        {scene.sceneDirection.audio && (
+                          <div className="p-3.5 bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/30 dark:to-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800/50">
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                              <Volume2 className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                              Audio
+                            </h4>
+                            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                              {scene.sceneDirection.audio.priorities && (
+                                <div className="pb-2 border-b border-orange-200/50 dark:border-orange-800/30">
+                                  <span className="font-medium text-orange-900 dark:text-orange-300">Priorities: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.audio.priorities}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.audio.considerations && (
+                                <div>
+                                  <span className="font-medium text-orange-900 dark:text-orange-300">Considerations: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.audio.considerations}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                       
                       {/* Regenerate Button */}
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation()
-                          if (onGenerateSceneDirection) {
-                            await onGenerateSceneDirection(sceneIdx)
-                          }
-                        }}
-                        disabled={generatingDirectionFor === sceneIdx}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {generatingDirectionFor === sceneIdx ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>Regenerating...</span>
-                          </>
-                        ) : (
-                          <>
-                            <RefreshCw className="w-4 h-4" />
-                            <span>Regenerate Scene Direction</span>
-                          </>
-                        )}
-                      </button>
+                      <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation()
+                            if (onGenerateSceneDirection) {
+                              await onGenerateSceneDirection(sceneIdx)
+                            }
+                          }}
+                          disabled={generatingDirectionFor === sceneIdx}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full justify-center"
+                        >
+                          {generatingDirectionFor === sceneIdx ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>Regenerating...</span>
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw className="w-4 h-4" />
+                              <span>Regenerate Scene Direction</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -2313,410 +2343,439 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
             </div>
           )}
           
-          {/* Narration (if available) */}
-          {scene.narration && (
-            <div className="mt-3 mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="flex items-center justify-between mb-2">
+          {/* Scene Script Section */}
+          {!isOutline && (
+            <div className="mb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setIsSceneScriptOpen(!isSceneScriptOpen)
+                }}
+                className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors"
+              >
                 <div className="flex items-center gap-2">
-                  <Volume2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Scene Narration</span>
-                  {scene.narrationAudioUrl && (
-                    <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
-                      <Volume2 className="w-3 h-3" />
-                      Audio Ready
-                    </span>
+                  <FileText className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Scene Script</span>
+                </div>
+                <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isSceneScriptOpen ? 'rotate-90' : ''}`} />
+              </button>
+              
+              {isSceneScriptOpen && (
+                <div className="mt-3 space-y-4">
+                  {/* Scene Narration */}
+                  {scene.narration && (
+                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Volume2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Scene Narration</span>
+                          {scene.narrationAudioUrl && (
+                            <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
+                              <Volume2 className="w-3 h-3" />
+                              Audio Ready
+                            </span>
+                          )}
+                        </div>
+                        {scene.narrationAudioUrl ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onPlayAudio?.(scene.narrationAudioUrl, 'narration')
+                              }}
+                              className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
+                              title="Play Narration"
+                            >
+                              {playingAudio === scene.narrationAudioUrl ? (
+                                <Pause className="w-4 h-4" />
+                              ) : (
+                                <Play className="w-4 h-4" />
+                              )}
+                            </button>
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation()
+                                if (!onGenerateSceneAudio) return
+                                
+                                setGeneratingDialogue?.({ sceneIdx, character: '__narration__' })
+                                try {
+                                  await onGenerateSceneAudio(sceneIdx, 'narration')
+                                } catch (error) {
+                                  console.error('[ScriptPanel] Narration regeneration failed:', error)
+                                } finally {
+                                  setGeneratingDialogue?.(null)
+                                }
+                              }}
+                              disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__'}
+                              className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded disabled:opacity-50"
+                              title="Regenerate Narration Audio"
+                            >
+                              {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__' ? (
+                                <Loader className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <RefreshCw className="w-4 h-4" />
+                              )}
+                            </button>
+                            <a
+                              href={scene.narrationAudioUrl}
+                              download
+                              className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
+                              title="Download Narration"
+                            >
+                              <Download className="w-4 h-4" />
+                            </a>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              if (!onGenerateSceneAudio) return
+                              
+                              setGeneratingDialogue?.({ sceneIdx, character: '__narration__' })
+                              try {
+                                await onGenerateSceneAudio(sceneIdx, 'narration')
+                              } catch (error) {
+                                console.error('[ScriptPanel] Narration generation failed:', error)
+                              } finally {
+                                setGeneratingDialogue?.(null)
+                              }
+                            }}
+                            disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__'}
+                            className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
+                          >
+                            {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__' ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : null}
+                            Generate Audio
+                          </button>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
+                        "{scene.narration}"
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Scene Dialog */}
+                  {scene.dialogue && scene.dialogue.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Users className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Scene Dialog</span>
+                      </div>
+                      {scene.dialogue.map((d: any, i: number) => {
+                        // Match audio by both character and dialogueIndex
+                        const audioEntry = scene.dialogueAudio?.find((a: any) => 
+                          a.character === d.character && a.dialogueIndex === i
+                        )
+                        return (
+                          <div key={i} className="flex items-start gap-2">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{d.character}</div>
+                                {audioEntry?.audioUrl && (
+                                  <span className="text-xs px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded">
+                                    ✓
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-sm text-gray-700 dark:text-gray-300 italic">"{d.line}"</div>
+                            </div>
+                            {audioEntry?.audioUrl ? (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    onPlayAudio?.(audioEntry.audioUrl, d.character)
+                                  }}
+                                  className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                                  title="Play Dialogue"
+                                >
+                                  {playingAudio === audioEntry.audioUrl ? (
+                                    <Pause className="w-4 h-4" />
+                                  ) : (
+                                    <Play className="w-4 h-4" />
+                                  )}
+                                </button>
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation()
+                                    if (!onGenerateSceneAudio) return
+                                    
+                                    setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
+                                    try {
+                                      await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i)
+                                    } catch (error) {
+                                      console.error('[ScriptPanel] Dialogue regeneration failed:', error)
+                                    } finally {
+                                      setGeneratingDialogue?.(null)
+                                    }
+                                  }}
+                                  disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character && generatingDialogue?.dialogueIndex === i}
+                                  className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-50"
+                                  title="Regenerate Dialogue Audio"
+                                >
+                                  {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character && generatingDialogue?.dialogueIndex === i ? (
+                                    <Loader className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <RefreshCw className="w-4 h-4" />
+                                  )}
+                                </button>
+                                <a
+                                  href={audioEntry.audioUrl}
+                                  download
+                                  className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                                  title="Download Dialogue"
+                                >
+                                  <Download className="w-4 h-4" />
+                                </a>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation()
+                                  console.log('[ScriptPanel] Generate dialogue clicked:', { sceneIdx, character: d.character, dialogueIndex: i })
+                                  
+                                  if (!onGenerateSceneAudio) {
+                                    console.error('[ScriptPanel] onGenerateSceneAudio is not defined!')
+                                    return
+                                  }
+                                  
+                                  setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
+                                  
+                                  try {
+                                    await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i)
+                                  } catch (error) {
+                                    console.error('[ScriptPanel] Dialogue generation failed:', error)
+                                  } finally {
+                                    setGeneratingDialogue?.(null)
+                                  }
+                                }}
+                                disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character && generatingDialogue?.dialogueIndex === i}
+                                className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50"
+                              >
+                                {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character && generatingDialogue?.dialogueIndex === i ? (
+                                  <div className="flex items-center gap-1">
+                                    <Loader className="w-3 h-3 animate-spin" />
+                                    Generating...
+                                  </div>
+                                ) : (
+                                  'Generate'
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                  
+                  {/* Background Music */}
+                  {scene.music && (
+                    <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Music className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                          <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">Background Music</span>
+                          {scene.musicAudio && (
+                            <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
+                              <Volume2 className="w-3 h-3" />
+                              Audio Ready
+                            </span>
+                          )}
+                        </div>
+                        {scene.musicAudio ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onPlayAudio?.(scene.musicAudio, 'music')
+                              }}
+                              className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
+                              title="Play Music"
+                            >
+                              {playingAudio === scene.musicAudio ? (
+                                <Pause className="w-4 h-4" />
+                              ) : (
+                                <Play className="w-4 h-4" />
+                              )}
+                            </button>
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation()
+                                setGeneratingMusic?.(sceneIdx)
+                                try {
+                                  await generateMusic?.(sceneIdx)
+                                } catch (error) {
+                                  console.error('[ScriptPanel] Music regeneration failed:', error)
+                                } finally {
+                                  setGeneratingMusic?.(null)
+                                }
+                              }}
+                              disabled={generatingMusic === sceneIdx}
+                              className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded disabled:opacity-50"
+                              title="Regenerate Music"
+                            >
+                              {generatingMusic === sceneIdx ? (
+                                <Loader className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <RefreshCw className="w-4 h-4" />
+                              )}
+                            </button>
+                            <a
+                              href={scene.musicAudio}
+                              download
+                              className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
+                              title="Download Music"
+                            >
+                              <Download className="w-4 h-4" />
+                            </a>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              setGeneratingMusic?.(sceneIdx)
+                              try {
+                                await generateMusic?.(sceneIdx)
+                              } catch (error) {
+                                console.error('[ScriptPanel] Music generation failed:', error)
+                              } finally {
+                                setGeneratingMusic?.(null)
+                              }
+                            }}
+                            disabled={generatingMusic === sceneIdx}
+                            className="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-50"
+                          >
+                            {generatingMusic === sceneIdx ? (
+                              <div className="flex items-center gap-1">
+                                <Loader className="w-3 h-3 animate-spin" />
+                                Generating...
+                              </div>
+                            ) : (
+                              'Generate'
+                            )}
+                          </button>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-700 dark:text-gray-300 italic">
+                        {typeof scene.music === 'string' ? scene.music : scene.music.description}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* SFX */}
+                  {scene.sfx && Array.isArray(scene.sfx) && scene.sfx.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <VolumeIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Sound Effects ({scene.sfx.length})</span>
+                      </div>
+                      {scene.sfx.map((sfx: any, sfxIdx: number) => {
+                        const sfxAudio = scene.sfxAudio?.[sfxIdx]
+                        return (
+                          <div key={sfxIdx} className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <VolumeIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                                <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">SFX {sfxIdx + 1}</span>
+                                {sfxAudio && (
+                                  <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
+                                    <Volume2 className="w-3 h-3" />
+                                    Audio Ready
+                                  </span>
+                                )}
+                              </div>
+                              {sfxAudio ? (
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      onPlayAudio?.(sfxAudio, `sfx-${sfxIdx}`)
+                                    }}
+                                    className="p-1 hover:bg-amber-200 dark:hover:bg-amber-800 rounded"
+                                    title="Play SFX"
+                                  >
+                                    {playingAudio === sfxAudio ? (
+                                      <Pause className="w-4 h-4" />
+                                    ) : (
+                                      <Play className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                  <button
+                                    onClick={async (e) => {
+                                      e.stopPropagation()
+                                      setGeneratingSFX?.({ sceneIdx, sfxIdx })
+                                      try {
+                                        await generateSFX?.(sceneIdx, sfxIdx)
+                                      } catch (error) {
+                                        console.error('[ScriptPanel] SFX regeneration failed:', error)
+                                      } finally {
+                                        setGeneratingSFX?.(null)
+                                      }
+                                    }}
+                                    disabled={generatingSFX?.sceneIdx === sceneIdx && generatingSFX?.sfxIdx === sfxIdx}
+                                    className="p-1 hover:bg-amber-200 dark:hover:bg-amber-800 rounded disabled:opacity-50"
+                                    title="Regenerate SFX"
+                                  >
+                                    {generatingSFX?.sceneIdx === sceneIdx && generatingSFX?.sfxIdx === sfxIdx ? (
+                                      <Loader className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <RefreshCw className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                  <a
+                                    href={sfxAudio}
+                                    download
+                                    className="p-1 hover:bg-amber-200 dark:hover:bg-amber-800 rounded"
+                                    title="Download SFX"
+                                  >
+                                    <Download className="w-4 h-4" />
+                                  </a>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation()
+                                    setGeneratingSFX?.({ sceneIdx, sfxIdx })
+                                    try {
+                                      await generateSFX?.(sceneIdx, sfxIdx)
+                                    } catch (error) {
+                                      console.error('[ScriptPanel] SFX generation failed:', error)
+                                    } finally {
+                                      setGeneratingSFX?.(null)
+                                    }
+                                  }}
+                                  disabled={generatingSFX?.sceneIdx === sceneIdx && generatingSFX?.sfxIdx === sfxIdx}
+                                  className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded disabled:opacity-50"
+                                >
+                                  {generatingSFX?.sceneIdx === sceneIdx && generatingSFX?.sfxIdx === sfxIdx ? (
+                                    <div className="flex items-center gap-1">
+                                      <Loader className="w-3 h-3 animate-spin" />
+                                      Generating...
+                                    </div>
+                                  ) : (
+                                    'Generate'
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                            <div className="text-sm text-gray-700 dark:text-gray-300 italic">
+                              {typeof sfx === 'string' ? sfx : sfx.description}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
                   )}
                 </div>
-                {scene.narrationAudioUrl ? (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onPlayAudio?.(scene.narrationAudioUrl, 'narration')
-                      }}
-                      className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
-                      title="Play Narration"
-                    >
-                      {playingAudio === scene.narrationAudioUrl ? (
-                        <Pause className="w-4 h-4" />
-                      ) : (
-                        <Play className="w-4 h-4" />
-                      )}
-                    </button>
-                    <button
-                      onClick={async (e) => {
-                        e.stopPropagation()
-                        if (!onGenerateSceneAudio) return
-                        
-                        setGeneratingDialogue?.({ sceneIdx, character: '__narration__' })
-                        try {
-                          await onGenerateSceneAudio(sceneIdx, 'narration')
-                        } catch (error) {
-                          console.error('[ScriptPanel] Narration regeneration failed:', error)
-                        } finally {
-                          setGeneratingDialogue?.(null)
-                        }
-                      }}
-                      disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__'}
-                      className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded disabled:opacity-50"
-                      title="Regenerate Narration Audio"
-                    >
-                      {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__' ? (
-                        <Loader className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <RefreshCw className="w-4 h-4" />
-                      )}
-                    </button>
-                    <a
-                      href={scene.narrationAudioUrl}
-                      download
-                      className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
-                      title="Download Narration"
-                    >
-                      <Download className="w-4 h-4" />
-                    </a>
-                  </div>
-                ) : (
-                  <button
-                    onClick={async (e) => {
-                      e.stopPropagation()
-                      if (!onGenerateSceneAudio) return
-                      
-                      setGeneratingDialogue?.({ sceneIdx, character: '__narration__' })
-                      try {
-                        await onGenerateSceneAudio(sceneIdx, 'narration')
-                      } catch (error) {
-                        console.error('[ScriptPanel] Narration generation failed:', error)
-                      } finally {
-                        setGeneratingDialogue?.(null)
-                      }
-                    }}
-                    disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__'}
-                    className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
-                  >
-                    {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__' ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : null}
-                    Generate Audio
-                  </button>
-                )}
-              </div>
-              <div className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
-                "{scene.narration}"
-              </div>
+              )}
             </div>
           )}
           
           {/* Show summary for outlines only (action now always visible in Row 3) */}
           {isOutline && scene.summary && (
             <div className="text-sm text-gray-600 dark:text-gray-400 mb-2 italic">{scene.summary}</div>
-          )}
-          
-          {!isOutline && scene.dialogue && scene.dialogue.length > 0 && (
-            <div className="space-y-2">
-              {scene.dialogue.map((d: any, i: number) => {
-                // Match audio by both character and dialogueIndex
-                const audioEntry = scene.dialogueAudio?.find((a: any) => 
-                  a.character === d.character && a.dialogueIndex === i
-                )
-                return (
-                  <div key={i} className="flex items-start gap-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{d.character}</div>
-                        {audioEntry?.audioUrl && (
-                          <span className="text-xs px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded">
-                            ✓
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-sm text-gray-700 dark:text-gray-300 italic">"{d.line}"</div>
-                    </div>
-                    {audioEntry?.audioUrl ? (
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onPlayAudio?.(audioEntry.audioUrl, d.character)
-                          }}
-                          className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
-                          title="Play Dialogue"
-                        >
-                          {playingAudio === audioEntry.audioUrl ? (
-                            <Pause className="w-4 h-4" />
-                          ) : (
-                            <Play className="w-4 h-4" />
-                          )}
-                        </button>
-                        <button
-                          onClick={async (e) => {
-                            e.stopPropagation()
-                            if (!onGenerateSceneAudio) return
-                            
-                            setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
-                            try {
-                              await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i)
-                            } catch (error) {
-                              console.error('[ScriptPanel] Dialogue regeneration failed:', error)
-                            } finally {
-                              setGeneratingDialogue?.(null)
-                            }
-                          }}
-                          disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character && generatingDialogue?.dialogueIndex === i}
-                          className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded disabled:opacity-50"
-                          title="Regenerate Dialogue Audio"
-                        >
-                          {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character && generatingDialogue?.dialogueIndex === i ? (
-                            <Loader className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <RefreshCw className="w-4 h-4" />
-                          )}
-                        </button>
-                        <a
-                          href={audioEntry.audioUrl}
-                          download
-                          className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
-                          title="Download Dialogue"
-                        >
-                          <Download className="w-4 h-4" />
-                        </a>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation()
-                          console.log('[ScriptPanel] Generate dialogue clicked:', { sceneIdx, character: d.character, dialogueIndex: i })
-                          
-                          if (!onGenerateSceneAudio) {
-                            console.error('[ScriptPanel] onGenerateSceneAudio is not defined!')
-                            return
-                          }
-                          
-                          setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
-                          
-                          try {
-                            await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i)
-                          } catch (error) {
-                            console.error('[ScriptPanel] Dialogue generation failed:', error)
-                          } finally {
-                            setGeneratingDialogue?.(null)
-                          }
-                        }}
-                        disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character && generatingDialogue?.dialogueIndex === i}
-                        className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50"
-                      >
-                        {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character && generatingDialogue?.dialogueIndex === i ? (
-                          <div className="flex items-center gap-1">
-                            <Loader className="w-3 h-3 animate-spin" />
-                            Generating...
-                          </div>
-                        ) : (
-                          'Generate'
-                        )}
-                      </button>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-          
-          {/* Music (if available) */}
-          {scene.music && (
-            <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Music className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                  <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">Background Music</span>
-                  {scene.musicAudio && (
-                    <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
-                      <Volume2 className="w-3 h-3" />
-                      Audio Ready
-                    </span>
-                  )}
-                </div>
-                {scene.musicAudio ? (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onPlayAudio?.(scene.musicAudio, 'music')
-                      }}
-                      className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
-                      title="Play Music"
-                    >
-                      {playingAudio === scene.musicAudio ? (
-                        <Pause className="w-4 h-4" />
-                      ) : (
-                        <Play className="w-4 h-4" />
-                      )}
-                    </button>
-                    <button
-                      onClick={async (e) => {
-                        e.stopPropagation()
-                        setGeneratingMusic?.(sceneIdx)
-                        try {
-                          await generateMusic?.(sceneIdx)
-                        } catch (error) {
-                          console.error('[ScriptPanel] Music regeneration failed:', error)
-                        } finally {
-                          setGeneratingMusic?.(null)
-                        }
-                      }}
-                      disabled={generatingMusic === sceneIdx}
-                      className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded disabled:opacity-50"
-                      title="Regenerate Music"
-                    >
-                      {generatingMusic === sceneIdx ? (
-                        <Loader className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <RefreshCw className="w-4 h-4" />
-                      )}
-                    </button>
-                    <a
-                      href={scene.musicAudio}
-                      download
-                      className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
-                      title="Download Music"
-                    >
-                      <Download className="w-4 h-4" />
-                    </a>
-                  </div>
-                ) : (
-                  <button
-                    onClick={async (e) => {
-                      e.stopPropagation()
-                      setGeneratingMusic?.(sceneIdx)
-                      try {
-                        await generateMusic?.(sceneIdx)
-                      } catch (error) {
-                        console.error('[ScriptPanel] Music generation failed:', error)
-                      } finally {
-                        setGeneratingMusic?.(null)
-                      }
-                    }}
-                    disabled={generatingMusic === sceneIdx}
-                    className="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-50"
-                  >
-                    {generatingMusic === sceneIdx ? (
-                      <div className="flex items-center gap-1">
-                        <Loader className="w-3 h-3 animate-spin" />
-                        Generating...
-                      </div>
-                    ) : (
-                      'Generate'
-                    )}
-                  </button>
-                )}
-              </div>
-              <div className="text-sm text-gray-700 dark:text-gray-300 italic">
-                {typeof scene.music === 'string' ? scene.music : scene.music.description}
-              </div>
-            </div>
-          )}
-          
-          {/* SFX (if available) */}
-          {scene.sfx && Array.isArray(scene.sfx) && scene.sfx.length > 0 && (
-            <div className="mt-3 space-y-2">
-              <div className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Sound Effects ({scene.sfx.length})
-              </div>
-              {scene.sfx.map((sfx: any, sfxIdx: number) => {
-                const sfxAudio = scene.sfxAudio?.[sfxIdx]
-                return (
-                  <div key={sfxIdx} className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <VolumeIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                        <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">SFX {sfxIdx + 1}</span>
-                        {sfxAudio && (
-                          <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
-                            <Volume2 className="w-3 h-3" />
-                            Audio Ready
-                          </span>
-                        )}
-                      </div>
-                      {sfxAudio ? (
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              onPlayAudio?.(sfxAudio, `sfx-${sfxIdx}`)
-                            }}
-                            className="p-1 hover:bg-amber-200 dark:hover:bg-amber-800 rounded"
-                            title="Play SFX"
-                          >
-                            {playingAudio === sfxAudio ? (
-                              <Pause className="w-4 h-4" />
-                            ) : (
-                              <Play className="w-4 h-4" />
-                            )}
-                          </button>
-                          <button
-                            onClick={async (e) => {
-                              e.stopPropagation()
-                              setGeneratingSFX?.({ sceneIdx, sfxIdx })
-                              try {
-                                await generateSFX?.(sceneIdx, sfxIdx)
-                              } catch (error) {
-                                console.error('[ScriptPanel] SFX regeneration failed:', error)
-                              } finally {
-                                setGeneratingSFX?.(null)
-                              }
-                            }}
-                            disabled={generatingSFX?.sceneIdx === sceneIdx && generatingSFX?.sfxIdx === sfxIdx}
-                            className="p-1 hover:bg-amber-200 dark:hover:bg-amber-800 rounded disabled:opacity-50"
-                            title="Regenerate SFX"
-                          >
-                            {generatingSFX?.sceneIdx === sceneIdx && generatingSFX?.sfxIdx === sfxIdx ? (
-                              <Loader className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <RefreshCw className="w-4 h-4" />
-                            )}
-                          </button>
-                          <a
-                            href={sfxAudio}
-                            download
-                            className="p-1 hover:bg-amber-200 dark:hover:bg-amber-800 rounded"
-                            title="Download SFX"
-                          >
-                            <Download className="w-4 h-4" />
-                          </a>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={async (e) => {
-                            e.stopPropagation()
-                            setGeneratingSFX?.({ sceneIdx, sfxIdx })
-                            try {
-                              await generateSFX?.(sceneIdx, sfxIdx)
-                            } catch (error) {
-                              console.error('[ScriptPanel] SFX generation failed:', error)
-                            } finally {
-                              setGeneratingSFX?.(null)
-                            }
-                          }}
-                          disabled={generatingSFX?.sceneIdx === sceneIdx && generatingSFX?.sfxIdx === sfxIdx}
-                          className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded disabled:opacity-50"
-                        >
-                          {generatingSFX?.sceneIdx === sceneIdx && generatingSFX?.sfxIdx === sfxIdx ? (
-                            <div className="flex items-center gap-1">
-                              <Loader className="w-3 h-3 animate-spin" />
-                              Generating...
-                            </div>
-                          ) : (
-                            'Generate'
-                          )}
-                        </button>
-                      )}
-                    </div>
-                    <div className="text-sm text-gray-700 dark:text-gray-300 italic">
-                      {typeof sfx === 'string' ? sfx : sfx.description}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
           )}
         </div>
       )}
