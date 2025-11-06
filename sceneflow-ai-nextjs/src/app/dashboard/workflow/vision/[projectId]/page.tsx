@@ -2409,8 +2409,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         body: JSON.stringify({ 
           projectId: projectId,
           sceneIndex: sceneIdx,
-          scenePrompt: scene.visualDescription || scene.action || scene.heading,
-          // NEW: Pass prompt builder data
+          // Use scenePrompt from prompt builder if provided, otherwise use scene description
+          scenePrompt: promptData.scenePrompt || scene.visualDescription || scene.action || scene.heading,
+          // Legacy support: customPrompt (if provided, will be used by API)
           customPrompt: promptData.customPrompt,
           artStyle: promptData.artStyle,
           shotType: promptData.shotType,
