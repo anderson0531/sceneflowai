@@ -92,28 +92,28 @@ export function SceneDisplay({ scene, sceneNumber, totalScenes, isLoading, showC
           <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black" />                                                                           
         )}
 
-        {/* Caption Overlay */}
+        {/* Caption Overlay - Responsive positioning */}
         {showCaptions && (
-          <div className="absolute bottom-20 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-8 pb-6">
+          <div className="absolute bottom-24 sm:bottom-20 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-4 sm:p-8 pb-4 sm:pb-6">
             <div className="max-w-4xl mx-auto text-center">
               {/* Narration Caption - use translated if available */}
               {(translatedNarration || scene.narration) && (
-                <div className="text-xl md:text-2xl text-white leading-relaxed mb-6 opacity-0 animate-[fadeIn_0.5s_ease-in-out_forwards]">
+                <div className="text-sm sm:text-base md:text-xl lg:text-2xl text-white leading-relaxed mb-3 sm:mb-4 md:mb-6 opacity-0 animate-[fadeIn_0.5s_ease-in-out_forwards]">
                   {translatedNarration || scene.narration}
                 </div>
               )}
 
               {/* Dialogue Captions - use translated if available */}
               {scene.dialogue && scene.dialogue.length > 0 && (
-                <div className="space-y-4">
+                <div className="space-y-2 sm:space-y-3 md:space-y-4">
                   {scene.dialogue.slice(0, 2).map((d: any, idx: number) => {
                     const displayText = translatedDialogue?.[idx] || d.line
                     return (
                       <div key={idx} className="opacity-0 animate-[fadeIn_0.5s_ease-in-out_forwards]" style={{ animationDelay: `${idx * 0.5}s` }}>
-                        <div className="text-xl md:text-2xl text-white font-light italic leading-relaxed mb-2">
+                        <div className="text-sm sm:text-base md:text-xl lg:text-2xl text-white font-light italic leading-relaxed mb-1 sm:mb-2">
                           "{displayText}"
                         </div>
-                        <div className="text-sm text-gray-300">
+                        <div className="text-xs sm:text-sm text-gray-300">
                           — {d.character}
                         </div>
                       </div>

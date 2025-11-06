@@ -1,10 +1,11 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { X, Play, Pause, SkipBack, SkipForward, Volume2, Subtitles, Download, Loader } from 'lucide-react'
+import { X, Play, Pause, SkipBack, SkipForward, Volume2, Subtitles, Download, Loader, Menu } from 'lucide-react'
 import { SceneDisplay } from './SceneDisplay'
 import { PlaybackControls } from './PlaybackControls'
 import { VoiceAssignmentPanel } from './VoiceAssignmentPanel'
+import { MobileMenuSheet } from './MobileMenuSheet'
 import { WebAudioMixer, SceneAudioConfig, AudioSource } from '@/lib/audio/webAudioMixer'
 import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { toast } from 'sonner'
@@ -54,6 +55,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   // Auto-hide controls state
   const [showControls, setShowControls] = useState(true)
   const [showCaptions, setShowCaptions] = useState(true)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const renderPollIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -997,8 +999,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       {/* Hidden audio element */}
       <audio ref={audioRef} />
 
-      {/* Progress Bar */}
-      <div className="absolute top-0 left-0 right-0 z-20 h-0.5 bg-gray-600">
+      {/* Progress Bar - Slightly thicker on mobile for better visibility */}
+      <div className="absolute top-0 left-0 right-0 z-20 h-1 sm:h-0.5 bg-gray-600" style={{ top: 'env(safe-area-inset-top, 0)' }}>
         <div 
           className="h-full bg-blue-500 transition-all duration-300"
           style={{ width: `${((playerState.currentSceneIndex + 1) / scenes.length) * 100}%` }}
@@ -1006,17 +1008,22 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       </div>
 
       {/* Header */}
-      <div className={`absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent transition-opacity duration-300 ${
+      <div className={`absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-3 sm:p-4 bg-gradient-to-b from-black/80 to-transparent transition-opacity duration-300 ${
         showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
-      }`}>
-        <div className="text-white">
-          <h2 className="text-xl font-semibold">Screening Room</h2>
-          <p className="text-sm text-gray-400">{script?.title || 'Untitled Script'}</p>
+      }`} style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
+        {/* Title - truncated on mobile */}
+        <div className="text-white flex-1 min-w-0">
+          <h2 className="text-lg sm:text-xl font-semibold truncate">Screening Room</h2>
+          <p className="text-xs sm:text-sm text-gray-400 truncate hidden sm:block">
+            {script?.title || 'Untitled Script'}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
+        
+        {/* Desktop controls - hidden on mobile/tablet */}
+        <div className="hidden lg:flex items-center gap-2">
           <button
             onClick={() => setShowCaptions(prev => !prev)}
-            className={`p-2 rounded-lg hover:bg-white/10 text-white transition-colors ${
+            className={`p-2 rounded-lg hover:bg-white/10 text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center ${
               showCaptions ? 'bg-white/20' : ''
             }`}
             title="Toggle Captions (C)"
@@ -1030,7 +1037,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
               // Clear cache when language changes
               setTranslationCache(new Map())
             }}
-            className="px-3 py-1 rounded-lg bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-colors text-sm"
+            className="px-3 py-1.5 rounded-lg bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-colors text-sm min-h-[44px]"
             title="Select Language"
           >
             {SUPPORTED_LANGUAGES.map(lang => (
@@ -1042,36 +1049,85 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           <button
             onClick={handleDownloadMP4}
             disabled={isRendering}
-            className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
             title={isRendering ? "Rendering..." : "Export to MP4"}
           >
             {isRendering ? (
               <>
                 <Loader className="w-5 h-5 animate-spin" />
-                <span className="hidden sm:inline text-sm">Rendering...</span>
+                <span className="text-sm">Rendering...</span>
               </>
             ) : (
               <>
                 <Download className="w-5 h-5" />
-                <span className="hidden sm:inline text-sm">MP4</span>
+                <span className="text-sm">MP4</span>
               </>
             )}
           </button>
+        </div>
+        
+        {/* Tablet controls - show captions toggle */}
+        <div className="hidden md:flex lg:hidden items-center gap-2">
           <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors"
-            title="Exit Screening Room (ESC)"
+            onClick={() => setShowCaptions(prev => !prev)}
+            className={`p-2 rounded-lg hover:bg-white/10 text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center ${
+              showCaptions ? 'bg-white/20' : ''
+            }`}
+            title="Toggle Captions"
           >
-            <X className="w-6 h-6" />
+            <Subtitles className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setShowMobileMenu(true)}
+            className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+            title="Menu"
+          >
+            <Menu className="w-6 h-6" />
           </button>
         </div>
+        
+        {/* Mobile menu button - visible only on mobile */}
+        <button
+          onClick={() => setShowMobileMenu(true)}
+          className="md:hidden p-2 rounded-lg hover:bg-white/10 text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+          title="Menu"
+          aria-label="Open menu"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+        
+        {/* Close button - always visible */}
+        <button
+          onClick={onClose}
+          className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center ml-2"
+          title="Exit Screening Room (ESC)"
+          aria-label="Close"
+        >
+          <X className="w-6 h-6" />
+        </button>
       </div>
+      
+      {/* Mobile Menu Bottom Sheet */}
+      <MobileMenuSheet
+        open={showMobileMenu}
+        onClose={() => setShowMobileMenu(false)}
+        showCaptions={showCaptions}
+        onToggleCaptions={() => setShowCaptions(prev => !prev)}
+        selectedLanguage={selectedLanguage}
+        onLanguageChange={(lang) => {
+          setSelectedLanguage(lang)
+          setTranslationCache(new Map())
+        }}
+        onDownloadMP4={handleDownloadMP4}
+        isRendering={isRendering}
+        supportedLanguages={SUPPORTED_LANGUAGES}
+      />
 
       {/* Main Content Area */}
       <div className="h-full flex">
         {/* Scene Display */}
         <div className={`flex-1 flex items-center justify-center transition-all duration-300 ${
-          playerState.showVoicePanel ? 'mr-80' : ''
+          playerState.showVoicePanel ? 'lg:mr-80' : ''
         }`}>
           <SceneDisplay
             scene={currentScene}
@@ -1085,8 +1141,37 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           />
         </div>
 
-        {/* Voice Assignment Panel (Slide-in from right) */}
-        <div className={`absolute top-0 right-0 bottom-0 w-80 bg-gray-900 border-l border-gray-700 transform transition-transform duration-300 ${
+        {/* Voice Assignment Panel - Mobile: Bottom Sheet */}
+        <div className={`lg:hidden fixed inset-x-0 bottom-0 top-1/3 bg-gray-900 border-t border-gray-700 transform transition-transform duration-300 z-50 ${
+          playerState.showVoicePanel ? 'translate-y-0' : 'translate-y-full'
+        }`} style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+          <div className="p-4 h-full overflow-y-auto">
+            {/* Handle bar */}
+            <div className="flex justify-center mb-4">
+              <div className="w-12 h-1 bg-gray-600 rounded-full" />
+            </div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Voice Assignments</h3>
+              <button
+                onClick={() => setPlayerState(prev => ({ ...prev, showVoicePanel: false }))}
+                className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Close voice panel"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <VoiceAssignmentPanel
+              characters={characters}
+              voiceAssignments={playerState.voiceAssignments}
+              onUpdateNarrator={(voiceId) => updateVoiceAssignment('narrator', voiceId)}
+              onUpdateVoiceover={(voiceId) => updateVoiceAssignment('voiceover', voiceId)}
+              onUpdateCharacter={updateCharacterVoice}
+            />
+          </div>
+        </div>
+
+        {/* Voice Assignment Panel - Desktop: Side Panel */}
+        <div className={`hidden lg:block absolute top-0 right-0 bottom-0 w-80 bg-gray-900 border-l border-gray-700 transform transition-transform duration-300 ${
           playerState.showVoicePanel ? 'translate-x-0' : 'translate-x-full'
         }`}>
           <VoiceAssignmentPanel
@@ -1098,6 +1183,14 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           />
         </div>
       </div>
+      
+      {/* Backdrop for mobile voice panel */}
+      {playerState.showVoicePanel && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setPlayerState(prev => ({ ...prev, showVoicePanel: false }))}
+        />
+      )}
 
       {/* Playback Controls */}
       <div className={`absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 to-transparent transition-opacity duration-300 ${
