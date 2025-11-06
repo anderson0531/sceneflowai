@@ -2458,11 +2458,12 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                   
                   {/* Scene Dialog */}
                   {scene.dialogue && scene.dialogue.length > 0 && (
-                    <div className="space-y-2">
+                    <div className="bg-green-950 border-l-4 border-green-500 p-4 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
                         <Users className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                         <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Scene Dialog</span>
                       </div>
+                      <div className="space-y-2">
                       {scene.dialogue.map((d: any, i: number) => {
                         // Match audio by both character and dialogueIndex
                         // Handle both old array format and new object format (keyed by language)
@@ -2576,6 +2577,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                           </div>
                         )
                       })}
+                      </div>
                     </div>
                   )}
                   
