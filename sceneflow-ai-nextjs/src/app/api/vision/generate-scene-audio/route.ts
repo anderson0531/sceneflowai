@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Step 4: Generate audio using specified provider with optimized text
-    const audioBuffer = await generateAudio(optimized.text, finalVoiceConfig)
+    const audioBuffer = await generateAudio(optimized.text, finalVoiceConfig, language)
 
     // Step 5: Get audio duration
     let audioDuration: number | null = null
@@ -194,15 +194,15 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function generateAudio(text: string, voiceConfig: VoiceConfig): Promise<Buffer> {
+async function generateAudio(text: string, voiceConfig: VoiceConfig, language: string = 'en'): Promise<Buffer> {
   if (voiceConfig.provider === 'elevenlabs') {
-    return await generateElevenLabsAudio(text, voiceConfig)
+    return await generateElevenLabsAudio(text, voiceConfig, language)
   } else {
     return await generateGoogleAudio(text, voiceConfig)
   }
 }
 
-async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig): Promise<Buffer> {
+async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig, language: string = 'en'): Promise<Buffer> {
   const apiKey = process.env.ELEVENLABS_API_KEY
   if (!apiKey) throw new Error('ElevenLabs API key not configured')
 
@@ -210,10 +210,21 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig): 
   // v3 models support [instruction] bracket syntax for audio tags
   const hasAudioTags = /\[[^\]]+\]/.test(text)
 
-  console.log('[Scene Audio] Audio tags detected:', hasAudioTags, 'Text:', text.substring(0, 100))
+  console.log('[Scene Audio] Audio tags detected:', hasAudioTags, 'Text:', text.substring(0, 100), 'Language:', language)
 
+  // Use higher quality format for non-English languages to avoid stuttering/quality issues
+  // MP3 44.1kHz 192kbps provides better quality for complex languages like Thai
+  // For English, we can use 128kbps to save bandwidth
+  const outputFormat = language !== 'en' ? 'mp3_44100_192' : 'mp3_44100_128'
+  
   // Always use standard endpoint (ElevenLabs doesn't have a separate SSML endpoint)
-  const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceConfig.voiceId}?optimize_streaming_latency=0&output_format=mp3_44100_128`
+  const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceConfig.voiceId}?optimize_streaming_latency=0&output_format=${outputFormat}`
+
+  // Adjust voice settings for better quality, especially for non-English languages
+  // Higher stability and similarity_boost can improve quality for complex languages like Thai
+  const isNonEnglish = language !== 'en'
+  const defaultStability = isNonEnglish ? 0.6 : 0.5  // Slightly higher stability for non-English
+  const defaultSimilarityBoost = isNonEnglish ? 0.8 : 0.75  // Higher similarity for non-English
 
   const response = await fetch(url, {
     method: 'POST',
@@ -226,22 +237,32 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig): 
       text: text, // Pass text as-is (ElevenLabs v3 handles [bracket] audio tags)
       model_id: 'eleven_turbo_v2_5', // v3 model supports [audio tags]
       voice_settings: {
-        stability: voiceConfig.stability || 0.5,
-        similarity_boost: voiceConfig.similarityBoost || 0.75,
+        stability: voiceConfig.stability || defaultStability,
+        similarity_boost: voiceConfig.similarityBoost || defaultSimilarityBoost,
         style: hasAudioTags ? 0.5 : undefined,
-        use_speaker_boost: hasAudioTags ? true : undefined,
+        use_speaker_boost: hasAudioTags ? true : (isNonEnglish ? true : undefined),  // Enable speaker boost for non-English
       },
     }),
   })
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => 'Unknown error')
-    console.error('[Scene Audio] ElevenLabs API failed:', response.status, errorText)
+    console.error('[Scene Audio] ElevenLabs API failed:', response.status, errorText, 'Language:', language, 'Format:', outputFormat)
     throw new Error(`ElevenLabs API error: ${response.status}`)
   }
 
   const arrayBuffer = await response.arrayBuffer()
-  return Buffer.from(arrayBuffer)
+  const buffer = Buffer.from(arrayBuffer)
+  
+  // Log audio generation details for debugging
+  console.log(`[Scene Audio] Audio generated successfully: ${buffer.length} bytes, format: ${outputFormat}, language: ${language}`)
+  
+  // Validate audio buffer is not empty
+  if (buffer.length === 0) {
+    throw new Error('Generated audio buffer is empty')
+  }
+  
+  return buffer
 }
 
 async function generateGoogleAudio(text: string, voiceConfig: VoiceConfig): Promise<Buffer> {
@@ -368,11 +389,10 @@ async function updateSceneAudio(
       
       scene.dialogueAudio[language] = dialogueArray
       
-      // Maintain backward compatibility: set dialogueAudio array for English
-      if (language === 'en') {
-        scene.dialogueAudio = dialogueArray
-        scene.dialogueAudioGeneratedAt = new Date().toISOString()
-      }
+      // Maintain backward compatibility: set legacy dialogueAudio array for English ONLY if object structure doesn't exist
+      // DO NOT overwrite the object structure - this would delete other languages!
+      // The object structure { en: [...], th: [...], es: [...] } must be preserved
+      scene.dialogueAudioGeneratedAt = new Date().toISOString()
       
       return scene
     }

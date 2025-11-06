@@ -3022,11 +3022,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               
               scene.dialogueAudio[language] = dialogueArray
               
-              // Maintain backward compatibility: set dialogueAudio array for English
-              if (language === 'en') {
-                scene.dialogueAudio = dialogueArray
-                scene.dialogueAudioGeneratedAt = new Date().toISOString()
-              }
+              // Maintain backward compatibility: DO NOT overwrite the object structure
+              // The object structure { en: [...], th: [...], es: [...] } must be preserved
+              // Setting scene.dialogueAudio = dialogueArray would delete all other languages!
+              scene.dialogueAudioGeneratedAt = new Date().toISOString()
               
               updated.script.scenes[sceneIdx] = scene
             }

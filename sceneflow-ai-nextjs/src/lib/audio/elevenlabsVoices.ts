@@ -110,6 +110,12 @@ export const ELEVENLABS_LANGUAGE_VOICES: Record<string, LanguageVoiceMapping> = 
     voiceId: 'EXAVITQu4vr4xnSDxMaL', // Bella - Multilingual (works well for Korean)
     voiceName: 'Bella',
     isMultilingual: true
+  },
+  'th': {
+    languageCode: 'th',
+    voiceId: 'EXAVITQu4vr4xnSDxMaL', // Bella - Multilingual (works well for Thai)
+    voiceName: 'Bella',
+    isMultilingual: true
   }
 }
 

@@ -97,7 +97,20 @@ export class WebAudioMixer {
       }
 
       const arrayBuffer = await response.arrayBuffer()
-      const audioBuffer = await context.decodeAudioData(arrayBuffer)
+      
+      // Log audio file info for debugging
+      console.log(`[WebAudioMixer] Loading audio from ${url}, size: ${arrayBuffer.byteLength} bytes, type: ${type || 'unknown'}`)
+      
+      // Decode audio with better error handling
+      let audioBuffer: AudioBuffer
+      try {
+        audioBuffer = await context.decodeAudioData(arrayBuffer)
+        console.log(`[WebAudioMixer] Audio decoded successfully: ${audioBuffer.duration.toFixed(2)}s, sample rate: ${audioBuffer.sampleRate}Hz, channels: ${audioBuffer.numberOfChannels}`)
+      } catch (decodeError: any) {
+        console.error(`[WebAudioMixer] Audio decoding failed for ${url}:`, decodeError)
+        // Provide more detailed error information
+        throw new Error(`Audio decoding failed: ${decodeError.message}. This may indicate a corrupted audio file or unsupported format.`)
+      }
       
       // Cache buffer
       this.audioBuffers.set(url, audioBuffer)
