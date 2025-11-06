@@ -2959,15 +2959,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         console.log('[Audio] Audio generated successfully:', data)
         
         // Update script state immediately with audio URL (multi-language structure)
+        // Create a new object reference to ensure React detects the change
         setScript((prevScript: any) => {
           const updated = { ...prevScript }
           if (updated.script?.scenes?.[sceneIdx]) {
-            const scene = { ...updated.script.scenes[sceneIdx] }
+            // Create a new scenes array to ensure reference change
+            const updatedScenes = [...updated.script.scenes]
+            const scene = { ...updatedScenes[sceneIdx] }
             
             if (audioType === 'narration') {
               // Initialize narrationAudio if it doesn't exist
               if (!scene.narrationAudio) {
                 scene.narrationAudio = {}
+              } else {
+                // Create a new object to ensure reference change
+                scene.narrationAudio = { ...scene.narrationAudio }
               }
               
               // Store language-specific narration audio
@@ -2984,7 +2990,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 scene.narrationAudioGeneratedAt = new Date().toISOString()
               }
               
-              updated.script.scenes[sceneIdx] = scene
+              updatedScenes[sceneIdx] = scene
+              updated.script = { ...updated.script, scenes: updatedScenes }
+              
+              console.log('[Generate Scene Audio] Updated script with narration audio for language:', language, 'Scene:', sceneIdx)
             } else if (audioType === 'dialogue' && characterName) {
               // Initialize dialogueAudio object if needed
               if (!scene.dialogueAudio || Array.isArray(scene.dialogueAudio)) {
@@ -2994,6 +3003,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 } else {
                   scene.dialogueAudio = {}
                 }
+              } else {
+                // Create a new object to ensure reference change
+                scene.dialogueAudio = { ...scene.dialogueAudio }
               }
               
               // Initialize language array if it doesn't exist
@@ -3027,7 +3039,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               // Setting scene.dialogueAudio = dialogueArray would delete all other languages!
               scene.dialogueAudioGeneratedAt = new Date().toISOString()
               
-              updated.script.scenes[sceneIdx] = scene
+              updatedScenes[sceneIdx] = scene
+              updated.script = { ...updated.script, scenes: updatedScenes }
+              
+              console.log('[Generate Scene Audio] Updated script with dialogue audio for language:', language, 'Scene:', sceneIdx)
             }
           }
           return updated

@@ -37,7 +37,25 @@ interface PlayerState {
 }
 
 export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }: ScreeningRoomProps) {
-  const scenes = script?.script?.scenes || []
+  // Extract scenes with proper reactivity to script changes
+  const scenes = React.useMemo(() => {
+    const extractedScenes = script?.script?.scenes || script?.scenes || []
+    console.log('[Screening Room] Scenes extracted:', extractedScenes.length, 'scenes')
+    // Log first scene structure for debugging
+    if (extractedScenes.length > 0) {
+      const firstScene = extractedScenes[0]
+      console.log('[Screening Room] First scene structure:', {
+        hasNarrationAudio: !!firstScene.narrationAudio,
+        narrationAudioType: typeof firstScene.narrationAudio,
+        narrationAudioKeys: firstScene.narrationAudio ? Object.keys(firstScene.narrationAudio) : [],
+        hasDialogueAudio: !!firstScene.dialogueAudio,
+        dialogueAudioType: typeof firstScene.dialogueAudio,
+        dialogueAudioKeys: firstScene.dialogueAudio && typeof firstScene.dialogueAudio === 'object' && !Array.isArray(firstScene.dialogueAudio) ? Object.keys(firstScene.dialogueAudio) : []
+      })
+    }
+    return extractedScenes
+  }, [script])
+  
   const [playerState, setPlayerState] = useState<PlayerState>({
     isPlaying: false,
     currentSceneIndex: initialScene,
@@ -69,22 +87,38 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   const [translatedDialogue, setTranslatedDialogue] = useState<string[] | null>(null)
   const translationCacheRef = useRef<Map<string, { narration?: string; dialogue?: string[] }>>(new Map())
   
-  // Get available languages from scenes
+  // Get available languages from scenes - recalculate when scenes or script changes
   const availableLanguages = React.useMemo(() => {
-    return getAvailableLanguages(scenes)
-  }, [scenes])
+    console.log('[Screening Room] Recalculating available languages from', scenes.length, 'scenes')
+    const detected = getAvailableLanguages(scenes)
+    console.log('[Screening Room] Available languages detected:', detected)
+    return detected
+  }, [scenes, script]) // Add script as dependency to force recalculation
   
   // Filter supported languages to only show those with audio files
   const selectableLanguages = React.useMemo(() => {
-    return SUPPORTED_LANGUAGES.filter(lang => availableLanguages.includes(lang.code))
+    const filtered = SUPPORTED_LANGUAGES.filter(lang => availableLanguages.includes(lang.code))
+    console.log('[Screening Room] Selectable languages:', filtered.map(l => l.code))
+    return filtered
   }, [availableLanguages])
   
   // Set default language to first available if current selection is not available
   React.useEffect(() => {
+    console.log('[Screening Room] Language selection check:', {
+      availableLanguages,
+      selectedLanguage,
+      selectableLanguages: selectableLanguages.map(l => l.code)
+    })
     if (availableLanguages.length > 0 && !availableLanguages.includes(selectedLanguage)) {
+      console.log('[Screening Room] Switching to first available language:', availableLanguages[0])
       setSelectedLanguage(availableLanguages[0])
     }
-  }, [availableLanguages, selectedLanguage])
+  }, [availableLanguages, selectedLanguage, selectableLanguages])
+  
+  // Debug effect to log script changes
+  React.useEffect(() => {
+    console.log('[Screening Room] Script prop changed, scenes count:', scenes.length)
+  }, [script, scenes.length])
   
   // Translate captions when language or scene changes
   useEffect(() => {
