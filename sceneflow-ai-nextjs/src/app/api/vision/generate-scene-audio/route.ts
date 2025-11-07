@@ -243,9 +243,8 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig, l
   // Always use standard endpoint (ElevenLabs doesn't have a separate SSML endpoint)
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceConfig.voiceId}?optimize_streaming_latency=0&output_format=${outputFormat}`
 
-  // Prefer v3 model if enabled, fallback to v2.5 to preserve backward compatibility
-  const preferredModelId = process.env.ELEVENLABS_MODEL_ID || 'eleven_turbo_v3'
-  const fallbackModelId = 'eleven_turbo_v2_5'
+  // Pin to ElevenLabs v2.5 unless overridden via environment variable
+  const modelId = process.env.ELEVENLABS_MODEL_ID || 'eleven_turbo_v2_5'
 
   // Adjust voice settings for better quality, especially for non-English languages
   // Higher stability and similarity_boost can improve quality for complex languages like Thai
@@ -261,8 +260,8 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig, l
       Accept: 'audio/mpeg',
     },
     body: JSON.stringify({
-      text: text, // Pass text as-is (ElevenLabs v3 handles [bracket] audio tags)
-      model_id: preferredModelId,
+      text: text,
+      model_id: modelId,
       voice_settings: {
         stability: voiceConfig.stability || defaultStability,
         similarity_boost: voiceConfig.similarityBoost || defaultSimilarityBoost,
@@ -274,53 +273,7 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig, l
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => 'Unknown error')
-    console.error('[Scene Audio] ElevenLabs API failed:', response.status, errorText, 'Language:', language, 'Format:', outputFormat, 'Model:', preferredModelId)
-
-    // Retry once with fallback model if we attempted v3 and it failed
-    if (preferredModelId !== fallbackModelId) {
-      console.warn('[Scene Audio] Retrying ElevenLabs request with fallback model:', fallbackModelId)
-      const fallbackResponse = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'xi-api-key': apiKey,
-          'Content-Type': 'application/json',
-          Accept: 'audio/mpeg',
-        },
-        body: JSON.stringify({
-          text,
-          model_id: fallbackModelId,
-          voice_settings: {
-            stability: voiceConfig.stability || defaultStability,
-            similarity_boost: voiceConfig.similarityBoost || defaultSimilarityBoost,
-            style: hasAudioTags ? 0.5 : undefined,
-            use_speaker_boost: hasAudioTags ? true : (isNonEnglish ? true : undefined),
-          },
-        }),
-      })
-
-      if (!fallbackResponse.ok) {
-        const fallbackErrorText = await fallbackResponse.text().catch(() => 'Unknown error')
-        console.error('[Scene Audio] ElevenLabs fallback model failed:', fallbackResponse.status, fallbackErrorText)
-        throw new Error(`ElevenLabs API error: ${fallbackResponse.status}`)
-      }
-
-      const fallbackArrayBuffer = await fallbackResponse.arrayBuffer()
-      const fallbackBuffer = Buffer.from(fallbackArrayBuffer)
-
-      console.log('[Scene Audio] ElevenLabs fallback model succeeded', {
-        language,
-        outputFormat,
-        bytes: fallbackBuffer.length,
-        model: fallbackModelId,
-      })
-
-      if (fallbackBuffer.length === 0) {
-        throw new Error('Generated audio buffer is empty (fallback)')
-      }
-
-      return fallbackBuffer
-    }
-
+    console.error('[Scene Audio] ElevenLabs API failed:', response.status, errorText, 'Language:', language, 'Format:', outputFormat, 'Model:', modelId)
     throw new Error(`ElevenLabs API error: ${response.status}`)
   }
 
@@ -332,7 +285,7 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig, l
     bytes: buffer.length,
     format: outputFormat,
     language,
-    model: preferredModelId,
+    model: modelId,
   })
   
   // Validate audio buffer is not empty
