@@ -247,7 +247,7 @@ export class CreatomateRenderService {
 
     const MUSIC_VOLUME = 15
     const BASE_DIALOGUE_VOLUME = 80
-    const DIALOGUE_VOLUME = Math.min(100, Math.round(BASE_DIALOGUE_VOLUME * 1.2))
+    const DIALOGUE_VOLUME = Math.min(100, Math.round(BASE_DIALOGUE_VOLUME * 1.4))
     
     // Calculate total duration
     const totalDuration = scenes.reduce((sum, s) => sum + s.duration, 0)
