@@ -36,6 +36,12 @@ interface PlayerState {
   }
 }
 
+const renderToastStyle = {
+  background: '#111827',
+  color: '#F9FAFB',
+  border: '1px solid #1f2937'
+}
+
 export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }: ScreeningRoomProps) {
   // Extract scenes with proper reactivity to script changes
   const scenes = React.useMemo(() => {
@@ -1000,13 +1006,13 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
               clearInterval(renderPollIntervalRef.current)
               renderPollIntervalRef.current = null
             }
-            toast.error('Video render failed. Please try again.')
+            toast.error('Video render failed. Please try again.', { style: renderToastStyle })
           } else if (pollAttempts >= maxPollAttempts) {
             if (renderPollIntervalRef.current) {
               clearInterval(renderPollIntervalRef.current)
               renderPollIntervalRef.current = null
             }
-            toast.error('Render timeout - please try again or contact support')
+            toast.error('Render timeout - please try again or contact support', { style: renderToastStyle })
           }
           // Continue polling if status is 'queued' or 'rendering'
         } catch (error) {
@@ -1018,7 +1024,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
               clearInterval(renderPollIntervalRef.current)
               renderPollIntervalRef.current = null
             }
-            toast.error('Error checking render status. Please try again.')
+            toast.error('Error checking render status. Please try again.', { style: renderToastStyle })
           }
         }
       }, 5000) // Poll every 5 seconds
@@ -1027,7 +1033,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       useOverlayStore.getState().hide()
       setIsRendering(false)
       console.error('Render submission failed:', error)
-      toast.error(`Failed to submit render job: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        toast.error(`Failed to submit render job: ${error instanceof Error ? error.message : 'Unknown error'}`, { style: renderToastStyle })
     }
   }
 

@@ -70,14 +70,22 @@ export class CreatomateRenderService {
       }
       
       const data = await response.json()
-      
-      // The API returns a render object with an id
-      if (!data.id) {
-        throw new Error('Render created but no renderId in response')
+      try {
+        console.log('[Creatomate] REST response payload:', JSON.stringify(data, null, 2))
+      } catch {
+        console.log('[Creatomate] REST response payload (unserializable):', data)
+      }
+
+      const restRenderId = data?.id || data?.renderId || data?.render_id || data?.data?.id || data?.render?.id
+      if (!restRenderId) {
+        const apiErrorMessage = typeof data?.error === 'string'
+          ? data.error
+          : data?.error?.message || data?.message || 'Render created but no renderId in response'
+        throw new Error(apiErrorMessage)
       }
       
-      console.log('[Creatomate] Render job created via REST API:', data.id)
-      return data.id
+      console.log('[Creatomate] Render job created via REST API:', restRenderId)
+      return restRenderId
     } catch (error: any) {
       console.error('[Creatomate] Error creating render via REST API:', error)
       
@@ -92,6 +100,12 @@ export class CreatomateRenderService {
           maxHeight: options.height,
         }, 30) // 30 second timeout as fallback
         
+        try {
+          console.log('[Creatomate] Client library response:', JSON.stringify(renders, null, 2))
+        } catch {
+          console.log('[Creatomate] Client library response (unserializable):', renders)
+        }
+
         if (renders.length === 0) {
           throw new Error('No renders created')
         }
