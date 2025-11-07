@@ -244,6 +244,10 @@ export class CreatomateRenderService {
   
   private buildSource(scenes: SceneRenderData[], options: RenderOptions): Source {
     const { width, height, fps } = options
+
+    const MUSIC_VOLUME = 15
+    const BASE_DIALOGUE_VOLUME = 80
+    const DIALOGUE_VOLUME = Math.min(100, Math.round(BASE_DIALOGUE_VOLUME * 1.2))
     
     // Calculate total duration
     const totalDuration = scenes.reduce((sum, s) => sum + s.duration, 0)
@@ -297,7 +301,7 @@ export class CreatomateRenderService {
           elements.push(new Audio({
             source: dialogue.url,
             time: currentTime + dialogue.startTime,
-            volume: 100
+            volume: DIALOGUE_VOLUME
           }))
         }
       }
@@ -319,7 +323,7 @@ export class CreatomateRenderService {
           source: scene.audioTracks.music,
           time: currentTime,
           duration: scene.duration,
-          volume: 30, // Background music at 30%
+          volume: MUSIC_VOLUME, // Background music at 15%
           loop: true
         }))
       }

@@ -67,7 +67,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     currentSceneIndex: initialScene,
     playbackSpeed: 1.0,
     volume: 1.0,
-    musicVolume: 0.3, // 30% default volume for music
+    musicVolume: 0.15, // 15% default volume for music
     autoAdvance: true, // Auto-advance enabled by default
     kenBurnsIntensity: 'medium', // Default Ken Burns intensity
     showVoicePanel: false,

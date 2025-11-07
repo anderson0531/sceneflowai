@@ -64,9 +64,9 @@ export class WebAudioMixer {
       
                     // Set default volumes
       if (type === 'music') {
-        gainNode.gain.value = 0.2  // 20% volume for music
+        gainNode.gain.value = 0.15  // 15% volume for music
       } else if (type === 'dialogue') {
-        gainNode.gain.value = 1.5  // 150% volume for dialogue
+        gainNode.gain.value = 1.8  // 180% volume for dialogue (20% boost)
       } else if (type === 'narration') {
         gainNode.gain.value = 1.5  // 150% volume for narration
       } else {
