@@ -76,12 +76,20 @@ export class CreatomateRenderService {
         console.log('[Creatomate] REST response payload (unserializable):', data)
       }
 
-      const restRenderId = data?.id || data?.renderId || data?.render_id || data?.data?.id || data?.render?.id
+      const {
+        renderId: restRenderId,
+        status: restStatus,
+        url: restUrl,
+      } = this.extractRenderInfo(data)
+
       if (!restRenderId) {
-        const apiErrorMessage = typeof data?.error === 'string'
-          ? data.error
-          : data?.error?.message || data?.message || 'Render created but no renderId in response'
-        throw new Error(apiErrorMessage)
+        const apiErrorMessage = typeof (data as any)?.error === 'string'
+          ? (data as any).error
+          : (data as any)?.error?.message
+            || (data as any)?.message
+            || `Render response missing id (status: ${restStatus || 'unknown'})`
+        const details = restUrl ? ` - status: ${restStatus || 'unknown'}, url: ${restUrl}` : restStatus ? ` - status: ${restStatus}` : ''
+        throw new Error(`${apiErrorMessage}${details}`)
       }
       
       console.log('[Creatomate] Render job created via REST API:', restRenderId)
@@ -106,21 +114,35 @@ export class CreatomateRenderService {
           console.log('[Creatomate] Client library response (unserializable):', renders)
         }
 
-        if (renders.length === 0) {
-          throw new Error('No renders created')
+        const { renderId: fallbackRenderId, status: fallbackStatus, url: fallbackUrl } = this.extractRenderInfo(renders)
+
+        if (!fallbackRenderId) {
+          throw new Error(`Render submitted but no renderId available${fallbackStatus ? ` (status: ${fallbackStatus})` : ''}${fallbackUrl ? `, url: ${fallbackUrl}` : ''}`)
         }
         
-        const render = renders[0]
-        if (!render.id) {
-          throw new Error('Render submitted but no renderId available')
-        }
-        
-        return render.id
+        return fallbackRenderId
       } catch (fallbackError: any) {
         // If both methods fail, throw the original error
-        throw new Error(`Failed to submit render job: ${error?.message || fallbackError?.message || 'Unknown error'}`)
+        const fallbackMessage = fallbackError?.message || 'Unknown error'
+        const originalMessage = error?.message || fallbackMessage
+        throw new Error(`Failed to submit render job: ${originalMessage}`)
       }
     }
+  }
+
+  private extractRenderInfo(payload: any): { renderId?: string | null; status?: string | null; url?: string | null } {
+    if (!payload) return { renderId: null, status: null, url: null }
+
+    const record = Array.isArray(payload) ? payload[0] : payload
+    if (!record || typeof record !== 'object') {
+      return { renderId: null, status: null, url: null }
+    }
+
+    const renderId = record.id || record.renderId || record.render_id || record?.data?.id || null
+    const status = record.status || null
+    const url = record.url || record.render_url || null
+
+    return { renderId, status, url }
   }
 
   /**
@@ -301,3 +323,4 @@ export class CreatomateRenderService {
     return render.status as any
   }
 }
+

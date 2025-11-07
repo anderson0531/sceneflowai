@@ -836,8 +836,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     
     // Show processing overlay ONLY while submitting render job
     useOverlayStore.getState().show(
-      'Submitting render job...',
-      30 // 30 seconds max for job submission
+      'Submitting render job... (this may take a minute)',
+      120 // Allow up to 2 minutes for submission before auto-hiding
     )
     
     try {
