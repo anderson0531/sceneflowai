@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -26,12 +26,31 @@ interface LanguageStatus {
   sfxCount: number
 }
 
+interface GenerationProgress {
+  status: 'idle' | 'running' | 'completed' | 'error'
+  phase: 'narration' | 'dialogue'
+  currentScene: number
+  totalScenes: number
+  currentDialogue: number
+  totalDialogue: number
+  completedSteps: number
+  totalSteps: number
+  message: string
+}
+
 interface GenerateAudioDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   script: any
-  onGenerate: (language: string, audioTypes: { narration: boolean; dialogue: boolean; music: boolean; sfx: boolean }) => Promise<void>
+  onGenerate: (
+    language: string,
+    audioTypes: { narration: boolean; dialogue: boolean; music: boolean; sfx: boolean },
+    options?: { stayOpen: boolean }
+  ) => Promise<void>
   isGenerating?: boolean
+  generationProgress?: GenerationProgress | null
+  mode?: 'foreground' | 'background'
+  onRunInBackground?: () => void
 }
 
 export function GenerateAudioDialog({
@@ -40,6 +59,9 @@ export function GenerateAudioDialog({
   script,
   onGenerate,
   isGenerating = false,
+  generationProgress = null,
+  mode = 'foreground',
+  onRunInBackground,
 }: GenerateAudioDialogProps) {
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en')
   const [audioTypes, setAudioTypes] = useState({
@@ -48,6 +70,13 @@ export function GenerateAudioDialog({
     music: false,
     sfx: false,
   })
+  const [stayOpen, setStayOpen] = useState(true)
+
+  useEffect(() => {
+    if (open) {
+      setStayOpen(true)
+    }
+  }, [open])
 
   const scenes = script?.script?.scenes || []
 
@@ -152,8 +181,8 @@ export function GenerateAudioDialog({
   )
 
   const handleGenerate = async () => {
-    await onGenerate(selectedLanguage, audioTypes)
-    // Dialog will be closed by parent if generation is successful
+    if (effectiveIsGenerating) return
+    await onGenerate(selectedLanguage, audioTypes, { stayOpen })
   }
 
   const handleToggleAll = (checked: boolean) => {
@@ -167,6 +196,19 @@ export function GenerateAudioDialog({
 
   const allSelected = audioTypes.narration && audioTypes.dialogue && audioTypes.music && audioTypes.sfx
   const noneSelected = !audioTypes.narration && !audioTypes.dialogue && !audioTypes.music && !audioTypes.sfx
+
+  const showProgress = mode === 'foreground' && generationProgress !== null && generationProgress.status !== 'idle'
+  const isRunning = showProgress && generationProgress?.status === 'running'
+  const isCompleted = showProgress && generationProgress?.status === 'completed'
+  const progressPercent = showProgress && generationProgress
+    ? (generationProgress.totalSteps > 0
+        ? Math.min(100, Math.round((generationProgress.completedSteps / generationProgress.totalSteps) * 100))
+        : 0)
+    : 0
+  const effectiveIsGenerating = Boolean(isGenerating || isRunning)
+  const dialogueProgressText = generationProgress && generationProgress.totalDialogue > 0
+    ? `${generationProgress.currentDialogue}/${generationProgress.totalDialogue}`
+    : null
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -182,14 +224,52 @@ export function GenerateAudioDialog({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {showProgress && generationProgress && (
+            <div className="space-y-3 rounded-lg border border-blue-800 bg-blue-900/20 p-4">
+              <div className="flex items-center justify-between text-sm text-blue-200">
+                <span>{generationProgress.phase === 'narration' ? 'Narration' : 'Dialogue'} progress</span>
+                <span>{progressPercent}%</span>
+              </div>
+              <div className="h-2 w-full rounded-full bg-blue-950/50">
+                <div
+                  className="h-2 rounded-full bg-blue-500 transition-all duration-300"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+              <div className="space-y-1 text-xs text-gray-300">
+                <p>{generationProgress.message}</p>
+                <div className="flex flex-wrap gap-3 text-gray-400">
+                  <span>Scene {Math.max(1, generationProgress.currentScene)} / {generationProgress.totalScenes}</span>
+                  {dialogueProgressText && (
+                    <span>Dialogue {dialogueProgressText}</span>
+                  )}
+                </div>
+              </div>
+              {isRunning && onRunInBackground && (
+                <div className="flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onRunInBackground}
+                    className="border-blue-500 text-blue-300 hover:bg-blue-900/40"
+                  >
+                    Run in background
+                  </Button>
+                </div>
+              )}
+              {isCompleted && (
+                <div className="text-sm font-medium text-green-400">Generation complete</div>
+              )}
+            </div>
+          )}
           {/* Language Selection */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-gray-200 flex items-center gap-2">
               <Globe className="w-4 h-4 text-blue-400" />
               Target Language
             </label>
-            <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-              <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white">
+            <Select value={selectedLanguage} onValueChange={setSelectedLanguage} disabled={isRunning}>
+              <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white" disabled={isRunning}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-gray-800 border-gray-700">
@@ -257,6 +337,7 @@ export function GenerateAudioDialog({
                 size="sm"
                 onClick={() => handleToggleAll(!allSelected)}
                 className="text-xs h-7 text-blue-400 hover:text-blue-300"
+                disabled={isRunning}
               >
                 {allSelected ? 'Deselect All' : 'Select All'}
               </Button>
@@ -270,6 +351,7 @@ export function GenerateAudioDialog({
                   onCheckedChange={(checked) =>
                     setAudioTypes({ ...audioTypes, narration: !!checked })
                   }
+                  disabled={isRunning}
                 />
                 <label
                   htmlFor="narration"
@@ -293,6 +375,7 @@ export function GenerateAudioDialog({
                   onCheckedChange={(checked) =>
                     setAudioTypes({ ...audioTypes, dialogue: !!checked })
                   }
+                  disabled={isRunning}
                 />
                 <label
                   htmlFor="dialogue"
@@ -316,6 +399,7 @@ export function GenerateAudioDialog({
                   onCheckedChange={(checked) =>
                     setAudioTypes({ ...audioTypes, music: !!checked })
                   }
+                  disabled={isRunning}
                 />
                 <label
                   htmlFor="music"
@@ -337,6 +421,7 @@ export function GenerateAudioDialog({
                   onCheckedChange={(checked) =>
                     setAudioTypes({ ...audioTypes, sfx: !!checked })
                   }
+                  disabled={isRunning}
                 />
                 <label
                   htmlFor="sfx"
@@ -380,34 +465,57 @@ export function GenerateAudioDialog({
               </div>
             )}
           </div>
+
+          <div className="flex items-start gap-2 rounded-lg border border-gray-800 bg-gray-900/40 p-3">
+            <Checkbox
+              id="stay-open"
+              checked={stayOpen}
+              onCheckedChange={(checked) => setStayOpen(!!checked)}
+              disabled={isRunning}
+            />
+            <label htmlFor="stay-open" className="text-xs leading-5 text-gray-300">
+              Keep this dialog open until narration and dialogue generation finishes. You can switch to background mode at any time.
+            </label>
+          </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-end">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={isGenerating}
+            disabled={Boolean(isRunning)}
             className="border-gray-700 hover:bg-gray-800"
           >
-            Cancel
+            {isCompleted ? 'Close' : 'Cancel'}
           </Button>
-          <Button
-            onClick={handleGenerate}
-            disabled={isGenerating || noneSelected}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            {isGenerating ? (
-              <>
-                <Loader className="w-4 h-4 mr-2 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4 mr-2" />
-                Generate
-              </>
-            )}
-          </Button>
+          {!isCompleted ? (
+            <Button
+              onClick={handleGenerate}
+              disabled={effectiveIsGenerating || noneSelected}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {effectiveIsGenerating ? (
+                <>
+                  <Loader className="w-4 h-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Generate
+                </>
+              )}
+            </Button>
+          ) : (
+            <Button
+              onClick={handleGenerate}
+              disabled={noneSelected}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Generate Again
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

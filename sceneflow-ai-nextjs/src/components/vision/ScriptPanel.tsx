@@ -24,6 +24,20 @@ import { ExportDialog } from './ExportDialog'
 import { GenerateAudioDialog } from './GenerateAudioDialog'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 
+type DialogGenerationMode = 'foreground' | 'background'
+
+interface DialogGenerationProgress {
+  status: 'idle' | 'running' | 'completed' | 'error'
+  phase: 'narration' | 'dialogue'
+  currentScene: number
+  totalScenes: number
+  currentDialogue: number
+  totalDialogue: number
+  completedSteps: number
+  totalSteps: number
+  message: string
+}
+
 interface ScriptPanelProps {
   script: any
   onScriptChange: (script: any) => void
@@ -369,68 +383,225 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
   const scenes = script?.script?.scenes || []
 
+  const [isDialogGenerating, setIsDialogGenerating] = useState(false)
+  const [dialogGenerationMode, setDialogGenerationMode] = useState<DialogGenerationMode>('foreground')
+  const [dialogGenerationProgress, setDialogGenerationProgress] = useState<DialogGenerationProgress | null>(null)
+  const generationModeRef = useRef<DialogGenerationMode>('foreground')
+  const backgroundRequestedRef = useRef(false)
+
+  useEffect(() => {
+    generationModeRef.current = dialogGenerationMode
+  }, [dialogGenerationMode])
+
+  const toastVisualStyle = {
+    background: '#111827',
+    color: '#F9FAFB',
+    border: '1px solid #1f2937'
+  }
+
+  const updateDialogProgress = (updater: (prev: DialogGenerationProgress | null) => DialogGenerationProgress | null) => {
+    if (generationModeRef.current === 'foreground') {
+      setDialogGenerationProgress((prev) => updater(prev))
+    }
+  }
+
+  const handleRunGenerationInBackground = () => {
+    if (!isDialogGenerating) return
+    backgroundRequestedRef.current = true
+    setDialogGenerationMode('background')
+    generationModeRef.current = 'background'
+    setGenerateAudioDialogOpen(false)
+    setDialogGenerationProgress(null)
+    toast.info('Audio generation will continue in the background.', { style: toastVisualStyle })
+  }
+
+  const handleGenerateDialogOpenChange = (open: boolean) => {
+    if (!open) {
+      if (isDialogGenerating && generationModeRef.current === 'foreground') {
+        handleRunGenerationInBackground()
+        return
+      }
+      setGenerateAudioDialogOpen(false)
+      setDialogGenerationProgress(null)
+      setDialogGenerationMode('foreground')
+      generationModeRef.current = 'foreground'
+      backgroundRequestedRef.current = false
+    } else {
+      setGenerateAudioDialogOpen(true)
+    }
+  }
+
   // Handler for generating audio from dialog
   const handleGenerateAudioFromDialog = async (
     language: string,
-    audioTypes: { narration: boolean; dialogue: boolean; music: boolean; sfx: boolean }
+    audioTypes: { narration: boolean; dialogue: boolean; music: boolean; sfx: boolean },
+    options?: { stayOpen: boolean }
   ) => {
+    const stayOpen = options?.stayOpen ?? true
+
     // If all types are selected and it's English, use the batch generation API (includes music and SFX)
     if (language === 'en' && audioTypes.narration && audioTypes.dialogue && audioTypes.music && audioTypes.sfx) {
       if (onGenerateAllAudio) {
+        setDialogGenerationProgress(null)
+        setDialogGenerationMode('foreground')
+        generationModeRef.current = 'foreground'
+        backgroundRequestedRef.current = false
         await onGenerateAllAudio()
         setGenerateAudioDialogOpen(false)
         return
       }
     }
 
-    // For non-English or partial selection, generate narration and dialogue scene by scene
-    // Note: Music and SFX are language-agnostic and should be generated separately if needed
     if (!onGenerateSceneAudio) {
       console.error('onGenerateSceneAudio not provided')
-      toast.error('Audio generation not available')
+      toast.error('Audio generation not available', { style: toastVisualStyle })
       return
     }
 
     const scenes = script?.script?.scenes || []
-    
+
+    if (!scenes.length) {
+      toast.error('No scenes to generate audio for', { style: toastVisualStyle })
+      return
+    }
+
     // Show warning if music/SFX are selected for non-English
     if ((audioTypes.music || audioTypes.sfx) && language !== 'en') {
-      toast.warning('Music and SFX will be generated in English only. Generating narration and dialogue in selected language.')
+      toast.warning('Music and SFX will be generated in English only. Generating narration and dialogue in the selected language.', { style: toastVisualStyle })
     }
-    
+
+    const totalDialogueLines = audioTypes.dialogue
+      ? scenes.reduce((sum: number, scene: any) => {
+          if (!Array.isArray(scene.dialogue)) return sum
+          const count = scene.dialogue.filter((d: any) => d?.character && d?.text).length
+          return sum + count
+        }, 0)
+      : 0
+
+    const totalSceneSteps = audioTypes.narration ? scenes.length : 0
+    const totalSteps = totalSceneSteps + totalDialogueLines
+
+    if (totalSteps === 0) {
+      toast.info('Select narration or dialogue to generate audio.', { style: toastVisualStyle })
+      return
+    }
+
+    setIsDialogGenerating(true)
+    backgroundRequestedRef.current = !stayOpen
+
+    if (stayOpen) {
+      setDialogGenerationMode('foreground')
+      generationModeRef.current = 'foreground'
+      setDialogGenerationProgress({
+        status: 'running',
+        phase: audioTypes.narration ? 'narration' : 'dialogue',
+        currentScene: 0,
+        totalScenes: scenes.length,
+        currentDialogue: 0,
+        totalDialogue: totalDialogueLines,
+        completedSteps: 0,
+        totalSteps,
+        message: audioTypes.narration ? 'Preparing narration...' : 'Preparing dialogue...'
+      })
+      setGenerateAudioDialogOpen(true)
+    } else {
+      setDialogGenerationMode('background')
+      generationModeRef.current = 'background'
+      setDialogGenerationProgress(null)
+      setGenerateAudioDialogOpen(false)
+      toast.info('Audio generation will continue in the background.', { style: toastVisualStyle })
+    }
+
+    let completedSteps = 0
+    let processedDialogue = 0
+
     try {
       for (let sceneIdx = 0; sceneIdx < scenes.length; sceneIdx++) {
         const scene = scenes[sceneIdx]
-        
-        // Generate narration
-        if (audioTypes.narration && scene.action) {
+        const hasNarration = audioTypes.narration && scene?.action
+        const dialogueEntries = audioTypes.dialogue && Array.isArray(scene.dialogue)
+          ? scene.dialogue
+              .map((d: any, idx: number) => ({ ...d, __index: idx }))
+              .filter((d: any) => d?.character && d?.text)
+          : []
+
+        if (hasNarration) {
+          updateDialogProgress((prev) => prev ? {
+            ...prev,
+            phase: 'narration',
+            currentScene: sceneIdx + 1,
+            message: `Generating narration for scene ${sceneIdx + 1} of ${scenes.length}`,
+          } : prev)
+
           await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined, language)
+
+          completedSteps += 1
+          updateDialogProgress((prev) => prev ? {
+            ...prev,
+            completedSteps,
+            currentScene: sceneIdx + 1,
+            message: `Narration generated for scene ${sceneIdx + 1}`,
+          } : prev)
         }
-        
-        // Generate dialogue
-        if (audioTypes.dialogue && Array.isArray(scene.dialogue)) {
-          for (let dialogueIdx = 0; dialogueIdx < scene.dialogue.length; dialogueIdx++) {
-            const dialogue = scene.dialogue[dialogueIdx]
-            if (dialogue?.character && dialogue?.text) {
-              await onGenerateSceneAudio(sceneIdx, 'dialogue', dialogue.character, dialogueIdx, language)
-            }
+
+        if (dialogueEntries && dialogueEntries.length > 0) {
+          for (const entry of dialogueEntries) {
+            processedDialogue += 1
+            updateDialogProgress((prev) => prev ? {
+              ...prev,
+              phase: 'dialogue',
+              currentScene: sceneIdx + 1,
+              currentDialogue: processedDialogue,
+              message: `Generating dialogue ${processedDialogue} of ${totalDialogueLines}${entry.character ? ` • ${entry.character}` : ''}`,
+            } : prev)
+
+            await onGenerateSceneAudio(sceneIdx, 'dialogue', entry.character, entry.__index, language)
+
+            completedSteps += 1
+            updateDialogProgress((prev) => prev ? {
+              ...prev,
+              completedSteps,
+              currentDialogue: processedDialogue,
+            } : prev)
           }
+        } else if (audioTypes.dialogue && stayOpen) {
+          updateDialogProgress((prev) => prev ? {
+            ...prev,
+            currentScene: sceneIdx + 1,
+          } : prev)
         }
       }
-      
-      // If English and music/SFX selected but not narration/dialogue, use batch API
-      if (language === 'en' && (audioTypes.music || audioTypes.sfx) && !audioTypes.narration && !audioTypes.dialogue) {
-        if (onGenerateAllAudio) {
-          // This will generate all types, but the API should respect what exists
-          await onGenerateAllAudio()
-        }
+
+      if (generationModeRef.current === 'foreground' && stayOpen) {
+        updateDialogProgress((prev) => prev ? {
+          ...prev,
+          status: 'completed',
+          completedSteps: prev.totalSteps,
+          message: 'Audio generation complete.',
+        } : prev)
+        toast.success(`Audio generation complete for ${SUPPORTED_LANGUAGES.find(l => l.code === language)?.name || language}.`, { style: toastVisualStyle })
+      } else {
+        toast.success('Audio generation complete.', { style: toastVisualStyle })
       }
-      
-      toast.success(`Audio generation started for ${SUPPORTED_LANGUAGES.find(l => l.code === language)?.name || language}`)
-      setGenerateAudioDialogOpen(false)
     } catch (error) {
       console.error('Error generating audio:', error)
-      toast.error('Failed to generate audio. Please try again.')
+      if (generationModeRef.current === 'foreground' && stayOpen) {
+        updateDialogProgress((prev) => prev ? {
+          ...prev,
+          status: 'error',
+          message: 'Audio generation failed. Please try again.',
+        } : prev)
+      }
+      toast.error('Failed to generate audio. Please try again.', { style: toastVisualStyle })
+    } finally {
+      setIsDialogGenerating(false)
+
+      if (generationModeRef.current === 'background' || !stayOpen) {
+        setDialogGenerationProgress(null)
+        setDialogGenerationMode('foreground')
+        generationModeRef.current = 'foreground'
+        backgroundRequestedRef.current = false
+      }
     }
   }
 
@@ -928,10 +1099,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                     variant="outline" 
                     size="sm"
                     onClick={() => setGenerateAudioDialogOpen(true)}
-                    disabled={isGeneratingAudio || !script || !scenes || scenes.length === 0}
+                    disabled={isGeneratingAudio || isDialogGenerating || !script || !scenes || scenes.length === 0}
                     className="flex items-center gap-1"
                   >
-                    {isGeneratingAudio ? (
+                    {isGeneratingAudio || isDialogGenerating ? (
                       <>
                         <Loader className="w-4 h-4 animate-spin" />
                         <span className="hidden sm:inline">Generating...</span>
@@ -1478,10 +1649,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       {/* Generate Audio Dialog */}
       <GenerateAudioDialog
         open={generateAudioDialogOpen}
-        onOpenChange={setGenerateAudioDialogOpen}
+        onOpenChange={handleGenerateDialogOpenChange}
         script={script}
         onGenerate={handleGenerateAudioFromDialog}
-        isGenerating={isGeneratingAudio}
+        isGenerating={isDialogGenerating}
+        generationProgress={dialogGenerationProgress}
+        mode={dialogGenerationMode}
+        onRunInBackground={isDialogGenerating ? handleRunGenerationInBackground : undefined}
       />
       
       {/* Report Preview Modals */}
