@@ -1,4 +1,4 @@
-import { Client, Source, Image, Audio, Pan } from 'creatomate'
+import { Client, Source, Image, Audio, Pan, Video } from 'creatomate'
 
 export interface SceneRenderData {
   sceneNumber: number
@@ -39,16 +39,14 @@ export class CreatomateRenderService {
     options: RenderOptions,
     projectTitle: string
   ): Promise<string> {
-    // Build Creatomate source (composition)
     const source = this.buildSource(scenes, options)
     const sourcePayload = typeof (source as any)?.toMap === 'function' ? (source as any).toMap() : source
     this.logPayloadSummary(sourcePayload, scenes)
-    
+    return this.createRenderFromSource(sourcePayload, options)
+  }
+
+  private async createRenderFromSource(sourcePayload: any, options: RenderOptions): Promise<string> {
     try {
-      // Use Creatomate REST API directly to create render without waiting
-      // This avoids the client library's render() method which waits for completion
-      // Convert source to JSON for API request
-      // Create render via REST API
       const response = await fetch('https://api.creatomate.com/v1/renders', {
         method: 'POST',
         headers: {
@@ -63,12 +61,12 @@ export class CreatomateRenderService {
           max_height: options.height,
         }),
       })
-      
+
       if (!response.ok) {
         const errorText = await response.text()
         throw new Error(`Creatomate API error: ${response.status} ${errorText}`)
       }
-      
+
       const data = await response.json()
       try {
         console.log('[Creatomate] REST response payload:', JSON.stringify(data, null, 2))
@@ -91,13 +89,12 @@ export class CreatomateRenderService {
         const details = restUrl ? ` - status: ${restStatus || 'unknown'}, url: ${restUrl}` : restStatus ? ` - status: ${restStatus}` : ''
         throw new Error(`${apiErrorMessage}${details}`)
       }
-      
+
       console.log('[Creatomate] Render job created via REST API:', restRenderId)
       return restRenderId
     } catch (error: any) {
       console.error('[Creatomate] Error creating render via REST API:', error)
-      
-      // Fallback: Try using client library with a longer timeout
+
       try {
         console.log('[Creatomate] Falling back to client library method...')
         const renders = await this.client.render({
@@ -106,8 +103,8 @@ export class CreatomateRenderService {
           frameRate: options.fps,
           maxWidth: options.width,
           maxHeight: options.height,
-        }, 30) // 30 second timeout as fallback
-        
+        }, 30)
+
         try {
           console.log('[Creatomate] Client library response:', JSON.stringify(renders, null, 2))
         } catch {
@@ -119,15 +116,113 @@ export class CreatomateRenderService {
         if (!fallbackRenderId) {
           throw new Error(`Render submitted but no renderId available${fallbackStatus ? ` (status: ${fallbackStatus})` : ''}${fallbackUrl ? `, url: ${fallbackUrl}` : ''}`)
         }
-        
+
         return fallbackRenderId
       } catch (fallbackError: any) {
-        // If both methods fail, throw the original error
         const fallbackMessage = fallbackError?.message || 'Unknown error'
         const originalMessage = error?.message || fallbackMessage
         throw new Error(`Failed to submit render job: ${originalMessage}`)
       }
     }
+  }
+
+  async submitRenderAndWait(
+    scenes: SceneRenderData[],
+    options: RenderOptions,
+    projectTitle: string,
+    contextLabel?: string
+  ): Promise<{ renderId: string; url: string; duration: number }> {
+    const renderId = await this.submitRender(scenes, options, projectTitle)
+    const render = await this.waitForRenderCompletion(renderId, contextLabel)
+    if (!render.url) {
+      throw new Error(`Creatomate render ${renderId} completed without a URL`)
+    }
+
+    const duration = scenes.reduce((sum, scene) => sum + (scene.duration || 0), 0)
+
+    return {
+      renderId,
+      url: render.url,
+      duration: render.duration ?? duration
+    }
+  }
+
+  async renderScenesInBatches(
+    scenes: SceneRenderData[],
+    options: RenderOptions,
+    projectTitle: string,
+    chunkSize: number = 10
+  ): Promise<Array<{ renderId: string; url: string; duration: number; sceneStart: number; sceneEnd: number }>> {
+    if (scenes.length === 0) return []
+
+    const batches: Array<{ renderId: string; url: string; duration: number; sceneStart: number; sceneEnd: number }> = []
+    let startIndex = 0
+    let batchIndex = 0
+
+    while (startIndex < scenes.length) {
+      const endIndex = Math.min(startIndex + chunkSize, scenes.length)
+      const batchScenes = scenes.slice(startIndex, endIndex)
+      batchIndex += 1
+
+      console.log(`[Creatomate] Rendering batch ${batchIndex} (${startIndex + 1}-${endIndex} of ${scenes.length})`)
+      const batchResult = await this.submitRenderAndWait(
+        batchScenes,
+        options,
+        `${projectTitle} (Part ${batchIndex})`,
+        `batch ${batchIndex}`
+      )
+
+      batches.push({
+        ...batchResult,
+        sceneStart: startIndex + 1,
+        sceneEnd: endIndex
+      })
+
+      startIndex = endIndex
+    }
+
+    return batches
+  }
+
+  async mergeVideoSegments(
+    segments: Array<{ url: string; duration: number }>,
+    options: RenderOptions,
+    projectTitle: string
+  ): Promise<{ renderId: string }> {
+    if (!segments.length) {
+      throw new Error('No video segments provided for merge')
+    }
+
+    let currentTime = 0
+    const elements = segments.map((segment, index) => {
+      const element = new Video({
+        source: segment.url,
+        time: currentTime,
+        duration: segment.duration,
+        width: '100%',
+        height: '100%',
+        fit: 'cover'
+      })
+      currentTime += segment.duration
+      console.log(`[Creatomate] Merge pipeline - segment ${index + 1} starts at ${currentTime - segment.duration}s, duration ${segment.duration}s`)
+      return element
+    })
+
+    const source = new Source({
+      outputFormat: options.format,
+      width: options.width,
+      height: options.height,
+      frameRate: options.fps,
+      duration: currentTime,
+      elements
+    })
+
+    const sourcePayload = typeof (source as any)?.toMap === 'function' ? (source as any).toMap() : source
+    console.log(`[Creatomate] Submitting merge render for ${projectTitle} with ${segments.length} segments (total ${currentTime.toFixed(2)}s)`)
+    const renderId = await this.createRenderFromSource(sourcePayload, options)
+    console.log(`[Creatomate] Merge render submitted: ${renderId}`)
+
+    return { renderId }
   }
 
   private logPayloadSummary(sourcePayload: any, scenes: SceneRenderData[]) {
@@ -378,6 +473,32 @@ export class CreatomateRenderService {
   async getRenderStatus(renderId: string): Promise<'queued' | 'rendering' | 'succeeded' | 'failed'> {
     const render = await this.client.fetchRender(renderId)
     return render.status as any
+  }
+
+  private async waitForRenderCompletion(
+    renderId: string,
+    contextLabel?: string,
+    pollIntervalMs: number = 5000,
+    timeoutMs: number = 45 * 60 * 1000
+  ) {
+    const start = Date.now()
+
+    while (Date.now() - start < timeoutMs) {
+      const render = await this.client.fetchRender(renderId)
+      console.log(`[Creatomate] Render ${renderId} (${contextLabel || 'render'}) status: ${render.status}`)
+
+      if (render.status === 'succeeded') {
+        return render
+      }
+
+      if (render.status === 'failed') {
+        throw new Error(`Creatomate render failed (${renderId}): ${render.errorMessage || 'Unknown error'}`)
+      }
+
+      await new Promise(resolve => setTimeout(resolve, pollIntervalMs))
+    }
+
+    throw new Error(`Creatomate render timed out after ${timeoutMs / 1000}s (${renderId})`)
   }
 }
 

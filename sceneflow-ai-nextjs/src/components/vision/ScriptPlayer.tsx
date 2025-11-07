@@ -836,8 +836,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     
     // Show processing overlay ONLY while submitting render job
     useOverlayStore.getState().show(
-      'Submitting render job... (this may take a minute)',
-      120 // Allow up to 2 minutes for submission before auto-hiding
+      'Batching scenes and starting render pipeline... (this can take several minutes)',
+      600 // Keep overlay visible while batches submit and merge kicks off
     )
     
     try {
@@ -935,6 +935,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       }
       
       const renderId = data.renderId
+      const batchRenderIds: string[] | undefined = Array.isArray(data.batchRenderIds) ? data.batchRenderIds : undefined
       const projectTitle = (script?.title || 'screening-room').replace(/[^a-z0-9]/gi, '-')
       
       // Hide overlay - user can now continue using the app
@@ -942,9 +943,15 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       setIsRendering(false) // Allow button to be enabled again
       
       // Show non-blocking notification that render is in progress
-      toast.info('Video render started. You will be notified when it completes.', {
-        duration: 5000
+      toast.info(batchRenderIds?.length
+        ? `Segmented render started (${batchRenderIds.length} batches). We'll merge and notify when it completes.`
+        : 'Video render started. You will be notified when it completes.', {
+        duration: 6000
       })
+
+      if (batchRenderIds?.length) {
+        console.log('[Creatomate] Batch render IDs:', batchRenderIds)
+      }
       
       // Poll for render status in background
       let pollAttempts = 0
