@@ -49,7 +49,7 @@ export class CreatomateRenderService {
       const sourceJson = JSON.parse(JSON.stringify(source))
       
       // Create render via REST API
-      const response = await fetch('https://rest.creatomate.com/v1/renders', {
+      const response = await fetch('https://api.creatomate.com/v1/renders', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
