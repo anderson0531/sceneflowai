@@ -28,11 +28,15 @@ interface LanguageStatus {
 
 interface GenerationProgress {
   status: 'idle' | 'running' | 'completed' | 'error'
-  phase: 'narration' | 'dialogue'
+  phase: 'narration' | 'dialogue' | 'characters' | 'images'
   currentScene: number
   totalScenes: number
   currentDialogue: number
   totalDialogue: number
+  currentCharacter: number
+  totalCharacters: number
+  currentImage: number
+  totalImages: number
   completedSteps: number
   totalSteps: number
   message: string
@@ -47,6 +51,7 @@ interface GenerateAudioDialogProps {
     audioTypes: { narration: boolean; dialogue: boolean; music: boolean; sfx: boolean },
     options?: { stayOpen: boolean }
   ) => Promise<void>
+  characters?: Array<{ name?: string; referenceImage?: string | null }>
   isGenerating?: boolean
   generationProgress?: GenerationProgress | null
   mode?: 'foreground' | 'background'
@@ -58,6 +63,7 @@ export function GenerateAudioDialog({
   onOpenChange,
   script,
   onGenerate,
+  characters = [],
   isGenerating = false,
   generationProgress = null,
   mode = 'foreground',
@@ -70,15 +76,24 @@ export function GenerateAudioDialog({
     music: false,
     sfx: false,
   })
+  const [includeCharacters, setIncludeCharacters] = useState(false)
+  const [includeSceneImages, setIncludeSceneImages] = useState(false)
   const [stayOpen, setStayOpen] = useState(true)
 
   useEffect(() => {
     if (open) {
       setStayOpen(true)
+      setIncludeCharacters(false)
+      setIncludeSceneImages(false)
     }
   }, [open])
 
   const scenes = script?.script?.scenes || []
+  const characterCount = Array.isArray(characters) ? characters.length : 0
+  const charactersWithAssets = Array.isArray(characters)
+    ? characters.filter(char => !!char?.referenceImage).length
+    : 0
+  const scenesWithImages = scenes.filter((scene: any) => !!scene?.imageUrl).length
 
   // Calculate language status for all languages
   const languageStatuses = useMemo((): LanguageStatus[] => {
@@ -182,7 +197,11 @@ export function GenerateAudioDialog({
 
   const handleGenerate = async () => {
     if (effectiveIsGenerating) return
-    await onGenerate(selectedLanguage, audioTypes, { stayOpen })
+    await onGenerate(selectedLanguage, audioTypes, {
+      stayOpen,
+      generateCharacters: includeCharacters,
+      generateSceneImages: includeSceneImages,
+    })
   }
 
   const handleToggleAll = (checked: boolean) => {
@@ -206,9 +225,25 @@ export function GenerateAudioDialog({
         : 0)
     : 0
   const effectiveIsGenerating = Boolean(isGenerating || isRunning)
-  const dialogueProgressText = generationProgress && generationProgress.totalDialogue > 0
-    ? `${generationProgress.currentDialogue}/${generationProgress.totalDialogue}`
-    : null
+  const secondaryProgressText = (() => {
+    if (!generationProgress) return null
+    switch (generationProgress.phase) {
+      case 'dialogue':
+        return generationProgress.totalDialogue > 0
+          ? `Dialogue ${generationProgress.currentDialogue}/${generationProgress.totalDialogue}`
+          : null
+      case 'characters':
+        return generationProgress.totalCharacters > 0
+          ? `Character ${generationProgress.currentCharacter}/${generationProgress.totalCharacters}`
+          : null
+      case 'images':
+        return generationProgress.totalImages > 0
+          ? `Scene Image ${generationProgress.currentImage}/${generationProgress.totalImages}`
+          : null
+      default:
+        return null
+    }
+  })()
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -227,7 +262,12 @@ export function GenerateAudioDialog({
           {showProgress && generationProgress && (
             <div className="space-y-3 rounded-lg border border-blue-800 bg-blue-900/20 p-4">
               <div className="flex items-center justify-between text-sm text-blue-200">
-                <span>{generationProgress.phase === 'narration' ? 'Narration' : 'Dialogue'} progress</span>
+                <span>
+                  {generationProgress.phase === 'narration' && 'Narration progress'}
+                  {generationProgress.phase === 'dialogue' && 'Dialogue progress'}
+                  {generationProgress.phase === 'characters' && 'Character progress'}
+                  {generationProgress.phase === 'images' && 'Scene image progress'}
+                </span>
                 <span>{progressPercent}%</span>
               </div>
               <div className="h-2 w-full rounded-full bg-blue-950/50">
@@ -239,10 +279,12 @@ export function GenerateAudioDialog({
               <div className="space-y-1 text-xs text-gray-300">
                 <p>{generationProgress.message}</p>
                 <div className="flex flex-wrap gap-3 text-gray-400">
-                  <span>Scene {Math.max(1, generationProgress.currentScene)} / {generationProgress.totalScenes}</span>
-                  {dialogueProgressText && (
-                    <span>Dialogue {dialogueProgressText}</span>
+                  {(generationProgress.totalScenes > 0 && (generationProgress.phase === 'narration' || generationProgress.phase === 'dialogue' || generationProgress.phase === 'images')) && (
+                    <span>
+                      Scene {Math.max(1, generationProgress.currentScene)} / {generationProgress.totalScenes}
+                    </span>
                   )}
+                  {secondaryProgressText && <span>{secondaryProgressText}</span>}
                 </div>
               </div>
               {isRunning && onRunInBackground && (
@@ -454,6 +496,22 @@ export function GenerateAudioDialog({
               {willGenerateSFX && (
                 <div>• {sfxCount} SFX file{sfxCount !== 1 ? 's' : ''}</div>
               )}
+              {includeCharacters && (
+                <div>
+                  • {characterCount} character asset{characterCount !== 1 ? 's' : ''}
+                  {characterCount > 0 && charactersWithAssets > 0 && (
+                    <span className="text-gray-500"> ({charactersWithAssets} already generated)</span>
+                  )}
+                </div>
+              )}
+              {includeSceneImages && (
+                <div>
+                  • {totalScenes} scene image{totalScenes !== 1 ? 's' : ''}
+                  {totalScenes > 0 && scenesWithImages > 0 && (
+                    <span className="text-gray-500"> ({scenesWithImages} already generated)</span>
+                  )}
+                </div>
+              )}
               <div className="pt-1 text-blue-300">
                 Language: <strong>{SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.name}</strong>
               </div>
@@ -464,6 +522,51 @@ export function GenerateAudioDialog({
                 <span>This will overwrite existing audio files for the selected types</span>
               </div>
             )}
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-gray-200">Additional Assets</label>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg hover:bg-gray-750">
+                <Checkbox
+                  id="characters"
+                  checked={includeCharacters}
+                  onCheckedChange={(checked) => setIncludeCharacters(!!checked)}
+                  disabled={isRunning || characterCount === 0}
+                />
+                <label
+                  htmlFor="characters"
+                  className={`flex-1 text-sm ${characterCount === 0 ? 'text-gray-500' : 'text-gray-200'} cursor-pointer`}
+                >
+                  <div className="font-medium">Character Reference Images</div>
+                  <div className="text-xs text-gray-400">
+                    {characterCount > 0
+                      ? `${characterCount} characters • ${charactersWithAssets} ready`
+                      : 'No characters available'}
+                  </div>
+                </label>
+              </div>
+
+              <div className="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg hover:bg-gray-750">
+                <Checkbox
+                  id="scene-images"
+                  checked={includeSceneImages}
+                  onCheckedChange={(checked) => setIncludeSceneImages(!!checked)}
+                  disabled={isRunning || totalScenes === 0}
+                />
+                <label
+                  htmlFor="scene-images"
+                  className={`flex-1 text-sm ${totalScenes === 0 ? 'text-gray-500' : 'text-gray-200'} cursor-pointer`}
+                >
+                  <div className="font-medium">Scene Images (throttled)</div>
+                  <div className="text-xs text-gray-400">
+                    {totalScenes} scenes • {scenesWithImages} ready • 5s delay between requests
+                  </div>
+                </label>
+              </div>
+            </div>
           </div>
 
           <div className="flex items-start gap-2 rounded-lg border border-gray-800 bg-gray-900/40 p-3">

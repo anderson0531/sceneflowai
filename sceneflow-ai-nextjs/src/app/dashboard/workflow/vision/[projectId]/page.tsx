@@ -3756,6 +3756,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             onOpenBYOK={() => setShowBYOKSettings(true)}
             onGenerateSceneDirection={handleGenerateSceneDirection}
             generatingDirectionFor={generatingDirectionFor}
+            onGenerateAllCharacters={generateCharacters}
           />
         </div>
         

@@ -28,15 +28,22 @@ type DialogGenerationMode = 'foreground' | 'background'
 
 interface DialogGenerationProgress {
   status: 'idle' | 'running' | 'completed' | 'error'
-  phase: 'narration' | 'dialogue'
+  phase: 'narration' | 'dialogue' | 'characters' | 'images'
   currentScene: number
   totalScenes: number
   currentDialogue: number
   totalDialogue: number
+  currentCharacter: number
+  totalCharacters: number
+  currentImage: number
+  totalImages: number
   completedSteps: number
   totalSteps: number
   message: string
 }
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+const SCENE_IMAGE_DELAY_MS = 5000
 
 interface ScriptPanelProps {
   script: any
@@ -94,6 +101,7 @@ interface ScriptPanelProps {
   // NEW: Scene direction generation props
   onGenerateSceneDirection?: (sceneIdx: number) => Promise<void>
   generatingDirectionFor?: number | null
+  onGenerateAllCharacters?: () => Promise<void>
 }
 
 // Transform score analysis data to review format
@@ -282,7 +290,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [showScriptEditor, setShowScriptEditor] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -399,10 +407,12 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     border: '1px solid #1f2937'
   }
 
+  const backgroundProgressPercent = dialogGenerationMode === 'background' && isDialogGenerating && dialogGenerationProgress
+    ? Math.min(99, Math.round((dialogGenerationProgress.completedSteps / Math.max(1, dialogGenerationProgress.totalSteps)) * 100))
+    : null
+
   const updateDialogProgress = (updater: (prev: DialogGenerationProgress | null) => DialogGenerationProgress | null) => {
-    if (generationModeRef.current === 'foreground') {
-      setDialogGenerationProgress((prev) => updater(prev))
-    }
+    setDialogGenerationProgress(prev => updater(prev))
   }
 
   const handleRunGenerationInBackground = () => {
@@ -411,21 +421,23 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     setDialogGenerationMode('background')
     generationModeRef.current = 'background'
     setGenerateAudioDialogOpen(false)
-    setDialogGenerationProgress(null)
     toast.info('Audio generation will continue in the background.', { style: toastVisualStyle })
   }
 
   const handleGenerateDialogOpenChange = (open: boolean) => {
     if (!open) {
       if (isDialogGenerating && generationModeRef.current === 'foreground') {
-        handleRunGenerationInBackground()
+        toast.info('Generation is still running. Use "Run in background" to continue without this dialog.', { style: toastVisualStyle })
+        setGenerateAudioDialogOpen(true)
         return
       }
       setGenerateAudioDialogOpen(false)
-      setDialogGenerationProgress(null)
-      setDialogGenerationMode('foreground')
-      generationModeRef.current = 'foreground'
-      backgroundRequestedRef.current = false
+      if (!isDialogGenerating) {
+        setDialogGenerationProgress(null)
+        setDialogGenerationMode('foreground')
+        generationModeRef.current = 'foreground'
+        backgroundRequestedRef.current = false
+      }
     } else {
       setGenerateAudioDialogOpen(true)
     }
@@ -435,9 +447,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const handleGenerateAudioFromDialog = async (
     language: string,
     audioTypes: { narration: boolean; dialogue: boolean; music: boolean; sfx: boolean },
-    options?: { stayOpen: boolean }
+    options?: { stayOpen: boolean; generateCharacters?: boolean; generateSceneImages?: boolean }
   ) => {
     const stayOpen = options?.stayOpen ?? true
+    const includeCharacters = options?.generateCharacters ?? false
+    const includeSceneImages = options?.generateSceneImages ?? false
 
     // If all types are selected and it's English, use the batch generation API (includes music and SFX)
     if (language === 'en' && audioTypes.narration && audioTypes.dialogue && audioTypes.music && audioTypes.sfx) {
@@ -479,41 +493,75 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       : 0
 
     const totalSceneSteps = audioTypes.narration ? scenes.length : 0
-    const totalSteps = totalSceneSteps + totalDialogueLines
+    const totalCharacters = includeCharacters ? (characters?.length || 0) : 0
+    const totalImages = includeSceneImages ? scenes.length : 0
+    const totalSteps = totalSceneSteps + totalDialogueLines + totalCharacters + totalImages
+    const audioTasksSelected = audioTypes.narration || audioTypes.dialogue
+    const languageName = SUPPORTED_LANGUAGES.find(l => l.code === language)?.name || language
 
     if (totalSteps === 0) {
-      toast.info('Select narration or dialogue to generate audio.', { style: toastVisualStyle })
+      toast.info('Select at least one generation option.', { style: toastVisualStyle })
       return
     }
 
     setIsDialogGenerating(true)
     backgroundRequestedRef.current = !stayOpen
 
+    const initialPhase: DialogGenerationProgress['phase'] = audioTypes.narration
+      ? 'narration'
+      : audioTypes.dialogue
+      ? 'dialogue'
+      : includeCharacters
+      ? 'characters'
+      : includeSceneImages
+      ? 'images'
+      : 'narration'
+
+    const initialMessage = (() => {
+      switch (initialPhase) {
+        case 'narration':
+          return audioTypes.narration ? 'Preparing narration...' : 'Narration skipped.'
+        case 'dialogue':
+          return 'Preparing dialogue...'
+        case 'characters':
+          return totalCharacters > 0 ? 'Preparing character assets...' : 'No characters to generate.'
+        case 'images':
+          return totalImages > 0 ? 'Preparing scene images...' : 'No scenes to generate.'
+        default:
+          return 'Preparing generation...'
+      }
+    })()
+
+    setDialogGenerationProgress({
+      status: 'running',
+      phase: initialPhase,
+      currentScene: 0,
+      totalScenes: scenes.length,
+      currentDialogue: 0,
+      totalDialogue: totalDialogueLines,
+      currentCharacter: 0,
+      totalCharacters,
+      currentImage: 0,
+      totalImages,
+      completedSteps: 0,
+      totalSteps,
+      message: initialMessage,
+    })
+
     if (stayOpen) {
       setDialogGenerationMode('foreground')
       generationModeRef.current = 'foreground'
-      setDialogGenerationProgress({
-        status: 'running',
-        phase: audioTypes.narration ? 'narration' : 'dialogue',
-        currentScene: 0,
-        totalScenes: scenes.length,
-        currentDialogue: 0,
-        totalDialogue: totalDialogueLines,
-        completedSteps: 0,
-        totalSteps,
-        message: audioTypes.narration ? 'Preparing narration...' : 'Preparing dialogue...'
-      })
       setGenerateAudioDialogOpen(true)
     } else {
       setDialogGenerationMode('background')
       generationModeRef.current = 'background'
-      setDialogGenerationProgress(null)
       setGenerateAudioDialogOpen(false)
-      toast.info('Audio generation will continue in the background.', { style: toastVisualStyle })
+      toast.info('Generation will continue in the background. A notification will appear when finished.', { style: toastVisualStyle })
     }
 
     let completedSteps = 0
     let processedDialogue = 0
+    const tasksCompleted: string[] = []
 
     try {
       for (let sceneIdx = 0; sceneIdx < scenes.length; sceneIdx++) {
@@ -572,26 +620,122 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         }
       }
 
-      if (generationModeRef.current === 'foreground' && stayOpen) {
-        updateDialogProgress((prev) => prev ? {
-          ...prev,
-          status: 'completed',
-          completedSteps: prev.totalSteps,
-          message: 'Audio generation complete.',
-        } : prev)
-        toast.success(`Audio generation complete for ${SUPPORTED_LANGUAGES.find(l => l.code === language)?.name || language}.`, { style: toastVisualStyle })
-      } else {
-        toast.success('Audio generation complete.', { style: toastVisualStyle })
+      if (audioTypes.narration) {
+        tasksCompleted.push('narration')
       }
+      if (audioTypes.dialogue) {
+        tasksCompleted.push('dialogue')
+      }
+
+      if (includeCharacters) {
+        if (totalCharacters === 0) {
+          updateDialogProgress(prev => prev ? {
+            ...prev,
+            phase: 'characters',
+            currentCharacter: 0,
+            message: 'No characters to generate.',
+          } : prev)
+        } else if (onGenerateAllCharacters) {
+          updateDialogProgress(prev => prev ? {
+            ...prev,
+            phase: 'characters',
+            currentCharacter: 0,
+            message: `Generating ${totalCharacters} character asset${totalCharacters !== 1 ? 's' : ''}...`,
+          } : prev)
+
+          await onGenerateAllCharacters()
+
+          completedSteps += totalCharacters
+          tasksCompleted.push('characters')
+
+          updateDialogProgress(prev => prev ? {
+            ...prev,
+            phase: 'characters',
+            currentCharacter: totalCharacters,
+            completedSteps,
+            message: 'Character assets generated.',
+          } : prev)
+        } else {
+          toast.warning('Character generation is not available in this project.', { style: toastVisualStyle })
+        }
+      }
+
+      if (includeSceneImages) {
+        if (!onGenerateSceneImage) {
+          toast.warning('Scene image generation is not available.', { style: toastVisualStyle })
+        } else if (totalImages === 0) {
+          updateDialogProgress(prev => prev ? {
+            ...prev,
+            phase: 'images',
+            currentImage: 0,
+            message: 'No scene images to generate.',
+          } : prev)
+        } else {
+          for (let sceneIdx = 0; sceneIdx < scenes.length; sceneIdx++) {
+            const scene = scenes[sceneIdx]
+            const sceneHeading = scene?.heading || scene?.action || `Scene ${sceneIdx + 1}`
+            const hasImage = !!scene?.imageUrl
+
+            updateDialogProgress(prev => prev ? {
+              ...prev,
+              phase: 'images',
+              currentScene: sceneIdx + 1,
+              currentImage: Math.min(prev.currentImage, sceneIdx),
+              message: hasImage
+                ? `Scene ${sceneIdx + 1} already has an image. Skipping generation...`
+                : `Generating image for scene ${sceneIdx + 1}${sceneHeading ? ` • ${sceneHeading}` : ''}`,
+            } : prev)
+
+            if (!hasImage) {
+              await onGenerateSceneImage(sceneIdx)
+              if (sceneIdx < scenes.length - 1) {
+                updateDialogProgress(prev => prev ? {
+                  ...prev,
+                  message: `Scene ${sceneIdx + 1} complete. Waiting ${SCENE_IMAGE_DELAY_MS / 1000}s before next scene...`,
+                } : prev)
+                await delay(SCENE_IMAGE_DELAY_MS)
+              }
+            }
+
+            completedSteps += 1
+
+            updateDialogProgress(prev => prev ? {
+              ...prev,
+              phase: 'images',
+              currentScene: sceneIdx + 1,
+              currentImage: sceneIdx + 1,
+              completedSteps,
+              message: hasImage
+                ? `Scene ${sceneIdx + 1} already had an image (skipped).`
+                : `Generated image for scene ${sceneIdx + 1}.`,
+            } : prev)
+          }
+
+          if (totalImages > 0) {
+            tasksCompleted.push('scene images')
+          }
+        }
+      }
+
+      const isBackground = generationModeRef.current === 'background' || !stayOpen
+      const taskSummary = tasksCompleted.length > 0 ? tasksCompleted.join(', ') : 'selected items'
+
+      updateDialogProgress(prev => prev ? {
+        ...prev,
+        status: 'completed',
+        completedSteps: prev.totalSteps,
+        message: 'Generation complete.',
+      } : prev)
+
+      const completionMessage = `${isBackground ? 'Background generation' : `Generation${audioTasksSelected ? ` for ${languageName}` : ''}`} complete: ${taskSummary}.`
+      toast.success(completionMessage, { style: toastVisualStyle })
     } catch (error) {
       console.error('Error generating audio:', error)
-      if (generationModeRef.current === 'foreground' && stayOpen) {
-        updateDialogProgress((prev) => prev ? {
-          ...prev,
-          status: 'error',
-          message: 'Audio generation failed. Please try again.',
-        } : prev)
-      }
+      updateDialogProgress(prev => prev ? {
+        ...prev,
+        status: 'error',
+        message: 'Generation failed. Please try again.',
+      } : prev)
       toast.error('Failed to generate audio. Please try again.', { style: toastVisualStyle })
     } finally {
       setIsDialogGenerating(false)
@@ -1184,6 +1328,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+
+          {dialogGenerationMode === 'background' && isDialogGenerating && backgroundProgressPercent !== null && (
+            <div className="flex items-center gap-1 text-xs text-blue-400">
+              <Loader className="w-3 h-3 animate-spin" />
+              <span>BG {backgroundProgressPercent}%</span>
+            </div>
+          )}
         </div>
       </div>
       
@@ -1652,10 +1803,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         onOpenChange={handleGenerateDialogOpenChange}
         script={script}
         onGenerate={handleGenerateAudioFromDialog}
+        characters={characters}
         isGenerating={isDialogGenerating}
-        generationProgress={dialogGenerationProgress}
+        generationProgress={dialogGenerationMode === 'foreground' ? dialogGenerationProgress : null}
         mode={dialogGenerationMode}
-        onRunInBackground={isDialogGenerating ? handleRunGenerationInBackground : undefined}
+        onRunInBackground={isDialogGenerating && dialogGenerationMode === 'foreground' ? handleRunGenerationInBackground : undefined}
       />
       
       {/* Report Preview Modals */}
