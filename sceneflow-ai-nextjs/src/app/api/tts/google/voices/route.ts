@@ -33,7 +33,10 @@ export async function GET(_req: NextRequest) {
       type: voice.type,
     }))
 
-    console.log('[Google Voices] Returning', formattedVoices.length, 'static voices')
+    const shouldLog = process.env.NODE_ENV !== 'production' && process.env.DEBUG_TTS !== 'false'
+    if (shouldLog) {
+      console.log('[Google Voices] Returning', formattedVoices.length, 'static voices')
+    }
 
     return NextResponse.json({ 
       enabled: true, 
