@@ -41,13 +41,13 @@ export class CreatomateRenderService {
   ): Promise<string> {
     // Build Creatomate source (composition)
     const source = this.buildSource(scenes, options)
+    const sourcePayload = typeof (source as any)?.toMap === 'function' ? (source as any).toMap() : source
+    this.logPayloadSummary(sourcePayload, scenes)
     
     try {
       // Use Creatomate REST API directly to create render without waiting
       // This avoids the client library's render() method which waits for completion
       // Convert source to JSON for API request
-      const sourceJson = JSON.parse(JSON.stringify(source))
-      
       // Create render via REST API
       const response = await fetch('https://api.creatomate.com/v1/renders', {
         method: 'POST',
@@ -56,7 +56,7 @@ export class CreatomateRenderService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          source: sourceJson,
+          source: sourcePayload,
           output_format: options.format,
           frame_rate: options.fps,
           max_width: options.width,
@@ -101,7 +101,7 @@ export class CreatomateRenderService {
       try {
         console.log('[Creatomate] Falling back to client library method...')
         const renders = await this.client.render({
-          source: source as any,
+          source: sourcePayload,
           outputFormat: options.format,
           frameRate: options.fps,
           maxWidth: options.width,
@@ -127,6 +127,59 @@ export class CreatomateRenderService {
         const originalMessage = error?.message || fallbackMessage
         throw new Error(`Failed to submit render job: ${originalMessage}`)
       }
+    }
+  }
+
+  private logPayloadSummary(sourcePayload: any, scenes: SceneRenderData[]) {
+    try {
+      const elements: any[] = Array.isArray(sourcePayload?.elements) ? sourcePayload.elements : []
+      const totalDuration = typeof sourcePayload?.duration === 'number'
+        ? sourcePayload.duration
+        : Number(sourcePayload?.duration) || null
+
+      let firstElementTime = elements.length > 0 ? Number(elements[0]?.time ?? 0) : null
+      let lastElementEnd: number | null = null
+      let zeroDurationElements = 0
+
+      for (const element of elements) {
+        const startTime = Number(element?.time ?? 0)
+        const duration = element?.duration != null ? Number(element.duration) : null
+
+        if (firstElementTime === null || startTime < firstElementTime) {
+          firstElementTime = startTime
+        }
+
+        const elementEnd = duration != null ? startTime + duration : null
+        if (elementEnd != null) {
+          if (lastElementEnd === null || elementEnd > lastElementEnd) {
+            lastElementEnd = elementEnd
+          }
+        }
+
+        if (duration === 0) {
+          zeroDurationElements += 1
+        }
+      }
+
+      const imageCount = elements.filter(el => el?.type === 'image').length
+      const audioCount = elements.filter(el => el?.type === 'audio').length
+
+      const sceneDurations = scenes.map(scene => Number(scene.duration || 0))
+
+      console.log('[Creatomate] Render payload summary:', {
+        totalDurationSeconds: totalDuration,
+        elementCount: elements.length,
+        imageCount,
+        audioCount,
+        firstElementTime,
+        lastElementEnd,
+        zeroDurationElements,
+        sceneCount: scenes.length,
+        sceneDurationsSample: sceneDurations.slice(0, 5),
+        sceneDurationsTotal: sceneDurations.reduce((sum, d) => sum + d, 0)
+      })
+    } catch (error) {
+      console.error('[Creatomate] Failed to summarize render payload:', error)
     }
   }
 
