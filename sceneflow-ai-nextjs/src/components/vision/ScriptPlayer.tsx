@@ -12,6 +12,7 @@ import { toast } from 'sonner'
 import { useOverlayStore } from '@/store/useOverlayStore'
 import { getAvailableLanguages, getAudioUrl, getAudioDuration as getStoredAudioDuration } from '@/lib/audio/languageDetection'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
+import { trackCta } from '@/lib/analytics'
 
 interface ScreeningRoomProps {
   script: any
@@ -831,71 +832,173 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     }))
   }
 
+  const exportStudioEnabled = process.env.NEXT_PUBLIC_EXPORT_STUDIO_ENABLED === 'true'
   const handleDownloadMP4 = async () => {
     setIsRendering(true)
-    
-    // Show processing overlay ONLY while submitting render job
+
+    if (!exportStudioEnabled) {
+      trackCta({
+        event: 'creatomate_render_start',
+        location: 'ScriptPlayer',
+        value: scenes.length
+      })
+      useOverlayStore.getState().show('Submitting Creatomate render...', 120)
+      try {
+        const response = await fetch('/api/screening-room/render/legacy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            scenes,
+            options: {
+              width: 1920,
+              height: 1080,
+              fps: 30,
+              quality: 'high',
+              format: 'mp4'
+            },
+            projectTitle: script?.title || 'Screening Room'
+          })
+        })
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({ message: 'Render failed' }))
+          throw new Error(error.message || `Render failed: ${response.status}`)
+        }
+
+        const data = await response.json()
+        if (!data.success || !data.videoUrl) {
+          throw new Error(data.message || 'Render did not return video URL')
+        }
+
+        useOverlayStore.getState().hide()
+        setIsRendering(false)
+
+        trackCta({
+          event: 'creatomate_render_complete',
+          location: 'ScriptPlayer',
+          value: scenes.length
+        })
+
+        toast.success('Video render complete!', {
+          duration: 8000,
+          action: {
+            label: 'Download',
+            onClick: () => {
+              const a = document.createElement('a')
+              a.href = data.videoUrl
+              a.download = `${(script?.title || 'screening-room').replace(/[^a-z0-9]/gi, '-')}.mp4`
+              a.target = '_blank'
+              document.body.appendChild(a)
+              a.click()
+              document.body.removeChild(a)
+            }
+          }
+        })
+
+        const a = document.createElement('a')
+        a.href = data.videoUrl
+        a.download = `${(script?.title || 'screening-room').replace(/[^a-z0-9]/gi, '-')}.mp4`
+        a.target = '_blank'
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        return
+      } catch (error) {
+        useOverlayStore.getState().hide()
+        setIsRendering(false)
+        console.error('Legacy Creatomate render failed:', error)
+        trackCta({
+          event: 'creatomate_render_error',
+          location: 'ScriptPlayer',
+          value: error instanceof Error ? error.message : 'Unknown error'
+        })
+        toast.error(`Failed to submit legacy render: ${error instanceof Error ? error.message : 'Unknown error'}`, { style: renderToastStyle })
+        return
+      }
+    }
+
+    trackCta({
+      event: 'export_studio_pipeline_request',
+      location: 'ScriptPlayer',
+      value: scenes.length
+    })
     useOverlayStore.getState().show(
       'Batching scenes and starting render pipeline... (this can take several minutes)',
-      600 // Keep overlay visible while batches submit and merge kicks off
+      600
     )
     
     try {
       // Prepare scene data for Creatomate using selected language
       const sceneData = scenes.map((scene: any, idx: number) => {
-        // Get language-specific audio URLs
         const narrationUrl = getAudioForLanguage(scene, selectedLanguage, 'narration')
+        const storedNarrationDuration = getStoredAudioDuration(scene, selectedLanguage, 'narration') ?? 0
         const dialogueArray = scene.dialogueAudio?.[selectedLanguage] || (selectedLanguage === 'en' ? scene.dialogueAudio : null)
-        
+
         // Build dialogue array with start times using language-specific audio
-        const dialogue: Array<{ url: string; startTime: number }> = []
+        const dialogue: Array<{ url: string; startTime: number; duration?: number }> = []
+        let dialogueStartTime = storedNarrationDuration > 0 ? storedNarrationDuration + 3.0 : 0
+        let totalDialogueDuration = 0
+
         if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
-          let dialogueTime = 0
-          // Use stored narration duration if available, otherwise estimate
-          const narrationDuration = getStoredAudioDuration(scene, selectedLanguage, 'narration') || 5
-          dialogueTime = narrationDuration + 3.0 // Add 3-second lag before dialogue starts
-          
           dialogueArray.forEach((d: any) => {
             if (d.audioUrl) {
+              const lineDuration = d.duration || 3
               dialogue.push({
                 url: d.audioUrl,
-                startTime: dialogueTime
+                startTime: dialogueStartTime,
+                duration: lineDuration
               })
-              // Use stored duration if available, otherwise estimate
-              const dialogueDuration = d.duration || 3
-              dialogueTime += dialogueDuration + 0.3 // Add 300ms pause between dialogue lines
+              totalDialogueDuration += lineDuration
+              dialogueStartTime += lineDuration + 0.3 // Add 300ms pause between dialogue lines
+              totalDialogueDuration += 0.3
             }
           })
+
+          // Remove the extra pause added after the final line
+          if (dialogue.length > 0) {
+            totalDialogueDuration -= 0.3
+          }
         }
-        
-        // Build SFX array with start times
-        const sfx: Array<{ url: string; startTime: number }> = []
+
+        const padAfterNarration = storedNarrationDuration > 0 && totalDialogueDuration > 0 ? 3.0 : 0
+        let computedSceneDuration = storedNarrationDuration + padAfterNarration + Math.max(totalDialogueDuration, 0)
+
+        if (computedSceneDuration <= 0) {
+          computedSceneDuration = Math.max(scene.duration || 0, 5)
+        }
+
+        // Ensure minimum positive duration to avoid zero-length scenes
+        computedSceneDuration = Math.max(computedSceneDuration, 0.5)
+
+        // Build SFX array with start times and clamp within scene duration
+        const sfx: Array<{ url: string; startTime: number; duration?: number }> = []
         if (scene.sfxAudio && Array.isArray(scene.sfxAudio)) {
           scene.sfxAudio.forEach((sfxUrl: string, sfxIdx: number) => {
             if (sfxUrl) {
               const sfxDef = scene.sfx?.[sfxIdx] || {}
-              const sfxTime = sfxDef.time !== undefined ? sfxDef.time : 0
+              const sfxTime = typeof sfxDef.time === 'number' ? sfxDef.time : 0
+              const remaining = Math.max(computedSceneDuration - sfxTime, 0)
               sfx.push({
                 url: sfxUrl,
-                startTime: sfxTime
+                startTime: sfxTime,
+                duration: remaining
               })
             }
           })
         }
-        
-        // Calculate scene duration based on language-specific audio
-        const narrationDuration = getStoredAudioDuration(scene, selectedLanguage, 'narration')
-        const totalDialogueDuration = Array.isArray(dialogueArray) 
-          ? dialogueArray.reduce((sum: number, d: any) => sum + (d.duration || 3) + 0.3, 0)
-          : 0
-        const sceneDuration = narrationDuration 
-          ? narrationDuration + 3.0 + totalDialogueDuration
-          : (scene.duration || 5)
-        
+
+        console.log('[Screening Room] Scene duration summary', {
+          sceneNumber: idx + 1,
+          narration: storedNarrationDuration,
+          dialogueCount: dialogue.length,
+          totalDialogueDuration,
+          computedSceneDuration
+        })
+
         return {
           sceneNumber: idx + 1,
           imageUrl: scene.imageUrl || '/images/placeholders/placeholder.svg',
-          duration: sceneDuration,
+          duration: computedSceneDuration,
           audioTracks: {
             narration: narrationUrl || undefined,
             dialogue: dialogue.length > 0 ? dialogue : undefined,
@@ -929,11 +1032,17 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       }
       
       const data = await response.json()
-      
+
       if (!data.success || !data.renderId) {
         throw new Error(data.message || 'Failed to submit render job')
       }
-      
+
+      trackCta({
+        event: 'export_studio_pipeline_enqueued',
+        location: 'ScriptPlayer',
+        value: data.renderId
+      })
+
       const renderId = data.renderId
       const batchRenderIds: string[] | undefined = Array.isArray(data.batchRenderIds) ? data.batchRenderIds : undefined
       const projectTitle = (script?.title || 'screening-room').replace(/[^a-z0-9]/gi, '-')
@@ -1040,7 +1149,12 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       useOverlayStore.getState().hide()
       setIsRendering(false)
       console.error('Render submission failed:', error)
-        toast.error(`Failed to submit render job: ${error instanceof Error ? error.message : 'Unknown error'}`, { style: renderToastStyle })
+      trackCta({
+        event: 'export_studio_pipeline_error',
+        location: 'ScriptPlayer',
+        value: error instanceof Error ? error.message : 'Unknown error'
+      })
+      toast.error(`Failed to submit render job: ${error instanceof Error ? error.message : 'Unknown error'}`, { style: renderToastStyle })
     }
   }
 

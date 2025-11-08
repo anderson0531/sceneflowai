@@ -6,8 +6,8 @@ export interface SceneRenderData {
   duration: number // seconds
   audioTracks: {
     narration?: string
-    dialogue?: Array<{ url: string; startTime: number }>
-    sfx?: Array<{ url: string; startTime: number }>
+    dialogue?: Array<{ url: string; startTime: number; duration?: number }>
+    sfx?: Array<{ url: string; startTime: number; duration?: number }>
     music?: string
   }
   kenBurnsIntensity: 'subtle' | 'medium' | 'dramatic'
@@ -345,13 +345,25 @@ export class CreatomateRenderService {
     const DIALOGUE_VOLUME = Math.min(100, Math.round(BASE_DIALOGUE_VOLUME * 1.4))
     
     // Calculate total duration
-    const totalDuration = scenes.reduce((sum, s) => sum + s.duration, 0)
-    
+    const totalDuration = scenes.reduce((sum, s) => sum + (Number(s.duration) || 0), 0)
+
+    console.log('[Creatomate] Scene duration summary (seconds):', scenes.map(scene => ({
+      scene: scene.sceneNumber,
+      duration: Number((Number(scene.duration) || 0).toFixed(2))
+    })))
+
     // Build composition with all elements
     const elements: any[] = []
     let currentTime = 0
     
     for (const scene of scenes) {
+      let sceneDuration = Number(scene.duration) || 0
+      if (!Number.isFinite(sceneDuration) || sceneDuration <= 0) {
+        sceneDuration = 5
+      }
+
+      console.log('[Creatomate] Building scene', scene.sceneNumber, 'duration:', sceneDuration.toFixed(2))
+
       // Get pan parameters
       const panParams = this.getPanParams(scene.kenBurnsIntensity)
       
@@ -359,7 +371,7 @@ export class CreatomateRenderService {
       const imageElement = new Image({
         source: scene.imageUrl,
         time: currentTime,
-        duration: scene.duration,
+        duration: sceneDuration,
         width: '100%',
         height: '100%',
         fit: 'cover',
@@ -385,7 +397,7 @@ export class CreatomateRenderService {
         elements.push(new Audio({
           source: scene.audioTracks.narration,
           time: currentTime,
-          duration: scene.duration,
+          duration: sceneDuration,
           volume: 100
         }))
       }
@@ -393,9 +405,27 @@ export class CreatomateRenderService {
       // Add dialogue tracks
       if (scene.audioTracks.dialogue) {
         for (const dialogue of scene.audioTracks.dialogue) {
+          const dialogueStart = currentTime + dialogue.startTime
+          const availableDuration = typeof dialogue.duration === 'number' ? Math.max(dialogue.duration, 0) : undefined
+          const remainingInScene = Math.max(sceneDuration - dialogue.startTime, 0)
+
+          if (remainingInScene <= 0) {
+            continue
+          }
+
+          const trimDuration = availableDuration !== undefined
+            ? Math.min(availableDuration, remainingInScene)
+            : remainingInScene
+
+          if (trimDuration <= 0) {
+            continue
+          }
+
           elements.push(new Audio({
             source: dialogue.url,
-            time: currentTime + dialogue.startTime,
+            time: dialogueStart,
+            duration: trimDuration,
+            trimDuration,
             volume: DIALOGUE_VOLUME
           }))
         }
@@ -404,9 +434,24 @@ export class CreatomateRenderService {
       // Add SFX tracks
       if (scene.audioTracks.sfx) {
         for (const sfx of scene.audioTracks.sfx) {
+          const remainingInScene = Math.max(sceneDuration - sfx.startTime, 0)
+          if (remainingInScene <= 0) {
+            continue
+          }
+
+          const sfxDuration = sfx.duration !== undefined
+            ? Math.min(Math.max(sfx.duration, 0), remainingInScene)
+            : remainingInScene
+
+          if (sfxDuration <= 0) {
+            continue
+          }
+
           elements.push(new Audio({
             source: sfx.url,
             time: currentTime + sfx.startTime,
+            duration: sfxDuration,
+            trimDuration: sfxDuration,
             volume: 80 // Slightly lower volume for SFX
           }))
         }
@@ -414,16 +459,18 @@ export class CreatomateRenderService {
       
       // Add music (loops if shorter than scene)
       if (scene.audioTracks.music) {
+        const musicDuration = Math.max(sceneDuration, 0)
         elements.push(new Audio({
           source: scene.audioTracks.music,
           time: currentTime,
-          duration: scene.duration,
+          duration: musicDuration,
+          trimDuration: musicDuration,
           volume: MUSIC_VOLUME, // Background music at 15%
           loop: true
         }))
       }
       
-      currentTime += scene.duration
+      currentTime += sceneDuration
     }
     
     // Create source with all elements

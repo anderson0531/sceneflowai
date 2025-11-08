@@ -9,13 +9,18 @@ export const maxDuration = 60 // Creatomate handles long renders asynchronously
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Authenticate user
     const session = await getServerSession(authOptions as any)
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // 2. Parse request
+    if (process.env.EXPORT_STUDIO_ENABLED !== 'true') {
+      return NextResponse.json({
+        error: 'FFmpeg export disabled',
+        message: 'FFmpeg export pipeline is disabled. Use /api/screening-room/render/legacy instead.'
+      }, { status: 400 })
+    }
+
     const { scenes, options, projectTitle } = await req.json()
 
     if (!scenes || scenes.length === 0) {

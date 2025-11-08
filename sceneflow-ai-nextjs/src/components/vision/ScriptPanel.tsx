@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Clapperboard, Printer, Video as VideoIcon, Info } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -21,6 +21,8 @@ import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData, SceneDirectionData } from '@/lib/types/reports'
 import { ProjectCostCalculator } from './ProjectCostCalculator'
 import { ExportDialog } from './ExportDialog'
+import { ExportStudioDialog } from './ExportStudioDialog'
+import type { ExportStudioScene } from './ExportStudioDialog'
 import { GenerateAudioDialog } from './GenerateAudioDialog'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 
@@ -298,6 +300,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [storyboardPreviewOpen, setStoryboardPreviewOpen] = useState(false)
   const [sceneDirectionPreviewOpen, setSceneDirectionPreviewOpen] = useState(false)
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
+  const [exportStudioOpen, setExportStudioOpen] = useState(false)
   const [generateAudioDialogOpen, setGenerateAudioDialogOpen] = useState(false)
   
   // Audio playback state
@@ -1200,6 +1203,55 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     setSceneBuilderIdx(null)
   }
 
+  const exportScenes = useMemo<ExportStudioScene[]>(() => {
+    return scenes.map((scene: any, index: number) => {
+      const dialogueCandidates = Array.isArray(scene?.dialogueAudio?.en)
+        ? scene.dialogueAudio.en
+        : Array.isArray(scene?.dialogueAudio)
+          ? scene.dialogueAudio
+          : []
+
+      const dialogue = dialogueCandidates
+        .filter((entry: any) => entry?.audioUrl)
+        .map((entry: any) => ({
+          url: entry.audioUrl,
+          startTime: Number(entry.startTime ?? 0),
+          duration: entry.duration != null ? Number(entry.duration) : undefined
+        }))
+
+      const sfxCandidates = Array.isArray(scene?.sfxAudio) ? scene.sfxAudio : []
+      const sfx = sfxCandidates
+        .map((url: string, sfxIndex: number) => {
+          if (!url) return null
+          const meta = scene?.sfx?.[sfxIndex] || {}
+          return {
+            url,
+            startTime: Number(meta.time ?? 0),
+            duration: meta.duration != null ? Number(meta.duration) : undefined
+          }
+        })
+        .filter(Boolean) as Array<{ url: string; startTime: number; duration?: number }>
+
+      const intensity = (scene?.kenBurnsIntensity as 'subtle' | 'medium' | 'dramatic') || 'medium'
+
+      return {
+        id: scene?.id || `scene-${index + 1}`,
+        number: index + 1,
+        imagePath: scene?.imageUrl || '/images/placeholders/placeholder.svg',
+        duration: Math.max(0.5, Number(scene?.duration) || 5),
+        audio: {
+          narration: scene?.narrationAudio?.en?.url || scene?.narrationAudioUrl || undefined,
+          dialogue: dialogue.length > 0 ? dialogue : undefined,
+          sfx: sfx.length > 0 ? sfx : undefined,
+          music: scene?.musicAudio || scene?.music?.url || undefined
+        },
+        kenBurnsIntensity: intensity
+      }
+    })
+  }, [scenes])
+
+  const exportStudioEnabled = process.env.NEXT_PUBLIC_EXPORT_STUDIO_ENABLED === 'true'
+
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 h-full flex flex-col overflow-hidden">
       {/* Header */}
@@ -1285,6 +1337,28 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          
+          {/* Export Studio Button */}
+          {exportStudioEnabled && script && scenes && scenes.length > 0 && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setExportStudioOpen(true)}
+                    className="flex items-center gap-1"
+                  >
+                    <Film className="w-4 h-4" />
+                    <span className="hidden sm:inline">Export Studio</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                  <p>Open the multi-pass desktop export workflow</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           
           {/* Export Button */}
           {script && scenes && scenes.length > 0 && (
@@ -1867,6 +1941,15 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         onEnded={() => setPlayingAudio(null)}
         className="hidden"
       />
+      {exportStudioEnabled && (
+        <ExportStudioDialog
+          open={exportStudioOpen}
+          onOpenChange={setExportStudioOpen}
+          projectId={projectId || 'unknown-project'}
+          projectTitle={script?.title || 'Untitled Project'}
+          scenes={exportScenes}
+        />
+      )}
     </div>
   )
 }
