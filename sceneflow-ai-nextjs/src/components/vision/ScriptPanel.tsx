@@ -2397,7 +2397,7 @@ function SceneCard({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                  <p>Open the multi-pass desktop export workflow</p>
+                  <p>Launch the desktop Export Studio to render the full script</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
