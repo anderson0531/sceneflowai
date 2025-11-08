@@ -1337,30 +1337,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          
-          {/* Export Studio Button */}
-          {exportStudioEnabled && script && scenes && scenes.length > 0 && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => setExportStudioOpen(true)}
-                    className="flex items-center gap-1"
-                  >
-                    <Film className="w-4 h-4" />
-                    <span className="hidden sm:inline">Export Studio</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                  <p>Open the multi-pass desktop export workflow</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          
-          {/* Export Button */}
+
+          {/* Report Button */}
           {script && scenes && scenes.length > 0 && (
             <TooltipProvider>
               <Tooltip>
@@ -1372,11 +1350,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                     className="flex items-center gap-1"
                   >
                     <Download className="w-4 h-4" />
-                    <span className="hidden sm:inline">Export</span>
+                    <span className="hidden sm:inline">Report</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                  <p>Export script, storyboard, or scene direction</p>
+                  <p>Generate printable script, storyboard, or scene direction reports</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -2288,6 +2266,28 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
                 </Tooltip>
               </TooltipProvider>
             )}
+
+          {/* Export Studio Button */}
+          {exportStudioEnabled && script && scenes && scenes.length > 0 && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setExportStudioOpen(true)}
+                    className="flex items-center gap-1"
+                  >
+                    <Film className="w-4 h-4" />
+                    <span className="hidden sm:inline">Export Studio</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                  <p>Open the multi-pass desktop export workflow</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
             
             {/* View Review Button - Only visible when score exists */}
             {!isOutline && scene.scoreAnalysis && onOpenSceneReview && (
