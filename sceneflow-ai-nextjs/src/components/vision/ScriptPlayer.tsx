@@ -832,10 +832,31 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     }))
   }
 
-  const isExportStudioEnabled = useMemo(
-    () => process.env.NEXT_PUBLIC_EXPORT_STUDIO_ENABLED === 'true',
-    []
-  )
+  const [isExportStudioEnabled, setIsExportStudioEnabled] = useState(() => {
+    if (typeof window === 'undefined') {
+      return process.env.NEXT_PUBLIC_EXPORT_STUDIO_ENABLED === 'true'
+    }
+
+    const globalFlag = (window as any).__SCENEFLOW_EXPORT_FLAG__
+    if (typeof globalFlag === 'boolean') {
+      return globalFlag
+    }
+    return process.env.NEXT_PUBLIC_EXPORT_STUDIO_ENABLED === 'true'
+  })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+    const globalFlag = (window as any).__SCENEFLOW_EXPORT_FLAG__
+    if (typeof globalFlag === 'boolean') {
+      setIsExportStudioEnabled(globalFlag)
+      return
+    }
+    const enabled = process.env.NEXT_PUBLIC_EXPORT_STUDIO_ENABLED === 'true'
+    ;(window as any).__SCENEFLOW_EXPORT_FLAG__ = enabled
+    setIsExportStudioEnabled(enabled)
+  }, [])
   const handleDownloadMP4 = async () => {
     setIsRendering(true)
 
