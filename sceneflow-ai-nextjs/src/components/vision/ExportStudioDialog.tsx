@@ -373,6 +373,7 @@ export function ExportStudioDialog({
   const [previewError, setPreviewError] = useState<string | null>(null)
   const publishFeatureEnabled = process.env.NEXT_PUBLIC_EXPORT_PUBLISH_ENABLED === 'true'
   const hardwareDefault = process.env.NEXT_PUBLIC_EXPORT_HWACCEL_DEFAULT === 'true'
+  const desktopDownloadUrl = process.env.NEXT_PUBLIC_EXPORT_DESKTOP_URL
   const [publishStatus, setPublishStatus] = useState<string | null>(null)
   const [publishingPlatform, setPublishingPlatform] = useState<'youtube' | 'tiktok' | null>(null)
   const [errorStage, setErrorStage] = useState<string | null>(null)
@@ -941,447 +942,474 @@ export function ExportStudioDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl border border-slate-800 bg-[#070b19] text-white sm:max-w-[1200px]" style={{ maxHeight: '90vh' }}>
-        <DialogHeader className="space-y-2">
-          <DialogTitle className="flex items-center gap-3 text-2xl font-semibold text-slate-50">
-            <Film className="h-6 w-6 text-blue-400" />
-            Export Studio
-          </DialogTitle>
-          <DialogDescription className="text-sm text-slate-400">
-            {!bridgeAvailable
-              ? 'Waiting for the desktop renderer to connect.'
-              : `Overall progress: ${Math.round(aggregatedProgress * 100)}% · ${phaseLabels[currentPhase as keyof typeof phaseLabels] || 'Preparing'}${etaSeconds != null ? ` · ETA ~${Math.max(0, Math.ceil(etaSeconds))}s` : ''}`}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent
+        className="max-w-6xl border border-slate-800 bg-[#070b19] text-white sm:max-w-[1200px] overflow-hidden p-0"
+        style={{ maxHeight: '85vh' }}
+      >
+        <div className="flex h-full flex-col">
+          <DialogHeader className="space-y-2 px-6 pt-6">
+            <DialogTitle className="flex items-center gap-3 text-2xl font-semibold text-slate-50">
+              <Film className="h-6 w-6 text-blue-400" />
+              Export Studio
+            </DialogTitle>
+            <DialogDescription className="text-sm text-slate-400">
+              {!bridgeAvailable
+                ? 'Waiting for the desktop renderer to connect.'
+                : `Overall progress: ${Math.round(aggregatedProgress * 100)}% · ${phaseLabels[currentPhase as keyof typeof phaseLabels] || 'Preparing'}${etaSeconds != null ? ` · ETA ~${Math.max(0, Math.ceil(etaSeconds))}s` : ''}`}
+            </DialogDescription>
+          </DialogHeader>
 
-        {!bridgeAvailable && (
-          <div className="mb-4 flex items-start gap-3 rounded-lg border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-amber-200">
-            <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium">Renderer unavailable</p>
-              <p className="text-xs text-amber-100/90">
-                Launch the SceneFlow desktop renderer to enable hardware-accelerated exports. Once connected, this dialog will update automatically.
-              </p>
+          {!bridgeAvailable && (
+            <div className="px-6 pb-4">
+              <div className="flex flex-col gap-3 rounded-lg border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-amber-200">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium">Renderer unavailable</p>
+                    <p className="text-xs text-amber-100/90">
+                      Launch the SceneFlow desktop renderer to enable hardware-accelerated exports. Once connected, this dialog will update automatically.
+                    </p>
+                  </div>
+                </div>
+                {desktopDownloadUrl && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="self-start border-amber-400/60 bg-amber-500/10 text-amber-100 hover:bg-amber-500/20"
+                    onClick={() => {
+                      trackCta({
+                        event: 'export_studio_renderer_download',
+                        location: 'ExportStudioDialog'
+                      })
+                      window.open(desktopDownloadUrl, '_blank', 'noopener,noreferrer')
+                    }}
+                  >
+                    Download SceneFlow Desktop
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-          <div className="flex flex-col gap-6">
-            <section className="space-y-4">
-              <div className="relative aspect-video overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
-                {completionInfo?.filePath ? (
-                  <video
-                    key={completionInfo.filePath}
-                    controls
-                    className="h-full w-full object-cover"
-                    src={completionInfo.filePath}
-                  />
-                ) : (
-                  <div className="flex h-full flex-col items-center justify-center gap-3 text-slate-500">
-                    <MonitorPlay className="h-12 w-12 text-slate-600" />
-                    <p className="text-sm">Render preview will appear here once export completes.</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="grid gap-4 rounded-xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-200 sm:grid-cols-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-400">Scenes</p>
-                  <p className="text-lg font-semibold text-slate-100">{scenes.length}</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-400">Duration</p>
-                  <p className="text-lg font-semibold text-slate-100">{formatDuration(totalDurationSeconds)}</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-400">Output</p>
-                  <p className="text-lg font-semibold text-slate-100">
-                    {videoOptions.width}×{videoOptions.height} · {videoOptions.fps} fps
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            <section className="space-y-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
-                <Volume2 className="h-4 w-4 text-blue-300" />
-                Audio Mixer
-              </div>
-              {scenes.length > 0 && (
-                <div className="flex flex-col gap-3 rounded-xl border border-slate-800 bg-slate-900/80 p-4">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Select
-                      value={String(previewSceneIndex)}
-                      onValueChange={value => setPreviewSceneIndex(Number(value))}
-                    >
-                      <SelectTrigger className="h-10 w-48 border-slate-700 bg-slate-950 text-slate-100">
-                        <SelectValue placeholder="Choose scene" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60 border-slate-700 bg-slate-900 text-slate-100">
-                        {scenes.map((scene, idx) => (
-                          <SelectItem key={scene.id ?? idx} value={String(idx)}>
-                            Scene {scene.number}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-2 border-slate-700 bg-slate-950 text-slate-100"
-                      onClick={handlePreview}
-                    >
-                      {isPreviewing ? (
-                        <>
-                          <span className="h-3 w-3 animate-ping rounded-full bg-emerald-400" />
-                          Stop Preview
-                        </>
-                      ) : (
-                        <>
-                          <Music2 className="h-4 w-4" />
-                          Preview Scene
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                  {previewError && <p className="text-xs text-rose-300">{previewError}</p>}
-                </div>
-              )}
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {(Object.keys(mixerState) as MixerTrack[]).map(track => (
-                  <MixerFader
-                    key={track}
-                    label={mapTrackToLabel[track]}
-                    value={mixerState[track].value}
-                    muted={mixerState[track].muted}
-                    solo={mixerState[track].solo}
-                    color={colorTokens[track]}
-                    onChange={value => updateMixerValue(track, value)}
-                    onToggleMute={() => toggleMute(track)}
-                    onToggleSolo={() => toggleSolo(track)}
-                  />
-                ))}
-              </div>
-            </section>
-          </div>
-
-          <div className="flex flex-col gap-6">
-            <section className="space-y-4 rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
-                <Music2 className="h-4 w-4 text-green-300" />
-                Smart Audio Features
-              </div>
-              <div className="space-y-2 text-sm text-slate-300">
-                <label className="flex items-start gap-3">
-                  <Checkbox
-                    checked={autoDucking}
-                    onCheckedChange={checked => setAutoDucking(Boolean(checked))}
-                    className="mt-0.5 border-slate-600 data-[state=checked]:bg-blue-500"
-                  />
-                  <span>
-                    <span className="font-medium text-slate-200">Auto-duck music during speech</span>
-                    <span className="block text-xs text-slate-400">
-                      Sidechain compression automatically lowers the music bed whenever narration or dialogue is present.
-                    </span>
-                  </span>
-                </label>
-                <label className="flex items-start gap-3">
-                  <Checkbox
-                    checked={normalizeAudio}
-                    onCheckedChange={checked => setNormalizeAudio(Boolean(checked))}
-                    className="mt-0.5 border-slate-600 data-[state=checked]:bg-blue-500"
-                  />
-                  <span>
-                    <span className="font-medium text-slate-200">Loudness normalization</span>
-                    <span className="block text-xs text-slate-400">
-                      Balances overall mix levels using EBU R128 compliant normalization for consistent playback across platforms.
-                    </span>
-                  </span>
-                </label>
-                <label className="flex items-start gap-3">
-                  <Checkbox
-                    checked={useHardwareAcceleration}
-                    onCheckedChange={checked => setUseHardwareAcceleration(Boolean(checked))}
-                    className="mt-0.5 border-slate-600 data-[state=checked]:bg-blue-500"
-                  />
-                  <span>
-                    <span className="font-medium text-slate-200">Hardware-accelerated encoding (beta)</span>
-                    <span className="block text-xs text-slate-400">
-                      Attempts to use GPU-assisted FFmpeg encoders when available. Falls back to CPU if unsupported.
-                    </span>
-                  </span>
-                </label>
-              </div>
-            </section>
-
-            <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
-                <FolderOpen className="h-4 w-4 text-slate-300" />
-                Metadata
-              </div>
-              <div className="space-y-3 text-sm text-slate-300">
-                <div>
-                  <label className="text-xs uppercase tracking-wide text-slate-400">Title</label>
-                  <Input
-                    value={metadataDraft.title}
-                    onChange={(event) => persistMetadataDraft({
-                      title: event.target.value,
-                      description: metadataDraft.description
-                    })}
-                    placeholder="Export title"
-                    className="mt-1 border-slate-700 bg-slate-950 text-slate-100"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs uppercase tracking-wide text-slate-400">Description / Notes</label>
-                  <Textarea
-                    value={metadataDraft.description}
-                    onChange={(event) => persistMetadataDraft({
-                      title: metadataDraft.title,
-                      description: event.target.value
-                    })}
-                    placeholder="Add context for collaborators or upload platforms"
-                    className="mt-1 min-h-[96px] border-slate-700 bg-slate-950 text-slate-100"
-                  />
-                  <p className="mt-1 text-[11px] text-slate-500">Saved per project for quick reuse.</p>
-                </div>
-              </div>
-            </section>
-
-            {publishFeatureEnabled && (
-              <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
-                    <FolderOpen className="h-4 w-4 text-blue-300" />
-                    Publish & Share
-                  </div>
-                  <Badge className="border border-blue-400/40 bg-blue-500/10 text-blue-200" variant="secondary">
-                    Beta
-                  </Badge>
-                </div>
-                <p className="text-xs text-slate-400">
-                  Stubbed integrations for YouTube and TikTok uploads. Enable `EXPORT_ENABLE_PUBLISH=true` on desktop to test workflow.
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <Button
-                    variant="outline"
-                    disabled={!completionInfo || !!publishingPlatform}
-                    onClick={() => handlePublish('youtube')}
-                  >
-                    {publishingPlatform === 'youtube' ? 'Publishing…' : 'Upload to YouTube'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    disabled={!completionInfo || !!publishingPlatform}
-                    onClick={() => handlePublish('tiktok')}
-                  >
-                    {publishingPlatform === 'tiktok' ? 'Publishing…' : 'Upload to TikTok'}
-                  </Button>
-                </div>
-                {publishStatus && (
-                  <p className="text-[11px] text-slate-400">{publishStatus}</p>
-                )}
-              </section>
-            )}
-
-            <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/60 p-5 text-xs text-slate-300">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
-                <Info className="h-4 w-4 text-slate-300" />
-                Status
-              </div>
-              <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs uppercase tracking-wide text-slate-400">Phase</span>
-                  <span className="text-xs text-slate-400">{progress ? phaseLabels[progress.phase] : 'Idle'}</span>
-                </div>
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-800">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 transition-all"
-                    style={{ width: `${Math.min(100, Math.max(0, Math.round(aggregatedProgress * 100)))}%` }}
-                  />
-                </div>
-                <p className="mt-3 text-sm text-slate-200">{statusMessage}</p>
-                {workspaceInfo && (
-                  <div className="mt-3 flex items-center gap-2 rounded-md border border-slate-800 bg-slate-900 px-3 py-2 text-[11px] text-slate-400">
-                    <FolderOpen className="h-3.5 w-3.5 flex-shrink-0 text-slate-500" />
-                    <span className="truncate" title={workspaceInfo.path}>
-                      {workspaceInfo.path}
-                    </span>
-                  </div>
-                )}
-                {completionInfo && (
-                  <div className="mt-3 space-y-2 text-[11px] text-slate-300">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="flex flex-1 items-center gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-emerald-100">
-                        <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
-                        <span className="truncate" title={completionInfo.filePath}>
-                          {completionInfo.filePath}
-                        </span>
+          <div className="flex-1 overflow-y-auto px-6 pb-6">
+            <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+              <div className="flex flex-col gap-6">
+                <section className="space-y-4">
+                  <div className="relative aspect-video overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                    {completionInfo?.filePath ? (
+                      <video
+                        key={completionInfo.filePath}
+                        controls
+                        className="h-full w-full object-cover"
+                        src={completionInfo.filePath}
+                      />
+                    ) : (
+                      <div className="flex h-full flex-col items-center justify-center gap-3 text-slate-500">
+                        <MonitorPlay className="h-12 w-12 text-slate-600" />
+                        <p className="text-sm">Render preview will appear here once export completes.</p>
                       </div>
-                      {feedbackVisible && feedbackUrl && (
+                    )}
+                  </div>
+
+                  <div className="grid gap-4 rounded-xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-200 sm:grid-cols-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-slate-400">Scenes</p>
+                      <p className="text-lg font-semibold text-slate-100">{scenes.length}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-slate-400">Duration</p>
+                      <p className="text-lg font-semibold text-slate-100">{formatDuration(totalDurationSeconds)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-slate-400">Output</p>
+                      <p className="text-lg font-semibold text-slate-100">
+                        {videoOptions.width}×{videoOptions.height} · {videoOptions.fps} fps
+                      </p>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="space-y-5">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
+                    <Volume2 className="h-4 w-4 text-blue-300" />
+                    Audio Mixer
+                  </div>
+                  {scenes.length > 0 && (
+                    <div className="flex flex-col gap-3 rounded-xl border border-slate-800 bg-slate-900/80 p-4">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Select
+                          value={String(previewSceneIndex)}
+                          onValueChange={value => setPreviewSceneIndex(Number(value))}
+                        >
+                          <SelectTrigger className="h-10 w-48 border-slate-700 bg-slate-950 text-slate-100">
+                            <SelectValue placeholder="Choose scene" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-60 border-slate-700 bg-slate-900 text-slate-100">
+                            {scenes.map((scene, idx) => (
+                              <SelectItem key={scene.id ?? idx} value={String(idx)}>
+                                Scene {scene.number}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <Button
                           variant="outline"
                           size="sm"
-                          className="border-blue-500/40 bg-blue-500/10 text-blue-100"
-                          onClick={() => {
-                            setFeedbackVisible(false)
-                            trackCta({
-                              event: 'export_studio_feedback_open',
-                              location: 'ExportStudioDialog'
-                            })
-                            window.open(feedbackUrl, '_blank', 'noopener,noreferrer')
-                          }}
+                          className="flex items-center gap-2 border-slate-700 bg-slate-950 text-slate-100"
+                          onClick={handlePreview}
                         >
-                          Share Feedback
+                          {isPreviewing ? (
+                            <>
+                              <span className="h-3 w-3 animate-ping rounded-full bg-emerald-400" />
+                              Stop Preview
+                            </>
+                          ) : (
+                            <>
+                              <Music2 className="h-4 w-4" />
+                              Preview Scene
+                            </>
+                          )}
                         </Button>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 rounded-md border border-slate-800 bg-slate-900 px-3 py-2 text-slate-400">
-                      <HardDrive className="h-3.5 w-3.5 flex-shrink-0 text-slate-500" />
-                      <span>{formatBytes(completionInfo.fileSizeBytes)} · {formatDuration(completionInfo.durationSeconds)}</span>
-                    </div>
-                    <div className="flex flex-col gap-1 rounded-md border border-slate-800 bg-slate-900 px-3 py-2 text-slate-200">
-                      <div className="flex items-center gap-2 text-slate-300">
-                        <FileText className="h-3.5 w-3.5 flex-shrink-0 text-slate-500" />
-                        <span className="font-medium truncate" title={metadataDraft.title}>{metadataDraft.title}</span>
                       </div>
-                      {metadataDraft.description && (
-                        <p className="text-left text-[10px] text-slate-400 line-clamp-3" title={metadataDraft.description}>
-                          {metadataDraft.description}
-                        </p>
-                      )}
+                      {previewError && <p className="text-xs text-rose-300">{previewError}</p>}
                     </div>
-                    {completionInfo.qa?.duration && (
-                      <div className={`rounded-md border px-3 py-2 ${completionInfo.qa.duration.withinTolerance ? 'border-emerald-500/40 bg-emerald-500/5 text-emerald-100' : 'border-amber-500/40 bg-amber-500/10 text-amber-100'}`}>
-                        <p className="flex items-center gap-1 text-[10px] uppercase tracking-wide">
-                          <span>Duration QA</span>
-                          {completionInfo.qa.duration.withinTolerance ? '✓' : '⚠'}
-                        </p>
-                        <p className="text-[11px]">
-                          Expected {completionInfo.qa.duration.expected.toFixed(2)}s · Video {completionInfo.qa.duration.video.toFixed(2)}s
-                        </p>
-                        {completionInfo.qa.duration.warnings?.length ? (
-                          <ul className="mt-1 list-disc space-y-1 pl-4 text-[10px]">
-                            {completionInfo.qa.duration.warnings.map((warning, idx) => (
-                              <li key={idx}>{warning}</li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="text-[10px]">All track durations within tolerance.</p>
+                  )}
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {(Object.keys(mixerState) as MixerTrack[]).map(track => (
+                      <MixerFader
+                        key={track}
+                        label={mapTrackToLabel[track]}
+                        value={mixerState[track].value}
+                        muted={mixerState[track].muted}
+                        solo={mixerState[track].solo}
+                        color={colorTokens[track]}
+                        onChange={value => updateMixerValue(track, value)}
+                        onToggleMute={() => toggleMute(track)}
+                        onToggleSolo={() => toggleSolo(track)}
+                      />
+                    ))}
+                  </div>
+                </section>
+              </div>
+
+              <div className="flex flex-col gap-6">
+                <section className="space-y-4 rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
+                    <Music2 className="h-4 w-4 text-green-300" />
+                    Smart Audio Features
+                  </div>
+                  <div className="space-y-2 text-sm text-slate-300">
+                    <label className="flex items-start gap-3">
+                      <Checkbox
+                        checked={autoDucking}
+                        onCheckedChange={checked => setAutoDucking(Boolean(checked))}
+                        className="mt-0.5 border-slate-600 data-[state=checked]:bg-blue-500"
+                      />
+                      <span>
+                        <span className="font-medium text-slate-200">Auto-duck music during speech</span>
+                        <span className="block text-xs text-slate-400">
+                          Sidechain compression automatically lowers the music bed whenever narration or dialogue is present.
+                        </span>
+                      </span>
+                    </label>
+                    <label className="flex items-start gap-3">
+                      <Checkbox
+                        checked={normalizeAudio}
+                        onCheckedChange={checked => setNormalizeAudio(Boolean(checked))}
+                        className="mt-0.5 border-slate-600 data-[state=checked]:bg-blue-500"
+                      />
+                      <span>
+                        <span className="font-medium text-slate-200">Loudness normalization</span>
+                        <span className="block text-xs text-slate-400">
+                          Balances overall mix levels using EBU R128 compliant normalization for consistent playback across platforms.
+                        </span>
+                      </span>
+                    </label>
+                    <label className="flex items-start gap-3">
+                      <Checkbox
+                        checked={useHardwareAcceleration}
+                        onCheckedChange={checked => setUseHardwareAcceleration(Boolean(checked))}
+                        className="mt-0.5 border-slate-600 data-[state=checked]:bg-blue-500"
+                      />
+                      <span>
+                        <span className="font-medium text-slate-200">Hardware-accelerated encoding (beta)</span>
+                        <span className="block text-xs text-slate-400">
+                          Attempts to use GPU-assisted FFmpeg encoders when available. Falls back to CPU if unsupported.
+                        </span>
+                      </span>
+                    </label>
+                  </div>
+                </section>
+
+                <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
+                    <FolderOpen className="h-4 w-4 text-slate-300" />
+                    Metadata
+                  </div>
+                  <div className="space-y-3 text-sm text-slate-300">
+                    <div>
+                      <label className="text-xs uppercase tracking-wide text-slate-400">Title</label>
+                      <Input
+                        value={metadataDraft.title}
+                        onChange={(event) => persistMetadataDraft({
+                          title: event.target.value,
+                          description: metadataDraft.description
+                        })}
+                        placeholder="Export title"
+                        className="mt-1 border-slate-700 bg-slate-950 text-slate-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs uppercase tracking-wide text-slate-400">Description / Notes</label>
+                      <Textarea
+                        value={metadataDraft.description}
+                        onChange={(event) => persistMetadataDraft({
+                          title: metadataDraft.title,
+                          description: event.target.value
+                        })}
+                        placeholder="Add context for collaborators or upload platforms"
+                        className="mt-1 min-h-[96px] border-slate-700 bg-slate-950 text-slate-100"
+                      />
+                      <p className="mt-1 text-[11px] text-slate-500">Saved per project for quick reuse.</p>
+                    </div>
+                  </div>
+                </section>
+
+                {publishFeatureEnabled && (
+                  <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
+                        <FolderOpen className="h-4 w-4 text-blue-300" />
+                        Publish & Share
+                      </div>
+                      <Badge className="border border-blue-400/40 bg-blue-500/10 text-blue-200" variant="secondary">
+                        Beta
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-slate-400">
+                      Stubbed integrations for YouTube and TikTok uploads. Enable `EXPORT_ENABLE_PUBLISH=true` on desktop to test workflow.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        variant="outline"
+                        disabled={!completionInfo || !!publishingPlatform}
+                        onClick={() => handlePublish('youtube')}
+                      >
+                        {publishingPlatform === 'youtube' ? 'Publishing…' : 'Upload to YouTube'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        disabled={!completionInfo || !!publishingPlatform}
+                        onClick={() => handlePublish('tiktok')}
+                      >
+                        {publishingPlatform === 'tiktok' ? 'Publishing…' : 'Upload to TikTok'}
+                      </Button>
+                    </div>
+                    {publishStatus && (
+                      <p className="text-[11px] text-slate-400">{publishStatus}</p>
+                    )}
+                  </section>
+                )}
+
+                <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/60 p-5 text-xs text-slate-300">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
+                    <Info className="h-4 w-4 text-slate-300" />
+                    Status
+                  </div>
+                  <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs uppercase tracking-wide text-slate-400">Phase</span>
+                      <span className="text-xs text-slate-400">{progress ? phaseLabels[progress.phase] : 'Idle'}</span>
+                    </div>
+                    <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 transition-all"
+                        style={{ width: `${Math.min(100, Math.max(0, Math.round(aggregatedProgress * 100)))}%` }}
+                      />
+                    </div>
+                    <p className="mt-3 text-sm text-slate-200">{statusMessage}</p>
+                    {workspaceInfo && (
+                      <div className="mt-3 flex items-center gap-2 rounded-md border border-slate-800 bg-slate-900 px-3 py-2 text-[11px] text-slate-400">
+                        <FolderOpen className="h-3.5 w-3.5 flex-shrink-0 text-slate-500" />
+                        <span className="truncate" title={workspaceInfo.path}>
+                          {workspaceInfo.path}
+                        </span>
+                      </div>
+                    )}
+                    {completionInfo && (
+                      <div className="mt-3 space-y-2 text-[11px] text-slate-300">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="flex flex-1 items-center gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-emerald-100">
+                            <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
+                            <span className="truncate" title={completionInfo.filePath}>
+                              {completionInfo.filePath}
+                            </span>
+                          </div>
+                          {feedbackVisible && feedbackUrl && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-blue-500/40 bg-blue-500/10 text-blue-100"
+                              onClick={() => {
+                                setFeedbackVisible(false)
+                                trackCta({
+                                  event: 'export_studio_feedback_open',
+                                  location: 'ExportStudioDialog'
+                                })
+                                window.open(feedbackUrl, '_blank', 'noopener,noreferrer')
+                              }}
+                            >
+                              Share Feedback
+                            </Button>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 rounded-md border border-slate-800 bg-slate-900 px-3 py-2 text-slate-400">
+                          <HardDrive className="h-3.5 w-3.5 flex-shrink-0 text-slate-500" />
+                          <span>{formatBytes(completionInfo.fileSizeBytes)} · {formatDuration(completionInfo.durationSeconds)}</span>
+                        </div>
+                        <div className="flex flex-col gap-1 rounded-md border border-slate-800 bg-slate-900 px-3 py-2 text-slate-200">
+                          <div className="flex items-center gap-2 text-slate-300">
+                            <FileText className="h-3.5 w-3.5 flex-shrink-0 text-slate-500" />
+                            <span className="font-medium truncate" title={metadataDraft.title}>{metadataDraft.title}</span>
+                          </div>
+                          {metadataDraft.description && (
+                            <p className="text-left text-[10px] text-slate-400 line-clamp-3" title={metadataDraft.description}>
+                              {metadataDraft.description}
+                            </p>
+                          )}
+                        </div>
+                        {completionInfo.qa?.duration && (
+                          <div className={`rounded-md border px-3 py-2 ${completionInfo.qa.duration.withinTolerance ? 'border-emerald-500/40 bg-emerald-500/5 text-emerald-100' : 'border-amber-500/40 bg-amber-500/10 text-amber-100'}`}>
+                            <p className="flex items-center gap-1 text-[10px] uppercase tracking-wide">
+                              <span>Duration QA</span>
+                              {completionInfo.qa.duration.withinTolerance ? '✓' : '⚠'}
+                            </p>
+                            <p className="text-[11px]">
+                              Expected {completionInfo.qa.duration.expected.toFixed(2)}s · Video {completionInfo.qa.duration.video.toFixed(2)}s
+                            </p>
+                            {completionInfo.qa.duration.warnings?.length ? (
+                              <ul className="mt-1 list-disc space-y-1 pl-4 text-[10px]">
+                                {completionInfo.qa.duration.warnings.map((warning, idx) => (
+                                  <li key={idx}>{warning}</li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-[10px]">All track durations within tolerance.</p>
+                            )}
+                          </div>
+                        )}
+                        {completionInfo.performance?.stages && completionInfo.performance.stages.length > 0 && (
+                          <div className="rounded-md border border-slate-800 bg-slate-900 px-3 py-2 text-[11px] text-slate-300">
+                            <p className="text-[10px] uppercase tracking-wide text-slate-500">Performance</p>
+                            <p className="text-[11px]">
+                              Total {((completionInfo.performance.totalDurationMs ?? 0) / 1000).toFixed(1)}s
+                            </p>
+                            <ul className="mt-1 space-y-1">
+                              {completionInfo.performance.stages.map((stage, idx) => (
+                                <li key={idx} className="flex justify-between gap-4 text-[11px]">
+                                  <span>{stage.label}</span>
+                                  <span>{(stage.durationMs / 1000).toFixed(1)}s</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
                         )}
                       </div>
                     )}
-                    {completionInfo.performance?.stages && completionInfo.performance.stages.length > 0 && (
-                      <div className="rounded-md border border-slate-800 bg-slate-900 px-3 py-2 text-[11px] text-slate-300">
-                        <p className="text-[10px] uppercase tracking-wide text-slate-500">Performance</p>
-                        <p className="text-[11px]">
-                          Total {((completionInfo.performance.totalDurationMs ?? 0) / 1000).toFixed(1)}s
-                        </p>
-                        <ul className="mt-1 space-y-1">
-                          {completionInfo.performance.stages.map((stage, idx) => (
-                            <li key={idx} className="flex justify-between gap-4 text-[11px]">
-                              <span>{stage.label}</span>
-                              <span>{(stage.durationMs / 1000).toFixed(1)}s</span>
-                            </li>
-                          ))}
-                        </ul>
+                    {errorMessage && (
+                      <div className="mt-3 flex flex-col gap-1 rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-[11px] text-rose-100">
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span>{errorMessage}</span>
+                        </div>
+                        {errorStage && (
+                          <span className="text-[10px] uppercase tracking-wide text-rose-200/80">
+                            Stage: {labelForStage(errorStage)}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
-                {errorMessage && (
-                  <div className="mt-3 flex flex-col gap-1 rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-[11px] text-rose-100">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span>{errorMessage}</span>
-                    </div>
-                    {errorStage && (
-                      <span className="text-[10px] uppercase tracking-wide text-rose-200/80">
-                        Stage: {labelForStage(errorStage)}
-                      </span>
-                    )}
-                  </div>
-                )}
+                </section>
               </div>
-            </section>
+            </div>
           </div>
-        </div>
 
-        <DialogFooter className="mt-4 flex flex-col gap-3 border-t border-slate-800 pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col text-xs text-slate-400">
-            <span>Exports run locally via hardware-accelerated FFmpeg (5-pass pipeline).</span>
-            <span>Keep the desktop renderer running until completion.</span>
-          </div>
-          <div className="flex items-center gap-3">
-            {completionInfo && (
-              <>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    const a = document.createElement('a')
-                    a.href = completionInfo.filePath
-                    a.download = `${projectTitle.replace(/[^a-z0-9-_]/gi, '-').toLowerCase() || 'export'}.mp4`
-                    a.target = '_blank'
-                    document.body.appendChild(a)
-                    a.click()
-                    document.body.removeChild(a)
-                    trackCta({
-                      event: 'export_studio_download',
-                      location: 'ExportStudioDialog'
-                    })
-                  }}
-                >
-                  Download
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(completionInfo.filePath)
-                      toast.success('Video URL copied to clipboard')
+          <DialogFooter className="mt-0 flex flex-col gap-3 border-t border-slate-800 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col text-xs text-slate-400">
+              <span>Exports run locally via hardware-accelerated FFmpeg (5-pass pipeline).</span>
+              <span>Keep the desktop renderer running until completion.</span>
+            </div>
+            <div className="flex items-center gap-3">
+              {completionInfo && (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const a = document.createElement('a')
+                      a.href = completionInfo.filePath
+                      a.download = `${projectTitle.replace(/[^a-z0-9-_]/gi, '-').toLowerCase() || 'export'}.mp4`
+                      a.target = '_blank'
+                      document.body.appendChild(a)
+                      a.click()
+                      document.body.removeChild(a)
                       trackCta({
-                        event: 'export_studio_copy_link',
+                        event: 'export_studio_download',
                         location: 'ExportStudioDialog'
                       })
-                    } catch (error) {
-                      toast.error('Unable to copy video link')
-                      console.error('[ExportStudio] Copy failed', error)
-                    }
-                  }}
-                >
-                  Copy Link
-                </Button>
-              </>
-            )}
-            <Button
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-              disabled={exportStatus === 'running'}
-            >
-              Close
-            </Button>
-            <Button
-              variant="primary"
-              size="lg"
-              disabled={startDisabled}
-              onClick={handleStartExport}
-              className="flex items-center gap-2"
-            >
-              {exportStatus === 'running' ? (
-                <>
-                  <span className="flex h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                  Rendering…
-                </>
-              ) : (
-                <>
-                  <Music2 className="h-4 w-4" />
-                  Start Export
+                    }}
+                  >
+                    Download
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(completionInfo.filePath)
+                        toast.success('Video URL copied to clipboard')
+                        trackCta({
+                          event: 'export_studio_copy_link',
+                          location: 'ExportStudioDialog'
+                        })
+                      } catch (error) {
+                        toast.error('Unable to copy video link')
+                        console.error('[ExportStudio] Copy failed', error)
+                      }
+                    }}
+                  >
+                    Copy Link
+                  </Button>
                 </>
               )}
-            </Button>
-          </div>
-        </DialogFooter>
+              <Button
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+                disabled={exportStatus === 'running'}
+              >
+                Close
+              </Button>
+              <Button
+                variant="primary"
+                size="lg"
+                disabled={startDisabled}
+                onClick={handleStartExport}
+                className="flex items-center gap-2"
+              >
+                {exportStatus === 'running' ? (
+                  <>
+                    <span className="flex h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                    Rendering…
+                  </>
+                ) : (
+                  <>
+                    <Music2 className="h-4 w-4" />
+                    Start Export
+                  </>
+                )}
+              </Button>
+            </div>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   )
