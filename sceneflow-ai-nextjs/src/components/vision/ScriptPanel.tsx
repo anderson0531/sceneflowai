@@ -260,6 +260,33 @@ function stripAudioDescriptions(action: string): string {
   return cleaned
 }
 
+function normalizeScenes(source: any): any[] {
+  if (!source) return []
+
+  const candidates = [
+    source?.script?.scenes,
+    source?.scenes,
+    source?.visionPhase?.script?.script?.scenes,
+    source?.visionPhase?.scenes,
+    source?.metadata?.visionPhase?.script?.script?.scenes,
+    source?.metadata?.visionPhase?.scenes
+  ]
+
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate) && candidate.length > 0) {
+      return candidate
+    }
+  }
+
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) {
+      return candidate
+    }
+  }
+
+  return []
+}
+
 // Sortable Scene Card Wrapper for drag-and-drop
 function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, ...props }: any) {
   const {
@@ -287,6 +314,8 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
         getScoreColorClass={getScoreColorClass}
         dragHandleProps={listeners}
         onOpenSceneReview={props.onOpenSceneReview}
+        canUseExportStudio={props.canUseExportStudio}
+        onOpenExportStudio={props.onOpenExportStudio}
       />
     </div>
   )
@@ -392,7 +421,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [isPlayingAll, setIsPlayingAll] = useState(false)
   const playbackAbortRef = useRef(false)
 
-  const scenes = script?.script?.scenes || []
+  const scenes = useMemo(() => normalizeScenes(script), [script])
 
   const [isDialogGenerating, setIsDialogGenerating] = useState(false)
   const [dialogGenerationMode, setDialogGenerationMode] = useState<DialogGenerationMode>('foreground')
@@ -1766,6 +1795,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       generateSFX={generateSFX}
                       onGenerateSceneDirection={onGenerateSceneDirection}
                       generatingDirectionFor={generatingDirectionFor}
+                      canUseExportStudio={canUseExportStudio}
+                      onOpenExportStudio={handleOpenExportStudio}
                 />
                     )
                   })}
