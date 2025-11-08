@@ -832,7 +832,10 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     }))
   }
 
-  const isExportStudioEnabled = process.env.NEXT_PUBLIC_EXPORT_STUDIO_ENABLED === 'true'
+  const isExportStudioEnabled = useMemo(
+    () => process.env.NEXT_PUBLIC_EXPORT_STUDIO_ENABLED === 'true',
+    []
+  )
   const handleDownloadMP4 = async () => {
     setIsRendering(true)
 

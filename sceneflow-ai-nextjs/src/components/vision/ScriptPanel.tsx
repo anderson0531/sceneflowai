@@ -1250,7 +1250,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     })
   }, [scenes])
 
-  const isExportStudioEnabled = process.env.NEXT_PUBLIC_EXPORT_STUDIO_ENABLED === 'true'
+  const isExportStudioEnabled = useMemo(
+    () => process.env.NEXT_PUBLIC_EXPORT_STUDIO_ENABLED === 'true',
+    []
+  )
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 h-full flex flex-col overflow-hidden">
