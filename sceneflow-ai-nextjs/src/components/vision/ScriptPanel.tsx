@@ -1250,7 +1250,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     })
   }, [scenes])
 
-  const exportStudioEnabled = process.env.NEXT_PUBLIC_EXPORT_STUDIO_ENABLED === 'true'
+  const isExportStudioEnabled = process.env.NEXT_PUBLIC_EXPORT_STUDIO_ENABLED === 'true'
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 h-full flex flex-col overflow-hidden">
@@ -1919,7 +1919,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         onEnded={() => setPlayingAudio(null)}
         className="hidden"
       />
-      {exportStudioEnabled && (
+      {isExportStudioEnabled && (
         <ExportStudioDialog
           open={exportStudioOpen}
           onOpenChange={setExportStudioOpen}
@@ -2268,7 +2268,7 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
             )}
 
           {/* Export Studio Button */}
-          {exportStudioEnabled && script && scenes && scenes.length > 0 && (
+          {isExportStudioEnabled && script && scenes && scenes.length > 0 && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>

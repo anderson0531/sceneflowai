@@ -832,11 +832,11 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     }))
   }
 
-  const exportStudioEnabled = process.env.NEXT_PUBLIC_EXPORT_STUDIO_ENABLED === 'true'
+  const isExportStudioEnabled = process.env.NEXT_PUBLIC_EXPORT_STUDIO_ENABLED === 'true'
   const handleDownloadMP4 = async () => {
     setIsRendering(true)
 
-    if (!exportStudioEnabled) {
+    if (!isExportStudioEnabled) {
       setIsRendering(false)
       toast.error('Export Studio is disabled. Enable NEXT_PUBLIC_EXPORT_STUDIO_ENABLED to download MP4 renders.', { style: renderToastStyle })
       trackCta({
