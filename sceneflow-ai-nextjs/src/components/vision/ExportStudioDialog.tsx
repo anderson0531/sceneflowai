@@ -29,6 +29,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { getExportBridge } from '@/lib/export/exportBridge'
 import { WebAudioMixer, type SceneAudioConfig } from '@/lib/audio/webAudioMixer'
+import {
+  getInstallersByPlatform,
+  getLatestRendererRelease
+} from '@/lib/export/rendererInstallers'
+import type { RendererArtifact } from '@/lib/export/rendererInstallers'
 import { Badge } from '@/components/ui/badge'
 import { trackCta } from '@/lib/analytics'
 import type {
@@ -341,6 +346,24 @@ const mapTrackToLabel: Record<MixerTrack, string> = {
   sfx: 'SFX'
 }
 
+type DesktopPlatform = 'mac' | 'windows'
+
+type DownloadOption = {
+  key: string
+  platform: DesktopPlatform
+  arch: RendererArtifact['arch']
+  label: string
+  installer: RendererArtifact
+}
+
+const detectPlatform = (): DesktopPlatform | null => {
+  if (typeof navigator === 'undefined') return null
+  const ua = navigator.userAgent.toLowerCase()
+  if (ua.includes('win')) return 'windows'
+  if (ua.includes('mac')) return 'mac'
+  return null
+}
+
 export function ExportStudioDialog({
   open,
   onOpenChange,
@@ -373,7 +396,6 @@ export function ExportStudioDialog({
   const [previewError, setPreviewError] = useState<string | null>(null)
   const publishFeatureEnabled = process.env.NEXT_PUBLIC_EXPORT_PUBLISH_ENABLED === 'true'
   const hardwareDefault = process.env.NEXT_PUBLIC_EXPORT_HWACCEL_DEFAULT === 'true'
-  const desktopDownloadUrl = process.env.NEXT_PUBLIC_EXPORT_DESKTOP_URL
   const [publishStatus, setPublishStatus] = useState<string | null>(null)
   const [publishingPlatform, setPublishingPlatform] = useState<'youtube' | 'tiktok' | null>(null)
   const [errorStage, setErrorStage] = useState<string | null>(null)
@@ -381,6 +403,92 @@ export function ExportStudioDialog({
   const [etaSeconds, setEtaSeconds] = useState<number | null>(null)
   const [feedbackVisible, setFeedbackVisible] = useState(false)
   const feedbackUrl = process.env.NEXT_PUBLIC_EXPORT_FEEDBACK_URL
+  const rendererRelease = useMemo(() => getLatestRendererRelease(), [])
+  const installersByPlatform = useMemo(() => getInstallersByPlatform(rendererRelease), [rendererRelease])
+  const downloadOptions = useMemo<DownloadOption[]>(() => {
+    const options: DownloadOption[] = []
+
+    const groupByArch = (artifacts: RendererArtifact[]) => {
+      const groups = new Map<RendererArtifact['arch'], RendererArtifact[]>()
+      artifacts.forEach((artifact) => {
+        const key = artifact.arch ?? 'universal'
+        const current = groups.get(key) ?? []
+        current.push(artifact)
+        groups.set(key, current)
+      })
+      return groups
+    }
+
+    const macGroups = groupByArch(installersByPlatform.mac)
+    const macOrder: RendererArtifact['arch'][] = ['arm64', 'x64', 'universal']
+    macOrder.forEach((arch) => {
+      const artifacts = macGroups.get(arch)
+      if (!artifacts || artifacts.length === 0) return
+      const preferred = artifacts.find((artifact) => artifact.type === 'dmg') ?? artifacts[0]
+      const label =
+        arch === 'arm64'
+          ? 'Download for macOS (Apple Silicon)'
+          : arch === 'x64'
+            ? 'Download for macOS (Intel)'
+            : 'Download for macOS'
+      options.push({
+        key: `mac-${arch}`,
+        platform: 'mac',
+        arch,
+        label,
+        installer: preferred
+      })
+    })
+
+    const windowsGroups = groupByArch(installersByPlatform.windows)
+    const windowsOrder: RendererArtifact['arch'][] = ['x64', 'arm64', 'universal']
+    windowsOrder.forEach((arch) => {
+      const artifacts = windowsGroups.get(arch)
+      if (!artifacts || artifacts.length === 0) return
+      const preferred = artifacts.find((artifact) => artifact.type === 'nsis') ?? artifacts[0]
+      options.push({
+        key: `windows-${arch}`,
+        platform: 'windows',
+        arch,
+        label: 'Download for Windows',
+        installer: preferred
+      })
+    })
+
+    return options
+  }, [installersByPlatform])
+  const [detectedPlatform, setDetectedPlatform] = useState<DesktopPlatform | null>(null)
+  useEffect(() => {
+    if (!open) {
+      setDetectedPlatform(null)
+      return
+    }
+    setDetectedPlatform(detectPlatform())
+  }, [open])
+  const explicitRecommendedKey = useMemo(() => {
+    if (!detectedPlatform) return null
+    const option = downloadOptions.find((candidate) => candidate.platform === detectedPlatform)
+    return option?.key ?? null
+  }, [detectedPlatform, downloadOptions])
+  const recommendedDownloadKey = useMemo(
+    () => explicitRecommendedKey ?? (downloadOptions[0]?.key ?? null),
+    [explicitRecommendedKey, downloadOptions]
+  )
+  const handleInstallerDownload = useCallback(
+    (option: DownloadOption) => {
+      trackCta({
+        event: 'export_studio_renderer_download',
+        location: 'ExportStudioDialog',
+        label: option.platform,
+        value: `${option.installer.type}-${option.installer.arch}-${rendererRelease?.version ?? 'unknown'}`
+      })
+
+      if (typeof window !== 'undefined') {
+        window.open(option.installer.url, '_blank', 'noopener,noreferrer')
+      }
+    },
+    [rendererRelease?.version]
+  )
 
   const audioMixerRef = useRef<WebAudioMixer | null>(null)
   const mixerStateRef = useRef<MixerState>(mixerState)
@@ -971,21 +1079,38 @@ export function ExportStudioDialog({
                     </p>
                   </div>
                 </div>
-                {desktopDownloadUrl && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="self-start border-amber-400/60 bg-amber-500/10 text-amber-100 hover:bg-amber-500/20"
-                    onClick={() => {
-                      trackCta({
-                        event: 'export_studio_renderer_download',
-                        location: 'ExportStudioDialog'
-                      })
-                      window.open(desktopDownloadUrl, '_blank', 'noopener,noreferrer')
-                    }}
-                  >
-                    Download SceneFlow Desktop
-                  </Button>
+                {rendererRelease && downloadOptions.length > 0 ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-wrap gap-2">
+                      {downloadOptions.map(option => (
+                        <Button
+                          key={option.key}
+                          variant={option.key === recommendedDownloadKey ? 'primary' : 'outline'}
+                          size="sm"
+                          className={cn(
+                            'flex items-center gap-2',
+                            option.key === recommendedDownloadKey
+                              ? 'bg-amber-400 text-slate-900 hover:bg-amber-300 focus-visible:ring-amber-200'
+                              : 'border-amber-400/60 bg-amber-500/10 text-amber-100 hover:bg-amber-500/20'
+                          )}
+                          onClick={() => handleInstallerDownload(option)}
+                        >
+                          {option.label}
+                          <span className="text-[11px] font-mono uppercase tracking-wide">
+                            v{rendererRelease.version}
+                          </span>
+                        </Button>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-amber-100/85">
+                      Latest desktop renderer build v{rendererRelease.version}
+                      {detectedPlatform ? ` · detected ${detectedPlatform === 'mac' ? 'macOS' : 'Windows'} environment` : ''}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-amber-100/90">
+                    Desktop installers are not yet published. After running <code className="rounded bg-amber-500/20 px-1 py-0.5">npm run electron:build</code> followed by <code className="rounded bg-amber-500/20 px-1 py-0.5">npm run electron:upload</code>, download links will appear here automatically.
+                  </p>
                 )}
               </div>
             </div>

@@ -21,6 +21,7 @@ The Creatomate workflow has been superseded by a local FFmpeg-based export pipel
    * `NEXT_PUBLIC_EXPORT_HWACCEL_DEFAULT=true` (optional) – pre-checks the hardware acceleration toggle in the dialog.
    * `NEXT_PUBLIC_EXPORT_FEEDBACK_URL=https://example.com/form` (optional) – enables the in-app “Share Feedback” button after export completes.
 3. **FFmpeg binaries:** Automatically installed via `fluent-ffmpeg` + `@ffmpeg-installer/ffmpeg/@ffprobe-installer/ffprobe`. Ensure they remain unpacked in distribution builds (handled by `asarUnpack`).
+4. **Desktop builds:** Generate installers from the host OS—`npm run electron:build:mac` (macOS arm64/x64 DMG + ZIP) and `npm run electron:build:win` (Windows x64 NSIS; requires Windows or macOS with Wine/Mono). Artifacts land in `dist/desktop/`.
 
 ## 3. Using Export Studio
 
@@ -56,7 +57,18 @@ The Creatomate workflow has been superseded by a local FFmpeg-based export pipel
 | Renderer bridge | `electron/preload.js`, `src/types/export-api.d.ts` |
 | Export dialog UI | `src/components/vision/ExportStudioDialog.tsx` |
 
-## 7. Future Work
+## 7. Desktop Installer Workflow
+
+1. **Build the web app (optional but recommended):** `npm run build`
+2. **Generate installers:**
+   * macOS (run on macOS) – `npm run electron:build:mac` produces a signed DMG + ZIP in `dist/desktop/`.
+   * Windows (run on Windows or macOS with Wine/Mono) – `npm run electron:build:win` produces an NSIS `.exe`.
+   * Both platforms (from their respective hosts) – `npm run electron:build:all`.
+3. **Upload to Vercel Blob:** set `VERCEL_BLOB_RW_TOKEN` (or `BLOB_READ_WRITE_TOKEN`) in your shell, then execute `npm run electron:upload`. The script publishes every installer in `dist/desktop/` and refreshes `desktop/renderer-manifest.json` with the public URLs + checksums.
+4. **Commit manifest updates:** the manifest is imported by the Next.js app at build time. Commit the updated JSON so production deployments expose the new links automatically.
+5. **Trigger a web redeploy:** push to `main` (or redeploy in Vercel) so the Export Studio dialog picks up the latest manifest.
+
+## 8. Future Work
 
 * **feature-flag:** Gate Export Studio behind a runtime toggle so legacy Creatomate path remains available.
 * **analytics:** Capture telemetry around export success/latency.

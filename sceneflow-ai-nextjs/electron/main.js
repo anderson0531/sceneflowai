@@ -19,10 +19,23 @@ const ffmpegEnabled = process.env.EXPORT_STUDIO_ENABLED === 'true'
 
 const sanitizeLabel = (value) => value.toString().replace(/[^a-z0-9-_]+/gi, '-').toLowerCase()
 
+function resolveStartUrl() {
+  if (process.env.ELECTRON_START_URL) {
+    return process.env.ELECTRON_START_URL
+  }
+
+  if (app.isPackaged) {
+    return path.join(__dirname, 'renderer', 'index.html')
+  }
+
+  return 'http://localhost:3000'
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1280,
     height: 720,
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -30,13 +43,17 @@ function createWindow() {
     }
   })
 
-  const startUrl = process.env.ELECTRON_START_URL || 'http://localhost:3000'
+  const startUrl = resolveStartUrl()
 
   if (/^https?:\/\//i.test(startUrl)) {
     win.loadURL(startUrl)
   } else {
     win.loadFile(startUrl)
   }
+
+  win.once('ready-to-show', () => {
+    win.show()
+  })
 }
 
 const safeSend = (webContents, channel, schema, payload) => {
