@@ -1271,6 +1271,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     setIsExportStudioEnabled(enabled)
   }, [])
 
+  const canUseExportStudio = isExportStudioEnabled && !!script && scenes.length > 0
+
+  const handleOpenExportStudio = () => {
+    if (!canUseExportStudio) return
+    setExportStudioOpen(true)
+  }
+
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 h-full flex flex-col overflow-hidden">
       {/* Header */}
@@ -2013,9 +2020,63 @@ interface SceneCardProps {
   // NEW: Scene direction generation props
   onGenerateSceneDirection?: (sceneIdx: number) => Promise<void>
   generatingDirectionFor?: number | null
+  // Export Studio controls
+  canUseExportStudio: boolean
+  onOpenExportStudio: () => void
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpanding, onPlayScene, isPlaying, audioEnabled, sceneIdx, onGenerateImage, isGeneratingImage, onOpenPromptBuilder, onOpenPromptDrawer, scenePrompt, onPromptChange, validationWarning, validationInfo, isWarningExpanded, onToggleWarningExpanded, onDismissValidationWarning, parseScriptForAudio, generateAndPlaySFX, generateAndPlayMusic, onPlayAudio, onGenerateSceneAudio, playingAudio, generatingDialogue, setGeneratingDialogue, timelineStart, dragHandleProps, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onStopAudio, onOpenSceneReview, generatingMusic, setGeneratingMusic, generatingSFX, setGeneratingSFX, generateMusic, generateSFX, onGenerateSceneDirection, generatingDirectionFor, selectedLanguage = 'en' }: SceneCardProps) {
+function SceneCard({
+  scene,
+  sceneNumber,
+  isSelected,
+  onClick,
+  onExpand,
+  isExpanding,
+  onPlayScene,
+  isPlaying,
+  audioEnabled,
+  sceneIdx,
+  onGenerateImage,
+  isGeneratingImage,
+  onOpenPromptBuilder,
+  onOpenPromptDrawer,
+  scenePrompt,
+  onPromptChange,
+  validationWarning,
+  validationInfo,
+  isWarningExpanded,
+  onToggleWarningExpanded,
+  onDismissValidationWarning,
+  parseScriptForAudio,
+  generateAndPlaySFX,
+  generateAndPlayMusic,
+  onPlayAudio,
+  onGenerateSceneAudio,
+  playingAudio,
+  generatingDialogue,
+  setGeneratingDialogue,
+  timelineStart,
+  dragHandleProps,
+  onAddScene,
+  onDeleteScene,
+  onEditScene,
+  onGenerateSceneScore,
+  generatingScoreFor,
+  getScoreColorClass,
+  onStopAudio,
+  onOpenSceneReview,
+  generatingMusic,
+  setGeneratingMusic,
+  generatingSFX,
+  setGeneratingSFX,
+  generateMusic,
+  generateSFX,
+  onGenerateSceneDirection,
+  generatingDirectionFor,
+  canUseExportStudio,
+  onOpenExportStudio,
+  selectedLanguage = 'en'
+}: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
   const [isSceneVisualOpen, setIsSceneVisualOpen] = useState(false)
@@ -2287,14 +2348,17 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onExpand, isExpand
             )}
 
           {/* Export Studio Button */}
-          {isExportStudioEnabled && script && scenes && scenes.length > 0 && (
+          {canUseExportStudio && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="primary"
                     size="sm"
-                    onClick={() => setExportStudioOpen(true)}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      onOpenExportStudio()
+                    }}
                     className="flex items-center gap-1"
                   >
                     <Film className="w-4 h-4" />
