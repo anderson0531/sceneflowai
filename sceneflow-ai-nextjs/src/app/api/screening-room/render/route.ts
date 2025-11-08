@@ -17,8 +17,8 @@ export async function POST(req: NextRequest) {
     if (process.env.EXPORT_STUDIO_ENABLED !== 'true') {
       return NextResponse.json({
         error: 'FFmpeg export disabled',
-        message: 'FFmpeg export pipeline is disabled. Use /api/screening-room/render/legacy instead.'
-      }, { status: 400 })
+        message: 'Set EXPORT_STUDIO_ENABLED=true to enable the FFmpeg export pipeline.'
+      }, { status: 503 })
     }
 
     const { scenes, options, projectTitle } = await req.json()

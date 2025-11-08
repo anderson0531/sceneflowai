@@ -837,84 +837,13 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     setIsRendering(true)
 
     if (!exportStudioEnabled) {
+      setIsRendering(false)
+      toast.error('Export Studio is disabled. Enable NEXT_PUBLIC_EXPORT_STUDIO_ENABLED to download MP4 renders.', { style: renderToastStyle })
       trackCta({
-        event: 'creatomate_render_start',
-        location: 'ScriptPlayer',
-        value: scenes.length
+        event: 'export_studio_disabled_download_attempt',
+        location: 'ScriptPlayer'
       })
-      useOverlayStore.getState().show('Submitting Creatomate render...', 120)
-      try {
-        const response = await fetch('/api/screening-room/render/legacy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            scenes,
-            options: {
-              width: 1920,
-              height: 1080,
-              fps: 30,
-              quality: 'high',
-              format: 'mp4'
-            },
-            projectTitle: script?.title || 'Screening Room'
-          })
-        })
-
-        if (!response.ok) {
-          const error = await response.json().catch(() => ({ message: 'Render failed' }))
-          throw new Error(error.message || `Render failed: ${response.status}`)
-        }
-
-        const data = await response.json()
-        if (!data.success || !data.videoUrl) {
-          throw new Error(data.message || 'Render did not return video URL')
-        }
-
-        useOverlayStore.getState().hide()
-        setIsRendering(false)
-
-        trackCta({
-          event: 'creatomate_render_complete',
-          location: 'ScriptPlayer',
-          value: scenes.length
-        })
-
-        toast.success('Video render complete!', {
-          duration: 8000,
-          action: {
-            label: 'Download',
-            onClick: () => {
-              const a = document.createElement('a')
-              a.href = data.videoUrl
-              a.download = `${(script?.title || 'screening-room').replace(/[^a-z0-9]/gi, '-')}.mp4`
-              a.target = '_blank'
-              document.body.appendChild(a)
-              a.click()
-              document.body.removeChild(a)
-            }
-          }
-        })
-
-        const a = document.createElement('a')
-        a.href = data.videoUrl
-        a.download = `${(script?.title || 'screening-room').replace(/[^a-z0-9]/gi, '-')}.mp4`
-        a.target = '_blank'
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        return
-      } catch (error) {
-        useOverlayStore.getState().hide()
-        setIsRendering(false)
-        console.error('Legacy Creatomate render failed:', error)
-        trackCta({
-          event: 'creatomate_render_error',
-          location: 'ScriptPlayer',
-          value: error instanceof Error ? error.message : 'Unknown error'
-        })
-        toast.error(`Failed to submit legacy render: ${error instanceof Error ? error.message : 'Unknown error'}`, { style: renderToastStyle })
-        return
-      }
+      return
     }
 
     trackCta({

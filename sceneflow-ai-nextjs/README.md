@@ -14,8 +14,8 @@ The Creatomate workflow has been superseded by a local FFmpeg-based export pipel
 
 1. **Desktop renderer:** Run the Electron app (`npm run electron:dev`) from the project root. The renderer must be active while the Next.js frontend is in use.
 2. **Environment flags:**
-   * `EXPORT_STUDIO_ENABLED=true` (Electron) – enables the FFmpeg pipeline. Set to `false` to fall back to the legacy Creatomate renderer.
-   * `NEXT_PUBLIC_EXPORT_STUDIO_ENABLED=true` (Next.js) – shows the Export Studio UI. When `false`, users are routed to the legacy Creatomate flow.
+   * `EXPORT_STUDIO_ENABLED=true` (Electron) – required. When false, export requests return an error.
+   * `NEXT_PUBLIC_EXPORT_STUDIO_ENABLED=true` (Next.js) – required for the UI to show Export Studio actions.
    * `EXPORT_ENABLE_PUBLISH=true` (Electron) – enables stubbed YouTube/TikTok handlers.
    * `NEXT_PUBLIC_EXPORT_PUBLISH_ENABLED=true` (Next.js) – shows publish buttons in the UI.
    * `NEXT_PUBLIC_EXPORT_HWACCEL_DEFAULT=true` (optional) – pre-checks the hardware acceleration toggle in the dialog.
