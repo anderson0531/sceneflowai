@@ -2,6 +2,7 @@ const path = require('path')
 const fs = require('fs/promises')
 const ffmpeg = require('fluent-ffmpeg')
 const { downloadAssetTo, getSuggestedExtension } = require('../utils/download')
+const { captureFfmpegError } = require('../utils/ffmpegErrors')
 
 const clampDuration = (value) => {
   const numeric = Number(value)
@@ -11,7 +12,7 @@ const clampDuration = (value) => {
   return Math.max(0.5, numeric)
 }
 
-const renderSceneClip = (imagePath, outputPath, duration, options) => {
+const renderSceneClip = (imagePath, outputPath, duration, options, label) => {
   return new Promise((resolve, reject) => {
     const command = ffmpeg()
 
@@ -31,7 +32,7 @@ const renderSceneClip = (imagePath, outputPath, duration, options) => {
       ])
       .outputOptions(['-f mpegts'])
       .on('end', resolve)
-      .on('error', reject)
+      .on('error', captureFfmpegError(label || 'scene', reject))
       .output(outputPath)
 
     command.run()
@@ -73,10 +74,18 @@ const renderSceneClips = async ({
     const imagePath = await prepareSceneImage(scene, index, workspace)
     const clipPath = path.join(videoDir, `scene-${index + 1}.ts`)
 
-    await renderSceneClip(imagePath, clipPath, duration, {
-      ...videoOptions,
-      useHardwareAcceleration
-    })
+    const label = `scene-${scene.number ?? index + 1}`
+
+    await renderSceneClip(
+      imagePath,
+      clipPath,
+      duration,
+      {
+        ...videoOptions,
+        useHardwareAcceleration
+      },
+      label
+    )
 
     const record = {
       clipPath,

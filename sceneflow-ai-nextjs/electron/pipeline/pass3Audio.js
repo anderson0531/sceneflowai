@@ -1,6 +1,7 @@
 const path = require('path')
 const ffmpeg = require('fluent-ffmpeg')
 const { downloadAssetTo, getSuggestedExtension } = require('../utils/download')
+const { captureFfmpegError } = require('../utils/ffmpegErrors')
 
 const MS_PER_SECOND = 1000
 
@@ -200,7 +201,7 @@ const renderTrack = async ({
       .complexFilter(filterParts, outputLabel)
       .outputOptions(['-map', `[${outputLabel}]`, '-c:a', 'aac', '-b:a', '192k'])
       .on('end', resolve)
-      .on('error', reject)
+      .on('error', captureFfmpegError(`audio-${track}`, reject))
       .save(outputPath)
   })
 

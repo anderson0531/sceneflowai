@@ -17,6 +17,7 @@ import CollabRecommendation from './CollabRecommendation'
 import CollabChatMessage from './CollabChatMessage'
 import SubscriptionTier from './SubscriptionTier'
 import RateCard from './RateCard'
+import AiJob from './AiJob'
 
 // Define model associations
 User.hasMany(Project, {
@@ -28,6 +29,28 @@ User.hasMany(Project, {
 Project.belongsTo(User, {
   foreignKey: 'user_id',
   as: 'user',
+})
+
+User.hasMany(AiJob, {
+  foreignKey: 'user_id',
+  as: 'aiJobs',
+  onDelete: 'CASCADE',
+})
+
+AiJob.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user',
+})
+
+Project.hasMany(AiJob, {
+  foreignKey: 'project_id',
+  as: 'aiJobs',
+  onDelete: 'SET NULL',
+})
+
+AiJob.belongsTo(Project, {
+  foreignKey: 'project_id',
+  as: 'project',
 })
 
 User.hasMany(UserProviderConfig, {
@@ -98,6 +121,7 @@ export {
   CollabChatMessage,
   SubscriptionTier,
   RateCard,
+  AiJob,
 }
 
 // Export default for convenience
@@ -121,4 +145,5 @@ export default {
   CollabChatMessage,
   SubscriptionTier,
   RateCard,
+  AiJob,
 }

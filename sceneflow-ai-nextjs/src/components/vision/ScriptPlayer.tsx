@@ -42,6 +42,55 @@ const renderToastStyle = {
   border: '1px solid #1f2937'
 }
 
+const audioDurationCache = new Map<string, number>()
+
+function normalizeDuration(value: unknown): number | null {
+  if (value === null || value === undefined) return null
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    return value
+  }
+  if (typeof value === 'string') {
+    const parsed = parseFloat(value)
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed
+    }
+  }
+  return null
+}
+
+async function resolveAudioDuration(url: string, stored?: unknown): Promise<number> {
+  if (!url) {
+    return 0
+  }
+
+  const cached = audioDurationCache.get(url)
+  if (typeof cached === 'number') {
+    return cached
+  }
+
+  const storedDuration = normalizeDuration(stored) ?? null
+
+  try {
+    const measured = await getAudioDuration(url)
+    if (Number.isFinite(measured) && measured > 0) {
+      const finalDuration = Math.max(measured, storedDuration ?? 0)
+      audioDurationCache.set(url, finalDuration)
+      return finalDuration
+    }
+  } catch (error) {
+    console.warn('[Timeline] Failed to measure duration, using stored/fallback', { url, error })
+  }
+
+  if (storedDuration) {
+    audioDurationCache.set(url, storedDuration)
+    return storedDuration
+  }
+
+  const fallback = 3
+  audioDurationCache.set(url, fallback)
+  return fallback
+}
+
 export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }: ScreeningRoomProps) {
   // Extract scenes with proper reactivity to script changes
   const scenes = React.useMemo(() => {
@@ -438,6 +487,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   const calculateAudioTimeline = useCallback(async (scene: any): Promise<SceneAudioConfig> => {
     const config: SceneAudioConfig = {}
     let currentTime = 0
+    let totalDuration = 0
     
     // Get language-specific audio URLs
     const narrationUrl = getAudioForLanguage(scene, selectedLanguage, 'narration')
@@ -465,22 +515,10 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     // Narration starts at scene beginning (concurrent with music)
     if (narrationUrl) {
       config.narration = narrationUrl
-      
-      // Use stored duration if available, otherwise calculate
       const storedDuration = getStoredAudioDuration(scene, selectedLanguage, 'narration')
-      if (storedDuration) {
-        currentTime = storedDuration + 3.0 // Add 3-second lag before dialogue starts
-        console.log('[Timeline] Using stored narration duration:', storedDuration)
-      } else {
-        // Fallback to calculating duration
-        try {
-          const narrationDuration = await getAudioDuration(narrationUrl)                                                                               
-          currentTime = narrationDuration + 3.0 // Add 3-second lag before dialogue starts
-        } catch (error) {
-          console.warn('[Timeline] Failed to get narration duration, using default:', error)                                                                      
-          currentTime = 8 // Default 8 seconds (5s narration + 3s delay)
-        }
-      }
+      const narrationDuration = await resolveAudioDuration(narrationUrl, storedDuration)
+      totalDuration = Math.max(totalDuration, narrationDuration)
+      currentTime = narrationDuration + 3.0 // Add 3-second lag before dialogue starts
     }
     
     // Dialogue follows narration sequentially
@@ -493,22 +531,10 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
             url: dialogue.audioUrl,
             startTime: currentTime
           })
-          
-          // Use stored duration if available, otherwise calculate
-          const storedDialogueDuration = dialogue.duration
-          if (storedDialogueDuration) {
-            currentTime += storedDialogueDuration + 0.3 // Add 300ms pause between dialogue lines
-            console.log('[Timeline] Using stored dialogue duration:', storedDialogueDuration)
-          } else {
-            // Fallback to calculating duration
-            try {
-              const dialogueDuration = await getAudioDuration(dialogue.audioUrl)
-              currentTime += dialogueDuration + 0.3 // Add 300ms pause between dialogue lines
-            } catch (error) {
-              console.warn('[Timeline] Failed to get dialogue duration, using default:', error)
-              currentTime += 3 // Default 3 seconds per dialogue
-            }
-          }
+
+          const dialogueDuration = await resolveAudioDuration(dialogue.audioUrl, dialogue.duration)
+          totalDuration = Math.max(totalDuration, currentTime + dialogueDuration)
+          currentTime += dialogueDuration + 0.3 // Add 300ms pause between dialogue lines
         }
       }
     }
@@ -518,33 +544,41 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       config.sfx = []
       
       // Loop through sfxAudio array directly (not scene.sfx which might be empty)
-      scene.sfxAudio.forEach((sfxUrl: string, idx: number) => {
-        if (sfxUrl) {
-          // Get metadata from scene.sfx if available
-          const sfxDef = scene.sfx?.[idx] || {}
-          // Use specified time if available, otherwise use current calculated time
-          const sfxTime = sfxDef.time !== undefined ? sfxDef.time : currentTime
-          config.sfx!.push({
-            url: sfxUrl,
-            startTime: sfxTime
-          })
-          console.log('[Timeline] Added SFX:', { url: sfxUrl, startTime: sfxTime, idx })
-          
-          // If sequential, update currentTime
-          if (sfxDef.time === undefined) {
-            currentTime += 2 // Default 2 seconds for SFX
-          }
+      for (let idx = 0; idx < scene.sfxAudio.length; idx++) {
+        const sfxUrl = scene.sfxAudio[idx]
+        if (!sfxUrl) continue
+
+        const sfxDef = scene.sfx?.[idx] || {}
+        const sfxTime = sfxDef.time !== undefined ? sfxDef.time : currentTime
+        const sfxDuration = await resolveAudioDuration(sfxUrl, sfxDef.duration)
+        config.sfx!.push({
+          url: sfxUrl,
+          startTime: sfxTime
+        })
+        totalDuration = Math.max(totalDuration, sfxTime + sfxDuration)
+
+        if (sfxDef.time === undefined) {
+          currentTime = sfxTime + sfxDuration + 0.3
         }
-      })
+      }
     }
     
+    totalDuration = Math.max(totalDuration, currentTime)
+
     console.log('[Timeline] Final config:', {
       hasMusic: !!config.music,
       hasNarration: !!config.narration,
       dialogueCount: config.dialogue?.length || 0,
-      sfxCount: config.sfx?.length || 0
+      sfxCount: config.sfx?.length || 0,
+      estimatedDuration: totalDuration
     })
     
+    const declaredDuration = normalizeDuration(scene?.duration)
+    const resolvedDuration = Math.max(totalDuration, declaredDuration ?? 0)
+    if (resolvedDuration > 0) {
+      config.sceneDuration = resolvedDuration
+    }
+
     return config
   }, [selectedLanguage, getAudioForLanguage])
 
@@ -1026,6 +1060,27 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           )}
         </div>
         
+        {hasRecording && (
+          <div className="flex items-center gap-2 lg:hidden">
+            <button
+              onClick={handleSaveRecording}
+              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+              title="Download recording"
+              aria-label="Download recording"
+            >
+              <Download className="w-5 h-5" />
+            </button>
+            <button
+              onClick={handleDiscardRecording}
+              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+              title="Discard recording"
+              aria-label="Discard recording"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+
         {/* Tablet controls - show captions toggle */}
         <div className="hidden md:flex lg:hidden items-center gap-2">
           <button

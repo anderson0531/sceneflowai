@@ -1,5 +1,6 @@
 const path = require('path')
 const ffmpeg = require('fluent-ffmpeg')
+const { captureFfmpegError } = require('../utils/ffmpegErrors')
 
 const buildFilterGraph = ({
   tracks,
@@ -113,7 +114,7 @@ const mixAudioTracks = async ({
       .complexFilter(filterGraph.filter, filterGraph.outputLabel)
       .outputOptions(['-map', `[${filterGraph.outputLabel}]`, '-c:a', 'aac', '-b:a', '192k'])
       .on('end', resolve)
-      .on('error', reject)
+      .on('error', captureFfmpegError('audio-mix', reject))
       .save(outputPath)
   })
 

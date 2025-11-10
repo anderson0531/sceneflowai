@@ -1,6 +1,7 @@
 const path = require('path')
 const fs = require('fs/promises')
 const ffmpeg = require('fluent-ffmpeg')
+const { captureFfmpegError } = require('../utils/ffmpegErrors')
 
 const writeManifest = async (clips, manifestPath) => {
   const lines = clips.map((clip) => `file '${clip.clipPath.replace(/'/g, "'\\''")}'`).join('\n')
@@ -42,7 +43,7 @@ const concatSceneClips = async ({
         }
       })
       .on('end', resolve)
-      .on('error', reject)
+      .on('error', captureFfmpegError('concat', reject))
       .output(outputPath)
 
     command.run()

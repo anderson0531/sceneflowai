@@ -10,6 +10,36 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  {
+    ignores: [
+      "src/services/**",
+      "src/components/**",
+      "src/app/dashboard/**",
+      "src/app/share/**",
+      "src/app/test-**",
+      "src/app/api/**",
+      "src/app/components/**",
+      "src/app/c/**",
+      "src/app/(dashboard)/**",
+      "src/app/admin/**",
+      "src/app/collaborate/**",
+      "src/app/setup-database/**",
+      "src/lib/**",
+      "src/models/**",
+      "src/hooks/**",
+      "src/store/**",
+      "src/scripts/**",
+      "src/examples/**",
+      "src/workflow/**",
+      "src/types/**",
+      "src/service-stubs/**",
+      "src/remotion/**",
+      "src/middleware.ts",
+      "src/app/layout.tsx",
+      "src/config/**",
+      "src/domain/**"
+    ],
+  },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
 ];
 

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Clapperboard, Printer, Video as VideoIcon, Info } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Clapperboard, Printer, Video as VideoIcon, Info, MonitorPlay } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
@@ -21,8 +21,6 @@ import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData, SceneDirectionData } from '@/lib/types/reports'
 import { ProjectCostCalculator } from './ProjectCostCalculator'
 import { ExportDialog } from './ExportDialog'
-import { ExportStudioDialog } from './ExportStudioDialog'
-import type { ExportStudioScene } from './ExportStudioDialog'
 import { GenerateAudioDialog } from './GenerateAudioDialog'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 
@@ -1232,7 +1230,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     setSceneBuilderIdx(null)
   }
 
-  const exportScenes = useMemo<ExportStudioScene[]>(() => {
+  const exportScenes = useMemo(() => {
     return scenes.map((scene: any, index: number) => {
       const dialogueCandidates = Array.isArray(scene?.dialogueAudio?.en)
         ? scene.dialogueAudio.en
@@ -1279,32 +1277,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     })
   }, [scenes])
 
-  const [isExportStudioEnabled, setIsExportStudioEnabled] = useState(() => {
-    if (typeof window === 'undefined') {
-      return process.env.NEXT_PUBLIC_EXPORT_STUDIO_ENABLED === 'true'
-    }
-
-    const globalFlag = (window as any).__SCENEFLOW_EXPORT_FLAG__
-    if (typeof globalFlag === 'boolean') {
-      return globalFlag
-    }
-    return process.env.NEXT_PUBLIC_EXPORT_STUDIO_ENABLED === 'true'
-  })
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
-    const enabled = process.env.NEXT_PUBLIC_EXPORT_STUDIO_ENABLED === 'true'
-    ;(window as any).__SCENEFLOW_EXPORT_FLAG__ = enabled
-    setIsExportStudioEnabled(enabled)
-  }, [])
-
-  const canUseExportStudio = isExportStudioEnabled && !!script && scenes.length > 0
+  const canUseExportStudio = !!script && scenes.length > 0
 
   const handleOpenExportStudio = () => {
-    if (!canUseExportStudio) return
-    setExportStudioOpen(true)
+    toast.info('Desktop renderer handles exports. Launch SceneFlow Desktop to export your project.')
   }
 
   return (
@@ -1976,15 +1952,15 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         onEnded={() => setPlayingAudio(null)}
         className="hidden"
       />
-      {isExportStudioEnabled && (
-        <ExportStudioDialog
-          open={exportStudioOpen}
-          onOpenChange={setExportStudioOpen}
-          projectId={projectId || 'unknown-project'}
-          projectTitle={script?.title || 'Untitled Project'}
-          scenes={exportScenes}
-        />
-      )}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onOpenExportStudio}
+        className="flex items-center gap-2"
+      >
+        <MonitorPlay className="w-4 h-4" />
+        Desktop Export
+      </Button>
     </div>
   )
 }

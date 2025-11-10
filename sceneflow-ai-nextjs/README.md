@@ -87,19 +87,6 @@ The in-app MP4 download now runs entirely client-side using the browser’s `Med
 
 Refer to `fix-script-ai-issues.plan.md` for the full migration roadmap and remaining tasks.
 
-## Export Studio GCP Backend
+## Desktop Export Only
 
-The Export Studio can now run entirely on Google Cloud. When `NEXT_PUBLIC_EXPORT_BACKEND` is set to `gcp`, the web app queues exports through the new API surface (`/api/export/*`). Jobs flow through Cloud Run Jobs, Pub/Sub, and Firestore for status caching. A minimal deployment looks like this:
-
-1. **Provision infrastructure**
-   - Create Cloud Storage buckets for staged assets and outputs.
-   - Create Pub/Sub topics `export-requests` and `export-status` and a Firestore collection to persist job state.
-   - Deploy the FFmpeg worker container to Cloud Run Jobs (see `infra/gcp/` for Terraform scaffolding).
-2. **Configure environment variables**
-   - Set `GCP_PROJECT_ID`, `GCP_PUBSUB_EXPORT_TOPIC`, `GCP_EXPORT_INPUT_BUCKET`, `GCP_EXPORT_OUTPUT_BUCKET`, and optionally `GCP_SERVICE_ACCOUNT_KEY` to a base64 encoded service account.
-   - Flip `NEXT_PUBLIC_EXPORT_BACKEND=gcp` for the client. Desktop export remains available when the flag is `desktop`.
-3. **Bridge behavior**
-   - `gcpExportBridge` polls `/api/export/status` to keep the dialog’s progress UI in sync.
-   - Signed upload URLs (`/api/export/upload-url`) handle large assets before the worker runs.
-
-Refer to `infra/gcp/main.tf` and the scripts in `scripts/gcp/` for a starting point on provisioning Cloud Run Jobs and Pub/Sub infrastructure.
+SceneFlow now ships with a desktop FFmpeg renderer. The web experience no longer submits jobs to Google Cloud—install the SceneFlow Desktop app and trigger exports from the Vision workflow UI. All former GCP-related instructions have been retired.

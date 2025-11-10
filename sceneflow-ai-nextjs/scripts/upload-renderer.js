@@ -70,18 +70,28 @@ function parseArtifactMetadata(filename) {
 
 let putFn = null
 
+async function uploadFile(blobKey, filePath) {
+  console.log(`[upload-renderer] Uploading ${path.basename(filePath)} → ${blobKey}`)
+  return putFn(blobKey, fs.createReadStream(filePath), {
+    access: 'public',
+    token
+  })
+}
+
 async function uploadArtifacts() {
   const files = fs.readdirSync(DIST_DIR).filter((item) => {
     const full = path.join(DIST_DIR, item)
     return fs.statSync(full).isFile()
   })
 
-  const allowed = files.filter((filename) => {
+  const artifactFilenames = files.filter((filename) => {
     const ext = path.extname(filename).toLowerCase()
     return ['.exe', '.dmg', '.zip'].includes(ext)
   })
 
-  if (allowed.length === 0) {
+  const updaterMetadataFiles = files.filter((filename) => filename.toLowerCase().endsWith('.yml'))
+
+  if (artifactFilenames.length === 0) {
     console.error('[upload-renderer] No installer artifacts (.exe, .dmg, .zip) found in dist/desktop.')
     process.exit(1)
   }
@@ -89,7 +99,7 @@ async function uploadArtifacts() {
   const uploaded = []
   const uploadedAt = new Date().toISOString()
 
-  for (const filename of allowed) {
+  for (const filename of artifactFilenames) {
     const metadata = parseArtifactMetadata(filename)
     if (!metadata) {
       console.warn(`[upload-renderer] Skipping unsupported artifact ${filename}`)
@@ -99,13 +109,13 @@ async function uploadArtifacts() {
     const filePath = path.join(DIST_DIR, filename)
     const size = fs.statSync(filePath).size
     const checksum = await sha256(filePath)
-    const blobKey = `${BLOB_PREFIX}/${version}/${filename}`
+    const versionedKey = `${BLOB_PREFIX}/${version}/${filename}`
+    const latestKey = `${BLOB_PREFIX}/${filename}`
 
-    console.log(`[upload-renderer] Uploading ${filename} → ${blobKey}`)
-    const { url } = await putFn(blobKey, fs.createReadStream(filePath), {
-      access: 'public',
-      token
-    })
+    const { url } = await uploadFile(versionedKey, filePath)
+
+    // Upload a copy to the root feed path to support electron-updater generic provider.
+    await uploadFile(latestKey, filePath)
 
     uploaded.push({
       version,
@@ -116,6 +126,13 @@ async function uploadArtifacts() {
       url,
       ...metadata
     })
+  }
+
+  // Upload auto-update metadata descriptors (latest.yml, latest-mac.yml, etc.)
+  for (const filename of updaterMetadataFiles) {
+    const filePath = path.join(DIST_DIR, filename)
+    const blobKey = `${BLOB_PREFIX}/${filename}`
+    await uploadFile(blobKey, filePath)
   }
 
   return uploaded

@@ -5,7 +5,7 @@ export interface AIUsageAttributes {
   id: string
   user_id: string
   route: string
-  provider: 'openai'
+  provider: 'openai' | 'sceneflow-ai'
   model: string
   category: 'text' | 'images' | 'tts' | 'whisper' | 'other'
   request_id: string | null
@@ -64,7 +64,7 @@ AIUsage.init(
       allowNull: false,
     },
     provider: {
-      type: DataTypes.ENUM('openai'),
+      type: DataTypes.ENUM('openai', 'sceneflow-ai'),
       allowNull: false,
     },
     model: {

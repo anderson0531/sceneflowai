@@ -1,6 +1,25 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
-const { configureFfmpegPaths } = require('./ffmpeg')
+const fs = require('fs')
+const { initializeFfmpeg } = require('./ffmpeg')
+const {
+  CHANNELS: PROJECT_CHANNELS,
+  ProjectUpsertInputSchema,
+  ProjectDeleteInputSchema,
+  ProjectGetInputSchema,
+  ProjectListResponseSchema,
+  ProjectGetResponseSchema,
+  DialogOpenRequestSchema,
+  DialogOpenResponseSchema,
+  BackgroundJobRequestSchema,
+  BackgroundJobResponseSchema,
+  BackgroundJobCancelSchema,
+  BackgroundJobProgressSchema,
+  ProjectRevealPathSchema
+} = require('./ipc/projectChannels')
+const { ProjectStore } = require('./offline/projectStore')
+const { BackgroundQueue } = require('./offline/backgroundQueue')
+const { registerStandardOperations } = require('./offline/operations')
 const {
   CHANNELS,
   ExportStartPayloadSchema,
@@ -14,10 +33,25 @@ const { createTempWorkspace } = require('./fs/tempWorkspace')
 const { runExportPipeline } = require('./pipeline')
 
 const workspaceRegistry = new Map()
+let projectStore = null
+let backgroundQueue = null
 const isPublishEnabled = process.env.EXPORT_ENABLE_PUBLISH === 'true'
-const ffmpegEnabled = process.env.EXPORT_STUDIO_ENABLED === 'true'
+const ffmpegEnabled = true
+
+const windows = new Set()
 
 const sanitizeLabel = (value) => value.toString().replace(/[^a-z0-9-_]+/gi, '-').toLowerCase()
+
+const resolvePackagedRenderer = () => {
+  const rendererPath = path.join(__dirname, 'renderer', 'index.html')
+
+  if (fs.existsSync(rendererPath)) {
+    return rendererPath
+  }
+
+  console.warn('[Electron] Packaged renderer missing at', rendererPath)
+  return null
+}
 
 function resolveStartUrl() {
   if (process.env.ELECTRON_START_URL) {
@@ -25,7 +59,14 @@ function resolveStartUrl() {
   }
 
   if (app.isPackaged) {
-    return path.join(__dirname, 'renderer', 'index.html')
+    const packagedRenderer = resolvePackagedRenderer()
+    if (packagedRenderer) {
+      return packagedRenderer
+    }
+
+    if (process.env.DESKTOP_FALLBACK_URL) {
+      return process.env.DESKTOP_FALLBACK_URL
+    }
   }
 
   return 'http://localhost:3000'
@@ -54,6 +95,14 @@ function createWindow() {
   win.once('ready-to-show', () => {
     win.show()
   })
+
+  win.on('closed', () => {
+    windows.delete(win)
+  })
+
+  windows.add(win)
+
+  return win
 }
 
 const safeSend = (webContents, channel, schema, payload) => {
@@ -65,11 +114,157 @@ const safeSend = (webContents, channel, schema, payload) => {
   }
 }
 
-app.whenReady().then(() => {
-  const { ffmpegPath, ffprobePath } = configureFfmpegPaths(app)
-  console.log('[Electron] FFmpeg configured', { ffmpegPath, ffprobePath })
+const broadcastProjectJobEvent = (job) => {
+  if (!BrowserWindow.getAllWindows().length) {
+    return
+  }
+
+  try {
+    const payload = BackgroundJobProgressSchema.parse({
+      jobId: job.id,
+      status: job.status,
+      progress: typeof job.progress === 'number' ? job.progress : undefined,
+      detail: job.detail || undefined,
+      result: job.result,
+      error: job.error
+    })
+
+    BrowserWindow.getAllWindows().forEach((window) => {
+      safeSend(window.webContents, PROJECT_CHANNELS.JOB_EVENTS, BackgroundJobProgressSchema, payload)
+    })
+  } catch (error) {
+    console.error('[Electron] Failed to broadcast job event', error)
+  }
+}
+
+if (process.platform === 'win32') {
+  app.setAppUserModelId('ai.sceneflow.desktop')
+}
+
+const gotLock = app.requestSingleInstanceLock()
+
+if (!gotLock) {
+  app.quit()
+} else {
+  app.on('second-instance', (_event, _commandLine, _workingDirectory) => {
+    const [window] = BrowserWindow.getAllWindows()
+    if (window) {
+      if (window.isMinimized()) {
+        window.restore()
+      }
+      window.focus()
+    }
+  })
+}
+
+app.whenReady().then(async () => {
+  try {
+    const { ffmpegPath, ffprobePath } = await initializeFfmpeg(app)
+    console.log('[Electron] FFmpeg configured', { ffmpegPath, ffprobePath })
+  } catch (error) {
+    console.error('[Electron] FFmpeg initialization failed', error)
+    dialog.showErrorBox(
+      'FFmpeg Initialization Failed',
+      `${error?.message || 'Unable to initialize local FFmpeg binaries.'}\n\nSee logs for details.`
+    )
+    app.quit()
+    return
+  }
+
+  projectStore = new ProjectStore(app)
+  await projectStore.init()
+
+  backgroundQueue = new BackgroundQueue({
+    concurrency: Number(process.env.PROJECT_JOB_CONCURRENCY) || 2
+  })
+
+  registerStandardOperations({ queue: backgroundQueue, projectStore })
+
+  ;['queued', 'started', 'progress', 'completed', 'cancelled', 'failed'].forEach((event) => {
+    backgroundQueue.on(event, broadcastProjectJobEvent)
+  })
 
   ipcMain.handle('system:ping', () => 'pong')
+
+  ipcMain.handle(PROJECT_CHANNELS.LIST, async () => {
+    const projects = await projectStore.listProjects()
+    return ProjectListResponseSchema.parse({ projects })
+  })
+
+  ipcMain.handle(PROJECT_CHANNELS.GET, async (_event, payload) => {
+    const { id } = ProjectGetInputSchema.parse(payload)
+    const project = await projectStore.getProject(id)
+    if (project) {
+      await projectStore.touchProject(id)
+    }
+    return ProjectGetResponseSchema.parse({ project })
+  })
+
+  ipcMain.handle(PROJECT_CHANNELS.UPSERT, async (_event, payload) => {
+    const input = ProjectUpsertInputSchema.parse(payload)
+    const project = await projectStore.upsertProject(input)
+    return ProjectGetResponseSchema.parse({ project })
+  })
+
+  ipcMain.handle(PROJECT_CHANNELS.DELETE, async (_event, payload) => {
+    const { id } = ProjectDeleteInputSchema.parse(payload)
+    const removed = await projectStore.deleteProject(id)
+    return { ok: removed }
+  })
+
+  ipcMain.handle(PROJECT_CHANNELS.DIALOG_OPEN, async (_event, payload) => {
+    const request = DialogOpenRequestSchema.parse(payload || {})
+    const result = await dialog.showOpenDialog({
+      title: request.title,
+      defaultPath: request.defaultPath,
+      properties: [
+        'openFile',
+        request.multiSelect ? 'multiSelections' : undefined
+      ].filter(Boolean),
+      filters: request.filters
+    })
+
+    return DialogOpenResponseSchema.parse({
+      canceled: result.canceled,
+      filePaths: result.filePaths || []
+    })
+  })
+
+  ipcMain.handle(PROJECT_CHANNELS.REVEAL_PATH, async (_event, payload) => {
+    try {
+      const { path: targetPath } = ProjectRevealPathSchema.parse(payload)
+      if (!targetPath) {
+        throw new Error('Missing path')
+      }
+      const success = shell.showItemInFolder(targetPath)
+      return { ok: success }
+    } catch (error) {
+      console.error('[Electron] Failed to reveal path', error)
+      return { ok: false, message: error?.message }
+    }
+  })
+
+  ipcMain.handle(PROJECT_CHANNELS.JOB_ENQUEUE, async (_event, payload) => {
+    const request = BackgroundJobRequestSchema.parse(payload)
+    const job = backgroundQueue.enqueue({
+      type: request.type,
+      payload: request.payload,
+      projectId: request.projectId
+    })
+
+    return BackgroundJobResponseSchema.parse({
+      jobId: job.id,
+      status: job.status,
+      queuedAt: job.queuedAt,
+      detail: job.detail || undefined
+    })
+  })
+
+  ipcMain.handle(PROJECT_CHANNELS.JOB_CANCEL, async (_event, payload) => {
+    const { jobId } = BackgroundJobCancelSchema.parse(payload)
+    const cancelled = backgroundQueue.cancel(jobId)
+    return { ok: cancelled }
+  })
 
   ipcMain.handle(CHANNELS.PUBLISH, async (_event, payload) => {
     try {
@@ -93,12 +288,6 @@ app.whenReady().then(() => {
   })
 
   ipcMain.handle(CHANNELS.START, async (event, payload) => {
-    if (!ffmpegEnabled) {
-      const message = 'FFmpeg export disabled. Set EXPORT_STUDIO_ENABLED=true to enable.'
-      console.warn('[Electron] START rejected - feature flag off')
-      throw new Error(message)
-    }
-
     try {
       const request = ExportStartPayloadSchema.parse(payload)
       console.log('[Electron] Export request received', {
