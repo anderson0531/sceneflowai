@@ -291,12 +291,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   }, [recorderError])
 
   const wasPlayingRef = useRef(playerState.isPlaying)
-  useEffect(() => {
-    if (wasPlayingRef.current && !playerState.isPlaying && isRecording) {
-      void handleStopRecording()
-    }
-    wasPlayingRef.current = playerState.isPlaying
-  }, [playerState.isPlaying, isRecording, handleStopRecording])
 
   const handleStartRecording = useCallback(async () => {
     if (!recorderSupported) {
@@ -317,6 +311,13 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       })
     }
   }, [stopScreenRecording])
+
+  useEffect(() => {
+    if (wasPlayingRef.current && !playerState.isPlaying && isRecording) {
+      void handleStopRecording()
+    }
+    wasPlayingRef.current = playerState.isPlaying
+  }, [playerState.isPlaying, isRecording, handleStopRecording])
 
   const handleSaveRecording = useCallback(() => {
     if (!hasRecording) {
