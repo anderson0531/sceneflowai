@@ -19,8 +19,6 @@
                 "electron:build:win": "npm run build && electron-builder --win nsis --publish never",
                 "electron:build:all": "npm run build && electron-builder -mwl --publish never",
                 "electron:upload": "node scripts/upload-renderer.js",
-                "jobs:process": "ts-node src/scripts/processAiJobs.ts",
-        "qa:hybrid": "npm run lint && npx tsc --noEmit && npm run build:memory && ts-node src/scripts/recommendWorkerScale.ts",
                 "ci:smoke": "bash scripts/ci/ai-smoke.sh",
                 "setup:database": "echo 'Database setup scripts removed during cleanup'",
                 "test": "echo 'Test scripts removed during cleanup'",
