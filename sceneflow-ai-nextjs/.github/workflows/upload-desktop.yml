@@ -30,3 +30,31 @@ jobs:
       - name: Install dependencies & upload
         run: scripts/ci/upload-desktop.sh --platform all
 
+  windows-smoke:
+    runs-on: windows-latest
+    needs: build-and-upload
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Windows installer
+        run: npm run electron:build:win
+
+      - name: Run Windows smoke test
+        shell: pwsh
+        run: |
+          $pkg = Get-Content package.json | ConvertFrom-Json
+          $version = $pkg.version
+          $installer = Join-Path "dist/desktop" ("SceneFlow-Renderer-{0}-Setup.exe" -f $version)
+          if (-not (Test-Path $installer)) {
+            throw "Installer not found: $installer"
+          }
+          ./scripts/windows/smoke-test.ps1 -InstallerPath $installer
+
