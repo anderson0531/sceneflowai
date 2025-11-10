@@ -1,18 +1,17 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { X, Play, Pause, SkipBack, SkipForward, Volume2, Subtitles, Download, Loader, Menu } from 'lucide-react'
+import { X, Subtitles, CircleDot, Square, Download, Loader2, Menu, Trash2, AlertCircle } from 'lucide-react'
 import { SceneDisplay } from './SceneDisplay'
 import { PlaybackControls } from './PlaybackControls'
 import { VoiceAssignmentPanel } from './VoiceAssignmentPanel'
 import { MobileMenuSheet } from './MobileMenuSheet'
-import { WebAudioMixer, SceneAudioConfig, AudioSource } from '@/lib/audio/webAudioMixer'
+import { WebAudioMixer, SceneAudioConfig } from '@/lib/audio/webAudioMixer'
 import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { toast } from 'sonner'
-import { useOverlayStore } from '@/store/useOverlayStore'
 import { getAvailableLanguages, getAudioUrl, getAudioDuration as getStoredAudioDuration } from '@/lib/audio/languageDetection'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
-import { trackCta } from '@/lib/analytics'
+import { useScreenRecorder } from '@/hooks/useScreenRecorder'
 
 interface ScreeningRoomProps {
   script: any
@@ -84,7 +83,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   const [showCaptions, setShowCaptions] = useState(false) // Default to off
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const renderPollIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Language state - use pre-generated audio files
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en') // Default: English
@@ -244,11 +242,106 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   }, [selectedLanguage, playerState.currentSceneIndex])
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  const [currentAudioUrl, setCurrentAudioUrl] = useState<string | null>(null)
   const [isLoadingAudio, setIsLoadingAudio] = useState(false)
-  const [isRendering, setIsRendering] = useState(false)
   const audioMixerRef = useRef<WebAudioMixer | null>(null)
   
+  const {
+    isSupported: recorderSupported,
+    isPreparing: recorderPreparing,
+    isRecording,
+    elapsedMs: recordingElapsedMs,
+    error: recorderError,
+    recordingBlob,
+    recordingUrl,
+    mimeType: recordingMimeType,
+    start: startScreenRecording,
+    stop: stopScreenRecording,
+    reset: resetScreenRecording,
+    download: downloadScreenRecording
+  } = useScreenRecorder({
+    audio: true,
+    video: {
+      frameRate: 30,
+      width: { ideal: 1920 },
+      height: { ideal: 1080 }
+    }
+  })
+  
+  const hasRecording = !!(recordingBlob || recordingUrl)
+  const recordingDurationLabel = React.useMemo(() => {
+    if (!isRecording && recordingElapsedMs === 0) return '00:00'
+    const totalSeconds = Math.max(0, Math.floor(recordingElapsedMs / 1000))
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+  }, [recordingElapsedMs, isRecording])
+
+  const recorderSupportHint = 'Screen recording requires Chrome 72+, Edge 79+, or Firefox 66+. Safari support varies.'
+  const recordButtonTitle = !recorderSupported && !isRecording
+    ? recorderSupportHint
+    : isRecording
+      ? 'Stop recording'
+      : 'Record playback'
+  const showRecordingDuration = isRecording || hasRecording
+
+  useEffect(() => {
+    if (recorderError) {
+      toast.error(recorderError, { style: renderToastStyle })
+    }
+  }, [recorderError])
+
+  const wasPlayingRef = useRef(playerState.isPlaying)
+  useEffect(() => {
+    if (wasPlayingRef.current && !playerState.isPlaying && isRecording) {
+      void handleStopRecording()
+    }
+    wasPlayingRef.current = playerState.isPlaying
+  }, [playerState.isPlaying, isRecording, handleStopRecording])
+
+  const handleStartRecording = useCallback(async () => {
+    if (!recorderSupported) {
+      toast.error('Screen recording is not supported in this browser.', { style: renderToastStyle })
+      return
+    }
+    await startScreenRecording()
+    toast.info('Select the screen, window, or tab that is playing the Screening Room to begin recording.', {
+      duration: 6000
+    })
+  }, [recorderSupported, startScreenRecording])
+
+  const handleStopRecording = useCallback(async () => {
+    const blob = await stopScreenRecording()
+    if (blob) {
+      toast.success('Recording ready. Save or discard the capture below.', {
+        duration: 4000
+      })
+    }
+  }, [stopScreenRecording])
+
+  const handleSaveRecording = useCallback(() => {
+    if (!hasRecording) {
+      toast.error('No recording available to download yet.', { style: renderToastStyle })
+      return
+    }
+    const sanitizedTitle = (script?.title || 'screening-room').trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase()
+    const extension = recordingMimeType && recordingMimeType.includes('mp4') ? 'mp4' : 'webm'
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+    downloadScreenRecording(`${sanitizedTitle || 'screening-room'}-${timestamp}.${extension}`)
+  }, [downloadScreenRecording, hasRecording, recordingMimeType, script?.title])
+
+  const handleDiscardRecording = useCallback(() => {
+    if (!hasRecording) return
+    resetScreenRecording()
+    toast('Recording discarded.', { style: renderToastStyle })
+  }, [hasRecording, resetScreenRecording])
+
+  const handleClose = useCallback(() => {
+    if (isRecording) {
+      void stopScreenRecording()
+    }
+    onClose()
+  }, [isRecording, onClose, stopScreenRecording])
+
   // Initialize Web Audio Mixer
   useEffect(() => {
     audioMixerRef.current = new WebAudioMixer()
@@ -258,11 +351,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       if (audioMixerRef.current) {
         audioMixerRef.current.dispose()
         audioMixerRef.current = null
-      }
-      // Cleanup polling interval
-      if (renderPollIntervalRef.current) {
-        clearInterval(renderPollIntervalRef.current)
-        renderPollIntervalRef.current = null
       }
     }
   }, [])
@@ -294,7 +382,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose()
+        handleClose()
       } else if (e.key === ' ' || e.key === 'Spacebar') {
         e.preventDefault()
         togglePlayPause()
@@ -334,7 +422,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [playerState.currentSceneIndex, scenes.length, resetControlsTimeout])
+  }, [playerState.currentSceneIndex, scenes.length, resetControlsTimeout, handleClose])
 
   // Get audio URL for selected language (uses pre-generated audio files)
   const getAudioForLanguage = useCallback((scene: any, language: string, audioType: 'narration' | 'dialogue', dialogueIndex?: number): string | null => {
@@ -686,7 +774,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       const blob = await response.blob()
       const audioUrl = URL.createObjectURL(blob)
       
-      setCurrentAudioUrl(audioUrl)
       setIsLoadingAudio(false)
 
       // Play audio
@@ -832,284 +919,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     }))
   }
 
-  const [isExportStudioEnabled, setIsExportStudioEnabled] = useState(() => {
-    if (typeof window === 'undefined') {
-      return process.env.NEXT_PUBLIC_EXPORT_STUDIO_ENABLED === 'true'
-    }
-
-    const globalFlag = (window as any).__SCENEFLOW_EXPORT_FLAG__
-    if (typeof globalFlag === 'boolean') {
-      return globalFlag
-    }
-    return process.env.NEXT_PUBLIC_EXPORT_STUDIO_ENABLED === 'true'
-  })
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
-    const globalFlag = (window as any).__SCENEFLOW_EXPORT_FLAG__
-    if (typeof globalFlag === 'boolean') {
-      setIsExportStudioEnabled(globalFlag)
-      return
-    }
-    const enabled = process.env.NEXT_PUBLIC_EXPORT_STUDIO_ENABLED === 'true'
-    ;(window as any).__SCENEFLOW_EXPORT_FLAG__ = enabled
-    setIsExportStudioEnabled(enabled)
-  }, [])
-  const handleDownloadMP4 = async () => {
-    setIsRendering(true)
-
-    if (!isExportStudioEnabled) {
-      setIsRendering(false)
-      toast.error('Export Studio is disabled. Enable NEXT_PUBLIC_EXPORT_STUDIO_ENABLED to download MP4 renders.', { style: renderToastStyle })
-      trackCta({
-        event: 'export_studio_disabled_download_attempt',
-        location: 'ScriptPlayer'
-      })
-      return
-    }
-
-    trackCta({
-      event: 'export_studio_pipeline_request',
-      location: 'ScriptPlayer',
-      value: scenes.length
-    })
-    useOverlayStore.getState().show(
-      'Batching scenes and starting render pipeline... (this can take several minutes)',
-      600
-    )
-    
-    try {
-      // Prepare scene data for Creatomate using selected language
-      const sceneData = scenes.map((scene: any, idx: number) => {
-        const narrationUrl = getAudioForLanguage(scene, selectedLanguage, 'narration')
-        const storedNarrationDuration = getStoredAudioDuration(scene, selectedLanguage, 'narration') ?? 0
-        const dialogueArray = scene.dialogueAudio?.[selectedLanguage] || (selectedLanguage === 'en' ? scene.dialogueAudio : null)
-
-        // Build dialogue array with start times using language-specific audio
-        const dialogue: Array<{ url: string; startTime: number; duration?: number }> = []
-        let dialogueStartTime = storedNarrationDuration > 0 ? storedNarrationDuration + 3.0 : 0
-        let totalDialogueDuration = 0
-
-        if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
-          dialogueArray.forEach((d: any) => {
-            if (d.audioUrl) {
-              const lineDuration = d.duration || 3
-              dialogue.push({
-                url: d.audioUrl,
-                startTime: dialogueStartTime,
-                duration: lineDuration
-              })
-              totalDialogueDuration += lineDuration
-              dialogueStartTime += lineDuration + 0.3 // Add 300ms pause between dialogue lines
-              totalDialogueDuration += 0.3
-            }
-          })
-
-          // Remove the extra pause added after the final line
-          if (dialogue.length > 0) {
-            totalDialogueDuration -= 0.3
-          }
-        }
-
-        const padAfterNarration = storedNarrationDuration > 0 && totalDialogueDuration > 0 ? 3.0 : 0
-        let computedSceneDuration = storedNarrationDuration + padAfterNarration + Math.max(totalDialogueDuration, 0)
-
-        if (computedSceneDuration <= 0) {
-          computedSceneDuration = Math.max(scene.duration || 0, 5)
-        }
-
-        // Ensure minimum positive duration to avoid zero-length scenes
-        computedSceneDuration = Math.max(computedSceneDuration, 0.5)
-
-        // Build SFX array with start times and clamp within scene duration
-        const sfx: Array<{ url: string; startTime: number; duration?: number }> = []
-        if (scene.sfxAudio && Array.isArray(scene.sfxAudio)) {
-          scene.sfxAudio.forEach((sfxUrl: string, sfxIdx: number) => {
-            if (sfxUrl) {
-              const sfxDef = scene.sfx?.[sfxIdx] || {}
-              const sfxTime = typeof sfxDef.time === 'number' ? sfxDef.time : 0
-              const remaining = Math.max(computedSceneDuration - sfxTime, 0)
-              sfx.push({
-                url: sfxUrl,
-                startTime: sfxTime,
-                duration: remaining
-              })
-            }
-          })
-        }
-
-        console.log('[Screening Room] Scene duration summary', {
-          sceneNumber: idx + 1,
-          narration: storedNarrationDuration,
-          dialogueCount: dialogue.length,
-          totalDialogueDuration,
-          computedSceneDuration
-        })
-
-        return {
-          sceneNumber: idx + 1,
-          imageUrl: scene.imageUrl || '/images/placeholders/placeholder.svg',
-          duration: computedSceneDuration,
-          audioTracks: {
-            narration: narrationUrl || undefined,
-            dialogue: dialogue.length > 0 ? dialogue : undefined,
-            sfx: sfx.length > 0 ? sfx : undefined,
-            music: scene.musicAudio
-          },
-          kenBurnsIntensity: playerState.kenBurnsIntensity
-        }
-      })
-      
-      // Submit render job (returns immediately with renderId)
-      const response = await fetch('/api/screening-room/render', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          scenes: sceneData,
-          options: {
-            width: 1920,
-            height: 1080,
-            fps: 30,
-            quality: 'high',
-            format: 'mp4'
-          },
-          projectTitle: script?.title || 'Screening Room'
-        })
-      })
-      
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Render failed' }))
-        throw new Error(error.message || `Render failed: ${response.status}`)
-      }
-      
-      const data = await response.json()
-
-      if (!data.success || !data.renderId) {
-        throw new Error(data.message || 'Failed to submit render job')
-      }
-
-      trackCta({
-        event: 'export_studio_pipeline_enqueued',
-        location: 'ScriptPlayer',
-        value: data.renderId
-      })
-
-      const renderId = data.renderId
-      const batchRenderIds: string[] | undefined = Array.isArray(data.batchRenderIds) ? data.batchRenderIds : undefined
-      const projectTitle = (script?.title || 'screening-room').replace(/[^a-z0-9]/gi, '-')
-      
-      // Hide overlay - user can now continue using the app
-      useOverlayStore.getState().hide()
-      setIsRendering(false) // Allow button to be enabled again
-      
-      // Show non-blocking notification that render is in progress
-      toast.info(batchRenderIds?.length
-        ? `Segmented render started (${batchRenderIds.length} batches). We'll merge and notify when it completes.`
-        : 'Video render started. You will be notified when it completes.', {
-        duration: 6000
-      })
-
-      if (batchRenderIds?.length) {
-        console.log('[Creatomate] Batch render IDs:', batchRenderIds)
-      }
-      
-      // Poll for render status in background
-      let pollAttempts = 0
-      const maxPollAttempts = 180 // 15 minutes at 5 second intervals
-      
-      // Clear any existing polling interval
-      if (renderPollIntervalRef.current) {
-        clearInterval(renderPollIntervalRef.current)
-      }
-      
-      renderPollIntervalRef.current = setInterval(async () => {
-        pollAttempts++
-        
-        try {
-          const statusResponse = await fetch(`/api/screening-room/render?renderId=${renderId}`)
-          
-          if (!statusResponse.ok) {
-            throw new Error('Failed to check render status')
-          }
-          
-          const statusData = await statusResponse.json()
-          
-          if (statusData.status === 'succeeded' && statusData.videoUrl) {
-            if (renderPollIntervalRef.current) {
-              clearInterval(renderPollIntervalRef.current)
-              renderPollIntervalRef.current = null
-            }
-            
-            // Show success notification with download option
-            toast.success('Video render complete!', {
-              duration: 10000,
-              action: {
-                label: 'Download',
-                onClick: () => {
-                  const a = document.createElement('a')
-                  a.href = statusData.videoUrl
-                  a.download = `${projectTitle}.mp4`
-                  a.target = '_blank'
-                  document.body.appendChild(a)
-                  a.click()
-                  document.body.removeChild(a)
-                }
-              }
-            })
-            
-            // Auto-download after a short delay
-            setTimeout(() => {
-              const a = document.createElement('a')
-              a.href = statusData.videoUrl
-              a.download = `${projectTitle}.mp4`
-              a.target = '_blank'
-              document.body.appendChild(a)
-              a.click()
-              document.body.removeChild(a)
-            }, 1000)
-            
-          } else if (statusData.status === 'failed') {
-            if (renderPollIntervalRef.current) {
-              clearInterval(renderPollIntervalRef.current)
-              renderPollIntervalRef.current = null
-            }
-            toast.error('Video render failed. Please try again.', { style: renderToastStyle })
-          } else if (pollAttempts >= maxPollAttempts) {
-            if (renderPollIntervalRef.current) {
-              clearInterval(renderPollIntervalRef.current)
-              renderPollIntervalRef.current = null
-            }
-            toast.error('Render timeout - please try again or contact support', { style: renderToastStyle })
-          }
-          // Continue polling if status is 'queued' or 'rendering'
-        } catch (error) {
-          console.error('[Render Poll] Error checking status:', error)
-          // Don't clear interval on error - continue polling
-          // Only clear if we've exceeded max attempts
-          if (pollAttempts >= maxPollAttempts) {
-            if (renderPollIntervalRef.current) {
-              clearInterval(renderPollIntervalRef.current)
-              renderPollIntervalRef.current = null
-            }
-            toast.error('Error checking render status. Please try again.', { style: renderToastStyle })
-          }
-        }
-      }, 5000) // Poll every 5 seconds
-      
-    } catch (error) {
-      useOverlayStore.getState().hide()
-      setIsRendering(false)
-      console.error('Render submission failed:', error)
-      trackCta({
-        event: 'export_studio_pipeline_error',
-        location: 'ScriptPlayer',
-        value: error instanceof Error ? error.message : 'Unknown error'
-      })
-      toast.error(`Failed to submit render job: ${error instanceof Error ? error.message : 'Unknown error'}`, { style: renderToastStyle })
-    }
-  }
+  // Legacy Creatomate export flow removed; recording handled via MediaRecorder pipeline.
 
   const currentScene = scenes[playerState.currentSceneIndex]
 
@@ -1164,23 +974,55 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
             ))}
           </select>
           <button
-            onClick={handleDownloadMP4}
-            disabled={isRendering}
-            className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
-            title={isRendering ? "Rendering..." : "Export to MP4"}
+            onClick={isRecording ? handleStopRecording : handleStartRecording}
+            disabled={recorderPreparing || (!recorderSupported && !isRecording)}
+            className={`px-3 py-2 rounded-lg flex items-center gap-3 transition-colors min-h-[44px] ${
+              isRecording
+                ? 'bg-rose-600/90 hover:bg-rose-500'
+                : 'bg-white/10 hover:bg-white/20'
+            } ${(!recorderSupported && !isRecording) || recorderPreparing ? 'opacity-60 cursor-not-allowed' : ''}`}
+            title={recordButtonTitle}
           >
-            {isRendering ? (
-              <>
-                <Loader className="w-5 h-5 animate-spin" />
-                <span className="text-sm">Rendering...</span>
-              </>
+            {recorderPreparing ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : isRecording ? (
+              <Square className="w-5 h-5" />
             ) : (
-              <>
-                <Download className="w-5 h-5" />
-                <span className="text-sm">MP4</span>
-              </>
+              <CircleDot className="w-5 h-5 text-rose-400" />
             )}
+            <div className="flex flex-col items-start leading-none">
+              <span className="text-sm font-medium text-white">
+                {recorderPreparing ? 'Preparing…' : isRecording ? 'Stop' : 'Record'}
+              </span>
+              {showRecordingDuration && (
+                <span className={`text-[11px] tabular-nums ${isRecording ? 'text-rose-200' : 'text-gray-300'}`}>
+                  {recordingDurationLabel}
+                </span>
+              )}
+            </div>
           </button>
+          {!recorderSupported && !isRecording && (
+            <AlertCircle className="w-5 h-5 text-yellow-400" title={recorderSupportHint} />
+          )}
+          {hasRecording && (
+            <>
+              <button
+                onClick={handleSaveRecording}
+                className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors flex items-center gap-2 min-h-[44px]"
+                title="Download recording"
+              >
+                <Download className="w-5 h-5" />
+                <span className="text-sm">Save</span>
+              </button>
+              <button
+                onClick={handleDiscardRecording}
+                className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors flex items-center gap-2 min-h-[44px]"
+                title="Discard recording"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            </>
+          )}
         </div>
         
         {/* Tablet controls - show captions toggle */}
@@ -1215,7 +1057,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         
         {/* Close button - always visible */}
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center ml-2"
           title="Exit Screening Room (ESC)"
           aria-label="Close"
@@ -1234,8 +1076,16 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         onLanguageChange={(lang) => {
           setSelectedLanguage(lang)
         }}
-        onDownloadMP4={handleDownloadMP4}
-        isRendering={isRendering}
+        onStartRecording={handleStartRecording}
+        onStopRecording={handleStopRecording}
+        onSaveRecording={handleSaveRecording}
+        onDiscardRecording={handleDiscardRecording}
+        isRecording={isRecording}
+        isPreparing={recorderPreparing}
+        hasRecording={hasRecording}
+        recorderSupported={recorderSupported}
+        recorderSupportHint={recorderSupportHint}
+        recordingDurationLabel={recordingDurationLabel}
         supportedLanguages={selectableLanguages}
       />
 

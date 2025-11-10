@@ -35,18 +35,29 @@ The Creatomate workflow has been superseded by a local FFmpeg-based export pipel
 5. When complete, the preview pane auto-loads the MP4 and the footer presents download/copy actions. Duration QA + performance metrics appear in the status panel.
 6. (Optional) Trigger stubbed uploads. Buttons remain disabled unless both publish flags are enabled; responses are logged and surfaced via toast notifications.
 
-## 4. Error Handling & QA
+## 4. Screening Room Screen Capture (Browser)
+
+The in-app MP4 download now runs entirely client-side using the browser’s `MediaRecorder` API:
+
+1. Open **Screening Room** and use the new **Record** control in the header (or the menu on mobile). Grant the "Share your tab/window" permission when prompted.
+2. While recording, the button turns red and displays a running timer. Press **Stop** to finalize the capture; a toast confirms when the blob is ready.
+3. Use **Save** to download the WebM (Chrome/Edge) or MP4 (Safari when supported) file, or **Discard** to reset.
+4. The recorder auto-stops if playback reaches the end of the script or if the dialog is closed. If recording isn’t supported, an inline warning explains the Chrome/Edge/Firefox requirement.
+
+> Tip: ask users to share the **Screening Room tab with audio** to capture both narration/dialogue and visuals.
+
+## 5. Error Handling & QA
 
 * Failures are reported with stage identifiers (`pass1-scenes`, `pass4-mix`, etc.), allowing the UI to highlight the offending phase.
 * Workspace paths are logged for inspection; on failure the workspace is preserved when `keepOnFailure=true` (default).
 * Duration QA compares expected scene runtime with rendered clips, concatenated video, and each audio stem. Warnings appear in the status panel if tolerance (0.25 s) is exceeded.
 
-## 5. Hardware Acceleration Notes
+## 6. Hardware Acceleration Notes
 
 * The hardware toggle adds `-hwaccel auto` during scene rendering. On systems without GPU support FFmpeg transparently falls back to CPU.
 * Because GPU availability varies, the toggle defaults to off unless `NEXT_PUBLIC_EXPORT_HWACCEL_DEFAULT=true`. Users can override per export.
 
-## 6. Project Structure Cheatsheet
+## 7. Project Structure Cheatsheet
 
 | Area | Files |
 | --- | --- |
@@ -57,7 +68,7 @@ The Creatomate workflow has been superseded by a local FFmpeg-based export pipel
 | Renderer bridge | `electron/preload.js`, `src/types/export-api.d.ts` |
 | Export dialog UI | `src/components/vision/ExportStudioDialog.tsx` |
 
-## 7. Desktop Installer Workflow
+## 8. Desktop Installer Workflow
 
 1. **Build the web app (optional but recommended):** `npm run build`
 2. **Generate installers:**
@@ -68,10 +79,27 @@ The Creatomate workflow has been superseded by a local FFmpeg-based export pipel
 4. **Commit manifest updates:** the manifest is imported by the Next.js app at build time. Commit the updated JSON so production deployments expose the new links automatically.
 5. **Trigger a web redeploy:** push to `main` (or redeploy in Vercel) so the Export Studio dialog picks up the latest manifest.
 
-## 8. Future Work
+## 9. Future Work
 
 * **feature-flag:** Gate Export Studio behind a runtime toggle so legacy Creatomate path remains available.
 * **analytics:** Capture telemetry around export success/latency.
 * **feedback-loop:** Collect beta feedback to refine presets and polish the publish stubs.
 
 Refer to `fix-script-ai-issues.plan.md` for the full migration roadmap and remaining tasks.
+
+## Export Studio GCP Backend
+
+The Export Studio can now run entirely on Google Cloud. When `NEXT_PUBLIC_EXPORT_BACKEND` is set to `gcp`, the web app queues exports through the new API surface (`/api/export/*`). Jobs flow through Cloud Run Jobs, Pub/Sub, and Firestore for status caching. A minimal deployment looks like this:
+
+1. **Provision infrastructure**
+   - Create Cloud Storage buckets for staged assets and outputs.
+   - Create Pub/Sub topics `export-requests` and `export-status` and a Firestore collection to persist job state.
+   - Deploy the FFmpeg worker container to Cloud Run Jobs (see `infra/gcp/` for Terraform scaffolding).
+2. **Configure environment variables**
+   - Set `GCP_PROJECT_ID`, `GCP_PUBSUB_EXPORT_TOPIC`, `GCP_EXPORT_INPUT_BUCKET`, `GCP_EXPORT_OUTPUT_BUCKET`, and optionally `GCP_SERVICE_ACCOUNT_KEY` to a base64 encoded service account.
+   - Flip `NEXT_PUBLIC_EXPORT_BACKEND=gcp` for the client. Desktop export remains available when the flag is `desktop`.
+3. **Bridge behavior**
+   - `gcpExportBridge` polls `/api/export/status` to keep the dialog’s progress UI in sync.
+   - Signed upload URLs (`/api/export/upload-url`) handle large assets before the worker runs.
+
+Refer to `infra/gcp/main.tf` and the scripts in `scripts/gcp/` for a starting point on provisioning Cloud Run Jobs and Pub/Sub infrastructure.

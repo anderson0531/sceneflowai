@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { X, Subtitles, Download, Loader, Globe } from 'lucide-react'
+import { X, Subtitles, CircleDot, Square, Download, Trash2, Loader2, Globe, AlertCircle } from 'lucide-react'
 
 interface MobileMenuSheetProps {
   open: boolean
@@ -10,8 +10,16 @@ interface MobileMenuSheetProps {
   onToggleCaptions: () => void
   selectedLanguage: string
   onLanguageChange: (language: string) => void
-  onDownloadMP4: () => void
-  isRendering: boolean
+  onStartRecording: () => void
+  onStopRecording: () => void
+  onSaveRecording: () => void
+  onDiscardRecording: () => void
+  isRecording: boolean
+  isPreparing: boolean
+  hasRecording: boolean
+  recorderSupported: boolean
+  recorderSupportHint: string
+  recordingDurationLabel: string
   supportedLanguages: Array<{ code: string; name: string }>
 }
 
@@ -22,11 +30,37 @@ export function MobileMenuSheet({
   onToggleCaptions,
   selectedLanguage,
   onLanguageChange,
-  onDownloadMP4,
-  isRendering,
+  onStartRecording,
+  onStopRecording,
+  onSaveRecording,
+  onDiscardRecording,
+  isRecording,
+  isPreparing,
+  hasRecording,
+  recorderSupported,
+  recorderSupportHint,
+  recordingDurationLabel,
   supportedLanguages
 }: MobileMenuSheetProps) {
   if (!open) return null
+
+  const showDuration = isRecording || hasRecording
+  const handleToggleRecording = () => {
+    if (isRecording) {
+      onStopRecording()
+    } else {
+      onStartRecording()
+    }
+    onClose()
+  }
+  const handleSaveRecordingClick = () => {
+    onSaveRecording()
+    onClose()
+  }
+  const handleDiscardRecordingClick = () => {
+    onDiscardRecording()
+    onClose()
+  }
 
   return (
     <>
@@ -98,27 +132,65 @@ export function MobileMenuSheet({
             </select>
           </div>
           
-          {/* MP4 Download */}
-          <button
-            onClick={() => {
-              onDownloadMP4()
-              onClose()
-            }}
-            disabled={isRendering}
-            className="w-full flex items-center justify-center gap-3 p-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px]"
-          >
-            {isRendering ? (
-              <>
-                <Loader className="w-5 h-5 animate-spin" />
-                <span className="text-base font-medium">Rendering...</span>
-              </>
-            ) : (
-              <>
-                <Download className="w-5 h-5" />
-                <span className="text-base font-medium">Export to MP4</span>
-              </>
+          {/* Screen Recording */}
+          <div className="p-4 rounded-lg bg-gray-800/50 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-base font-medium text-white">Screen Recording</span>
+              {showDuration && (
+                <span className={`text-sm tabular-nums ${isRecording ? 'text-rose-300' : 'text-gray-300'}`}>
+                  {recordingDurationLabel}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={handleToggleRecording}
+              disabled={isPreparing || (!recorderSupported && !isRecording)}
+              className={`w-full flex items-center justify-center gap-3 p-4 rounded-lg transition-colors min-h-[56px] ${
+                isRecording ? 'bg-rose-600 hover:bg-rose-500' : 'bg-blue-600 hover:bg-blue-700'
+              } ${(!recorderSupported && !isRecording) || isPreparing ? 'opacity-60 cursor-not-allowed' : ''}`}
+            >
+              {isPreparing ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span className="text-base font-medium">Preparing…</span>
+                </>
+              ) : isRecording ? (
+                <>
+                  <Square className="w-5 h-5" />
+                  <span className="text-base font-medium">Stop Recording</span>
+                </>
+              ) : (
+                <>
+                  <CircleDot className="w-5 h-5 text-rose-200" />
+                  <span className="text-base font-medium">Record Playback</span>
+                </>
+              )}
+            </button>
+            {!recorderSupported && !isRecording && (
+              <div className="flex items-start gap-3 rounded-lg border border-yellow-500/40 bg-yellow-500/10 text-yellow-100 px-3 py-3 text-sm">
+                <AlertCircle className="w-5 h-5 mt-0.5" />
+                <span>{recorderSupportHint}</span>
+              </div>
             )}
-          </button>
+            {hasRecording && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleSaveRecordingClick}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                >
+                  <Download className="w-5 h-5" />
+                  <span className="text-base font-medium">Save</span>
+                </button>
+                <button
+                  onClick={handleDiscardRecordingClick}
+                  className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                >
+                  <Trash2 className="w-5 h-5" />
+                  <span className="text-base font-medium">Discard</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>
