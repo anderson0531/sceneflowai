@@ -15,8 +15,9 @@ const DIST_DIR = path.resolve(__dirname, '..', 'dist', 'desktop')
 const MANIFEST_PATH = path.resolve(__dirname, '..', 'desktop', 'renderer-manifest.json')
 const BLOB_PREFIX = 'renderer'
 const token = process.env.VERCEL_BLOB_RW_TOKEN || process.env.BLOB_READ_WRITE_TOKEN
+const dryRun = ['1', 'true', 'yes'].includes((process.env.DRY_RUN || '').toLowerCase())
 
-if (!token) {
+if (!token && !dryRun) {
   console.error('[upload-renderer] Missing VERCEL_BLOB_RW_TOKEN (or BLOB_READ_WRITE_TOKEN).')
   process.exit(1)
 }
@@ -72,6 +73,10 @@ let putFn = null
 
 async function uploadFile(blobKey, filePath) {
   console.log(`[upload-renderer] Uploading ${path.basename(filePath)} → ${blobKey}`)
+  if (dryRun) {
+    return { url: `dry-run://${blobKey}` }
+  }
+
   return putFn(blobKey, fs.createReadStream(filePath), {
     access: 'public',
     token
@@ -90,6 +95,7 @@ async function uploadArtifacts() {
   })
 
   const updaterMetadataFiles = files.filter((filename) => filename.toLowerCase().endsWith('.yml'))
+  const blockmapFiles = files.filter((filename) => filename.toLowerCase().endsWith('.blockmap'))
 
   if (artifactFilenames.length === 0) {
     console.error('[upload-renderer] No installer artifacts (.exe, .dmg, .zip) found in dist/desktop.')
@@ -135,6 +141,14 @@ async function uploadArtifacts() {
     await uploadFile(blobKey, filePath)
   }
 
+  // Upload differential updater blockmaps
+  for (const filename of blockmapFiles) {
+    const filePath = path.join(DIST_DIR, filename)
+    const blobKey = `${BLOB_PREFIX}/${version}/${filename}`
+    await uploadFile(blobKey, filePath)
+    await uploadFile(`${BLOB_PREFIX}/${filename}`, filePath)
+  }
+
   return uploaded
 }
 
@@ -173,11 +187,21 @@ async function writeManifest(artifacts) {
 
 async function main() {
   try {
-    const blobModule = await import('@vercel/blob')
-    putFn = blobModule.put
+    if (!dryRun) {
+      const blobModule = await import('@vercel/blob')
+      putFn = blobModule.put
+    } else {
+      putFn = () => {
+        throw new Error('putFn should not be called when DRY_RUN is enabled')
+      }
+    }
 
     const artifacts = await uploadArtifacts()
-    await writeManifest(artifacts)
+    if (!dryRun) {
+      await writeManifest(artifacts)
+    } else {
+      console.log('[upload-renderer] DRY_RUN enabled – manifest not written.')
+    }
     console.log('[upload-renderer] Completed successfully.')
   } catch (error) {
     console.error('[upload-renderer] Failed:', error)

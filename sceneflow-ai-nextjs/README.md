@@ -90,3 +90,57 @@ Refer to `fix-script-ai-issues.plan.md` for the full migration roadmap and remai
 ## Desktop Export Only
 
 SceneFlow now ships with a desktop FFmpeg renderer. The web experience no longer submits jobs to Google Cloud—install the SceneFlow Desktop app and trigger exports from the Vision workflow UI. All former GCP-related instructions have been retired.
+
+### macOS Notarization
+
+Before distributing macOS builds, submit the DMG/ZIP to Apple notarization:
+
+```
+APPLE_ID=you@example.com \
+APPLE_TEAM_ID=ABCDE12345 \
+APPLE_APP_SPECIFIC_PASSWORD=xxxx-xxxx-xxxx \
+scripts/notarize-macos.sh dist/desktop/SceneFlow-Renderer-<version>-x64.dmg
+```
+
+You may alternatively configure a `NOTARYTOOL_PROFILE` via `xcrun notarytool store-credentials` and pass only the artifact path.
+
+### Publishing Installers
+
+Use the upload helper to push DMG/ZIP/EXE artifacts and blockmaps to Vercel Blob after running `npm run electron:build`:
+
+```
+VERCEL_BLOB_RW_TOKEN=xxxxx node scripts/upload-renderer.js
+```
+
+Set `DRY_RUN=true` to preview the uploads without writing to Blob storage. The script also refreshes `desktop/renderer-manifest.json` with checksums for the new release.
+
+In CI you can invoke `scripts/ci/upload-desktop.sh --platform all` to build macOS/Windows installers, notarize (if Apple credentials are set), and publish artifacts.
+
+A GitHub Actions workflow (`.github/workflows/upload-desktop.yml`) is configured to run on `desktop-v*` tags and call the helper script with credentials stored in repository secrets.
+
+For manual Windows verification, use `scripts/windows/smoke-test.ps1` with an NSIS installer path to install, launch, check logs, and uninstall automatically.
+
+### Windows Packaging & Signing
+
+Build a Windows installer from a Windows environment (or cross-platform build host with wine/NSIS):
+
+```
+npm run electron:build:win
+```
+
+For code signing, set the following environment variables before running the build:
+
+- `CSC_LINK`: Path/URL to the PFX (code-signing certificate)
+- `CSC_KEY_PASSWORD`: Password for the PFX
+- `WIN_CSC_LINK`/`WIN_CSC_KEY_PASSWORD`: Windows-specific overrides (optional)
+
+Post-build verification checklist (PowerShell):
+
+```powershell
+./dist/desktop/SceneFlow-Renderer-<version>-Setup.exe /VERYSILENT
+Start-Sleep -Seconds 5
+Start-Process "C:\\Program Files\\SceneFlow Desktop Renderer\\SceneFlow Desktop Renderer.exe"
+Get-AuthenticodeSignature .\dist\desktop\SceneFlow-Renderer-<version>-Setup.exe
+```
+
+Uninstall via “Add or Remove Programs” and ensure `%APPDATA%\SceneFlow` cleanup. Document SmartScreen dialogs if the installer is unsigned.

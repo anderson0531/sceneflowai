@@ -24,6 +24,16 @@ This document captures quality checks for the desktop-only export workflow. Clou
 | Vision workflow | Audio mix + preset | Export dialog indicates desktop requirement; no server call |
 | BYOK projects | Verify cost calculator | Shows zero cloud export cost |
 
+### Windows QA Checklist
+
+- Download the latest Windows installer (`SceneFlow-Renderer-<version>-Setup.exe`).
+- Install via default NSIS wizard; confirm app launches without SmartScreen warning (or document override steps).
+- Trigger a short export (e.g., 10s sample) and ensure FFmpeg output renders locally.
+- Verify logs appear under `%APPDATA%/SceneFlow/logs` and no GPU/cloud calls occur.
+- Uninstall via "Add or Remove Programs" and confirm residual files removed from `%LOCALAPPDATA%`.
+- Run `Get-AuthenticodeSignature` on the installer; capture results if unsigned or expired.
+- Optional automation: execute `powershell -ExecutionPolicy Bypass -File scripts/windows/smoke-test.ps1 -InstallerPath .\SceneFlow-Renderer-<version>-Setup.exe` on a QA host.
+
 QA should execute the matrix in staging with the latest desktop build. Log issues with the `qa-desktop-export` label.
 
 ## 3. Staged Rollout Strategy
