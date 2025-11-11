@@ -1952,15 +1952,17 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         onEnded={() => setPlayingAudio(null)}
         className="hidden"
       />
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onOpenExportStudio}
-        className="flex items-center gap-2"
-      >
-        <MonitorPlay className="w-4 h-4" />
-        Desktop Export
-      </Button>
+      {canUseExportStudio && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleOpenExportStudio}
+          className="flex items-center gap-2"
+        >
+          <MonitorPlay className="w-4 h-4" />
+          Desktop Export
+        </Button>
+      )}
     </div>
   )
 }
