@@ -26,7 +26,8 @@ const nextConfig = {
   webpack: (config) => {
     config.resolve = config.resolve || {}
     config.resolve.alias = config.resolve.alias || {}
-    config.resolve.alias['@/services'] = path.resolve(__dirname, 'src/service-stubs/runtime/services')
+    config.resolve.alias['@/services'] = path.resolve(__dirname, 'src/services')
+    config.resolve.alias['@/service-stubs'] = path.resolve(__dirname, 'src/service-stubs')
     return config
   }
 };

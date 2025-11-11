@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Clapperboard, Printer, Video as VideoIcon, Info, MonitorPlay } from 'lucide-react'
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Video as VideoIcon, Info } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
@@ -312,8 +312,6 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
         getScoreColorClass={getScoreColorClass}
         dragHandleProps={listeners}
         onOpenSceneReview={props.onOpenSceneReview}
-        canUseExportStudio={props.canUseExportStudio}
-        onOpenExportStudio={props.onOpenExportStudio}
       />
     </div>
   )
@@ -329,6 +327,15 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [exportStudioOpen, setExportStudioOpen] = useState(false)
   const [generateAudioDialogOpen, setGenerateAudioDialogOpen] = useState(false)
+  const [exportJob, setExportJob] = useState<{
+    id: string
+    status: 'queued' | 'running' | 'completed' | 'failed'
+    progress: number | null
+    resultUrl?: string | null
+    errorMessage?: string | null
+    metadata?: Record<string, any> | null
+  } | null>(null)
+  const [isExportSubmitting, setIsExportSubmitting] = useState(false)
   
   // Audio playback state
   const [voices, setVoices] = useState<Array<CuratedVoice>>([])
@@ -1277,15 +1284,102 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     })
   }, [scenes])
 
-  const canUseExportStudio = !!script && scenes.length > 0
+  const handleStartHostedExport = useCallback(async () => {
+    if (!script || !scenes || scenes.length === 0) {
+      toast.error('Add scenes before exporting.')
+      return
+    }
 
-  const handleOpenExportStudio = () => {
-    toast.info('Desktop renderer handles exports. Launch SceneFlow Desktop to export your project.')
-  }
+    try {
+      setIsExportSubmitting(true)
+      const response = await fetch('/api/export/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: projectId ?? null,
+          title: script?.title || 'SceneFlow Project',
+          scenes,
+          video: {
+            width: 1920,
+            height: 1080,
+            fps: 30,
+            format: 'mp4',
+          },
+          audio: {
+            narration: 1,
+            dialogue: 1,
+            music: 0.6,
+            sfx: 0.8,
+            normalize: true,
+            duckMusic: true,
+          },
+          metadata: {
+            projectId,
+            projectTitle: script?.title,
+          },
+        }),
+      })
 
-  const desktopDownloadUrl =
-    process.env.NEXT_PUBLIC_DESKTOP_DOWNLOAD_URL ??
-    'https://github.com/anderson0531/sceneflowai/releases/latest'
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}))
+        throw new Error(error?.error || 'Failed to start export')
+      }
+
+      const data = await response.json()
+      setExportJob({ id: data.jobId, status: data.status ?? 'queued', progress: 0 })
+      toast.info('Export queued. We will notify you when it is ready.', { style: toastVisualStyle })
+    } catch (error: any) {
+      console.error('[Export] Failed to start', error)
+      toast.error(error?.message || 'Failed to start export job', { style: toastVisualStyle })
+    } finally {
+      setIsExportSubmitting(false)
+    }
+  }, [projectId, scenes, script, toastVisualStyle])
+
+  useEffect(() => {
+    if (!exportJob || ['completed', 'failed'].includes(exportJob.status)) {
+      return
+    }
+
+    let isCancelled = false
+
+    const poll = async () => {
+      try {
+        const response = await fetch(`/api/export/status?jobId=${exportJob.id}`)
+        if (!response.ok) {
+          throw new Error('Failed to fetch job status')
+        }
+        const data = await response.json()
+        const job = data?.job
+        if (!job || isCancelled) return
+
+        setExportJob({
+          id: job.id,
+          status: job.status,
+          progress: typeof job.progress === 'number' ? job.progress : null,
+          resultUrl: job.resultUrl,
+          errorMessage: job.errorMessage,
+          metadata: job.metadata,
+        })
+
+        if (job.status === 'completed' && job.resultUrl) {
+          toast.success('Export ready! Downloading…', { style: toastVisualStyle })
+          window.open(job.resultUrl, '_blank', 'noopener')
+        } else if (job.status === 'failed' && job.errorMessage) {
+          toast.error(`Export failed: ${job.errorMessage}`, { style: toastVisualStyle })
+        }
+      } catch (error) {
+        console.error('[Export] Polling failed', error)
+      }
+    }
+
+    const interval = setInterval(poll, 5000)
+    poll()
+    return () => {
+      isCancelled = true
+      clearInterval(interval)
+    }
+  }, [exportJob, toastVisualStyle])
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 h-full flex flex-col overflow-hidden">
@@ -1393,6 +1487,35 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+          )}
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="flex items-center gap-1"
+                  disabled={isExportSubmitting}
+                  onClick={handleStartHostedExport}
+                >
+                  <VideoIcon className="w-4 h-4" />
+                  <span className="hidden sm:inline">Render Video</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                <p>Submit scenes to SceneFlow&apos;s hosted renderer. We&apos;ll notify you when the video is ready.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          {exportJob && (
+            <Badge variant={exportJob.status === 'failed' ? 'destructive' : exportJob.status === 'completed' ? 'outline' : 'secondary'}>
+              {exportJob.status}
+              {typeof exportJob.progress === 'number' && exportJob.status !== 'completed' && exportJob.status !== 'failed'
+                ? ` · ${Math.round((exportJob.progress || 0) * 100)}%`
+                : ''}
+            </Badge>
           )}
 
           {/* Preview Button (Screening Room) */}
@@ -1775,8 +1898,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       generateSFX={generateSFX}
                       onGenerateSceneDirection={onGenerateSceneDirection}
                       generatingDirectionFor={generatingDirectionFor}
-                      canUseExportStudio={canUseExportStudio}
-                      onOpenExportStudio={handleOpenExportStudio}
                 />
                     )
                   })}
@@ -1956,33 +2077,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         onEnded={() => setPlayingAudio(null)}
         className="hidden"
       />
-      {canUseExportStudio && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleOpenExportStudio}
-          className="flex items-center gap-2"
-        >
-          <MonitorPlay className="w-4 h-4" />
-          Desktop Export
-        </Button>
-      )}
-
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="primary" size="sm" className="flex items-center gap-1" asChild>
-              <a href={desktopDownloadUrl} target="_blank" rel="noopener noreferrer">
-                <MonitorPlay className="w-4 h-4" />
-                <span className="hidden sm:inline">Desktop App</span>
-              </a>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-            <p>Download the SceneFlow Desktop renderer to export your projects locally.</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
     </div>
   )
 }
@@ -2049,9 +2143,6 @@ interface SceneCardProps {
   // NEW: Scene direction generation props
   onGenerateSceneDirection?: (sceneIdx: number) => Promise<void>
   generatingDirectionFor?: number | null
-  // Export Studio controls
-  canUseExportStudio?: boolean
-  onOpenExportStudio?: () => void
 }
 
 function SceneCard({
@@ -2102,9 +2193,6 @@ function SceneCard({
   generateSFX,
   onGenerateSceneDirection,
   generatingDirectionFor,
-  canUseExportStudio = false,
-  onOpenExportStudio,
-  selectedLanguage = 'en'
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
@@ -2154,15 +2242,6 @@ function SceneCard({
   const toggleOpen = (e: React.MouseEvent) => {
     e.stopPropagation()
     setIsOpen(!isOpen)
-  }
-  
-  const handleExportStudioClick = (event: React.MouseEvent) => {
-    event.stopPropagation()
-    if (onOpenExportStudio) {
-      onOpenExportStudio()
-    } else {
-      toast.info('Desktop renderer handles exports. Launch SceneFlow Desktop to export your project.')
-    }
   }
   
   return (
@@ -2384,28 +2463,6 @@ function SceneCard({
                 </Tooltip>
               </TooltipProvider>
             )}
-
-          {/* Export Studio Button */}
-          {canUseExportStudio && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={handleExportStudioClick}
-                    className="flex items-center gap-1"
-                  >
-                    <Film className="w-4 h-4" />
-                    <span className="hidden sm:inline">Export Studio</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                  <p>Launch the desktop Export Studio to render the full script</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
             
             {/* View Review Button - Only visible when score exists */}
             {!isOutline && scene.scoreAnalysis && onOpenSceneReview && (

@@ -17,6 +17,7 @@ import CollabRecommendation from './CollabRecommendation'
 import CollabChatMessage from './CollabChatMessage'
 import SubscriptionTier from './SubscriptionTier'
 import RateCard from './RateCard'
+import { ExportJob } from './ExportJob'
 
 // Define model associations
 User.hasMany(Project, {
@@ -39,6 +40,26 @@ User.hasMany(UserProviderConfig, {
 UserProviderConfig.belongsTo(User, {
   foreignKey: 'user_id',
   as: 'user',
+})
+
+ExportJob.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user',
+})
+
+User.hasMany(ExportJob, {
+  foreignKey: 'user_id',
+  as: 'exportJobs',
+})
+
+ExportJob.belongsTo(Project, {
+  foreignKey: 'project_id',
+  as: 'project',
+})
+
+Project.hasMany(ExportJob, {
+  foreignKey: 'project_id',
+  as: 'exportJobs',
 })
 
 // Subscription model associations
@@ -98,6 +119,7 @@ export {
   CollabChatMessage,
   SubscriptionTier,
   RateCard,
+  ExportJob,
 }
 
 // Export default for convenience
@@ -121,4 +143,5 @@ export default {
   CollabChatMessage,
   SubscriptionTier,
   RateCard,
+  ExportJob,
 }

@@ -27,8 +27,10 @@
         "./src/*"
       ],
       "@/services/*": [
-        "./src/service-stubs/*",
-        "./src/service-stubs/index.d.ts"
+        "./src/services/*"
+      ],
+      "@/service-stubs/*": [
+        "./src/service-stubs/*"
       ]
     }
   },

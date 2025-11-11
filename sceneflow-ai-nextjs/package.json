@@ -2,7 +2,6 @@
         "name": "sceneflow-ai-nextjs",
         "version": "2.0.1",
         "private": true,
-        "main": "electron/main.js",
         "engines": {
                 "node": ">=20 <21"
         },
@@ -13,81 +12,10 @@
                 "build:memory": "NODE_OPTIONS='--max-old-space-size=3072' next build",
                 "start": "next start",
                 "lint": "next lint",
-                "electron:dev": "ELECTRON_START_URL=http://localhost:3000 electron .",
-                "electron:build": "npm run build && electron-builder --publish never",
-                "electron:build:mac": "npm run build && electron-builder --mac dmg zip --publish never",
-                "electron:build:win": "npm run build && electron-builder --win nsis --publish never",
-                "electron:build:all": "npm run build && electron-builder -mwl --publish never",
-                "electron:upload": "node scripts/upload-renderer.js",
                 "ci:smoke": "bash scripts/ci/ai-smoke.sh",
                 "setup:database": "echo 'Database setup scripts removed during cleanup'",
                 "test": "echo 'Test scripts removed during cleanup'",
-                "gcp:deploy": "echo 'GCP deployment script removed. Use desktop renderer.'"
-        },
-        "build": {
-                "appId": "ai.sceneflow.desktop",
-                "productName": "SceneFlow Desktop Renderer",
-                "directories": {
-                        "output": "dist/desktop",
-                        "buildResources": "electron/resources"
-                },
-                "files": [
-                        "electron/**/*",
-                        "desktop/renderer-manifest.json",
-                        "package.json",
-                        "!**/*.map",
-                        "!**/node_modules/.cache/**",
-                        "!**/dist/**",
-                        "!**/.next/**",
-                        "!**/out/**"
-                ],
-                "extraMetadata": {
-                        "main": "electron/main.js"
-                },
-                "asarUnpack": [
-                        "**/node_modules/ffmpeg-static/**",
-                        "**/node_modules/ffprobe-static/**"
-                ],
-                "mac": {
-                        "category": "public.app-category.video",
-                        "target": [
-                                {
-                                        "target": "dmg",
-                                        "arch": [
-                                                "x64",
-                                                "arm64"
-                                        ]
-                                },
-                                {
-                                        "target": "zip",
-                                        "arch": [
-                                                "x64",
-                                                "arm64"
-                                        ]
-                                }
-                        ],
-                        "artifactName": "SceneFlow-Renderer-${version}-${arch}.${ext}"
-                },
-                "win": {
-                        "target": [
-                                {
-                                        "target": "nsis",
-                                        "arch": [
-                                                "x64"
-                                        ]
-                                }
-                        ],
-                        "artifactName": "SceneFlow-Renderer-${version}-Setup.${ext}"
-                },
-                "nsis": {
-                        "oneClick": true,
-                        "perMachine": false,
-                        "allowToChangeInstallationDirectory": false,
-                        "createDesktopShortcut": true,
-                        "shortcutName": "SceneFlow Desktop Renderer",
-                        "artifactName": "SceneFlow-Renderer-${version}-Setup.${ext}"
-                },
-                "publish": null
+                "gcp:deploy": "echo 'Deploy via Vercel (cloud export handled server-side).'"
         },
         "dependencies": {
                 "@dnd-kit/core": "^6.3.1",
@@ -175,9 +103,6 @@
                 "@types/react-dom": "^19",
                 "@types/sequelize": "^4.28.20",
                 "autoprefixer": "^10.4.19",
-                "electron": "^31.5.1",
-                "electron-builder": "^25.0.5",
-                "electron-updater": "^6.6.2",
                 "eslint": "^9",
                 "eslint-config-next": "15.4.6",
                 "postcss": "^8.5.6",

@@ -5,7 +5,7 @@ let storageClient: Storage | null = null
 /**
  * Get or create GCS storage client using service account credentials
  */
-function getStorageClient(): Storage {
+export function getStorageClient(): Storage {
   if (!storageClient) {
     if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
       throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON not configured')
