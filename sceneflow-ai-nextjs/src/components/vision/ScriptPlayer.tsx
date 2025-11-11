@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { X, Subtitles, CircleDot, Square, Download, Loader2, Menu, Trash2, AlertCircle } from 'lucide-react'
+import { X, Subtitles, CircleDot, Square, Loader2, Menu, Trash2, AlertCircle } from 'lucide-react'
 import { SceneDisplay } from './SceneDisplay'
 import { PlaybackControls } from './PlaybackControls'
 import { VoiceAssignmentPanel } from './VoiceAssignmentPanel'
@@ -302,11 +302,9 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     error: recorderError,
     recordingBlob,
     recordingUrl,
-    mimeType: recordingMimeType,
     start: startScreenRecording,
     stop: stopScreenRecording,
-    reset: resetScreenRecording,
-    download: downloadScreenRecording
+    reset: resetScreenRecording
   } = useScreenRecorder({
     audio: true,
     video: {
@@ -367,17 +365,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     }
     wasPlayingRef.current = playerState.isPlaying
   }, [playerState.isPlaying, isRecording, handleStopRecording])
-
-  const handleSaveRecording = useCallback(() => {
-    if (!hasRecording) {
-      toast.error('No recording available to download yet.', { style: renderToastStyle })
-      return
-    }
-    const sanitizedTitle = (script?.title || 'screening-room').trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase()
-    const extension = recordingMimeType && recordingMimeType.includes('mp4') ? 'mp4' : 'webm'
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-    downloadScreenRecording(`${sanitizedTitle || 'screening-room'}-${timestamp}.${extension}`)
-  }, [downloadScreenRecording, hasRecording, recordingMimeType, script?.title])
 
   const handleDiscardRecording = useCallback(() => {
     if (!hasRecording) return
@@ -1040,36 +1027,18 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
             <AlertCircle className="w-5 h-5 text-yellow-400" title={recorderSupportHint} />
           )}
           {hasRecording && (
-            <>
-              <button
-                onClick={handleSaveRecording}
-                className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors flex items-center gap-2 min-h-[44px]"
-                title="Download recording"
-              >
-                <Download className="w-5 h-5" />
-                <span className="text-sm">Save</span>
-              </button>
-              <button
-                onClick={handleDiscardRecording}
-                className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors flex items-center gap-2 min-h-[44px]"
-                title="Discard recording"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
-            </>
+            <button
+              onClick={handleDiscardRecording}
+              className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors flex items-center gap-2 min-h-[44px]"
+              title="Discard recording"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
           )}
         </div>
         
         {hasRecording && (
           <div className="flex items-center gap-2 lg:hidden">
-            <button
-              onClick={handleSaveRecording}
-              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-              title="Download recording"
-              aria-label="Download recording"
-            >
-              <Download className="w-5 h-5" />
-            </button>
             <button
               onClick={handleDiscardRecording}
               className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -1134,7 +1103,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         }}
         onStartRecording={handleStartRecording}
         onStopRecording={handleStopRecording}
-        onSaveRecording={handleSaveRecording}
         onDiscardRecording={handleDiscardRecording}
         isRecording={isRecording}
         isPreparing={recorderPreparing}

@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { X, Subtitles, CircleDot, Square, Download, Trash2, Loader2, Globe, AlertCircle } from 'lucide-react'
+import { X, Subtitles, CircleDot, Square, Trash2, Loader2, Globe, AlertCircle } from 'lucide-react'
 
 interface MobileMenuSheetProps {
   open: boolean
@@ -12,7 +12,6 @@ interface MobileMenuSheetProps {
   onLanguageChange: (language: string) => void
   onStartRecording: () => void
   onStopRecording: () => void
-  onSaveRecording: () => void
   onDiscardRecording: () => void
   isRecording: boolean
   isPreparing: boolean
@@ -32,7 +31,6 @@ export function MobileMenuSheet({
   onLanguageChange,
   onStartRecording,
   onStopRecording,
-  onSaveRecording,
   onDiscardRecording,
   isRecording,
   isPreparing,
@@ -51,10 +49,6 @@ export function MobileMenuSheet({
     } else {
       onStartRecording()
     }
-    onClose()
-  }
-  const handleSaveRecordingClick = () => {
-    onSaveRecording()
     onClose()
   }
   const handleDiscardRecordingClick = () => {
@@ -173,14 +167,7 @@ export function MobileMenuSheet({
               </div>
             )}
             {hasRecording && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleSaveRecordingClick}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
-                >
-                  <Download className="w-5 h-5" />
-                  <span className="text-base font-medium">Save</span>
-                </button>
+              <div className="flex items-center justify-center">
                 <button
                   onClick={handleDiscardRecordingClick}
                   className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
