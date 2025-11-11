@@ -1283,6 +1283,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     toast.info('Desktop renderer handles exports. Launch SceneFlow Desktop to export your project.')
   }
 
+  const desktopDownloadUrl =
+    process.env.NEXT_PUBLIC_DESKTOP_DOWNLOAD_URL ??
+    'https://github.com/anderson0531/sceneflowai/releases/latest'
+
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 h-full flex flex-col overflow-hidden">
       {/* Header */}
@@ -1963,6 +1967,22 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           Desktop Export
         </Button>
       )}
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="primary" size="sm" className="flex items-center gap-1" asChild>
+              <a href={desktopDownloadUrl} target="_blank" rel="noopener noreferrer">
+                <MonitorPlay className="w-4 h-4" />
+                <span className="hidden sm:inline">Desktop App</span>
+              </a>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+            <p>Download the SceneFlow Desktop renderer to export your projects locally.</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   )
 }
