@@ -2028,8 +2028,8 @@ interface SceneCardProps {
   onGenerateSceneDirection?: (sceneIdx: number) => Promise<void>
   generatingDirectionFor?: number | null
   // Export Studio controls
-  canUseExportStudio: boolean
-  onOpenExportStudio: () => void
+  canUseExportStudio?: boolean
+  onOpenExportStudio?: () => void
 }
 
 function SceneCard({
@@ -2080,7 +2080,7 @@ function SceneCard({
   generateSFX,
   onGenerateSceneDirection,
   generatingDirectionFor,
-  canUseExportStudio,
+  canUseExportStudio = false,
   onOpenExportStudio,
   selectedLanguage = 'en'
 }: SceneCardProps) {
@@ -2132,6 +2132,15 @@ function SceneCard({
   const toggleOpen = (e: React.MouseEvent) => {
     e.stopPropagation()
     setIsOpen(!isOpen)
+  }
+  
+  const handleExportStudioClick = (event: React.MouseEvent) => {
+    event.stopPropagation()
+    if (onOpenExportStudio) {
+      onOpenExportStudio()
+    } else {
+      toast.info('Desktop renderer handles exports. Launch SceneFlow Desktop to export your project.')
+    }
   }
   
   return (
@@ -2362,10 +2371,7 @@ function SceneCard({
                   <Button
                     variant="primary"
                     size="sm"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      onOpenExportStudio()
-                    }}
+                    onClick={handleExportStudioClick}
                     className="flex items-center gap-1"
                   >
                     <Film className="w-4 h-4" />
