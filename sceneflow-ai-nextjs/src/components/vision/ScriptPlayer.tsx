@@ -1,18 +1,15 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { X, Subtitles, CircleDot, Square, Loader2, Menu, Trash2, AlertCircle } from 'lucide-react'
+import { X, Subtitles, Menu } from 'lucide-react'
 import { SceneDisplay } from './SceneDisplay'
 import { PlaybackControls } from './PlaybackControls'
 import { VoiceAssignmentPanel } from './VoiceAssignmentPanel'
 import { MobileMenuSheet } from './MobileMenuSheet'
 import { WebAudioMixer, SceneAudioConfig } from '@/lib/audio/webAudioMixer'
 import { getAudioDuration } from '@/lib/audio/audioDuration'
-import { toast } from 'sonner'
 import { getAvailableLanguages, getAudioUrl, getAudioDuration as getStoredAudioDuration } from '@/lib/audio/languageDetection'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
-import { useScreenRecorder } from '@/hooks/useScreenRecorder'
-
 interface ScreeningRoomProps {
   script: any
   characters: Array<{ name: string; description?: string }>
@@ -34,12 +31,6 @@ interface PlayerState {
     characters: Record<string, string>
     voiceover: string
   }
-}
-
-const renderToastStyle = {
-  background: '#111827',
-  color: '#F9FAFB',
-  border: '1px solid #1f2937'
 }
 
 const audioDurationCache = new Map<string, number>()
@@ -294,90 +285,9 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   const [isLoadingAudio, setIsLoadingAudio] = useState(false)
   const audioMixerRef = useRef<WebAudioMixer | null>(null)
   
-  const {
-    isSupported: recorderSupported,
-    isPreparing: recorderPreparing,
-    isRecording,
-    elapsedMs: recordingElapsedMs,
-    error: recorderError,
-    recordingBlob,
-    recordingUrl,
-    start: startScreenRecording,
-    stop: stopScreenRecording,
-    reset: resetScreenRecording
-  } = useScreenRecorder({
-    audio: true,
-    video: {
-      frameRate: 30,
-      width: { ideal: 1920 },
-      height: { ideal: 1080 }
-    }
-  })
-  
-  const hasRecording = !!(recordingBlob || recordingUrl)
-  const recordingDurationLabel = React.useMemo(() => {
-    if (!isRecording && recordingElapsedMs === 0) return '00:00'
-    const totalSeconds = Math.max(0, Math.floor(recordingElapsedMs / 1000))
-    const minutes = Math.floor(totalSeconds / 60)
-    const seconds = totalSeconds % 60
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-  }, [recordingElapsedMs, isRecording])
-
-  const recorderSupportHint = 'Screen recording requires Chrome 72+, Edge 79+, or Firefox 66+. Safari support varies.'
-  const recordButtonTitle = !recorderSupported && !isRecording
-    ? recorderSupportHint
-    : isRecording
-      ? 'Stop recording'
-      : 'Record playback'
-  const showRecordingDuration = isRecording || hasRecording
-
-  useEffect(() => {
-    if (recorderError) {
-      toast.error(recorderError, { style: renderToastStyle })
-    }
-  }, [recorderError])
-
-  const wasPlayingRef = useRef(playerState.isPlaying)
-
-  const handleStartRecording = useCallback(async () => {
-    if (!recorderSupported) {
-      toast.error('Screen recording is not supported in this browser.', { style: renderToastStyle })
-      return
-    }
-    await startScreenRecording()
-    toast.info('Select the screen, window, or tab that is playing the Screening Room to begin recording.', {
-      duration: 6000
-    })
-  }, [recorderSupported, startScreenRecording])
-
-  const handleStopRecording = useCallback(async () => {
-    const blob = await stopScreenRecording()
-    if (blob) {
-      toast.success('Recording ready. Save or discard the capture below.', {
-        duration: 4000
-      })
-    }
-  }, [stopScreenRecording])
-
-  useEffect(() => {
-    if (wasPlayingRef.current && !playerState.isPlaying && isRecording) {
-      void handleStopRecording()
-    }
-    wasPlayingRef.current = playerState.isPlaying
-  }, [playerState.isPlaying, isRecording, handleStopRecording])
-
-  const handleDiscardRecording = useCallback(() => {
-    if (!hasRecording) return
-    resetScreenRecording()
-    toast('Recording discarded.', { style: renderToastStyle })
-  }, [hasRecording, resetScreenRecording])
-
   const handleClose = useCallback(() => {
-    if (isRecording) {
-      void stopScreenRecording()
-    }
     onClose()
-  }, [isRecording, onClose, stopScreenRecording])
+  }, [onClose])
 
   // Initialize Web Audio Mixer
   useEffect(() => {
@@ -941,8 +851,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     }))
   }
 
-  // Legacy Creatomate export flow removed; recording handled via MediaRecorder pipeline.
-
   const currentScene = scenes[playerState.currentSceneIndex]
 
   return (
@@ -995,60 +903,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
               </option>
             ))}
           </select>
-          <button
-            onClick={isRecording ? handleStopRecording : handleStartRecording}
-            disabled={recorderPreparing || (!recorderSupported && !isRecording)}
-            className={`px-3 py-2 rounded-lg flex items-center gap-3 transition-colors min-h-[44px] ${
-              isRecording
-                ? 'bg-rose-600/90 hover:bg-rose-500'
-                : 'bg-white/10 hover:bg-white/20'
-            } ${(!recorderSupported && !isRecording) || recorderPreparing ? 'opacity-60 cursor-not-allowed' : ''}`}
-            title={recordButtonTitle}
-          >
-            {recorderPreparing ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : isRecording ? (
-              <Square className="w-5 h-5" />
-            ) : (
-              <CircleDot className="w-5 h-5 text-rose-400" />
-            )}
-            <div className="flex flex-col items-start leading-none">
-              <span className="text-sm font-medium text-white">
-                {recorderPreparing ? 'Preparing…' : isRecording ? 'Stop' : 'Record'}
-              </span>
-              {showRecordingDuration && (
-                <span className={`text-[11px] tabular-nums ${isRecording ? 'text-rose-200' : 'text-gray-300'}`}>
-                  {recordingDurationLabel}
-                </span>
-              )}
-            </div>
-          </button>
-          {!recorderSupported && !isRecording && (
-            <AlertCircle className="w-5 h-5 text-yellow-400" title={recorderSupportHint} />
-          )}
-          {hasRecording && (
-            <button
-              onClick={handleDiscardRecording}
-              className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors flex items-center gap-2 min-h-[44px]"
-              title="Discard recording"
-            >
-              <Trash2 className="w-5 h-5" />
-            </button>
-          )}
         </div>
-        
-        {hasRecording && (
-          <div className="flex items-center gap-2 lg:hidden">
-            <button
-              onClick={handleDiscardRecording}
-              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-              title="Discard recording"
-              aria-label="Discard recording"
-            >
-              <Trash2 className="w-5 h-5" />
-            </button>
-          </div>
-        )}
 
         {/* Tablet controls - show captions toggle */}
         <div className="hidden md:flex lg:hidden items-center gap-2">
@@ -1101,15 +956,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         onLanguageChange={(lang) => {
           setSelectedLanguage(lang)
         }}
-        onStartRecording={handleStartRecording}
-        onStopRecording={handleStopRecording}
-        onDiscardRecording={handleDiscardRecording}
-        isRecording={isRecording}
-        isPreparing={recorderPreparing}
-        hasRecording={hasRecording}
-        recorderSupported={recorderSupported}
-        recorderSupportHint={recorderSupportHint}
-        recordingDurationLabel={recordingDurationLabel}
         supportedLanguages={selectableLanguages}
       />
 
