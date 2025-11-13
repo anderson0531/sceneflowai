@@ -5,8 +5,10 @@ import { Users, Plus, RefreshCw, Loader, Wand2, Upload, X, ChevronDown, Check, S
 import { Button } from '@/components/ui/Button'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
 import { toast } from 'sonner'
+import { useDraggable } from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
 
-interface CharacterLibraryProps {
+export interface CharacterLibraryProps {
   characters: any[]
   onRegenerateCharacter: (characterId: string) => void
   onGenerateCharacter: (characterId: string, prompt: string) => void
@@ -23,9 +25,10 @@ interface CharacterLibraryProps {
   compact?: boolean
   uploadingRef?: Record<string, boolean>
   setUploadingRef?: (updater: (prev: Record<string, boolean>) => Record<string, boolean>) => void
+  enableDrag?: boolean
 }
 
-export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onAddCharacter, onRemoveCharacter, ttsProvider, compact = false, uploadingRef = {}, setUploadingRef }: CharacterLibraryProps) {                                
+export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onAddCharacter, onRemoveCharacter, ttsProvider, compact = false, uploadingRef = {}, setUploadingRef, enableDrag = false }: CharacterLibraryProps) {                                
   const [selectedChar, setSelectedChar] = useState<string | null>(null)
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(new Set())
   const [zoomedImage, setZoomedImage] = useState<{url: string; name: string} | null>(null)
@@ -231,6 +234,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                 ttsProvider={ttsProvider}
                 voiceSectionExpanded={voiceSectionExpanded[charId] || false}
                 onToggleVoiceSection={() => handleToggleVoiceSection(charId)}
+                enableDrag={enableDrag}
               />
             )
           })}
@@ -309,9 +313,10 @@ interface CharacterCardProps {
   ttsProvider: 'google' | 'elevenlabs'
   voiceSectionExpanded?: boolean
   onToggleVoiceSection?: () => void
+  enableDrag?: boolean
 }
 
-function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, isUploading = false, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onRemove, ttsProvider, voiceSectionExpanded, onToggleVoiceSection }: CharacterCardProps) {
+function CharacterCard({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, isUploading = false, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onRemove, ttsProvider, voiceSectionExpanded, onToggleVoiceSection, enableDrag = false }: CharacterCardProps) {
   const hasImage = !!character.referenceImage
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
@@ -368,9 +373,34 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
       setEditingRole(false)
     }
   }
+
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `character-reference-${characterId}`,
+    data: {
+      referenceType: 'character',
+      referenceId: character.id || characterId,
+      name: character.name,
+      imageUrl: character.referenceImage,
+    },
+    disabled: !enableDrag,
+  })
+
+  const draggableStyle = enableDrag
+    ? {
+        transform: transform ? CSS.Translate.toString(transform) : undefined,
+        opacity: isDragging ? 0.65 : 1,
+        cursor: 'grab' as const,
+      }
+    : undefined
   
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all overflow-hidden">
+    <div
+      ref={setNodeRef}
+      style={draggableStyle}
+      className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all overflow-hidden"
+      {...(enableDrag ? listeners : {})}
+      {...(enableDrag ? attributes : {})}
+    >
       {/* Image Section */}
       <div className="relative aspect-square bg-gray-100 dark:bg-gray-800">
         {character.referenceImage ? (

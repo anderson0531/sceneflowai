@@ -1,10 +1,13 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer } from 'lucide-react'
+import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData } from '@/lib/types/reports'
+import { SceneProductionManager } from './scene-production'
+import { SceneProductionData, SceneProductionReferences } from './scene-production/types'
+import { cn } from '@/lib/utils'
 
 interface SceneGalleryProps {
   scenes: any[]
@@ -13,14 +16,36 @@ interface SceneGalleryProps {
   onRegenerateScene: (sceneIndex: number) => void
   onGenerateScene: (sceneIndex: number, prompt: string) => void
   onUploadScene: (sceneIndex: number, file: File) => void
+  sceneProductionState: Record<string, SceneProductionData>
+  productionReferences: SceneProductionReferences
+  onInitializeProduction: (sceneId: string, options: { targetDuration: number }) => Promise<void>
+  onSegmentPromptChange: (sceneId: string, segmentId: string, prompt: string) => void
+  onSegmentGenerate: (sceneId: string, segmentId: string, mode: 'video' | 'image') => Promise<void>
+  onSegmentUpload: (sceneId: string, segmentId: string, file: File) => Promise<void>
 }
 
-export function SceneGallery({ scenes, characters, projectTitle, onRegenerateScene, onGenerateScene, onUploadScene }: SceneGalleryProps) {
+const buildSceneKey = (scene: any, index: number) => scene.id || scene.sceneId || `scene-${index}`
+
+export function SceneGallery({
+  scenes,
+  characters,
+  projectTitle,
+  onRegenerateScene,
+  onGenerateScene,
+  onUploadScene,
+  sceneProductionState,
+  productionReferences,
+  onInitializeProduction,
+  onSegmentPromptChange,
+  onSegmentGenerate,
+  onSegmentUpload,
+}: SceneGalleryProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'timeline'>('grid')
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
   const [scenePrompts, setScenePrompts] = useState<Record<number, string>>({})
   const [generatingScenes, setGeneratingScenes] = useState<Set<number>>(new Set())
   const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
+  const [openProductionScene, setOpenProductionScene] = useState<string | null>(null)
   
   // Build smart prompt that includes character references
   const buildScenePrompt = (scene: any, sceneIdx: number): string => {
@@ -101,32 +126,50 @@ export function SceneGallery({ scenes, characters, projectTitle, onRegenerateSce
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           {scenes.map((scene, idx) => {
+            const sceneKey = buildSceneKey(scene, idx)
             const defaultPrompt = buildScenePrompt(scene, idx)
+            const productionData = sceneProductionState[sceneKey] ?? (scene.productionData as SceneProductionData | undefined)
+            const isProductionOpen = openProductionScene === sceneKey
             return (
-              <SceneCard
-                key={idx}
-                scene={scene}
-                sceneNumber={idx + 1}
-                isSelected={selectedScene === idx}
-                onClick={() => setSelectedScene(idx)}
-                onRegenerate={() => onRegenerateScene(idx)}
-                onGenerate={async (prompt) => {
-                  setGeneratingScenes(prev => new Set(prev).add(idx))
-                  try {
-                    await onGenerateScene(idx, prompt)
-                  } finally {
-                    setGeneratingScenes(prev => {
-                      const newSet = new Set(prev)
-                      newSet.delete(idx)
-                      return newSet
-                    })
+              <div
+                key={sceneKey}
+                className={cn('col-span-1', isProductionOpen && 'col-span-2 lg:col-span-3')}
+              >
+                <SceneCard
+                  sceneKey={sceneKey}
+                  scene={scene}
+                  sceneNumber={idx + 1}
+                  isSelected={selectedScene === idx}
+                  isProductionOpen={isProductionOpen}
+                  onToggleProduction={() =>
+                    setOpenProductionScene(isProductionOpen ? null : sceneKey)
                   }
-                }}
-                onUpload={(file) => onUploadScene(idx, file)}
-                prompt={scenePrompts[idx] || defaultPrompt}
-                onPromptChange={(prompt) => setScenePrompts(prev => ({ ...prev, [idx]: prompt }))}
-                isGenerating={generatingScenes.has(idx)}
-              />
+                  onClick={() => setSelectedScene(idx)}
+                  onRegenerate={() => onRegenerateScene(idx)}
+                  onGenerate={async (prompt) => {
+                    setGeneratingScenes((prev) => new Set(prev).add(idx))
+                    try {
+                      await onGenerateScene(idx, prompt)
+                    } finally {
+                      setGeneratingScenes((prev) => {
+                        const newSet = new Set(prev)
+                        newSet.delete(idx)
+                        return newSet
+                      })
+                    }
+                  }}
+                  onUpload={(file) => onUploadScene(idx, file)}
+                  prompt={scenePrompts[idx] || defaultPrompt}
+                  onPromptChange={(prompt) => setScenePrompts((prev) => ({ ...prev, [idx]: prompt }))}
+                  isGenerating={generatingScenes.has(idx)}
+                  productionData={productionData}
+                  productionReferences={productionReferences}
+                  onInitializeProduction={onInitializeProduction}
+                  onSegmentPromptChange={onSegmentPromptChange}
+                  onSegmentGenerate={onSegmentGenerate}
+                  onSegmentUpload={onSegmentUpload}
+                />
+              </div>
             )
           })}
         </div>
@@ -164,9 +207,11 @@ export function SceneGallery({ scenes, characters, projectTitle, onRegenerateSce
 }
 
 interface SceneCardProps {
+  sceneKey: string
   scene: any
   sceneNumber: number
   isSelected: boolean
+  isProductionOpen: boolean
   onClick: () => void
   onRegenerate: () => void
   onGenerate: (prompt: string) => void
@@ -174,13 +219,48 @@ interface SceneCardProps {
   prompt: string
   onPromptChange: (prompt: string) => void
   isGenerating: boolean
+  onToggleProduction: () => void
+  productionData?: SceneProductionData
+  productionReferences: SceneProductionReferences
+  onInitializeProduction: (sceneId: string, options: { targetDuration: number }) => Promise<void>
+  onSegmentPromptChange: (sceneId: string, segmentId: string, prompt: string) => void
+  onSegmentGenerate: (sceneId: string, segmentId: string, mode: 'video' | 'image') => Promise<void>
+  onSegmentUpload: (sceneId: string, segmentId: string, file: File) => Promise<void>
 }
 
-function SceneCard({ scene, sceneNumber, isSelected, onClick, onRegenerate, onGenerate, onUpload, prompt, onPromptChange, isGenerating }: SceneCardProps) {
+function SceneCard({
+  sceneKey,
+  scene,
+  sceneNumber,
+  isSelected,
+  isProductionOpen,
+  onClick,
+  onRegenerate,
+  onGenerate,
+  onUpload,
+  prompt,
+  onPromptChange,
+  isGenerating,
+  onToggleProduction,
+  productionData,
+  productionReferences,
+  onInitializeProduction,
+  onSegmentPromptChange,
+  onSegmentGenerate,
+  onSegmentUpload,
+}: SceneCardProps) {
   const hasImage = !!scene.imageUrl
+  const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement
+    if (target.closest('[data-scene-production]')) {
+      return
+    }
+    onClick()
+  }
+  const sceneHeading = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text
   return (
     <div 
-      onClick={onClick}
+      onClick={handleCardClick}
       className={`group relative rounded-lg border overflow-hidden cursor-pointer transition-all ${
         isSelected 
           ? 'border-sf-primary ring-2 ring-sf-primary' 
@@ -216,8 +296,8 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onRegenerate, onGe
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
         <div className="text-white">
           <div className="text-xs font-semibold">SCENE {sceneNumber}</div>
-          {scene.heading && (
-            <div className="text-sm truncate">{scene.heading}</div>
+          {sceneHeading && (
+            <div className="text-sm truncate">{sceneHeading}</div>
           )}
         </div>
       </div>
@@ -292,6 +372,41 @@ function SceneCard({ scene, sceneNumber, isSelected, onClick, onRegenerate, onGe
           ))}
         </div>
       )}
+
+      <div
+        data-scene-production
+        className="mt-4 border-t border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/80 backdrop-blur-sm"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onToggleProduction}
+          className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-100"
+        >
+          <span className="flex items-center gap-2">
+            <Clapperboard className="w-4 h-4 text-sf-primary" />
+            Scene Production
+          </span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {isProductionOpen ? 'Hide' : 'Expand'}
+          </span>
+        </button>
+        {isProductionOpen ? (
+          <div className="px-4 pb-4">
+            <SceneProductionManager
+              sceneId={sceneKey}
+              sceneNumber={sceneNumber}
+              heading={sceneHeading}
+              productionData={productionData}
+              references={productionReferences}
+              onInitialize={onInitializeProduction}
+              onPromptChange={onSegmentPromptChange}
+              onGenerate={onSegmentGenerate}
+              onUpload={onSegmentUpload}
+            />
+          </div>
+        ) : null}
+      </div>
     </div>
   )
 }

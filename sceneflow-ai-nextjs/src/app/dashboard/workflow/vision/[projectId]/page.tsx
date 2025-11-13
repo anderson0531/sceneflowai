@@ -1,11 +1,10 @@
 'use client'
 // Force rebuild: 2024-11-01
 
-import { use, useEffect, useState } from 'react'
+import { use, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ContextBar } from '@/components/layout/ContextBar'
 import { ScriptPanel } from '@/components/vision/ScriptPanel'
-import { CharacterLibrary } from '@/components/vision/CharacterLibrary'
 import { SceneGallery } from '@/components/vision/SceneGallery'
 import { GenerationProgress } from '@/components/vision/GenerationProgress'
 import { ScreeningRoom } from '@/components/vision/ScriptPlayer'
@@ -26,6 +25,10 @@ import { v4 as uuidv4 } from 'uuid'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { DetailedSceneDirection } from '@/types/scene-direction'
 import { cn } from '@/lib/utils'
+import { VisionReferencesSidebar } from '@/components/vision/VisionReferencesSidebar'
+import { VisualReference, VisualReferenceType, VisionReferencesPayload } from '@/types/visionReferences'
+import { uploadAssetToBlob } from '@/lib/storage/upload'
+import { SceneProductionData, SceneProductionReferences } from '@/components/vision/scene-production'
 
 // Scene Analysis interface for score generation
 interface SceneAnalysis {
@@ -53,6 +56,9 @@ interface Scene {
   sceneDirection?: DetailedSceneDirection
   [key: string]: any
 }
+
+const getSceneProductionKey = (scene: Scene, index: number): string =>
+  (scene as any)?.sceneId || scene.id || `scene-${index}`
 
 // Helper function to normalize character names by removing screenplay annotations
 const normalizeCharacterName = (name: string): string => {
@@ -162,6 +168,261 @@ function BYOKSettingsPanel({ isOpen, onClose, settings, onUpdateSettings, projec
       setImageQuality(project.metadata.imageQuality)
     }
   }, [project])
+
+  const handleCreateReference = async (
+    type: VisualReferenceType,
+    payload: { name: string; description?: string; file?: File | null }
+  ) => {
+    let imageUrl: string | undefined
+    if (payload.file) {
+      if (!project?.id) {
+        throw new Error('Project must be loaded before adding references.')
+      }
+      const safeName = payload.file.name.replace(/\s+/g, '-').toLowerCase()
+      const filename = `${type}-reference-${crypto.randomUUID()}-${safeName}`
+      imageUrl = await uploadAssetToBlob(payload.file, filename, project.id)
+    }
+
+    const newReference: VisualReference = {
+      id: crypto.randomUUID(),
+      type,
+      name: payload.name,
+      description: payload.description,
+      imageUrl,
+      createdAt: new Date().toISOString(),
+    }
+
+    if (type === 'scene') {
+      setSceneReferences((prev) => [...prev, newReference])
+    } else {
+      setObjectReferences((prev) => [...prev, newReference])
+    }
+  }
+
+  const handleRemoveReference = (type: VisualReferenceType, referenceId: string) => {
+    if (type === 'scene') {
+      setSceneReferences((prev) => prev.filter((reference) => reference.id !== referenceId))
+    } else {
+      setObjectReferences((prev) => prev.filter((reference) => reference.id !== referenceId))
+    }
+  }
+
+  const persistSceneProduction = useCallback(
+    async (nextState: Record<string, SceneProductionData>, nextScenes: Scene[]) => {
+      if (!project?.id) return
+      try {
+        const currentMetadata = project.metadata ?? {}
+        const currentVisionPhase = currentMetadata.visionPhase ?? {}
+        const safeScenes =
+          typeof (globalThis as any).structuredClone === 'function'
+            ? (globalThis as any).structuredClone(nextScenes)
+            : JSON.parse(JSON.stringify(nextScenes))
+
+        const nextVisionPhase = {
+          ...currentVisionPhase,
+          references: {
+            sceneReferences,
+            objectReferences,
+          },
+          scenes: safeScenes,
+          script: currentVisionPhase.script
+            ? {
+                ...currentVisionPhase.script,
+                script: {
+                  ...currentVisionPhase.script.script,
+                  scenes: safeScenes,
+                },
+              }
+            : currentVisionPhase.script,
+          production: {
+            ...(currentVisionPhase.production ?? {}),
+            lastUpdated: new Date().toISOString(),
+            scenes: nextState,
+          },
+        }
+
+        const nextMetadata = {
+          ...currentMetadata,
+          visionPhase: nextVisionPhase,
+        }
+
+        await fetch(`/api/projects/${project.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ metadata: nextMetadata }),
+        })
+
+        setProject((prev) => (prev ? { ...prev, metadata: nextMetadata } : prev))
+      } catch (error) {
+        console.error('[SceneProduction] Failed to persist production data', error)
+      }
+    },
+    [project?.id, project?.metadata, sceneReferences, objectReferences, setProject]
+  )
+
+  const applySceneProductionUpdate = useCallback(
+    (sceneId: string, updater: (current: SceneProductionData | undefined) => SceneProductionData | undefined) => {
+      setSceneProductionState((prev) => {
+        const nextSceneData = updater(prev[sceneId])
+        if (!nextSceneData) {
+          return prev
+        }
+
+        const nextState = { ...prev, [sceneId]: nextSceneData }
+        let nextScenesRef: Scene[] = []
+
+        setScenes((prevScenes) => {
+          nextScenesRef = prevScenes.map((sceneEntry, index) => {
+            const key = getSceneProductionKey(sceneEntry as Scene, index)
+            const production = nextState[key] ?? (sceneEntry as any)?.productionData
+            return production ? { ...sceneEntry, productionData: production } : sceneEntry
+          })
+          return nextScenesRef
+        })
+
+        void persistSceneProduction(nextState, nextScenesRef)
+        return nextState
+      })
+    },
+    [persistSceneProduction]
+  )
+
+  const handleInitializeSceneProduction = useCallback(
+    async (sceneId: string, { targetDuration }: { targetDuration: number }) => {
+      if (!project?.id) {
+        throw new Error('Project must be loaded before segmenting a scene.')
+      }
+
+      const response = await fetch(`/api/scenes/${encodeURIComponent(sceneId)}/segment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: project.id,
+          targetSegmentDuration: targetDuration,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(errorText || 'Failed to segment scene')
+      }
+
+      const data = await response.json()
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to segment scene')
+      }
+
+      const productionData: SceneProductionData = data.productionData
+
+      setSceneProductionState((prev) => ({
+        ...prev,
+        [sceneId]: productionData,
+      }))
+
+      setScenes((prevScenes) =>
+        prevScenes.map((sceneEntry, index) => {
+          const key = getSceneProductionKey(sceneEntry as Scene, index)
+          if (key !== sceneId) return sceneEntry
+          return {
+            ...sceneEntry,
+            productionData,
+          }
+        })
+      )
+
+      setProject((prev) => (prev ? { ...prev, metadata: data.metadata ?? prev.metadata } : prev))
+
+      try {
+        const { toast } = require('sonner')
+        toast.success(`Scene segmented into ${productionData.segments.length} blocks.`)
+      } catch {}
+    },
+    [project?.id]
+  )
+
+  const handleSegmentPromptChange = useCallback(
+    (sceneId: string, segmentId: string, prompt: string) => {
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        const segments = current.segments.map((segment) =>
+          segment.segmentId === segmentId
+            ? {
+                ...segment,
+                userEditedPrompt: prompt,
+                status: segment.status === 'DRAFT' ? 'READY' : segment.status,
+              }
+            : segment
+        )
+        return { ...current, segments }
+      })
+    },
+    [applySceneProductionUpdate]
+  )
+
+  const handleSegmentGenerate = useCallback(
+    async (sceneId: string, segmentId: string, mode: 'video' | 'image') => {
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        const segments = current.segments.map((segment) =>
+          segment.segmentId === segmentId ? { ...segment, status: 'GENERATING' } : segment
+        )
+        return { ...current, segments }
+      })
+
+      try {
+        const { toast } = require('sonner')
+        toast.info(`Queued ${mode} generation for segment ${segmentId.slice(0, 6)}…`)
+      } catch {}
+
+      setTimeout(() => {
+        applySceneProductionUpdate(sceneId, (current) => {
+          if (!current) return current
+          const segments = current.segments.map((segment) =>
+            segment.segmentId === segmentId ? { ...segment, status: 'COMPLETE' } : segment
+          )
+          return { ...current, segments }
+        })
+      }, 1200)
+    },
+    [applySceneProductionUpdate]
+  )
+
+  const handleSegmentUpload = useCallback(
+    async (sceneId: string, segmentId: string, file: File) => {
+      const objectUrl = URL.createObjectURL(file)
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        const segments = current.segments.map((segment) =>
+          segment.segmentId === segmentId
+            ? {
+                ...segment,
+                status: 'UPLOADED',
+                assetType: file.type.startsWith('image') ? 'image' : 'video',
+                activeAssetUrl: objectUrl,
+                takes: [
+                  {
+                    id: `${segmentId}-take-${Date.now()}`,
+                    createdAt: new Date().toISOString(),
+                    assetUrl: objectUrl,
+                    thumbnailUrl: file.type.startsWith('image') ? objectUrl : segment.activeAssetUrl,
+                    status: 'UPLOADED',
+                    notes: 'User upload',
+                  },
+                  ...segment.takes,
+                ],
+              }
+            : segment
+        )
+        return { ...current, segments }
+      })
+
+      try {
+        const { toast } = require('sonner')
+        toast.success('Uploaded media linked to segment.')
+      } catch {}
+    },
+    [applySceneProductionUpdate]
+  )
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -443,6 +704,33 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [isPlayerOpen, setIsPlayerOpen] = useState(false)
   const [showAnimaticsStudio, setShowAnimaticsStudio] = useState(false)
   const [voiceAssignments, setVoiceAssignments] = useState<Record<string, any>>({})
+  const [sceneReferences, setSceneReferences] = useState<VisualReference[]>([])
+  const [objectReferences, setObjectReferences] = useState<VisualReference[]>([])
+  const [sceneProductionState, setSceneProductionState] = useState<Record<string, SceneProductionData>>({})
+  useEffect(() => {
+    const productionScenes =
+      project?.metadata?.visionPhase?.production?.scenes as Record<string, SceneProductionData> | undefined
+    if (productionScenes && typeof productionScenes === 'object') {
+      try {
+        const cloned = JSON.parse(JSON.stringify(productionScenes)) as Record<string, SceneProductionData>
+        setSceneProductionState(cloned)
+      } catch {
+        setSceneProductionState(productionScenes)
+      }
+    }
+  }, [project?.metadata?.visionPhase?.production?.scenes])
+
+
+  useEffect(() => {
+    const references = project?.metadata?.visionPhase?.references as VisionReferencesPayload | undefined
+    if (references) {
+      setSceneReferences(references.sceneReferences ?? [])
+      setObjectReferences(references.objectReferences ?? [])
+    } else if (project) {
+      setSceneReferences([])
+      setObjectReferences([])
+    }
+  }, [project])
   
   // Script review state
   const [directorReview, setDirectorReview] = useState<any>(null)
@@ -3262,11 +3550,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const handleSaveProject = async () => {
     try {
       if (!project) return
-      
-      // Vision data is already saved during generation
-      // This just forces a manual save/refresh
+
+      const currentMetadata = project.metadata ?? {}
+      const nextVisionPhase = {
+        ...(currentMetadata.visionPhase ?? {}),
+        references: {
+          sceneReferences,
+          objectReferences,
+        } satisfies VisionReferencesPayload,
+      }
+
+      await fetch(`/api/projects/${project.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          metadata: {
+            ...currentMetadata,
+            visionPhase: nextVisionPhase,
+          },
+        }),
+      })
+
       await loadProject()
-      
+
       try {
         const { toast } = require('sonner')
         toast.success('Project saved!')
@@ -3782,6 +4088,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             generatingDirectionFor={generatingDirectionFor}
             onGenerateAllCharacters={generateCharacters}
           />
+          <div className="mt-8">
+            <SceneGallery
+              scenes={scenes}
+              characters={characters}
+              projectTitle={project?.title}
+              onRegenerateScene={(index) => handleGenerateSceneImage(index)}
+              onGenerateScene={handleGenerateScene}
+              onUploadScene={handleUploadScene}
+              sceneProductionState={sceneProductionState}
+              productionReferences={{
+                characters,
+                sceneReferences,
+                objectReferences,
+              }}
+              onInitializeProduction={handleInitializeSceneProduction}
+              onSegmentPromptChange={handleSegmentPromptChange}
+              onSegmentGenerate={handleSegmentGenerate}
+              onSegmentUpload={handleSegmentUpload}
+            />
+          </div>
         </div>
         
         {/* Right Sidebar: Characters */}
@@ -3810,7 +4136,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           
           {/* Narration Voice Selector */}
           
-          <CharacterLibrary 
+          <VisionReferencesSidebar
             characters={characters}
             onRegenerateCharacter={handleRegenerateCharacter}
             onGenerateCharacter={handleGenerateCharacter}
@@ -3824,9 +4150,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             onAddCharacter={handleAddCharacter}
             onRemoveCharacter={handleRemoveCharacter}
             ttsProvider={ttsProvider}
-            compact={true}
             uploadingRef={uploadingRef}
             setUploadingRef={setUploadingRef}
+            sceneReferences={sceneReferences}
+            objectReferences={objectReferences}
+            onCreateReference={handleCreateReference}
+            onRemoveReference={handleRemoveReference}
           />
         </div>
       </div>
