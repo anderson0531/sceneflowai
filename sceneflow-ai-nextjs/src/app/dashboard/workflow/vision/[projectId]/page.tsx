@@ -4105,9 +4105,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               onInitializeProduction={(sceneId, options) =>
                 handleInitializeSceneProduction(sceneId, options)
               }
-              onSegmentPromptChange={handleSegmentPromptChange}
-              onSegmentGenerate={handleSegmentGenerate}
-              onSegmentUpload={handleSegmentUpload}
+              onSegmentPromptChange={(sceneId, segmentId, prompt) =>
+                handleSegmentPromptChange(sceneId, segmentId, prompt)
+              }
+              onSegmentGenerate={(sceneId, segmentId, mode) =>
+                handleSegmentGenerate(sceneId, segmentId, mode)
+              }
+              onSegmentUpload={(sceneId, segmentId, file) =>
+                handleSegmentUpload(sceneId, segmentId, file)
+              }
             />
           </div>
         </div>
