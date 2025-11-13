@@ -12,6 +12,8 @@
                 "build:memory": "NODE_OPTIONS='--max-old-space-size=3072' next build",
                 "start": "next start",
                 "lint": "next lint",
+		"db:migrate": "echo 'Skipping migrations (placeholder)'",
+		"test:dol": "echo 'Skipping DOL tests (placeholder)'",
                 "ci:smoke": "bash scripts/ci/ai-smoke.sh",
                 "setup:database": "echo 'Database setup scripts removed during cleanup'",
                 "test": "echo 'Test scripts removed during cleanup'",

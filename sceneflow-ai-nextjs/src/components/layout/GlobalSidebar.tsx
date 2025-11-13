@@ -7,6 +7,13 @@ import { episodeNav } from '../../config/nav/episodeNav'
 import { seriesNav } from '../../config/nav/seriesNav'
 import { mainNav, settingsNav } from '../../config/nav/globalNav'
 import { useStore } from '../../store/useStore'
+import {
+  WORKFLOW_STEP_LABELS,
+  WORKFLOW_STEPS,
+  normalizeWorkflowStep,
+} from '@/constants/workflowSteps'
+
+type StepStatus = 'completed' | 'current' | 'upcoming'
 
 function useBYOKReady() {
   const byok = useStore(s => s.byokSettings)
@@ -26,18 +33,57 @@ function usePhaseLocks(seriesId?: string, episodeId?: string) {
   }, [seriesId, episodeId])
 }
 
+const deriveStepFromPath = (pathname: string): string | undefined => {
+  const segments = pathname.split('/').filter(Boolean)
+  const workflowIndex = segments.findIndex((segment) => segment === 'workflow')
+
+  if (workflowIndex !== -1 && segments[workflowIndex + 1]) {
+    return segments[workflowIndex + 1]
+  }
+
+  if (segments.includes('studio')) {
+    return 'blueprint'
+  }
+
+  return undefined
+}
+
 function useLegacyWorkflow(pathname: string) {
   const currentProject = useStore(s => s.currentProject)
-  const studioHref = currentProject?.id ? `/dashboard/studio/${currentProject.id}` : '/dashboard/studio/new-project'
-  const projectVisionHref = currentProject?.id ? `/dashboard/workflow/vision/${currentProject.id}` : '/dashboard/workflow/storyboard'
-  const items = [
-    { key: 'start', label: 'The Blueprint', href: studioHref },
-    { key: 'vision', label: 'Vision', href: projectVisionHref },
-    { key: 'direction', label: 'Action Plan', href: '/dashboard/workflow/scene-direction' },
-    { key: 'video', label: 'Creation Hub', href: '/dashboard/workflow/video-generation' },
-    { key: 'review', label: 'Polish', href: '/dashboard/workflow/generation' },
-    { key: 'opt', label: 'Launchpad', href: '/dashboard' },
-  ]
+  const activeStepFromPath = normalizeWorkflowStep(deriveStepFromPath(pathname))
+
+  const completed = useMemo(() => {
+    if (!currentProject?.completedSteps?.length) {
+      return new Set<ReturnType<typeof normalizeWorkflowStep>>()
+    }
+    return new Set(
+      currentProject.completedSteps.map((step) => normalizeWorkflowStep(step))
+    )
+  }, [currentProject?.completedSteps])
+
+  const currentStep = useMemo(() => {
+    if (currentProject?.currentStep) {
+      return normalizeWorkflowStep(currentProject.currentStep)
+    }
+    return activeStepFromPath
+  }, [currentProject?.currentStep, activeStepFromPath])
+
+  const items = WORKFLOW_STEPS.map((stepId) => {
+    const normalized = normalizeWorkflowStep(stepId)
+    const status: StepStatus =
+      normalized === currentStep
+        ? 'current'
+        : completed.has(normalized)
+          ? 'completed'
+          : 'upcoming'
+
+    return {
+      key: normalized,
+      label: WORKFLOW_STEP_LABELS[normalized],
+      status,
+    }
+  })
+
   return { items }
 }
 
@@ -49,7 +95,10 @@ export function GlobalSidebar({ children }: { children?: React.ReactNode }) {
   const byokReady = useBYOKReady()
   const phaseLocks = usePhaseLocks(seriesId, episodeId)
 
-  let flowItems: Array<{ key:string; label:string; href:string; requires?: number[]; byok?: boolean }> = []
+  type WorkflowDisplayItem = { key: string; label: string; status: StepStatus }
+  type NavigableItem = { key: string; label: string; href: string; requires?: number[]; byok?: boolean }
+
+  let flowItems: Array<WorkflowDisplayItem | NavigableItem> = []
   if (seriesId && episodeId) flowItems = episodeNav(seriesId, episodeId)
   else if (seriesId) flowItems = seriesNav(seriesId)
   else flowItems = useLegacyWorkflow(pathname).items
@@ -72,6 +121,33 @@ export function GlobalSidebar({ children }: { children?: React.ReactNode }) {
               <h3 className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">WORKFLOW</h3>
               <div className="space-y-1">
                 {flowItems.map(i => {
+                  if ('status' in i) {
+                    const statusClasses =
+                      i.status === 'current'
+                        ? 'bg-sf-primary/25 text-white border border-sf-primary/50'
+                        : i.status === 'completed'
+                          ? 'bg-sf-surface text-gray-900 dark:text-white border border-sf-border/60'
+                          : 'text-gray-500 dark:text-gray-500 border border-transparent opacity-60'
+
+                    return (
+                      <div
+                        key={i.key}
+                        className={`block px-3 py-2 rounded flex items-center gap-2 ${statusClasses}`}
+                      >
+                        <span
+                          className={`h-2 w-2 rounded-full ${
+                            i.status === 'current'
+                              ? 'bg-sf-primary-light'
+                              : i.status === 'completed'
+                                ? 'bg-sf-success'
+                                : 'bg-sf-border'
+                          }`}
+                        />
+                        <span>{i.label}</span>
+                      </div>
+                    )
+                  }
+
                   const unmet = (i.requires || []).some(p => !(phaseLocks as any)[p]?.locked)
                   const blocked = unmet || (i.byok && !byokReady)
                   const className = `block px-3 py-2 rounded ${pathname===i.href?'bg-sf-primary/15 text-gray-900 dark:text-white':'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'} ${blocked?'opacity-60 cursor-not-allowed':''}`

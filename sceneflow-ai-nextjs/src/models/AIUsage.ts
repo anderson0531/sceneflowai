@@ -7,7 +7,7 @@ export interface AIUsageAttributes {
   route: string
   provider: 'openai' | 'sceneflow-ai'
   model: string
-  category: 'text' | 'images' | 'tts' | 'whisper' | 'other'
+  category: 'text' | 'images' | 'tts' | 'whisper' | 'video' | 'other'
   request_id: string | null
   byok: boolean
   input_tokens: number
@@ -30,7 +30,7 @@ export class AIUsage extends Model<AIUsageAttributes, AIUsageCreationAttributes>
   public route!: string
   public provider!: 'openai'
   public model!: string
-  public category!: 'text' | 'images' | 'tts' | 'whisper' | 'other'
+  public category!: 'text' | 'images' | 'tts' | 'whisper' | 'video' | 'other'
   public request_id!: string | null
   public byok!: boolean
   public input_tokens!: number
@@ -72,7 +72,7 @@ AIUsage.init(
       allowNull: false,
     },
     category: {
-      type: DataTypes.ENUM('text', 'images', 'tts', 'whisper', 'other'),
+      type: DataTypes.ENUM('text', 'images', 'tts', 'whisper', 'video', 'other'),
       allowNull: false,
     },
     request_id: {

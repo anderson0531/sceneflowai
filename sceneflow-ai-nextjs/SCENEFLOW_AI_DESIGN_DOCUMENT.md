@@ -108,7 +108,7 @@ The application follows a 6-step workflow:
    - Scene image generation with character references
    - Visual storyboarding (previously separate Storyboard phase)
 
-3. **Action Plan (Scene Direction)** — `/dashboard/workflow/scene-direction`
+3. **Creation Hub** — `/dashboard/workflow/video-generation`
    - Scene-by-scene direction
    - Camera angles and composition
    - Lighting and mood
@@ -518,7 +518,7 @@ type WorkflowStep =
 - Workflow Steps:
   - The Blueprint (Ideation)
   - Vision (Script & Visual Development)
-  - Action Plan (Scene Direction)
+  - Creation Hub
   - Creation Hub (Video Generation)
   - Polish (Screening & Editing)
   - Launchpad (Optimization & Publishing)

@@ -6,21 +6,19 @@ import { useEnhancedStore } from '@/store/enhancedStore'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { ProjectCard } from './ProjectCard'
+import {
+  WORKFLOW_STEP_LABELS,
+  WORKFLOW_STEPS,
+  normalizeCompletedWorkflowSteps,
+  normalizeWorkflowStep,
+  getWorkflowStepIndex,
+} from '@/constants/workflowSteps'
 
 export function ProjectHub() {
   const { projects } = useEnhancedStore()
 
-  const getStageDisplayName = (step: string) => {
-    const stageNames = {
-      'ideation': 'Script Analysis',
-      'storyboard': 'Storyboarding',
-      'scene-direction': 'Action Plan',
-      'video-generation': 'Creation Hub',
-      'review': 'Polish',
-      'optimization': 'Finalization'
-    }
-    return stageNames[step as keyof typeof stageNames] || step
-  }
+  const getStageDisplayName = (step: string) =>
+    WORKFLOW_STEP_LABELS[normalizeWorkflowStep(step)]
 
   if (projects.length === 0) {
     return (
@@ -137,7 +135,16 @@ export function ProjectHub() {
                         {getStageDisplayName(project.currentStep)}
                       </div>
                       <div className="text-xs text-gray-500">
-                        Step {project.completedSteps.length + 1}/6
+                        {(() => {
+                          const normalizedCurrent = normalizeWorkflowStep(project.currentStep)
+                          const normalizedCompleted = normalizeCompletedWorkflowSteps(project.completedSteps)
+                          const currentIndex = getWorkflowStepIndex(normalizedCurrent)
+                          const stepNumber =
+                            currentIndex === -1
+                              ? Math.min(normalizedCompleted.length + 1, WORKFLOW_STEPS.length)
+                              : currentIndex + 1
+                          return `Step ${stepNumber}/${WORKFLOW_STEPS.length}`
+                        })()}
                       </div>
                     </div>
                     

@@ -6,7 +6,7 @@ import { resolveUser } from '@/lib/userHelper'
 export const CREDIT_VALUE_USD = Number(process.env.CREDIT_VALUE_USD ?? '0.0001')
 export const MARKUP_MULTIPLIER = Number(process.env.MARKUP_MULTIPLIER ?? '4')
 
-export type PricingCategory = 'text' | 'images' | 'tts' | 'whisper' | 'other'
+export type PricingCategory = 'text' | 'images' | 'tts' | 'whisper' | 'video' | 'other'
 
 // Cache to prevent multiple concurrent migrations
 let migrationInProgress = false

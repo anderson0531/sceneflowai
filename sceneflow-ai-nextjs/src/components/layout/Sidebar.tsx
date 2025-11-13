@@ -13,7 +13,6 @@ import {
   CreditCard,
   Sparkles,
   Layout,
-  Camera,
   Film,
   Menu,
   X,
@@ -51,15 +50,6 @@ const workflowNav = [
     credits: 'Uses Analysis Credits'
   },
   { 
-    name: 'Action Plan', 
-    href: '/dashboard/workflow/scene-direction', 
-    icon: Camera,
-    description: 'Scene Direction',
-    step: 'scene-direction',
-    phase: 1,
-    credits: 'Uses Analysis Credits'
-  },
-  { 
     name: 'Creation Hub', 
     href: '/dashboard/workflow/video-generation', 
     icon: Film,
@@ -78,7 +68,7 @@ const workflowNav = [
     credits: '🔑 BYOK Required'
   },
   { 
-    name: 'Launchpad', 
+    name: 'Launch', 
     href: '/dashboard', 
     icon: Wrench,
     description: 'Optimization & Publishing',

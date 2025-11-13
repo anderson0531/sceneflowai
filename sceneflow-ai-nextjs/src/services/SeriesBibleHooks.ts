@@ -59,7 +59,14 @@ export const SeriesBibleHooks = {
     if (!bible) return
     mgr.updateProjectBible(bible.id, {
       version: (Number(bible.version?.split('.')[0]||'1')+1)+'.0.0',
-      productionNotes: [...(bible.productionNotes||[]), { id: `lock_${Date.now()}`, text: 'Action Plan lock: bible finalized for continuity.', createdAt: new Date() } as any]
+      productionNotes: [
+        ...(bible.productionNotes || []),
+        {
+          id: `lock_${Date.now()}`,
+          text: 'Workflow lock: bible finalized for continuity.',
+          createdAt: new Date(),
+        } as any,
+      ]
     })
   }
 }

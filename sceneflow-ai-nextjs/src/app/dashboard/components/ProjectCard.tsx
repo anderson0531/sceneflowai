@@ -2,25 +2,23 @@
 
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { 
-  Play, 
-  Video, 
-  FileText, 
-  Camera, 
-  Film, 
-  CheckCircle, 
+import {
+  Play,
+  Video,
+  FileText,
+  Film,
+  CheckCircle,
   Wrench,
   Sparkles,
   Eye,
   Clock,
-  DollarSign,
   Key,
   AlertTriangle,
   MoreVertical,
   Edit,
   Copy,
   Archive,
-  Trash
+  Trash,
 } from 'lucide-react'
 import { useEnhancedStore } from '@/store/enhancedStore'
 import { useCueStore } from '@/store/useCueStore'
@@ -28,6 +26,80 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import ThumbnailPromptDrawer from '@/components/project/ThumbnailPromptDrawer'
+import {
+  WORKFLOW_STEPS,
+  WORKFLOW_STEP_LABELS,
+  normalizeCompletedWorkflowSteps,
+  normalizeWorkflowStep,
+  getWorkflowStepIndex,
+} from '@/constants/workflowSteps'
+
+type NormalizedWorkflowStep = (typeof WORKFLOW_STEPS)[number]
+
+const STEP_STYLES: Record<
+  NormalizedWorkflowStep,
+  {
+    name: string
+    icon: typeof FileText
+    color: string
+    bgColor: string
+    borderColor: string
+    badgeBg: string
+    badgeText: string
+    badgeBorder: string
+  }
+> = {
+  blueprint: {
+    name: WORKFLOW_STEP_LABELS.blueprint,
+    icon: FileText,
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500/20',
+    borderColor: 'border-blue-500/40',
+    badgeBg: 'bg-blue-500/20',
+    badgeText: 'text-blue-300',
+    badgeBorder: 'border-blue-500/40',
+  },
+  vision: {
+    name: WORKFLOW_STEP_LABELS.vision,
+    icon: Eye,
+    color: 'text-purple-400',
+    bgColor: 'bg-purple-500/20',
+    borderColor: 'border-purple-500/40',
+    badgeBg: 'bg-purple-500/20',
+    badgeText: 'text-purple-300',
+    badgeBorder: 'border-purple-500/40',
+  },
+  creation: {
+    name: WORKFLOW_STEP_LABELS.creation,
+    icon: Film,
+    color: 'text-orange-400',
+    bgColor: 'bg-orange-500/20',
+    borderColor: 'border-orange-500/40',
+    badgeBg: 'bg-orange-500/20',
+    badgeText: 'text-orange-300',
+    badgeBorder: 'border-orange-500/40',
+  },
+  polish: {
+    name: WORKFLOW_STEP_LABELS.polish,
+    icon: CheckCircle,
+    color: 'text-teal-400',
+    bgColor: 'bg-teal-500/20',
+    borderColor: 'border-teal-500/40',
+    badgeBg: 'bg-teal-500/20',
+    badgeText: 'text-teal-300',
+    badgeBorder: 'border-teal-500/40',
+  },
+  launch: {
+    name: WORKFLOW_STEP_LABELS.launch,
+    icon: Wrench,
+    color: 'text-pink-400',
+    bgColor: 'bg-pink-500/20',
+    borderColor: 'border-pink-500/40',
+    badgeBg: 'bg-pink-500/20',
+    badgeText: 'text-pink-300',
+    badgeBorder: 'border-pink-500/40',
+  },
+}
 
 interface ProjectCardProps {
   project: {
@@ -66,91 +138,20 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false)
   const [promptDrawerOpen, setPromptDrawerOpen] = useState(false)
 
-  // Enhanced workflow step mapping with phase information
-  const workflowSteps = {
-    'ideation': { 
-      name: 'The Blueprint', 
-      phase: 1, 
-      stepNumber: 1,
-      icon: FileText,
-      color: 'text-blue-400',
-      bgColor: 'bg-blue-500/20',
-      borderColor: 'border-blue-500/40',
-      phaseBadgeBg: 'bg-blue-500/20',
-      phaseBadgeText: 'text-blue-300',
-      phaseBadgeBorder: 'border-blue-500/40'
-    },
-    'storyboard': { 
-      name: 'Vision', 
-      phase: 2, 
-      stepNumber: 2,
-      icon: Eye,
-      color: 'text-purple-400',
-      bgColor: 'bg-purple-500/20',
-      borderColor: 'border-purple-500/40',
-      phaseBadgeBg: 'bg-purple-500/20',
-      phaseBadgeText: 'text-purple-300',
-      phaseBadgeBorder: 'border-purple-500/40'
-    },
-    'scene-direction': { 
-      name: 'Action Plan', 
-      phase: 3, 
-      stepNumber: 3,
-      icon: Camera,
-      color: 'text-green-400',
-      bgColor: 'bg-green-500/20',
-      borderColor: 'border-green-500/40',
-      phaseBadgeBg: 'bg-green-500/20',
-      phaseBadgeText: 'text-green-300',
-      phaseBadgeBorder: 'border-green-500/40'
-    },
-    'video-generation': { 
-      name: 'Creation Hub', 
-      phase: 4, 
-      stepNumber: 4,
-      icon: Film,
-      color: 'text-orange-400',
-      bgColor: 'bg-orange-500/20',
-      borderColor: 'border-orange-500/40',
-      phaseBadgeBg: 'bg-orange-500/20',
-      phaseBadgeText: 'text-orange-300',
-      phaseBadgeBorder: 'border-orange-500/40'
-    },
-    'review': { 
-      name: 'Polish', 
-      phase: 5, 
-      stepNumber: 5,
-      icon: CheckCircle,
-      color: 'text-teal-400',
-      bgColor: 'bg-teal-500/20',
-      borderColor: 'border-teal-500/40',
-      phaseBadgeBg: 'bg-teal-500/20',
-      phaseBadgeText: 'text-teal-300',
-      phaseBadgeBorder: 'border-teal-500/40'
-    },
-    'optimization': { 
-      name: 'Launchpad', 
-      phase: 6, 
-      stepNumber: 6,
-      icon: Wrench,
-      color: 'text-pink-400',
-      bgColor: 'bg-pink-500/20',
-      borderColor: 'border-pink-500/40',
-      phaseBadgeBg: 'bg-pink-500/20',
-      phaseBadgeText: 'text-pink-300',
-      phaseBadgeBorder: 'border-pink-500/40'
-    }
-  }
-
-  const currentStepInfo = workflowSteps[project.currentStep as keyof typeof workflowSteps]
-  const isPhase1Complete = project.completedSteps.includes('scene-direction')
+  const normalizedCurrentStep = normalizeWorkflowStep(project.currentStep)
+  const normalizedCompletedSteps = normalizeCompletedWorkflowSteps(project.completedSteps)
+  const currentStepInfo = STEP_STYLES[normalizedCurrentStep]
+  const currentStepIndex = getWorkflowStepIndex(normalizedCurrentStep)
+  const stepNumber = currentStepIndex === -1 ? 1 : currentStepIndex + 1
+  const totalSteps = WORKFLOW_STEPS.length
+  const isPhase1Complete = normalizedCompletedSteps.includes('creation')
   const isPhase2Available = isPhase1Complete
   const hasValidBYOK = Boolean(byokSettings?.videoGenerationProvider?.isConfigured)
 
   // Calculate estimated costs based on project complexity and duration
   const getEstimatedCosts = () => {
     const baseAnalysisCost = 150 // credits per step
-    const analysisCreditsUsed = project.completedSteps.length * baseAnalysisCost
+    const analysisCreditsUsed = normalizedCompletedSteps.length * baseAnalysisCost
     const estimatedBYOKCost = project.metadata?.duration ? 
       Math.max(5, project.metadata.duration * 0.5) : 15 // $0.50 per minute, minimum $5
     
@@ -195,10 +196,10 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
       }
     } else {
       return {
-        text: `Step ${currentStepInfo.stepNumber}/6: ${currentStepInfo.name}`,
+        text: `Stage ${stepNumber}/${totalSteps}: ${currentStepInfo.name}`,
         color: currentStepInfo.color,
         bgColor: currentStepInfo.bgColor,
-        borderColor: currentStepInfo.borderColor
+        borderColor: currentStepInfo.borderColor,
       }
     }
   }
@@ -286,7 +287,7 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
       'start': `/dashboard/studio/${id}`,
       'storyboard': `/dashboard/workflow/vision/${id}`, // Route to new Vision page
       'vision': `/dashboard/workflow/vision/${id}`,     // Route to new Vision page
-      'scene-direction': `/dashboard/workflow/scene-direction?project=${id}`,
+      'scene-direction': `/dashboard/workflow/video-generation?project=${id}`,
       
       // Phase 2 - Production
       'video-generation': `/dashboard/workflow/video-generation?project=${id}`,
@@ -402,10 +403,10 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
           </div>
         )}
         
-        {/* Phase Indicator */}
+        {/* Stage Indicator */}
         <div className="absolute top-3 right-3">
-          <div className={`px-3 py-1 rounded-full text-xs font-semibold ${currentStepInfo.phaseBadgeBg} ${currentStepInfo.phaseBadgeText} border ${currentStepInfo.phaseBadgeBorder}`}>
-            Phase {currentStepInfo.phase} • {currentStepInfo.name}
+          <div className={`px-3 py-1 rounded-full text-xs font-semibold ${currentStepInfo.badgeBg} ${currentStepInfo.badgeText} border ${currentStepInfo.badgeBorder}`}>
+            Stage {stepNumber} • {currentStepInfo.name}
           </div>
         </div>
       </div>

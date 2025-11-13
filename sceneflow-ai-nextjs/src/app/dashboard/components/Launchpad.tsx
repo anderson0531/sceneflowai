@@ -4,6 +4,13 @@ import { motion } from 'framer-motion'
 import { Plus, Play } from 'lucide-react'
 import { useEnhancedStore } from '@/store/enhancedStore'
 import Link from 'next/link'
+import {
+  WORKFLOW_STEP_LABELS,
+  WORKFLOW_STEPS,
+  normalizeCompletedWorkflowSteps,
+  normalizeWorkflowStep,
+  getWorkflowStepIndex,
+} from '@/constants/workflowSteps'
 
 export function Launchpad() {
   const { projects, currentProject } = useEnhancedStore()
@@ -15,15 +22,8 @@ export function Launchpad() {
 
   const hasActiveProjects = projects.length > 0
 
-  const getStageDisplayName = (step: string) => {
-    const stageNames = {
-      'ideation': 'The Blueprint',
-      'storyboard': 'Vision',
-      'scene-direction': 'Action Plan',
-      'video-generation': 'Creation Hub'
-    }
-    return stageNames[step as keyof typeof stageNames] || step
-  }
+  const getStageDisplayName = (step: string) =>
+    WORKFLOW_STEP_LABELS[normalizeWorkflowStep(step)]
 
   return (
     <motion.div
@@ -88,9 +88,20 @@ export function Launchpad() {
                 <p className="text-sf-text-secondary text-sm leading-relaxed mb-2">
                   {mostRecentProject.title}
                 </p>
-                <div className="text-sf-text-secondary text-xs">
-                  Stage {mostRecentProject.completedSteps.length + 1}: {getStageDisplayName(mostRecentProject.currentStep)}
-                </div>
+                {(() => {
+                  const normalizedCurrent = normalizeWorkflowStep(mostRecentProject.currentStep)
+                  const normalizedCompleted = normalizeCompletedWorkflowSteps(mostRecentProject.completedSteps)
+                  const currentIndex = getWorkflowStepIndex(normalizedCurrent)
+                  const stageNumber =
+                    currentIndex === -1
+                      ? Math.min(normalizedCompleted.length + 1, WORKFLOW_STEPS.length)
+                      : currentIndex + 1
+                  return (
+                    <div className="text-sf-text-secondary text-xs">
+                      Stage {stageNumber}/{WORKFLOW_STEPS.length}: {getStageDisplayName(mostRecentProject.currentStep)}
+                    </div>
+                  )
+                })()}
                 
                 <div className="mt-4 flex items-center text-sf-text-secondary text-sm">
                   <Play className="w-4 h-4 mr-2" />
