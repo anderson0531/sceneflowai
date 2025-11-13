@@ -12,11 +12,12 @@ import { ScreeningRoom } from '@/components/vision/ScriptPlayer'
 import { AnimaticsStudio } from '@/components/vision/AnimaticsStudio'
 import { ImageQualitySelector } from '@/components/vision/ImageQualitySelector'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
-import { Button } from '@/components/ui/Button'
+import { Button, buttonVariants } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Save, Share2, ArrowRight, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users } from 'lucide-react'
+import { Save, Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users } from 'lucide-react'
+import Link from 'next/link'
 import ScriptReviewModal from '@/components/vision/ScriptReviewModal'
 import { SceneEditorModal } from '@/components/vision/SceneEditorModal'
 import { findSceneCharacters } from '../../../../../lib/character/matching'
@@ -24,6 +25,7 @@ import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 import { v4 as uuidv4 } from 'uuid'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { DetailedSceneDirection } from '@/types/scene-direction'
+import { cn } from '@/lib/utils'
 
 // Scene Analysis interface for score generation
 interface SceneAnalysis {
@@ -3658,10 +3660,32 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         titleVariant="page"
         emphasis
         primaryActions={
-          <Button className="bg-sf-primary text-white hover:bg-sf-accent flex items-center gap-2">
-            <span>Continue to Direction</span>
-            <ArrowRight className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link
+              href={project?.id ? `/dashboard/studio/${project.id}` : '/dashboard/studio/new-project'}
+              prefetch={false}
+              className={cn(buttonVariants({ variant: 'outline' }), 'flex items-center gap-2')}
+              aria-label="Return to The Blueprint phase"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>The Blueprint</span>
+            </Link>
+            <Link
+              href={
+                project?.id
+                  ? `/dashboard/workflow/creation/${project.id}`
+                  : typeof projectId === 'string'
+                    ? `/dashboard/workflow/creation/${projectId}`
+                    : '/dashboard/workflow/creation'
+              }
+              prefetch={false}
+              className={cn(buttonVariants({ variant: 'primary' }), 'flex items-center gap-2')}
+              aria-label="Continue to the Creation Hub phase"
+            >
+              <span>Creation Hub</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         }
         secondaryActions={
           <>
