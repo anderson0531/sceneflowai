@@ -1,4 +1,7 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "sceneflow-ai-nextjs/.next",
+  "installCommand": "npm install",
   "functions": {
     "src/app/api/vision/generate-script-v2/route.ts": {
       "memory": 3008,
