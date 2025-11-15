@@ -10,10 +10,10 @@ export const WORKFLOW_STEPS: WorkflowStep[] = [
 
 export const WORKFLOW_STEP_LABELS: Record<WorkflowStep, string> = {
   blueprint: 'The Blueprint',
-  vision: 'Vision',
+  vision: 'Production Studio',
   creation: 'Creation Hub',
-  polish: 'Polish',
-  launch: 'Launch',
+  polish: 'Final Cut',
+  launch: 'The Premiere',
 }
 
 const LEGACY_STEP_ALIASES: Record<string, WorkflowStep> = {

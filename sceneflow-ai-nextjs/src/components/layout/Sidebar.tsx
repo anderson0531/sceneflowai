@@ -41,7 +41,7 @@ const workflowNav = [
     credits: 'Uses Analysis Credits'
   },
   { 
-    name: 'Vision', 
+    name: 'Production Studio', 
     href: '/dashboard/workflow/vision', 
     icon: Layout,
     description: 'Script & Visual Development',
@@ -59,7 +59,7 @@ const workflowNav = [
     credits: '🔑 BYOK Required'
   },
   { 
-    name: 'Polish', 
+    name: 'Final Cut', 
     href: '/dashboard/workflow/generation', 
     icon: CheckCircle,
     description: 'Screening & Editing',
@@ -68,7 +68,7 @@ const workflowNav = [
     credits: '🔑 BYOK Required'
   },
   { 
-    name: 'Launch', 
+    name: 'The Premiere', 
     href: '/dashboard', 
     icon: Wrench,
     description: 'Optimization & Publishing',
@@ -121,7 +121,7 @@ export function Sidebar() {
   // Group workflow steps by phase
   const phase1Steps = workflowNav.filter(item => item.phase === 1).map(item => {
     if (item.name === 'The Blueprint') return { ...item, href: studioHref }
-    if (item.name === 'Vision') return { ...item, href: projectVisionHref }
+    if (item.name === 'Production Studio') return { ...item, href: projectVisionHref }
     return item
   })
   const phase2Steps = workflowNav.filter(item => item.phase === 2)
