@@ -79,7 +79,7 @@ export function ContextBar({
 
       {/* Tabs row (optional) */}
       {tabs && tabs.length > 0 && (
-        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-2">
           <div className="flex w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700/60 scrollbar-track-transparent" role="tablist" aria-label="Section tabs">
             <div className="flex items-stretch gap-1">
               {tabs.map((t) => {
@@ -90,7 +90,7 @@ export function ContextBar({
                     role="tab"
                     aria-selected={isActive}
                     className={cn(
-                      'flex-shrink-0 h-10 md:h-11 px-3 md:px-4 text-xs md:text-sm font-medium border-b-2 transition-colors',
+                      'flex-shrink-0 min-h-[2.5rem] md:min-h-[2.75rem] px-3 md:px-4 py-2 text-xs md:text-sm font-medium border-b-2 transition-colors leading-normal',
                       isActive
                         ? 'text-white border-blue-500 bg-gray-800/70'
                         : 'text-gray-300 border-transparent hover:text-white hover:border-blue-400/60 hover:bg-gray-800/40',
