@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight } from 'lucide-react'
+import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -2063,6 +2064,50 @@ function SceneCard({
   const [isDirectorsChairOpen, setIsDirectorsChairOpen] = useState(false)
   const [isStoryboardPreVizOpen, setIsStoryboardPreVizOpen] = useState(false)
   const [isCallActionOpen, setIsCallActionOpen] = useState(false)
+  const [copilotCollapsed, setCopilotCollapsed] = useState(false)
+  
+  // Determine active step for Co-Pilot
+  const activeStep: WorkflowStep | null = useMemo(() => {
+    if (isDialogueActionOpen) return 'dialogueAction'
+    if (isDirectorsChairOpen) return 'directorsChair'
+    if (isStoryboardPreVizOpen) return 'storyboardPreViz'
+    if (isCallActionOpen) return 'callAction'
+    return null
+  }, [isDialogueActionOpen, isDirectorsChairOpen, isStoryboardPreVizOpen, isCallActionOpen])
+  
+  // Completion status detection for workflow steps
+  const stepCompletion = useMemo(() => {
+    const dialogueActionComplete = !!(scene.narration || (scene.dialogue && scene.dialogue.length > 0))
+    const directorsChairComplete = !!scene.sceneDirection
+    const storyboardPreVizComplete = !!scene.imageUrl
+    // Call Action completion would check for scene production data - placeholder for now
+    const callActionComplete = false // TODO: Check scene production segments when available
+    
+    return {
+      dialogueAction: dialogueActionComplete,
+      directorsChair: directorsChairComplete,
+      storyboardPreViz: storyboardPreVizComplete,
+      callAction: callActionComplete,
+    }
+  }, [scene.narration, scene.dialogue, scene.sceneDirection, scene.imageUrl])
+  
+  // Sequential activation logic - steps unlock based on prerequisite completion
+  const stepUnlocked = useMemo(() => {
+    return {
+      dialogueAction: true, // Always unlocked
+      directorsChair: stepCompletion.dialogueAction,
+      storyboardPreViz: stepCompletion.directorsChair,
+      callAction: stepCompletion.storyboardPreViz,
+    }
+  }, [stepCompletion])
+  
+  // Determine status for each step
+  const getStepStatus = (stepKey: keyof typeof stepCompletion, isOpen: boolean) => {
+    if (stepCompletion[stepKey]) return 'complete'
+    if (isOpen) return 'in-progress'
+    if (!stepUnlocked[stepKey as keyof typeof stepUnlocked]) return 'locked'
+    return 'todo'
+  }
   
   const handleExpand = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -2523,24 +2568,40 @@ function SceneCard({
           })()}
           
           {/* Dialogue & Action Section */}
-          {!isOutline && (
-            <div className="mb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setIsDialogueActionOpen(!isDialogueActionOpen)
-                }}
-                className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Dialogue & Action</span>
-                </div>
-                <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isDialogueActionOpen ? 'rotate-90' : ''}`} />
-              </button>
-              
-              {isDialogueActionOpen && (
-                <div className="mt-3 space-y-4">
+          {!isOutline && (() => {
+            const status = getStepStatus('dialogueAction', isDialogueActionOpen)
+            const isLocked = !stepUnlocked.dialogueAction
+            return (
+              <div className={`mb-4 border-t border-gray-200 dark:border-gray-700 pt-4 ${isLocked ? 'opacity-50' : ''}`}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (!isLocked) {
+                      setIsDialogueActionOpen(!isDialogueActionOpen)
+                    }
+                  }}
+                  disabled={isLocked}
+                  className={`flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors ${isLocked ? 'cursor-not-allowed' : ''}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400 w-5">1</span>
+                      {status === 'complete' && <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />}
+                      {status === 'in-progress' && <ArrowRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
+                      {status === 'todo' && <Circle className="w-4 h-4 text-gray-400" />}
+                      {status === 'locked' && <Circle className="w-4 h-4 text-gray-500" />}
+                    </div>
+                    <FileText className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Dialogue & Action</span>
+                  </div>
+                  <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isDialogueActionOpen ? 'rotate-90' : ''}`} />
+                </button>
+              </div>
+            )
+          })()}
+          
+          {!isOutline && isDialogueActionOpen && (
+            <div className="mt-3 space-y-4">
                   {/* Scene Narration */}
                   {scene.narration && (
                     <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
@@ -2959,29 +3020,43 @@ function SceneCard({
                     </div>
                   )}
                 </div>
-              )}
-            </div>
           )}
           
           {/* Director's Chair Section */}
-          {!isOutline && (
-            <div className="mb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setIsDirectorsChairOpen(!isDirectorsChairOpen)
-                }}
-                className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Film className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Director's Chair</span>
-                </div>
-                <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isDirectorsChairOpen ? 'rotate-90' : ''}`} />
-              </button>
-              
-              {isDirectorsChairOpen && (
-                <div className="mt-3 space-y-4">
+          {!isOutline && (() => {
+            const status = getStepStatus('directorsChair', isDirectorsChairOpen)
+            const isLocked = !stepUnlocked.directorsChair
+            return (
+              <div className={`mb-4 border-t border-gray-200 dark:border-gray-700 pt-4 ${isLocked ? 'opacity-50' : ''}`}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (!isLocked) {
+                      setIsDirectorsChairOpen(!isDirectorsChairOpen)
+                    }
+                  }}
+                  disabled={isLocked}
+                  className={`flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors ${isLocked ? 'cursor-not-allowed' : ''}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400 w-5">2</span>
+                      {status === 'complete' && <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />}
+                      {status === 'in-progress' && <ArrowRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
+                      {status === 'todo' && <Circle className="w-4 h-4 text-gray-400" />}
+                      {status === 'locked' && <Circle className="w-4 h-4 text-gray-500" />}
+                    </div>
+                    <Film className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Director's Chair</span>
+                  </div>
+                  <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isDirectorsChairOpen ? 'rotate-90' : ''}`} />
+                </button>
+              </div>
+            )
+          })()}
+          
+          {!isOutline && isDirectorsChairOpen && (
+            <div className="mt-3 space-y-4">
                   {!scene.sceneDirection ? (
                     <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
@@ -3223,29 +3298,43 @@ function SceneCard({
                     </div>
                   )}
                 </div>
-              )}
-            </div>
           )}
           
           {/* Storyboard & Pre-Viz Section */}
-          {!isOutline && (
-            <div className="mb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setIsStoryboardPreVizOpen(!isStoryboardPreVizOpen)
-                }}
-                className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Camera className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Storyboard & Pre-Viz</span>
-                </div>
-                <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isStoryboardPreVizOpen ? 'rotate-90' : ''}`} />
-              </button>
-              
-              {isStoryboardPreVizOpen && (
-                <div className="mt-3 space-y-4">
+          {!isOutline && (() => {
+            const status = getStepStatus('storyboardPreViz', isStoryboardPreVizOpen)
+            const isLocked = !stepUnlocked.storyboardPreViz
+            return (
+              <div className={`mb-4 border-t border-gray-200 dark:border-gray-700 pt-4 ${isLocked ? 'opacity-50' : ''}`}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (!isLocked) {
+                      setIsStoryboardPreVizOpen(!isStoryboardPreVizOpen)
+                    }
+                  }}
+                  disabled={isLocked}
+                  className={`flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors ${isLocked ? 'cursor-not-allowed' : ''}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400 w-5">3</span>
+                      {status === 'complete' && <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />}
+                      {status === 'in-progress' && <ArrowRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
+                      {status === 'todo' && <Circle className="w-4 h-4 text-gray-400" />}
+                      {status === 'locked' && <Circle className="w-4 h-4 text-gray-500" />}
+                    </div>
+                    <Camera className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Storyboard & Pre-Viz</span>
+                  </div>
+                  <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isStoryboardPreVizOpen ? 'rotate-90' : ''}`} />
+                </button>
+              </div>
+            )
+          })()}
+          
+          {!isOutline && isStoryboardPreVizOpen && (
+            <div className="mt-3 space-y-4">
                   {/* Scene Image */}
                   {scene.imageUrl && (
                     <div className="rounded-lg overflow-hidden border-2 border-gray-300 dark:border-gray-600 shadow-md max-w-3xl mx-auto">
@@ -3294,36 +3383,59 @@ function SceneCard({
                     </div>
                   )}
                 </div>
-              )}
-            </div>
           )}
           
           {/* Call Action Section */}
-          {!isOutline && (
-            <div className="mb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setIsCallActionOpen(!isCallActionOpen)
-                }}
-                className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Clapperboard className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Call Action</span>
-                </div>
-                <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isCallActionOpen ? 'rotate-90' : ''}`} />
-              </button>
-              
-              {isCallActionOpen && (
-                <div className="mt-3 space-y-4">
-                  <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Call Action functionality will be available in an upcoming build.
-                    </p>
+          {!isOutline && (() => {
+            const status = getStepStatus('callAction', isCallActionOpen)
+            const isLocked = !stepUnlocked.callAction
+            return (
+              <div className={`mb-4 border-t border-gray-200 dark:border-gray-700 pt-4 ${isLocked ? 'opacity-50' : ''}`}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (!isLocked) {
+                      setIsCallActionOpen(!isCallActionOpen)
+                    }
+                  }}
+                  disabled={isLocked}
+                  className={`flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors ${isLocked ? 'cursor-not-allowed' : ''}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400 w-5">4</span>
+                      {status === 'complete' && <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />}
+                      {status === 'in-progress' && <ArrowRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
+                      {status === 'todo' && <Circle className="w-4 h-4 text-gray-400" />}
+                      {status === 'locked' && <Circle className="w-4 h-4 text-gray-500" />}
+                    </div>
+                    <Clapperboard className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Call Action</span>
                   </div>
-                </div>
-              )}
+                  <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isCallActionOpen ? 'rotate-90' : ''}`} />
+                </button>
+              </div>
+            )
+          })()}
+          
+          {!isOutline && isCallActionOpen && (
+            <div className="mt-3 space-y-4">
+              <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Call Action functionality will be available in an upcoming build.
+                </p>
+              </div>
+            </div>
+          )}
+          
+          {/* AI Co-Pilot Guidance Panel */}
+          {!isOutline && activeStep && (
+            <div className="mt-6">
+              <SceneWorkflowCoPilot
+                activeStep={activeStep}
+                isCollapsed={copilotCollapsed}
+                onToggleCollapse={() => setCopilotCollapsed(!copilotCollapsed)}
+              />
             </div>
           )}
           
