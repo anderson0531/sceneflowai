@@ -2092,6 +2092,13 @@ function SceneCard({
   generateSFX,
   onGenerateSceneDirection,
   generatingDirectionFor,
+  sceneProductionData,
+  sceneProductionReferences,
+  onInitializeSceneProduction,
+  onSegmentPromptChange,
+  onSegmentGenerate,
+  onSegmentUpload,
+  sceneAudioTracks,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
