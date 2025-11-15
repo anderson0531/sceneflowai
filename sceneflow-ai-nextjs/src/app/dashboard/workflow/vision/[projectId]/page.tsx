@@ -4162,8 +4162,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             setUploadingRef={setUploadingRef}
             sceneReferences={sceneReferences}
             objectReferences={objectReferences}
-            onCreateReference={handleCreateReference}
-            onRemoveReference={handleRemoveReference}
+            onCreateReference={(type, payload) => handleCreateReference(type, payload)}
+            onRemoveReference={(type, referenceId) => handleRemoveReference(type, referenceId)}
           />
         </div>
       </div>
