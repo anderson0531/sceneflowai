@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -2059,9 +2059,10 @@ function SceneCard({
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
-  const [isSceneVisualOpen, setIsSceneVisualOpen] = useState(false)
-  const [isSceneDirectionOpen, setIsSceneDirectionOpen] = useState(false)
-  const [isSceneScriptOpen, setIsSceneScriptOpen] = useState(false)
+  const [isDialogueActionOpen, setIsDialogueActionOpen] = useState(false)
+  const [isDirectorsChairOpen, setIsDirectorsChairOpen] = useState(false)
+  const [isStoryboardPreVizOpen, setIsStoryboardPreVizOpen] = useState(false)
+  const [isCallActionOpen, setIsCallActionOpen] = useState(false)
   
   const handleExpand = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -2521,359 +2522,24 @@ function SceneCard({
             return null
           })()}
           
-          {/* Scene Visual Section */}
+          {/* Dialogue & Action Section */}
           {!isOutline && (
             <div className="mb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  setIsSceneVisualOpen(!isSceneVisualOpen)
-                }}
-                className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Camera className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Scene Visual</span>
-                </div>
-                <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isSceneVisualOpen ? 'rotate-90' : ''}`} />
-              </button>
-              
-              {isSceneVisualOpen && (
-                <div className="mt-3 space-y-4">
-                  {/* Scene Image */}
-                  {scene.imageUrl && (
-                    <div className="rounded-lg overflow-hidden border-2 border-gray-300 dark:border-gray-600 shadow-md max-w-3xl mx-auto">
-                      <img 
-                        src={scene.imageUrl} 
-                        alt={scene.heading}
-                        className="w-full h-auto object-cover"
-                      />
-                    </div>
-                  )}
-                  
-                  {/* Image Generation Buttons */}
-                  {onGenerateImage && scene.visualDescription && (
-                    <div className="flex items-center justify-end gap-2">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={handleOpenBuilder}
-                              disabled={isGeneratingImage}
-                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-lg transition-colors disabled:opacity-50 border border-purple-200 dark:border-purple-800"
-                            >
-                              <Image className="w-4 h-4" />
-                              <span>Build</span>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Build image prompt</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={handleQuickGenerate}
-                              disabled={isGeneratingImage}
-                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-lg transition-colors disabled:opacity-50 border border-purple-200 dark:border-purple-800"
-                            >
-                              <Sparkles className="w-4 h-4" />
-                              <span>Generate</span>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Quick generate image</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-          
-          {/* Scene Direction Section */}
-          {!isOutline && (
-            <div className="mb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setIsSceneDirectionOpen(!isSceneDirectionOpen)
-                }}
-                className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Film className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Scene Direction</span>
-                </div>
-                <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isSceneDirectionOpen ? 'rotate-90' : ''}`} />
-              </button>
-              
-              {isSceneDirectionOpen && (
-                <div className="mt-3 space-y-4">
-                  {!scene.sceneDirection ? (
-                    <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                        Generate detailed technical directions for live-action film crew including camera, lighting, scene, talent, and audio specifications.
-                      </p>
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation()
-                          if (onGenerateSceneDirection) {
-                            await onGenerateSceneDirection(sceneIdx)
-                          }
-                        }}
-                        disabled={generatingDirectionFor === sceneIdx}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {generatingDirectionFor === sceneIdx ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>Generating...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="w-4 h-4" />
-                            <span>Generate Scene Direction</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {/* Technical Details Grid - 2 columns on larger screens */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {/* Camera */}
-                        {scene.sceneDirection.camera && (
-                          <div className="p-3.5 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800/50">
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-                              <Camera className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                              Camera
-                            </h4>
-                            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                              {scene.sceneDirection.camera.shots && scene.sceneDirection.camera.shots.length > 0 && (
-                                <div className="pb-2 border-b border-blue-200/50 dark:border-blue-800/30">
-                                  <span className="font-medium text-blue-900 dark:text-blue-300">Shots: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.camera.shots.join(', ')}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.camera.angle && (
-                                <div>
-                                  <span className="font-medium text-blue-900 dark:text-blue-300">Angle: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.camera.angle}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.camera.movement && (
-                                <div>
-                                  <span className="font-medium text-blue-900 dark:text-blue-300">Movement: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.camera.movement}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.camera.lensChoice && (
-                                <div>
-                                  <span className="font-medium text-blue-900 dark:text-blue-300">Lens: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.camera.lensChoice}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.camera.focus && (
-                                <div>
-                                  <span className="font-medium text-blue-900 dark:text-blue-300">Focus: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.camera.focus}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Lighting */}
-                        {scene.sceneDirection.lighting && (
-                          <div className="p-3.5 bg-gradient-to-br from-yellow-50 to-yellow-100/50 dark:from-yellow-950/30 dark:to-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800/50">
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-                              <Zap className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
-                              Lighting
-                            </h4>
-                            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                              {scene.sceneDirection.lighting.overallMood && (
-                                <div className="pb-2 border-b border-yellow-200/50 dark:border-yellow-800/30">
-                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Mood: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.overallMood}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.lighting.timeOfDay && (
-                                <div>
-                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Time of Day: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.timeOfDay}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.lighting.keyLight && (
-                                <div>
-                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Key Light: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.keyLight}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.lighting.fillLight && (
-                                <div>
-                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Fill Light: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.fillLight}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.lighting.backlight && (
-                                <div>
-                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Backlight: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.backlight}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.lighting.practicals && (
-                                <div>
-                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Practicals: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.practicals}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.lighting.colorTemperature && (
-                                <div>
-                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Color Temp: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.colorTemperature}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Scene */}
-                        {scene.sceneDirection.scene && (
-                          <div className="p-3.5 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 rounded-lg border border-green-200 dark:border-green-800/50">
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-                              <ImageIcon className="w-4 h-4 text-green-600 dark:text-green-400" />
-                              Scene
-                            </h4>
-                            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                              {scene.sceneDirection.scene.location && (
-                                <div className="pb-2 border-b border-green-200/50 dark:border-green-800/30">
-                                  <span className="font-medium text-green-900 dark:text-green-300">Location: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.scene.location}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.scene.keyProps && scene.sceneDirection.scene.keyProps.length > 0 && (
-                                <div>
-                                  <span className="font-medium text-green-900 dark:text-green-300">Key Props: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.scene.keyProps.join(', ')}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.scene.atmosphere && (
-                                <div>
-                                  <span className="font-medium text-green-900 dark:text-green-300">Atmosphere: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.scene.atmosphere}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Talent */}
-                        {scene.sceneDirection.talent && (
-                          <div className="p-3.5 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/30 dark:to-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800/50">
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-                              <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                              Talent
-                            </h4>
-                            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                              {scene.sceneDirection.talent.blocking && (
-                                <div className="pb-2 border-b border-purple-200/50 dark:border-purple-800/30">
-                                  <span className="font-medium text-purple-900 dark:text-purple-300">Blocking: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.talent.blocking}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.talent.keyActions && scene.sceneDirection.talent.keyActions.length > 0 && (
-                                <div>
-                                  <span className="font-medium text-purple-900 dark:text-purple-300">Key Actions: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.talent.keyActions.join(', ')}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.talent.emotionalBeat && (
-                                <div>
-                                  <span className="font-medium text-purple-900 dark:text-purple-300">Emotional Beat: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.talent.emotionalBeat}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Audio */}
-                        {scene.sceneDirection.audio && (
-                          <div className="p-3.5 bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/30 dark:to-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800/50">
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-                              <Volume2 className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                              Audio
-                            </h4>
-                            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                              {scene.sceneDirection.audio.priorities && (
-                                <div className="pb-2 border-b border-orange-200/50 dark:border-orange-800/30">
-                                  <span className="font-medium text-orange-900 dark:text-orange-300">Priorities: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.audio.priorities}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.audio.considerations && (
-                                <div>
-                                  <span className="font-medium text-orange-900 dark:text-orange-300">Considerations: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.audio.considerations}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Regenerate Button */}
-                      <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                        <button
-                          onClick={async (e) => {
-                            e.stopPropagation()
-                            if (onGenerateSceneDirection) {
-                              await onGenerateSceneDirection(sceneIdx)
-                            }
-                          }}
-                          disabled={generatingDirectionFor === sceneIdx}
-                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full justify-center"
-                        >
-                          {generatingDirectionFor === sceneIdx ? (
-                            <>
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              <span>Regenerating...</span>
-                            </>
-                          ) : (
-                            <>
-                              <RefreshCw className="w-4 h-4" />
-                              <span>Regenerate Scene Direction</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-          
-          {/* Scene Script Section */}
-          {!isOutline && (
-            <div className="mb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setIsSceneScriptOpen(!isSceneScriptOpen)
+                  setIsDialogueActionOpen(!isDialogueActionOpen)
                 }}
                 className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors"
               >
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Scene Script</span>
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Dialogue & Action</span>
                 </div>
-                <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isSceneScriptOpen ? 'rotate-90' : ''}`} />
+                <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isDialogueActionOpen ? 'rotate-90' : ''}`} />
               </button>
               
-              {isSceneScriptOpen && (
+              {isDialogueActionOpen && (
                 <div className="mt-3 space-y-4">
                   {/* Scene Narration */}
                   {scene.narration && (
@@ -3292,6 +2958,370 @@ function SceneCard({
                       })}
                     </div>
                   )}
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Director's Chair Section */}
+          {!isOutline && (
+            <div className="mb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setIsDirectorsChairOpen(!isDirectorsChairOpen)
+                }}
+                className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Film className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Director's Chair</span>
+                </div>
+                <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isDirectorsChairOpen ? 'rotate-90' : ''}`} />
+              </button>
+              
+              {isDirectorsChairOpen && (
+                <div className="mt-3 space-y-4">
+                  {!scene.sceneDirection ? (
+                    <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                        Generate detailed technical directions for live-action film crew including camera, lighting, scene, talent, and audio specifications.
+                      </p>
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          if (onGenerateSceneDirection) {
+                            await onGenerateSceneDirection(sceneIdx)
+                          }
+                        }}
+                        disabled={generatingDirectionFor === sceneIdx}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {generatingDirectionFor === sceneIdx ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Generating...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4" />
+                            <span>Generate Scene Direction</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Technical Details Grid - 2 columns on larger screens */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {/* Camera */}
+                        {scene.sceneDirection.camera && (
+                          <div className="p-3.5 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800/50">
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                              <Camera className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                              Camera
+                            </h4>
+                            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                              {scene.sceneDirection.camera.shots && scene.sceneDirection.camera.shots.length > 0 && (
+                                <div className="pb-2 border-b border-blue-200/50 dark:border-blue-800/30">
+                                  <span className="font-medium text-blue-900 dark:text-blue-300">Shots: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.camera.shots.join(', ')}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.camera.angle && (
+                                <div>
+                                  <span className="font-medium text-blue-900 dark:text-blue-300">Angle: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.camera.angle}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.camera.movement && (
+                                <div>
+                                  <span className="font-medium text-blue-900 dark:text-blue-300">Movement: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.camera.movement}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.camera.lensChoice && (
+                                <div>
+                                  <span className="font-medium text-blue-900 dark:text-blue-300">Lens: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.camera.lensChoice}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.camera.focus && (
+                                <div>
+                                  <span className="font-medium text-blue-900 dark:text-blue-300">Focus: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.camera.focus}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Lighting */}
+                        {scene.sceneDirection.lighting && (
+                          <div className="p-3.5 bg-gradient-to-br from-yellow-50 to-yellow-100/50 dark:from-yellow-950/30 dark:to-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800/50">
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                              <Zap className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+                              Lighting
+                            </h4>
+                            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                              {scene.sceneDirection.lighting.overallMood && (
+                                <div className="pb-2 border-b border-yellow-200/50 dark:border-yellow-800/30">
+                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Mood: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.overallMood}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.lighting.timeOfDay && (
+                                <div>
+                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Time of Day: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.timeOfDay}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.lighting.keyLight && (
+                                <div>
+                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Key Light: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.keyLight}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.lighting.fillLight && (
+                                <div>
+                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Fill Light: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.fillLight}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.lighting.backlight && (
+                                <div>
+                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Backlight: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.backlight}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.lighting.practicals && (
+                                <div>
+                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Practicals: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.practicals}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.lighting.colorTemperature && (
+                                <div>
+                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Color Temp: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.colorTemperature}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Scene */}
+                        {scene.sceneDirection.scene && (
+                          <div className="p-3.5 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 rounded-lg border border-green-200 dark:border-green-800/50">
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                              <ImageIcon className="w-4 h-4 text-green-600 dark:text-green-400" />
+                              Scene
+                            </h4>
+                            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                              {scene.sceneDirection.scene.location && (
+                                <div className="pb-2 border-b border-green-200/50 dark:border-green-800/30">
+                                  <span className="font-medium text-green-900 dark:text-green-300">Location: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.scene.location}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.scene.keyProps && scene.sceneDirection.scene.keyProps.length > 0 && (
+                                <div>
+                                  <span className="font-medium text-green-900 dark:text-green-300">Key Props: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.scene.keyProps.join(', ')}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.scene.atmosphere && (
+                                <div>
+                                  <span className="font-medium text-green-900 dark:text-green-300">Atmosphere: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.scene.atmosphere}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Talent */}
+                        {scene.sceneDirection.talent && (
+                          <div className="p-3.5 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/30 dark:to-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800/50">
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                              <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                              Talent
+                            </h4>
+                            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                              {scene.sceneDirection.talent.blocking && (
+                                <div className="pb-2 border-b border-purple-200/50 dark:border-purple-800/30">
+                                  <span className="font-medium text-purple-900 dark:text-purple-300">Blocking: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.talent.blocking}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.talent.keyActions && scene.sceneDirection.talent.keyActions.length > 0 && (
+                                <div>
+                                  <span className="font-medium text-purple-900 dark:text-purple-300">Key Actions: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.talent.keyActions.join(', ')}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.talent.emotionalBeat && (
+                                <div>
+                                  <span className="font-medium text-purple-900 dark:text-purple-300">Emotional Beat: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.talent.emotionalBeat}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Audio */}
+                        {scene.sceneDirection.audio && (
+                          <div className="p-3.5 bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/30 dark:to-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800/50">
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                              <Volume2 className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                              Audio
+                            </h4>
+                            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                              {scene.sceneDirection.audio.priorities && (
+                                <div className="pb-2 border-b border-orange-200/50 dark:border-orange-800/30">
+                                  <span className="font-medium text-orange-900 dark:text-orange-300">Priorities: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.audio.priorities}</span>
+                                </div>
+                              )}
+                              {scene.sceneDirection.audio.considerations && (
+                                <div>
+                                  <span className="font-medium text-orange-900 dark:text-orange-300">Considerations: </span>
+                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.audio.considerations}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Regenerate Button */}
+                      <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation()
+                            if (onGenerateSceneDirection) {
+                              await onGenerateSceneDirection(sceneIdx)
+                            }
+                          }}
+                          disabled={generatingDirectionFor === sceneIdx}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full justify-center"
+                        >
+                          {generatingDirectionFor === sceneIdx ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>Regenerating...</span>
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw className="w-4 h-4" />
+                              <span>Regenerate Scene Direction</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Storyboard & Pre-Viz Section */}
+          {!isOutline && (
+            <div className="mb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setIsStoryboardPreVizOpen(!isStoryboardPreVizOpen)
+                }}
+                className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Camera className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Storyboard & Pre-Viz</span>
+                </div>
+                <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isStoryboardPreVizOpen ? 'rotate-90' : ''}`} />
+              </button>
+              
+              {isStoryboardPreVizOpen && (
+                <div className="mt-3 space-y-4">
+                  {/* Scene Image */}
+                  {scene.imageUrl && (
+                    <div className="rounded-lg overflow-hidden border-2 border-gray-300 dark:border-gray-600 shadow-md max-w-3xl mx-auto">
+                      <img 
+                        src={scene.imageUrl} 
+                        alt={scene.heading}
+                        className="w-full h-auto object-cover"
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Image Generation Buttons */}
+                  {onGenerateImage && scene.visualDescription && (
+                    <div className="flex items-center justify-end gap-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={handleOpenBuilder}
+                              disabled={isGeneratingImage}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-lg transition-colors disabled:opacity-50 border border-purple-200 dark:border-purple-800"
+                            >
+                              <Image className="w-4 h-4" />
+                              <span>Build</span>
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Build image prompt</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={handleQuickGenerate}
+                              disabled={isGeneratingImage}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-lg transition-colors disabled:opacity-50 border border-purple-200 dark:border-purple-800"
+                            >
+                              <Sparkles className="w-4 h-4" />
+                              <span>Generate</span>
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Quick generate image</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Call Action Section */}
+          {!isOutline && (
+            <div className="mb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setIsCallActionOpen(!isCallActionOpen)
+                }}
+                className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Clapperboard className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Call Action</span>
+                </div>
+                <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isCallActionOpen ? 'rotate-90' : ''}`} />
+              </button>
+              
+              {isCallActionOpen && (
+                <div className="mt-3 space-y-4">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Call Action functionality will be available in an upcoming build.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
