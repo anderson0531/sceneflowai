@@ -4,14 +4,18 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/Input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SceneSegment, SceneProductionReferences, SceneSegmentStatus } from './types'
-import { Upload, Video, Image as ImageIcon, CheckCircle2 } from 'lucide-react'
+import { Upload, Video, Image as ImageIcon, CheckCircle2, Film, Link as LinkIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+export type GenerationType = 'T2V' | 'I2V' | 'T2I' | 'UPLOAD'
 
 interface SegmentStudioProps {
   segment: SceneSegment | null
+  previousSegmentLastFrame?: string | null
   onPromptChange: (prompt: string) => void
-  onGenerate: (mode: 'video' | 'image') => Promise<void>
+  onGenerate: (mode: GenerationType, options?: { startFrameUrl?: string }) => Promise<void>
   onUploadMedia: (file: File) => Promise<void>
   references: SceneProductionReferences
   estimatedCredits?: number | null
@@ -19,6 +23,7 @@ interface SegmentStudioProps {
 
 export function SegmentStudio({
   segment,
+  previousSegmentLastFrame,
   onPromptChange,
   onGenerate,
   onUploadMedia,
@@ -26,10 +31,20 @@ export function SegmentStudio({
   estimatedCredits,
 }: SegmentStudioProps) {
   const [promptDraft, setPromptDraft] = useState(segment?.userEditedPrompt ?? segment?.generatedPrompt ?? '')
+  const [generationType, setGenerationType] = useState<GenerationType>('T2V')
+  const [startFrameUrl, setStartFrameUrl] = useState<string | null>(null)
 
   useEffect(() => {
     setPromptDraft(segment?.userEditedPrompt ?? segment?.generatedPrompt ?? '')
-  }, [segment?.segmentId, segment?.userEditedPrompt, segment?.generatedPrompt])
+    // Determine default generation type based on segment recommendations or previous frame availability
+    if (previousSegmentLastFrame) {
+      setGenerationType('I2V')
+      setStartFrameUrl(previousSegmentLastFrame)
+    } else {
+      setGenerationType('T2V')
+      setStartFrameUrl(null)
+    }
+  }, [segment?.segmentId, segment?.userEditedPrompt, segment?.generatedPrompt, previousSegmentLastFrame])
 
   if (!segment) {
     return (
@@ -49,6 +64,33 @@ export function SegmentStudio({
   const handlePromptBlur = () => {
     if (promptDraft !== undefined) {
       onPromptChange(promptDraft)
+    }
+  }
+
+  const handleUseLastFrame = () => {
+    if (previousSegmentLastFrame) {
+      setStartFrameUrl(previousSegmentLastFrame)
+      setGenerationType('I2V')
+    }
+  }
+
+  const handleGenerateClick = async () => {
+    if (generationType === 'UPLOAD') {
+      // Upload is handled separately via file input
+      return
+    }
+    await onGenerate(generationType, { startFrameUrl: startFrameUrl || undefined })
+  }
+
+  const handleGenerationTypeChange = (value: string) => {
+    const newType = value as GenerationType
+    setGenerationType(newType)
+    // If switching away from I2V, clear start frame
+    if (newType !== 'I2V') {
+      setStartFrameUrl(null)
+    } else if (previousSegmentLastFrame && !startFrameUrl) {
+      // If switching to I2V and we have a previous frame, use it
+      setStartFrameUrl(previousSegmentLastFrame)
     }
   }
 
@@ -94,22 +136,104 @@ export function SegmentStudio({
             )}
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <Button onClick={() => onGenerate('video')} className="flex items-center gap-2">
-              <Video className="w-4 h-4" />
-              Generate Video
-            </Button>
-            <Button variant="secondary" onClick={() => onGenerate('image')} className="flex items-center gap-2">
-              <ImageIcon className="w-4 h-4" />
-              Generate Image
-            </Button>
-            <label className="inline-flex">
-              <input type="file" className="hidden" accept="video/*,image/*" onChange={handleUploadChange} />
-              <Button type="button" variant="outline" className="w-full flex items-center gap-2 justify-center">
-                <Upload className="w-4 h-4" />
-                Upload Media
+          <div className="space-y-3">
+            {/* Generation Type Selector */}
+            <div>
+              <label className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-2 block">
+                Generation Type
+              </label>
+              <Select value={generationType} onValueChange={handleGenerationTypeChange}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="T2V">
+                    <div className="flex items-center gap-2">
+                      <Video className="w-4 h-4" />
+                      <span>AI Video (Text-to-Video)</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="I2V">
+                    <div className="flex items-center gap-2">
+                      <LinkIcon className="w-4 h-4" />
+                      <span>AI Video (Image-to-Video - Continuity)</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="T2I">
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4" />
+                      <span>AI Image (Text-to-Image)</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="UPLOAD">
+                    <div className="flex items-center gap-2">
+                      <Upload className="w-4 h-4" />
+                      <span>Upload Media</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Continuity Button */}
+            {previousSegmentLastFrame && generationType !== 'UPLOAD' && (
+              <Button
+                variant="outline"
+                onClick={handleUseLastFrame}
+                disabled={startFrameUrl === previousSegmentLastFrame}
+                className="w-full flex items-center gap-2"
+              >
+                <LinkIcon className="w-4 h-4" />
+                {startFrameUrl === previousSegmentLastFrame
+                  ? 'Using Previous Clip\'s Last Frame'
+                  : 'Use Previous Clip\'s Last Frame (I2V)'}
               </Button>
-            </label>
+            )}
+
+            {/* Generate/Upload Buttons */}
+            <div className="grid grid-cols-2 gap-2">
+              {generationType === 'UPLOAD' ? (
+                <label className="inline-flex col-span-2">
+                  <input type="file" className="hidden" accept="video/*,image/*" onChange={handleUploadChange} />
+                  <Button type="button" variant="outline" className="w-full flex items-center gap-2 justify-center">
+                    <Upload className="w-4 h-4" />
+                    Upload Media
+                  </Button>
+                </label>
+              ) : (
+                <Button
+                  onClick={handleGenerateClick}
+                  className="flex items-center gap-2 col-span-2"
+                  disabled={segment?.status === 'GENERATING'}
+                >
+                  {generationType === 'T2V' || generationType === 'I2V' ? (
+                    <>
+                      <Video className="w-4 h-4" />
+                      Generate Video
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="w-4 h-4" />
+                      Generate Image
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+
+            {/* Start Frame Preview for I2V */}
+            {generationType === 'I2V' && startFrameUrl && (
+              <div className="mt-2 p-2 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                <div className="text-xs font-medium text-blue-900 dark:text-blue-300 mb-1">
+                  Continuity Frame:
+                </div>
+                <img
+                  src={startFrameUrl}
+                  alt="Start frame for continuity"
+                  className="w-full h-24 object-cover rounded border border-blue-300 dark:border-blue-700"
+                />
+              </div>
+            )}
           </div>
 
           {typeof estimatedCredits === 'number' ? (
@@ -136,15 +260,21 @@ export function SegmentStudio({
           <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-2">
               <div className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Continuity</div>
-              <div className="space-y-2">
-                <div>
-                  <label className="text-xs text-gray-500 dark:text-gray-400">Start Frame</label>
-                  <Input type="file" accept="image/*" />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 dark:text-gray-400">End Frame</label>
-                  <Input type="file" accept="image/*" />
-                </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                {startFrameUrl ? (
+                  <div className="space-y-1">
+                    <div className="text-green-600 dark:text-green-400">✓ Start frame set for continuity</div>
+                    {segment.references.startFrameUrl && (
+                      <div className="text-gray-600 dark:text-gray-400">
+                        Frame from previous segment will be used for seamless transition.
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-gray-500 dark:text-gray-400">
+                    No start frame set. This will be a standard text-to-video generation.
+                  </div>
+                )}
               </div>
             </div>
             <div className="space-y-2">

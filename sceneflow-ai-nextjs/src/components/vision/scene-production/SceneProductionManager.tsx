@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { SegmentTimeline } from './SegmentTimeline'
-import { SegmentStudio } from './SegmentStudio'
+import { SegmentStudio, GenerationType } from './SegmentStudio'
 import {
   SceneProductionData,
   SceneProductionReferences,
@@ -20,8 +20,14 @@ interface SceneProductionManagerProps {
   references: SceneProductionReferences
   onInitialize: (sceneId: string, options: { targetDuration: number }) => Promise<void>
   onPromptChange: (sceneId: string, segmentId: string, prompt: string) => void
-  onGenerate: (sceneId: string, segmentId: string, mode: 'video' | 'image') => Promise<void>
+  onGenerate: (sceneId: string, segmentId: string, mode: GenerationType, options?: { startFrameUrl?: string }) => Promise<void>
   onUpload: (sceneId: string, segmentId: string, file: File) => Promise<void>
+  audioTracks?: {
+    narration?: { url?: string; startTime: number; duration: number }
+    dialogue?: Array<{ url?: string; startTime: number; duration: number; character?: string }>
+    sfx?: Array<{ url?: string; startTime: number; duration: number; description?: string }>
+    music?: { url?: string; startTime: number; duration: number }
+  }
 }
 
 export function SceneProductionManager({
@@ -34,6 +40,7 @@ export function SceneProductionManager({
   onPromptChange,
   onGenerate,
   onUpload,
+  audioTracks,
 }: SceneProductionManagerProps) {
   const [targetDuration, setTargetDuration] = useState<number>(productionData?.targetSegmentDuration ?? 8)
   useEffect(() => {
@@ -79,10 +86,19 @@ export function SceneProductionManager({
     onPromptChange(sceneId, selectedSegment.segmentId, prompt)
   }
 
-  const handleGenerate = async (mode: 'video' | 'image') => {
+  const handleGenerate = async (mode: GenerationType, options?: { startFrameUrl?: string }) => {
     if (!selectedSegment) return
-    await onGenerate(sceneId, selectedSegment.segmentId, mode)
+    await onGenerate(sceneId, selectedSegment.segmentId, mode, options)
   }
+
+  // Get previous segment's last frame for continuity
+  const previousSegmentLastFrame = useMemo(() => {
+    if (!selectedSegment || segments.length === 0) return null
+    const currentIndex = segments.findIndex(s => s.segmentId === selectedSegment.segmentId)
+    if (currentIndex <= 0) return null
+    const previousSegment = segments[currentIndex - 1]
+    return previousSegment.references.endFrameUrl || null
+  }, [selectedSegment, segments])
 
   const handleUpload = async (file: File) => {
     if (!selectedSegment) return
@@ -139,10 +155,12 @@ export function SceneProductionManager({
         segments={segments}
         selectedSegmentId={selectedSegmentId ?? undefined}
         onSelect={setSelectedSegmentId}
+        audioTracks={audioTracks}
       />
 
       <SegmentStudio
         segment={selectedSegment}
+        previousSegmentLastFrame={previousSegmentLastFrame}
         onPromptChange={handlePromptChange}
         onGenerate={handleGenerate}
         onUploadMedia={handleUpload}

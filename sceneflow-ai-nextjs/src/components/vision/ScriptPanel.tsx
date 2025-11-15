@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
+import { SceneProductionManager } from './scene-production/SceneProductionManager'
+import { SceneProductionData, SceneProductionReferences } from './scene-production/types'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -102,6 +104,19 @@ interface ScriptPanelProps {
   onGenerateSceneDirection?: (sceneIdx: number) => Promise<void>
   generatingDirectionFor?: number | null
   onGenerateAllCharacters?: () => Promise<void>
+  // NEW: Scene production props
+  sceneProductionData?: Record<string, SceneProductionData>
+  sceneProductionReferences?: Record<string, SceneProductionReferences>
+  onInitializeSceneProduction?: (sceneId: string, options: { targetDuration: number }) => Promise<void>
+  onSegmentPromptChange?: (sceneId: string, segmentId: string, prompt: string) => void
+  onSegmentGenerate?: (sceneId: string, segmentId: string, mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD', options?: { startFrameUrl?: string }) => Promise<void>
+  onSegmentUpload?: (sceneId: string, segmentId: string, file: File) => Promise<void>
+  sceneAudioTracks?: Record<string, {
+    narration?: { url?: string; startTime: number; duration: number }
+    dialogue?: Array<{ url?: string; startTime: number; duration: number; character?: string }>
+    sfx?: Array<{ url?: string; startTime: number; duration: number; description?: string }>
+    music?: { url?: string; startTime: number; duration: number }
+  }>
 }
 
 // Transform score analysis data to review format
@@ -317,7 +332,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, sceneAudioTracks = {} }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [showScriptEditor, setShowScriptEditor] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -1762,6 +1777,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       generateSFX={generateSFX}
                       onGenerateSceneDirection={onGenerateSceneDirection}
                       generatingDirectionFor={generatingDirectionFor}
+                      sceneProductionData={sceneProductionData[scene.id || `scene-${idx}`]}
+                      sceneProductionReferences={sceneProductionReferences[scene.id || `scene-${idx}`]}
+                      onInitializeSceneProduction={onInitializeSceneProduction}
+                      onSegmentPromptChange={onSegmentPromptChange}
+                      onSegmentGenerate={onSegmentGenerate}
+                      onSegmentUpload={onSegmentUpload}
+                      sceneAudioTracks={sceneAudioTracks[scene.id || `scene-${idx}`]}
                 />
                     )
                   })}
@@ -2007,6 +2029,19 @@ interface SceneCardProps {
   // NEW: Scene direction generation props
   onGenerateSceneDirection?: (sceneIdx: number) => Promise<void>
   generatingDirectionFor?: number | null
+  // NEW: Scene production props
+  sceneProductionData?: SceneProductionData | null
+  sceneProductionReferences?: SceneProductionReferences
+  onInitializeSceneProduction?: (sceneId: string, options: { targetDuration: number }) => Promise<void>
+  onSegmentPromptChange?: (sceneId: string, segmentId: string, prompt: string) => void
+  onSegmentGenerate?: (sceneId: string, segmentId: string, mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD', options?: { startFrameUrl?: string }) => Promise<void>
+  onSegmentUpload?: (sceneId: string, segmentId: string, file: File) => Promise<void>
+  sceneAudioTracks?: {
+    narration?: { url?: string; startTime: number; duration: number }
+    dialogue?: Array<{ url?: string; startTime: number; duration: number; character?: string }>
+    sfx?: Array<{ url?: string; startTime: number; duration: number; description?: string }>
+    music?: { url?: string; startTime: number; duration: number }
+  }
 }
 
 function SceneCard({
@@ -2080,8 +2115,13 @@ function SceneCard({
     const dialogueActionComplete = !!(scene.narration || (scene.dialogue && scene.dialogue.length > 0))
     const directorsChairComplete = !!scene.sceneDirection
     const storyboardPreVizComplete = !!scene.imageUrl
-    // Call Action completion would check for scene production data - placeholder for now
-    const callActionComplete = false // TODO: Check scene production segments when available
+    // Check if Call Action is complete: scene must be segmented and all segments must have assets
+    const callActionComplete = (() => {
+      if (!sceneProductionData) return false
+      if (!sceneProductionData.isSegmented || sceneProductionData.segments.length === 0) return false
+      // All segments should have active assets (video or image)
+      return sceneProductionData.segments.every(segment => segment.activeAssetUrl && segment.assetType)
+    })()
     
     return {
       dialogueAction: dialogueActionComplete,
@@ -2089,7 +2129,7 @@ function SceneCard({
       storyboardPreViz: storyboardPreVizComplete,
       callAction: callActionComplete,
     }
-  }, [scene.narration, scene.dialogue, scene.sceneDirection, scene.imageUrl])
+  }, [scene.narration, scene.dialogue, scene.sceneDirection, scene.imageUrl, sceneProductionData])
   
   // Sequential activation logic - steps unlock based on prerequisite completion
   const stepUnlocked = useMemo(() => {
@@ -3420,11 +3460,26 @@ function SceneCard({
           
           {!isOutline && isCallActionOpen && (
             <div className="mt-3 space-y-4">
-              <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Call Action functionality will be available in an upcoming build.
-                </p>
-              </div>
+              {sceneProductionData && sceneProductionReferences && onInitializeSceneProduction && onSegmentPromptChange && onSegmentGenerate && onSegmentUpload ? (
+                <SceneProductionManager
+                  sceneId={scene.id || `scene-${sceneIdx}`}
+                  sceneNumber={sceneNumber}
+                  heading={typeof scene.heading === 'string' ? scene.heading : scene.heading?.text}
+                  productionData={sceneProductionData}
+                  references={sceneProductionReferences}
+                  onInitialize={onInitializeSceneProduction}
+                  onPromptChange={onSegmentPromptChange}
+                  onGenerate={onSegmentGenerate}
+                  onUpload={onSegmentUpload}
+                  audioTracks={sceneAudioTracks}
+                />
+              ) : (
+                <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Scene production data is loading...
+                  </p>
+                </div>
+              )}
             </div>
           )}
           

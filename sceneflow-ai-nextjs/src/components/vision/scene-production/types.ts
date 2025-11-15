@@ -4,6 +4,8 @@ export type SceneSegmentStatus = 'DRAFT' | 'READY' | 'GENERATING' | 'COMPLETE' |
 
 export type SceneSegmentAssetType = 'video' | 'image' | null
 
+export type GenerationType = 'T2V' | 'I2V' | 'T2I' | 'UPLOAD'
+
 export interface SceneSegmentTake {
   id: string
   createdAt: string

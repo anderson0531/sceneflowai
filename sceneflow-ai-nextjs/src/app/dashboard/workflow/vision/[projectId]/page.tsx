@@ -609,12 +609,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         throw new Error('Project must be loaded before segmenting a scene.')
       }
 
-      const response = await fetch(`/api/scenes/${encodeURIComponent(sceneId)}/segment`, {
+      const response = await fetch(`/api/scenes/${encodeURIComponent(sceneId)}/generate-segments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId: project.id,
-          targetSegmentDuration: targetDuration,
+          preferredDuration: targetDuration,
         }),
       })
 
@@ -628,7 +628,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         throw new Error(data?.error || 'Failed to segment scene')
       }
 
-      const productionData: SceneProductionData = data.productionData
+      // Transform API response to SceneProductionData format
+      const productionData: SceneProductionData = {
+        isSegmented: true,
+        targetSegmentDuration: data.targetSegmentDuration || targetDuration,
+        segments: data.segments || [],
+        lastGeneratedAt: new Date().toISOString(),
+      }
 
       setSceneProductionState((prev) => ({
         ...prev,
@@ -676,7 +682,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   const handleSegmentGenerate = useCallback(
-    async (sceneId: string, segmentId: string, mode: 'video' | 'image') => {
+    async (
+      sceneId: string,
+      segmentId: string,
+      mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD',
+      options?: { startFrameUrl?: string }
+    ) => {
+      if (!project?.id) {
+        throw new Error('Project must be loaded before generating assets.')
+      }
+
+      // Update status to GENERATING
       applySceneProductionUpdate(sceneId, (current) => {
         if (!current) return current
         const segments = current.segments.map((segment) =>
@@ -687,20 +703,98 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       try {
         const { toast } = require('sonner')
-        toast.info(`Queued ${mode} generation for segment ${segmentId.slice(0, 6)}…`)
+        toast.info(`Generating ${mode} for segment ${segmentId.slice(0, 6)}…`)
       } catch {}
 
-      setTimeout(() => {
+      try {
+        // Get the segment to get its prompt
+        const currentProduction = sceneProductionState[sceneId]
+        const segment = currentProduction?.segments.find((s) => s.segmentId === segmentId)
+        if (!segment) {
+          throw new Error('Segment not found')
+        }
+
+        const prompt = segment.userEditedPrompt || segment.generatedPrompt || ''
+        if (!prompt) {
+          throw new Error('Segment prompt is required')
+        }
+
+        // Call the asset generation API
+        const response = await fetch(`/api/segments/${encodeURIComponent(segmentId)}/generate-asset`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt,
+            genType: mode,
+            startFrameUrl: options?.startFrameUrl,
+            sceneId,
+            projectId: project.id,
+          }),
+        })
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          throw new Error(errorText || 'Failed to generate asset')
+        }
+
+        const data = await response.json()
+        if (!data.success) {
+          throw new Error(data.error || 'Asset generation failed')
+        }
+
+        // Update segment with generated asset
+        applySceneProductionUpdate(sceneId, (current) => {
+          if (!current) return current
+          const segments = current.segments.map((segment) => {
+            if (segment.segmentId !== segmentId) return segment
+
+            const newTake = {
+              id: `${segmentId}-take-${Date.now()}`,
+              createdAt: new Date().toISOString(),
+              assetUrl: data.assetUrl,
+              thumbnailUrl: data.assetType === 'image' ? data.assetUrl : undefined,
+              status: data.status === 'COMPLETE' ? 'COMPLETE' : 'GENERATING',
+              durationSec: segment.endTime - segment.startTime,
+            }
+
+            return {
+              ...segment,
+              status: data.status === 'COMPLETE' ? 'COMPLETE' : 'GENERATING',
+              assetType: data.assetType,
+              activeAssetUrl: data.assetUrl,
+              takes: [newTake, ...segment.takes],
+              references: {
+                ...segment.references,
+                startFrameUrl: options?.startFrameUrl || segment.references.startFrameUrl,
+                endFrameUrl: data.lastFrameUrl || segment.references.endFrameUrl,
+              },
+            }
+          })
+          return { ...current, segments }
+        })
+
+        try {
+          const { toast } = require('sonner')
+          toast.success(`Asset generated successfully for segment ${segmentId.slice(0, 6)}`)
+        } catch {}
+      } catch (error) {
+        console.error('[Segment Generate] Error:', error)
+        // Update status to ERROR
         applySceneProductionUpdate(sceneId, (current) => {
           if (!current) return current
           const segments = current.segments.map((segment) =>
-            segment.segmentId === segmentId ? { ...segment, status: 'COMPLETE' } : segment
+            segment.segmentId === segmentId ? { ...segment, status: 'ERROR' } : segment
           )
           return { ...current, segments }
         })
-      }, 1200)
+
+        try {
+          const { toast } = require('sonner')
+          toast.error(error instanceof Error ? error.message : 'Failed to generate asset')
+        } catch {}
+      }
     },
-    [applySceneProductionUpdate]
+    [applySceneProductionUpdate, project?.id, sceneProductionState]
   )
 
   const handleSegmentUpload = useCallback(
@@ -4097,6 +4191,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onGenerateSceneDirection={handleGenerateSceneDirection}
                 generatingDirectionFor={generatingDirectionFor}
                 onGenerateAllCharacters={generateCharacters}
+                sceneProductionData={sceneProductionState}
+                sceneProductionReferences={Object.keys(sceneProductionState).reduce((acc, sceneId) => {
+                  acc[sceneId] = {
+                    characters,
+                    sceneReferences,
+                    objectReferences,
+                  }
+                  return acc
+                }, {} as Record<string, SceneProductionReferences>)}
+                onInitializeSceneProduction={handleInitializeSceneProduction}
+                onSegmentPromptChange={handleSegmentPromptChange}
+                onSegmentGenerate={handleSegmentGenerate}
+                onSegmentUpload={handleSegmentUpload}
+                sceneAudioTracks={{}}
               />
               <div className="mt-8">
                 <SceneGallery
