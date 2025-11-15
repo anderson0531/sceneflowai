@@ -345,7 +345,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [showVoiceSelection, setShowVoiceSelection] = useState(false)
   
   // Script overview visibility state
-  const [showScriptOverview, setShowScriptOverview] = useState(true)
+  const [showScriptOverview, setShowScriptOverview] = useState(false)
   
   // Scene review modal state
   const [showSceneReviewModal, setShowSceneReviewModal] = useState(false)

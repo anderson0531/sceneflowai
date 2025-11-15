@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { DndContext } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/Input'
@@ -70,7 +70,7 @@ function DraggableReferenceCard({ reference }: { reference: VisualReference }) {
 }
 
 function ReferenceSection({ title, type, references, icon, onAdd, onRemove }: ReferenceSectionProps) {
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(false)
 
   return (
     <div className="border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900">
@@ -261,32 +261,53 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     }
   }
 
+  const [castOpen, setCastOpen] = useState(true)
+
   return (
     <DndContext>
       <div className="space-y-6">
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">References</h3>
-          <CharacterLibrary
-            characters={characters}
-            onRegenerateCharacter={onRegenerateCharacter}
-            onGenerateCharacter={onGenerateCharacter}
-            onUploadCharacter={onUploadCharacter}
-            onApproveCharacter={onApproveCharacter}
-            onUpdateCharacterAttributes={onUpdateCharacterAttributes}
-            onUpdateCharacterVoice={onUpdateCharacterVoice}
-            onUpdateCharacterAppearance={onUpdateCharacterAppearance}
-            onUpdateCharacterName={onUpdateCharacterName}
-            onUpdateCharacterRole={onUpdateCharacterRole}
-            onAddCharacter={onAddCharacter}
-            onRemoveCharacter={onRemoveCharacter}
-            ttsProvider={ttsProvider}
-            uploadingRef={uploadingRef}
-            setUploadingRef={setUploadingRef}
-            enableDrag={enableDrag}
-            compact
-          />
+          <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Reference Library</h3>
+          
+          {/* Cast Section */}
+          <div className="border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900">
+            <button
+              onClick={() => setCastOpen((prev) => !prev)}
+              className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-100"
+            >
+              <span className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-sf-primary" />
+                Cast
+              </span>
+              {castOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+            {castOpen && (
+              <div className="px-4 pb-4">
+                <CharacterLibrary
+                  characters={characters}
+                  onRegenerateCharacter={onRegenerateCharacter}
+                  onGenerateCharacter={onGenerateCharacter}
+                  onUploadCharacter={onUploadCharacter}
+                  onApproveCharacter={onApproveCharacter}
+                  onUpdateCharacterAttributes={onUpdateCharacterAttributes}
+                  onUpdateCharacterVoice={onUpdateCharacterVoice}
+                  onUpdateCharacterAppearance={onUpdateCharacterAppearance}
+                  onUpdateCharacterName={onUpdateCharacterName}
+                  onUpdateCharacterRole={onUpdateCharacterRole}
+                  onAddCharacter={onAddCharacter}
+                  onRemoveCharacter={onRemoveCharacter}
+                  ttsProvider={ttsProvider}
+                  uploadingRef={uploadingRef}
+                  setUploadingRef={setUploadingRef}
+                  enableDrag={enableDrag}
+                  compact
+                />
+              </div>
+            )}
+          </div>
+
           <ReferenceSection
-            title="Scene References"
+            title="Scenes"
             type="scene"
             references={sceneReferences}
             icon={<Images className="w-4 h-4 text-sf-primary" />}
@@ -294,7 +315,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
             onRemove={onRemoveReference}
           />
           <ReferenceSection
-            title="Object References"
+            title="Objects"
             type="object"
             references={objectReferences}
             icon={<Package className="w-4 h-4 text-sf-primary" />}

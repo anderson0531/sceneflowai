@@ -50,15 +50,6 @@ const workflowNav = [
     credits: 'Uses Analysis Credits'
   },
   { 
-    name: 'Creation Hub', 
-    href: '/dashboard/workflow/video-generation', 
-    icon: Film,
-    description: 'Video Generation',
-    step: 'video-generation',
-    phase: 2,
-    credits: '🔑 BYOK Required'
-  },
-  { 
     name: 'Final Cut', 
     href: '/dashboard/workflow/generation', 
     icon: CheckCircle,

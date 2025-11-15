@@ -3,6 +3,7 @@
 
 import { use, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels'
 import { ContextBar } from '@/components/layout/ContextBar'
 import { ScriptPanel } from '@/components/vision/ScriptPanel'
 import { SceneGallery } from '@/components/vision/SceneGallery'
@@ -3986,16 +3987,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             <Link
               href={
                 project?.id
-                  ? `/dashboard/workflow/creation/${project.id}`
+                  ? `/dashboard/workflow/generation/${project.id}`
                   : typeof projectId === 'string'
-                    ? `/dashboard/workflow/creation/${projectId}`
-                    : '/dashboard/workflow/creation'
+                    ? `/dashboard/workflow/generation/${projectId}`
+                    : '/dashboard/workflow/generation'
               }
               prefetch={false}
               className={cn(buttonVariants({ variant: 'primary' }), 'flex items-center gap-2')}
-              aria-label="Continue to the Creation Hub phase"
+              aria-label="Continue to Final Cut phase"
             >
-              <span>Creation Hub</span>
+              <span>Final Cut</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -4056,123 +4057,131 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       />
       
-      <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 px-6 py-4">
-        {/* Main: Script with Scene Cards */}
-        <div className="overflow-y-auto">
-                    <ScriptPanel 
-            script={script}
-            onScriptChange={setScript}
-            isGenerating={isGenerating}
-            onExpandScene={expandScene}
-            onExpandAllScenes={expandAllScenes}
-            onGenerateSceneImage={handleGenerateSceneImage}
-            characters={characters}
-            projectId={projectId}
-            visualStyle={project?.tone || project?.metadata?.filmTreatmentVariant?.tone}                                                                        
-            validationWarnings={validationWarnings}
-            validationInfo={validationInfo}
-            onDismissValidationWarning={handleDismissValidationWarning}
-            onGenerateSceneAudio={handleGenerateSceneAudio}
-            onGenerateAllAudio={handleGenerateAllAudio}
-            isGeneratingAudio={isGeneratingAudio}
-            onPlayScript={() => setIsPlayerOpen(true)}
-            onOpenAnimaticsStudio={() => setShowAnimaticsStudio(true)}
-            onAddScene={handleAddScene}
-            onDeleteScene={handleDeleteScene}
-            onReorderScenes={handleReorderScenes}
-            onEditScene={handleEditScene}
-            onGenerateSceneScore={handleGenerateSceneScore}
-            generatingScoreFor={generatingScoreFor}
-            getScoreColorClass={getScoreColorClass}
-            directorScore={directorReview?.overallScore}
-            audienceScore={audienceReview?.overallScore}
-            onGenerateReviews={handleGenerateReviews}
-            isGeneratingReviews={isGeneratingReviews}
-            onShowReviews={() => setShowReviewModal(true)}
-            hasBYOK={!!byokSettings?.videoProvider}
-            onOpenBYOK={() => setShowBYOKSettings(true)}
-            onGenerateSceneDirection={handleGenerateSceneDirection}
-            generatingDirectionFor={generatingDirectionFor}
-            onGenerateAllCharacters={generateCharacters}
-          />
-          <div className="mt-8">
-            <SceneGallery
-              scenes={scenes}
-              characters={characters}
-              projectTitle={project?.title}
-              onRegenerateScene={(index) => handleGenerateSceneImage(index)}
-              onGenerateScene={handleGenerateScene}
-              onUploadScene={handleUploadScene}
-              sceneProductionState={sceneProductionState}
-              productionReferences={{
-                characters,
-                sceneReferences,
-                objectReferences,
-              }}
-              onInitializeProduction={(sceneId, options) =>
-                handleInitializeSceneProduction(sceneId, options)
-              }
-              onSegmentPromptChange={(sceneId, segmentId, prompt) =>
-                handleSegmentPromptChange(sceneId, segmentId, prompt)
-              }
-              onSegmentGenerate={(sceneId, segmentId, mode) =>
-                handleSegmentGenerate(sceneId, segmentId, mode)
-              }
-              onSegmentUpload={(sceneId, segmentId, file) =>
-                handleSegmentUpload(sceneId, segmentId, file)
-              }
-            />
-          </div>
-        </div>
-        
-        {/* Right Sidebar: Characters */}
-        <div className="overflow-y-auto">
-          {/* Merge Duplicates Button */}
-          {findPotentialDuplicates(characters).length > 0 && (
-            <div className="mb-4 px-2">
-              <Button
-                onClick={() => {
-                  const duplicates = findPotentialDuplicates(characters)
-                  if (duplicates.length > 0) {
-                    // Auto-select first group for merge
-                    setMergePrimaryCharId(duplicates[0][0].id)
-                    setMergeDuplicateCharIds(duplicates[0].slice(1).map((c: any) => c.id))
-                    setMergeDialogOpen(true)
+      <div className="flex-1 overflow-hidden px-6 py-4">
+        <PanelGroup direction="horizontal" className="h-full">
+          {/* Main: Script with Scene Cards */}
+          <Panel defaultSize={75} minSize={50} maxSize={90} className="min-w-0">
+            <div className="h-full overflow-y-auto pr-6">
+              <ScriptPanel 
+                script={script}
+                onScriptChange={setScript}
+                isGenerating={isGenerating}
+                onExpandScene={expandScene}
+                onExpandAllScenes={expandAllScenes}
+                onGenerateSceneImage={handleGenerateSceneImage}
+                characters={characters}
+                projectId={projectId}
+                visualStyle={project?.tone || project?.metadata?.filmTreatmentVariant?.tone}                                                                        
+                validationWarnings={validationWarnings}
+                validationInfo={validationInfo}
+                onDismissValidationWarning={handleDismissValidationWarning}
+                onGenerateSceneAudio={handleGenerateSceneAudio}
+                onGenerateAllAudio={handleGenerateAllAudio}
+                isGeneratingAudio={isGeneratingAudio}
+                onPlayScript={() => setIsPlayerOpen(true)}
+                onOpenAnimaticsStudio={() => setShowAnimaticsStudio(true)}
+                onAddScene={handleAddScene}
+                onDeleteScene={handleDeleteScene}
+                onReorderScenes={handleReorderScenes}
+                onEditScene={handleEditScene}
+                onGenerateSceneScore={handleGenerateSceneScore}
+                generatingScoreFor={generatingScoreFor}
+                getScoreColorClass={getScoreColorClass}
+                directorScore={directorReview?.overallScore}
+                audienceScore={audienceReview?.overallScore}
+                onGenerateReviews={handleGenerateReviews}
+                isGeneratingReviews={isGeneratingReviews}
+                onShowReviews={() => setShowReviewModal(true)}
+                hasBYOK={!!byokSettings?.videoProvider}
+                onOpenBYOK={() => setShowBYOKSettings(true)}
+                onGenerateSceneDirection={handleGenerateSceneDirection}
+                generatingDirectionFor={generatingDirectionFor}
+                onGenerateAllCharacters={generateCharacters}
+              />
+              <div className="mt-8">
+                <SceneGallery
+                  scenes={scenes}
+                  characters={characters}
+                  projectTitle={project?.title}
+                  onRegenerateScene={(index) => handleGenerateSceneImage(index)}
+                  onGenerateScene={handleGenerateScene}
+                  onUploadScene={handleUploadScene}
+                  sceneProductionState={sceneProductionState}
+                  productionReferences={{
+                    characters,
+                    sceneReferences,
+                    objectReferences,
+                  }}
+                  onInitializeProduction={(sceneId, options) =>
+                    handleInitializeSceneProduction(sceneId, options)
                   }
-                }}
-                variant="outline"
-                className="w-full text-amber-600 border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
-              >
-                <Users className="w-4 h-4 mr-2" />
-                Merge Duplicates ({findPotentialDuplicates(characters).reduce((sum, group) => sum + group.length - 1, 0)} duplicate{findPotentialDuplicates(characters).reduce((sum, group) => sum + group.length - 1, 0) !== 1 ? 's' : ''})
-              </Button>
+                  onSegmentPromptChange={(sceneId, segmentId, prompt) =>
+                    handleSegmentPromptChange(sceneId, segmentId, prompt)
+                  }
+                  onSegmentGenerate={(sceneId, segmentId, mode) =>
+                    handleSegmentGenerate(sceneId, segmentId, mode)
+                  }
+                  onSegmentUpload={(sceneId, segmentId, file) =>
+                    handleSegmentUpload(sceneId, segmentId, file)
+                  }
+                />
+              </div>
             </div>
-          )}
+          </Panel>
           
-          {/* Narration Voice Selector */}
+          <PanelResizeHandle className="w-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors cursor-col-resize" />
           
-          <VisionReferencesSidebar
-            characters={characters}
-            onRegenerateCharacter={handleRegenerateCharacter}
-            onGenerateCharacter={handleGenerateCharacter}
-            onUploadCharacter={handleUploadCharacter}
-            onApproveCharacter={handleApproveCharacter}
-            onUpdateCharacterAttributes={handleUpdateCharacterAttributes}
-            onUpdateCharacterVoice={handleUpdateCharacterVoice}
-            onUpdateCharacterAppearance={handleUpdateCharacterAppearance}
-            onUpdateCharacterName={handleUpdateCharacterName}
-            onUpdateCharacterRole={handleUpdateCharacterRole}
-            onAddCharacter={handleAddCharacter}
-            onRemoveCharacter={handleRemoveCharacter}
-            ttsProvider={ttsProvider}
-            uploadingRef={uploadingRef}
-            setUploadingRef={setUploadingRef}
-            sceneReferences={sceneReferences}
-            objectReferences={objectReferences}
-            onCreateReference={(type, payload) => handleCreateReference(type, payload)}
-            onRemoveReference={(type, referenceId) => handleRemoveReference(type, referenceId)}
-          />
-        </div>
+          {/* Right Sidebar: Reference Library */}
+          <Panel defaultSize={25} minSize={10} maxSize={50} className="min-w-0">
+            <div className="h-full overflow-y-auto pl-6">
+              {/* Merge Duplicates Button */}
+              {findPotentialDuplicates(characters).length > 0 && (
+                <div className="mb-4 px-2">
+                  <Button
+                    onClick={() => {
+                      const duplicates = findPotentialDuplicates(characters)
+                      if (duplicates.length > 0) {
+                        // Auto-select first group for merge
+                        setMergePrimaryCharId(duplicates[0][0].id)
+                        setMergeDuplicateCharIds(duplicates[0].slice(1).map((c: any) => c.id))
+                        setMergeDialogOpen(true)
+                      }
+                    }}
+                    variant="outline"
+                    className="w-full text-amber-600 border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Merge Duplicates ({findPotentialDuplicates(characters).reduce((sum, group) => sum + group.length - 1, 0)} duplicate{findPotentialDuplicates(characters).reduce((sum, group) => sum + group.length - 1, 0) !== 1 ? 's' : ''})
+                  </Button>
+                </div>
+              )}
+              
+              {/* Narration Voice Selector */}
+              
+              <VisionReferencesSidebar
+                characters={characters}
+                onRegenerateCharacter={handleRegenerateCharacter}
+                onGenerateCharacter={handleGenerateCharacter}
+                onUploadCharacter={handleUploadCharacter}
+                onApproveCharacter={handleApproveCharacter}
+                onUpdateCharacterAttributes={handleUpdateCharacterAttributes}
+                onUpdateCharacterVoice={handleUpdateCharacterVoice}
+                onUpdateCharacterAppearance={handleUpdateCharacterAppearance}
+                onUpdateCharacterName={handleUpdateCharacterName}
+                onUpdateCharacterRole={handleUpdateCharacterRole}
+                onAddCharacter={handleAddCharacter}
+                onRemoveCharacter={handleRemoveCharacter}
+                ttsProvider={ttsProvider}
+                uploadingRef={uploadingRef}
+                setUploadingRef={setUploadingRef}
+                sceneReferences={sceneReferences}
+                objectReferences={objectReferences}
+                onCreateReference={(type, payload) => handleCreateReference(type, payload)}
+                onRemoveReference={(type, referenceId) => handleRemoveReference(type, referenceId)}
+              />
+            </div>
+          </Panel>
+        </PanelGroup>
       </div>
       
       {/* Generation Progress Indicator */}

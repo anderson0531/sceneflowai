@@ -3,7 +3,6 @@ import type { WorkflowStep } from '@/types/enhanced-project'
 export const WORKFLOW_STEPS: WorkflowStep[] = [
   'blueprint',
   'vision',
-  'creation',
   'polish',
   'launch',
 ]
@@ -11,7 +10,6 @@ export const WORKFLOW_STEPS: WorkflowStep[] = [
 export const WORKFLOW_STEP_LABELS: Record<WorkflowStep, string> = {
   blueprint: 'The Blueprint',
   vision: 'Production Studio',
-  creation: 'Creation Hub',
   polish: 'Final Cut',
   launch: 'The Premiere',
 }
