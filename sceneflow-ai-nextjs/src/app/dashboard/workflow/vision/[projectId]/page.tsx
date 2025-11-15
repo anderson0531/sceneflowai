@@ -169,261 +169,6 @@ function BYOKSettingsPanel({ isOpen, onClose, settings, onUpdateSettings, projec
     }
   }, [project])
 
-  const handleCreateReference = async (
-    type: VisualReferenceType,
-    payload: { name: string; description?: string; file?: File | null }
-  ) => {
-    let imageUrl: string | undefined
-    if (payload.file) {
-      if (!project?.id) {
-        throw new Error('Project must be loaded before adding references.')
-      }
-      const safeName = payload.file.name.replace(/\s+/g, '-').toLowerCase()
-      const filename = `${type}-reference-${crypto.randomUUID()}-${safeName}`
-      imageUrl = await uploadAssetToBlob(payload.file, filename, project.id)
-    }
-
-    const newReference: VisualReference = {
-      id: crypto.randomUUID(),
-      type,
-      name: payload.name,
-      description: payload.description,
-      imageUrl,
-      createdAt: new Date().toISOString(),
-    }
-
-    if (type === 'scene') {
-      setSceneReferences((prev) => [...prev, newReference])
-    } else {
-      setObjectReferences((prev) => [...prev, newReference])
-    }
-  }
-
-  const handleRemoveReference = (type: VisualReferenceType, referenceId: string) => {
-    if (type === 'scene') {
-      setSceneReferences((prev) => prev.filter((reference) => reference.id !== referenceId))
-    } else {
-      setObjectReferences((prev) => prev.filter((reference) => reference.id !== referenceId))
-    }
-  }
-
-  const persistSceneProduction = useCallback(
-    async (nextState: Record<string, SceneProductionData>, nextScenes: Scene[]) => {
-      if (!project?.id) return
-      try {
-        const currentMetadata = project.metadata ?? {}
-        const currentVisionPhase = currentMetadata.visionPhase ?? {}
-        const safeScenes =
-          typeof (globalThis as any).structuredClone === 'function'
-            ? (globalThis as any).structuredClone(nextScenes)
-            : JSON.parse(JSON.stringify(nextScenes))
-
-        const nextVisionPhase = {
-          ...currentVisionPhase,
-          references: {
-            sceneReferences,
-            objectReferences,
-          },
-          scenes: safeScenes,
-          script: currentVisionPhase.script
-            ? {
-                ...currentVisionPhase.script,
-                script: {
-                  ...currentVisionPhase.script.script,
-                  scenes: safeScenes,
-                },
-              }
-            : currentVisionPhase.script,
-          production: {
-            ...(currentVisionPhase.production ?? {}),
-            lastUpdated: new Date().toISOString(),
-            scenes: nextState,
-          },
-        }
-
-        const nextMetadata = {
-          ...currentMetadata,
-          visionPhase: nextVisionPhase,
-        }
-
-        await fetch(`/api/projects/${project.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ metadata: nextMetadata }),
-        })
-
-        setProject((prev) => (prev ? { ...prev, metadata: nextMetadata } : prev))
-      } catch (error) {
-        console.error('[SceneProduction] Failed to persist production data', error)
-      }
-    },
-    [project?.id, project?.metadata, sceneReferences, objectReferences, setProject]
-  )
-
-  const applySceneProductionUpdate = useCallback(
-    (sceneId: string, updater: (current: SceneProductionData | undefined) => SceneProductionData | undefined) => {
-      setSceneProductionState((prev) => {
-        const nextSceneData = updater(prev[sceneId])
-        if (!nextSceneData) {
-          return prev
-        }
-
-        const nextState = { ...prev, [sceneId]: nextSceneData }
-        let nextScenesRef: Scene[] = []
-
-        setScenes((prevScenes) => {
-          nextScenesRef = prevScenes.map((sceneEntry, index) => {
-            const key = getSceneProductionKey(sceneEntry as Scene, index)
-            const production = nextState[key] ?? (sceneEntry as any)?.productionData
-            return production ? { ...sceneEntry, productionData: production } : sceneEntry
-          })
-          return nextScenesRef
-        })
-
-        void persistSceneProduction(nextState, nextScenesRef)
-        return nextState
-      })
-    },
-    [persistSceneProduction]
-  )
-
-  const handleInitializeSceneProduction = useCallback(
-    async (sceneId: string, { targetDuration }: { targetDuration: number }) => {
-      if (!project?.id) {
-        throw new Error('Project must be loaded before segmenting a scene.')
-      }
-
-      const response = await fetch(`/api/scenes/${encodeURIComponent(sceneId)}/segment`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId: project.id,
-          targetSegmentDuration: targetDuration,
-        }),
-      })
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(errorText || 'Failed to segment scene')
-      }
-
-      const data = await response.json()
-      if (!data?.success) {
-        throw new Error(data?.error || 'Failed to segment scene')
-      }
-
-      const productionData: SceneProductionData = data.productionData
-
-      setSceneProductionState((prev) => ({
-        ...prev,
-        [sceneId]: productionData,
-      }))
-
-      setScenes((prevScenes) =>
-        prevScenes.map((sceneEntry, index) => {
-          const key = getSceneProductionKey(sceneEntry as Scene, index)
-          if (key !== sceneId) return sceneEntry
-          return {
-            ...sceneEntry,
-            productionData,
-          }
-        })
-      )
-
-      setProject((prev) => (prev ? { ...prev, metadata: data.metadata ?? prev.metadata } : prev))
-
-      try {
-        const { toast } = require('sonner')
-        toast.success(`Scene segmented into ${productionData.segments.length} blocks.`)
-      } catch {}
-    },
-    [project?.id]
-  )
-
-  const handleSegmentPromptChange = useCallback(
-    (sceneId: string, segmentId: string, prompt: string) => {
-      applySceneProductionUpdate(sceneId, (current) => {
-        if (!current) return current
-        const segments = current.segments.map((segment) =>
-          segment.segmentId === segmentId
-            ? {
-                ...segment,
-                userEditedPrompt: prompt,
-                status: segment.status === 'DRAFT' ? 'READY' : segment.status,
-              }
-            : segment
-        )
-        return { ...current, segments }
-      })
-    },
-    [applySceneProductionUpdate]
-  )
-
-  const handleSegmentGenerate = useCallback(
-    async (sceneId: string, segmentId: string, mode: 'video' | 'image') => {
-      applySceneProductionUpdate(sceneId, (current) => {
-        if (!current) return current
-        const segments = current.segments.map((segment) =>
-          segment.segmentId === segmentId ? { ...segment, status: 'GENERATING' } : segment
-        )
-        return { ...current, segments }
-      })
-
-      try {
-        const { toast } = require('sonner')
-        toast.info(`Queued ${mode} generation for segment ${segmentId.slice(0, 6)}…`)
-      } catch {}
-
-      setTimeout(() => {
-        applySceneProductionUpdate(sceneId, (current) => {
-          if (!current) return current
-          const segments = current.segments.map((segment) =>
-            segment.segmentId === segmentId ? { ...segment, status: 'COMPLETE' } : segment
-          )
-          return { ...current, segments }
-        })
-      }, 1200)
-    },
-    [applySceneProductionUpdate]
-  )
-
-  const handleSegmentUpload = useCallback(
-    async (sceneId: string, segmentId: string, file: File) => {
-      const objectUrl = URL.createObjectURL(file)
-      applySceneProductionUpdate(sceneId, (current) => {
-        if (!current) return current
-        const segments = current.segments.map((segment) =>
-          segment.segmentId === segmentId
-            ? {
-                ...segment,
-                status: 'UPLOADED',
-                assetType: file.type.startsWith('image') ? 'image' : 'video',
-                activeAssetUrl: objectUrl,
-                takes: [
-                  {
-                    id: `${segmentId}-take-${Date.now()}`,
-                    createdAt: new Date().toISOString(),
-                    assetUrl: objectUrl,
-                    thumbnailUrl: file.type.startsWith('image') ? objectUrl : segment.activeAssetUrl,
-                    status: 'UPLOADED',
-                    notes: 'User upload',
-                  },
-                  ...segment.takes,
-                ],
-              }
-            : segment
-        )
-        return { ...current, segments }
-      })
-
-      try {
-        const { toast } = require('sonner')
-        toast.success('Uploaded media linked to segment.')
-      } catch {}
-    },
-    [applySceneProductionUpdate]
-  )
-  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -731,6 +476,268 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       setObjectReferences([])
     }
   }, [project])
+
+  // Scene production handlers
+  const persistSceneProduction = useCallback(
+    async (nextState: Record<string, SceneProductionData>, nextScenes: Scene[]) => {
+      if (!project?.id) return
+      try {
+        const currentMetadata = project.metadata ?? {}
+        const currentVisionPhase = currentMetadata.visionPhase ?? {}
+        const safeScenes =
+          typeof (globalThis as any).structuredClone === 'function'
+            ? (globalThis as any).structuredClone(nextScenes)
+            : JSON.parse(JSON.stringify(nextScenes))
+
+        const nextVisionPhase = {
+          ...currentVisionPhase,
+          references: {
+            sceneReferences,
+            objectReferences,
+          },
+          scenes: safeScenes,
+          script: currentVisionPhase.script
+            ? {
+                ...currentVisionPhase.script,
+                script: {
+                  ...currentVisionPhase.script.script,
+                  scenes: safeScenes,
+                },
+              }
+            : currentVisionPhase.script,
+          production: {
+            ...(currentVisionPhase.production ?? {}),
+            lastUpdated: new Date().toISOString(),
+            scenes: nextState,
+          },
+        }
+
+        const nextMetadata = {
+          ...currentMetadata,
+          visionPhase: nextVisionPhase,
+        }
+
+        await fetch(`/api/projects/${project.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ metadata: nextMetadata }),
+        })
+
+        setProject((prev) => (prev ? { ...prev, metadata: nextMetadata } : prev))
+      } catch (error) {
+        console.error('[SceneProduction] Failed to persist production data', error)
+      }
+    },
+    [project?.id, project?.metadata, sceneReferences, objectReferences, setProject]
+  )
+
+  const applySceneProductionUpdate = useCallback(
+    (sceneId: string, updater: (current: SceneProductionData | undefined) => SceneProductionData | undefined) => {
+      setSceneProductionState((prev) => {
+        const nextSceneData = updater(prev[sceneId])
+        if (!nextSceneData) {
+          return prev
+        }
+
+        const nextState = { ...prev, [sceneId]: nextSceneData }
+        let nextScenesRef: Scene[] = []
+
+        setScenes((prevScenes) => {
+          nextScenesRef = prevScenes.map((sceneEntry, index) => {
+            const key = getSceneProductionKey(sceneEntry as Scene, index)
+            const production = nextState[key] ?? (sceneEntry as any)?.productionData
+            return production ? { ...sceneEntry, productionData: production } : sceneEntry
+          })
+          return nextScenesRef
+        })
+
+        void persistSceneProduction(nextState, nextScenesRef)
+        return nextState
+      })
+    },
+    [persistSceneProduction]
+  )
+
+  const handleCreateReference = useCallback(
+    async (
+      type: VisualReferenceType,
+      payload: { name: string; description?: string; file?: File | null }
+    ) => {
+      let imageUrl: string | undefined
+      if (payload.file) {
+        if (!project?.id) {
+          throw new Error('Project must be loaded before adding references.')
+        }
+        const safeName = payload.file.name.replace(/\s+/g, '-').toLowerCase()
+        const filename = `${type}-reference-${crypto.randomUUID()}-${safeName}`
+        imageUrl = await uploadAssetToBlob(payload.file, filename, project.id)
+      }
+
+      const newReference: VisualReference = {
+        id: crypto.randomUUID(),
+        type,
+        name: payload.name,
+        description: payload.description,
+        imageUrl,
+        createdAt: new Date().toISOString(),
+      }
+
+      if (type === 'scene') {
+        setSceneReferences((prev) => [...prev, newReference])
+      } else {
+        setObjectReferences((prev) => [...prev, newReference])
+      }
+    },
+    [project?.id]
+  )
+
+  const handleRemoveReference = useCallback(
+    (type: VisualReferenceType, referenceId: string) => {
+      if (type === 'scene') {
+        setSceneReferences((prev) => prev.filter((reference) => reference.id !== referenceId))
+      } else {
+        setObjectReferences((prev) => prev.filter((reference) => reference.id !== referenceId))
+      }
+    },
+    []
+  )
+
+  const handleInitializeSceneProduction = useCallback(
+    async (sceneId: string, { targetDuration }: { targetDuration: number }) => {
+      if (!project?.id) {
+        throw new Error('Project must be loaded before segmenting a scene.')
+      }
+
+      const response = await fetch(`/api/scenes/${encodeURIComponent(sceneId)}/segment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: project.id,
+          targetSegmentDuration: targetDuration,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(errorText || 'Failed to segment scene')
+      }
+
+      const data = await response.json()
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to segment scene')
+      }
+
+      const productionData: SceneProductionData = data.productionData
+
+      setSceneProductionState((prev) => ({
+        ...prev,
+        [sceneId]: productionData,
+      }))
+
+      setScenes((prevScenes) =>
+        prevScenes.map((sceneEntry, index) => {
+          const key = getSceneProductionKey(sceneEntry as Scene, index)
+          if (key !== sceneId) return sceneEntry
+          return {
+            ...sceneEntry,
+            productionData,
+          }
+        })
+      )
+
+      setProject((prev) => (prev ? { ...prev, metadata: data.metadata ?? prev.metadata } : prev))
+
+      try {
+        const { toast } = require('sonner')
+        toast.success(`Scene segmented into ${productionData.segments.length} blocks.`)
+      } catch {}
+    },
+    [project?.id]
+  )
+
+  const handleSegmentPromptChange = useCallback(
+    (sceneId: string, segmentId: string, prompt: string) => {
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        const segments = current.segments.map((segment) =>
+          segment.segmentId === segmentId
+            ? {
+                ...segment,
+                userEditedPrompt: prompt,
+                status: segment.status === 'DRAFT' ? 'READY' : segment.status,
+              }
+            : segment
+        )
+        return { ...current, segments }
+      })
+    },
+    [applySceneProductionUpdate]
+  )
+
+  const handleSegmentGenerate = useCallback(
+    async (sceneId: string, segmentId: string, mode: 'video' | 'image') => {
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        const segments = current.segments.map((segment) =>
+          segment.segmentId === segmentId ? { ...segment, status: 'GENERATING' } : segment
+        )
+        return { ...current, segments }
+      })
+
+      try {
+        const { toast } = require('sonner')
+        toast.info(`Queued ${mode} generation for segment ${segmentId.slice(0, 6)}…`)
+      } catch {}
+
+      setTimeout(() => {
+        applySceneProductionUpdate(sceneId, (current) => {
+          if (!current) return current
+          const segments = current.segments.map((segment) =>
+            segment.segmentId === segmentId ? { ...segment, status: 'COMPLETE' } : segment
+          )
+          return { ...current, segments }
+        })
+      }, 1200)
+    },
+    [applySceneProductionUpdate]
+  )
+
+  const handleSegmentUpload = useCallback(
+    async (sceneId: string, segmentId: string, file: File) => {
+      const objectUrl = URL.createObjectURL(file)
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        const segments = current.segments.map((segment) =>
+          segment.segmentId === segmentId
+            ? {
+                ...segment,
+                status: 'UPLOADED',
+                assetType: file.type.startsWith('image') ? 'image' : 'video',
+                activeAssetUrl: objectUrl,
+                takes: [
+                  {
+                    id: `${segmentId}-take-${Date.now()}`,
+                    createdAt: new Date().toISOString(),
+                    assetUrl: objectUrl,
+                    thumbnailUrl: file.type.startsWith('image') ? objectUrl : segment.activeAssetUrl,
+                    status: 'UPLOADED',
+                    notes: 'User upload',
+                  },
+                  ...segment.takes,
+                ],
+              }
+            : segment
+        )
+        return { ...current, segments }
+      })
+
+      try {
+        const { toast } = require('sonner')
+        toast.success('Uploaded media linked to segment.')
+      } catch {}
+    },
+    [applySceneProductionUpdate]
+  )
   
   // Script review state
   const [directorReview, setDirectorReview] = useState<any>(null)
