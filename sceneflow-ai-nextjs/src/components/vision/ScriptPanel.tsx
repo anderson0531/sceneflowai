@@ -1554,37 +1554,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               <span className="hidden sm:inline">Stop</span>
             </Button>
           )}
-          {/* Generate Audio Button */}
-          {(onGenerateAllAudio || onGenerateSceneAudio) && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setGenerateAudioDialogOpen(true)}
-                    disabled={isGeneratingAudio || isDialogGenerating || !script || !scenes || scenes.length === 0}
-                    className="flex items-center gap-1"
-                  >
-                    {isGeneratingAudio || isDialogGenerating ? (
-                      <>
-                        <Loader className="w-4 h-4 animate-spin" />
-                        <span className="hidden sm:inline">Generating...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4" />
-                        <span className="hidden sm:inline">Generate</span>
-                      </>
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                  <p>Generate audio files for all scenes</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+          {/* Generate Audio button moved to Storyboard header */}
           
           {/* Edit Button */}
           <TooltipProvider>
@@ -1642,10 +1612,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       {/* Optional slot between Dashboard and Scene Director */}
       {belowDashboardSlot ? (
         <div className="mt-6">
-          {belowDashboardSlot}
+          {belowDashboardSlot({ openGenerateAudio: () => setGenerateAudioDialogOpen(true) })}
         </div>
       ) : null}
-    
+      
       {/* Script Content */}
       <div className="flex-1 overflow-y-auto">
         {!script || isGenerating ? (
@@ -1995,8 +1965,9 @@ interface SceneCardProps {
   // NEW: Scene production props
   sceneProductionData?: SceneProductionData | null
   sceneProductionReferences?: SceneProductionReferences
-  // Optional content to render between Dashboard and Scene Director sections
-  belowDashboardSlot?: React.ReactNode
+  // Optional slot renderer to place content below Dashboard (e.g., Storyboard header)
+  // Provides helper to open the Generate Audio dialog from parent section
+  belowDashboardSlot?: (helpers: { openGenerateAudio: () => void }) => React.ReactNode
   onInitializeSceneProduction?: (sceneId: string, options: { targetDuration: number }) => Promise<void>
   onSegmentPromptChange?: (sceneId: string, segmentId: string, prompt: string) => void
   onSegmentGenerate?: (sceneId: string, segmentId: string, mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD', options?: { startFrameUrl?: string }) => Promise<void>

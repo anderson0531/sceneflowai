@@ -4225,7 +4225,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSegmentGenerate={handleSegmentGenerate}
                 onSegmentUpload={handleSegmentUpload}
                 sceneAudioTracks={{}}
-                belowDashboardSlot={
+                belowDashboardSlot={({ openGenerateAudio }) => (
                   <div className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
                     <div className="px-4 py-4">
                       <div className="flex items-center justify-between mb-3">
@@ -4239,10 +4239,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={handleGenerateAllImages}
+                            onClick={openGenerateAudio}
                             className="flex items-center gap-1"
-                            disabled={!script?.script?.scenes || script?.script?.scenes.length === 0 || isGenerating}
-                            title="Generate storyboard images for all scenes"
+                            title="Open Generate Audio"
                           >
                             <Sparkles className="w-4 h-4" />
                             <span className="hidden sm:inline">Generate</span>
@@ -4302,7 +4301,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       )}
                     </div>
                   </div>
-                }
+                )}
               />
             </div>
           </Panel>
