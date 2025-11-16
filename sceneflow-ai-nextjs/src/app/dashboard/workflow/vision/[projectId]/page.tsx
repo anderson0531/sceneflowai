@@ -4241,10 +4241,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             size="sm"
                             onClick={openGenerateAudio}
                             className="flex items-center gap-1"
-                            title="Open Generate Audio"
+                            title="Open Generate Assets"
                           >
                             <Sparkles className="w-4 h-4" />
-                            <span className="hidden sm:inline">Generate</span>
+                            <span className="hidden sm:inline">Assets</span>
                           </Button>
                           <Button
                             variant="outline"

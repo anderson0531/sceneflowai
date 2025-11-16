@@ -251,10 +251,10 @@ export function GenerateAudioDialog({
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-blue-400" />
-            Generate Audio
-          </DialogTitle>
+            Generate Assets
+          </Title>
           <DialogDescription className="text-gray-300">
-            Select language and audio types to generate for all scenes
+            Select language and asset types to generate for all scenes
           </DialogDescription>
         </DialogHeader>
 
