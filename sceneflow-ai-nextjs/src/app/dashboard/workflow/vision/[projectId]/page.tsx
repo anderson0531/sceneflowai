@@ -4192,14 +4192,33 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 generatingDirectionFor={generatingDirectionFor}
                 onGenerateAllCharacters={generateCharacters}
                 sceneProductionData={sceneProductionState}
-                sceneProductionReferences={Object.keys(sceneProductionState).reduce((acc, sceneId) => {
-                  acc[sceneId] = {
+                sceneProductionReferences={(() => {
+                  // Create a function that returns references for any scene ID
+                  // References are project-wide, so they're the same for all scenes
+                  const defaultReferences: SceneProductionReferences = {
                     characters,
                     sceneReferences,
                     objectReferences,
                   }
-                  return acc
-                }, {} as Record<string, SceneProductionReferences>)}
+                  
+                  // Build references object for all scenes in the script
+                  const scriptScenes = script?.script?.scenes || scenes || []
+                  const referencesMap: Record<string, SceneProductionReferences> = {}
+                  
+                  scriptScenes.forEach((scene: any, idx: number) => {
+                    const sceneId = scene.id || `scene-${idx}`
+                    referencesMap[sceneId] = defaultReferences
+                  })
+                  
+                  // Also include any scenes that are in production state but might not be in script yet
+                  Object.keys(sceneProductionState).forEach((sceneId) => {
+                    if (!referencesMap[sceneId]) {
+                      referencesMap[sceneId] = defaultReferences
+                    }
+                  })
+                  
+                  return referencesMap
+                })()}
                 onInitializeSceneProduction={handleInitializeSceneProduction}
                 onSegmentPromptChange={handleSegmentPromptChange}
                 onSegmentGenerate={handleSegmentGenerate}

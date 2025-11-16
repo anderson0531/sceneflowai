@@ -1777,8 +1777,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       generateSFX={generateSFX}
                       onGenerateSceneDirection={onGenerateSceneDirection}
                       generatingDirectionFor={generatingDirectionFor}
-                      sceneProductionData={sceneProductionData[scene.id || `scene-${idx}`]}
-                      sceneProductionReferences={sceneProductionReferences[scene.id || `scene-${idx}`]}
+                      sceneProductionData={sceneProductionData[scene.id || `scene-${idx}`] || undefined}
+                      sceneProductionReferences={sceneProductionReferences[scene.id || `scene-${idx}`] || undefined}
                       onInitializeSceneProduction={onInitializeSceneProduction}
                       onSegmentPromptChange={onSegmentPromptChange}
                       onSegmentGenerate={onSegmentGenerate}
@@ -3467,12 +3467,12 @@ function SceneCard({
           
           {!isOutline && isCallActionOpen && (
             <div className="mt-3 space-y-4">
-              {sceneProductionData && sceneProductionReferences && onInitializeSceneProduction && onSegmentPromptChange && onSegmentGenerate && onSegmentUpload ? (
+              {onInitializeSceneProduction && onSegmentPromptChange && onSegmentGenerate && onSegmentUpload && sceneProductionReferences ? (
                 <SceneProductionManager
                   sceneId={scene.id || `scene-${sceneIdx}`}
                   sceneNumber={sceneNumber}
                   heading={typeof scene.heading === 'string' ? scene.heading : scene.heading?.text}
-                  productionData={sceneProductionData}
+                  productionData={sceneProductionData || null}
                   references={sceneProductionReferences}
                   onInitialize={onInitializeSceneProduction}
                   onPromptChange={onSegmentPromptChange}
@@ -3483,7 +3483,7 @@ function SceneCard({
               ) : (
                 <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Scene production data is loading...
+                    Scene production handlers are not available. Please refresh the page.
                   </p>
                 </div>
               )}
