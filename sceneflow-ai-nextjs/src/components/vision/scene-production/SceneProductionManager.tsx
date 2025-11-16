@@ -142,13 +142,34 @@ export function SceneProductionManager({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-          Scene {sceneNumber}: {heading || 'Untitled'}
-        </h4>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          {productionData.segments.length} segments · Target {productionData.targetSegmentDuration}s
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            Scene {sceneNumber}: {heading || 'Untitled'}
+          </h4>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {productionData.segments.length} segments · Target {productionData.targetSegmentDuration}s
+          </p>
+        </div>
+        {productionData?.isSegmented && (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isInitializing}
+            onClick={async () => {
+              // Confirm re-generation as it will replace current segments
+              const confirmed = typeof window !== 'undefined'
+                ? window.confirm('Regenerate segments from the latest script and direction? This will replace current segments.')
+                : true
+              if (!confirmed) return
+              await handleInitialize()
+            }}
+            className="shrink-0"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Regenerate Segments
+          </Button>
+        )}
       </div>
 
       <SegmentTimeline
