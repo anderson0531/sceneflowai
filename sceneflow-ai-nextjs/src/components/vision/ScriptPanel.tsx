@@ -2098,6 +2098,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         className="hidden"
       />
     </div>
+    </>
   )
 }
 
