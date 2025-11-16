@@ -4232,7 +4232,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         <div className="flex items-center gap-2">
                           <ImageIcon className="w-6 h-6 text-sf-primary" />
                           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">
-                            Production Storyboard
+                            Storyboard
                           </h3>
                         </div>
                         <button

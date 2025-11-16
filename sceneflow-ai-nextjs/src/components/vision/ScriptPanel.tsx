@@ -1324,10 +1324,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           <div className="px-4 py-4">
             {/* Header with Toggle */}
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
                 <BarChart3 className="w-6 h-6 text-sf-primary" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">Production Dashboard</h3>
-              </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">Dashboard</h3>
+          </div>
               <button
                 onClick={() => setShowScriptOverview(!showScriptOverview)}
                 className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
@@ -1341,180 +1341,180 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               <>
                 {/* Statistics Grid - 2 rows x 3 columns */}
                 <div className="grid grid-cols-3 gap-3 mb-4">
-                  {/* Scenes */}
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-2 mb-1">
-                      <FileText className="w-4 h-4 text-blue-500" />
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Scenes</span>
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                      {scenes.length}
-                    </div>
-                  </div>
-                  {/* Characters */}
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Users className="w-4 h-4 text-purple-500" />
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Characters</span>
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                      {characters?.length || 0}
-                    </div>
-                  </div>
-                  {/* Duration */}
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Clock className="w-4 h-4 text-orange-500" />
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Duration</span>
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                      {formatTotalDuration(scenes)}
-                    </div>
-                  </div>
-                  {/* Images */}
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-2 mb-1">
+              {/* Scenes */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 mb-1">
+                  <FileText className="w-4 h-4 text-blue-500" />
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Scenes</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {scenes.length}
+                </div>
+              </div>
+              {/* Characters */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 mb-1">
+                  <Users className="w-4 h-4 text-purple-500" />
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Characters</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {characters?.length || 0}
+                </div>
+              </div>
+              {/* Duration */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 mb-1">
+                  <Clock className="w-4 h-4 text-orange-500" />
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Duration</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {formatTotalDuration(scenes)}
+                </div>
+              </div>
+              {/* Images */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 mb-1">
                       <ImageIcon className="w-4 h-4 text-pink-500" />
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Images</span>
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Images</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                       {imageCount}
-                    </div>
-                  </div>
+                </div>
+              </div>
                   {/* Audio */}
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-2 mb-1">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 mb-1">
                       <Volume2 className="w-4 h-4 text-green-500" />
                       <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Audio</span>
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                       {audioCount}
-                    </div>
-                  </div>
+                </div>
+              </div>
                   {/* Score */}
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-2 mb-1">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">                                            
+                <div className="flex items-center gap-2 mb-1">
                       <Star className="w-4 h-4 text-yellow-500" />
                       <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Avg Score</span>
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                      {averageScore}
-                    </div>
-                  </div>
                 </div>
-
-                {/* Project Cost Calculator */}
-                {scenes.length > 0 && (
-                  <div className="mt-4">
-                    <ProjectCostCalculator
-                      scenes={scenes}
-                      characters={characters}
-                      hasBYOK={hasBYOK}
-                      onOpenBYOK={onOpenBYOK}
-                    />
-                  </div>
-                )}
-
-                {/* Script Reviews Section */}
+                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">                                                                           
+                      {averageScore}
+                </div>
+              </div>
+            </div>
+            
+            {/* Project Cost Calculator */}
+            {scenes.length > 0 && (
+              <div className="mt-4">
+                <ProjectCostCalculator 
+                  scenes={scenes}
+                  characters={characters}
+                  hasBYOK={hasBYOK}
+                  onOpenBYOK={onOpenBYOK}
+                />
+              </div>
+            )}
+            
+            {/* Script Reviews Section */}
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 mt-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Star className="w-4 h-4 text-yellow-500" />
-                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                        Script Reviews
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+                  <Star className="w-4 h-4 text-yellow-500" />
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Script Reviews
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
                       {(directorScore || audienceScore) ? (
                         <>
                           <Button variant="ghost" size="sm" onClick={onShowReviews} className="text-xs">
-                            View Full Reviews
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={onGenerateReviews}
-                            disabled={isGeneratingReviews}
-                            className="text-xs"
-                          >
+                        View Full Reviews
+                  </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onGenerateReviews}
+                        disabled={isGeneratingReviews}
+                        className="text-xs"
+                      >
                             {isGeneratingReviews ? <Loader className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                          </Button>
-                        </>
+                      </Button>
+                    </>
                       ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={onGenerateReviews}
-                          disabled={isGeneratingReviews}
-                        >
+                  <Button 
+                    variant="outline" 
+                      size="sm"
+                      onClick={onGenerateReviews}
+                      disabled={isGeneratingReviews}
+                    >
                           {isGeneratingReviews ? <Loader className="w-4 h-4 animate-spin" /> : <Star className="w-4 h-4" />}
-                          Generate Reviews
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-
-                  {(directorScore || audienceScore) ? (
-                    <div className="grid grid-cols-2 gap-4">
-                      {directorScore && (
+                      Generate Reviews
+                  </Button>
+                  )}
+                </div>
+              </div>
+              
+              {(directorScore || audienceScore) ? (
+                <div className="grid grid-cols-2 gap-4">
+                  {directorScore && (
                         <div onClick={onShowReviews} className="cursor-pointer hover:opacity-80 transition-opacity">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Film className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              Director
-                            </span>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Film className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Director
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className={`text-3xl font-bold ${getStoplightTextColor(directorScore)}`}>
+                          {directorScore}
+                        </div>
+                        <div className="flex-1">
+                          <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full ${getStoplightBgColor(directorScore)} transition-all duration-500`}
+                              style={{ width: `${directorScore}%` }}
+                            />
                           </div>
-                          <div className="flex items-center gap-3">
-                            <div className={`text-3xl font-bold ${getStoplightTextColor(directorScore)}`}>
-                              {directorScore}
-                            </div>
-                            <div className="flex-1">
-                              <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full ${getStoplightBgColor(directorScore)} transition-all duration-500`}
-                                  style={{ width: `${directorScore}%` }}
-                                />
-                              </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                {getScoreLabel(directorScore)}
-                              </div>
-                            </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {getScoreLabel(directorScore)}
                           </div>
                         </div>
-                      )}
-                      {audienceScore && (
+          </div>
+        </div>
+      )}
+                  {audienceScore && (
                         <div onClick={onShowReviews} className="cursor-pointer hover:opacity-80 transition-opacity">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Users className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              Audience
-                            </span>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Users className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Audience
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className={`text-3xl font-bold ${getStoplightTextColor(audienceScore)}`}>
+                          {audienceScore}
+                        </div>
+                        <div className="flex-1">
+                          <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full ${getStoplightBgColor(audienceScore)} transition-all duration-500`}
+                              style={{ width: `${audienceScore}%` }}
+                            />
                           </div>
-                          <div className="flex items-center gap-3">
-                            <div className={`text-3xl font-bold ${getStoplightTextColor(audienceScore)}`}>
-                              {audienceScore}
-                            </div>
-                            <div className="flex-1">
-                              <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full ${getStoplightBgColor(audienceScore)} transition-all duration-500`}
-                                  style={{ width: `${audienceScore}%` }}
-                                />
-                              </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                {getScoreLabel(audienceScore)}
-                              </div>
-                            </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {getScoreLabel(audienceScore)}
                           </div>
                         </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
-                      Generate reviews to get expert feedback on your script
+                      </div>
                     </div>
                   )}
                 </div>
+              ) : (
+                <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                  Generate reviews to get expert feedback on your script
+                </div>
+              )}
+            </div>
               </>
             )}
           </div>
@@ -1690,29 +1690,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           </div>
         ) : (
           <div className="p-4 space-y-6">
-            {/* Production Scenes Section */}
-            <div className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
-              <div className="px-4 py-4">
-                {/* Header with Toggle */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Film className="w-6 h-6 text-sf-primary" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">
-                      Production Scenes
-                    </h3>
-                  </div>
-                  <button
-                    onClick={() => setShowProductionScenes(!showProductionScenes)}
-                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-                    aria-expanded={showProductionScenes}
-                  >
-                    <ChevronDown className={`w-5 h-5 transition-transform ${showProductionScenes ? '' : 'rotate-180'}`} />
-                  </button>
-                </div>
-
-                {/* Collapsible Scenes List */}
-                {!showProductionScenes ? null : (
-                  <>
+            {/* Scenes List (inside Production Plan container) */}
             {/* Scenes */}
             {scenes.length === 0 ? (
               <div className="text-center py-12">
@@ -1802,11 +1780,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   })}
                 </SortableContext>
               </DndContext>
-              )}
-                  </>
             )}
-              </div>
-            </div>
           </div>
         )}
       </div>
