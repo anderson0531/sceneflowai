@@ -16,7 +16,7 @@ import { Button, buttonVariants } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Save, Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp } from 'lucide-react'
+import { Save, Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, Eye } from 'lucide-react'
 import Link from 'next/link'
 import ScriptReviewModal from '@/components/vision/ScriptReviewModal'
 import { SceneEditorModal } from '@/components/vision/SceneEditorModal'
@@ -4159,25 +4159,36 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             <div className="h-full overflow-y-auto pr-6 space-y-6">
               <div className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
                 <div className="px-4 py-4">
-                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <ImageIcon className="w-6 h-6 text-sf-primary" />
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">
                         Storyboard
                       </h3>
                     </div>
-                    <button
-                      onClick={() => setShowSceneGallery((v) => !v)}
-                      className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-                      aria-expanded={showSceneGallery}
-                      aria-controls="scene-gallery-section"
-                    >
-                      {showSceneGallery ? (
-                        <ChevronDown className="w-5 h-5" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5 rotate-180" />
-                      )}
-                    </button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsPlayerOpen(true)}
+                          className="flex items-center gap-1"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span className="hidden sm:inline">Preview</span>
+                        </Button>
+                        <button
+                          onClick={() => setShowSceneGallery((v) => !v)}
+                          className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                          aria-expanded={showSceneGallery}
+                          aria-controls="scene-gallery-section"
+                        >
+                          {showSceneGallery ? (
+                            <ChevronDown className="w-5 h-5" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 rotate-180" />
+                          )}
+                        </button>
+                      </div>
                   </div>
                   {showSceneGallery && (
                     <div id="scene-gallery-section" className="mt-2">
