@@ -48,16 +48,71 @@ export async function POST(
     }
     const project = await projectResponse.json()
 
-    // Extract scene data
-    const scenes = project.metadata?.visionPhase?.scenes || []
-    const scene = scenes.find((s: any) => s.id === sceneId || s.sceneNumber === parseInt(sceneId))
+    // Extract scene data from both possible locations
+    const visionPhase = project.metadata?.visionPhase || {}
+    const scenesFromDirect = visionPhase.scenes || []
+    const scenesFromScript = visionPhase.script?.script?.scenes || []
+    
+    // Combine scenes (prioritize direct scenes, then script scenes)
+    const allScenes = [...scenesFromDirect]
+    // Add scenes from script that aren't already in direct scenes
+    scenesFromScript.forEach((s: any) => {
+      const existingIndex = allScenes.findIndex((existing: any) => 
+        existing.id === s.id || 
+        (existing.sceneNumber && s.sceneNumber && existing.sceneNumber === s.sceneNumber)
+      )
+      if (existingIndex === -1) {
+        allScenes.push(s)
+      }
+    })
+    
+    console.log('[Scene Segmentation] Found scenes:', allScenes.length, 'from direct:', scenesFromDirect.length, 'from script:', scenesFromScript.length)
+
+    // Improved scene matching logic
+    let scene: any = null
+    
+    // Try exact id match first
+    scene = allScenes.find((s: any) => s.id === sceneId)
+    
+    // Try sceneNumber match (if sceneId is numeric)
+    if (!scene && !isNaN(parseInt(sceneId))) {
+      const sceneNumber = parseInt(sceneId)
+      scene = allScenes.find((s: any) => s.sceneNumber === sceneNumber)
+    }
+    
+    // Try scene-{index} format (e.g., "scene-1" -> index 0)
+    if (!scene && sceneId.startsWith('scene-')) {
+      const indexMatch = sceneId.match(/^scene-(\d+)$/)
+      if (indexMatch) {
+        const index = parseInt(indexMatch[1]) - 1 // Convert to 0-indexed
+        if (index >= 0 && index < allScenes.length) {
+          scene = allScenes[index]
+        }
+      }
+    }
+    
+    // Fall back to array index if sceneId is numeric (1-indexed)
+    if (!scene && !isNaN(parseInt(sceneId))) {
+      const index = parseInt(sceneId) - 1 // Convert to 0-indexed
+      if (index >= 0 && index < allScenes.length) {
+        scene = allScenes[index]
+      }
+    }
     
     if (!scene) {
+      console.error('[Scene Segmentation] Scene not found. SceneId:', sceneId, 'Available scenes:', allScenes.map((s: any, idx: number) => ({
+        index: idx,
+        id: s.id,
+        sceneNumber: s.sceneNumber,
+        fallbackId: `scene-${idx + 1}`
+      })))
       return NextResponse.json(
-        { error: 'Scene not found' },
+        { error: 'Scene not found', sceneId, availableScenes: allScenes.length },
         { status: 404 }
       )
     }
+    
+    console.log('[Scene Segmentation] Found scene:', scene.id || scene.sceneNumber || 'unknown', 'at index:', allScenes.indexOf(scene))
 
     // Get script and director's notes
     const script = buildScriptText(scene)
