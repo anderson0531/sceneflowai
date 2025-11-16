@@ -332,7 +332,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, sceneAudioTracks = {} }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, sceneAudioTracks = {} }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [showScriptEditor, setShowScriptEditor] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -1521,13 +1521,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         </div>
       )}
 
-      {/* Standalone Production Storyboard (if provided) */}
-      {belowDashboardSlot ? (
-        <div className="mt-6">
-          {belowDashboardSlot}
-        </div>
-      ) : null}
-
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 h-full flex flex-col overflow-hidden">
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0 bg-gray-50 dark:bg-gray-900/50">
@@ -2024,8 +2017,6 @@ interface SceneCardProps {
   // NEW: Scene production props
   sceneProductionData?: SceneProductionData | null
   sceneProductionReferences?: SceneProductionReferences
-  // Slot to render content immediately below Production Dashboard and above Scene Cards
-  belowDashboardSlot?: React.ReactNode
   onInitializeSceneProduction?: (sceneId: string, options: { targetDuration: number }) => Promise<void>
   onSegmentPromptChange?: (sceneId: string, segmentId: string, prompt: string) => void
   onSegmentGenerate?: (sceneId: string, segmentId: string, mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD', options?: { startFrameUrl?: string }) => Promise<void>
