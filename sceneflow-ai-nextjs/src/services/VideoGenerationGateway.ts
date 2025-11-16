@@ -295,15 +295,7 @@ export class VideoGenerationGateway {
     providerName: AIProvider
   ): Promise<GatewayResponse<{ isValid: boolean; decryptedCredentials: any }>> {
     try {
-      // Check if encryption is configured
-      if (!EncryptionService.isEncryptionConfigured()) {
-        return {
-          success: false,
-          error: 'Encryption service is not properly configured'
-        }
-      }
-
-      // Retrieve user provider configuration
+      // Retrieve user provider configuration first
       const userConfig = await UserProviderConfig.findOne({
         where: { user_id: userId, provider_name: providerName }
       })
@@ -311,7 +303,15 @@ export class VideoGenerationGateway {
       if (!userConfig) {
         return {
           success: false,
-          error: `No configuration found for provider ${providerName}`
+          error: `No BYOK configuration found for provider ${providerName}. Please configure your API keys in BYOK Settings.`
+        }
+      }
+
+      // Only check encryption if we have credentials to decrypt
+      if (!EncryptionService.isEncryptionConfigured()) {
+        return {
+          success: false,
+          error: 'Encryption service is not properly configured. Please set ENCRYPTION_KEY environment variable in your Vercel project settings.'
         }
       }
 
@@ -330,7 +330,7 @@ export class VideoGenerationGateway {
         console.error('Credential decryption failed:', decryptionError)
         return {
           success: false,
-          error: 'Failed to decrypt provider credentials'
+          error: 'Failed to decrypt provider credentials. Please verify your ENCRYPTION_KEY is correct and matches the key used to encrypt the credentials.'
         }
       }
 
