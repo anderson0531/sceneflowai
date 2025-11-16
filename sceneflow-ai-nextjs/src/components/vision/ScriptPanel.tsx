@@ -332,7 +332,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, sceneAudioTracks = {} }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, sceneAudioTracks = {} }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [showScriptEditor, setShowScriptEditor] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -1677,6 +1677,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 </div>
               )}
             </div>
+                
+                {/* Optional slot below dashboard (e.g., Scene Gallery) */}
+                {belowDashboardSlot ? (
+                  <div className="mt-4">
+                    {belowDashboardSlot}
+                  </div>
+                ) : null}
               </>
             )}
           </div>
@@ -2032,6 +2039,8 @@ interface SceneCardProps {
   // NEW: Scene production props
   sceneProductionData?: SceneProductionData | null
   sceneProductionReferences?: SceneProductionReferences
+  // Slot to render content immediately below Production Dashboard and above Scene Cards
+  belowDashboardSlot?: React.ReactNode
   onInitializeSceneProduction?: (sceneId: string, options: { targetDuration: number }) => Promise<void>
   onSegmentPromptChange?: (sceneId: string, segmentId: string, prompt: string) => void
   onSegmentGenerate?: (sceneId: string, segmentId: string, mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD', options?: { startFrameUrl?: string }) => Promise<void>
@@ -2620,35 +2629,35 @@ function SceneCard({
             const isLocked = !stepUnlocked.dialogueAction
             return (
               <div className={`mb-4 border-t border-gray-200 dark:border-gray-700 pt-4 ${isLocked ? 'opacity-50' : ''}`}>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
                     if (!isLocked) {
                       setIsDialogueActionOpen(!isDialogueActionOpen)
                     }
-                  }}
+                }}
                   disabled={isLocked}
                   className={`flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors ${isLocked ? 'cursor-not-allowed' : ''}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2">
+              >
+                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-gray-500 dark:text-gray-400 w-5">1</span>
                       {status === 'complete' && <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />}
                       {status === 'in-progress' && <ArrowRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
                       {status === 'todo' && <Circle className="w-4 h-4 text-gray-400" />}
                       {status === 'locked' && <Circle className="w-4 h-4 text-gray-500" />}
-                    </div>
+                </div>
                     <FileText className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                     <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Dialogue & Action</span>
-                  </div>
+                    </div>
                   <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isDialogueActionOpen ? 'rotate-90' : ''}`} />
-                </button>
-              </div>
+                        </button>
+                      </div>
             )
           })()}
           
           {!isOutline && isDialogueActionOpen && (
-            <div className="mt-3 space-y-4">
+                <div className="mt-3 space-y-4">
                   {/* Scene Narration */}
                   {scene.narration && (
                     <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
@@ -3067,7 +3076,7 @@ function SceneCard({
                     </div>
                   )}
                 </div>
-          )}
+              )}
           
           {/* Director's Chair Section */}
           {!isOutline && (() => {
