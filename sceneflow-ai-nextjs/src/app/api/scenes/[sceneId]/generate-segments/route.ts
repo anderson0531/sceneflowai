@@ -81,11 +81,12 @@ export async function POST(
       scene = allScenes.find((s: any) => s.sceneNumber === sceneNumber)
     }
     
-    // Try scene-{index} format (e.g., "scene-1" -> index 0)
+    // Try scene-{index} format (e.g., "scene-0" -> index 0, "scene-1" -> index 1)
+    // Note: The component uses 0-indexed sceneIdx, so scene-0 is the first scene
     if (!scene && sceneId.startsWith('scene-')) {
       const indexMatch = sceneId.match(/^scene-(\d+)$/)
       if (indexMatch) {
-        const index = parseInt(indexMatch[1]) - 1 // Convert to 0-indexed
+        const index = parseInt(indexMatch[1]) // Already 0-indexed from component
         if (index >= 0 && index < allScenes.length) {
           scene = allScenes[index]
         }
