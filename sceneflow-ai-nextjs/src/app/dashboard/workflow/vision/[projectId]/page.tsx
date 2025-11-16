@@ -4225,52 +4225,56 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSegmentGenerate={handleSegmentGenerate}
                 onSegmentUpload={handleSegmentUpload}
                 sceneAudioTracks={{}}
-                belowDashboardSlot={({ openGenerateAudio }) => (
-                  <div className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
-                    <div className="px-4 py-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <ImageIcon className="w-6 h-6 text-sf-primary" />
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">
+              belowDashboardSlot={({ openGenerateAudio }) => (
+                <div className="rounded-2xl border border-white/10 bg-slate-950/40 shadow-inner">
+                  <div className="px-5 py-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <span className="text-[10px] uppercase tracking-[0.45em] text-slate-500">Guide</span>
+                        <div className="mt-1 flex items-center gap-2">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800/80 text-cyan-300">
+                            <ImageIcon className="w-4 h-4" />
+                          </div>
+                          <h3 className="text-xl font-semibold text-white leading-6 my-0">
                             Storyboard
                           </h3>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={openGenerateAudio}
-                            className="flex items-center gap-1"
-                            title="Open Generate Assets"
-                          >
-                            <Sparkles className="w-4 h-4" />
-                            <span className="hidden sm:inline">Assets</span>
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setIsPlayerOpen(true)}
-                            className="flex items-center gap-1"
-                          >
-                            <Eye className="w-4 h-4" />
-                            <span className="hidden sm:inline">Preview</span>
-                          </Button>
-                          <button
-                            onClick={() => setShowSceneGallery((v) => !v)}
-                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-                            aria-expanded={showSceneGallery}
-                            aria-controls="scene-gallery-section"
-                          >
-                            {showSceneGallery ? (
-                              <ChevronDown className="w-5 h-5" />
-                            ) : (
-                              <ChevronDown className="w-5 h-5 rotate-180" />
-                            )}
-                          </button>
-                        </div>
                       </div>
-                      {showSceneGallery && (
-                        <div id="scene-gallery-section" className="mt-2">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={openGenerateAudio}
+                          className="flex items-center gap-2 border-white/20 text-slate-200 hover:text-white hover:bg-white/10"
+                          title="Open Generate Assets"
+                        >
+                          <Sparkles className="w-4 h-4 text-cyan-300" />
+                          <span className="hidden sm:inline">Assets</span>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsPlayerOpen(true)}
+                          className="flex items-center gap-2 border-white/20 text-slate-200 hover:text-white hover:bg-white/10"
+                        >
+                          <Eye className="w-4 h-4 text-purple-300" />
+                          <span className="hidden sm:inline">Preview</span>
+                        </Button>
+                        <button
+                          onClick={() => setShowSceneGallery((v) => !v)}
+                          className="p-2 text-slate-300 hover:text-white rounded-full border border-white/10 hover:bg-white/10 transition-colors"
+                          aria-expanded={showSceneGallery}
+                          aria-controls="scene-gallery-section"
+                        >
+                          <ChevronDown className={`w-5 h-5 transition-transform ${showSceneGallery ? '' : 'rotate-180'}`} />
+                        </button>
+                      </div>
+                    </div>
+                    {showSceneGallery && (
+                      <div
+                        id="scene-gallery-section"
+                        className="mt-4 rounded-2xl border border-white/5 bg-slate-900/40 p-4 shadow-[0_15px_40px_rgba(8,8,20,0.35)]"
+                      >
                           <SceneGallery
                             scenes={scenes}
                             characters={characters}

@@ -1320,17 +1320,22 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     <>
       {/* Production Dashboard - moved above Production Plan */}
       {script && (
-        <div className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
-          <div className="px-4 py-4">
+        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/85 to-slate-800/50 shadow-inner mb-6">
+          <div className="px-5 py-5">
             {/* Header with Toggle */}
-            <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-                <BarChart3 className="w-6 h-6 text-sf-primary" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">Dashboard</h3>
-          </div>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <span className="text-[10px] uppercase tracking-[0.45em] text-slate-500">Guide</span>
+                <div className="mt-1 flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800/80 text-sky-300">
+                    <BarChart3 className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white leading-6 my-0">Dashboard</h3>
+                </div>
+              </div>
               <button
                 onClick={() => setShowScriptOverview(!showScriptOverview)}
-                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                className="p-2 text-slate-300 hover:text-white rounded-full border border-white/10 hover:bg-white/10 transition-colors"
               >
                 <ChevronDown className={`w-5 h-5 transition-transform ${showScriptOverview ? '' : 'rotate-180'}`} />
               </button>
@@ -1340,72 +1345,72 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             {showScriptOverview && (
               <>
                 {/* Statistics Grid - 2 rows x 3 columns */}
-                <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="grid grid-cols-3 gap-4 mb-5">
               {/* Scenes */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-2 mb-1">
-                  <FileText className="w-4 h-4 text-blue-500" />
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Scenes</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-sf-primary/15 to-white/5 p-4 shadow-lg">
+                    <div className="flex items-center gap-2 mb-2 text-slate-200">
+                      <FileText className="w-4 h-4 text-sf-primary" />
+                      <span className="text-xs font-semibold uppercase tracking-wide text-slate-300">Scenes</span>
+                    </div>
+                    <div className="text-3xl font-bold text-white">
                   {scenes.length}
                 </div>
               </div>
               {/* Characters */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-2 mb-1">
-                  <Users className="w-4 h-4 text-purple-500" />
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Characters</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-fuchsia-600/20 to-white/5 p-4 shadow-lg">
+                    <div className="flex items-center gap-2 mb-2 text-slate-200">
+                      <Users className="w-4 h-4 text-fuchsia-300" />
+                      <span className="text-xs font-semibold uppercase tracking-wide text-slate-300">Characters</span>
+                    </div>
+                    <div className="text-3xl font-bold text-white">
                   {characters?.length || 0}
                 </div>
               </div>
               {/* Duration */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-2 mb-1">
-                  <Clock className="w-4 h-4 text-orange-500" />
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Duration</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-amber-500/20 to-white/5 p-4 shadow-lg">
+                    <div className="flex items-center gap-2 mb-2 text-slate-200">
+                      <Clock className="w-4 h-4 text-amber-300" />
+                      <span className="text-xs font-semibold uppercase tracking-wide text-slate-300">Duration</span>
+                    </div>
+                    <div className="text-3xl font-bold text-white">
                   {formatTotalDuration(scenes)}
                 </div>
               </div>
               {/* Images */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-2 mb-1">
-                      <ImageIcon className="w-4 h-4 text-pink-500" />
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Images</span>
+              <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-cyan-500/20 to-white/5 p-4 shadow-lg">
+                <div className="flex items-center gap-2 mb-2 text-slate-200">
+                  <ImageIcon className="w-4 h-4 text-cyan-300" />
+                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-300">Images</span>
                 </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                      {imageCount}
-                </div>
-              </div>
-                  {/* Audio */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-2 mb-1">
-                      <Volume2 className="w-4 h-4 text-green-500" />
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Audio</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                      {audioCount}
+                <div className="text-3xl font-bold text-white">
+                  {imageCount}/{scenes.length}
                 </div>
               </div>
-                  {/* Score */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">                                            
-                <div className="flex items-center gap-2 mb-1">
-                      <Star className="w-4 h-4 text-yellow-500" />
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Avg Score</span>
+              {/* Audio */}
+              <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-emerald-500/20 to-white/5 p-4 shadow-lg">
+                <div className="flex items-center gap-2 mb-2 text-slate-200">
+                  <Volume2 className="w-4 h-4 text-emerald-300" />
+                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-300">Audio Lines</span>
                 </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">                                                                           
-                      {averageScore}
+                <div className="text-3xl font-bold text-white">
+                  {audioCount}
+                </div>
+              </div>
+              {/* Score */}
+              <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-amber-400/25 to-white/5 p-4 shadow-lg">                                            
+                <div className="flex items-center gap-2 mb-2 text-slate-200">
+                  <Star className="w-4 h-4 text-amber-200" />
+                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-300">Avg Score</span>
+                </div>
+                <div className="text-3xl font-bold text-white">                                                                           
+                  {averageScore}
                 </div>
               </div>
             </div>
             
             {/* Project Cost Calculator */}
             {scenes.length > 0 && (
-              <div className="mt-4">
+              <div className="mt-5 rounded-2xl border border-white/5 bg-slate-950/30 p-4 shadow-inner">
                 <ProjectCostCalculator 
                   scenes={scenes}
                   characters={characters}
@@ -1416,11 +1421,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             )}
             
             {/* Script Reviews Section */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 mt-4">
+                <div className="bg-slate-950/40 rounded-2xl p-5 border border-white/10 mt-5 shadow-lg">
               <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-                  <Star className="w-4 h-4 text-yellow-500" />
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  <Star className="w-4 h-4 text-amber-300" />
+                  <span className="text-sm font-semibold text-white">
                     Script Reviews
                   </span>
                 </div>
@@ -1521,26 +1526,34 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         </div>
       )}
 
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 h-full flex flex-col overflow-hidden">
+    <div className="relative rounded-3xl border border-slate-700/60 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900/60 h-full flex flex-col overflow-hidden shadow-[0_25px_80px_rgba(8,8,20,0.55)]">
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-sf-primary via-fuchsia-500 to-cyan-400 opacity-80" />
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0 bg-gray-50 dark:bg-gray-900/50">
-        <div className="flex items-center gap-3">
-          <FileText className="w-6 h-6 text-sf-primary" />
-          <h2 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">Scene Director</h2>
-          {scenes.length > 0 && (
-            <span className="text-xs px-2 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30 font-medium">
-              {scenes.length} {scenes.length === 1 ? 'Scene' : 'Scenes'}
-            </span>
-          )}
-          {isGenerating && (
-            <span className="text-xs text-blue-600 flex items-center gap-1">
-              <Loader className="w-3 h-3 animate-spin" />
-              Generating...
-            </span>
-          )}
+      <div className="px-6 py-6 border-b border-white/10 flex items-center justify-between flex-shrink-0 bg-slate-900/40 backdrop-blur">
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-sf-primary to-cyan-400 text-white shadow-lg">
+            <FileText className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[11px] uppercase tracking-[0.4em] text-slate-400 block mb-1">Primary Flow</span>
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl font-semibold text-white leading-6 my-0">Scene Director</h2>
+              {scenes.length > 0 && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-sf-primary/15 text-sf-primary border border-sf-primary/40 font-semibold">
+                  {scenes.length} {scenes.length === 1 ? 'Scene' : 'Scenes'}
+                </span>
+              )}
+              {isGenerating && (
+                <span className="text-xs text-cyan-300 flex items-center gap-1">
+                  <Loader className="w-3 h-3 animate-spin" />
+                  Generating...
+                </span>
+              )}
+            </div>
+          </div>
         </div>
         
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap text-slate-200">
           
           {/* Stop button if playing */}
           {loadingSceneId !== null && (
@@ -1617,7 +1630,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       ) : null}
       
       {/* Script Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto bg-slate-950/20">
         {!script || isGenerating ? (
           <div className="h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
             {isGenerating ? (
@@ -1630,7 +1643,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             )}
           </div>
         ) : (
-          <div className="p-4 space-y-6">
+          <div className="p-6 space-y-6">
             {/* Scenes List (inside Production Plan container) */}
             {/* Scenes */}
             {scenes.length === 0 ? (
@@ -2138,11 +2151,11 @@ function SceneCard({
   
   return (
     <div 
-      className={`relative p-4 rounded-lg border transition-all ${
+      className={`relative p-5 rounded-2xl border transition-all shadow-[0_15px_40px_rgba(8,8,20,0.35)] bg-slate-950/40 backdrop-blur ${
         isSelected 
-          ? 'border-sf-primary bg-blue-50 dark:bg-blue-950/30 ring-2 ring-sf-primary' 
-          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-      } ${isOutline ? 'bg-yellow-50 dark:bg-yellow-950/20' : ''}`}
+          ? 'border-sf-primary/70 ring-2 ring-sf-primary/60' 
+          : 'border-white/10 hover:border-sf-primary/30'
+      } ${isOutline ? 'bg-amber-500/10 border-amber-300/40' : ''}`}
     >
       {/* Collapsible Header - COMPACT THREE-ROW LAYOUT */}
       <div className="mb-3">
