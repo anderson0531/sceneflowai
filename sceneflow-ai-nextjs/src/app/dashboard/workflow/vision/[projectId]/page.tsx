@@ -16,7 +16,7 @@ import { Button, buttonVariants } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Save, Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users } from 'lucide-react'
+import { Save, Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp } from 'lucide-react'
 import Link from 'next/link'
 import ScriptReviewModal from '@/components/vision/ScriptReviewModal'
 import { SceneEditorModal } from '@/components/vision/SceneEditorModal'
@@ -449,6 +449,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }>>({})
   const [isPlayerOpen, setIsPlayerOpen] = useState(false)
   const [showAnimaticsStudio, setShowAnimaticsStudio] = useState(false)
+  const [showSceneGallery, setShowSceneGallery] = useState(false)
   const [voiceAssignments, setVoiceAssignments] = useState<Record<string, any>>({})
   const [sceneReferences, setSceneReferences] = useState<VisualReference[]>([])
   const [objectReferences, setObjectReferences] = useState<VisualReference[]>([])
@@ -4226,32 +4227,50 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 sceneAudioTracks={{}}
               />
               <div className="mt-8">
-                <SceneGallery
-                  scenes={scenes}
-                  characters={characters}
-                  projectTitle={project?.title}
-                  onRegenerateScene={(index) => handleGenerateSceneImage(index)}
-                  onGenerateScene={handleGenerateScene}
-                  onUploadScene={handleUploadScene}
-                  sceneProductionState={sceneProductionState}
-                  productionReferences={{
-                    characters,
-                    sceneReferences,
-                    objectReferences,
-                  }}
-                  onInitializeProduction={(sceneId, options) =>
-                    handleInitializeSceneProduction(sceneId, options)
-                  }
-                  onSegmentPromptChange={(sceneId, segmentId, prompt) =>
-                    handleSegmentPromptChange(sceneId, segmentId, prompt)
-                  }
-                  onSegmentGenerate={(sceneId, segmentId, mode) =>
-                    handleSegmentGenerate(sceneId, segmentId, mode)
-                  }
-                  onSegmentUpload={(sceneId, segmentId, file) =>
-                    handleSegmentUpload(sceneId, segmentId, file)
-                  }
-                />
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    Scene Gallery
+                  </h3>
+                  <button
+                    onClick={() => setShowSceneGallery((v) => !v)}
+                    className="inline-flex items-center gap-1 text-xs text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+                    aria-expanded={showSceneGallery}
+                    aria-controls="scene-gallery-section"
+                  >
+                    {showSceneGallery ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    {showSceneGallery ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+                {showSceneGallery && (
+                  <div id="scene-gallery-section" className="mt-4">
+                    <SceneGallery
+                      scenes={scenes}
+                      characters={characters}
+                      projectTitle={project?.title}
+                      onRegenerateScene={(index) => handleGenerateSceneImage(index)}
+                      onGenerateScene={handleGenerateScene}
+                      onUploadScene={handleUploadScene}
+                      sceneProductionState={sceneProductionState}
+                      productionReferences={{
+                        characters,
+                        sceneReferences,
+                        objectReferences,
+                      }}
+                      onInitializeProduction={(sceneId, options) =>
+                        handleInitializeSceneProduction(sceneId, options)
+                      }
+                      onSegmentPromptChange={(sceneId, segmentId, prompt) =>
+                        handleSegmentPromptChange(sceneId, segmentId, prompt)
+                      }
+                      onSegmentGenerate={(sceneId, segmentId, mode) =>
+                        handleSegmentGenerate(sceneId, segmentId, mode)
+                      }
+                      onSegmentUpload={(sceneId, segmentId, file) =>
+                        handleSegmentUpload(sceneId, segmentId, file)
+                      }
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </Panel>
