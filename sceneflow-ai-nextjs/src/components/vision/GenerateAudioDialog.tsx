@@ -252,7 +252,7 @@ export function GenerateAudioDialog({
           <DialogTitle className="text-white flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-blue-400" />
             Generate Assets
-          </Title>
+          </DialogTitle>
           <DialogDescription className="text-gray-300">
             Select language and asset types to generate for all scenes
           </DialogDescription>
