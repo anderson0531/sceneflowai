@@ -135,7 +135,8 @@ export async function POST(
 
       return {
         segmentId: `seg_${sceneId}_${seg.sequence}`,
-        sequenceIndex: seg.sequence,
+        // Normalize to zero-based index; UI displays +1 for human-friendly numbering
+        sequenceIndex: Math.max(0, (Number(seg.sequence) || (idx + 1)) - 1),
         startTime: cumulativeTime,
         endTime: cumulativeTime + seg.estimated_duration,
         status: 'DRAFT' as const,
