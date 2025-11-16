@@ -46,7 +46,8 @@ export async function POST(
     if (!projectResponse.ok) {
       throw new Error('Failed to fetch project')
     }
-    const project = await projectResponse.json()
+    const responseData = await projectResponse.json()
+    const project = responseData.project || responseData // Handle both wrapped and unwrapped responses
 
     // Extract scene data from both possible locations
     const visionPhase = project.metadata?.visionPhase || {}
