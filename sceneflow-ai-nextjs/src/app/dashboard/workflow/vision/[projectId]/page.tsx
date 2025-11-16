@@ -16,7 +16,7 @@ import { Button, buttonVariants } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Save, Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, Eye } from 'lucide-react'
+import { Save, Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, Eye, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import ScriptReviewModal from '@/components/vision/ScriptReviewModal'
 import { SceneEditorModal } from '@/components/vision/SceneEditorModal'
@@ -4236,6 +4236,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                           </h3>
                         </div>
                         <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleGenerateAllImages}
+                            className="flex items-center gap-1"
+                            disabled={!script?.script?.scenes || script?.script?.scenes.length === 0 || isGenerating}
+                            title="Generate storyboard images for all scenes"
+                          >
+                            <Sparkles className="w-4 h-4" />
+                            <span className="hidden sm:inline">Generate</span>
+                          </Button>
                           <Button
                             variant="outline"
                             size="sm"
