@@ -4226,51 +4226,59 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSegmentUpload={handleSegmentUpload}
                 sceneAudioTracks={{}}
                 belowDashboardSlot={
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                        Scene Gallery
-                      </h3>
-                      <button
-                        onClick={() => setShowSceneGallery((v) => !v)}
-                        className="inline-flex items-center gap-1 text-xs text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
-                        aria-expanded={showSceneGallery}
-                        aria-controls="scene-gallery-section"
-                      >
-                        {showSceneGallery ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                        {showSceneGallery ? 'Hide' : 'Show'}
-                      </button>
-                    </div>
-                    {showSceneGallery && (
-                      <div id="scene-gallery-section" className="mt-4">
-                        <SceneGallery
-                          scenes={scenes}
-                          characters={characters}
-                          projectTitle={project?.title}
-                          onRegenerateScene={(index) => handleGenerateSceneImage(index)}
-                          onGenerateScene={handleGenerateScene}
-                          onUploadScene={handleUploadScene}
-                          sceneProductionState={sceneProductionState}
-                          productionReferences={{
-                            characters,
-                            sceneReferences,
-                            objectReferences,
-                          }}
-                          onInitializeProduction={(sceneId, options) =>
-                            handleInitializeSceneProduction(sceneId, options)
-                          }
-                          onSegmentPromptChange={(sceneId, segmentId, prompt) =>
-                            handleSegmentPromptChange(sceneId, segmentId, prompt)
-                          }
-                          onSegmentGenerate={(sceneId, segmentId, mode) =>
-                            handleSegmentGenerate(sceneId, segmentId, mode)
-                          }
-                          onSegmentUpload={(sceneId, segmentId, file) =>
-                            handleSegmentUpload(sceneId, segmentId, file)
-                          }
-                        />
+                  <div className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
+                    <div className="px-4 py-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <ImageIcon className="w-6 h-6 text-sf-primary" />
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">
+                            Production Storyboard
+                          </h3>
+                        </div>
+                        <button
+                          onClick={() => setShowSceneGallery((v) => !v)}
+                          className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                          aria-expanded={showSceneGallery}
+                          aria-controls="scene-gallery-section"
+                        >
+                          {showSceneGallery ? (
+                            <ChevronDown className="w-5 h-5" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 rotate-180" />
+                          )}
+                        </button>
                       </div>
-                    )}
+                      {showSceneGallery && (
+                        <div id="scene-gallery-section" className="mt-2">
+                          <SceneGallery
+                            scenes={scenes}
+                            characters={characters}
+                            projectTitle={project?.title}
+                            onRegenerateScene={(index) => handleGenerateSceneImage(index)}
+                            onGenerateScene={handleGenerateScene}
+                            onUploadScene={handleUploadScene}
+                            sceneProductionState={sceneProductionState}
+                            productionReferences={{
+                              characters,
+                              sceneReferences,
+                              objectReferences,
+                            }}
+                            onInitializeProduction={(sceneId, options) =>
+                              handleInitializeSceneProduction(sceneId, options)
+                            }
+                            onSegmentPromptChange={(sceneId, segmentId, prompt) =>
+                              handleSegmentPromptChange(sceneId, segmentId, prompt)
+                            }
+                            onSegmentGenerate={(sceneId, segmentId, mode) =>
+                              handleSegmentGenerate(sceneId, segmentId, mode)
+                            }
+                            onSegmentUpload={(sceneId, segmentId, file) =>
+                              handleSegmentUpload(sceneId, segmentId, file)
+                            }
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 }
               />

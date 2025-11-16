@@ -1678,17 +1678,18 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               )}
             </div>
                 
-                {/* Optional slot below dashboard (e.g., Scene Gallery) */}
-                {belowDashboardSlot ? (
-                  <div className="mt-4">
-                    {belowDashboardSlot}
-                  </div>
-                ) : null}
               </>
             )}
           </div>
         </div>
       )}
+
+      {/* Standalone section rendered immediately after the Production Dashboard */}
+      {belowDashboardSlot ? (
+        <div className="mt-6">
+          {belowDashboardSlot}
+        </div>
+      ) : null}
 
       
       {/* Script Content */}
