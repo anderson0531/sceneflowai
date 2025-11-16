@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useEffect } from 'react'
+import React, { useRef } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog'
@@ -55,17 +55,15 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
     contentRef: contentRef,
     documentTitle: documentTitle,
     onBeforePrint: async () => {
-      console.log('[ReportPreview] Starting print...')
-      console.log('[ReportPreview] contentRef.current:', contentRef.current)
       if (!contentRef.current) {
-        console.error('[ReportPreview] Content ref is null')
+        // Content ref is null
       }
     },
     onAfterPrint: async () => {
-      console.log('[ReportPreview] Print completed')
+      // Print completed
     },
     onPrintError: (errorLocation, error) => {
-      console.error('[ReportPreview] Print error:', errorLocation, error)
+      // Print error occurred
     },
     pageStyle: `
       @media print {
@@ -90,25 +88,14 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
     `,
   })
   
-  // Add debug useEffect
-  useEffect(() => {
-    console.log('[ReportPreview] handlePrint is:', handlePrint)
-    console.log('[ReportPreview] contentRef.current:', contentRef.current)
-  }, [handlePrint])
-  
   // Wrap handlers to prevent Promise expectations
   const handlePrintClick = () => {
-    console.log('[ReportPreview] handlePrint:', handlePrint)
-    console.log('[ReportPreview] contentRef.current:', contentRef.current)
-    
     if (!handlePrint) {
-      console.error('[ReportPreview] handlePrint is undefined!')
       alert('Print function is not available. Please try refreshing the page.')
       return
     }
     
     if (!contentRef.current) {
-      console.error('[ReportPreview] Content ref is null!')
       alert('Content is not ready for printing.')
       return
     }
@@ -116,23 +103,17 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
     try {
       handlePrint()
     } catch (error: any) {
-      console.error('[ReportPreview] Print failed:', error)
       alert(`Print failed: ${error.message}`)
     }
   }
 
   const handleDownloadClick = () => {
-    console.log('[ReportPreview] handlePrint:', handlePrint)
-    console.log('[ReportPreview] contentRef.current:', contentRef.current)
-    
     if (!handlePrint) {
-      console.error('[ReportPreview] handlePrint is undefined!')
       alert('Download function is not available. Please try refreshing the page.')
       return
     }
     
     if (!contentRef.current) {
-      console.error('[ReportPreview] Content ref is null!')
       alert('Content is not ready for downloading.')
       return
     }
@@ -140,7 +121,6 @@ export const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
     try {
       handlePrint()
     } catch (error: any) {
-      console.error('[ReportPreview] Download failed:', error)
       alert(`Download failed: ${error.message}`)
     }
   }
