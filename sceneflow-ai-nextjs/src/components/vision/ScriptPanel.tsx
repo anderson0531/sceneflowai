@@ -422,6 +422,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // Scene prompt drawer state (new editor)
   const [sceneDrawerOpen, setSceneDrawerOpen] = useState(false)
   const [sceneDrawerIdx, setSceneDrawerIdx] = useState<number | null>(null)
+  // Collapsible state for Production Scenes section (default hidden)
+  const [showProductionScenes, setShowProductionScenes] = useState(false)
   
   // Audio features state
   const [generatingSFX, setGeneratingSFX] = useState<{sceneIdx: number, sfxIdx: number} | null>(null)
@@ -1707,9 +1709,31 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           </div>
         ) : (
           <div className="p-4 space-y-6">
-            
-            {/* Scenes */}
-            {scenes.length === 0 ? (
+            {/* Production Scenes Section */}
+            <div className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
+              <div className="px-4 py-4">
+                {/* Header with Toggle */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Film className="w-6 h-6 text-sf-primary" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">
+                      Production Scenes
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setShowProductionScenes(!showProductionScenes)}
+                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                    aria-expanded={showProductionScenes}
+                  >
+                    <ChevronDown className={`w-5 h-5 transition-transform ${showProductionScenes ? '' : 'rotate-180'}`} />
+                  </button>
+                </div>
+
+                {/* Collapsible Scenes List */}
+                {!showProductionScenes ? null : (
+                  <>
+                  {/* Scenes */}
+                  {scenes.length === 0 ? (
               <div className="text-center py-12">
                 <FileText className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
                 <p className="text-gray-500 dark:text-gray-400 text-lg mb-2">
@@ -1797,7 +1821,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   })}
                 </SortableContext>
               </DndContext>
-            )}
+              )}
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>
