@@ -1660,14 +1660,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       
       {/* Removed legacy in-container Production Dashboard and extras to avoid duplication */}
 
-      {/* Standalone section rendered immediately after the Production Dashboard */}
-      {belowDashboardSlot ? (
-        <div className="mt-6">
-          {belowDashboardSlot}
-        </div>
-      ) : null}
-
-      
+     
       {/* Script Content */}
       <div className="flex-1 overflow-y-auto">
         {!script || isGenerating ? (
