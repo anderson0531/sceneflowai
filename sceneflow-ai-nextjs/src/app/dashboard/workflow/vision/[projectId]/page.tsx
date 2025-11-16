@@ -58,6 +58,11 @@ interface Scene {
   [key: string]: any
 }
 
+type SceneBookmark = {
+  sceneId: string
+  sceneNumber: number
+}
+
 const getSceneProductionKey = (scene: Scene, index: number): string =>
   (scene as any)?.sceneId || scene.id || `scene-${index}`
 
@@ -454,6 +459,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [sceneReferences, setSceneReferences] = useState<VisualReference[]>([])
   const [objectReferences, setObjectReferences] = useState<VisualReference[]>([])
   const [sceneProductionState, setSceneProductionState] = useState<Record<string, SceneProductionData>>({})
+  const [sceneBookmark, setSceneBookmark] = useState<SceneBookmark | null>(null)
   useEffect(() => {
     const productionScenes =
       project?.metadata?.visionPhase?.production?.scenes as Record<string, SceneProductionData> | undefined
@@ -478,6 +484,64 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       setObjectReferences([])
     }
   }, [project])
+
+  useEffect(() => {
+    const bookmark = project?.metadata?.visionPhase?.bookmark as SceneBookmark | undefined
+    if (bookmark && (bookmark.sceneId || bookmark.sceneNumber)) {
+      setSceneBookmark({
+        sceneId: bookmark.sceneId || `scene-${bookmark.sceneNumber ?? 1}`,
+        sceneNumber: Number(bookmark.sceneNumber) || 1
+      })
+    } else {
+      setSceneBookmark(null)
+    }
+  }, [project])
+
+  const handleBookmarkScene = useCallback(
+    async (bookmark: SceneBookmark | null) => {
+      if (!projectId) return
+      setSceneBookmark(bookmark)
+      setProject(prev => {
+        if (!prev) return prev
+        const prevMetadata = prev.metadata || {}
+        const nextVisionPhase = {
+          ...(prevMetadata.visionPhase || {}),
+          bookmark: bookmark ? bookmark : null
+        }
+        return {
+          ...prev,
+          metadata: {
+            ...prevMetadata,
+            visionPhase: nextVisionPhase
+          }
+        }
+      })
+
+      const existingMetadata = project?.metadata || {}
+      const nextMetadata = {
+        ...existingMetadata,
+        visionPhase: {
+          ...(existingMetadata.visionPhase || {}),
+          bookmark: bookmark ? bookmark : null
+        }
+      }
+
+      try {
+        await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ metadata: nextMetadata })
+        })
+      } catch (error) {
+        console.error('[Bookmark] Failed to save bookmark', error)
+        try {
+          const { toast } = require('sonner')
+          toast.error('Failed to save bookmark')
+        } catch {}
+      }
+    },
+    [projectId, project]
+  )
 
   // Scene production handlers
   const persistSceneProduction = useCallback(
@@ -4225,6 +4289,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSegmentGenerate={handleSegmentGenerate}
                 onSegmentUpload={handleSegmentUpload}
                 sceneAudioTracks={{}}
+                  bookmarkedScene={sceneBookmark}
+                  onBookmarkScene={handleBookmarkScene}
               belowDashboardSlot={({ openGenerateAudio }) => (
                 <div className="rounded-2xl border border-white/10 bg-slate-950/40 shadow-inner">
                   <div className="px-5 py-5">

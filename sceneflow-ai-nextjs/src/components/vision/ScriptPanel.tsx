@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight } from 'lucide-react'
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
 import { SceneProductionData, SceneProductionReferences } from './scene-production/types'
@@ -117,6 +117,8 @@ interface ScriptPanelProps {
     sfx?: Array<{ url?: string; startTime: number; duration: number; description?: string }>
     music?: { url?: string; startTime: number; duration: number }
   }>
+  bookmarkedScene?: { sceneId?: string; sceneNumber?: number } | null
+  onBookmarkScene?: (bookmark: { sceneId: string; sceneNumber: number } | null) => Promise<void> | void
 }
 
 // Transform score analysis data to review format
@@ -300,6 +302,12 @@ function normalizeScenes(source: any): any[] {
   return []
 }
 
+const getSceneDomId = (scene: any, index: number) => {
+  const rawId = (scene?.id || `scene-${index}`).toString()
+  const safeId = rawId.replace(/[^a-zA-Z0-9_-]/g, '-')
+  return `scene-card-${safeId}`
+}
+
 // Sortable Scene Card Wrapper for drag-and-drop
 function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, ...props }: any) {
   const {
@@ -332,7 +340,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, sceneAudioTracks = {} }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [showScriptEditor, setShowScriptEditor] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -432,8 +440,43 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [isPlayingMixed, setIsPlayingMixed] = useState(false)
   const [isPlayingAll, setIsPlayingAll] = useState(false)
   const playbackAbortRef = useRef(false)
+  const [bookmarkSaving, setBookmarkSaving] = useState(false)
 
   const scenes = useMemo(() => normalizeScenes(script), [script])
+
+  const bookmarkedSceneIndex = useMemo(() => {
+    if (!bookmarkedScene) return -1
+    return scenes.findIndex((scene: any, idx: number) => {
+      const sceneId = scene?.id || `scene-${idx}`
+      if (bookmarkedScene?.sceneId) {
+        return sceneId === bookmarkedScene.sceneId
+      }
+      if (bookmarkedScene?.sceneNumber != null) {
+        return idx === Number(bookmarkedScene.sceneNumber) - 1
+      }
+      return false
+    })
+  }, [bookmarkedScene, scenes])
+
+  const scrollSceneIntoView = useCallback(
+    (index: number, smooth = true) => {
+      if (index < 0) return
+      const scene = scenes[index]
+      if (!scene) return
+      const domId = getSceneDomId(scene, index)
+      const element = typeof window !== 'undefined' ? document.getElementById(domId) : null
+      if (element) {
+        element.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' })
+      }
+    },
+    [scenes]
+  )
+
+  useEffect(() => {
+    if (selectedScene === null && bookmarkedSceneIndex !== -1) {
+      setSelectedScene(bookmarkedSceneIndex)
+    }
+  }, [bookmarkedSceneIndex, selectedScene])
 
   // Stats for Production Dashboard
   const imageCount = useMemo(
@@ -474,6 +517,47 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     background: '#111827',
     color: '#F9FAFB',
     border: '1px solid #1f2937'
+  }
+
+  const currentSceneIsBookmarked = selectedScene !== null && selectedScene === bookmarkedSceneIndex
+
+  const handleBookmarkToggle = async () => {
+    if (!onBookmarkScene) return
+    if (selectedScene === null) {
+      toast.info('Select a scene to bookmark first.', { style: toastVisualStyle })
+      return
+    }
+    const scene = scenes[selectedScene]
+    if (!scene) {
+      toast.error('Selected scene not found.', { style: toastVisualStyle })
+      return
+    }
+    const sceneId = scene?.id || `scene-${selectedScene}`
+    const sceneNumber = Number(scene?.sceneNumber) || selectedScene + 1
+    setBookmarkSaving(true)
+    try {
+      if (currentSceneIsBookmarked) {
+        await onBookmarkScene(null)
+        toast.info(`Removed bookmark for Scene ${sceneNumber}.`, { style: toastVisualStyle })
+      } else {
+        await onBookmarkScene({ sceneId, sceneNumber })
+        toast.success(`Bookmarked Scene ${sceneNumber}.`, { style: toastVisualStyle })
+      }
+    } catch (error) {
+      console.error('[Bookmark] Failed to update bookmark', error)
+      toast.error('Failed to update bookmark. Please try again.', { style: toastVisualStyle })
+    } finally {
+      setBookmarkSaving(false)
+    }
+  }
+
+  const handleJumpToBookmark = () => {
+    if (bookmarkedSceneIndex === -1) {
+      toast.info('No bookmarked scene yet.', { style: toastVisualStyle })
+      return
+    }
+    setSelectedScene(bookmarkedSceneIndex)
+    scrollSceneIntoView(bookmarkedSceneIndex)
   }
 
   const backgroundProgressPercent = dialogGenerationMode === 'background' && isDialogGenerating && dialogGenerationProgress
@@ -1611,6 +1695,52 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             </TooltipProvider>
           )}
 
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={currentSceneIsBookmarked ? 'default' : 'outline'}
+                size="sm"
+                onClick={handleBookmarkToggle}
+                disabled={bookmarkSaving || !onBookmarkScene}
+                className={`flex items-center gap-1 ${currentSceneIsBookmarked ? 'bg-amber-500/90 hover:bg-amber-500 text-white' : ''}`}
+              >
+                {bookmarkSaving ? (
+                  <Loader className="w-4 h-4 animate-spin" />
+                ) : currentSceneIsBookmarked ? (
+                  <BookmarkCheck className="w-4 h-4" />
+                ) : (
+                  <BookmarkPlus className="w-4 h-4" />
+                )}
+                <span className="hidden sm:inline">{currentSceneIsBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+              {currentSceneIsBookmarked ? 'Click to clear bookmark' : 'Bookmark the currently selected scene'}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleJumpToBookmark}
+                disabled={bookmarkedSceneIndex === -1}
+                className="flex items-center gap-1"
+              >
+                <BookMarked className="w-4 h-4" />
+                <span className="hidden sm:inline">Open Bookmark</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+              {bookmarkedSceneIndex === -1 ? 'No bookmarked scene yet' : 'Jump to your saved scene'}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
           {/* Preview moved to Storyboard header */}
 
           {dialogGenerationMode === 'background' && isDialogGenerating && backgroundProgressPercent !== null && (
@@ -1666,8 +1796,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   items={scenes.map((_: any, idx: number) => idx)}
                   strategy={verticalListSortingStrategy}
                 >
-                  {scenes.map((scene: any, idx: number) => {
-                    const timelineStart = scenes.slice(0, idx).reduce((total: number, s: any) => total + calculateSceneDuration(s), 0)
+                          {scenes.map((scene: any, idx: number) => {
+                            const timelineStart = scenes.slice(0, idx).reduce((total: number, s: any) => total + calculateSceneDuration(s), 0)
+                            const domId = getSceneDomId(scene, idx)
                     return (
                     <SortableSceneCard
                   key={idx}
@@ -1729,6 +1860,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       onSegmentGenerate={onSegmentGenerate}
                       onSegmentUpload={onSegmentUpload}
                       sceneAudioTracks={sceneAudioTracks[scene.id || `scene-${idx}`]}
+                          domId={domId}
+                          isBookmarked={bookmarkedSceneIndex === idx}
                 />
                     )
                   })}
@@ -1991,6 +2124,8 @@ interface SceneCardProps {
     sfx?: Array<{ url?: string; startTime: number; duration: number; description?: string }>
     music?: { url?: string; startTime: number; duration: number }
   }
+  domId?: string
+  isBookmarked?: boolean
 }
 
 function SceneCard({
@@ -2048,6 +2183,8 @@ function SceneCard({
   onSegmentGenerate,
   onSegmentUpload,
   sceneAudioTracks,
+  domId,
+  isBookmarked = false,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
@@ -2098,12 +2235,35 @@ function SceneCard({
   }, [stepCompletion])
   
   // Determine status for each step
-  const getStepStatus = (stepKey: keyof typeof stepCompletion, isOpen: boolean) => {
+  type StepStatus = 'complete' | 'in-progress' | 'todo' | 'locked'
+
+  const getStepStatus = (stepKey: keyof typeof stepCompletion, isOpen: boolean): StepStatus => {
     if (stepCompletion[stepKey]) return 'complete'
     if (isOpen) return 'in-progress'
     if (!stepUnlocked[stepKey as keyof typeof stepUnlocked]) return 'locked'
     return 'todo'
   }
+
+  const chipClassByStatus: Record<StepStatus, string> = {
+    complete: 'bg-emerald-500/15 text-emerald-200 border border-emerald-400/40',
+    'in-progress': 'bg-sf-primary/20 text-sf-primary border border-sf-primary/40',
+    todo: 'bg-white/5 text-slate-300 border border-white/10',
+    locked: 'bg-slate-800/60 text-slate-500 border border-white/10'
+  }
+
+  const chipDotClass: Record<StepStatus, string> = {
+    complete: 'bg-emerald-300',
+    'in-progress': 'bg-sf-primary',
+    todo: 'bg-slate-400',
+    locked: 'bg-slate-600'
+  }
+
+  const stepChipConfig: Array<{ key: keyof typeof stepCompletion; label: string; isOpen: boolean }> = [
+    { key: 'dialogueAction', label: 'Dialogue & Action', isOpen: isDialogueActionOpen },
+    { key: 'directorsChair', label: "Director's Chair", isOpen: isDirectorsChairOpen },
+    { key: 'storyboardPreViz', label: 'Storyboard & Pre-Viz', isOpen: isStoryboardPreVizOpen },
+    { key: 'callAction', label: 'Call Action', isOpen: isCallActionOpen }
+  ]
   
   const handleExpand = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -2149,16 +2309,73 @@ function SceneCard({
     setIsOpen(!isOpen)
   }
   
+  const accentGradient =
+    sceneNumber % 2 === 0
+      ? 'from-sf-primary/35 via-sky-500/10 to-transparent'
+      : 'from-fuchsia-400/35 via-amber-400/15 to-transparent'
+
+  const selectionClasses = isSelected
+    ? 'border-sf-primary/70 ring-2 ring-sf-primary/60'
+    : 'border-white/10 hover:border-sf-primary/30'
+
+  const bookmarkClasses = isBookmarked ? 'border-amber-300/80 shadow-[0_0_35px_rgba(251,191,36,0.25)]' : ''
+  const headingText =
+    typeof scene?.heading === 'string'
+      ? scene.heading
+      : typeof scene?.heading === 'object' && scene.heading !== null
+        ? (scene.heading as any)?.text
+        : ''
+
   return (
-    <div 
-      className={`relative p-5 rounded-2xl border transition-all shadow-[0_15px_40px_rgba(8,8,20,0.35)] bg-slate-950/40 backdrop-blur ${
-        isSelected 
-          ? 'border-sf-primary/70 ring-2 ring-sf-primary/60' 
-          : 'border-white/10 hover:border-sf-primary/30'
-      } ${isOutline ? 'bg-amber-500/10 border-amber-300/40' : ''}`}
+    <div
+      id={domId}
+      className={`relative overflow-hidden p-5 rounded-2xl border transition-all shadow-[0_15px_40px_rgba(8,8,20,0.35)] bg-slate-950/50 backdrop-blur ${selectionClasses} ${bookmarkClasses} ${isOutline ? 'bg-amber-500/10 border-amber-300/40' : ''}`}
     >
-      {/* Collapsible Header - COMPACT THREE-ROW LAYOUT */}
-      <div className="mb-3">
+      <div className={`pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br ${accentGradient} opacity-40`} />
+      {isBookmarked && (
+        <div className="absolute -right-1 -top-1 flex items-center gap-1 rounded-full bg-amber-500/90 px-2 py-1 text-[10px] font-semibold text-white shadow-lg">
+          <Bookmark className="w-3 h-3" />
+          Saved
+        </div>
+      )}
+      <div className="relative z-[1]">
+        <div className="flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">
+          <span>Scene Workflow</span>
+          {isBookmarked && (
+            <span className="text-amber-300 tracking-normal font-semibold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-400/30">
+              Bookmarked
+            </span>
+          )}
+        </div>
+
+        <div className="mt-2 flex flex-wrap gap-2">
+          {stepChipConfig.map(({ key, label, isOpen }) => {
+            const status = getStepStatus(key, isOpen)
+            return (
+              <span
+                key={key as string}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide ${chipClassByStatus[status]}`}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${chipDotClass[status]}`} />
+                {label}
+              </span>
+            )
+          })}
+        </div>
+
+        <div className="mt-4">
+          <p className="text-xl font-semibold text-white leading-tight">
+            {headingText || `Scene ${sceneNumber}`}
+          </p>
+          {(scene.summary || scene.action) && (
+            <p className="text-sm text-slate-300/90 mt-1 line-clamp-3">
+              {scene.summary || stripAudioDescriptions(scene.action)}
+            </p>
+          )}
+        </div>
+
+        {/* Collapsible Header - COMPACT THREE-ROW LAYOUT */}
+        <div className="mb-3">
         {/* Row 1: Unified Control Bar */}
         <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
           {/* Left Side: Scene Management Controls */}
@@ -3482,6 +3699,7 @@ function SceneCard({
           </div>
         </div>
       )}
+    </div>
     </div>
   )
 }
