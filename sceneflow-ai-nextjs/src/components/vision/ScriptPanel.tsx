@@ -435,6 +435,31 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
   const scenes = useMemo(() => normalizeScenes(script), [script])
 
+  // Stats for Production Dashboard
+  const imageCount = useMemo(
+    () => (Array.isArray(scenes) ? scenes.filter((s: any) => !!s?.imageUrl).length : 0),
+    [scenes]
+  )
+  const audioCount = useMemo(() => {
+    if (!Array.isArray(scenes)) return 0
+    return scenes.reduce((acc: number, s: any) => {
+      const narration = s?.narrationAudioUrl || s?.narrationAudio?.en?.url ? 1 : 0
+      const music = s?.musicAudio ? 1 : 0
+      const dialogue = Array.isArray(s?.dialogueAudio) ? s.dialogueAudio.length : 0
+      const sfx = Array.isArray(s?.sfxAudio) ? s.sfxAudio.length : 0
+      return acc + narration + music + dialogue + sfx
+    }, 0)
+  }, [scenes])
+  const averageScore = useMemo(() => {
+    if (!Array.isArray(scenes) || scenes.length === 0) return 0
+    const scores = scenes
+      .map((s: any) => s?.scoreAnalysis?.overallScore)
+      .filter((n: any) => typeof n === 'number') as number[]
+    if (scores.length === 0) return 0
+    const avg = scores.reduce((a, b) => a + b, 0) / scores.length
+    return Math.round(avg)
+  }, [scenes])
+
   const [isDialogGenerating, setIsDialogGenerating] = useState(false)
   const [dialogGenerationMode, setDialogGenerationMode] = useState<DialogGenerationMode>('foreground')
   const [dialogGenerationProgress, setDialogGenerationProgress] = useState<DialogGenerationProgress | null>(null)
@@ -1527,262 +1552,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         </div>
       </div>
       
-      {/* Script Summary Panel */}
-      {script && (
-        <div className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
-          <div className="px-4 py-4">
-            {/* Header with Toggle */}
-            <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-                <BarChart3 className="w-6 h-6 text-sf-primary" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">Production Dashboard</h3>
-          </div>
-              <button
-                onClick={() => setShowScriptOverview(!showScriptOverview)}
-                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-              >
-                <ChevronDown className={`w-5 h-5 transition-transform ${showScriptOverview ? '' : 'rotate-180'}`} />
-              </button>
-            </div>
-            
-            {/* Collapsible Content */}
-            {showScriptOverview && (
-              <>
-                {/* Statistics Grid - 2 rows x 3 columns */}
-                <div className="grid grid-cols-3 gap-3 mb-4">
-              {/* Row 1 */}
-              {/* Scenes */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-2 mb-1">
-                  <FileText className="w-4 h-4 text-blue-500" />
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Scenes</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {scenes.length}
-                </div>
-              </div>
-              
-              {/* Characters */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-2 mb-1">
-                  <Users className="w-4 h-4 text-purple-500" />
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Characters</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {characters?.length || 0}
-                </div>
-              </div>
-              
-              {/* Duration */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-2 mb-1">
-                  <Clock className="w-4 h-4 text-orange-500" />
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Duration</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {formatTotalDuration(scenes)}
-                </div>
-              </div>
-              
-              {/* Row 2 */}
-              {/* Images */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-2 mb-1">
-                  <Camera className="w-4 h-4 text-green-500" />
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Images</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {scenes.filter((s: any) => s.imageUrl).length}/{scenes.length}
-                </div>
-              </div>
-              
-              {/* Voice */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-2 mb-1">
-                  <Volume2 className="w-4 h-4 text-indigo-500" />
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Voice</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {scenes.filter((s: any) => s.narrationAudioUrl).length}/{scenes.length}
-                </div>
-              </div>
-              
-                            {/* Est. Clips */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">                                            
-                <div className="flex items-center gap-2 mb-1">
-                  <Film className="w-4 h-4 text-pink-500" />
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Est. Clips</span>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <Info className="w-3 h-3 text-gray-400" />
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        <p className="text-xs">
-                          Estimated number of 10-second video clips needed based on scene duration.
-                          Each scene may require multiple clips.
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">                                                                           
-                  {Math.ceil(scenes.reduce((total: number, s: any) => total + calculateSceneDuration(s), 0) / 8)}                                               
-                </div>
-              </div>
-            </div>
-            
-            {/* Project Cost Calculator */}
-            {scenes.length > 0 && (
-              <div className="mt-4">
-                <ProjectCostCalculator 
-                  scenes={scenes}
-                  characters={characters}
-                  hasBYOK={hasBYOK}
-                  onOpenBYOK={onOpenBYOK}
-                />
-              </div>
-            )}
-            
-            {/* Script Reviews Section */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-                  <Star className="w-4 h-4 text-yellow-500" />
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Script Reviews
-                  </span>
-                </div>
-                
-                {/* Action Buttons */}
-                <div className="flex items-center gap-2">
-                  {(directorScore || audienceScore) && (
-                    <>
-                  <Button 
-                        variant="ghost"
-                        size="sm"
-                        onClick={onShowReviews}
-                        className="text-xs"
-                      >
-                        View Full Reviews
-                  </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onGenerateReviews}
-                        disabled={isGeneratingReviews}
-                        className="text-xs"
-                      >
-                        {isGeneratingReviews ? (
-                          <Loader className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <RefreshCw className="w-3 h-3" />
-                        )}
-                      </Button>
-                    </>
-                  )}
-                  
-                  {!directorScore && !audienceScore && (
-                  <Button 
-                    variant="outline" 
-                      size="sm"
-                      onClick={onGenerateReviews}
-                      disabled={isGeneratingReviews}
-                    >
-                      {isGeneratingReviews ? (
-                        <Loader className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Star className="w-4 h-4" />
-                      )}
-                      Generate Reviews
-                  </Button>
-                  )}
-                </div>
-              </div>
-              
-              {/* Review Scores with Stoplight Colors */}
-              {(directorScore || audienceScore) ? (
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Director Score */}
-                  {directorScore && (
-                    <div 
-                      onClick={onShowReviews}
-                      className="cursor-pointer hover:opacity-80 transition-opacity"
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <Film className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Director
-                        </span>
-                      </div>
-                      
-                      {/* Score with Stoplight Color */}
-                      <div className="flex items-center gap-3">
-                        <div className={`text-3xl font-bold ${getStoplightTextColor(directorScore)}`}>
-                          {directorScore}
-                        </div>
-                        <div className="flex-1">
-                          {/* Progress Bar with Stoplight Color */}
-                          <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full ${getStoplightBgColor(directorScore)} transition-all duration-500`}
-                              style={{ width: `${directorScore}%` }}
-                            />
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {getScoreLabel(directorScore)}
-                          </div>
-                        </div>
-          </div>
-        </div>
-      )}
-                  
-                  {/* Audience Score */}
-                  {audienceScore && (
-                    <div 
-                      onClick={onShowReviews}
-                      className="cursor-pointer hover:opacity-80 transition-opacity"
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <Users className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Audience
-                        </span>
-                      </div>
-                      
-                      {/* Score with Stoplight Color */}
-                      <div className="flex items-center gap-3">
-                        <div className={`text-3xl font-bold ${getStoplightTextColor(audienceScore)}`}>
-                          {audienceScore}
-                        </div>
-                        <div className="flex-1">
-                          {/* Progress Bar with Stoplight Color */}
-                          <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full ${getStoplightBgColor(audienceScore)} transition-all duration-500`}
-                              style={{ width: `${audienceScore}%` }}
-                            />
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {getScoreLabel(audienceScore)}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
-                  Generate reviews to get expert feedback on your script
-                </div>
-              )}
-            </div>
-                
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Removed legacy in-container Production Dashboard and extras to avoid duplication */}
 
       {/* Standalone section rendered immediately after the Production Dashboard */}
       {belowDashboardSlot ? (
