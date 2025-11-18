@@ -2386,12 +2386,6 @@ function SceneCard({
       className={`relative overflow-hidden p-5 rounded-2xl border transition-all shadow-[0_15px_40px_rgba(8,8,20,0.35)] bg-slate-950/50 backdrop-blur ${selectionClasses} ${bookmarkClasses} ${isOutline ? 'bg-amber-500/10 border-amber-300/40' : ''}`}
     >
       <div className={`pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br ${accentGradient} opacity-40`} />
-      {isBookmarked && (
-        <div className="absolute -right-1 -top-1 flex items-center gap-1 rounded-full bg-amber-500/90 px-2 py-1 text-[10px] font-semibold text-white shadow-lg">
-          <Bookmark className="w-3 h-3" />
-          Saved
-        </div>
-      )}
       <div className="relative z-[1]">
         {/* Top Row: Control Buttons */}
         <div className="flex items-center justify-between gap-3 py-2 border-b border-gray-200 dark:border-gray-700 mb-2">
@@ -2581,16 +2575,16 @@ function SceneCard({
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-3 text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">
-          <div className="flex items-center gap-2">
-            <span>{`Scene ${sceneNumber}`}</span>
-            {isBookmarked && (
-              <span className="text-amber-300 tracking-normal font-semibold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-400/30">
-                Bookmarked
-              </span>
-            )}
-          </div>
-          {onBookmarkToggle && (
+        {/* Line 2: Scene Title */}
+        <div className="mt-2 mb-2">
+          <p className="text-xl font-semibold text-white leading-tight">
+            Scene {sceneNumber}: {headingText || `Untitled`}
+          </p>
+        </div>
+
+        {/* Bookmark toggle button */}
+        {onBookmarkToggle && (
+          <div className="flex justify-end mb-2">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -2622,8 +2616,8 @@ function SceneCard({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="mt-2 flex flex-wrap gap-2">
           {workflowTabs.map(({ key, label }) => {
@@ -2641,9 +2635,6 @@ function SceneCard({
         </div>
 
         <div className="mt-4">
-          <p className="text-xl font-semibold text-white leading-tight">
-            {headingText || `Scene ${sceneNumber}`}
-          </p>
           {(scene.summary || scene.action) && (
             <p className="text-sm text-slate-300/90 mt-1 line-clamp-3">
               {scene.summary || stripAudioDescriptions(scene.action)}
