@@ -2572,52 +2572,50 @@ function SceneCard({
                 </Tooltip>
               </TooltipProvider>
             )}
+
+            {/* Bookmark toggle button */}
+            {onBookmarkToggle && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onBookmarkToggle()
+                      }}
+                      disabled={bookmarkSaving}
+                      aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark scene'}
+                      className={`inline-flex h-9 w-9 items-center justify-center rounded-full border-2 transition-all shadow-md ${
+                        isBookmarked
+                          ? 'bg-amber-500/30 border-amber-400 text-amber-200 hover:bg-amber-500/40 hover:border-amber-300 hover:shadow-lg'
+                          : 'border-amber-400/50 text-amber-400 hover:border-amber-400 hover:bg-amber-500/20 hover:text-amber-300 hover:shadow-lg'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {bookmarkSaving ? (
+                        <Loader className="w-4 h-4 animate-spin" />
+                      ) : isBookmarked ? (
+                        <BookmarkCheck className="w-5 h-5" />
+                      ) : (
+                        <BookmarkPlus className="w-5 h-5" />
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                    {isBookmarked ? 'Remove bookmark' : 'Bookmark this scene'}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
         </div>
 
         {/* Line 2: Scene Title */}
-        <div className="mt-2 mb-2">
+        <div className="mt-2">
           <p className="text-xl font-semibold text-white leading-tight">
-            Scene {sceneNumber}: {headingText || `Untitled`}
+            Scene {sceneNumber}: {headingText || 'Untitled'}
           </p>
         </div>
-
-        {/* Bookmark toggle button */}
-        {onBookmarkToggle && (
-          <div className="flex justify-end mb-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onBookmarkToggle()
-                    }}
-                    disabled={bookmarkSaving}
-                    aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark scene'}
-                    className={`inline-flex h-9 w-9 items-center justify-center rounded-full border-2 transition-all shadow-md ${
-                      isBookmarked
-                        ? 'bg-amber-500/30 border-amber-400 text-amber-200 hover:bg-amber-500/40 hover:border-amber-300 hover:shadow-lg'
-                        : 'border-amber-400/50 text-amber-400 hover:border-amber-400 hover:bg-amber-500/20 hover:text-amber-300 hover:shadow-lg'
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {bookmarkSaving ? (
-                      <Loader className="w-4 h-4 animate-spin" />
-                    ) : isBookmarked ? (
-                      <BookmarkCheck className="w-5 h-5" />
-                    ) : (
-                      <BookmarkPlus className="w-5 h-5" />
-                    )}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                  {isBookmarked ? 'Remove bookmark' : 'Bookmark this scene'}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        )}
 
         <div className="mt-2 flex flex-wrap gap-2">
           {workflowTabs.map(({ key, label }) => {
