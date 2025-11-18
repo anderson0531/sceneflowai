@@ -3666,7 +3666,6 @@ function SceneCard({
         </div>
       )}
     </div>
-    </div>
   )
 }
 
