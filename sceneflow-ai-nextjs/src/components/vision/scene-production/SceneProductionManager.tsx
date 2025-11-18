@@ -63,6 +63,8 @@ export function SceneProductionManager({
     }
   }, [segments, selectedSegmentId])
 
+  const selectedSegment: SceneSegment | null =
+    segments.find((segment) => segment.segmentId === selectedSegmentId) ?? null
 
   const handleInitialize = async () => {
     setIsInitializing(true)
@@ -79,17 +81,6 @@ export function SceneProductionManager({
     }
   }
 
-  const selectedSegment = segments.find((segment) => segment.segmentId === selectedSegmentId) ?? null
-
-  // Calculate previous segment's last frame for continuity
-  const previousSegmentLastFrame = useMemo(() => {
-    if (!selectedSegment || !selectedSegmentId) return null
-    const currentIndex = segments.findIndex(s => s.segmentId === selectedSegmentId)
-    if (currentIndex <= 0) return null
-    const prevSegment = segments[currentIndex - 1]
-    return prevSegment?.takes?.[0]?.assetUrl ?? prevSegment?.activeAssetUrl ?? null
-  }, [segments, selectedSegmentId])
-
   const handlePromptChange = (prompt: string) => {
     if (!selectedSegment) return
     onPromptChange(sceneId, selectedSegment.segmentId, prompt)
@@ -97,30 +88,22 @@ export function SceneProductionManager({
 
   const handleGenerate = async (mode: GenerationType, options?: { startFrameUrl?: string }) => {
     if (!selectedSegment) return
-    try {
-      await onGenerate(sceneId, selectedSegment.segmentId, mode, options)
-    } catch (error) {
-      console.error('[SceneProduction] Generation failed', error)
-      try {
-        const { toast } = require('sonner')
-        toast.error(error instanceof Error ? error.message : 'Failed to generate')
-      } catch {}
-    }
+    await onGenerate(sceneId, selectedSegment.segmentId, mode, options)
   }
+
+  // Get previous segment's last frame for continuity
+  const previousSegmentLastFrame = useMemo(() => {
+    if (!selectedSegment || segments.length === 0) return null
+    const currentIndex = segments.findIndex(s => s.segmentId === selectedSegment.segmentId)
+    if (currentIndex <= 0) return null
+    const previousSegment = segments[currentIndex - 1]
+    return previousSegment.references.endFrameUrl || null
+  }, [selectedSegment, segments])
 
   const handleUpload = async (file: File) => {
     if (!selectedSegment) return
-    try {
-      await onUpload(sceneId, selectedSegment.segmentId, file)
-    } catch (error) {
-      console.error('[SceneProduction] Upload failed', error)
-      try {
-        const { toast } = require('sonner')
-        toast.error(error instanceof Error ? error.message : 'Failed to upload file')
-      } catch {}
-    }
+    await onUpload(sceneId, selectedSegment.segmentId, file)
   }
-
 
   if (!productionData || !productionData.isSegmented || productionData.segments.length === 0) {
     return (
@@ -158,71 +141,53 @@ export function SceneProductionManager({
   }
 
   return (
-    <>
-      <div className="space-y-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-              Scene {sceneNumber}: {heading || 'Untitled'}
-            </h4>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {productionData.segments.length} segments · Target {productionData.targetSegmentDuration}s
-            </p>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            {productionData?.isSegmented && (
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={isInitializing}
-                onClick={async () => {
-                  const confirmed = typeof window !== 'undefined'
-                    ? window.confirm('Regenerate segments from the latest script and direction? This will replace current segments.')
-                    : true
-                  if (!confirmed) return
-                  await handleInitialize()
-                }}
-                className="shrink-0"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                Regenerate Segments
-              </Button>
-            )}
-          </div>
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            Scene {sceneNumber}: {heading || 'Untitled'}
+          </h4>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {productionData.segments.length} segments · Target {productionData.targetSegmentDuration}s
+          </p>
         </div>
-
-        {/* Selected Segment Description */}
-        {selectedSegment && (
-          <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">
-              Segment {selectedSegment.sequenceIndex + 1} Description
-            </div>
-            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-              {(selectedSegment as any).visualBeat || 
-               selectedSegment.userEditedPrompt || 
-               selectedSegment.generatedPrompt || 
-               'No description available for this segment.'}
-            </p>
-          </div>
+        {productionData?.isSegmented && (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isInitializing}
+            onClick={async () => {
+              // Confirm re-generation as it will replace current segments
+              const confirmed = typeof window !== 'undefined'
+                ? window.confirm('Regenerate segments from the latest script and direction? This will replace current segments.')
+                : true
+              if (!confirmed) return
+              await handleInitialize()
+            }}
+            className="shrink-0"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Regenerate Segments
+          </Button>
         )}
-
-        <SegmentTimeline
-          segments={segments}
-          selectedSegmentId={selectedSegmentId ?? undefined}
-          onSelect={setSelectedSegmentId}
-          audioTracks={audioTracks}
-        />
-
-        <SegmentStudio
-          segment={selectedSegment}
-          previousSegmentLastFrame={previousSegmentLastFrame}
-          onPromptChange={handlePromptChange}
-          onGenerate={handleGenerate}
-          onUploadMedia={handleUpload}
-          references={references}
-        />
       </div>
-    </>
+
+      <SegmentTimeline
+        segments={segments}
+        selectedSegmentId={selectedSegmentId ?? undefined}
+        onSelect={setSelectedSegmentId}
+        audioTracks={audioTracks}
+      />
+
+      <SegmentStudio
+        segment={selectedSegment}
+        previousSegmentLastFrame={previousSegmentLastFrame}
+        onPromptChange={handlePromptChange}
+        onGenerate={handleGenerate}
+        onUploadMedia={handleUpload}
+        references={references}
+      />
+    </div>
   )
 }
 
