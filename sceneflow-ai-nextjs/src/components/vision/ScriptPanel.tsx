@@ -2393,98 +2393,10 @@ function SceneCard({
         </div>
       )}
       <div className="relative z-[1]">
-        <div className="flex items-center justify-between gap-3 text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">
-          <div className="flex items-center gap-2">
-            <span>{`Scene ${sceneNumber}`}</span>
-            {isBookmarked && (
-              <span className="text-amber-300 tracking-normal font-semibold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-400/30">
-                Bookmarked
-              </span>
-            )}
-          </div>
-          {onBookmarkToggle && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onBookmarkToggle()
-                    }}
-                    disabled={bookmarkSaving}
-                    aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark scene'}
-                    className={`inline-flex h-9 w-9 items-center justify-center rounded-full border-2 transition-all shadow-md ${
-                      isBookmarked
-                        ? 'bg-amber-500/30 border-amber-400 text-amber-200 hover:bg-amber-500/40 hover:border-amber-300 hover:shadow-lg'
-                        : 'border-amber-400/50 text-amber-400 hover:border-amber-400 hover:bg-amber-500/20 hover:text-amber-300 hover:shadow-lg'
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {bookmarkSaving ? (
-                      <Loader className="w-4 h-4 animate-spin" />
-                    ) : isBookmarked ? (
-                      <BookmarkCheck className="w-5 h-5" />
-                    ) : (
-                      <BookmarkPlus className="w-5 h-5" />
-                    )}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                  {isBookmarked ? 'Remove bookmark' : 'Bookmark this scene'}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </div>
-
-        <div className="mt-2 flex flex-wrap gap-2">
-          {workflowTabs.map(({ key, label }) => {
-            const status = getStepStatus(key)
-            return (
-              <span
-                key={key as string}
-                className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide ${chipClassByStatus[status]}`}
-              >
-                <span className={`h-1.5 w-1.5 rounded-full ${chipDotClass[status]}`} />
-                {label}
-              </span>
-            )
-          })}
-        </div>
-
-        <div className="mt-4">
-          <p className="text-xl font-semibold text-white leading-tight">
-            {headingText || `Scene ${sceneNumber}`}
-          </p>
-          {(scene.summary || scene.action) && (
-            <p className="text-sm text-slate-300/90 mt-1 line-clamp-3">
-              {scene.summary || stripAudioDescriptions(scene.action)}
-            </p>
-          )}
-        </div>
-
-        {/* Collapsible Header - COMPACT THREE-ROW LAYOUT */}
-        <div className="mb-3">
-        {/* Row 1: Unified Control Bar */}
-        <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+        {/* Top Row: Control Buttons */}
+        <div className="flex items-center justify-between gap-3 py-2 border-b border-gray-200 dark:border-gray-700 mb-2">
           {/* Left Side: Scene Management Controls */}
           <div className="flex items-center gap-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={toggleOpen}
-                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-                  >
-                    <ChevronRight className={`w-4 h-4 transition-transform text-gray-500 dark:text-gray-400 ${isOpen ? 'rotate-90' : ''}`} />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                  {isOpen ? 'Collapse scene' : 'Expand scene'}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -2671,6 +2583,95 @@ function SceneCard({
               </TooltipProvider>
             )}
           </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-3 text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">
+          <div className="flex items-center gap-2">
+            <span>{`Scene ${sceneNumber}`}</span>
+            {isBookmarked && (
+              <span className="text-amber-300 tracking-normal font-semibold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-400/30">
+                Bookmarked
+              </span>
+            )}
+          </div>
+          {onBookmarkToggle && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onBookmarkToggle()
+                    }}
+                    disabled={bookmarkSaving}
+                    aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark scene'}
+                    className={`inline-flex h-9 w-9 items-center justify-center rounded-full border-2 transition-all shadow-md ${
+                      isBookmarked
+                        ? 'bg-amber-500/30 border-amber-400 text-amber-200 hover:bg-amber-500/40 hover:border-amber-300 hover:shadow-lg'
+                        : 'border-amber-400/50 text-amber-400 hover:border-amber-400 hover:bg-amber-500/20 hover:text-amber-300 hover:shadow-lg'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {bookmarkSaving ? (
+                      <Loader className="w-4 h-4 animate-spin" />
+                    ) : isBookmarked ? (
+                      <BookmarkCheck className="w-5 h-5" />
+                    ) : (
+                      <BookmarkPlus className="w-5 h-5" />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                  {isBookmarked ? 'Remove bookmark' : 'Bookmark this scene'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
+
+        <div className="mt-2 flex flex-wrap gap-2">
+          {workflowTabs.map(({ key, label }) => {
+            const status = getStepStatus(key)
+            return (
+              <span
+                key={key as string}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide ${chipClassByStatus[status]}`}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${chipDotClass[status]}`} />
+                {label}
+              </span>
+            )
+          })}
+        </div>
+
+        <div className="mt-4">
+          <p className="text-xl font-semibold text-white leading-tight">
+            {headingText || `Scene ${sceneNumber}`}
+          </p>
+          {(scene.summary || scene.action) && (
+            <p className="text-sm text-slate-300/90 mt-1 line-clamp-3">
+              {scene.summary || stripAudioDescriptions(scene.action)}
+            </p>
+          )}
+        </div>
+
+        {/* Hide/Show Control - Separate from other buttons */}
+        <div className="mb-3 flex items-center">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={toggleOpen}
+                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+                >
+                  <ChevronRight className={`w-4 h-4 transition-transform text-gray-500 dark:text-gray-400 ${isOpen ? 'rotate-90' : ''}`} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                {isOpen ? 'Collapse scene' : 'Expand scene'}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
