@@ -16,7 +16,25 @@ import { Button, buttonVariants } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Save, Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, Eye, Sparkles } from 'lucide-react'
+import { Save, Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, Eye, Sparkles, BarChart3 } from 'lucide-react'
+
+const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement> & { size?: number }> = ({ size = 32, className, ...props }) => (
+  <svg
+    viewBox="0 0 64 64"
+    width={size}
+    height={size}
+    aria-hidden="true"
+    className={className}
+    {...props}
+  >
+    <rect x="10" y="18" width="44" height="10" rx="2" className="fill-current" />
+    <rect x="14" y="30" width="36" height="7" rx="2" className="fill-current" />
+    <path d="M18 37L10 54" className="stroke-current" strokeWidth="3" strokeLinecap="round" />
+    <path d="M46 37L54 54" className="stroke-current" strokeWidth="3" strokeLinecap="round" />
+    <path d="M18 37L30 54" className="stroke-current" strokeWidth="3" strokeLinecap="round" />
+    <path d="M46 37L34 54" className="stroke-current" strokeWidth="3" strokeLinecap="round" />
+  </svg>
+)
 import Link from 'next/link'
 import ScriptReviewModal from '@/components/vision/ScriptReviewModal'
 import { SceneEditorModal } from '@/components/vision/SceneEditorModal'
@@ -455,6 +473,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [isPlayerOpen, setIsPlayerOpen] = useState(false)
   const [showAnimaticsStudio, setShowAnimaticsStudio] = useState(false)
   const [showSceneGallery, setShowSceneGallery] = useState(false)
+  const [showDashboard, setShowDashboard] = useState(false)
   const [voiceAssignments, setVoiceAssignments] = useState<Record<string, any>>({})
   const [sceneReferences, setSceneReferences] = useState<VisualReference[]>([])
   const [objectReferences, setObjectReferences] = useState<VisualReference[]>([])
@@ -4129,7 +4148,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-sf-background">
       <ContextBar
-        title="Production Studio"
+        title="Scene Director"
+        titleIcon={
+          <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-gradient-to-br from-sf-primary/20 via-cyan-400/15 to-fuchsia-500/15 border-2 border-sf-primary/60 shadow-xl flex items-center justify-center">
+            <DirectorChairIcon className="w-6 h-6 md:w-8 md:h-8 text-sf-primary flex-shrink-0" />
+          </div>
+        }
         titleVariant="page"
         emphasis
         primaryActions={
@@ -4140,7 +4164,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               className={cn(buttonVariants({ variant: 'outline' }), 'flex items-center gap-2')}
               aria-label="Return to The Blueprint phase"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4 text-blue-400" />
               <span>The Blueprint</span>
             </Link>
             <Link
@@ -4156,7 +4180,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               aria-label="Continue to Final Cut phase"
             >
               <span>Final Cut</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 text-white" />
             </Link>
           </div>
         }
@@ -4165,12 +4189,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
+                  <Button
+                    variant={showDashboard ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setShowDashboard(!showDashboard)}
+                    className={`flex items-center gap-1 ${showDashboard ? 'bg-sky-500/90 hover:bg-sky-500 text-white' : ''}`}
+                  >
+                    <BarChart3 className={`w-4 h-4 ${showDashboard ? 'text-white' : 'text-sky-400'}`} />
+                    <span className="hidden sm:inline">Dashboard</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                  {showDashboard ? 'Hide Dashboard section' : 'Show Dashboard section'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
                   <Button 
                     variant="outline" 
                     size="icon"
               onClick={handleSaveProject}
             >
-              <Save className="w-4 h-4" />
+              <Save className="w-4 h-4 text-emerald-400" />
             </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -4188,7 +4230,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     disabled={isSharing}
                     className={isSharing ? 'opacity-50' : ''}
                   >
-              <Share2 className="w-4 h-4" />
+              <Share2 className="w-4 h-4 text-purple-400" />
             </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -4204,7 +4246,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     size="icon"
                     onClick={() => setShowBYOKSettings(true)}
                   >
-                    <Settings className="w-4 h-4" />
+                    <Settings className="w-4 h-4 text-slate-400" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -4291,55 +4333,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 sceneAudioTracks={{}}
                   bookmarkedScene={sceneBookmark}
                   onBookmarkScene={handleBookmarkScene}
+                showStoryboard={showSceneGallery}
+                onToggleStoryboard={() => setShowSceneGallery(!showSceneGallery)}
+                showDashboard={showDashboard}
+                onToggleDashboard={() => setShowDashboard(!showDashboard)}
               belowDashboardSlot={({ openGenerateAudio }) => (
                 <div className="rounded-2xl border border-white/10 bg-slate-950/40 shadow-inner">
                   <div className="px-5 py-5">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <span className="text-[10px] uppercase tracking-[0.45em] text-slate-500">Guide</span>
-                        <div className="mt-1 flex items-center gap-2">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800/80 text-cyan-300">
-                            <ImageIcon className="w-4 h-4" />
-                          </div>
-                          <h3 className="text-xl font-semibold text-white leading-6 my-0">
-                            Storyboard
-                          </h3>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={openGenerateAudio}
-                          className="flex items-center gap-2 border-white/20 text-slate-200 hover:text-white hover:bg-white/10"
-                          title="Open Generate Assets"
-                        >
-                          <Sparkles className="w-4 h-4 text-cyan-300" />
-                          <span className="hidden sm:inline">Assets</span>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setIsPlayerOpen(true)}
-                          className="flex items-center gap-2 border-white/20 text-slate-200 hover:text-white hover:bg-white/10"
-                        >
-                          <Eye className="w-4 h-4 text-purple-300" />
-                          <span className="hidden sm:inline">Preview</span>
-                        </Button>
-                        <button
-                          onClick={() => setShowSceneGallery((v) => !v)}
-                          className="p-2 text-slate-300 hover:text-white rounded-full border border-white/10 hover:bg-white/10 transition-colors"
-                          aria-expanded={showSceneGallery}
-                          aria-controls="scene-gallery-section"
-                        >
-                          <ChevronDown className={`w-5 h-5 transition-transform ${showSceneGallery ? '' : 'rotate-180'}`} />
-                        </button>
-                      </div>
-                    </div>
                     {showSceneGallery && (
                       <div
                         id="scene-gallery-section"
-                        className="mt-4 rounded-2xl border border-white/5 bg-slate-900/40 p-4 shadow-[0_15px_40px_rgba(8,8,20,0.35)]"
+                        className="rounded-2xl border border-white/5 bg-slate-900/40 p-4 shadow-[0_15px_40px_rgba(8,8,20,0.35)]"
                       >
                           <SceneGallery
                             scenes={scenes}
@@ -4366,6 +4370,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onSegmentUpload={(sceneId, segmentId, file) =>
                               handleSegmentUpload(sceneId, segmentId, file)
                             }
+                            onOpenAssets={openGenerateAudio}
+                            onOpenPreview={() => setIsPlayerOpen(true)}
                           />
                         </div>
                       )}

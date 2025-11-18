@@ -26,16 +26,20 @@ export interface CharacterLibraryProps {
   uploadingRef?: Record<string, boolean>
   setUploadingRef?: (updater: (prev: Record<string, boolean>) => Record<string, boolean>) => void
   enableDrag?: boolean
+  showProTips?: boolean
 }
 
-export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onAddCharacter, onRemoveCharacter, ttsProvider, compact = false, uploadingRef = {}, setUploadingRef, enableDrag = false }: CharacterLibraryProps) {                                
+export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onAddCharacter, onRemoveCharacter, ttsProvider, compact = false, uploadingRef = {}, setUploadingRef, enableDrag = false, showProTips: showProTipsProp }: CharacterLibraryProps) {                                
   const [selectedChar, setSelectedChar] = useState<string | null>(null)
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(new Set())
   const [zoomedImage, setZoomedImage] = useState<{url: string; name: string} | null>(null)
   const [expandedSections, setExpandedSections] = useState<Record<string, string | null>>({})
   const [needsReupload, setNeedsReupload] = useState<Record<string, boolean>>({})
-  const [showProTips, setShowProTips] = useState(false)
+  const [showProTipsInternal, setShowProTipsInternal] = useState(false)
   const [voiceSectionExpanded, setVoiceSectionExpanded] = useState<Record<string, boolean>>({})
+  
+  // Use prop if provided (for compact mode), otherwise use internal state
+  const showProTips = showProTipsProp !== undefined ? showProTipsProp : showProTipsInternal
   
   // Detect low-resolution images that need re-upload
   useEffect(() => {
@@ -137,26 +141,28 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
   
   return (
     <div className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 ${compact ? 'p-4' : 'p-6'} h-full overflow-y-auto`}>
-      <div className={`flex items-center justify-between ${compact ? 'mb-4' : 'mb-6'}`}>
-        <div className="flex items-center gap-2">
-          <Users className={`${compact ? 'w-4 h-4' : 'w-5 h-5'} text-sf-primary`} />
-          <h3 className={`${compact ? 'text-sm font-medium' : 'font-semibold'} text-gray-900 dark:text-gray-100`}>
-            {compact ? 'Characters' : 'Character Library'}
-          </h3>
-          <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
-            {characters.length}
-          </span>
-          
-          {/* Pro Tips Toggle Button */}
-          <button
-            onClick={() => setShowProTips(prev => !prev)}
-            className="ml-2 p-1.5 rounded-full hover:bg-blue-500/10 text-blue-400 hover:text-blue-300 transition-colors"
-            title={showProTips ? "Hide Pro Tips" : "Show Pro Tips"}
-          >
-            <Info className="w-4 h-4" />
-          </button>
+      {!compact && (
+        <div className={`flex items-center justify-between mb-6`}>
+          <div className="flex items-center gap-2">
+            <Users className="w-5 h-5 text-sf-primary" />
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+              Character Library
+            </h3>
+            <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
+              {characters.length}
+            </span>
+            
+            {/* Pro Tips Toggle Button */}
+            <button
+              onClick={() => setShowProTipsInternal(prev => !prev)}
+              className="ml-2 p-1.5 rounded-full hover:bg-blue-500/10 text-blue-400 hover:text-blue-300 transition-colors"
+              title={showProTips ? "Hide Pro Tips" : "Show Pro Tips"}
+            >
+              <Info className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
       
       {characters.length === 0 ? (
         <div className={`text-center ${compact ? 'py-8' : 'py-12'} text-gray-500 dark:text-gray-400`}>

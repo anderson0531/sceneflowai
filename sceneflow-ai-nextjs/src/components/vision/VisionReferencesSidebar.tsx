@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { DndContext } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/Input'
@@ -262,6 +262,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   }
 
   const [castOpen, setCastOpen] = useState(true)
+  const [showProTips, setShowProTips] = useState(false)
 
   return (
     <DndContext>
@@ -278,6 +279,20 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               <span className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-sf-primary" />
                 Cast
+                <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
+                  {characters.length}
+                </span>
+                {/* Pro Tips Toggle Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setShowProTips((prev) => !prev)
+                  }}
+                  className="p-1.5 rounded-full hover:bg-blue-500/10 text-blue-400 hover:text-blue-300 transition-colors"
+                  title={showProTips ? "Hide Pro Tips" : "Show Pro Tips"}
+                >
+                  <Info className="w-4 h-4" />
+                </button>
               </span>
               {castOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
@@ -301,6 +316,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                   setUploadingRef={setUploadingRef}
                   enableDrag={enableDrag}
                   compact
+                  showProTips={showProTips}
                 />
               </div>
             )}

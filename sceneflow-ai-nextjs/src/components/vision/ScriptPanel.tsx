@@ -1,8 +1,9 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
+import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
 import { SceneProductionData, SceneProductionReferences } from './scene-production/types'
 import { Button } from '@/components/ui/Button'
@@ -43,6 +44,21 @@ interface DialogGenerationProgress {
   totalSteps: number
   message: string
 }
+
+const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg
+    viewBox="0 0 64 64"
+    aria-hidden="true"
+    {...props}
+  >
+    <rect x="10" y="18" width="44" height="10" rx="2" className="fill-slate-100/95" />
+    <rect x="14" y="30" width="36" height="7" rx="2" className="fill-slate-200/95" />
+    <path d="M18 37L10 54" className="stroke-slate-100" strokeWidth="3" strokeLinecap="round" />
+    <path d="M46 37L54 54" className="stroke-slate-100" strokeWidth="3" strokeLinecap="round" />
+    <path d="M18 37L30 54" className="stroke-slate-300" strokeWidth="3" strokeLinecap="round" />
+    <path d="M46 37L34 54" className="stroke-slate-300" strokeWidth="3" strokeLinecap="round" />
+  </svg>
+)
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 const SCENE_IMAGE_DELAY_MS = 5000
@@ -119,6 +135,14 @@ interface ScriptPanelProps {
   }>
   bookmarkedScene?: { sceneId?: string; sceneNumber?: number } | null
   onBookmarkScene?: (bookmark: { sceneId: string; sceneNumber: number } | null) => Promise<void> | void
+  // Storyboard visibility control
+  showStoryboard?: boolean
+  onToggleStoryboard?: () => void
+  // Dashboard visibility control
+  showDashboard?: boolean
+  onToggleDashboard?: () => void
+  // Assets dialog control
+  onOpenAssets?: () => void
 }
 
 // Transform score analysis data to review format
@@ -340,7 +364,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets }: ScriptPanelProps) {
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [showScriptEditor, setShowScriptEditor] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -440,7 +464,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [isPlayingMixed, setIsPlayingMixed] = useState(false)
   const [isPlayingAll, setIsPlayingAll] = useState(false)
   const playbackAbortRef = useRef(false)
-  const [bookmarkSaving, setBookmarkSaving] = useState(false)
+  const [bookmarkSavingSceneIdx, setBookmarkSavingSceneIdx] = useState<number | null>(null)
 
   const scenes = useMemo(() => normalizeScenes(script), [script])
 
@@ -519,35 +543,38 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     border: '1px solid #1f2937'
   }
 
-  const currentSceneIsBookmarked = selectedScene !== null && selectedScene === bookmarkedSceneIndex
-
-  const handleBookmarkToggle = async () => {
+  const handleBookmarkToggle = async (targetSceneIdx?: number) => {
     if (!onBookmarkScene) return
-    if (selectedScene === null) {
+    const resolvedSceneIdx = typeof targetSceneIdx === 'number' ? targetSceneIdx : selectedScene
+    if (resolvedSceneIdx === null || resolvedSceneIdx === undefined) {
       toast.info('Select a scene to bookmark first.', { style: toastVisualStyle })
       return
     }
-    const scene = scenes[selectedScene]
+    const scene = scenes[resolvedSceneIdx]
     if (!scene) {
       toast.error('Selected scene not found.', { style: toastVisualStyle })
       return
     }
-    const sceneId = scene?.id || `scene-${selectedScene}`
-    const sceneNumber = Number(scene?.sceneNumber) || selectedScene + 1
-    setBookmarkSaving(true)
+    const sceneId = scene?.id || `scene-${resolvedSceneIdx}`
+    const sceneNumber = Number(scene?.sceneNumber) || resolvedSceneIdx + 1
+    const isBookmarked = resolvedSceneIdx === bookmarkedSceneIndex
+    setBookmarkSavingSceneIdx(resolvedSceneIdx)
     try {
-      if (currentSceneIsBookmarked) {
+      if (isBookmarked) {
         await onBookmarkScene(null)
         toast.info(`Removed bookmark for Scene ${sceneNumber}.`, { style: toastVisualStyle })
       } else {
         await onBookmarkScene({ sceneId, sceneNumber })
         toast.success(`Bookmarked Scene ${sceneNumber}.`, { style: toastVisualStyle })
       }
+      if (typeof targetSceneIdx === 'number') {
+        setSelectedScene(targetSceneIdx)
+      }
     } catch (error) {
       console.error('[Bookmark] Failed to update bookmark', error)
       toast.error('Failed to update bookmark. Please try again.', { style: toastVisualStyle })
     } finally {
-      setBookmarkSaving(false)
+      setBookmarkSavingSceneIdx(null)
     }
   }
 
@@ -1403,18 +1430,20 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   return (
     <>
       {/* Production Dashboard - moved above Production Plan */}
-      {script && (
-        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/85 to-slate-800/50 shadow-inner mb-6">
+      {script && showDashboard && (
+        <div className="rounded-2xl border border-white/10 bg-slate-950/60 shadow-inner mb-6">
           <div className="px-5 py-5">
             {/* Header with Toggle */}
             <div className="flex items-center justify-between mb-4">
-              <div>
-                <span className="text-[10px] uppercase tracking-[0.45em] text-slate-500">Guide</span>
-                <div className="mt-1 flex items-center gap-2">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800/80 text-sky-300">
-                    <BarChart3 className="w-4 h-4" />
+              <div className="inline-flex items-center gap-3 rounded-xl bg-slate-900/70 border border-white/10 px-3 py-2">
+                <div>
+                  <span className="text-[10px] uppercase tracking-[0.45em] text-slate-400">PROJECT</span>
+                  <div className="mt-1 flex items-center gap-2">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800/80 text-sky-300">
+                      <BarChart3 className="w-4 h-4" />
+                    </div>
+                    <h3 className="text-base font-semibold text-white leading-6 my-0">Dashboard</h3>
                   </div>
-                  <h3 className="text-xl font-semibold text-white leading-6 my-0">Dashboard</h3>
                 </div>
               </div>
               <button
@@ -1613,15 +1642,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     <div className="relative rounded-3xl border border-slate-700/60 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900/60 h-full flex flex-col overflow-hidden shadow-[0_25px_80px_rgba(8,8,20,0.55)]">
       <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-sf-primary via-fuchsia-500 to-cyan-400 opacity-80" />
       {/* Header */}
-      <div className="px-6 py-6 border-b border-white/10 flex items-center justify-between flex-shrink-0 bg-slate-900/40 backdrop-blur">
+      <div className="px-6 py-6 border-b border-white/10 flex items-center justify-between flex-shrink-0 bg-slate-900/70 backdrop-blur rounded-t-3xl">
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-sf-primary to-cyan-400 text-white shadow-lg">
-            <FileText className="w-5 h-5" />
-          </div>
           <div>
-            <span className="text-[11px] uppercase tracking-[0.4em] text-slate-400 block mb-1">Primary Flow</span>
+            <span className="text-[11px] uppercase tracking-[0.4em] text-slate-400 block mb-1">Scene Flow</span>
             <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-semibold text-white leading-6 my-0">Scene Director</h2>
               {scenes.length > 0 && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-sf-primary/15 text-sf-primary border border-sf-primary/40 font-semibold">
                   {scenes.length} {scenes.length === 1 ? 'Scene' : 'Scenes'}
@@ -1653,6 +1678,32 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           )}
           {/* Generate Audio button moved to Storyboard header */}
           
+          {/* Assets Button */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (onOpenAssets) {
+                      onOpenAssets()
+                    } else {
+                      setGenerateAudioDialogOpen(true)
+                    }
+                  }}
+                  className="flex items-center gap-1"
+                >
+                  <Sparkles className="w-4 h-4 text-cyan-300" />
+                  <span className="hidden sm:inline">Assets</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                <p>Generate audio assets</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
           {/* Edit Button */}
           <TooltipProvider>
             <Tooltip>
@@ -1663,7 +1714,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   onClick={() => setShowScriptEditor(true)}
                   className="flex items-center gap-1"
                 >
-                  <Edit className="w-4 h-4" />
+                  <Edit className="w-4 h-4 text-blue-400" />
                   <span className="hidden sm:inline">Edit</span>
                 </Button>
               </TooltipTrigger>
@@ -1673,7 +1724,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             </Tooltip>
           </TooltipProvider>
 
-          {/* Report Button */}
+          {/* Export Button */}
           {script && scenes && scenes.length > 0 && (
             <TooltipProvider>
               <Tooltip>
@@ -1684,8 +1735,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                     onClick={() => setExportDialogOpen(true)}
                     className="flex items-center gap-1"
                   >
-                    <Download className="w-4 h-4" />
-                    <span className="hidden sm:inline">Report</span>
+                    <Download className="w-4 h-4 text-emerald-400" />
+                    <span className="hidden sm:inline">Export</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
@@ -1699,40 +1750,14 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant={currentSceneIsBookmarked ? 'default' : 'outline'}
-                size="sm"
-                onClick={handleBookmarkToggle}
-                disabled={bookmarkSaving || !onBookmarkScene}
-                className={`flex items-center gap-1 ${currentSceneIsBookmarked ? 'bg-amber-500/90 hover:bg-amber-500 text-white' : ''}`}
-              >
-                {bookmarkSaving ? (
-                  <Loader className="w-4 h-4 animate-spin" />
-                ) : currentSceneIsBookmarked ? (
-                  <BookmarkCheck className="w-4 h-4" />
-                ) : (
-                  <BookmarkPlus className="w-4 h-4" />
-                )}
-                <span className="hidden sm:inline">{currentSceneIsBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-              {currentSceneIsBookmarked ? 'Click to clear bookmark' : 'Bookmark the currently selected scene'}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
                 variant="outline"
                 size="sm"
                 onClick={handleJumpToBookmark}
                 disabled={bookmarkedSceneIndex === -1}
                 className="flex items-center gap-1"
               >
-                <BookMarked className="w-4 h-4" />
-                <span className="hidden sm:inline">Open Bookmark</span>
+                <ArrowRight className="w-4 h-4 text-amber-400" />
+                <span className="hidden sm:inline">Bookmark</span>
               </Button>
             </TooltipTrigger>
             <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
@@ -1740,6 +1765,28 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
+
+          {/* Storyboard Toggle Button */}
+          {onToggleStoryboard && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={showStoryboard ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={onToggleStoryboard}
+                    className={`flex items-center gap-1 ${showStoryboard ? 'bg-cyan-500/90 hover:bg-cyan-500 text-white' : ''}`}
+                  >
+                    <ImageIcon className={`w-4 h-4 ${showStoryboard ? 'text-white' : 'text-cyan-400'}`} />
+                    <span className="hidden sm:inline">Storyboard</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                  {showStoryboard ? 'Hide Storyboard section' : 'Show Storyboard section'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
 
           {/* Preview moved to Storyboard header */}
 
@@ -1753,7 +1800,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       </div>
       
       {/* Optional slot between Dashboard and Scene Director */}
-      {belowDashboardSlot ? (
+      {belowDashboardSlot && showStoryboard ? (
         <div className="mt-6">
           {belowDashboardSlot({ openGenerateAudio: () => setGenerateAudioDialogOpen(true) })}
         </div>
@@ -1862,6 +1909,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       sceneAudioTracks={sceneAudioTracks[scene.id || `scene-${idx}`]}
                           domId={domId}
                           isBookmarked={bookmarkedSceneIndex === idx}
+                          onBookmarkToggle={() => handleBookmarkToggle(idx)}
+                          bookmarkSaving={bookmarkSavingSceneIdx === idx}
                 />
                     )
                   })}
@@ -2126,6 +2175,8 @@ interface SceneCardProps {
   }
   domId?: string
   isBookmarked?: boolean
+  onBookmarkToggle?: () => void
+  bookmarkSaving?: boolean
 }
 
 function SceneCard({
@@ -2185,23 +2236,16 @@ function SceneCard({
   sceneAudioTracks,
   domId,
   isBookmarked = false,
+  onBookmarkToggle,
+  bookmarkSaving = false,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
-  const [isDialogueActionOpen, setIsDialogueActionOpen] = useState(false)
-  const [isDirectorsChairOpen, setIsDirectorsChairOpen] = useState(false)
-  const [isStoryboardPreVizOpen, setIsStoryboardPreVizOpen] = useState(false)
-  const [isCallActionOpen, setIsCallActionOpen] = useState(false)
-  const [copilotCollapsed, setCopilotCollapsed] = useState(false)
+  const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(null)
+  const [copilotPanelOpen, setCopilotPanelOpen] = useState(false)
   
   // Determine active step for Co-Pilot
-  const activeStep: WorkflowStep | null = useMemo(() => {
-    if (isDialogueActionOpen) return 'dialogueAction'
-    if (isDirectorsChairOpen) return 'directorsChair'
-    if (isStoryboardPreVizOpen) return 'storyboardPreViz'
-    if (isCallActionOpen) return 'callAction'
-    return null
-  }, [isDialogueActionOpen, isDirectorsChairOpen, isStoryboardPreVizOpen, isCallActionOpen])
+  const activeStep: WorkflowStep | null = activeWorkflowTab
   
   // Completion status detection for workflow steps
   const stepCompletion = useMemo(() => {
@@ -2237,9 +2281,9 @@ function SceneCard({
   // Determine status for each step
   type StepStatus = 'complete' | 'in-progress' | 'todo' | 'locked'
 
-  const getStepStatus = (stepKey: keyof typeof stepCompletion, isOpen: boolean): StepStatus => {
+  const getStepStatus = (stepKey: keyof typeof stepCompletion): StepStatus => {
     if (stepCompletion[stepKey]) return 'complete'
-    if (isOpen) return 'in-progress'
+    if (activeWorkflowTab === stepKey) return 'in-progress'
     if (!stepUnlocked[stepKey as keyof typeof stepUnlocked]) return 'locked'
     return 'todo'
   }
@@ -2258,12 +2302,22 @@ function SceneCard({
     locked: 'bg-slate-600'
   }
 
-  const stepChipConfig: Array<{ key: keyof typeof stepCompletion; label: string; isOpen: boolean }> = [
-    { key: 'dialogueAction', label: 'Dialogue & Action', isOpen: isDialogueActionOpen },
-    { key: 'directorsChair', label: "Director's Chair", isOpen: isDirectorsChairOpen },
-    { key: 'storyboardPreViz', label: 'Storyboard & Pre-Viz', isOpen: isStoryboardPreVizOpen },
-    { key: 'callAction', label: 'Call Action', isOpen: isCallActionOpen }
-  ]
+  const workflowTabs: Array<{ key: WorkflowStep; label: string; icon: React.ReactNode }> = useMemo(() => [
+    { key: 'dialogueAction', label: 'Script', icon: <FileText className="w-4 h-4" /> },
+    { key: 'directorsChair', label: 'Direction', icon: <Film className="w-4 h-4" /> },
+    { key: 'storyboardPreViz', label: 'Frame', icon: <Camera className="w-4 h-4" /> },
+    { key: 'callAction', label: 'Call Action', icon: <Clapperboard className="w-4 h-4" /> }
+  ], [])
+  
+  // Set default tab to first unlocked step
+  useEffect(() => {
+    if (!activeWorkflowTab && !isOutline) {
+      const firstUnlocked = workflowTabs.find(tab => stepUnlocked[tab.key as keyof typeof stepUnlocked])
+      if (firstUnlocked) {
+        setActiveWorkflowTab(firstUnlocked.key)
+      }
+    }
+  }, [isOutline, activeWorkflowTab, stepUnlocked, workflowTabs])
   
   const handleExpand = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -2339,18 +2393,53 @@ function SceneCard({
         </div>
       )}
       <div className="relative z-[1]">
-        <div className="flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">
-          <span>Scene Workflow</span>
-          {isBookmarked && (
-            <span className="text-amber-300 tracking-normal font-semibold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-400/30">
-              Bookmarked
-            </span>
+        <div className="flex items-center justify-between gap-3 text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">
+          <div className="flex items-center gap-2">
+            <span>{`Scene ${sceneNumber}`}</span>
+            {isBookmarked && (
+              <span className="text-amber-300 tracking-normal font-semibold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-400/30">
+                Bookmarked
+              </span>
+            )}
+          </div>
+          {onBookmarkToggle && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onBookmarkToggle()
+                    }}
+                    disabled={bookmarkSaving}
+                    aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark scene'}
+                    className={`inline-flex h-9 w-9 items-center justify-center rounded-full border-2 transition-all shadow-md ${
+                      isBookmarked
+                        ? 'bg-amber-500/30 border-amber-400 text-amber-200 hover:bg-amber-500/40 hover:border-amber-300 hover:shadow-lg'
+                        : 'border-amber-400/50 text-amber-400 hover:border-amber-400 hover:bg-amber-500/20 hover:text-amber-300 hover:shadow-lg'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {bookmarkSaving ? (
+                      <Loader className="w-4 h-4 animate-spin" />
+                    ) : isBookmarked ? (
+                      <BookmarkCheck className="w-5 h-5" />
+                    ) : (
+                      <BookmarkPlus className="w-5 h-5" />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                  {isBookmarked ? 'Remove bookmark' : 'Bookmark this scene'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
         </div>
 
         <div className="mt-2 flex flex-wrap gap-2">
-          {stepChipConfig.map(({ key, label, isOpen }) => {
-            const status = getStepStatus(key, isOpen)
+          {workflowTabs.map(({ key, label }) => {
+            const status = getStepStatus(key)
             return (
               <span
                 key={key as string}
@@ -2533,82 +2622,6 @@ function SceneCard({
               </TooltipProvider>
             </div>
             
-            {/* Score Badge/Button */}
-            {!isOutline && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        if (onGenerateSceneScore) {
-                          onGenerateSceneScore(sceneIdx)
-                        }
-                      }}
-                      disabled={generatingScoreFor === sceneIdx}
-                      className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold transition-all ${
-                        scene.scoreAnalysis 
-                          ? `${getScoreColorClass ? getScoreColorClass(scene.scoreAnalysis.overallScore) : 'bg-gray-100 text-gray-800'} shadow-sm hover:opacity-90 cursor-pointer` 
-                          : 'border border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20 dark:hover:border-blue-700'
-                      } disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      {generatingScoreFor === sceneIdx ? (
-                        <>
-                          <Loader className="w-3 h-3 animate-spin" />
-                          <span>...</span>
-                        </>
-                      ) : scene.scoreAnalysis ? (
-                        <>
-                          <Star className="w-3 h-3 fill-current" />
-                          <span>{scene.scoreAnalysis.overallScore}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Star className="w-3 h-3" />
-                          <span>Score</span>
-                        </>
-                      )}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                    {scene.scoreAnalysis ? (
-                      <div className="text-xs space-y-1">
-                        <p className="font-semibold">Scene Quality Score</p>
-                        <p>Director: {scene.scoreAnalysis.directorScore}/100</p>
-                        <p>Audience: {scene.scoreAnalysis.audienceScore}/100</p>
-                        <p className="text-gray-400 mt-2">Click to regenerate score</p>
-                      </div>
-                    ) : (
-                      <p className="text-xs">Generate scene quality score</p>
-                    )}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-            
-            {/* View Review Button - Only visible when score exists */}
-            {!isOutline && scene.scoreAnalysis && onOpenSceneReview && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onOpenSceneReview(sceneIdx)
-                      }}
-                      className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded transition-colors"
-                    >
-                      <BarChart3 className="w-3 h-3" />
-                      <span>Review</span>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                    <p className="text-xs">View detailed scene analysis</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-            
             {/* Edit Button */}
             {!isOutline && (
               <TooltipProvider>
@@ -2658,41 +2671,6 @@ function SceneCard({
               </TooltipProvider>
             )}
           </div>
-        </div>
-        
-        {/* Row 2: Scene Title */}
-        <div className="py-2 px-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 min-w-0">
-              {scene.heading && (
-                <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 truncate">{scene.heading}</h3>
-              )}
-              {isOutline && (
-                <span className="text-xs px-2 py-0.5 rounded bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 flex-shrink-0">
-                  Outline
-                </span>
-              )}
-            </div>
-            
-            {/* Generate Button (for outline scenes) */}
-            {isOutline && onExpand && (
-              <Button
-                size="sm"
-                onClick={handleExpand}
-                disabled={isExpanding}
-                className="bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50 text-xs px-3 py-1 h-auto"
-              >
-                {isExpanding ? <Loader className="w-3 h-3 animate-spin" /> : 'Generate'}
-              </Button>
-            )}
-          </div>
-        </div>
-        
-        {/* Row 3: Scene Description */}
-        <div className="py-2 px-3 border-b border-gray-100 dark:border-gray-800">
-          <p className={`text-sm text-gray-600 dark:text-gray-400 ${isOpen ? 'whitespace-pre-wrap' : 'line-clamp-3'}`}>
-            {stripAudioDescriptions(scene.action || scene.summary || 'No description available')}
-          </p>
         </div>
       </div>
 
@@ -2780,41 +2758,112 @@ function SceneCard({
             return null
           })()}
           
-          {/* Dialogue & Action Section */}
-          {!isOutline && (() => {
-            const status = getStepStatus('dialogueAction', isDialogueActionOpen)
-            const isLocked = !stepUnlocked.dialogueAction
-            return (
-              <div className={`mb-4 border-t border-gray-200 dark:border-gray-700 pt-4 ${isLocked ? 'opacity-50' : ''}`}>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                    if (!isLocked) {
-                      setIsDialogueActionOpen(!isDialogueActionOpen)
-                    }
-                }}
-                  disabled={isLocked}
-                  className={`flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors ${isLocked ? 'cursor-not-allowed' : ''}`}
-              >
-                <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400 w-5">1</span>
-                      {status === 'complete' && <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />}
-                      {status === 'in-progress' && <ArrowRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
-                      {status === 'todo' && <Circle className="w-4 h-4 text-gray-400" />}
-                      {status === 'locked' && <Circle className="w-4 h-4 text-gray-500" />}
-                </div>
-                    <FileText className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Dialogue & Action</span>
-                    </div>
-                  <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isDialogueActionOpen ? 'rotate-90' : ''}`} />
-                        </button>
+          {/* Stepped Timeline Navigation */}
+          {!isOutline && (
+            <div className="mt-4 mb-6">
+              <div className="flex items-center max-w-4xl mx-auto py-4 px-2">
+                {workflowTabs.map((tab, index) => {
+                  const status = getStepStatus(tab.key)
+                  const isLocked = !stepUnlocked[tab.key as keyof typeof stepUnlocked]
+                  const isActive = activeWorkflowTab === tab.key
+                  const isCompleted = status === 'complete'
+                  const isUpcoming = status === 'todo' || status === 'locked'
+                  const stepNumber = index + 1
+                  const prevCompleted = index > 0 && getStepStatus(workflowTabs[index - 1].key) === 'complete'
+                  
+                  return (
+                    <React.Fragment key={tab.key}>
+                      <div 
+                        className={`flex items-center ${isLocked ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} group relative z-10`}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (!isLocked && tab.key !== activeWorkflowTab) {
+                            setActiveWorkflowTab(tab.key)
+                          }
+                        }}
+                      >
+                        {/* Step Circle */}
+                        {isCompleted ? (
+                          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-green-600 text-white font-bold text-sm shadow-md flex-shrink-0">
+                            <CheckCircle className="w-5 h-5" />
+                          </div>
+                        ) : isActive ? (
+                          <div className="w-9 h-9 flex items-center justify-center rounded-full bg-sf-primary text-white ring-4 ring-sf-primary/40 font-extrabold text-lg shadow-lg flex-shrink-0">
+                            {stepNumber}
+                          </div>
+                        ) : (
+                          <div className={`w-8 h-8 flex items-center justify-center rounded-full border-2 font-bold text-sm flex-shrink-0 ${
+                            isUpcoming 
+                              ? 'bg-slate-800 text-slate-400 border-slate-600' 
+                              : 'bg-slate-700 text-slate-300 border-slate-500'
+                          }`}>
+                            {stepNumber}
+                          </div>
+                        )}
+                        
+                        {/* Step Label */}
+                        <p className={`ml-2 text-sm font-semibold hidden sm:block transition-colors whitespace-nowrap ${
+                          isCompleted 
+                            ? 'text-green-400' 
+                            : isActive 
+                              ? 'text-white font-extrabold' 
+                              : 'text-slate-400 group-hover:text-slate-300'
+                        }`}>
+                          {tab.label}
+                        </p>
                       </div>
-            )
-          })()}
-          
-          {!isOutline && isDialogueActionOpen && (
-                <div className="mt-3 space-y-4">
+                      
+                      {/* Connector Line */}
+                      {index < workflowTabs.length - 1 && (
+                        <div 
+                          className={`flex-1 h-0.5 mx-2 ${
+                            prevCompleted || isCompleted
+                              ? 'bg-green-600' 
+                              : 'bg-slate-700'
+                          }`}
+                        />
+                      )}
+                    </React.Fragment>
+                  )
+                })}
+                
+                {/* AI Co-Pilot Help Button */}
+                {activeStep && (
+                  <div className="ml-4 flex-shrink-0">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setCopilotPanelOpen(!copilotPanelOpen)
+                            }}
+                            className={`p-2 rounded-lg transition ${
+                              copilotPanelOpen
+                                ? 'bg-sf-primary/20 text-sf-primary border border-sf-primary/40'
+                                : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700'
+                            }`}
+                            aria-label={activeStep === 'dialogueAction' ? 'Script help' : activeStep === 'directorsChair' ? 'Direction help' : activeStep === 'storyboardPreViz' ? 'Frame help' : 'Call Action help'}
+                          >
+                            <Lightbulb className="w-5 h-5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                          {activeStep === 'dialogueAction' && 'Get help with Script workflow'}
+                          {activeStep === 'directorsChair' && 'Get help with Direction workflow'}
+                          {activeStep === 'storyboardPreViz' && 'Get help with Frame workflow'}
+                          {activeStep === 'callAction' && 'Get help with Call Action workflow'}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                )}
+              </div>
+              
+              {/* Tab Content Container */}
+              <div className="mt-4">
+                {activeWorkflowTab === 'dialogueAction' && (
+                  <div className="space-y-4">
                   {/* Scene Narration */}
                   {scene.narration && (
                     <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
@@ -3232,44 +3281,11 @@ function SceneCard({
                       })}
                     </div>
                   )}
-                </div>
-              )}
-          
-          {/* Director's Chair Section */}
-          {!isOutline && (() => {
-            const status = getStepStatus('directorsChair', isDirectorsChairOpen)
-            const isLocked = !stepUnlocked.directorsChair
-            return (
-              <div className={`mb-4 border-t border-gray-200 dark:border-gray-700 pt-4 ${isLocked ? 'opacity-50' : ''}`}>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    if (!isLocked) {
-                      setIsDirectorsChairOpen(!isDirectorsChairOpen)
-                    }
-                  }}
-                  disabled={isLocked}
-                  className={`flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors ${isLocked ? 'cursor-not-allowed' : ''}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400 w-5">2</span>
-                      {status === 'complete' && <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />}
-                      {status === 'in-progress' && <ArrowRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
-                      {status === 'todo' && <Circle className="w-4 h-4 text-gray-400" />}
-                      {status === 'locked' && <Circle className="w-4 h-4 text-gray-500" />}
-                    </div>
-                    <Film className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Director's Chair</span>
                   </div>
-                  <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isDirectorsChairOpen ? 'rotate-90' : ''}`} />
-                </button>
-              </div>
-            )
-          })()}
-          
-          {!isOutline && isDirectorsChairOpen && (
-            <div className="mt-3 space-y-4">
+                )}
+                
+                {activeWorkflowTab === 'directorsChair' && (
+                  <div className="space-y-4">
                   {!scene.sceneDirection ? (
                     <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
@@ -3510,44 +3526,11 @@ function SceneCard({
                       </div>
                     </div>
                   )}
-                </div>
-          )}
-          
-          {/* Storyboard & Pre-Viz Section */}
-          {!isOutline && (() => {
-            const status = getStepStatus('storyboardPreViz', isStoryboardPreVizOpen)
-            const isLocked = !stepUnlocked.storyboardPreViz
-            return (
-              <div className={`mb-4 border-t border-gray-200 dark:border-gray-700 pt-4 ${isLocked ? 'opacity-50' : ''}`}>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    if (!isLocked) {
-                      setIsStoryboardPreVizOpen(!isStoryboardPreVizOpen)
-                    }
-                  }}
-                  disabled={isLocked}
-                  className={`flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors ${isLocked ? 'cursor-not-allowed' : ''}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400 w-5">3</span>
-                      {status === 'complete' && <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />}
-                      {status === 'in-progress' && <ArrowRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
-                      {status === 'todo' && <Circle className="w-4 h-4 text-gray-400" />}
-                      {status === 'locked' && <Circle className="w-4 h-4 text-gray-500" />}
-                    </div>
-                    <Camera className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Storyboard & Pre-Viz</span>
                   </div>
-                  <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isStoryboardPreVizOpen ? 'rotate-90' : ''}`} />
-                </button>
-              </div>
-            )
-          })()}
-          
-          {!isOutline && isStoryboardPreVizOpen && (
-            <div className="mt-3 space-y-4">
+                )}
+                
+                {activeWorkflowTab === 'storyboardPreViz' && (
+                  <div className="space-y-4">
                   {/* Scene Image */}
                   {scene.imageUrl && (
                     <div className="rounded-lg overflow-hidden border-2 border-gray-300 dark:border-gray-600 shadow-md max-w-3xl mx-auto">
@@ -3595,77 +3578,59 @@ function SceneCard({
                       </TooltipProvider>
                     </div>
                   )}
-                </div>
-          )}
-          
-          {/* Call Action Section */}
-          {!isOutline && (() => {
-            const status = getStepStatus('callAction', isCallActionOpen)
-            const isLocked = !stepUnlocked.callAction
-            return (
-              <div className={`mb-4 border-t border-gray-200 dark:border-gray-700 pt-4 ${isLocked ? 'opacity-50' : ''}`}>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    if (!isLocked) {
-                      setIsCallActionOpen(!isCallActionOpen)
-                    }
-                  }}
-                  disabled={isLocked}
-                  className={`flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg p-2 transition-colors ${isLocked ? 'cursor-not-allowed' : ''}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400 w-5">4</span>
-                      {status === 'complete' && <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />}
-                      {status === 'in-progress' && <ArrowRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
-                      {status === 'todo' && <Circle className="w-4 h-4 text-gray-400" />}
-                      {status === 'locked' && <Circle className="w-4 h-4 text-gray-500" />}
-                    </div>
-                    <Clapperboard className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Call Action</span>
                   </div>
-                  <ChevronRight className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isCallActionOpen ? 'rotate-90' : ''}`} />
-                </button>
+                )}
+                
+                {activeWorkflowTab === 'callAction' && (
+                  <div className="space-y-4">
+                    {onInitializeSceneProduction && onSegmentPromptChange && onSegmentGenerate && onSegmentUpload && sceneProductionReferences ? (
+                      <SceneProductionManager
+                        sceneId={scene.id || `scene-${sceneIdx}`}
+                        sceneNumber={sceneNumber}
+                        heading={typeof scene.heading === 'string' ? scene.heading : scene.heading?.text}
+                        productionData={sceneProductionData || null}
+                        references={sceneProductionReferences}
+                        onInitialize={onInitializeSceneProduction}
+                        onPromptChange={onSegmentPromptChange}
+                        onGenerate={onSegmentGenerate}
+                        onUpload={onSegmentUpload}
+                        audioTracks={sceneAudioTracks}
+                      />
+                    ) : (
+                      <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Scene production handlers are not available. Please refresh the page.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            )
-          })()}
-          
-          {!isOutline && isCallActionOpen && (
-            <div className="mt-3 space-y-4">
-              {onInitializeSceneProduction && onSegmentPromptChange && onSegmentGenerate && onSegmentUpload && sceneProductionReferences ? (
-                <SceneProductionManager
-                  sceneId={scene.id || `scene-${sceneIdx}`}
-                  sceneNumber={sceneNumber}
-                  heading={typeof scene.heading === 'string' ? scene.heading : scene.heading?.text}
-                  productionData={sceneProductionData || null}
-                  references={sceneProductionReferences}
-                  onInitialize={onInitializeSceneProduction}
-                  onPromptChange={onSegmentPromptChange}
-                  onGenerate={onSegmentGenerate}
-                  onUpload={onSegmentUpload}
-                  audioTracks={sceneAudioTracks}
-                />
-              ) : (
-                <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Scene production handlers are not available. Please refresh the page.
-                  </p>
-                </div>
-              )}
             </div>
           )}
           
-          {/* AI Co-Pilot Guidance Panel */}
+          {/* AI Co-Pilot Side Panel */}
           {!isOutline && activeStep && (
-            <div className="mt-6">
-              <SceneWorkflowCoPilot
-                activeStep={activeStep}
-                isCollapsed={copilotCollapsed}
-                onToggleCollapse={() => setCopilotCollapsed(!copilotCollapsed)}
-              />
-            </div>
+            <SceneWorkflowCoPilotPanel
+              activeStep={activeStep}
+              isOpen={copilotPanelOpen}
+              onClose={() => setCopilotPanelOpen(false)}
+              onRegenerate={activeStep === 'directorsChair' && onGenerateSceneDirection ? async () => {
+                if (onGenerateSceneDirection) {
+                  await onGenerateSceneDirection(sceneIdx)
+                }
+              } : undefined}
+              onRunReview={activeStep === 'dialogueAction' && onGenerateSceneScore ? () => {
+                if (onGenerateSceneScore) {
+                  onGenerateSceneScore(sceneIdx)
+                }
+              } : undefined}
+              sceneIdx={sceneIdx}
+              generatingDirectionFor={generatingDirectionFor}
+              generatingScoreFor={generatingScoreFor}
+            />
           )}
+          
           
           {/* Show summary for outlines only (action now always visible in Row 3) */}
           {isOutline && scene.summary && (

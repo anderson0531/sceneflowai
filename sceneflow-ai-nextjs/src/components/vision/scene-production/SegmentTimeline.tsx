@@ -197,17 +197,21 @@ export function SegmentTimeline({ segments, selectedSegmentId, onSelect, audioTr
       </div>
 
       {/* Segment Cards (Alternative View) - Keep for detailed editing */}
-      <div className="flex flex-wrap gap-3 mt-4">
-        {segments.map((segment) => (
-          <SegmentBlock
-            key={segment.segmentId}
-            segment={segment}
-            isSelected={segment.segmentId === selectedSegmentId}
-            onSelect={onSelect}
-            isExpanded={expandedSegments.has(segment.segmentId)}
-            onToggleExpand={handleToggleExpand}
-          />
-        ))}
+      <div className="mt-4 border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-gray-900 overflow-hidden">
+        <div className="overflow-x-auto p-3">
+          <div className="flex gap-3 min-w-max">
+            {segments.map((segment) => (
+              <SegmentBlock
+                key={segment.segmentId}
+                segment={segment}
+                isSelected={segment.segmentId === selectedSegmentId}
+                onSelect={onSelect}
+                isExpanded={expandedSegments.has(segment.segmentId)}
+                onToggleExpand={handleToggleExpand}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   )

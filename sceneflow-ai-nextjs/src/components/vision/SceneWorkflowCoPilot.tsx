@@ -12,7 +12,7 @@ interface SceneWorkflowCoPilotProps {
   onToggleCollapse?: () => void
 }
 
-const guidanceContent: Record<WorkflowStep, {
+export const guidanceContent: Record<WorkflowStep, {
   title: string
   icon: React.ReactNode
   goal: string
@@ -23,7 +23,7 @@ const guidanceContent: Record<WorkflowStep, {
   tip: string
 }> = {
   dialogueAction: {
-    title: 'Dialogue & Action',
+    title: 'Script',
     icon: <FileText className="w-5 h-5 text-sf-primary" />,
     goal: 'Finalize the scene script.',
     whyItMatters: 'The script is the foundation. Changes made here automatically update everything else. Locking the script now prevents costly regeneration later.',
@@ -41,7 +41,7 @@ const guidanceContent: Record<WorkflowStep, {
     tip: 'Finalizing the script early prevents costly rework later in the workflow.'
   },
   directorsChair: {
-    title: 'Director\'s Chair',
+    title: 'Direction',
     icon: <Film className="w-5 h-5 text-sf-primary" />,
     goal: 'Define the cinematic vision and technical execution of the scene.',
     whyItMatters: 'This direction is used directly as the input prompt for storyboards and final video generation. Precision here is key.',
@@ -61,7 +61,7 @@ const guidanceContent: Record<WorkflowStep, {
     tip: 'This direction is used directly as the input prompt for storyboards and final video. Precision here is key.'
   },
   storyboardPreViz: {
-    title: 'Storyboard & Pre-Viz',
+    title: 'Frame',
     icon: <Camera className="w-5 h-5 text-sf-primary" />,
     goal: 'Visualize the scene and gather feedback before final video generation.',
     whyItMatters: 'This is your checkpoint! Video generation is intensive. Making changes to the storyboard is fast; making changes to the video is slow and costly.',

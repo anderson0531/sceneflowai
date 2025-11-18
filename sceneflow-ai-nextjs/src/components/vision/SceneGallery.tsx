@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard } from 'lucide-react'
+import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData } from '@/lib/types/reports'
@@ -22,6 +22,8 @@ interface SceneGalleryProps {
   onSegmentPromptChange: (sceneId: string, segmentId: string, prompt: string) => void
   onSegmentGenerate: (sceneId: string, segmentId: string, mode: 'video' | 'image') => Promise<void>
   onSegmentUpload: (sceneId: string, segmentId: string, file: File) => Promise<void>
+  onOpenAssets?: () => void
+  onOpenPreview?: () => void
 }
 
 const buildSceneKey = (scene: any, index: number) => scene.id || scene.sceneId || `scene-${index}`
@@ -39,6 +41,8 @@ export function SceneGallery({
   onSegmentPromptChange,
   onSegmentGenerate,
   onSegmentUpload,
+  onOpenAssets,
+  onOpenPreview,
 }: SceneGalleryProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'timeline'>('grid')
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -82,23 +86,34 @@ export function SceneGallery({
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6 h-full overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <Camera className="w-5 h-5 text-sf-primary" />
-          <h2 className="font-semibold text-gray-900 dark:text-gray-100">Scene Gallery</h2>
+          <Clapperboard className="w-5 h-5 text-sf-primary" />
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">Storyboard</h3>
           <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
             {scenes.length} {scenes.length === 1 ? 'scene' : 'scenes'}
           </span>
         </div>
         
         <div className="flex gap-2">
+          {onOpenPreview && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onOpenPreview}
+              className="flex items-center gap-2"
+            >
+              <Eye className="w-4 h-4 text-purple-300" />
+              <span>Preview</span>
+            </Button>
+          )}
           {scenes.length > 0 && (
             <Button
               variant="outline"
               size="sm"
               onClick={() => setReportPreviewOpen(true)}
-              className="flex items-center gap-2"
+              className="flex items-center justify-center"
+              title="Print Storyboard"
             >
               <Printer className="w-4 h-4" />
-              <span>Storyboard</span>
             </Button>
           )}
           <button 

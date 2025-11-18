@@ -2,49 +2,60 @@
 
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/Button'
-import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SceneSegment, SceneProductionReferences, SceneSegmentStatus } from './types'
-import { Upload, Video, Image as ImageIcon, CheckCircle2, Film, Link as LinkIcon } from 'lucide-react'
+import { Upload, Video, Image as ImageIcon, CheckCircle2, Film, Link as LinkIcon, Sparkles, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export type GenerationType = 'T2V' | 'I2V' | 'T2I' | 'UPLOAD'
 
+interface SegmentPromptSummary {
+  promptText: string
+  platform?: string
+  promptType?: GenerationType
+  characterNames?: string[]
+  sceneRefNames?: string[]
+  objectNames?: string[]
+}
+
 interface SegmentStudioProps {
   segment: SceneSegment | null
   previousSegmentLastFrame?: string | null
-  onPromptChange: (prompt: string) => void
   onGenerate: (mode: GenerationType, options?: { startFrameUrl?: string }) => Promise<void>
   onUploadMedia: (file: File) => Promise<void>
   references: SceneProductionReferences
   estimatedCredits?: number | null
+  promptSummary?: SegmentPromptSummary | null
+  onOpenPromptBuilder?: () => void
+  onOpenScenePreview?: () => void
 }
 
 export function SegmentStudio({
   segment,
   previousSegmentLastFrame,
-  onPromptChange,
   onGenerate,
   onUploadMedia,
   references,
   estimatedCredits,
+  promptSummary,
+  onOpenPromptBuilder,
+  onOpenScenePreview,
 }: SegmentStudioProps) {
-  const [promptDraft, setPromptDraft] = useState(segment?.userEditedPrompt ?? segment?.generatedPrompt ?? '')
   const [generationType, setGenerationType] = useState<GenerationType>('T2V')
   const [startFrameUrl, setStartFrameUrl] = useState<string | null>(null)
 
   useEffect(() => {
-    setPromptDraft(segment?.userEditedPrompt ?? segment?.generatedPrompt ?? '')
-    // Determine default generation type based on segment recommendations or previous frame availability
-    if (previousSegmentLastFrame) {
+    if (promptSummary?.promptType) {
+      setGenerationType(promptSummary.promptType)
+    } else if (previousSegmentLastFrame) {
       setGenerationType('I2V')
       setStartFrameUrl(previousSegmentLastFrame)
     } else {
       setGenerationType('T2V')
       setStartFrameUrl(null)
     }
-  }, [segment?.segmentId, segment?.userEditedPrompt, segment?.generatedPrompt, previousSegmentLastFrame])
+  }, [segment?.segmentId, previousSegmentLastFrame, promptSummary?.promptType])
 
   if (!segment) {
     return (
@@ -58,12 +69,6 @@ export function SegmentStudio({
     const file = event.target.files?.[0]
     if (file) {
       await onUploadMedia(file)
-    }
-  }
-
-  const handlePromptBlur = () => {
-    if (promptDraft !== undefined) {
-      onPromptChange(promptDraft)
     }
   }
 
@@ -111,35 +116,33 @@ export function SegmentStudio({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-          Segment {segment.sequenceIndex + 1} Studio
-        </h4>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          {displayStatus(segment.status)} · {segment.startTime.toFixed(1)}s – {segment.endTime.toFixed(1)}s
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            Segment {segment.sequenceIndex + 1} Studio
+          </h4>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {displayStatus(segment.status)} · {segment.startTime.toFixed(1)}s – {segment.endTime.toFixed(1)}s
+          </p>
+        </div>
+        {onOpenScenePreview && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onOpenScenePreview}
+            className="flex items-center gap-2"
+          >
+            <Video className="w-4 h-4" />
+            Preview Scene
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-4">
-          <div className="aspect-video rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-950/5 dark:bg-gray-900 flex items-center justify-center overflow-hidden">
-            {segment.activeAssetUrl ? (
-              <video
-                src={segment.activeAssetUrl}
-                controls
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="text-sm text-gray-500 dark:text-gray-400 text-center px-6">
-                No active take yet. Generate a clip or upload custom footage to preview continuity.
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-3">
-            {/* Generation Type Selector */}
+          <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-4 bg-white/70 dark:bg-gray-900/40 space-y-4">
             <div>
-              <label className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-2 block">
+              <label className="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-2 block uppercase tracking-wide">
                 Generation Type
               </label>
               <Select value={generationType} onValueChange={handleGenerationTypeChange}>
@@ -191,9 +194,9 @@ export function SegmentStudio({
             )}
 
             {/* Generate/Upload Buttons */}
-            <div className="grid grid-cols-2 gap-2">
+            <div>
               {generationType === 'UPLOAD' ? (
-                <label className="inline-flex col-span-2">
+                <label className="inline-flex w-full">
                   <input type="file" className="hidden" accept="video/*,image/*" onChange={handleUploadChange} />
                   <Button type="button" variant="outline" className="w-full flex items-center gap-2 justify-center">
                     <Upload className="w-4 h-4" />
@@ -203,10 +206,15 @@ export function SegmentStudio({
               ) : (
                 <Button
                   onClick={handleGenerateClick}
-                  className="flex items-center gap-2 col-span-2"
+                  className="w-full flex items-center gap-2 justify-center"
                   disabled={segment?.status === 'GENERATING'}
                 >
-                  {generationType === 'T2V' || generationType === 'I2V' ? (
+                  {segment?.status === 'GENERATING' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : generationType === 'T2V' || generationType === 'I2V' ? (
                     <>
                       <Video className="w-4 h-4" />
                       Generate Video
@@ -223,8 +231,8 @@ export function SegmentStudio({
 
             {/* Start Frame Preview for I2V */}
             {generationType === 'I2V' && startFrameUrl && (
-              <div className="mt-2 p-2 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-                <div className="text-xs font-medium text-blue-900 dark:text-blue-300 mb-1">
+              <div className="p-3 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                <div className="text-xs font-medium text-blue-900 dark:text-blue-300 mb-2">
                   Continuity Frame:
                 </div>
                 <img
@@ -234,41 +242,75 @@ export function SegmentStudio({
                 />
               </div>
             )}
-          </div>
 
-          {typeof estimatedCredits === 'number' ? (
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              Estimated cost: <span className="font-semibold text-sf-primary">{estimatedCredits.toFixed(2)} credits</span>
-            </div>
-          ) : null}
+            {typeof estimatedCredits === 'number' && (
+              <div className="text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-200 dark:border-gray-700">
+                Estimated cost: <span className="font-semibold text-sf-primary">{estimatedCredits.toFixed(2)} credits</span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2 block">
-              AI Prompt
-            </label>
-            <Textarea
-              value={promptDraft}
-              onChange={(event) => setPromptDraft(event.target.value)}
-              onBlur={handlePromptBlur}
-              rows={12}
-              placeholder="Describe the visuals, camera, and emotional beats for this segment."
-            />
+          <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-4 bg-white/70 dark:bg-gray-900/40">
+            <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+              <div className="flex-1">
+                <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Scene Segment Description</div>
+                <div className="flex items-center gap-3 flex-wrap">
+                  {promptSummary?.platform && (
+                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      {promptSummary.platform}
+                    </div>
+                  )}
+                  {promptSummary?.promptType && (
+                    <div className="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                      {promptSummary.promptType}
+                    </div>
+                  )}
+                </div>
+              </div>
+              {onOpenPromptBuilder && (
+                <Button
+                  size="sm"
+                  onClick={onOpenPromptBuilder}
+                  className="flex items-center gap-2 flex-shrink-0"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Edit Description
+                </Button>
+              )}
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-3 whitespace-pre-line min-h-[96px]">
+              {promptSummary?.promptText || 'Generate or edit the scene segment description to see it here. This description is used to generate video and image prompts.'}
+            </p>
+            {(promptSummary?.characterNames?.length ||
+              promptSummary?.sceneRefNames?.length ||
+              promptSummary?.objectNames?.length) && (
+              <div className="mt-3 grid gap-2 sm:grid-cols-3 text-xs text-gray-600 dark:text-gray-400">
+                <div>
+                  <div className="font-semibold uppercase text-[11px] text-gray-500 dark:text-gray-400 mb-1">Characters</div>
+                  <p>{promptSummary?.characterNames?.join(', ') || 'None selected'}</p>
+                </div>
+                <div>
+                  <div className="font-semibold uppercase text-[11px] text-gray-500 dark:text-gray-400 mb-1">Scene refs</div>
+                  <p>{promptSummary?.sceneRefNames?.join(', ') || 'None selected'}</p>
+                </div>
+                <div>
+                  <div className="font-semibold uppercase text-[11px] text-gray-500 dark:text-gray-400 mb-1">Objects</div>
+                  <p>{promptSummary?.objectNames?.join(', ') || 'None selected'}</p>
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="space-y-2">
-              <div className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Continuity</div>
+          <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-4 bg-white/70 dark:bg-gray-900/40 space-y-4">
+            <div>
+              <div className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase mb-2 tracking-wide">Continuity</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">
                 {startFrameUrl ? (
-                  <div className="space-y-1">
-                    <div className="text-green-600 dark:text-green-400">✓ Start frame set for continuity</div>
-                    {segment.references.startFrameUrl && (
-                      <div className="text-gray-600 dark:text-gray-400">
-                        Frame from previous segment will be used for seamless transition.
-                      </div>
-                    )}
+                  <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Start frame set for continuity</span>
                   </div>
                 ) : (
                   <div className="text-gray-500 dark:text-gray-400">
@@ -277,29 +319,29 @@ export function SegmentStudio({
                 )}
               </div>
             </div>
-            <div className="space-y-2">
-              <div className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Linked References</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+            <div>
+              <div className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase mb-2 tracking-wide">Linked References</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 space-y-2">
                 <div>
                   <span className="font-medium text-gray-600 dark:text-gray-300">Characters:</span>{' '}
                   {references.characters.length > 0
                     ? references.characters.map((char: any) => char.name || char.id).join(', ')
-                    : 'Drag a character from the sidebar'}
+                    : <span className="italic text-gray-400">Drag a character from the sidebar</span>}
                 </div>
                 <div>
                   <span className="font-medium text-gray-600 dark:text-gray-300">Scene refs:</span>{' '}
                   {references.sceneReferences.length > 0
                     ? references.sceneReferences.map((ref) => ref.name).join(', ')
-                    : 'Drag scene references here'}
+                    : <span className="italic text-gray-400">Drag scene references here</span>}
                 </div>
                 <div>
                   <span className="font-medium text-gray-600 dark:text-gray-300">Objects:</span>{' '}
                   {references.objectReferences.length > 0
                     ? references.objectReferences.map((ref) => ref.name).join(', ')
-                    : 'Drag object references here'}
+                    : <span className="italic text-gray-400">Drag object references here</span>}
                 </div>
               </div>
-              <div className="text-xs text-gray-400 dark:text-gray-500 italic">
+              <div className="text-xs text-gray-400 dark:text-gray-500 italic mt-2">
                 Drag references from the sidebar to anchor this segment&apos;s look and props.
               </div>
             </div>
@@ -307,10 +349,10 @@ export function SegmentStudio({
         </div>
       </div>
 
-      <div>
-        <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Takes Gallery</h5>
+      <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-4 bg-white/70 dark:bg-gray-900/40">
+        <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Takes Gallery</h5>
         {segment.takes.length === 0 ? (
-          <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg py-6 text-sm text-gray-500 dark:text-gray-400 text-center">
+          <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg py-8 text-sm text-gray-500 dark:text-gray-400 text-center">
             No takes yet. Generate or upload media to populate this gallery.
           </div>
         ) : (
@@ -319,10 +361,10 @@ export function SegmentStudio({
               <div
                 key={take.id}
                 className={cn(
-                  'border rounded-lg p-3 space-y-2',
+                  'border rounded-lg p-3 space-y-2 transition-all hover:shadow-md',
                   take.status === 'COMPLETE'
                     ? 'border-emerald-400/60 bg-emerald-50 dark:bg-emerald-900/20'
-                    : 'border-gray-200 dark:border-gray-800'
+                    : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900'
                 )}
               >
                 <div className="aspect-video rounded-md bg-gray-100 dark:bg-gray-800 overflow-hidden flex items-center justify-center">

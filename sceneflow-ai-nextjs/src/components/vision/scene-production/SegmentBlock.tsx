@@ -57,7 +57,7 @@ export const SegmentBlock = memo(({ segment, isSelected, onSelect, isExpanded = 
     <div
       className={cn(
         'flex flex-col rounded-lg border-2 transition-all flex-shrink-0 bg-white dark:bg-gray-900 shadow-sm',
-        'min-w-[280px] max-w-[360px] flex-1',
+        'w-[280px]',
         isSelected
           ? 'border-sf-primary ring-2 ring-sf-primary/40 bg-sf-primary/5'
           : 'border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'

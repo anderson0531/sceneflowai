@@ -10,6 +10,7 @@ export interface ContextBarTab {
 
 interface ContextBarProps {
   title: string
+  titleIcon?: React.ReactNode
   tabs?: ContextBarTab[]
   activeTab?: string
   onTabChange?: (value: string) => void
@@ -25,6 +26,7 @@ interface ContextBarProps {
 
 export function ContextBar({
   title,
+  titleIcon,
   tabs,
   activeTab,
   onTabChange,
@@ -50,16 +52,23 @@ export function ContextBar({
           'h-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2',
           titleVariant === 'page' ? 'py-3 md:py-4' : 'py-2 sm:py-0 sm:h-12'
         )}>
-          <div className="min-w-0 flex items-center gap-2">
-            <h2
-              className={cn(
-                'truncate font-semibold text-gray-900 dark:text-white',
-                titleVariant === 'page' ? 'text-2xl md:text-3xl font-extrabold tracking-tight' : 'text-sm md:text-base',
-                emphasis && titleVariant !== 'page' && 'text-base md:text-lg font-bold'
-              )}
-            >
-              {title}
-            </h2>
+          <div className="min-w-0 flex items-center gap-3">
+            {titleIcon && (
+              <div className="flex-shrink-0">
+                {titleIcon}
+              </div>
+            )}
+            <div className="flex items-center">
+              <h2
+                className={cn(
+                  'truncate font-semibold text-gray-900 dark:text-white',
+                  titleVariant === 'page' ? 'text-2xl md:text-3xl font-extrabold tracking-tight leading-none' : 'text-sm md:text-base',
+                  emphasis && titleVariant !== 'page' && 'text-base md:text-lg font-bold'
+                )}
+              >
+                {title}
+              </h2>
+            </div>
             {meta ? (
               <div className="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-800 text-gray-300 text-[11px] leading-tight border border-gray-700">
                 {meta}
