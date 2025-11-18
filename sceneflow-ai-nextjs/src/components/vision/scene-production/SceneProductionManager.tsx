@@ -4,40 +4,13 @@ import { useEffect, useState, useMemo } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { SegmentTimeline } from './SegmentTimeline'
+import { SegmentStudio, GenerationType } from './SegmentStudio'
 import {
   SceneProductionData,
   SceneProductionReferences,
   SceneSegment,
 } from './types'
-import { SceneVideoPromptBuilder, VideoPromptConfig } from './SceneVideoPromptBuilder'
-import { ScenePlayerDialog } from './ScenePlayerDialog'
-import { SceneVideoBuilder } from './SceneVideoBuilder'
-import { SceneImageBuilder } from './SceneImageBuilder'
-import { Calculator, Sparkles, Play, Video, Image as ImageIcon, Upload } from 'lucide-react'
-import { GenerationType } from './types'
-
-const DEFAULT_PLATFORM = 'runway'
-
-const getReferenceId = (item: any) => item?.id || item?.referenceId || item?.characterId || item?.name
-
-const resolveNames = (ids: string[] = [], collection: any[] = []) => {
-  const lookup = new Map(collection.map((item) => [getReferenceId(item), item]))
-  return ids
-    .map((id) => {
-      const ref = lookup.get(id)
-      return ref?.name || ref?.title || ref?.label || id
-    })
-    .filter(Boolean)
-}
-
-const buildDefaultConfig = (segment: SceneSegment): VideoPromptConfig => ({
-  prompt: segment.userEditedPrompt ?? segment.generatedPrompt ?? '',
-  platform: DEFAULT_PLATFORM,
-  promptType: 'T2V',
-  characters: segment.references.characterIds ?? [],
-  sceneRefs: segment.references.sceneRefIds ?? [],
-  objects: segment.references.objectRefIds ?? [],
-})
+import { Calculator, Sparkles } from 'lucide-react'
 
 interface SceneProductionManagerProps {
   sceneId: string
@@ -79,12 +52,6 @@ export function SceneProductionManager({
   const [isInitializing, setIsInitializing] = useState(false)
   const segments = productionData?.segments ?? []
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(segments[0]?.segmentId ?? null)
-  const [promptConfigs, setPromptConfigs] = useState<Record<string, VideoPromptConfig>>({})
-  const [isPromptBuilderOpen, setIsPromptBuilderOpen] = useState(false)
-  const [builderSegmentId, setBuilderSegmentId] = useState<string | null>(null)
-  const [isScenePlayerOpen, setIsScenePlayerOpen] = useState(false)
-  const [isVideoBuilderOpen, setIsVideoBuilderOpen] = useState(false)
-  const [isImageBuilderOpen, setIsImageBuilderOpen] = useState(false)
 
   useEffect(() => {
     if (segments.length > 0) {
@@ -96,24 +63,8 @@ export function SceneProductionManager({
     }
   }, [segments, selectedSegmentId])
 
-  const builderSegment =
-    segments.find((segment) => segment.segmentId === (builderSegmentId ?? selectedSegmentId ?? '')) ?? null
-
-  const builderConfig = builderSegment
-    ? promptConfigs[builderSegment.segmentId] ?? buildDefaultConfig(builderSegment)
-    : undefined
-
-  const openPromptBuilder = (segmentId: string) => {
-    setBuilderSegmentId(segmentId)
-    setIsPromptBuilderOpen(true)
-  }
-
-  const handlePromptBuilderSave = (config: VideoPromptConfig) => {
-    if (!builderSegment) return
-    setPromptConfigs((prev) => ({ ...prev, [builderSegment.segmentId]: config }))
-    onPromptChange(sceneId, builderSegment.segmentId, config.prompt)
-    setIsPromptBuilderOpen(false)
-  }
+  const selectedSegment: SceneSegment | null =
+    segments.find((segment) => segment.segmentId === selectedSegmentId) ?? null
 
   const handleInitialize = async () => {
     setIsInitializing(true)
@@ -130,70 +81,29 @@ export function SceneProductionManager({
     }
   }
 
-  const selectedSegment = segments.find((segment) => segment.segmentId === selectedSegmentId) ?? null
-
-  const handleUploadClick = () => {
+  const handlePromptChange = (prompt: string) => {
     if (!selectedSegment) return
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = 'video/*,image/*'
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (file && selectedSegment) {
-        try {
-          await onUpload(sceneId, selectedSegment.segmentId, file)
-        } catch (error) {
-          console.error('[SceneProduction] Upload failed', error)
-          try {
-            const { toast } = require('sonner')
-            toast.error(error instanceof Error ? error.message : 'Failed to upload file')
-          } catch {}
-        }
-      }
-    }
-    input.click()
+    onPromptChange(sceneId, selectedSegment.segmentId, prompt)
   }
 
-  const handleVideoGenerate = async (promptData: any) => {
+  const handleGenerate = async (mode: GenerationType, options?: { startFrameUrl?: string }) => {
     if (!selectedSegment) return
-    try {
-      // Update the segment prompt with the generated prompt
-      if (promptData.scenePrompt) {
-        onPromptChange(sceneId, selectedSegment.segmentId, promptData.scenePrompt)
-      }
-      // Close the builder dialog
-      setIsVideoBuilderOpen(false)
-      // Generate the video
-      await onGenerate(sceneId, selectedSegment.segmentId, 'T2V')
-    } catch (error) {
-      console.error('[SceneProduction] Video generation failed', error)
-      try {
-        const { toast } = require('sonner')
-        toast.error(error instanceof Error ? error.message : 'Failed to generate video')
-      } catch {}
-    }
+    await onGenerate(sceneId, selectedSegment.segmentId, mode, options)
   }
 
-  const handleImageGenerate = async (promptData: any) => {
-    if (!selectedSegment) return
-    try {
-      // Update the segment prompt with the generated prompt
-      if (promptData.scenePrompt) {
-        onPromptChange(sceneId, selectedSegment.segmentId, promptData.scenePrompt)
-      }
-      // Close the builder dialog
-      setIsImageBuilderOpen(false)
-      // Generate the image
-      await onGenerate(sceneId, selectedSegment.segmentId, 'T2I')
-    } catch (error) {
-      console.error('[SceneProduction] Image generation failed', error)
-      try {
-        const { toast } = require('sonner')
-        toast.error(error instanceof Error ? error.message : 'Failed to generate image')
-      } catch {}
-    }
-  }
+  // Get previous segment's last frame for continuity
+  const previousSegmentLastFrame = useMemo(() => {
+    if (!selectedSegment || segments.length === 0) return null
+    const currentIndex = segments.findIndex(s => s.segmentId === selectedSegment.segmentId)
+    if (currentIndex <= 0) return null
+    const previousSegment = segments[currentIndex - 1]
+    return previousSegment.references.endFrameUrl || null
+  }, [selectedSegment, segments])
 
+  const handleUpload = async (file: File) => {
+    if (!selectedSegment) return
+    await onUpload(sceneId, selectedSegment.segmentId, file)
+  }
 
   if (!productionData || !productionData.isSegmented || productionData.segments.length === 0) {
     return (
@@ -231,143 +141,53 @@ export function SceneProductionManager({
   }
 
   return (
-    <>
-      <div className="space-y-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-              Scene {sceneNumber}: {heading || 'Untitled'}
-            </h4>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {productionData.segments.length} segments · Target {productionData.targetSegmentDuration}s
-            </p>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            {selectedSegment && (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsVideoBuilderOpen(true)}
-                  className="shrink-0 flex items-center gap-2"
-                  disabled={!selectedSegment}
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <Video className="w-3.5 h-3.5" />
-                  Video
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsImageBuilderOpen(true)}
-                  className="shrink-0 flex items-center gap-2"
-                  disabled={!selectedSegment}
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <ImageIcon className="w-3.5 h-3.5" />
-                  Image
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleUploadClick}
-                  className="shrink-0 flex items-center gap-2"
-                  disabled={!selectedSegment}
-                >
-                  <Upload className="w-3.5 h-3.5" />
-                  Upload
-                </Button>
-              </>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsScenePlayerOpen(true)}
-              className="shrink-0 flex items-center gap-2"
-            >
-              <Play className="w-3.5 h-3.5" />
-              Preview Scene
-            </Button>
-            {productionData?.isSegmented && (
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={isInitializing}
-                onClick={async () => {
-                  const confirmed = typeof window !== 'undefined'
-                    ? window.confirm('Regenerate segments from the latest script and direction? This will replace current segments.')
-                    : true
-                  if (!confirmed) return
-                  await handleInitialize()
-                }}
-                className="shrink-0"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                Regenerate Segments
-              </Button>
-            )}
-          </div>
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            Scene {sceneNumber}: {heading || 'Untitled'}
+          </h4>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {productionData.segments.length} segments · Target {productionData.targetSegmentDuration}s
+          </p>
         </div>
-
-        {/* Selected Segment Description */}
-        {selectedSegment && (
-          <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">
-              Segment {selectedSegment.sequenceIndex + 1} Description
-            </div>
-            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-              {(selectedSegment as any).visualBeat || 
-               selectedSegment.userEditedPrompt || 
-               selectedSegment.generatedPrompt || 
-               'No description available for this segment.'}
-            </p>
-          </div>
+        {productionData?.isSegmented && (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isInitializing}
+            onClick={async () => {
+              // Confirm re-generation as it will replace current segments
+              const confirmed = typeof window !== 'undefined'
+                ? window.confirm('Regenerate segments from the latest script and direction? This will replace current segments.')
+                : true
+              if (!confirmed) return
+              await handleInitialize()
+            }}
+            className="shrink-0"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Regenerate Segments
+          </Button>
         )}
-
-        <SegmentTimeline
-          segments={segments}
-          selectedSegmentId={selectedSegmentId ?? undefined}
-          onSelect={setSelectedSegmentId}
-          audioTracks={audioTracks}
-        />
       </div>
 
-      <SceneVideoPromptBuilder
-        open={isPromptBuilderOpen}
-        onClose={() => setIsPromptBuilderOpen(false)}
-        segment={builderSegment}
-        references={references}
-        config={builderConfig}
-        onSave={handlePromptBuilderSave}
-      />
-
-      <ScenePlayerDialog
-        open={isScenePlayerOpen}
-        onClose={() => setIsScenePlayerOpen(false)}
-        sceneNumber={sceneNumber}
-        heading={heading}
+      <SegmentTimeline
         segments={segments}
+        selectedSegmentId={selectedSegmentId ?? undefined}
+        onSelect={setSelectedSegmentId}
         audioTracks={audioTracks}
       />
 
-      <SceneVideoBuilder
-        open={isVideoBuilderOpen}
-        onClose={() => setIsVideoBuilderOpen(false)}
+      <SegmentStudio
         segment={selectedSegment}
+        previousSegmentLastFrame={previousSegmentLastFrame}
+        onPromptChange={handlePromptChange}
+        onGenerate={handleGenerate}
+        onUploadMedia={handleUpload}
         references={references}
-        onGenerate={handleVideoGenerate}
-        isGenerating={false}
       />
-
-      <SceneImageBuilder
-        open={isImageBuilderOpen}
-        onClose={() => setIsImageBuilderOpen(false)}
-        segment={selectedSegment}
-        references={references}
-        onGenerate={handleImageGenerate}
-        isGenerating={false}
-      />
-    </>
+    </div>
   )
 }
 
