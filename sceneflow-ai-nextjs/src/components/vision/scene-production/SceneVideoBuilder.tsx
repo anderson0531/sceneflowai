@@ -1,0 +1,608 @@
+'use client'
+
+import React, { useState, useEffect } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Input } from '@/components/ui/Input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Button } from '@/components/ui/Button'
+import { Textarea } from '@/components/ui/textarea'
+import { Copy, Check, Sparkles, Info, Loader2, Video } from 'lucide-react'
+import { findSceneCharacters } from '../../../lib/character/matching'
+import { SceneSegment, SceneProductionReferences } from './types'
+
+interface SceneVideoStructure {
+  location: string
+  timeOfDay: string
+  weather: string
+  atmosphere: string
+  shotType: string
+  cameraAngle: string
+  lighting: string
+  characters: string[]
+  characterActions: string
+}
+
+interface SceneVideoBuilderProps {
+  open: boolean
+  onClose: () => void
+  segment: SceneSegment | null
+  references: SceneProductionReferences
+  onGenerate: (promptData: any) => void
+  isGenerating?: boolean
+}
+
+export function SceneVideoBuilder({
+  open,
+  onClose,
+  segment,
+  references,
+  onGenerate,
+  isGenerating = false
+}: SceneVideoBuilderProps) {
+  const [mode, setMode] = useState<'guided' | 'advanced'>('guided')
+  const [localIsGenerating, setLocalIsGenerating] = useState(false)
+  const [structure, setStructure] = useState<SceneVideoStructure>({
+    location: '',
+    timeOfDay: 'day',
+    weather: 'clear',
+    atmosphere: 'neutral',
+    shotType: 'medium-close-up',
+    cameraAngle: 'eye-level',
+    lighting: 'natural',
+    characters: [],
+    characterActions: '',
+  })
+  
+  const [advancedPrompt, setAdvancedPrompt] = useState('')
+  const [copied, setCopied] = useState(false)
+
+  // Parse segment prompt to auto-populate fields
+  useEffect(() => {
+    if (!open || !segment) return
+    
+    const updates: Partial<SceneVideoStructure> = {}
+    const promptText = segment.userEditedPrompt ?? segment.generatedPrompt ?? ''
+    
+    // AUTO-DETECT AND PRE-SELECT CHARACTERS using smart matching
+    if (references.characters && references.characters.length > 0) {
+      const detectedChars = findSceneCharacters(promptText, references.characters)
+      if (detectedChars.length > 0) {
+        updates.characters = detectedChars.map((c: any) => c.name)
+      }
+    }
+    
+    // Parse location from prompt
+    const locationMatch = promptText.match(/(?:of|at|in)\s+([A-Z][A-Za-z\s]+?)(?:,|\s|$)/i)
+    if (locationMatch) {
+      updates.location = locationMatch[1].trim()
+    }
+    
+    // Parse time of day
+    const desc = promptText.toLowerCase()
+    if (desc.includes('night') || desc.includes('evening')) {
+      updates.timeOfDay = 'night'
+    } else if (desc.includes('morning') || desc.includes('dawn')) {
+      updates.timeOfDay = 'morning'
+    } else if (desc.includes('afternoon')) {
+      updates.timeOfDay = 'afternoon'
+    } else if (desc.includes('dusk') || desc.includes('sunset')) {
+      updates.timeOfDay = 'dusk'
+    }
+    
+    // Atmosphere
+    if (desc.includes('dark') || desc.includes('moody') || desc.includes('ominous')) {
+      updates.atmosphere = 'dark and moody'
+    } else if (desc.includes('bright') || desc.includes('vibrant') || desc.includes('cheerful')) {
+      updates.atmosphere = 'bright and vibrant'
+    } else if (desc.includes('tense') || desc.includes('suspenseful')) {
+      updates.atmosphere = 'tense and suspenseful'
+    }
+    
+    // Camera angles
+    if (desc.includes('close up') || desc.includes('close-up')) {
+      if (desc.includes('medium close') || desc.includes('medium-close')) {
+        updates.shotType = 'medium-close-up'
+      } else {
+        updates.shotType = 'close-up'
+      }
+    } else if (desc.includes('wide shot') || desc.includes('wide angle') || desc.includes('establishing')) {
+      updates.shotType = 'wide-shot'
+    } else if (desc.includes('medium')) {
+      updates.shotType = 'medium-close-up'
+    }
+    
+    if (desc.includes('high angle') || desc.includes('high-angle')) {
+      updates.cameraAngle = 'high-angle'
+    } else if (desc.includes('low angle') || desc.includes('low-angle')) {
+      updates.cameraAngle = 'low-angle'
+    }
+    
+    // Lighting
+    if (desc.includes('dramatic lighting') || desc.includes('side lighting')) {
+      updates.lighting = 'dramatic'
+    } else if (desc.includes('soft') || desc.includes('diffused')) {
+      updates.lighting = 'soft'
+    } else if (desc.includes('backlight') || desc.includes('silhouette')) {
+      updates.lighting = 'backlit'
+    }
+    
+    setStructure(prev => ({ ...prev, ...updates }))
+  }, [open, segment, references.characters])
+
+  // Sync to advanced mode when switching
+  useEffect(() => {
+    if (mode === 'advanced' && !advancedPrompt) {
+      const constructed = constructPrompt()
+      if (constructed) {
+        setAdvancedPrompt(constructed)
+      }
+    }
+  }, [mode, advancedPrompt])
+
+  // Reset editing state when dialog opens/closes
+  useEffect(() => {
+    if (!open) {
+      setAdvancedPrompt('')
+    }
+  }, [open])
+
+  // Construct prompt from structure
+  const constructPrompt = (): string => {
+    const parts: string[] = []
+    
+    // Shot type
+    const shotTypes: Record<string, string> = {
+      'wide-shot': 'Wide establishing shot',
+      'medium-shot': 'Medium shot',
+      'medium-close-up': 'Medium close-up shot',
+      'close-up': 'Close-up shot',
+      'extreme-close-up': 'Extreme close-up shot',
+      'extreme-wide': 'Extreme wide shot',
+      'over-shoulder': 'Over the shoulder shot'
+    }
+    if (structure.shotType) parts.push(shotTypes[structure.shotType] || structure.shotType)
+    
+    // Location
+    if (structure.location) parts.push(`of ${structure.location}`)
+    
+    // Time and weather
+    const timeWeather: string[] = []
+    if (structure.timeOfDay) timeWeather.push(structure.timeOfDay)
+    if (structure.weather && structure.weather !== 'clear') timeWeather.push(structure.weather)
+    if (timeWeather.length) parts.push(timeWeather.join(', '))
+    
+    // Characters and actions
+    if (structure.characters.length > 0) {
+      const charList = structure.characters.join(', ')
+      if (structure.characterActions) {
+        parts.push(`featuring ${charList} ${structure.characterActions}`)
+      } else {
+        parts.push(`featuring ${charList}`)
+      }
+    }
+    
+    // Atmosphere
+    if (structure.atmosphere && structure.atmosphere !== 'neutral') {
+      parts.push(`${structure.atmosphere} atmosphere`)
+    }
+    
+    // Camera angle
+    const angles: Record<string, string> = {
+      'eye-level': 'eye level camera angle',
+      'low-angle': 'low angle camera',
+      'high-angle': 'high angle camera',
+      'birds-eye': "bird's eye view",
+      'dutch-angle': 'dutch angle'
+    }
+    if (structure.cameraAngle && structure.cameraAngle !== 'eye-level') {
+      parts.push(angles[structure.cameraAngle] || structure.cameraAngle)
+    }
+    
+    // Lighting
+    const lightingTypes: Record<string, string> = {
+      'natural': 'natural lighting',
+      'golden-hour': 'golden hour lighting',
+      'dramatic': 'dramatic cinematic lighting',
+      'soft': 'soft diffused lighting',
+      'harsh': 'harsh contrast lighting',
+      'backlit': 'backlit scene'
+    }
+    if (structure.lighting) parts.push(lightingTypes[structure.lighting] || structure.lighting)
+    
+    return parts.filter(Boolean).join(', ')
+  }
+
+  const getRawPrompt = (): string => {
+    if (mode === 'advanced') {
+      return advancedPrompt
+    } else {
+      return constructPrompt()
+    }
+  }
+
+  const constructedPrompt = getRawPrompt()
+
+  const handleGenerateVideo = () => {
+    setLocalIsGenerating(true)
+    
+    const selectedCharacterObjects = structure.characters
+      .map(charName => {
+        const found = references.characters.find((c: any) => c.name === charName)
+        return found
+      })
+      .filter(Boolean)
+    
+    const rawPrompt = getRawPrompt()
+    const promptData = {
+      characters: selectedCharacterObjects,
+      scenePrompt: rawPrompt,
+      shotType: structure.shotType,
+      cameraAngle: structure.cameraAngle,
+      lighting: structure.lighting
+    }
+    
+    onGenerate(promptData)
+  }
+  
+  const isActuallyGenerating = localIsGenerating || isGenerating
+  
+  useEffect(() => {
+    if (!isGenerating && localIsGenerating) {
+      setTimeout(() => setLocalIsGenerating(false), 100)
+    }
+  }, [isGenerating, localIsGenerating])
+
+  const handleCopy = async () => {
+    await navigator.clipboard?.writeText(constructedPrompt)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleModeChange = (newMode: string) => {
+    const mode = newMode as 'guided' | 'advanced'
+    if (mode === 'advanced' && !advancedPrompt) {
+      const currentPrompt = constructPrompt()
+      setAdvancedPrompt(currentPrompt)
+    }
+    setMode(mode)
+  }
+
+  const availableCharacters = references.characters || []
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl h-[85vh] bg-gray-900 text-white border-gray-700 flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle className="text-white flex items-center gap-2">
+            <Video className="w-5 h-5" />
+            Scene Video Builder - Segment {segment?.sequenceIndex !== undefined ? segment.sequenceIndex + 1 : ''}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
+        <Tabs value={mode} onValueChange={handleModeChange}>
+          <TabsList className="w-full">
+            <TabsTrigger value="guided" className="flex-1">
+              Guided Mode
+            </TabsTrigger>
+            <TabsTrigger value="advanced" className="flex-1">
+              Advanced Mode
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Character Reference Guidance Banner */}
+          {structure.characters.length > 0 && structure.characters.some(charName => {
+            const char = availableCharacters.find((c: any) => c.name === charName)
+            return char?.referenceImage
+          }) && (
+            <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                <div className="text-xs text-blue-300">
+                  <p className="font-medium mb-1">Character References Active</p>
+                  <p className="text-blue-400/80">
+                    For best results with character references, use <span className="font-medium">Close-Up</span> or{' '}
+                    <span className="font-medium">Medium Shot</span> framing. Wide shots make characters too small 
+                    for facial recognition.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Guided Mode */}
+          <TabsContent value="guided" className="space-y-4 mt-4">
+            {/* Location & Setting */}
+            <div className="space-y-3 p-3 rounded border border-gray-700 bg-gray-800/50">
+              <h3 className="text-sm font-semibold text-gray-200">Location & Setting</h3>
+              <div className="space-y-2">
+                <div>
+                  <label className="text-xs text-gray-400">Location/Setting</label>
+                  <Input
+                    value={structure.location}
+                    onChange={(e) => setStructure(prev => ({ ...prev, location: e.target.value }))}
+                    placeholder="beach at sunrise, urban street, mountain peak"
+                    className="mt-1"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-400">Time of Day</label>
+                    <Select value={structure.timeOfDay} onValueChange={(v) => setStructure(prev => ({ ...prev, timeOfDay: v }))}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="dawn">Dawn</SelectItem>
+                        <SelectItem value="day">Day</SelectItem>
+                        <SelectItem value="dusk">Dusk</SelectItem>
+                        <SelectItem value="night">Night</SelectItem>
+                        <SelectItem value="golden-hour">Golden Hour</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400">Weather</label>
+                    <Select value={structure.weather} onValueChange={(v) => setStructure(prev => ({ ...prev, weather: v }))}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="clear">Clear</SelectItem>
+                        <SelectItem value="overcast">Overcast</SelectItem>
+                        <SelectItem value="rainy">Rainy</SelectItem>
+                        <SelectItem value="stormy">Stormy</SelectItem>
+                        <SelectItem value="foggy">Foggy</SelectItem>
+                        <SelectItem value="snowy">Snowy</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400">Atmosphere/Mood</label>
+                  <Select value={structure.atmosphere} onValueChange={(v) => setStructure(prev => ({ ...prev, atmosphere: v }))}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="neutral">Neutral</SelectItem>
+                      <SelectItem value="serene">Serene</SelectItem>
+                      <SelectItem value="tense">Tense</SelectItem>
+                      <SelectItem value="mysterious">Mysterious</SelectItem>
+                      <SelectItem value="energetic">Energetic</SelectItem>
+                      <SelectItem value="melancholic">Melancholic</SelectItem>
+                      <SelectItem value="hopeful">Hopeful</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Characters */}
+            {availableCharacters.length > 0 && (
+              <div className="space-y-3 p-3 rounded border border-gray-700 bg-gray-800/50">
+                <h3 className="text-sm font-semibold text-gray-200">Characters in Scene</h3>
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-xs text-gray-400">Select Characters</label>
+                    <div className="mt-1 space-y-2">
+                      {availableCharacters.map((char: any) => (
+                        <label 
+                          key={char.name} 
+                          className={`flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors ${
+                            structure.characters.includes(char.name)
+                              ? 'border-blue-500 bg-blue-500/10'
+                              : 'border-gray-700 hover:border-gray-600'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={structure.characters.includes(char.name)}
+                            onChange={(e) => {
+                              setStructure(prev => ({
+                                ...prev,
+                                characters: e.target.checked
+                                  ? [...prev.characters, char.name]
+                                  : prev.characters.filter(n => n !== char.name)
+                              }))
+                            }}
+                            className="rounded"
+                          />
+                          {char.referenceImage && (
+                            <img
+                              src={char.referenceImage}
+                              alt={char.name}
+                              className="w-8 h-8 rounded-full object-cover border border-gray-600"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <div className="text-sm text-gray-200">{char.name}</div>
+                            {char.referenceImage && (
+                              <div className="text-[10px] text-green-400">✓ Has reference image</div>
+                            )}
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400">What are they doing?</label>
+                    <Input
+                      value={structure.characterActions}
+                      onChange={(e) => setStructure(prev => ({ ...prev, characterActions: e.target.value }))}
+                      placeholder="walking along the shore, engaged in conversation"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Camera & Composition */}
+            <div className="space-y-3 p-3 rounded border border-gray-700 bg-gray-800/50">
+              <h3 className="text-sm font-semibold text-gray-200">Camera & Composition 🎬</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-400">Shot Type</label>
+                  <Select value={structure.shotType} onValueChange={(v) => setStructure(prev => ({ ...prev, shotType: v }))}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(() => {
+                        const hasReferences = structure.characters.some(charName => {
+                          const char = availableCharacters.find((c: any) => c.name === charName)
+                          return char?.referenceImage
+                        })
+                        
+                        return (
+                          <>
+                            <SelectItem value="extreme-close-up">
+                              Extreme Close-Up (ECU) {hasReferences && '✓'}
+                            </SelectItem>
+                            <SelectItem value="close-up">
+                              Close-Up (CU) {hasReferences && '✓ Recommended'}
+                            </SelectItem>
+                            <SelectItem value="medium-close-up">
+                              Medium Close-Up (MCU) {hasReferences && '✓'}
+                            </SelectItem>
+                            <SelectItem value="medium-shot">
+                              Medium Shot (MS) {hasReferences && '✓'}
+                            </SelectItem>
+                            <SelectItem value="over-shoulder">
+                              Over Shoulder {hasReferences && '✓'}
+                            </SelectItem>
+                            <SelectItem value="wide-shot" className={hasReferences ? 'text-yellow-400' : ''}>
+                              Wide Shot (WS) {hasReferences && '⚠️ Limited'}
+                            </SelectItem>
+                            <SelectItem value="extreme-wide" className={hasReferences ? 'text-red-400' : ''}>
+                              Extreme Wide {hasReferences && '❌ Too small'}
+                            </SelectItem>
+                          </>
+                        )
+                      })()}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400">Camera Angle</label>
+                  <Select value={structure.cameraAngle} onValueChange={(v) => setStructure(prev => ({ ...prev, cameraAngle: v }))}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="eye-level">Eye Level</SelectItem>
+                      <SelectItem value="low-angle">Low Angle</SelectItem>
+                      <SelectItem value="high-angle">High Angle</SelectItem>
+                      <SelectItem value="birds-eye">Bird's Eye</SelectItem>
+                      <SelectItem value="dutch-angle">Dutch Angle</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-400">Lighting</label>
+                <Select value={structure.lighting} onValueChange={(v) => setStructure(prev => ({ ...prev, lighting: v }))}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="natural">Natural</SelectItem>
+                    <SelectItem value="golden-hour">Golden Hour</SelectItem>
+                    <SelectItem value="dramatic">Dramatic</SelectItem>
+                    <SelectItem value="soft">Soft Diffused</SelectItem>
+                    <SelectItem value="harsh">Harsh Contrast</SelectItem>
+                    <SelectItem value="backlit">Backlit</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Advanced Mode */}
+          <TabsContent value="advanced" className="space-y-4 mt-4">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs text-gray-400">Custom Video Prompt</label>
+              </div>
+              <Textarea
+                value={advancedPrompt}
+                onChange={(e) => {
+                  setAdvancedPrompt(e.target.value)
+                }}
+                rows={12}
+                placeholder="Enter your custom prompt here. The API will optimize it with character references and safety filters..."
+                className="resize-vertical"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                💡 Tip: Write your scene description here. The API will automatically optimize it with character references, safety filters, and settings when you generate.
+              </p>
+            </div>
+          </TabsContent>
+        </Tabs>
+        </div>
+
+        {/* Fixed Footer */}
+        <div className="border-t border-gray-700 p-4 bg-gray-900">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs text-gray-400">
+              {mode === 'guided' 
+                ? 'Prompt Preview'
+                : 'Custom Prompt'
+              }
+            </label>
+          </div>
+          <div className="text-sm text-gray-200 p-2 bg-gray-800 rounded border border-gray-700 max-h-32 overflow-y-auto leading-relaxed">
+            {constructedPrompt || <span className="text-gray-500 italic">Fill in the fields above to build your prompt...</span>}
+          </div>
+          <div className="flex gap-2 mt-2">
+            <Button 
+              onClick={handleGenerateVideo} 
+              disabled={isActuallyGenerating}
+              className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isActuallyGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Video className="w-4 h-4 mr-2" />
+                  Generate Video
+                </>
+              )}
+            </Button>
+            <Button onClick={handleCopy} variant="outline" className="px-3">
+              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            </Button>
+          </div>
+        </div>
+
+        {/* Loading Overlay */}
+        {isActuallyGenerating && (
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center rounded-lg">
+            <div className="bg-gray-900 border-2 border-purple-500 rounded-xl p-8 shadow-2xl flex flex-col items-center max-w-sm">
+              <div className="relative mb-4">
+                <Loader2 className="w-16 h-16 animate-spin text-purple-500" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full border-4 border-purple-300 animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Generating Video</h3>
+              <p className="text-sm text-gray-300 text-center">
+                Creating your video visualization...
+              </p>
+              <p className="text-xs text-gray-400 mt-2">
+                This may take 10-15 seconds
+              </p>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+
