@@ -2448,15 +2448,16 @@ function SceneCard({
               </Tooltip>
             </TooltipProvider>
             
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">SCENE {sceneNumber}</span>
-            
-            {/* Duration Badge */}
+            {/* Scene & Time Pill - Consolidated Timeline Metadata */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded cursor-help">
-                    {formatDuration(calculateSceneDuration(scene))}
-                  </span>
+                  <div className="flex items-center space-x-2 bg-indigo-900/40 rounded-full px-3 py-1 text-xs border border-indigo-700 cursor-help">
+                    <span className="text-indigo-300 font-extrabold">S {sceneNumber}</span>
+                    <span className="text-gray-500">|</span>
+                    <span className="text-white font-bold tracking-wider">{formatDuration(calculateSceneDuration(scene))}</span>
+                    <span className="text-gray-400">@ {formatDuration(timelineStart || 0)}</span>
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
                   <div className="text-xs">
@@ -2468,11 +2469,6 @@ function SceneCard({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            
-            {/* Timeline Start */}
-            <span className="text-xs text-gray-400">
-              @{formatDuration(timelineStart || 0)}
-            </span>
           </div>
           
           {/* Right Side: Scene Actions & Status */}
