@@ -37,6 +37,19 @@ export async function getVertexAIAuthToken(): Promise<string> {
 }
 
 /**
+ * Extract service account email from GOOGLE_APPLICATION_CREDENTIALS_JSON
+ */
+export function getServiceAccountEmail(): string | null {
+  try {
+    if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) return null
+    const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+    return credentials.client_email || null
+  } catch {
+    return null
+  }
+}
+
+/**
  * Generate image using Vertex AI Imagen
  * Character references provided as Base64-encoded images
  * 
@@ -64,6 +77,7 @@ export async function callVertexAIImagen(
 ): Promise<string> {
   const projectId = process.env.GCP_PROJECT_ID
   const region = process.env.GCP_REGION || 'us-central1'
+  const saEmail = getServiceAccountEmail()
   
   if (!projectId) {
     throw new Error('GCP_PROJECT_ID not configured')
@@ -83,7 +97,7 @@ export async function callVertexAIImagen(
   }
   
   console.log(`[Vertex AI] Generating image with ${model} (${options.quality || 'auto'} quality)...`)
-  console.log('[Vertex AI] Project:', projectId, 'Region:', region)
+  console.log('[Vertex AI] Project:', projectId, 'Region:', region, 'ServiceAccount:', saEmail || '(unknown)')
 
   const accessToken = await getVertexAIAuthToken()
   
@@ -190,9 +204,55 @@ export async function callVertexAIImagen(
   })
 
   if (!response.ok) {
-    const errorText = await response.text()
-    console.error('[Vertex AI] Error response:', errorText)
-    throw new Error(`Vertex AI error: ${response.status} - ${errorText}`)
+    let rawText = ''
+    let json: any = null
+    try {
+      rawText = await response.text()
+      json = JSON.parse(rawText)
+    } catch {
+      // leave json as null
+    }
+
+    const status = response.status
+    const apiMessage: string = json?.error?.message || json?.message || rawText || 'Unknown error'
+    const apiCode: string = json?.error?.status || 'UNKNOWN'
+
+    const ctx = `project=${projectId} region=${region} model=${model} sa=${saEmail || 'n/a'}`
+
+    let hint = ''
+    const msgLower = apiMessage.toLowerCase()
+
+    if (status === 403 || msgLower.includes('permission') || msgLower.includes('permission denied')) {
+      hint = [
+        'IAM: grant roles/aiplatform.user on the project to the service account.',
+        'Also ensure roles/serviceusage.serviceUsageConsumer to call services.',
+        'Enable Vertex AI API in the project.',
+        `Service account: ${saEmail || 'unknown'}; Project: ${projectId}; Region: ${region}`
+      ].join(' ')
+      if (msgLower.includes('aiplatform.endpoints.predict')) {
+        hint += ' Missing aiplatform.endpoints.predict permission indicates Vertex AI User role required.'
+      }
+    } else if (status === 404 || msgLower.includes('not found')) {
+      hint = [
+        'Model not found in region. Verify region/model availability.',
+        `Tried model ${model} in ${region}.`,
+        'For Imagen 4, ensure it is available and allowlisted in your region.'
+      ].join(' ')
+    } else if (status === 400) {
+      if (msgLower.includes('persongeneration')) {
+        hint = 'Invalid personGeneration value or policy blocked. Try personGeneration="allow_adult".'
+      } else if (msgLower.includes('reference') && msgLower.includes('image')) {
+        hint = 'Check referenceImages format for Imagen 4 Subject Customization (use structured array with gcsUri or base64).'
+      } else {
+        hint = 'Bad request. Check parameters: aspectRatio, sampleCount, negativePrompt.'
+      }
+    }
+
+    console.error('[Vertex AI] Error response:', { status, apiCode, apiMessage, context: ctx })
+    if (hint) console.error('[Vertex AI] Hint:', hint)
+
+    const friendly = `Vertex AI error ${status} (${apiCode}): ${apiMessage}. ${hint ? 'Hint: ' + hint : ''}`
+    throw new Error(friendly)
   }
 
   const data = await response.json()
