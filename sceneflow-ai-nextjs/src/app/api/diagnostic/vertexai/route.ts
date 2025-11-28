@@ -1,68 +1,88 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getVertexAIAuthToken } from '@/lib/vertexai/client'
 
 export const runtime = 'nodejs'
 
 export async function GET(_req: NextRequest) {
   const results: any = {
     ok: false,
-    authMethod: null,
-    apiKey: null,
-    modelTest: { status: 0, ok: false },
+    authMethod: 'oauth2',
+    projectId: process.env.GCP_PROJECT_ID || null,
+    region: process.env.GCP_REGION || 'us-central1',
+    serviceAccount: null,
+    tokenTest: { ok: false },
+    predictTest: { status: 0, ok: false },
     hints: []
   }
 
   try {
-    // Check for API key (preferred method - no IAM needed!)
-    if (process.env.GOOGLE_API_KEY) {
-      results.authMethod = 'api-key'
-      results.apiKey = 'present'
-      
-      // Test Imagen 3 endpoint with API key
-      const model = 'imagen-3.0-fast-generate-001'
-      const endpoint = `https://aiplatform.googleapis.com/v1/publishers/google/models/${model}:predict`
-      
-      try {
-        const testRes = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'X-Goog-Api-Key': process.env.GOOGLE_API_KEY,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            instances: [{ prompt: 'test diagnostic image' }],
-            parameters: { sampleCount: 1, aspectRatio: '1:1' }
-          })
+    // 1. Check environment
+    if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+      results.hints.push('Missing GOOGLE_APPLICATION_CREDENTIALS_JSON')
+      return NextResponse.json(results, { status: 500 })
+    }
+    
+    if (!results.projectId) {
+      results.hints.push('Missing GCP_PROJECT_ID')
+      return NextResponse.json(results, { status: 500 })
+    }
+
+    // 2. Parse service account
+    try {
+      const creds = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+      results.serviceAccount = creds.client_email || 'unknown'
+    } catch {
+      results.hints.push('Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON')
+      return NextResponse.json(results, { status: 500 })
+    }
+
+    // 3. Get access token
+    try {
+      await getVertexAIAuthToken()
+      results.tokenTest.ok = true
+    } catch (error: any) {
+      results.tokenTest.error = error.message
+      results.hints.push(`Token acquisition failed: ${error.message}`)
+      return NextResponse.json(results, { status: 500 })
+    }
+
+    // 4. Test predict endpoint
+    const model = 'imagen-3.0-fast-generate-001'
+    const endpoint = `https://${results.region}-aiplatform.googleapis.com/v1/projects/${results.projectId}/locations/${results.region}/publishers/google/models/${model}:predict`
+    
+    try {
+      const token = await getVertexAIAuthToken()
+      const testRes = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          instances: [{ prompt: 'test' }],
+          parameters: { sampleCount: 1, aspectRatio: '1:1' }
         })
+      })
+      
+      results.predictTest.status = testRes.status
+      results.predictTest.ok = testRes.ok || testRes.status === 400
+      
+      if (!testRes.ok && testRes.status !== 400) {
+        const text = await testRes.text()
+        results.predictTest.error = text.slice(0, 300)
         
-        results.modelTest.status = testRes.status
-        // 200 = success, 400 = accessible but bad params (still counts as working)
-        results.modelTest.ok = testRes.ok || testRes.status === 400
-        
-        if (!testRes.ok) {
-          const text = await testRes.text()
-          results.modelTest.error = text.slice(0, 300)
-          
-          if (testRes.status === 403) {
-            results.hints.push('API key invalid or Vertex AI API not enabled in Google Cloud Console')
-          } else if (testRes.status === 404) {
-            results.hints.push('Model not found - ensure Vertex AI API is enabled')
-          }
+        if (testRes.status === 403) {
+          results.hints.push(`Run: gcloud projects add-iam-policy-binding ${results.projectId} --member="serviceAccount:${results.serviceAccount}" --role="roles/aiplatform.user"`)
         }
-      } catch (error: any) {
-        results.modelTest.error = error.message
-        results.hints.push(`Request failed: ${error.message}`)
       }
-      
-      results.ok = results.modelTest.ok
-      
-      if (results.ok) {
-        results.hints.push('✅ API key authentication working! No IAM configuration needed.')
-      }
-      
-    } else {
-      results.authMethod = 'none'
-      results.hints.push('Missing GOOGLE_API_KEY environment variable')
-      results.hints.push('Add your Google Cloud API key to enable Vertex AI Imagen (no IAM needed!)')
+    } catch (error: any) {
+      results.predictTest.error = error.message
+    }
+
+    results.ok = results.predictTest.ok
+    
+    if (results.ok) {
+      results.hints.push('✅ OAuth2 working! Image generation should work.')
     }
 
     return NextResponse.json(results)

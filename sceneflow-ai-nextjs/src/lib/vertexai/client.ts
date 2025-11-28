@@ -1,13 +1,39 @@
+import { GoogleAuth } from 'google-auth-library'
+
+let authClient: any = null
+
 /**
- * Get Google API key for Vertex AI
- * Uses GOOGLE_API_KEY (same key used for other Google services)
+ * Get OAuth2 access token for Vertex AI API
+ * Uses service account credentials from GOOGLE_APPLICATION_CREDENTIALS_JSON
  */
-export function getGoogleApiKey(): string {
-  const apiKey = process.env.GOOGLE_API_KEY
-  if (!apiKey) {
-    throw new Error('GOOGLE_API_KEY not configured')
+export async function getVertexAIAuthToken(): Promise<string> {
+  if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+    throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON not configured')
   }
-  return apiKey
+
+  try {
+    if (!authClient) {
+      const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+      
+      const auth = new GoogleAuth({
+        credentials,
+        scopes: ['https://www.googleapis.com/auth/cloud-platform']
+      })
+      
+      authClient = await auth.getClient()
+    }
+
+    const accessToken = await authClient.getAccessToken()
+    
+    if (!accessToken.token) {
+      throw new Error('Failed to get access token')
+    }
+    
+    return accessToken.token
+  } catch (error: any) {
+    console.error('[Vertex AI Auth] Error:', error)
+    throw new Error(`Vertex AI authentication failed: ${error.message}`)
+  }
 }
 
 /**
@@ -36,13 +62,18 @@ export async function callVertexAIImagen(
     }>
   } = {}
 ): Promise<string> {
-  const apiKey = getGoogleApiKey()
+  const projectId = process.env.GCP_PROJECT_ID
+  const region = process.env.GCP_REGION || 'us-central1'
   
+  if (!projectId) {
+    throw new Error('GCP_PROJECT_ID not configured')
+  }
+
   // Determine model based on quality and whether references are provided
   let model: string
 
   if (options.referenceImages && options.referenceImages.length > 0) {
-    // Reference images require Imagen 3 (generateContent endpoint supports references)
+    // Reference images require Imagen 3
     model = 'imagen-3.0-generate-001'
     console.log('[Vertex AI] Using Imagen 3 for reference image support')
   } else if (options.quality === 'max') {
@@ -52,10 +83,12 @@ export async function callVertexAIImagen(
   }
   
   console.log(`[Vertex AI] Generating image with ${model} (${options.quality || 'auto'} quality)...`)
-  console.log('[Vertex AI] Using API key authentication')
+  console.log('[Vertex AI] Project:', projectId, 'Region:', region)
 
-  // Vertex AI REST API endpoint (no project/region needed with API key)
-  const endpoint = `https://aiplatform.googleapis.com/v1/publishers/google/models/${model}:predict`
+  const accessToken = await getVertexAIAuthToken()
+  
+  // Vertex AI REST API endpoint
+  const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${model}:predict`
   
   // Build request payload
   const instance: any = {
@@ -150,7 +183,7 @@ export async function callVertexAIImagen(
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
-      'X-Goog-Api-Key': apiKey,
+      'Authorization': `Bearer ${accessToken}`,
       'Content-Type': 'application/json'
     },
     body: requestBodyStr
@@ -170,15 +203,15 @@ export async function callVertexAIImagen(
     const apiMessage: string = json?.error?.message || json?.message || rawText || 'Unknown error'
     const apiCode: string = json?.error?.status || 'UNKNOWN'
 
-    const ctx = `model=${model} api_key=present`
+    const ctx = `project=${projectId} region=${region} model=${model}`
 
     let hint = ''
     const msgLower = apiMessage.toLowerCase()
 
-    if (status === 403 || msgLower.includes('api key')) {
-      hint = 'Check GOOGLE_API_KEY is valid and Vertex AI API is enabled in Google Cloud Console.'
+    if (status === 403 || msgLower.includes('permission')) {
+      hint = 'IAM permission denied. Run: gcloud projects add-iam-policy-binding ' + projectId + ' --member="serviceAccount:YOUR_SA@PROJECT.iam.gserviceaccount.com" --role="roles/aiplatform.user"'
     } else if (status === 404 || msgLower.includes('not found')) {
-      hint = `Model ${model} not found. Verify model name and availability.`
+      hint = `Model ${model} not found. Verify model name and region availability.`
     } else if (status === 400) {
       if (msgLower.includes('persongeneration')) {
         hint = 'Invalid personGeneration value or policy blocked. Try personGeneration="allow_adult".'
