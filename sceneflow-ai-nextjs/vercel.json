@@ -4,6 +4,9 @@
   "functions": {
     "src/app/api/vision/generate-script-v2/route.ts": {
       "maxDuration": 600
+    },
+    "src/app/api/character/upload-reference/route.ts": {
+      "maxDuration": 30
     }
   }
 }

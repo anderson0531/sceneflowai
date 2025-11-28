@@ -100,12 +100,52 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
         toast.warning('Image resolution is low. Use at least 512x512 for best facial recognition.')
       }
       
+      // Compress image if too large to avoid 413 errors
+      let fileToUpload = file
+      if (sizeMB > 4) {
+        try {
+          const canvas = document.createElement('canvas')
+          const ctx = canvas.getContext('2d')!
+          
+          // Calculate new dimensions (max 2048px)
+          const maxSize = 2048
+          let width = img.width
+          let height = img.height
+          
+          if (width > maxSize || height > maxSize) {
+            if (width > height) {
+              height = (height / width) * maxSize
+              width = maxSize
+            } else {
+              width = (width / height) * maxSize
+              height = maxSize
+            }
+          }
+          
+          canvas.width = width
+          canvas.height = height
+          ctx.drawImage(img, 0, 0, width, height)
+          
+          // Convert to blob with compression
+          const blob = await new Promise<Blob>((resolve) => {
+            canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', 0.85)
+          })
+          
+          fileToUpload = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })
+          const newSizeMB = fileToUpload.size / 1024 / 1024
+          console.log(`[Upload] Compressed from ${sizeMB.toFixed(2)}MB to ${newSizeMB.toFixed(2)}MB`)
+        } catch (compressionError) {
+          console.error('[Upload] Compression failed:', compressionError)
+          // Continue with original file if compression fails
+        }
+      }
+      
       // Proceed with upload
       setUploadingRef?.(prev => ({ ...prev, [characterId]: true }))
       
       try {
         const formData = new FormData()
-        formData.append('file', file)
+        formData.append('file', fileToUpload)
         formData.append('projectId', 'vision-project') // TODO: Get from context
         formData.append('characterName', characterName)
         
