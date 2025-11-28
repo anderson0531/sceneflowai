@@ -4,6 +4,7 @@
 import { use, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels'
+import { upload } from '@vercel/blob/client'
 import { ContextBar } from '@/components/layout/ContextBar'
 import { ScriptPanel } from '@/components/vision/ScriptPanel'
 import { SceneGallery } from '@/components/vision/SceneGallery'
@@ -2153,46 +2154,45 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     try {
       setUploadingRef(prev => ({ ...prev, [characterId]: true }))
       
-      // Upload to both Vercel Blob and GCS
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('projectId', projectId)
       const character = characters.find(c => {
         const charId = c.id || characters.indexOf(c).toString()
         return charId === characterId
       })
-      formData.append('characterName', character?.name || 'character')
       
-      const uploadRes = await fetch('/api/character/upload-reference', {
-        method: 'POST',
-        body: formData
+      // Step 1: Upload directly to Vercel Blob (client-side)
+      const newBlob = await upload(file.name, file, {
+        access: 'public',
+        handleUploadUrl: '/api/character/upload-url',
       })
       
-      if (!uploadRes.ok) {
-        throw new Error('Upload failed')
+      const blobUrl = newBlob.url
+      console.log('[Character Upload] Blob uploaded:', blobUrl)
+      
+      // Step 2: Process upload (GCS upload) in background
+      const processRes = await fetch('/api/character/process-upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          blobUrl,
+          characterName: character?.name || 'character',
+        }),
+      })
+      
+      if (!processRes.ok) {
+        throw new Error('Processing failed')
       }
       
-      const { url: blobUrl, gcsUrl } = await uploadRes.json()
+      const { gcsUrl, visionDescription } = await processRes.json()
       console.log('[Character Upload] Vercel Blob URL:', blobUrl)
       console.log('[Character Upload] GCS URL:', gcsUrl)
+      console.log('[Character Upload] Auto-analyzed appearance:', visionDescription)
       
-      // Auto-analyze to generate appearance description
-      let analysisData: any = null
-      try {
-        const analyzeRes = await fetch('/api/character/analyze-image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageUrl: blobUrl, characterName: character?.name })
-        })
-        
-        if (analyzeRes.ok) {
-          analysisData = await analyzeRes.json()
-          console.log('[Character Upload] Auto-analyzed appearance:', analysisData.appearanceDescription)
-        }
-      } catch (analyzeError) {
-        console.error('[Character Upload] Auto-analysis failed:', analyzeError)
-        // Continue with upload even if analysis fails
-      }
+      // Use visionDescription from process-upload (already includes AI analysis)
+      const analysisData = visionDescription ? {
+        success: true,
+        appearanceDescription: visionDescription,
+        // Parse individual attributes if needed in future
+      } : null
       
       // Update character with the Blob URL and analysis results
         const updatedCharacters = characters.map(char => {
