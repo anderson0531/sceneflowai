@@ -55,8 +55,8 @@ export async function callVertexAIImagen(
   
   const accessToken = await getVertexAIAuthToken()
   
-  // Vertex AI endpoint
-  const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${MODEL_ID}:predict`
+  // Vertex AI endpoint with API key
+  const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${MODEL_ID}:predict?key=${accessToken}`
   
   // Build request body for Vertex AI Imagen 2
   const requestBody: any = {
@@ -77,7 +77,6 @@ export async function callVertexAIImagen(
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(requestBody)

@@ -35,14 +35,12 @@ export async function GET(_req: NextRequest) {
 
     // 4. Test predict endpoint
     const model = 'imagegeneration@006'
-    const endpoint = `https://${results.region}-aiplatform.googleapis.com/v1/projects/${results.projectId}/locations/${results.region}/publishers/google/models/${model}:predict`
+    const endpoint = `https://${results.region}-aiplatform.googleapis.com/v1/projects/${results.projectId}/locations/${results.region}/publishers/google/models/${model}:predict?key=${process.env.GOOGLE_API_KEY}`
     
     try {
-      const token = await getVertexAIAuthToken()
       const testRes = await fetch(endpoint, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
