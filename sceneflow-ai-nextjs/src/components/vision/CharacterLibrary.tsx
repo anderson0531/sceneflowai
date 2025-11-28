@@ -7,6 +7,7 @@ import { VoiceSelector } from '@/components/tts/VoiceSelector'
 import { toast } from 'sonner'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
+import { upload } from '@vercel/blob/client'
 
 export interface CharacterLibraryProps {
   characters: any[]
@@ -140,27 +141,35 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
         }
       }
       
-      // Proceed with upload
+      // Proceed with client-side direct upload
       setUploadingRef?.(prev => ({ ...prev, [characterId]: true }))
       
       try {
-        const formData = new FormData()
-        formData.append('file', fileToUpload)
-        formData.append('projectId', 'vision-project') // TODO: Get from context
-        formData.append('characterName', characterName)
-        
-        const res = await fetch('/api/character/upload-reference', {
-          method: 'POST',
-          body: formData
+        // Step 1: Upload directly to Vercel Blob (client-side)
+        const newBlob = await upload(fileToUpload.name, fileToUpload, {
+          access: 'public',
+          handleUploadUrl: '/api/character/upload-url',
         })
         
-        const data = await res.json()
-        if (data.success) {
+        console.log('[Upload] Blob uploaded:', newBlob.url)
+        
+        // Step 2: Process upload (GCS + analysis) in background
+        const processRes = await fetch('/api/character/process-upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            blobUrl: newBlob.url,
+            characterName,
+          }),
+        })
+        
+        const processData = await processRes.json()
+        if (processData.success) {
           // Call parent handler to update character
           onUploadCharacter(characterId, file)
           toast.success('Reference image uploaded successfully!')
         } else {
-          throw new Error(data.error || 'Upload failed')
+          throw new Error(processData.error || 'Processing failed')
         }
       } catch (error) {
         console.error('[Upload Reference] Error:', error)
