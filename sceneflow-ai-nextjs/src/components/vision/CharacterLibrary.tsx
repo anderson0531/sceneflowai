@@ -395,7 +395,6 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
     ? {
         transform: transform ? CSS.Translate.toString(transform) : undefined,
         opacity: isDragging ? 0.65 : 1,
-        cursor: 'grab' as const,
       }
     : undefined
   
@@ -404,11 +403,12 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
       ref={setNodeRef}
       style={draggableStyle}
       className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all overflow-hidden"
-      {...(enableDrag ? listeners : {})}
-      {...(enableDrag ? attributes : {})}
     >
-      {/* Image Section */}
-      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800">
+      {/* Image Section - Only this section has drag handles */}
+      <div 
+        className="relative aspect-square bg-gray-100 dark:bg-gray-800"
+        {...(enableDrag ? { ...listeners, ...attributes, style: { cursor: 'grab' } } : {})}
+      >
         {character.referenceImage ? (
           <>
             <img 
