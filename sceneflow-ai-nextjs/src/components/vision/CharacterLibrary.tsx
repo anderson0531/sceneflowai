@@ -407,7 +407,7 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
       {/* Image Section - Only this section has drag handles */}
       <div 
         className="relative aspect-square bg-gray-100 dark:bg-gray-800"
-        {...(enableDrag ? { ...listeners, ...attributes, style: { cursor: 'grab' } } : {})}
+        {...(enableDrag ? { ...listeners, ...attributes, style: { cursor: 'grab', pointerEvents: 'none' } } : {})}
       >
         {character.referenceImage ? (
           <>
@@ -417,7 +417,7 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
               className="w-full h-full object-cover"
             />
             {/* Overlay controls - only show on hover */}
-            <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all opacity-0 hover:opacity-100 flex items-center justify-center gap-2">
+            <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all opacity-0 hover:opacity-100 flex items-center justify-center gap-2" style={{ pointerEvents: 'auto' }}>
               <button
                 onClick={(e) => {
                   e.stopPropagation()
@@ -457,7 +457,7 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
             </div>
           </>
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-4">
+          <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-4" style={{ pointerEvents: 'auto' }}>
             <ImageIcon className="w-12 h-12 text-gray-400" />
             <div className="flex gap-2">
               <Button 
