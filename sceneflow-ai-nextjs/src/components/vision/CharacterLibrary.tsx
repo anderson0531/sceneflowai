@@ -404,11 +404,8 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
       style={draggableStyle}
       className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all overflow-hidden"
     >
-      {/* Image Section - Only this section has drag handles */}
-      <div 
-        className="relative aspect-square bg-gray-100 dark:bg-gray-800"
-        {...(enableDrag ? { ...listeners, ...attributes, style: { cursor: 'grab', pointerEvents: 'none' } } : {})}
-      >
+      {/* Image Section */}
+      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800">
         {character.referenceImage ? (
           <>
             <img 
@@ -417,7 +414,7 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
               className="w-full h-full object-cover"
             />
             {/* Overlay controls - only show on hover */}
-            <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all opacity-0 hover:opacity-100 flex items-center justify-center gap-2" style={{ pointerEvents: 'auto' }}>
+            <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all opacity-0 hover:opacity-100 flex items-center justify-center gap-2">
               <button
                 onClick={(e) => {
                   e.stopPropagation()
@@ -455,9 +452,23 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
                 }}
               />
             </div>
+            {/* Drag Handle - Bottom Strip */}
+            {enableDrag && (
+              <div 
+                className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center cursor-grab active:cursor-grabbing"
+                {...listeners}
+                {...attributes}
+              >
+                <div className="flex gap-1">
+                  <div className="w-1 h-1 rounded-full bg-white/60"></div>
+                  <div className="w-1 h-1 rounded-full bg-white/60"></div>
+                  <div className="w-1 h-1 rounded-full bg-white/60"></div>
+                </div>
+              </div>
+            )}
           </>
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-4" style={{ pointerEvents: 'auto' }}>
+          <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-4">
             <ImageIcon className="w-12 h-12 text-gray-400" />
             <div className="flex gap-2">
               <Button 
