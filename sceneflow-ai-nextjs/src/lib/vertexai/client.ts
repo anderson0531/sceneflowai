@@ -1,16 +1,43 @@
+import { GoogleAuth } from 'google-auth-library'
+
+let authClient: any = null
+
 /**
- * Get Google API key for Gemini/Imagen
+ * Get OAuth2 access token for Vertex AI API
+ * Uses service account credentials from GOOGLE_APPLICATION_CREDENTIALS_JSON
  */
-function getGoogleApiKey(): string {
-  const apiKey = process.env.GOOGLE_API_KEY
-  if (!apiKey) {
-    throw new Error('GOOGLE_API_KEY not configured')
+export async function getVertexAIAuthToken(): Promise<string> {
+  if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+    throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON not configured')
   }
-  return apiKey
+
+  try {
+    if (!authClient) {
+      const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+      
+      const auth = new GoogleAuth({
+        credentials,
+        scopes: ['https://www.googleapis.com/auth/cloud-platform']
+      })
+      
+      authClient = await auth.getClient()
+    }
+
+    const accessToken = await authClient.getAccessToken()
+    
+    if (!accessToken.token) {
+      throw new Error('Failed to get access token')
+    }
+    
+    return accessToken.token
+  } catch (error: any) {
+    console.error('[Vertex AI Auth] Error:', error)
+    throw new Error(`Vertex AI authentication failed: ${error.message}`)
+  }
 }
 
 /**
- * Generate image using Nano Banana Pro (gemini-3-pro-image-preview)
+ * Generate image using Vertex AI Imagen 2
  * 
  * @param prompt - Text description of image to generate
  * @param options - Generation options (aspect ratio, number of images, reference images)
@@ -34,58 +61,46 @@ export async function callVertexAIImagen(
     }>
   } = {}
 ): Promise<string> {
-  const apiKey = getGoogleApiKey()
+  const projectId = process.env.GCP_PROJECT_ID
+  const region = process.env.GCP_REGION || 'us-central1'
   
-  // Use Nano Banana Pro model
-  const MODEL_ID = 'gemini-3-pro-image-preview'
+  if (!projectId) {
+    throw new Error('GCP_PROJECT_ID not configured')
+  }
+  
+  // Use stable Imagen 2 model
+  const MODEL_ID = 'imagegeneration@006'
   
   console.log(`[Imagen] Generating image with ${MODEL_ID}...`)
   console.log('[Imagen] Prompt:', prompt.slice(0, 100) + '...')
+  console.log('[Imagen] Project:', projectId, 'Region:', region)
   
-  // REST API endpoint for Nano Banana Pro
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateImage`
+  const accessToken = await getVertexAIAuthToken()
   
-  // Build request body for Nano Banana Pro
+  // Vertex AI endpoint
+  const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${MODEL_ID}:predict`
+  
+  // Build request body for Vertex AI Imagen 2
   const requestBody: any = {
-    prompt: prompt,
-    generationConfig: {
+    instances: [{
+      prompt: prompt
+    }],
+    parameters: {
+      sampleCount: options.numberOfImages || 1,
       aspectRatio: options.aspectRatio || '16:9',
-      numberOfImages: options.numberOfImages || 1,
+      negativePrompt: options.negativePrompt || '',
+      safetySetting: 'block_some',
       personGeneration: options.personGeneration || 'allow_adult'
     }
   }
   
-  // Enable thinking mode for max quality
-  if (options.quality === 'max') {
-    requestBody.generationConfig.includeThoughts = true
-    console.log('[Imagen] Enabling thinking mode for max quality')
-  }
-  
-  // Handle reference images (up to 14 supported)
-  if (options.referenceImages && options.referenceImages.length > 0) {
-    console.log(`[Imagen] Using ${options.referenceImages.length} reference images`)
-    requestBody.referenceImages = options.referenceImages
-      .filter(ref => ref.base64Image)
-      .map(ref => {
-        const base64Data = ref.base64Image!.replace(/^data:image\/[^;]+;base64,/, '')
-        return {
-          imageBytes: base64Data,
-          mimeType: 'image/jpeg'
-        }
-      })
-  }
-  
-  if (options.negativePrompt) {
-    requestBody.negativePrompt = options.negativePrompt
-  }
-  
-  console.log('[Imagen] Config:', JSON.stringify(requestBody.generationConfig))
+  console.log('[Imagen] Config:', JSON.stringify(requestBody.parameters))
   
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'x-goog-api-key': apiKey
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify(requestBody)
   })
@@ -95,29 +110,27 @@ export async function callVertexAIImagen(
     console.error('[Imagen] Error response:', errorText)
     
     let hint = ''
-    if (response.status === 403 || response.status === 401) {
-      hint = 'Check that GOOGLE_API_KEY is valid and has Gemini API access enabled.'
+    if (response.status === 403) {
+      hint = 'IAM permission denied. Ensure service account has roles/aiplatform.user role.'
     } else if (response.status === 404) {
-      hint = 'Model gemini-3-pro-image-preview not found. Ensure Gemini API is enabled in Google Cloud Console.'
+      hint = `Model ${MODEL_ID} not found in region ${region}.`
     } else if (response.status === 400) {
-      hint = 'Bad request. Check prompt and generation config parameters.'
+      hint = 'Bad request. Check prompt and parameters.'
     }
     
-    throw new Error(`Imagen API error ${response.status}: ${errorText}. ${hint}`)
+    throw new Error(`Vertex AI error ${response.status}: ${errorText}. ${hint}`)
   }
   
   const data = await response.json()
   
   console.log('[Imagen] Response structure:', Object.keys(data))
   
-  // Extract image bytes from response
-  const imageBytes = data?.generatedImages?.[0]?.imageBytes || 
-                    data?.images?.[0]?.imageBytes ||
-                    data?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data
+  // Extract image bytes from Vertex AI response
+  const imageBytes = data?.predictions?.[0]?.bytesBase64Encoded
   
   if (!imageBytes) {
     console.error('[Imagen] Unexpected response:', JSON.stringify(data).slice(0, 500))
-    throw new Error('No image data in API response')
+    throw new Error('No image data in Vertex AI response')
   }
   
   console.log('[Imagen] Image generated successfully')
