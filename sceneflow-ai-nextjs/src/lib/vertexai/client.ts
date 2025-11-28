@@ -3,37 +3,15 @@ import { GoogleAuth } from 'google-auth-library'
 let authClient: any = null
 
 /**
- * Get OAuth2 access token for Vertex AI API
- * Uses service account credentials from GOOGLE_APPLICATION_CREDENTIALS_JSON
+ * Get access token for Vertex AI API
+ * Uses API key for authentication (no IAM required)
  */
 export async function getVertexAIAuthToken(): Promise<string> {
-  if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-    throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON not configured')
+  const apiKey = process.env.GOOGLE_API_KEY
+  if (!apiKey) {
+    throw new Error('GOOGLE_API_KEY not configured')
   }
-
-  try {
-    if (!authClient) {
-      const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
-      
-      const auth = new GoogleAuth({
-        credentials,
-        scopes: ['https://www.googleapis.com/auth/cloud-platform']
-      })
-      
-      authClient = await auth.getClient()
-    }
-
-    const accessToken = await authClient.getAccessToken()
-    
-    if (!accessToken.token) {
-      throw new Error('Failed to get access token')
-    }
-    
-    return accessToken.token
-  } catch (error: any) {
-    console.error('[Vertex AI Auth] Error:', error)
-    throw new Error(`Vertex AI authentication failed: ${error.message}`)
-  }
+  return apiKey
 }
 
 /**

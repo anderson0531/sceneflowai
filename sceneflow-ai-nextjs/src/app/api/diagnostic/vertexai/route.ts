@@ -6,7 +6,7 @@ export const runtime = 'nodejs'
 export async function GET(_req: NextRequest) {
   const results: any = {
     ok: false,
-    authMethod: 'oauth2',
+    authMethod: 'api_key',
     projectId: process.env.GCP_PROJECT_ID || null,
     region: process.env.GCP_REGION || 'us-central1',
     serviceAccount: null,
@@ -17,8 +17,8 @@ export async function GET(_req: NextRequest) {
 
   try {
     // 1. Check environment
-    if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-      results.hints.push('Missing GOOGLE_APPLICATION_CREDENTIALS_JSON')
+    if (!process.env.GOOGLE_API_KEY) {
+      results.hints.push('Missing GOOGLE_API_KEY')
       return NextResponse.json(results, { status: 500 })
     }
     
@@ -27,27 +27,14 @@ export async function GET(_req: NextRequest) {
       return NextResponse.json(results, { status: 500 })
     }
 
-    // 2. Parse service account
-    try {
-      const creds = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
-      results.serviceAccount = creds.client_email || 'unknown'
-    } catch {
-      results.hints.push('Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON')
-      return NextResponse.json(results, { status: 500 })
-    }
+    // 2. No service account needed for API key
+    results.serviceAccount = 'N/A (API key auth)'
 
-    // 3. Get access token
-    try {
-      await getVertexAIAuthToken()
-      results.tokenTest.ok = true
-    } catch (error: any) {
-      results.tokenTest.error = error.message
-      results.hints.push(`Token acquisition failed: ${error.message}`)
-      return NextResponse.json(results, { status: 500 })
-    }
+    // 3. Test API key (just check if present)
+    results.tokenTest.ok = true
 
     // 4. Test predict endpoint
-    const model = 'imagen-3.0-fast-generate-001'
+    const model = 'imagegeneration@006'
     const endpoint = `https://${results.region}-aiplatform.googleapis.com/v1/projects/${results.projectId}/locations/${results.region}/publishers/google/models/${model}:predict`
     
     try {
@@ -72,7 +59,7 @@ export async function GET(_req: NextRequest) {
         results.predictTest.error = text.slice(0, 300)
         
         if (testRes.status === 403) {
-          results.hints.push(`Run: gcloud projects add-iam-policy-binding ${results.projectId} --member="serviceAccount:${results.serviceAccount}" --role="roles/aiplatform.user"`)
+          results.hints.push('API key may not have Vertex AI permissions or project quota exceeded.')
         }
       }
     } catch (error: any) {
@@ -82,7 +69,7 @@ export async function GET(_req: NextRequest) {
     results.ok = results.predictTest.ok
     
     if (results.ok) {
-      results.hints.push('✅ OAuth2 working! Image generation should work.')
+      results.hints.push('✅ API key working! Image generation should work.')
     }
 
     return NextResponse.json(results)
