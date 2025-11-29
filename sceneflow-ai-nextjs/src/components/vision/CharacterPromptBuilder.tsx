@@ -159,6 +159,7 @@ export function CharacterPromptBuilder({
       cameraAngle,
       lighting,
       additionalDetails
+      , rawMode: mode === 'advanced'
     })
   }
 

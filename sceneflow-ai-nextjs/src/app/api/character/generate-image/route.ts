@@ -10,7 +10,7 @@ export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, projectId, characterId, quality = 'auto', artStyle, shotType, cameraAngle, lighting, additionalDetails } = await req.json()
+    const { prompt, projectId, characterId, quality = 'auto', artStyle, shotType, cameraAngle, lighting, additionalDetails, rawMode } = await req.json()
     
     let finalPrompt = prompt?.trim() || ''
     
@@ -52,65 +52,58 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
     }
 
-    // Enhance prompt for character portrait using user selections (no hard-coded overrides)
-    const parts: string[] = []
-    parts.push(finalPrompt)
-
-    // Style preset
-    const stylePreset = artStyle ? artStylePresets.find(s => s.id === artStyle) : undefined
-    if (stylePreset) parts.push(stylePreset.promptSuffix)
-
-    // Camera & composition mappings
-    const shotMap: Record<string, string> = {
-      'wide-shot': 'wide shot composition',
-      'medium-shot': 'medium shot composition',
-      'medium-close-up': 'medium close-up portrait',
-      'close-up': 'close-up portrait',
-      'extreme-close-up': 'extreme close-up portrait',
-      'over-shoulder': 'over the shoulder view'
-    }
-    const angleMap: Record<string, string> = {
-      'eye-level': 'eye level angle',
-      'low-angle': 'low angle view',
-      'high-angle': 'high angle view',
-      'birds-eye': "bird's eye view",
-      'dutch-angle': 'dutch angle'
-    }
-    const lightingMap: Record<string, string> = {
-      'natural': 'soft natural lighting',
-      'golden-hour': 'golden hour lighting',
-      'dramatic': 'dramatic cinematic lighting',
-      'soft': 'soft diffused lighting',
-      'harsh': 'high contrast lighting',
-      'backlit': 'backlit subject'
-    }
-    if (shotType) parts.push(shotMap[shotType] || shotType)
-    if (cameraAngle && cameraAngle !== 'eye-level') parts.push(angleMap[cameraAngle] || cameraAngle)
-    if (lighting) parts.push(lightingMap[lighting] || lighting)
-    if (additionalDetails) parts.push(additionalDetails)
-
-    // Normalize, dedupe, and resolve style conflicts
-    const tokens = parts
-      .join(', ')
-      .split(',')
-      .map(t => t.trim())
-      .filter(Boolean)
-
-    const seen = new Set<string>()
-    const out: string[] = []
-    for (const t of tokens) {
-      const key = t.toLowerCase()
-      if (seen.has(key)) continue
-      // If a non-photorealistic style is selected, drop explicit 'photorealistic'
-      if (artStyle && artStyle !== 'photorealistic' && key.includes('photorealistic')) continue
-      out.push(t)
-      seen.add(key)
+    let enhancedPrompt: string
+    if (rawMode) {
+      // Advanced mode: use user prompt verbatim (only trim) to avoid hidden overrides
+      enhancedPrompt = finalPrompt.trim()
+    } else {
+      // Guided mode: assemble structured parts
+      const parts: string[] = []
+      parts.push(finalPrompt)
+      const stylePreset = artStyle ? artStylePresets.find(s => s.id === artStyle) : undefined
+      if (stylePreset) parts.push(stylePreset.promptSuffix)
+      const shotMap: Record<string, string> = {
+        'wide-shot': 'wide shot composition',
+        'medium-shot': 'medium shot composition',
+        'medium-close-up': 'medium close-up portrait',
+        'close-up': 'close-up portrait',
+        'extreme-close-up': 'extreme close-up portrait',
+        'over-shoulder': 'over the shoulder view'
+      }
+      const angleMap: Record<string, string> = {
+        'eye-level': 'eye level angle',
+        'low-angle': 'low angle view',
+        'high-angle': 'high angle view',
+        'birds-eye': "bird's eye view",
+        'dutch-angle': 'dutch angle'
+      }
+      const lightingMap: Record<string, string> = {
+        'natural': 'soft natural lighting',
+        'golden-hour': 'golden hour lighting',
+        'dramatic': 'dramatic cinematic lighting',
+        'soft': 'soft diffused lighting',
+        'harsh': 'high contrast lighting',
+        'backlit': 'backlit subject'
+      }
+      if (shotType) parts.push(shotMap[shotType] || shotType)
+      if (cameraAngle && cameraAngle !== 'eye-level') parts.push(angleMap[cameraAngle] || cameraAngle)
+      if (lighting) parts.push(lightingMap[lighting] || lighting)
+      if (additionalDetails) parts.push(additionalDetails)
+      const tokens = parts.join(', ').split(',').map(t => t.trim()).filter(Boolean)
+      const seen = new Set<string>()
+      const out: string[] = []
+      for (const t of tokens) {
+        const key = t.toLowerCase()
+        if (seen.has(key)) continue
+        if (artStyle && artStyle !== 'photorealistic' && key.includes('photorealistic')) continue
+        out.push(t)
+        seen.add(key)
+      }
+      enhancedPrompt = out.join(', ')
     }
 
-    const enhancedPrompt = out.join(', ')
-
-    console.log('[Character Image] Art style:', artStyle || '(none)')
-    console.log('[Character Image] Generating with Vertex AI Imagen 3:', enhancedPrompt.substring(0, 100))
+    console.log('[Character Image] rawMode:', !!rawMode, 'artStyle:', artStyle || '(none)')
+    console.log('[Character Image] Final prompt preview:', enhancedPrompt.substring(0, 140))
 
     // Generate with Vertex AI (1:1 for portrait)
     const base64Image = await callVertexAIImagen(enhancedPrompt, {
