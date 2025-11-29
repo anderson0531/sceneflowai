@@ -2297,16 +2297,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  const handleGenerateCharacter = async (characterId: string, prompt: string) => {
+  const handleGenerateCharacter = async (characterId: string, promptOrPayload: any) => {
+    const isObjectPayload = promptOrPayload && typeof promptOrPayload === 'object'
+    const prompt: string = isObjectPayload ? (promptOrPayload.characterPrompt || '') : (promptOrPayload || '')
     if (!prompt?.trim()) return
     
     try {
       const res = await fetch('/api/character/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           prompt,
-          quality: imageQuality // Pass quality setting
+          // Use builder selections if provided; remove hard-coded defaults
+          artStyle: isObjectPayload ? promptOrPayload.artStyle : undefined,
+          shotType: isObjectPayload ? promptOrPayload.shotType : undefined,
+          cameraAngle: isObjectPayload ? promptOrPayload.cameraAngle : undefined,
+          lighting: isObjectPayload ? promptOrPayload.lighting : undefined,
+          additionalDetails: isObjectPayload ? promptOrPayload.additionalDetails : undefined,
+          quality: imageQuality
         })
       })
       

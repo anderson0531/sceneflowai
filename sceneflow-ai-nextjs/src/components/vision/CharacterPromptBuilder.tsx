@@ -127,11 +127,11 @@ export function CharacterPromptBuilder({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl bg-gray-900 text-white border-gray-700">
+      <DialogContent className="max-w-3xl h-[85vh] bg-gray-900 text-white border-gray-700 flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-white">Character Prompt Builder{character?.name ? ` - ${character.name}` : ''}</DialogTitle>
         </DialogHeader>
-
+        
         {/* Guidance Banner when character has reference image */}
         {character?.referenceImage && (
           <div className="mt-2 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
@@ -146,7 +146,9 @@ export function CharacterPromptBuilder({
             </div>
           </div>
         )}
-
+        
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto px-0">
         {/* Camera & Composition */}
         <div className="mt-4 space-y-4 p-3 rounded border border-gray-700 bg-gray-800/50">
           <h3 className="text-sm font-semibold text-gray-200">Camera & Composition</h3>
@@ -228,6 +230,21 @@ export function CharacterPromptBuilder({
             placeholder="Add specifics: wardrobe, expression, mood, background blur, bokeh, studio lighting setup, lens focal length, etc."
             className="min-h-[90px]"
           />
+          <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2">
+            <Textarea
+              placeholder="AI Assist: describe changes to the prompt (e.g., 'make lighting softer, add studio background')"
+              className="md:col-span-2 min-h-[60px]"
+              value={additionalDetails}
+              onChange={(e) => setAdditionalDetails(e.target.value)}
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {/* no-op: additionalDetails already reflects assist */}}
+            >
+              Apply Assist
+            </Button>
+          </div>
         </div>
 
         {/* Prompt Preview */}
@@ -242,9 +259,10 @@ export function CharacterPromptBuilder({
             {promptPreview}
           </div>
         </div>
+        </div>
 
         {/* Actions */}
-        <div className="mt-4 flex items-center justify-end gap-2">
+        <div className="flex-shrink-0 mt-4 flex items-center justify-end gap-2">
           <Button variant="outline" onClick={onClose} className="text-gray-300">Cancel</Button>
           <Button onClick={handleGenerate} disabled={isGenerating}>
             Generate Character Image

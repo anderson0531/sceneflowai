@@ -14,7 +14,7 @@ import { CharacterPromptBuilder } from '@/components/vision/CharacterPromptBuild
 export interface CharacterLibraryProps {
   characters: any[]
   onRegenerateCharacter: (characterId: string) => void
-  onGenerateCharacter: (characterId: string, prompt: string) => void
+  onGenerateCharacter: (characterId: string, promptOrPayload: any) => void
   onUploadCharacter: (characterId: string, file: File) => void
   onApproveCharacter: (characterId: string) => void
   onUpdateCharacterAttributes?: (characterId: string, attributes: any) => void
@@ -334,7 +334,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                     const targetId = promptBuilderOpenFor!
                     setPromptBuilderOpenFor(null)
                     setGeneratingChars(prev => new Set(prev).add(targetId))
-                    onGenerateCharacter(targetId, payload.characterPrompt)
+                    onGenerateCharacter(targetId, payload)
                       .finally(() => {
                         setGeneratingChars(prev => {
                           const ns = new Set(prev)
