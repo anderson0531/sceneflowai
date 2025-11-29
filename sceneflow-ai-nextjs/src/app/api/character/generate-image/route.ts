@@ -109,6 +109,7 @@ export async function POST(req: NextRequest) {
 
     const enhancedPrompt = out.join(', ')
 
+    console.log('[Character Image] Art style:', artStyle || '(none)')
     console.log('[Character Image] Generating with Vertex AI Imagen 3:', enhancedPrompt.substring(0, 100))
 
     // Generate with Vertex AI (1:1 for portrait)
