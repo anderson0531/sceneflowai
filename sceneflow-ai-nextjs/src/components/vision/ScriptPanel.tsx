@@ -1877,7 +1877,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   generateAndPlaySFX={generateAndPlaySFX}
                   generateAndPlayMusic={generateAndPlayMusic}
                   onPlayAudio={handlePlayAudio}
-                  selectedLanguage={'en'}
+                  onGenerateSceneAudio={onGenerateSceneAudio}
+                  selectedLanguage={selectedLanguage}
                   playingAudio={playingAudio}
                       generatingDialogue={generatingDialogue}
                       setGeneratingDialogue={setGeneratingDialogue}
