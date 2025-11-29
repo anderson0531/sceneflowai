@@ -21,10 +21,19 @@ export async function POST(req: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey)
-    // Use gemini-pro as a fallback if 1.5-flash is not available in the current region/API version
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' })
+    
+    // Try models in order of preference: User requested 3.0, then fallbacks
+    const modelsToTry = ['gemini-3.0-flash', 'gemini-1.5-flash-001', 'gemini-1.5-flash', 'gemini-pro']
+    
+    let optimizedPrompt = ''
+    let lastError = null
 
-    const systemPrompt = `You are an expert AI prompt optimizer for character image generation. Your task is to optimize a character description prompt for better image generation results, specifically for professional character portraits.
+    for (const modelName of modelsToTry) {
+      try {
+        console.log(`[Optimize Prompt] Attempting with model: ${modelName}`)
+        const model = genAI.getGenerativeModel({ model: modelName })
+
+        const systemPrompt = `You are an expert AI prompt optimizer for character image generation. Your task is to optimize a character description prompt for better image generation results, specifically for professional character portraits.
 
 Given a character description and an instruction, modify the prompt to better suit the instruction while maintaining the core character details.
 
@@ -32,7 +41,7 @@ Keep the optimized prompt concise but descriptive, focusing on visual elements t
 
 Return only the optimized prompt text, no explanations or additional formatting.`
 
-    const fullPrompt = `${systemPrompt}
+        const fullPrompt = `${systemPrompt}
 
 Original prompt: ${prompt}
 
@@ -40,9 +49,22 @@ Instruction: ${instruction}
 
 Optimized prompt:`
 
-    const result = await model.generateContent(fullPrompt)
-    const response = await result.response
-    const optimizedPrompt = response.text().trim()
+        const result = await model.generateContent(fullPrompt)
+        const response = await result.response
+        optimizedPrompt = response.text().trim()
+        
+        console.log(`[Optimize Prompt] Success with model: ${modelName}`)
+        break // Stop if successful
+      } catch (error) {
+        console.warn(`[Optimize Prompt] Failed with model ${modelName}:`, error instanceof Error ? error.message : error)
+        lastError = error
+        // Continue to next model
+      }
+    }
+
+    if (!optimizedPrompt) {
+      throw lastError || new Error('All model attempts failed')
+    }
 
     return NextResponse.json({ optimizedPrompt })
 
