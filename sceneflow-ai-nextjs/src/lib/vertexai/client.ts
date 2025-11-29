@@ -124,13 +124,26 @@ export async function callVertexAIImagen(
   const data = await response.json()
   
   console.log('[Imagen] Response structure:', Object.keys(data))
+  console.log('[Imagen] Full response:', JSON.stringify(data).slice(0, 1000))
+  
+  // Check for API errors in response
+  if (data.error) {
+    console.error('[Imagen] API error in response:', data.error)
+    throw new Error(`Vertex AI API error: ${data.error.message || 'Unknown error'}`)
+  }
   
   // Extract image bytes from Vertex AI response
-  const imageBytes = data?.predictions?.[0]?.bytesBase64Encoded
+  const predictions = data?.predictions
+  if (!predictions || predictions.length === 0) {
+    console.error('[Imagen] No predictions in response - likely filtered by safety settings')
+    throw new Error('Image generation was filtered due to content policies. Try adjusting the prompt to be more descriptive, avoid sensitive content, and ensure it describes a professional character portrait.')
+  }
+  
+  const imageBytes = predictions[0]?.bytesBase64Encoded
   
   if (!imageBytes) {
-    console.error('[Imagen] Unexpected response:', JSON.stringify(data).slice(0, 500))
-    throw new Error('No image data in Vertex AI response')
+    console.error('[Imagen] Unexpected response structure:', JSON.stringify(data).slice(0, 500))
+    throw new Error('Unexpected response format from Vertex AI')
   }
   
   console.log('[Imagen] Image generated successfully')
