@@ -1014,7 +1014,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         ...project,
         metadata: {
           ...project.metadata,
-          imageQuality: quality
+          imageQuality: quality,
+          visionPhase: {
+            ...project.metadata?.visionPhase,
+            script: script,
+            characters: characters,
+            scenes: scenes,
+            narrationVoice: narrationVoice
+          }
         }
       }
       setProject(updatedProject)
@@ -1059,7 +1066,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           visionPhase: {
             ...project.metadata?.visionPhase,
             narrationVoice: voiceConfig,
-            characters: updatedCharacters
+            characters: updatedCharacters,
+            script: script,
+            scenes: scenes
           }
         }
       }
@@ -1123,7 +1132,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           ...project.metadata,
           visionPhase: {
             ...project.metadata?.visionPhase,
-            characters: updatedCharacters
+            characters: updatedCharacters,
+            script: script,
+            scenes: scenes,
+            narrationVoice: narrationVoice
           }
         }
       }
@@ -1180,7 +1192,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               ...project.metadata,
               visionPhase: {
                 ...project.metadata?.visionPhase,
-                characters: updatedCharacters
+                characters: updatedCharacters,
+                script: script,
+                scenes: scenes,
+                narrationVoice: narrationVoice
               }
             }
           })
@@ -1225,7 +1240,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               ...project.metadata,
               visionPhase: {
                 ...project.metadata?.visionPhase,
-                characters: updatedCharacters
+                characters: updatedCharacters,
+                script: script,
+                scenes: scenes,
+                narrationVoice: narrationVoice
               }
             }
           })
@@ -1270,7 +1288,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               ...project.metadata,
               visionPhase: {
                 ...project.metadata?.visionPhase,
-                characters: updatedCharacters
+                characters: updatedCharacters,
+                script: script,
+                scenes: scenes,
+                narrationVoice: narrationVoice
               }
             }
           })
@@ -1355,7 +1376,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   audience: data.audience,
                   lastUpdated: data.generatedAt,
                   scriptHash: generateScriptHash(script)
-                }
+                },
+                script: script,
+                scenes: scenes,
+                characters: characters,
+                narrationVoice: narrationVoice
               }
             }
             
@@ -2242,6 +2267,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 ...existingMetadata,
                 visionPhase: {
                   ...existingVisionPhase,
+                  script: script,
+                  scenes: scenes,
                   characters: updatedCharacters
                 }
               }
@@ -2294,6 +2321,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               ...existingMetadata,
               visionPhase: {
                 ...existingVisionPhase,
+                script: script,
+                scenes: scenes,
                 characters: updatedCharacters
               }
             }
@@ -2351,6 +2380,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 ...existingMetadata,
                 visionPhase: {
                   ...existingVisionPhase,
+                  script: script,
+                  scenes: scenes,
                   characters: updatedCharacters
                 }
               }
@@ -2414,6 +2445,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 ...existingMetadata,
                 visionPhase: {
                   ...existingVisionPhase,
+                  script: script,
+                  characters: characters,
                   scenes: updatedScenes
                 }
               }
@@ -2462,6 +2495,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 ...existingMetadata,
                 visionPhase: {
                   ...existingVisionPhase,
+                  script: script,
+                  characters: characters,
                   scenes: updatedScenes
                 }
               }
@@ -3741,6 +3776,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const currentMetadata = project.metadata ?? {}
       const nextVisionPhase = {
         ...(currentMetadata.visionPhase ?? {}),
+        script: script,
+        characters: characters,
+        scenes: scenes,
+        narrationVoice: narrationVoice,
         references: {
           sceneReferences,
           objectReferences,

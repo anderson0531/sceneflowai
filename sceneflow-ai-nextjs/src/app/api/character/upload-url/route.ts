@@ -15,6 +15,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         return {
           allowedContentTypes: ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'],
           maximumSizeInBytes: 10 * 1024 * 1024, // 10MB
+          addRandomSuffix: true,
         }
       },
       onUploadCompleted: async ({ blob, tokenPayload }) => {
