@@ -429,35 +429,6 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
     }
   }
 
-  const handleAiAssist = async () => {
-    if (!aiInstruction.trim()) return
-
-    setOptimizingPrompt(true)
-    try {
-      const res = await fetch('/api/character/optimize-prompt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: appearanceText,
-          instruction: aiInstruction
-        })
-      })
-
-      const json = await res.json()
-      if (json.optimizedPrompt) {
-        setAppearanceText(json.optimizedPrompt)
-        setShowAiAssist(false)
-        setAiInstruction('')
-        toast.success('Prompt optimized with AI!')
-      } else {
-        toast.error(json.error || 'Failed to optimize prompt')
-      }
-    } catch (error) {
-      console.error('AI assist failed:', error)
-      toast.error('Failed to optimize prompt')
-    } finally {
-      setOptimizingPrompt(false)
-    }
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `character-reference-${characterId}`,
     data: {
