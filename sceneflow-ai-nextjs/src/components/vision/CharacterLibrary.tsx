@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Users, Plus, RefreshCw, Loader, Wand2, Upload, X, ChevronDown, Check, Settings, Sparkles, Lightbulb, Info, Volume2, ImageIcon, Edit, Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { VoiceSelector } from '@/components/tts/VoiceSelector'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
@@ -382,6 +381,9 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
   const [editingName, setEditingName] = useState(false)
   const [nameText, setNameText] = useState('')
   const [editingRole, setEditingRole] = useState(false)
+  const [showAiAssist, setShowAiAssist] = useState(false)
+  const [aiInstruction, setAiInstruction] = useState('')
+  const [optimizingPrompt, setOptimizingPrompt] = useState(false)
   
   // Helper function to generate fallback description from attributes
   const generateFallbackDescription = (character: any): string => {
@@ -426,6 +428,37 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
     if (onUpdateCharacterRole) {
       await onUpdateCharacterRole(characterId, (document.getElementById(`role-select-${characterId}`) as HTMLSelectElement)?.value || 'supporting')
       setEditingRole(false)
+    }
+  }
+
+  const handleAiAssist = async () => {
+    if (!aiInstruction.trim()) return
+
+    setOptimizingPrompt(true)
+    try {
+      const res = await fetch('/api/character/optimize-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: appearanceText,
+          instruction: aiInstruction
+        })
+      })
+
+      const json = await res.json()
+      if (json.optimizedPrompt) {
+        setAppearanceText(json.optimizedPrompt)
+        setShowAiAssist(false)
+        setAiInstruction('')
+        toast.success('Prompt optimized with AI!')
+      } else {
+        toast.error(json.error || 'Failed to optimize prompt')
+      }
+    } catch (error) {
+      console.error('AI assist failed:', error)
+      toast.error('Failed to optimize prompt')
+    } finally {
+      setOptimizingPrompt(false)
     }
   }
 
@@ -825,16 +858,29 @@ function CharacterCard({ character, characterId, isSelected, onClick, onRegenera
                     rows={5}
                     placeholder="Describe physical appearance (e.g., ethnicity, build, hair, eyes, distinctive features)..."
                   />
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleSaveAppearance()
-                    }}
-                    className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-                  >
-                    <Check className="w-3 h-3 inline mr-1" />
-                    Save Description
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowAiAssist(true)
+                      }}
+                      className="flex-1 px-3 py-2 text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors flex items-center justify-center gap-1"
+                      disabled={optimizingPrompt}
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      {optimizingPrompt ? 'Optimizing...' : 'AI Assist'}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleSaveAppearance()
+                      }}
+                      className="flex-1 px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Check className="w-3 h-3" />
+                      Save
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div 
@@ -951,6 +997,58 @@ function NarratorCharacterCard({ character, onUpdateCharacterVoice, ttsProvider 
           )}
         </div>
       </div>
+
+      {/* AI Assist Dialog */}
+      <Dialog open={showAiAssist} onOpenChange={setShowAiAssist}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              AI Prompt Assistant
+            </DialogTitle>
+            <DialogDescription>
+              Describe how you'd like to optimize this character prompt for better image generation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <textarea
+              value={aiInstruction}
+              onChange={(e) => setAiInstruction(e.target.value)}
+              placeholder="e.g., optimize for content policies, make it more descriptive, focus on professional appearance..."
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              rows={3}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAiAssist(false)
+                setAiInstruction('')
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAiAssist}
+              disabled={!aiInstruction.trim() || optimizingPrompt}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              {optimizingPrompt ? (
+                <>
+                  <Loader className="w-4 h-4 mr-2 animate-spin" />
+                  Optimizing...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Optimize Prompt
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

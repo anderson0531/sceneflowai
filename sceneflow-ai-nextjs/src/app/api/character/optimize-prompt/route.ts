@@ -1,0 +1,54 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { GoogleGenerativeAI } from '@google/generative-ai'
+
+export const runtime = 'nodejs'
+
+export async function POST(req: NextRequest) {
+  try {
+    const { prompt, instruction } = await req.json()
+
+    if (!prompt?.trim()) {
+      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
+    }
+
+    if (!instruction?.trim()) {
+      return NextResponse.json({ error: 'Instruction is required' }, { status: 400 })
+    }
+
+    const apiKey = process.env.GOOGLE_API_KEY
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Gemini API key not configured' }, { status: 500 })
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey)
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+
+    const systemPrompt = `You are an expert AI prompt optimizer for character image generation. Your task is to optimize a character description prompt for better image generation results, specifically for professional character portraits.
+
+Given a character description and an instruction, modify the prompt to better suit the instruction while maintaining the core character details.
+
+Keep the optimized prompt concise but descriptive, focusing on visual elements that work well for AI image generation.
+
+Return only the optimized prompt text, no explanations or additional formatting.`
+
+    const fullPrompt = `${systemPrompt}
+
+Original prompt: ${prompt}
+
+Instruction: ${instruction}
+
+Optimized prompt:`
+
+    const result = await model.generateContent(fullPrompt)
+    const response = await result.response
+    const optimizedPrompt = response.text().trim()
+
+    return NextResponse.json({ optimizedPrompt })
+
+  } catch (error) {
+    console.error('[Optimize Prompt] Error:', error)
+    return NextResponse.json({ 
+      error: error instanceof Error ? error.message : 'Failed to optimize prompt' 
+    }, { status: 500 })
+  }
+}

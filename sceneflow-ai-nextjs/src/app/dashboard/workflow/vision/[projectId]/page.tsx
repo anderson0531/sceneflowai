@@ -4,7 +4,8 @@
 import { use, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels'
-import { upload } from '@vercel/blob/client'
+ import { upload } from '@vercel/blob/client'
+import { toast } from 'sonner'
 import { ContextBar } from '@/components/layout/ContextBar'
 import { ScriptPanel } from '@/components/vision/ScriptPanel'
 import { SceneGallery } from '@/components/vision/SceneGallery'
@@ -2301,7 +2302,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         
         const char = updatedCharacters.find(c => (c.id || characters.indexOf(c).toString()) === characterId)
         const msg = char?.imageApproved ? 'Character image approved!' : 'Character image unlocked for editing'
-        try { const { toast } = require('sonner'); toast.success(msg) } catch {}
+        try { toast.success(msg) } catch {}
       } catch (saveError) {
         console.error('Failed to save character approval to project:', saveError)
       }
@@ -2360,7 +2361,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           console.error('Failed to save character to project:', saveError)
         }
         
-        try { const { toast } = require('sonner'); toast.success('Character image generated!') } catch {}
+        try { toast.success('Character image generated!') } catch {}
       } else {
         const errorMsg = json?.error || 'Failed to generate image'
         throw new Error(errorMsg)
@@ -2368,7 +2369,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     } catch (error) {
       console.error('Character image generation failed:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate character image'
-      try { const { toast } = require('sonner'); toast.error(errorMessage) } catch {}
+      try { toast.error(errorMessage) } catch {}
     }
   }
 
