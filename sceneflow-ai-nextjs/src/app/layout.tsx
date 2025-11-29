@@ -82,14 +82,15 @@ export default function RootLayout({
             <Toaster 
               position="top-right" 
               richColors 
-              theme="system"
+              theme="dark"
               toastOptions={{
                 style: {
-                  background: 'var(--background)',
-                  color: 'var(--foreground)',
-                  border: '1px solid var(--border)',
+                  background: '#1f2937', // gray-800
+                  color: '#f3f4f6', // gray-100
+                  border: '1px solid #374151', // gray-700
+                  opacity: 1,
                 },
-                className: 'dark:bg-gray-900 dark:text-white dark:border-gray-800 bg-white text-gray-900 border-gray-200',
+                className: 'bg-gray-800 text-gray-100 border-gray-700 shadow-lg !opacity-100',
               }}
             />
             <ProcessingOverlay />
