@@ -9,7 +9,7 @@ import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { upload } from '@vercel/blob/client'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
-import { CharacterPromptBuilder } from '@/components/vision/CharacterPromptBuilder'
+import { CharacterPromptBuilderV3 } from '@/components/vision/CharacterPromptBuilderV3'
 
 export interface CharacterLibraryProps {
   characters: any[]
@@ -325,7 +325,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
           })}
               {/* Character Prompt Builder Modal */}
               {promptBuilderOpenFor && (
-                <CharacterPromptBuilder
+                <CharacterPromptBuilderV3
                   open={!!promptBuilderOpenFor}
                   onClose={() => setPromptBuilderOpenFor(null)}
                   character={characters.find(c => (c.id || characters.indexOf(c).toString()) === promptBuilderOpenFor)}
