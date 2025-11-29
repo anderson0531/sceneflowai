@@ -9,6 +9,7 @@ import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { upload } from '@vercel/blob/client'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
+import { CharacterPromptBuilder } from '@/components/vision/CharacterPromptBuilder'
 
 export interface CharacterLibraryProps {
   characters: any[]
@@ -54,6 +55,7 @@ interface CharacterCardProps {
   voiceSectionExpanded?: boolean
   onToggleVoiceSection?: () => void
   enableDrag?: boolean
+  onOpenCharacterPrompt?: () => void
 }
 
 export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onAddCharacter, onRemoveCharacter, ttsProvider, compact = false, uploadingRef = {}, setUploadingRef, enableDrag = false, showProTips: showProTipsProp }: CharacterLibraryProps) {                                
@@ -64,6 +66,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
   const [needsReupload, setNeedsReupload] = useState<Record<string, boolean>>({})
   const [showProTipsInternal, setShowProTipsInternal] = useState(false)
   const [voiceSectionExpanded, setVoiceSectionExpanded] = useState<Record<string, boolean>>({})
+  const [promptBuilderOpenFor, setPromptBuilderOpenFor] = useState<string | null>(null)
   
   // Use prop if provided (for compact mode), otherwise use internal state
   const showProTips = showProTipsProp !== undefined ? showProTipsProp : showProTipsInternal
@@ -316,9 +319,32 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                 voiceSectionExpanded={voiceSectionExpanded[charId] || false}
                 onToggleVoiceSection={() => handleToggleVoiceSection(charId)}
                 enableDrag={enableDrag}
+                onOpenCharacterPrompt={() => setPromptBuilderOpenFor(charId)}
               />
             )
           })}
+              {/* Character Prompt Builder Modal */}
+              {promptBuilderOpenFor && (
+                <CharacterPromptBuilder
+                  open={!!promptBuilderOpenFor}
+                  onClose={() => setPromptBuilderOpenFor(null)}
+                  character={characters.find(c => (c.id || characters.indexOf(c).toString()) === promptBuilderOpenFor)}
+                  isGenerating={Array.from(generatingChars).includes(promptBuilderOpenFor)}
+                  onGenerateImage={(payload) => {
+                    const targetId = promptBuilderOpenFor!
+                    setPromptBuilderOpenFor(null)
+                    setGeneratingChars(prev => new Set(prev).add(targetId))
+                    onGenerateCharacter(targetId, payload.characterPrompt)
+                      .finally(() => {
+                        setGeneratingChars(prev => {
+                          const ns = new Set(prev)
+                          ns.delete(targetId)
+                          return ns
+                        })
+                      })
+                  }}
+                />
+              )}
         </div>
       )}
       
@@ -372,7 +398,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
   )
 }
 
-const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, isUploading = false, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onRemove, ttsProvider, voiceSectionExpanded, onToggleVoiceSection, enableDrag = false }: CharacterCardProps) => {
+const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, isUploading = false, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onRemove, ttsProvider, voiceSectionExpanded, onToggleVoiceSection, enableDrag = false, onOpenCharacterPrompt }: CharacterCardProps) => {
   const hasImage = !!character.referenceImage
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
@@ -509,6 +535,16 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                 title="Regenerate image"
               >
                 <RefreshCw className="w-4 h-4" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onOpenCharacterPrompt?.()
+                }}
+                className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm"
+                title="Open Prompt Builder"
+              >
+                <Sparkles className="w-4 h-4" />
               </button>
                             <button 
                 onClick={(e) => {
