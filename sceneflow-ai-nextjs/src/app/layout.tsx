@@ -79,7 +79,19 @@ export default function RootLayout({
             <GlobalHeader />
             <ConditionalLayout>{children}</ConditionalLayout>
             <InstallPrompt />
-            <Toaster position="top-right" richColors />
+            <Toaster 
+              position="top-right" 
+              richColors 
+              theme="system"
+              toastOptions={{
+                style: {
+                  background: 'var(--background)',
+                  color: 'var(--foreground)',
+                  border: '1px solid var(--border)',
+                },
+                className: 'dark:bg-gray-900 dark:text-white dark:border-gray-800 bg-white text-gray-900 border-gray-200',
+              }}
+            />
             <ProcessingOverlay />
           </AuthSessionProvider>
         </ThemeProvider>
