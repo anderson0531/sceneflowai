@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+    // Use gemini-pro as a fallback if 1.5-flash is not available in the current region/API version
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' })
 
     const systemPrompt = `You are an expert AI prompt optimizer for character image generation. Your task is to optimize a character description prompt for better image generation results, specifically for professional character portraits.
 
