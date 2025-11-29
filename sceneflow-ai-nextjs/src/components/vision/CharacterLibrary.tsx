@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { upload } from '@vercel/blob/client'
+import { VoiceSelector } from '@/components/tts/VoiceSelector'
 
 export interface CharacterLibraryProps {
   characters: any[]
