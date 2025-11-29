@@ -136,7 +136,7 @@ export async function callVertexAIImagen(
   const predictions = data?.predictions
   if (!predictions || predictions.length === 0) {
     console.error('[Imagen] No predictions in response - likely filtered by safety settings')
-    throw new Error('Problem: Image generation was filtered due to content policies.\n\nAction: Try adjusting the prompt to be more descriptive, avoid sensitive content, and ensure it describes a professional character portrait.')
+    throw new Error('Problem: Image generation was filtered due to content policies.\n\n\nAction: Try adjusting the prompt to be more descriptive, avoid sensitive content, and ensure it describes a professional character portrait.')
   }
   
   const imageBytes = predictions[0]?.bytesBase64Encoded
