@@ -2853,30 +2853,33 @@ function SceneCard({
                 {activeWorkflowTab === 'dialogueAction' && (
                   <div className="space-y-4">
                   {/* Scene Narration */}
-                  {scene.narration && (
+                  {scene.narration && (() => {
+                    const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
+                    
+                    return (
                     <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <Volume2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                           <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Scene Narration</span>
-                          {scene.narrationAudioUrl && (
+                          {narrationUrl && (
                             <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
                               <Volume2 className="w-3 h-3" />
                               Audio Ready
                             </span>
                           )}
                         </div>
-                        {scene.narrationAudioUrl ? (
+                        {narrationUrl ? (
                           <div className="flex items-center gap-2">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                onPlayAudio?.(scene.narrationAudioUrl, 'narration')
+                                onPlayAudio?.(narrationUrl, 'narration')
                               }}
                               className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
                               title="Play Narration"
                             >
-                              {playingAudio === scene.narrationAudioUrl ? (
+                              {playingAudio === narrationUrl ? (
                                 <Pause className="w-4 h-4" />
                               ) : (
                                 <Play className="w-4 h-4" />
@@ -2907,7 +2910,7 @@ function SceneCard({
                               )}
                             </button>
                             <a
-                              href={scene.narrationAudioUrl}
+                              href={narrationUrl}
                               download
                               className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
                               title="Download Narration"
@@ -2944,7 +2947,8 @@ function SceneCard({
                         "{scene.narration}"
                       </div>
                     </div>
-                  )}
+                  )
+                  })()}
                   
                   {/* Scene Dialog */}
                   {scene.dialogue && scene.dialogue.length > 0 && (
@@ -2962,8 +2966,8 @@ function SceneCard({
                           // Old format: array
                           dialogueAudioArray = scene.dialogueAudio
                         } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
-                          // New format: object keyed by language, use 'en' by default
-                          dialogueAudioArray = scene.dialogueAudio['en'] || []
+                          // New format: object keyed by language
+                          dialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
                         }
                         const audioEntry = dialogueAudioArray.find((a: any) => 
                           a.character === d.character && a.dialogueIndex === i
