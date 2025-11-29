@@ -30,6 +30,31 @@ export interface CharacterLibraryProps {
   showProTips?: boolean
 }
 
+interface CharacterCardProps {
+  character: any
+  characterId: string
+  isSelected: boolean
+  onClick: () => void
+  onRegenerate: () => void
+  onGenerate: () => void
+  onUpload: (file: File) => void
+  onApprove: () => void
+  prompt: string
+  isGenerating: boolean
+  isUploading?: boolean
+  expandedCharId?: string | null
+  onToggleExpand?: (charId: string, section: 'coreIdentity' | 'appearance') => void                                                                             
+  onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void
+  onUpdateAppearance?: (characterId: string, description: string) => void
+  onUpdateCharacterName?: (characterId: string, name: string) => void
+  onUpdateCharacterRole?: (characterId: string, role: string) => void
+  onRemove?: () => void
+  ttsProvider: 'google' | 'elevenlabs'
+  voiceSectionExpanded?: boolean
+  onToggleVoiceSection?: () => void
+  enableDrag?: boolean
+}
+
 export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onAddCharacter, onRemoveCharacter, ttsProvider, compact = false, uploadingRef = {}, setUploadingRef, enableDrag = false, showProTips: showProTipsProp }: CharacterLibraryProps) {                                
   const [selectedChar, setSelectedChar] = useState<string | null>(null)
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(new Set())
@@ -346,31 +371,6 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
   )
 }
 
-interface CharacterCardProps {
-  character: any
-  characterId: string
-  isSelected: boolean
-  onClick: () => void
-  onRegenerate: () => void
-  onGenerate: () => void
-  onUpload: (file: File) => void
-  onApprove: () => void
-  prompt: string
-  isGenerating: boolean
-  isUploading?: boolean
-  expandedCharId?: string | null
-  onToggleExpand?: (charId: string, section: 'coreIdentity' | 'appearance') => void                                                                             
-  onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void
-  onUpdateAppearance?: (characterId: string, description: string) => void
-  onUpdateCharacterName?: (characterId: string, name: string) => void
-  onUpdateCharacterRole?: (characterId: string, role: string) => void
-  onRemove?: () => void
-  ttsProvider: 'google' | 'elevenlabs'
-  voiceSectionExpanded?: boolean
-  onToggleVoiceSection?: () => void
-  enableDrag?: boolean
-}
-
 const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, isUploading = false, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onRemove, ttsProvider, voiceSectionExpanded, onToggleVoiceSection, enableDrag = false }: CharacterCardProps) => {
   const hasImage = !!character.referenceImage
   const isApproved = character.imageApproved === true
@@ -382,9 +382,6 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   const [editingName, setEditingName] = useState(false)
   const [nameText, setNameText] = useState('')
   const [editingRole, setEditingRole] = useState(false)
-  const [showAiAssist, setShowAiAssist] = useState(false)
-  const [aiInstruction, setAiInstruction] = useState('')
-  const [optimizingPrompt, setOptimizingPrompt] = useState(false)
   
   // Helper function to generate fallback description from attributes
   const generateFallbackDescription = (character: any): string => {
@@ -461,8 +458,6 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
     } finally {
       setOptimizingPrompt(false)
     }
-  }
-
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `character-reference-${characterId}`,
     data: {
@@ -859,29 +854,16 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                     rows={5}
                     placeholder="Describe physical appearance (e.g., ethnicity, build, hair, eyes, distinctive features)..."
                   />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setShowAiAssist(true)
-                      }}
-                      className="flex-1 px-3 py-2 text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors flex items-center justify-center gap-1"
-                      disabled={optimizingPrompt}
-                    >
-                      <Sparkles className="w-3 h-3" />
-                      {optimizingPrompt ? 'Optimizing...' : 'AI Assist'}
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleSaveAppearance()
-                      }}
-                      className="flex-1 px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center justify-center gap-1"
-                    >
-                      <Check className="w-3 h-3" />
-                      Save
-                    </button>
-                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleSaveAppearance()
+                    }}
+                    className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                  >
+                    <Check className="w-3 h-3 inline mr-1" />
+                    Save Description
+                  </button>
                 </div>
               ) : (
                 <div 
@@ -999,57 +981,6 @@ function NarratorCharacterCard({ character, onUpdateCharacterVoice, ttsProvider 
         </div>
       </div>
 
-      {/* AI Assist Dialog */}
-      <Dialog open={showAiAssist} onOpenChange={setShowAiAssist}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
-              AI Prompt Assistant
-            </DialogTitle>
-            <DialogDescription>
-              Describe how you'd like to optimize this character prompt for better image generation.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <textarea
-              value={aiInstruction}
-              onChange={(e) => setAiInstruction(e.target.value)}
-              placeholder="e.g., optimize for content policies, make it more descriptive, focus on professional appearance..."
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              rows={3}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowAiAssist(false)
-                setAiInstruction('')
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleAiAssist}
-              disabled={!aiInstruction.trim() || optimizingPrompt}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              {optimizingPrompt ? (
-                <>
-                  <Loader className="w-4 h-4 mr-2 animate-spin" />
-                  Optimizing...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Optimize Prompt
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
