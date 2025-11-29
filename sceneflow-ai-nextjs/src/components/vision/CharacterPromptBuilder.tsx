@@ -269,24 +269,6 @@ export function CharacterPromptBuilder({
                   placeholder="Wardrobe, expression, mood, background blur, lens focal length, etc."
                   className="min-h-[90px]"
                 />
-                <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2">
-                  <Textarea
-                    placeholder="AI Assist instruction (e.g. 'add Rembrandt lighting')"
-                    className="md:col-span-2 min-h-[60px]"
-                    value={assistInstruction}
-                    onChange={(e) => setAssistInstruction(e.target.value)}
-                    disabled={isOptimizing}
-                  />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={handleAssist}
-                    disabled={isOptimizing || !assistInstruction.trim()}
-                  >
-                    {isOptimizing ? 'Optimizing...' : 'AI Assist'}
-                  </Button>
-                </div>
-                <div className="text-[10px] text-gray-400">Assist appends changes to Guided prompt.</div>
               </div>
               <div className="mt-4 p-3 rounded border border-gray-700 bg-gray-800/50">
                 <div className="flex items-center justify-between">
