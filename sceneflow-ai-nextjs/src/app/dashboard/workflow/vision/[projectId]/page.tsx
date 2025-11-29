@@ -1495,20 +1495,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // DEBUG: Log loaded scene assets from BOTH locations
       const loadedScenesFromVisionPhase = proj.metadata?.visionPhase?.scenes || []
       const loadedScenesFromScript = proj.metadata?.visionPhase?.script?.script?.scenes || []
-
-      console.log('[loadProject] Scenes from visionPhase.scenes:', loadedScenesFromVisionPhase.slice(0, 3).map((s: any) => ({
-        sceneNumber: s.sceneNumber,
-        hasImage: !!s.imageUrl,
-        hasNarration: !!s.narrationAudioUrl,
-        imageUrl: s.imageUrl?.substring(0, 50)
-      })))
-
-      console.log('[loadProject] Scenes from visionPhase.script.script.scenes:', loadedScenesFromScript.slice(0, 3).map((s: any) => ({
-        sceneNumber: s.sceneNumber,
-        hasImage: !!s.imageUrl,
-        hasNarration: !!s.narrationAudioUrl,
-        imageUrl: s.imageUrl?.substring(0, 50)
-      })))
       
       // Load image quality setting from project metadata
       if (proj.metadata?.imageQuality) {
@@ -1531,7 +1517,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const { script: migratedScript, needsMigration } = migrateScriptAudio(visionPhase.script)
           
           if (needsMigration) {
-            console.log('[loadProject] Migrating audio structure to multi-language format')
             // Save migrated script back to database
             try {
               await fetch(`/api/projects/${projectId}`, {
@@ -1547,19 +1532,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   }
                 })
               })
-              console.log('[loadProject] Audio migration saved successfully')
             } catch (error) {
               console.warn('[loadProject] Failed to save audio migration:', error)
             }
           }
           
-          console.log('[loadProject] Setting script with structure:', {
-            hasTitle: !!migratedScript.title,
-            hasNestedScript: !!migratedScript.script,
-            nestedScenesCount: migratedScript.script?.scenes?.length || 0,
-            firstSceneHasImage: !!migratedScript.script?.scenes?.[0]?.imageUrl,
-            firstSceneImageUrl: migratedScript.script?.scenes?.[0]?.imageUrl?.substring(0, 100)
-          })
           setScript(migratedScript)
         }
         
@@ -1641,7 +1618,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           )
           
           if (needsIdMigration) {
-            console.log('[Load Project] Migrating characters to add UUIDs')
             try {
               await fetch(`/api/projects/${projectId}`, {
                 method: 'PUT',
@@ -1656,7 +1632,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   }
                 })
               })
-              console.log('[Load Project] Character IDs migrated successfully')
             } catch (error) {
               console.warn('[Load Project] Failed to save character IDs:', error)
             }
@@ -1674,7 +1649,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const narratorChar = charactersWithNarrator.find(c => c.type === 'narrator')
           if (narratorChar?.voiceConfig) {
             const finalNarratorVoice = narratorChar.voiceConfig
-            console.log('[Load Project] Syncing narration voice from narrator character:', finalNarratorVoice)
             setNarrationVoice(finalNarratorVoice)
             
                         // Save to visionPhase.narrationVoice for backward compatibility
@@ -1693,7 +1667,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     }
                   })
                 })
-                console.log('[Load Project] Narration voice synced to database')
               } catch (error) {
                 console.warn('[Load Project] Failed to sync narration voice:', error)
               }
@@ -1727,7 +1700,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           )
           
           if (needsDialogueMigration) {
-            console.log('[Load Project] Migrating dialogue to add characterId')
             try {
               await fetch(`/api/projects/${projectId}`, {
                 method: 'PUT',
@@ -1749,7 +1721,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   }
                 })
               })
-              console.log('[Load Project] Dialogue characterId migrated successfully')
             } catch (error) {
               console.warn('[Load Project] Failed to save dialogue characterId:', error)
             }
@@ -1789,7 +1760,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     }
                   })
                 })
-                console.log('[Load Project] Narration voice config saved successfully')
+                // Narration voice config corrected and saved
               } catch (error) {
                 console.warn('[Load Project] Failed to save narration voice config:', error)
               }
@@ -2192,7 +2163,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       })
       
       const blobUrl = newBlob.url
-      console.log('[Character Upload] Blob uploaded:', blobUrl)
       
       // Step 2: Process upload (GCS upload) in background
       const processRes = await fetch('/api/character/process-upload', {
@@ -2209,9 +2179,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       
       const { gcsUrl, visionDescription } = await processRes.json()
-      console.log('[Character Upload] Vercel Blob URL:', blobUrl)
-      console.log('[Character Upload] GCS URL:', gcsUrl)
-      console.log('[Character Upload] Auto-analyzed appearance:', visionDescription)
       
       // Use visionDescription from process-upload (already includes AI analysis)
       const analysisData = visionDescription ? {
@@ -2245,14 +2212,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
         
         setCharacters(updatedCharacters)
-      
-      console.log('[Character Upload] Updated character details:', updatedCharacters.map(c => ({
-        name: c.name,
-        hasReferenceImage: !!c.referenceImage,
-        hasReferenceImageGCS: !!c.referenceImageGCS,
-        gcsUrl: c.referenceImageGCS?.substring(0, 50) || 'none',
-        hasAppearanceDesc: !!c.appearanceDescription
-      })))
         
         // Persist to project metadata
         try {
@@ -2274,12 +2233,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               }
             })
           })
-        console.log('[Character Upload] ✓ Saved to project metadata with GCS URL')
         
         // Reload project to ensure fresh character data is available for scene generation
-        console.log('[Character Upload] Reloading project to refresh character data...')
         await loadProject()
-        console.log('[Character Upload] ✓ Project reloaded with fresh character data')
         } catch (saveError) {
           console.error('Failed to save uploaded character to project:', saveError)
         }
@@ -2387,7 +2343,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               }
             })
           })
-          console.log('[Character Image] Saved to project metadata')
         } catch (saveError) {
           console.error('Failed to save character to project:', saveError)
         }
