@@ -83,6 +83,7 @@ export default function RootLayout({
               position="top-right" 
               richColors 
               theme="dark"
+              closeButton
               toastOptions={{
                 style: {
                   background: '#1f2937', // gray-800
@@ -90,7 +91,7 @@ export default function RootLayout({
                   border: '1px solid #374151', // gray-700
                   opacity: 1,
                 },
-                className: 'bg-gray-800 text-gray-100 border-gray-700 shadow-lg !opacity-100',
+                className: 'bg-gray-800 text-gray-100 border-gray-700 shadow-lg !opacity-100 whitespace-pre-wrap',
               }}
             />
             <ProcessingOverlay />

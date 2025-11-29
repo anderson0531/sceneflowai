@@ -2369,7 +2369,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     } catch (error) {
       console.error('Character image generation failed:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate character image'
-      try { toast.error(errorMessage) } catch {}
+      try { toast.error(errorMessage, { duration: Infinity }) } catch {}
     }
   }
 
@@ -2431,7 +2431,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     } catch (error) {
       console.error('Scene image generation failed:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate scene image'
-      try { const { toast } = require('sonner'); toast.error(errorMessage) } catch {}
+      try { const { toast } = require('sonner'); toast.error(errorMessage, { duration: Infinity }) } catch {}
     }
   }
 
@@ -3041,7 +3041,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           )
         } catch {}
       } else {
-        try { const { toast } = require('sonner'); toast.error(`Failed to generate scene image: ${error.message}`) } catch {}
+        try { const { toast } = require('sonner'); toast.error(`Failed to generate scene image: ${error.message}`, { duration: Infinity }) } catch {}
       }
     }
   }
