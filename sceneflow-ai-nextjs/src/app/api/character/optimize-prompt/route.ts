@@ -22,8 +22,9 @@ export async function POST(req: NextRequest) {
 
     const genAI = new GoogleGenerativeAI(apiKey)
     
-    // Try models in order of preference: User requested 3.0, then fallbacks
-    const modelsToTry = ['gemini-3.0-flash', 'gemini-1.5-flash-001', 'gemini-1.5-flash', 'gemini-pro']
+    // Try models in order of preference: User requested 2.5 (stable), then fallbacks
+    // Note: gemini-pro (1.0) is deprecated/removed in v1beta by late 2025
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-1.5-pro-latest', 'gemini-1.5-flash-latest']
     
     let optimizedPrompt = ''
     let lastError = null
