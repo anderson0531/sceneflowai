@@ -373,6 +373,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [sceneDirectionPreviewOpen, setSceneDirectionPreviewOpen] = useState(false)
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [generateAudioDialogOpen, setGenerateAudioDialogOpen] = useState(false)
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('en')
   
   // Audio playback state
   const [voices, setVoices] = useState<Array<CuratedVoice>>([])
@@ -1876,7 +1877,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   generateAndPlaySFX={generateAndPlaySFX}
                   generateAndPlayMusic={generateAndPlayMusic}
                   onPlayAudio={handlePlayAudio}
-                  onGenerateSceneAudio={onGenerateSceneAudio}
                   selectedLanguage={'en'}
                   playingAudio={playingAudio}
                       generatingDialogue={generatingDialogue}
@@ -2206,6 +2206,7 @@ function SceneCard({
   generateAndPlayMusic,
   onPlayAudio,
   onGenerateSceneAudio,
+  selectedLanguage = 'en',
   playingAudio,
   generatingDialogue,
   setGeneratingDialogue,
