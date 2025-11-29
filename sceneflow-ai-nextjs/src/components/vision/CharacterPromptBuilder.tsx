@@ -114,7 +114,32 @@ export function CharacterPromptBuilder({
       const existing = parts.join(', ').toLowerCase()
       if (!existing.includes(suffix.toLowerCase())) parts.push(suffix)
     }
-    return parts.filter(Boolean).join(', ')
+
+    // Normalize, dedupe, and resolve style conflicts
+    const tokens = parts
+      .join(', ')
+      .split(',')
+      .map(t => t.trim())
+      .filter(Boolean)
+
+    const seen = new Set<string>()
+    const out: string[] = []
+    const isPhotorealisticMentioned = tokens.some(t => t.toLowerCase().includes('photorealistic'))
+    const selectedArtStyle = artStyle
+
+    for (const t of tokens) {
+      const key = t.toLowerCase()
+      if (seen.has(key)) continue
+
+      // Remove conflicting style words when a non-photorealistic artStyle is selected
+      if (selectedArtStyle && selectedArtStyle !== 'photorealistic') {
+        if (key.includes('photorealistic')) continue
+      }
+      out.push(t)
+      seen.add(key)
+    }
+
+    return out.join(', ')
   }, [shotType, cameraAngle, lighting, artStyle, additionalDetails, basePrompt])
 
   const finalPrompt = mode === 'advanced' ? advancedPrompt : guidedPrompt

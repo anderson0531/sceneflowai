@@ -89,10 +89,25 @@ export async function POST(req: NextRequest) {
     if (lighting) parts.push(lightingMap[lighting] || lighting)
     if (additionalDetails) parts.push(additionalDetails)
 
-    // Quality hints
-    parts.push('high detail, sharp focus')
+    // Normalize, dedupe, and resolve style conflicts
+    const tokens = parts
+      .join(', ')
+      .split(',')
+      .map(t => t.trim())
+      .filter(Boolean)
 
-    const enhancedPrompt = parts.filter(Boolean).join(', ')
+    const seen = new Set<string>()
+    const out: string[] = []
+    for (const t of tokens) {
+      const key = t.toLowerCase()
+      if (seen.has(key)) continue
+      // If a non-photorealistic style is selected, drop explicit 'photorealistic'
+      if (artStyle && artStyle !== 'photorealistic' && key.includes('photorealistic')) continue
+      out.push(t)
+      seen.add(key)
+    }
+
+    const enhancedPrompt = out.join(', ')
 
     console.log('[Character Image] Generating with Vertex AI Imagen 3:', enhancedPrompt.substring(0, 100))
 
