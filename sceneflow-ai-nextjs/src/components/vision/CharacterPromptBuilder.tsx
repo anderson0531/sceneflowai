@@ -115,30 +115,20 @@ export function CharacterPromptBuilder({
       if (!existing.includes(suffix.toLowerCase())) parts.push(suffix)
     }
 
-    // Normalize, dedupe, and resolve style conflicts
-    const tokens = parts
-      .join(', ')
-      .split(',')
-      .map(t => t.trim())
-      .filter(Boolean)
-
+    // Normalize, dedupe, and resolve bidirectional style conflicts
+    const tokens = parts.join(', ').split(',').map(t => t.trim()).filter(Boolean)
     const seen = new Set<string>()
     const out: string[] = []
-    const isPhotorealisticMentioned = tokens.some(t => t.toLowerCase().includes('photorealistic'))
-    const selectedArtStyle = artStyle
-
+    const photoTerms = ['photorealistic','photo','photograph','photography','8k','4k','realistic']
+    const artTerms = ['anime','cartoon','sketch','illustration','painting','drawing']
     for (const t of tokens) {
       const key = t.toLowerCase()
       if (seen.has(key)) continue
-
-      // Remove conflicting style words when a non-photorealistic artStyle is selected
-      if (selectedArtStyle && selectedArtStyle !== 'photorealistic') {
-        if (key.includes('photorealistic')) continue
-      }
+      if (artStyle && artStyle !== 'photorealistic' && photoTerms.some(term => key.includes(term))) continue
+      if (artStyle === 'photorealistic' && artTerms.some(term => key.includes(term))) continue
       out.push(t)
       seen.add(key)
     }
-
     return out.join(', ')
   }, [shotType, cameraAngle, lighting, artStyle, additionalDetails, basePrompt])
 

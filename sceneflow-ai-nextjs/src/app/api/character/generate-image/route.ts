@@ -12,40 +12,42 @@ export async function POST(req: NextRequest) {
   try {
     const { prompt, projectId, characterId, quality = 'auto', artStyle, shotType, cameraAngle, lighting, additionalDetails, rawMode } = await req.json()
     
-    let finalPrompt = prompt?.trim() || ''
-    
-    // If projectId and characterId provided, try to build prompt from stored attributes
-    if (projectId && characterId && !finalPrompt) {
-      const character = await getCharacterAttributes(projectId, characterId)
-      if (character) {
-        // Build comprehensive prompt from flat character structure
-        const parts: string[] = []
-        
-        // Core identity - key feature is primary descriptor
-        if (character.keyFeature) {
-          parts.push(character.keyFeature)
+    // Aggregate character attributes (ALWAYS if IDs provided) and merge with user prompt
+    const attributeParts: string[] = []
+    if (projectId && characterId) {
+      try {
+        const character = await getCharacterAttributes(projectId, characterId)
+        if (character) {
+          if (character.keyFeature) attributeParts.push(character.keyFeature)
+          if (character.ethnicity) attributeParts.push(character.ethnicity)
+          if (character.hairColor && character.hairStyle) attributeParts.push(`${character.hairColor} ${character.hairStyle} hair`)
+          if (character.eyeColor) attributeParts.push(`${character.eyeColor} eyes`)
+          if (character.expression) attributeParts.push(character.expression)
+          if (character.build) attributeParts.push(`${character.build} build`)
         }
-        if (character.ethnicity) {
-          parts.push(character.ethnicity)
-        }
-        
-        // Appearance details - build comprehensive visual
-        if (character.hairColor && character.hairStyle) {
-          parts.push(`${character.hairColor} ${character.hairStyle} hair`)
-        }
-        if (character.eyeColor) {
-          parts.push(`${character.eyeColor} eyes`)
-        }
-        if (character.expression) {
-          parts.push(character.expression)
-        }
-        if (character.build) {
-          parts.push(`${character.build} build`)
-        }
-        
-        finalPrompt = parts.join(', ')
-        console.log('[Character Image] Built prompt from structured attributes:', finalPrompt.substring(0, 100))
+      } catch (e) {
+        console.warn('[Character Image] Failed to load character attributes:', e)
       }
+    }
+
+    // Merge attributes + user prompt (if provided) then dedupe
+    const userPrompt = prompt?.trim() || ''
+    const combinedTokens = [...attributeParts, userPrompt]
+      .join(', ')
+      .split(',')
+      .map(t => t.trim())
+      .filter(Boolean)
+    const seenTokens = new Set<string>()
+    const merged: string[] = []
+    for (const tok of combinedTokens) {
+      const key = tok.toLowerCase()
+      if (seenTokens.has(key)) continue
+      merged.push(tok)
+      seenTokens.add(key)
+    }
+    let finalPrompt = merged.join(', ')
+    if (!finalPrompt.trim()) {
+      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
     }
     
     if (!finalPrompt) {
@@ -92,10 +94,13 @@ export async function POST(req: NextRequest) {
       const tokens = parts.join(', ').split(',').map(t => t.trim()).filter(Boolean)
       const seen = new Set<string>()
       const out: string[] = []
+      const photoTerms = ['photorealistic','photo','photograph','photography','8k','4k','realistic']
+      const artTerms = ['anime','cartoon','sketch','illustration','painting','drawing']
       for (const t of tokens) {
         const key = t.toLowerCase()
         if (seen.has(key)) continue
-        if (artStyle && artStyle !== 'photorealistic' && key.includes('photorealistic')) continue
+        if (artStyle && artStyle !== 'photorealistic' && photoTerms.some(term => key.includes(term))) continue
+        if (artStyle === 'photorealistic' && artTerms.some(term => key.includes(term))) continue
         out.push(t)
         seen.add(key)
       }
