@@ -1185,18 +1185,29 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         hasMusic: !!audioConfig.music,
         hasNarration: !!audioConfig.narration,
         dialogueCount: audioConfig.dialogue?.length || 0,
-        sfxCount: audioConfig.sfx?.length || 0
+        sfxCount: audioConfig.sfx?.length || 0,
+        sceneDuration: audioConfig.sceneDuration
       })
       
-      // Play the scene - this returns a promise that resolves when all non-looping audio completes
-      await audioMixerRef.current.playScene(audioConfig)
+      // Calculate total audio duration for music fade timing
+      // Use the scene's calculated duration which accounts for all audio
+      const totalAudioDuration = audioConfig.sceneDuration || scene.duration || 5
       
-      // After narration/dialogue completes, wait 3 seconds then fade out music
+      // Start playing all audio (music loops, others play once)
+      // Don't await - we'll manage timing ourselves based on duration
+      audioMixerRef.current.playScene(audioConfig).catch(err => {
+        console.error('[ScriptPanel] Error in playScene:', err)
+      })
+      
+      // Wait for the total audio duration (narration + dialogue + spacing)
+      // Then add 3 seconds for the ending transition
+      const waitTime = (totalAudioDuration + 3) * 1000
+      console.log('[ScriptPanel] Waiting', waitTime, 'ms before fading out music (audio duration:', totalAudioDuration, 's + 3s transition)')
+      
+      await new Promise(resolve => setTimeout(resolve, waitTime))
+      
+      // Fade out music over 2 seconds for smooth ending
       if (audioConfig.music && audioMixerRef.current) {
-        console.log('[ScriptPanel] Narration/dialogue complete, waiting 3 seconds before fade out...')
-        await new Promise(resolve => setTimeout(resolve, 3000))
-        
-        // Fade out music over 2 seconds for smooth ending
         console.log('[ScriptPanel] Fading out music...')
         await audioMixerRef.current.fadeOut(2000)
         
