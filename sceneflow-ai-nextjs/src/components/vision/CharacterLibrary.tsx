@@ -14,7 +14,7 @@ import { CharacterPromptBuilder } from '@/components/vision/CharacterPromptBuild
 export interface CharacterLibraryProps {
   characters: any[]
   onRegenerateCharacter: (characterId: string) => void
-  onGenerateCharacter: (characterId: string, promptOrPayload: any) => void
+  onGenerateCharacter: (characterId: string, promptOrPayload: any) => Promise<void>
   onUploadCharacter: (characterId: string, file: File) => void
   onApproveCharacter: (characterId: string) => void
   onUpdateCharacterAttributes?: (characterId: string, attributes: any) => void
@@ -328,7 +328,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                 <CharacterPromptBuilder
                   open={!!promptBuilderOpenFor}
                   onClose={() => setPromptBuilderOpenFor(null)}
-                  character={characters.find(c => (c.id || characters.indexOf(c).toString()) === promptBuilderOpenFor)}
+                  character={characters.filter(c => c.type !== 'narrator').find((c, idx) => (c.id || idx.toString()) === promptBuilderOpenFor)}
                   isGenerating={Array.from(generatingChars).includes(promptBuilderOpenFor)}
                   onGenerateImage={(payload) => {
                     const targetId = promptBuilderOpenFor!
