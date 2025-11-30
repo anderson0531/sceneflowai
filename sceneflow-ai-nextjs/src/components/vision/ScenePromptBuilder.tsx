@@ -59,8 +59,6 @@ export function ScenePromptBuilder({
   isGenerating = false
 }: ScenePromptBuilderProps) {
   const [mode, setMode] = useState<'guided' | 'advanced'>('guided')
-  // Local loading state for immediate feedback (before parent updates)
-  const [localIsGenerating, setLocalIsGenerating] = useState(false)
   const [structure, setStructure] = useState<ScenePromptStructure>({
     location: '',
     timeOfDay: 'day',
@@ -459,20 +457,9 @@ export function ScenePromptBuilder({
     // Call parent handler - it will update isGenerating prop
     onGenerateImage(promptData)
     
-    // Don't close - let the loading overlay show while generating
-    // Modal will close when parent updates the isGenerating prop to false
+    // Close the dialog immediately after triggering generation
+    onClose()
   }
-  
-  // Combine local and prop loading states for immediate feedback
-  const isActuallyGenerating = localIsGenerating || isGenerating
-  
-  // Reset local loading state when parent stops generating
-  useEffect(() => {
-    if (!isGenerating && localIsGenerating) {
-      // Small delay to ensure smooth transition
-      setTimeout(() => setLocalIsGenerating(false), 100)
-    }
-  }, [isGenerating, localIsGenerating])
 
   const handleCopy = async () => {
     await navigator.clipboard?.writeText(constructedPrompt)
@@ -917,10 +904,10 @@ export function ScenePromptBuilder({
           <div className="flex gap-2 mt-2">
             <Button 
               onClick={handleGenerateScene} 
-              disabled={isActuallyGenerating}
+              disabled={isGenerating}
               className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isActuallyGenerating ? (
+              {isGenerating ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Generating...
@@ -939,7 +926,7 @@ export function ScenePromptBuilder({
         </div>
 
         {/* Loading Overlay - Freeze screen during generation */}
-        {isActuallyGenerating && (
+        {isGenerating && (
           <div className="absolute inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center rounded-lg">
             <div className="bg-gray-900 border-2 border-purple-500 rounded-xl p-8 shadow-2xl flex flex-col items-center max-w-sm">
               <div className="relative mb-4">
