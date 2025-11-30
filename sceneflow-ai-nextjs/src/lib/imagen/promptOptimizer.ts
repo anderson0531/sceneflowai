@@ -179,58 +179,38 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
   console.log('[Prompt Optimizer] Cleaned scene action:', cleanedAction.substring(0, 100))
   
   if (hasReferences) {
-    // REFERENCE MODE: Reference character by name (structured array will handle the actual reference image)
-    // Note: Imagen 4 Subject Customization requires structured array format, not URLs in prompt text
+    // REFERENCE MODE: Simple, clean prompt structure like Character Prompt Builder
+    // The GCS reference images do the heavy lifting - prompt just needs to be clear and concise
     
-    // Build enhanced reference text with key physical characteristics
-    const referenceText = params.characterReferences!.map((ref, idx) => {
-      let refLine = `Character ${ref.name.toUpperCase()} appears in this scene.`
-      
-      // Add key physical characteristics if provided
-      if (ref.keyFeatures && ref.keyFeatures.length > 0) {
-        const featuresList = ref.keyFeatures.join(', ')
-        refLine += ` MUST match their reference image exactly, especially: ${featuresList}.`
-      } else {
-        refLine += ` MUST match their reference image exactly.`
-      }
-      
-      return refLine
-    }).join('\n')
+    // Build simple character reference - just names and key features
+    const characterNames = params.characterReferences!.map(ref => ref.name).join(' and ')
     
-    // Replace character name at start of scene with pronoun + ethnicity (matching working Gemini Chat format)
+    // Extract ethnicities for visual accuracy
+    const ethnicities = params.characterReferences!
+      .filter(ref => ref.ethnicity)
+      .map(ref => `${ref.name}: ${ref.ethnicity}`)
+      .join(', ')
+    
+    // Build a simple, focused scene prompt
+    // Don't repeat the complex reference instructions - the structured API handles that
     let sceneDescription = cleanedAction
     
-    params.characterReferences!.forEach(ref => {
-      // Escape special regex characters in name
-      const escapedName = ref.name.toUpperCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      // Match character name at start of scene (case insensitive, followed by comma/period/space)
-      const namePattern = new RegExp(`^${escapedName}[,\\.]?\\s*`, 'i')
-      if (namePattern.test(sceneDescription)) {
-        // Inject ethnicity when replacing name with pronoun
-        const ethnicityText = ref.ethnicity ? `The ${ref.ethnicity} man` : 'He'
-        sceneDescription = sceneDescription.replace(namePattern, `${ethnicityText} `)
-      }
-    })
+    // Simple prompt structure: Scene description + character names + style
+    // Keep it under 500 characters for best results
+    let prompt = `${sceneDescription}`
     
-    // Build critical matching instructions with key features
-    const keyFeaturesList = params.characterReferences!
-      .filter(ref => ref.keyFeatures && ref.keyFeatures.length > 0)
-      .flatMap(ref => ref.keyFeatures!)
-      .filter((feature, index, self) => self.indexOf(feature) === index) // Remove duplicates
-    
-    let matchingInstructions = ''
-    if (keyFeaturesList.length > 0) {
-      matchingInstructions = `\n\nCRITICAL: The character${params.characterReferences!.length > 1 ? 's' : ''} MUST match their reference image${params.characterReferences!.length > 1 ? 's' : ''} exactly. Key features to preserve:\n- ${keyFeaturesList.join('\n- ')}\n\nReference image appearance takes priority over scene emotional state descriptions.`
-    } else {
-      matchingInstructions = `\n\nCRITICAL: The character${params.characterReferences!.length > 1 ? 's' : ''} MUST match their reference image${params.characterReferences!.length > 1 ? 's' : ''} exactly. Reference image appearance takes priority over scene emotional state descriptions.`
+    // Add character context if not already mentioned in scene
+    if (!sceneDescription.toLowerCase().includes(characterNames.toLowerCase())) {
+      prompt = `Scene featuring ${characterNames}. ${sceneDescription}`
     }
     
-    // NOTE: Child-related terms are sanitized (e.g., "young boys" → "young men") to avoid
-    // triggering Imagen 4's child safety filter (error 58061214) when personGeneration is 'allow_adult'.
-    // Family relationship terms like "his sons" remain to preserve context, but age qualifiers
-    // are adjusted to adult-oriented language while main character ethnicity is preserved.
+    // Add ethnicity hint for visual accuracy (brief)
+    if (ethnicities) {
+      prompt += ` Characters: ${ethnicities}.`
+    }
     
-    const prompt = `${referenceText}\nScene: ${sceneDescription}${matchingInstructions}\nQualifiers: ${visualStyle}`
+    // Add style qualifiers
+    prompt += ` ${visualStyle}`
     
     console.log('[Prompt Optimizer] Using REFERENCE MODE with', params.characterReferences!.length, 'character(s)')
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
@@ -305,12 +285,54 @@ function integrateCharactersIntoScene(
 
 /**
  * Aggressively clean scene description to ONLY visual elements
+ * Strips cinematographic directions, sound cues, and keeps only the final visual scene
  */
 function cleanSceneForVisuals(action: string, visualDesc: string): string {
   let cleaned = action || visualDesc || ''
   
   // Remove everything after SFX: or Music: markers (including the markers)
   cleaned = cleaned.split(/\n\n(?:SFX|Music):/)[0]
+  
+  // CINEMATOGRAPHIC CLEANUP - Remove montage/editing directions
+  // These confuse image generation as they describe multiple shots, not a single image
+  
+  // Remove FADE IN/OUT, CUT TO, DISSOLVE TO, etc.
+  cleaned = cleaned.replace(/\b(FADE\s+(IN|OUT)\s*(FROM|TO)?\s*(BLACK|WHITE)?[:\.\s]*)/gi, '')
+  cleaned = cleaned.replace(/\b(CUT\s+TO\s*:?\s*)/gi, '')
+  cleaned = cleaned.replace(/\b(DISSOLVE\s+TO\s*:?\s*)/gi, '')
+  cleaned = cleaned.replace(/\b(SMASH\s+CUT\s*:?\s*)/gi, '')
+  cleaned = cleaned.replace(/\b(MATCH\s+CUT\s*:?\s*)/gi, '')
+  cleaned = cleaned.replace(/\b(JUMP\s+CUT\s*:?\s*)/gi, '')
+  
+  // Remove CLOSE ON:, WIDE ON:, etc. camera directions
+  cleaned = cleaned.replace(/\b(CLOSE\s+ON\s*:?\s*)/gi, '')
+  cleaned = cleaned.replace(/\b(WIDE\s+ON\s*:?\s*)/gi, '')
+  cleaned = cleaned.replace(/\b(ANGLE\s+ON\s*:?\s*)/gi, '')
+  cleaned = cleaned.replace(/\b(PUSH\s+IN\s+ON\s*:?\s*)/gi, '')
+  cleaned = cleaned.replace(/\b(PULL\s+BACK\s+TO\s*:?\s*)/gi, '')
+  
+  // Remove montage descriptions - keep only the LAST distinct scene
+  // Split on "Then," or "Then the" patterns which often signal the main scene after montage
+  const thenMatch = cleaned.match(/\bThen,?\s+(the\s+)?(.+)$/is)
+  if (thenMatch && thenMatch[2] && thenMatch[2].length > 100) {
+    // Use the part after "Then" as it's likely the main scene
+    cleaned = thenMatch[2]
+  }
+  
+  // If still very long (> 1000 chars), look for the last major scene description
+  if (cleaned.length > 1000) {
+    // Find the last paragraph/sentence that describes the actual scene (not montage cuts)
+    const paragraphs = cleaned.split(/\n\n+/)
+    const lastMeaningful = paragraphs.filter(p => 
+      p.length > 50 && 
+      !p.match(/^(CUT|CLOSE|WIDE|ANGLE|FADE|DISSOLVE)/i) &&
+      p.match(/\b(sits?|stands?|walks?|looks?|faces?|enters?|studio|room|table|chair)/i)
+    ).pop()
+    
+    if (lastMeaningful && lastMeaningful.length > 100) {
+      cleaned = lastMeaningful
+    }
+  }
   
   // Remove ALL sound-related content
   cleaned = cleaned.replace(/SOUND\s+of[^.!?]*[.!?]/gi, '')
@@ -356,6 +378,19 @@ function cleanSceneForVisuals(action: string, visualDesc: string): string {
     if (cleanVisual) {
       cleaned = `${cleanVisual}. ${cleaned}`.trim()
     }
+  }
+  
+  // Final length check - if still too long, truncate intelligently
+  if (cleaned.length > 800) {
+    // Find a good breaking point (end of sentence)
+    const truncated = cleaned.substring(0, 800)
+    const lastPeriod = truncated.lastIndexOf('.')
+    if (lastPeriod > 400) {
+      cleaned = truncated.substring(0, lastPeriod + 1)
+    } else {
+      cleaned = truncated + '...'
+    }
+    console.log('[Prompt Optimizer] Truncated long prompt to', cleaned.length, 'chars')
   }
   
   console.log('[Prompt Optimizer] Original length:', action?.length || 0)
