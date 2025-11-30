@@ -153,6 +153,16 @@ export async function callVertexAIImagen(
     if (referenceImagesArray.length > 0) {
       requestBody.instances[0].referenceImages = referenceImagesArray
       console.log('[Imagen] Reference images configured:', referenceImagesArray.length, 'images')
+      
+      // Debug: Log the full reference structure (without base64 data)
+      console.log('[Imagen] DEBUG - Reference structure:', JSON.stringify(
+        referenceImagesArray.map(r => ({
+          referenceType: r.referenceType,
+          referenceId: r.referenceId,
+          subjectImageConfig: r.subjectImageConfig,
+          imageSize: r.referenceImage?.bytesBase64Encoded?.length || 0
+        })), null, 2
+      ))
     } else {
       console.warn('[Imagen] No valid reference images, proceeding without subject customization')
     }
