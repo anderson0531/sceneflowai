@@ -23,11 +23,18 @@ function createConciseSubjectDescription(char: any, index: number): string {
   
   const parts: string[] = ['a']
   
-  // Extract ethnicity/descent from description
-  const ethnicityMatch = description.match(/(?:of\s+)?(\w+(?:\s+\w+)?)\s+descent/i) ||
-                         description.match(/(\w+(?:-\w+)?)\s+(?:man|woman|person)/i)
-  if (ethnicityMatch) {
-    parts.push(ethnicityMatch[1].toLowerCase())
+  // Extract ethnicity/descent from description - look for specific patterns
+  // Pattern: "of [X] descent" or "appears to be of [X] descent"
+  const descentMatch = description.match(/(?:appears\s+to\s+be\s+)?of\s+(\w+(?:\s+\w+)?)\s+descent/i)
+  // Pattern: "[X]-skinned" or "[X] skin"
+  const skinMatch = description.match(/(\w+)[-\s]skinned/i) || description.match(/(\w+(?:\s+\w+)?)\s+skin(?:\s|\.|,)/i)
+  
+  if (descentMatch) {
+    // Clean up: remove "or" if present (e.g., "Middle Eastern or Mediterranean" -> "Middle Eastern")
+    const ethnicity = descentMatch[1].split(/\s+or\s+/i)[0]
+    parts.push(ethnicity.toLowerCase())
+  } else if (skinMatch) {
+    parts.push(`${skinMatch[1].toLowerCase()}-skinned`)
   }
   
   // Extract age from description

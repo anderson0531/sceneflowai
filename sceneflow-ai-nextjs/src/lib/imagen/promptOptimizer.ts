@@ -230,15 +230,10 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
       prompt = `Scene featuring ${characterNamesWithRefs}. ${prompt}`
     }
     
-    // Add ethnicity hint for visual accuracy (brief) - only for chars with refIds
-    const ethnicities = characterRefs
-      .filter(ref => ref.ethnicity && ref.refId)
-      .map(ref => `${ref.name} [${ref.refId}]: ${ref.ethnicity}`)
-      .join(', ')
-    
-    if (ethnicities) {
-      prompt += ` Characters: ${ethnicities}.`
-    }
+    // IMPORTANT: Do NOT add ethnicity to the prompt when reference images are present!
+    // The reference image defines the character's appearance - adding conflicting ethnicity
+    // text causes the model to ignore the reference image and generate based on text.
+    // The subjectDescription in the API request already describes the visual characteristics.
     
     // Add style qualifiers
     prompt += ` ${visualStyle}`
