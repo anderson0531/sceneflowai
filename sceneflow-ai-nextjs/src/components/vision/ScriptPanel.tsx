@@ -369,6 +369,9 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets }: ScriptPanelProps) {
+  // Get overlay store for generation blocking - must be at top level
+  const overlay = useOverlayStore()
+  
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [showScriptEditor, setShowScriptEditor] = useState(false)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
@@ -1266,9 +1269,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       })
     }
   }
-
-  // Get overlay store for generation blocking
-  const overlay = useOverlayStore()
 
   // Audio generation functions
   const generateSFX = async (sceneIdx: number, sfxIdx: number) => {
