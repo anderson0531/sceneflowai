@@ -10,14 +10,14 @@ export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, projectId, characterId, quality = 'auto', artStyle, rawMode } = await req.json()
+    const body = await req.json()
     
-    // DEBUG: Log exactly what we received
-    console.log('[Character Image] ========== REQUEST DEBUG ==========')
-    console.log('[Character Image] Received prompt:', prompt)
-    console.log('[Character Image] Received artStyle:', artStyle)
-    console.log('[Character Image] Received rawMode:', rawMode)
-    console.log('[Character Image] ====================================')
+    // DEBUG: Log the ENTIRE request body to see exactly what the client sent
+    console.log('[Character Image] ========== FULL REQUEST BODY ==========')
+    console.log(JSON.stringify(body, null, 2))
+    console.log('[Character Image] ========================================')
+    
+    const { prompt, projectId, characterId, quality = 'auto', artStyle, rawMode } = body
     
     // Use user prompt directly - NO modifications
     const finalPrompt = prompt?.trim() || ''
@@ -27,11 +27,15 @@ export async function POST(req: NextRequest) {
     }
 
     // SIMPLIFIED: Just use the prompt as-is. No filtering, no optimization.
-    // The client (CharacterPromptBuilder) already assembled the complete prompt.
     const enhancedPrompt = finalPrompt
 
-    console.log('[Character Image] Final prompt sent to Imagen:', enhancedPrompt)
-    console.log('[Character Image] Prompt length:', enhancedPrompt.length)
+    console.log('[Character Image] ========== PROMPT COMPARISON ==========')
+    console.log('[Character Image] Received prompt length:', prompt?.length || 0)
+    console.log('[Character Image] Final prompt length:', enhancedPrompt.length)
+    console.log('[Character Image] Prompts identical:', prompt === enhancedPrompt)
+    console.log('[Character Image] FULL PROMPT SENT TO MODEL:')
+    console.log(enhancedPrompt)
+    console.log('[Character Image] =======================================')
 
     // Generate with Vertex AI (1:1 for portrait)
     const base64Image = await callVertexAIImagen(enhancedPrompt, {
