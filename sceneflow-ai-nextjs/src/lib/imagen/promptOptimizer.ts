@@ -181,108 +181,38 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
   const hasValidReferences = charactersWithRefs.length > 0
   
   if (hasValidReferences) {
-    // REFERENCE MODE: Use [referenceId] format required by Imagen 3 Capability API
-    // The API requires [1], [2], etc. in the prompt to link to reference images
-    // Only characters with a valid referenceId will get markers
+    // SIMPLIFIED REFERENCE MODE: Let the reference images do the work
+    // Use only [1], [2] markers - no names, no ethnicity, no complex descriptors
+    // The model should focus on the reference images, not text descriptions
     
-    // Build character references - only add [referenceId] for those with valid IDs
-    // IMPORTANT: Include short physical descriptors to overcome name-based semantic bias
-    // (e.g., "Anderson" may bias toward Caucasian without explicit descriptors)
-    const characterRefs = params.characterReferences!.map((ref) => {
-      // Extract a SHORT physical descriptor from the description
-      // This aligns the text token with the visual reference
-      let shortDescriptor = ''
-      const desc = ref.description?.toLowerCase() || ''
-      
-      // Look for ethnicity/descent markers in the description
-      if (desc.includes('african')) {
-        shortDescriptor = 'an African man'
-      } else if (desc.includes('middle eastern') || desc.includes('mediterranean')) {
-        shortDescriptor = 'a Middle Eastern man'
-      } else if (desc.includes('latino') || desc.includes('hispanic')) {
-        shortDescriptor = 'a Latino man'
-      } else if (desc.includes('asian')) {
-        shortDescriptor = 'an Asian man'
-      } else if (desc.includes('light-skinned') || desc.includes('light skinned')) {
-        shortDescriptor = 'a light-skinned man'
-      }
-      
-      // Add key physical features if found
-      if (desc.includes('curly afro') || desc.includes('afro')) {
-        shortDescriptor += shortDescriptor ? ' with curly afro hair' : 'a man with curly afro hair'
-      } else if (desc.includes('salt-and-pepper') || desc.includes('gray hair')) {
-        shortDescriptor += shortDescriptor ? ' with gray hair' : 'a man with gray hair'
-      } else if (desc.includes('bald')) {
-        shortDescriptor += shortDescriptor ? ' who is bald' : 'a bald man'
-      }
-      
-      // Add beard if mentioned
-      if (desc.includes('beard')) {
-        if (shortDescriptor && !shortDescriptor.includes('with')) {
-          shortDescriptor += ' with a beard'
-        } else if (shortDescriptor && shortDescriptor.includes('with')) {
-          shortDescriptor += ' and beard'
-        }
-      }
-      
-      return {
+    const characterRefs = params.characterReferences!
+      .filter(ref => ref.referenceId !== undefined)
+      .map(ref => ({
         name: ref.name,
-        refId: ref.referenceId,  // May be undefined for characters without GCS images
-        description: ref.description,
-        ethnicity: ref.ethnicity,
-        shortDescriptor: shortDescriptor || 'a person' // Fallback
-      }
-    })
+        refId: ref.referenceId!
+      }))
     
-    // Build character names with reference markers AND physical descriptors
-    // This overcomes name-based semantic bias (e.g., "Anderson" -> Caucasian)
-    const characterNamesWithRefs = characterRefs.map(ref => 
-      ref.refId ? `${ref.name}, ${ref.shortDescriptor} [${ref.refId}]` : ref.name
-    ).join(' and ')
-    
-    // Build a simple, focused scene prompt
-    // Don't repeat the complex reference instructions - the structured API handles that
-    let sceneDescription = cleanedAction
-    
-    // Replace character names with reference-marked versions in scene description
-    // CRITICAL: Include physical descriptors to align text with visual reference
-    let promptScene = sceneDescription
+    // Replace character names with simple [refId] markers
+    // "Alex Anderson sits" -> "[1] sits"
+    let promptScene = cleanedAction
     characterRefs.forEach(ref => {
       const namePattern = new RegExp(`\\b${ref.name}\\b`, 'gi')
-      if (promptScene.match(namePattern)) {
-        // Replace with name + descriptor + reference ID
-        // This aligns semantic token (text) with visual token (image)
-        const replacement = ref.refId 
-          ? `${ref.name}, ${ref.shortDescriptor} [${ref.refId}]` 
-          : ref.name
-        promptScene = promptScene.replace(namePattern, replacement)
-      }
+      promptScene = promptScene.replace(namePattern, `[${ref.refId}]`)
     })
     
-    // Simple prompt structure: Scene description with character references + style
+    // Build simple prompt: scene with [1], [2] markers + style
     let prompt = promptScene
     
-    // For multi-character scenes, add explicit instruction about distinct people
-    const numRefsWithIds = characterRefs.filter(r => r.refId).length
-    if (numRefsWithIds > 1) {
-      prompt = `Two distinct people in the same scene. ${prompt}`
+    // For multi-character scenes, add brief context
+    if (characterRefs.length > 1) {
+      prompt = `[1] and [2] in the same scene. ${prompt}`
     }
-    
-    // Add character context if not already mentioned in scene
-    if (!promptScene.toLowerCase().includes(characterRefs[0].name.toLowerCase())) {
-      prompt = `Scene featuring ${characterNamesWithRefs}. ${prompt}`
-    }
-    
-    // IMPORTANT: Do NOT add ethnicity to the prompt when reference images are present!
-    // The reference image defines the character's appearance - adding conflicting ethnicity
-    // text causes the model to ignore the reference image and generate based on text.
-    // The subjectDescription in the API request already describes the visual characteristics.
     
     // Add style qualifiers
     prompt += ` ${visualStyle}`
     
-    console.log('[Prompt Optimizer] Using REFERENCE MODE with', charactersWithRefs.length, 'character(s) with GCS images')
-    console.log('[Prompt Optimizer] Character refs:', characterRefs.map(r => r.refId ? `${r.name} [${r.refId}]` : `${r.name} (text only)`).join(', '))
+    console.log('[Prompt Optimizer] Using SIMPLIFIED REFERENCE MODE with', characterRefs.length, 'reference(s)')
+    console.log('[Prompt Optimizer] Refs:', characterRefs.map(r => `[${r.refId}]`).join(', '))
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
     console.log(prompt)
     console.log('[Prompt Optimizer] ===== END FULL PROMPT =====')
