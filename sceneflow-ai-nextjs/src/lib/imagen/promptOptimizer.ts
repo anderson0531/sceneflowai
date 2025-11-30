@@ -189,6 +189,7 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
       .filter(ref => ref.referenceId !== undefined)
       .map(ref => ({
         name: ref.name,
+        firstName: ref.name.split(' ')[0], // Extract first name for standalone replacement
         refId: ref.referenceId!,
         // Detect gender for anchor text
         isFemale: (ref.description || '').toLowerCase().includes('woman') ||
@@ -196,12 +197,24 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
       }))
     
     // Replace character names with anchored class noun + refId
-    // "Alex Anderson sits" -> "the man [1] sits"
+    // First replace full names, then first names only (to avoid partial matches)
     let promptScene = cleanedAction
+    
+    // Pass 1: Replace full names "Alex Anderson" -> "the man [1]"
     characterRefs.forEach(ref => {
-      const namePattern = new RegExp(`\\b${ref.name}\\b`, 'gi')
+      const fullNamePattern = new RegExp(`\\b${ref.name}\\b`, 'gi')
       const anchor = ref.isFemale ? 'the woman' : 'the man'
-      promptScene = promptScene.replace(namePattern, `${anchor} [${ref.refId}]`)
+      promptScene = promptScene.replace(fullNamePattern, `${anchor} [${ref.refId}]`)
+    })
+    
+    // Pass 2: Replace first names only "Alex" -> "[1]" (just the marker, no anchor to avoid duplication)
+    // Also handle possessives like "Alex's" -> "[1]'s"
+    characterRefs.forEach(ref => {
+      const firstNamePattern = new RegExp(`\\b${ref.firstName}'s\\b`, 'gi')
+      promptScene = promptScene.replace(firstNamePattern, `[${ref.refId}]'s`)
+      
+      const firstNameStandalone = new RegExp(`\\b${ref.firstName}\\b`, 'gi')
+      promptScene = promptScene.replace(firstNameStandalone, `[${ref.refId}]`)
     })
     
     // Build simple prompt: scene with anchored [1], [2] markers + style
