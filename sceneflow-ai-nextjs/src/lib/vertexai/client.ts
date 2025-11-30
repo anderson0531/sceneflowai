@@ -68,11 +68,11 @@ export async function callVertexAIImagen(
     throw new Error('GCP_PROJECT_ID not configured')
   }
   
-  // Use stable Imagen 2 model
-  const MODEL_ID = 'imagegeneration@006'
+  // Use Imagen 3 for better prompt adherence and quality
+  const MODEL_ID = 'imagen-3.0-generate-002'
   
   console.log(`[Imagen] Generating image with ${MODEL_ID}...`)
-  console.log('[Imagen] Prompt:', prompt.slice(0, 100) + '...')
+  console.log('[Imagen] FULL Prompt:', prompt)
   console.log('[Imagen] Project:', projectId, 'Region:', region)
   
   const accessToken = await getVertexAIAuthToken()

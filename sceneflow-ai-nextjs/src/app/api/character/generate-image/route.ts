@@ -12,46 +12,26 @@ export async function POST(req: NextRequest) {
   try {
     const { prompt, projectId, characterId, quality = 'auto', artStyle, rawMode } = await req.json()
     
-    // Use user prompt directly. We trust the client (CharacterPromptBuilder) to have assembled 
-    // the attributes, shot type, lighting, etc. into the prompt string.
-    // We do NOT fetch attributes here to avoid duplication and allow user edits to persist.
+    // DEBUG: Log exactly what we received
+    console.log('[Character Image] ========== REQUEST DEBUG ==========')
+    console.log('[Character Image] Received prompt:', prompt)
+    console.log('[Character Image] Received artStyle:', artStyle)
+    console.log('[Character Image] Received rawMode:', rawMode)
+    console.log('[Character Image] ====================================')
     
-    let finalPrompt = prompt?.trim() || ''
+    // Use user prompt directly - NO modifications
+    const finalPrompt = prompt?.trim() || ''
 
     if (!finalPrompt) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
     }
 
-    let enhancedPrompt: string
-    if (rawMode) {
-      // Advanced mode: use user prompt verbatim
-      enhancedPrompt = finalPrompt
-    } else {
-      // Guided mode: Apply style conflict filtering only.
-      // We do NOT append shot/lighting/style suffixes here because the client already did it.
-      
-      const tokens = finalPrompt.split(',').map(t => t.trim()).filter(Boolean)
-      const seen = new Set<string>()
-      const out: string[] = []
-      const photoTerms = ['photorealistic','photo','photograph','photography','8k','4k','realistic']
-      const artTerms = ['anime','cartoon','sketch','illustration','painting','drawing']
-      
-      for (const t of tokens) {
-        const key = t.toLowerCase()
-        if (seen.has(key)) continue
-        
-        // Filter conflicting style terms
-        if (artStyle && artStyle !== 'photorealistic' && photoTerms.some(term => key.includes(term))) continue
-        if (artStyle === 'photorealistic' && artTerms.some(term => key.includes(term))) continue
-        
-        out.push(t)
-        seen.add(key)
-      }
-      enhancedPrompt = out.join(', ')
-    }
+    // SIMPLIFIED: Just use the prompt as-is. No filtering, no optimization.
+    // The client (CharacterPromptBuilder) already assembled the complete prompt.
+    const enhancedPrompt = finalPrompt
 
-    console.log('[Character Image] rawMode:', !!rawMode, 'artStyle:', artStyle || '(none)')
-    console.log('[Character Image] Final prompt preview:', enhancedPrompt.substring(0, 140))
+    console.log('[Character Image] Final prompt sent to Imagen:', enhancedPrompt)
+    console.log('[Character Image] Prompt length:', enhancedPrompt.length)
 
     // Generate with Vertex AI (1:1 for portrait)
     const base64Image = await callVertexAIImagen(enhancedPrompt, {
