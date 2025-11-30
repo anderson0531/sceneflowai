@@ -18,7 +18,7 @@ import { Button, buttonVariants } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Save, Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, Eye, Sparkles, BarChart3 } from 'lucide-react'
+import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, Eye, Sparkles, BarChart3 } from 'lucide-react'
 
 const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement> & { size?: number }> = ({ size = 32, className, ...props }) => (
   <svg
@@ -3732,49 +3732,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  const handleSaveProject = async () => {
-    try {
-      if (!project) return
-
-      const currentMetadata = project.metadata ?? {}
-      const nextVisionPhase = {
-        ...(currentMetadata.visionPhase ?? {}),
-        script: script,
-        characters: characters,
-        scenes: scenes,
-        narrationVoice: narrationVoice,
-        references: {
-          sceneReferences,
-          objectReferences,
-        } satisfies VisionReferencesPayload,
-      }
-
-      await fetch(`/api/projects/${project.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          metadata: {
-            ...currentMetadata,
-            visionPhase: nextVisionPhase,
-          },
-        }),
-      })
-
-      await loadProject()
-
-      try {
-        const { toast } = require('sonner')
-        toast.success('Project saved!')
-      } catch {}
-    } catch (error) {
-      console.error('Save failed:', error)
-      try {
-        const { toast } = require('sonner')
-        toast.error('Failed to save project')
-      } catch {}
-    }
-  }
-
   // Scene management handlers
   const handleAddScene = async (afterIndex?: number) => {
     if (!script) return
@@ -4204,22 +4161,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 </TooltipTrigger>
                 <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
                   {showDashboard ? 'Hide Dashboard section' : 'Show Dashboard section'}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-              onClick={handleSaveProject}
-            >
-              <Save className="w-4 h-4 text-emerald-400" />
-            </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Save Project</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
