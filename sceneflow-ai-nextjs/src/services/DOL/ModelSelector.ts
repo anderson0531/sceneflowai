@@ -5,7 +5,7 @@ const mockPlatformModels: PlatformModel[] = [
   // Intelligence Models
   {
     id: '1',
-    modelId: 'gemini-1.5-flash',
+    modelId: 'gemini-2.0-flash',
     platformId: 'google',
     platformType: PlatformType.GOOGLE,
     category: APICategory.INTELLIGENCE,

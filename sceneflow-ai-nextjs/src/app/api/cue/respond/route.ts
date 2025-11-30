@@ -345,7 +345,7 @@ export async function POST(req: NextRequest) {
                   return new Response(JSON.stringify({ 
                     reply: extractedJson, 
                     provider: provider.name.toLowerCase(),
-                    model: provider.name === 'Gemini' ? 'gemini-1.5-flash' : 'gpt-4o-mini'
+                    model: provider.name === 'Gemini' ? 'gemini-2.0-flash' : 'gpt-4o-mini'
                   }), { 
                     status: 200, 
                     headers: { 'Content-Type': 'application/json' } 

@@ -254,7 +254,7 @@ export default function DOLAdminPage() {
                     value={templateForm.modelId}
                     onChange={(e) => setTemplateForm(prev => ({ ...prev, modelId: e.target.value }))}
                     className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg"
-                    placeholder="gemini-1.5-flash"
+                    placeholder="gemini-2.0-flash"
                   />
                 </div>
 
