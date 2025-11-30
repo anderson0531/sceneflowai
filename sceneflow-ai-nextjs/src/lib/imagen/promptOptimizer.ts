@@ -181,31 +181,39 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
   const hasValidReferences = charactersWithRefs.length > 0
   
   if (hasValidReferences) {
-    // SIMPLIFIED REFERENCE MODE: Let the reference images do the work
-    // Use only [1], [2] markers - no names, no ethnicity, no complex descriptors
-    // The model should focus on the reference images, not text descriptions
+    // SIMPLIFIED REFERENCE MODE: Trust the reference image pixels
+    // Use "the man [1]" or "the woman [2]" to anchor references
+    // Don't describe physical attributes - let the model derive them from the photos
     
     const characterRefs = params.characterReferences!
       .filter(ref => ref.referenceId !== undefined)
       .map(ref => ({
         name: ref.name,
-        refId: ref.referenceId!
+        refId: ref.referenceId!,
+        // Detect gender for anchor text
+        isFemale: (ref.description || '').toLowerCase().includes('woman') ||
+                  (ref.description || '').toLowerCase().includes('female')
       }))
     
-    // Replace character names with simple [refId] markers
-    // "Alex Anderson sits" -> "[1] sits"
+    // Replace character names with anchored class noun + refId
+    // "Alex Anderson sits" -> "the man [1] sits"
     let promptScene = cleanedAction
     characterRefs.forEach(ref => {
       const namePattern = new RegExp(`\\b${ref.name}\\b`, 'gi')
-      promptScene = promptScene.replace(namePattern, `[${ref.refId}]`)
+      const anchor = ref.isFemale ? 'the woman' : 'the man'
+      promptScene = promptScene.replace(namePattern, `${anchor} [${ref.refId}]`)
     })
     
-    // Build simple prompt: scene with [1], [2] markers + style
+    // Build simple prompt: scene with anchored [1], [2] markers + style
     let prompt = promptScene
     
-    // For multi-character scenes, add brief context
-    if (characterRefs.length > 1) {
-      prompt = `[1] and [2] in the same scene. ${prompt}`
+    // For multi-character scenes, add brief context with class nouns
+    if (characterRefs.length === 2) {
+      const anchor1 = characterRefs[0].isFemale ? 'The woman' : 'The man'
+      const anchor2 = characterRefs[1].isFemale ? 'the woman' : 'the man'
+      prompt = `${anchor1} [1] and ${anchor2} [2] in the same scene. ${prompt}`
+    } else if (characterRefs.length > 2) {
+      prompt = `Multiple people in the same scene. ${prompt}`
     }
     
     // Add style qualifiers

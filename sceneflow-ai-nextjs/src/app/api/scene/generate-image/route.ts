@@ -11,95 +11,25 @@ export const runtime = 'nodejs'
 export const maxDuration = 60
 
 /**
- * Create a concise subject description for Imagen API
- * The API works better with short, distinctive descriptions
- * Format: "a [ethnicity] [age] [gender] with [key_physical_feature]"
+ * Create a MINIMAL subject description for Imagen API
  * 
- * IMPORTANT: Only include PHYSICAL characteristics, not personality traits!
+ * TRUST THE PIXELS: Don't describe physical attributes in text!
+ * When text descriptions (skin tone, hair, etc.) conflict with the reference image,
+ * the model often follows the text and ignores the actual photo.
+ * 
+ * Solution: Use only "a man" or "a woman" to force the model to derive
+ * ALL physical characteristics from the reference image pixels.
  */
 function createConciseSubjectDescription(char: any, index: number): string {
-  // Use the Gemini Vision description which contains actual physical traits
   const description = char.visionDescription || char.appearanceDescription || ''
   
-  const parts: string[] = ['a']
+  // ONLY detect gender - let the reference image define everything else
+  const isFemale = description.toLowerCase().includes('woman') || 
+                   description.toLowerCase().includes('female') ||
+                   description.toLowerCase().includes('she ')
   
-  // Extract ethnicity/descent from description - look for specific patterns
-  // Pattern: "of [X] descent" or "appears to be of [X] descent"
-  const descentMatch = description.match(/(?:appears\s+to\s+be\s+)?of\s+(\w+(?:\s+\w+)?)\s+descent/i)
-  // Pattern: "[X]-skinned" or "[X] skin"
-  const skinMatch = description.match(/(\w+)[-\s]skinned/i) || description.match(/(\w+(?:\s+\w+)?)\s+skin(?:\s|\.|,)/i)
-  
-  if (descentMatch) {
-    // Clean up: remove "or" if present (e.g., "Middle Eastern or Mediterranean" -> "Middle Eastern")
-    const ethnicity = descentMatch[1].split(/\s+or\s+/i)[0]
-    parts.push(ethnicity.toLowerCase())
-  } else if (skinMatch) {
-    parts.push(`${skinMatch[1].toLowerCase()}-skinned`)
-  }
-  
-  // Extract age from description
-  const ageMatch = description.match(/(?:in\s+(?:his|her)\s+)?(late\s+)?(\d{1,2})s?(?:\s+to\s+(early\s+)?(\d{1,2})s?)?/i)
-  if (ageMatch) {
-    parts.push(ageMatch[0].replace(/in\s+(?:his|her)\s+/i, ''))
-  }
-  
-  // Add gender
-  if (description.toLowerCase().includes('woman') || description.toLowerCase().includes('female')) {
-    parts.push('woman')
-  } else {
-    parts.push('man')
-  }
-  
-  // Extract key physical features (ONLY visual traits)
-  const physicalFeatures: string[] = []
-  
-  // Hair style/color from description (not from char.hairStyle which may have garbage)
-  const hairMatch = description.match(/(?:hair\s+is\s+)?(\w+(?:\s+\w+)?)\s+(?:color\s+)?(?:and\s+)?(?:is\s+)?styled?\s+in\s+(?:a\s+)?(\w+(?:\s+\w+)?)/i) ||
-                    description.match(/(\w+(?:\s+\w+)?)\s+(?:curly|straight|wavy|afro|short|long)\s+hair/i) ||
-                    description.match(/(?:curly|straight|wavy)\s+(\w+)\s+hair/i)
-  
-  // Check for specific hair descriptions
-  if (description.toLowerCase().includes('curly afro') || description.toLowerCase().includes('voluminous, curly afro')) {
-    physicalFeatures.push('curly afro hair')
-  } else if (description.toLowerCase().includes('salt-and-pepper')) {
-    physicalFeatures.push('salt-and-pepper hair')
-  } else if (description.toLowerCase().includes('gray hair') || description.toLowerCase().includes('grey hair')) {
-    physicalFeatures.push('gray hair')
-  } else if (description.toLowerCase().includes('bald')) {
-    physicalFeatures.push('bald head')
-  }
-  
-  // Beard
-  if (description.toLowerCase().includes('beard')) {
-    if (description.toLowerCase().includes('salt-and-pepper')) {
-      physicalFeatures.push('salt-and-pepper beard')
-    } else if (description.toLowerCase().includes('full beard')) {
-      physicalFeatures.push('full beard')
-    } else {
-      physicalFeatures.push('beard')
-    }
-  }
-  
-  // Glasses
-  if (description.toLowerCase().includes('glasses')) {
-    physicalFeatures.push('glasses')
-  }
-  
-  // Skin tone
-  if (description.toLowerCase().includes('medium brown skin')) {
-    physicalFeatures.push('medium brown skin')
-  } else if (description.toLowerCase().includes('light-skinned') || description.toLowerCase().includes('light skinned')) {
-    physicalFeatures.push('light skin')
-  }
-  
-  // Build final description
-  if (physicalFeatures.length > 0) {
-    parts.push('with')
-    parts.push(physicalFeatures.slice(0, 2).join(' and ')) // Max 2 features
-  }
-  
-  const result = parts.join(' ')
-  console.log(`[Scene Image] Concise subject description for ${char.name} (ref ${index}): "${result}"`)
+  const result = isFemale ? 'a woman' : 'a man'
+  console.log(`[Scene Image] Subject description for ${char.name} (ref ${index}): "${result}" (trusting reference image for physical attributes)`)
   return result
 }
 
