@@ -36,7 +36,7 @@ export function CharacterPromptBuilder({
   const [shotType, setShotType] = useState('close-up')
   const [cameraAngle, setCameraAngle] = useState('eye-level')
   const [lighting, setLighting] = useState('natural')
-  const [artStyle, setArtStyle] = useState('photorealistic')
+  const [artStyle, setArtStyle] = useState('') // Default to no style to prevent overrides
   const [additionalDetails, setAdditionalDetails] = useState('')
   // Modes & prompt state
   const [mode, setMode] = useState<'guided' | 'advanced'>('guided')
