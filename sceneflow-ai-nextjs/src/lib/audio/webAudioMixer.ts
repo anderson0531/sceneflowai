@@ -156,6 +156,15 @@ export class WebAudioMixer {
     this.isPlaying = true
     this.sceneStartTime = context.currentTime
     this.nonLoopingSources.clear()
+    
+    // Reset all gain nodes to default volumes (important after fadeOut)
+    const musicGain = this.gainNodes.get('music')
+    if (musicGain) {
+      musicGain.gain.cancelScheduledValues(context.currentTime)
+      musicGain.gain.setValueAtTime(0.15, context.currentTime) // Reset to 15% default
+      console.log('[WebAudioMixer] Reset music gain to 0.15')
+    }
+    
     console.log('[WebAudioMixer] Scene start time:', this.sceneStartTime)
     console.log('[WebAudioMixer] Playing scene with config:', {
       hasMusic: !!config.music,
