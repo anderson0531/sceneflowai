@@ -2299,80 +2299,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   const handleGenerateCharacter = async (characterId: string, promptOrPayload: any) => {
     const isObjectPayload = promptOrPayload && typeof promptOrPayload === 'object'
-    
-    // Check for V3 payload (Nano Banana Pro)
-    const isV3 = isObjectPayload && ('includeThoughts' in promptOrPayload || 'personGeneration' in promptOrPayload)
-
-    if (isV3) {
-      const { prompt, aspectRatio, includeThoughts, personGeneration, negativePrompt } = promptOrPayload
-      if (!prompt?.trim()) return
-
-      try {
-        const res = await fetch('/api/character/generate-image-v3', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            prompt,
-            projectId,
-            characterId,
-            aspectRatio,
-            includeThoughts,
-            personGeneration,
-            negativePrompt
-          })
-        })
-
-        const json = await res.json()
-
-        if (json?.url) {
-          const updatedCharacters = characters.map(char => {
-            const charId = char.id || characters.indexOf(char).toString()
-            return charId === characterId 
-              ? { 
-                  ...char, 
-                  referenceImage: json.url, 
-                  imagePrompt: json.prompt,
-                  generationThoughts: json.thoughts // Store thoughts if available
-                } 
-              : char
-          })
-          
-          setCharacters(updatedCharacters)
-          
-          // Persist
-          try {
-            const existingMetadata = project?.metadata || {}
-            const existingVisionPhase = existingMetadata.visionPhase || {}
-            await fetch(`/api/projects/${projectId}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                metadata: {
-                  ...existingMetadata,
-                  visionPhase: {
-                    ...existingVisionPhase,
-                    characters: updatedCharacters
-                  }
-                }
-              })
-            })
-          } catch (saveError) {
-            console.error('Failed to save character to project:', saveError)
-          }
-          
-          try { toast.success('Character image generated with Gemini 3 Pro!') } catch {}
-        } else {
-          throw new Error(json?.error || 'Failed to generate image')
-        }
-      } catch (error) {
-        console.error('Character image generation failed:', error)
-        const errorMessage = error instanceof Error ? error.message : 'Failed to generate character image'
-        try { toast.error(errorMessage) } catch {}
-      }
-      return
-    }
-
-    // Legacy Logic
     const prompt: string = isObjectPayload ? (promptOrPayload.characterPrompt || '') : (promptOrPayload || '')
     if (!prompt?.trim()) return
     
@@ -2382,16 +2308,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt,
-          projectId,
-          characterId,
           // Use builder selections if provided; remove hard-coded defaults
           artStyle: isObjectPayload ? promptOrPayload.artStyle : undefined,
           shotType: isObjectPayload ? promptOrPayload.shotType : undefined,
           cameraAngle: isObjectPayload ? promptOrPayload.cameraAngle : undefined,
           lighting: isObjectPayload ? promptOrPayload.lighting : undefined,
           additionalDetails: isObjectPayload ? promptOrPayload.additionalDetails : undefined,
-          quality: imageQuality,
-          rawMode: isObjectPayload ? promptOrPayload.rawMode : undefined
+          quality: imageQuality
         })
       })
       
