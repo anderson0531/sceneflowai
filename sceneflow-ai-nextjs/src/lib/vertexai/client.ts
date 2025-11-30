@@ -68,8 +68,9 @@ export async function callVertexAIImagen(
     throw new Error('GCP_PROJECT_ID not configured')
   }
   
-  // Use stable Imagen 2 model (was working before recent changes)
-  const MODEL_ID = 'imagegeneration@006'
+  // Use Imagen 3 for better style adherence
+  // imagegeneration@006 (Imagen 2) has poor style following
+  const MODEL_ID = 'imagen-3.0-generate-001'
   
   console.log(`[Imagen] Generating image with ${MODEL_ID}...`)
   console.log('[Imagen] FULL Prompt:', prompt)
