@@ -186,18 +186,58 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
     // Only characters with a valid referenceId will get markers
     
     // Build character references - only add [referenceId] for those with valid IDs
+    // IMPORTANT: Include short physical descriptors to overcome name-based semantic bias
+    // (e.g., "Anderson" may bias toward Caucasian without explicit descriptors)
     const characterRefs = params.characterReferences!.map((ref) => {
+      // Extract a SHORT physical descriptor from the description
+      // This aligns the text token with the visual reference
+      let shortDescriptor = ''
+      const desc = ref.description?.toLowerCase() || ''
+      
+      // Look for ethnicity/descent markers in the description
+      if (desc.includes('african')) {
+        shortDescriptor = 'an African man'
+      } else if (desc.includes('middle eastern') || desc.includes('mediterranean')) {
+        shortDescriptor = 'a Middle Eastern man'
+      } else if (desc.includes('latino') || desc.includes('hispanic')) {
+        shortDescriptor = 'a Latino man'
+      } else if (desc.includes('asian')) {
+        shortDescriptor = 'an Asian man'
+      } else if (desc.includes('light-skinned') || desc.includes('light skinned')) {
+        shortDescriptor = 'a light-skinned man'
+      }
+      
+      // Add key physical features if found
+      if (desc.includes('curly afro') || desc.includes('afro')) {
+        shortDescriptor += shortDescriptor ? ' with curly afro hair' : 'a man with curly afro hair'
+      } else if (desc.includes('salt-and-pepper') || desc.includes('gray hair')) {
+        shortDescriptor += shortDescriptor ? ' with gray hair' : 'a man with gray hair'
+      } else if (desc.includes('bald')) {
+        shortDescriptor += shortDescriptor ? ' who is bald' : 'a bald man'
+      }
+      
+      // Add beard if mentioned
+      if (desc.includes('beard')) {
+        if (shortDescriptor && !shortDescriptor.includes('with')) {
+          shortDescriptor += ' with a beard'
+        } else if (shortDescriptor && shortDescriptor.includes('with')) {
+          shortDescriptor += ' and beard'
+        }
+      }
+      
       return {
         name: ref.name,
         refId: ref.referenceId,  // May be undefined for characters without GCS images
         description: ref.description,
-        ethnicity: ref.ethnicity
+        ethnicity: ref.ethnicity,
+        shortDescriptor: shortDescriptor || 'a person' // Fallback
       }
     })
     
-    // Build character names with reference markers only for those with refIds
+    // Build character names with reference markers AND physical descriptors
+    // This overcomes name-based semantic bias (e.g., "Anderson" -> Caucasian)
     const characterNamesWithRefs = characterRefs.map(ref => 
-      ref.refId ? `${ref.name} [${ref.refId}]` : ref.name
+      ref.refId ? `${ref.name}, ${ref.shortDescriptor} [${ref.refId}]` : ref.name
     ).join(' and ')
     
     // Build a simple, focused scene prompt
@@ -205,13 +245,16 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
     let sceneDescription = cleanedAction
     
     // Replace character names with reference-marked versions in scene description
+    // CRITICAL: Include physical descriptors to align text with visual reference
     let promptScene = sceneDescription
     characterRefs.forEach(ref => {
       const namePattern = new RegExp(`\\b${ref.name}\\b`, 'gi')
       if (promptScene.match(namePattern)) {
-        // Only replace first occurrence to avoid redundancy
-        // Only add [refId] marker if character has one
-        const replacement = ref.refId ? `${ref.name} [${ref.refId}]` : ref.name
+        // Replace with name + descriptor + reference ID
+        // This aligns semantic token (text) with visual token (image)
+        const replacement = ref.refId 
+          ? `${ref.name}, ${ref.shortDescriptor} [${ref.refId}]` 
+          : ref.name
         promptScene = promptScene.replace(namePattern, replacement)
       }
     })
