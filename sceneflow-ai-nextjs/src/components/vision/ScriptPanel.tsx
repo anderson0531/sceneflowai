@@ -1027,7 +1027,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                           (Array.isArray(scene.dialogueAudio) ? scene.dialogueAudio : null)
     
     console.log('[ScriptPanel] Calculating audio timeline for scene (language:', selectedLanguage, '):', {
-      hasMusic: !!scene.musicAudio,
+      hasMusic: !!(scene.musicAudio || scene.music?.url),
+      musicAudio: scene.musicAudio,
+      musicUrl: scene.music?.url,
       hasNarration: !!narrationUrl,
       hasDialogue: !!(Array.isArray(dialogueArray) && dialogueArray.length > 0),
       dialogueCount: Array.isArray(dialogueArray) ? dialogueArray.length : 0,
@@ -1036,9 +1038,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     })
     
     // Music starts at scene beginning (concurrent with everything, loops)
-    if (scene.musicAudio) {
-      config.music = scene.musicAudio
-      console.log('[ScriptPanel] Added music:', scene.musicAudio)
+    // Check both musicAudio (new format) and music.url (legacy format)
+    const musicUrl = scene.musicAudio || scene.music?.url
+    if (musicUrl) {
+      config.music = musicUrl
+      console.log('[ScriptPanel] Added music:', musicUrl)
     }
     
     // Narration starts at scene beginning (concurrent with music)
@@ -1134,7 +1138,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                           (selectedLanguage === 'en' ? scene.dialogueAudio?.en : null) ||
                           (Array.isArray(scene.dialogueAudio) ? scene.dialogueAudio : null)
     const hasDialogue = Array.isArray(dialogueArray) && dialogueArray.some((d: any) => d.audioUrl || d.url)
-    const hasMusic = !!scene.musicAudio
+    const hasMusic = !!(scene.musicAudio || scene.music?.url)
     const hasSFX = !!(scene.sfxAudio && scene.sfxAudio.length > 0)
     
     const hasPreGeneratedAudio = narrationUrl || hasDialogue || hasMusic || hasSFX
