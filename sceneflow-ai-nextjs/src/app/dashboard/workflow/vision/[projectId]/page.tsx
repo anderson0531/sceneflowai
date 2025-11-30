@@ -1003,6 +1003,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     sceneHeading?: string
   } | null>(null)
 
+  // Single keyframe generation state (for global screen freeze)
+  const [isGeneratingKeyframe, setIsGeneratingKeyframe] = useState(false)
+  const [generatingKeyframeSceneNumber, setGeneratingKeyframeSceneNumber] = useState<number | null>(null)
   
   // Handle quality setting change
   const handleQualityChange = async (quality: 'max' | 'auto') => {
@@ -2882,6 +2885,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return
     }
     
+    // Set global keyframe generation state for screen freeze
+    setIsGeneratingKeyframe(true)
+    setGeneratingKeyframeSceneNumber(sceneIdx + 1)
+    
     try {
       // Check if we received prompt data object (from Scene Prompt Builder)
       let sceneCharacters: any[] = []
@@ -3043,6 +3050,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       } else {
         try { const { toast } = require('sonner'); toast.error(`Failed to generate scene image: ${error.message}`, { duration: Infinity }) } catch {}
       }
+    } finally {
+      // Clear global keyframe generation state
+      setIsGeneratingKeyframe(false)
+      setGeneratingKeyframeSceneNumber(null)
     }
   }
 
@@ -4283,6 +4294,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onToggleStoryboard={() => setShowSceneGallery(!showSceneGallery)}
                 showDashboard={showDashboard}
                 onToggleDashboard={() => setShowDashboard(!showDashboard)}
+                isGeneratingKeyframe={isGeneratingKeyframe}
+                generatingKeyframeSceneNumber={generatingKeyframeSceneNumber}
               belowDashboardSlot={({ openGenerateAudio }) => (
                 <div className="rounded-2xl border border-white/10 bg-slate-950/40 shadow-inner">
                   <div className="px-5 py-5">

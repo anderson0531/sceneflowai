@@ -147,6 +147,9 @@ interface ScriptPanelProps {
   onToggleDashboard?: () => void
   // Assets dialog control
   onOpenAssets?: () => void
+  // Global keyframe generation state (for screen freeze)
+  isGeneratingKeyframe?: boolean
+  generatingKeyframeSceneNumber?: number | null
 }
 
 // Transform score analysis data to review format
@@ -368,7 +371,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -2322,6 +2325,41 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         onEnded={() => setPlayingAudio(null)}
         className="hidden"
       />
+
+      {/* Global Keyframe Generation Overlay */}
+      {isGeneratingKeyframe && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-gray-900 border border-purple-500 rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl">
+            <div className="flex flex-col items-center">
+              <div className="relative mb-4">
+                <Loader className="w-16 h-16 animate-spin text-purple-500" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full border-4 border-purple-300 animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-200 mb-2">
+                Generating Scene KeyFrame
+              </h3>
+              {generatingKeyframeSceneNumber !== null && (
+                <p className="text-sm text-gray-400 mb-3">
+                  Scene {generatingKeyframeSceneNumber}
+                </p>
+              )}
+              <p className="text-sm text-gray-400 text-center">
+                Creating your scene visualization with character references...
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                This may take 15-30 seconds with character matching
+              </p>
+              <div className="mt-4 flex items-center gap-2">
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </>
   )
@@ -3799,26 +3837,10 @@ function SceneCard({
                               className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-lg transition-colors disabled:opacity-50 border border-purple-200 dark:border-purple-800"
                             >
                               <Image className="w-4 h-4" />
-                              <span>Build</span>
+                              <span>Generate KeyFrame</span>
                             </button>
                           </TooltipTrigger>
-                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Build image prompt</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={handleQuickGenerate}
-                              disabled={isGeneratingImage}
-                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-lg transition-colors disabled:opacity-50 border border-purple-200 dark:border-purple-800"
-                            >
-                              <Sparkles className="w-4 h-4" />
-                              <span>Generate</span>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Quick generate image</TooltipContent>
+                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Open prompt builder and generate keyframe image</TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     </div>
@@ -3881,32 +3903,6 @@ function SceneCard({
           {isOutline && scene.summary && (
             <div className="text-sm text-gray-600 dark:text-gray-400 mb-2 italic">{scene.summary}</div>
           )}
-        </div>
-      )}
-      
-      {/* Generation Lock Screen */}
-      {isGeneratingImage && (
-        <div className="absolute inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center rounded-lg">
-          <div className="bg-gray-900 border-2 border-purple-500 rounded-xl p-8 shadow-2xl flex flex-col items-center max-w-sm">
-            <div className="relative mb-4">
-              <Loader className="w-16 h-16 animate-spin text-purple-500" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-12 h-12 rounded-full border-4 border-purple-300 animate-pulse"></div>
-              </div>
-            </div>
-            <h3 className="text-xl font-bold text-white mb-2">Generating Scene Image</h3>
-            <p className="text-sm text-gray-300 text-center">
-              Creating your scene visualization...
-            </p>
-            <p className="text-xs text-gray-400 mt-2">
-              This may take 10-15 seconds
-            </p>
-            <div className="mt-4 flex items-center gap-2">
-              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-            </div>
-          </div>
         </div>
       )}
     </div>
