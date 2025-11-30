@@ -541,14 +541,15 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                 size="sm" 
                 onClick={(e) => {
                   e.stopPropagation()
-                  onGenerate()
+                  onOpenCharacterPrompt?.()
                 }} 
                 disabled={isGenerating}
+                title="Open Prompt Builder"
               >
-                {isGenerating ? <Loader className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
-                Generate
+                <Sparkles className="w-4 h-4" />
+                Create
               </Button>
-                            <Button 
+              <Button 
                 size="sm" 
                 variant="outline"
                 onClick={(e) => {
@@ -558,6 +559,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                   input?.click()
                 }}
                 disabled={isUploading || isGenerating}
+                title="Upload image"
               >
                 {isUploading ? <Loader className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
               </Button>
