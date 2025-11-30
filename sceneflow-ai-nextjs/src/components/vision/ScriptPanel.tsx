@@ -1277,7 +1277,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     if (!sfx) return
 
     setGeneratingSFX({ sceneIdx, sfxIdx })
-    overlayStore.show(`Generating sound effect ${sfxIdx + 1} for Scene ${sceneIdx + 1}...`, 15)
+    overlayStore?.show(`Generating sound effect ${sfxIdx + 1} for Scene ${sceneIdx + 1}...`, 15)
     try {
       const response = await fetch('/api/tts/elevenlabs/sound-effects', {
         method: 'POST',
@@ -1312,11 +1312,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       
       // Update scene with persistent audio URL
       await saveSceneAudio(sceneIdx, 'sfx', audioUrl, sfxIdx)
-      overlayStore.hide()
+      overlayStore?.hide()
       toast.success(`Sound effect generated!`)
     } catch (error: any) {
       console.error('[SFX Generation] Error:', error)
-      overlayStore.hide()
+      overlayStore?.hide()
       toast.error(`Failed to generate sound effect: ${error.message}`)
     } finally {
       setGeneratingSFX(null)
@@ -1329,7 +1329,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     if (!music) return
 
     setGeneratingMusic(sceneIdx)
-    overlayStore.show(`Generating music for Scene ${sceneIdx + 1}...`, 45)
+    overlayStore?.show(`Generating music for Scene ${sceneIdx + 1}...`, 45)
     try {
       const duration = scene.duration || 30
       const response = await fetch('/api/tts/elevenlabs/music', {
@@ -1365,11 +1365,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       
       // Update scene with persistent audio URL
       await saveSceneAudio(sceneIdx, 'music', audioUrl)
-      overlayStore.hide()
+      overlayStore?.hide()
       toast.success(`Music generated!`)
     } catch (error: any) {
       console.error('[Music Generation] Error:', error)
-      overlayStore.hide()
+      overlayStore?.hide()
       toast.error(`Failed to generate music: ${error.message}`)
     } finally {
       setGeneratingMusic(null)
@@ -2142,6 +2142,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                           isBookmarked={bookmarkedSceneIndex === idx}
                           onBookmarkToggle={() => handleBookmarkToggle(idx)}
                           bookmarkSaving={bookmarkSavingSceneIdx === idx}
+                          overlayStore={overlayStore}
                 />
                     )
                   })}
@@ -2408,6 +2409,7 @@ interface SceneCardProps {
   isBookmarked?: boolean
   onBookmarkToggle?: () => void
   bookmarkSaving?: boolean
+  overlayStore?: { show: (message: string, duration: number) => void; hide: () => void }
 }
 
 function SceneCard({
@@ -2470,6 +2472,7 @@ function SceneCard({
   isBookmarked = false,
   onBookmarkToggle,
   bookmarkSaving = false,
+  overlayStore,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
@@ -3121,14 +3124,14 @@ function SceneCard({
                                 if (!onGenerateSceneAudio) return
                                 
                                 setGeneratingDialogue?.({ sceneIdx, character: '__narration__' })
-                                overlayStore.show(`Regenerating narration for Scene ${sceneIdx + 1}...`, 20)
+                                overlayStore?.show(`Regenerating narration for Scene ${sceneIdx + 1}...`, 20)
                                 try {
                                   await onGenerateSceneAudio?.(sceneIdx, 'narration', undefined, undefined, selectedLanguage)
-                                  overlayStore.hide()
+                                  overlayStore?.hide()
                                   toast.success('Narration regenerated!')
                                 } catch (error) {
                                   console.error('[ScriptPanel] Narration regeneration failed:', error)
-                                  overlayStore.hide()
+                                  overlayStore?.hide()
                                   toast.error('Failed to regenerate narration')
                                 } finally {
                                   setGeneratingDialogue?.(null)
@@ -3160,14 +3163,14 @@ function SceneCard({
                               if (!onGenerateSceneAudio) return
                               
                               setGeneratingDialogue?.({ sceneIdx, character: '__narration__' })
-                              overlayStore.show(`Generating narration for Scene ${sceneIdx + 1}...`, 20)
+                              overlayStore?.show(`Generating narration for Scene ${sceneIdx + 1}...`, 20)
                               try {
                                 await onGenerateSceneAudio?.(sceneIdx, 'narration', undefined, undefined, selectedLanguage)
-                                overlayStore.hide()
+                                overlayStore?.hide()
                                 toast.success('Narration generated!')
                               } catch (error) {
                                 console.error('[ScriptPanel] Narration generation failed:', error)
-                                overlayStore.hide()
+                                overlayStore?.hide()
                                 toast.error('Failed to generate narration')
                               } finally {
                                 setGeneratingDialogue?.(null)
@@ -3247,14 +3250,14 @@ function SceneCard({
                                     if (!onGenerateSceneAudio) return
                                     
                                     setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
-                                    overlayStore.show(`Regenerating dialogue for ${d.character}...`, 15)
+                                    overlayStore?.show(`Regenerating dialogue for ${d.character}...`, 15)
                                     try {
                                       await onGenerateSceneAudio?.(sceneIdx, 'dialogue', d.character, i, selectedLanguage)
-                                      overlayStore.hide()
+                                      overlayStore?.hide()
                                       toast.success('Dialogue regenerated!')
                                     } catch (error) {
                                       console.error('[ScriptPanel] Dialogue regeneration failed:', error)
-                                      overlayStore.hide()
+                                      overlayStore?.hide()
                                       toast.error('Failed to regenerate dialogue')
                                     } finally {
                                       setGeneratingDialogue?.(null)
@@ -3291,15 +3294,15 @@ function SceneCard({
                                   }
                                   
                                   setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
-                                  overlayStore.show(`Generating dialogue for ${d.character}...`, 15)
+                                  overlayStore?.show(`Generating dialogue for ${d.character}...`, 15)
                                   
                                   try {
                                     await onGenerateSceneAudio?.(sceneIdx, 'dialogue', d.character, i, selectedLanguage)
-                                    overlayStore.hide()
+                                    overlayStore?.hide()
                                     toast.success(`Dialogue generated for ${d.character}`)
                                   } catch (error) {
                                     console.error('[ScriptPanel] Dialogue generation failed:', error)
-                                    overlayStore.hide()
+                                    overlayStore?.hide()
                                     toast.error(`Failed to generate dialogue for ${d.character}`)
                                   } finally {
                                     setGeneratingDialogue?.(null)
