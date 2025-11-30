@@ -3788,7 +3788,7 @@ function SceneCard({
                   )}
                   
                   {/* Image Generation Buttons */}
-                  {onGenerateImage && scene.visualDescription && (
+                  {onGenerateImage && (scene.visualDescription || scene.action || scene.summary) && (
                     <div className="flex items-center justify-end gap-2">
                       <TooltipProvider>
                         <Tooltip>
