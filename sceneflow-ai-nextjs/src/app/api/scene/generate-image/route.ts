@@ -233,6 +233,9 @@ export async function POST(req: NextRequest) {
     }
     
     // Build character references using visionDescription (preferred) or fallback descriptions
+    // IMPORTANT: referenceId is ONLY assigned to characters with GCS images
+    // This ensures the [1], [2] markers in the prompt match the API's referenceImages array
+    let gcsRefIndex = 0
     const characterReferences = characterObjects.map((char: any, idx: number) => {
       // Prefer Gemini Vision description over manual description
       const rawDescription = char.visionDescription || char.appearanceDescription || 
@@ -272,8 +275,18 @@ export async function POST(req: NextRequest) {
       
       console.log(`[Scene Image] Extracted key features for ${char.name}:`, keyFeatures)
       
+      // Only assign referenceId if character has GCS image (will be in referenceImages array)
+      const hasGCS = !!char.referenceImageGCS
+      const referenceId = hasGCS ? ++gcsRefIndex : undefined
+      
+      if (hasGCS) {
+        console.log(`[Scene Image] ${char.name} has GCS image, assigned referenceId: ${referenceId}`)
+      } else {
+        console.log(`[Scene Image] ${char.name} has no GCS image, will use text description only`)
+      }
+      
       return {
-        referenceId: idx + 1,
+        referenceId,  // Only defined for characters with GCS images
         name: char.name,
         description: `${description}${ageClause}`,
         imageUrl: char.referenceImage,      // HTTPS URL for prompt text (preferred - works in prompts)
@@ -350,16 +363,31 @@ export async function POST(req: NextRequest) {
       console.warn('[Scene Image] These characters should have referenceImageGCS saved to database for optimal image generation')
     }
     
-    const gcsReferences = charactersWithGCS.map((char: any, idx: number) => ({
-      referenceId: idx + 1,
-      gcsUri: char.referenceImageGCS,
-      referenceType: 'REFERENCE_TYPE_SUBJECT' as const,
-      subjectType: 'SUBJECT_TYPE_PERSON' as const,
-      subjectDescription: char.appearanceDescription || 
-        `${char.ethnicity || ''} ${char.subject || 'person'}`.trim(),
-      // Store HTTPS fallback URL
-      httpsUrl: char.referenceImage
-    }))
+    // Build GCS references for all characters with GCS images
+    // Use the enriched descriptions and referenceIds from characterReferences
+    const gcsReferences = charactersWithGCS.map((char: any) => {
+      // Find the matching character reference with enriched description and referenceId
+      const matchingRef = characterReferences.find((ref: any) => ref.name === char.name)
+      const enrichedDescription = matchingRef?.description || 
+        char.appearanceDescription || 
+        `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
+      
+      // Use the referenceId from characterReferences - this was assigned in order for GCS chars only
+      const referenceId = matchingRef?.referenceId
+      if (!referenceId) {
+        console.error(`[Scene Image] ERROR: Character ${char.name} has GCS but no referenceId assigned!`)
+      }
+      
+      return {
+        referenceId: referenceId || 1, // Fallback to 1 if somehow missing
+        gcsUri: char.referenceImageGCS,
+        referenceType: 'REFERENCE_TYPE_SUBJECT' as const,
+        subjectType: 'SUBJECT_TYPE_PERSON' as const,
+        subjectDescription: enrichedDescription,
+        // Store HTTPS fallback URL
+        httpsUrl: char.referenceImage
+      }
+    })
 
     console.log(`[Scene Image] Using ${gcsReferences.length} character references with GCS for structured API call`)
     if (gcsReferences.length > 0) {

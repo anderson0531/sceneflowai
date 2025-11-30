@@ -8,16 +8,16 @@ import { artStylePresets } from '@/constants/artStylePresets'
 interface OptimizePromptParams {
   sceneAction: string
   visualDescription: string
-  artStyle?: string          // NEW: User's art style selection
-  customPrompt?: string      // NEW: User-crafted prompt
+  artStyle?: string          // User's art style selection
+  customPrompt?: string      // User-crafted prompt
   characterReferences?: Array<{
-    referenceId?: number
+    referenceId?: number     // Only set for characters with GCS images
     name: string
     description: string
     gcsUri?: string          // GCS URI for structured array
-    imageUrl?: string         // HTTPS URL for prompt text (preferred)
-    ethnicity?: string        // NEW: For ethnicity injection
-    keyFeatures?: string[]    // NEW: Key physical characteristics to emphasize
+    imageUrl?: string        // HTTPS URL for prompt text (preferred)
+    ethnicity?: string       // For ethnicity injection
+    keyFeatures?: string[]   // Key physical characteristics to emphasize
   }>
 }
 
@@ -153,8 +153,6 @@ export interface OptimizedPromptResult {
 export function optimizePromptForImagen(params: OptimizePromptParams): string;
 export function optimizePromptForImagen(params: OptimizePromptParams, returnDetails: boolean): OptimizedPromptResult;
 export function optimizePromptForImagen(params: OptimizePromptParams, returnDetails?: boolean): string | OptimizedPromptResult {
-  const hasReferences = params.characterReferences && params.characterReferences.length > 0
-  
   // Get art style
   const selectedStyle = artStylePresets.find(s => s.id === params.artStyle) || 
     artStylePresets.find(s => s.id === 'photorealistic')!
@@ -178,24 +176,29 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
   console.log('[Prompt Optimizer] Using art style:', params.artStyle || 'photorealistic')
   console.log('[Prompt Optimizer] Cleaned scene action:', cleanedAction.substring(0, 100))
   
-  if (hasReferences) {
+  // Check if we have characters with actual reference images (valid referenceId)
+  const charactersWithRefs = params.characterReferences?.filter(ref => ref.referenceId !== undefined) || []
+  const hasValidReferences = charactersWithRefs.length > 0
+  
+  if (hasValidReferences) {
     // REFERENCE MODE: Use [referenceId] format required by Imagen 3 Capability API
     // The API requires [1], [2], etc. in the prompt to link to reference images
+    // Only characters with a valid referenceId will get markers
     
-    // Build character references with [referenceId] markers
-    // Each character gets their referenceId (defaulting to index + 1)
-    const characterRefs = params.characterReferences!.map((ref, index) => {
-      const refId = ref.referenceId || (index + 1)
+    // Build character references - only add [referenceId] for those with valid IDs
+    const characterRefs = params.characterReferences!.map((ref) => {
       return {
         name: ref.name,
-        refId,
+        refId: ref.referenceId,  // May be undefined for characters without GCS images
         description: ref.description,
         ethnicity: ref.ethnicity
       }
     })
     
-    // Build character names with reference markers: "John [1] and Mary [2]"
-    const characterNamesWithRefs = characterRefs.map(ref => `${ref.name} [${ref.refId}]`).join(' and ')
+    // Build character names with reference markers only for those with refIds
+    const characterNamesWithRefs = characterRefs.map(ref => 
+      ref.refId ? `${ref.name} [${ref.refId}]` : ref.name
+    ).join(' and ')
     
     // Build a simple, focused scene prompt
     // Don't repeat the complex reference instructions - the structured API handles that
@@ -207,7 +210,9 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
       const namePattern = new RegExp(`\\b${ref.name}\\b`, 'gi')
       if (promptScene.match(namePattern)) {
         // Only replace first occurrence to avoid redundancy
-        promptScene = promptScene.replace(namePattern, `${ref.name} [${ref.refId}]`)
+        // Only add [refId] marker if character has one
+        const replacement = ref.refId ? `${ref.name} [${ref.refId}]` : ref.name
+        promptScene = promptScene.replace(namePattern, replacement)
       }
     })
     
@@ -219,9 +224,9 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
       prompt = `Scene featuring ${characterNamesWithRefs}. ${promptScene}`
     }
     
-    // Add ethnicity hint for visual accuracy (brief)
+    // Add ethnicity hint for visual accuracy (brief) - only for chars with refIds
     const ethnicities = characterRefs
-      .filter(ref => ref.ethnicity)
+      .filter(ref => ref.ethnicity && ref.refId)
       .map(ref => `${ref.name} [${ref.refId}]: ${ref.ethnicity}`)
       .join(', ')
     
@@ -232,8 +237,8 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
     // Add style qualifiers
     prompt += ` ${visualStyle}`
     
-    console.log('[Prompt Optimizer] Using REFERENCE MODE with', params.characterReferences!.length, 'character(s)')
-    console.log('[Prompt Optimizer] Character refs:', characterRefs.map(r => `${r.name} [${r.refId}]`).join(', '))
+    console.log('[Prompt Optimizer] Using REFERENCE MODE with', charactersWithRefs.length, 'character(s) with GCS images')
+    console.log('[Prompt Optimizer] Character refs:', characterRefs.map(r => r.refId ? `${r.name} [${r.refId}]` : `${r.name} (text only)`).join(', '))
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
     console.log(prompt)
     console.log('[Prompt Optimizer] ===== END FULL PROMPT =====')
@@ -246,7 +251,7 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
       }
     }
     return prompt.trim()
-  } else {
+  } else if (params.characterReferences && params.characterReferences.length > 0) {
     // TEXT-ONLY MODE: Include character descriptions in prompt
     // Build integrated character descriptions
     const integratedPrompt = integrateCharactersIntoScene(
@@ -271,35 +276,87 @@ ${visualStyle}`
       }
     }
     return prompt.trim()
+  } else {
+    // NO CHARACTERS MODE: Just scene description with style
+    const prompt = `${cleanedAction}
+
+${visualStyle}`
+
+    console.log('[Prompt Optimizer] Built scene-only prompt (no characters)')
+    console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
+    console.log(prompt)
+    console.log('[Prompt Optimizer] ===== END FULL PROMPT =====')
+    
+    if (returnDetails) {
+      return {
+        prompt: prompt.trim(),
+        sanitizationChanges,
+        originalPrompt: params.sceneAction || params.visualDescription
+      }
+    }
+    return prompt.trim()
   }
 }
 
 /**
  * Integrate character descriptions naturally into scene context
  * Instead of separate sections, weave character details where they're mentioned
+ * 
+ * For multi-character scenes (no reference images), provides more detailed descriptions
+ * to help maintain visual consistency through text alone.
  */
 function integrateCharactersIntoScene(
   sceneAction: string,
-  characterReferences: Array<{ referenceId?: number; name: string; description: string; gcsUri?: string }>
+  characterReferences: Array<{ 
+    referenceId?: number; 
+    name: string; 
+    description: string; 
+    gcsUri?: string;
+    ethnicity?: string;
+    keyFeatures?: string[];
+  }>
 ): string {
   let integrated = sceneAction
+  const isMultiCharacter = characterReferences.length > 1
   
   // For each character, find their first mention and inject their description
   characterReferences.forEach(ref => {
+    // Build a detailed description for multi-character scenes
+    let detailedDescription = ref.description
+    
+    // For multi-character scenes, add ethnicity and key features if available
+    if (isMultiCharacter) {
+      const extras: string[] = []
+      if (ref.ethnicity) {
+        extras.push(ref.ethnicity)
+      }
+      if (ref.keyFeatures && ref.keyFeatures.length > 0) {
+        extras.push(...ref.keyFeatures)
+      }
+      if (extras.length > 0) {
+        detailedDescription = `${extras.join(', ')}, ${detailedDescription}`
+      }
+    }
+    
     // Match character name (case insensitive, word boundary)
     const namePattern = new RegExp(`\\b(${ref.name})\\b`, 'i')
     const match = integrated.match(namePattern)
     
     if (match) {
       // Found character mention - inject description right after
-      const characterWithDescription = `${match[1]} (${ref.description})`
+      const characterWithDescription = `${match[1]} (${detailedDescription})`
       integrated = integrated.replace(namePattern, characterWithDescription)
     } else {
       // Character not explicitly mentioned in scene - add them at the start
-      const characterIntro = `${ref.name} (${ref.description}) is present. `
+      const characterIntro = `${ref.name} (${detailedDescription}) is present. `
       integrated = characterIntro + integrated
     }
   })
+  
+  // For multi-character scenes, add explicit instruction for consistency
+  if (isMultiCharacter) {
+    integrated = `Multi-character scene with ${characterReferences.length} distinct people. ${integrated}`
+  }
   
   return integrated
 }
