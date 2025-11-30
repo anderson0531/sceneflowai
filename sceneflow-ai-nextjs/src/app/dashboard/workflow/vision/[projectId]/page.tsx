@@ -2874,9 +2874,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   const handleGenerateSceneImage = async (sceneIdx: number, selectedCharacters?: any[] | any) => {
     const scene = script?.script?.scenes?.[sceneIdx]
-    if (!scene || !scene.visualDescription) {
+    // Accept any scene description field: visualDescription, action, or summary
+    const sceneDescription = scene?.visualDescription || scene?.action || scene?.summary
+    if (!scene || !sceneDescription) {
       console.warn('No visual description available for scene', sceneIdx)
-      try { const { toast } = require('sonner'); toast.error('Scene must be expanded first to generate image') } catch {}
+      try { const { toast } = require('sonner'); toast.error('Scene must have a description to generate image') } catch {}
       return
     }
     
