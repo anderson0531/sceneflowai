@@ -13,69 +13,82 @@ export const maxDuration = 60
 /**
  * Create a concise subject description for Imagen API
  * The API works better with short, distinctive descriptions
- * Format: "a [ethnicity] [age] [gender] with [key_feature]"
+ * Format: "a [ethnicity] [age] [gender] with [key_physical_feature]"
+ * 
+ * IMPORTANT: Only include PHYSICAL characteristics, not personality traits!
  */
 function createConciseSubjectDescription(char: any, index: number): string {
-  const parts: string[] = []
-  
-  // Start with article
-  parts.push('a')
-  
-  // Add ethnicity if available
-  if (char.ethnicity) {
-    parts.push(char.ethnicity.toLowerCase())
-  }
-  
-  // Extract age from description or use explicit age field
-  let age = ''
+  // Use the Gemini Vision description which contains actual physical traits
   const description = char.visionDescription || char.appearanceDescription || ''
-  const ageMatch = description.match(/\b(late\s*)?(\d{1,2})s?\s*(to\s*(early\s*)?\d{1,2}s?)?\b/i)
+  
+  const parts: string[] = ['a']
+  
+  // Extract ethnicity/descent from description
+  const ethnicityMatch = description.match(/(?:of\s+)?(\w+(?:\s+\w+)?)\s+descent/i) ||
+                         description.match(/(\w+(?:-\w+)?)\s+(?:man|woman|person)/i)
+  if (ethnicityMatch) {
+    parts.push(ethnicityMatch[1].toLowerCase())
+  }
+  
+  // Extract age from description
+  const ageMatch = description.match(/(?:in\s+(?:his|her)\s+)?(late\s+)?(\d{1,2})s?(?:\s+to\s+(early\s+)?(\d{1,2})s?)?/i)
   if (ageMatch) {
-    age = ageMatch[0]
-  }
-  if (age) {
-    parts.push(`${age} year old`)
+    parts.push(ageMatch[0].replace(/in\s+(?:his|her)\s+/i, ''))
   }
   
-  // Add gender (default to man if not specified)
-  parts.push('man')
-  
-  // Add the most distinctive physical feature
-  const keyFeatures: string[] = []
-  
-  // Hair is often the most distinctive
-  if (char.hairStyle) {
-    if (char.hairStyle.toLowerCase() === 'bald') {
-      keyFeatures.push('bald head')
-    } else if (char.hairColor) {
-      keyFeatures.push(`${char.hairColor.toLowerCase()} ${char.hairStyle.toLowerCase()} hair`)
-    } else {
-      keyFeatures.push(`${char.hairStyle.toLowerCase()} hair`)
-    }
+  // Add gender
+  if (description.toLowerCase().includes('woman') || description.toLowerCase().includes('female')) {
+    parts.push('woman')
+  } else {
+    parts.push('man')
   }
   
-  // Add key feature if available
-  if (char.keyFeature) {
-    keyFeatures.push(char.keyFeature.toLowerCase())
+  // Extract key physical features (ONLY visual traits)
+  const physicalFeatures: string[] = []
+  
+  // Hair style/color from description (not from char.hairStyle which may have garbage)
+  const hairMatch = description.match(/(?:hair\s+is\s+)?(\w+(?:\s+\w+)?)\s+(?:color\s+)?(?:and\s+)?(?:is\s+)?styled?\s+in\s+(?:a\s+)?(\w+(?:\s+\w+)?)/i) ||
+                    description.match(/(\w+(?:\s+\w+)?)\s+(?:curly|straight|wavy|afro|short|long)\s+hair/i) ||
+                    description.match(/(?:curly|straight|wavy)\s+(\w+)\s+hair/i)
+  
+  // Check for specific hair descriptions
+  if (description.toLowerCase().includes('curly afro') || description.toLowerCase().includes('voluminous, curly afro')) {
+    physicalFeatures.push('curly afro hair')
+  } else if (description.toLowerCase().includes('salt-and-pepper')) {
+    physicalFeatures.push('salt-and-pepper hair')
+  } else if (description.toLowerCase().includes('gray hair') || description.toLowerCase().includes('grey hair')) {
+    physicalFeatures.push('gray hair')
+  } else if (description.toLowerCase().includes('bald')) {
+    physicalFeatures.push('bald head')
   }
   
-  // Add glasses if mentioned in description
-  if (description.toLowerCase().includes('glasses')) {
-    keyFeatures.push('glasses')
-  }
-  
-  // Add beard if mentioned
+  // Beard
   if (description.toLowerCase().includes('beard')) {
-    if (description.toLowerCase().includes('salt-and-pepper') || description.toLowerCase().includes('gray')) {
-      keyFeatures.push('gray beard')
+    if (description.toLowerCase().includes('salt-and-pepper')) {
+      physicalFeatures.push('salt-and-pepper beard')
+    } else if (description.toLowerCase().includes('full beard')) {
+      physicalFeatures.push('full beard')
     } else {
-      keyFeatures.push('beard')
+      physicalFeatures.push('beard')
     }
   }
   
-  if (keyFeatures.length > 0) {
+  // Glasses
+  if (description.toLowerCase().includes('glasses')) {
+    physicalFeatures.push('glasses')
+  }
+  
+  // Skin tone
+  if (description.toLowerCase().includes('medium brown skin')) {
+    physicalFeatures.push('medium brown skin')
+  } else if (description.toLowerCase().includes('light-skinned') || description.toLowerCase().includes('light skinned')) {
+    physicalFeatures.push('light skin')
+  }
+  
+  // Build final description
+  if (physicalFeatures.length > 0) {
     parts.push('with')
-    parts.push(keyFeatures.slice(0, 2).join(' and ')) // Max 2 key features
+    parts.push(physicalFeatures.slice(0, 2).join(' and ')) // Max 2 features
   }
   
   const result = parts.join(' ')
