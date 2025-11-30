@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Users, Plus, RefreshCw, Loader, Wand2, Upload, X, ChevronDown, Check, Settings, Sparkles, Lightbulb, Info, Volume2, ImageIcon, Edit, Trash2 } from 'lucide-react'
+import { Users, Plus, Loader, Wand2, Upload, X, ChevronDown, Check, Sparkles, Lightbulb, Info, Volume2, ImageIcon, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
@@ -403,47 +403,9 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
   const isAppearanceExpanded = expandedCharId === `${characterId}-appear`
-  const [showAdvanced, setShowAdvanced] = useState(false)
-  const [editingAppearance, setEditingAppearance] = useState(false)
-  const [appearanceText, setAppearanceText] = useState('')
   const [editingName, setEditingName] = useState(false)
   const [nameText, setNameText] = useState('')
   const [editingRole, setEditingRole] = useState(false)
-  const [showAiAssist, setShowAiAssist] = useState(false)
-  const [aiInstruction, setAiInstruction] = useState('')
-  const [isOptimizing, setIsOptimizing] = useState(false)
-
-  const handleAiAssist = async () => {
-    if (!aiInstruction.trim()) return
-    
-    setIsOptimizing(true)
-    try {
-      const response = await fetch('/api/character/optimize-prompt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: appearanceText,
-          instruction: aiInstruction
-        })
-      })
-      
-      const data = await response.json()
-      
-      if (data.optimizedPrompt) {
-        setAppearanceText(data.optimizedPrompt)
-        setShowAiAssist(false)
-        setAiInstruction('')
-        toast.success('Appearance description optimized!')
-      } else {
-        toast.error(data.error || 'Failed to optimize description')
-      }
-    } catch (error) {
-      console.error('AI Assist error:', error)
-      toast.error('Failed to connect to AI service')
-    } finally {
-      setIsOptimizing(false)
-    }
-  }
   
   // Helper function to generate fallback description from attributes
   const generateFallbackDescription = (character: any): string => {
@@ -468,13 +430,6 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
     return parts.length > 0 
       ? parts.join(', ') 
       : 'Click to add appearance description for scene generation'
-  }
-  
-  const handleSaveAppearance = async () => {
-    if (appearanceText.trim() && onUpdateAppearance) {
-      await onUpdateAppearance(characterId, appearanceText.trim())
-      setEditingAppearance(false)
-    }
   }
   
   const handleSaveName = async () => {
@@ -526,16 +481,6 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
             />
             {/* Overlay controls - only show on hover */}
             <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all opacity-0 hover:opacity-100 flex items-center justify-center gap-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onRegenerate()
-                }}
-                className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm"
-                title="Regenerate image"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation()
@@ -832,234 +777,19 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
           )}
         </div>
         
-        {/* Advanced Options - Collapsible */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            setShowAdvanced(!showAdvanced)
-          }}
-          className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1"
-        >
-          <Settings className="w-3 h-3" />
-          Advanced Options
-          <ChevronDown className={`w-3 h-3 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
-        </button>
-        
-        {showAdvanced && (
-          <div className="space-y-2 pt-2">
-            {/* Appearance Description - Editable (Replaces Core Identity & Appearance) */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Appearance Description
-                  </span>
-                  <span className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">
-                    For Scene Images
-                  </span>
-                </div>
-                {!editingAppearance ? (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setEditingAppearance(true)
-                      setAppearanceText(character.appearanceDescription || generateFallbackDescription(character))
-                    }}
-                    className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1"
-                  >
-                    <Edit className="w-3 h-3" />
-                    Edit
-                  </button>
-                ) : (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setEditingAppearance(false)
-                      setAppearanceText('')
-                    }}
-                    className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400"
-                  >
-                    Cancel
-                  </button>
-                )}
-              </div>
-              
-              {editingAppearance ? (
-                <div className="space-y-2">
-                  <textarea
-                    value={appearanceText}
-                    onChange={(e) => {
-                      e.stopPropagation()
-                      setAppearanceText(e.target.value)
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    rows={5}
-                    placeholder="Describe physical appearance (e.g., ethnicity, build, hair, eyes, distinctive features)..."
-                  />
-                  
-                  {/* AI Assist Section */}
-                  {showAiAssist ? (
-                    <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-purple-700 dark:text-purple-300 flex items-center gap-1">
-                          <Sparkles className="w-3 h-3" />
-                          AI Assist
-                        </span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setShowAiAssist(false)
-                          }}
-                          className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                      <textarea
-                        value={aiInstruction}
-                        onChange={(e) => {
-                          e.stopPropagation()
-                          setAiInstruction(e.target.value)
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        className="w-full px-2 py-1.5 text-xs border border-purple-200 dark:border-purple-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-purple-500"
-                        rows={2}
-                        placeholder="e.g., Optimize for content policies, Make it more cinematic..."
-                      />
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleAiAssist()
-                        }}
-                        disabled={isOptimizing || !aiInstruction.trim()}
-                        className="w-full px-2 py-1.5 text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 rounded transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
-                      >
-                        {isOptimizing ? (
-                          <>
-                            <Loader className="w-3 h-3 animate-spin" />
-                            Optimizing...
-                          </>
-                        ) : (
-                          <>
-                            <Wand2 className="w-3 h-3" />
-                            Generate
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setShowAiAssist(true)
-                      }}
-                      className="w-full px-2 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 rounded border border-purple-200 dark:border-purple-800 transition-colors flex items-center justify-center gap-1"
-                    >
-                      <Sparkles className="w-3 h-3" />
-                      AI Assist
-                    </button>
-                  )}
-
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleSaveAppearance()
-                    }}
-                    className="w-full px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-                  >
-                    <Check className="w-3 h-3 inline mr-1" />
-                    Save Description
-                  </button>
-                </div>
-              ) : (
-                <div 
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setEditingAppearance(true)
-                    setAppearanceText(character.appearanceDescription || generateFallbackDescription(character))
-                  }}
-                  className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed p-2 bg-gray-50 dark:bg-gray-800/50 rounded border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer transition-colors"
-                >
-                  {character.appearanceDescription || generateFallbackDescription(character)}
-                </div>
-              )}
-              
-              <p className="text-[10px] text-gray-400 dark:text-gray-500 italic">
-                This description is used to generate consistent character appearances in scene images.
-              </p>
-            </div>
-            
-            {/* AI Assist - Optimize Prompt */}
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  AI Assist: Optimize Prompt
-                </span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setShowAiAssist(!showAiAssist)
-                  }}
-                  className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                >
-                  {showAiAssist ? 'Hide' : 'Show'} Instructions
-                </button>
-              </div>
-              
-              {showAiAssist && (
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                  <p className="mb-1">
-                    Use AI Assist to optimize your appearance description for better results.
-                  </p>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>• Provide clear and specific details about the character's appearance.</li>
-                    <li>• Mention any distinctive features or attributes.</li>
-                    <li>• Keep it concise and relevant to the character's role.</li>
-                  </ul>
-                </div>
-              )}
-              
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={aiInstruction}
-                  onChange={(e) => setAiInstruction(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex-1 px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter your instruction for AI..."
-                />
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleAiAssist()
-                  }}
-                  className="px-3 py-2 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50"
-                  disabled={isOptimizing}
-                >
-                  {isOptimizing ? <Loader className="w-4 h-4 animate-spin" /> : 'Optimize'}
-                </button>
-              </div>
-            </div>
-            
-            {/* Action Buttons */}
-            <div className="flex gap-2 pt-2">
-              
-              {hasImage && !isApproved && (
-                <button
-                  onClick={(e) => { 
-                    e.stopPropagation()
-                    onApprove()
-                  }}
-                  disabled={isGenerating}
-                  className="flex-1 px-3 py-2 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50"
-                >
-                  <Check className="w-3 h-3 inline mr-1" />
-                  Approve
-                </button>
-              )}
-            </div>
-          </div>
+        {/* Approve Button - Show only if image exists and not approved */}
+        {hasImage && !isApproved && (
+          <button
+            onClick={(e) => { 
+              e.stopPropagation()
+              onApprove()
+            }}
+            disabled={isGenerating}
+            className="w-full px-3 py-2 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50"
+          >
+            <Check className="w-3 h-3 inline mr-1" />
+            Approve
+          </button>
         )}
       </div>
     </div>
