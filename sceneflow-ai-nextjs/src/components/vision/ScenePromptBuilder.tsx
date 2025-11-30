@@ -431,9 +431,6 @@ export function ScenePromptBuilder({
   const constructedPrompt = getRawPrompt()
 
   const handleGenerateScene = () => {
-    // Set local loading state immediately for instant feedback
-    setLocalIsGenerating(true)
-    
     // Pass full character objects (not just names) so API gets referenceImageGCS
     const selectedCharacterObjects = structure.characters
       .map(charName => {
