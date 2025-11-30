@@ -1187,6 +1187,19 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       // Play the scene - this returns a promise that resolves when all non-looping audio completes
       await audioMixerRef.current.playScene(audioConfig)
       
+      // After narration/dialogue completes, wait 3 seconds then fade out music
+      if (audioConfig.music && audioMixerRef.current) {
+        console.log('[ScriptPanel] Narration/dialogue complete, waiting 3 seconds before fade out...')
+        await new Promise(resolve => setTimeout(resolve, 3000))
+        
+        // Fade out music over 2 seconds for smooth ending
+        console.log('[ScriptPanel] Fading out music...')
+        await audioMixerRef.current.fadeOut(2000)
+        
+        // Stop all audio after fade
+        audioMixerRef.current.stop()
+      }
+      
       console.log('[ScriptPanel] Scene', sceneIdx + 1, 'playback complete')
       setLoadingSceneId(null)
     } catch (error) {
