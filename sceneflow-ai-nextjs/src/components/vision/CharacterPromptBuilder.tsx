@@ -132,11 +132,19 @@ export function CharacterPromptBuilder({
     if (cameraAngle && cameraAngle !== 'eye-level') parts.push(angleMap[cameraAngle] || cameraAngle)
     if (lighting) parts.push(lightingMap[lighting] || lighting)
     if (additionalDetails) parts.push(additionalDetails)
-    const stylePreset = artStylePresets.find(s => s.id === artStyle)
+    
+    // Only add art style suffix if user explicitly selected a style AND
+    // the base prompt doesn't already contain key style terms
+    const stylePreset = artStyle ? artStylePresets.find(s => s.id === artStyle) : null
     if (stylePreset) {
-      const suffix = stylePreset.promptSuffix
       const existing = parts.join(', ').toLowerCase()
-      if (!existing.includes(suffix.toLowerCase())) parts.push(suffix)
+      // Check if the primary style term is already present (e.g., "photorealistic", "anime", "comic")
+      const primaryTerm = stylePreset.id.split('-')[0] // e.g., "photorealistic", "anime", "comic"
+      const alreadyHasStyle = existing.includes(primaryTerm) || 
+                              existing.includes(stylePreset.name.toLowerCase())
+      if (!alreadyHasStyle) {
+        parts.push(stylePreset.promptSuffix)
+      }
     }
 
     // Normalize, dedupe, and resolve bidirectional style conflicts
