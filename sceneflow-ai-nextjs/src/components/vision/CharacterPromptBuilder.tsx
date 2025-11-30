@@ -56,15 +56,39 @@ export function CharacterPromptBuilder({
       setBasePrompt('')
       return
     }
-    const parts: string[] = []
-    if (character.name) parts.push(character.name)
-    if (character.appearanceDescription) parts.push(character.appearanceDescription)
-    const attrKeys = ['ethnicity','hairStyle','hairColor','eyeColor','expression','build','keyFeature']
-    attrKeys.forEach(k => {
-      const v = character[k]
-      if (v && typeof v === 'string' && v.trim()) parts.push(v.trim())
-    })
-    const constructed = parts.filter(Boolean).join(', ')
+    
+    // Build a clean, non-repetitive prompt
+    // Priority: Use appearanceDescription if it exists (it's comprehensive)
+    // Otherwise, construct from individual attributes
+    
+    let constructed = ''
+    
+    if (character.appearanceDescription && character.appearanceDescription.trim().length > 50) {
+      // Use the comprehensive description, just prepend the name
+      const namePart = character.name ? `${character.name}, ` : ''
+      const ethnicityPart = character.ethnicity && !character.appearanceDescription.toLowerCase().includes(character.ethnicity.toLowerCase()) 
+        ? `${character.ethnicity}, ` 
+        : ''
+      constructed = `${namePart}${ethnicityPart}${character.appearanceDescription.trim()}`
+    } else {
+      // No comprehensive description, build from individual attributes
+      const parts: string[] = []
+      if (character.name) parts.push(character.name)
+      if (character.ethnicity) parts.push(character.ethnicity)
+      if (character.keyFeature) parts.push(character.keyFeature)
+      if (character.build) parts.push(`${character.build} build`)
+      if (character.hairColor && character.hairStyle) {
+        parts.push(`${character.hairColor} ${character.hairStyle} hair`)
+      } else if (character.hairColor) {
+        parts.push(`${character.hairColor} hair`)
+      } else if (character.hairStyle) {
+        parts.push(`${character.hairStyle} hair`)
+      }
+      if (character.eyeColor) parts.push(`${character.eyeColor} eyes`)
+      if (character.expression) parts.push(character.expression)
+      constructed = parts.filter(Boolean).join(', ')
+    }
+    
     setBasePrompt(constructed)
     if (!hasUserEditedAdvanced) setAdvancedPrompt(constructed)
   }, [open, character, hasUserEditedAdvanced])
