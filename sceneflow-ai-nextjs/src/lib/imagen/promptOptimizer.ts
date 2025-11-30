@@ -219,9 +219,15 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
     // Simple prompt structure: Scene description with character references + style
     let prompt = promptScene
     
+    // For multi-character scenes, add explicit instruction about distinct people
+    const numRefsWithIds = characterRefs.filter(r => r.refId).length
+    if (numRefsWithIds > 1) {
+      prompt = `Two distinct people in the same scene. ${prompt}`
+    }
+    
     // Add character context if not already mentioned in scene
     if (!promptScene.toLowerCase().includes(characterRefs[0].name.toLowerCase())) {
-      prompt = `Scene featuring ${characterNamesWithRefs}. ${promptScene}`
+      prompt = `Scene featuring ${characterNamesWithRefs}. ${prompt}`
     }
     
     // Add ethnicity hint for visual accuracy (brief) - only for chars with refIds

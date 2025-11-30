@@ -11,6 +11,79 @@ export const runtime = 'nodejs'
 export const maxDuration = 60
 
 /**
+ * Create a concise subject description for Imagen API
+ * The API works better with short, distinctive descriptions
+ * Format: "a [ethnicity] [age] [gender] with [key_feature]"
+ */
+function createConciseSubjectDescription(char: any, index: number): string {
+  const parts: string[] = []
+  
+  // Start with article
+  parts.push('a')
+  
+  // Add ethnicity if available
+  if (char.ethnicity) {
+    parts.push(char.ethnicity.toLowerCase())
+  }
+  
+  // Extract age from description or use explicit age field
+  let age = ''
+  const description = char.visionDescription || char.appearanceDescription || ''
+  const ageMatch = description.match(/\b(late\s*)?(\d{1,2})s?\s*(to\s*(early\s*)?\d{1,2}s?)?\b/i)
+  if (ageMatch) {
+    age = ageMatch[0]
+  }
+  if (age) {
+    parts.push(`${age} year old`)
+  }
+  
+  // Add gender (default to man if not specified)
+  parts.push('man')
+  
+  // Add the most distinctive physical feature
+  const keyFeatures: string[] = []
+  
+  // Hair is often the most distinctive
+  if (char.hairStyle) {
+    if (char.hairStyle.toLowerCase() === 'bald') {
+      keyFeatures.push('bald head')
+    } else if (char.hairColor) {
+      keyFeatures.push(`${char.hairColor.toLowerCase()} ${char.hairStyle.toLowerCase()} hair`)
+    } else {
+      keyFeatures.push(`${char.hairStyle.toLowerCase()} hair`)
+    }
+  }
+  
+  // Add key feature if available
+  if (char.keyFeature) {
+    keyFeatures.push(char.keyFeature.toLowerCase())
+  }
+  
+  // Add glasses if mentioned in description
+  if (description.toLowerCase().includes('glasses')) {
+    keyFeatures.push('glasses')
+  }
+  
+  // Add beard if mentioned
+  if (description.toLowerCase().includes('beard')) {
+    if (description.toLowerCase().includes('salt-and-pepper') || description.toLowerCase().includes('gray')) {
+      keyFeatures.push('gray beard')
+    } else {
+      keyFeatures.push('beard')
+    }
+  }
+  
+  if (keyFeatures.length > 0) {
+    parts.push('with')
+    parts.push(keyFeatures.slice(0, 2).join(' and ')) // Max 2 key features
+  }
+  
+  const result = parts.join(' ')
+  console.log(`[Scene Image] Concise subject description for ${char.name} (ref ${index}): "${result}"`)
+  return result
+}
+
+/**
  * Strip emotional descriptors from character descriptions
  * Keeps only physical characteristics, lets scene drive emotions
  */
@@ -364,13 +437,10 @@ export async function POST(req: NextRequest) {
     }
     
     // Build GCS references for all characters with GCS images
-    // Use the enriched descriptions and referenceIds from characterReferences
+    // Use CONCISE subject descriptions - the API works better with short, distinctive descriptions
     const gcsReferences = charactersWithGCS.map((char: any) => {
-      // Find the matching character reference with enriched description and referenceId
+      // Find the matching character reference with referenceId
       const matchingRef = characterReferences.find((ref: any) => ref.name === char.name)
-      const enrichedDescription = matchingRef?.description || 
-        char.appearanceDescription || 
-        `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
       
       // Use the referenceId from characterReferences - this was assigned in order for GCS chars only
       const referenceId = matchingRef?.referenceId
@@ -378,12 +448,16 @@ export async function POST(req: NextRequest) {
         console.error(`[Scene Image] ERROR: Character ${char.name} has GCS but no referenceId assigned!`)
       }
       
+      // Create a CONCISE subject description for the API
+      // Long descriptions confuse the model and cause blending
+      const conciseDescription = createConciseSubjectDescription(char, referenceId || 1)
+      
       return {
         referenceId: referenceId || 1, // Fallback to 1 if somehow missing
         gcsUri: char.referenceImageGCS,
         referenceType: 'REFERENCE_TYPE_SUBJECT' as const,
         subjectType: 'SUBJECT_TYPE_PERSON' as const,
-        subjectDescription: enrichedDescription,
+        subjectDescription: conciseDescription,
         // Store HTTPS fallback URL
         httpsUrl: char.referenceImage
       }
