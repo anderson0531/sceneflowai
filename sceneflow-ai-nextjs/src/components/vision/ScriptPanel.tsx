@@ -369,8 +369,8 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets }: ScriptPanelProps) {
-  // Get overlay store for generation blocking - must be at top level
-  const overlay = useOverlayStore()
+  // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
+  const overlayStore = useOverlayStore()
   
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [showScriptEditor, setShowScriptEditor] = useState(false)
@@ -1277,7 +1277,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     if (!sfx) return
 
     setGeneratingSFX({ sceneIdx, sfxIdx })
-    overlay.show(`Generating sound effect ${sfxIdx + 1} for Scene ${sceneIdx + 1}...`, 15)
+    overlayStore.show(`Generating sound effect ${sfxIdx + 1} for Scene ${sceneIdx + 1}...`, 15)
     try {
       const response = await fetch('/api/tts/elevenlabs/sound-effects', {
         method: 'POST',
@@ -1312,11 +1312,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       
       // Update scene with persistent audio URL
       await saveSceneAudio(sceneIdx, 'sfx', audioUrl, sfxIdx)
-      overlay.hide()
+      overlayStore.hide()
       toast.success(`Sound effect generated!`)
     } catch (error: any) {
       console.error('[SFX Generation] Error:', error)
-      overlay.hide()
+      overlayStore.hide()
       toast.error(`Failed to generate sound effect: ${error.message}`)
     } finally {
       setGeneratingSFX(null)
@@ -1329,7 +1329,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     if (!music) return
 
     setGeneratingMusic(sceneIdx)
-    overlay.show(`Generating music for Scene ${sceneIdx + 1}...`, 45)
+    overlayStore.show(`Generating music for Scene ${sceneIdx + 1}...`, 45)
     try {
       const duration = scene.duration || 30
       const response = await fetch('/api/tts/elevenlabs/music', {
@@ -1365,11 +1365,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       
       // Update scene with persistent audio URL
       await saveSceneAudio(sceneIdx, 'music', audioUrl)
-      overlay.hide()
+      overlayStore.hide()
       toast.success(`Music generated!`)
     } catch (error: any) {
       console.error('[Music Generation] Error:', error)
-      overlay.hide()
+      overlayStore.hide()
       toast.error(`Failed to generate music: ${error.message}`)
     } finally {
       setGeneratingMusic(null)
@@ -3121,14 +3121,14 @@ function SceneCard({
                                 if (!onGenerateSceneAudio) return
                                 
                                 setGeneratingDialogue?.({ sceneIdx, character: '__narration__' })
-                                overlay.show(`Regenerating narration for Scene ${sceneIdx + 1}...`, 20)
+                                overlayStore.show(`Regenerating narration for Scene ${sceneIdx + 1}...`, 20)
                                 try {
                                   await onGenerateSceneAudio?.(sceneIdx, 'narration', undefined, undefined, selectedLanguage)
-                                  overlay.hide()
+                                  overlayStore.hide()
                                   toast.success('Narration regenerated!')
                                 } catch (error) {
                                   console.error('[ScriptPanel] Narration regeneration failed:', error)
-                                  overlay.hide()
+                                  overlayStore.hide()
                                   toast.error('Failed to regenerate narration')
                                 } finally {
                                   setGeneratingDialogue?.(null)
@@ -3160,14 +3160,14 @@ function SceneCard({
                               if (!onGenerateSceneAudio) return
                               
                               setGeneratingDialogue?.({ sceneIdx, character: '__narration__' })
-                              overlay.show(`Generating narration for Scene ${sceneIdx + 1}...`, 20)
+                              overlayStore.show(`Generating narration for Scene ${sceneIdx + 1}...`, 20)
                               try {
                                 await onGenerateSceneAudio?.(sceneIdx, 'narration', undefined, undefined, selectedLanguage)
-                                overlay.hide()
+                                overlayStore.hide()
                                 toast.success('Narration generated!')
                               } catch (error) {
                                 console.error('[ScriptPanel] Narration generation failed:', error)
-                                overlay.hide()
+                                overlayStore.hide()
                                 toast.error('Failed to generate narration')
                               } finally {
                                 setGeneratingDialogue?.(null)
@@ -3247,14 +3247,14 @@ function SceneCard({
                                     if (!onGenerateSceneAudio) return
                                     
                                     setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
-                                    overlay.show(`Regenerating dialogue for ${d.character}...`, 15)
+                                    overlayStore.show(`Regenerating dialogue for ${d.character}...`, 15)
                                     try {
                                       await onGenerateSceneAudio?.(sceneIdx, 'dialogue', d.character, i, selectedLanguage)
-                                      overlay.hide()
+                                      overlayStore.hide()
                                       toast.success('Dialogue regenerated!')
                                     } catch (error) {
                                       console.error('[ScriptPanel] Dialogue regeneration failed:', error)
-                                      overlay.hide()
+                                      overlayStore.hide()
                                       toast.error('Failed to regenerate dialogue')
                                     } finally {
                                       setGeneratingDialogue?.(null)
@@ -3291,15 +3291,15 @@ function SceneCard({
                                   }
                                   
                                   setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
-                                  overlay.show(`Generating dialogue for ${d.character}...`, 15)
+                                  overlayStore.show(`Generating dialogue for ${d.character}...`, 15)
                                   
                                   try {
                                     await onGenerateSceneAudio?.(sceneIdx, 'dialogue', d.character, i, selectedLanguage)
-                                    overlay.hide()
+                                    overlayStore.hide()
                                     toast.success(`Dialogue generated for ${d.character}`)
                                   } catch (error) {
                                     console.error('[ScriptPanel] Dialogue generation failed:', error)
-                                    overlay.hide()
+                                    overlayStore.hide()
                                     toast.error(`Failed to generate dialogue for ${d.character}`)
                                   } finally {
                                     setGeneratingDialogue?.(null)
