@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Copy, Check, Sparkles, Info, Loader2 } from 'lucide-react'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { findSceneCharacters } from '../../lib/character/matching'
+import { DetailedSceneDirection } from '@/types/scene-direction'
 
 interface ScenePromptStructure {
   location: string
@@ -18,9 +19,15 @@ interface ScenePromptStructure {
   atmosphere: string
   shotType: string
   cameraAngle: string
+  cameraMovement: string
+  lensChoice: string
   lighting: string
+  lightingMood: string
   characters: string[]
   characterActions: string
+  talentBlocking: string
+  emotionalBeat: string
+  keyProps: string
   artStyle: string
   additionalDetails: string
   negativePrompt: string
@@ -61,9 +68,15 @@ export function ScenePromptBuilder({
     atmosphere: 'neutral',
     shotType: 'medium-close-up',
     cameraAngle: 'eye-level',
+    cameraMovement: 'static',
+    lensChoice: 'standard',
     lighting: 'natural',
+    lightingMood: 'neutral',
     characters: [],
     characterActions: '',
+    talentBlocking: '',
+    emotionalBeat: '',
+    keyProps: '',
     artStyle: 'photorealistic',
     additionalDetails: '',
     negativePrompt: 'blurry, low quality, distorted, poor composition'
@@ -76,10 +89,12 @@ export function ScenePromptBuilder({
   const [isPromptEdited, setIsPromptEdited] = useState(false)
 
   // Parse scene description to auto-populate fields
+  // PRIORITY: Use Scene Direction data (camera, lighting, scene, talent) if available
   useEffect(() => {
     if (!open || !scene) return
     
     const updates: Partial<ScenePromptStructure> = {}
+    const sceneDirection: DetailedSceneDirection | undefined = scene.sceneDirection
     
     // AUTO-DETECT AND PRE-SELECT CHARACTERS using smart matching
     if (availableCharacters && availableCharacters.length > 0) {
@@ -97,60 +112,171 @@ export function ScenePromptBuilder({
       }
     }
     
-    // Parse heading: "INT./EXT. LOCATION - TIME"
-    if (scene.heading) {
-      const headingMatch = scene.heading.match(/(INT|EXT)\.\s+(.+?)\s+-\s+(.+)/i)
-      if (headingMatch) {
-        updates.location = headingMatch[2].trim()
-        const time = headingMatch[3].trim().toLowerCase()
-        if (time.includes('night') || time.includes('evening')) updates.timeOfDay = 'night'
-        else if (time.includes('morning') || time.includes('dawn')) updates.timeOfDay = 'morning'
-        else if (time.includes('afternoon')) updates.timeOfDay = 'afternoon'
-        else if (time.includes('dusk') || time.includes('sunset')) updates.timeOfDay = 'dusk'
-        else updates.timeOfDay = 'day'
+    // ============================================
+    // SCENE DIRECTION DATA (Priority Source)
+    // ============================================
+    if (sceneDirection) {
+      console.log('[ScenePromptBuilder] Using Scene Direction data:', sceneDirection)
+      
+      // CAMERA DIRECTION
+      if (sceneDirection.camera) {
+        // Shot Type - extract from shots array
+        if (sceneDirection.camera.shots && sceneDirection.camera.shots.length > 0) {
+          const shotStr = sceneDirection.camera.shots[0].toLowerCase()
+          if (shotStr.includes('extreme close')) updates.shotType = 'extreme-close-up'
+          else if (shotStr.includes('close-up') || shotStr.includes('close up')) updates.shotType = 'close-up'
+          else if (shotStr.includes('medium close') || shotStr.includes('mcu')) updates.shotType = 'medium-close-up'
+          else if (shotStr.includes('medium shot') || shotStr.includes('ms')) updates.shotType = 'medium-shot'
+          else if (shotStr.includes('extreme wide')) updates.shotType = 'extreme-wide'
+          else if (shotStr.includes('wide') || shotStr.includes('establishing')) updates.shotType = 'wide-shot'
+          else if (shotStr.includes('over') && shotStr.includes('shoulder')) updates.shotType = 'over-shoulder'
+        }
+        
+        // Camera Angle
+        if (sceneDirection.camera.angle) {
+          const angleStr = sceneDirection.camera.angle.toLowerCase()
+          if (angleStr.includes('low')) updates.cameraAngle = 'low-angle'
+          else if (angleStr.includes('high')) updates.cameraAngle = 'high-angle'
+          else if (angleStr.includes('bird')) updates.cameraAngle = 'birds-eye'
+          else if (angleStr.includes('dutch')) updates.cameraAngle = 'dutch-angle'
+          else updates.cameraAngle = 'eye-level'
+        }
+        
+        // Camera Movement
+        if (sceneDirection.camera.movement) {
+          updates.cameraMovement = sceneDirection.camera.movement
+        }
+        
+        // Lens Choice
+        if (sceneDirection.camera.lensChoice) {
+          updates.lensChoice = sceneDirection.camera.lensChoice
+        }
       }
-    }
-    
-    // Parse visual description for atmosphere, lighting, camera
-    const desc = (scene.visualDescription || scene.action || '').toLowerCase()
-    
-    // Atmosphere
-    if (desc.includes('dark') || desc.includes('moody') || desc.includes('ominous')) {
-      updates.atmosphere = 'dark and moody'
-    } else if (desc.includes('bright') || desc.includes('vibrant') || desc.includes('cheerful')) {
-      updates.atmosphere = 'bright and vibrant'
-    } else if (desc.includes('tense') || desc.includes('suspenseful')) {
-      updates.atmosphere = 'tense and suspenseful'
-    }
-    
-    // Camera angles
-    if (desc.includes('close up') || desc.includes('close-up')) {
-      // Check for medium close-up first, then regular close-up
-      if (desc.includes('medium close') || desc.includes('medium-close')) {
+      
+      // LIGHTING DIRECTION
+      if (sceneDirection.lighting) {
+        // Overall Mood
+        if (sceneDirection.lighting.overallMood) {
+          const moodStr = sceneDirection.lighting.overallMood.toLowerCase()
+          updates.lightingMood = sceneDirection.lighting.overallMood
+          
+          if (moodStr.includes('high-key') || moodStr.includes('high key')) updates.lighting = 'soft'
+          else if (moodStr.includes('low-key') || moodStr.includes('low key') || moodStr.includes('noir')) updates.lighting = 'dramatic'
+          else if (moodStr.includes('natural') || moodStr.includes('soft')) updates.lighting = 'natural'
+          else if (moodStr.includes('harsh') || moodStr.includes('hard')) updates.lighting = 'harsh'
+        }
+        
+        // Time of Day from lighting
+        if (sceneDirection.lighting.timeOfDay) {
+          const timeStr = sceneDirection.lighting.timeOfDay.toLowerCase()
+          if (timeStr.includes('golden') || timeStr.includes('sunset')) updates.timeOfDay = 'golden-hour'
+          else if (timeStr.includes('night')) updates.timeOfDay = 'night'
+          else if (timeStr.includes('dawn') || timeStr.includes('morning')) updates.timeOfDay = 'dawn'
+          else if (timeStr.includes('twilight') || timeStr.includes('dusk')) updates.timeOfDay = 'dusk'
+          else updates.timeOfDay = 'day'
+        }
+      }
+      
+      // SCENE DIRECTION (Location & Props)
+      if (sceneDirection.scene) {
+        // Location
+        if (sceneDirection.scene.location) {
+          updates.location = sceneDirection.scene.location
+        }
+        
+        // Atmosphere
+        if (sceneDirection.scene.atmosphere) {
+          const atmoStr = sceneDirection.scene.atmosphere.toLowerCase()
+          if (atmoStr.includes('tense')) updates.atmosphere = 'tense'
+          else if (atmoStr.includes('mysterious') || atmoStr.includes('hazy')) updates.atmosphere = 'mysterious'
+          else if (atmoStr.includes('chaotic') || atmoStr.includes('energetic')) updates.atmosphere = 'energetic'
+          else if (atmoStr.includes('serene') || atmoStr.includes('peaceful') || atmoStr.includes('minimalist')) updates.atmosphere = 'serene'
+          else if (atmoStr.includes('melancholic') || atmoStr.includes('sad')) updates.atmosphere = 'melancholic'
+          else if (atmoStr.includes('hopeful') || atmoStr.includes('bright')) updates.atmosphere = 'hopeful'
+        }
+        
+        // Key Props
+        if (sceneDirection.scene.keyProps && sceneDirection.scene.keyProps.length > 0) {
+          updates.keyProps = sceneDirection.scene.keyProps.join(', ')
+        }
+      }
+      
+      // TALENT DIRECTION (Blocking & Actions)
+      if (sceneDirection.talent) {
+        // Blocking
+        if (sceneDirection.talent.blocking) {
+          updates.talentBlocking = sceneDirection.talent.blocking
+        }
+        
+        // Key Actions -> Character Actions
+        if (sceneDirection.talent.keyActions && sceneDirection.talent.keyActions.length > 0) {
+          updates.characterActions = sceneDirection.talent.keyActions.join(', ')
+        }
+        
+        // Emotional Beat
+        if (sceneDirection.talent.emotionalBeat) {
+          updates.emotionalBeat = sceneDirection.talent.emotionalBeat
+        }
+      }
+    } else {
+      // ============================================
+      // FALLBACK: Parse from heading & description
+      // ============================================
+      console.log('[ScenePromptBuilder] No Scene Direction, falling back to description parsing')
+      
+      // Parse heading: "INT./EXT. LOCATION - TIME"
+      if (scene.heading) {
+        const headingMatch = scene.heading.match(/(INT|EXT)\.\s+(.+?)\s+-\s+(.+)/i)
+        if (headingMatch) {
+          updates.location = headingMatch[2].trim()
+          const time = headingMatch[3].trim().toLowerCase()
+          if (time.includes('night') || time.includes('evening')) updates.timeOfDay = 'night'
+          else if (time.includes('morning') || time.includes('dawn')) updates.timeOfDay = 'dawn'
+          else if (time.includes('afternoon')) updates.timeOfDay = 'day'
+          else if (time.includes('dusk') || time.includes('sunset')) updates.timeOfDay = 'dusk'
+          else updates.timeOfDay = 'day'
+        }
+      }
+      
+      // Parse visual description for atmosphere, lighting, camera
+      const desc = (scene.visualDescription || scene.action || '').toLowerCase()
+      
+      // Atmosphere
+      if (desc.includes('dark') || desc.includes('moody') || desc.includes('ominous')) {
+        updates.atmosphere = 'tense'
+      } else if (desc.includes('bright') || desc.includes('vibrant') || desc.includes('cheerful')) {
+        updates.atmosphere = 'hopeful'
+      } else if (desc.includes('tense') || desc.includes('suspenseful')) {
+        updates.atmosphere = 'tense'
+      }
+      
+      // Camera angles
+      if (desc.includes('close up') || desc.includes('close-up')) {
+        if (desc.includes('medium close') || desc.includes('medium-close')) {
+          updates.shotType = 'medium-close-up'
+        } else {
+          updates.shotType = 'close-up'
+        }
+      } else if (desc.includes('wide shot') || desc.includes('wide angle') || desc.includes('establishing')) {
+        updates.shotType = 'wide-shot'
+      } else if (desc.includes('medium')) {
         updates.shotType = 'medium-close-up'
-      } else {
-        updates.shotType = 'close-up'
       }
-    } else if (desc.includes('wide shot') || desc.includes('wide angle') || desc.includes('establishing')) {
-      updates.shotType = 'wide-shot'
-    } else if (desc.includes('medium')) {
-      // Default to medium-close-up for generic "medium" detections
-      updates.shotType = 'medium-close-up'
-    }
-    
-    if (desc.includes('high angle') || desc.includes('high-angle')) {
-      updates.cameraAngle = 'high-angle'
-    } else if (desc.includes('low angle') || desc.includes('low-angle')) {
-      updates.cameraAngle = 'low-angle'
-    }
-    
-    // Lighting
-    if (desc.includes('dramatic lighting') || desc.includes('side lighting')) {
-      updates.lighting = 'dramatic'
-    } else if (desc.includes('soft') || desc.includes('diffused')) {
-      updates.lighting = 'soft'
-    } else if (desc.includes('backlight') || desc.includes('silhouette')) {
-      updates.lighting = 'backlit'
+      
+      if (desc.includes('high angle') || desc.includes('high-angle')) {
+        updates.cameraAngle = 'high-angle'
+      } else if (desc.includes('low angle') || desc.includes('low-angle')) {
+        updates.cameraAngle = 'low-angle'
+      }
+      
+      // Lighting
+      if (desc.includes('dramatic lighting') || desc.includes('side lighting')) {
+        updates.lighting = 'dramatic'
+      } else if (desc.includes('soft') || desc.includes('diffused')) {
+        updates.lighting = 'soft'
+      } else if (desc.includes('backlight') || desc.includes('silhouette')) {
+        updates.lighting = 'backlit'
+      }
     }
     
     setStructure(prev => ({ ...prev, ...updates }))
@@ -176,7 +302,7 @@ export function ScenePromptBuilder({
     }
   }, [open])
 
-  // Construct prompt from structure
+  // Construct prompt from structure (using Scene Direction data when available)
   const constructPrompt = (): string => {
     const parts: string[] = []
     
@@ -197,18 +323,44 @@ export function ScenePromptBuilder({
     
     // Time and weather
     const timeWeather: string[] = []
-    if (structure.timeOfDay) timeWeather.push(structure.timeOfDay)
+    if (structure.timeOfDay && structure.timeOfDay !== 'day') {
+      const timeLabels: Record<string, string> = {
+        'dawn': 'at dawn',
+        'day': 'during the day',
+        'dusk': 'at dusk',
+        'night': 'at night',
+        'golden-hour': 'during golden hour'
+      }
+      timeWeather.push(timeLabels[structure.timeOfDay] || structure.timeOfDay)
+    }
     if (structure.weather && structure.weather !== 'clear') timeWeather.push(structure.weather)
     if (timeWeather.length) parts.push(timeWeather.join(', '))
     
-    // Characters and actions
+    // Characters, actions, and talent blocking
     if (structure.characters.length > 0) {
       const charList = structure.characters.join(', ')
+      const actionParts: string[] = []
+      
+      // Add talent blocking if available
+      if (structure.talentBlocking) {
+        actionParts.push(structure.talentBlocking)
+      }
+      
+      // Add character actions
       if (structure.characterActions) {
-        parts.push(`featuring ${charList} ${structure.characterActions}`)
+        actionParts.push(structure.characterActions)
+      }
+      
+      if (actionParts.length > 0) {
+        parts.push(`featuring ${charList} - ${actionParts.join(', ')}`)
       } else {
         parts.push(`featuring ${charList}`)
       }
+    }
+    
+    // Emotional beat (from talent direction)
+    if (structure.emotionalBeat) {
+      parts.push(`conveying ${structure.emotionalBeat}`)
     }
     
     // Atmosphere
@@ -228,6 +380,16 @@ export function ScenePromptBuilder({
       parts.push(angles[structure.cameraAngle] || structure.cameraAngle)
     }
     
+    // Camera movement (from Scene Direction)
+    if (structure.cameraMovement && structure.cameraMovement !== 'static') {
+      parts.push(structure.cameraMovement)
+    }
+    
+    // Lens choice (from Scene Direction)
+    if (structure.lensChoice && structure.lensChoice !== 'standard') {
+      parts.push(`shot with ${structure.lensChoice}`)
+    }
+    
     // Lighting
     const lightingTypes: Record<string, string> = {
       'natural': 'natural lighting',
@@ -238,6 +400,16 @@ export function ScenePromptBuilder({
       'backlit': 'backlit scene'
     }
     if (structure.lighting) parts.push(lightingTypes[structure.lighting] || structure.lighting)
+    
+    // Lighting mood (from Scene Direction)
+    if (structure.lightingMood && structure.lightingMood !== 'neutral') {
+      parts.push(`${structure.lightingMood} mood`)
+    }
+    
+    // Key props (from Scene Direction)
+    if (structure.keyProps) {
+      parts.push(`with ${structure.keyProps}`)
+    }
     
     // Additional details
     if (structure.additionalDetails) parts.push(structure.additionalDetails)
@@ -547,21 +719,104 @@ export function ScenePromptBuilder({
                   </Select>
                 </div>
               </div>
-              <div>
-                <label className="text-xs text-gray-400">Lighting</label>
-                <Select value={structure.lighting} onValueChange={(v) => setStructure(prev => ({ ...prev, lighting: v }))}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="natural">Natural</SelectItem>
-                    <SelectItem value="golden-hour">Golden Hour</SelectItem>
-                    <SelectItem value="dramatic">Dramatic</SelectItem>
-                    <SelectItem value="soft">Soft Diffused</SelectItem>
-                    <SelectItem value="harsh">Harsh Contrast</SelectItem>
-                    <SelectItem value="backlit">Backlit</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-400">Camera Movement</label>
+                  <Select value={structure.cameraMovement} onValueChange={(v) => setStructure(prev => ({ ...prev, cameraMovement: v }))}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="static">Static</SelectItem>
+                      <SelectItem value="handheld">Handheld</SelectItem>
+                      <SelectItem value="steadicam">Steadicam</SelectItem>
+                      <SelectItem value="dolly-in">Dolly In</SelectItem>
+                      <SelectItem value="dolly-out">Dolly Out</SelectItem>
+                      <SelectItem value="pan-left">Pan Left</SelectItem>
+                      <SelectItem value="pan-right">Pan Right</SelectItem>
+                      <SelectItem value="tilt-up">Tilt Up</SelectItem>
+                      <SelectItem value="tilt-down">Tilt Down</SelectItem>
+                      <SelectItem value="jib-up">Jib Up</SelectItem>
+                      <SelectItem value="crane-shot">Crane Shot</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400">Lens Choice</label>
+                  <Select value={structure.lensChoice} onValueChange={(v) => setStructure(prev => ({ ...prev, lensChoice: v }))}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="standard">Standard (50mm)</SelectItem>
+                      <SelectItem value="wide-angle">Wide-Angle (24mm)</SelectItem>
+                      <SelectItem value="telephoto">Telephoto (85mm+)</SelectItem>
+                      <SelectItem value="macro">Macro</SelectItem>
+                      <SelectItem value="anamorphic">Anamorphic</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-400">Lighting</label>
+                  <Select value={structure.lighting} onValueChange={(v) => setStructure(prev => ({ ...prev, lighting: v }))}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="natural">Natural</SelectItem>
+                      <SelectItem value="golden-hour">Golden Hour</SelectItem>
+                      <SelectItem value="dramatic">Dramatic</SelectItem>
+                      <SelectItem value="soft">Soft Diffused</SelectItem>
+                      <SelectItem value="harsh">Harsh Contrast</SelectItem>
+                      <SelectItem value="backlit">Backlit</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400">Lighting Mood</label>
+                  <Input
+                    value={structure.lightingMood}
+                    onChange={(e) => setStructure(prev => ({ ...prev, lightingMood: e.target.value }))}
+                    placeholder="e.g., High-Key, Low-Key, Film Noir"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Talent Direction (from Scene Direction) */}
+            <div className="space-y-3 p-3 rounded border border-gray-700 bg-gray-800/50">
+              <h3 className="text-sm font-semibold text-gray-200">Talent Direction 🎭</h3>
+              <div className="space-y-2">
+                <div>
+                  <label className="text-xs text-gray-400">Blocking/Positioning</label>
+                  <Input
+                    value={structure.talentBlocking}
+                    onChange={(e) => setStructure(prev => ({ ...prev, talentBlocking: e.target.value }))}
+                    placeholder="e.g., Actor A at window, Actor B enters from left"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400">Emotional Beat</label>
+                  <Input
+                    value={structure.emotionalBeat}
+                    onChange={(e) => setStructure(prev => ({ ...prev, emotionalBeat: e.target.value }))}
+                    placeholder="e.g., Convey anxiety, Moment of realization"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400">Key Props</label>
+                  <Input
+                    value={structure.keyProps}
+                    onChange={(e) => setStructure(prev => ({ ...prev, keyProps: e.target.value }))}
+                    placeholder="e.g., steaming coffee mug, flickering neon sign"
+                    className="mt-1"
+                  />
+                </div>
               </div>
             </div>
 
