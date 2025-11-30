@@ -1,4 +1,5 @@
 import { GoogleAuth } from 'google-auth-library'
+import { downloadImageAsBase64 } from '@/lib/storage/gcs'
 
 let authClient: any = null
 
@@ -37,7 +38,9 @@ export async function getVertexAIAuthToken(): Promise<string> {
 }
 
 /**
- * Generate image using Vertex AI Imagen 2
+ * Generate image using Vertex AI Imagen 
+ * Uses imagen-3.0-capability-001 for subject customization with reference images
+ * Uses imagen-3.0-generate-001 for standard generation without references
  * 
  * @param prompt - Text description of image to generate
  * @param options - Generation options (aspect ratio, number of images, reference images)
@@ -68,20 +71,24 @@ export async function callVertexAIImagen(
     throw new Error('GCP_PROJECT_ID not configured')
   }
   
-  // Use Imagen 3 for better style adherence
-  // imagegeneration@006 (Imagen 2) has poor style following
-  const MODEL_ID = 'imagen-3.0-generate-001'
+  // Use capability model for subject customization with reference images
+  // Use standard model for generation without references
+  const hasReferenceImages = options.referenceImages && options.referenceImages.length > 0
+  const MODEL_ID = hasReferenceImages 
+    ? 'imagen-3.0-capability-001'  // Required for subject customization
+    : 'imagen-3.0-generate-001'    // Standard generation
   
   console.log(`[Imagen] Generating image with ${MODEL_ID}...`)
   console.log('[Imagen] FULL Prompt:', prompt)
   console.log('[Imagen] Project:', projectId, 'Region:', region)
+  console.log('[Imagen] Has reference images:', hasReferenceImages)
   
   const accessToken = await getVertexAIAuthToken()
   
   // Vertex AI endpoint
   const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${MODEL_ID}:predict`
   
-  // Build request body for Vertex AI Imagen 3
+  // Build request body for Vertex AI Imagen 
   const requestBody: any = {
     instances: [{
       prompt: prompt
@@ -89,48 +96,66 @@ export async function callVertexAIImagen(
     parameters: {
       sampleCount: options.numberOfImages || 1,
       aspectRatio: options.aspectRatio || '16:9',
-      negativePrompt: options.negativePrompt || '',
       safetySetting: 'block_some',
       personGeneration: options.personGeneration || 'allow_adult'
     }
   }
   
+  // Only add negativePrompt for non-capability models (not supported by imagen-3.0-capability-001)
+  if (!hasReferenceImages && options.negativePrompt) {
+    requestBody.parameters.negativePrompt = options.negativePrompt
+  }
+  
   // Add reference images for subject customization (character consistency)
-  if (options.referenceImages && options.referenceImages.length > 0) {
-    console.log('[Imagen] Adding', options.referenceImages.length, 'reference image(s) for subject customization')
+  if (hasReferenceImages) {
+    console.log('[Imagen] Adding', options.referenceImages!.length, 'reference image(s) for subject customization')
     
-    // Imagen 3 uses referenceImages array in the instance
-    requestBody.instances[0].referenceImages = options.referenceImages.map(ref => {
+    // Build referenceImages array per Imagen 3 Capability API spec
+    const referenceImagesArray = []
+    
+    for (const ref of options.referenceImages!) {
+      let base64Data = ref.base64Image
+      
+      // If GCS URI provided, download and convert to base64
+      if (!base64Data && ref.gcsUri) {
+        console.log(`[Imagen] Downloading GCS image: ${ref.gcsUri.substring(0, 50)}...`)
+        try {
+          base64Data = await downloadImageAsBase64(ref.gcsUri)
+        } catch (error: any) {
+          console.error(`[Imagen] Failed to download reference image from GCS:`, error.message)
+          throw new Error(`Failed to download reference image: ${error.message}`)
+        }
+      }
+      
+      if (!base64Data) {
+        console.warn(`[Imagen] Reference ${ref.referenceId}: No image data available, skipping`)
+        continue
+      }
+      
+      // Build reference image object per API spec
+      // Uses subjectImageConfig for subject customization
       const refImage: any = {
+        referenceType: ref.referenceType || 'REFERENCE_TYPE_SUBJECT',
         referenceId: ref.referenceId,
-        referenceType: ref.referenceType || 'REFERENCE_TYPE_SUBJECT'
-      }
-      
-      // Use GCS URI (preferred) or base64
-      if (ref.gcsUri) {
-        refImage.referenceImage = {
-          gcsUri: ref.gcsUri
+        referenceImage: {
+          bytesBase64Encoded: base64Data
+        },
+        subjectImageConfig: {
+          subjectType: ref.subjectType || 'SUBJECT_TYPE_PERSON',
+          subjectDescription: ref.subjectDescription || 'a person'
         }
-        console.log(`[Imagen] Reference ${ref.referenceId}: Using GCS URI ${ref.gcsUri.substring(0, 50)}...`)
-      } else if (ref.base64Image) {
-        refImage.referenceImage = {
-          bytesBase64Encoded: ref.base64Image
-        }
-        console.log(`[Imagen] Reference ${ref.referenceId}: Using base64 image`)
       }
       
-      // Add subject info for person references
-      if (ref.subjectType) {
-        refImage.subjectType = ref.subjectType
-      }
-      if (ref.subjectDescription) {
-        refImage.subjectDescription = ref.subjectDescription
-      }
-      
-      return refImage
-    })
+      referenceImagesArray.push(refImage)
+      console.log(`[Imagen] Reference ${ref.referenceId}: ${ref.subjectDescription || 'person'} (${base64Data.length} base64 chars)`)
+    }
     
-    console.log('[Imagen] Reference images configured:', JSON.stringify(requestBody.instances[0].referenceImages, null, 2).substring(0, 500))
+    if (referenceImagesArray.length > 0) {
+      requestBody.instances[0].referenceImages = referenceImagesArray
+      console.log('[Imagen] Reference images configured:', referenceImagesArray.length, 'images')
+    } else {
+      console.warn('[Imagen] No valid reference images, proceeding without subject customization')
+    }
   }
   
   console.log('[Imagen] Config:', JSON.stringify(requestBody.parameters))

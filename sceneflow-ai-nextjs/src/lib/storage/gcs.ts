@@ -129,3 +129,40 @@ export async function deleteImageFromGCS(gsUrl: string): Promise<void> {
   }
 }
 
+/**
+ * Download image from GCS and return as base64 encoded string
+ * Required for Imagen subject customization which needs bytesBase64Encoded, not GCS URIs
+ * @param gsUrl - GCS URL in format: gs://bucket-name/path/to/file.jpg
+ * @returns Base64 encoded image data (without data URL prefix)
+ */
+export async function downloadImageAsBase64(gsUrl: string): Promise<string> {
+  try {
+    // Parse GCS URL
+    const match = gsUrl.match(/^gs:\/\/([^\/]+)\/(.+)$/)
+    if (!match) {
+      throw new Error(`Invalid GCS URL format: ${gsUrl}`)
+    }
+
+    const [, bucketName, filePath] = match
+
+    const storage = getStorageClient()
+    const bucket = storage.bucket(bucketName)
+    const file = bucket.file(filePath)
+
+    console.log(`[GCS] Downloading ${gsUrl} for base64 encoding`)
+
+    // Download file contents
+    const [contents] = await file.download()
+
+    // Convert to base64
+    const base64Data = contents.toString('base64')
+    
+    console.log(`[GCS] Successfully downloaded and encoded ${gsUrl} (${base64Data.length} chars)`)
+
+    return base64Data
+  } catch (error: any) {
+    console.error('[GCS] Download failed:', error)
+    throw new Error(`Failed to download image from GCS: ${error.message}`)
+  }
+}
+

@@ -179,32 +179,52 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
   console.log('[Prompt Optimizer] Cleaned scene action:', cleanedAction.substring(0, 100))
   
   if (hasReferences) {
-    // REFERENCE MODE: Simple, clean prompt structure like Character Prompt Builder
-    // The GCS reference images do the heavy lifting - prompt just needs to be clear and concise
+    // REFERENCE MODE: Use [referenceId] format required by Imagen 3 Capability API
+    // The API requires [1], [2], etc. in the prompt to link to reference images
     
-    // Build simple character reference - just names and key features
-    const characterNames = params.characterReferences!.map(ref => ref.name).join(' and ')
+    // Build character references with [referenceId] markers
+    // Each character gets their referenceId (defaulting to index + 1)
+    const characterRefs = params.characterReferences!.map((ref, index) => {
+      const refId = ref.referenceId || (index + 1)
+      return {
+        name: ref.name,
+        refId,
+        description: ref.description,
+        ethnicity: ref.ethnicity
+      }
+    })
     
-    // Extract ethnicities for visual accuracy
-    const ethnicities = params.characterReferences!
-      .filter(ref => ref.ethnicity)
-      .map(ref => `${ref.name}: ${ref.ethnicity}`)
-      .join(', ')
+    // Build character names with reference markers: "John [1] and Mary [2]"
+    const characterNamesWithRefs = characterRefs.map(ref => `${ref.name} [${ref.refId}]`).join(' and ')
     
     // Build a simple, focused scene prompt
     // Don't repeat the complex reference instructions - the structured API handles that
     let sceneDescription = cleanedAction
     
-    // Simple prompt structure: Scene description + character names + style
-    // Keep it under 500 characters for best results
-    let prompt = `${sceneDescription}`
+    // Replace character names with reference-marked versions in scene description
+    let promptScene = sceneDescription
+    characterRefs.forEach(ref => {
+      const namePattern = new RegExp(`\\b${ref.name}\\b`, 'gi')
+      if (promptScene.match(namePattern)) {
+        // Only replace first occurrence to avoid redundancy
+        promptScene = promptScene.replace(namePattern, `${ref.name} [${ref.refId}]`)
+      }
+    })
+    
+    // Simple prompt structure: Scene description with character references + style
+    let prompt = promptScene
     
     // Add character context if not already mentioned in scene
-    if (!sceneDescription.toLowerCase().includes(characterNames.toLowerCase())) {
-      prompt = `Scene featuring ${characterNames}. ${sceneDescription}`
+    if (!promptScene.toLowerCase().includes(characterRefs[0].name.toLowerCase())) {
+      prompt = `Scene featuring ${characterNamesWithRefs}. ${promptScene}`
     }
     
     // Add ethnicity hint for visual accuracy (brief)
+    const ethnicities = characterRefs
+      .filter(ref => ref.ethnicity)
+      .map(ref => `${ref.name} [${ref.refId}]: ${ref.ethnicity}`)
+      .join(', ')
+    
     if (ethnicities) {
       prompt += ` Characters: ${ethnicities}.`
     }
@@ -213,6 +233,7 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
     prompt += ` ${visualStyle}`
     
     console.log('[Prompt Optimizer] Using REFERENCE MODE with', params.characterReferences!.length, 'character(s)')
+    console.log('[Prompt Optimizer] Character refs:', characterRefs.map(r => `${r.name} [${r.refId}]`).join(', '))
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
     console.log(prompt)
     console.log('[Prompt Optimizer] ===== END FULL PROMPT =====')
