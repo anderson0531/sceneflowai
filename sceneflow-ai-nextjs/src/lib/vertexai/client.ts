@@ -81,7 +81,7 @@ export async function callVertexAIImagen(
   // Vertex AI endpoint
   const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${MODEL_ID}:predict`
   
-  // Build request body for Vertex AI Imagen 2
+  // Build request body for Vertex AI Imagen 3
   const requestBody: any = {
     instances: [{
       prompt: prompt
@@ -93,6 +93,44 @@ export async function callVertexAIImagen(
       safetySetting: 'block_some',
       personGeneration: options.personGeneration || 'allow_adult'
     }
+  }
+  
+  // Add reference images for subject customization (character consistency)
+  if (options.referenceImages && options.referenceImages.length > 0) {
+    console.log('[Imagen] Adding', options.referenceImages.length, 'reference image(s) for subject customization')
+    
+    // Imagen 3 uses referenceImages array in the instance
+    requestBody.instances[0].referenceImages = options.referenceImages.map(ref => {
+      const refImage: any = {
+        referenceId: ref.referenceId,
+        referenceType: ref.referenceType || 'REFERENCE_TYPE_SUBJECT'
+      }
+      
+      // Use GCS URI (preferred) or base64
+      if (ref.gcsUri) {
+        refImage.referenceImage = {
+          gcsUri: ref.gcsUri
+        }
+        console.log(`[Imagen] Reference ${ref.referenceId}: Using GCS URI ${ref.gcsUri.substring(0, 50)}...`)
+      } else if (ref.base64Image) {
+        refImage.referenceImage = {
+          bytesBase64Encoded: ref.base64Image
+        }
+        console.log(`[Imagen] Reference ${ref.referenceId}: Using base64 image`)
+      }
+      
+      // Add subject info for person references
+      if (ref.subjectType) {
+        refImage.subjectType = ref.subjectType
+      }
+      if (ref.subjectDescription) {
+        refImage.subjectDescription = ref.subjectDescription
+      }
+      
+      return refImage
+    })
+    
+    console.log('[Imagen] Reference images configured:', JSON.stringify(requestBody.instances[0].referenceImages, null, 2).substring(0, 500))
   }
   
   console.log('[Imagen] Config:', JSON.stringify(requestBody.parameters))
