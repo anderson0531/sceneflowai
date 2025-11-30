@@ -26,6 +26,9 @@ import { ProjectCostCalculator } from './ProjectCostCalculator'
 import { ExportDialog } from './ExportDialog'
 import { GenerateAudioDialog } from './GenerateAudioDialog'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
+import { WebAudioMixer, type SceneAudioConfig, type AudioSource } from '@/lib/audio/webAudioMixer'
+import { getAudioDuration } from '@/lib/audio/audioDuration'
+import { getAudioUrl } from '@/lib/audio/languageDetection'
 
 type DialogGenerationMode = 'foreground' | 'background'
 
@@ -382,6 +385,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [selectedVoiceId, setSelectedVoiceId] = useState<string | undefined>(undefined)
   const queueAbortRef = useRef<{ abort: boolean }>({ abort: false })
+  const audioMixerRef = useRef<WebAudioMixer | null>(null)
+  const audioDurationCacheRef = useRef<Map<string, number>>(new Map())
   
   // Individual audio playback state
   const [playingAudio, setPlayingAudio] = useState<string | null>(null)
@@ -963,6 +968,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
   const stopAudio = () => {
     try {
+      // Stop the WebAudioMixer if it's playing
+      if (audioMixerRef.current) {
+        audioMixerRef.current.stop()
+      }
+      // Also stop legacy audio element if present
       if (audioRef.current) {
         audioRef.current.pause()
         audioRef.current.currentTime = 0
@@ -971,6 +981,218 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     audioRef.current = null
     setLoadingSceneId(null)
     queueAbortRef.current.abort = true
+  }
+
+  // Helper to resolve audio duration with caching
+  const resolveAudioDuration = async (url: string, storedDuration?: number): Promise<number> => {
+    if (!url) return 0
+    
+    // Check cache first
+    const cached = audioDurationCacheRef.current.get(url)
+    if (typeof cached === 'number') return cached
+    
+    // Use stored duration if available
+    if (typeof storedDuration === 'number' && storedDuration > 0) {
+      audioDurationCacheRef.current.set(url, storedDuration)
+      return storedDuration
+    }
+    
+    // Measure duration from audio file
+    try {
+      const measured = await getAudioDuration(url)
+      if (Number.isFinite(measured) && measured > 0) {
+        audioDurationCacheRef.current.set(url, measured)
+        return measured
+      }
+    } catch (error) {
+      console.warn('[ScriptPanel] Failed to measure audio duration:', url, error)
+    }
+    
+    // Fallback duration
+    const fallback = 3
+    audioDurationCacheRef.current.set(url, fallback)
+    return fallback
+  }
+
+  // Calculate audio timeline for intelligent playback
+  const calculateAudioTimeline = async (scene: any): Promise<SceneAudioConfig> => {
+    const config: SceneAudioConfig = {}
+    let currentTime = 0
+    let totalDuration = 0
+    
+    // Get language-specific audio URLs
+    const narrationUrl = getAudioUrl(scene, selectedLanguage, 'narration')
+    const dialogueArray = scene.dialogueAudio?.[selectedLanguage] || 
+                          (selectedLanguage === 'en' ? scene.dialogueAudio?.en : null) ||
+                          (Array.isArray(scene.dialogueAudio) ? scene.dialogueAudio : null)
+    
+    console.log('[ScriptPanel] Calculating audio timeline for scene (language:', selectedLanguage, '):', {
+      hasMusic: !!scene.musicAudio,
+      hasNarration: !!narrationUrl,
+      hasDialogue: !!(Array.isArray(dialogueArray) && dialogueArray.length > 0),
+      dialogueCount: Array.isArray(dialogueArray) ? dialogueArray.length : 0,
+      hasSFX: !!(scene.sfxAudio && scene.sfxAudio.length > 0),
+      sfxCount: scene.sfxAudio?.length || 0
+    })
+    
+    // Music starts at scene beginning (concurrent with everything, loops)
+    if (scene.musicAudio) {
+      config.music = scene.musicAudio
+      console.log('[ScriptPanel] Added music:', scene.musicAudio)
+    }
+    
+    // Narration starts at scene beginning (concurrent with music)
+    if (narrationUrl) {
+      config.narration = narrationUrl
+      const storedDuration = scene.narrationAudio?.[selectedLanguage]?.duration
+      const narrationDuration = await resolveAudioDuration(narrationUrl, storedDuration)
+      totalDuration = Math.max(totalDuration, narrationDuration)
+      currentTime = narrationDuration + 0.5 // 500ms pause after narration before dialogue
+      console.log('[ScriptPanel] Added narration, duration:', narrationDuration, 'next dialogue starts at:', currentTime)
+    }
+    
+    // Dialogue follows narration sequentially with appropriate spacing
+    if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
+      config.dialogue = []
+      
+      for (const dialogue of dialogueArray) {
+        const audioUrl = dialogue.audioUrl || dialogue.url
+        if (audioUrl) {
+          config.dialogue.push({
+            url: audioUrl,
+            startTime: currentTime
+          })
+          
+          const dialogueDuration = await resolveAudioDuration(audioUrl, dialogue.duration)
+          totalDuration = Math.max(totalDuration, currentTime + dialogueDuration)
+          
+          // Add 300ms pause between dialogue lines for natural pacing
+          currentTime += dialogueDuration + 0.3
+          console.log('[ScriptPanel] Added dialogue for', dialogue.character, 'at', config.dialogue[config.dialogue.length - 1].startTime, 's, duration:', dialogueDuration)
+        }
+      }
+    }
+    
+    // SFX - play concurrently, use specified time or distribute across scene
+    if (scene.sfxAudio && scene.sfxAudio.length > 0) {
+      config.sfx = []
+      
+      for (let idx = 0; idx < scene.sfxAudio.length; idx++) {
+        const sfxUrl = scene.sfxAudio[idx]
+        if (!sfxUrl) continue
+        
+        const sfxDef = scene.sfx?.[idx] || {}
+        // Use specified time, or distribute SFX evenly across the scene
+        let sfxTime: number
+        if (sfxDef.time !== undefined) {
+          sfxTime = sfxDef.time
+        } else {
+          // Distribute SFX evenly, starting after first 1 second
+          const interval = totalDuration > 2 ? (totalDuration - 1) / scene.sfxAudio.length : 1
+          sfxTime = 1 + (idx * interval)
+        }
+        
+        const sfxDuration = await resolveAudioDuration(sfxUrl, sfxDef.duration)
+        config.sfx.push({
+          url: sfxUrl,
+          startTime: sfxTime
+        })
+        totalDuration = Math.max(totalDuration, sfxTime + sfxDuration)
+        console.log('[ScriptPanel] Added SFX at', sfxTime, 's, duration:', sfxDuration)
+      }
+    }
+    
+    // Set scene duration for music-only scenes or to ensure music plays long enough
+    config.sceneDuration = Math.max(totalDuration, scene.duration || 5)
+    
+    console.log('[ScriptPanel] Final timeline config:', {
+      hasMusic: !!config.music,
+      hasNarration: !!config.narration,
+      dialogueCount: config.dialogue?.length || 0,
+      sfxCount: config.sfx?.length || 0,
+      totalDuration: config.sceneDuration
+    })
+    
+    return config
+  }
+
+  // Play scene using pre-generated MP3 files with intelligent timing
+  const playScene = async (sceneIdx: number) => {
+    if (!scenes || scenes.length === 0) return
+    stopAudio()
+    setLoadingSceneId(sceneIdx)
+    
+    const scene = scenes[sceneIdx]
+    if (!scene) {
+      setLoadingSceneId(null)
+      return
+    }
+    
+    // Check if we have any pre-generated audio
+    const narrationUrl = getAudioUrl(scene, selectedLanguage, 'narration')
+    const dialogueArray = scene.dialogueAudio?.[selectedLanguage] || 
+                          (selectedLanguage === 'en' ? scene.dialogueAudio?.en : null) ||
+                          (Array.isArray(scene.dialogueAudio) ? scene.dialogueAudio : null)
+    const hasDialogue = Array.isArray(dialogueArray) && dialogueArray.some((d: any) => d.audioUrl || d.url)
+    const hasMusic = !!scene.musicAudio
+    const hasSFX = !!(scene.sfxAudio && scene.sfxAudio.length > 0)
+    
+    const hasPreGeneratedAudio = narrationUrl || hasDialogue || hasMusic || hasSFX
+    
+    if (!hasPreGeneratedAudio) {
+      // Fall back to legacy TTS generation if no pre-generated audio
+      console.log('[ScriptPanel] No pre-generated audio found, falling back to TTS generation')
+      const fullText = buildSceneNarrationText(scene)
+      if (!fullText.trim()) {
+        setLoadingSceneId(null)
+        return
+      }
+      
+      // Chunk text for TTS
+      const chunks: string[] = []
+      const maxLen = 1200
+      let cursor = 0
+      while (cursor < fullText.length) {
+        chunks.push(fullText.slice(cursor, cursor + maxLen))
+        cursor += maxLen
+      }
+      
+      try {
+        if (!selectedVoiceId && (!voices || !voices.length)) throw new Error('No voice available')
+        await playTextChunks(chunks)
+        setLoadingSceneId(null)
+      } catch {
+        setLoadingSceneId(null)
+      }
+      return
+    }
+    
+    // Use WebAudioMixer for pre-generated audio
+    try {
+      // Initialize mixer if needed
+      if (!audioMixerRef.current) {
+        audioMixerRef.current = new WebAudioMixer()
+      }
+      
+      // Calculate timeline with intelligent timing
+      const audioConfig = await calculateAudioTimeline(scene)
+      
+      console.log('[ScriptPanel] Playing scene', sceneIdx + 1, 'with config:', {
+        hasMusic: !!audioConfig.music,
+        hasNarration: !!audioConfig.narration,
+        dialogueCount: audioConfig.dialogue?.length || 0,
+        sfxCount: audioConfig.sfx?.length || 0
+      })
+      
+      // Play the scene - this returns a promise that resolves when all non-looping audio completes
+      await audioMixerRef.current.playScene(audioConfig)
+      
+      console.log('[ScriptPanel] Scene', sceneIdx + 1, 'playback complete')
+      setLoadingSceneId(null)
+    } catch (error) {
+      console.error('[ScriptPanel] Error playing scene:', error)
+      setLoadingSceneId(null)
+    }
   }
 
   function buildSceneNarrationText(scene: any): string {
@@ -996,7 +1218,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     for (const t of texts) {
       if (queueAbortRef.current.abort) break
       
-      // Always use standard endpoint (ElevenLabs handles stage directions natively)
       console.log('[ScriptPanel] Generating audio for text:', t.substring(0, 100))
       
       const resp = await fetch('/api/tts/elevenlabs', {
@@ -1014,37 +1235,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         audio.onerror = () => reject(new Error('Audio error'))
         audio.play().catch(reject)
       })
-    }
-  }
-
-  const playScene = async (sceneIdx: number) => {
-    if (!scenes || scenes.length === 0) return
-    stopAudio()
-    setLoadingSceneId(sceneIdx)
-    const scene = scenes[sceneIdx]
-    if (!scene) return
-    
-    const fullText = buildSceneNarrationText(scene)
-    if (!fullText.trim()) {
-      stopAudio()
-      return
-    }
-    
-    // Chunk to ~1200 chars to avoid long clips
-    const chunks: string[] = []
-    const maxLen = 1200
-    let cursor = 0
-    while (cursor < fullText.length) {
-      chunks.push(fullText.slice(cursor, cursor + maxLen))
-      cursor += maxLen
-    }
-    
-    try {
-      if (!selectedVoiceId && (!voices || !voices.length)) throw new Error('No voice available')
-      await playTextChunks(chunks)
-      stopAudio()
-    } catch {
-      stopAudio()
     }
   }
 
