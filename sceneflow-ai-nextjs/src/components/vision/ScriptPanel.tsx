@@ -2516,6 +2516,7 @@ function SceneCard({
   const [isOpen, setIsOpen] = useState(false)
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(null)
   const [copilotPanelOpen, setCopilotPanelOpen] = useState(false)
+  const [isImageExpanded, setIsImageExpanded] = useState(false)
   
   // Determine active step for Co-Pilot
   const activeStep: WorkflowStep | null = activeWorkflowTab
@@ -3814,14 +3815,56 @@ function SceneCard({
                 
                 {activeWorkflowTab === 'storyboardPreViz' && (
                   <div className="space-y-4">
-                  {/* Scene Image */}
+                  {/* Scene Image with Expand/Collapse */}
                   {scene.imageUrl && (
-                    <div className="rounded-lg overflow-hidden border-2 border-gray-300 dark:border-gray-600 shadow-md max-w-3xl mx-auto">
+                    <div className={`relative rounded-lg overflow-hidden border-2 border-gray-300 dark:border-gray-600 shadow-md transition-all duration-300 ${isImageExpanded ? 'max-w-full' : 'max-w-3xl mx-auto'}`}>
                       <img 
                         src={scene.imageUrl} 
                         alt={scene.heading}
-                        className="w-full h-auto object-cover"
+                        className={`w-full h-auto object-cover cursor-pointer transition-transform duration-300 ${isImageExpanded ? '' : 'hover:scale-[1.02]'}`}
+                        onClick={() => setIsImageExpanded(!isImageExpanded)}
                       />
+                      {/* Expand/Collapse Button */}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setIsImageExpanded(!isImageExpanded)
+                              }}
+                              className="absolute top-2 right-2 p-2 bg-black/60 hover:bg-black/80 text-white rounded-lg transition-colors backdrop-blur-sm"
+                            >
+                              {isImageExpanded ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="4 14 10 14 10 20"></polyline>
+                                  <polyline points="20 10 14 10 14 4"></polyline>
+                                  <line x1="14" y1="10" x2="21" y2="3"></line>
+                                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                                </svg>
+                              ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="15 3 21 3 21 9"></polyline>
+                                  <polyline points="9 21 3 21 3 15"></polyline>
+                                  <line x1="21" y1="3" x2="14" y2="10"></line>
+                                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                                </svg>
+                              )}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                            {isImageExpanded ? 'Collapse image' : 'Expand image for full view'}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      {/* Expand hint overlay on hover */}
+                      {!isImageExpanded && (
+                        <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors pointer-events-none flex items-center justify-center opacity-0 hover:opacity-100">
+                          <span className="text-white/80 text-sm font-medium bg-black/50 px-3 py-1 rounded-full pointer-events-none">
+                            Click to expand
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
                   
