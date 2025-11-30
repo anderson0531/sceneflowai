@@ -11,25 +11,99 @@ export const runtime = 'nodejs'
 export const maxDuration = 60
 
 /**
- * Create a MINIMAL subject description for Imagen API
+ * Extract VISUAL ANCHORS from appearance description for Imagen API
  * 
- * TRUST THE PIXELS: Don't describe physical attributes in text!
- * When text descriptions (skin tone, hair, etc.) conflict with the reference image,
- * the model often follows the text and ignores the actual photo.
+ * The model needs key visual differentiators to "latch onto" the reference image.
+ * Too generic ("a man") = model ignores specific features
+ * Too specific (conflicting details) = model follows text over image
  * 
- * Solution: Use only "a man" or "a woman" to force the model to derive
- * ALL physical characteristics from the reference image pixels.
+ * Goal: 3-6 word description with KEY VISUAL ANCHORS (hair, glasses, beard, age)
+ * These anchors tell the model WHICH pixels in the reference image are important.
  */
-function createConciseSubjectDescription(char: any, index: number): string {
+function createVisualAnchorDescription(char: any, index: number): string {
   const description = char.visionDescription || char.appearanceDescription || ''
+  const descLower = description.toLowerCase()
   
-  // ONLY detect gender - let the reference image define everything else
-  const isFemale = description.toLowerCase().includes('woman') || 
-                   description.toLowerCase().includes('female') ||
-                   description.toLowerCase().includes('she ')
+  // Detect gender
+  const isFemale = descLower.includes('woman') || 
+                   descLower.includes('female') ||
+                   descLower.includes('she ')
   
-  const result = isFemale ? 'a woman' : 'a man'
-  console.log(`[Scene Image] Subject description for ${char.name} (ref ${index}): "${result}" (trusting reference image for physical attributes)`)
+  const anchors: string[] = []
+  
+  // AGE ANCHOR - critical differentiator
+  if (descLower.includes('late 50s') || descLower.includes('early 60s') || descLower.includes('60s')) {
+    anchors.push('older')
+  } else if (descLower.includes('late 40s') || descLower.includes('50s')) {
+    anchors.push('middle-aged')
+  } else if (descLower.includes('late 20s') || descLower.includes('early 30s') || descLower.includes('30s')) {
+    anchors.push('young')
+  }
+  
+  // HAIR ANCHOR - very distinctive
+  if (descLower.includes('curly afro') || descLower.includes('afro')) {
+    anchors.push('with curly afro')
+  } else if (descLower.includes('salt-and-pepper') && descLower.includes('hair')) {
+    anchors.push('with salt-and-pepper hair')
+  } else if (descLower.includes('bald')) {
+    anchors.push('bald')
+  } else if (descLower.includes('grey hair') || descLower.includes('gray hair')) {
+    anchors.push('with grey hair')
+  } else if (descLower.includes('short') && descLower.includes('cropped')) {
+    anchors.push('with short cropped hair')
+  }
+  
+  // BEARD ANCHOR - important for men
+  if (!isFemale) {
+    if (descLower.includes('salt-and-pepper') && descLower.includes('beard')) {
+      anchors.push('grey beard')
+    } else if (descLower.includes('full beard')) {
+      anchors.push('full beard')
+    } else if (descLower.includes('beard')) {
+      anchors.push('beard')
+    }
+  }
+  
+  // GLASSES ANCHOR - very distinctive
+  if (descLower.includes('glasses')) {
+    anchors.push('glasses')
+  }
+  
+  // Build the description
+  const gender = isFemale ? 'woman' : 'man'
+  let result: string
+  
+  if (anchors.length === 0) {
+    result = `a ${gender}`
+  } else if (anchors.length === 1) {
+    // "an older man" or "a man with curly afro"
+    const anchor = anchors[0]
+    if (anchor.startsWith('with') || anchor === 'bald') {
+      result = `a ${gender} ${anchor}`
+    } else {
+      result = `${anchor.startsWith('o') ? 'an' : 'a'} ${anchor} ${gender}`
+    }
+  } else {
+    // Combine anchors: "an older man with grey beard"
+    const ageAnchor = anchors.find(a => ['older', 'middle-aged', 'young'].includes(a))
+    const otherAnchors = anchors.filter(a => !['older', 'middle-aged', 'young'].includes(a))
+    
+    if (ageAnchor) {
+      const article = ageAnchor.startsWith('o') ? 'an' : 'a'
+      result = `${article} ${ageAnchor} ${gender}`
+      if (otherAnchors.length > 0) {
+        // Join with "and" for readability
+        const features = otherAnchors.map(a => a.startsWith('with') ? a.substring(5) : a).join(' and ')
+        result += ` with ${features}`
+      }
+    } else {
+      // No age anchor, just combine features
+      const features = otherAnchors.map(a => a.startsWith('with') ? a.substring(5) : a).join(' and ')
+      result = `a ${gender} with ${features}`
+    }
+  }
+  
+  console.log(`[Scene Image] Visual anchor description for ${char.name} (ref ${index}): "${result}"`)
   return result
 }
 
@@ -398,16 +472,16 @@ export async function POST(req: NextRequest) {
         console.error(`[Scene Image] ERROR: Character ${char.name} has GCS but no referenceId assigned!`)
       }
       
-      // Create a CONCISE subject description for the API
-      // Long descriptions confuse the model and cause blending
-      const conciseDescription = createConciseSubjectDescription(char, referenceId || 1)
+      // Create VISUAL ANCHOR description for the API
+      // Includes key differentiators (age, hair, beard, glasses) to help model latch onto reference
+      const visualAnchorDescription = createVisualAnchorDescription(char, referenceId || 1)
       
       return {
         referenceId: referenceId || 1, // Fallback to 1 if somehow missing
         gcsUri: char.referenceImageGCS,
         referenceType: 'REFERENCE_TYPE_SUBJECT' as const,
         subjectType: 'SUBJECT_TYPE_PERSON' as const,
-        subjectDescription: conciseDescription,
+        subjectDescription: visualAnchorDescription,
         // Store HTTPS fallback URL
         httpsUrl: char.referenceImage
       }
