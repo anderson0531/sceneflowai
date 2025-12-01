@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { uploadImageToBlob } from '@/lib/storage/blob'
-import { callVertexAIImagen } from '@/lib/vertexai/client'
+import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 
 export const maxDuration = 60
 
@@ -17,12 +17,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // TODO: BYOK - Use user's service account credentials when BYOK is implemented
-    // For now, use platform Vertex AI service account
-    if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || !process.env.GCP_PROJECT_ID) {
+    // TODO: BYOK - Use user's Gemini API key when BYOK is implemented
+    // For now, use platform Gemini API key
+    if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json({
         success: false,
-        error: 'Vertex AI not configured. Please set GOOGLE_APPLICATION_CREDENTIALS_JSON and GCP_PROJECT_ID.',
+        error: 'Gemini API not configured. Please set GEMINI_API_KEY.',
         requiresBYOK: true
       }, { status: 400 })
     }
@@ -59,12 +59,13 @@ Style Requirements:
       console.log('[Thumbnail] Using default generated prompt')
     }
 
-    console.log('[Thumbnail] Generating with Vertex AI Imagen...')
+    console.log('[Thumbnail] Generating with Gemini 3 Pro Image...')
 
-    // Generate image using Vertex AI Imagen
-    const base64Image = await callVertexAIImagen(enhancedPrompt, {
+    // Generate image using Gemini API
+    const base64Image = await generateImageWithGemini(enhancedPrompt, {
       aspectRatio: '16:9',
-      numberOfImages: 1
+      numberOfImages: 1,
+      imageSize: '2K'
     })
     
     console.log('[Thumbnail] Image generated, uploading to Vercel Blob...')

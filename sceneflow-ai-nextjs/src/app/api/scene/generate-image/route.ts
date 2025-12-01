@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { callVertexAIImagen } from '@/lib/vertexai/client'
+import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen, generateLinkingDescription } from '@/lib/imagen/promptOptimizer'
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
@@ -486,9 +486,7 @@ export async function POST(req: NextRequest) {
       
       return {
         referenceId: referenceId || 1, // Fallback to 1 if somehow missing
-        imageUrl: char.referenceImage,  // Blob URL - will be downloaded and encoded by callVertexAIImagen
-        referenceType: 'REFERENCE_TYPE_SUBJECT' as const,
-        subjectType: 'SUBJECT_TYPE_PERSON' as const,
+        imageUrl: char.referenceImage,  // Blob URL - will be downloaded and encoded by generateImageWithGemini
         subjectDescription: linkingDescription
       }
     })
@@ -538,11 +536,10 @@ export async function POST(req: NextRequest) {
         generationAttempt++
         console.log(`[Scene Image] Generation attempt ${generationAttempt}/${maxGenerationAttempts}`)
         
-        base64Image = await callVertexAIImagen(optimizedPrompt, {
+        base64Image = await generateImageWithGemini(optimizedPrompt, {
           aspectRatio: '16:9',
           numberOfImages: 1,
-          quality: quality,
-          negativePrompt: finalNegativePrompt,
+          imageSize: quality === 'max' ? '2K' : '1K',
           referenceImages: imageReferences.length > 0 ? imageReferences : undefined,
           personGeneration: personGeneration || 'allow_adult' // Default to 'allow_adult' for backward compatibility
         })

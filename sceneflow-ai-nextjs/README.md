@@ -17,7 +17,11 @@ npm run dev
 ```
 
 - Database: ensure Postgres is reachable; `npm run db:setup` seeds required tables.
-- Environment: copy `.env.example` → `.env.local` and fill in provider keys (Google, ElevenLabs, OpenAI, etc.). Use `GOOGLE_APPLICATION_CREDENTIALS_JSON` for Imagen storage uploads.
+- Environment: copy `.env.example` → `.env.local` and fill in provider keys:
+  - `GEMINI_API_KEY` - Get from [Google AI Studio](https://aistudio.google.com/apikey) (used for LLM, TTS, image generation)
+  - `ELEVENLABS_API_KEY` - For SFX generation
+  - `REPLICATE_API_TOKEN` - For Flux 1.1 Pro image generation (optional)
+  - Database credentials (PostgreSQL)
 - Lint & build checks: `npm run lint` and `npm run build`.
 
 ## What’s Next
