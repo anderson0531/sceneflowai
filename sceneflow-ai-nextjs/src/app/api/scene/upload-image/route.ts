@@ -20,9 +20,9 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(arrayBuffer)
     
     // Get image metadata
-    const metadata = await sharp(buffer).metadata()
-    const originalWidth = metadata.width || 0
-    const originalHeight = metadata.height || 0
+    const imageMetadata = await sharp(buffer).metadata()
+    const originalWidth = imageMetadata.width || 0
+    const originalHeight = imageMetadata.height || 0
     
     console.log(`[Scene Upload] Original dimensions: ${originalWidth}x${originalHeight}`)
     
