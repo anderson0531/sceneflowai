@@ -72,19 +72,31 @@ export async function POST(req: NextRequest) {
     })
 
     // Update Database
+    console.log(`[Scene Upload] Updating database for project ${projectId}, scene ${sceneNumber}`)
     await sequelize.authenticate()
     const project = await Project.findByPk(projectId)
     if (!project) {
+      console.error(`[Scene Upload] Project not found: ${projectId}`)
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
 
     const metadata = project.metadata || {}
     const visionPhase = metadata.visionPhase || {}
-    const script = visionPhase.script || {}
-    const scenes = script.script?.scenes || script.scenes || []
+    
+    // Check both possible locations for scenes
+    const scriptScenes = visionPhase.script?.script?.scenes || visionPhase.script?.scenes || []
+    const topLevelScenes = visionPhase.scenes || []
+    
+    console.log(`[Scene Upload] Found ${scriptScenes.length} scenes in script, ${topLevelScenes.length} scenes at top level`)
+    
+    // Determine which scenes array to update
+    const scenesToUpdate = scriptScenes.length > 0 ? scriptScenes : topLevelScenes
+    
+    console.log(`[Scene Upload] Updating scene ${sceneNumber} in array of ${scenesToUpdate.length} scenes`)
+    console.log(`[Scene Upload] Scene numbers in array:`, scenesToUpdate.map((s: any) => s.sceneNumber))
 
     // Update the specific scene
-    const updatedScenes = scenes.map((s: any) =>
+    const updatedScenes = scenesToUpdate.map((s: any) =>
       s.sceneNumber === sceneNumber
         ? {
             ...s,
@@ -94,24 +106,36 @@ export async function POST(req: NextRequest) {
           }
         : s
     )
+    
+    // Verify the update happened
+    const updatedScene = updatedScenes.find((s: any) => s.sceneNumber === sceneNumber)
+    console.log(`[Scene Upload] Updated scene ${sceneNumber} imageUrl:`, updatedScene?.imageUrl?.substring(0, 50))
 
-    // Update metadata
+    // Build updated metadata - update BOTH locations if they exist
     const updatedMetadata = {
       ...metadata,
       visionPhase: {
         ...visionPhase,
-        script: {
-          ...script,
+        // Update top-level scenes if they exist
+        ...(topLevelScenes.length > 0 ? { scenes: updatedScenes } : {}),
+        // Update script scenes if they exist
+        ...(visionPhase.script ? {
           script: {
-            ...script.script,
+            ...visionPhase.script,
+            ...(visionPhase.script.script ? {
+              script: {
+                ...visionPhase.script.script,
+                scenes: updatedScenes
+              }
+            } : {}),
             scenes: updatedScenes
-          },
-          scenes: updatedScenes
-        }
+          }
+        } : {})
       }
     }
 
-    await project.update({ metadata: updatedMetadata })
+    const updateResult = await project.update({ metadata: updatedMetadata })
+    console.log(`[Scene Upload] Database update successful, returning imageUrl: ${blob.url.substring(0, 50)}`)
 
     return NextResponse.json({ success: true, imageUrl: blob.url })
   } catch (error: any) {
