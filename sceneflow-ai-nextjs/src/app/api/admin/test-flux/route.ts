@@ -69,7 +69,22 @@ export async function POST(req: NextRequest) {
 
     if (response.status !== 201) {
       const error = await response.json();
-      return NextResponse.json({ success: false, error: error.detail || "Failed to create prediction" }, { status: response.status });
+      let errorMessage = error.detail || "Failed to create prediction";
+      
+      // Provide specific error messages based on status code
+      if (response.status === 402) {
+        errorMessage = "❌ Payment Required: Your Replicate account needs billing setup or has insufficient credits. Please add payment method at replicate.com/account/billing";
+      } else if (response.status === 401) {
+        errorMessage = "❌ Invalid API Token: Please check your REPLICATE_API_TOKEN environment variable";
+      } else if (response.status === 429) {
+        errorMessage = "❌ Rate Limited: Too many requests. Please wait a moment and try again";
+      }
+      
+      return NextResponse.json({ 
+        success: false, 
+        error: errorMessage,
+        statusCode: response.status 
+      }, { status: response.status });
     }
 
     const prediction = await response.json();
