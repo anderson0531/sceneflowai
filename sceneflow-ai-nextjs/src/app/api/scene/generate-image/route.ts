@@ -700,6 +700,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(response)
   } catch (error: any) {
     console.error('[Scene Image] Error:', error)
+    console.error('[Scene Image] Error stack:', error.stack)
+    console.error('[Scene Image] Error details:', {
+      message: error.message,
+      name: error.name,
+      code: error.code,
+      statusCode: error.statusCode
+    })
     
     // Check if it's a quota error
     const isQuotaError = error.message?.includes('quota') || 
@@ -718,10 +725,20 @@ export async function POST(req: NextRequest) {
       }, { status: 429 })
     }
     
+    // Provide detailed error message to frontend
+    const errorMessage = error.message || 'Failed to generate scene image'
+    const detailedError = `${errorMessage}${error.code ? ` (Code: ${error.code})` : ''}${error.statusCode ? ` (Status: ${error.statusCode})` : ''}`
+    
     return NextResponse.json({
       success: false,
-      error: error.message || 'Failed to generate scene image',
-      errorType: 'api'
+      error: detailedError,
+      errorType: 'api',
+      errorDetails: {
+        originalMessage: error.message,
+        code: error.code,
+        statusCode: error.statusCode,
+        name: error.name
+      }
     }, { status: 500 })
   }
 }
