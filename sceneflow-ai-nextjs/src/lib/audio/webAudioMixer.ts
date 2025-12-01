@@ -158,42 +158,56 @@ export class WebAudioMixer {
     })
 
     try {
-      // Preload all audio files
-      const loadPromises: Promise<AudioBuffer>[] = []
-
+      // Preload and start background audio (music & SFX) immediately for better UX
+      // These don't need to wait for narration/dialogue to load
+      const backgroundPromises: Promise<void>[] = []
+      
       if (config.music) {
-        loadPromises.push(this.loadAudioFile(config.music, 'music'))
-      }
-      if (config.narration) {
-        loadPromises.push(this.loadAudioFile(config.narration, 'narration'))
-      }
-      if (config.dialogue) {
-        config.dialogue.forEach(d => {
-          loadPromises.push(this.loadAudioFile(d.url, 'dialogue'))
-        })
-      }
-      if (config.sfx) {
-        config.sfx.forEach(s => {
-          loadPromises.push(this.loadAudioFile(s.url, 'sfx'))
-        })
-      }
-
-      await Promise.all(loadPromises)
-
-      // Play music at scene start (if available) - music loops, so we don't track it
-      if (config.music) {
-        const musicBuffer = this.audioBuffers.get(config.music)
-        if (musicBuffer) {
+        const musicPromise = this.loadAudioFile(config.music, 'music').then(musicBuffer => {
           this.playAudioBuffer(
             musicBuffer,
             'music',
-            0,  // Start at scene beginning
+            0,  // Start immediately at scene beginning
             true  // Loop if needed
           )
-        } else {
-          console.error('[WebAudioMixer] Music buffer not found for:', config.music)
-        }
+        }).catch(error => {
+          console.error('[WebAudioMixer] Music load/play failed:', error)
+        })
+        backgroundPromises.push(musicPromise)
       }
+      
+      if (config.sfx) {
+        config.sfx.forEach(s => {
+          const sfxPromise = this.loadAudioFile(s.url, 'sfx').then(sfxBuffer => {
+            this.playAudioBuffer(
+              sfxBuffer,
+              'sfx',
+              s.startTime,
+              false  // Non-looping
+            )
+          }).catch(error => {
+            console.error('[WebAudioMixer] SFX load/play failed:', error)
+          })
+          backgroundPromises.push(sfxPromise)
+        })
+      }
+      
+      // Start background audio loading/playing (don't wait)
+      Promise.all(backgroundPromises).catch(console.error)
+
+      // Preload foreground audio (narration & dialogue) - we wait for these
+      const foregroundPromises: Promise<AudioBuffer>[] = []
+      
+      if (config.narration) {
+        foregroundPromises.push(this.loadAudioFile(config.narration, 'narration'))
+      }
+      if (config.dialogue) {
+        config.dialogue.forEach(d => {
+          foregroundPromises.push(this.loadAudioFile(d.url, 'dialogue'))
+        })
+      }
+
+      await Promise.all(foregroundPromises)
 
       // Play narration at scene start (if available) - narration is non-looping
       if (config.narration) {
@@ -223,23 +237,6 @@ export class WebAudioMixer {
             )
           } else {
             console.error('[WebAudioMixer] Dialogue buffer not found for:', d.url)
-          }
-        })
-      }
-
-      // Schedule SFX - SFX is non-looping
-      if (config.sfx) {
-        config.sfx.forEach(s => {
-          const sfxBuffer = this.audioBuffers.get(s.url)
-          if (sfxBuffer) {
-            this.playAudioBuffer(
-              sfxBuffer,
-              'sfx',
-              s.startTime,
-              false  // Non-looping
-            )
-          } else {
-            console.error('[WebAudioMixer] SFX buffer not found for:', s.url)
           }
         })
       }
