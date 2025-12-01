@@ -2220,7 +2220,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const existingMetadata = project?.metadata || {}
           const existingVisionPhase = existingMetadata.visionPhase || {}
           
-          await fetch(`/api/projects/${projectId}`, {
+          console.log('[Character Upload] Saving to project:', projectId)
+          console.log('[Character Upload] Updated characters:', updatedCharacters.map(c => ({ 
+            name: c.name, 
+            hasRefImage: !!c.referenceImage,
+            refImageUrl: c.referenceImage?.substring(0, 50)
+          })))
+          
+          const saveResponse = await fetch(`/api/projects/${projectId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -2235,11 +2242,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               }
             })
           })
+          
+          if (!saveResponse.ok) {
+            const errorText = await saveResponse.text()
+            console.error('[Character Upload] Save failed:', saveResponse.status, errorText)
+            throw new Error(`Failed to save: ${saveResponse.status}`)
+          }
+          
+          console.log('[Character Upload] Save successful, reloading project...')
         
         // Reload project to ensure fresh character data is available for scene generation
         await loadProject()
+        console.log('[Character Upload] Project reloaded successfully')
         } catch (saveError) {
           console.error('Failed to save uploaded character to project:', saveError)
+          try { const { toast } = require('sonner'); toast.error('Failed to save character image') } catch {}
         }
         
       setUploadingRef(prev => ({ ...prev, [characterId]: false }))
