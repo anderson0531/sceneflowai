@@ -13,7 +13,7 @@ export default function FluxTestPage() {
   const [safetyTolerance, setSafetyTolerance] = useState<number>(2);
   const [seed, setSeed] = useState<number | undefined>(undefined);
   const [promptUpsampling, setPromptUpsampling] = useState<boolean>(true);
-  const [imagePromptStrength, setImagePromptStrength] = useState<number>(0.1);
+  const [imagePromptStrength, setImagePromptStrength] = useState<number>(0.05);
   const [result, setResult] = useState<any>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,13 +131,17 @@ export default function FluxTestPage() {
                 type="range"
                 min="0"
                 max="1"
-                step="0.05"
+                step="0.01"
                 value={imagePromptStrength}
                 onChange={(e) => setImagePromptStrength(Number(e.target.value))}
                 className="w-full"
               />
-              <div className="text-xs text-gray-600 text-center">{imagePromptStrength.toFixed(2)}</div>
-              <div className="text-xs text-gray-500 mt-1">Higher values follow reference images more closely</div>
+              <div className="text-xs text-gray-600 text-center font-bold">{imagePromptStrength.toFixed(2)}</div>
+              <div className="text-xs text-gray-500 mt-1">
+                <strong>Style reference only:</strong> 0.01-0.10 (recommended)<br/>
+                <strong>Balanced:</strong> 0.20-0.40<br/>
+                <strong>Strong influence:</strong> 0.50+
+              </div>
             </div>
           )}
 

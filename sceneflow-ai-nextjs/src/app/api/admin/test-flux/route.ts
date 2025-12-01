@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       safetyTolerance = 2,
       seed,
       promptUpsampling = true,
-      imagePromptStrength = 0.1
+      imagePromptStrength = 0.05
     } = await req.json();
 
     if (!process.env.REPLICATE_API_TOKEN) {
