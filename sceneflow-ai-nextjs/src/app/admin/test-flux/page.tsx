@@ -7,7 +7,19 @@ export default function FluxTestPage() {
   const [loading, setLoading] = useState(false);
   const [prompt, setPrompt] = useState('A cinematic shot of a futuristic city with flying cars, 8k resolution, photorealistic.');
   const [aspectRatio, setAspectRatio] = useState('16:9');
+  const [referenceImage, setReferenceImage] = useState<string | null>(null);
   const [result, setResult] = useState<any>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setReferenceImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const runTest = async () => {
     setLoading(true);
@@ -16,7 +28,7 @@ export default function FluxTestPage() {
       const res = await fetch('/api/admin/test-flux', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, aspectRatio }),
+        body: JSON.stringify({ prompt, aspectRatio, referenceImage }),
       });
       const data = await res.json();
       setResult(data);
@@ -61,6 +73,27 @@ export default function FluxTestPage() {
               <option value="9:16">9:16 (Portrait)</option>
               <option value="21:9">21:9 (Ultrawide)</option>
             </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold mb-1">Reference Image (Optional)</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="w-full p-2 border rounded text-sm"
+            />
+            {referenceImage && (
+              <div className="mt-2 relative">
+                <img src={referenceImage} alt="Reference" className="w-full rounded border" />
+                <button
+                  onClick={() => setReferenceImage(null)}
+                  className="absolute top-1 right-1 bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
           </div>
 
           <button 

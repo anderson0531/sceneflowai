@@ -4,13 +4,27 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, aspectRatio = "16:9" } = await req.json();
+    const { prompt, aspectRatio = "16:9", referenceImage } = await req.json();
 
     if (!process.env.REPLICATE_API_TOKEN) {
       return NextResponse.json(
         { success: false, error: 'REPLICATE_API_TOKEN is not set in environment variables' },
         { status: 500 }
       );
+    }
+
+    // Build input object
+    const input: any = {
+      prompt,
+      aspect_ratio: aspectRatio,
+      safety_tolerance: 2,
+      output_format: "jpg",
+      output_quality: 90
+    };
+
+    // Add reference image if provided
+    if (referenceImage) {
+      input.image_prompt = referenceImage;
     }
 
     // 1. Create Prediction
@@ -20,15 +34,7 @@ export async function POST(req: NextRequest) {
         "Authorization": `Token ${process.env.REPLICATE_API_TOKEN}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        input: {
-          prompt,
-          aspect_ratio: aspectRatio,
-          safety_tolerance: 2, // Allow some flexibility
-          output_format: "jpg",
-          output_quality: 90
-        }
-      }),
+      body: JSON.stringify({ input }),
     });
 
     if (response.status !== 201) {
