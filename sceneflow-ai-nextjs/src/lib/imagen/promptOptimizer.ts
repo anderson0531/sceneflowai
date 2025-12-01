@@ -18,7 +18,86 @@ interface OptimizePromptParams {
     imageUrl?: string        // HTTPS URL for prompt text (preferred)
     ethnicity?: string       // For ethnicity injection
     keyFeatures?: string[]   // Key physical characteristics to emphasize
+    linkingDescription?: string // Pre-computed linking text for text-matching
   }>
+}
+
+/**
+ * Generate the LINKING DESCRIPTION for text-matching mode
+ * This EXACT text must appear in BOTH:
+ *   1. The prompt text (replacing character names)
+ *   2. The subjectDescription field in referenceImages array
+ * 
+ * The model matches these to link reference images to characters in the scene.
+ * 
+ * @param description - The character's appearance description
+ * @returns A short linking phrase like "a young man with curly hair"
+ */
+export function generateLinkingDescription(description: string): string {
+  const descLower = (description || '').toLowerCase()
+  const isFemale = descLower.includes('woman') || descLower.includes('female')
+  
+  // Build the LINKING DESCRIPTION that will appear in BOTH prompt and subjectDescription
+  // This must be distinctive enough to identify each character
+  const anchors: string[] = []
+  
+  // Age anchor
+  if (descLower.includes('late 50s') || descLower.includes('60s') || descLower.includes('older')) {
+    anchors.push('older')
+  } else if (descLower.includes('late 20s') || descLower.includes('30s') || descLower.includes('young')) {
+    anchors.push('young')
+  }
+  
+  // Hair anchor - more specific for distinctive appearance
+  if (descLower.includes('curly afro') || descLower.includes('afro')) {
+    anchors.push('with curly afro')
+  } else if (descLower.includes('curly')) {
+    anchors.push('with curly hair')
+  } else if (descLower.includes('salt-and-pepper') && descLower.includes('hair')) {
+    anchors.push('with salt-and-pepper hair')
+  } else if (descLower.includes('grey hair') || descLower.includes('gray hair')) {
+    anchors.push('with grey hair')
+  }
+  
+  // Beard anchor (men only)
+  if (!isFemale && descLower.includes('beard')) {
+    if (descLower.includes('salt-and-pepper') && descLower.includes('beard')) {
+      anchors.push('grey beard')
+    } else if (descLower.includes('full beard')) {
+      anchors.push('full beard')
+    } else {
+      anchors.push('beard')
+    }
+  }
+  
+  // Build the description
+  const gender = isFemale ? 'woman' : 'man'
+  
+  if (anchors.length === 0) {
+    return `a ${gender}`
+  } else if (anchors.length === 1) {
+    const anchor = anchors[0]
+    if (anchor.startsWith('with') || anchor === 'older' || anchor === 'young') {
+      return anchor === 'older' ? `an older ${gender}` : anchor === 'young' ? `a young ${gender}` : `a ${gender} ${anchor}`
+    }
+    return `a ${gender} with ${anchor}`
+  } else {
+    const ageAnchor = anchors.find(a => ['older', 'young'].includes(a))
+    const features = anchors.filter(a => !['older', 'young'].includes(a))
+    
+    if (ageAnchor) {
+      const article = ageAnchor === 'older' ? 'an' : 'a'
+      let result = `${article} ${ageAnchor} ${gender}`
+      if (features.length > 0) {
+        const featureText = features.map(f => f.startsWith('with') ? f.substring(5) : f).join(' and ')
+        result += ` with ${featureText}`
+      }
+      return result
+    } else {
+      const featureText = features.map(f => f.startsWith('with') ? f.substring(5) : f).join(' and ')
+      return `a ${gender} with ${featureText}`
+    }
+  }
 }
 
 /**
@@ -181,36 +260,55 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
   const hasValidReferences = charactersWithRefs.length > 0
   
   if (hasValidReferences) {
-    // GEMINI CHAT STYLE: Use character names directly, let API link via referenceId
-    // Based on testing: Gemini Chat works with "[Image 1: Alex Anderson]" format
-    // The Imagen API should link names to referenceId via subjectDescription
+    // TEXT-MATCHING LINK MODE: subject_description text must appear in prompt
+    // This is how the model links reference images to characters in the scene
+    // 
+    // Example:
+    //   prompt: "a young man with curly hair sits at the table..."
+    //   subject_description: "a young man with curly hair"  <- MUST MATCH
+    //
+    // The model sees matching text and knows: "use this reference image for this person"
     
     const characterRefs = params.characterReferences!
       .filter(ref => ref.referenceId !== undefined)
-      .map(ref => ({
-        name: ref.name,
-        firstName: ref.name.split(' ')[0],
-        refId: ref.referenceId!,
-        isFemale: (ref.description || '').toLowerCase().includes('woman') ||
-                  (ref.description || '').toLowerCase().includes('female')
-      }))
+      .map(ref => {
+        const descLower = (ref.description || '').toLowerCase()
+        const isFemale = descLower.includes('woman') || descLower.includes('female')
+        
+        // Use pre-computed linking description OR generate it
+        // This MUST match the subjectDescription passed to the Imagen API
+        const linkingDescription = ref.linkingDescription || generateLinkingDescription(ref.description)
+        
+        return {
+          name: ref.name,
+          firstName: ref.name.split(' ')[0],
+          refId: ref.referenceId!,
+          isFemale,
+          linkingDescription // e.g., "a young man with curly hair"
+        }
+      })
     
-    // MINIMAL PROCESSING: Keep character names, just add reference markers
-    // Format: "featuring Alex Anderson [1], Ben Anderson [2]"
+    // Replace character names with their linking descriptions
+    // "Alex Anderson sits..." -> "A young man with curly hair sits..."
     let promptScene = cleanedAction
     
-    // Add [refId] markers AFTER character names (not replacing them)
-    // This matches how Gemini Chat seems to work: name + image reference together
     characterRefs.forEach(ref => {
       const fullNamePattern = new RegExp(`\\b${ref.name}\\b`, 'gi')
-      promptScene = promptScene.replace(fullNamePattern, `${ref.name} [${ref.refId}]`)
+      promptScene = promptScene.replace(fullNamePattern, ref.linkingDescription)
+      
+      // Also replace first names only
+      const firstNamePattern = new RegExp(`\\b${ref.firstName}\\b`, 'gi')
+      promptScene = promptScene.replace(firstNamePattern, ref.isFemale ? 'the woman' : 'the man')
     })
     
     // Build the final prompt with style
     let prompt = promptScene + ` ${visualStyle}`
     
-    console.log('[Prompt Optimizer] Using MINIMAL MODE with', characterRefs.length, 'reference(s)')
-    console.log('[Prompt Optimizer] Character mappings:', characterRefs.map(r => `${r.name} -> [${r.refId}]`).join(', '))
+    console.log('[Prompt Optimizer] Using TEXT-MATCHING LINK MODE with', characterRefs.length, 'reference(s)')
+    console.log('[Prompt Optimizer] Linking descriptions (must match subjectDescription):')
+    characterRefs.forEach(r => {
+      console.log(`  - ${r.name} -> "${r.linkingDescription}"`)
+    })
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
     console.log(prompt)
     console.log('[Prompt Optimizer] ===== END FULL PROMPT =====')

@@ -1,17 +1,22 @@
 /**
  * ISOLATED TEST ENDPOINT: Verify Imagen API can read reference images
  * 
- * This test uses the SIMPLEST possible prompt to verify:
- * 1. Base64 images are correctly encoded
- * 2. The API can interpret reference images
- * 3. The [1] marker correctly links to referenceId: 1
+ * This test verifies the LINKING mechanism:
+ * - The subject_description in referenceImages MUST match text in the prompt
+ * - This is how the model knows which reference image applies to which person
  * 
- * Test prompt: "A portrait photo of [1]"
- * Expected: The generated image should look like the reference image
+ * Example:
+ *   prompt: "A portrait of a man with curly hair..."
+ *   subject_description: "a man with curly hair"  <- SAME TEXT
+ * 
+ * NOT:
+ *   prompt: "A portrait of [1]..."
+ *   subject_description: "Alex Anderson"  <- DOESN'T MATCH
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { downloadImageAsBase64 } from '@/lib/storage/gcs'
+import { generateLinkingDescription } from '@/lib/imagen/promptOptimizer'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -20,9 +25,10 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { 
-      gcsUri,           // GCS URI of the reference image
-      testPrompt,       // Optional: custom test prompt (defaults to simple portrait)
-      subjectDescription // Optional: subject description (defaults to "a person")
+      gcsUri,              // GCS URI of the reference image
+      subjectDescription,  // Optional: override the LINKING TEXT
+      customPrompt,        // Optional: fully custom prompt (must contain subjectDescription text)
+      appearanceDescription // Optional: character appearance to generate linking text from
     } = body
 
     if (!gcsUri) {
@@ -32,10 +38,21 @@ export async function POST(req: NextRequest) {
       }, { status: 400 })
     }
 
+    // Generate linking description from appearance, or use provided, or default
+    let linkingDescription = subjectDescription
+    if (!linkingDescription && appearanceDescription) {
+      linkingDescription = generateLinkingDescription(appearanceDescription)
+      console.log('[Test Reference] Generated linking description from appearance:', linkingDescription)
+    }
+    if (!linkingDescription) {
+      linkingDescription = 'a man with curly hair'  // Default for testing
+    }
+
     console.log('[Test Reference] ========================================')
-    console.log('[Test Reference] ISOLATED REFERENCE IMAGE TEST')
+    console.log('[Test Reference] REFERENCE IMAGE LINKING TEST')
     console.log('[Test Reference] ========================================')
     console.log('[Test Reference] GCS URI:', gcsUri)
+    console.log('[Test Reference] Linking Description:', linkingDescription)
 
     // Step 1: Download and validate the image
     console.log('[Test Reference] Step 1: Downloading image from GCS...')
@@ -51,13 +68,14 @@ export async function POST(req: NextRequest) {
       }, { status: 500 })
     }
 
-    // Step 2: Build the SIMPLEST possible API request
-    const simplePrompt = testPrompt || 'A professional portrait photo of [1]. The person is looking directly at the camera with a neutral expression. photorealistic, studio lighting, sharp focus'
-    const description = subjectDescription || 'a person'
+    // Step 2: Build prompt with MATCHING TEXT
+    // The key insight: subject_description text MUST appear in the prompt
+    const prompt = customPrompt || `A professional portrait photograph of ${linkingDescription}. The person is looking directly at the camera with a neutral expression. The background is a simple grey studio backdrop. photorealistic, studio lighting, sharp focus, 8K resolution`
     
-    console.log('[Test Reference] Step 2: Building minimal API request...')
-    console.log('[Test Reference] Prompt:', simplePrompt)
-    console.log('[Test Reference] Subject Description:', description)
+    console.log('[Test Reference] Step 2: Building API request with LINKED description...')
+    console.log('[Test Reference] Prompt:', prompt)
+    console.log('[Test Reference] Subject Description (MUST match text in prompt):', linkingDescription)
+    console.log('[Test Reference] Text match check:', prompt.toLowerCase().includes(linkingDescription.toLowerCase()) ? '✓ MATCH' : '✗ NO MATCH')
 
     // Get access token
     const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || '{}')
@@ -75,15 +93,15 @@ export async function POST(req: NextRequest) {
       }, { status: 500 })
     }
 
-    // Build the request - EXACTLY matching Google's documentation
     const projectId = credentials.project_id || 'gen-lang-client-0596406756'
     const region = 'us-central1'
     const model = 'imagen-3.0-capability-001'
     const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${model}:predict`
 
+    // Build request WITHOUT [1] markers - use TEXT MATCHING instead
     const requestBody = {
       instances: [{
-        prompt: simplePrompt,
+        prompt: prompt,
         referenceImages: [{
           referenceType: 'REFERENCE_TYPE_SUBJECT',
           referenceId: 1,
@@ -92,32 +110,34 @@ export async function POST(req: NextRequest) {
           },
           subjectImageConfig: {
             subjectType: 'SUBJECT_TYPE_PERSON',
-            subjectDescription: description
+            subjectDescription: linkingDescription  // SAME TEXT as in prompt
           }
         }]
       }],
       parameters: {
         sampleCount: 1,
-        aspectRatio: '1:1',  // Square for portrait
+        aspectRatio: '1:1',
         safetySetting: 'block_some',
         personGeneration: 'allow_adult'
       }
     }
 
     console.log('[Test Reference] Step 3: Sending request to Imagen API...')
-    console.log('[Test Reference] Endpoint:', endpoint)
     console.log('[Test Reference] Request structure:')
     console.log(JSON.stringify({
-      ...requestBody,
       instances: [{
-        prompt: requestBody.instances[0].prompt,
+        prompt: prompt.substring(0, 100) + '...',
         referenceImages: [{
           referenceType: 'REFERENCE_TYPE_SUBJECT',
           referenceId: 1,
           referenceImage: { bytesBase64Encoded: `[${base64Data.length} chars]` },
-          subjectImageConfig: requestBody.instances[0].referenceImages[0].subjectImageConfig
+          subjectImageConfig: {
+            subjectType: 'SUBJECT_TYPE_PERSON',
+            subjectDescription: linkingDescription
+          }
         }]
-      }]
+      }],
+      parameters: requestBody.parameters
     }, null, 2))
 
     const startTime = Date.now()
@@ -145,47 +165,35 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await response.json()
-    console.log('[Test Reference] ✓ Response keys:', Object.keys(result))
 
-    if (!result.predictions || result.predictions.length === 0) {
-      console.error('[Test Reference] ✗ No predictions in response')
+    if (!result.predictions || result.predictions.length === 0 || !result.predictions[0].bytesBase64Encoded) {
+      console.error('[Test Reference] ✗ No image in response')
       return NextResponse.json({ 
         success: false, 
-        error: 'No predictions returned',
+        error: 'No image data in response',
         response: result
       }, { status: 500 })
     }
 
     const prediction = result.predictions[0]
-    if (!prediction.bytesBase64Encoded) {
-      console.error('[Test Reference] ✗ No image data in prediction')
-      return NextResponse.json({ 
-        success: false, 
-        error: 'No image data in prediction',
-        prediction: { mimeType: prediction.mimeType, hasBytes: false }
-      }, { status: 500 })
-    }
-
     console.log('[Test Reference] ✓ Image generated successfully!')
-    console.log('[Test Reference] Output size:', prediction.bytesBase64Encoded.length, 'base64 chars')
-    console.log('[Test Reference] MIME type:', prediction.mimeType)
 
-    // Return the generated image as base64 data URL
     const imageDataUrl = `data:${prediction.mimeType};base64,${prediction.bytesBase64Encoded}`
 
     return NextResponse.json({
       success: true,
-      message: 'Reference image test completed successfully',
+      message: 'Reference image test completed - compare generated image to reference!',
+      linkingMechanism: {
+        explanation: 'The subject_description text must appear in the prompt to link the reference image',
+        subjectDescription: linkingDescription,
+        appearsInPrompt: prompt.toLowerCase().includes(linkingDescription.toLowerCase())
+      },
       test: {
         gcsUri,
-        prompt: simplePrompt,
-        subjectDescription: description,
-        inputImageSize: base64Data.length,
-        outputImageSize: prediction.bytesBase64Encoded.length,
+        prompt,
+        subjectDescription: linkingDescription,
         elapsedMs: elapsed
       },
-      // Return both the input reference and output for comparison
-      referenceImagePreview: `data:image/jpeg;base64,${base64Data.substring(0, 100)}...`,
       generatedImage: imageDataUrl
     })
 
@@ -193,33 +201,30 @@ export async function POST(req: NextRequest) {
     console.error('[Test Reference] ✗ Unexpected error:', error)
     return NextResponse.json({ 
       success: false, 
-      error: error.message,
-      stack: error.stack
+      error: error.message 
     }, { status: 500 })
   }
 }
 
-/**
- * GET endpoint to show usage instructions
- */
 export async function GET() {
   return NextResponse.json({
     endpoint: '/api/test/reference-image',
     method: 'POST',
-    description: 'Isolated test to verify Imagen API can read reference images',
-    usage: {
-      required: {
-        gcsUri: 'GCS URI of the reference image (e.g., gs://sceneflow-character-refs/characters/alex-anderson-1764493450843.jpg)'
-      },
-      optional: {
-        testPrompt: 'Custom prompt (default: "A professional portrait photo of [1]...")',
-        subjectDescription: 'Subject description (default: "a person")'
-      }
-    },
+    description: 'Test reference image LINKING mechanism',
+    keyInsight: 'The subject_description text MUST appear in the prompt. This is how the model links the reference image to the correct person in the scene.',
     example: {
       gcsUri: 'gs://sceneflow-character-refs/characters/alex-anderson-1764493450843.jpg',
-      subjectDescription: 'a young man with curly hair'
+      subjectDescription: 'a young man with curly dark hair and a beard'
     },
-    expectedResult: 'If working correctly, the generated image should look like the reference image'
+    wrongApproach: {
+      prompt: 'A photo of [1] sitting at a table',
+      subjectDescription: 'Alex Anderson',
+      problem: '[1] and "Alex Anderson" are not the same text - no link!'
+    },
+    correctApproach: {
+      prompt: 'A photo of a young man with curly dark hair sitting at a table',
+      subjectDescription: 'a young man with curly dark hair',
+      solution: 'Same text in both = model knows which reference image to use'
+    }
   })
 }

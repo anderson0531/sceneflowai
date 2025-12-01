@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { callVertexAIImagen } from '@/lib/vertexai/client'
 import { uploadImageToBlob } from '@/lib/storage/blob'
-import { optimizePromptForImagen } from '@/lib/imagen/promptOptimizer'
+import { optimizePromptForImagen, generateLinkingDescription } from '@/lib/imagen/promptOptimizer'
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
 import { waitForGCSURIs, checkGCSURIAccessibility } from '@/lib/storage/gcsAccessibility'
 import Project from '../../../../models/Project'
@@ -11,6 +11,7 @@ export const runtime = 'nodejs'
 export const maxDuration = 60
 
 /**
+ * @deprecated Use generateLinkingDescription from promptOptimizer instead
  * Extract VISUAL ANCHORS from appearance description for Imagen API
  * 
  * The model needs key visual differentiators to "latch onto" the reference image.
@@ -472,16 +473,25 @@ export async function POST(req: NextRequest) {
         console.error(`[Scene Image] ERROR: Character ${char.name} has GCS but no referenceId assigned!`)
       }
       
-      // Create VISUAL ANCHOR description for the API
-      // Includes key differentiators (age, hair, beard, glasses) to help model latch onto reference
-      const visualAnchorDescription = createVisualAnchorDescription(char, referenceId || 1)
+      // Generate LINKING DESCRIPTION for text-matching mode
+      // This EXACT text must appear in BOTH the prompt AND the subjectDescription
+      // to link the reference image to the character in the scene
+      const description = char.visionDescription || char.appearanceDescription || ''
+      const linkingDescription = generateLinkingDescription(description)
+      
+      // Also add linkingDescription to the characterReference so promptOptimizer can use it
+      if (matchingRef) {
+        matchingRef.linkingDescription = linkingDescription
+      }
+      
+      console.log(`[Scene Image] Character ${char.name} linking description: "${linkingDescription}"`)
       
       return {
         referenceId: referenceId || 1, // Fallback to 1 if somehow missing
         gcsUri: char.referenceImageGCS,
         referenceType: 'REFERENCE_TYPE_SUBJECT' as const,
         subjectType: 'SUBJECT_TYPE_PERSON' as const,
-        subjectDescription: visualAnchorDescription,
+        subjectDescription: linkingDescription,
         // Store HTTPS fallback URL
         httpsUrl: char.referenceImage
       }
