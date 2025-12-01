@@ -32,6 +32,21 @@ export function getAvailableLanguages(scenes: any[]): string[] {
       languages.add('en')
       console.log(`[Language Detection] Found legacy narrationAudioUrl in scene ${sceneIndex + 1}`)
     }
+
+    // Check description audio - mirrors narration structure
+    if (scene.descriptionAudio && typeof scene.descriptionAudio === 'object' && !Array.isArray(scene.descriptionAudio)) {
+      Object.entries(scene.descriptionAudio).forEach(([lang, data]: [string, any]) => {
+        const hasUrl = data?.url || (typeof data === 'string' && data.length > 0)
+        if (hasUrl) {
+          languages.add(lang)
+          console.log(`[Language Detection] Found description audio for language "${lang}" in scene ${sceneIndex + 1}`)
+        }
+      })
+    }
+    if (scene.descriptionAudioUrl && !scene.descriptionAudio) {
+      languages.add('en')
+      console.log(`[Language Detection] Found legacy descriptionAudioUrl in scene ${sceneIndex + 1}`)
+    }
     
     // Check dialogue audio - new multi-language structure
     if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object' && !Array.isArray(scene.dialogueAudio)) {
@@ -67,16 +82,18 @@ export function getAvailableLanguages(scenes: any[]): string[] {
  * Check if a specific language has audio for a scene
  */
 export function hasLanguageAudio(scene: any, language: string): boolean {
-  // Check narration
-  const hasNarration = 
+  const hasNarration =
     (scene.narrationAudio?.[language]?.url) ||
     (language === 'en' && scene.narrationAudioUrl)
-  
-  // Check dialogue
+
+  const hasDescription =
+    (scene.descriptionAudio?.[language]?.url) ||
+    (language === 'en' && scene.descriptionAudioUrl)
+
   const dialogueArray = scene.dialogueAudio?.[language] || (language === 'en' ? scene.dialogueAudio : null)
   const hasDialogue = Array.isArray(dialogueArray) && dialogueArray.some((d: any) => d.audioUrl)
-  
-  return hasNarration || hasDialogue
+
+  return hasNarration || hasDescription || hasDialogue
 }
 
 /**
@@ -85,18 +102,22 @@ export function hasLanguageAudio(scene: any, language: string): boolean {
 export function getAudioUrl(
   scene: any,
   language: string,
-  audioType: 'narration' | 'dialogue',
+  audioType: 'narration' | 'dialogue' | 'description',
   dialogueIndex?: number
 ): string | null {
   if (audioType === 'narration') {
     return scene.narrationAudio?.[language]?.url || (language === 'en' ? scene.narrationAudioUrl : null) || null
-  } else {
-    const dialogueArray = scene.dialogueAudio?.[language] || (language === 'en' ? scene.dialogueAudio : null)
-    if (Array.isArray(dialogueArray) && dialogueIndex !== undefined) {
-      return dialogueArray[dialogueIndex]?.audioUrl || null
-    }
-    return null
   }
+
+  if (audioType === 'description') {
+    return scene.descriptionAudio?.[language]?.url || (language === 'en' ? scene.descriptionAudioUrl : null) || null
+  }
+
+  const dialogueArray = scene.dialogueAudio?.[language] || (language === 'en' ? scene.dialogueAudio : null)
+  if (Array.isArray(dialogueArray) && dialogueIndex !== undefined) {
+    return dialogueArray[dialogueIndex]?.audioUrl || null
+  }
+  return null
 }
 
 /**
@@ -105,17 +126,21 @@ export function getAudioUrl(
 export function getAudioDuration(
   scene: any,
   language: string,
-  audioType: 'narration' | 'dialogue',
+  audioType: 'narration' | 'dialogue' | 'description',
   dialogueIndex?: number
 ): number | null {
   if (audioType === 'narration') {
     return scene.narrationAudio?.[language]?.duration || null
-  } else {
-    const dialogueArray = scene.dialogueAudio?.[language] || (language === 'en' ? scene.dialogueAudio : null)
-    if (Array.isArray(dialogueArray) && dialogueIndex !== undefined) {
-      return dialogueArray[dialogueIndex]?.duration || null
-    }
-    return null
   }
+
+  if (audioType === 'description') {
+    return scene.descriptionAudio?.[language]?.duration || null
+  }
+
+  const dialogueArray = scene.dialogueAudio?.[language] || (language === 'en' ? scene.dialogueAudio : null)
+  if (Array.isArray(dialogueArray) && dialogueIndex !== undefined) {
+    return dialogueArray[dialogueIndex]?.duration || null
+  }
+  return null
 }
 

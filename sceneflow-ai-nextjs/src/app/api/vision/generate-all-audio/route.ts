@@ -148,6 +148,7 @@ export async function POST(req: NextRequest) {
         try {
           const results = []
           let narrationCount = 0
+          let descriptionCount = 0
           let dialogueCount = 0
           let musicCount = 0
           let sfxCount = 0
@@ -185,6 +186,27 @@ export async function POST(req: NextRequest) {
               const narrationData = await narrationResult.json()
               if (narrationData.success) narrationCount++
               results.push(narrationData)
+            }
+
+            // Generate scene description audio if text is available
+            const sceneDescriptionText = scene.visualDescription || scene.action || scene.summary || scene.heading
+            if (sceneDescriptionText) {
+              console.log(`[Batch Audio] Generating description audio for scene ${i + 1}`)
+              const optimizedDescription = optimizeTextForTTS(sceneDescriptionText)
+              const descriptionResult = await fetch(`${baseUrl}/api/vision/generate-scene-audio`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  projectId,
+                  sceneIndex: i,
+                  audioType: 'description',
+                  text: optimizedDescription.text,
+                  voiceConfig: narrationVoice,
+                }),
+              })
+              const descriptionData = await descriptionResult.json()
+              if (descriptionData.success) descriptionCount++
+              results.push(descriptionData)
             }
             
             // Generate dialogue
@@ -343,6 +365,7 @@ export async function POST(req: NextRequest) {
           sendProgress({
             type: 'complete',
             narrationCount,
+            descriptionCount,
             dialogueCount,
             musicCount,
             sfxCount,

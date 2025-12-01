@@ -3309,7 +3309,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   // Handle generate scene audio
-  const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number, language: string = 'en') => {
+  const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue' | 'description', characterName?: string, dialogueIndex?: number, language: string = 'en') => {
     console.log('[Generate Scene Audio] START:', { sceneIdx, audioType, characterName, dialogueIndex })
     
     const scene = script?.script?.scenes?.[sceneIdx]
@@ -3319,7 +3319,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
 
     // Add a lock mechanism to prevent concurrent dialogue generations
-    const lockKey = `${sceneIdx}-${audioType === 'dialogue' ? `${characterName}-${dialogueIndex}` : 'narration'}`
+    const lockKey = `${sceneIdx}-${audioType === 'dialogue' ? `${characterName}-${dialogueIndex}` : audioType}`
     if (generatingAudioLocks.has(lockKey)) {
       console.warn('[Generate Scene Audio] Already generating for:', lockKey)
       return
@@ -3346,7 +3346,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       }
       
-      const text = audioType === 'narration' ? scene.narration : dialogueLine?.line
+      let text: string | undefined
+      if (audioType === 'narration') {
+        text = scene.narration
+      } else if (audioType === 'description') {
+        text = scene.visualDescription || scene.action || scene.summary || scene.heading
+      } else {
+        text = dialogueLine?.line
+      }
       
       if (!text) {
         try { const { toast } = require('sonner'); toast.error('No text found to generate audio') } catch {}
@@ -3354,11 +3361,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
             // Primary: Match by ID (most reliable)
-      let character = audioType === 'narration' ? null :
-        (dialogueLine?.characterId ? 
-          characters.find(c => c.id === dialogueLine.characterId) :
-          null
-        )
+      let character = audioType === 'dialogue'
+        ? (dialogueLine?.characterId
+            ? characters.find(c => c.id === dialogueLine.characterId)
+            : null)
+        : null
       
       // Enhanced fallback matching if ID lookup fails
       if (!character && audioType === 'dialogue' && characterName) {
@@ -3414,13 +3421,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       }
       
-      const voiceConfig = audioType === 'narration' ? narrationVoice : character?.voiceConfig
+      const voiceConfig = audioType === 'dialogue' ? character?.voiceConfig : narrationVoice
 
       console.log('[Generate Scene Audio] Voice config determined:', { voiceConfig, audioType })
 
       if (!voiceConfig) {
         // Show specific error message based on audio type
-        if (audioType === 'narration') {
+        if (audioType === 'narration' || audioType === 'description') {
           console.error('[Generate Scene Audio] No narration voice configured')
           try { 
             const { toast } = require('sonner')
@@ -3445,7 +3452,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         audioType,
         text: text.substring(0, 50),
         voiceId: voiceConfig.voiceId,
-        characterName, // CRITICAL: Must be passed
+        language,
+        characterName,
         dialogueIndex
       })
 
@@ -3504,6 +3512,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               updated.script = { ...updated.script, scenes: updatedScenes }
               
               console.log('[Generate Scene Audio] Updated script with narration audio for language:', language, 'Scene:', sceneIdx)
+            } else if (audioType === 'description') {
+              if (!scene.descriptionAudio) {
+                scene.descriptionAudio = {}
+              } else {
+                scene.descriptionAudio = { ...scene.descriptionAudio }
+              }
+
+              scene.descriptionAudio[language] = {
+                url: data.audioUrl,
+                duration: data.duration || undefined,
+                generatedAt: new Date().toISOString(),
+                voiceId: voiceConfig.voiceId
+              }
+
+              if (language === 'en') {
+                scene.descriptionAudioUrl = data.audioUrl
+                scene.descriptionAudioGeneratedAt = new Date().toISOString()
+              }
+
+              updatedScenes[sceneIdx] = scene
+              updated.script = { ...updated.script, scenes: updatedScenes }
             } else if (audioType === 'dialogue' && characterName) {
               // Initialize dialogueAudio object if needed
               if (!scene.dialogueAudio || Array.isArray(scene.dialogueAudio)) {

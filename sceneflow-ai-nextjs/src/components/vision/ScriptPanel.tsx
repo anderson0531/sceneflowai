@@ -3145,6 +3145,117 @@ function SceneCard({
               <div className="mt-4">
                 {activeWorkflowTab === 'dialogueAction' && (
                   <div className="space-y-4">
+                  {/* Scene Description (plays before narration) */}
+                  {(() => {
+                    const sceneDescription = scene.visualDescription || scene.action || scene.summary || scene.heading
+                    if (!sceneDescription) return null
+
+                    const descriptionUrl = scene.descriptionAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.descriptionAudioUrl : undefined)
+
+                    return (
+                      <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Volume2 className="w-4 h-4 text-purple-600 dark:text-purple-300" />
+                            <span className="text-xs font-semibold text-purple-700 dark:text-purple-200">Scene Description</span>
+                            {descriptionUrl && (
+                              <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
+                                <Volume2 className="w-3 h-3" />
+                                Audio Ready
+                              </span>
+                            )}
+                          </div>
+                          {descriptionUrl ? (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onPlayAudio?.(descriptionUrl, 'description')
+                                }}
+                                className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
+                                title="Play Scene Description"
+                              >
+                                {playingAudio === descriptionUrl ? (
+                                  <Pause className="w-4 h-4" />
+                                ) : (
+                                  <Play className="w-4 h-4" />
+                                )}
+                              </button>
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation()
+                                  if (!onGenerateSceneAudio) return
+
+                                  setGeneratingDialogue?.({ sceneIdx, character: '__description__' })
+                                  overlayStore?.show(`Regenerating scene description for Scene ${sceneIdx + 1}...`, 20)
+                                  try {
+                                    await onGenerateSceneAudio?.(sceneIdx, 'description', undefined, undefined, selectedLanguage)
+                                    overlayStore?.hide()
+                                    toast.success('Scene description regenerated!')
+                                  } catch (error) {
+                                    console.error('[ScriptPanel] Description regeneration failed:', error)
+                                    overlayStore?.hide()
+                                    toast.error('Failed to regenerate description audio')
+                                  } finally {
+                                    setGeneratingDialogue?.(null)
+                                  }
+                                }}
+                                disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__description__'}
+                                className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded disabled:opacity-50"
+                                title="Regenerate Scene Description Audio"
+                              >
+                                {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__description__' ? (
+                                  <Loader className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <RefreshCw className="w-4 h-4" />
+                                )}
+                              </button>
+                              <a
+                                href={descriptionUrl}
+                                download
+                                className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
+                                title="Download Scene Description Audio"
+                              >
+                                <Download className="w-4 h-4" />
+                              </a>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation()
+                                if (!onGenerateSceneAudio) return
+
+                                setGeneratingDialogue?.({ sceneIdx, character: '__description__' })
+                                overlayStore?.show(`Generating scene description for Scene ${sceneIdx + 1}...`, 20)
+                                try {
+                                  await onGenerateSceneAudio?.(sceneIdx, 'description', undefined, undefined, selectedLanguage)
+                                  overlayStore?.hide()
+                                  toast.success('Scene description generated!')
+                                } catch (error) {
+                                  console.error('[ScriptPanel] Description generation failed:', error)
+                                  overlayStore?.hide()
+                                  toast.error('Failed to generate scene description audio')
+                                } finally {
+                                  setGeneratingDialogue?.(null)
+                                }
+                              }}
+                              disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__description__'}
+                              className="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
+                            >
+                              {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__description__' ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : null}
+                              Generate Audio
+                            </button>
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
+                          "{sceneDescription}"
+                        </div>
+                      </div>
+                    )
+                  })()}
+
                   {/* Scene Narration */}
                   {scene.narration && (() => {
                     const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)

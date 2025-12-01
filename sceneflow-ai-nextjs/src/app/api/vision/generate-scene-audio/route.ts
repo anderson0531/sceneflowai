@@ -21,7 +21,7 @@ interface VoiceConfig {
 interface AudioGenerationRequest {
   projectId: string
   sceneIndex: number
-  audioType: 'narration' | 'dialogue'
+  audioType: 'narration' | 'dialogue' | 'description'
   text: string
   voiceConfig: VoiceConfig
   language?: string // New: language code (default: 'en')
@@ -31,7 +31,7 @@ interface AudioGenerationRequest {
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, sceneIndex, audioType, text, voiceConfig, language = 'en', characterName, dialogueIndex } = await req.json()
+    const { projectId, sceneIndex, audioType, text, voiceConfig, language = 'en', characterName, dialogueIndex }: AudioGenerationRequest & { text: string } = await req.json()
 
     // Log the request for debugging
     console.log('[Scene Audio] Request:', { 
@@ -160,9 +160,13 @@ export async function POST(req: NextRequest) {
 
     // Step 6: Upload to Vercel Blob
     const languageSuffix = language !== 'en' ? `-${language}` : ''
-    const fileName = characterName
-      ? `audio/${projectId}/scene-${sceneIndex}-${characterName}${languageSuffix}-${Date.now()}.mp3`
-      : `audio/${projectId}/scene-${sceneIndex}-narration${languageSuffix}-${Date.now()}.mp3`
+    const fileDescriptor = audioType === 'description'
+      ? 'description'
+      : audioType === 'narration'
+        ? 'narration'
+        : characterName || 'dialogue'
+
+    const fileName = `audio/${projectId}/scene-${sceneIndex}-${fileDescriptor}${languageSuffix}-${Date.now()}.mp3`
 
     const blob = await put(fileName, audioBuffer, {
       access: 'public',
@@ -329,7 +333,7 @@ async function generateGoogleAudio(text: string, voiceConfig: VoiceConfig): Prom
 async function updateSceneAudio(
   projectId: string,
   sceneIndex: number,
-  audioType: 'narration' | 'dialogue',
+  audioType: 'narration' | 'dialogue' | 'description',
   audioUrl: string,
   language: string = 'en',
   duration?: number | null,
@@ -382,6 +386,24 @@ async function updateSceneAudio(
         scene.narrationAudioGeneratedAt = new Date().toISOString()
       }
       
+      return scene
+    } else if (audioType === 'description') {
+      if (!scene.descriptionAudio) {
+        scene.descriptionAudio = {}
+      }
+
+      scene.descriptionAudio[language] = {
+        url: audioUrl,
+        duration: duration || undefined,
+        generatedAt: new Date().toISOString(),
+        voiceId: voiceId || undefined,
+      }
+
+      if (language === 'en') {
+        scene.descriptionAudioUrl = audioUrl
+        scene.descriptionAudioGeneratedAt = new Date().toISOString()
+      }
+
       return scene
     } else {
       // Dialogue audio - initialize dialogueAudio object if needed
