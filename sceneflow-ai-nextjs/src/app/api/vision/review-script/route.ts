@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function generateDirectorReview(script: any): Promise<Review> {
-  const apiKey = process.env.GOOGLE_GEMINI_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) throw new Error('Google API key not configured')
 
   const sceneCount = script.scenes?.length || 0
@@ -195,7 +195,7 @@ Format as JSON with this structure:
 }
 
 async function generateAudienceReview(script: any): Promise<Review> {
-  const apiKey = process.env.GOOGLE_GEMINI_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) throw new Error('Google API key not configured')
 
   const sceneCount = script.scenes?.length || 0

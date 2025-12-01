@@ -255,7 +255,7 @@ async function generateVideoIdeas(
   const formattedConversation = formatConversationForIdeaGeneration(systemPrompt, conversationHistory, finalizedConcept)
 
   // 1) Try Google Gemini (if key present) for real generations
-  const apiKey = process.env.GOOGLE_GEMINI_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
   console.log('Google Gemini API Key present:', !!apiKey)
   if (apiKey) {
     try {

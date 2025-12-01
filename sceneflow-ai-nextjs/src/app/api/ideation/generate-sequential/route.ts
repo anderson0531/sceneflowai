@@ -461,7 +461,7 @@ export async function POST(request: NextRequest) {
     console.log('🔄 Input content preview:', input.substring(0, 200))
 
     // Resolve provider/model and API keys with Gemini-first fallback when auto
-    const geminiApiKey = process.env.GOOGLE_GEMINI_API_KEY
+    const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
     const openaiApiKey = process.env.OPENAI_API_KEY
 
     const userProvider = provider && (provider as any) !== 'auto' ? (provider as Provider) : null

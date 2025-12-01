@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
     if (!apiKey) {
       return NextResponse.json(
         { success: false, error: 'Google API key not configured' },

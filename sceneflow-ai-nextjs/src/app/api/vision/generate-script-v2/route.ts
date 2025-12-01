@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
           return
         }
 
-        const apiKey = process.env.GOOGLE_GEMINI_API_KEY
+        const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
         if (!apiKey) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
             type: 'error', 

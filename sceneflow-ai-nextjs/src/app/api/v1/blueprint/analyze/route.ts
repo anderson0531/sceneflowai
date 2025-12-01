@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     const data = RequestSchema.parse(body)
 
     // Resolve provider/model with safe fallback based on available keys
-    const hasGemini = !!(process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY)
+    const hasGemini = !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY)
     const hasOpenAI = !!process.env.OPENAI_API_KEY
     const resolvedProvider: Provider = (() => {
       if (data.provider === 'gemini' || data.provider === 'openai') return data.provider

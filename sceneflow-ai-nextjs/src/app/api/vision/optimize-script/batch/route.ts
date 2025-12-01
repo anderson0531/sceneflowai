@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     const jobs = getJobs()
     jobs[jobId] = { total: script.scenes?.length || 0, completed: 0, currentScene: 0, lastMessage: 'Queued' }
 
-    const apiKey = process.env.GOOGLE_GEMINI_API_KEY as string
+    const apiKey = (process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY) as string
     if (!apiKey) throw new Error('Google API key not configured')
 
     // Fire-and-forget

@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No image URL provided' }, { status: 400 })
     }
     
-    const apiKey = process.env.GOOGLE_GEMINI_API_KEY
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
     if (!apiKey) {
       return NextResponse.json({ error: 'API key not configured' }, { status: 500 })
     }

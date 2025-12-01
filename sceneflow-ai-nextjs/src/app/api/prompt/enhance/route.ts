@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Field and value are required' }, { status: 400 })
     }
 
-    const googleApiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
+    const googleApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
     if (!googleApiKey) {
       return NextResponse.json({ 
         error: 'Google API key not configured' 

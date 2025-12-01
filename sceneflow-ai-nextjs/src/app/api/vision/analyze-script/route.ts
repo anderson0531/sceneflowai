@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function analyzeScript(script: any, characters: any[], compact: boolean): Promise<any[]> {
-  const apiKey = process.env.GOOGLE_GEMINI_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) throw new Error('Google API key not configured')
   
   const limit = compact ? 5 : 8

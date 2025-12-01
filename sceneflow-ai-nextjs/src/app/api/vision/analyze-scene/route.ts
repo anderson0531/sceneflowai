@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
 
     console.log('[Scene Analysis] Analyzing scene:', sceneIndex, 'for project:', projectId)
     console.log('[Scene Analysis] Scene data:', JSON.stringify(scene, null, 2))
-    console.log('[Scene Analysis] API Key present:', !!process.env.GOOGLE_GEMINI_API_KEY)
+    console.log('[Scene Analysis] API Key present:', !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY))
 
     // Generate both director and audience analysis
     let directorAnalysis, audienceAnalysis
@@ -123,7 +123,7 @@ async function generateDirectorAnalysis(scene: any, context: any): Promise<{
   score: number
   recommendations: Recommendation[]
 }> {
-  const apiKey = process.env.GOOGLE_GEMINI_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) throw new Error('Google API key not configured')
 
   const dialogueText = scene.dialogue?.map((d: any) => `${d.character}: ${d.text}`).join('\n') || 'No dialogue'
@@ -336,7 +336,7 @@ async function generateAudienceAnalysis(scene: any, context: any): Promise<{
   score: number
   recommendations: Recommendation[]
 }> {
-  const apiKey = process.env.GOOGLE_GEMINI_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) throw new Error('Google API key not configured')
 
   const dialogueText = scene.dialogue?.map((d: any) => `${d.character}: ${d.text}`).join('\n') || 'No dialogue'

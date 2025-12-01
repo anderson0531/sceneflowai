@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function optimizeScript(script: any, instruction: string, characters: any[], compact: boolean) {
-  const apiKey = process.env.GOOGLE_GEMINI_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) throw new Error('Google API key not configured')
   
   // Build condensed script summary for context

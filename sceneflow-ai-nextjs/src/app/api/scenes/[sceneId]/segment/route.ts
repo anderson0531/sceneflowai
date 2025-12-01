@@ -174,7 +174,7 @@ async function resolvePromptGeneration({
   const attempts: Array<() => Promise<{ provider: string; segments: SegmentPrompt[] }>> = []
 
   const hasOpenAI = !!process.env.OPENAI_API_KEY
-  const hasGemini = !!process.env.GOOGLE_GEMINI_API_KEY || !!process.env.GOOGLE_API_KEY
+  const hasGemini = !!process.env.GEMINI_API_KEY || !!process.env.GOOGLE_GEMINI_API_KEY || !!process.env.GOOGLE_API_KEY
 
   const llmPrompt = buildLLMPrompt(context)
 

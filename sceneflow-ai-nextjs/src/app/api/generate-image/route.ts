@@ -17,10 +17,10 @@ export async function POST(req: NextRequest) {
 
     // Use Google Generative AI (Gemini/Imagen) for image generation
     // BYOK: Use user-provided key if available
-    const googleApiKey = options?.userApiKey || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    const googleApiKey = options?.userApiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     
     if (!googleApiKey) {
-      console.error('Google API key not found in environment variables (GOOGLE_GEMINI_API_KEY / GOOGLE_API_KEY)');
+      console.error('Google API key not found in environment variables (GEMINI_API_KEY / GOOGLE_GEMINI_API_KEY / GOOGLE_API_KEY)');
       return NextResponse.json(
         { error: 'Google API key not configured' },
         { status: 500 }

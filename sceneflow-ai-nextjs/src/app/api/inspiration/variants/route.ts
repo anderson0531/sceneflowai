@@ -55,7 +55,7 @@ CRITICAL:
 OUTPUT FORMAT: Return ONLY the variations, one per line, no numbering, no markdown.`
 
     // Call Gemini API directly with high temperature for creativity
-    const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
     if (!apiKey) {
       throw new Error('Google Gemini API key not configured')
     }

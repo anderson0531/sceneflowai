@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    const apiKey = process.env.GOOGLE_GEMINI_API_KEY
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
     console.log('🔑 API Key available:', !!apiKey)
     if (!apiKey) {
       console.error('❌ Google Gemini API key not configured')

@@ -89,7 +89,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Get user's LLM provider configuration
     let llmProvider = 'GOOGLE_GEMINI' // Default fallback
-    let apiKey = process.env.GOOGLE_GEMINI_API_KEY
+    let apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
 
     try {
       const userConfig = await UserProviderConfig.findOne({

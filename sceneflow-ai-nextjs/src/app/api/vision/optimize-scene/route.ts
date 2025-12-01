@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function optimizeScene(scene: any, context: any) {
-  const apiKey = process.env.GOOGLE_GEMINI_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) throw new Error('Google API key not configured')
 
   const dialogueText = scene.dialogue?.map((d: any) => `${d.character}: ${d.text}`).join('\n') || 'No dialogue'

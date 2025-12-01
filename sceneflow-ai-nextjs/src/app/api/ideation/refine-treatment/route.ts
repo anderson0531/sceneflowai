@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     const { variant, instructions } = body || {}
     if (!variant) return NextResponse.json({ success: false, message: 'variant required' }, { status: 400 })
 
-    const apiKey = process.env.GOOGLE_GEMINI_API_KEY
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
     if (!apiKey) return NextResponse.json({ success: false, message: 'Google Gemini API key not configured' }, { status: 500 })
 
     const prompt = `You are an expert film treatment editor. Refine the provided treatment variant according to the user instructions. Keep structure and factual content unless asked to change. Improve clarity, tone and concision.

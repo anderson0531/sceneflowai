@@ -95,7 +95,7 @@ export const V2BlueprintRequest = z.object({
 export type V2BlueprintRequestType = z.infer<typeof V2BlueprintRequest>
 
 export async function analyzeBlueprintV2(req: V2BlueprintRequestType): Promise<{ data: V2Blueprint; provider: Provider; model: string; }>{
-  const hasGemini = !!(process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY)
+  const hasGemini = !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY)
   const hasOpenAI = !!process.env.OPENAI_API_KEY
   const provider: Provider = ((): Provider => {
     if (req.provider === 'gemini' || req.provider === 'openai') return req.provider
@@ -201,7 +201,7 @@ INPUT:\n${req.input}`
 }
 
 export async function analyzeBlueprintV2Batch(req: V2BlueprintRequestType): Promise<{ items: V2Blueprint[]; provider: Provider; model: string; }>{
-  const hasGemini = !!(process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY)
+  const hasGemini = !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY)
   const hasOpenAI = !!process.env.OPENAI_API_KEY
   const provider: Provider = ((): Provider => {
     if (req.provider === 'gemini' || req.provider === 'openai') return req.provider

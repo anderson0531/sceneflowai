@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
     const variantsRequested = Math.max(1, Math.min(5, Number(body?.variants || 1)))
     if (!input) return NextResponse.json({ success: false, error: 'Missing input' }, { status: 400 })
 
-    const provider = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY ? 'gemini' : 'openai'
+    const provider = (process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY) ? 'gemini' : 'openai'
     const model = provider === 'gemini' ? (process.env.GEMINI_MODEL || 'gemini-2.5-flash') : (process.env.OPENAI_MODEL || 'gpt-4.1')
     
     console.log(`[Blueprint V3] Generating ${variantsRequested} variant(s) - model: ${model}`)
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
     async function generateOne(): Promise<SimpleBlueprint> {
       let jsonText = ''
       if (provider === 'gemini') {
-        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY}`, {
+        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
