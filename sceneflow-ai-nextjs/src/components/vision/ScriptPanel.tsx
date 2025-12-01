@@ -2148,6 +2148,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                           onBookmarkToggle={() => handleBookmarkToggle(idx)}
                           bookmarkSaving={bookmarkSavingSceneIdx === idx}
                           overlayStore={overlayStore}
+                          projectId={projectId}
                 />
                     )
                   })}
@@ -2450,6 +2451,7 @@ interface SceneCardProps {
   onBookmarkToggle?: () => void
   bookmarkSaving?: boolean
   overlayStore?: { show: (message: string, duration: number) => void; hide: () => void }
+  projectId?: string
 }
 
 function SceneCard({
@@ -2513,6 +2515,7 @@ function SceneCard({
   onBookmarkToggle,
   bookmarkSaving = false,
   overlayStore,
+  projectId,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
