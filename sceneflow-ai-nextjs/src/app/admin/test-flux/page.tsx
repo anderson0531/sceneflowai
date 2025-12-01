@@ -70,21 +70,41 @@ export default function FluxTestPage() {
           &larr; Back to Imagen Test
         </Link>
       </div>
+
+      {/* Pro Tips Section */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 p-4 rounded-lg mb-6">
+        <h2 className="text-lg font-bold text-blue-900 mb-2">💡 Pro Tips for Better Results</h2>
+        <ul className="text-sm text-blue-800 space-y-1">
+          <li><strong>Quality:</strong> Use 95-100 for production, 80-90 for testing</li>
+          <li><strong>Format:</strong> PNG for transparency, WebP for best compression, JPEG for compatibility</li>
+          <li><strong>Reference Images:</strong> Keep strength at 0.01-0.10 for style guidance without overriding prompt</li>
+          <li><strong>Prompt Upsampling:</strong> Keep enabled for better prompt interpretation</li>
+          <li><strong>Seed:</strong> Use same seed to reproduce exact results or leave blank for variety</li>
+          <li><strong>Safety:</strong> If content is blocked, increase tolerance to 3-4</li>
+        </ul>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Controls */}
         <div className="bg-white p-6 rounded-lg shadow-md space-y-4 h-fit">
           <div>
-            <label className="block text-sm font-bold mb-1">Prompt</label>
+            <label className="block text-sm font-bold mb-1">
+              Prompt
+              <span className="ml-2 text-xs font-normal text-gray-500">(Be specific and detailed)</span>
+            </label>
             <textarea 
               value={prompt} 
               onChange={(e) => setPrompt(e.target.value)}
               className="w-full p-2 border rounded text-sm h-32"
+              placeholder="Example: A cinematic wide shot of a futuristic city at sunset, flying cars, neon lights, 8k, photorealistic"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">Aspect Ratio</label>
+            <label className="block text-sm font-bold mb-1">
+              Aspect Ratio
+              <span className="ml-2 text-xs font-normal text-gray-500">(Choose based on use case)</span>
+            </label>
             <select 
               value={aspectRatio}
               onChange={(e) => setAspectRatio(e.target.value)}
@@ -98,7 +118,13 @@ export default function FluxTestPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">Reference Images (Optional, max 3)</label>
+            <label className="block text-sm font-bold mb-1">
+              Reference Images
+              <span className="ml-2 text-xs font-normal text-gray-500">(Optional, max 3)</span>
+            </label>
+            <div className="text-xs text-blue-600 mb-2">
+              💡 For style only: Keep strength low (0.01-0.10)
+            </div>
             <input
               type="file"
               accept="image/*"
@@ -146,34 +172,43 @@ export default function FluxTestPage() {
           )}
 
           <div>
-            <label className="block text-sm font-bold mb-1">Output Quality</label>
+            <label className="block text-sm font-bold mb-1">
+              Output Quality
+              <span className="ml-2 text-xs font-normal text-gray-500">(Higher = better but slower)</span>
+            </label>
             <select 
               value={outputQuality}
               onChange={(e) => setOutputQuality(Number(e.target.value))}
               className="w-full p-2 border rounded text-sm"
             >
-              <option value="80">Standard (80)</option>
-              <option value="90">High (90)</option>
-              <option value="95">Very High (95)</option>
-              <option value="100">Maximum (100)</option>
+              <option value="80">Standard (80) - Fast</option>
+              <option value="90">High (90) - Recommended</option>
+              <option value="95">Very High (95) - Production</option>
+              <option value="100">Maximum (100) - Best Quality</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">Output Format</label>
+            <label className="block text-sm font-bold mb-1">
+              Output Format
+              <span className="ml-2 text-xs font-normal text-gray-500">(File type)</span>
+            </label>
             <select 
               value={outputFormat}
               onChange={(e) => setOutputFormat(e.target.value)}
               className="w-full p-2 border rounded text-sm"
             >
-              <option value="jpg">JPEG</option>
-              <option value="png">PNG</option>
-              <option value="webp">WebP</option>
+              <option value="jpg">JPEG - Smallest size</option>
+              <option value="png">PNG - Best quality</option>
+              <option value="webp">WebP - Balanced</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">Safety Tolerance (0-6)</label>
+            <label className="block text-sm font-bold mb-1">
+              Safety Tolerance
+              <span className="ml-2 text-xs font-normal text-gray-500">(0-6, increase if blocked)</span>
+            </label>
             <select 
               value={safetyTolerance}
               onChange={(e) => setSafetyTolerance(Number(e.target.value))}
@@ -190,18 +225,23 @@ export default function FluxTestPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">Seed (Optional)</label>
+            <label className="block text-sm font-bold mb-1">
+              Seed
+              <span className="ml-2 text-xs font-normal text-gray-500">(Optional, for reproducibility)</span>
+            </label>
             <input
               type="number"
               value={seed || ''}
               onChange={(e) => setSeed(e.target.value ? Number(e.target.value) : undefined)}
-              placeholder="Random"
+              placeholder="Random (leave blank for variety)"
               className="w-full p-2 border rounded text-sm"
             />
-            <div className="text-xs text-gray-500 mt-1">Same seed = reproducible results</div>
+            <div className="text-xs text-blue-600 mt-1">
+              💡 Use same seed to get identical results
+            </div>
           </div>
 
-          <div>
+          <div className="bg-green-50 p-3 rounded border border-green-200">
             <label className="flex items-center space-x-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -209,9 +249,11 @@ export default function FluxTestPage() {
                 onChange={(e) => setPromptUpsampling(e.target.checked)}
                 className="w-4 h-4"
               />
-              <span className="text-sm font-bold">Prompt Upsampling</span>
+              <span className="text-sm font-bold text-green-900">Prompt Upsampling</span>
             </label>
-            <div className="text-xs text-gray-500 mt-1">Automatically improve prompt for better results</div>
+            <div className="text-xs text-green-700 mt-1">
+              ✨ Recommended: Automatically enhances your prompt for better results
+            </div>
           </div>
 
           <button 
