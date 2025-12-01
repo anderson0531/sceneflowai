@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { uploadImageToGCS } from '@/lib/storage/gcs'
 import { analyzeCharacterImage } from '@/lib/imagen/visionAnalyzer'
 
 export const runtime = 'nodejs'
@@ -15,16 +14,13 @@ export async function POST(req: NextRequest) {
     
     console.log('[Process Upload] Processing upload for', characterName)
     
-    // Fetch from Vercel Blob and upload to GCS (for Imagen API)
+    // Verify Blob URL is accessible
     const imageResponse = await fetch(blobUrl)
     if (!imageResponse.ok) {
       throw new Error('Failed to fetch image from Vercel Blob')
     }
     
-    const imageBuffer = Buffer.from(await imageResponse.arrayBuffer())
-    const gcsUrl = await uploadImageToGCS(imageBuffer, characterName)
-    
-    console.log('[Process Upload] GCS URL:', gcsUrl)
+    console.log('[Process Upload] Blob URL verified:', blobUrl)
     
     // AUTO-ANALYZE: Extract detailed description using Gemini Vision
     let visionDescription = null
@@ -38,7 +34,6 @@ export async function POST(req: NextRequest) {
     
     return NextResponse.json({ 
       success: true,
-      gcsUrl,
       visionDescription
     })
   } catch (error: any) {

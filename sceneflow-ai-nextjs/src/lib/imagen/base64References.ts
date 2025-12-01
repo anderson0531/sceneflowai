@@ -40,8 +40,8 @@ export async function prepareBase64References(
   for (let i = 0; i < characters.length; i++) {
     const char = characters[i]
     
-    // Check for either referenceImage (Vercel Blob) or referenceImageGCS (GCS)
-    const imageUrl = char.referenceImage || char.referenceImageGCS
+    // Check for referenceImage (Blob URL)
+    const imageUrl = char.referenceImage
     if (!imageUrl) {
       console.log(`[Base64 Ref] Character ${char.name} has no reference image, skipping`)
       continue

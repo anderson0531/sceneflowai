@@ -27,9 +27,9 @@ export async function POST(request: NextRequest) {
     // For now, use platform Vertex AI service account for all scene images
     console.log(`[Scene Gen] Generating ${scenes.length} scene images with Vertex AI Imagen 3`)
 
-    // Filter characters with GCS references
-    const charactersWithGCS = (characters || []).filter((c: any) => c.referenceImageGCS)
-    console.log(`[Scene Gen] Found ${charactersWithGCS.length} characters with GCS references`)
+    // Filter characters with reference images
+    const charactersWithImages = (characters || []).filter((c: any) => c.referenceImage)
+    console.log(`[Scene Gen] Found ${charactersWithImages.length} characters with reference images`)
 
     // Generate scene images with Vertex AI
     const sceneImages = await Promise.all(
@@ -37,11 +37,11 @@ export async function POST(request: NextRequest) {
         try {
           const prompt = buildScenePrompt(scene, characters)
           
-          // Build optimized prompt with GCS references
+          // Build optimized prompt with character references
           const sceneCharacterNames = scene.characters || []
           let finalPrompt = prompt
           
-          if (charactersWithGCS.length > 0) {
+          if (charactersWithImages.length > 0) {
             try {
               finalPrompt = await optimizePromptForImagen({
                 rawPrompt: prompt,
@@ -49,9 +49,9 @@ export async function POST(request: NextRequest) {
                 visualDescription: scene.visualDescription || prompt,
                 characterNames: sceneCharacterNames,
                 hasCharacterReferences: true,
-                characterMetadata: charactersWithGCS.map((char: any) => ({
+                characterMetadata: charactersWithImages.map((char: any) => ({
                   name: char.name,
-                  referenceImageGCS: char.referenceImageGCS,
+                  referenceImage: char.referenceImage,
                   appearanceDescription: char.appearanceDescription || `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
                 }))
               })
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
             }
           }
           
-          // Use Vertex AI with GCS references embedded in prompt
+          // Use Vertex AI with character references embedded in prompt
           const base64Image = await callVertexAIImagen(finalPrompt, {
             aspectRatio: '16:9',
             numberOfImages: 1

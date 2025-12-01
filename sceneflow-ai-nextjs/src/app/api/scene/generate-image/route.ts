@@ -259,29 +259,25 @@ export async function POST(req: NextRequest) {
         }
       }
       
-      // DEBUG: Log character properties and ensure referenceImageGCS is populated
+      // DEBUG: Log character properties and ensure referenceImage is populated
       if (characterObjects.length > 0) {
         console.log('[Scene Image] DEBUG - First character keys:', Object.keys(characterObjects[0]))
         console.log('[Scene Image] DEBUG - Has referenceImage:', !!characterObjects[0].referenceImage)
-        console.log('[Scene Image] DEBUG - Has referenceImageGCS:', !!characterObjects[0].referenceImageGCS)
         
         // Log all characters' reference image status
         characterObjects.forEach((char: any, idx: number) => {
           console.log(`[Scene Image] Character ${idx + 1} (${char.name}):`, {
             hasReferenceImage: !!char.referenceImage,
-            hasReferenceImageGCS: !!char.referenceImageGCS,
-            referenceImageUrl: char.referenceImage ? char.referenceImage.substring(0, 50) + '...' : 'none',
-            referenceImageGCSUrl: char.referenceImageGCS ? char.referenceImageGCS.substring(0, 50) + '...' : 'none'
+            referenceImageUrl: char.referenceImage ? char.referenceImage.substring(0, 50) + '...' : 'none'
           })
         })
         
-        // Ensure all characters have referenceImageGCS - if missing but referenceImage exists, 
-        // log warning but continue (GCS URL might be in a different field or needs to be fetched)
-        const missingGCS = characterObjects.filter((c: any) => c.referenceImage && !c.referenceImageGCS)
-        if (missingGCS.length > 0) {
-          console.warn(`[Scene Image] WARNING: ${missingGCS.length} character(s) have referenceImage but missing referenceImageGCS:`, 
-            missingGCS.map((c: any) => c.name))
-          console.warn('[Scene Image] These characters will still be included in prompt text but may not have structured GCS references')
+        // Check for characters missing reference images
+        const missingImages = characterObjects.filter((c: any) => !c.referenceImage)
+        if (missingImages.length > 0) {
+          console.warn(`[Scene Image] WARNING: ${missingImages.length} character(s) missing referenceImage:`, 
+            missingImages.map((c: any) => c.name))
+          console.warn('[Scene Image] These characters will be included in prompt text only (no visual reference)')
         }
       } else if (projectId) {
         // Even if no characterObjects found, log available characters from project
@@ -290,8 +286,7 @@ export async function POST(req: NextRequest) {
           allCharacters.forEach((char: any, idx: number) => {
             console.log(`[Scene Image] Available character ${idx + 1}:`, {
               name: char.name,
-              hasReferenceImage: !!char.referenceImage,
-              hasReferenceImageGCS: !!char.referenceImageGCS
+              hasReferenceImage: !!char.referenceImage
             })
           })
         }
@@ -373,22 +368,21 @@ export async function POST(req: NextRequest) {
       
       console.log(`[Scene Image] Extracted key features for ${char.name}:`, keyFeatures)
       
-      // Only assign referenceId if character has GCS image (will be in referenceImages array)
-      const hasGCS = !!char.referenceImageGCS
-      const referenceId = hasGCS ? ++gcsRefIndex : undefined
+      // Only assign referenceId if character has reference image (will be in referenceImages array)
+      const hasReferenceImage = !!char.referenceImage
+      const referenceId = hasReferenceImage ? ++gcsRefIndex : undefined
       
-      if (hasGCS) {
-        console.log(`[Scene Image] ${char.name} has GCS image, assigned referenceId: ${referenceId}`)
+      if (hasReferenceImage) {
+        console.log(`[Scene Image] ${char.name} has reference image, assigned referenceId: ${referenceId}`)
       } else {
-        console.log(`[Scene Image] ${char.name} has no GCS image, will use text description only`)
+        console.log(`[Scene Image] ${char.name} has no reference image, will use text description only`)
       }
       
       return {
-        referenceId,  // Only defined for characters with GCS images
+        referenceId,  // Only defined for characters with reference images
         name: char.name,
         description: `${description}${ageClause}`,
-        imageUrl: char.referenceImage,      // HTTPS URL for prompt text (preferred - works in prompts)
-        gcsUri: char.referenceImageGCS,     // GCS URI for structured array (if needed)
+        imageUrl: char.referenceImage,      // Blob URL for both prompt text and API call
         ethnicity: char.ethnicity,           // For ethnicity injection in scene description
         keyFeatures: keyFeatures.length > 0 ? keyFeatures : undefined  // Key physical characteristics
       }
@@ -443,34 +437,34 @@ export async function POST(req: NextRequest) {
 
     console.log('[Scene Image] Optimized prompt preview:', optimizedPrompt.substring(0, 150))
 
-    // Build character references using GCS URIs
-    // Filter for characters that have GCS references (required for Imagen API structured references)
-    const charactersWithGCS = characterObjects.filter((c: any) => c.referenceImageGCS)
-    const charactersWithoutGCS = characterObjects.filter((c: any) => c.referenceImage && !c.referenceImageGCS)
+    // Build character references using Blob URLs
+    // Filter for characters that have reference images
+    const charactersWithImages = characterObjects.filter((c: any) => c.referenceImage)
+    const charactersWithoutImages = characterObjects.filter((c: any) => !c.referenceImage)
     
     console.log(`[Scene Image] Character reference status:`, {
       totalCharacters: characterObjects.length,
-      withGCS: charactersWithGCS.length,
-      withoutGCS: charactersWithoutGCS.length,
-      withoutGCSNames: charactersWithoutGCS.map((c: any) => c.name)
+      withImages: charactersWithImages.length,
+      withoutImages: charactersWithoutImages.length,
+      withoutImagesNames: charactersWithoutImages.map((c: any) => c.name)
     })
     
-    if (charactersWithoutGCS.length > 0) {
-      console.warn(`[Scene Image] ${charactersWithoutGCS.length} character(s) will be included in prompt text only (no structured GCS references):`, 
-        charactersWithoutGCS.map((c: any) => c.name))
-      console.warn('[Scene Image] These characters should have referenceImageGCS saved to database for optimal image generation')
+    if (charactersWithoutImages.length > 0) {
+      console.warn(`[Scene Image] ${charactersWithoutImages.length} character(s) will be included in prompt text only (no reference images):`, 
+        charactersWithoutImages.map((c: any) => c.name))
+      console.warn('[Scene Image] These characters should have referenceImage saved to database for optimal image generation')
     }
     
-    // Build GCS references for all characters with GCS images
+    // Build image references for all characters with reference images
     // Use CONCISE subject descriptions - the API works better with short, distinctive descriptions
-    const gcsReferences = charactersWithGCS.map((char: any) => {
+    const imageReferences = charactersWithImages.map((char: any) => {
       // Find the matching character reference with referenceId
       const matchingRef = characterReferences.find((ref: any) => ref.name === char.name)
       
-      // Use the referenceId from characterReferences - this was assigned in order for GCS chars only
+      // Use the referenceId from characterReferences - this was assigned in order for chars with images
       const referenceId = matchingRef?.referenceId
       if (!referenceId) {
-        console.error(`[Scene Image] ERROR: Character ${char.name} has GCS but no referenceId assigned!`)
+        console.error(`[Scene Image] ERROR: Character ${char.name} has reference image but no referenceId assigned!`)
       }
       
       // Generate LINKING DESCRIPTION for text-matching mode
@@ -492,49 +486,14 @@ export async function POST(req: NextRequest) {
       
       return {
         referenceId: referenceId || 1, // Fallback to 1 if somehow missing
-        gcsUri: char.referenceImageGCS,
+        imageUrl: char.referenceImage,  // Blob URL - will be downloaded and encoded by callVertexAIImagen
         referenceType: 'REFERENCE_TYPE_SUBJECT' as const,
         subjectType: 'SUBJECT_TYPE_PERSON' as const,
-        subjectDescription: linkingDescription,
-        // Store HTTPS fallback URL
-        httpsUrl: char.referenceImage
+        subjectDescription: linkingDescription
       }
     })
 
-    console.log(`[Scene Image] Using ${gcsReferences.length} character references with GCS for structured API call`)
-    if (gcsReferences.length > 0) {
-      gcsReferences.forEach((ref, idx) => {
-        console.log(`[Scene Image] GCS Reference ${idx + 1}:`, {
-          referenceId: ref.referenceId,
-          gcsUri: ref.gcsUri.substring(0, 60) + '...',
-          subjectDescription: ref.subjectDescription.substring(0, 50) + '...'
-        })
-      })
-    }
-
-    // Pre-flight validation: Wait for GCS URIs to be accessible
-    // This helps avoid race conditions where the image was just uploaded
-    if (gcsReferences.length > 0) {
-      console.log('[Scene Image] Pre-flight validation: Checking GCS URI accessibility...')
-      const gcsUris = gcsReferences.map(ref => ref.gcsUri)
-      
-      try {
-        // Wait for all GCS URIs to be accessible with retries
-        // This adds a delay (1000ms initial) to allow GCS to process the upload
-        // Increased from 500ms to 1000ms for better reliability
-        const { accessible, failed } = await waitForGCSURIs(gcsUris, 5, 1000)
-        
-        if (failed.length > 0) {
-          console.warn(`[Scene Image] ${failed.length} GCS URI(s) may not be accessible:`, failed)
-          console.warn('[Scene Image] Will attempt generation anyway - Vertex AI may handle this gracefully')
-        } else {
-          console.log(`[Scene Image] ✓ All ${accessible.length} GCS URI(s) are accessible`)
-        }
-      } catch (error: any) {
-        console.warn('[Scene Image] Pre-flight validation failed:', error.message)
-        console.warn('[Scene Image] Continuing with generation - Vertex AI will validate access')
-      }
-    }
+    console.log(`[Scene Image] Using ${imageReferences.length} character references for structured API call`)
 
     // Build character-specific negative prompts based on reference characteristics
     const baseNegativePrompt = 'elderly appearance, deeply wrinkled, aged beyond reference, geriatric, wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager, youthful appearance'
@@ -584,7 +543,7 @@ export async function POST(req: NextRequest) {
           numberOfImages: 1,
           quality: quality,
           negativePrompt: finalNegativePrompt,
-          referenceImages: gcsReferences.length > 0 ? gcsReferences : undefined,
+          referenceImages: imageReferences.length > 0 ? imageReferences : undefined,
           personGeneration: personGeneration || 'allow_adult' // Default to 'allow_adult' for backward compatibility
         })
         
@@ -608,12 +567,6 @@ export async function POST(req: NextRequest) {
           // Wait longer before retry (exponential backoff)
           const retryDelay = 1000 * Math.pow(2, generationAttempt - 1)
           console.log(`[Scene Image] Reference image access error detected. Retrying after ${retryDelay}ms...`)
-          
-          // Re-check GCS URIs before retry with longer delay and more retries
-          if (gcsReferences.length > 0) {
-            const gcsUris = gcsReferences.map(ref => ref.gcsUri)
-            await waitForGCSURIs(gcsUris, 3, 1500)
-          }
           
           await new Promise(resolve => setTimeout(resolve, retryDelay))
           continue

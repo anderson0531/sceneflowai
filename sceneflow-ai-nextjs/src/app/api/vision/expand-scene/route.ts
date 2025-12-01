@@ -395,14 +395,14 @@ ${hasCharacterRefs ? '- Characters MUST match their reference images' : ''}
 
     console.log(`[Scene Image] Generating with Vertex AI Imagen 3 for scene ${sceneNumber}`)
     
-    // Filter characters with GCS references
-    const charactersWithGCS = characters.filter((c: any) => c.referenceImageGCS)
+    // Filter characters with reference images
+    const charactersWithImages = characters.filter((c: any) => c.referenceImage)
     const characterNames = characters.map((c: any) => c.name || c)
     
     let finalPrompt = prompt
     
-    // Optimize prompt if GCS references available
-    if (charactersWithGCS.length > 0) {
+    // Optimize prompt if reference images available
+    if (charactersWithImages.length > 0) {
       try {
         finalPrompt = await optimizePromptForImagen({
           rawPrompt: prompt,
@@ -410,19 +410,19 @@ ${hasCharacterRefs ? '- Characters MUST match their reference images' : ''}
           visualDescription: scene.visualDescription || prompt,
           characterNames,
           hasCharacterReferences: true,
-          characterMetadata: charactersWithGCS.map((char: any) => ({
+          characterMetadata: charactersWithImages.map((char: any) => ({
             name: char.name,
-            referenceImageGCS: char.referenceImageGCS,
+            referenceImage: char.referenceImage,
             appearanceDescription: char.appearanceDescription || `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
           }))
         })
-        console.log(`[Scene Image] Using ${charactersWithGCS.length} character GCS references for consistency`)
+        console.log(`[Scene Image] Using ${charactersWithImages.length} character references for consistency`)
       } catch (error) {
         console.error('[Prompt Optimizer] Failed, using original prompt:', error)
       }
     }
 
-    // Generate with Vertex AI Imagen 3 (GCS references embedded in prompt)
+    // Generate with Vertex AI Imagen 3 (character references embedded in prompt)
     const base64Image = await callVertexAIImagen(finalPrompt, {
       aspectRatio: '16:9',
       numberOfImages: 1

@@ -1,5 +1,4 @@
 import { GoogleAuth } from 'google-auth-library'
-import { downloadImageAsBase64 } from '@/lib/storage/gcs'
 
 let authClient: any = null
 
@@ -57,7 +56,8 @@ export async function callVertexAIImagen(
     referenceImages?: Array<{
       referenceId: number
       base64Image?: string
-      gcsUri?: string
+      imageUrl?: string
+      gcsUri?: string // Deprecated: kept for backward compatibility
       referenceType?: 'REFERENCE_TYPE_SUBJECT'
       subjectDescription?: string
       subjectType?: 'SUBJECT_TYPE_PERSON' | 'SUBJECT_TYPE_PRODUCT'
@@ -116,13 +116,31 @@ export async function callVertexAIImagen(
     for (const ref of options.referenceImages!) {
       let base64Data = ref.base64Image
       
-      // If GCS URI provided, download and convert to base64
-      if (!base64Data && ref.gcsUri) {
-        console.log(`[Imagen] Downloading GCS image: ${ref.gcsUri.substring(0, 50)}...`)
+      // If HTTP/HTTPS URL provided, download and convert to base64
+      if (!base64Data && (ref.imageUrl || ref.gcsUri)) {
+        const sourceUrl = ref.imageUrl || ref.gcsUri
+        console.log(`[Imagen] Downloading image from: ${sourceUrl?.substring(0, 50)}...`)
         try {
-          base64Data = await downloadImageAsBase64(ref.gcsUri)
+          // Download image from URL (works with both HTTP/HTTPS and gs:// URLs if GCS client is configured)
+          if (sourceUrl?.startsWith('http://') || sourceUrl?.startsWith('https://')) {
+            // Direct HTTP download and base64 encode
+            const imageResponse = await fetch(sourceUrl)
+            if (!imageResponse.ok) {
+              throw new Error(`HTTP ${imageResponse.status}: ${imageResponse.statusText}`)
+            }
+            const imageBuffer = await imageResponse.arrayBuffer()
+            base64Data = Buffer.from(imageBuffer).toString('base64')
+            console.log(`[Imagen] Downloaded and encoded ${base64Data.length} base64 chars from HTTP URL`)
+          } else if (sourceUrl?.startsWith('gs://')) {
+            // Legacy GCS support - import dynamically to avoid dependency if not needed
+            const { downloadImageAsBase64 } = await import('@/lib/storage/gcs')
+            base64Data = await downloadImageAsBase64(sourceUrl)
+            console.log(`[Imagen] Downloaded and encoded ${base64Data.length} base64 chars from GCS`)
+          } else {
+            throw new Error(`Unsupported URL scheme: ${sourceUrl}`)
+          }
         } catch (error: any) {
-          console.error(`[Imagen] Failed to download reference image from GCS:`, error.message)
+          console.error(`[Imagen] Failed to download reference image:`, error.message)
           throw new Error(`Failed to download reference image: ${error.message}`)
         }
       }

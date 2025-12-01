@@ -2167,7 +2167,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       const blobUrl = newBlob.url
       
-      // Step 2: Process upload (GCS upload) in background
+      // Step 2: Process upload and analyze with Gemini Vision
       const processRes = await fetch('/api/character/process-upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2181,7 +2181,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         throw new Error('Processing failed')
       }
       
-      const { gcsUrl, visionDescription } = await processRes.json()
+      const { visionDescription } = await processRes.json()
       
       // Use visionDescription from process-upload (already includes AI analysis)
       const analysisData = visionDescription ? {
@@ -2196,8 +2196,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           return charId === characterId 
           ? { 
               ...char, 
-              referenceImage: blobUrl,  // Vercel Blob URL for UI display
-              referenceImageGCS: gcsUrl,  // GCS URL for Imagen API
+              referenceImage: blobUrl,  // Vercel Blob URL for both UI display and Imagen API
               imageApproved: false,
               // Add appearance description and attributes if analysis succeeded
               ...(analysisData?.success ? {

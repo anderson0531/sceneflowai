@@ -1035,23 +1035,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                           (selectedLanguage === 'en' ? scene.dialogueAudio?.en : null) ||
                           (Array.isArray(scene.dialogueAudio) ? scene.dialogueAudio : null)
     
-    console.log('[ScriptPanel] Calculating audio timeline for scene (language:', selectedLanguage, '):', {
-      hasMusic: !!(scene.musicAudio || scene.music?.url),
-      musicAudio: scene.musicAudio,
-      musicUrl: scene.music?.url,
-      hasNarration: !!narrationUrl,
-      hasDialogue: !!(Array.isArray(dialogueArray) && dialogueArray.length > 0),
-      dialogueCount: Array.isArray(dialogueArray) ? dialogueArray.length : 0,
-      hasSFX: !!(scene.sfxAudio && scene.sfxAudio.length > 0),
-      sfxCount: scene.sfxAudio?.length || 0
-    })
-    
     // Music starts at scene beginning (concurrent with everything, loops)
     // Check both musicAudio (new format) and music.url (legacy format)
     const musicUrl = scene.musicAudio || scene.music?.url
     if (musicUrl) {
       config.music = musicUrl
-      console.log('[ScriptPanel] Added music:', musicUrl)
     }
     
     // Narration starts at scene beginning (concurrent with music)
@@ -1061,7 +1049,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       const narrationDuration = await resolveAudioDuration(narrationUrl, storedDuration)
       totalDuration = Math.max(totalDuration, narrationDuration)
       currentTime = narrationDuration + 0.5 // 500ms pause after narration before dialogue
-      console.log('[ScriptPanel] Added narration, duration:', narrationDuration, 'next dialogue starts at:', currentTime)
     }
     
     // Dialogue follows narration sequentially with appropriate spacing
@@ -1081,7 +1068,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           
           // Add 300ms pause between dialogue lines for natural pacing
           currentTime += dialogueDuration + 0.3
-          console.log('[ScriptPanel] Added dialogue for', dialogue.character, 'at', config.dialogue[config.dialogue.length - 1].startTime, 's, duration:', dialogueDuration)
         }
       }
     }
@@ -1111,20 +1097,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           startTime: sfxTime
         })
         totalDuration = Math.max(totalDuration, sfxTime + sfxDuration)
-        console.log('[ScriptPanel] Added SFX at', sfxTime, 's, duration:', sfxDuration)
       }
     }
     
     // Set scene duration for music-only scenes or to ensure music plays long enough
     config.sceneDuration = Math.max(totalDuration, scene.duration || 5)
-    
-    console.log('[ScriptPanel] Final timeline config:', {
-      hasMusic: !!config.music,
-      hasNarration: !!config.narration,
-      dialogueCount: config.dialogue?.length || 0,
-      sfxCount: config.sfx?.length || 0,
-      totalDuration: config.sceneDuration
-    })
     
     return config
   }
@@ -1190,14 +1167,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       // Calculate timeline with intelligent timing
       const audioConfig = await calculateAudioTimeline(scene)
       
-      console.log('[ScriptPanel] Playing scene', sceneIdx + 1, 'with config:', {
-        hasMusic: !!audioConfig.music,
-        hasNarration: !!audioConfig.narration,
-        dialogueCount: audioConfig.dialogue?.length || 0,
-        sfxCount: audioConfig.sfx?.length || 0,
-        sceneDuration: audioConfig.sceneDuration
-      })
-      
       // Calculate total audio duration for music fade timing
       // Use the scene's calculated duration which accounts for all audio
       const totalAudioDuration = audioConfig.sceneDuration || scene.duration || 5
@@ -1211,20 +1180,17 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       // Wait for the total audio duration (narration + dialogue + spacing)
       // Then add 3 seconds for the ending transition
       const waitTime = (totalAudioDuration + 3) * 1000
-      console.log('[ScriptPanel] Waiting', waitTime, 'ms before fading out music (audio duration:', totalAudioDuration, 's + 3s transition)')
       
       await new Promise(resolve => setTimeout(resolve, waitTime))
       
       // Fade out music over 2 seconds for smooth ending
       if (audioConfig.music && audioMixerRef.current) {
-        console.log('[ScriptPanel] Fading out music...')
         await audioMixerRef.current.fadeOut(2000)
         
         // Stop all audio after fade
         audioMixerRef.current.stop()
       }
       
-      console.log('[ScriptPanel] Scene', sceneIdx + 1, 'playback complete')
       setLoadingSceneId(null)
     } catch (error) {
       console.error('[ScriptPanel] Error playing scene:', error)
@@ -1254,8 +1220,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     queueAbortRef.current.abort = false
     for (const t of texts) {
       if (queueAbortRef.current.abort) break
-      
-      console.log('[ScriptPanel] Generating audio for text:', t.substring(0, 100))
       
       const resp = await fetch('/api/tts/elevenlabs', {
         method: 'POST', 
@@ -2260,8 +2224,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           availableCharacters={characters.map(c => ({
             name: c.name,
             description: c.description,
-            referenceImage: c.referenceImage,
-            referenceImageGCS: c.referenceImageGCS,  // Pass GCS URL for Imagen API
+            referenceImage: c.referenceImage,  // Pass Blob URL for Imagen API
             appearanceDescription: c.appearanceDescription,  // Pass appearance description
             ethnicity: c.ethnicity,
             subject: c.subject

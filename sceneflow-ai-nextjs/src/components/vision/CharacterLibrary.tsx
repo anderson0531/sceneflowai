@@ -182,7 +182,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
         
         console.log('[Upload] Blob uploaded:', newBlob.url)
         
-        // Step 2: Process upload (GCS + analysis) in background
+        // Step 2: Process upload and analyze with Gemini Vision
         const processRes = await fetch('/api/character/process-upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

@@ -41,7 +41,6 @@ interface ScenePromptBuilderProps {
     name: string
     description: string
     referenceImage?: string
-    referenceImageGCS?: string
     appearanceDescription?: string
     ethnicity?: string
     subject?: string
@@ -114,7 +113,7 @@ export function ScenePromptBuilder({
     // SCENE DIRECTION DATA (Priority Source)
     // ============================================
     if (sceneDirection) {
-      console.log('[ScenePromptBuilder] Using Scene Direction data:', sceneDirection)
+      // Scene Direction data loaded
       
       // CAMERA DIRECTION
       if (sceneDirection.camera) {
@@ -431,7 +430,7 @@ export function ScenePromptBuilder({
   const constructedPrompt = getRawPrompt()
 
   const handleGenerateScene = () => {
-    // Pass full character objects (not just names) so API gets referenceImageGCS
+    // Pass full character objects (not just names) so API gets referenceImage URLs
     const selectedCharacterObjects = structure.characters
       .map(charName => {
         const found = availableCharacters.find(c => c.name === charName)
