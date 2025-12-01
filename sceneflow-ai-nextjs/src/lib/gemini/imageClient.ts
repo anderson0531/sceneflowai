@@ -98,23 +98,26 @@ export async function generateImageWithGemini(
   }
   
   // Build request body for Gemini API
+  const generationConfig: any = {
+    response_modalities: ['IMAGE'],
+    responseMimeType: 'image/png'
+  }
+
+  // Add image config if specified
+  if (options.aspectRatio || options.imageSize) {
+    generationConfig.image_config = {
+      aspect_ratio: options.aspectRatio || '16:9',
+      image_size: options.imageSize || '1K'
+    }
+  }
+
   const requestBody: any = {
     contents: [
       {
         parts: contents
       }
     ],
-    generationConfig: {
-      response_modalities: ['IMAGE'],
-    }
-  }
-  
-  // Add image config if specified
-  if (options.aspectRatio || options.imageSize) {
-    requestBody.generationConfig.image_config = {
-      aspect_ratio: options.aspectRatio || '16:9',
-      image_size: options.imageSize || '1K'
-    }
+    generationConfig
   }
   
   console.log('[Gemini Image] Config:', JSON.stringify({
@@ -168,7 +171,8 @@ export async function generateImageWithGemini(
     throw new Error('Problem: Image generation was filtered due to content policies.\n\n\nAction: Try adjusting the prompt to be more descriptive and professional.')
   }
   
-  const parts = candidates[0]?.content?.parts
+  const candidate = candidates[0]
+  const parts = candidate?.content?.parts
   if (!parts || parts.length === 0) {
     console.error('[Gemini Image] No parts in response:', JSON.stringify(data).slice(0, 500))
     throw new Error('Unexpected response format from Gemini API')
@@ -181,10 +185,71 @@ export async function generateImageWithGemini(
       imageData = part.inline_data.data
       break
     }
+
+    if (!imageData && part.file_data?.file_uri) {
+      const fileUri: string = part.file_data.file_uri
+      const isGcsUri = fileUri.startsWith('gs://')
+      if (isGcsUri) {
+        console.warn('[Gemini Image] Received gs:// file URI, which cannot be downloaded with API key. Prompt likely blocked or requires Vertex integration.')
+        continue
+      }
+
+      try {
+        const separator = fileUri.includes('?') ? '&' : '?'
+        const urlWithKey = fileUri.includes('key=') ? fileUri : `${fileUri}${separator}key=${apiKey}`
+        console.log('[Gemini Image] Downloading image via file_data URI...')
+        const fileResponse = await fetch(urlWithKey)
+        if (!fileResponse.ok) {
+          console.error('[Gemini Image] file_data download failed:', fileResponse.status, fileResponse.statusText)
+          continue
+        }
+
+        const buffer = Buffer.from(await fileResponse.arrayBuffer())
+        imageData = buffer.toString('base64')
+        break
+      } catch (error: any) {
+        console.error('[Gemini Image] Unable to download file_data URI:', error.message)
+      }
+    }
   }
   
   if (!imageData) {
+    const finishReason = candidate?.finishReason || candidate?.finish_reason
+    const safetyRatings = candidate?.safetyRatings || candidate?.safety_ratings
+    const promptFeedback = data?.promptFeedback
+    const textParts = parts
+      .filter((part: any) => typeof part.text === 'string' && part.text.trim().length > 0)
+      .map((part: any) => part.text.trim())
+
     console.error('[Gemini Image] No image data in response parts:', JSON.stringify(parts).slice(0, 500))
+    console.error('[Gemini Image] Debug context:', {
+      finishReason,
+      promptFeedback,
+      safetyRatings,
+      firstTextPart: textParts[0]
+    })
+
+    if (finishReason && finishReason !== 'STOP') {
+      const reason = finishReason.toString().toUpperCase()
+      if (reason.includes('SAFETY')) {
+        throw new Error('Gemini blocked the prompt for safety reasons. Try softening violent/graphic wording or remove disallowed references.')
+      }
+      if (reason.includes('BLOCK') || reason.includes('FILTER')) {
+        throw new Error(`Gemini filtered this request (${finishReason}). Adjust the prompt and try again.`)
+      }
+      if (reason.includes('ERROR')) {
+        throw new Error(`Gemini encountered an internal error while generating the image (finishReason=${finishReason}). Please retry in a moment.`)
+      }
+    }
+
+    if (promptFeedback?.blockReason) {
+      throw new Error(`Gemini blocked this prompt (${promptFeedback.blockReason}). ${promptFeedback.blockReasonMessage || 'Please adjust the description.'}`)
+    }
+
+    if (textParts.length > 0) {
+      throw new Error(`Gemini returned text instead of an image: "${textParts[0].slice(0, 200)}"`)
+    }
+    
     throw new Error('No image data in Gemini API response')
   }
   
