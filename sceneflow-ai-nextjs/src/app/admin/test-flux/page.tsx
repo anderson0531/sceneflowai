@@ -95,7 +95,7 @@ export default function FluxTestPage() {
             <textarea 
               value={prompt} 
               onChange={(e) => setPrompt(e.target.value)}
-              className="w-full p-2 border rounded text-sm h-32"
+              className="w-full p-2 border rounded text-sm h-32 text-gray-900 bg-white"
               placeholder="Example: A cinematic wide shot of a futuristic city at sunset, flying cars, neon lights, 8k, photorealistic"
             />
           </div>
@@ -108,7 +108,7 @@ export default function FluxTestPage() {
             <select 
               value={aspectRatio}
               onChange={(e) => setAspectRatio(e.target.value)}
-              className="w-full p-2 border rounded text-sm"
+              className="w-full p-2 border rounded text-sm text-gray-900 bg-white"
             >
               <option value="16:9">16:9 (Landscape)</option>
               <option value="1:1">1:1 (Square)</option>
@@ -131,7 +131,7 @@ export default function FluxTestPage() {
               multiple
               onChange={handleImageUpload}
               disabled={referenceImages.length >= 3}
-              className="w-full p-2 border rounded text-sm disabled:opacity-50"
+              className="w-full p-2 border rounded text-sm disabled:opacity-50 text-gray-900 bg-white"
             />
             {referenceImages.length > 0 && (
               <div className="mt-2 space-y-2">
@@ -179,7 +179,7 @@ export default function FluxTestPage() {
             <select 
               value={outputQuality}
               onChange={(e) => setOutputQuality(Number(e.target.value))}
-              className="w-full p-2 border rounded text-sm"
+              className="w-full p-2 border rounded text-sm text-gray-900 bg-white"
             >
               <option value="80">Standard (80) - Fast</option>
               <option value="90">High (90) - Recommended</option>
@@ -196,7 +196,7 @@ export default function FluxTestPage() {
             <select 
               value={outputFormat}
               onChange={(e) => setOutputFormat(e.target.value)}
-              className="w-full p-2 border rounded text-sm"
+              className="w-full p-2 border rounded text-sm text-gray-900 bg-white"
             >
               <option value="jpg">JPEG - Smallest size</option>
               <option value="png">PNG - Best quality</option>
@@ -212,7 +212,7 @@ export default function FluxTestPage() {
             <select 
               value={safetyTolerance}
               onChange={(e) => setSafetyTolerance(Number(e.target.value))}
-              className="w-full p-2 border rounded text-sm"
+              className="w-full p-2 border rounded text-sm text-gray-900 bg-white"
             >
               <option value="0">0 - Most Restrictive</option>
               <option value="1">1 - Very Restrictive</option>
@@ -234,7 +234,7 @@ export default function FluxTestPage() {
               value={seed || ''}
               onChange={(e) => setSeed(e.target.value ? Number(e.target.value) : undefined)}
               placeholder="Random (leave blank for variety)"
-              className="w-full p-2 border rounded text-sm"
+              className="w-full p-2 border rounded text-sm text-gray-900 bg-white"
             />
             <div className="text-xs text-blue-600 mt-1">
               💡 Use same seed to get identical results
