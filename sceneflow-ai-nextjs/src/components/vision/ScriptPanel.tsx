@@ -3898,18 +3898,50 @@ function SceneCard({
                                 input.accept = 'image/*';
                                 input.onchange = async (e) => {
                                   const file = (e.target as HTMLInputElement).files?.[0];
-                                  if (file && onGenerateImage) {
-                                    // Convert file to base64/blob and upload
-                                    // This reuses the existing image upload flow if available, 
-                                    // or we might need a new handler. 
-                                    // For now, assuming we can trigger an upload via a prop or direct API call.
-                                    // Since we don't have a direct onUploadImage prop here, we'll need to implement it.
-                                    // But wait, onGenerateImage is for generation. 
-                                    // Let's check if there's an upload handler available in the parent or if we need to add one.
-                                    // Looking at the props... onSegmentUpload exists but that's for segments.
-                                    // We might need to add onUploadKeyframe to the props.
-                                    // For now, let's just add the UI button as requested.
-                                    alert("Upload feature coming soon! (Backend integration required)");
+                                  if (file && projectId) {
+                                    const toastId = toast.loading('Uploading keyframe...');
+                                    try {
+                                      const formData = new FormData();
+                                      formData.append('file', file);
+                                      formData.append('projectId', projectId);
+                                      formData.append('sceneNumber', sceneNumber.toString());
+
+                                      const res = await fetch('/api/scene/upload-image', {
+                                        method: 'POST',
+                                        body: formData,
+                                      });
+
+                                      if (!res.ok) throw new Error('Upload failed');
+
+                                      const data = await res.json();
+                                      
+                                      // Update local script state
+                                      let updatedScript = Array.isArray(script) ? [...script] : { ...script };
+                                      const currentScenes = normalizeScenes(script);
+                                      
+                                      const updatedScenes = currentScenes.map((s: any) => 
+                                        s.sceneNumber === sceneNumber 
+                                          ? { ...s, imageUrl: data.imageUrl } 
+                                          : s
+                                      );
+
+                                      if (Array.isArray(script)) {
+                                        updatedScript = updatedScenes;
+                                      } else if (script.script && Array.isArray(script.script.scenes)) {
+                                        updatedScript.script.scenes = updatedScenes;
+                                      } else if (script.scenes && Array.isArray(script.scenes)) {
+                                        updatedScript.scenes = updatedScenes;
+                                      }
+                                      
+                                      onScriptChange(updatedScript);
+                                      
+                                      toast.success('Keyframe uploaded successfully', { id: toastId });
+                                    } catch (error) {
+                                      console.error(error);
+                                      toast.error('Failed to upload keyframe', { id: toastId });
+                                    }
+                                  } else if (!projectId) {
+                                    toast.error('Project ID missing');
                                   }
                                 };
                                 input.click();
