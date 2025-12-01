@@ -177,6 +177,7 @@ export async function POST(req: NextRequest) {
     // Build prompt
     const prompt = buildSceneDirectionPrompt(scene)
     console.log('[Scene Direction] Generating direction for scene', sceneIndex)
+    console.log('[Scene Direction] Using API key:', apiKey.substring(0, 20) + '...' + apiKey.substring(apiKey.length - 4))
 
     // Call Gemini API
     const responseText = await callGemini(apiKey, prompt)
