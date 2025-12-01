@@ -7,18 +7,30 @@ export default function FluxTestPage() {
   const [loading, setLoading] = useState(false);
   const [prompt, setPrompt] = useState('A cinematic shot of a futuristic city with flying cars, 8k resolution, photorealistic.');
   const [aspectRatio, setAspectRatio] = useState('16:9');
-  const [referenceImage, setReferenceImage] = useState<string | null>(null);
+  const [referenceImages, setReferenceImages] = useState<string[]>([]);
+  const [outputQuality, setOutputQuality] = useState<number>(90);
+  const [outputFormat, setOutputFormat] = useState<string>('jpg');
+  const [safetyTolerance, setSafetyTolerance] = useState<number>(2);
+  const [seed, setSeed] = useState<number | undefined>(undefined);
+  const [promptUpsampling, setPromptUpsampling] = useState<boolean>(true);
+  const [imagePromptStrength, setImagePromptStrength] = useState<number>(0.1);
   const [result, setResult] = useState<any>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setReferenceImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    const files = e.target.files;
+    if (files) {
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setReferenceImages(prev => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
     }
+  };
+
+  const removeReferenceImage = (index: number) => {
+    setReferenceImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const runTest = async () => {
@@ -28,7 +40,17 @@ export default function FluxTestPage() {
       const res = await fetch('/api/admin/test-flux', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, aspectRatio, referenceImage }),
+        body: JSON.stringify({ 
+          prompt, 
+          aspectRatio, 
+          referenceImages, 
+          outputQuality,
+          outputFormat,
+          safetyTolerance,
+          seed,
+          promptUpsampling,
+          imagePromptStrength
+        }),
       });
       const data = await res.json();
       setResult(data);
@@ -76,24 +98,116 @@ export default function FluxTestPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">Reference Image (Optional)</label>
+            <label className="block text-sm font-bold mb-1">Reference Images (Optional, max 3)</label>
             <input
               type="file"
               accept="image/*"
+              multiple
               onChange={handleImageUpload}
-              className="w-full p-2 border rounded text-sm"
+              disabled={referenceImages.length >= 3}
+              className="w-full p-2 border rounded text-sm disabled:opacity-50"
             />
-            {referenceImage && (
-              <div className="mt-2 relative">
-                <img src={referenceImage} alt="Reference" className="w-full rounded border" />
-                <button
-                  onClick={() => setReferenceImage(null)}
-                  className="absolute top-1 right-1 bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
-                >
-                  Remove
-                </button>
+            {referenceImages.length > 0 && (
+              <div className="mt-2 space-y-2">
+                {referenceImages.map((img, idx) => (
+                  <div key={idx} className="relative">
+                    <img src={img} alt={`Reference ${idx + 1}`} className="w-full rounded border" />
+                    <button
+                      onClick={() => removeReferenceImage(idx)}
+                      className="absolute top-1 right-1 bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
+          </div>
+
+          {referenceImages.length > 0 && (
+            <div>
+              <label className="block text-sm font-bold mb-1">Image Prompt Strength (0.0 - 1.0)</label>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={imagePromptStrength}
+                onChange={(e) => setImagePromptStrength(Number(e.target.value))}
+                className="w-full"
+              />
+              <div className="text-xs text-gray-600 text-center">{imagePromptStrength.toFixed(2)}</div>
+              <div className="text-xs text-gray-500 mt-1">Higher values follow reference images more closely</div>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-bold mb-1">Output Quality</label>
+            <select 
+              value={outputQuality}
+              onChange={(e) => setOutputQuality(Number(e.target.value))}
+              className="w-full p-2 border rounded text-sm"
+            >
+              <option value="80">Standard (80)</option>
+              <option value="90">High (90)</option>
+              <option value="95">Very High (95)</option>
+              <option value="100">Maximum (100)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold mb-1">Output Format</label>
+            <select 
+              value={outputFormat}
+              onChange={(e) => setOutputFormat(e.target.value)}
+              className="w-full p-2 border rounded text-sm"
+            >
+              <option value="jpg">JPEG</option>
+              <option value="png">PNG</option>
+              <option value="webp">WebP</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold mb-1">Safety Tolerance (0-6)</label>
+            <select 
+              value={safetyTolerance}
+              onChange={(e) => setSafetyTolerance(Number(e.target.value))}
+              className="w-full p-2 border rounded text-sm"
+            >
+              <option value="0">0 - Most Restrictive</option>
+              <option value="1">1 - Very Restrictive</option>
+              <option value="2">2 - Moderate (Default)</option>
+              <option value="3">3 - Balanced</option>
+              <option value="4">4 - Permissive</option>
+              <option value="5">5 - Very Permissive</option>
+              <option value="6">6 - Least Restrictive</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold mb-1">Seed (Optional)</label>
+            <input
+              type="number"
+              value={seed || ''}
+              onChange={(e) => setSeed(e.target.value ? Number(e.target.value) : undefined)}
+              placeholder="Random"
+              className="w-full p-2 border rounded text-sm"
+            />
+            <div className="text-xs text-gray-500 mt-1">Same seed = reproducible results</div>
+          </div>
+
+          <div>
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={promptUpsampling}
+                onChange={(e) => setPromptUpsampling(e.target.checked)}
+                className="w-4 h-4"
+              />
+              <span className="text-sm font-bold">Prompt Upsampling</span>
+            </label>
+            <div className="text-xs text-gray-500 mt-1">Automatically improve prompt for better results</div>
           </div>
 
           <button 

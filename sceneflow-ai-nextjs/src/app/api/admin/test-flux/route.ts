@@ -4,7 +4,17 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, aspectRatio = "16:9", referenceImage } = await req.json();
+    const { 
+      prompt, 
+      aspectRatio = "16:9", 
+      referenceImages = [], 
+      outputQuality = 90,
+      outputFormat = "jpg",
+      safetyTolerance = 2,
+      seed,
+      promptUpsampling = true,
+      imagePromptStrength = 0.1
+    } = await req.json();
 
     if (!process.env.REPLICATE_API_TOKEN) {
       return NextResponse.json(
@@ -17,14 +27,34 @@ export async function POST(req: NextRequest) {
     const input: any = {
       prompt,
       aspect_ratio: aspectRatio,
-      safety_tolerance: 2,
-      output_format: "jpg",
-      output_quality: 90
+      safety_tolerance: safetyTolerance,
+      output_format: outputFormat,
+      output_quality: outputQuality,
+      prompt_upsampling: promptUpsampling
     };
 
-    // Add reference image if provided
-    if (referenceImage) {
-      input.image_prompt = referenceImage;
+    // Add seed if provided
+    if (seed !== undefined && seed !== null) {
+      input.seed = seed;
+    }
+
+    // Add reference images if provided (up to 3)
+    // Flux 1.1 Pro supports multiple image_prompt parameters
+    if (referenceImages && referenceImages.length > 0) {
+      // Use up to 3 reference images
+      const imagesToUse = referenceImages.slice(0, 3);
+      if (imagesToUse.length === 1) {
+        input.image_prompt = imagesToUse[0];
+      } else if (imagesToUse.length === 2) {
+        input.image_prompt = imagesToUse[0];
+        input.image_prompt_2 = imagesToUse[1];
+      } else if (imagesToUse.length === 3) {
+        input.image_prompt = imagesToUse[0];
+        input.image_prompt_2 = imagesToUse[1];
+        input.image_prompt_3 = imagesToUse[2];
+      }
+      // Set strength for all reference images
+      input.image_prompt_strength = imagePromptStrength;
     }
 
     // 1. Create Prediction
