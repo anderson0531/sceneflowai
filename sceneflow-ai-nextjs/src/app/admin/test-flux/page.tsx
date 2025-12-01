@@ -76,6 +76,13 @@ export default function FluxTestPage() {
                <strong>Error:</strong> {result.error}
              </div>
           )}
+
+          {result?.logs && (
+            <div className="mt-4 p-4 bg-gray-900 text-green-400 rounded text-xs font-mono overflow-auto max-h-48">
+              <div className="font-bold mb-2 text-white">Generation Logs:</div>
+              <pre>{result.logs}</pre>
+            </div>
+          )}
         </div>
 
         {/* Results Display */}

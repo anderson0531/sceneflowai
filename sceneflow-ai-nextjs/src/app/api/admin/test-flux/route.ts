@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      imageUrl: output, // Flux 1.1 Pro returns a string URL (or array of strings)
+      imageUrl: Array.isArray(output) ? output[0] : output, // Flux 1.1 Pro returns a string URL (or array of strings)
       logs
     });
 
