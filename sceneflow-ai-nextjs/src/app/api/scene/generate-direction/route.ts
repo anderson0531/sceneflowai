@@ -21,8 +21,10 @@ interface GenerateDirectionRequest {
 
 /**
  * Call Gemini 2.5 Pro API to generate scene direction
+ * Includes retry logic for rate limiting (429 errors)
  */
-async function callGemini(apiKey: string, prompt: string): Promise<string> {
+async function callGemini(apiKey: string, prompt: string, retryCount = 0): Promise<string> {
+  const maxRetries = 3
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 60000) // 60 second timeout
   
@@ -47,8 +49,18 @@ async function callGemini(apiKey: string, prompt: string): Promise<string> {
     
     if (!response.ok) {
       const errorBody = await response.text().catch(() => 'Unknown error')
+      
+      // Handle rate limiting with exponential backoff
+      if (response.status === 429 && retryCount < maxRetries) {
+        const waitTime = Math.pow(2, retryCount) * 1000 // 1s, 2s, 4s
+        console.warn(`[Gemini API] Rate limited (429). Retrying in ${waitTime}ms... (attempt ${retryCount + 1}/${maxRetries})`)
+        clearTimeout(timeout)
+        await new Promise(resolve => setTimeout(resolve, waitTime))
+        return callGemini(apiKey, prompt, retryCount + 1)
+      }
+      
       console.error(`[Gemini API] HTTP ${response.status}:`, errorBody)
-      throw new Error(`Gemini API error: ${response.status}`)
+      throw new Error(`Gemini API error: ${response.status}${response.status === 429 ? ' (Rate limit exceeded. Please try again in a moment.)' : ''}`)
     }
     
     const data = await response.json()
@@ -153,11 +165,11 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Get API key
-    const apiKey = process.env.GOOGLE_GEMINI_API_KEY
+    // Get API key (prioritize GEMINI_API_KEY, fallback to legacy)
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
     if (!apiKey) {
       return NextResponse.json(
-        { success: false, error: 'Gemini API key not configured' },
+        { success: false, error: 'Gemini API key not configured (GEMINI_API_KEY)' },
         { status: 500 }
       )
     }
