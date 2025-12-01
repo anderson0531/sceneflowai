@@ -476,8 +476,12 @@ export async function POST(req: NextRequest) {
       // Generate LINKING DESCRIPTION for text-matching mode
       // This EXACT text must appear in BOTH the prompt AND the subjectDescription
       // to link the reference image to the character in the scene
-      const description = char.visionDescription || char.appearanceDescription || ''
-      const linkingDescription = generateLinkingDescription(description)
+      // const description = char.visionDescription || char.appearanceDescription || ''
+      // const linkingDescription = generateLinkingDescription(description)
+      
+      // NEW: Use explicit ID linking which is more reliable with Imagen 3.0
+      // The format "person [id]" works best with the model
+      const linkingDescription = `person [${referenceId || 1}]`
       
       // Also add linkingDescription to the characterReference so promptOptimizer can use it
       if (matchingRef) {

@@ -298,7 +298,14 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
       
       // Also replace first names only
       const firstNamePattern = new RegExp(`\\b${ref.firstName}\\b`, 'gi')
-      promptScene = promptScene.replace(firstNamePattern, ref.isFemale ? 'the woman' : 'the man')
+      
+      // If using ID-based linking (e.g. "person [1]"), use that for first name too
+      // Otherwise use generic "the man"/"the woman" to avoid repetition of long descriptions
+      const replacement = ref.linkingDescription.includes('[') 
+        ? ref.linkingDescription 
+        : (ref.isFemale ? 'the woman' : 'the man')
+        
+      promptScene = promptScene.replace(firstNamePattern, replacement)
     })
     
     // Build the final prompt with style
