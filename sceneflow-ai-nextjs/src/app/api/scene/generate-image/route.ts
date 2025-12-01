@@ -435,6 +435,15 @@ export async function POST(req: NextRequest) {
       console.log('[Scene Image] Optimized scene description prompt')
     }
 
+    // Validate we have a prompt to send to the model
+    if (!optimizedPrompt || !optimizedPrompt.trim()) {
+      console.warn('[Scene Image] Missing scene description/prompt. projectId, sceneIndex, scenePrompt/customPrompt are required.')
+      return NextResponse.json({
+        success: false,
+        error: 'Missing scene description. Provide projectId+sceneIndex or a scenePrompt/customPrompt.'
+      }, { status: 400 })
+    }
+
     console.log('[Scene Image] Optimized prompt preview:', optimizedPrompt.substring(0, 150))
 
     // Build character references using Blob URLs
@@ -525,7 +534,7 @@ export async function POST(req: NextRequest) {
     
     console.log(`[Scene Image] Negative prompt includes ${characterSpecificNegatives.length} character-specific exclusions`)
 
-    // Generate with Vertex AI Imagen 3 (with character references)
+    // Generate with Gemini (with optional character references)
     // Add retry logic for reference image access issues
     let base64Image: string | null = null
     let generationAttempt = 0
@@ -634,9 +643,9 @@ export async function POST(req: NextRequest) {
     const response: any = {
       success: true,
       imageUrl,
-      model: quality === 'max' ? 'imagen-4.0-ultra-generate-001' : 'imagen-3.0-generate-002',
+      model: 'gemini-3-pro-image-preview',
       quality: quality,
-      provider: 'vertex-ai',
+      provider: 'gemini',
       storage: 'vercel-blob'
     }
 

@@ -2399,7 +2399,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const res = await fetch('/api/scene/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, sceneContext })
+        body: JSON.stringify({
+          projectId,
+          sceneIndex,
+          scenePrompt: prompt
+        })
       })
       
       const json = await res.json()
@@ -2954,9 +2958,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       })
       
-      if (!response.ok) throw new Error('Image generation failed')
-      
       const data = await response.json()
+      if (!response.ok) {
+        const errorMsg = data?.error || 'Image generation failed'
+        throw new Error(errorMsg)
+      }
       
       // Handle validation info based on response
       if (data.validationPassed === false && data.validationWarning) {
