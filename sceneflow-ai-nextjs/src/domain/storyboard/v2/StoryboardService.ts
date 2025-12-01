@@ -20,8 +20,8 @@ export const V2StoryboardSchema = z.object({
 export type V2Storyboard = z.infer<typeof V2StoryboardSchema>
 export type V2StoryboardRequestType = z.infer<typeof V2StoryboardRequest>
 
-export async function generateStoryboardV2(req: V2StoryboardRequestType): Promise<{ data: V2Storyboard; provider: Provider; model: string; }>{
-  const hasGemini = !!process.env.GOOGLE_GEMINI_API_KEY
+export async function analyzeStoryboardV2(req: V2StoryboardRequestType): Promise<{ data: V2Storyboard; provider: Provider; model: string }> {
+  const hasGemini = !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY)
   const hasOpenAI = !!process.env.OPENAI_API_KEY
   const provider: Provider = ((): Provider => {
     if (req.provider === 'gemini' || req.provider === 'openai') return req.provider

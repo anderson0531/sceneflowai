@@ -41,8 +41,8 @@ export async function callLLM(config: LLMConfig, prompt: string): Promise<string
   }
 
   // default gemini
-  const apiKey = config.apiKey || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
-  if (!apiKey) throw new Error('Google Gemini API key not configured')
+  const apiKey = config.apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
+  if (!apiKey) throw new Error('Gemini API key not configured (GEMINI_API_KEY)')
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 60000)
   const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {

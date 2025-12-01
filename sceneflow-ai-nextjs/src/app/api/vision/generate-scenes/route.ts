@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import UserProviderConfig from '@/models/UserProviderConfig'
 import { sequelize } from '@/config/database'
-import { callVertexAIImagen } from '@/lib/vertexai/client'
+import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen } from '@/lib/imagen/promptOptimizer'
 
@@ -61,9 +61,10 @@ export async function POST(request: NextRequest) {
           }
           
           // Use Vertex AI with character references embedded in prompt
-          const base64Image = await callVertexAIImagen(finalPrompt, {
+          const base64Image = await generateImageWithGemini(finalPrompt, {
             aspectRatio: '16:9',
-            numberOfImages: 1
+            numberOfImages: 1,
+            imageSize: '2K'
           })
           
           const imageUrl = await uploadImageToBlob(
@@ -244,9 +245,10 @@ async function generateWithGemini(apiKey: string, prompt: string): Promise<strin
   // Use Vertex AI Imagen 3 (same as thumbnail generation)
   console.log('[Scene Gen] Using Vertex AI Imagen 3 for scene image')
   
-  const base64Image = await callVertexAIImagen(prompt, {
+  const base64Image = await generateImageWithGemini(prompt, {
     aspectRatio: '16:9',
-    numberOfImages: 1
+    numberOfImages: 1,
+    imageSize: '2K'
   })
   
   // Upload to Vercel Blob and return URL

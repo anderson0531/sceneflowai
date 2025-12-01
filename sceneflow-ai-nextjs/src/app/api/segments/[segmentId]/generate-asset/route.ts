@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { VideoGenerationGateway } from '@/services/VideoGenerationGateway'
 import { StandardVideoRequest } from '@/services/ai-providers/BaseAIProviderAdapter'
-import { callVertexAIImagen } from '@/lib/vertexai/client'
+import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { extractAndStoreLastFrame } from '@/lib/videoUtils'
 import { getServerSession } from 'next-auth'
@@ -103,11 +103,11 @@ export async function POST(
       }
 
     } else if (genType === 'T2I') {
-      // Image generation using Vertex AI
-      const base64Image = await callVertexAIImagen(prompt, {
+      // Image generation using Gemini API
+      const base64Image = await generateImageWithGemini(prompt, {
         aspectRatio: '16:9',
         numberOfImages: 1,
-        quality: 'auto',
+        imageSize: '2K',
         // TODO: Add reference images support when available
       })
 

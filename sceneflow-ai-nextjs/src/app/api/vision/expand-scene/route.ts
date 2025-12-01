@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
-import { callVertexAIImagen } from '@/lib/vertexai/client'
+import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen } from '@/lib/imagen/promptOptimizer'
 
@@ -423,9 +423,10 @@ ${hasCharacterRefs ? '- Characters MUST match their reference images' : ''}
     }
 
     // Generate with Vertex AI Imagen 3 (character references embedded in prompt)
-    const base64Image = await callVertexAIImagen(finalPrompt, {
+    const base64Image = await generateImageWithGemini(finalPrompt, {
       aspectRatio: '16:9',
-      numberOfImages: 1
+      numberOfImages: 1,
+      imageSize: '2K'
     })
 
     // Upload to Vercel Blob

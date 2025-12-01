@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import UserProviderConfig from '@/models/UserProviderConfig'
 import { sequelize } from '@/config/database'
-import { callVertexAIImagen } from '@/lib/vertexai/client'
+import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 
 export const runtime = 'nodejs'
@@ -147,12 +147,13 @@ async function generateCharacterImage(params: {
   apiKey: string
   prompt: string
 }): Promise<string> {
-  // Force Vertex AI for now (bypass BYOK)
-  console.log('[Character Gen] Using Vertex AI Imagen 3 (platform service account)')
+  // Use Gemini API for character generation (platform API key)
+  console.log('[Character Gen] Using Gemini 3 Pro Image (platform API key)')
   
-  const base64Image = await callVertexAIImagen(params.prompt, {
+  const base64Image = await generateImageWithGemini(params.prompt, {
     aspectRatio: '1:1', // Portrait aspect ratio
-    numberOfImages: 1
+    numberOfImages: 1,
+    imageSize: '2K' // Higher quality for character references
   })
   
   const blobUrl = await uploadImageToBlob(
@@ -163,6 +164,6 @@ async function generateCharacterImage(params: {
   return blobUrl
 }
 
-// Old provider functions removed - now using Vertex AI for all character images
-// BYOK will be re-implemented later with Vertex AI service accounts
+// Old provider functions removed - now using Gemini API for all character images
+// BYOK will be re-implemented later with user's Gemini API keys
 

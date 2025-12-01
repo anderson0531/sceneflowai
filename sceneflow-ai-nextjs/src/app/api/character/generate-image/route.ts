@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { callVertexAIImagen } from '@/lib/vertexai/client'
+import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { getCharacterAttributes } from '../../../../lib/character/persistence'
@@ -37,11 +37,11 @@ export async function POST(req: NextRequest) {
     console.log(enhancedPrompt)
     console.log('[Character Image] =======================================')
 
-    // Generate with Vertex AI (1:1 for portrait)
-    const base64Image = await callVertexAIImagen(enhancedPrompt, {
+    // Generate with Gemini API (1:1 for portrait)
+    const base64Image = await generateImageWithGemini(enhancedPrompt, {
       aspectRatio: '1:1',
       numberOfImages: 1,
-      quality: quality // Pass quality setting
+      imageSize: quality === 'max' ? '2K' : '1K' // Map quality to image size
     })
     
     // Upload to Vercel Blob

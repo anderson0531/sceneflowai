@@ -28,7 +28,7 @@ export type V2Direction = z.infer<typeof V2DirectionSchema>
 export type V2DirectionRequestType = z.infer<typeof V2DirectionRequest>
 
 export async function analyzeDirectionV2(req: V2DirectionRequestType): Promise<{ data: V2Direction; provider: Provider; model: string; }>{
-  const hasGemini = !!process.env.GOOGLE_GEMINI_API_KEY
+  const hasGemini = !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY)
   const hasOpenAI = !!process.env.OPENAI_API_KEY
   const provider: Provider = ((): Provider => {
     if (req.provider === 'gemini' || req.provider === 'openai') return req.provider

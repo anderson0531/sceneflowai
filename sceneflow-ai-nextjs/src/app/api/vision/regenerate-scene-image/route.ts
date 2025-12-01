@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import '@/models'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
-import { callVertexAIImagen } from '@/lib/vertexai/client'
+import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 
 export const dynamic = 'force-dynamic'
@@ -25,9 +25,10 @@ export async function POST(request: NextRequest) {
     await sequelize.authenticate()
 
     // Generate image with Vertex AI Imagen 3
-    const base64Image = await callVertexAIImagen(customPrompt, {
+    const base64Image = await generateImageWithGemini(customPrompt, {
       aspectRatio: '16:9',
-      numberOfImages: 1
+      numberOfImages: 1,
+      imageSize: '2K'
     })
 
     // Upload to Vercel Blob
