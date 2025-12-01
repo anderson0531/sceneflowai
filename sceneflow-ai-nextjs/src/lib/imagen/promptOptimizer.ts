@@ -181,59 +181,103 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
   const hasValidReferences = charactersWithRefs.length > 0
   
   if (hasValidReferences) {
-    // SIMPLIFIED REFERENCE MODE: Trust the reference image pixels
-    // Use "the man [1]" or "the woman [2]" to anchor references
-    // Don't describe physical attributes - let the model derive them from the photos
+    // VISUAL ANCHOR MODE: Use matching descriptions in prompt and subjectDescription
+    // The prompt text must describe characters using the SAME visual anchors
+    // that are in the API's subjectDescription field
     
     const characterRefs = params.characterReferences!
       .filter(ref => ref.referenceId !== undefined)
-      .map(ref => ({
-        name: ref.name,
-        firstName: ref.name.split(' ')[0], // Extract first name for standalone replacement
-        refId: ref.referenceId!,
-        // Detect gender for anchor text
-        isFemale: (ref.description || '').toLowerCase().includes('woman') ||
-                  (ref.description || '').toLowerCase().includes('female')
-      }))
+      .map(ref => {
+        const descLower = (ref.description || '').toLowerCase()
+        const isFemale = descLower.includes('woman') || descLower.includes('female')
+        
+        // Extract visual anchors from description (must match what createVisualAnchorDescription returns)
+        const anchors: string[] = []
+        
+        // Age
+        if (descLower.includes('late 50s') || descLower.includes('early 60s') || descLower.includes('60s')) {
+          anchors.push('older')
+        } else if (descLower.includes('late 20s') || descLower.includes('early 30s') || descLower.includes('30s')) {
+          anchors.push('young')
+        }
+        
+        // Hair
+        if (descLower.includes('curly afro') || descLower.includes('afro')) {
+          anchors.push('curly hair')
+        } else if (descLower.includes('salt-and-pepper') && descLower.includes('hair')) {
+          anchors.push('grey hair')
+        }
+        
+        // Beard
+        if (!isFemale && descLower.includes('beard')) {
+          if (descLower.includes('salt-and-pepper') || descLower.includes('grey') || descLower.includes('gray')) {
+            anchors.push('grey beard')
+          } else {
+            anchors.push('beard')
+          }
+        }
+        
+        // Glasses
+        if (descLower.includes('glasses')) {
+          anchors.push('glasses')
+        }
+        
+        // Build visual anchor phrase for prompt
+        const gender = isFemale ? 'woman' : 'man'
+        let visualAnchor: string
+        if (anchors.length === 0) {
+          visualAnchor = `a ${gender}`
+        } else {
+          const ageAnchor = anchors.find(a => ['older', 'young', 'middle-aged'].includes(a))
+          const features = anchors.filter(a => !['older', 'young', 'middle-aged'].includes(a))
+          
+          if (ageAnchor) {
+            visualAnchor = `${ageAnchor === 'older' ? 'an' : 'a'} ${ageAnchor} ${gender}`
+            if (features.length > 0) {
+              visualAnchor += ` with ${features.join(' and ')}`
+            }
+          } else {
+            visualAnchor = `a ${gender} with ${features.join(' and ')}`
+          }
+        }
+        
+        return {
+          name: ref.name,
+          firstName: ref.name.split(' ')[0],
+          refId: ref.referenceId!,
+          isFemale,
+          visualAnchor // e.g., "a young man with curly hair and beard"
+        }
+      })
     
-    // Replace character names with anchored class noun + refId
-    // First replace full names, then first names only (to avoid partial matches)
+    // Replace character names with visual anchor descriptions (NO [refId] markers in prompt text)
+    // This ensures the prompt text MATCHES the subjectDescription
     let promptScene = cleanedAction
     
-    // Pass 1: Replace full names "Alex Anderson" -> "the man [1]"
+    // Pass 1: Replace full names with visual anchors
     characterRefs.forEach(ref => {
       const fullNamePattern = new RegExp(`\\b${ref.name}\\b`, 'gi')
-      const anchor = ref.isFemale ? 'the woman' : 'the man'
-      promptScene = promptScene.replace(fullNamePattern, `${anchor} [${ref.refId}]`)
+      promptScene = promptScene.replace(fullNamePattern, ref.visualAnchor)
     })
     
-    // Pass 2: Replace first names only "Alex" -> "[1]" (just the marker, no anchor to avoid duplication)
-    // Also handle possessives like "Alex's" -> "[1]'s"
+    // Pass 2: Replace first names and possessives
     characterRefs.forEach(ref => {
-      const firstNamePattern = new RegExp(`\\b${ref.firstName}'s\\b`, 'gi')
-      promptScene = promptScene.replace(firstNamePattern, `[${ref.refId}]'s`)
+      const firstNamePossessive = new RegExp(`\\b${ref.firstName}'s\\b`, 'gi')
+      promptScene = promptScene.replace(firstNamePossessive, `the ${ref.isFemale ? 'woman' : 'man'}'s`)
       
       const firstNameStandalone = new RegExp(`\\b${ref.firstName}\\b`, 'gi')
-      promptScene = promptScene.replace(firstNameStandalone, `[${ref.refId}]`)
+      promptScene = promptScene.replace(firstNameStandalone, `the ${ref.isFemale ? 'woman' : 'man'}`)
     })
     
-    // Build simple prompt: scene with anchored [1], [2] markers + style
+    // Build the final prompt - no need for "[1] and [2]" preamble since
+    // the visual anchors in the text match the subjectDescriptions
     let prompt = promptScene
-    
-    // For multi-character scenes, add brief context with class nouns
-    if (characterRefs.length === 2) {
-      const anchor1 = characterRefs[0].isFemale ? 'The woman' : 'The man'
-      const anchor2 = characterRefs[1].isFemale ? 'the woman' : 'the man'
-      prompt = `${anchor1} [1] and ${anchor2} [2] in the same scene. ${prompt}`
-    } else if (characterRefs.length > 2) {
-      prompt = `Multiple people in the same scene. ${prompt}`
-    }
     
     // Add style qualifiers
     prompt += ` ${visualStyle}`
     
-    console.log('[Prompt Optimizer] Using SIMPLIFIED REFERENCE MODE with', characterRefs.length, 'reference(s)')
-    console.log('[Prompt Optimizer] Refs:', characterRefs.map(r => `[${r.refId}]`).join(', '))
+    console.log('[Prompt Optimizer] Using VISUAL ANCHOR MODE with', characterRefs.length, 'reference(s)')
+    console.log('[Prompt Optimizer] Visual anchors:', characterRefs.map(r => `${r.name} -> "${r.visualAnchor}"`).join(', '))
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
     console.log(prompt)
     console.log('[Prompt Optimizer] ===== END FULL PROMPT =====')
@@ -383,6 +427,37 @@ function cleanSceneForVisuals(action: string, visualDesc: string): string {
   cleaned = cleaned.replace(/\b(ANGLE\s+ON\s*:?\s*)/gi, '')
   cleaned = cleaned.replace(/\b(PUSH\s+IN\s+ON\s*:?\s*)/gi, '')
   cleaned = cleaned.replace(/\b(PULL\s+BACK\s+TO\s*:?\s*)/gi, '')
+  
+  // Remove contradictory camera movement descriptions
+  // These describe motion which can't be captured in a single still image
+  cleaned = cleaned.replace(/\b(slow\s+)?pull[s\-]?\s*back\s+(to\s+)?(reveal\s+)?(a\s+)?/gi, '')
+  cleaned = cleaned.replace(/\b(rapid\s+)?succession\s+of\s+(static\s+)?lock[- ]?offs?\b/gi, '')
+  cleaned = cleaned.replace(/\bextreme\s+close[- ]?up\b/gi, '')
+  cleaned = cleaned.replace(/\bwide\s+two[- ]?shot\b/gi, '')
+  cleaned = cleaned.replace(/\b(camera\s+)?(pushes?|pulls?|zooms?|pans?|tilts?|tracks?|dollies?)\s+(in|out|to|toward|away|left|right)?\b/gi, '')
+  cleaned = cleaned.replace(/\bflash\s+resolves?,?\s*/gi, '')
+  
+  // Remove contradictory lighting descriptions - keep only the dominant one
+  // If multiple lighting types mentioned, prefer the last/most specific one
+  const lightingPatterns = [
+    /\bhigh[- ]?contrast,?\s*source[- ]?driven\s+lighting\s*\([^)]+\)\s*/gi,
+    /\bharsh\s+sunlight\b/gi,
+    /\bsoft,?\s*diffused\s+lighting\b/gi,
+  ]
+  
+  // Count lighting mentions and remove all but keep scene coherent
+  let lightingMentions = 0
+  lightingPatterns.forEach(pattern => {
+    const matches = cleaned.match(pattern)
+    if (matches) lightingMentions += matches.length
+  })
+  
+  // If multiple lighting descriptions, simplify to just "diffused lighting" or remove specifics
+  if (lightingMentions > 1) {
+    lightingPatterns.forEach(pattern => {
+      cleaned = cleaned.replace(pattern, '')
+    })
+  }
   
   // Remove montage descriptions - keep only the LAST distinct scene
   // Split on "Then," or "Then the" patterns which often signal the main scene after montage
