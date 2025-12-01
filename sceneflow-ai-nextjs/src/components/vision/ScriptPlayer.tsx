@@ -6,7 +6,7 @@ import { SceneDisplay } from './SceneDisplay'
 import { PlaybackControls } from './PlaybackControls'
 import { VoiceAssignmentPanel } from './VoiceAssignmentPanel'
 import { MobileMenuSheet } from './MobileMenuSheet'
-import { WebAudioMixer, SceneAudioConfig } from '@/lib/audio/webAudioMixer'
+import { WebAudioMixer, SceneAudioConfig, type AudioSource } from '@/lib/audio/webAudioMixer'
 import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAvailableLanguages, getAudioUrl, getAudioDuration as getStoredAudioDuration } from '@/lib/audio/languageDetection'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
@@ -34,6 +34,9 @@ interface PlayerState {
 }
 
 const audioDurationCache = new Map<string, number>()
+const NARRATION_DELAY_SECONDS = 2
+const DIALOGUE_GAP_SECONDS = 0.3
+const SFX_GAP_SECONDS = 0
 
 function normalizeDuration(value: unknown): number | null {
   if (value === null || value === undefined) return null
@@ -383,8 +386,10 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
    */
   const calculateAudioTimeline = useCallback(async (scene: any): Promise<SceneAudioConfig> => {
     const config: SceneAudioConfig = {}
-    let currentTime = 0
     let totalDuration = 0
+    let narrationEndTime = 0
+    let sfxCursor = 0
+    let dialogueCursor = 0
     
     // Get language-specific audio URLs
     const narrationUrl = getAudioForLanguage(scene, selectedLanguage, 'narration')
@@ -409,58 +414,63 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       console.log('[Timeline] Added music:', scene.musicAudio)
     }
     
-    // Narration starts at scene beginning (concurrent with music)
+    // Narration starts after configured offset
     if (narrationUrl) {
       config.narration = narrationUrl
+      config.narrationOffsetSeconds = NARRATION_DELAY_SECONDS
       const storedDuration = getStoredAudioDuration(scene, selectedLanguage, 'narration')
       const narrationDuration = await resolveAudioDuration(narrationUrl, storedDuration)
-      totalDuration = Math.max(totalDuration, narrationDuration)
-      currentTime = narrationDuration + 3.0 // Add 3-second lag before dialogue starts
+      narrationEndTime = NARRATION_DELAY_SECONDS + narrationDuration
+      totalDuration = Math.max(totalDuration, narrationEndTime)
     }
-    
-    // Dialogue follows narration sequentially
-    if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
-      config.dialogue = []
-      
-      for (const dialogue of dialogueArray) {
-        if (dialogue.audioUrl) {
-          config.dialogue.push({
-            url: dialogue.audioUrl,
-            startTime: currentTime
-          })
 
-          const dialogueDuration = await resolveAudioDuration(dialogue.audioUrl, dialogue.duration)
-          totalDuration = Math.max(totalDuration, currentTime + dialogueDuration)
-          currentTime += dialogueDuration + 0.3 // Add 300ms pause between dialogue lines
-        }
-      }
-    }
-    
-    // SFX - use specified time or calculate sequential position
+    // SFX queue begins after narration finishes
+    const resolvedSfx: AudioSource[] = []
+    sfxCursor = narrationEndTime
     if (scene.sfxAudio && scene.sfxAudio.length > 0) {
-      config.sfx = []
-      
-      // Loop through sfxAudio array directly (not scene.sfx which might be empty)
       for (let idx = 0; idx < scene.sfxAudio.length; idx++) {
         const sfxUrl = scene.sfxAudio[idx]
         if (!sfxUrl) continue
 
         const sfxDef = scene.sfx?.[idx] || {}
-        const sfxTime = sfxDef.time !== undefined ? sfxDef.time : currentTime
         const sfxDuration = await resolveAudioDuration(sfxUrl, sfxDef.duration)
-        config.sfx!.push({
+        const explicitTime = typeof sfxDef.time === 'number' ? Math.max(sfxDef.time, narrationEndTime) : Math.max(sfxCursor, narrationEndTime)
+        const startTime = Math.max(explicitTime, sfxCursor)
+        resolvedSfx.push({
           url: sfxUrl,
-          startTime: sfxTime
+          startTime
         })
-        totalDuration = Math.max(totalDuration, sfxTime + sfxDuration)
+        sfxCursor = startTime + sfxDuration + SFX_GAP_SECONDS
+        totalDuration = Math.max(totalDuration, sfxCursor)
+      }
+    }
+    if (resolvedSfx.length > 0) {
+      config.sfx = resolvedSfx
+    }
 
-        if (sfxDef.time === undefined) {
-          currentTime = sfxTime + sfxDuration + 0.3
+    // Dialogue waits for narration/SFX to finish and plays sequentially
+    const resolvedDialogue: AudioSource[] = []
+    dialogueCursor = Math.max(sfxCursor, narrationEndTime)
+    if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
+      for (const dialogue of dialogueArray) {
+        if (dialogue.audioUrl) {
+          const startTime = Math.max(dialogueCursor, narrationEndTime)
+          resolvedDialogue.push({
+            url: dialogue.audioUrl,
+            startTime
+          })
+
+          const dialogueDuration = await resolveAudioDuration(dialogue.audioUrl, dialogue.duration)
+          dialogueCursor = startTime + dialogueDuration + DIALOGUE_GAP_SECONDS
+          totalDuration = Math.max(totalDuration, dialogueCursor)
         }
       }
     }
-    
-    totalDuration = Math.max(totalDuration, currentTime)
+    if (resolvedDialogue.length > 0) {
+      config.dialogue = resolvedDialogue
+    }
+
+    totalDuration = Math.max(totalDuration, dialogueCursor, narrationEndTime, sfxCursor)
 
     console.log('[Timeline] Final config:', {
       hasMusic: !!config.music,

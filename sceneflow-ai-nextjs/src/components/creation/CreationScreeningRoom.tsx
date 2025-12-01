@@ -101,9 +101,11 @@ export function CreationScreeningRoom({ scenes, onClose, projectTitle }: Creatio
     const mixer = audioMixerRef.current
     if (!mixer) return
 
+    const narrationUrl = scene.narrationUrl || scene.timeline?.narrationTrackUrl
     const config: SceneAudioConfig = {
       music: scene.musicUrl || scene.timeline?.musicTrackUrl,
-      narration: scene.narrationUrl || scene.timeline?.narrationTrackUrl,
+      narration: narrationUrl,
+      narrationOffsetSeconds: narrationUrl ? 2 : undefined,
       dialogue: (scene.timeline?.userAudioTrack ?? [])
         .filter((clip) => clip.sourceUrl)
         .map((clip) => ({ url: clip.sourceUrl as string, startTime: clip.startTime ?? 0 })),
