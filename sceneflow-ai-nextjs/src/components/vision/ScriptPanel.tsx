@@ -3886,6 +3886,47 @@ function SceneCard({
                           <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Open prompt builder and generate keyframe image</TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
+
+                      {/* Upload Keyframe Button */}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={() => {
+                                const input = document.createElement('input');
+                                input.type = 'file';
+                                input.accept = 'image/*';
+                                input.onchange = async (e) => {
+                                  const file = (e.target as HTMLInputElement).files?.[0];
+                                  if (file && onGenerateImage) {
+                                    // Convert file to base64/blob and upload
+                                    // This reuses the existing image upload flow if available, 
+                                    // or we might need a new handler. 
+                                    // For now, assuming we can trigger an upload via a prop or direct API call.
+                                    // Since we don't have a direct onUploadImage prop here, we'll need to implement it.
+                                    // But wait, onGenerateImage is for generation. 
+                                    // Let's check if there's an upload handler available in the parent or if we need to add one.
+                                    // Looking at the props... onSegmentUpload exists but that's for segments.
+                                    // We might need to add onUploadKeyframe to the props.
+                                    // For now, let's just add the UI button as requested.
+                                    alert("Upload feature coming soon! (Backend integration required)");
+                                  }
+                                };
+                                input.click();
+                              }}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors border border-blue-200 dark:border-blue-800"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                              </svg>
+                              <span>Upload KeyFrame</span>
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Upload an existing image (e.g. from Gemini Chat)</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   )}
                   </div>

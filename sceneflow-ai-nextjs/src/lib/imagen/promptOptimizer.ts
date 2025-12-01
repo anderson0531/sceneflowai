@@ -277,6 +277,7 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
         
         // Use pre-computed linking description OR generate it
         // This MUST match the subjectDescription passed to the Imagen API
+        // IMPORTANT: If linkingDescription is provided (e.g. "person [1]"), use it directly!
         const linkingDescription = ref.linkingDescription || generateLinkingDescription(ref.description)
         
         return {
@@ -284,12 +285,12 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
           firstName: ref.name.split(' ')[0],
           refId: ref.referenceId!,
           isFemale,
-          linkingDescription // e.g., "a young man with curly hair"
+          linkingDescription // e.g., "person [1]" or "a young man with curly hair"
         }
       })
     
     // Replace character names with their linking descriptions
-    // "Alex Anderson sits..." -> "A young man with curly hair sits..."
+    // "Alex Anderson sits..." -> "person [1] sits..."
     let promptScene = cleanedAction
     
     characterRefs.forEach(ref => {

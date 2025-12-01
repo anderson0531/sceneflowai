@@ -66,13 +66,36 @@ export default function ImagenTestPage() {
             <p className="text-xs text-gray-500 mt-1">The anchor text linking image to prompt.</p>
           </div>
 
-          <button 
-            onClick={runTest} 
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded font-bold hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? 'Generating...' : 'Run Test'}
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={runTest} 
+              disabled={loading}
+              className="flex-1 bg-blue-600 text-white py-3 rounded font-bold hover:bg-blue-700 disabled:opacity-50"
+            >
+              {loading ? 'Generating...' : 'Run Test'}
+            </button>
+            
+            <button 
+              onClick={() => {
+                setPrompt('A professional studio portrait of [1], 8k resolution, sharp focus.');
+                setSubjectDescription('person [1]');
+              }}
+              className="px-3 py-3 bg-gray-200 text-gray-700 rounded font-bold hover:bg-gray-300"
+              title="Reset to Force Reference defaults"
+            >
+              Reset
+            </button>
+          </div>
+
+          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded text-sm">
+            <h4 className="font-bold text-yellow-800 mb-1">API Reference Guide</h4>
+            <ul className="list-disc pl-4 space-y-1 text-yellow-700">
+              <li><strong>Force Reference:</strong> Ensure <code>[1]</code> appears in BOTH Prompt and Subject Description.</li>
+              <li><strong>Prompt:</strong> "A photo of [1]..."</li>
+              <li><strong>Subject Desc:</strong> "person [1]"</li>
+              <li><strong>Model:</strong> imagen-3.0-capability-001</li>
+            </ul>
+          </div>
 
           {result?.logs && (
             <div className="mt-4 p-2 bg-gray-900 text-green-400 text-xs font-mono rounded h-48 overflow-y-auto">
