@@ -181,103 +181,36 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
   const hasValidReferences = charactersWithRefs.length > 0
   
   if (hasValidReferences) {
-    // VISUAL ANCHOR MODE: Use matching descriptions in prompt and subjectDescription
-    // The prompt text must describe characters using the SAME visual anchors
-    // that are in the API's subjectDescription field
+    // GEMINI CHAT STYLE: Use character names directly, let API link via referenceId
+    // Based on testing: Gemini Chat works with "[Image 1: Alex Anderson]" format
+    // The Imagen API should link names to referenceId via subjectDescription
     
     const characterRefs = params.characterReferences!
       .filter(ref => ref.referenceId !== undefined)
-      .map(ref => {
-        const descLower = (ref.description || '').toLowerCase()
-        const isFemale = descLower.includes('woman') || descLower.includes('female')
-        
-        // Extract visual anchors from description (must match what createVisualAnchorDescription returns)
-        const anchors: string[] = []
-        
-        // Age
-        if (descLower.includes('late 50s') || descLower.includes('early 60s') || descLower.includes('60s')) {
-          anchors.push('older')
-        } else if (descLower.includes('late 20s') || descLower.includes('early 30s') || descLower.includes('30s')) {
-          anchors.push('young')
-        }
-        
-        // Hair
-        if (descLower.includes('curly afro') || descLower.includes('afro')) {
-          anchors.push('curly hair')
-        } else if (descLower.includes('salt-and-pepper') && descLower.includes('hair')) {
-          anchors.push('grey hair')
-        }
-        
-        // Beard
-        if (!isFemale && descLower.includes('beard')) {
-          if (descLower.includes('salt-and-pepper') || descLower.includes('grey') || descLower.includes('gray')) {
-            anchors.push('grey beard')
-          } else {
-            anchors.push('beard')
-          }
-        }
-        
-        // Glasses
-        if (descLower.includes('glasses')) {
-          anchors.push('glasses')
-        }
-        
-        // Build visual anchor phrase for prompt
-        const gender = isFemale ? 'woman' : 'man'
-        let visualAnchor: string
-        if (anchors.length === 0) {
-          visualAnchor = `a ${gender}`
-        } else {
-          const ageAnchor = anchors.find(a => ['older', 'young', 'middle-aged'].includes(a))
-          const features = anchors.filter(a => !['older', 'young', 'middle-aged'].includes(a))
-          
-          if (ageAnchor) {
-            visualAnchor = `${ageAnchor === 'older' ? 'an' : 'a'} ${ageAnchor} ${gender}`
-            if (features.length > 0) {
-              visualAnchor += ` with ${features.join(' and ')}`
-            }
-          } else {
-            visualAnchor = `a ${gender} with ${features.join(' and ')}`
-          }
-        }
-        
-        return {
-          name: ref.name,
-          firstName: ref.name.split(' ')[0],
-          refId: ref.referenceId!,
-          isFemale,
-          visualAnchor // e.g., "a young man with curly hair and beard"
-        }
-      })
+      .map(ref => ({
+        name: ref.name,
+        firstName: ref.name.split(' ')[0],
+        refId: ref.referenceId!,
+        isFemale: (ref.description || '').toLowerCase().includes('woman') ||
+                  (ref.description || '').toLowerCase().includes('female')
+      }))
     
-    // Replace character names with visual anchor descriptions (NO [refId] markers in prompt text)
-    // This ensures the prompt text MATCHES the subjectDescription
+    // MINIMAL PROCESSING: Keep character names, just add reference markers
+    // Format: "featuring Alex Anderson [1], Ben Anderson [2]"
     let promptScene = cleanedAction
     
-    // Pass 1: Replace full names with visual anchors
+    // Add [refId] markers AFTER character names (not replacing them)
+    // This matches how Gemini Chat seems to work: name + image reference together
     characterRefs.forEach(ref => {
       const fullNamePattern = new RegExp(`\\b${ref.name}\\b`, 'gi')
-      promptScene = promptScene.replace(fullNamePattern, ref.visualAnchor)
+      promptScene = promptScene.replace(fullNamePattern, `${ref.name} [${ref.refId}]`)
     })
     
-    // Pass 2: Replace first names and possessives
-    characterRefs.forEach(ref => {
-      const firstNamePossessive = new RegExp(`\\b${ref.firstName}'s\\b`, 'gi')
-      promptScene = promptScene.replace(firstNamePossessive, `the ${ref.isFemale ? 'woman' : 'man'}'s`)
-      
-      const firstNameStandalone = new RegExp(`\\b${ref.firstName}\\b`, 'gi')
-      promptScene = promptScene.replace(firstNameStandalone, `the ${ref.isFemale ? 'woman' : 'man'}`)
-    })
+    // Build the final prompt with style
+    let prompt = promptScene + ` ${visualStyle}`
     
-    // Build the final prompt - no need for "[1] and [2]" preamble since
-    // the visual anchors in the text match the subjectDescriptions
-    let prompt = promptScene
-    
-    // Add style qualifiers
-    prompt += ` ${visualStyle}`
-    
-    console.log('[Prompt Optimizer] Using VISUAL ANCHOR MODE with', characterRefs.length, 'reference(s)')
-    console.log('[Prompt Optimizer] Visual anchors:', characterRefs.map(r => `${r.name} -> "${r.visualAnchor}"`).join(', '))
+    console.log('[Prompt Optimizer] Using MINIMAL MODE with', characterRefs.length, 'reference(s)')
+    console.log('[Prompt Optimizer] Character mappings:', characterRefs.map(r => `${r.name} -> [${r.refId}]`).join(', '))
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
     console.log(prompt)
     console.log('[Prompt Optimizer] ===== END FULL PROMPT =====')

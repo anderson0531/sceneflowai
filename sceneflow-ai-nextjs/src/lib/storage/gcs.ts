@@ -154,8 +154,35 @@ export async function downloadImageAsBase64(gsUrl: string): Promise<string> {
     // Download file contents
     const [contents] = await file.download()
 
+    // Validate image data
+    const fileSize = contents.length
+    console.log(`[GCS] Downloaded ${fileSize} bytes from ${gsUrl}`)
+    
+    // Check for valid JPEG/PNG header
+    const isJpeg = contents[0] === 0xFF && contents[1] === 0xD8
+    const isPng = contents[0] === 0x89 && contents[1] === 0x50 && contents[2] === 0x4E && contents[3] === 0x47
+    console.log(`[GCS] Image format detection: JPEG=${isJpeg}, PNG=${isPng}`)
+    
+    if (!isJpeg && !isPng) {
+      console.warn(`[GCS] WARNING: Image does not have valid JPEG/PNG header. First 4 bytes: ${contents.slice(0, 4).toString('hex')}`)
+    }
+
     // Convert to base64
     const base64Data = contents.toString('base64')
+    
+    // Validate base64 encoding
+    const base64Length = base64Data.length
+    const expectedBase64Length = Math.ceil(fileSize / 3) * 4
+    console.log(`[GCS] Base64 encoding: ${base64Length} chars (expected ~${expectedBase64Length})`)
+    
+    // Verify base64 is valid by checking first/last chars and no invalid characters
+    const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/
+    const isValidBase64 = base64Regex.test(base64Data)
+    console.log(`[GCS] Base64 validation: ${isValidBase64 ? 'VALID' : 'INVALID'}`)
+    
+    if (!isValidBase64) {
+      console.error(`[GCS] ERROR: Invalid base64 encoding detected!`)
+    }
     
     console.log(`[GCS] Successfully downloaded and encoded ${gsUrl} (${base64Data.length} chars)`)
 

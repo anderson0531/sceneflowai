@@ -160,9 +160,27 @@ export async function callVertexAIImagen(
           referenceType: r.referenceType,
           referenceId: r.referenceId,
           subjectImageConfig: r.subjectImageConfig,
-          imageSize: r.referenceImage?.bytesBase64Encoded?.length || 0
+          imageSize: r.referenceImage?.bytesBase64Encoded?.length || 0,
+          // Log first 50 chars of base64 to verify it looks correct
+          base64Preview: r.referenceImage?.bytesBase64Encoded?.substring(0, 50) + '...'
         })), null, 2
       ))
+      
+      // Verify the request structure matches Google's expected format
+      console.log('[Imagen] DEBUG - Full request structure (without image data):')
+      const debugRequest = {
+        instances: [{
+          prompt: requestBody.instances[0].prompt.substring(0, 100) + '...',
+          referenceImages: referenceImagesArray.map(r => ({
+            referenceType: r.referenceType,
+            referenceId: r.referenceId,
+            referenceImage: { bytesBase64Encoded: `[${r.referenceImage.bytesBase64Encoded.length} chars]` },
+            subjectImageConfig: r.subjectImageConfig
+          }))
+        }],
+        parameters: requestBody.parameters
+      }
+      console.log(JSON.stringify(debugRequest, null, 2))
     } else {
       console.warn('[Imagen] No valid reference images, proceeding without subject customization')
     }
