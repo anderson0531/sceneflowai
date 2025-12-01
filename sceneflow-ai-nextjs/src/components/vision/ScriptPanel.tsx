@@ -1663,6 +1663,56 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     })
   }, [scenes])
 
+  // NEW: Handle keyframe upload
+  const handleUploadKeyframe = async (sceneIdx: number, file: File) => {
+    if (!projectId) {
+      toast.error('Project ID missing')
+      return
+    }
+    
+    const toastId = toast.loading('Uploading keyframe...')
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('projectId', projectId)
+      formData.append('sceneNumber', (sceneIdx + 1).toString())
+
+      const res = await fetch('/api/scene/upload-image', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!res.ok) throw new Error('Upload failed')
+
+      const data = await res.json()
+      
+      // Update local script state
+      let updatedScript = Array.isArray(script) ? [...script] : { ...script }
+      const currentScenes = normalizeScenes(script)
+      
+      const updatedScenes = currentScenes.map((s: any, idx: number) => 
+        idx === sceneIdx 
+          ? { ...s, imageUrl: data.imageUrl } 
+          : s
+      )
+
+      if (Array.isArray(script)) {
+        updatedScript = updatedScenes
+      } else if (script.script && Array.isArray(script.script.scenes)) {
+        updatedScript.script.scenes = updatedScenes
+      } else if (script.scenes && Array.isArray(script.scenes)) {
+        updatedScript.scenes = updatedScenes
+      }
+      
+      onScriptChange(updatedScript)
+      
+      toast.success('Keyframe uploaded successfully', { id: toastId })
+    } catch (error) {
+      console.error(error)
+      toast.error('Failed to upload keyframe', { id: toastId })
+    }
+  }
+
   return (
     <>
       {/* Production Dashboard - moved above Production Plan */}
@@ -2149,6 +2199,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                           bookmarkSaving={bookmarkSavingSceneIdx === idx}
                           overlayStore={overlayStore}
                           projectId={projectId}
+                          onUploadKeyframe={handleUploadKeyframe}
                 />
                     )
                   })}
@@ -2452,6 +2503,7 @@ interface SceneCardProps {
   bookmarkSaving?: boolean
   overlayStore?: { show: (message: string, duration: number) => void; hide: () => void }
   projectId?: string
+  onUploadKeyframe?: (sceneIdx: number, file: File) => Promise<void>
 }
 
 function SceneCard({
@@ -2516,6 +2568,7 @@ function SceneCard({
   bookmarkSaving = false,
   overlayStore,
   projectId,
+  onUploadKeyframe,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [isOpen, setIsOpen] = useState(false)
@@ -3903,50 +3956,10 @@ function SceneCard({
                                 input.accept = 'image/*';
                                 input.onchange = async (e) => {
                                   const file = (e.target as HTMLInputElement).files?.[0];
-                                  if (file && projectId) {
-                                    const toastId = toast.loading('Uploading keyframe...');
-                                    try {
-                                      const formData = new FormData();
-                                      formData.append('file', file);
-                                      formData.append('projectId', projectId);
-                                      formData.append('sceneNumber', sceneNumber.toString());
-
-                                      const res = await fetch('/api/scene/upload-image', {
-                                        method: 'POST',
-                                        body: formData,
-                                      });
-
-                                      if (!res.ok) throw new Error('Upload failed');
-
-                                      const data = await res.json();
-                                      
-                                      // Update local script state
-                                      let updatedScript = Array.isArray(script) ? [...script] : { ...script };
-                                      const currentScenes = normalizeScenes(script);
-                                      
-                                      const updatedScenes = currentScenes.map((s: any) => 
-                                        s.sceneNumber === sceneNumber 
-                                          ? { ...s, imageUrl: data.imageUrl } 
-                                          : s
-                                      );
-
-                                      if (Array.isArray(script)) {
-                                        updatedScript = updatedScenes;
-                                      } else if (script.script && Array.isArray(script.script.scenes)) {
-                                        updatedScript.script.scenes = updatedScenes;
-                                      } else if (script.scenes && Array.isArray(script.scenes)) {
-                                        updatedScript.scenes = updatedScenes;
-                                      }
-                                      
-                                      onScriptChange(updatedScript);
-                                      
-                                      toast.success('Keyframe uploaded successfully', { id: toastId });
-                                    } catch (error) {
-                                      console.error(error);
-                                      toast.error('Failed to upload keyframe', { id: toastId });
-                                    }
-                                  } else if (!projectId) {
-                                    toast.error('Project ID missing');
+                                  if (file && onUploadKeyframe) {
+                                    await onUploadKeyframe(sceneIdx, file);
+                                  } else if (!onUploadKeyframe) {
+                                    toast.error('Upload handler not available');
                                   }
                                 };
                                 input.click();
