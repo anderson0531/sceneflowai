@@ -95,20 +95,26 @@ export async function POST(req: NextRequest) {
     console.log(`[Scene Upload] Updating scene ${sceneNumber} in array of ${scenesToUpdate.length} scenes`)
     console.log(`[Scene Upload] Scene numbers in array:`, scenesToUpdate.map((s: any) => s.sceneNumber))
 
-    // Update the specific scene
-    const updatedScenes = scenesToUpdate.map((s: any) =>
-      s.sceneNumber === sceneNumber
+    // Update the specific scene - match by index if sceneNumber is undefined
+    const updatedScenes = scenesToUpdate.map((s: any, index: number) => {
+      // Match by sceneNumber if it exists, otherwise match by index (1-based)
+      const isTargetScene = s.sceneNumber === sceneNumber || (s.sceneNumber === undefined && index + 1 === sceneNumber)
+      
+      return isTargetScene
         ? {
             ...s,
+            sceneNumber: sceneNumber, // Ensure sceneNumber is set
             imageUrl: blob.url,
             imageGeneratedAt: new Date().toISOString(),
             imageSource: 'upload'
           }
         : s
-    )
+    })
     
     // Verify the update happened
-    const updatedScene = updatedScenes.find((s: any) => s.sceneNumber === sceneNumber)
+    const updatedScene = updatedScenes.find((s: any, index: number) => 
+      s.sceneNumber === sceneNumber || (s.sceneNumber === undefined && index + 1 === sceneNumber)
+    )
     console.log(`[Scene Upload] Updated scene ${sceneNumber} imageUrl:`, updatedScene?.imageUrl?.substring(0, 50))
 
     // Build updated metadata - update BOTH locations if they exist
