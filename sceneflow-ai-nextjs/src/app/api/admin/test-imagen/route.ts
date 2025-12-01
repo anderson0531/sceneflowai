@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Storage } from '@google-cloud/storage';
-import { GoogleAuth } from 'google-auth-library';
+import { getStorageClient } from '@/lib/storage/gcs';
+import { getVertexAIAuthToken } from '@/lib/vertexai/client';
 
 export const maxDuration = 60; // Allow longer timeout for AI generation
 
@@ -23,7 +23,9 @@ export async function POST(req: NextRequest) {
     if (!match) throw new Error('Invalid GCS URI format. Must be gs://bucket/path');
     
     const [, bucket, object] = match;
-    const storage = new Storage();
+    
+    // Use the shared storage client which handles credentials properly
+    const storage = getStorageClient();
     log(`2. Downloading from bucket: ${bucket}`);
     
     const [buf] = await storage.bucket(bucket).file(object).download();
@@ -31,9 +33,8 @@ export async function POST(req: NextRequest) {
     log(`3. Image downloaded. Size: ${buf.length} bytes`);
 
     // --- Step 2: Prepare Vertex AI Request ---
-    const auth = new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
-    const client = await auth.getClient();
-    const accessToken = await client.getAccessToken();
+    // Use the shared auth helper which handles credentials properly
+    const accessToken = await getVertexAIAuthToken();
     
     const projectId = process.env.GCP_PROJECT || 'gen-lang-client-0596406756';
     const endpoint = `https://us-central1-aiplatform.googleapis.com/v1/projects/${projectId}/locations/us-central1/publishers/google/models/imagen-3.0-capability-001:predict`;
@@ -67,7 +68,7 @@ export async function POST(req: NextRequest) {
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${accessToken.token}`,
+        Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
