@@ -11,11 +11,13 @@ import {
   SceneSegment,
 } from './types'
 import { Calculator, Sparkles } from 'lucide-react'
+import { breakdownSceneScript } from '@/lib/scene/breakdown'
 
 interface SceneProductionManagerProps {
   sceneId: string
   sceneNumber: number
   heading?: string
+  scene?: any // Add scene prop
   productionData?: SceneProductionData | null
   references: SceneProductionReferences
   onInitialize: (sceneId: string, options: { targetDuration: number }) => Promise<void>
@@ -34,6 +36,7 @@ export function SceneProductionManager({
   sceneId,
   sceneNumber,
   heading,
+  scene, // Destructure scene
   productionData,
   references,
   onInitialize,
@@ -69,7 +72,16 @@ export function SceneProductionManager({
   const handleInitialize = async () => {
     setIsInitializing(true)
     try {
-      await onInitialize(sceneId, { targetDuration })
+      // If we have scene data, perform client-side breakdown
+      let segments = []
+      if (scene) {
+        segments = breakdownSceneScript(scene, sceneId)
+      }
+      
+      // Pass segments to onInitialize if it accepts them (we'll assume it does via options)
+      // or if onInitialize is just a trigger, we might need another way.
+      // For now, we'll pass it in options and hope the handler uses it.
+      await onInitialize(sceneId, { targetDuration, segments: segments as any })
     } catch (error) {
       console.error('[SceneProduction] Initialize failed', error)
       try {

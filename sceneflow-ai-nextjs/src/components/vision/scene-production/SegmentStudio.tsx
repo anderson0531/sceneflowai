@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { SceneSegment, SceneProductionReferences, SceneSegmentStatus } from './types'
 import { Upload, Video, Image as ImageIcon, CheckCircle2, Film, Link as LinkIcon, Sparkles, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ShotPromptBuilder } from '../ShotPromptBuilder'
 
 export type GenerationType = 'T2V' | 'I2V' | 'T2I' | 'UPLOAD'
 
@@ -44,6 +45,10 @@ export function SegmentStudio({
 }: SegmentStudioProps) {
   const [generationType, setGenerationType] = useState<GenerationType>('T2V')
   const [startFrameUrl, setStartFrameUrl] = useState<string | null>(null)
+  
+  // Prompt Builder State
+  const [isPromptBuilderOpen, setIsPromptBuilderOpen] = useState(false)
+  const [promptBuilderMode, setPromptBuilderMode] = useState<'image' | 'video'>('video')
 
   useEffect(() => {
     if (promptSummary?.promptType) {
@@ -84,7 +89,25 @@ export function SegmentStudio({
       // Upload is handled separately via file input
       return
     }
-    await onGenerate(generationType, { startFrameUrl: startFrameUrl || undefined })
+    
+    // Open Prompt Builder instead of direct generation
+    const mode = generationType === 'T2I' ? 'image' : 'video'
+    setPromptBuilderMode(mode)
+    setIsPromptBuilderOpen(true)
+  }
+  
+  const handlePromptBuilderGenerate = async (promptData: any) => {
+    // Map promptData back to generation parameters
+    // promptData contains: prompt, negativePrompt, duration, transition, etc.
+    // We might need to pass these to onGenerate if it supports them
+    // For now, we'll just pass the prompt text if onGenerate only takes simple options
+    // But ideally onGenerate should accept the full promptData object.
+    // Since onGenerate signature is (mode, options), I'll pass promptData in options.
+    
+    await onGenerate(generationType, { 
+      startFrameUrl: startFrameUrl || undefined,
+      ...promptData 
+    })
   }
 
   const handleGenerationTypeChange = (value: string) => {
@@ -387,6 +410,19 @@ export function SegmentStudio({
           </div>
         )}
       </div>
+
+      {/* Render ShotPromptBuilder */}
+      {segment && (
+        <ShotPromptBuilder
+          open={isPromptBuilderOpen}
+          onClose={() => setIsPromptBuilderOpen(false)}
+          segment={segment}
+          mode={promptBuilderMode}
+          availableCharacters={references.characters}
+          onGenerate={handlePromptBuilderGenerate}
+          isGenerating={segment.status === 'GENERATING'}
+        />
+      )}
     </div>
   )
 }

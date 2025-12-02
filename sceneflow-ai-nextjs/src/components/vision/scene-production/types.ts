@@ -36,6 +36,15 @@ export interface SceneSegment {
   assetType: SceneSegmentAssetType
   references: SceneSegmentReferences
   takes: SceneSegmentTake[]
+  // New Shot Metadata
+  shotType?: string
+  cameraAngle?: string
+  cameraMovement?: string
+  subject?: string
+  action?: string
+  transition?: 'cut' | 'dissolve' | 'fade_out'
+  trigger?: string
+  visualFrame?: string // e.g. "Shot Frame" url if separate from activeAssetUrl
 }
 
 export interface SceneProductionData {

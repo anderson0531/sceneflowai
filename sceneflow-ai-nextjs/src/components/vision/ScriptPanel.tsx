@@ -128,7 +128,7 @@ interface ScriptPanelProps {
   // NEW: Scene production props
   sceneProductionData?: Record<string, SceneProductionData>
   sceneProductionReferences?: Record<string, SceneProductionReferences>
-  onInitializeSceneProduction?: (sceneId: string, options: { targetDuration: number }) => Promise<void>
+  onInitializeSceneProduction?: (sceneId: string, options: { targetDuration: number; segments?: any[] }) => Promise<void>
   onSegmentPromptChange?: (sceneId: string, segmentId: string, prompt: string) => void
   onSegmentGenerate?: (sceneId: string, segmentId: string, mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD', options?: { startFrameUrl?: string }) => Promise<void>
   onSegmentUpload?: (sceneId: string, segmentId: string, file: File) => Promise<void>
@@ -2453,7 +2453,7 @@ interface SceneCardProps {
   // Optional slot renderer to place content below Dashboard (e.g., Storyboard header)
   // Provides helper to open the Generate Audio dialog from parent section
   belowDashboardSlot?: (helpers: { openGenerateAudio: () => void }) => React.ReactNode
-  onInitializeSceneProduction?: (sceneId: string, options: { targetDuration: number }) => Promise<void>
+  onInitializeSceneProduction?: (sceneId: string, options: { targetDuration: number; segments?: any[] }) => Promise<void>
   onSegmentPromptChange?: (sceneId: string, segmentId: string, prompt: string) => void
   onSegmentGenerate?: (sceneId: string, segmentId: string, mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD', options?: { startFrameUrl?: string }) => Promise<void>
   onSegmentUpload?: (sceneId: string, segmentId: string, file: File) => Promise<void>
@@ -3226,8 +3226,6 @@ function SceneCard({
                             <button
                               onClick={async (e) => {
                                 e.stopPropagation()
-                                if (!onGenerateSceneAudio) return
-                                
                                 setGeneratingDialogue?.({ sceneIdx, character: '__narration__' })
                                 overlayStore?.show(`Regenerating narration for Scene ${sceneIdx + 1}...`, 20)
                                 try {
@@ -3265,8 +3263,6 @@ function SceneCard({
                           <button
                             onClick={async (e) => {
                               e.stopPropagation()
-                              if (!onGenerateSceneAudio) return
-                              
                               setGeneratingDialogue?.({ sceneIdx, character: '__narration__' })
                               overlayStore?.show(`Generating narration for Scene ${sceneIdx + 1}...`, 20)
                               try {
@@ -3634,386 +3630,17 @@ function SceneCard({
                   )}
                   </div>
                 )}
-                
-                {activeWorkflowTab === 'directorsChair' && (
-                  <div className="space-y-4">
-                  {!scene.sceneDirection ? (
-                    <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                        Generate detailed technical directions for live-action film crew including camera, lighting, scene, talent, and audio specifications.
-                      </p>
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation()
-                          if (onGenerateSceneDirection) {
-                            await onGenerateSceneDirection(sceneIdx)
-                          }
-                        }}
-                        disabled={generatingDirectionFor === sceneIdx}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {generatingDirectionFor === sceneIdx ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>Generating...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="w-4 h-4" />
-                            <span>Generate Scene Direction</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {/* Technical Details Grid - 2 columns on larger screens */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {/* Camera */}
-                        {scene.sceneDirection.camera && (
-                          <div className="p-3.5 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800/50">
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-                              <Camera className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                              Camera
-                            </h4>
-                            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                              {scene.sceneDirection.camera.shots && scene.sceneDirection.camera.shots.length > 0 && (
-                                <div className="pb-2 border-b border-blue-200/50 dark:border-blue-800/30">
-                                  <span className="font-medium text-blue-900 dark:text-blue-300">Shots: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.camera.shots.join(', ')}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.camera.angle && (
-                                <div>
-                                  <span className="font-medium text-blue-900 dark:text-blue-300">Angle: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.camera.angle}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.camera.movement && (
-                                <div>
-                                  <span className="font-medium text-blue-900 dark:text-blue-300">Movement: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.camera.movement}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.camera.lensChoice && (
-                                <div>
-                                  <span className="font-medium text-blue-900 dark:text-blue-300">Lens: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.camera.lensChoice}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.camera.focus && (
-                                <div>
-                                  <span className="font-medium text-blue-900 dark:text-blue-300">Focus: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.camera.focus}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Lighting */}
-                        {scene.sceneDirection.lighting && (
-                          <div className="p-3.5 bg-gradient-to-br from-yellow-50 to-yellow-100/50 dark:from-yellow-950/30 dark:to-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800/50">
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-                              <Zap className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
-                              Lighting
-                            </h4>
-                            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                              {scene.sceneDirection.lighting.overallMood && (
-                                <div className="pb-2 border-b border-yellow-200/50 dark:border-yellow-800/30">
-                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Mood: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.overallMood}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.lighting.timeOfDay && (
-                                <div>
-                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Time of Day: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.timeOfDay}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.lighting.keyLight && (
-                                <div>
-                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Key Light: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.keyLight}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.lighting.fillLight && (
-                                <div>
-                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Fill Light: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.fillLight}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.lighting.backlight && (
-                                <div>
-                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Backlight: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.backlight}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.lighting.practicals && (
-                                <div>
-                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Practicals: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.practicals}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.lighting.colorTemperature && (
-                                <div>
-                                  <span className="font-medium text-yellow-900 dark:text-yellow-300">Color Temp: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.lighting.colorTemperature}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Scene */}
-                        {scene.sceneDirection.scene && (
-                          <div className="p-3.5 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 rounded-lg border border-green-200 dark:border-green-800/50">
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-                              <ImageIcon className="w-4 h-4 text-green-600 dark:text-green-400" />
-                              Scene
-                            </h4>
-                            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                              {scene.sceneDirection.scene.location && (
-                                <div className="pb-2 border-b border-green-200/50 dark:border-green-800/30">
-                                  <span className="font-medium text-green-900 dark:text-green-300">Location: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.scene.location}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.scene.keyProps && scene.sceneDirection.scene.keyProps.length > 0 && (
-                                <div>
-                                  <span className="font-medium text-green-900 dark:text-green-300">Key Props: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.scene.keyProps.join(', ')}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.scene.atmosphere && (
-                                <div>
-                                  <span className="font-medium text-green-900 dark:text-green-300">Atmosphere: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.scene.atmosphere}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Talent */}
-                        {scene.sceneDirection.talent && (
-                          <div className="p-3.5 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/30 dark:to-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800/50">
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-                              <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                              Talent
-                            </h4>
-                            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                              {scene.sceneDirection.talent.blocking && (
-                                <div className="pb-2 border-b border-purple-200/50 dark:border-purple-800/30">
-                                  <span className="font-medium text-purple-900 dark:text-purple-300">Blocking: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.talent.blocking}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.talent.keyActions && scene.sceneDirection.talent.keyActions.length > 0 && (
-                                <div>
-                                  <span className="font-medium text-purple-900 dark:text-purple-300">Key Actions: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.talent.keyActions.join(', ')}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.talent.emotionalBeat && (
-                                <div>
-                                  <span className="font-medium text-purple-900 dark:text-purple-300">Emotional Beat: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.talent.emotionalBeat}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Audio */}
-                        {scene.sceneDirection.audio && (
-                          <div className="p-3.5 bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/30 dark:to-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800/50">
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-                              <Volume2 className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                              Audio
-                            </h4>
-                            <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                              {scene.sceneDirection.audio.priorities && (
-                                <div className="pb-2 border-b border-orange-200/50 dark:border-orange-800/30">
-                                  <span className="font-medium text-orange-900 dark:text-orange-300">Priorities: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.audio.priorities}</span>
-                                </div>
-                              )}
-                              {scene.sceneDirection.audio.considerations && (
-                                <div>
-                                  <span className="font-medium text-orange-900 dark:text-orange-300">Considerations: </span>
-                                  <span className="text-gray-800 dark:text-gray-200">{scene.sceneDirection.audio.considerations}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Regenerate Button */}
-                      <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                        <button
-                          onClick={async (e) => {
-                            e.stopPropagation()
-                            if (onGenerateSceneDirection) {
-                              await onGenerateSceneDirection(sceneIdx)
-                            }
-                          }}
-                          disabled={generatingDirectionFor === sceneIdx}
-                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full justify-center"
-                        >
-                          {generatingDirectionFor === sceneIdx ? (
-                            <>
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              <span>Regenerating...</span>
-                            </>
-                          ) : (
-                            <>
-                              <RefreshCw className="w-4 h-4" />
-                              <span>Regenerate Scene Direction</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                )}
-                
-                {activeWorkflowTab === 'storyboardPreViz' && (
-                  <div className="space-y-4">
-                  {/* Scene Image with Expand/Collapse */}
-                  {scene.imageUrl && (
-                    <div className={`relative rounded-lg overflow-hidden border-2 border-gray-300 dark:border-gray-600 shadow-md transition-all duration-300 ${isImageExpanded ? 'max-w-full' : 'max-w-3xl mx-auto'}`}>
-                      <img 
-                        src={scene.imageUrl} 
-                        alt={scene.heading}
-                        className={`w-full h-auto object-cover cursor-pointer transition-transform duration-300 ${isImageExpanded ? '' : 'hover:scale-[1.02]'}`}
-                        onClick={() => setIsImageExpanded(!isImageExpanded)}
-                      />
-                      {/* Expand/Collapse Button */}
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setIsImageExpanded(!isImageExpanded)
-                              }}
-                              className="absolute top-2 right-2 p-2 bg-black/60 hover:bg-black/80 text-white rounded-lg transition-colors backdrop-blur-sm"
-                            >
-                              {isImageExpanded ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="4 14 10 14 10 20"></polyline>
-                                  <polyline points="20 10 14 10 14 4"></polyline>
-                                  <line x1="14" y1="10" x2="21" y2="3"></line>
-                                  <line x1="3" y1="21" x2="10" y2="14"></line>
-                                </svg>
-                              ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="15 3 21 3 21 9"></polyline>
-                                  <polyline points="9 21 3 21 3 15"></polyline>
-                                  <line x1="21" y1="3" x2="14" y2="10"></line>
-                                  <line x1="3" y1="21" x2="10" y2="14"></line>
-                                </svg>
-                              )}
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                            {isImageExpanded ? 'Collapse image' : 'Expand image for full view'}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      {/* Expand hint overlay on hover */}
-                      {!isImageExpanded && (
-                        <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors pointer-events-none flex items-center justify-center opacity-0 hover:opacity-100">
-                          <span className="text-white/80 text-sm font-medium bg-black/50 px-3 py-1 rounded-full pointer-events-none">
-                            Click to expand
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  {/* Image Generation Buttons */}
-                  {onGenerateImage && (scene.visualDescription || scene.action || scene.summary || scene.heading) && (
-                    <div className="flex items-center justify-end gap-2">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={handleOpenBuilder}
-                              disabled={isGeneratingImage}
-                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-lg transition-colors disabled:opacity-50 border border-purple-200 dark:border-purple-800"
-                            >
-                              <Image className="w-4 h-4" />
-                              <span>Generate Frame</span>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Open prompt builder and generate frame image</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
 
-                      {/* Upload Keyframe Button */}
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={() => {
-                                const input = document.createElement('input');
-                                input.type = 'file';
-                                input.accept = 'image/*';
-                                input.onchange = async (e) => {
-                                  const file = (e.target as HTMLInputElement).files?.[0];
-                                  if (file && onUploadKeyframe) {
-                                    await onUploadKeyframe(sceneIdx, file);
-                                  } else if (!onUploadKeyframe) {
-                                    toast.error('Upload handler not available');
-                                  }
-                                };
-                                input.click();
-                              }}
-                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors border border-blue-200 dark:border-blue-800"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="17 8 12 3 7 8"></polyline>
-                                <line x1="12" y1="3" x2="12" y2="15"></line>
-                              </svg>
-                              <span>Upload Frame</span>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Upload an existing image (e.g. from Gemini Chat)</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  )}
-                  </div>
+                {activeWorkflowTab === 'directorsChair' && (
+                  <div>Direction workflow content here</div>
                 )}
-                
+
+                {activeWorkflowTab === 'storyboardPreViz' && (
+                  <div>Frame workflow content here</div>
+                )}
+
                 {activeWorkflowTab === 'callAction' && (
-                  <div className="space-y-4">
-                    {onInitializeSceneProduction && onSegmentPromptChange && onSegmentGenerate && onSegmentUpload && sceneProductionReferences ? (
-                      <SceneProductionManager
-                        sceneId={scene.id || `scene-${sceneIdx}`}
-                        sceneNumber={sceneNumber}
-                        heading={typeof scene.heading === 'string' ? scene.heading : scene.heading?.text}
-                        productionData={sceneProductionData || null}
-                        references={sceneProductionReferences}
-                        onInitialize={onInitializeSceneProduction}
-                        onPromptChange={onSegmentPromptChange}
-                        onGenerate={onSegmentGenerate}
-                        onUpload={onSegmentUpload}
-                        audioTracks={sceneAudioTracks}
-                      />
-                    ) : (
-                      <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Scene production handlers are not available. Please refresh the page.
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                  <div>Call Action workflow content here</div>
                 )}
               </div>
             </div>
