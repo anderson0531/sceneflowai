@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2 } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
@@ -31,6 +31,7 @@ import { WebAudioMixer, type SceneAudioConfig, type AudioSource } from '@/lib/au
 import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAudioUrl } from '@/lib/audio/languageDetection'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '@/components/ui/dialog'
 
 type DialogGenerationMode = 'foreground' | 'background'
 
@@ -3633,69 +3634,73 @@ function SceneCard({
 
                 {activeWorkflowTab === 'directorsChair' && (
                   <div className="space-y-4">
-                    <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-700">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-semibold text-slate-300">Scene Direction</h3>
+                    <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Film className="w-4 h-4 text-purple-600 dark:text-purple-300" />
+                          <span className="text-xs font-semibold text-purple-700 dark:text-purple-200">Scene Direction</span>
+                        </div>
                         <Button 
                           size="sm"
-                          variant="outline"
+                          variant="ghost"
+                          className="h-6 text-xs text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:text-purple-300 dark:hover:bg-purple-800/50"
                           onClick={() => onGenerateSceneDirection?.(sceneIdx)}
                           disabled={!onGenerateSceneDirection || generatingDirectionFor === sceneIdx}
                         >
                           {generatingDirectionFor === sceneIdx ? (
                             <>
-                              <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
                               Generating...
                             </>
                           ) : (
                             <>
-                              <Sparkles className="w-3 h-3 mr-2" />
-                              Generate Direction
+                              <Sparkles className="w-3 h-3 mr-1" />
+                              Generate
                             </>
                           )}
                         </Button>
                       </div>
                       {scene.sceneDirection ? (
-                        <div className="text-slate-300 whitespace-pre-wrap text-sm leading-relaxed">
+                        <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                           {typeof scene.sceneDirection === 'string' ? (
                             scene.sceneDirection
                           ) : (
-                            <div className="space-y-4 text-left">
+                            <div className="space-y-3 mt-2">
                               {scene.sceneDirection.scene && (
-                                <div>
-                                  <h4 className="font-semibold text-slate-400 text-xs uppercase mb-1">Visual</h4>
-                                  <p className="text-slate-300">{typeof scene.sceneDirection.scene === 'string' ? scene.sceneDirection.scene : JSON.stringify(scene.sceneDirection.scene)}</p>
+                                <div className="bg-white/50 dark:bg-black/20 p-2 rounded">
+                                  <h4 className="font-semibold text-purple-700 dark:text-purple-300 text-xs uppercase mb-1">Visual</h4>
+                                  <p className="text-gray-700 dark:text-gray-300">{typeof scene.sceneDirection.scene === 'string' ? scene.sceneDirection.scene : JSON.stringify(scene.sceneDirection.scene)}</p>
                                 </div>
                               )}
                               {scene.sceneDirection.camera && (
-                                <div>
-                                  <h4 className="font-semibold text-slate-400 text-xs uppercase mb-1">Camera</h4>
-                                  <p className="text-slate-300">{typeof scene.sceneDirection.camera === 'string' ? scene.sceneDirection.camera : JSON.stringify(scene.sceneDirection.camera)}</p>
+                                <div className="bg-white/50 dark:bg-black/20 p-2 rounded">
+                                  <h4 className="font-semibold text-purple-700 dark:text-purple-300 text-xs uppercase mb-1">Camera</h4>
+                                  <p className="text-gray-700 dark:text-gray-300">{typeof scene.sceneDirection.camera === 'string' ? scene.sceneDirection.camera : JSON.stringify(scene.sceneDirection.camera)}</p>
                                 </div>
                               )}
                               {scene.sceneDirection.lighting && (
-                                <div>
-                                  <h4 className="font-semibold text-slate-400 text-xs uppercase mb-1">Lighting</h4>
-                                  <p className="text-slate-300">{typeof scene.sceneDirection.lighting === 'string' ? scene.sceneDirection.lighting : JSON.stringify(scene.sceneDirection.lighting)}</p>
+                                <div className="bg-white/50 dark:bg-black/20 p-2 rounded">
+                                  <h4 className="font-semibold text-purple-700 dark:text-purple-300 text-xs uppercase mb-1">Lighting</h4>
+                                  <p className="text-gray-700 dark:text-gray-300">{typeof scene.sceneDirection.lighting === 'string' ? scene.sceneDirection.lighting : JSON.stringify(scene.sceneDirection.lighting)}</p>
                                 </div>
                               )}
                               {scene.sceneDirection.audio && (
-                                <div>
-                                  <h4 className="font-semibold text-slate-400 text-xs uppercase mb-1">Audio</h4>
-                                  <p className="text-slate-300">{typeof scene.sceneDirection.audio === 'string' ? scene.sceneDirection.audio : JSON.stringify(scene.sceneDirection.audio)}</p>
+                                <div className="bg-white/50 dark:bg-black/20 p-2 rounded">
+                                  <h4 className="font-semibold text-purple-700 dark:text-purple-300 text-xs uppercase mb-1">Audio</h4>
+                                  <p className="text-gray-700 dark:text-gray-300">{typeof scene.sceneDirection.audio === 'string' ? scene.sceneDirection.audio : JSON.stringify(scene.sceneDirection.audio)}</p>
                                 </div>
                               )}
                               {scene.sceneDirection.talent && (
-                                <div>
-                                  <h4 className="font-semibold text-slate-400 text-xs uppercase mb-1">Talent</h4>
-                                  <p className="text-slate-300">{typeof scene.sceneDirection.talent === 'string' ? scene.sceneDirection.talent : JSON.stringify(scene.sceneDirection.talent)}</p>
+                                <div className="bg-white/50 dark:bg-black/20 p-2 rounded">
+                                  <h4 className="font-semibold text-purple-700 dark:text-purple-300 text-xs uppercase mb-1">Talent</h4>
+                                  <p className="text-gray-700 dark:text-gray-300">{typeof scene.sceneDirection.talent === 'string' ? scene.sceneDirection.talent : JSON.stringify(scene.sceneDirection.talent)}</p>
                                 </div>
                               )}
                             </div>
                           )}
                         </div>
                       ) : (
-                        <div className="text-center py-8 text-slate-500 text-sm">
+                        <div className="text-center py-6 text-gray-500 dark:text-gray-400 text-sm italic">
                           No scene direction generated yet.
                         </div>
                       )}
@@ -3705,74 +3710,71 @@ function SceneCard({
 
                 {activeWorkflowTab === 'storyboardPreViz' && (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Image Display */}
-                      <div className="space-y-2">
-                        <h3 className="text-sm font-semibold text-slate-300">Scene Frame</h3>
-                        <div className="relative aspect-video bg-black rounded-lg overflow-hidden border border-slate-700 group">
-                          {scene.imageUrl ? (
-                            <img 
-                              src={scene.imageUrl} 
-                              alt={`Scene ${sceneNumber} Frame`} 
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-900">
-                              <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
-                              <span className="text-xs">No frame generated</span>
+                    <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden border border-slate-700 group">
+                      {scene.imageUrl ? (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <div className="relative w-full h-full cursor-pointer">
+                              <img 
+                                src={scene.imageUrl} 
+                                alt={`Scene ${sceneNumber} Frame`} 
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                              />
+                              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded p-1 text-white">
+                                <Maximize2 className="w-4 h-4" />
+                              </div>
                             </div>
-                          )}
-                          
-                          {/* Overlay Actions */}
-                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                             <Button
-                                size="sm"
-                                variant="secondary"
-                                onClick={() => onOpenPromptBuilder?.(sceneIdx)}
-                             >
-                               <Wand2 className="w-3 h-3 mr-2" />
-                               Generate
-                             </Button>
-                             <Button
-                                size="sm"
-                                variant="secondary"
-                                onClick={() => {
-                                  const input = document.createElement('input');
-                                  input.type = 'file';
-                                  input.accept = 'image/*';
-                                  input.onchange = async (e) => {
-                                    const file = (e.target as HTMLInputElement).files?.[0];
-                                    if (file && onUploadKeyframe) {
-                                      await onUploadKeyframe(sceneIdx, file);
-                                    }
-                                  };
-                                  input.click();
-                                }}
-                             >
-                               <Upload className="w-3 h-3 mr-2" />
-                               Upload
-                             </Button>
-                          </div>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 border-none bg-black">
+                            <DialogTitle className="sr-only">Scene {sceneNumber} Frame</DialogTitle>
+                            <div className="relative w-full h-full flex items-center justify-center">
+                              <img 
+                                src={scene.imageUrl} 
+                                alt={`Scene ${sceneNumber} Frame Fullscreen`} 
+                                className="max-w-full max-h-[90vh] object-contain"
+                              />
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      ) : (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-900">
+                          <ImageIcon className="w-12 h-12 mb-3 opacity-30" />
+                          <span className="text-sm font-medium">No frame generated</span>
+                          <p className="text-xs opacity-60 mt-1">Generate or upload an image to visualize this scene</p>
                         </div>
-                      </div>
-
-                      {/* Prompt Details */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-slate-300">Visual Prompt</h3>
-                          <Button
+                      )}
+                      
+                      {/* Overlay Actions */}
+                      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                         <Button
                             size="sm"
-                            variant="ghost"
-                            className="h-6 text-xs"
+                            variant="secondary"
+                            className="bg-white/90 text-black hover:bg-white"
                             onClick={() => onOpenPromptBuilder?.(sceneIdx)}
-                          >
-                            <Edit className="w-3 h-3 mr-1" />
-                            Edit
-                          </Button>
-                        </div>
-                        <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-700 min-h-[100px] text-xs text-slate-400">
-                          {scene.imagePrompt || "No prompt defined."}
-                        </div>
+                         >
+                           <Wand2 className="w-3 h-3 mr-2" />
+                           Generate
+                         </Button>
+                         <Button
+                            size="sm"
+                            variant="secondary"
+                            className="bg-white/90 text-black hover:bg-white"
+                            onClick={() => {
+                              const input = document.createElement('input');
+                              input.type = 'file';
+                              input.accept = 'image/*';
+                              input.onchange = async (e) => {
+                                const file = (e.target as HTMLInputElement).files?.[0];
+                                if (file && onUploadKeyframe) {
+                                  await onUploadKeyframe(sceneIdx, file);
+                                }
+                              };
+                              input.click();
+                            }}
+                         >
+                           <Upload className="w-3 h-3 mr-2" />
+                           Upload
+                         </Button>
                       </div>
                     </div>
                   </div>
