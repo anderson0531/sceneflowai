@@ -3657,7 +3657,42 @@ function SceneCard({
                       </div>
                       {scene.sceneDirection ? (
                         <div className="text-slate-300 whitespace-pre-wrap text-sm leading-relaxed">
-                          {scene.sceneDirection}
+                          {typeof scene.sceneDirection === 'string' ? (
+                            scene.sceneDirection
+                          ) : (
+                            <div className="space-y-4 text-left">
+                              {scene.sceneDirection.scene && (
+                                <div>
+                                  <h4 className="font-semibold text-slate-400 text-xs uppercase mb-1">Visual</h4>
+                                  <p className="text-slate-300">{typeof scene.sceneDirection.scene === 'string' ? scene.sceneDirection.scene : JSON.stringify(scene.sceneDirection.scene)}</p>
+                                </div>
+                              )}
+                              {scene.sceneDirection.camera && (
+                                <div>
+                                  <h4 className="font-semibold text-slate-400 text-xs uppercase mb-1">Camera</h4>
+                                  <p className="text-slate-300">{typeof scene.sceneDirection.camera === 'string' ? scene.sceneDirection.camera : JSON.stringify(scene.sceneDirection.camera)}</p>
+                                </div>
+                              )}
+                              {scene.sceneDirection.lighting && (
+                                <div>
+                                  <h4 className="font-semibold text-slate-400 text-xs uppercase mb-1">Lighting</h4>
+                                  <p className="text-slate-300">{typeof scene.sceneDirection.lighting === 'string' ? scene.sceneDirection.lighting : JSON.stringify(scene.sceneDirection.lighting)}</p>
+                                </div>
+                              )}
+                              {scene.sceneDirection.audio && (
+                                <div>
+                                  <h4 className="font-semibold text-slate-400 text-xs uppercase mb-1">Audio</h4>
+                                  <p className="text-slate-300">{typeof scene.sceneDirection.audio === 'string' ? scene.sceneDirection.audio : JSON.stringify(scene.sceneDirection.audio)}</p>
+                                </div>
+                              )}
+                              {scene.sceneDirection.talent && (
+                                <div>
+                                  <h4 className="font-semibold text-slate-400 text-xs uppercase mb-1">Talent</h4>
+                                  <p className="text-slate-300">{typeof scene.sceneDirection.talent === 'string' ? scene.sceneDirection.talent : JSON.stringify(scene.sceneDirection.talent)}</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div className="text-center py-8 text-slate-500 text-sm">
