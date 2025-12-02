@@ -4332,7 +4332,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-sf-background">
       <ContextBar
-        title="Scene Director"
+        title="Scene Studio"
         titleIcon={
           <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-gradient-to-br from-sf-primary/20 via-cyan-400/15 to-fuchsia-500/15 border-2 border-sf-primary/60 shadow-xl flex items-center justify-center">
             <DirectorChairIcon className="w-6 h-6 md:w-8 md:h-8 text-sf-primary flex-shrink-0" />

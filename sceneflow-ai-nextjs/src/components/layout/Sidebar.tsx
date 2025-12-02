@@ -59,7 +59,7 @@ const workflowNav = [
     credits: 'Uses Analysis Credits'
   },
   { 
-    name: 'Scene Director', 
+    name: 'Scene Studio', 
     href: '/dashboard/workflow/vision', 
     icon: DirectorChairIcon,
     description: 'Script & Visual Development',
@@ -130,7 +130,7 @@ export function Sidebar() {
   // Group workflow steps by phase
   const phase1Steps = workflowNav.filter(item => item.phase === 1).map(item => {
     if (item.name === 'The Blueprint') return { ...item, href: studioHref }
-    if (item.name === 'Scene Director') return { ...item, href: projectVisionHref }
+    if (item.name === 'Scene Studio') return { ...item, href: projectVisionHref }
     return item
   })
   const phase2Steps = workflowNav.filter(item => item.phase === 2)
