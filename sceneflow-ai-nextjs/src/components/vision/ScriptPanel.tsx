@@ -3632,15 +3632,133 @@ function SceneCard({
                 )}
 
                 {activeWorkflowTab === 'directorsChair' && (
-                  <div>Direction workflow content here</div>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-700">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-semibold text-slate-300">Scene Direction</h3>
+                        <Button 
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onGenerateSceneDirection?.(sceneIdx)}
+                          disabled={!onGenerateSceneDirection || generatingDirectionFor === sceneIdx}
+                        >
+                          {generatingDirectionFor === sceneIdx ? (
+                            <>
+                              <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                              Generating...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-3 h-3 mr-2" />
+                              Generate Direction
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      {scene.sceneDirection ? (
+                        <div className="text-slate-300 whitespace-pre-wrap text-sm leading-relaxed">
+                          {scene.sceneDirection}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-slate-500 text-sm">
+                          No scene direction generated yet.
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )}
 
                 {activeWorkflowTab === 'storyboardPreViz' && (
-                  <div>Frame workflow content here</div>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Image Display */}
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-semibold text-slate-300">Scene Frame</h3>
+                        <div className="relative aspect-video bg-black rounded-lg overflow-hidden border border-slate-700 group">
+                          {scene.imageUrl ? (
+                            <img 
+                              src={scene.imageUrl} 
+                              alt={`Scene ${sceneNumber} Frame`} 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-900">
+                              <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
+                              <span className="text-xs">No frame generated</span>
+                            </div>
+                          )}
+                          
+                          {/* Overlay Actions */}
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                             <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => onOpenPromptBuilder?.(sceneIdx)}
+                             >
+                               <Wand2 className="w-3 h-3 mr-2" />
+                               Generate
+                             </Button>
+                             <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => {
+                                  const input = document.createElement('input');
+                                  input.type = 'file';
+                                  input.accept = 'image/*';
+                                  input.onchange = async (e) => {
+                                    const file = (e.target as HTMLInputElement).files?.[0];
+                                    if (file && onUploadKeyframe) {
+                                      await onUploadKeyframe(sceneIdx, file);
+                                    }
+                                  };
+                                  input.click();
+                                }}
+                             >
+                               <Upload className="w-3 h-3 mr-2" />
+                               Upload
+                             </Button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Prompt Details */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-semibold text-slate-300">Visual Prompt</h3>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 text-xs"
+                            onClick={() => onOpenPromptBuilder?.(sceneIdx)}
+                          >
+                            <Edit className="w-3 h-3 mr-1" />
+                            Edit
+                          </Button>
+                        </div>
+                        <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-700 min-h-[100px] text-xs text-slate-400">
+                          {scene.imagePrompt || "No prompt defined."}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 )}
 
                 {activeWorkflowTab === 'callAction' && (
-                  <div>Call Action workflow content here</div>
+                  <div className="space-y-4">
+                    <SceneProductionManager
+                      sceneId={scene.id || `scene-${sceneNumber}`}
+                      sceneNumber={sceneNumber}
+                      heading={scene.heading}
+                      scene={scene}
+                      productionData={sceneProductionData?.[scene.id] || null}
+                      references={sceneProductionReferences?.[scene.id] || {}}
+                      onInitialize={onInitializeSceneProduction || (async () => {})}
+                      onPromptChange={onSegmentPromptChange || (() => {})}
+                      onGenerate={onSegmentGenerate || (async () => {})}
+                      onUpload={onSegmentUpload || (async () => {})}
+                      audioTracks={sceneAudioTracks?.[scene.id]}
+                    />
+                  </div>
                 )}
               </div>
             </div>
