@@ -1927,6 +1927,22 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           )}
           {/* Generate Audio button moved to Storyboard header */}
           
+          {/* Language Selector */}
+          <div className="w-[140px]">
+            <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+              <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700 text-slate-200">
+                <SelectValue placeholder="Language" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-700 text-slate-200">
+                {SUPPORTED_LANGUAGES.map((lang) => (
+                  <SelectItem key={lang.code} value={lang.code} className="text-xs focus:bg-slate-700 focus:text-slate-100">
+                    {lang.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Assets Button */}
           <TooltipProvider>
             <Tooltip>
