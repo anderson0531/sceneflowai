@@ -3,7 +3,7 @@ import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { DetailedSceneDirection } from '../../../../types/scene-direction'
 
-export const maxDuration = 60
+export const maxDuration = 300
 export const runtime = 'nodejs'
 
 const GEMINI_API_VERSION = process.env.GEMINI_API_VERSION || 'v1beta'
