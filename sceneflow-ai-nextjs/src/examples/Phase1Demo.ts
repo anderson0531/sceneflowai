@@ -140,7 +140,7 @@ export async function demoDynamicPromptGeneration() {
       userPreferences: {
         userId: 'demo-user',
         category: 'ideation',
-        preferredModels: ['gpt-4o', 'gemini-2.0'],
+        preferredModels: ['gpt-4o', 'gemini-3.0'],
         preferredStyles: ['structured', 'educational'],
         qualityThreshold: 85,
         costSensitivity: 5,

@@ -130,6 +130,21 @@ PROVIDE:
 2. Changes summary explaining major improvements
 3. Rationale for each category of changes
 
+DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
+EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
+
+STYLE TAGS (In square brackets BEFORE text):
+Emotions: [happy], [sad], [angry], [fearful], [surprised], [disgusted], [neutral]
+Intensity: [very], [slightly], [extremely]
+Vocal Quality: [whispering], [shouting], [mumbling], [singing], [laughing], [crying]
+Pace: [quickly], [slowly], [hesitantly], [confidently]
+
+EXAMPLES:
+  * {"character": "JOHN", "line": "[very excited] I can't believe it!"}
+  * {"character": "MARY", "line": "[sadly] I wish things were different..."}
+
+CRITICAL: Every single dialogue line must start with at least one emotion/style tag in [brackets].
+
 Return ONLY JSON with this exact structure (no commentary, do NOT wrap in code fences; escape all embedded quotes; use \\n for newlines; plain ASCII punctuation; no trailing commas). For EVERY scene, the fields "heading", "action", "narration", "dialogue", "music", "sfx", and "duration" MUST be present. If reducing narration, REPLACE it with a concise 1–2 sentence narration (never null/empty/"None"):
 {
   "optimizedScript": {
@@ -139,7 +154,7 @@ Return ONLY JSON with this exact structure (no commentary, do NOT wrap in code f
         "action": "Action description...",
         "narration": "Narration text...",
         "dialogue": [
-          { "character": "CHARACTER", "line": "Dialogue..." }
+          { "character": "CHARACTER", "line": "[emotion tag] Dialogue with emotional cues..." }
         ],
         "music": "Music description",
         "sfx": ["SFX description"],
@@ -169,7 +184,7 @@ ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce si
   console.log('[Script Optimization] Calling Gemini API...')
   
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

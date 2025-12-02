@@ -30,6 +30,7 @@ import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { WebAudioMixer, type SceneAudioConfig, type AudioSource } from '@/lib/audio/webAudioMixer'
 import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAudioUrl } from '@/lib/audio/languageDetection'
+import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
 
 type DialogGenerationMode = 'foreground' | 'background'
 
@@ -286,26 +287,6 @@ function formatDuration(seconds: number): string {
 function formatTotalDuration(scenes: any[]): string {
   const totalSeconds = scenes.reduce((sum, scene) => sum + calculateSceneDuration(scene), 0)
   return formatDuration(totalSeconds)
-}
-
-/**
- * Strip SFX and Music descriptions from scene action text
- * These are redundantly included and should be displayed separately
- */
-function stripAudioDescriptions(action: string): string {
-  if (!action) return action
-  
-  // Remove patterns like "SFX: ...", "MUSIC: ...", "Music: ...", "Sound: ..."
-  // Match case-insensitive and handle various formats
-  let cleaned = action
-    .replace(/\b(SFX|MUSIC|Music|Sound|sound effects?):\s*[^\n]+/gi, '')
-    // Remove standalone lines that are just audio descriptions
-    .replace(/^\s*(SFX|MUSIC|Music|Sound|sound effects?)\s*:.*$/gmi, '')
-    // Clean up multiple consecutive newlines
-    .replace(/\n{2,}/g, '\n')
-    .trim()
-  
-  return cleaned
 }
 
 function normalizeScenes(source: any): any[] {
@@ -1028,9 +1009,12 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     const config: SceneAudioConfig = {}
     let currentTime = 0
     let totalDuration = 0
+    let descriptionEndTime = 0
+    let narrationEndTime = 0
     
     // Get language-specific audio URLs
     const narrationUrl = getAudioUrl(scene, selectedLanguage, 'narration')
+    const descriptionUrl = getAudioUrl(scene, selectedLanguage, 'description')
     const dialogueArray = scene.dialogueAudio?.[selectedLanguage] || 
                           (selectedLanguage === 'en' ? scene.dialogueAudio?.en : null) ||
                           (Array.isArray(scene.dialogueAudio) ? scene.dialogueAudio : null)
@@ -1042,14 +1026,33 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       config.music = musicUrl
     }
     
-    // Narration starts at scene beginning (concurrent with music)
+    // Scene description plays before narration when available
+    if (descriptionUrl) {
+      config.description = descriptionUrl
+      const storedDescriptionDuration = scene.descriptionAudio?.[selectedLanguage]?.duration
+      const descriptionDuration = await resolveAudioDuration(descriptionUrl, storedDescriptionDuration)
+      descriptionEndTime = descriptionDuration
+      totalDuration = Math.max(totalDuration, descriptionEndTime)
+    }
+
+    const narrationOffset = descriptionUrl
+      ? descriptionEndTime + 0.35
+      : 2
+
+    // Narration starts after the configured offset (or after description)
     if (narrationUrl) {
       config.narration = narrationUrl
+      config.narrationOffsetSeconds = narrationOffset
       const storedDuration = scene.narrationAudio?.[selectedLanguage]?.duration
       const narrationDuration = await resolveAudioDuration(narrationUrl, storedDuration)
-      totalDuration = Math.max(totalDuration, narrationDuration)
-      currentTime = narrationDuration + 0.5 // 500ms pause after narration before dialogue
+      narrationEndTime = narrationOffset + narrationDuration
+      totalDuration = Math.max(totalDuration, narrationEndTime)
+    } else {
+      narrationEndTime = descriptionEndTime
     }
+    
+    const voiceAnchorTime = Math.max(descriptionEndTime, narrationEndTime)
+    currentTime = voiceAnchorTime + 0.5 // 500ms pause after narration/description before dialogue
     
     // Dialogue follows narration sequentially with appropriate spacing
     if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
@@ -1167,30 +1170,22 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       // Calculate timeline with intelligent timing
       const audioConfig = await calculateAudioTimeline(scene)
       
-      // Calculate total audio duration for music fade timing
-      // Use the scene's calculated duration which accounts for all audio
-      const totalAudioDuration = audioConfig.sceneDuration || scene.duration || 5
-      
-      // Start playing all audio (music loops, others play once)
-      // Don't await - we'll manage timing ourselves based on duration
-      audioMixerRef.current.playScene(audioConfig).catch(err => {
-        console.error('[ScriptPanel] Error in playScene:', err)
-      })
-      
-      // Wait for the total audio duration (narration + dialogue + spacing)
-      // Then add 3 seconds for the ending transition
-      const waitTime = (totalAudioDuration + 3) * 1000
-      
-      await new Promise(resolve => setTimeout(resolve, waitTime))
-      
-      // Fade out music over 2 seconds for smooth ending
+      try {
+        // Wait for the mixer to report real completion of all non-looping audio
+        await audioMixerRef.current.playScene(audioConfig)
+      } catch (mixerError) {
+        console.error('[ScriptPanel] Error in playScene:', mixerError)
+      }
+
+      // Give a short breathing room after the final audio finishes
+      await new Promise(resolve => setTimeout(resolve, 3000))
+
+      // Fade out looping music gracefully once everything else is done
       if (audioConfig.music && audioMixerRef.current) {
         await audioMixerRef.current.fadeOut(2000)
-        
-        // Stop all audio after fade
         audioMixerRef.current.stop()
       }
-      
+
       setLoadingSceneId(null)
     } catch (error) {
       console.error('[ScriptPanel] Error playing scene:', error)
@@ -1965,7 +1960,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                   className="flex items-center gap-1"
                 >
                   <Edit className="w-4 h-4 text-blue-400" />
-                  <span className="hidden sm:inline">Edit</span>
+                  <span className="hidden sm:inline">Edit Script</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
@@ -2674,6 +2669,7 @@ function SceneCard({
       : typeof scene?.heading === 'object' && scene.heading !== null
         ? (scene.heading as any)?.text
         : ''
+  const formattedHeading = formatSceneHeading(headingText) || headingText || 'Untitled'
 
   return (
     <div
@@ -2832,7 +2828,7 @@ function SceneCard({
                       className="flex items-center gap-1 px-2 py-1 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded transition-colors"
                     >
                       <Edit className="w-4 h-4" />
-                      <span className="text-xs">Edit</span>
+                      <span className="text-xs">Edit Scene</span>
                     </button>
                   </TooltipTrigger>
                   <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Edit scene</TooltipContent>
@@ -2908,7 +2904,7 @@ function SceneCard({
         {/* Line 2: Scene Title */}
         <div className="mt-2">
           <p className="text-xl font-semibold text-white leading-tight">
-            Scene {sceneNumber}: {headingText || 'Untitled'}
+            SCENE {sceneNumber}: {formattedHeading}
           </p>
         </div>
 
@@ -2925,14 +2921,6 @@ function SceneCard({
               </span>
             )
           })}
-        </div>
-
-        <div className="mt-4">
-          {(scene.summary || scene.action) && (
-            <p className="text-sm text-slate-300/90 mt-1 line-clamp-3">
-              {scene.summary || stripAudioDescriptions(scene.action)}
-            </p>
-          )}
         </div>
 
         {/* Hide/Show Control - Separate from other buttons */}
@@ -3392,8 +3380,9 @@ function SceneCard({
                               <div className="flex items-center gap-2 mb-1">
                                 <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{d.character}</div>
                                 {audioEntry?.audioUrl && (
-                                  <span className="text-xs px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded">
-                                    ✓
+                                  <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
+                                    <Volume2 className="w-3 h-3" />
+                                    Audio Ready
                                   </span>
                                 )}
                               </div>

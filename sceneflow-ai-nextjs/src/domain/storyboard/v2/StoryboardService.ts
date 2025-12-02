@@ -29,7 +29,7 @@ export async function analyzeStoryboardV2(req: V2StoryboardRequestType): Promise
     if (hasOpenAI) return 'openai'
     return 'gemini'
   })()
-  const model = req.model || (provider === 'openai' ? (process.env.OPENAI_MODEL || 'gpt-4.1') : (process.env.GEMINI_MODEL || 'gemini-2.5-flash'))
+  const model = req.model || (provider === 'openai' ? (process.env.OPENAI_MODEL || 'gpt-4.1') : (process.env.GEMINI_MODEL || 'gemini-3.0-flash'))
 
   const prompt = `You are a storyboard artist. For each beat, propose 1-3 concise storyboard frames. Return ONLY JSON:\n\n{
   "frames": [{

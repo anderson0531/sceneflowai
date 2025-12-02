@@ -248,7 +248,7 @@ export class AICapabilityManager {
         isActive: true
       },
       {
-        model: 'gemini-2.0',
+        model: 'gemini-3.0',
         version: '2.0',
         provider: 'google',
         capabilities: {
@@ -366,7 +366,7 @@ Focus on {{focusArea}} and ensure each concept is unique and engaging.`,
             defaultValue: 'creativity and engagement'
           }
         ],
-        aiModels: ['gpt-4', 'gpt-4o', 'gemini-2.0', 'claude-3.5-sonnet'],
+        aiModels: ['gpt-4', 'gpt-4o', 'gemini-3.0', 'claude-3.5-sonnet'],
         effectiveness: 85,
         usageCount: 0,
         lastUpdated: new Date(),
@@ -402,7 +402,7 @@ Output JSON with: acts[ { title, summary, chapters[ { title, summary, targetDura
           { name: 'visualMotifs', type: 'string', description: 'Visual motifs/keywords', required: false },
           { name: 'platform', type: 'string', description: 'Intended platform', required: false }
         ],
-        aiModels: ['gpt-4', 'gpt-4o', 'gemini-2.0', 'claude-3.5-sonnet'],
+        aiModels: ['gpt-4', 'gpt-4o', 'gemini-3.0', 'claude-3.5-sonnet'],
         effectiveness: 84,
         usageCount: 0,
         lastUpdated: new Date(),
@@ -437,7 +437,7 @@ Provide:
             defaultValue: 'medium'
           }
         ],
-        aiModels: ['gpt-4', 'gpt-4o', 'gemini-2.0', 'claude-3.5-sonnet'],
+        aiModels: ['gpt-4', 'gpt-4o', 'gemini-3.0', 'claude-3.5-sonnet'],
         effectiveness: 82,
         usageCount: 0,
         lastUpdated: new Date(),
@@ -471,7 +471,7 @@ Provide:
             defaultValue: '1080p'
           }
         ],
-        aiModels: ['gpt-4', 'gpt-4o', 'gemini-2.0', 'claude-3.5-sonnet'],
+        aiModels: ['gpt-4', 'gpt-4o', 'gemini-3.0', 'claude-3.5-sonnet'],
         effectiveness: 84,
         usageCount: 0,
         lastUpdated: new Date(),
@@ -500,7 +500,7 @@ Return:
             defaultValue: 'visual-consistency, audio-clarity, pacing, narrative-coherence'
           }
         ],
-        aiModels: ['gpt-4', 'gpt-4o', 'gemini-2.0', 'claude-3.5-sonnet'],
+        aiModels: ['gpt-4', 'gpt-4o', 'gemini-3.0', 'claude-3.5-sonnet'],
         effectiveness: 81,
         usageCount: 0,
         lastUpdated: new Date(),
@@ -527,7 +527,7 @@ Return:
             defaultValue: 85
           }
         ],
-        aiModels: ['gpt-4', 'gpt-4o', 'gemini-2.0', 'claude-3.5-sonnet'],
+        aiModels: ['gpt-4', 'gpt-4o', 'gemini-3.0', 'claude-3.5-sonnet'],
         effectiveness: 83,
         usageCount: 0,
         lastUpdated: new Date(),
@@ -570,7 +570,7 @@ For each frame, provide:
             validation: { min: 4, max: 20 }
           }
         ],
-        aiModels: ['gpt-4', 'gpt-4o', 'gemini-2.0', 'claude-3.5-sonnet'],
+        aiModels: ['gpt-4', 'gpt-4o', 'gemini-3.0', 'claude-3.5-sonnet'],
         effectiveness: 80,
         usageCount: 0,
         lastUpdated: new Date(),
@@ -599,7 +599,7 @@ For each frame, provide:
           improvementThreshold: 0.1
         },
         effectiveness: 90,
-        applicableModels: ['gpt-4', 'gpt-4o', 'gemini-2.0', 'claude-3.5-sonnet'],
+        applicableModels: ['gpt-4', 'gpt-4o', 'gemini-3.0', 'claude-3.5-sonnet'],
         lastUpdated: new Date(),
         isActive: true
       },
@@ -614,7 +614,7 @@ For each frame, provide:
           includeExamples: true
         },
         effectiveness: 85,
-        applicableModels: ['gpt-4', 'gpt-4o', 'gemini-2.0', 'claude-3.5-sonnet'],
+        applicableModels: ['gpt-4', 'gpt-4o', 'gemini-3.0', 'claude-3.5-sonnet'],
         lastUpdated: new Date(),
         isActive: true
       }

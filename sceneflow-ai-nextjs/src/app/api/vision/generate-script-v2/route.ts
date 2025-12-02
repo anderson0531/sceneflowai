@@ -482,17 +482,28 @@ CHARACTER NAME RULES (CRITICAL):
    
 DO NOT force full character names into dialogue text unnaturally.
 
-DIALOGUE AUDIO TAGS (CRITICAL FOR TTS):
-- Add emotion/inflection instructions in SQUARE BRACKETS: [whispering], [excitedly], [sadly]
-- Use ellipses (...) for pauses or hesitation
-- Use dashes (—) for interruptions
-- Capitalize for EMPHASIS
-- Audio tags should come BEFORE the spoken text
-- Common tags: [whispering], [shouting], [sadly], [excitedly], [angrily], [nervously], [cheerfully]
-- Examples:
-  * {"character": "BRIAN ANDERSON SR", "line": "[excitedly] I can't believe it!"}
-  * {"character": "MINT", "line": "[whispering] Don't tell anyone... It's our secret."}
-  * {"character": "ERIC", "line": "[sadly] I wish things were different—"}
+DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
+EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
+
+STYLE TAGS (In square brackets BEFORE text):
+Emotions: [happy], [sad], [angry], [fearful], [surprised], [disgusted], [neutral]
+Intensity: [very], [slightly], [extremely]
+Vocal Quality: [whispering], [shouting], [mumbling], [singing], [laughing], [crying], [gasping]
+Pace: [quickly], [slowly], [hesitantly], [confidently]
+Combined: [very happy], [slightly angry], [extremely fearful], [confidently asserting]
+
+PUNCTUATION & PACING:
+- Use ellipses (...) for pauses, trailing off, or hesitation
+- Use dashes (—) for interruptions or sudden stops  
+- Use CAPS for EMPHASIS on specific words
+- Use commas (,) for natural breathing pauses
+
+EXAMPLES:
+  * {"character": "BRIAN ANDERSON SR", "line": "[very excited] I can't believe it! This changes EVERYTHING!"}
+  * {"character": "MINT", "line": "[whispering nervously] Don't tell anyone... It's our secret, okay?"}
+  * {"character": "ERIC", "line": "[sadly, slowly] I wish things were different— but they're not."}
+
+CRITICAL: Every single dialogue line must start with at least one emotion/style tag in [brackets].
 
 SCENE PLANNING:
 - Total target: ${targetDuration}s (±10% is fine)
@@ -644,12 +655,25 @@ CHARACTER NAME RULES (CRITICAL):
    
 DO NOT force full character names into dialogue text unnaturally.
 
-DIALOGUE AUDIO TAGS (CRITICAL FOR TTS):
-- Add emotion/inflection instructions in SQUARE BRACKETS: [whispering], [excitedly], [sadly]
-- Use ellipses (...) for pauses or hesitation
-- Audio tags should come BEFORE the spoken text
-- Common tags: [whispering], [shouting], [sadly], [excitedly], [angrily], [nervously], [cheerfully]
-- Example: {"character": "NAME", "line": "[sadly] ...I can't believe it."}
+DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
+EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
+
+STYLE TAGS (In square brackets BEFORE text):
+Emotions: [happy], [sad], [angry], [fearful], [surprised], [disgusted], [neutral]
+Intensity: [very], [slightly], [extremely]
+Vocal Quality: [whispering], [shouting], [mumbling], [singing], [laughing], [crying], [gasping]
+Pace: [quickly], [slowly], [hesitantly], [confidently]
+
+PUNCTUATION & PACING:
+- Use ellipses (...) for pauses, trailing off, or hesitation
+- Use dashes (—) for interruptions or sudden stops
+- Use CAPS for EMPHASIS on specific words
+
+EXAMPLES:
+  * {"character": "NAME", "line": "[sadly] ...I can't believe it."}
+  * {"character": "NAME", "line": "[very excited, quickly] This is AMAZING!"}
+
+CRITICAL: Every single dialogue line must start with at least one emotion/style tag in [brackets].
 
 PREVIOUS SCENES (${prevScenes.length} so far, ${prevDuration}s total):
 ${prevScenes.slice(-3).map((s: any) => `${s.sceneNumber}. ${s.heading} (${s.duration}s): ${s.action.substring(0, 80)}...`).join('\n')}
@@ -744,7 +768,7 @@ Complete the script with accurate duration estimates.`
 
 async function callGemini(apiKey: string, prompt: string): Promise<string> {
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

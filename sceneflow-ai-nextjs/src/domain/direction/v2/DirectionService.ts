@@ -36,7 +36,7 @@ export async function analyzeDirectionV2(req: V2DirectionRequestType): Promise<{
     if (hasOpenAI) return 'openai'
     return 'gemini'
   })()
-  const model = req.model || (provider === 'openai' ? (process.env.OPENAI_MODEL || 'gpt-4.1') : (process.env.GEMINI_MODEL || 'gemini-2.5-flash'))
+  const model = req.model || (provider === 'openai' ? (process.env.OPENAI_MODEL || 'gpt-4.1') : (process.env.GEMINI_MODEL || 'gemini-3.0-flash'))
 
   const prompt = `You are a film director. Convert the blueprint beats into concise, actionable direction. Return ONLY JSON:\n\n{
   "directorNotes": string[],

@@ -227,7 +227,7 @@ Respond with valid JSON only:
   "transition_notes": ["Transition 1", "Transition 2"]
 }` + strictJsonPromptSuffix
 
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${apiKey}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

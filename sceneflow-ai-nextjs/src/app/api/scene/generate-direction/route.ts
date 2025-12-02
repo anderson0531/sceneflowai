@@ -6,6 +6,9 @@ import { DetailedSceneDirection } from '../../../../types/scene-direction'
 export const maxDuration = 60
 export const runtime = 'nodejs'
 
+const GEMINI_API_VERSION = process.env.GEMINI_API_VERSION || 'v1beta'
+const GEMINI_API_HOST = process.env.GEMINI_API_HOST || 'https://generativelanguage.googleapis.com'
+
 interface GenerateDirectionRequest {
   projectId: string
   sceneIndex: number
@@ -19,18 +22,64 @@ interface GenerateDirectionRequest {
   }
 }
 
+interface GeminiRequestError extends Error {
+  status?: number
+}
+
+const DEFAULT_MODEL_SEQUENCE = [
+  'gemini-3-pro-preview',
+  'gemini-2.5-pro',
+  'gemini-2.5-flash',
+  'gemini-1.5-pro',
+  'gemini-1.5-flash',
+]
+
+const configuredSequence = process.env.GEMINI_MODEL_SEQUENCE || process.env.GEMINI_MODEL_PRIORITY
+const preferredModel = process.env.GEMINI_MODEL?.trim()
+
+const prioritizedModels: string[] = preferredModel ? [preferredModel] : []
+const configuredModels: string[] = configuredSequence
+  ? configuredSequence.split(',').map(model => model.trim()).filter(Boolean)
+  : DEFAULT_MODEL_SEQUENCE
+
+const GEMINI_MODEL_SEQUENCE = Array.from(new Set([...prioritizedModels, ...configuredModels]))
+
 /**
- * Call Gemini 2.5 Pro API to generate scene direction
- * Includes retry logic for rate limiting (429 errors)
+ * Attempts Gemini generation using preferred models in sequence, falling back when models return 404/403
  */
-async function callGemini(apiKey: string, prompt: string, retryCount = 0): Promise<string> {
+async function callGemini(apiKey: string, prompt: string): Promise<string> {
+  let lastError: Error | null = null
+
+  for (const model of GEMINI_MODEL_SEQUENCE) {
+    try {
+      return await callGeminiWithModel(apiKey, prompt, model)
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Unknown Gemini error')
+      const status = (error as GeminiRequestError)?.status
+      const canFallback = status === 404 || status === 403
+      console.warn(`[Gemini API] Model ${model} failed${status ? ` (${status})` : ''}: ${lastError.message}`)
+
+      if (!canFallback) {
+        throw lastError
+      }
+    }
+  }
+
+  throw lastError || new Error('Gemini API failed for all configured models')
+}
+
+/**
+ * Call Gemini API for a specific model with retry logic for rate limiting (429 errors)
+ */
+async function callGeminiWithModel(apiKey: string, prompt: string, model: string, retryCount = 0): Promise<string> {
   const maxRetries = 3
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 60000) // 60 second timeout
   
   try {
+    const endpoint = `${GEMINI_API_HOST}/${GEMINI_API_VERSION}/models/${model}:generateContent?key=${apiKey}`
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${apiKey}`,
+      endpoint,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -53,14 +102,18 @@ async function callGemini(apiKey: string, prompt: string, retryCount = 0): Promi
       // Handle rate limiting with exponential backoff
       if (response.status === 429 && retryCount < maxRetries) {
         const waitTime = Math.pow(2, retryCount) * 1000 // 1s, 2s, 4s
-        console.warn(`[Gemini API] Rate limited (429). Retrying in ${waitTime}ms... (attempt ${retryCount + 1}/${maxRetries})`)
+        console.warn(`[Gemini API] Rate limited (429) on model ${model}. Retrying in ${waitTime}ms... (attempt ${retryCount + 1}/${maxRetries})`)
         clearTimeout(timeout)
         await new Promise(resolve => setTimeout(resolve, waitTime))
-        return callGemini(apiKey, prompt, retryCount + 1)
+        return callGeminiWithModel(apiKey, prompt, model, retryCount + 1)
       }
       
-      console.error(`[Gemini API] HTTP ${response.status}:`, errorBody)
-      throw new Error(`Gemini API error: ${response.status}${response.status === 429 ? ' (Rate limit exceeded. Please try again in a moment.)' : ''}`)
+      console.error(`[Gemini API] HTTP ${response.status} on model ${model}:`, errorBody)
+      const error: GeminiRequestError = new Error(
+        `Gemini API error: ${response.status}${response.status === 429 ? ' (Rate limit exceeded. Please try again in a moment.)' : ''}`
+      )
+      error.status = response.status
+      throw error
     }
     
     const data = await response.json()
@@ -76,6 +129,7 @@ async function callGemini(apiKey: string, prompt: string, retryCount = 0): Promi
       throw new Error(`Gemini returned empty content. Finish reason: ${finishReason || 'unknown'}`)
     }
     
+    console.log(`[Gemini API] Scene direction generated with model ${model}`)
     return text
   } finally {
     clearTimeout(timeout)
@@ -166,7 +220,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get API key (prioritize GEMINI_API_KEY, fallback to legacy)
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
     if (!apiKey) {
       return NextResponse.json(
         { success: false, error: 'Gemini API key not configured (GEMINI_API_KEY)' },

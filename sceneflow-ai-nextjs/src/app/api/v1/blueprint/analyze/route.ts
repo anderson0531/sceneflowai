@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       if (hasOpenAI) return 'openai'
       return 'gemini'
     })()
-    const model = data.model || (resolvedProvider === 'openai' ? (process.env.OPENAI_MODEL || 'gpt-4.1') : (process.env.GEMINI_MODEL || 'gemini-2.5-pro'))
+    const model = data.model || (resolvedProvider === 'openai' ? (process.env.OPENAI_MODEL || 'gpt-4.1') : (process.env.GEMINI_MODEL || 'gemini-3-pro-preview'))
 
     if (resolvedProvider === 'gemini' && !hasGemini) {
       if (hasOpenAI) {

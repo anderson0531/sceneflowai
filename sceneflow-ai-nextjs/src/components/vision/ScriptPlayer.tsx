@@ -34,6 +34,7 @@ interface PlayerState {
 }
 
 const audioDurationCache = new Map<string, number>()
+const DESCRIPTION_TO_NARRATION_GAP_SECONDS = 0.35
 const NARRATION_DELAY_SECONDS = 2
 const DIALOGUE_GAP_SECONDS = 0.3
 const SFX_GAP_SECONDS = 0
@@ -375,7 +376,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   }, [playerState.currentSceneIndex, scenes.length, resetControlsTimeout, handleClose])
 
   // Get audio URL for selected language (uses pre-generated audio files)
-  const getAudioForLanguage = useCallback((scene: any, language: string, audioType: 'narration' | 'dialogue', dialogueIndex?: number): string | null => {
+  const getAudioForLanguage = useCallback((scene: any, language: string, audioType: 'narration' | 'dialogue' | 'description', dialogueIndex?: number): string | null => {
     return getAudioUrl(scene, language, audioType, dialogueIndex)
   }, [])
 
@@ -388,17 +389,21 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     const config: SceneAudioConfig = {}
     let totalDuration = 0
     let narrationEndTime = 0
+    let descriptionEndTime = 0
     let sfxCursor = 0
     let dialogueCursor = 0
     
     // Get language-specific audio URLs
     const narrationUrl = getAudioForLanguage(scene, selectedLanguage, 'narration')
+    const descriptionUrl = getAudioForLanguage(scene, selectedLanguage, 'description')
     const dialogueArray = scene.dialogueAudio?.[selectedLanguage] || (selectedLanguage === 'en' ? scene.dialogueAudio : null)
     
     // Debug logging
     console.log('[Timeline] Calculating audio timeline for scene (language:', selectedLanguage, '):', {
       hasMusic: !!scene.musicAudio,
       musicUrl: scene.musicAudio,
+      hasDescription: !!descriptionUrl,
+      descriptionUrl,
       hasNarration: !!narrationUrl,
       narrationUrl,
       hasDialogue: !!(Array.isArray(dialogueArray) && dialogueArray.length > 0),
@@ -414,19 +419,36 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       console.log('[Timeline] Added music:', scene.musicAudio)
     }
     
+    // Scene description plays before narration
+    if (descriptionUrl) {
+      config.description = descriptionUrl
+      config.descriptionOffsetSeconds = 0
+      const storedDescriptionDuration = getStoredAudioDuration(scene, selectedLanguage, 'description')
+      const descriptionDuration = await resolveAudioDuration(descriptionUrl, storedDescriptionDuration)
+      descriptionEndTime = descriptionDuration
+      totalDuration = Math.max(totalDuration, descriptionEndTime)
+    }
+
     // Narration starts after configured offset
     if (narrationUrl) {
       config.narration = narrationUrl
-      config.narrationOffsetSeconds = NARRATION_DELAY_SECONDS
+      const narrationOffset = descriptionUrl
+        ? descriptionEndTime + DESCRIPTION_TO_NARRATION_GAP_SECONDS
+        : NARRATION_DELAY_SECONDS
+      config.narrationOffsetSeconds = narrationOffset
       const storedDuration = getStoredAudioDuration(scene, selectedLanguage, 'narration')
       const narrationDuration = await resolveAudioDuration(narrationUrl, storedDuration)
-      narrationEndTime = NARRATION_DELAY_SECONDS + narrationDuration
+      narrationEndTime = narrationOffset + narrationDuration
       totalDuration = Math.max(totalDuration, narrationEndTime)
+    } else {
+      narrationEndTime = descriptionEndTime
     }
+
+    const voiceAnchorTime = Math.max(narrationEndTime, descriptionEndTime)
 
     // SFX queue begins after narration finishes
     const resolvedSfx: AudioSource[] = []
-    sfxCursor = narrationEndTime
+    sfxCursor = voiceAnchorTime
     if (scene.sfxAudio && scene.sfxAudio.length > 0) {
       for (let idx = 0; idx < scene.sfxAudio.length; idx++) {
         const sfxUrl = scene.sfxAudio[idx]
@@ -434,7 +456,9 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
 
         const sfxDef = scene.sfx?.[idx] || {}
         const sfxDuration = await resolveAudioDuration(sfxUrl, sfxDef.duration)
-        const explicitTime = typeof sfxDef.time === 'number' ? Math.max(sfxDef.time, narrationEndTime) : Math.max(sfxCursor, narrationEndTime)
+        const explicitTime = typeof sfxDef.time === 'number'
+          ? Math.max(sfxDef.time, voiceAnchorTime)
+          : Math.max(sfxCursor, voiceAnchorTime)
         const startTime = Math.max(explicitTime, sfxCursor)
         resolvedSfx.push({
           url: sfxUrl,
@@ -450,11 +474,11 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
 
     // Dialogue waits for narration/SFX to finish and plays sequentially
     const resolvedDialogue: AudioSource[] = []
-    dialogueCursor = Math.max(sfxCursor, narrationEndTime)
+    dialogueCursor = Math.max(sfxCursor, voiceAnchorTime)
     if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
       for (const dialogue of dialogueArray) {
         if (dialogue.audioUrl) {
-          const startTime = Math.max(dialogueCursor, narrationEndTime)
+          const startTime = Math.max(dialogueCursor, voiceAnchorTime)
           resolvedDialogue.push({
             url: dialogue.audioUrl,
             startTime
@@ -470,10 +494,11 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       config.dialogue = resolvedDialogue
     }
 
-    totalDuration = Math.max(totalDuration, dialogueCursor, narrationEndTime, sfxCursor)
+    totalDuration = Math.max(totalDuration, dialogueCursor, narrationEndTime, sfxCursor, descriptionEndTime)
 
     console.log('[Timeline] Final config:', {
       hasMusic: !!config.music,
+      hasDescription: !!config.description,
       hasNarration: !!config.narration,
       dialogueCount: config.dialogue?.length || 0,
       sfxCount: config.sfx?.length || 0,
@@ -513,7 +538,11 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       // Check if scene has any pre-generated audio for the selected language
       const narrationUrl = getAudioForLanguage(scene, selectedLanguage, 'narration')
       const hasValidNarration = narrationUrl && 
-                                (narrationUrl.startsWith('http://') || narrationUrl.startsWith('https://'))
+                (narrationUrl.startsWith('http://') || narrationUrl.startsWith('https://'))
+
+      const descriptionUrl = getAudioForLanguage(scene, selectedLanguage, 'description')
+      const hasValidDescription = descriptionUrl &&
+                  (descriptionUrl.startsWith('http://') || descriptionUrl.startsWith('https://'))
       
       // Check dialogue audio for selected language
       const dialogueArray = scene.dialogueAudio?.[selectedLanguage] || (selectedLanguage === 'en' ? scene.dialogueAudio : null)
@@ -527,10 +556,11 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
                          scene.sfxAudio.some((url: string) => url && 
                            (url.startsWith('http://') || url.startsWith('https://')))
       
-      const hasPreGeneratedAudio = hasValidNarration || hasValidMusic || hasValidDialogue || hasValidSFX
+      const hasPreGeneratedAudio = hasValidNarration || hasValidDescription || hasValidMusic || hasValidDialogue || hasValidSFX
       
       if (hasPreGeneratedAudio) {
         console.log('[Player] Using pre-generated audio with Web Audio Mixer for scene', sceneIndex + 1, 'language:', selectedLanguage, {
+          description: !!descriptionUrl,
           narration: !!narrationUrl,
           music: !!scene.musicAudio,
           dialogue: hasValidDialogue,
@@ -552,8 +582,9 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         // Calculate audio timeline for concurrent playback
         const audioConfig = await calculateAudioTimeline(scene)
         
-        // Add scene duration to config for music-only scenes
-        audioConfig.sceneDuration = scene.duration || 5
+        // Ensure scene duration covers either calculated audio length or storyboard duration
+        const fallbackDuration = scene.duration || 5
+        audioConfig.sceneDuration = Math.max(audioConfig.sceneDuration || 0, fallbackDuration)
         
         // Check cancellation after async calculation
         if (playbackCancelledRef.current) {
@@ -562,7 +593,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         }
         
                 // Check if we have any audio to play
-        if (!audioConfig.music && !audioConfig.narration && 
+        if (!audioConfig.music && !audioConfig.narration && !audioConfig.description &&
             (!audioConfig.dialogue || audioConfig.dialogue.length === 0) &&
             (!audioConfig.sfx || audioConfig.sfx.length === 0)) {
           console.warn('[Player] No audio available in calculated config for scene', sceneIndex + 1, 'Config:', audioConfig)                                    
@@ -586,6 +617,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         
         console.log('[Player] Audio config validated, proceeding to play:', {
           music: !!audioConfig.music,
+          description: !!audioConfig.description,
           narration: !!audioConfig.narration,
           dialogueCount: audioConfig.dialogue?.length || 0,
           sfxCount: audioConfig.sfx?.length || 0

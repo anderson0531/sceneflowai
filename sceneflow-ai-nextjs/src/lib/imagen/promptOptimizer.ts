@@ -1,6 +1,11 @@
 /**
  * Clean, simple prompt builder for Imagen 3 with Base64 character references
  * Focuses ONLY on visual scene description + character reference
+ * 
+ * CRITICAL: Strips all video-specific instructions (camera movements, dolly/pan/tilt,
+ * multi-focal-length specs) that confuse static image generation models.
+ * Scene Direction data contains cinematography instructions for video production,
+ * but image models need a single frozen moment description.
  */
 
 import { artStylePresets } from '@/constants/artStylePresets'
@@ -476,6 +481,21 @@ function cleanSceneForVisuals(action: string, visualDesc: string): string {
   cleaned = cleaned.replace(/\b(camera\s+)?(pushes?|pulls?|zooms?|pans?|tilts?|tracks?|dollies?)\s+(in|out|to|toward|away|left|right)?\b/gi, '')
   cleaned = cleaned.replace(/\bflash\s+resolves?,?\s*/gi, '')
   
+  // Remove formatted camera movements from Scene Direction (e.g., "Slow, creeping Dolly In on Kaelen", "Static stability on Alex")
+  cleaned = cleaned.replace(/\b(slow|fast|quick|creeping|smooth|steady|rapid|gentle)?,?\s*(dolly\s+(?:in|out)|pan\s+(?:left|right)|tilt\s+(?:up|down)|zoom\s+(?:in|out)|track\s+(?:forward|back)|crane\s+(?:up|down))\s+(on|to|toward|at|across|over|around)?\s+[^,;\.]+/gi, '')
+  cleaned = cleaned.replace(/\b(static|handheld|steadicam|gimbal)\s+(stability|shot|movement|tracking)\s+(on|of|at)\s+[^,;\.]+/gi, '')
+  
+  // Remove movement speed descriptors (commonly used in video direction)
+  cleaned = cleaned.replace(/\b(slow|quick|rapid)\s+(movement|motion|tracking)\b/gi, '')
+  
+  // Remove complex lens/focal length specifications meant for video coverage (multiple shots)
+  // E.g., "35mm for studio geography, 85mm for isolating character emotions"
+  cleaned = cleaned.replace(/\b\d+mm\s+for\s+[^,;\.]+(?:,\s*\d+mm\s+for\s+[^,;\.]+)*/gi, '')
+  
+  // Simplify "shot with X set" to just the lens type
+  cleaned = cleaned.replace(/\bshot with\s+(anamorphic|spherical|prime|zoom)\s+(prime|lens)?\s*set;?/gi, 'anamorphic lens')
+  cleaned = cleaned.replace(/\bshot with\s+(\w+\s+\w+\s+set);?/gi, '')
+  
   // Remove contradictory lighting descriptions - keep only the dominant one
   // If multiple lighting types mentioned, prefer the last/most specific one
   const lightingPatterns = [
@@ -552,6 +572,10 @@ function cleanSceneForVisuals(action: string, visualDesc: string): string {
   
   // Clean up punctuation and whitespace
   cleaned = cleaned.replace(/\s*,\s*,/g, ',')        // Remove double commas
+  // Clean up punctuation artifacts from removed video instructions
+  cleaned = cleaned.replace(/[;,]\s*[;,]+/g, ',')    // Remove multiple consecutive semicolons/commas
+  cleaned = cleaned.replace(/\s*;\s*/g, ', ')         // Replace semicolons with commas for flow
+  cleaned = cleaned.replace(/,\s*,+/g, ',')          // Remove double commas
   cleaned = cleaned.replace(/\s{2,}/g, ' ')          // Normalize spaces
   cleaned = cleaned.replace(/^\s*[,.\s]+/g, '')      // Remove leading punctuation
   cleaned = cleaned.replace(/[,.\s]+$/g, '.')        // Clean trailing, ensure period

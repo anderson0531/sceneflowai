@@ -5,7 +5,7 @@ export async function GET() {
     commit: '0b38294',
     timestamp: Date.now(),
     blueprintVariants: 1,
-    model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+    model: process.env.GEMINI_MODEL || 'gemini-3.0-flash',
     api: 'v3',
     beats: '6-8'
   })

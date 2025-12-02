@@ -5,7 +5,7 @@ const mockPlatformModels: PlatformModel[] = [
   // Intelligence Models
   {
     id: '1',
-    modelId: 'gemini-2.0-flash',
+    modelId: 'gemini-3.0-flash',
     platformId: 'google',
     platformType: PlatformType.GOOGLE,
     category: APICategory.INTELLIGENCE,
@@ -23,7 +23,7 @@ const mockPlatformModels: PlatformModel[] = [
   },
   {
     id: '2',
-    modelId: 'gemini-2.5-flash',
+    modelId: 'gemini-3.0-flash',
     platformId: 'google',
     platformType: PlatformType.GOOGLE,
     category: APICategory.INTELLIGENCE,

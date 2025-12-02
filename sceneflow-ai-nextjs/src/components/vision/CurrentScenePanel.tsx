@@ -21,6 +21,16 @@ export function CurrentScenePanel({ scene }: CurrentScenePanelProps) {
           </p>
         </div>
 
+        {/* Scene Description */}
+        {scene.visualDescription && (
+          <div className="mb-4">
+            <h4 className="text-sm font-medium text-gray-500 mb-1">SCENE DESCRIPTION</h4>
+            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+              {scene.visualDescription}
+            </p>
+          </div>
+        )}
+
         {/* Action Description */}
         <div className="mb-4">
           <h4 className="text-sm font-medium text-gray-500 mb-1">ACTION</h4>

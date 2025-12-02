@@ -31,7 +31,7 @@ export function BlueprintComposer({
     trackCta({ event: 'blueprint_generate_clicked' })
     try {
       setIsGenerating(true)
-      await onGenerate(text.trim(), { persona, model: 'gemini-2.5-pro' })
+      await onGenerate(text.trim(), { persona, model: 'gemini-3.0-pro' })
     } catch (e: any) {
       setErrorMsg(e?.message || 'Generation failed')
     } finally {

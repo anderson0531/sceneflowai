@@ -220,14 +220,25 @@ CHARACTER NAME RULES (CRITICAL):
    
 DO NOT force full character names into dialogue text unnaturally.
 
-DIALOGUE AUDIO TAGS (CRITICAL FOR TTS):
-- Add emotion/inflection instructions in SQUARE BRACKETS: [whispering], [excitedly], [sadly]
-- Use ellipses (...) for pauses or hesitation
-- Use dashes (—) for interruptions
-- Capitalize for EMPHASIS
-- Audio tags should come BEFORE the spoken text
-- Common tags: [whispering], [shouting], [sadly], [excitedly], [angrily], [nervously], [cheerfully]
-- Example: {"character": "BRIAN", "line": "[thoughtfully] I... I think you're right."}
+DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
+EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
+
+STYLE TAGS (In square brackets BEFORE text):
+Emotions: [happy], [sad], [angry], [fearful], [surprised], [disgusted], [neutral]
+Intensity: [very], [slightly], [extremely]
+Vocal Quality: [whispering], [shouting], [mumbling], [singing], [laughing], [crying], [gasping]
+Pace: [quickly], [slowly], [hesitantly], [confidently]
+
+PUNCTUATION & PACING:
+- Use ellipses (...) for pauses, trailing off, or hesitation
+- Use dashes (—) for interruptions or sudden stops
+- Use CAPS for EMPHASIS on specific words
+
+EXAMPLES:
+  * {"character": "BRIAN", "line": "[thoughtfully, slowly] I... I think you're right."}
+  * {"character": "SARAH", "line": "[very excited] This is AMAZING!"}
+
+CRITICAL: Every single dialogue line must start with at least one emotion/style tag in [brackets].
 
 ${beatContext}
 
@@ -477,7 +488,7 @@ async function callGemini(apiKey: string, prompt: string, maxTokens: number): Pr
   
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

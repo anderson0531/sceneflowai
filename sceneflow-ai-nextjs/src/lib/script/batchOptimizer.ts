@@ -72,7 +72,7 @@ Rules:
 
 async function callGeminiForScene({ apiKey, fetchImpl, prompt }: { apiKey: string, fetchImpl: FetchFn, prompt: string }): Promise<any> {
   const res = await fetchImpl(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

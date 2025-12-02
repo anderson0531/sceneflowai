@@ -4,7 +4,7 @@
 export interface PromptInstruction {
   id: string;
   version: string;
-  aiModel: string; // 'gpt-4', 'gpt-5', 'gemini-2.0', 'claude-3.5', etc.
+  aiModel: string; // 'gpt-4', 'gpt-5', 'gemini-3.0', 'claude-3.5', etc.
   category: 'ideation' | 'storyboard' | 'direction' | 'generation' | 'review' | 'optimization';
   instructions: string;
   parameters: Record<string, any>;

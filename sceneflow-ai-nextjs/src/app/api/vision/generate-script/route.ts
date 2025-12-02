@@ -279,17 +279,30 @@ CHARACTER NAME RULES (CRITICAL):
    
 DO NOT force full character names into dialogue text unnaturally.
 
-DIALOGUE AUDIO TAGS (CRITICAL FOR TTS):
-- Add emotion/inflection instructions in SQUARE BRACKETS: [whispering], [excitedly], [sadly]
-- Use ellipses (...) for pauses or hesitation
-- Use dashes (—) for interruptions
-- Capitalize for EMPHASIS
-- Audio tags should come BEFORE the spoken text
-- Common tags: [whispering], [shouting], [sadly], [excitedly], [angrily], [nervously], [cheerfully]
-- Examples:
-  * {"character": "BRIAN ANDERSON SR", "line": "[excitedly] I can't believe it!"}
-  * {"character": "MINT", "line": "[whispering] Don't tell anyone... It's our secret."}
-  * {"character": "ERIC", "line": "[sadly] I wish things were different—"}
+DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
+EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
+
+STYLE TAGS (In square brackets BEFORE text):
+Emotions: [happy], [sad], [angry], [fearful], [surprised], [disgusted], [neutral]
+Intensity: [very], [slightly], [extremely]
+Vocal Quality: [whispering], [shouting], [mumbling], [singing], [laughing], [crying], [gasping]
+Pace: [quickly], [slowly], [hesitantly], [confidently]
+Combined: [very happy], [slightly angry], [extremely fearful], [confidently asserting]
+
+PUNCTUATION & PACING:
+- Use ellipses (...) for pauses, trailing off, or hesitation
+- Use dashes (—) for interruptions or sudden stops  
+- Use CAPS for EMPHASIS on specific words
+- Use commas (,) for natural breathing pauses
+
+EXAMPLES:
+  * {"character": "BRIAN ANDERSON SR", "line": "[very excited] I can't believe it! This changes EVERYTHING!"}
+  * {"character": "MINT", "line": "[whispering nervously] Don't tell anyone... It's our secret, okay?"}
+  * {"character": "ERIC", "line": "[sadly, slowly] I wish things were different— but they're not."}
+  * {"character": "DR. MARTINEZ", "line": "[confidently] The results are clear, and I'm afraid... [pausing] they're not good."}
+  * {"character": "CHILD", "line": "[very happy, quickly] Mommy, mommy! Look what I found!"}
+
+CRITICAL: Every single dialogue line must start with at least one emotion/style tag in [brackets].
 
 CRITICAL REQUIREMENTS:
 1. Generate a COMPLETE, CONTINUOUS script with ${sceneCount} scenes
@@ -651,7 +664,7 @@ async function callGemini(apiKey: string, prompt: string, maxTokens: number): Pr
   
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, // Switched from experimental to stable
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${apiKey}`, // Switched from experimental to stable
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

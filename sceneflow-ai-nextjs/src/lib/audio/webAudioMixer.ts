@@ -5,7 +5,7 @@
  * with individual volume control and precise timing.
  */
 
-export type AudioType = 'music' | 'narration' | 'dialogue' | 'sfx'
+export type AudioType = 'music' | 'narration' | 'description' | 'dialogue' | 'sfx'
 
 export interface AudioSource {
   url: string
@@ -15,6 +15,8 @@ export interface AudioSource {
 
 export interface SceneAudioConfig {
   music?: string  // Music URL - plays from scene start
+  description?: string  // Scene description URL - plays before narration
+  descriptionOffsetSeconds?: number
   narration?: string  // Narration URL - plays from scene start
   narrationOffsetSeconds?: number  // Optional delay before narration begins
   dialogue?: AudioSource[]  // Dialogue with timing
@@ -23,6 +25,7 @@ export interface SceneAudioConfig {
 }
 
 const DEFAULT_NARRATION_OFFSET = 2
+const DESCRIPTION_TO_NARRATION_GAP = 0.35
 const DIALOGUE_GAP_SECONDS = 0.3
 const SFX_GAP_SECONDS = 0
 
@@ -62,7 +65,7 @@ export class WebAudioMixer {
     this.masterGain.gain.value = 1.0
 
     // Create gain nodes for each audio type
-    const types: AudioType[] = ['music', 'narration', 'dialogue', 'sfx']
+    const types: AudioType[] = ['music', 'description', 'narration', 'dialogue', 'sfx']
     types.forEach(type => {
       const gainNode = this.audioContext!.createGain()
       gainNode.connect(this.masterGain!)
@@ -72,7 +75,7 @@ export class WebAudioMixer {
         gainNode.gain.value = 0.15  // 15% volume for music
       } else if (type === 'dialogue') {
         gainNode.gain.value = 2.1  // 210% volume for dialogue (140% boost)
-      } else if (type === 'narration') {
+      } else if (type === 'narration' || type === 'description') {
         gainNode.gain.value = 1.5  // 150% volume for narration
       } else {
         gainNode.gain.value = 1.0  // 100% volume for SFX
@@ -179,6 +182,13 @@ export class WebAudioMixer {
           })
       }
 
+      const descriptionPromise = config.description
+        ? this.loadAudioFile(config.description, 'description').catch(error => {
+            console.error('[WebAudioMixer] Description load failed:', error)
+            return null
+          })
+        : Promise.resolve(null)
+
       const narrationPromise = config.narration
         ? this.loadAudioFile(config.narration, 'narration').catch(error => {
             console.error('[WebAudioMixer] Narration load failed:', error)
@@ -204,15 +214,41 @@ export class WebAudioMixer {
           })
       )
 
-      const [narrationBuffer, dialogueResults, sfxResults] = await Promise.all([
+      const [descriptionBuffer, narrationBuffer, dialogueResults, sfxResults] = await Promise.all([
+        descriptionPromise,
         narrationPromise,
         Promise.all(dialoguePromises),
         Promise.all(sfxPromises)
       ])
 
-      const narrationOffset = config.narration ? (config.narrationOffsetSeconds ?? DEFAULT_NARRATION_OFFSET) : 0
+      const descriptionOffset = config.description ? Math.max(0, config.descriptionOffsetSeconds ?? 0) : 0
+      const descriptionDuration = descriptionBuffer?.duration ?? 0
+      const descriptionEndTime = descriptionOffset + descriptionDuration
+
+      if (descriptionBuffer) {
+        this.playAudioBuffer(
+          descriptionBuffer,
+          'description',
+          descriptionOffset,
+          false
+        )
+      }
+
+      const narrationRequestedOffset = config.narration
+        ? Math.max(0, config.narrationOffsetSeconds ?? DEFAULT_NARRATION_OFFSET)
+        : 0
+
+      const narrationGuardrailOffset = descriptionBuffer
+        ? descriptionEndTime + DESCRIPTION_TO_NARRATION_GAP
+        : 0
+
+      const narrationOffset = config.narration
+        ? Math.max(narrationRequestedOffset, narrationGuardrailOffset)
+        : descriptionEndTime
       const narrationDuration = narrationBuffer?.duration ?? 0
-      const narrationEndTime = narrationOffset + narrationDuration
+      const narrationEndTime = narrationBuffer
+        ? narrationOffset + narrationDuration
+        : descriptionEndTime
 
       if (narrationBuffer) {
         this.playAudioBuffer(
@@ -223,19 +259,27 @@ export class WebAudioMixer {
         )
       }
 
+      const narrationAnchor = narrationBuffer ? narrationEndTime : descriptionEndTime
+      const speechAnchor = narrationAnchor
+
       const validSfx = sfxResults.filter((entry): entry is { source: AudioSource; buffer: AudioBuffer } => !!entry)
-      let sfxCursor = narrationEndTime
+      let sfxCursor = narrationAnchor
       validSfx.forEach(({ source, buffer }) => {
-        const requestedStart = typeof source.startTime === 'number' ? Math.max(source.startTime, narrationEndTime) : Math.max(sfxCursor, narrationEndTime)
+        const requestedStart = typeof source.startTime === 'number'
+          ? Math.max(source.startTime, speechAnchor)
+          : Math.max(sfxCursor, speechAnchor)
         const startTime = Math.max(requestedStart, sfxCursor)
         this.playAudioBuffer(buffer, 'sfx', startTime, false)
         sfxCursor = startTime + buffer.duration + SFX_GAP_SECONDS
       })
 
       const validDialogues = dialogueResults.filter((entry): entry is { source: AudioSource; buffer: AudioBuffer } => !!entry)
-      let dialogueCursor = Math.max(sfxCursor, narrationEndTime)
+      const dialogueAnchor = validSfx.length > 0 ? sfxCursor : narrationAnchor
+      let dialogueCursor = Math.max(dialogueAnchor, speechAnchor)
       validDialogues.forEach(({ source, buffer }) => {
-        const requestedStart = typeof source.startTime === 'number' ? Math.max(source.startTime, dialogueCursor) : dialogueCursor
+        const requestedStart = typeof source.startTime === 'number'
+          ? Math.max(source.startTime, speechAnchor)
+          : Math.max(dialogueCursor, speechAnchor)
         const startTime = Math.max(requestedStart, dialogueCursor)
         this.playAudioBuffer(buffer, 'dialogue', startTime, false)
         dialogueCursor = startTime + buffer.duration + DIALOGUE_GAP_SECONDS

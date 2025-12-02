@@ -472,7 +472,7 @@ export async function POST(request: NextRequest) {
       provider: p,
       model: p === 'openai'
         ? ((model && (model as any) !== 'auto') ? model : (process.env.OPENAI_MODEL || 'gpt-5'))
-        : ((model && (model as any) !== 'auto') ? model : (process.env.GEMINI_MODEL || 'gemini-2.5-flash'))
+        : ((model && (model as any) !== 'auto') ? model : (process.env.GEMINI_MODEL || 'gemini-3.0-flash'))
     })
 
     const candidates: Provider[] = userProvider

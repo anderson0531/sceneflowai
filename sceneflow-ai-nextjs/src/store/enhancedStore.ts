@@ -196,7 +196,7 @@ export interface EnhancedAppState {
 
 const initialAIConfiguration: AIConfiguration = {
   defaultModel: 'gpt-4',
-  fallbackModels: ['gpt-4o', 'gemini-2.0', 'claude-3.5-sonnet'],
+  fallbackModels: ['gpt-4o', 'gemini-3.0', 'claude-3.5-sonnet'],
   costLimits: {
     daily: 10.0,
     monthly: 100.0,

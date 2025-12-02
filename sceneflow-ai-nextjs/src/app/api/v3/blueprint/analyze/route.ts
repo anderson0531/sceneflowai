@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
     if (!input) return NextResponse.json({ success: false, error: 'Missing input' }, { status: 400 })
 
     const provider = (process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY) ? 'gemini' : 'openai'
-    const model = provider === 'gemini' ? (process.env.GEMINI_MODEL || 'gemini-2.5-flash') : (process.env.OPENAI_MODEL || 'gpt-4.1')
+    const model = provider === 'gemini' ? (process.env.GEMINI_MODEL || 'gemini-3.0-flash') : (process.env.OPENAI_MODEL || 'gpt-4.1')
     
     console.log(`[Blueprint V3] Generating ${variantsRequested} variant(s) - model: ${model}`)
     const prompt = toPrompt(input)

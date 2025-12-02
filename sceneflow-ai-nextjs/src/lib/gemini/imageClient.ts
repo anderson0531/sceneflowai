@@ -99,8 +99,7 @@ export async function generateImageWithGemini(
   
   // Build request body for Gemini API
   const generationConfig: any = {
-    response_modalities: ['IMAGE'],
-    responseMimeType: 'image/png'
+    response_modalities: ['IMAGE']
   }
 
   // Add image config if specified
@@ -181,13 +180,16 @@ export async function generateImageWithGemini(
   // Find the image part (skip thought parts if present)
   let imageData: string | null = null
   for (const part of parts) {
-    if (part.inline_data && part.inline_data.mime_type?.startsWith('image/') && !part.thought) {
-      imageData = part.inline_data.data
+    const inlineData = part.inline_data || part.inlineData
+    const fileData = part.file_data || part.fileData
+
+    if (inlineData && (inlineData.mime_type || inlineData.mimeType)?.startsWith?.('image/') && !part.thought) {
+      imageData = inlineData.data
       break
     }
 
-    if (!imageData && part.file_data?.file_uri) {
-      const fileUri: string = part.file_data.file_uri
+    if (!imageData && (fileData?.file_uri || fileData?.fileUri)) {
+      const fileUri: string = fileData.file_uri || fileData.fileUri
       const isGcsUri = fileUri.startsWith('gs://')
       if (isGcsUri) {
         console.warn('[Gemini Image] Received gs:// file URI, which cannot be downloaded with API key. Prompt likely blocked or requires Vertex integration.')

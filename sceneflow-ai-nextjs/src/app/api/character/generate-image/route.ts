@@ -65,14 +65,14 @@ export async function POST(req: NextRequest) {
       success: true, 
       imageUrl,
       visionDescription, // Include in response for client to save
-      model: quality === 'max' ? 'imagen-4.0-ultra-generate-001' : 'imagen-3.0-generate-002',
+      model: 'gemini-3-pro-image-preview',
       quality: quality,
-      provider: 'vertex-ai',
+      provider: 'gemini-api',
       storage: 'vercel-blob'
     })
 
   } catch (error) {
-    console.error('[Character Image] Vertex AI generation error:', error)
+    console.error('[Character Image] Gemini API generation error:', error)
     return NextResponse.json({ 
       error: error instanceof Error ? error.message : 'Image generation failed' 
     }, { status: 500 })

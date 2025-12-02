@@ -25,7 +25,7 @@ Provide 3 brief, vivid variations (each 3-8 words). Return ONLY a JSON array of 
 Example response: ["variation one", "variation two", "variation three"]`
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${googleApiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${googleApiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

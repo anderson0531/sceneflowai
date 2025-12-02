@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-export const maxDuration = 60
+export const maxDuration = 300 // Increased for complex optimization
 export const runtime = 'nodejs'
+
+// Model fallback sequence for optimization
+const MODEL_SEQUENCE = [
+  'gemini-3-pro-preview',     // Best quality, may be slower
+  'gemini-2.5-pro',            // High quality fallback
+  'gemini-2.5-flash',          // Fast fallback
+  'gemini-1.5-pro-latest'      // Legacy fallback
+]
 
 interface OptimizeSceneRequest {
   projectId: string
@@ -55,10 +63,40 @@ async function optimizeScene(scene: any, context: any) {
     `Next: ${context.nextScene.heading || 'Untitled'} - ${context.nextScene.action?.substring(0, 100) || 'No action'}...` : 
     'No next scene'
 
+  // Try models in sequence with fallback
+  let lastError: Error | null = null
+  
+  for (const model of MODEL_SEQUENCE) {
+    try {
+      console.log(`[Scene Optimization] Trying model: ${model}`)
+      const result = await tryOptimizeWithModel(model, scene, context, dialogueText, previousSceneText, nextSceneText, apiKey)
+      console.log(`[Scene Optimization] Success with model: ${model}`)
+      return result
+    } catch (error: any) {
+      console.error(`[Scene Optimization] Model ${model} failed:`, error.message)
+      lastError = error
+      // Continue to next model
+    }
+  }
+  
+  // All models failed
+  throw lastError || new Error('All optimization models failed')
+}
+
+async function tryOptimizeWithModel(
+  model: string,
+  scene: any,
+  context: any,
+  dialogueText: string,
+  previousSceneText: string,
+  nextSceneText: string,
+  apiKey: string
+) {
   const prompt = `You are an expert film director and screenwriting consultant. Optimize this scene holistically for both director and audience perspectives.
 
 SCENE TO OPTIMIZE:
 Heading: ${scene.heading || 'Untitled Scene'}
+Scene Description: ${scene.visualDescription || 'No dedicated scene description'}
 Action: ${scene.action || 'No action description'}
 Narration: ${scene.narration || 'No narration'}
 Dialogue:
@@ -89,6 +127,26 @@ Optimize this scene for:
    - Clear storytelling beats
    - Satisfying scene arc
 
+DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
+EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
+
+STYLE TAGS (In square brackets BEFORE text):
+Emotions: [happy], [sad], [angry], [fearful], [surprised], [disgusted], [neutral]
+Intensity: [very], [slightly], [extremely]
+Vocal Quality: [whispering], [shouting], [mumbling], [singing], [laughing], [crying], [gasping]
+Pace: [quickly], [slowly], [hesitantly], [confidently]
+
+PUNCTUATION & PACING:
+- Use ellipses (...) for pauses, trailing off, or hesitation
+- Use dashes (—) for interruptions or sudden stops
+- Use CAPS for EMPHASIS on specific words
+
+EXAMPLES:
+  * {"character": "JOHN", "line": "[very excited] I can't believe it!"}
+  * {"character": "MARY", "line": "[whispering nervously] Don't tell anyone..."}
+
+CRITICAL: Every single dialogue line must start with at least one emotion/style tag in [brackets].
+
 PROVIDE:
 1. A COMPLETE rewritten version of the scene (all elements: heading, action, narration, dialogue, etc.)
 2. A detailed "Changes Summary" explaining what you changed and WHY
@@ -98,10 +156,11 @@ Return JSON with this exact structure:
 {
   "optimizedScene": {
     "heading": "INT. LOCATION - TIME",
+    "visualDescription": "Scene description / director notes that reinforce the cinematic look",
     "action": "Complete rewritten action...",
     "narration": "Complete rewritten narration...",
     "dialogue": [
-      { "character": "CHARACTER NAME", "line": "Optimized dialogue..." }
+      { "character": "CHARACTER NAME", "line": "[emotion tag] Optimized dialogue with emotional cues..." }
     ],
     "music": "Music description",
     "sfx": ["SFX description"]
@@ -116,13 +175,13 @@ Return JSON with this exact structure:
   ]
 }
 
+REMEMBER: ALL dialogue must include [emotional tags] at the beginning.
+
 Focus on holistic improvement that works together, not piecemeal fixes.
 Make every change count toward making the scene more effective overall.`
 
-  console.log('[Scene Optimization] Calling Gemini API...')
-  
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -138,18 +197,16 @@ Make every change count toward making the scene more effective overall.`
 
   if (!response.ok) {
     const errorText = await response.text()
-    console.error('[Scene Optimization] Gemini API error:', response.status, errorText)
-    throw new Error(`Gemini API error: ${response.status} - ${errorText}`)
+    console.error(`[Scene Optimization] API error with ${model}:`, response.status, errorText)
+    throw new Error(`API error: ${response.status}`)
   }
 
   const data = await response.json()
-  console.log('[Scene Optimization] Received API response')
 
   const analysisText = data.candidates?.[0]?.content?.parts?.[0]?.text
 
   if (!analysisText) {
-    console.error('[Scene Optimization] No text in response')
-    throw new Error('No optimization generated from Gemini')
+    throw new Error('No optimization generated')
   }
 
   // Extract JSON from markdown code blocks if present
@@ -161,13 +218,9 @@ Make every change count toward making the scene more effective overall.`
     jsonText = jsonText.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '').trim()
   }
 
-  try {
-    const optimization = JSON.parse(jsonText)
-    return optimization
-  } catch (parseError) {
-    console.error('[Scene Optimization] JSON parse error:', parseError)
-    console.error('[Scene Optimization] Failed to parse text:', jsonText.substring(0, 500))
-    throw new Error('Failed to parse optimization response')
+  const optimization = JSON.parse(jsonText)
+  if (optimization?.optimizedScene && optimization.optimizedScene.visualDescription === undefined) {
+    optimization.optimizedScene.visualDescription = scene.visualDescription || ''
   }
+  return optimization
 }
-

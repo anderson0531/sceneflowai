@@ -8,6 +8,7 @@ import { ReportType, StoryboardData } from '@/lib/types/reports'
 import { SceneProductionManager } from './scene-production'
 import { SceneProductionData, SceneProductionReferences } from './scene-production/types'
 import { cn } from '@/lib/utils'
+import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
 
 interface SceneGalleryProps {
   scenes: any[]
@@ -273,6 +274,7 @@ function SceneCard({
     onClick()
   }
   const sceneHeading = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text
+  const formattedHeading = formatSceneHeading(sceneHeading) || sceneHeading || 'Untitled'
   return (
     <div 
       onClick={handleCardClick}
@@ -311,9 +313,7 @@ function SceneCard({
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
         <div className="text-white">
           <div className="text-xs font-semibold">SCENE {sceneNumber}</div>
-          {sceneHeading && (
-            <div className="text-sm truncate">{sceneHeading}</div>
-          )}
+          <div className="text-sm truncate">{formattedHeading}</div>
         </div>
       </div>
       

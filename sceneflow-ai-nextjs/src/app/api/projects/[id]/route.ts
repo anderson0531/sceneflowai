@@ -52,10 +52,26 @@ export async function PUT(
     const { id } = await params
     const body = await request.json()
     
+    console.log('[Projects PUT] Request received:', {
+      projectId: id,
+      hasMetadata: !!body.metadata,
+      hasVisionPhase: !!body.metadata?.visionPhase,
+      hasCharacters: !!body.metadata?.visionPhase?.characters,
+      charactersCount: body.metadata?.visionPhase?.characters?.length || 0
+    })
+    
+    // Log character reference images if present
+    if (body.metadata?.visionPhase?.characters) {
+      body.metadata.visionPhase.characters.forEach((char: any, idx: number) => {
+        console.log(`[Projects PUT] Character ${idx + 1}: ${char.name}, hasReferenceImage: ${!!char.referenceImage}`)
+      })
+    }
+    
     await sequelize.authenticate()
     
     const project = await Project.findByPk(id)
     if (!project) {
+      console.error('[Projects PUT] Project not found:', id)
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
     
@@ -87,6 +103,11 @@ export async function PUT(
     await project.update({
       ...body,
       metadata: mergedMetadata
+    })
+    
+    console.log('[Projects PUT] Project updated successfully:', {
+      projectId: id,
+      charactersInDb: mergedMetadata?.visionPhase?.characters?.length || 0
     })
     
     return NextResponse.json({ success: true, project })

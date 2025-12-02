@@ -11,6 +11,8 @@ interface PreviewPanelProps {
 }
 
 export function PreviewPanel({ originalScene, previewScene, isGenerating, changes }: PreviewPanelProps) {
+  const normalize = (value?: string | null) => (value ?? '').trim()
+
   if (isGenerating) {
     return (
       <div className="space-y-4">
@@ -78,6 +80,21 @@ export function PreviewPanel({ originalScene, previewScene, isGenerating, change
             </p>
             {originalScene.heading !== previewScene.heading && (
               <Badge variant="outline" className="text-xs bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700">
+                Changed
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        {/* Scene Description */}
+        <div>
+          <h4 className="text-sm font-medium text-gray-500 mb-1">SCENE DESCRIPTION</h4>
+          <div className="relative">
+            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed break-words">
+              {previewScene.visualDescription || 'No scene description'}
+            </p>
+            {normalize(originalScene.visualDescription) !== normalize(previewScene.visualDescription) && (
+              <Badge variant="outline" className="absolute -top-1 -right-1 text-xs bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700">
                 Changed
               </Badge>
             )}

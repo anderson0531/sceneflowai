@@ -119,6 +119,26 @@ const ensureNarratorCharacter = (characters: Character[], narrationVoice?: Voice
   }
 }
 
+const ensureDescriptionCharacter = (characters: Character[], descriptionVoice?: VoiceConfig): Character => {
+  const existingDescription = characters.find(char => char.type === 'description')
+
+  if (existingDescription) {
+    return existingDescription
+  }
+
+  return {
+    id: 'scene-description-voice',
+    name: 'Scene Description',
+    description: 'Voiceover that introduces the scene before narration begins',
+    type: 'description',
+    voiceConfig: descriptionVoice || {
+      provider: 'elevenlabs',
+      voiceName: 'Allison',
+      voiceId: 'EXAVITQu4vr4xnSDxMaL'
+    }
+  }
+}
+
 interface VoiceConfig {
   provider: 'elevenlabs' | 'google'
   voiceId: string
@@ -135,7 +155,7 @@ interface Character {
   name: string
   description: string
   role?: 'protagonist' | 'main' | 'supporting'
-  type?: 'character' | 'narrator' // NEW: character type
+  type?: 'character' | 'narrator' | 'description'
   referenceImage?: string
   appearanceDescription?: string
   // NEW: Voice assignment
@@ -170,6 +190,7 @@ interface Project {
       charactersGenerated?: boolean
       scenesGenerated?: boolean
       narrationVoice?: VoiceConfig
+      descriptionVoice?: VoiceConfig
     }
   }
 }
@@ -963,6 +984,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Audio generation state
   const [narrationVoice, setNarrationVoice] = useState<VoiceConfig | null>(null)
+  const [descriptionVoice, setDescriptionVoice] = useState<VoiceConfig | null>(null)
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false)
   const [audioProgress, setAudioProgress] = useState<{
     current: number
@@ -1023,7 +1045,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             script: script,
             characters: characters,
             scenes: scenes,
-            narrationVoice: narrationVoice
+            narrationVoice: narrationVoice,
+            descriptionVoice: descriptionVoice
           }
         }
       }
@@ -1071,7 +1094,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             narrationVoice: voiceConfig,
             characters: updatedCharacters,
             script: script,
-            scenes: scenes
+            scenes: scenes,
+            descriptionVoice: descriptionVoice
           }
         }
       }
@@ -1126,6 +1150,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (updatedCharacter.type === 'narrator') {
       console.log('[Character Voice] Updating narration voice from narrator character')
       setNarrationVoice(voiceConfig)
+    } else if (updatedCharacter.type === 'description') {
+      console.log('[Character Voice] Updating description voice from description character')
+      setDescriptionVoice(voiceConfig)
     }
     
     if (project) {
@@ -1138,7 +1165,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             characters: updatedCharacters,
             script: script,
             scenes: scenes,
-            narrationVoice: narrationVoice
+            narrationVoice: updatedCharacter.type === 'narrator' ? voiceConfig : narrationVoice,
+            descriptionVoice: updatedCharacter.type === 'description' ? voiceConfig : descriptionVoice
           }
         }
       }
@@ -1198,7 +1226,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 characters: updatedCharacters,
                 script: script,
                 scenes: scenes,
-                narrationVoice: narrationVoice
+                narrationVoice: narrationVoice,
+                descriptionVoice: descriptionVoice
               }
             }
           })
@@ -1246,7 +1275,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 characters: updatedCharacters,
                 script: script,
                 scenes: scenes,
-                narrationVoice: narrationVoice
+                narrationVoice: narrationVoice,
+                descriptionVoice: descriptionVoice
               }
             }
           })
@@ -1294,7 +1324,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 characters: updatedCharacters,
                 script: script,
                 scenes: scenes,
-                narrationVoice: narrationVoice
+                narrationVoice: narrationVoice,
+                descriptionVoice: descriptionVoice
               }
             }
           })
@@ -1640,16 +1671,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           }
 
-          // Ensure narrator character exists
+          // Ensure narrator/description characters exist so voices can be configured independently
           const narratorCharacter = ensureNarratorCharacter(charactersWithIds, narrationVoice || undefined)
           const charactersWithNarrator = charactersWithIds.some(c => c.type === 'narrator') 
             ? charactersWithIds 
             : [...charactersWithIds, narratorCharacter]
-          
-          setCharacters(charactersWithNarrator)
+
+          const descriptionCharacter = ensureDescriptionCharacter(charactersWithNarrator, visionPhase.descriptionVoice || undefined)
+          const charactersWithDescription = charactersWithNarrator.some(c => c.type === 'description')
+            ? charactersWithNarrator
+            : [...charactersWithNarrator, descriptionCharacter]
+
+          setCharacters(charactersWithDescription)
           
           // Sync narration voice from narrator character (single source of truth)
-          const narratorChar = charactersWithNarrator.find(c => c.type === 'narrator')
+          const narratorChar = charactersWithDescription.find(c => c.type === 'narrator')
           if (narratorChar?.voiceConfig) {
             const finalNarratorVoice = narratorChar.voiceConfig
             setNarrationVoice(finalNarratorVoice)
@@ -1672,6 +1708,33 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 })
               } catch (error) {
                 console.warn('[Load Project] Failed to sync narration voice:', error)
+              }
+            }
+          }
+
+          // Sync description voice from dedicated character
+          const descriptionChar = charactersWithDescription.find(c => c.type === 'description')
+          if (descriptionChar?.voiceConfig) {
+            const finalDescriptionVoice = descriptionChar.voiceConfig
+            setDescriptionVoice(finalDescriptionVoice)
+
+            if (!visionPhase.descriptionVoice || visionPhase.descriptionVoice.voiceId !== descriptionChar.voiceConfig.voiceId) {
+              try {
+                await fetch(`/api/projects/${projectId}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    metadata: {
+                      ...proj.metadata,
+                      visionPhase: {
+                        ...visionPhase,
+                        descriptionVoice: descriptionChar.voiceConfig
+                      }
+                    }
+                  })
+                })
+              } catch (error) {
+                console.warn('[Load Project] Failed to sync description voice:', error)
               }
             }
           }
@@ -2352,10 +2415,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         
         // Persist to project metadata
         try {
+          console.log('[Character Save] Saving character image to project:', {
+            projectId,
+            characterId,
+            characterName: updatedCharacters.find(c => (c.id || characters.indexOf(c).toString()) === characterId)?.name,
+            hasImageUrl: !!json.imageUrl,
+            imageUrl: json.imageUrl?.substring(0, 50)
+          })
+          
           const existingMetadata = project?.metadata || {}
           const existingVisionPhase = existingMetadata.visionPhase || {}
           
-          await fetch(`/api/projects/${projectId}`, {
+          const saveResponse = await fetch(`/api/projects/${projectId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -2370,8 +2441,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               }
             })
           })
+          
+          if (!saveResponse.ok) {
+            const errorText = await saveResponse.text()
+            console.error('[Character Save] Failed to save:', saveResponse.status, errorText)
+            throw new Error(`Save failed: ${saveResponse.status}`)
+          }
+          
+          console.log('[Character Save] Successfully saved character image to database')
         } catch (saveError) {
-          console.error('Failed to save character to project:', saveError)
+          console.error('[Character Save] Failed to save character to project:', saveError)
+          try { toast.error('Character image generated but failed to save to project') } catch {}
         }
         
         try { toast.success('Character image generated!') } catch {}
@@ -2433,7 +2513,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   ...existingVisionPhase,
                   script: script,
                   characters: characters,
-                  scenes: updatedScenes
+                  scenes: updatedScenes,
+                  narrationVoice: narrationVoice,
+                  descriptionVoice: descriptionVoice
                 }
               }
             })
@@ -3421,17 +3503,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       }
       
-      const voiceConfig = audioType === 'dialogue' ? character?.voiceConfig : narrationVoice
+      const voiceConfig = audioType === 'dialogue'
+        ? character?.voiceConfig
+        : audioType === 'description'
+          ? descriptionVoice
+          : narrationVoice
 
       console.log('[Generate Scene Audio] Voice config determined:', { voiceConfig, audioType })
 
       if (!voiceConfig) {
         // Show specific error message based on audio type
-        if (audioType === 'narration' || audioType === 'description') {
+        if (audioType === 'narration') {
           console.error('[Generate Scene Audio] No narration voice configured')
           try { 
             const { toast } = require('sonner')
             toast.error('Please select a narration voice in the sidebar before generating audio')
+          } catch {}
+        } else if (audioType === 'description') {
+          console.error('[Generate Scene Audio] No description voice configured')
+          try {
+            const { toast } = require('sonner')
+            toast.error('Please select a scene description voice before generating audio')
           } catch {}
         } else {
           const normalizedName = normalizeCharacterName(characterName || '')
@@ -3952,6 +4044,70 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  // Helper: Clean up audio assets for removed dialogue lines
+  const cleanupRemovedDialogueAudio = (originalScene: any, revisedScene: any) => {
+    // If no dialogue audio exists, return revised scene as-is
+    if (!originalScene?.dialogueAudio) {
+      return revisedScene
+    }
+
+    const cleanedScene = { ...revisedScene }
+    
+    // Get the dialogue lines in the revised scene
+    const revisedDialogueLines = (revisedScene.dialogue || []).map((d: any, idx: number) => ({
+      character: d.character,
+      line: d.line || d.text,
+      index: idx
+    }))
+
+    console.log('[Cleanup Dialogue Audio] Original dialogue count:', originalScene.dialogue?.length || 0)
+    console.log('[Cleanup Dialogue Audio] Revised dialogue count:', revisedDialogueLines.length)
+
+    // Handle multi-language audio format (object with language keys)
+    if (typeof originalScene.dialogueAudio === 'object' && !Array.isArray(originalScene.dialogueAudio)) {
+      cleanedScene.dialogueAudio = {}
+      
+      // Process each language
+      for (const [language, audioArray] of Object.entries(originalScene.dialogueAudio)) {
+        if (Array.isArray(audioArray)) {
+          // Filter audio to only keep entries that still exist in revised dialogue
+          const filteredAudio = audioArray.filter((audio: any) => {
+            const stillExists = revisedDialogueLines.some((d: any) => 
+              d.character === audio.character && d.index === audio.dialogueIndex
+            )
+            
+            if (!stillExists) {
+              console.log(`[Cleanup Dialogue Audio] Removing ${language} audio for ${audio.character} (dialogue index ${audio.dialogueIndex})`)
+            }
+            
+            return stillExists
+          })
+          
+          cleanedScene.dialogueAudio[language] = filteredAudio
+          console.log(`[Cleanup Dialogue Audio] ${language}: ${audioArray.length} -> ${filteredAudio.length} audio entries`)
+        }
+      }
+    }
+    // Handle legacy array format
+    else if (Array.isArray(originalScene.dialogueAudio)) {
+      cleanedScene.dialogueAudio = originalScene.dialogueAudio.filter((audio: any) => {
+        const stillExists = revisedDialogueLines.some((d: any) => 
+          d.character === audio.character && d.index === audio.dialogueIndex
+        )
+        
+        if (!stillExists) {
+          console.log(`[Cleanup Dialogue Audio] Removing audio for ${audio.character} (dialogue index ${audio.dialogueIndex})`)
+        }
+        
+        return stillExists
+      })
+      
+      console.log(`[Cleanup Dialogue Audio] Legacy format: ${originalScene.dialogueAudio.length} -> ${cleanedScene.dialogueAudio.length} audio entries`)
+    }
+
+    return cleanedScene
+  }
+
   // Scene editor handlers
   const handleEditScene = (sceneIndex: number) => {
     setEditingSceneIndex(sceneIndex)
@@ -3962,7 +4118,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (!script) return
 
     const updatedScenes = [...(script.script?.scenes || [])]
-    updatedScenes[sceneIndex] = revisedScene
+    const originalScene = updatedScenes[sceneIndex]
+    
+    // Clean up dialogue audio for removed dialogue lines
+    const cleanedScene = cleanupRemovedDialogueAudio(originalScene, revisedScene)
+    updatedScenes[sceneIndex] = cleanedScene
 
     // Save to database FIRST
     try {
@@ -4183,7 +4343,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         primaryActions={
           <div className="flex items-center gap-2">
             <Link
-              href={project?.id ? `/dashboard/studio/${project.id}` : '/dashboard/studio/new-project'}
+              href={projectId ? `/dashboard/studio/${projectId}` : '/dashboard/studio/new-project'}
               prefetch={false}
               className={cn(buttonVariants({ variant: 'outline' }), 'flex items-center gap-2')}
               aria-label="Return to The Blueprint phase"

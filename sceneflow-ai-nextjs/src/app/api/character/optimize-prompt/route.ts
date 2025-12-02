@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     
     // Try models in order of preference: User requested 2.5 (stable), then fallbacks
     // Note: gemini-pro (1.0) is deprecated/removed in v1beta by late 2025
-    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-1.5-pro-latest', 'gemini-1.5-flash-latest']
+    const modelsToTry = ['gemini-3-pro-preview', 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-1.5-pro-latest']
     
     let optimizedPrompt = ''
     let lastError = null

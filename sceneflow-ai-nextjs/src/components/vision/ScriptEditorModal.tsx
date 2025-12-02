@@ -4,14 +4,15 @@ import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Loader, Edit, Wand2, Check, Eye, Sparkles, Clapperboard } from 'lucide-react'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Loader, Edit, Wand2, Check, Eye, Sparkles, Clapperboard, Mic, Square } from 'lucide-react'
 import ScriptRecommendationCard from './ScriptRecommendationCard'
 import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { useProcessWithOverlay } from '../../hooks/useProcessWithOverlay'
 import { detectCharacterChanges } from '@/lib/character/detection'
+import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 
 interface ScriptEditorModalProps {
   isOpen: boolean
@@ -92,6 +93,17 @@ export function ScriptEditorModal({
   // Batch pass selector
   const [batchPriority, setBatchPriority] = useState<'high' | 'medium' | 'low'>('high')
   const [batchCategories, setBatchCategories] = useState<string[]>(['structure'])
+  const {
+    supported: sttSupported,
+    isSecure: sttSecure,
+    permission: micPermission,
+    isRecording: isMicRecording,
+    transcript: micTranscript,
+    error: micError,
+    start: startMic,
+    stop: stopMic,
+    setTranscript: setMicTranscript
+  } = useSpeechRecognition()
 
   // Reset state when modal opens
   useEffect(() => {
@@ -128,6 +140,28 @@ export function ScriptEditorModal({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab])
+
+  useEffect(() => {
+    if (!isMicRecording) return
+    if (!micTranscript) return
+    setCustomInstruction(prev => {
+      const current = prev || ''
+      if (current.endsWith(micTranscript)) return current
+      const next = current.trimEnd()
+      return next ? `${next} ${micTranscript}` : micTranscript
+    })
+  }, [isMicRecording, micTranscript])
+
+  const handleVoiceToggle = () => {
+    if (!sttSupported || !sttSecure) return
+    if (isMicRecording) {
+      stopMic()
+      setMicTranscript('')
+      return
+    }
+    setMicTranscript('')
+    startMic()
+  }
 
   const handleAnalyze = async () => {
     setIsAnalyzing(true)
@@ -567,20 +601,63 @@ export function ScriptEditorModal({
                         <Edit className="w-4 h-4 text-green-600" />
                         Custom Instructions
                       </h3>
-                      <Textarea
-                        value={customInstruction}
-                        onChange={(e) => setCustomInstruction(e.target.value)}
-                        placeholder="Describe how you want to optimize your script...
+                      <div className="space-y-2">
+                        <div className="flex flex-col gap-2">
+                          <Textarea
+                            value={customInstruction}
+                            onChange={(e) => setCustomInstruction(e.target.value)}
+                            placeholder="Describe how you want to optimize your script...
 Examples:
 • Make the pacing more dynamic and cut unnecessary scenes
 • Strengthen the emotional arc and character development
 • Unify the visual style across all scenes
 • Polish dialogue for more natural, subtext-rich conversations"
-                        className="min-h-[200px] text-sm"
-                      />
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                        💡 Be specific about what to optimize. The more detailed your instructions, the better the results.
-                      </p>
+                            className="min-h-[200px] text-sm"
+                          />
+                          <div className="flex items-center justify-between gap-3">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={handleVoiceToggle}
+                              disabled={!sttSupported || !sttSecure}
+                              className={`flex items-center gap-2 ${isMicRecording ? 'border-red-500 text-red-400' : ''}`}
+                              aria-label={isMicRecording ? 'Stop voice input' : 'Start voice input'}
+                            >
+                              {isMicRecording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                              <span>
+                                {isMicRecording ? 'Stop Recording' : 'Voice Input'}
+                              </span>
+                            </Button>
+                            {isMicRecording && (
+                              <span className="text-xs text-red-400 animate-pulse">Listening...</span>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          💡 Be specific about what to optimize. The more detailed your instructions, the better the results.
+                        </p>
+                        {!sttSupported && (
+                          <p className="text-xs text-amber-500">
+                            Voice input is unavailable in this browser. Try Chrome on HTTPS or localhost.
+                          </p>
+                        )}
+                        {sttSupported && !sttSecure && (
+                          <p className="text-xs text-amber-500">
+                            Voice input requires a secure context (HTTPS or localhost).
+                          </p>
+                        )}
+                        {micError && (
+                          <p className="text-xs text-red-500">
+                            Mic error: {micError}
+                          </p>
+                        )}
+                        {micPermission && micPermission !== 'granted' && (
+                          <p className="text-xs text-amber-400">
+                            Microphone permission: {micPermission}. Update browser settings to enable voice input.
+                          </p>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex gap-3 justify-end">

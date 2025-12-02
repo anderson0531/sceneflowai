@@ -274,9 +274,18 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
               ttsProvider={ttsProvider}
             />
           )}
+
+          {/* Scene Description Voice Card */}
+          {characters.find(char => char.type === 'description') && (
+            <DescriptionVoiceCard
+              character={characters.find(char => char.type === 'description')!}
+              onUpdateCharacterVoice={onUpdateCharacterVoice}
+              ttsProvider={ttsProvider}
+            />
+          )}
           
           {/* Regular Character Cards */}
-          {characters.filter(char => char.type !== 'narrator').map((char, idx) => {
+          {characters.filter(char => char.type !== 'narrator' && char.type !== 'description').map((char, idx) => {
             const charId = char.id || idx.toString()
             // Use appearanceDescription for image generation, fallback to saved imagePrompt or default
             const appearancePrompt = char.appearanceDescription || char.imagePrompt || `${char.name || 'Character'}`
@@ -872,6 +881,80 @@ function NarratorCharacterCard({ character, onUpdateCharacterVoice, ttsProvider 
         </div>
       </div>
 
+    </div>
+  )
+}
+
+// Scene Description Voice Card Component
+interface DescriptionVoiceCardProps {
+  character: any
+  onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void
+  ttsProvider: 'google' | 'elevenlabs'
+}
+
+function DescriptionVoiceCard({ character, onUpdateCharacterVoice, ttsProvider }: DescriptionVoiceCardProps) {
+  const [voiceSectionExpanded, setVoiceSectionExpanded] = useState(false)
+
+  return (
+    <div className="bg-gradient-to-br from-emerald-50 to-cyan-50 dark:from-emerald-900/20 dark:to-cyan-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800 overflow-hidden">
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Volume2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              {character.name}
+            </h3>
+          </div>
+          <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full">
+            Scene Description
+          </span>
+        </div>
+
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          {character.description}
+        </p>
+
+        <div className="space-y-2">
+          <button
+            onClick={() => setVoiceSectionExpanded(!voiceSectionExpanded)}
+            className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-800/50 rounded-lg transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              <Volume2 className="w-4 h-4" />
+              Voice Settings
+              {!character.voiceConfig && (
+                <span className="ml-1 text-xs px-1.5 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded">
+                  Required
+                </span>
+              )}
+            </span>
+            <ChevronDown className={`w-4 h-4 transition-transform ${voiceSectionExpanded ? 'rotate-180' : ''}`} />
+          </button>
+
+          {voiceSectionExpanded && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 space-y-2">
+              <VoiceSelector
+                provider={ttsProvider}
+                selectedVoiceId={character.voiceConfig?.voiceId || ''}
+                onSelectVoice={(voiceId, voiceName) => {
+                  onUpdateCharacterVoice?.(character.id, {
+                    provider: ttsProvider,
+                    voiceId,
+                    voiceName
+                  })
+                }}
+                compact={true}
+              />
+              {character.voiceConfig && (
+                <div className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                  <Check className="w-3 h-3" />
+                  {character.voiceConfig.voiceName}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

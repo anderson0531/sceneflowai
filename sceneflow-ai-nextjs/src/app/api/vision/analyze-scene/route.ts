@@ -202,10 +202,10 @@ Focus on practical, implementable suggestions that a director would give to impr
 IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maximum.`
 
   console.log('[Director Analysis] Sending prompt (first 500 chars):', prompt.substring(0, 500))
-  console.log('[Director Analysis] API endpoint:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`)
+  console.log('[Director Analysis] API endpoint:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent`)
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -403,10 +403,10 @@ Focus on what audiences will love and what will make them more engaged with the 
 IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maximum.`
 
   console.log('[Audience Analysis] Sending prompt (first 500 chars):', prompt.substring(0, 500))
-  console.log('[Audience Analysis] API endpoint:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`)
+  console.log('[Audience Analysis] API endpoint:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent`)
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

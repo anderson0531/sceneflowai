@@ -316,13 +316,13 @@ export async function POST(req: NextRequest) {
             const reply = await provider.call(
               finalMessages.map(m => m.content).join('\n\n'), 
               {}, 
-              provider.name === 'Gemini' ? 'gemini-2.5-flash' : 'gpt-4o-mini'
+              provider.name === 'Gemini' ? 'gemini-3.0-flash' : 'gpt-4o-mini'
             );
             console.log(`✅ Fallback: ${provider.name} success`);
             return new Response(JSON.stringify({ 
               reply, 
               provider: provider.name.toLowerCase(),
-              model: provider.name === 'Gemini' ? 'gemini-2.5-flash' : 'gpt-4o-mini',
+              model: provider.name === 'Gemini' ? 'gemini-3.0-flash' : 'gpt-4o-mini',
               fallback: true
             }), { 
               status: 200, 

@@ -8,8 +8,8 @@ export async function analyzeCharacterImage(imageUrl: string, characterName: str
   console.log(`[Vision Analyzer] Analyzing ${characterName} from:`, imageUrl.substring(0, 50))
   
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-  // Use gemini-2.0-flash (gemini-1.5-flash is deprecated)
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+  // Use gemini-3.0-flash (gemini-1.5-flash is deprecated)
+  const model = genAI.getGenerativeModel({ model: 'gemini-3.0-flash' })
 
   // Fetch image
   const response = await fetch(imageUrl)

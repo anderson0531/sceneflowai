@@ -377,10 +377,9 @@ export function ScenePromptBuilder({
       parts.push(angles[structure.cameraAngle] || structure.cameraAngle)
     }
     
-    // Camera movement (from Scene Direction)
-    if (structure.cameraMovement && structure.cameraMovement !== 'static') {
-      parts.push(structure.cameraMovement)
-    }
+    // Camera movement - EXCLUDED for static image generation
+    // Video-specific movements like "Dolly In", "Pan Left" confuse image models
+    // Images capture a single frozen moment, not motion
     
     // Lens choice (from Scene Direction)
     if (structure.lensChoice && structure.lensChoice !== 'standard') {

@@ -113,6 +113,7 @@ async function generateRevisedScene({
 
 CURRENT SCENE:
 Heading: ${currentScene.heading || 'Untitled Scene'}
+Scene Description: ${currentScene.visualDescription || 'No dedicated scene description'}
 Action: ${currentScene.action || 'No action description'}
 Narration: ${currentScene.narration || 'No narration'}
 Dialogue:
@@ -132,32 +133,77 @@ ${revisionInstruction}
 
 ${preserveInstructions ? `PRESERVATION REQUIREMENTS: ${preserveInstructions}` : ''}
 
+SCOPE GUARDRAILS - WHAT YOU CAN CHANGE:
+✓ Scene-level improvements: dialogue delivery, action descriptions, visual details, pacing
+✓ Enhance emotional impact, clarity, and cinematography within the scene
+✓ Improve character-appropriate dialogue while keeping the same characters present
+✓ Refine blocking, camera work, sound design for THIS scene only
+
+SCOPE GUARDRAILS - WHAT YOU CANNOT CHANGE:
+✗ Do NOT introduce new characters or remove existing characters
+✗ Do NOT change major plot points, story beats, or character motivations
+✗ Do NOT alter the scene's role in the overall narrative arc
+✗ Do NOT modify what happens before or after this scene
+
+If the revision instructions request changes beyond scene-level improvements (e.g., "add a new character", "change the storyline", "make character X do something completely different from their arc"), you must respond with an error JSON instead:
+{
+  "error": "OUT_OF_SCOPE",
+  "message": "The requested changes require script-level edits. Please revise the script itself to: [explain what needs to change at script level]",
+  "suggestion": "For scene-level improvements, try: [suggest appropriate scene-level changes]"
+}
+
+DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
+EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
+
+STYLE TAGS (In square brackets BEFORE text):
+Emotions: [happy], [sad], [angry], [fearful], [surprised], [disgusted], [neutral]
+Intensity: [very], [slightly], [extremely]
+Vocal Quality: [whispering], [shouting], [mumbling], [singing], [laughing], [crying], [gasping]
+Pace: [quickly], [slowly], [hesitantly], [confidently]
+Combined: [very happy], [slightly angry], [extremely fearful]
+
+PUNCTUATION & PACING:
+- Use ellipses (...) for pauses, trailing off, or hesitation
+- Use dashes (—) for interruptions or sudden stops  
+- Use CAPS for EMPHASIS on specific words
+
+EXAMPLES:
+  * {"character": "JOHN", "line": "[very excited] I can't believe it! This changes EVERYTHING!"}
+  * {"character": "MARY", "line": "[whispering nervously] Don't tell anyone... It's our secret, okay?"}
+  * {"character": "JACK", "line": "[sadly, slowly] I wish things were different— but they're not."}
+
+CRITICAL: Every single dialogue line must start with at least one emotion/style tag in [brackets].
+
 REQUIREMENTS:
 1. Maintain the same scene structure and format
 2. Use EXACT character names as provided - no abbreviations or variations
-3. Keep basic plot points consistent
+3. Keep basic plot points and character arcs consistent with the overall script
 4. Improve the specified elements while preserving others
 5. Ensure smooth transitions from previous scene and to next scene
-6. Make dialogue natural and character-appropriate
+6. Make dialogue natural and character-appropriate with EMOTIONAL TAGS
 7. Enhance visual storytelling and emotional impact
 8. Keep the scene length appropriate (not too short, not too long)
+9. Stay within scene-level scope - direct users to edit the script for broader changes
 
 Output the revised scene as JSON with this exact structure:
 {
   "heading": "Revised scene heading",
+  "visualDescription": "Scene description / director notes that set the look and feel",
   "action": "Revised action description with improved visual storytelling",
   "narration": "Revised narration (if not preserved)",
   "dialogue": [
-    {"character": "Character Name", "line": "Revised dialogue text"}
+    {"character": "Character Name", "line": "[emotion tag] Revised dialogue text with emotional cues"}
   ],
   "music": "Revised music specification (if not preserved)",
   "sfx": ["Revised sound effect 1", "Revised sound effect 2"]
 }
 
+REMEMBER: ALL dialogue must include [emotional tags] at the beginning.
+
 Focus on making the scene more engaging, clear, and emotionally impactful while following the revision instructions.`
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -233,6 +279,9 @@ Focus on making the scene more engaging, clear, and emotionally impactful while 
     
     // Apply preservation rules
     const finalScene = { ...currentScene, ...revisedScene }
+    if (revisedScene.visualDescription === undefined && currentScene.visualDescription) {
+      finalScene.visualDescription = currentScene.visualDescription
+    }
     
     if (preserveElements.includes('narration')) {
       finalScene.narration = currentScene.narration

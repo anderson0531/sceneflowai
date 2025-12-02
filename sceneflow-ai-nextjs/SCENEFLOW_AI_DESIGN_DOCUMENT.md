@@ -386,7 +386,7 @@ Store in Project metadata
 ### 6.1 AI Providers
 
 **Primary Provider - Google Gemini:**
-- Model: `gemini-2.0-flash-exp` / `gemini-1.5-pro`
+- Model: `gemini-3.0-flash` / `gemini-1.5-pro`
 - Usage: Script generation, analysis, ideation
 - Cost: Efficient for analysis tasks
 - Fallback: OpenAI GPT-4o-mini

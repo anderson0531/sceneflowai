@@ -67,7 +67,7 @@ async function callGeminiJson(messages: Message[], apiKey: string): Promise<any>
       responseMimeType: 'application/json'
     }
   }
-  const model = 'gemini-2.5-flash'
+  const model = 'gemini-3.0-flash'
   const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
   })

@@ -64,7 +64,7 @@ OUTPUT FORMAT: Return ONLY the variations, one per line, no numbering, no markdo
     const timeout = setTimeout(() => controller.abort(), 15000) // 15s timeout
     
     const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

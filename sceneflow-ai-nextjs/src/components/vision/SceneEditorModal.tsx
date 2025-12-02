@@ -86,6 +86,13 @@ export function SceneEditorModal({
   const [optimizedScene, setOptimizedScene] = useState<any | null>(null)
   const [changesSummary, setChangesSummary] = useState<any[]>([])
   const [showComparison, setShowComparison] = useState(false)
+  const [sceneDescription, setSceneDescription] = useState(scene?.visualDescription || '')
+
+  const syncSceneDescriptionFrom = useCallback((candidate?: any) => {
+    if (candidate && typeof candidate.visualDescription === 'string') {
+      setSceneDescription(candidate.visualDescription)
+    }
+  }, [])
 
   // Initialize analysis when modal opens - REMOVED AUTO-ANALYSIS
   useEffect(() => {
@@ -95,6 +102,7 @@ export function SceneEditorModal({
       setCurrentHistoryIndex(0)
       setSceneAnalysis(null)
       setShowPreview(false)
+      setSceneDescription(scene.visualDescription || '')
     }
   }, [isOpen, scene])
 
@@ -175,6 +183,7 @@ export function SceneEditorModal({
       
       // Set preview to optimized scene
       setPreviewScene(data.optimizedScene)
+      syncSceneDescriptionFrom(data.optimizedScene)
       setShowPreview(true)
       
     } catch (error) {
@@ -231,6 +240,7 @@ export function SceneEditorModal({
 
       const data = await response.json()
       setPreviewScene(data.revisedScene)
+      syncSceneDescriptionFrom(data.revisedScene)
       
       // Switch to preview mode
       setShowPreview(true)
@@ -243,20 +253,24 @@ export function SceneEditorModal({
   }
 
   const handleApplyChanges = () => {
-    if (!previewScene) return
+    const sourceScene = previewScene || revisionHistory[currentHistoryIndex] || scene
+    if (!sourceScene) return
 
-    // Save to history
-    const newHistory = [...revisionHistory.slice(0, currentHistoryIndex + 1), previewScene]
+    const cleanedDescription = sceneDescription?.trim() || ''
+
+    const revisedSceneWithMetadata = {
+      ...sourceScene,
+      visualDescription: cleanedDescription
+    }
+
+    if (previewScene) {
+      revisedSceneWithMetadata.appliedRecommendations = selectedRecommendations
+    }
+
+    const newHistory = [...revisionHistory.slice(0, currentHistoryIndex + 1), revisedSceneWithMetadata]
     setRevisionHistory(newHistory)
     setCurrentHistoryIndex(newHistory.length - 1)
 
-    // Store which recommendations were applied for future scoring context
-    const revisedSceneWithMetadata = {
-      ...previewScene,
-      appliedRecommendations: selectedRecommendations  // Track applied recommendations
-    }
-
-    // Apply changes
     onApplyChanges(sceneIndex, revisedSceneWithMetadata)
     onClose()
   }
@@ -265,7 +279,9 @@ export function SceneEditorModal({
     if (currentHistoryIndex > 0) {
       const newIndex = currentHistoryIndex - 1
       setCurrentHistoryIndex(newIndex)
-      setPreviewScene(revisionHistory[newIndex])
+      const rewritten = revisionHistory[newIndex]
+      setPreviewScene(rewritten)
+      syncSceneDescriptionFrom(rewritten)
     }
   }
 
@@ -273,7 +289,9 @@ export function SceneEditorModal({
     if (currentHistoryIndex < revisionHistory.length - 1) {
       const newIndex = currentHistoryIndex + 1
       setCurrentHistoryIndex(newIndex)
-      setPreviewScene(revisionHistory[newIndex])
+      const rewritten = revisionHistory[newIndex]
+      setPreviewScene(rewritten)
+      syncSceneDescriptionFrom(rewritten)
     }
   }
 
@@ -298,7 +316,14 @@ export function SceneEditorModal({
     return 'bg-red-500'
   }
 
-  const hasChanges = selectedRecommendations.length > 0 || customInstruction.trim()
+  const normalizeDescription = (value?: string | null) => (value ?? '').trim()
+  const descriptionChanged = normalizeDescription(scene.visualDescription) !== normalizeDescription(sceneDescription)
+  const hasAIChanges = selectedRecommendations.length > 0 || customInstruction.trim().length > 0
+  const changeStatusMessage = hasAIChanges
+    ? `${selectedRecommendations.length} suggestion${selectedRecommendations.length !== 1 ? 's' : ''} selected`
+    : descriptionChanged
+      ? 'Scene description updated'
+      : 'No changes selected'
 
   if (!scene) return null
 
@@ -340,6 +365,20 @@ export function SceneEditorModal({
           <div className="grid grid-cols-2 gap-6 h-[calc(90vh-200px)]">
             {/* Left: Current Scene */}
             <div className="overflow-y-auto">
+              <div className="mb-6">
+                <label className="text-sm font-medium text-gray-500 mb-2 block">
+                  Scene Description
+                </label>
+                <Textarea
+                  value={sceneDescription}
+                  onChange={(event) => setSceneDescription(event.target.value)}
+                  placeholder={scene.action || 'Describe what the viewer should see.'}
+                  className="min-h-[140px]"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  This text plays before narration and powers storyboard/image prompts.
+                </p>
+              </div>
               <CurrentScenePanel scene={scene} />
             </div>
             
@@ -488,35 +527,46 @@ export function SceneEditorModal({
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                {hasChanges ? `${selectedRecommendations.length} suggestion${selectedRecommendations.length !== 1 ? 's' : ''} selected` : 'No changes selected'}
+                {changeStatusMessage}
               </span>
             </div>
             
             <div className="flex items-center gap-2">
               {!showPreview ? (
                 <>
-                  <Button
-                    onClick={handleGeneratePreview}
-                    disabled={isGenerating || !hasChanges || isAnalyzing}
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader className="w-4 h-4 animate-spin mr-2" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="w-4 h-4 mr-2" />
-                        Generate Preview
-                      </>
-                    )}
-                  </Button>
+                  {hasAIChanges ? (
+                    <Button
+                      onClick={handleGeneratePreview}
+                      disabled={isGenerating || isAnalyzing}
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Loader className="w-4 h-4 animate-spin mr-2" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-4 h-4 mr-2" />
+                          Generate Preview
+                        </>
+                      )}
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleApplyChanges}
+                      disabled={!descriptionChanged}
+                      className="bg-sf-primary"
+                    >
+                      <Check className="w-4 h-4 mr-2" />
+                      Save Description
+                    </Button>
+                  )}
                 </>
               ) : (
                 <>
                   <Button
                     onClick={handleApplyChanges}
-                    disabled={!previewScene || isGenerating}
+                    disabled={(!previewScene && !descriptionChanged) || isGenerating}
                     className="bg-sf-primary"
                   >
                     <Check className="w-4 h-4 mr-2" />
