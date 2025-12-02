@@ -461,6 +461,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [isPlayingAll, setIsPlayingAll] = useState(false)
   const playbackAbortRef = useRef(false)
   const [bookmarkSavingSceneIdx, setBookmarkSavingSceneIdx] = useState<number | null>(null)
+  
+  // Single-scene-open state - only one scene workflow can be open at a time
+  const [openSceneIdx, setOpenSceneIdx] = useState<number | null>(null)
 
   const scenes = useMemo(() => normalizeScenes(script), [script])
 
@@ -2159,6 +2162,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                           overlayStore={overlayStore}
                           projectId={projectId}
                           onUploadKeyframe={handleUploadKeyframe}
+                          isWorkflowOpen={openSceneIdx === idx}
+                          onWorkflowOpenChange={(isOpen: boolean) => {
+                            // Single-scene-open behavior: close others when opening this one
+                            setOpenSceneIdx(isOpen ? idx : null)
+                          }}
                 />
                     )
                   })}
@@ -2462,6 +2470,9 @@ interface SceneCardProps {
   overlayStore?: { show: (message: string, duration: number) => void; hide: () => void }
   projectId?: string
   onUploadKeyframe?: (sceneIdx: number, file: File) => Promise<void>
+  // Single-scene-open control
+  isWorkflowOpen?: boolean
+  onWorkflowOpenChange?: (isOpen: boolean) => void
 }
 
 function SceneCard({
@@ -2527,9 +2538,10 @@ function SceneCard({
   overlayStore,
   projectId,
   onUploadKeyframe,
+  isWorkflowOpen = false,
+  onWorkflowOpenChange,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
-  const [isOpen, setIsOpen] = useState(false)
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(null)
   const [copilotPanelOpen, setCopilotPanelOpen] = useState(false)
   const [isImageExpanded, setIsImageExpanded] = useState(false)
@@ -2650,7 +2662,9 @@ function SceneCard({
 
   const toggleOpen = (e: React.MouseEvent) => {
     e.stopPropagation()
-    setIsOpen(!isOpen)
+    if (onWorkflowOpenChange) {
+      onWorkflowOpenChange(!isWorkflowOpen)
+    }
   }
   
   const accentGradient =
@@ -2908,43 +2922,33 @@ function SceneCard({
           </p>
         </div>
 
-        <div className="mt-2 flex flex-wrap gap-2">
-          {workflowTabs.map(({ key, label }) => {
-            const status = getStepStatus(key)
-            return (
-              <span
-                key={key as string}
-                className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide ${chipClassByStatus[status]}`}
-              >
-                <span className={`h-1.5 w-1.5 rounded-full ${chipDotClass[status]}`} />
-                {label}
-              </span>
-            )
-          })}
-        </div>
-
-        {/* Hide/Show Control - Separate from other buttons */}
-        <div className="mb-3 flex items-center">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={toggleOpen}
-                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-                >
-                  <ChevronRight className={`w-4 h-4 transition-transform text-gray-500 dark:text-gray-400 ${isOpen ? 'rotate-90' : ''}`} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                {isOpen ? 'Collapse scene' : 'Expand scene'}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+        {/* Open/Close Workflow Button */}
+        <div className="mt-3 flex justify-center">
+          <button
+            onClick={toggleOpen}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all shadow-md ${
+              isWorkflowOpen 
+                ? 'bg-slate-700 hover:bg-slate-600 text-white border border-slate-500' 
+                : 'bg-sf-primary hover:bg-sf-primary/90 text-white border border-sf-primary/50'
+            }`}
+          >
+            {isWorkflowOpen ? (
+              <>
+                <ChevronDown className="w-4 h-4" />
+                <span>Close Workflow</span>
+              </>
+            ) : (
+              <>
+                <ChevronRight className="w-4 h-4" />
+                <span>Open Workflow</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 
       {/* Collapsible Content */}
-      {isOpen && (
+      {isWorkflowOpen && (
         <div className="mt-3">
           {/* Prompt textarea hidden - accessible via drawer/builder */}
           
@@ -3027,10 +3031,10 @@ function SceneCard({
             return null
           })()}
           
-          {/* Stepped Timeline Navigation */}
+          {/* Workflow Navigation - Stepped Timeline */}
           {!isOutline && (
             <div className="mt-4 mb-6">
-              <div className="flex items-center max-w-4xl mx-auto py-4 px-2">
+              <div className="flex items-center justify-center max-w-5xl mx-auto py-4 px-2">
                 {workflowTabs.map((tab, index) => {
                   const status = getStepStatus(tab.key)
                   const isLocked = !stepUnlocked[tab.key as keyof typeof stepUnlocked]
@@ -3042,55 +3046,74 @@ function SceneCard({
                   
                   return (
                     <React.Fragment key={tab.key}>
-                      <div 
-                        className={`flex items-center ${isLocked ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} group relative z-10`}
+                      <button 
+                        type="button"
+                        disabled={isLocked}
+                        className={`flex flex-col items-center ${isLocked ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:scale-105'} group relative z-10 transition-all`}
                         onClick={(e) => {
                           e.stopPropagation()
                           if (!isLocked && tab.key !== activeWorkflowTab) {
                             setActiveWorkflowTab(tab.key)
                           }
                         }}
+                        aria-label={`${isLocked ? 'Locked: ' : ''}${tab.label} step`}
                       >
-                        {/* Step Circle */}
+                        {/* Step Circle with Icon */}
                         {isCompleted ? (
-                          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-green-600 text-white font-bold text-sm shadow-md flex-shrink-0">
-                            <CheckCircle className="w-5 h-5" />
+                          <div className="w-10 h-10 flex items-center justify-center rounded-full bg-green-600 text-white font-bold text-sm shadow-md flex-shrink-0 group-hover:bg-green-500 transition-colors">
+                            <CheckCircle className="w-6 h-6" />
                           </div>
                         ) : isActive ? (
-                          <div className="w-9 h-9 flex items-center justify-center rounded-full bg-sf-primary text-white ring-4 ring-sf-primary/40 font-extrabold text-lg shadow-lg flex-shrink-0">
-                            {stepNumber}
+                          <div className="w-11 h-11 flex items-center justify-center rounded-full bg-sf-primary text-white ring-4 ring-sf-primary/40 font-extrabold text-lg shadow-lg flex-shrink-0 animate-pulse">
+                            {tab.icon}
                           </div>
                         ) : (
-                          <div className={`w-8 h-8 flex items-center justify-center rounded-full border-2 font-bold text-sm flex-shrink-0 ${
+                          <div className={`w-10 h-10 flex items-center justify-center rounded-full border-2 font-bold text-sm flex-shrink-0 transition-all ${
                             isUpcoming 
-                              ? 'bg-slate-800 text-slate-400 border-slate-600' 
-                              : 'bg-slate-700 text-slate-300 border-slate-500'
+                              ? 'bg-slate-800 text-slate-400 border-slate-600 group-hover:border-slate-500' 
+                              : 'bg-slate-700 text-slate-300 border-slate-500 group-hover:bg-slate-600 group-hover:border-slate-400'
                           }`}>
-                            {stepNumber}
+                            {isLocked ? (
+                              <Circle className="w-5 h-5" />
+                            ) : (
+                              tab.icon
+                            )}
                           </div>
                         )}
                         
-                        {/* Step Label */}
-                        <p className={`ml-2 text-sm font-semibold hidden sm:block transition-colors whitespace-nowrap ${
-                          isCompleted 
-                            ? 'text-green-400' 
-                            : isActive 
-                              ? 'text-white font-extrabold' 
-                              : 'text-slate-400 group-hover:text-slate-300'
-                        }`}>
-                          {tab.label}
-                        </p>
-                      </div>
+                        {/* Step Label with Status */}
+                        <div className="mt-2 text-center">
+                          <p className={`text-xs font-semibold transition-colors whitespace-nowrap ${
+                            isCompleted 
+                              ? 'text-green-400' 
+                              : isActive 
+                                ? 'text-white font-extrabold' 
+                                : isLocked
+                                  ? 'text-slate-500'
+                                  : 'text-slate-400 group-hover:text-slate-300'
+                          }`}>
+                            {tab.label}
+                          </p>
+                          {!isLocked && !isActive && !isCompleted && (
+                            <p className="text-[10px] text-slate-500 mt-0.5">Click to view</p>
+                          )}
+                          {isActive && (
+                            <p className="text-[10px] text-sf-primary/80 mt-0.5 font-semibold">Active</p>
+                          )}
+                        </div>
+                      </button>
                       
                       {/* Connector Line */}
                       {index < workflowTabs.length - 1 && (
-                        <div 
-                          className={`flex-1 h-0.5 mx-2 ${
-                            prevCompleted || isCompleted
-                              ? 'bg-green-600' 
-                              : 'bg-slate-700'
-                          }`}
-                        />
+                        <div className="flex items-center justify-center px-2 mb-8">
+                          <ArrowRight 
+                            className={`w-5 h-5 transition-colors ${
+                              prevCompleted || isCompleted
+                                ? 'text-green-600' 
+                                : 'text-slate-700'
+                            }`}
+                          />
+                        </div>
                       )}
                     </React.Fragment>
                   )
