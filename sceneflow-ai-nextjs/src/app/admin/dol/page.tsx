@@ -226,6 +226,12 @@ export default function DOLAdminPage() {
           >
             Production Health
           </button>
+          <a
+            href="/admin/dol/credits"
+            className="px-4 py-2 rounded-lg bg-gradient-to-r from-green-600 to-blue-600 text-white hover:from-green-500 hover:to-blue-500 transition-all"
+          >
+            💰 Credit Tracking
+          </a>
         </div>
 
         {/* Templates Tab */}

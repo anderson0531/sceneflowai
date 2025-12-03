@@ -39,12 +39,12 @@ SceneFlow AI is an AI-powered video creation platform that helps users transform
 - Prisma (Database client)
 
 **AI Services:**
-- Google Gemini (Primary LLM)
-- Google Imagen 4 (Image Generation)
-- Google Veo (Video Generation - BYOK)
-- Vertex AI (Image Generation via Imagen)
-- ElevenLabs (Text-to-Speech)
-- OpenAI (Fallback LLM)
+- Google Gemini 2.0 Flash (Primary LLM for all text generation)
+- Google Imagen 3 (Image Generation via Vertex AI)
+- Google Veo 2 (Video Generation via Vertex AI)
+- ElevenLabs (Voice Synthesis & Sound Effects)
+
+> **V1 Architecture Decision**: SceneFlow uses a consolidated AI stack with Google (Gemini, Imagen, Veo) for all generation capabilities and ElevenLabs for audio. This simplifies operations, ensures consistent quality, and enables accurate credit tracking. No BYOK (Bring Your Own Key) - all users share the platform's API allocation.
 
 **Storage & Infrastructure:**
 - Vercel (Hosting & Deployment)
