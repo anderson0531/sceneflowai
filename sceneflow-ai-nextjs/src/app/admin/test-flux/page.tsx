@@ -16,6 +16,13 @@ export default function FluxTestPage() {
   const [imagePromptStrength, setImagePromptStrength] = useState<number>(0.05);
   const [result, setResult] = useState<any>(null);
 
+  // Video generation state
+  const [videoLoading, setVideoLoading] = useState(false);
+  const [videoPrompt, setVideoPrompt] = useState('A cinematic panning shot across a futuristic cityscape at sunset, flying cars gliding between skyscrapers');
+  const [videoSourceImage, setVideoSourceImage] = useState<string>('');
+  const [videoDuration, setVideoDuration] = useState<number>(5);
+  const [videoResult, setVideoResult] = useState<any>(null);
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
@@ -26,6 +33,17 @@ export default function FluxTestPage() {
         };
         reader.readAsDataURL(file);
       });
+    }
+  };
+
+  const handleVideoSourceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setVideoSourceImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -59,6 +77,36 @@ export default function FluxTestPage() {
       alert('Test failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const runVideoTest = async () => {
+    setVideoLoading(true);
+    setVideoResult(null);
+    try {
+      const res = await fetch('/api/admin/test-flux', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          mode: 'video',
+          prompt: videoPrompt,
+          sourceImage: videoSourceImage || result?.imageUrl,
+          duration: videoDuration
+        }),
+      });
+      const data = await res.json();
+      setVideoResult(data);
+    } catch (err) {
+      console.error(err);
+      alert('Video test failed');
+    } finally {
+      setVideoLoading(false);
+    }
+  };
+
+  const useGeneratedImageForVideo = () => {
+    if (result?.imageUrl) {
+      setVideoSourceImage(result.imageUrl);
     }
   };
 
@@ -309,6 +357,151 @@ export default function FluxTestPage() {
               <div className="animate-pulse">Generating...</div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Video Generation Section */}
+      <div className="mt-12 border-t-4 border-indigo-500 pt-8">
+        <h2 className="text-2xl font-bold mb-4 text-indigo-900">🎬 Video Generation Test</h2>
+        
+        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border-l-4 border-indigo-500 p-4 rounded-lg mb-6">
+          <h3 className="text-lg font-bold text-indigo-900 mb-2">💡 Video Generation Tips</h3>
+          <ul className="text-sm text-indigo-800 space-y-1">
+            <li><strong>Image-to-Video:</strong> Use a generated or uploaded image as the starting frame</li>
+            <li><strong>Duration:</strong> 5 seconds is standard, longer videos take more time</li>
+            <li><strong>Prompt:</strong> Describe camera movement and action (pan, zoom, walk forward)</li>
+          </ul>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Video Controls */}
+          <div className="bg-white p-6 rounded-lg shadow-md space-y-4 h-fit">
+            <div>
+              <label className="block text-sm font-bold mb-1 text-gray-900">
+                Video Prompt
+                <span className="ml-2 text-xs font-normal text-gray-500">(Describe motion/action)</span>
+              </label>
+              <textarea 
+                value={videoPrompt} 
+                onChange={(e) => setVideoPrompt(e.target.value)}
+                className="w-full p-2 border rounded text-sm h-24 text-gray-900 bg-white"
+                placeholder="Example: Camera slowly pans across the scene, clouds drifting in the background"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold mb-1 text-gray-900">
+                Source Image
+                <span className="ml-2 text-xs font-normal text-gray-500">(Starting frame)</span>
+              </label>
+              
+              {result?.imageUrl && (
+                <button
+                  onClick={useGeneratedImageForVideo}
+                  className="w-full mb-2 bg-indigo-100 text-indigo-700 py-2 rounded text-sm hover:bg-indigo-200 border border-indigo-300"
+                >
+                  ✨ Use Generated Image Above
+                </button>
+              )}
+              
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleVideoSourceUpload}
+                className="w-full p-2 border rounded text-sm text-gray-900 bg-white"
+              />
+              
+              {videoSourceImage && (
+                <div className="mt-2 relative">
+                  <img src={videoSourceImage} alt="Video source" className="w-full rounded border" />
+                  <button
+                    onClick={() => setVideoSourceImage('')}
+                    className="absolute top-1 right-1 bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold mb-1 text-gray-900">
+                Duration (seconds)
+              </label>
+              <select 
+                value={videoDuration}
+                onChange={(e) => setVideoDuration(Number(e.target.value))}
+                className="w-full p-2 border rounded text-sm text-gray-900 bg-white"
+              >
+                <option value="3">3 seconds - Fast</option>
+                <option value="5">5 seconds - Standard</option>
+                <option value="10">10 seconds - Extended</option>
+              </select>
+            </div>
+
+            <button 
+              onClick={runVideoTest} 
+              disabled={videoLoading || (!videoSourceImage && !result?.imageUrl)}
+              className="w-full bg-indigo-600 text-white py-3 rounded font-bold hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {videoLoading ? 'Generating Video...' : '🎬 Generate Video'}
+            </button>
+
+            {!videoSourceImage && !result?.imageUrl && (
+              <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
+                ⚠️ Generate an image first or upload a source image
+              </div>
+            )}
+
+            {videoResult?.error && (
+              <div className="p-3 bg-red-100 text-red-700 rounded text-sm">
+                <strong>Error:</strong> {videoResult.error}
+              </div>
+            )}
+
+            {videoResult?.logs && (
+              <div className="mt-4 p-4 bg-gray-900 text-green-400 rounded text-xs font-mono overflow-auto max-h-48">
+                <div className="font-bold mb-2 text-white">Video Generation Logs:</div>
+                <pre>{videoResult.logs}</pre>
+              </div>
+            )}
+          </div>
+
+          {/* Video Results */}
+          <div className="md:col-span-2 space-y-6">
+            {videoResult && videoResult.success && (
+              <div className="space-y-2">
+                <h3 className="font-bold text-center text-gray-900">Generated Video</h3>
+                <div className="relative border-2 border-gray-200 rounded overflow-hidden bg-gray-100 min-h-[300px] flex items-center justify-center">
+                  <video 
+                    src={videoResult.videoUrl} 
+                    controls
+                    autoPlay
+                    loop
+                    className="max-w-full max-h-[600px] shadow-lg" 
+                  />
+                </div>
+                <div className="text-center text-sm text-gray-500 mt-2">
+                  <a href={videoResult.videoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                    Download Video
+                  </a>
+                </div>
+              </div>
+            )}
+            
+            {!videoResult && !videoLoading && (
+              <div className="flex items-center justify-center h-64 bg-gray-100 rounded border-2 border-dashed border-gray-300 text-gray-500">
+                Generated video will appear here
+              </div>
+            )}
+
+            {videoLoading && (
+              <div className="flex flex-col items-center justify-center h-64 bg-gray-100 rounded border-2 border-dashed border-gray-300 text-gray-500">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+                <div>Generating video... This may take 1-3 minutes</div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
