@@ -71,21 +71,62 @@ export default function PolishPage() {
   const handleRender = async () => {
     setIsRendering(true);
     try {
-      // Call Remotion Lambda or local rendering
+      // Start rendering job
       const response = await fetch('/api/editor/render', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projectId: currentProject?.id })
       });
       
-      const { videoUrl } = await response.json();
+      const data = await response.json();
       
-      // Download or save
-      window.open(videoUrl, '_blank');
+      if (!data.success) {
+        throw new Error(data.error || data.message || 'Render failed');
+      }
+      
+      if (data.videoUrl) {
+        // Immediate result (unlikely for Shotstack)
+        window.open(data.videoUrl, '_blank');
+        setIsRendering(false);
+        return;
+      }
+      
+      // Poll for status
+      const statusUrl = data.statusUrl;
+      if (!statusUrl) {
+        throw new Error('No status URL returned');
+      }
+      
+      // Poll every 5 seconds
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusRes = await fetch(statusUrl);
+          const statusData = await statusRes.json();
+          
+          if (statusData.status === 'completed') {
+            clearInterval(pollInterval);
+            setIsRendering(false);
+            if (statusData.final_video_url) {
+              window.open(statusData.final_video_url, '_blank');
+            }
+          } else if (statusData.status === 'failed') {
+            clearInterval(pollInterval);
+            setIsRendering(false);
+            console.error('Render failed:', statusData.error);
+            alert('Render failed: ' + (statusData.error || 'Unknown error'));
+          }
+          // Continue polling if queued or processing
+        } catch (e) {
+          console.error('Polling error:', e);
+          clearInterval(pollInterval);
+          setIsRendering(false);
+        }
+      }, 5000);
+      
     } catch (error) {
       console.error('Render failed:', error);
-    } finally {
       setIsRendering(false);
+      alert('Render failed. See console for details.');
     }
   };
   

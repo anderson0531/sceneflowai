@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { shotstackService } from '@/services/ShotstackService'
 
 export interface VideoStitchRequest {
   generationId: string
@@ -57,37 +58,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }, { status: 400 })
     }
 
-    // Generate unique stitch ID
-    const stitchId = `stitch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    // Call Shotstack service to assemble video
+    const result = await shotstackService.assembleVideo(body)
 
-    // Calculate metadata
-    const totalDuration = clips.reduce((sum, clip) => sum + clip.duration, 0)
-    const totalClips = clips.length
-
-    // In production, this would:
-    // 1. Queue the stitching job in a background processor
-    // 2. Use FFmpeg or cloud-based video editing API
-    // 3. Process clips in sequence based on scene_number
-    // 4. Apply transitions, audio mixing, and final encoding
-    // 5. Upload to CDN and update status
-
-    // For demo purposes, we'll simulate the stitching process
-    const stitchJob = await simulateVideoStitching(
-      stitchId,
-      clips,
-      outputSettings,
-      totalDuration
-    )
+    if (!result.success) {
+      return NextResponse.json({
+        success: false,
+        error: result.error || 'Failed to start video rendering'
+      }, { status: 500 })
+    }
 
     return NextResponse.json({
       success: true,
-      stitchId,
-      status: stitchJob.status,
-      progress: stitchJob.progress,
-      estimated_completion: stitchJob.estimated_completion,
+      stitchId: result.renderId,
+      status: 'queued',
+      message: result.message,
       metadata: {
-        totalDuration,
-        totalClips,
+        totalDuration: clips.reduce((sum, clip) => sum + clip.duration, 0),
+        totalClips: clips.length,
         outputFormat: outputSettings.format,
         outputQuality: outputSettings.quality,
         stitchStartedAt: new Date()
@@ -101,39 +89,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       success: false,
       error: error instanceof Error ? error.message : 'Internal server error'
     }, { status: 500 })
-  }
-}
-
-// Simulate video stitching process
-async function simulateVideoStitching(
-  stitchId: string,
-  clips: any[],
-  outputSettings: any,
-  totalDuration: number
-) {
-  // In production, this would:
-  // 1. Download all video clips
-  // 2. Sort by scene_number for proper sequence
-  // 3. Use FFmpeg to concatenate videos
-  // 4. Apply transitions and effects
-  // 5. Encode to final format
-  // 6. Upload to storage/CDN
-  
-  console.log(`Starting video stitching for ${clips.length} clips`)
-  console.log(`Output settings:`, outputSettings)
-  console.log(`Total duration: ${totalDuration} seconds`)
-  
-  // Simulate processing time based on video length and quality
-  const baseProcessingTime = totalDuration * 2 // 2x real-time for processing
-  const qualityMultiplier = outputSettings.quality === 'ultra' ? 2 : 
-                           outputSettings.quality === 'high' ? 1.5 : 1
-  
-  const estimatedProcessingTime = baseProcessingTime * qualityMultiplier * 1000 // Convert to milliseconds
-  
-  return {
-    status: 'queued' as const,
-    progress: 0,
-    estimated_completion: new Date(Date.now() + estimatedProcessingTime)
   }
 }
 
@@ -151,15 +106,26 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       }, { status: 400 })
     }
 
-    // In production, this would query the database for actual stitching status
-    // For demo purposes, we'll simulate status updates
+    // Check status with Shotstack
+    const status = await shotstackService.getRenderStatus(stitchId)
     
-    const status = await simulateStitchingStatus(stitchId)
-    
+    let mappedStatus = 'queued';
+    if (status.status === 'rendering' || status.status === 'saving') {
+      mappedStatus = 'processing';
+    } else if (status.status === 'done') {
+      mappedStatus = 'completed';
+    } else if (status.status === 'failed') {
+      mappedStatus = 'failed';
+    }
+
     return NextResponse.json({
       success: true,
       stitchId,
-      ...status
+      status: mappedStatus,
+      progress: status.status === 'done' ? 100 : (status.status === 'rendering' || status.status === 'saving' ? 50 : 0),
+      final_video_url: status.url,
+      thumbnail_url: status.poster,
+      error: status.error
     })
 
   } catch (error) {
@@ -169,42 +135,5 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       success: false,
       error: error instanceof Error ? error.message : 'Internal server error'
     }, { status: 500 })
-  }
-}
-
-// Simulate stitching status updates
-async function simulateStitchingStatus(stitchId: string) {
-  // In production, this would return actual status from the database
-  // For demo purposes, we'll simulate realistic processing progress
-  
-  const startTime = Date.now()
-  const elapsed = Date.now() - startTime
-  
-  // Simulate different processing stages
-  if (elapsed < 5000) {
-    return {
-      status: 'queued' as const,
-      progress: 0,
-      estimated_completion: new Date(startTime + 30000)
-    }
-  } else if (elapsed < 15000) {
-    return {
-      status: 'processing' as const,
-      progress: Math.round((elapsed - 5000) / 10000 * 60),
-      estimated_completion: new Date(startTime + 30000)
-    }
-  } else if (elapsed < 30000) {
-    return {
-      status: 'processing' as const,
-      progress: Math.round(60 + (elapsed - 15000) / 15000 * 40),
-      estimated_completion: new Date(startTime + 30000)
-    }
-  } else {
-    return {
-      status: 'completed' as const,
-      progress: 100,
-      final_video_url: `https://example.com/videos/${stitchId}_final.mp4`,
-      thumbnail_url: `https://example.com/thumbnails/${stitchId}_final.jpg`
-    }
   }
 }
