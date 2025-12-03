@@ -58,7 +58,8 @@ export async function generateVideoWithVeo(
   }
 
   // Available models: veo-2.0-generate-001, veo-3.0-generate-001, veo-3.0-fast-generate-001
-  const model = 'veo-2.0-generate-001'
+  // Using Veo 3 for best quality + native audio generation
+  const model = 'veo-3.0-generate-001'
   console.log(`[Veo Video] Generating video with ${model}...`)
   console.log('[Veo Video] Prompt:', prompt.substring(0, 200))
   console.log('[Veo Video] Options:', JSON.stringify({
