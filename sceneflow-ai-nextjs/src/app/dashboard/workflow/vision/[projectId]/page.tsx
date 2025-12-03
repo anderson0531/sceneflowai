@@ -3232,9 +3232,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     setGeneratingDirectionFor(sceneIdx)
 
     // Use the overlay to prevent navigation during generation
-    await execute(async () => {
-      try {
-        const directionResponse = await fetch('/api/scene/generate-direction', {
+    await execute(
+      async () => {
+        try {
+          const directionResponse = await fetch('/api/scene/generate-direction', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -3328,7 +3329,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     }, {
       message: `🎬 Generating Scene Direction for Scene ${sceneIdx + 1}... Please wait, do not navigate away.`,
-      estimatedDuration: 30000 // 30 seconds estimated
+      estimatedDuration: 30 // 30 seconds estimated (in seconds, not ms)
     }).finally(() => {
       setGeneratingDirectionFor(null)
     })
