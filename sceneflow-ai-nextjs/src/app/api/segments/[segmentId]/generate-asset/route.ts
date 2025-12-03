@@ -113,11 +113,27 @@ export async function POST(
         )
       } else if (finalResult.videoUrl.startsWith('http')) {
         // Download from URL and re-upload to our storage
-        const videoResponse = await fetch(finalResult.videoUrl)
+        // Gemini Files API requires API key for authentication
+        let fetchUrl = finalResult.videoUrl
+        if (finalResult.videoUrl.includes('generativelanguage.googleapis.com')) {
+          const apiKey = process.env.GEMINI_API_KEY
+          if (apiKey) {
+            // Add API key if URL doesn't already have one
+            const url = new URL(finalResult.videoUrl)
+            if (!url.searchParams.has('key')) {
+              url.searchParams.set('key', apiKey)
+            }
+            fetchUrl = url.toString()
+          }
+        }
+        console.log('[Segment Asset Generation] Downloading video from:', fetchUrl.replace(/key=[^&]+/, 'key=API_KEY'))
+        const videoResponse = await fetch(fetchUrl)
         if (!videoResponse.ok) {
-          throw new Error('Failed to fetch video from Veo')
+          console.error('[Segment Asset Generation] Video fetch failed:', videoResponse.status, videoResponse.statusText)
+          throw new Error(`Failed to fetch video from Veo: ${videoResponse.status}`)
         }
         const videoArrayBuffer = await videoResponse.arrayBuffer()
+        console.log('[Segment Asset Generation] Downloaded video size:', videoArrayBuffer.byteLength, 'bytes')
         assetUrl = await uploadVideoToBlob(
           Buffer.from(videoArrayBuffer),
           `segments/${segmentId}-${Date.now()}.mp4`
