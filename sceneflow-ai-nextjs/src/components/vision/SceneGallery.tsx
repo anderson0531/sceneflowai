@@ -27,7 +27,7 @@ interface SceneGalleryProps {
   onOpenPreview?: () => void
 }
 
-const buildSceneKey = (scene: any, index: number) => scene.id || scene.sceneId || `scene-${index}`
+const buildSceneKey = (scene: any, index: number) => scene.sceneId || scene.id || `scene-${index}`
 
 export function SceneGallery({
   scenes,
@@ -415,6 +415,7 @@ function SceneCard({
               sceneId={sceneKey}
               sceneNumber={sceneNumber}
               heading={sceneHeading}
+              scene={scene}
               productionData={productionData}
               references={productionReferences}
               onInitialize={onInitializeProduction}

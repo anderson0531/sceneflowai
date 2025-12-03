@@ -8,6 +8,7 @@ import { SceneSegment, SceneProductionReferences, SceneSegmentStatus } from './t
 import { Upload, Video, Image as ImageIcon, CheckCircle2, Film, Link as LinkIcon, Sparkles, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ShotPromptBuilder } from '../ShotPromptBuilder'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 
 export type GenerationType = 'T2V' | 'I2V' | 'T2I' | 'UPLOAD'
 
@@ -30,6 +31,7 @@ interface SegmentStudioProps {
   promptSummary?: SegmentPromptSummary | null
   onOpenPromptBuilder?: () => void
   onOpenScenePreview?: () => void
+  sceneImageUrl?: string
 }
 
 export function SegmentStudio({
@@ -42,9 +44,11 @@ export function SegmentStudio({
   promptSummary,
   onOpenPromptBuilder,
   onOpenScenePreview,
+  sceneImageUrl,
 }: SegmentStudioProps) {
   const [generationType, setGenerationType] = useState<GenerationType>('T2V')
   const [startFrameUrl, setStartFrameUrl] = useState<string | null>(null)
+  const [isAssetSelectorOpen, setIsAssetSelectorOpen] = useState(false)
   
   // Prompt Builder State
   const [isPromptBuilderOpen, setIsPromptBuilderOpen] = useState(false)
@@ -82,6 +86,12 @@ export function SegmentStudio({
       setStartFrameUrl(previousSegmentLastFrame)
       setGenerationType('I2V')
     }
+  }
+
+  const handleSelectAsset = (url: string) => {
+    setStartFrameUrl(url)
+    setGenerationType('I2V')
+    setIsAssetSelectorOpen(false)
   }
 
   const handleGenerateClick = async () => {
@@ -200,6 +210,37 @@ export function SegmentStudio({
                 </SelectContent>
               </Select>
             </div>
+
+            {generationType === 'I2V' && (
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-700 dark:text-gray-200 block uppercase tracking-wide">
+                  Start Frame
+                </label>
+                
+                {startFrameUrl ? (
+                  <div className="relative aspect-video rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 group">
+                    <img src={startFrameUrl} alt="Start frame" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <Button size="sm" variant="secondary" onClick={() => setIsAssetSelectorOpen(true)}>
+                        Change
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => setStartFrameUrl(null)}>
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    className="w-full h-24 border-dashed flex flex-col gap-2"
+                    onClick={() => setIsAssetSelectorOpen(true)}
+                  >
+                    <ImageIcon className="w-6 h-6 text-gray-400" />
+                    <span className="text-xs text-gray-500">Select Start Frame</span>
+                  </Button>
+                )}
+              </div>
+            )}
 
             {/* Continuity Button */}
             {previousSegmentLastFrame && generationType !== 'UPLOAD' && (
@@ -423,6 +464,46 @@ export function SegmentStudio({
           isGenerating={segment.status === 'GENERATING'}
         />
       )}
+
+      {/* Asset Selector Dialog */}
+      <Dialog open={isAssetSelectorOpen} onOpenChange={setIsAssetSelectorOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Select Start Frame</DialogTitle>
+            <DialogDescription>
+              Choose an image to use as the starting frame for video generation.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-2 gap-4 py-4">
+            {/* Scene Master Image Option */}
+            {sceneImageUrl && (
+              <div 
+                className="cursor-pointer group relative aspect-video rounded-lg overflow-hidden border-2 border-transparent hover:border-primary transition-all"
+                onClick={() => handleSelectAsset(sceneImageUrl)}
+              >
+                <img src={sceneImageUrl} alt="Scene Master" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-white font-medium">Use Scene Master</span>
+                </div>
+                <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                  Scene Master
+                </div>
+              </div>
+            )}
+
+            {/* Previous Segment Last Frame Option (Placeholder for now) */}
+            {/* In a real implementation, we would pass the previous segment's last frame here */}
+            
+            {/* Upload Option */}
+            <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg flex flex-col items-center justify-center gap-2 p-4 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors cursor-pointer">
+              <Upload className="w-8 h-8 text-gray-400" />
+              <span className="text-sm text-gray-500 font-medium">Upload Custom Frame</span>
+              <span className="text-xs text-gray-400 text-center">Click to browse or drag and drop</span>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

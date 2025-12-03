@@ -198,6 +198,7 @@ export function SceneProductionManager({
         onGenerate={handleGenerate}
         onUploadMedia={handleUpload}
         references={references}
+        sceneImageUrl={scene?.imageUrl}
       />
     </div>
   )
