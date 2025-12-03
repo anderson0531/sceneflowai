@@ -92,10 +92,13 @@ export async function generateVideoWithVeo(
   }
 
   // Build parameters object
+  // Note: For Veo 3 text-to-video, personGeneration must be 'allow_all'
+  // For image-to-video, it should be 'allow_adult'
+  const isImageToVideo = !!options.startFrame
   const parameters: Record<string, any> = {
     aspectRatio: options.aspectRatio || '16:9',
     durationSeconds: options.durationSeconds || 8,
-    personGeneration: options.personGeneration || 'allow_adult'
+    personGeneration: isImageToVideo ? 'allow_adult' : 'allow_all'
   }
 
   // Add resolution if 1080p (720p is default)
