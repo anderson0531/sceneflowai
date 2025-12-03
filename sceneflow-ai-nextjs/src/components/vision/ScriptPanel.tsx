@@ -3792,19 +3792,19 @@ function SceneCard({
                 )}
 
                 {activeWorkflowTab === 'callAction' && (
-                  <div className="space-y-4">
+                  <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
                     <SceneProductionManager
-                      sceneId={scene.id || `scene-${sceneIdx}`}
+                      sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
                       sceneNumber={sceneNumber}
                       heading={scene.heading}
                       scene={scene}
-                      productionData={sceneProductionData?.[scene.id || `scene-${sceneIdx}`] || null}
-                      references={sceneProductionReferences?.[scene.id || `scene-${sceneIdx}`] || {}}
+                      productionData={sceneProductionData?.[scene.sceneId || scene.id || `scene-${sceneIdx}`] || null}
+                      references={sceneProductionReferences?.[scene.sceneId || scene.id || `scene-${sceneIdx}`] || {}}
                       onInitialize={onInitializeSceneProduction || (async () => {})}
                       onPromptChange={onSegmentPromptChange || (() => {})}
                       onGenerate={onSegmentGenerate || (async () => {})}
                       onUpload={onSegmentUpload || (async () => {})}
-                      audioTracks={sceneAudioTracks?.[scene.id || `scene-${sceneIdx}`]}
+                      audioTracks={sceneAudioTracks?.[scene.sceneId || scene.id || `scene-${sceneIdx}`]}
                     />
                   </div>
                 )}

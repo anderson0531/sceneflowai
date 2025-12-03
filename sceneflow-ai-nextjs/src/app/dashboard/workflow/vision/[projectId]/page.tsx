@@ -2768,12 +2768,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           })
         })
-        
-        // Update local state
-        setScript((prev: any) => ({
-          ...prev,
-          script: { ...prev.script, scenes: updatedScenes }
-        }))
+          
+          // Update local state
+          setScript((prev: any) => ({
+            ...prev,
+            script: { ...prev.script, scenes: updatedScenes }
+          }))
       } else if (action === 'clear') {
         // Clear characterId from affected dialogue lines
         const updatedScenes = script.script.scenes.map((scene: any) => ({
@@ -2800,12 +2800,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           })
         })
-        
-        // Update local state
-        setScript((prev: any) => ({
-          ...prev,
-          script: { ...prev.script, scenes: updatedScenes }
-        }))
+          
+          // Update local state
+          setScript((prev: any) => ({
+            ...prev,
+            script: { ...prev.script, scenes: updatedScenes }
+          }))
       }
       
       // Now delete the character
@@ -2931,7 +2931,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }
         })
       })
-      
+        
       // Update local state
       setCharacters(updatedCharacters)
       setScript((prev: any) => ({
@@ -3108,7 +3108,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       })
       
       try { const { toast } = require('sonner'); toast.success('Scene image generated!') } catch {}
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to generate scene image:', error)
       
       // Check for quota error
@@ -3188,7 +3188,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Update local state
       const updatedScenes = [...(script.script.scenes || [])]
       updatedScenes[sceneIdx] = {
-        ...updatedScenes[sceneIdx],
+        ...scene,
         sceneDirection: data.sceneDirection
       }
 
@@ -3290,7 +3290,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }),
         })
 
-              if (!response.body) {
+        if (!response.body) {
           throw new Error('No response body')
         }
 
@@ -3298,11 +3298,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const decoder = new TextDecoder()
         let buffer = ''
 
+        // Read SSE stream
         while (true) {
           const { done, value } = await reader.read()
-          
           if (done) break
-          
+
           buffer += decoder.decode(value, { stream: true })
           const lines = buffer.split('\n\n')
           buffer = lines.pop() || ''
@@ -3612,6 +3612,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 voiceId: voiceConfig.voiceId
               }
 
+              // Maintain backward compatibility: set descriptionAudioUrl for English
               if (language === 'en') {
                 scene.descriptionAudioUrl = data.audioUrl
                 scene.descriptionAudioGeneratedAt = new Date().toISOString()
@@ -4502,7 +4503,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 isGeneratingKeyframe={isGeneratingKeyframe}
                 generatingKeyframeSceneNumber={generatingKeyframeSceneNumber}
               belowDashboardSlot={({ openGenerateAudio }) => (
-                <div className="rounded-2xl border border-white/10 bg-slate-950/40 shadow-inner">
+                <div className="rounded-2xl border border-white/10 bg-slate950/40 shadow-inner">
                   <div className="px-5 py-5">
                     {showSceneGallery && (
                       <div

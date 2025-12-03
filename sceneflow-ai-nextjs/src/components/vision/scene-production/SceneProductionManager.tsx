@@ -139,7 +139,14 @@ export function SceneProductionManager({
               className="w-32"
             />
           </label>
-          <Button onClick={handleInitialize} disabled={isInitializing} className="flex items-center gap-2">
+          <Button 
+            onClick={(e) => {
+              e.stopPropagation()
+              handleInitialize()
+            }} 
+            disabled={isInitializing} 
+            className="flex items-center gap-2"
+          >
             <Sparkles className="w-4 h-4" />
             {isInitializing ? 'Generating…' : 'Action Segments'}
           </Button>
@@ -168,7 +175,8 @@ export function SceneProductionManager({
             variant="outline"
             size="sm"
             disabled={isInitializing}
-            onClick={async () => {
+            onClick={async (e) => {
+              e.stopPropagation()
               // Confirm re-generation as it will replace current segments
               const confirmed = typeof window !== 'undefined'
                 ? window.confirm('Regenerate segments from the latest script and direction? This will replace current segments.')
