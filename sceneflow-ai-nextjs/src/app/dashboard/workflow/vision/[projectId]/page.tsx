@@ -743,30 +743,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         lastGeneratedAt: new Date().toISOString(),
       }
 
-      setSceneProductionState((prev) => ({
-        ...prev,
-        [sceneId]: productionData,
-      }))
-
-      setScenes((prevScenes) =>
-        prevScenes.map((sceneEntry, index) => {
-          const key = getSceneProductionKey(sceneEntry as Scene, index)
-          if (key !== sceneId) return sceneEntry
-          return {
-            ...sceneEntry,
-            productionData,
-          }
-        })
-      )
-
-      setProject((prev) => (prev ? { ...prev, metadata: data.metadata ?? prev.metadata } : prev))
+      // Use applySceneProductionUpdate to update state and persist to DB
+      applySceneProductionUpdate(sceneId, () => productionData)
 
       try {
         const { toast } = require('sonner')
         toast.success(`Scene segmented into ${productionData.segments.length} blocks.`)
       } catch {}
     },
-    [project?.id]
+    [project?.id, applySceneProductionUpdate]
   )
 
   const handleSegmentPromptChange = useCallback(
