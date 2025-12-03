@@ -234,12 +234,11 @@ export async function checkVideoGenerationStatus(
     throw new Error('GEMINI_API_KEY not configured')
   }
 
-  // Extract just the operation ID if full name provided
-  const opId = operationName.includes('/') 
-    ? operationName.split('/').pop() 
-    : operationName
-
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/operations/${opId}?key=${apiKey}`
+  // Use the full operation name in the endpoint
+  // The operation name is like "models/veo-3.0-generate-001/operations/xyz123"
+  // So the endpoint should be /v1beta/{operationName}
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/${operationName}?key=${apiKey}`
+  console.log('[Veo Video] Checking status at:', endpoint.replace(apiKey, 'API_KEY'))
 
   try {
     const response = await fetch(endpoint, {
