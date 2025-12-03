@@ -72,24 +72,40 @@ export async function generateVideoWithVeo(
   }))
 
   // Build request body for Veo API
-  // Veo uses a different endpoint structure than generateContent
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateVideos?key=${apiKey}`
+  // Video generation uses predictLongRunning endpoint for async operation
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:predictLongRunning?key=${apiKey}`
 
-  // Build config object
-  const config: Record<string, any> = {
-    aspect_ratio: options.aspectRatio || '16:9',
-    duration_seconds: options.durationSeconds || 8,
-    person_generation: options.personGeneration || 'allow_adult'
+  // Build instances array (Veo uses Vertex AI-style request format)
+  const instance: Record<string, any> = {
+    prompt: prompt
+  }
+
+  // Add start frame for I2V
+  if (options.startFrame) {
+    const startFrameData = options.startFrame.startsWith('http')
+      ? await urlToBase64(options.startFrame)
+      : options.startFrame
+    instance.image = {
+      bytesBase64Encoded: startFrameData
+    }
+    console.log('[Veo Video] Added start frame for I2V generation')
+  }
+
+  // Build parameters object
+  const parameters: Record<string, any> = {
+    aspectRatio: options.aspectRatio || '16:9',
+    durationSeconds: options.durationSeconds || 8,
+    personGeneration: options.personGeneration || 'allow_adult'
   }
 
   // Add resolution if 1080p (720p is default)
   if (options.resolution === '1080p') {
-    config.resolution = '1080p'
+    parameters.resolution = '1080p'
   }
 
   // Add negative prompt if provided
   if (options.negativePrompt) {
-    config.negative_prompt = options.negativePrompt
+    parameters.negativePrompt = options.negativePrompt
   }
 
   // Add last frame for interpolation
@@ -97,9 +113,9 @@ export async function generateVideoWithVeo(
     const lastFrameData = options.lastFrame.startsWith('http')
       ? await urlToBase64(options.lastFrame)
       : options.lastFrame
-    config.last_frame = {
+    parameters.lastFrame = {
       image: {
-        bytes_base64_encoded: lastFrameData
+        bytesBase64Encoded: lastFrameData
       }
     }
   }
@@ -112,30 +128,19 @@ export async function generateVideoWithVeo(
         if (!imageData) return null
         return {
           image: {
-            bytes_base64_encoded: imageData
+            bytesBase64Encoded: imageData
           },
-          reference_type: ref.referenceType || 'asset'
+          referenceType: ref.referenceType || 'asset'
         }
       })
     )
-    config.reference_images = refs.filter(Boolean)
+    parameters.referenceImages = refs.filter(Boolean)
   }
 
-  // Build request body
+  // Build request body (Vertex AI-style format for predictLongRunning)
   const requestBody: Record<string, any> = {
-    prompt: prompt,
-    config: config
-  }
-
-  // Add start frame for I2V
-  if (options.startFrame) {
-    const startFrameData = options.startFrame.startsWith('http')
-      ? await urlToBase64(options.startFrame)
-      : options.startFrame
-    requestBody.image = {
-      bytes_base64_encoded: startFrameData
-    }
-    console.log('[Veo Video] Added start frame for I2V generation')
+    instances: [instance],
+    parameters: parameters
   }
 
   try {
