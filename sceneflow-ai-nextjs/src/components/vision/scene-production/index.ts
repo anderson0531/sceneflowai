@@ -1,5 +1,7 @@
 export * from './SceneProductionManager'
 export * from './SegmentTimeline'
-export * from './SegmentStudio'
+export { SegmentStudio } from './SegmentStudio'
+export type { GenerationType } from './SegmentStudio'
+export { SegmentPromptBuilder } from './SegmentPromptBuilder'
+export type { GeneratePromptData, VideoGenerationMethod } from './SegmentPromptBuilder'
 export * from './types'
-

@@ -8,8 +8,10 @@
 
 interface ReferenceImage {
   imageUrl?: string
+  url?: string  // Alternative URL field name
   base64Image?: string
   referenceType?: 'asset' | 'style'
+  type?: 'style' | 'character'  // Alternative type field name (maps to referenceType)
 }
 
 interface VideoGenerationOptions {
@@ -127,13 +129,22 @@ export async function generateVideoWithVeo(
   if (options.referenceImages && options.referenceImages.length > 0) {
     const refs = await Promise.all(
       options.referenceImages.slice(0, 3).map(async (ref) => {
-        const imageData = ref.base64Image || (ref.imageUrl ? await urlToBase64(ref.imageUrl) : null)
-        if (!imageData) return null
+        // Support both imageUrl and url field names
+        const imageSource = ref.base64Image || ref.imageUrl || ref.url
+        if (!imageSource) return null
+        
+        const imageData = imageSource.startsWith('http')
+          ? await urlToBase64(imageSource)
+          : imageSource
+          
+        // Map 'character' type to 'asset', keep 'style' as 'style'
+        const refType = ref.referenceType || (ref.type === 'style' ? 'style' : 'asset')
+        
         return {
           image: {
             bytesBase64Encoded: imageData
           },
-          referenceType: ref.referenceType || 'asset'
+          referenceType: refType
         }
       })
     )

@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/Button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SceneSegment, SceneProductionReferences, SceneSegmentStatus } from './types'
 import { Upload, Video, Image as ImageIcon, CheckCircle2, Link as LinkIcon, Sparkles, Loader2, Info, Film, Play, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { ShotPromptBuilder } from '../ShotPromptBuilder'
+import { SegmentPromptBuilder, GeneratePromptData, VideoGenerationMethod } from './SegmentPromptBuilder'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 
 export type GenerationType = 'T2V' | 'I2V' | 'T2I' | 'UPLOAD'
@@ -25,6 +24,9 @@ interface SegmentStudioProps {
   previousSegmentLastFrame?: string | null
   onGenerate: (mode: GenerationType, options?: { 
     startFrameUrl?: string
+    endFrameUrl?: string
+    referenceImages?: Array<{ url: string; type: 'style' | 'character' }>
+    generationMethod?: VideoGenerationMethod
     prompt?: string
     negativePrompt?: string
     duration?: number
@@ -54,8 +56,6 @@ export function SegmentStudio({
   onOpenScenePreview,
   sceneImageUrl,
 }: SegmentStudioProps) {
-  const [generationType, setGenerationType] = useState<GenerationType>('T2V')
-  const [startFrameUrl, setStartFrameUrl] = useState<string | null>(null)
   const [isAssetSelectorOpen, setIsAssetSelectorOpen] = useState(false)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
   const [isTakesGalleryOpen, setIsTakesGalleryOpen] = useState(false)
@@ -64,18 +64,6 @@ export function SegmentStudio({
   // Prompt Builder State
   const [isPromptBuilderOpen, setIsPromptBuilderOpen] = useState(false)
   const [promptBuilderMode, setPromptBuilderMode] = useState<'image' | 'video'>('video')
-
-  useEffect(() => {
-    if (promptSummary?.promptType) {
-      setGenerationType(promptSummary.promptType)
-    } else if (previousSegmentLastFrame) {
-      setGenerationType('I2V')
-      setStartFrameUrl(previousSegmentLastFrame)
-    } else {
-      setGenerationType('T2V')
-      setStartFrameUrl(null)
-    }
-  }, [segment?.segmentId, previousSegmentLastFrame, promptSummary?.promptType])
 
   if (!segment) {
     return (
@@ -92,44 +80,39 @@ export function SegmentStudio({
     }
   }
 
-  const handleUseLastFrame = () => {
-    if (previousSegmentLastFrame) {
-      setStartFrameUrl(previousSegmentLastFrame)
-      setGenerationType('I2V')
-    }
+  // Open Video Prompt Builder
+  const handleOpenVideoBuilder = () => {
+    setPromptBuilderMode('video')
+    setIsPromptBuilderOpen(true)
   }
 
-  const handleSelectAsset = (url: string) => {
-    setStartFrameUrl(url)
-    setGenerationType('I2V')
-    setIsAssetSelectorOpen(false)
-  }
-
-  const handleGenerateClick = async () => {
-    if (generationType === 'UPLOAD') {
-      return
-    }
-    
-    const mode = generationType === 'T2I' ? 'image' : 'video'
-    setPromptBuilderMode(mode)
+  // Open Image Prompt Builder
+  const handleOpenImageBuilder = () => {
+    setPromptBuilderMode('image')
     setIsPromptBuilderOpen(true)
   }
   
-  const handlePromptBuilderGenerate = async (promptData: any) => {
-    await onGenerate(generationType, { 
-      startFrameUrl: startFrameUrl || undefined,
-      ...promptData 
-    })
-  }
-
-  const handleGenerationTypeChange = (value: string) => {
-    const newType = value as GenerationType
-    setGenerationType(newType)
-    if (newType !== 'I2V') {
-      setStartFrameUrl(null)
-    } else if (previousSegmentLastFrame && !startFrameUrl) {
-      setStartFrameUrl(previousSegmentLastFrame)
+  // Handle generation from the new SegmentPromptBuilder
+  const handlePromptBuilderGenerate = async (promptData: GeneratePromptData) => {
+    // Determine generation type based on mode and method
+    let genType: GenerationType = 'T2V'
+    if (promptData.mode === 'image') {
+      genType = 'T2I'
+    } else if (promptData.startFrameUrl) {
+      genType = 'I2V'
     }
+    
+    await onGenerate(genType, {
+      prompt: promptData.prompt,
+      negativePrompt: promptData.negativePrompt,
+      duration: promptData.duration,
+      aspectRatio: promptData.aspectRatio,
+      resolution: promptData.resolution,
+      startFrameUrl: promptData.startFrameUrl,
+      endFrameUrl: promptData.endFrameUrl,
+      referenceImages: promptData.referenceImages,
+      generationMethod: promptData.generationMethod,
+    })
   }
 
   const displayStatus = (status: SceneSegmentStatus) => {
@@ -174,14 +157,15 @@ export function SegmentStudio({
                 Generating Segment {segment.sequenceIndex + 1}
               </div>
               <div className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                {generationType === 'T2V' ? 'Text-to-Video' : generationType === 'I2V' ? 'Image-to-Video (Continuity)' : 'Text-to-Image'} · {segment.startTime.toFixed(1)}s – {segment.endTime.toFixed(1)}s
+                Generating... · {segment.startTime.toFixed(1)}s – {segment.endTime.toFixed(1)}s
               </div>
             </div>
           </div>
         </div>
       )}
 
-      <div className="flex items-center justify-between">
+      {/* Segment Header with Inline Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
             Segment {segment.sequenceIndex + 1} Studio
@@ -190,36 +174,70 @@ export function SegmentStudio({
             {displayStatus(segment.status)} · {segment.startTime.toFixed(1)}s – {segment.endTime.toFixed(1)}s
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        
+        {/* Generation Action Buttons - Inline Row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Video Button */}
           <Button
-            variant="outline"
+            onClick={handleOpenVideoBuilder}
+            disabled={segment.status === 'GENERATING'}
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5"
+          >
+            {segment.status === 'GENERATING' ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Video className="w-3.5 h-3.5" />
+            )}
+            Video
+          </Button>
+          
+          {/* Image Button */}
+          <Button
+            onClick={handleOpenImageBuilder}
+            disabled={segment.status === 'GENERATING'}
+            size="sm"
+            className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-1.5"
+          >
+            <ImageIcon className="w-3.5 h-3.5" />
+            Image
+          </Button>
+          
+          {/* Upload Button */}
+          <label className="inline-flex cursor-pointer">
+            <input type="file" className="hidden" accept="video/*,image/*" onChange={handleUploadChange} />
+            <span
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${segment.status === 'GENERATING' ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <Upload className="w-3.5 h-3.5" />
+              Upload
+            </span>
+          </label>
+          
+          {/* Divider */}
+          <div className="w-px h-6 bg-gray-300 dark:bg-gray-700 hidden sm:block" />
+          
+          {/* Details Button */}
+          <Button
+            variant="ghost"
             size="sm"
             onClick={() => setIsDetailDialogOpen(true)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400"
           >
-            <Info className="w-4 h-4" />
+            <Info className="w-3.5 h-3.5" />
             Details
           </Button>
+          
+          {/* Takes Button */}
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => setIsTakesGalleryOpen(true)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400"
           >
-            <Film className="w-4 h-4" />
+            <Film className="w-3.5 h-3.5" />
             Takes ({segment.takes.length})
           </Button>
-          {onOpenScenePreview && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onOpenScenePreview}
-              className="flex items-center gap-2"
-            >
-              <Video className="w-4 h-4" />
-              Preview
-            </Button>
-          )}
         </div>
       </div>
 
@@ -259,137 +277,14 @@ export function SegmentStudio({
         </div>
       )}
 
-      {/* Generation Controls - Compact Layout */}
-      <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-4 bg-white/70 dark:bg-gray-900/40 space-y-4">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-2 block uppercase tracking-wide">
-              Generation Type
-            </label>
-            <Select value={generationType} onValueChange={handleGenerationTypeChange}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="T2V">
-                  <div className="flex items-center gap-2">
-                    <Video className="w-4 h-4" />
-                    <span>AI Video (Text-to-Video)</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="I2V">
-                  <div className="flex items-center gap-2">
-                    <LinkIcon className="w-4 h-4" />
-                    <span>AI Video (Image-to-Video)</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="T2I">
-                  <div className="flex items-center gap-2">
-                    <ImageIcon className="w-4 h-4" />
-                    <span>AI Image (Text-to-Image)</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="UPLOAD">
-                  <div className="flex items-center gap-2">
-                    <Upload className="w-4 h-4" />
-                    <span>Upload Media</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-2 block uppercase tracking-wide">
-              Action
-            </label>
-            {generationType === 'UPLOAD' ? (
-              <label className="inline-flex w-full">
-                <input type="file" className="hidden" accept="video/*,image/*" onChange={handleUploadChange} />
-                <Button type="button" variant="outline" className="w-full flex items-center gap-2 justify-center h-10">
-                  <Upload className="w-4 h-4" />
-                  Upload Media
-                </Button>
-              </label>
-            ) : (
-              <Button
-                onClick={handleGenerateClick}
-                className="w-full flex items-center gap-2 justify-center h-10"
-                disabled={segment?.status === 'GENERATING'}
-              >
-                {segment?.status === 'GENERATING' ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : generationType === 'T2V' || generationType === 'I2V' ? (
-                  <>
-                    <Video className="w-4 h-4" />
-                    Generate Video
-                  </>
-                ) : (
-                  <>
-                    <ImageIcon className="w-4 h-4" />
-                    Generate Image
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {generationType === 'I2V' && (
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-gray-700 dark:text-gray-200 block uppercase tracking-wide">
-              Start Frame (Continuity)
-            </label>
-            
-            {startFrameUrl ? (
-              <div className="relative aspect-video rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 group">
-                <img src={startFrameUrl} alt="Start frame" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                  <Button size="sm" variant="secondary" onClick={() => setIsAssetSelectorOpen(true)}>
-                    Change
-                  </Button>
-                  <Button size="sm" variant="destructive" onClick={() => setStartFrameUrl(null)}>
-                    Clear
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <Button 
-                variant="outline" 
-                className="w-full h-24 border-dashed flex flex-col gap-2"
-                onClick={() => setIsAssetSelectorOpen(true)}
-              >
-                <ImageIcon className="w-6 h-6 text-gray-400" />
-                <span className="text-xs text-gray-500">Select Start Frame</span>
-              </Button>
-            )}
-          </div>
-        )}
-
-        {previousSegmentLastFrame && generationType !== 'UPLOAD' && (
-          <Button
-            variant="outline"
-            onClick={handleUseLastFrame}
-            disabled={startFrameUrl === previousSegmentLastFrame}
-            className="w-full flex items-center gap-2"
-            size="sm"
-          >
-            <LinkIcon className="w-4 h-4" />
-            {startFrameUrl === previousSegmentLastFrame
-              ? 'Using Previous Clip\'s Last Frame'
-              : 'Use Previous Clip\'s Last Frame'}
-          </Button>
-        )}
-
-        {typeof estimatedCredits === 'number' && (
-          <div className="text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-200 dark:border-gray-700">
+      {/* Credits Estimate */}
+      {typeof estimatedCredits === 'number' && (
+        <div className="rounded-lg border border-gray-200 dark:border-gray-800 px-4 py-2 bg-white/50 dark:bg-gray-900/30">
+          <span className="text-xs text-gray-500 dark:text-gray-400">
             Estimated cost: <span className="font-semibold text-sf-primary">{estimatedCredits.toFixed(2)} credits</span>
-          </div>
-        )}
-      </div>
+          </span>
+        </div>
+      )}
 
       {/* Segment Detail Dialog */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
@@ -458,17 +353,17 @@ export function SegmentStudio({
             <div>
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Continuity</h3>
               <div className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg">
-                {startFrameUrl ? (
+                {previousSegmentLastFrame ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                       <CheckCircle2 className="w-4 h-4" />
-                      <span>Start frame set for continuity</span>
+                      <span>Previous segment has a last frame available for I2V</span>
                     </div>
-                    <img src={startFrameUrl} alt="Start frame" className="w-full max-w-xs rounded-md border border-gray-200 dark:border-gray-700" />
+                    <img src={previousSegmentLastFrame} alt="Previous frame" className="w-full max-w-xs rounded-md border border-gray-200 dark:border-gray-700" />
                   </div>
                 ) : (
                   <div className="text-gray-500 dark:text-gray-400">
-                    No start frame set. This will be a standard text-to-video generation.
+                    No previous segment frame available. Use the Video button to access I2V, F2F, and Reference options.
                   </div>
                 )}
               </div>
@@ -585,53 +480,20 @@ export function SegmentStudio({
         </DialogContent>
       </Dialog>
 
-      {/* Shot Prompt Builder */}
+      {/* New Segment Prompt Builder (replaces ShotPromptBuilder) */}
       {segment && (
-        <ShotPromptBuilder
+        <SegmentPromptBuilder
           open={isPromptBuilderOpen}
           onClose={() => setIsPromptBuilderOpen(false)}
           segment={segment}
           mode={promptBuilderMode}
           availableCharacters={references.characters}
+          sceneImageUrl={sceneImageUrl}
+          previousSegmentLastFrame={previousSegmentLastFrame}
           onGenerate={handlePromptBuilderGenerate}
           isGenerating={segment.status === 'GENERATING'}
         />
       )}
-
-      {/* Asset Selector Dialog */}
-      <Dialog open={isAssetSelectorOpen} onOpenChange={setIsAssetSelectorOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Select Start Frame</DialogTitle>
-            <DialogDescription>
-              Choose an image to use as the starting frame for video generation.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid grid-cols-2 gap-4 py-4">
-            {sceneImageUrl && (
-              <div 
-                className="cursor-pointer group relative aspect-video rounded-lg overflow-hidden border-2 border-transparent hover:border-primary transition-all"
-                onClick={() => handleSelectAsset(sceneImageUrl)}
-              >
-                <img src={sceneImageUrl} alt="Scene Master" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-white font-medium">Use Scene Master</span>
-                </div>
-                <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                  Scene Master
-                </div>
-              </div>
-            )}
-
-            <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg flex flex-col items-center justify-center gap-2 p-4 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors cursor-pointer">
-              <Upload className="w-8 h-8 text-gray-400" />
-              <span className="text-sm text-gray-500 font-medium">Upload Custom Frame</span>
-              <span className="text-xs text-gray-400 text-center">Click to browse</span>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
