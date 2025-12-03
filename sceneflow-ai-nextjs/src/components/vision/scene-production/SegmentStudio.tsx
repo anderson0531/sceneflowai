@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SceneSegment, SceneProductionReferences, SceneSegmentStatus } from './types'
-import { Upload, Video, Image as ImageIcon, CheckCircle2, Link as LinkIcon, Sparkles, Loader2, Info, Film } from 'lucide-react'
+import { Upload, Video, Image as ImageIcon, CheckCircle2, Link as LinkIcon, Sparkles, Loader2, Info, Film, Play, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ShotPromptBuilder } from '../ShotPromptBuilder'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -59,6 +59,7 @@ export function SegmentStudio({
   const [isAssetSelectorOpen, setIsAssetSelectorOpen] = useState(false)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
   const [isTakesGalleryOpen, setIsTakesGalleryOpen] = useState(false)
+  const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null)
   
   // Prompt Builder State
   const [isPromptBuilderOpen, setIsPromptBuilderOpen] = useState(false)
@@ -221,6 +222,42 @@ export function SegmentStudio({
           )}
         </div>
       </div>
+
+      {/* Video/Image Preview - Show active asset */}
+      {segment.activeAssetUrl && (segment.status === 'COMPLETE' || segment.status === 'UPLOADED') && (
+        <div className="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden bg-black">
+          {segment.assetType === 'video' ? (
+            <video
+              key={segment.activeAssetUrl}
+              src={segment.activeAssetUrl}
+              controls
+              className="w-full aspect-video"
+              poster={segment.takes[0]?.thumbnailUrl}
+            >
+              Your browser does not support the video tag.
+            </video>
+          ) : (
+            <img
+              src={segment.activeAssetUrl}
+              alt={`Segment ${segment.sequenceIndex + 1} preview`}
+              className="w-full aspect-video object-contain"
+            />
+          )}
+          <div className="bg-gray-900 px-4 py-2 flex items-center justify-between">
+            <span className="text-xs text-gray-400">
+              {segment.assetType === 'video' ? 'Generated Video' : 'Generated Image'} · Segment {segment.sequenceIndex + 1}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsTakesGalleryOpen(true)}
+              className="text-xs text-gray-400 hover:text-white"
+            >
+              View All Takes ({segment.takes.length})
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Generation Controls - Compact Layout */}
       <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-4 bg-white/70 dark:bg-gray-900/40 space-y-4">
@@ -466,14 +503,35 @@ export function SegmentStudio({
       </Dialog>
 
       {/* Takes Gallery Dialog */}
-      <Dialog open={isTakesGalleryOpen} onOpenChange={setIsTakesGalleryOpen}>
+      <Dialog open={isTakesGalleryOpen} onOpenChange={(open) => {
+        setIsTakesGalleryOpen(open)
+        if (!open) setPlayingVideoUrl(null)
+      }}>
         <DialogContent className="sm:max-w-[900px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Takes Gallery - Segment {segment.sequenceIndex + 1}</DialogTitle>
             <DialogDescription>
-              All generated and uploaded takes for this segment
+              All generated and uploaded takes for this segment. Click to play.
             </DialogDescription>
           </DialogHeader>
+          
+          {/* Video Player */}
+          {playingVideoUrl && (
+            <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden mb-4">
+              <video
+                src={playingVideoUrl}
+                controls
+                autoPlay
+                className="w-full h-full"
+              />
+              <button
+                onClick={() => setPlayingVideoUrl(null)}
+                className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-black/80 rounded-full text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
           
           <div className="py-4">
             {segment.takes.length === 0 ? (
@@ -486,15 +544,26 @@ export function SegmentStudio({
                   <div
                     key={take.id}
                     className={cn(
-                      'border rounded-lg p-3 space-y-2 transition-all hover:shadow-lg',
+                      'border rounded-lg p-3 space-y-2 transition-all hover:shadow-lg cursor-pointer',
                       take.status === 'COMPLETE'
                         ? 'border-emerald-400/60 bg-emerald-50 dark:bg-emerald-900/20'
-                        : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900'
+                        : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900',
+                      playingVideoUrl === take.assetUrl && 'ring-2 ring-primary'
                     )}
+                    onClick={() => take.assetUrl && setPlayingVideoUrl(take.assetUrl)}
                   >
-                    <div className="aspect-video rounded-md bg-gray-100 dark:bg-gray-800 overflow-hidden flex items-center justify-center">
+                    <div className="aspect-video rounded-md bg-gray-100 dark:bg-gray-800 overflow-hidden flex items-center justify-center relative group">
                       {take.thumbnailUrl ? (
-                        <img src={take.thumbnailUrl} alt="Take preview" className="w-full h-full object-cover" />
+                        <>
+                          <img src={take.thumbnailUrl} alt="Take preview" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Play className="w-10 h-10 text-white" />
+                          </div>
+                        </>
+                      ) : take.assetUrl ? (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-900">
+                          <Play className="w-10 h-10 text-white/80 group-hover:text-white transition-colors" />
+                        </div>
                       ) : (
                         <Video className="w-8 h-8 text-gray-400" />
                       )}
@@ -505,6 +574,7 @@ export function SegmentStudio({
                         <span>{new Date(take.createdAt).toLocaleString()}</span>
                       </div>
                       <div className="font-medium capitalize">Status: {take.status.toLowerCase()}</div>
+                      {take.durationSec && <div>Duration: {take.durationSec}s</div>}
                       {take.notes && <div className="italic text-gray-400 text-xs">{take.notes}</div>}
                     </div>
                   </div>
