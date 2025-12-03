@@ -3165,7 +3165,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     setGeneratingDirectionFor(sceneIdx)
 
     try {
-      const response = await fetch('/api/scene/generate-direction', {
+      const directionResponse = await fetch('/api/scene/generate-direction', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -3181,52 +3181,51 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       })
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+      if (!directionResponse.ok) {
+        const errorData = await directionResponse.json().catch(() => ({ error: 'Unknown error' }))
         throw new Error(errorData.error || 'Failed to generate scene direction')
       }
 
-      const data = await response.json()
+      const data = await directionResponse.json()
       
       if (!data.success || !data.sceneDirection) {
         throw new Error(data.error || 'Failed to generate scene direction')
       }
 
-      // Update local state
+      // Build updated scenes array with the new direction
       const updatedScenes = [...(script.script.scenes || [])]
       updatedScenes[sceneIdx] = {
-        ...scene,
+        ...updatedScenes[sceneIdx],
         sceneDirection: data.sceneDirection
       }
 
-      setScript({
+      // Build the updated script object
+      const updatedScript = {
         ...script,
         script: {
           ...script.script,
           scenes: updatedScenes
         }
-      })
+      }
 
-      // Update project metadata to reflect the change
+      // Update local state
+      setScript(updatedScript)
+
+      // Update project metadata and persist to DB
       if (project) {
         const updatedMetadata = {
           ...project.metadata,
           visionPhase: {
             ...project.metadata?.visionPhase,
-            script: {
-              ...script,
-              script: {
-                ...script.script,
-                scenes: updatedScenes
-              }
-            }
+            script: updatedScript
           }
         }
         
         console.log('[SceneDirection] Saving to DB:', {
           sceneIdx,
           hasSceneDirection: !!updatedScenes[sceneIdx]?.sceneDirection,
-          sceneDirectionType: typeof updatedScenes[sceneIdx]?.sceneDirection
+          sceneDirectionKeys: Object.keys(updatedScenes[sceneIdx]?.sceneDirection || {}),
+          updatedMetadataPath: 'metadata.visionPhase.script.script.scenes[' + sceneIdx + '].sceneDirection'
         })
         
         setProject({
@@ -3235,7 +3234,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
 
         // Persist to database
-        const response = await fetch(`/api/projects/${project.id}`, {
+        const saveResponse = await fetch(`/api/projects/${project.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -3243,8 +3242,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           })
         })
         
-        if (!response.ok) {
-          console.error('[SceneDirection] Save failed:', await response.text())
+        if (!saveResponse.ok) {
+          const errorText = await saveResponse.text()
+          console.error('[SceneDirection] Save failed:', errorText)
+          throw new Error('Failed to save scene direction to database')
         } else {
           console.log('[SceneDirection] Save successful')
         }
