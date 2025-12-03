@@ -6,9 +6,7 @@ export const runtime = 'nodejs'
 // Model fallback sequence for optimization
 const MODEL_SEQUENCE = [
   'gemini-3-pro-preview',     // Best quality, may be slower
-  'gemini-2.5-pro',            // High quality fallback
-  'gemini-2.5-flash',          // Fast fallback
-  'gemini-1.5-pro-latest'      // Legacy fallback
+  'gemini-2.5-flash'          // Fast fallback
 ]
 
 interface OptimizeSceneRequest {

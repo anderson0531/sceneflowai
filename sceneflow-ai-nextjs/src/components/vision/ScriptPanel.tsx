@@ -3799,17 +3799,17 @@ function SceneCard({
                 {activeWorkflowTab === 'callAction' && (
                   <div className="space-y-4">
                     <SceneProductionManager
-                      sceneId={scene.id || `scene-${sceneNumber}`}
+                      sceneId={scene.id || `scene-${sceneIdx}`}
                       sceneNumber={sceneNumber}
                       heading={scene.heading}
                       scene={scene}
-                      productionData={sceneProductionData?.[scene.id] || null}
-                      references={sceneProductionReferences?.[scene.id] || {}}
+                      productionData={sceneProductionData?.[scene.id || `scene-${sceneIdx}`] || null}
+                      references={sceneProductionReferences?.[scene.id || `scene-${sceneIdx}`] || {}}
                       onInitialize={onInitializeSceneProduction || (async () => {})}
                       onPromptChange={onSegmentPromptChange || (() => {})}
                       onGenerate={onSegmentGenerate || (async () => {})}
                       onUpload={onSegmentUpload || (async () => {})}
-                      audioTracks={sceneAudioTracks?.[scene.id]}
+                      audioTracks={sceneAudioTracks?.[scene.id || `scene-${sceneIdx}`]}
                     />
                   </div>
                 )}

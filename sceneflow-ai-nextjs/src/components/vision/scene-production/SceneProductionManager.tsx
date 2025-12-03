@@ -141,7 +141,7 @@ export function SceneProductionManager({
           </label>
           <Button onClick={handleInitialize} disabled={isInitializing} className="flex items-center gap-2">
             <Sparkles className="w-4 h-4" />
-            {isInitializing ? 'Generating…' : 'Generate Shot Segments'}
+            {isInitializing ? 'Generating…' : 'Action Segments'}
           </Button>
         </div>
         <p className="text-xs text-gray-400 mt-3 flex items-center gap-2">
