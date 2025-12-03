@@ -11,10 +11,23 @@ export async function GET(
     
     await sequelize.authenticate()
     
-    const project = await Project.findByPk(id)
+    // Force fresh read from database - bypass any Sequelize caching
+    // Use raw query to ensure we always get the latest data
+    const project = await Project.findByPk(id, {
+      // Disable Sequelize's internal caching
+      rejectOnEmpty: false,
+      // Force a fresh read
+      lock: false,
+      // Don't use transaction cache
+      useMaster: true
+    })
+    
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
+    
+    // Reload to get fresh data from database
+    await project.reload()
     
     // Return project with formatted fields (matching /api/projects route format)
     const response = NextResponse.json({ 
@@ -35,8 +48,22 @@ export async function GET(
       }
     })
     
-    // Add cache control headers
-    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+    // Add cache control headers to prevent any caching
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, private')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
+    response.headers.set('X-Content-Type-Options', 'nosniff')
+    
+    // Log direction data for debugging intermittent issues
+    const scenes = project.metadata?.visionPhase?.script?.script?.scenes || []
+    const scenesWithDirection = scenes.filter((s: any) => !!s.sceneDirection)
+    console.log('[Projects GET] Loaded project:', {
+      id: project.id,
+      totalScenes: scenes.length,
+      scenesWithDirection: scenesWithDirection.length,
+      timestamp: new Date().toISOString()
+    })
+    
     return response
   } catch (error) {
     console.error('[Projects GET by ID] Error:', error)
@@ -136,14 +163,26 @@ export async function PUT(
       }
     }
     
-    await project.update({
-      ...body,
-      metadata: mergedMetadata
-    })
+    // Explicitly mark metadata as changed to ensure JSONB update is detected
+    // Sequelize sometimes doesn't detect nested changes in JSONB fields
+    project.set('metadata', mergedMetadata)
+    project.changed('metadata', true)
+    
+    await project.save()
+    
+    // Reload to ensure the updated data is committed and fetched fresh
+    await project.reload()
+    
+    // Log scene direction status after update
+    const scenesAfterUpdate = mergedMetadata?.visionPhase?.script?.script?.scenes || []
+    const scenesWithDirectionAfter = scenesAfterUpdate.filter((s: any) => !!s.sceneDirection)
     
     console.log('[Projects PUT] Project updated successfully:', {
       projectId: id,
-      charactersInDb: mergedMetadata?.visionPhase?.characters?.length || 0
+      charactersInDb: mergedMetadata?.visionPhase?.characters?.length || 0,
+      scenesWithDirection: scenesWithDirectionAfter.length,
+      totalScenes: scenesAfterUpdate.length,
+      timestamp: new Date().toISOString()
     })
     
     return NextResponse.json({ success: true, project })
