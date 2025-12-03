@@ -57,7 +57,7 @@ export async function generateVideoWithVeo(
     throw new Error('GEMINI_API_KEY not configured')
   }
 
-  const model = 'veo-3.1-generate-preview'
+  const model = 'veo-001'
   console.log(`[Veo Video] Generating video with ${model}...`)
   console.log('[Veo Video] Prompt:', prompt.substring(0, 200))
   console.log('[Veo Video] Options:', JSON.stringify({
