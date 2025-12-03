@@ -1535,6 +1535,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const { migrateScriptAudio } = await import('@/lib/audio/audioMigration')
           const { script: migratedScript, needsMigration } = migrateScriptAudio(visionPhase.script)
           
+          // Log scene direction status
+          const loadedScenes = migratedScript?.script?.scenes || []
+          console.log('[Load Project] Scene directions:', loadedScenes.map((s: any, i: number) => ({
+            sceneIdx: i,
+            hasDirection: !!s.sceneDirection
+          })))
+          
           if (needsMigration) {
             // Save migrated script back to database
             try {
@@ -3215,19 +3222,32 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           }
         }
+        
+        console.log('[SceneDirection] Saving to DB:', {
+          sceneIdx,
+          hasSceneDirection: !!updatedScenes[sceneIdx]?.sceneDirection,
+          sceneDirectionType: typeof updatedScenes[sceneIdx]?.sceneDirection
+        })
+        
         setProject({
           ...project,
           metadata: updatedMetadata
         })
 
         // Persist to database
-        await fetch(`/api/projects/${project.id}`, {
+        const response = await fetch(`/api/projects/${project.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             metadata: updatedMetadata
           })
         })
+        
+        if (!response.ok) {
+          console.error('[SceneDirection] Save failed:', await response.text())
+        } else {
+          console.log('[SceneDirection] Save successful')
+        }
       }
 
       try { const { toast } = require('sonner'); toast.success('Scene direction generated!') } catch {}

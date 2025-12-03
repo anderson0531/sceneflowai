@@ -2165,13 +2165,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       generateSFX={generateSFX}
                       onGenerateSceneDirection={onGenerateSceneDirection}
                       generatingDirectionFor={generatingDirectionFor}
-                      sceneProductionData={sceneProductionData[scene.id || `scene-${idx}`] || undefined}
-                      sceneProductionReferences={sceneProductionReferences[scene.id || `scene-${idx}`] || undefined}
+                      sceneProductionData={sceneProductionData[scene.sceneId || scene.id || `scene-${idx}`] || undefined}
+                      sceneProductionReferences={sceneProductionReferences[scene.sceneId || scene.id || `scene-${idx}`] || undefined}
                       onInitializeSceneProduction={onInitializeSceneProduction}
                       onSegmentPromptChange={onSegmentPromptChange}
                       onSegmentGenerate={onSegmentGenerate}
                       onSegmentUpload={onSegmentUpload}
-                      sceneAudioTracks={sceneAudioTracks[scene.id || `scene-${idx}`]}
+                      sceneAudioTracks={sceneAudioTracks[scene.sceneId || scene.id || `scene-${idx}`]}
                           domId={domId}
                           isBookmarked={bookmarkedSceneIndex === idx}
                           onBookmarkToggle={() => handleBookmarkToggle(idx)}
@@ -3798,13 +3798,13 @@ function SceneCard({
                       sceneNumber={sceneNumber}
                       heading={scene.heading}
                       scene={scene}
-                      productionData={sceneProductionData?.[scene.sceneId || scene.id || `scene-${sceneIdx}`] || null}
-                      references={sceneProductionReferences?.[scene.sceneId || scene.id || `scene-${sceneIdx}`] || {}}
+                      productionData={sceneProductionData || null}
+                      references={sceneProductionReferences || {}}
                       onInitialize={onInitializeSceneProduction || (async () => {})}
                       onPromptChange={onSegmentPromptChange || (() => {})}
                       onGenerate={onSegmentGenerate || (async () => {})}
                       onUpload={onSegmentUpload || (async () => {})}
-                      audioTracks={sceneAudioTracks?.[scene.sceneId || scene.id || `scene-${sceneIdx}`]}
+                      audioTracks={sceneAudioTracks}
                     />
                   </div>
                 )}
