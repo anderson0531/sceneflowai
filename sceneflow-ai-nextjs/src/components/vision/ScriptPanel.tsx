@@ -131,7 +131,7 @@ interface ScriptPanelProps {
   sceneProductionReferences?: Record<string, SceneProductionReferences>
   onInitializeSceneProduction?: (sceneId: string, options: { targetDuration: number; segments?: any[] }) => Promise<void>
   onSegmentPromptChange?: (sceneId: string, segmentId: string, prompt: string) => void
-  onSegmentGenerate?: (sceneId: string, segmentId: string, mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD', options?: { startFrameUrl?: string }) => Promise<void>
+  onSegmentGenerate?: (sceneId: string, segmentId: string, mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD', options?: { startFrameUrl?: string; prompt?: string; negativePrompt?: string; duration?: number; aspectRatio?: '16:9' | '9:16'; resolution?: '720p' | '1080p' }) => Promise<void>
   onSegmentUpload?: (sceneId: string, segmentId: string, file: File) => Promise<void>
   sceneAudioTracks?: Record<string, {
     narration?: { url?: string; startTime: number; duration: number }
@@ -2472,7 +2472,7 @@ interface SceneCardProps {
   belowDashboardSlot?: (helpers: { openGenerateAudio: () => void }) => React.ReactNode
   onInitializeSceneProduction?: (sceneId: string, options: { targetDuration: number; segments?: any[] }) => Promise<void>
   onSegmentPromptChange?: (sceneId: string, segmentId: string, prompt: string) => void
-  onSegmentGenerate?: (sceneId: string, segmentId: string, mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD', options?: { startFrameUrl?: string }) => Promise<void>
+  onSegmentGenerate?: (sceneId: string, segmentId: string, mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD', options?: { startFrameUrl?: string; prompt?: string; negativePrompt?: string; duration?: number; aspectRatio?: '16:9' | '9:16'; resolution?: '720p' | '1080p' }) => Promise<void>
   onSegmentUpload?: (sceneId: string, segmentId: string, file: File) => Promise<void>
   sceneAudioTracks?: {
     narration?: { url?: string; startTime: number; duration: number }

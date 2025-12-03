@@ -23,7 +23,14 @@ interface SegmentPromptSummary {
 interface SegmentStudioProps {
   segment: SceneSegment | null
   previousSegmentLastFrame?: string | null
-  onGenerate: (mode: GenerationType, options?: { startFrameUrl?: string }) => Promise<void>
+  onGenerate: (mode: GenerationType, options?: { 
+    startFrameUrl?: string
+    prompt?: string
+    negativePrompt?: string
+    duration?: number
+    aspectRatio?: '16:9' | '9:16'
+    resolution?: '720p' | '1080p'
+  }) => Promise<void>
   onUploadMedia: (file: File) => Promise<void>
   onPromptChange?: (prompt: string) => void
   references: SceneProductionReferences

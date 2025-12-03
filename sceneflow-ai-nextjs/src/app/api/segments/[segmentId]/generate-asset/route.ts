@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { VideoGenerationGateway } from '@/services/VideoGenerationGateway'
-import { StandardVideoRequest } from '@/services/ai-providers/BaseAIProviderAdapter'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
-import { uploadImageToBlob } from '@/lib/storage/blob'
+import { generateVideoWithVeo, waitForVideoCompletion, downloadVideoFile } from '@/lib/gemini/videoClient'
+import { uploadImageToBlob, uploadVideoToBlob } from '@/lib/storage/blob'
 import { extractAndStoreLastFrame } from '@/lib/videoUtils'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { AIProvider } from '@/services/ai-providers/BaseAIProviderAdapter'
 
 export const maxDuration = 300 // 5 minutes for video generation
 export const runtime = 'nodejs'
@@ -18,6 +16,11 @@ interface GenerateAssetRequest {
   startFrameUrl?: string
   sceneId: string
   projectId: string
+  // Optional video settings from prompt builder
+  negativePrompt?: string
+  duration?: number
+  aspectRatio?: '16:9' | '9:16'
+  resolution?: '720p' | '1080p'
 }
 
 export async function POST(
@@ -27,14 +30,24 @@ export async function POST(
   try {
     const { segmentId } = await params
     const body: GenerateAssetRequest = await req.json()
-    const { prompt, genType, referenceImageIds, startFrameUrl, sceneId, projectId } = body
+    const { 
+      prompt, 
+      genType, 
+      referenceImageIds, 
+      startFrameUrl, 
+      sceneId, 
+      projectId,
+      negativePrompt,
+      duration,
+      aspectRatio,
+      resolution
+    } = body
 
-    // Get user session for BYOK credentials
+    // Get user session for authentication
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    const userId = session.user.id
 
     if (!prompt || !genType || !sceneId || !projectId) {
       return NextResponse.json(
@@ -50,56 +63,79 @@ export async function POST(
     let lastFrameUrl: string | null = null
 
     if (genType === 'T2V' || genType === 'I2V') {
-      // Video generation using Veo
-      const videoGateway = VideoGenerationGateway.getInstance()
+      // Video generation using Veo 3.1 (platform credentials)
+      console.log('[Segment Asset Generation] Using Veo 3.1 for video generation')
       
-      // Get user's video provider config (BYOK)
-      // For now, default to GOOGLE_VEO if available
-      const providerName = AIProvider.GOOGLE_VEO // TODO: Get from user's BYOK config
-      
-      // Build video generation request
-      const videoRequest: StandardVideoRequest = {
-        prompt: prompt,
-        duration: 8, // Default segment duration, can be adjusted
-        resolution: '1920x1080',
-        aspect_ratio: '16:9',
-        motion_intensity: 5, // Default motion intensity
-        quality: 'standard',
-        // For I2V, pass startFrame through custom_settings
-        custom_settings: genType === 'I2V' && startFrameUrl
-          ? { startFrame: startFrameUrl, referenceImages: referenceImageIds || [] }
-          : { referenceImages: referenceImageIds || [] },
+      // Trigger video generation
+      const veoResult = await generateVideoWithVeo(prompt, {
+        aspectRatio: aspectRatio || '16:9',
+        resolution: resolution || '720p',
+        durationSeconds: (duration && [4, 6, 8].includes(duration)) ? duration as 4 | 6 | 8 : 8,
+        negativePrompt: negativePrompt,
+        startFrame: genType === 'I2V' ? startFrameUrl : undefined,
+        personGeneration: 'allow_adult'
+      })
+
+      if (veoResult.status === 'FAILED') {
+        throw new Error(veoResult.error || 'Video generation failed')
       }
 
-      // Generate video
-      const result = await videoGateway.trigger_generation(
-        userId,
-        videoRequest,
-        providerName
-      )
-
-      if (!result.success || !result.data) {
-        throw new Error(result.error || 'Video generation failed')
+      // If video is queued/processing, wait for completion (up to 4 minutes)
+      let finalResult = veoResult
+      if (veoResult.status === 'QUEUED' || veoResult.status === 'PROCESSING') {
+        console.log('[Segment Asset Generation] Waiting for video completion...')
+        finalResult = await waitForVideoCompletion(
+          veoResult.operationName!,
+          240, // 4 minutes max wait
+          10   // Poll every 10 seconds
+        )
       }
 
-      // Video generation is async - we get a job ID
-      // For now, return the job ID and status
-      // In production, you'd poll for completion or use webhooks
-      const jobId = result.data.provider_job_id
-      assetUrl = result.data.video_url || `job:${jobId}` // Placeholder until video is ready
+      if (finalResult.status !== 'COMPLETED' || !finalResult.videoUrl) {
+        throw new Error(finalResult.error || 'Video generation did not complete')
+      }
+
+      // Handle file download if needed
+      let videoBuffer: Buffer | null = null
+      if (finalResult.videoUrl.startsWith('file:')) {
+        console.log('[Segment Asset Generation] Downloading video from Files API...')
+        videoBuffer = await downloadVideoFile(finalResult.videoUrl)
+        if (!videoBuffer) {
+          throw new Error('Failed to download video file')
+        }
+      }
+
+      // Upload video to blob storage
+      if (videoBuffer) {
+        assetUrl = await uploadVideoToBlob(
+          videoBuffer,
+          `segments/${segmentId}-${Date.now()}.mp4`
+        )
+      } else if (finalResult.videoUrl.startsWith('http')) {
+        // Download from URL and re-upload to our storage
+        const videoResponse = await fetch(finalResult.videoUrl)
+        if (!videoResponse.ok) {
+          throw new Error('Failed to fetch video from Veo')
+        }
+        const videoArrayBuffer = await videoResponse.arrayBuffer()
+        assetUrl = await uploadVideoToBlob(
+          Buffer.from(videoArrayBuffer),
+          `segments/${segmentId}-${Date.now()}.mp4`
+        )
+      } else {
+        // Use the URL directly if it's already a valid URL
+        assetUrl = finalResult.videoUrl
+      }
+      
       assetType = 'video'
 
-      // Note: Last frame extraction will happen asynchronously when video completes
-      // This should be handled via webhook or polling mechanism
-      // For now, we'll extract it if the video is immediately available
-      if (result.data.status === 'COMPLETED' && result.data.video_url) {
-        try {
-          lastFrameUrl = await extractAndStoreLastFrame(result.data.video_url, segmentId)
-          console.log('[Segment Asset Generation] Extracted last frame:', lastFrameUrl)
-        } catch (error) {
-          console.error('[Segment Asset Generation] Failed to extract last frame:', error)
-          // Continue without last frame - not critical
-        }
+      // Extract last frame for I2V continuity
+      try {
+        lastFrameUrl = await extractAndStoreLastFrame(assetUrl, segmentId)
+        console.log('[Segment Asset Generation] Extracted last frame:', lastFrameUrl)
+      } catch (error) {
+        console.error('[Segment Asset Generation] Failed to extract last frame:', error)
+        // Continue without last frame - not critical
       }
 
     } else if (genType === 'T2I') {

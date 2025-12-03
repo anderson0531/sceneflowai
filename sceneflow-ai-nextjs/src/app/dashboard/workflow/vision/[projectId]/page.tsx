@@ -778,7 +778,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       sceneId: string,
       segmentId: string,
       mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD',
-      options?: { startFrameUrl?: string }
+      options?: { 
+        startFrameUrl?: string
+        prompt?: string
+        negativePrompt?: string
+        duration?: number
+        aspectRatio?: '16:9' | '9:16'
+        resolution?: '720p' | '1080p'
+      }
     ) => {
       if (!project?.id) {
         throw new Error('Project must be loaded before generating assets.')
@@ -799,19 +806,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       } catch {}
 
       try {
-        // Get the segment to get its prompt
+        // Get the segment to get its prompt if not provided in options
         const currentProduction = sceneProductionState[sceneId]
         const segment = currentProduction?.segments.find((s) => s.segmentId === segmentId)
         if (!segment) {
           throw new Error('Segment not found')
         }
 
-        const prompt = segment.userEditedPrompt || segment.generatedPrompt || ''
+        // Use prompt from options (from prompt builder) or fall back to segment prompt
+        const prompt = options?.prompt || segment.userEditedPrompt || segment.generatedPrompt || ''
         if (!prompt) {
           throw new Error('Segment prompt is required')
         }
 
-        // Call the asset generation API
+        // Call the asset generation API with all prompt builder options
         const response = await fetch(`/api/segments/${encodeURIComponent(segmentId)}/generate-asset`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -821,6 +829,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             startFrameUrl: options?.startFrameUrl,
             sceneId,
             projectId: project.id,
+            // Pass video-specific options from prompt builder
+            negativePrompt: options?.negativePrompt,
+            duration: options?.duration,
+            aspectRatio: options?.aspectRatio,
+            resolution: options?.resolution,
           }),
         })
 

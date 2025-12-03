@@ -22,7 +22,14 @@ interface SceneProductionManagerProps {
   references: SceneProductionReferences
   onInitialize: (sceneId: string, options: { targetDuration: number }) => Promise<void>
   onPromptChange: (sceneId: string, segmentId: string, prompt: string) => void
-  onGenerate: (sceneId: string, segmentId: string, mode: GenerationType, options?: { startFrameUrl?: string }) => Promise<void>
+  onGenerate: (sceneId: string, segmentId: string, mode: GenerationType, options?: { 
+    startFrameUrl?: string
+    prompt?: string
+    negativePrompt?: string
+    duration?: number
+    aspectRatio?: '16:9' | '9:16'
+    resolution?: '720p' | '1080p'
+  }) => Promise<void>
   onUpload: (sceneId: string, segmentId: string, file: File) => Promise<void>
   audioTracks?: {
     narration?: { url?: string; startTime: number; duration: number }
@@ -98,7 +105,14 @@ export function SceneProductionManager({
     onPromptChange(sceneId, selectedSegment.segmentId, prompt)
   }
 
-  const handleGenerate = async (mode: GenerationType, options?: { startFrameUrl?: string }) => {
+  const handleGenerate = async (mode: GenerationType, options?: { 
+    startFrameUrl?: string
+    prompt?: string
+    negativePrompt?: string
+    duration?: number
+    aspectRatio?: '16:9' | '9:16'
+    resolution?: '720p' | '1080p'
+  }) => {
     if (!selectedSegment) return
     await onGenerate(sceneId, selectedSegment.segmentId, mode, options)
   }

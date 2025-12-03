@@ -24,6 +24,25 @@ export async function uploadImageToBlob(
 }
 
 /**
+ * Upload a video buffer to Vercel Blob Storage
+ * @param videoBuffer - Video data as Buffer
+ * @param filename - Filename for the blob (e.g., 'segments/segment-123.mp4')
+ * @returns Public URL of the uploaded video
+ */
+export async function uploadVideoToBlob(
+  videoBuffer: Buffer,
+  filename: string
+): Promise<string> {
+  // Upload to Vercel Blob
+  const blob = await put(filename, videoBuffer, {
+    access: 'public',
+    contentType: 'video/mp4'
+  })
+  
+  return blob.url // Returns permanent public URL
+}
+
+/**
  * Check if a string is a base64 data URI
  */
 export function isBase64DataUri(str: string): boolean {
