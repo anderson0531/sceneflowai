@@ -3219,6 +3219,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           ...project,
           metadata: updatedMetadata
         })
+
+        // Persist to database
+        await fetch(`/api/projects/${project.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: updatedMetadata
+          })
+        })
       }
 
       try { const { toast } = require('sonner'); toast.success('Scene direction generated!') } catch {}

@@ -3652,7 +3652,10 @@ function SceneCard({
                           size="sm"
                           variant="ghost"
                           className="h-6 text-xs text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:text-purple-300 dark:hover:bg-purple-800/50"
-                          onClick={() => onGenerateSceneDirection?.(sceneIdx)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onGenerateSceneDirection?.(sceneIdx)
+                          }}
                           disabled={!onGenerateSceneDirection || generatingDirectionFor === sceneIdx}
                         >
                           {generatingDirectionFor === sceneIdx ? (
