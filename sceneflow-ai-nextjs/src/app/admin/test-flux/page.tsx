@@ -111,9 +111,9 @@ export default function FluxTestPage() {
   };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto bg-gray-50 min-h-screen text-black">
+    <div className="light p-8 max-w-6xl mx-auto bg-white min-h-screen" style={{ color: '#111827' }}>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Flux 1.1 Pro Test</h1>
+        <h1 className="text-3xl font-bold" style={{ color: '#111827' }}>Flux 1.1 Pro Test</h1>
         <Link href="/admin/test-imagen" className="text-blue-600 hover:underline">
           &larr; Back to Imagen Test
         </Link>
@@ -121,8 +121,8 @@ export default function FluxTestPage() {
 
       {/* Pro Tips Section */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 p-4 rounded-lg mb-6">
-        <h2 className="text-lg font-bold text-blue-900 mb-2">💡 Pro Tips for Better Results</h2>
-        <ul className="text-sm text-blue-800 space-y-1">
+        <h2 className="text-lg font-bold mb-2" style={{ color: '#1e3a5f' }}>💡 Pro Tips for Better Results</h2>
+        <ul className="text-sm space-y-1" style={{ color: '#1e40af' }}>
           <li><strong>Quality:</strong> Use 95-100 for production, 80-90 for testing</li>
           <li><strong>Format:</strong> PNG for transparency, WebP for best compression, JPEG for compatibility</li>
           <li><strong>Reference Images:</strong> Keep strength at 0.01-0.10 for style guidance without overriding prompt</li>
@@ -134,11 +134,11 @@ export default function FluxTestPage() {
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Controls */}
-        <div className="bg-white p-6 rounded-lg shadow-md space-y-4 h-fit">
+        <div className="bg-white p-6 rounded-lg shadow-md space-y-4 h-fit" style={{ color: '#111827' }}>
           <div>
-            <label className="block text-sm font-bold mb-1">
+            <label className="block text-sm font-bold mb-1" style={{ color: '#111827' }}>
               Prompt
-              <span className="ml-2 text-xs font-normal text-gray-500">(Be specific and detailed)</span>
+              <span className="ml-2 text-xs font-normal" style={{ color: '#6b7280' }}>(Be specific and detailed)</span>
             </label>
             <textarea 
               value={prompt} 
@@ -149,9 +149,9 @@ export default function FluxTestPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">
+            <label className="block text-sm font-bold mb-1" style={{ color: '#111827' }}>
               Aspect Ratio
-              <span className="ml-2 text-xs font-normal text-gray-500">(Choose based on use case)</span>
+              <span className="ml-2 text-xs font-normal" style={{ color: '#6b7280' }}>(Choose based on use case)</span>
             </label>
             <select 
               value={aspectRatio}
@@ -166,11 +166,11 @@ export default function FluxTestPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">
+            <label className="block text-sm font-bold mb-1" style={{ color: '#111827' }}>
               Reference Images
-              <span className="ml-2 text-xs font-normal text-gray-500">(Optional, max 3)</span>
+              <span className="ml-2 text-xs font-normal" style={{ color: '#6b7280' }}>(Optional, max 3)</span>
             </label>
-            <div className="text-xs text-blue-600 mb-2">
+            <div className="text-xs mb-2" style={{ color: '#2563eb' }}>
               💡 For style only: Keep strength low (0.01-0.10)
             </div>
             <input
@@ -200,7 +200,7 @@ export default function FluxTestPage() {
 
           {referenceImages.length > 0 && (
             <div>
-              <label className="block text-sm font-bold mb-1">Image Prompt Strength (0.0 - 1.0)</label>
+              <label className="block text-sm font-bold mb-1" style={{ color: '#111827' }}>Image Prompt Strength (0.0 - 1.0)</label>
               <input
                 type="range"
                 min="0"
@@ -210,8 +210,8 @@ export default function FluxTestPage() {
                 onChange={(e) => setImagePromptStrength(Number(e.target.value))}
                 className="w-full"
               />
-              <div className="text-xs text-gray-600 text-center font-bold">{imagePromptStrength.toFixed(2)}</div>
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="text-xs text-center font-bold" style={{ color: '#4b5563' }}>{imagePromptStrength.toFixed(2)}</div>
+              <div className="text-xs mt-1" style={{ color: '#6b7280' }}>
                 <strong>Style reference only:</strong> 0.01-0.10 (recommended)<br/>
                 <strong>Balanced:</strong> 0.20-0.40<br/>
                 <strong>Strong influence:</strong> 0.50+
@@ -220,9 +220,9 @@ export default function FluxTestPage() {
           )}
 
           <div>
-            <label className="block text-sm font-bold mb-1">
+            <label className="block text-sm font-bold mb-1" style={{ color: '#111827' }}>
               Output Quality
-              <span className="ml-2 text-xs font-normal text-gray-500">(Higher = better but slower)</span>
+              <span className="ml-2 text-xs font-normal" style={{ color: '#6b7280' }}>(Higher = better but slower)</span>
             </label>
             <select 
               value={outputQuality}
@@ -237,9 +237,9 @@ export default function FluxTestPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">
+            <label className="block text-sm font-bold mb-1" style={{ color: '#111827' }}>
               Output Format
-              <span className="ml-2 text-xs font-normal text-gray-500">(File type)</span>
+              <span className="ml-2 text-xs font-normal" style={{ color: '#6b7280' }}>(File type)</span>
             </label>
             <select 
               value={outputFormat}
@@ -253,9 +253,9 @@ export default function FluxTestPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">
+            <label className="block text-sm font-bold mb-1" style={{ color: '#111827' }}>
               Safety Tolerance
-              <span className="ml-2 text-xs font-normal text-gray-500">(0-6, increase if blocked)</span>
+              <span className="ml-2 text-xs font-normal" style={{ color: '#6b7280' }}>(0-6, increase if blocked)</span>
             </label>
             <select 
               value={safetyTolerance}
@@ -273,9 +273,9 @@ export default function FluxTestPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">
+            <label className="block text-sm font-bold mb-1" style={{ color: '#111827' }}>
               Seed
-              <span className="ml-2 text-xs font-normal text-gray-500">(Optional, for reproducibility)</span>
+              <span className="ml-2 text-xs font-normal" style={{ color: '#6b7280' }}>(Optional, for reproducibility)</span>
             </label>
             <input
               type="number"
@@ -284,7 +284,7 @@ export default function FluxTestPage() {
               placeholder="Random (leave blank for variety)"
               className="w-full p-2 border rounded text-sm text-gray-900 bg-white"
             />
-            <div className="text-xs text-blue-600 mt-1">
+            <div className="text-xs mt-1" style={{ color: '#2563eb' }}>
               💡 Use same seed to get identical results
             </div>
           </div>
@@ -297,9 +297,9 @@ export default function FluxTestPage() {
                 onChange={(e) => setPromptUpsampling(e.target.checked)}
                 className="w-4 h-4"
               />
-              <span className="text-sm font-bold text-green-900">Prompt Upsampling</span>
+              <span className="text-sm font-bold" style={{ color: '#14532d' }}>Prompt Upsampling</span>
             </label>
-            <div className="text-xs text-green-700 mt-1">
+            <div className="text-xs mt-1" style={{ color: '#15803d' }}>
               ✨ Recommended: Automatically enhances your prompt for better results
             </div>
           </div>
@@ -330,7 +330,7 @@ export default function FluxTestPage() {
         <div className="md:col-span-2 space-y-6">
           {result && result.success && (
             <div className="space-y-2">
-              <h3 className="font-bold text-center">Generated Image (Flux 1.1 Pro)</h3>
+              <h3 className="font-bold text-center" style={{ color: '#111827' }}>Generated Image (Flux 1.1 Pro)</h3>
               <div className="relative border-2 border-gray-200 rounded overflow-hidden bg-gray-100 min-h-[300px] flex items-center justify-center">
                 <img 
                   src={result.imageUrl} 
@@ -338,7 +338,7 @@ export default function FluxTestPage() {
                   alt="Generated" 
                 />
               </div>
-              <div className="text-center text-sm text-gray-500 mt-2">
+              <div className="text-center text-sm mt-2" style={{ color: '#6b7280' }}>
                 <a href={result.imageUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                   Open Full Size
                 </a>
@@ -347,13 +347,13 @@ export default function FluxTestPage() {
           )}
           
           {!result && !loading && (
-            <div className="flex items-center justify-center h-64 bg-gray-100 rounded border-2 border-dashed border-gray-300 text-gray-400">
+            <div className="flex items-center justify-center h-64 bg-gray-100 rounded border-2 border-dashed border-gray-300" style={{ color: '#9ca3af' }}>
               Generated image will appear here
             </div>
           )}
 
           {loading && (
-            <div className="flex items-center justify-center h-64 bg-gray-100 rounded border-2 border-dashed border-gray-300 text-gray-400">
+            <div className="flex items-center justify-center h-64 bg-gray-100 rounded border-2 border-dashed border-gray-300" style={{ color: '#9ca3af' }}>
               <div className="animate-pulse">Generating...</div>
             </div>
           )}
@@ -362,11 +362,11 @@ export default function FluxTestPage() {
 
       {/* Video Generation Section */}
       <div className="mt-12 border-t-4 border-indigo-500 pt-8">
-        <h2 className="text-2xl font-bold mb-4 text-indigo-900">🎬 Video Generation Test</h2>
+        <h2 className="text-2xl font-bold mb-4" style={{ color: '#312e81' }}>🎬 Video Generation Test</h2>
         
         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border-l-4 border-indigo-500 p-4 rounded-lg mb-6">
-          <h3 className="text-lg font-bold text-indigo-900 mb-2">💡 Video Generation Tips</h3>
-          <ul className="text-sm text-indigo-800 space-y-1">
+          <h3 className="text-lg font-bold mb-2" style={{ color: '#312e81' }}>💡 Video Generation Tips</h3>
+          <ul className="text-sm space-y-1" style={{ color: '#3730a3' }}>
             <li><strong>Image-to-Video:</strong> Use a generated or uploaded image as the starting frame</li>
             <li><strong>Duration:</strong> 5 seconds is standard, longer videos take more time</li>
             <li><strong>Prompt:</strong> Describe camera movement and action (pan, zoom, walk forward)</li>
@@ -375,11 +375,11 @@ export default function FluxTestPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Video Controls */}
-          <div className="bg-white p-6 rounded-lg shadow-md space-y-4 h-fit">
+          <div className="bg-white p-6 rounded-lg shadow-md space-y-4 h-fit" style={{ color: '#111827' }}>
             <div>
-              <label className="block text-sm font-bold mb-1 text-gray-900">
+              <label className="block text-sm font-bold mb-1" style={{ color: '#111827' }}>
                 Video Prompt
-                <span className="ml-2 text-xs font-normal text-gray-500">(Describe motion/action)</span>
+                <span className="ml-2 text-xs font-normal" style={{ color: '#6b7280' }}>(Describe motion/action)</span>
               </label>
               <textarea 
                 value={videoPrompt} 
@@ -390,9 +390,9 @@ export default function FluxTestPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold mb-1 text-gray-900">
+              <label className="block text-sm font-bold mb-1" style={{ color: '#111827' }}>
                 Source Image
-                <span className="ml-2 text-xs font-normal text-gray-500">(Starting frame)</span>
+                <span className="ml-2 text-xs font-normal" style={{ color: '#6b7280' }}>(Starting frame)</span>
               </label>
               
               {result?.imageUrl && (
@@ -425,7 +425,7 @@ export default function FluxTestPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold mb-1 text-gray-900">
+              <label className="block text-sm font-bold mb-1" style={{ color: '#111827' }}>
                 Duration (seconds)
               </label>
               <select 
@@ -448,7 +448,7 @@ export default function FluxTestPage() {
             </button>
 
             {!videoSourceImage && !result?.imageUrl && (
-              <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
+              <div className="text-xs bg-amber-50 p-2 rounded" style={{ color: '#d97706' }}>
                 ⚠️ Generate an image first or upload a source image
               </div>
             )}
@@ -471,7 +471,7 @@ export default function FluxTestPage() {
           <div className="md:col-span-2 space-y-6">
             {videoResult && videoResult.success && (
               <div className="space-y-2">
-                <h3 className="font-bold text-center text-gray-900">Generated Video</h3>
+                <h3 className="font-bold text-center" style={{ color: '#111827' }}>Generated Video</h3>
                 <div className="relative border-2 border-gray-200 rounded overflow-hidden bg-gray-100 min-h-[300px] flex items-center justify-center">
                   <video 
                     src={videoResult.videoUrl} 
@@ -481,7 +481,7 @@ export default function FluxTestPage() {
                     className="max-w-full max-h-[600px] shadow-lg" 
                   />
                 </div>
-                <div className="text-center text-sm text-gray-500 mt-2">
+                <div className="text-center text-sm mt-2" style={{ color: '#6b7280' }}>
                   <a href={videoResult.videoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                     Download Video
                   </a>
@@ -490,13 +490,13 @@ export default function FluxTestPage() {
             )}
             
             {!videoResult && !videoLoading && (
-              <div className="flex items-center justify-center h-64 bg-gray-100 rounded border-2 border-dashed border-gray-300 text-gray-500">
+              <div className="flex items-center justify-center h-64 bg-gray-100 rounded border-2 border-dashed border-gray-300" style={{ color: '#6b7280' }}>
                 Generated video will appear here
               </div>
             )}
 
             {videoLoading && (
-              <div className="flex flex-col items-center justify-center h-64 bg-gray-100 rounded border-2 border-dashed border-gray-300 text-gray-500">
+              <div className="flex flex-col items-center justify-center h-64 bg-gray-100 rounded border-2 border-dashed border-gray-300" style={{ color: '#6b7280' }}>
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
                 <div>Generating video... This may take 1-3 minutes</div>
               </div>
