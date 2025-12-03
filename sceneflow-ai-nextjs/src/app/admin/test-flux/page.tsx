@@ -15,6 +15,10 @@ export default function FluxTestPage() {
   const [promptUpsampling, setPromptUpsampling] = useState<boolean>(true);
   const [imagePromptStrength, setImagePromptStrength] = useState<number>(0.05);
   const [result, setResult] = useState<any>(null);
+  
+  // Platform and model selection
+  const [platform, setPlatform] = useState<string>('fal');
+  const [model, setModel] = useState<string>('flux-pro');
 
   // Video generation state
   const [videoLoading, setVideoLoading] = useState(false);
@@ -22,6 +26,7 @@ export default function FluxTestPage() {
   const [videoSourceImage, setVideoSourceImage] = useState<string>('');
   const [videoDuration, setVideoDuration] = useState<number>(5);
   const [videoResult, setVideoResult] = useState<any>(null);
+
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -67,7 +72,9 @@ export default function FluxTestPage() {
           safetyTolerance,
           seed,
           promptUpsampling,
-          imagePromptStrength
+          imagePromptStrength,
+          platform,
+          model
         }),
       });
       const data = await res.json();
@@ -113,10 +120,57 @@ export default function FluxTestPage() {
   return (
     <div className="light p-8 max-w-6xl mx-auto bg-white min-h-screen" style={{ color: '#111827' }}>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold" style={{ color: '#111827' }}>Flux 1.1 Pro Test</h1>
+        <h1 className="text-3xl font-bold" style={{ color: '#111827' }}>Image Generation Test</h1>
         <Link href="/admin/test-imagen" className="text-blue-600 hover:underline">
           &larr; Back to Imagen Test
         </Link>
+      </div>
+
+      {/* Platform & Model Selection */}
+      <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500 p-4 rounded-lg mb-6">
+        <h2 className="text-lg font-bold mb-3" style={{ color: '#581c87' }}>🎨 Platform & Model Selection</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-bold mb-1" style={{ color: '#111827' }}>Platform</label>
+            <select 
+              value={platform}
+              onChange={(e) => {
+                setPlatform(e.target.value);
+                if (e.target.value === 'imagen') setModel('imagen-3');
+                else setModel('flux-pro');
+              }}
+              className="w-full p-2 border rounded text-sm text-gray-900 bg-white"
+            >
+              <option value="fal">FAL.ai (Fast & Reliable)</option>
+              <option value="replicate">Replicate (Fallback)</option>
+              <option value="imagen">Google Imagen 3 (Best Quality)</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-bold mb-1" style={{ color: '#111827' }}>Model</label>
+            <select 
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              className="w-full p-2 border rounded text-sm text-gray-900 bg-white"
+              disabled={platform === 'imagen'}
+            >
+              {platform === 'imagen' ? (
+                <option value="imagen-3">Imagen 3</option>
+              ) : (
+                <>
+                  <option value="flux-pro">Flux Pro 1.1 (Best)</option>
+                  <option value="flux-dev">Flux Dev (Good)</option>
+                  <option value="flux-schnell">Flux Schnell (Fast)</option>
+                </>
+              )}
+            </select>
+          </div>
+        </div>
+        <div className="mt-2 text-xs" style={{ color: '#6b21a8' }}>
+          {platform === 'fal' && '⚡ FAL.ai: Fastest Flux hosting, 3-8 second generations'}
+          {platform === 'replicate' && '🔄 Replicate: Popular but may queue during peak times'}
+          {platform === 'imagen' && '✨ Imagen 3: Google\'s best model, excellent prompt following'}
+        </div>
       </div>
 
       {/* Pro Tips Section */}
@@ -309,7 +363,7 @@ export default function FluxTestPage() {
             disabled={loading}
             className="w-full bg-black text-white py-3 rounded font-bold hover:bg-gray-800 disabled:opacity-50"
           >
-            {loading ? 'Generating with Flux...' : 'Generate Image'}
+            {loading ? `Generating with ${platform === 'imagen' ? 'Imagen' : 'Flux'}...` : 'Generate Image'}
           </button>
 
           {result?.error && (
@@ -330,11 +384,16 @@ export default function FluxTestPage() {
         <div className="md:col-span-2 space-y-6">
           {result && result.success && (
             <div className="space-y-2">
-              <h3 className="font-bold text-center" style={{ color: '#111827' }}>Generated Image (Flux 1.1 Pro)</h3>
-              <div className="relative border-2 border-gray-200 rounded overflow-hidden bg-gray-100 min-h-[300px] flex items-center justify-center">
+              <h3 className="font-bold text-center" style={{ color: '#111827' }}>
+                Generated Image 
+                {result.provider && <span className="text-sm font-normal ml-2" style={{ color: '#6b7280' }}>
+                  (via {result.provider === 'fal' ? 'FAL.ai' : result.provider === 'replicate' ? 'Replicate' : 'Imagen'} - {result.model || model})
+                </span>}
+              </h3>
+              <div className="relative border-2 border-gray-200 rounded overflow-hidden bg-gray-100 flex items-center justify-center" style={{ aspectRatio: '16/9' }}>
                 <img 
                   src={result.imageUrl} 
-                  className="max-w-full max-h-[600px] object-contain shadow-lg" 
+                  className="w-full h-full object-contain shadow-lg" 
                   alt="Generated" 
                 />
               </div>
@@ -347,14 +406,14 @@ export default function FluxTestPage() {
           )}
           
           {!result && !loading && (
-            <div className="flex items-center justify-center h-64 bg-gray-100 rounded border-2 border-dashed border-gray-300" style={{ color: '#9ca3af' }}>
+            <div className="flex items-center justify-center bg-gray-100 rounded border-2 border-dashed border-gray-300" style={{ color: '#9ca3af', aspectRatio: '16/9' }}>
               Generated image will appear here
             </div>
           )}
 
           {loading && (
-            <div className="flex items-center justify-center h-64 bg-gray-100 rounded border-2 border-dashed border-gray-300" style={{ color: '#9ca3af' }}>
-              <div className="animate-pulse">Generating...</div>
+            <div className="flex items-center justify-center bg-gray-100 rounded border-2 border-dashed border-gray-300" style={{ color: '#9ca3af', aspectRatio: '16/9' }}>
+              <div className="animate-pulse">Generating with {platform === 'imagen' ? 'Imagen 3' : `Flux (${platform})`}...</div>
             </div>
           )}
         </div>

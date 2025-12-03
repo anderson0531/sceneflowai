@@ -1,30 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export const maxDuration = 300; // 5 minutes for video generation
+export const maxDuration = 300;
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     
-    // Check if this is a video generation request
     if (body.mode === 'video') {
       return handleVideoGeneration(body);
     }
     
-    // Otherwise, handle image generation
     return handleImageGeneration(body);
   } catch (error: any) {
-    console.error("Flux API Error:", error);
+    console.error("Image Generation Error:", error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
 async function handleVideoGeneration(body: any) {
-  const { prompt, sourceImage, duration = 5 } = body;
+  const { sourceImage } = body;
 
   if (!process.env.REPLICATE_API_TOKEN) {
     return NextResponse.json(
-      { success: false, error: 'REPLICATE_API_TOKEN is not set in environment variables' },
+      { success: false, error: 'REPLICATE_API_TOKEN is not set' },
       { status: 500 }
     );
   }
@@ -36,27 +34,14 @@ async function handleVideoGeneration(body: any) {
     );
   }
 
-  // Use Stable Video Diffusion via Replicate for image-to-video
-  const input: any = {
-    input_image: sourceImage,
-    motion_bucket_id: 127, // Higher = more motion
-    fps: 24,
-    cond_aug: 0.02,
-    decoding_t: 7,
-    video_length: duration === 3 ? 'short' : duration === 10 ? 'long' : 'medium',
-  };
-
-  // If prompt is provided, use a text-to-video model instead
-  // For now, we'll use the image-to-video approach with SVD
-
   const response = await fetch("https://api.replicate.com/v1/predictions", {
     method: "POST",
     headers: {
-      "Authorization": `Token ${process.env.REPLICATE_API_TOKEN}`,
+      "Authorization": "Token " + process.env.REPLICATE_API_TOKEN,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      version: "3f0457e4619daac51203dedb472816fd4af51f3149fa7a9e0b5ffcf1b8172438", // stable-video-diffusion
+      version: "3f0457e4619daac51203dedb472816fd4af51f3149fa7a9e0b5ffcf1b8172438",
       input: {
         input_image: sourceImage,
         motion_bucket_id: 127,
@@ -70,38 +55,24 @@ async function handleVideoGeneration(body: any) {
   if (!response.ok) {
     const error = await response.json();
     let errorMessage = error.detail || "Failed to create video prediction";
-    
-    if (response.status === 402) {
-      errorMessage = "❌ Payment Required: Your Replicate account needs billing setup";
-    } else if (response.status === 401) {
-      errorMessage = "❌ Invalid API Token";
-    }
-    
-    return NextResponse.json({ 
-      success: false, 
-      error: errorMessage,
-      statusCode: response.status 
-    }, { status: response.status });
+    if (response.status === 402) errorMessage = "Payment Required";
+    else if (response.status === 401) errorMessage = "Invalid API Token";
+    return NextResponse.json({ success: false, error: errorMessage }, { status: response.status });
   }
 
   const prediction = await response.json();
   let status = prediction.status;
   let logs = "";
   let output = null;
-
-  // Poll for completion (video takes longer)
   const getUrl = prediction.urls.get;
   let attempts = 0;
-  const maxAttempts = 180; // 3 minutes max polling
   
-  while (status !== "succeeded" && status !== "failed" && status !== "canceled" && attempts < maxAttempts) {
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2s between polls
+  while (status !== "succeeded" && status !== "failed" && status !== "canceled" && attempts < 180) {
+    await new Promise(resolve => setTimeout(resolve, 2000));
     attempts++;
     
     const pollResponse = await fetch(getUrl, {
-      headers: {
-        "Authorization": `Token ${process.env.REPLICATE_API_TOKEN}`,
-      },
+      headers: { "Authorization": "Token " + process.env.REPLICATE_API_TOKEN },
     });
     
     const pollData = await pollResponse.json();
@@ -135,110 +106,257 @@ async function handleImageGeneration(body: any) {
     safetyTolerance = 2,
     seed,
     promptUpsampling = true,
-    imagePromptStrength = 0.05
+    imagePromptStrength = 0.05,
+    platform = "fal",
+    model = "flux-pro"
   } = body;
 
-    if (!process.env.REPLICATE_API_TOKEN) {
-      return NextResponse.json(
-        { success: false, error: 'REPLICATE_API_TOKEN is not set in environment variables' },
-        { status: 500 }
-      );
-    }
+  if (platform === "imagen") {
+    return handleImagenGeneration({ prompt, aspectRatio });
+  } else if (platform === "fal") {
+    return handleFalGeneration({ prompt, aspectRatio, model, referenceImages, imagePromptStrength });
+  } else {
+    return handleReplicateGeneration({ 
+      prompt, aspectRatio, referenceImages, outputQuality, outputFormat, 
+      safetyTolerance, seed, promptUpsampling, imagePromptStrength, model 
+    });
+  }
+}
 
-    // Build input object
-    const input: any = {
-      prompt,
-      aspect_ratio: aspectRatio,
-      safety_tolerance: safetyTolerance,
-      output_format: outputFormat,
-      output_quality: outputQuality,
-      prompt_upsampling: promptUpsampling
-    };
+async function handleFalGeneration(params: any) {
+  const { prompt, aspectRatio, model, referenceImages, imagePromptStrength } = params;
 
-    // Add seed if provided
-    if (seed !== undefined && seed !== null) {
-      input.seed = seed;
-    }
+  if (!process.env.FAL_API_KEY) {
+    return NextResponse.json(
+      { success: false, error: 'FAL_API_KEY is not set in environment variables' },
+      { status: 500 }
+    );
+  }
 
-    // Add reference images if provided (up to 3)
-    // Flux 1.1 Pro supports multiple image_prompt parameters
-    if (referenceImages && referenceImages.length > 0) {
-      // Use up to 3 reference images
-      const imagesToUse = referenceImages.slice(0, 3);
-      if (imagesToUse.length === 1) {
-        input.image_prompt = imagesToUse[0];
-      } else if (imagesToUse.length === 2) {
-        input.image_prompt = imagesToUse[0];
-        input.image_prompt_2 = imagesToUse[1];
-      } else if (imagesToUse.length === 3) {
-        input.image_prompt = imagesToUse[0];
-        input.image_prompt_2 = imagesToUse[1];
-        input.image_prompt_3 = imagesToUse[2];
-      }
-      // Set strength for all reference images
-      input.image_prompt_strength = imagePromptStrength;
-    }
+  const modelMap: Record<string, string> = {
+    "flux-pro": "fal-ai/flux-pro/v1.1",
+    "flux-dev": "fal-ai/flux/dev",
+    "flux-schnell": "fal-ai/flux/schnell",
+  };
 
-    // 1. Create Prediction
-    const response = await fetch("https://api.replicate.com/v1/models/black-forest-labs/flux-1.1-pro/predictions", {
+  const falModel = modelMap[model] || "fal-ai/flux-pro/v1.1";
+
+  const input: any = {
+    prompt,
+    image_size: aspectRatio === "16:9" ? "landscape_16_9" : 
+                aspectRatio === "9:16" ? "portrait_16_9" :
+                aspectRatio === "1:1" ? "square" : "landscape_16_9",
+    num_images: 1,
+    enable_safety_checker: true,
+  };
+
+  if (referenceImages && referenceImages.length > 0) {
+    input.image_url = referenceImages[0];
+    input.strength = 1 - imagePromptStrength;
+  }
+
+  try {
+    const submitResponse = await fetch("https://queue.fal.run/" + falModel, {
       method: "POST",
       headers: {
-        "Authorization": `Token ${process.env.REPLICATE_API_TOKEN}`,
+        "Authorization": "Key " + process.env.FAL_API_KEY,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ input }),
+      body: JSON.stringify(input),
     });
 
-    if (response.status !== 201) {
-      const error = await response.json();
-      let errorMessage = error.detail || "Failed to create prediction";
-      
-      // Provide specific error messages based on status code
-      if (response.status === 402) {
-        errorMessage = "❌ Payment Required: Your Replicate account needs billing setup or has insufficient credits. Please add payment method at replicate.com/account/billing";
-      } else if (response.status === 401) {
-        errorMessage = "❌ Invalid API Token: Please check your REPLICATE_API_TOKEN environment variable";
-      } else if (response.status === 429) {
-        errorMessage = "❌ Rate Limited: Too many requests. Please wait a moment and try again";
-      }
-      
-      return NextResponse.json({ 
-        success: false, 
-        error: errorMessage,
-        statusCode: response.status 
-      }, { status: response.status });
+    if (!submitResponse.ok) {
+      const error = await submitResponse.json();
+      throw new Error(error.detail || error.message || "FAL submission failed");
     }
 
-    const prediction = await response.json();
-    let status = prediction.status;
-    let logs = "";
-    let output = null;
-
-    // 2. Poll for completion
-    const getUrl = prediction.urls.get;
+    const submitData = await submitResponse.json();
     
-    while (status !== "succeeded" && status !== "failed" && status !== "canceled") {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
-      
-      const pollResponse = await fetch(getUrl, {
-        headers: {
-          "Authorization": `Token ${process.env.REPLICATE_API_TOKEN}`,
-        },
+    if (submitData.images && submitData.images.length > 0) {
+      return NextResponse.json({
+        success: true,
+        imageUrl: submitData.images[0].url,
+        provider: "fal",
+        model: falModel,
       });
-      
-      const pollData = await pollResponse.json();
-      status = pollData.status;
-      logs = pollData.logs;
-      output = pollData.output;
-      
-      if (status === "failed") {
-        return NextResponse.json({ success: false, error: pollData.error, logs }, { status: 500 });
+    }
+
+    const requestId = submitData.request_id;
+    let attempts = 0;
+
+    while (attempts < 60) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      attempts++;
+
+      const statusResponse = await fetch("https://queue.fal.run/" + falModel + "/requests/" + requestId + "/status", {
+        headers: { "Authorization": "Key " + process.env.FAL_API_KEY },
+      });
+
+      const statusData = await statusResponse.json();
+
+      if (statusData.status === "COMPLETED") {
+        const resultResponse = await fetch("https://queue.fal.run/" + falModel + "/requests/" + requestId, {
+          headers: { "Authorization": "Key " + process.env.FAL_API_KEY },
+        });
+        const resultData = await resultResponse.json();
+        
+        if (resultData.images && resultData.images.length > 0) {
+          return NextResponse.json({
+            success: true,
+            imageUrl: resultData.images[0].url,
+            provider: "fal",
+            model: falModel,
+          });
+        }
+      } else if (statusData.status === "FAILED") {
+        throw new Error(statusData.error || "FAL generation failed");
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      imageUrl: Array.isArray(output) ? output[0] : output, // Flux 1.1 Pro returns a string URL (or array of strings)
-      logs
+    throw new Error("FAL generation timed out");
+  } catch (error: any) {
+    console.error("FAL Error:", error);
+    console.log("Falling back to Replicate...");
+    return handleReplicateGeneration({
+      prompt,
+      aspectRatio,
+      referenceImages,
+      imagePromptStrength,
+      model,
+      outputQuality: 90,
+      outputFormat: "jpg",
+      safetyTolerance: 2,
+      promptUpsampling: true,
     });
+  }
+}
+
+async function handleImagenGeneration(params: any) {
+  const { prompt, aspectRatio } = params;
+
+  if (!process.env.GOOGLE_CLOUD_PROJECT) {
+    return NextResponse.json(
+      { success: false, error: 'GOOGLE_CLOUD_PROJECT is not set. Imagen requires Vertex AI setup.' },
+      { status: 500 }
+    );
+  }
+
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const response = await fetch(baseUrl + "/api/admin/test-imagen", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, aspectRatio }),
+    });
+
+    const data = await response.json();
+    
+    if (data.success) {
+      return NextResponse.json({
+        success: true,
+        imageUrl: data.imageUrl,
+        provider: "imagen",
+        model: "imagen-3",
+      });
+    } else {
+      throw new Error(data.error || "Imagen generation failed");
+    }
+  } catch (error: any) {
+    return NextResponse.json({ 
+      success: false, 
+      error: "Imagen error: " + error.message 
+    }, { status: 500 });
+  }
+}
+
+async function handleReplicateGeneration(params: any) {
+  const { 
+    prompt, aspectRatio, referenceImages, outputQuality, outputFormat, 
+    safetyTolerance, seed, promptUpsampling, imagePromptStrength, model 
+  } = params;
+
+  if (!process.env.REPLICATE_API_TOKEN) {
+    return NextResponse.json(
+      { success: false, error: 'REPLICATE_API_TOKEN is not set' },
+      { status: 500 }
+    );
+  }
+
+  const modelEndpoints: Record<string, string> = {
+    "flux-pro": "black-forest-labs/flux-1.1-pro",
+    "flux-dev": "black-forest-labs/flux-dev",
+    "flux-schnell": "black-forest-labs/flux-schnell",
+  };
+
+  const replicateModel = modelEndpoints[model] || "black-forest-labs/flux-1.1-pro";
+
+  const input: any = {
+    prompt,
+    aspect_ratio: aspectRatio,
+    safety_tolerance: safetyTolerance,
+    output_format: outputFormat,
+    output_quality: outputQuality,
+    prompt_upsampling: promptUpsampling
+  };
+
+  if (seed !== undefined && seed !== null) {
+    input.seed = seed;
+  }
+
+  if (referenceImages && referenceImages.length > 0) {
+    const imagesToUse = referenceImages.slice(0, 3);
+    if (imagesToUse.length >= 1) input.image_prompt = imagesToUse[0];
+    if (imagesToUse.length >= 2) input.image_prompt_2 = imagesToUse[1];
+    if (imagesToUse.length >= 3) input.image_prompt_3 = imagesToUse[2];
+    input.image_prompt_strength = imagePromptStrength;
+  }
+
+  const response = await fetch("https://api.replicate.com/v1/models/" + replicateModel + "/predictions", {
+    method: "POST",
+    headers: {
+      "Authorization": "Token " + process.env.REPLICATE_API_TOKEN,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ input }),
+  });
+
+  if (response.status !== 201) {
+    const error = await response.json();
+    let errorMessage = error.detail || "Failed to create prediction";
+    if (response.status === 402) errorMessage = "Payment Required";
+    else if (response.status === 401) errorMessage = "Invalid API Token";
+    else if (response.status === 429) errorMessage = "Queue is full; wait and retry";
+    return NextResponse.json({ success: false, error: errorMessage }, { status: response.status });
+  }
+
+  const prediction = await response.json();
+  let status = prediction.status;
+  let logs = "";
+  let output = null;
+  const getUrl = prediction.urls.get;
+  
+  while (status !== "succeeded" && status !== "failed" && status !== "canceled") {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    const pollResponse = await fetch(getUrl, {
+      headers: { "Authorization": "Token " + process.env.REPLICATE_API_TOKEN },
+    });
+    
+    const pollData = await pollResponse.json();
+    status = pollData.status;
+    logs = pollData.logs;
+    output = pollData.output;
+    
+    if (status === "failed") {
+      return NextResponse.json({ success: false, error: pollData.error, logs }, { status: 500 });
+    }
+  }
+
+  return NextResponse.json({
+    success: true,
+    imageUrl: Array.isArray(output) ? output[0] : output,
+    provider: "replicate",
+    model: replicateModel,
+    logs
+  });
 }
