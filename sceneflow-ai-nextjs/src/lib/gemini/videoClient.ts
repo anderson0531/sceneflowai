@@ -277,29 +277,59 @@ export async function checkVideoGenerationStatus(
       }
 
       // Extract video URL from response
+      // The API may return in different formats:
+      // 1. data.response.generateVideoResponse.generatedSamples[].video (predictLongRunning format)
+      // 2. data.response.generatedVideos[].video (generateVideos format)
+      // 3. data.result.generatedVideos[].video (alternative format)
+      const generateVideoResponse = data.response?.generateVideoResponse
+      const generatedSamples = generateVideoResponse?.generatedSamples
       const generatedVideos = data.response?.generatedVideos || data.result?.generatedVideos
-      if (generatedVideos && generatedVideos.length > 0) {
-        const video = generatedVideos[0].video
-        // The video object may have uri, url, or need to be downloaded
+      
+      // Try generatedSamples first (predictLongRunning response format)
+      if (generatedSamples && generatedSamples.length > 0) {
+        const video = generatedSamples[0].video
         const videoUrl = video?.uri || video?.url
         
         if (videoUrl) {
+          console.log('[Veo Video] Video completed! URI:', videoUrl.substring(0, 100))
           return {
             status: 'COMPLETED',
             videoUrl: videoUrl,
             operationName: operationName
           }
-        } else {
+        } else if (video?.name) {
           // Video may need to be downloaded using Files API
           return {
             status: 'COMPLETED',
             operationName: operationName,
-            // Return the video object for download handling
-            videoUrl: `file:${video.name || operationName}`
+            videoUrl: `file:${video.name}`
+          }
+        }
+      }
+      
+      // Fallback to generatedVideos format
+      if (generatedVideos && generatedVideos.length > 0) {
+        const video = generatedVideos[0].video
+        const videoUrl = video?.uri || video?.url
+        
+        if (videoUrl) {
+          console.log('[Veo Video] Video completed! URI:', videoUrl.substring(0, 100))
+          return {
+            status: 'COMPLETED',
+            videoUrl: videoUrl,
+            operationName: operationName
+          }
+        } else if (video?.name) {
+          return {
+            status: 'COMPLETED',
+            operationName: operationName,
+            videoUrl: `file:${video.name}`
           }
         }
       }
 
+      // Log full response for debugging if we couldn't extract the video
+      console.error('[Veo Video] Could not extract video from response:', JSON.stringify(data).substring(0, 500))
       return {
         status: 'FAILED',
         error: 'No video in completed response'
