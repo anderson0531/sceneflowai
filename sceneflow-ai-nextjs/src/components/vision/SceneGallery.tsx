@@ -160,7 +160,10 @@ export function SceneGallery({
                   onToggleProduction={() =>
                     setOpenProductionScene(isProductionOpen ? null : sceneKey)
                   }
-                  onClick={() => setSelectedScene(idx)}
+                  onClick={() => {
+                    setSelectedScene(idx)
+                    setOpenProductionScene(isProductionOpen ? null : sceneKey)
+                  }}
                   onRegenerate={() => onRegenerateScene(idx)}
                   onGenerate={async (prompt) => {
                     setGeneratingScenes((prev) => new Set(prev).add(idx))
