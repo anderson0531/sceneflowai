@@ -92,9 +92,45 @@ export async function PUT(
         
         // Deep merge script if it exists in both
         if (body.metadata.visionPhase.script && existingMetadata.visionPhase.script) {
+          const incomingScript = body.metadata.visionPhase.script
+          const existingScript = existingMetadata.visionPhase.script
+          
           mergedMetadata.visionPhase.script = {
-            ...existingMetadata.visionPhase.script,
-            ...body.metadata.visionPhase.script
+            ...existingScript,
+            ...incomingScript
+          }
+          
+          // Deep merge script.script if it exists in both
+          if (incomingScript.script && existingScript.script) {
+            mergedMetadata.visionPhase.script.script = {
+              ...existingScript.script,
+              ...incomingScript.script
+            }
+            
+            // Deep merge scenes array - preserve fields like sceneDirection from existing scenes
+            if (incomingScript.script.scenes && existingScript.script.scenes) {
+              const existingScenes = existingScript.script.scenes
+              const incomingScenes = incomingScript.script.scenes
+              
+              mergedMetadata.visionPhase.script.script.scenes = incomingScenes.map((incomingScene: any, idx: number) => {
+                const existingScene = existingScenes[idx]
+                if (!existingScene) return incomingScene
+                
+                // Merge scene data, preserving sceneDirection if not explicitly being updated
+                return {
+                  ...existingScene,
+                  ...incomingScene,
+                  // Preserve sceneDirection from either source (incoming takes precedence)
+                  sceneDirection: incomingScene.sceneDirection || existingScene.sceneDirection
+                }
+              })
+              
+              console.log('[Projects PUT] Deep merged scenes:', {
+                existingScenesCount: existingScenes.length,
+                incomingScenesCount: incomingScenes.length,
+                mergedScenesWithDirection: mergedMetadata.visionPhase.script.script.scenes.filter((s: any) => !!s.sceneDirection).length
+              })
+            }
           }
         }
       }

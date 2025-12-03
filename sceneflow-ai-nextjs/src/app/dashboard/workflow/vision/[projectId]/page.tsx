@@ -18,7 +18,7 @@ import { Button, buttonVariants } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, Eye, Sparkles, BarChart3 } from 'lucide-react'
+import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, Eye, Sparkles, BarChart3, Save } from 'lucide-react'
 
 const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement> & { size?: number }> = ({ size = 32, className, ...props }) => (
   <svg
@@ -482,6 +482,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [characters, setCharacters] = useState<any[]>([])
   const [scenes, setScenes] = useState<Scene[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [uploadingRef, setUploadingRef] = useState<Record<string, boolean>>({})
   const [validationWarnings, setValidationWarnings] = useState<Record<number, string>>({})
   
@@ -3166,6 +3167,59 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  // Handle manual save project - forces save of all current state to database
+  const handleSaveProject = async () => {
+    if (!project || !script) {
+      try { const { toast } = require('sonner'); toast.error('No project data to save') } catch {}
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      const currentScenes = script?.script?.scenes || []
+      
+      console.log('[SaveProject] Saving project with scenes:', currentScenes.map((s: any, idx: number) => ({
+        idx,
+        hasImage: !!s.imageUrl,
+        hasNarration: !!s.narrationAudioUrl,
+        hasSceneDirection: !!s.sceneDirection,
+        sceneDirectionKeys: s.sceneDirection ? Object.keys(s.sceneDirection) : []
+      })))
+
+      const payload = {
+        metadata: {
+          ...project.metadata,
+          visionPhase: {
+            ...project.metadata?.visionPhase,
+            script: script,
+            characters: characters,
+            scenes: currentScenes
+          }
+        }
+      }
+
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('[SaveProject] Failed:', errorText)
+        throw new Error(`Save failed: ${response.status}`)
+      }
+
+      console.log('[SaveProject] Successfully saved project')
+      try { const { toast } = require('sonner'); toast.success('Project saved successfully!') } catch {}
+    } catch (error: any) {
+      console.error('[SaveProject] Error:', error)
+      try { const { toast } = require('sonner'); toast.error(`Failed to save project: ${error.message}`) } catch {}
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   // Handle generate scene direction
   const handleGenerateSceneDirection = async (sceneIdx: number) => {
     const scene = script?.script?.scenes?.[sceneIdx]
@@ -3177,43 +3231,45 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     setGeneratingDirectionFor(sceneIdx)
 
-    try {
-      const directionResponse = await fetch('/api/scene/generate-direction', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          sceneIndex: sceneIdx,
-          scene: {
-            heading: scene.heading,
-            action: scene.action,
-            visualDescription: scene.visualDescription,
-            narration: scene.narration,
-            dialogue: scene.dialogue
-          }
+    // Use the overlay to prevent navigation during generation
+    await execute(async () => {
+      try {
+        const directionResponse = await fetch('/api/scene/generate-direction', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId,
+            sceneIndex: sceneIdx,
+            scene: {
+              heading: scene.heading,
+              action: scene.action,
+              visualDescription: scene.visualDescription,
+              narration: scene.narration,
+              dialogue: scene.dialogue
+            }
+          })
         })
-      })
 
-      if (!directionResponse.ok) {
-        const errorData = await directionResponse.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(errorData.error || 'Failed to generate scene direction')
-      }
+        if (!directionResponse.ok) {
+          const errorData = await directionResponse.json().catch(() => ({ error: 'Unknown error' }))
+          throw new Error(errorData.error || 'Failed to generate scene direction')
+        }
 
-      const data = await directionResponse.json()
-      
-      if (!data.success || !data.sceneDirection) {
-        throw new Error(data.error || 'Failed to generate scene direction')
-      }
+        const data = await directionResponse.json()
+        
+        if (!data.success || !data.sceneDirection) {
+          throw new Error(data.error || 'Failed to generate scene direction')
+        }
 
-      // Build updated scenes array with the new direction
-      const updatedScenes = [...(script.script.scenes || [])]
-      updatedScenes[sceneIdx] = {
-        ...updatedScenes[sceneIdx],
-        sceneDirection: data.sceneDirection
-      }
+        // Build updated scenes array with the new direction
+        const updatedScenes = [...(script.script.scenes || [])]
+        updatedScenes[sceneIdx] = {
+          ...updatedScenes[sceneIdx],
+          sceneDirection: data.sceneDirection
+        }
 
-      // Build the updated script object
-      const updatedScript = {
+        // Build the updated script object
+        const updatedScript = {
         ...script,
         script: {
           ...script.script,
@@ -3265,12 +3321,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       try { const { toast } = require('sonner'); toast.success('Scene direction generated!') } catch {}
-    } catch (error: any) {
-      console.error('Failed to generate scene direction:', error)
-      try { const { toast } = require('sonner'); toast.error(`Failed to generate scene direction: ${error.message}`) } catch {}
-    } finally {
+      } catch (error: any) {
+        console.error('Failed to generate scene direction:', error)
+        try { const { toast } = require('sonner'); toast.error(`Failed to generate scene direction: ${error.message}`) } catch {}
+        throw error // Re-throw to let overlay know it failed
+      }
+    }, {
+      message: `🎬 Generating Scene Direction for Scene ${sceneIdx + 1}... Please wait, do not navigate away.`,
+      estimatedDuration: 30000 // 30 seconds estimated
+    }).finally(() => {
       setGeneratingDirectionFor(null)
-    }
+    })
   }
 
   // Handle generate all audio
@@ -4280,13 +4341,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
   const saveScenesToDatabase = async (updatedScenes: any[]) => {
     try {
-      // DEBUG: Log what we're about to save
+      // DEBUG: Log what we're about to save, including sceneDirection
       console.log('[saveScenesToDatabase] Saving scenes with assets:', updatedScenes.map((s, idx) => ({
         idx,
         sceneNumber: s.sceneNumber,
         hasImage: !!s.imageUrl,
         hasNarration: !!s.narrationAudioUrl,
         hasMusic: !!s.musicAudio,
+        hasSceneDirection: !!s.sceneDirection,
+        sceneDirectionKeys: s.sceneDirection ? Object.keys(s.sceneDirection) : [],
         imageUrl: s.imageUrl?.substring(0, 50) + '...',
         narrationUrl: s.narrationAudioUrl?.substring(0, 50) + '...'
       })))
@@ -4324,6 +4387,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       
       const result = await response.json()
+      console.log('[saveScenesToDatabase] Save successful')
       
     } catch (error) {
       console.error('[saveScenesToDatabase] Failed to save scenes:', error)
@@ -4432,6 +4496,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Share Project</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={handleSaveProject}
+                    disabled={isSaving}
+                    className={isSaving ? 'opacity-50' : ''}
+                  >
+                    <Save className={`w-4 h-4 ${isSaving ? 'animate-pulse' : ''} text-green-400`} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isSaving ? 'Saving...' : 'Save Project'}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
