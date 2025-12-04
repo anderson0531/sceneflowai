@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils'
 // Types & Interfaces
 // ============================================
 
-export type VideoGenerationMethod = 'T2V' | 'I2V' | 'F2F' | 'REF'
+export type VideoGenerationMethod = 'T2V' | 'I2V' | 'FTV' | 'EXT' | 'REF'
 
 export interface PromptStructure {
   // Location & Setting
@@ -310,9 +310,13 @@ export function SegmentPromptBuilder({
         promptData.startFrameUrl = startFrameUrl
       }
       
-      if (generationMethod === 'F2F') {
+      if (generationMethod === 'FTV') {
         if (startFrameUrl) promptData.startFrameUrl = startFrameUrl
         if (endFrameUrl) promptData.endFrameUrl = endFrameUrl
+      }
+      
+      if (generationMethod === 'EXT' && previousSegmentLastFrame) {
+        promptData.startFrameUrl = previousSegmentLastFrame
       }
       
       if (generationMethod === 'REF' && referenceImages.length > 0) {
@@ -345,10 +349,15 @@ export function SegmentPromptBuilder({
       description: 'Animate from a start frame image',
       icon: <Camera className="w-4 h-4" />
     },
-    'F2F': { 
-      label: 'Frame-to-Frame', 
-      description: 'Transition between start and end frames',
+    'FTV': { 
+      label: 'Frame-to-Video', 
+      description: 'Use start frame and optional end frame',
       icon: <ArrowRight className="w-4 h-4" />
+    },
+    'EXT': { 
+      label: 'Extend', 
+      description: 'Continue from previous segment\'s last frame',
+      icon: <Film className="w-4 h-4" />
     },
     'REF': { 
       label: 'Reference Images', 
@@ -436,34 +445,83 @@ export function SegmentPromptBuilder({
                 </div>
               )}
               
-              {generationMethod === 'F2F' && (
-                <div className="mt-4 grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-xs text-gray-400">Start Frame</label>
-                    <div className="aspect-video rounded-lg border border-dashed border-gray-700 flex flex-col items-center justify-center hover:border-gray-600 cursor-pointer">
-                      {startFrameUrl ? (
-                        <img src={startFrameUrl} alt="Start" className="w-full h-full object-cover rounded-lg" />
-                      ) : (
-                        <>
-                          <Upload className="w-6 h-6 text-gray-500 mb-1" />
-                          <span className="text-xs text-gray-500">Select Start</span>
-                        </>
+              {generationMethod === 'FTV' && (
+                <div className="mt-4">
+                  <div className="text-xs text-blue-400 mb-3">Start frame required. End frame optional for controlled transitions.</div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs text-gray-400">Start Frame <span className="text-red-400">*</span></label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {previousSegmentLastFrame && (
+                          <button
+                            onClick={() => setStartFrameUrl(previousSegmentLastFrame)}
+                            className={cn(
+                              'aspect-video rounded-lg border overflow-hidden relative',
+                              startFrameUrl === previousSegmentLastFrame ? 'border-blue-500 ring-2 ring-blue-500' : 'border-gray-700 hover:border-gray-600'
+                            )}
+                          >
+                            <img src={previousSegmentLastFrame} alt="Previous frame" className="w-full h-full object-cover" />
+                            <div className="absolute bottom-1 left-1 text-[10px] bg-black/60 px-1.5 py-0.5 rounded">Previous</div>
+                          </button>
+                        )}
+                        {sceneImageUrl && (
+                          <button
+                            onClick={() => setStartFrameUrl(sceneImageUrl)}
+                            className={cn(
+                              'aspect-video rounded-lg border overflow-hidden relative',
+                              startFrameUrl === sceneImageUrl ? 'border-blue-500 ring-2 ring-blue-500' : 'border-gray-700 hover:border-gray-600'
+                            )}
+                          >
+                            <img src={sceneImageUrl} alt="Scene image" className="w-full h-full object-cover" />
+                            <div className="absolute bottom-1 left-1 text-[10px] bg-black/60 px-1.5 py-0.5 rounded">Scene</div>
+                          </button>
+                        )}
+                        <div className="aspect-video rounded-lg border border-dashed border-gray-700 flex flex-col items-center justify-center hover:border-gray-600 cursor-pointer">
+                          <Upload className="w-5 h-5 text-gray-500 mb-1" />
+                          <span className="text-[10px] text-gray-500">Upload</span>
+                        </div>
+                      </div>
+                      {startFrameUrl && (
+                        <div className="aspect-video rounded-lg border border-blue-500 overflow-hidden">
+                          <img src={startFrameUrl} alt="Selected start" className="w-full h-full object-cover" />
+                        </div>
                       )}
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs text-gray-400">End Frame</label>
-                    <div className="aspect-video rounded-lg border border-dashed border-gray-700 flex flex-col items-center justify-center hover:border-gray-600 cursor-pointer">
-                      {endFrameUrl ? (
-                        <img src={endFrameUrl} alt="End" className="w-full h-full object-cover rounded-lg" />
-                      ) : (
-                        <>
-                          <Upload className="w-6 h-6 text-gray-500 mb-1" />
-                          <span className="text-xs text-gray-500">Select End</span>
-                        </>
-                      )}
+                    <div className="space-y-2">
+                      <label className="text-xs text-gray-400">End Frame <span className="text-gray-600">(optional)</span></label>
+                      <div className="aspect-video rounded-lg border border-dashed border-gray-700 flex flex-col items-center justify-center hover:border-gray-600 cursor-pointer">
+                        {endFrameUrl ? (
+                          <img src={endFrameUrl} alt="End" className="w-full h-full object-cover rounded-lg" />
+                        ) : (
+                          <>
+                            <Upload className="w-6 h-6 text-gray-500 mb-1" />
+                            <span className="text-xs text-gray-500">Select End Frame</span>
+                            <span className="text-[10px] text-gray-600">Optional transition target</span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
+                </div>
+              )}
+              
+              {generationMethod === 'EXT' && (
+                <div className="mt-4">
+                  <div className="text-xs text-green-400 mb-3">Automatically uses the last frame from the previous segment</div>
+                  {previousSegmentLastFrame ? (
+                    <div className="space-y-2">
+                      <label className="text-xs text-gray-400">Previous Segment Last Frame</label>
+                      <div className="aspect-video max-w-xs rounded-lg border border-green-500 overflow-hidden">
+                        <img src={previousSegmentLastFrame} alt="Previous segment last frame" className="w-full h-full object-cover" />
+                      </div>
+                      <div className="text-[10px] text-gray-500">This frame will be used to continue the video seamlessly</div>
+                    </div>
+                  ) : (
+                    <div className="p-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10">
+                      <div className="text-sm text-yellow-400 font-medium">No previous segment available</div>
+                      <div className="text-xs text-gray-400 mt-1">This is the first segment. Use Image-to-Video or Text-to-Video instead.</div>
+                    </div>
+                  )}
                 </div>
               )}
               

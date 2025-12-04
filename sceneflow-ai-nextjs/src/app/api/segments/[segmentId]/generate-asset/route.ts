@@ -14,9 +14,9 @@ interface GenerateAssetRequest {
   genType: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD'
   referenceImageIds?: string[]
   startFrameUrl?: string
-  endFrameUrl?: string  // Veo 3.1: For Frame-to-Frame (F2F) generation
+  endFrameUrl?: string  // Veo 3.1: For Frame-to-Video (FTV) generation with end frame
   referenceImages?: Array<{ url: string; type: 'style' | 'character' }>  // Veo 3.1: Up to 3 reference images
-  generationMethod?: 'T2V' | 'I2V' | 'F2F' | 'REF'  // Veo 3.1: Explicit generation method
+  generationMethod?: 'T2V' | 'I2V' | 'FTV' | 'EXT' | 'REF'  // Veo 3.1: Explicit generation method (EXT = extend from previous)
   sceneId: string
   projectId: string
   // Optional video settings from prompt builder
@@ -85,17 +85,17 @@ export async function POST(
       // Handle different Veo 3.1 generation methods
       const method = generationMethod || genType
       
-      // Start Frame - used for I2V and F2F
-      if ((method === 'I2V' || method === 'F2F') && startFrameUrl) {
+      // Start Frame - used for I2V, FTV, and EXT methods
+      if ((method === 'I2V' || method === 'FTV' || method === 'EXT') && startFrameUrl) {
         videoOptions.startFrame = startFrameUrl
         console.log('[Segment Asset Generation] Using start frame for', method)
       }
       
-      // End Frame - used for F2F (Frame-to-Frame) only
+      // End Frame - used for FTV (Frame-to-Video) only when end frame is provided
       // NOTE: Cannot use endFrame together with referenceImages per Veo 3.1 API constraints
-      if (method === 'F2F' && endFrameUrl) {
+      if (method === 'FTV' && endFrameUrl) {
         videoOptions.lastFrame = endFrameUrl
-        console.log('[Segment Asset Generation] Using end frame for F2F')
+        console.log('[Segment Asset Generation] Using end frame for FTV')
       }
       
       // Reference Images - used for REF method (up to 3 images for style/character consistency)
