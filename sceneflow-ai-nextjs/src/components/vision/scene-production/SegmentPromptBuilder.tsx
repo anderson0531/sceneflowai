@@ -140,19 +140,41 @@ export function SegmentPromptBuilder({
   // Initialize from segment data
   useEffect(() => {
     if (open && segment) {
-      // Set start frame if previous segment has last frame
-      if (previousSegmentLastFrame && mode === 'video') {
-        setStartFrameUrl(previousSegmentLastFrame)
-        setGenerationMethod('I2V')
+      // Initialize prompt from segment's generated prompt or user edited prompt
+      const initialPrompt = segment.userEditedPrompt || segment.generatedPrompt || ''
+      if (initialPrompt) {
+        setAdvancedPrompt(initialPrompt)
       }
       
-      // Parse segment data
+      // Set generation method from segment metadata
+      if (segment.generationMethod) {
+        setGenerationMethod(segment.generationMethod as VideoGenerationMethod)
+      }
+      
+      // Set start frame based on segment configuration:
+      // 1. For segment 1 with useSceneFrame, use sceneImageUrl
+      // 2. For other segments, use previousSegmentLastFrame
+      // 3. If segment has references.startFrameUrl, use that
+      if (mode === 'video') {
+        if (segment.references?.startFrameUrl) {
+          setStartFrameUrl(segment.references.startFrameUrl)
+        } else if (segment.sequenceIndex === 0 && segment.references?.useSceneFrame && sceneImageUrl) {
+          setStartFrameUrl(sceneImageUrl)
+          if (!segment.generationMethod) setGenerationMethod('I2V')
+        } else if (previousSegmentLastFrame) {
+          setStartFrameUrl(previousSegmentLastFrame)
+          if (!segment.generationMethod) setGenerationMethod('I2V')
+        }
+      }
+      
+      // Parse segment data for structure
       setStructure(prev => ({
         ...prev,
         shotType: segment.shotType || prev.shotType,
         cameraAngle: segment.cameraAngle || prev.cameraAngle,
         cameraMovement: segment.cameraMovement || prev.cameraMovement,
         characterActions: segment.action || prev.characterActions,
+        emotionalBeat: segment.emotionalBeat || prev.emotionalBeat,
       }))
       
       // Set duration from segment
@@ -161,7 +183,7 @@ export function SegmentPromptBuilder({
         setDuration(segmentDuration as 4 | 6 | 8)
       }
     }
-  }, [open, segment, previousSegmentLastFrame, mode])
+  }, [open, segment, previousSegmentLastFrame, sceneImageUrl, mode])
 
   // Auto-detect characters from segment
   useEffect(() => {

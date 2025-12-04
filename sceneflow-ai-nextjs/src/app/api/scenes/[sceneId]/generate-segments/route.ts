@@ -141,6 +141,13 @@ export async function POST(
         'T2V': 'T2V',
         'FTV': 'FTV'
       }
+      
+      // For segment 1 with use_scene_frame, set the start frame to scene image
+      const isFirstSegment = idx === 0
+      const useSceneFrame = seg.reference_strategy?.use_scene_frame ?? isFirstSegment
+      const startFrameUrl = (isFirstSegment && useSceneFrame && sceneData.sceneFrameUrl) 
+        ? sceneData.sceneFrameUrl 
+        : null
 
       return {
         segmentId: `seg_${sceneId}_${seg.sequence}`,
@@ -160,9 +167,9 @@ export async function POST(
         cameraMovement: seg.camera_notes,
         emotionalBeat: seg.emotional_beat,
         references: {
-          startFrameUrl: null,
+          startFrameUrl: startFrameUrl,
           endFrameUrl: null,
-          useSceneFrame: seg.reference_strategy?.use_scene_frame ?? (idx === 0),
+          useSceneFrame: useSceneFrame,
           characterRefs: seg.reference_strategy?.use_character_refs || [],
           startFrameDescription: seg.reference_strategy?.start_frame_description || null,
           characterIds: [],
@@ -171,6 +178,12 @@ export async function POST(
         },
         takes: [],
       }
+    })
+    
+    // Log segment generation results
+    console.log('[Scene Segmentation] Generated', transformedSegments.length, 'segments')
+    transformedSegments.forEach((seg: any, idx: number) => {
+      console.log(`[Scene Segmentation] Segment ${idx + 1}: method=${seg.generationMethod}, trigger="${seg.triggerReason?.substring(0, 50)}...", prompt="${seg.generatedPrompt?.substring(0, 100)}..."`)
     })
 
     return NextResponse.json({

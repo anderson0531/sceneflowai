@@ -10,8 +10,9 @@ import {
   SceneProductionReferences,
   SceneSegment,
 } from './types'
-import { Calculator, Sparkles } from 'lucide-react'
+import { Calculator, Sparkles, RefreshCw, Loader2 } from 'lucide-react'
 import { breakdownSceneScript } from '@/lib/scene/breakdown'
+import { toast } from 'sonner'
 
 interface SceneProductionManagerProps {
   sceneId: string
@@ -78,23 +79,18 @@ export function SceneProductionManager({
 
   const handleInitialize = async () => {
     setIsInitializing(true)
+    // Show loading toast
+    const loadingToastId = toast.loading('Generating intelligent segments with Gemini 3.0...', {
+      description: 'Analyzing script, dialogue, and scene direction'
+    })
+    
     try {
-      // If we have scene data, perform client-side breakdown
-      let segments = []
-      if (scene) {
-        segments = breakdownSceneScript(scene, sceneId)
-      }
-      
-      // Pass segments to onInitialize if it accepts them (we'll assume it does via options)
-      // or if onInitialize is just a trigger, we might need another way.
-      // For now, we'll pass it in options and hope the handler uses it.
-      await onInitialize(sceneId, { targetDuration, segments: segments as any })
+      await onInitialize(sceneId, { targetDuration })
+      toast.dismiss(loadingToastId)
     } catch (error) {
       console.error('[SceneProduction] Initialize failed', error)
-      try {
-        const { toast } = require('sonner')
-        toast.error(error instanceof Error ? error.message : 'Failed to initialize scene production')
-      } catch {}
+      toast.dismiss(loadingToastId)
+      toast.error(error instanceof Error ? error.message : 'Failed to generate segments')
     } finally {
       setIsInitializing(false)
     }
@@ -193,15 +189,19 @@ export function SceneProductionManager({
               e.stopPropagation()
               // Confirm re-generation as it will replace current segments
               const confirmed = typeof window !== 'undefined'
-                ? window.confirm('Regenerate segments from the latest script and direction? This will replace current segments.')
+                ? window.confirm('Confirm that you want to update the current Scene Segments?')
                 : true
               if (!confirmed) return
               await handleInitialize()
             }}
             className="shrink-0"
           >
-            <Sparkles className="w-4 h-4 mr-2" />
-            Regenerate Segments
+            {isInitializing ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4 mr-2" />
+            )}
+            {isInitializing ? 'Generating...' : 'Segments'}
           </Button>
         )}
       </div>
@@ -225,4 +225,3 @@ export function SceneProductionManager({
     </div>
   )
 }
-
