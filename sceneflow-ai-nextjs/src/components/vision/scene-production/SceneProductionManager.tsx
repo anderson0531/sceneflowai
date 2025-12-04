@@ -1,17 +1,17 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { SegmentTimeline } from './SegmentTimeline'
+import { SceneTimeline, AudioTracksData } from './SceneTimeline'
+import { VerticalSegmentSelector } from './VerticalSegmentSelector'
 import { SegmentStudio, GenerationType } from './SegmentStudio'
-import { AudioTimeline, AudioTracksData } from './AudioTimeline'
 import {
   SceneProductionData,
   SceneProductionReferences,
   SceneSegment,
 } from './types'
-import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Music } from 'lucide-react'
+import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Film } from 'lucide-react'
 import { toast } from 'sonner'
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
 import {
@@ -42,6 +42,7 @@ interface SceneProductionManagerProps {
   }) => Promise<void>
   onUpload: (sceneId: string, segmentId: string, file: File) => Promise<void>
   audioTracks?: AudioTracksData
+  onGenerateSceneMp4?: () => void
 }
 
 export function SceneProductionManager({
@@ -56,6 +57,7 @@ export function SceneProductionManager({
   onGenerate,
   onUpload,
   audioTracks,
+  onGenerateSceneMp4,
 }: SceneProductionManagerProps) {
   const [targetDuration, setTargetDuration] = useState<number>(productionData?.targetSegmentDuration ?? 8)
   useEffect(() => {
@@ -67,6 +69,7 @@ export function SceneProductionManager({
   const [isInitializing, setIsInitializing] = useState(false)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [generationProgress, setGenerationProgress] = useState(0)
+  const [currentPlayingSegmentId, setCurrentPlayingSegmentId] = useState<string | null>(null)
   const segments = productionData?.segments ?? []
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(segments[0]?.segmentId ?? null)
 
@@ -139,6 +142,13 @@ export function SceneProductionManager({
     if (!selectedSegment) return
     await onUpload(sceneId, selectedSegment.segmentId, file)
   }
+
+  // Handle playhead changes from timeline
+  const handlePlayheadChange = useCallback((time: number, segmentId?: string) => {
+    if (segmentId) {
+      setCurrentPlayingSegmentId(segmentId)
+    }
+  }, [])
 
   if (!productionData || !productionData.isSegmented || productionData.segments.length === 0) {
     return (
@@ -235,7 +245,8 @@ export function SceneProductionManager({
         </DialogContent>
       </Dialog>
     
-      <div className="space-y-6">
+      <div className="space-y-4">
+        {/* Header with scene info and regenerate button */}
         <div className="flex items-start justify-between gap-3">
           <div>
             <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -262,37 +273,42 @@ export function SceneProductionManager({
           )}
         </div>
 
-        <SegmentTimeline
-          segments={segments}
-          selectedSegmentId={selectedSegmentId ?? undefined}
-          onSelect={setSelectedSegmentId}
-          audioTracks={audioTracks}
-        />
-
-        {/* Audio Timeline - Scene-level audio tracks */}
-        {segments.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-              <Music className="w-3.5 h-3.5" />
-              <span>Audio Preview</span>
-            </div>
-            <AudioTimeline
-              sceneDuration={segments.length > 0 ? segments[segments.length - 1].endTime : productionData?.targetSegmentDuration ?? 8}
-              segments={segments.map(s => ({ startTime: s.startTime, endTime: s.endTime, segmentId: s.segmentId }))}
-              audioTracks={audioTracks}
+        {/* Main 3-Column Layout: Segment Selector | Timeline + Preview */}
+        <div className="flex gap-4">
+          {/* Left Panel: Vertical Segment Selector */}
+          <div className="w-48 flex-shrink-0 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 overflow-hidden h-[500px]">
+            <VerticalSegmentSelector
+              segments={segments}
+              selectedSegmentId={selectedSegmentId ?? undefined}
+              currentPlayingSegmentId={currentPlayingSegmentId ?? undefined}
+              onSelect={setSelectedSegmentId}
             />
           </div>
-        )}
 
-        <SegmentStudio
-          segment={selectedSegment}
-          previousSegmentLastFrame={previousSegmentLastFrame}
-          onPromptChange={handlePromptChange}
-          onGenerate={handleGenerate}
-          onUploadMedia={handleUpload}
-          references={references}
-          sceneImageUrl={scene?.imageUrl}
-        />
+          {/* Right Panel: Timeline + Segment Studio */}
+          <div className="flex-1 min-w-0 space-y-4">
+            {/* Unified Scene Timeline with Visual + Audio Tracks */}
+            <SceneTimeline
+              segments={segments}
+              selectedSegmentId={selectedSegmentId ?? undefined}
+              onSegmentSelect={setSelectedSegmentId}
+              audioTracks={audioTracks}
+              onPlayheadChange={handlePlayheadChange}
+              onGenerateSceneMp4={onGenerateSceneMp4}
+            />
+
+            {/* Segment Studio for editing selected segment */}
+            <SegmentStudio
+              segment={selectedSegment}
+              previousSegmentLastFrame={previousSegmentLastFrame}
+              onPromptChange={handlePromptChange}
+              onGenerate={handleGenerate}
+              onUploadMedia={handleUpload}
+              references={references}
+              sceneImageUrl={scene?.imageUrl}
+            />
+          </div>
+        </div>
       </div>
     </>
   )
