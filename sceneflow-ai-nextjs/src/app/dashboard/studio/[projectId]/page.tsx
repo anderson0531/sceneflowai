@@ -132,15 +132,46 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
         const json = await res.json().catch(() => null)
         if (json?.success && json?.project) {
           setCurrentProject(json.project)
-          // If acts exist, hydrate beats immediately
-          if (Array.isArray(json.project?.metadata?.acts) && json.project.metadata.acts.length) {
-            setBeats(json.project.metadata.acts)
+          const projectData = json.project
+          
+          // Hydrate guide store with project data
+          if (projectData.metadata?.filmTreatment) {
+            updateTreatment(projectData.metadata.filmTreatment)
           }
+          if (projectData.metadata?.treatmentVariants?.length) {
+            setTreatmentVariants(projectData.metadata.treatmentVariants)
+          }
+          if (projectData.title) {
+            try {
+              const { useGuideStore } = require('@/store/useGuideStore')
+              useGuideStore.getState().setTitle(projectData.title)
+            } catch {}
+          }
+          // If acts exist, hydrate beats immediately
+          if (Array.isArray(projectData.metadata?.acts) && projectData.metadata.acts.length) {
+            setBeats(projectData.metadata.acts)
+          }
+          // Hydrate the lastInput from blueprintInput
+          if (projectData.metadata?.blueprintInput) {
+            setLastInput(projectData.metadata.blueprintInput)
+            setIsInputExpanded(false) // Collapse input if we have saved input
+          }
+          // Hydrate beats view
+          if (Array.isArray(projectData.metadata?.beats)) {
+            setBeatsView(projectData.metadata.beats)
+          }
+          // Hydrate estimated runtime
+          if (projectData.metadata?.estimatedRuntime) {
+            setEstimatedRuntime(projectData.metadata.estimatedRuntime)
+          }
+          console.log('[StudioPage] Project data loaded:', projectData.id)
         }
-      } catch {}
+      } catch (err) {
+        console.error('[StudioPage] Failed to load project:', err)
+      }
     }
     load()
-  }, [params.projectId, currentProject, setCurrentProject, setBeats])
+  }, [params.projectId, currentProject, setCurrentProject, setBeats, updateTreatment, setTreatmentVariants])
 
   // Disable duplicate autogeneration here
   useEffect(() => { console.debug('[StudioPage] outline autogen disabled; relying on OutlineV2') }, [guide?.filmTreatment, currentProject?.id])

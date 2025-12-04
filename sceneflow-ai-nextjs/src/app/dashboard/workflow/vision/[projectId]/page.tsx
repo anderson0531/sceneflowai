@@ -40,6 +40,7 @@ const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement> & { size?: numbe
 import Link from 'next/link'
 import ScriptReviewModal from '@/components/vision/ScriptReviewModal'
 import { SceneEditorModal } from '@/components/vision/SceneEditorModal'
+import { NavigationWarningDialog } from '@/components/workflow/NavigationWarningDialog'
 import { findSceneCharacters } from '../../../../../lib/character/matching'
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 import { v4 as uuidv4 } from 'uuid'
@@ -498,6 +499,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [showAnimaticsStudio, setShowAnimaticsStudio] = useState(false)
   const [showSceneGallery, setShowSceneGallery] = useState(false)
   const [showDashboard, setShowDashboard] = useState(false)
+  const [showNavigationWarning, setShowNavigationWarning] = useState(false)
   const [voiceAssignments, setVoiceAssignments] = useState<Record<string, any>>({})
   const [sceneReferences, setSceneReferences] = useState<VisualReference[]>([])
   const [objectReferences, setObjectReferences] = useState<VisualReference[]>([])
@@ -4436,15 +4438,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         emphasis
         primaryActions={
           <div className="flex items-center gap-2">
-            <Link
-              href={projectId ? `/dashboard/studio/${projectId}` : '/dashboard/studio/new-project'}
-              prefetch={false}
-              className={cn(buttonVariants({ variant: 'outline' }), 'flex items-center gap-2')}
+            <Button
+              variant="outline"
+              onClick={() => setShowNavigationWarning(true)}
+              className="flex items-center gap-2"
               aria-label="Return to The Blueprint phase"
             >
               <ArrowLeft className="w-4 h-4 text-blue-400" />
               <span>The Blueprint</span>
-            </Link>
+            </Button>
             <Link
               href={
                 project?.id
@@ -4742,6 +4744,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           onClose={() => setShowAnimaticsStudio(false)}
         />
       )}
+
+      {/* Navigation Warning Dialog */}
+      <NavigationWarningDialog
+        open={showNavigationWarning}
+        onOpenChange={setShowNavigationWarning}
+        targetHref={projectId ? `/dashboard/studio/${projectId}` : '/dashboard/studio/new-project'}
+        targetLabel="The Blueprint"
+      />
 
       {/* Script Review Modal */}
       <ScriptReviewModal

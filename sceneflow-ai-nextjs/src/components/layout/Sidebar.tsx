@@ -96,8 +96,23 @@ const settingsNav = [
 export function Sidebar() {
   const { sidebarOpen, setSidebarOpen, user, currentStep, projects, currentProject } = useEnhancedStore()
   const pathname = usePathname()
-  const studioHref = currentProject?.id ? `/dashboard/studio/${currentProject.id}` : '/dashboard/studio/new-project'
-  const projectVisionHref = currentProject?.id ? `/dashboard/workflow/vision/${currentProject.id}` : '/dashboard/workflow/storyboard'
+  
+  // Extract projectId from URL if available (handles /dashboard/studio/[projectId] and /dashboard/workflow/vision/[projectId])
+  const projectIdFromUrl = React.useMemo(() => {
+    if (!pathname) return null
+    const studioMatch = pathname.match(/\/dashboard\/studio\/([^/]+)/)
+    if (studioMatch && studioMatch[1] !== 'new-project') return studioMatch[1]
+    const visionMatch = pathname.match(/\/dashboard\/workflow\/vision\/([^/]+)/)
+    if (visionMatch) return visionMatch[1]
+    const generationMatch = pathname.match(/\/dashboard\/workflow\/generation\/([^/]+)/)
+    if (generationMatch) return generationMatch[1]
+    return null
+  }, [pathname])
+  
+  // Use projectId from URL or currentProject
+  const activeProjectId = projectIdFromUrl || currentProject?.id
+  const studioHref = activeProjectId ? `/dashboard/studio/${activeProjectId}` : '/dashboard/studio/new-project'
+  const projectVisionHref = activeProjectId ? `/dashboard/workflow/vision/${activeProjectId}` : '/dashboard/workflow/storyboard'
   
   const isActive = (href: string) => {
     if (href.startsWith('/dashboard/studio')) {
