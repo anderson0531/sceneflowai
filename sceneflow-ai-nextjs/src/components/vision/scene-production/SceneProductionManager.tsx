@@ -10,9 +10,17 @@ import {
   SceneProductionReferences,
   SceneSegment,
 } from './types'
-import { Calculator, Sparkles, RefreshCw, Loader2 } from 'lucide-react'
-import { breakdownSceneScript } from '@/lib/scene/breakdown'
+import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
+import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 interface SceneProductionManagerProps {
   sceneId: string
@@ -61,6 +69,8 @@ export function SceneProductionManager({
   }, [productionData?.targetSegmentDuration])
 
   const [isInitializing, setIsInitializing] = useState(false)
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [generationProgress, setGenerationProgress] = useState(0)
   const segments = productionData?.segments ?? []
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(segments[0]?.segmentId ?? null)
 
@@ -78,21 +88,28 @@ export function SceneProductionManager({
     segments.find((segment) => segment.segmentId === selectedSegmentId) ?? null
 
   const handleInitialize = async () => {
+    setShowConfirmDialog(false)
     setIsInitializing(true)
-    // Show loading toast
-    const loadingToastId = toast.loading('Generating intelligent segments with Gemini 3.0...', {
-      description: 'Analyzing script, dialogue, and scene direction'
-    })
+    setGenerationProgress(10)
+    
+    // Simulate progress updates
+    const progressInterval = setInterval(() => {
+      setGenerationProgress(prev => Math.min(prev + 5, 85))
+    }, 2000)
     
     try {
       await onInitialize(sceneId, { targetDuration })
-      toast.dismiss(loadingToastId)
+      setGenerationProgress(100)
+      toast.success('Segments generated successfully', {
+        description: `Created intelligent video segments with cinematic prompts`
+      })
     } catch (error) {
       console.error('[SceneProduction] Initialize failed', error)
-      toast.dismiss(loadingToastId)
       toast.error(error instanceof Error ? error.message : 'Failed to generate segments')
     } finally {
+      clearInterval(progressInterval)
       setIsInitializing(false)
+      setGenerationProgress(0)
     }
   }
 
@@ -170,58 +187,102 @@ export function SceneProductionManager({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-            Scene {sceneNumber}: {heading || 'Untitled'}
-          </h4>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {productionData.segments.length} segments · Target {productionData.targetSegmentDuration}s
-          </p>
-        </div>
-        {productionData?.isSegmented && (
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={isInitializing}
-            onClick={async (e) => {
-              e.stopPropagation()
-              // Confirm re-generation as it will replace current segments
-              const confirmed = typeof window !== 'undefined'
-                ? window.confirm('Confirm that you want to update the current Scene Segments?')
-                : true
-              if (!confirmed) return
-              await handleInitialize()
-            }}
-            className="shrink-0"
-          >
-            {isInitializing ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
+    <>
+      {/* Freeze Screen Overlay during generation */}
+      <GeneratingOverlay 
+        visible={isInitializing} 
+        title="Generating Intelligent Segments..." 
+        progress={generationProgress}
+        subtext="Analyzing dialogue, scene direction, and character blocking with Gemini 3.0"
+      />
+      
+      {/* Confirmation Dialog */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+                <RefreshCw className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <DialogTitle className="text-left">Update Scene Segments</DialogTitle>
+                <DialogDescription className="text-left">
+                  This will regenerate all segments for this scene.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Confirm that you want to update the current Scene Segments? 
+              New segments will be generated using the latest script, dialogue, and scene direction.
+            </p>
+          </div>
+
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmDialog(false)}
+              className="flex-1 sm:flex-none"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleInitialize}
+              className="flex-1 sm:flex-none"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Generate Segments
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    
+      <div className="space-y-6">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              Scene {sceneNumber}: {heading || 'Untitled'}
+            </h4>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {productionData.segments.length} segments · Target {productionData.targetSegmentDuration}s
+            </p>
+          </div>
+          {productionData?.isSegmented && (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isInitializing}
+              onClick={(e) => {
+                e.stopPropagation()
+                setShowConfirmDialog(true)
+              }}
+              className="shrink-0"
+            >
               <RefreshCw className="w-4 h-4 mr-2" />
-            )}
-            {isInitializing ? 'Generating...' : 'Segments'}
-          </Button>
-        )}
+              Segments
+            </Button>
+          )}
+        </div>
+
+        <SegmentTimeline
+          segments={segments}
+          selectedSegmentId={selectedSegmentId ?? undefined}
+          onSelect={setSelectedSegmentId}
+          audioTracks={audioTracks}
+        />
+
+        <SegmentStudio
+          segment={selectedSegment}
+          previousSegmentLastFrame={previousSegmentLastFrame}
+          onPromptChange={handlePromptChange}
+          onGenerate={handleGenerate}
+          onUploadMedia={handleUpload}
+          references={references}
+          sceneImageUrl={scene?.imageUrl}
+        />
       </div>
-
-      <SegmentTimeline
-        segments={segments}
-        selectedSegmentId={selectedSegmentId ?? undefined}
-        onSelect={setSelectedSegmentId}
-        audioTracks={audioTracks}
-      />
-
-      <SegmentStudio
-        segment={selectedSegment}
-        previousSegmentLastFrame={previousSegmentLastFrame}
-        onPromptChange={handlePromptChange}
-        onGenerate={handleGenerate}
-        onUploadMedia={handleUpload}
-        references={references}
-        sceneImageUrl={scene?.imageUrl}
-      />
-    </div>
+    </>
   )
 }

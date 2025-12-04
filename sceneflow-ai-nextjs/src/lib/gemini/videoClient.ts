@@ -34,15 +34,19 @@ interface VideoGenerationResult {
 }
 
 /**
- * Convert URL to base64 image data
+ * Convert URL to base64 image data with mimeType
  */
-async function urlToBase64(url: string): Promise<string> {
+async function urlToBase64(url: string): Promise<{ base64: string; mimeType: string }> {
   const response = await fetch(url)
   if (!response.ok) {
     throw new Error(`Failed to fetch image: ${response.status}`)
   }
+  const contentType = response.headers.get('content-type') || 'image/png'
   const buffer = await response.arrayBuffer()
-  return Buffer.from(buffer).toString('base64')
+  return {
+    base64: Buffer.from(buffer).toString('base64'),
+    mimeType: contentType.split(';')[0] // Remove charset if present
+  }
 }
 
 /**
@@ -84,13 +88,22 @@ export async function generateVideoWithVeo(
 
   // Add start frame for I2V
   if (options.startFrame) {
-    const startFrameData = options.startFrame.startsWith('http')
-      ? await urlToBase64(options.startFrame)
-      : options.startFrame
-    instance.image = {
-      bytesBase64Encoded: startFrameData
+    let startFrameData: string
+    let mimeType = 'image/png'
+    
+    if (options.startFrame.startsWith('http')) {
+      const result = await urlToBase64(options.startFrame)
+      startFrameData = result.base64
+      mimeType = result.mimeType
+    } else {
+      startFrameData = options.startFrame
     }
-    console.log('[Veo Video] Added start frame for I2V generation')
+    
+    instance.image = {
+      bytesBase64Encoded: startFrameData,
+      mimeType: mimeType
+    }
+    console.log('[Veo Video] Added start frame for I2V generation, mimeType:', mimeType)
   }
 
   // Build parameters object
@@ -115,12 +128,21 @@ export async function generateVideoWithVeo(
 
   // Add last frame for interpolation
   if (options.lastFrame) {
-    const lastFrameData = options.lastFrame.startsWith('http')
-      ? await urlToBase64(options.lastFrame)
-      : options.lastFrame
+    let lastFrameData: string
+    let mimeType = 'image/png'
+    
+    if (options.lastFrame.startsWith('http')) {
+      const result = await urlToBase64(options.lastFrame)
+      lastFrameData = result.base64
+      mimeType = result.mimeType
+    } else {
+      lastFrameData = options.lastFrame
+    }
+    
     parameters.lastFrame = {
       image: {
-        bytesBase64Encoded: lastFrameData
+        bytesBase64Encoded: lastFrameData,
+        mimeType: mimeType
       }
     }
   }
@@ -133,16 +155,24 @@ export async function generateVideoWithVeo(
         const imageSource = ref.base64Image || ref.imageUrl || ref.url
         if (!imageSource) return null
         
-        const imageData = imageSource.startsWith('http')
-          ? await urlToBase64(imageSource)
-          : imageSource
+        let imageData: string
+        let mimeType = 'image/png'
+        
+        if (imageSource.startsWith('http')) {
+          const result = await urlToBase64(imageSource)
+          imageData = result.base64
+          mimeType = result.mimeType
+        } else {
+          imageData = imageSource
+        }
           
         // Map 'character' type to 'asset', keep 'style' as 'style'
         const refType = ref.referenceType || (ref.type === 'style' ? 'style' : 'asset')
         
         return {
           image: {
-            bytesBase64Encoded: imageData
+            bytesBase64Encoded: imageData,
+            mimeType: mimeType
           },
           referenceType: refType
         }

@@ -144,6 +144,11 @@ export function SegmentPromptBuilder({
       const initialPrompt = segment.userEditedPrompt || segment.generatedPrompt || ''
       if (initialPrompt) {
         setAdvancedPrompt(initialPrompt)
+        // Switch to advanced mode if there's an AI-generated cinematic prompt
+        setActiveTab('advanced')
+      } else {
+        // Reset to guided mode if no AI prompt
+        setActiveTab('guided')
       }
       
       // Set generation method from segment metadata
