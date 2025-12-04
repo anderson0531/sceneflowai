@@ -2705,8 +2705,7 @@ function SceneCard({
   return (
     <div
       id={domId}
-      onClick={toggleOpen}
-      className={`relative overflow-hidden p-5 rounded-2xl border transition-all shadow-[0_15px_40px_rgba(8,8,20,0.35)] bg-slate-950/50 backdrop-blur cursor-pointer ${selectionClasses} ${bookmarkClasses} ${isOutline ? 'bg-amber-500/10 border-amber-300/40' : ''}`}
+      className={`relative overflow-hidden p-5 rounded-2xl border transition-all shadow-[0_15px_40px_rgba(8,8,20,0.35)] bg-slate-950/50 backdrop-blur ${selectionClasses} ${bookmarkClasses} ${isOutline ? 'bg-amber-500/10 border-amber-300/40' : ''}`}
     >
       <div className={`pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br ${accentGradient} opacity-40`} />
       <div className="relative z-[1]">
@@ -2919,10 +2918,16 @@ function SceneCard({
           </div>
         </div>
 
-        {/* Line 2: Scene Title */}
-        <div className="mt-2">
-          <p className="text-xl font-semibold text-white leading-tight">
+        {/* Line 2: Scene Title - Click to toggle open/close */}
+        <div 
+          className="mt-2 cursor-pointer hover:bg-white/5 -mx-2 px-2 py-1 rounded-lg transition-colors"
+          onClick={toggleOpen}
+        >
+          <p className="text-xl font-semibold text-white leading-tight flex items-center gap-2">
             SCENE {sceneNumber}: {formattedHeading}
+            <span className="text-xs text-gray-500 font-normal">
+              {isWorkflowOpen ? '(click to collapse)' : '(click to expand)'}
+            </span>
           </p>
         </div>
       </div>
