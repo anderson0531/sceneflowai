@@ -27,7 +27,7 @@ import GeneratingOverlay from '@/components/ui/GeneratingOverlay'
 export default function SparkStudioPage({ params }: { params: { projectId: string } }) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { guide } = useGuideStore();
+  const { guide, updateTitle, updateTreatment, setTreatmentVariants } = useGuideStore();
   const { invokeCue } = useCue();
   const { currentProject, setCurrentProject, setBeats } = useStore();
   const [isNewProject, setIsNewProject] = useState(false);
@@ -142,10 +142,7 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
             setTreatmentVariants(projectData.metadata.treatmentVariants)
           }
           if (projectData.title) {
-            try {
-              const { useGuideStore } = require('@/store/useGuideStore')
-              useGuideStore.getState().setTitle(projectData.title)
-            } catch {}
+            updateTitle(projectData.title)
           }
           // If acts exist, hydrate beats immediately
           if (Array.isArray(projectData.metadata?.acts) && projectData.metadata.acts.length) {
@@ -171,15 +168,12 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
       }
     }
     load()
-  }, [params.projectId, currentProject, setCurrentProject, setBeats, updateTreatment, setTreatmentVariants])
+  }, [params.projectId, currentProject, setCurrentProject, setBeats, updateTreatment, setTreatmentVariants, updateTitle])
 
   // Disable duplicate autogeneration here
   useEffect(() => { console.debug('[StudioPage] outline autogen disabled; relying on OutlineV2') }, [guide?.filmTreatment, currentProject?.id])
 
   // Legacy tab code removed (single-phase page)
-
-  const { updateTreatment } = useGuideStore()
-  const { setTreatmentVariants } = useGuideStore() as any
 
   const [isGen, setIsGen] = useState(false)
   const [genProgress, setGenProgress] = useState(0)
