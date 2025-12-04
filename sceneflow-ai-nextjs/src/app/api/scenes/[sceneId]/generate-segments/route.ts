@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
 export const maxDuration = 120
 export const runtime = 'nodejs'
@@ -375,65 +376,49 @@ Return a JSON array of segment objects with these exact fields:
 }
 
 async function callGeminiForIntelligentSegmentation(prompt: string): Promise<IntelligentSegment[]> {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
   if (!apiKey) {
     throw new Error('Google Gemini API key not configured')
   }
 
-  // Use Gemini 2.5 Pro for complex reasoning
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-preview-06-05:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
+  const genAI = new GoogleGenerativeAI(apiKey)
+  
+  // Try models in order of preference: Gemini 3.0 Pro for highest intelligence
+  const modelsToTry = ['gemini-3-pro-preview', 'gemini-3.0-flash', 'gemini-2.5-flash']
+  
+  let lastError: Error | null = null
+
+  for (const modelName of modelsToTry) {
+    try {
+      console.log(`[Scene Segmentation] Attempting with model: ${modelName}`)
+      const model = genAI.getGenerativeModel({ 
+        model: modelName,
         generationConfig: {
           temperature: 0.7,
           maxOutputTokens: 16384,
           responseMimeType: 'application/json',
         },
-      }),
-    }
-  )
+      })
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error('[Scene Segmentation] Gemini API error:', response.status, errorText)
-    
-    // Fallback to standard Gemini Pro if preview model fails
-    console.log('[Scene Segmentation] Attempting fallback to gemini-1.5-pro...')
-    const fallbackResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 16384,
-            responseMimeType: 'application/json',
-          },
-        }),
-      }
-    )
-    
-    if (!fallbackResponse.ok) {
-      throw new Error(`Gemini API error: ${response.status}`)
+      const result = await model.generateContent(prompt)
+      const response = await result.response
+      const text = response.text()
+      
+      console.log(`[Scene Segmentation] Success with model: ${modelName}`)
+      return parseGeminiResponseText(text)
+    } catch (error) {
+      console.warn(`[Scene Segmentation] Failed with model ${modelName}:`, error instanceof Error ? error.message : error)
+      lastError = error instanceof Error ? error : new Error(String(error))
+      // Continue to next model
     }
-    
-    return parseGeminiResponse(await fallbackResponse.json())
   }
 
-  return parseGeminiResponse(await response.json())
+  throw lastError || new Error('All Gemini model attempts failed')
 }
 
-function parseGeminiResponse(data: any): IntelligentSegment[] {
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text
-
+function parseGeminiResponseText(text: string): IntelligentSegment[] {
   if (!text) {
-    console.error('[Scene Segmentation] No text in response:', data)
+    console.error('[Scene Segmentation] No text in response')
     throw new Error('No segments generated from Gemini')
   }
 
