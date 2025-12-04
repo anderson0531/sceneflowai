@@ -3,18 +3,14 @@
 import { useState, useMemo } from 'react'
 import { SegmentBlock } from './SegmentBlock'
 import { SceneSegment } from './types'
+import { AudioTracksData } from './AudioTimeline'
 
 interface SegmentTimelineProps {
   segments: SceneSegment[]
   selectedSegmentId?: string
   onSelect: (segmentId: string) => void
-  // Audio track data (optional for now, will be enhanced later)
-  audioTracks?: {
-    narration?: { url?: string; startTime: number; duration: number }
-    dialogue?: Array<{ url?: string; startTime: number; duration: number; character?: string }>
-    sfx?: Array<{ url?: string; startTime: number; duration: number; description?: string }>
-    music?: { url?: string; startTime: number; duration: number }
-  }
+  // Audio track data
+  audioTracks?: AudioTracksData
 }
 
 export function SegmentTimeline({ segments, selectedSegmentId, onSelect, audioTracks }: SegmentTimelineProps) {

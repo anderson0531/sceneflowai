@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { SceneSegment, SceneProductionReferences, SceneSegmentStatus } from './types'
-import { Upload, Video, Image as ImageIcon, CheckCircle2, Link as LinkIcon, Sparkles, Loader2, Info, Film, Play, X } from 'lucide-react'
+import { Upload, Video, Image as ImageIcon, CheckCircle2, Link as LinkIcon, Sparkles, Loader2, Info, Film, Play, X, Maximize2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SegmentPromptBuilder, GeneratePromptData, VideoGenerationMethod } from './SegmentPromptBuilder'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -60,6 +60,7 @@ export function SegmentStudio({
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
   const [isTakesGalleryOpen, setIsTakesGalleryOpen] = useState(false)
   const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null)
+  const [isFullscreenPreview, setIsFullscreenPreview] = useState(false)
   
   // Prompt Builder State
   const [isPromptBuilderOpen, setIsPromptBuilderOpen] = useState(false)
@@ -261,9 +262,9 @@ export function SegmentStudio({
         </div>
       </div>
 
-      {/* Video/Image Preview - Show active asset */}
+      {/* Video/Image Preview - Compact with expand option */}
       {segment.activeAssetUrl && (segment.status === 'COMPLETE' || segment.status === 'UPLOADED') && (
-        <div className="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden bg-black">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden bg-black max-w-md">
           {segment.assetType === 'video' ? (
             <video
               key={segment.activeAssetUrl}
@@ -281,18 +282,29 @@ export function SegmentStudio({
               className="w-full aspect-video object-contain"
             />
           )}
-          <div className="bg-gray-900 px-4 py-2 flex items-center justify-between">
-            <span className="text-xs text-gray-400">
-              {segment.assetType === 'video' ? 'Generated Video' : 'Generated Image'} · Segment {segment.sequenceIndex + 1}
+          <div className="bg-gray-900 px-3 py-1.5 flex items-center justify-between">
+            <span className="text-[10px] text-gray-400">
+              {segment.assetType === 'video' ? 'Video' : 'Image'} · Seg {segment.sequenceIndex + 1}
             </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsTakesGalleryOpen(true)}
-              className="text-xs text-gray-400 hover:text-white"
-            >
-              View All Takes ({segment.takes.length})
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsFullscreenPreview(true)}
+                className="text-[10px] text-gray-400 hover:text-white h-6 px-2"
+              >
+                <Maximize2 className="w-3 h-3 mr-1" />
+                Expand
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsTakesGalleryOpen(true)}
+                className="text-[10px] text-gray-400 hover:text-white h-6 px-2"
+              >
+                Takes ({segment.takes.length})
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -540,6 +552,35 @@ export function SegmentStudio({
               </div>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Fullscreen Preview Dialog */}
+      <Dialog open={isFullscreenPreview} onOpenChange={setIsFullscreenPreview}>
+        <DialogContent className="sm:max-w-[90vw] max-h-[90vh] p-0 bg-black">
+          <button
+            onClick={() => setIsFullscreenPreview(false)}
+            className="absolute top-4 right-4 z-10 p-2 bg-black/60 hover:bg-black/80 rounded-full text-white transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          {segment.activeAssetUrl && (
+            segment.assetType === 'video' ? (
+              <video
+                key={segment.activeAssetUrl}
+                src={segment.activeAssetUrl}
+                controls
+                autoPlay
+                className="w-full h-full max-h-[85vh] object-contain"
+              />
+            ) : (
+              <img
+                src={segment.activeAssetUrl}
+                alt={`Segment ${segment.sequenceIndex + 1} fullscreen`}
+                className="w-full h-full max-h-[85vh] object-contain"
+              />
+            )
+          )}
         </DialogContent>
       </Dialog>
 

@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { SegmentTimeline } from './SegmentTimeline'
 import { SegmentStudio, GenerationType } from './SegmentStudio'
+import { AudioTimeline, AudioTracksData } from './AudioTimeline'
 import {
   SceneProductionData,
   SceneProductionReferences,
   SceneSegment,
 } from './types'
-import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle } from 'lucide-react'
+import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Music } from 'lucide-react'
 import { toast } from 'sonner'
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
 import {
@@ -40,12 +41,7 @@ interface SceneProductionManagerProps {
     resolution?: '720p' | '1080p'
   }) => Promise<void>
   onUpload: (sceneId: string, segmentId: string, file: File) => Promise<void>
-  audioTracks?: {
-    narration?: { url?: string; startTime: number; duration: number }
-    dialogue?: Array<{ url?: string; startTime: number; duration: number; character?: string }>
-    sfx?: Array<{ url?: string; startTime: number; duration: number; description?: string }>
-    music?: { url?: string; startTime: number; duration: number }
-  }
+  audioTracks?: AudioTracksData
 }
 
 export function SceneProductionManager({
@@ -272,6 +268,21 @@ export function SceneProductionManager({
           onSelect={setSelectedSegmentId}
           audioTracks={audioTracks}
         />
+
+        {/* Audio Timeline - Scene-level audio tracks */}
+        {segments.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+              <Music className="w-3.5 h-3.5" />
+              <span>Audio Preview</span>
+            </div>
+            <AudioTimeline
+              sceneDuration={segments.length > 0 ? segments[segments.length - 1].endTime : productionData?.targetSegmentDuration ?? 8}
+              segments={segments.map(s => ({ startTime: s.startTime, endTime: s.endTime, segmentId: s.segmentId }))}
+              audioTracks={audioTracks}
+            />
+          </div>
+        )}
 
         <SegmentStudio
           segment={selectedSegment}
