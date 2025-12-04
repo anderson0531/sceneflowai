@@ -6,6 +6,9 @@ export type SceneSegmentAssetType = 'video' | 'image' | null
 
 export type GenerationType = 'T2V' | 'I2V' | 'T2I' | 'UPLOAD'
 
+// Veo 3.1 generation methods
+export type VideoGenerationMethod = 'T2V' | 'I2V' | 'EXT' | 'FTV' | 'REF'
+
 export interface SceneSegmentTake {
   id: string
   createdAt: string
@@ -19,6 +22,10 @@ export interface SceneSegmentTake {
 export interface SceneSegmentReferences {
   startFrameUrl?: string | null
   endFrameUrl?: string | null
+  // Enhanced reference data
+  useSceneFrame?: boolean
+  characterRefs?: string[] // Character names to use as references
+  startFrameDescription?: string | null
   characterIds: string[]
   sceneRefIds: string[]
   objectRefIds: string[]
@@ -36,7 +43,7 @@ export interface SceneSegment {
   assetType: SceneSegmentAssetType
   references: SceneSegmentReferences
   takes: SceneSegmentTake[]
-  // New Shot Metadata
+  // Shot Metadata
   shotType?: string
   cameraAngle?: string
   cameraMovement?: string
@@ -45,6 +52,11 @@ export interface SceneSegment {
   transition?: 'cut' | 'dissolve' | 'fade_out'
   trigger?: string
   visualFrame?: string // e.g. "Shot Frame" url if separate from activeAssetUrl
+  // Enhanced Veo 3.1 metadata
+  generationMethod?: VideoGenerationMethod
+  triggerReason?: string // Why we cut here (speaker change, action change, etc.)
+  endFrameDescription?: string // Lookahead for next segment
+  emotionalBeat?: string // The emotional intent of this segment
 }
 
 export interface SceneProductionData {

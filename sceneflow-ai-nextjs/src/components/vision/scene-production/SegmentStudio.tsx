@@ -167,9 +167,29 @@ export function SegmentStudio({
       {/* Segment Header with Inline Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-            Segment {segment.sequenceIndex + 1} Studio
-          </h4>
+          <div className="flex items-center gap-2">
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              Segment {segment.sequenceIndex + 1} Studio
+            </h4>
+            {/* Generation Method Badge */}
+            {segment.generationMethod && (
+              <span className={cn(
+                "text-[10px] font-bold px-1.5 py-0.5 rounded",
+                segment.generationMethod === 'I2V' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
+                segment.generationMethod === 'EXT' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
+                segment.generationMethod === 'FTV' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
+                'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+              )}>
+                {segment.generationMethod}
+              </span>
+            )}
+            {/* Trigger Reason Badge */}
+            {segment.triggerReason && (
+              <span className="text-[10px] text-gray-500 dark:text-gray-400 hidden sm:inline">
+                • {segment.triggerReason}
+              </span>
+            )}
+          </div>
           <p className={cn("text-xs font-medium", getStatusColor(segment.status))}>
             {displayStatus(segment.status)} · {segment.startTime.toFixed(1)}s – {segment.endTime.toFixed(1)}s
           </p>
@@ -297,6 +317,49 @@ export function SegmentStudio({
           </DialogHeader>
           
           <div className="space-y-6 py-4">
+            {/* Veo 3.1 Generation Metadata - NEW */}
+            {(segment.generationMethod || segment.triggerReason || segment.emotionalBeat) && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {segment.generationMethod && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div className="text-[10px] font-semibold uppercase text-blue-600 dark:text-blue-400 mb-1">Method</div>
+                    <div className="text-sm font-bold text-blue-900 dark:text-blue-100">
+                      {segment.generationMethod === 'I2V' ? 'Image-to-Video' :
+                       segment.generationMethod === 'EXT' ? 'Extend' :
+                       segment.generationMethod === 'FTV' ? 'Frame-to-Video' :
+                       segment.generationMethod === 'REF' ? 'Reference' : 'Text-to-Video'}
+                    </div>
+                  </div>
+                )}
+                {segment.triggerReason && (
+                  <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <div className="text-[10px] font-semibold uppercase text-amber-600 dark:text-amber-400 mb-1">Cut Trigger</div>
+                    <div className="text-xs text-amber-900 dark:text-amber-100">{segment.triggerReason}</div>
+                  </div>
+                )}
+                {segment.emotionalBeat && (
+                  <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg border border-purple-200 dark:border-purple-800">
+                    <div className="text-[10px] font-semibold uppercase text-purple-600 dark:text-purple-400 mb-1">Emotional Beat</div>
+                    <div className="text-xs text-purple-900 dark:text-purple-100">{segment.emotionalBeat}</div>
+                  </div>
+                )}
+                {segment.cameraMovement && (
+                  <div className="bg-slate-50 dark:bg-slate-900/20 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
+                    <div className="text-[10px] font-semibold uppercase text-slate-600 dark:text-slate-400 mb-1">Camera</div>
+                    <div className="text-xs text-slate-900 dark:text-slate-100">{segment.cameraMovement}</div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* End Frame Description - Lookahead */}
+            {segment.endFrameDescription && (
+              <div className="bg-gradient-to-r from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="text-[10px] font-semibold uppercase text-green-600 dark:text-green-400 mb-1">End Frame (Lookahead for Next Segment)</div>
+                <div className="text-sm text-green-900 dark:text-green-100">{segment.endFrameDescription}</div>
+              </div>
+            )}
+
             {/* Scene Segment Description */}
             <div>
               <div className="flex items-center justify-between mb-3">

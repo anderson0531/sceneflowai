@@ -9,11 +9,21 @@ interface GenerateSegmentsRequest {
   projectId?: string
 }
 
-interface Segment {
+// Enhanced segment structure for Veo 3.1 intelligent generation
+interface IntelligentSegment {
   sequence: number
   estimated_duration: number
+  trigger_reason: string // Why we cut here
+  generation_method: 'I2V' | 'EXT' | 'T2V' | 'FTV' // Veo 3.1 methods
   video_generation_prompt: string
-  recommended_generation_type: 'T2V' | 'I2V' | 'T2I'
+  reference_strategy: {
+    use_scene_frame: boolean
+    use_character_refs: string[] // Character names to reference
+    start_frame_description?: string
+  }
+  end_frame_description: string // For lookahead/continuity
+  camera_notes: string
+  emotional_beat: string
 }
 
 export async function POST(
@@ -39,7 +49,7 @@ export async function POST(
       )
     }
 
-    console.log('[Scene Segmentation] Generating segments for scene:', sceneId)
+    console.log('[Scene Segmentation] Generating intelligent segments for scene:', sceneId)
 
     // Fetch project and scene data
     const projectResponse = await fetch(`${req.nextUrl.origin}/api/projects/${projectId}`)
@@ -47,16 +57,15 @@ export async function POST(
       throw new Error('Failed to fetch project')
     }
     const responseData = await projectResponse.json()
-    const project = responseData.project || responseData // Handle both wrapped and unwrapped responses
+    const project = responseData.project || responseData
 
     // Extract scene data from both possible locations
     const visionPhase = project.metadata?.visionPhase || {}
     const scenesFromDirect = visionPhase.scenes || []
     const scenesFromScript = visionPhase.script?.script?.scenes || []
     
-    // Combine scenes (prioritize direct scenes, then script scenes)
+    // Combine scenes
     const allScenes = [...scenesFromDirect]
-    // Add scenes from script that aren't already in direct scenes
     scenesFromScript.forEach((s: any) => {
       const existingIndex = allScenes.findIndex((existing: any) => 
         existing.id === s.id || 
@@ -67,86 +76,94 @@ export async function POST(
       }
     })
     
-    console.log('[Scene Segmentation] Found scenes:', allScenes.length, 'from direct:', scenesFromDirect.length, 'from script:', scenesFromScript.length)
+    console.log('[Scene Segmentation] Found scenes:', allScenes.length)
 
-    // Improved scene matching logic
+    // Find the scene
     let scene: any = null
-    
-    // Try exact id match first
     scene = allScenes.find((s: any) => s.id === sceneId)
     
-    // Try sceneNumber match (if sceneId is numeric)
     if (!scene && !isNaN(parseInt(sceneId))) {
       const sceneNumber = parseInt(sceneId)
       scene = allScenes.find((s: any) => s.sceneNumber === sceneNumber)
     }
     
-    // Try scene-{index} format (e.g., "scene-0" -> index 0, "scene-1" -> index 1)
-    // Note: The component uses 0-indexed sceneIdx, so scene-0 is the first scene
     if (!scene && sceneId.startsWith('scene-')) {
       const indexMatch = sceneId.match(/^scene-(\d+)$/)
       if (indexMatch) {
-        const index = parseInt(indexMatch[1]) // Already 0-indexed from component
+        const index = parseInt(indexMatch[1])
         if (index >= 0 && index < allScenes.length) {
           scene = allScenes[index]
         }
       }
     }
     
-    // Fall back to array index if sceneId is numeric (1-indexed)
     if (!scene && !isNaN(parseInt(sceneId))) {
-      const index = parseInt(sceneId) - 1 // Convert to 0-indexed
+      const index = parseInt(sceneId) - 1
       if (index >= 0 && index < allScenes.length) {
         scene = allScenes[index]
       }
     }
     
     if (!scene) {
-      console.error('[Scene Segmentation] Scene not found. SceneId:', sceneId, 'Available scenes:', allScenes.map((s: any, idx: number) => ({
-        index: idx,
-        id: s.id,
-        sceneNumber: s.sceneNumber,
-        fallbackId: `scene-${idx + 1}`
-      })))
+      console.error('[Scene Segmentation] Scene not found. SceneId:', sceneId)
       return NextResponse.json(
         { error: 'Scene not found', sceneId, availableScenes: allScenes.length },
         { status: 404 }
       )
     }
     
-    console.log('[Scene Segmentation] Found scene:', scene.id || scene.sceneNumber || 'unknown', 'at index:', allScenes.indexOf(scene))
+    console.log('[Scene Segmentation] Found scene:', scene.id || scene.sceneNumber || 'unknown')
 
-    // Get script and director's notes
-    const script = buildScriptText(scene)
-    const directorsNotes = buildDirectorsNotes(scene)
+    // Extract characters from project
+    const characters = visionPhase.characters || project.metadata?.characters || []
+    
+    // Build comprehensive scene data for intelligent segmentation
+    const sceneData = buildComprehensiveSceneData(scene, characters)
+    
+    // Generate intelligent segmentation prompt
+    const prompt = generateIntelligentSegmentationPrompt(sceneData, preferredDuration)
 
-    // Generate segmentation prompt
-    const prompt = generateBreakdownPrompt(script, directorsNotes, preferredDuration)
+    // Call Gemini for intelligent segmentation
+    const segments = await callGeminiForIntelligentSegmentation(prompt)
 
-    // Call Gemini 2.5
-    const segments = await callGeminiForSegmentation(prompt)
-
-    // Transform segments to match our data structure
-    const transformedSegments = segments.map((seg: Segment, idx: number) => {
+    // Transform segments to match our enhanced data structure
+    const transformedSegments = segments.map((seg: IntelligentSegment, idx: number) => {
       let cumulativeTime = 0
       for (let i = 0; i < idx; i++) {
         cumulativeTime += segments[i].estimated_duration
       }
 
+      // Map generation method to our types
+      const methodMap: Record<string, string> = {
+        'I2V': 'I2V',
+        'EXT': 'EXT', 
+        'T2V': 'T2V',
+        'FTV': 'FTV'
+      }
+
       return {
         segmentId: `seg_${sceneId}_${seg.sequence}`,
-        // Normalize to zero-based index; UI displays +1 for human-friendly numbering
         sequenceIndex: Math.max(0, (Number(seg.sequence) || (idx + 1)) - 1),
         startTime: cumulativeTime,
         endTime: cumulativeTime + seg.estimated_duration,
         status: 'DRAFT' as const,
+        // Enhanced prompt data
         generatedPrompt: seg.video_generation_prompt,
         userEditedPrompt: null,
         activeAssetUrl: null,
-        assetType: null as const,
+        assetType: null as 'video' | 'image' | null,
+        // Enhanced metadata for Veo 3.1
+        generationMethod: methodMap[seg.generation_method] || 'T2V',
+        triggerReason: seg.trigger_reason,
+        endFrameDescription: seg.end_frame_description,
+        cameraMovement: seg.camera_notes,
+        emotionalBeat: seg.emotional_beat,
         references: {
           startFrameUrl: null,
           endFrameUrl: null,
+          useSceneFrame: seg.reference_strategy?.use_scene_frame ?? (idx === 0),
+          characterRefs: seg.reference_strategy?.use_character_refs || [],
+          startFrameDescription: seg.reference_strategy?.start_frame_description || null,
           characterIds: [],
           sceneRefIds: [],
           objectRefIds: [],
@@ -172,129 +189,200 @@ export async function POST(
   }
 }
 
-function buildScriptText(scene: any): string {
-  const parts: string[] = []
-  
-  if (scene.heading) {
-    const headingText = typeof scene.heading === 'string' ? scene.heading : scene.heading.text
-    parts.push(`SCENE HEADING: ${headingText}`)
+interface ComprehensiveSceneData {
+  heading: string
+  visualDescription: string
+  narration: string | null
+  dialogue: Array<{ character: string; text: string; emotion?: string }>
+  sceneDirection: {
+    camera: string
+    lighting: string
+    scene: string
+    talent: string
+    audio: string
   }
-  
-  if (scene.narration) {
-    parts.push(`NARRATION: ${scene.narration}`)
-  }
-  
-  if (scene.visualDescription) {
-    parts.push(`VISUAL DESCRIPTION: ${scene.visualDescription}`)
-  }
-  
-  if (scene.dialogue && Array.isArray(scene.dialogue)) {
-    const dialogueText = scene.dialogue
-      .map((d: any) => {
-        const char = d.character || d.name || 'UNKNOWN'
-        const text = d.text || d.dialogue || ''
-        return `${char}: ${text}`
-      })
-      .join('\n')
-    parts.push(`DIALOGUE:\n${dialogueText}`)
-  }
-  
-  return parts.join('\n\n')
+  sceneFrameUrl: string | null
+  characters: Array<{
+    name: string
+    description: string
+    hasReferenceImage: boolean
+  }>
+  estimatedTotalDuration: number
 }
 
-function buildDirectorsNotes(scene: any): string {
-  if (!scene.sceneDirection) {
-    return 'No director notes available.'
+function buildComprehensiveSceneData(scene: any, characters: any[]): ComprehensiveSceneData {
+  // Extract heading
+  const heading = typeof scene.heading === 'string' 
+    ? scene.heading 
+    : scene.heading?.text || 'UNKNOWN LOCATION'
+
+  // Extract visual description
+  const visualDescription = scene.visualDescription || scene.action || scene.summary || ''
+
+  // Extract narration
+  const narration = scene.narration || null
+
+  // Extract and normalize dialogue
+  const dialogue = (scene.dialogue || []).map((d: any) => ({
+    character: d.character || d.name || 'UNKNOWN',
+    text: d.text || d.dialogue || d.line || '',
+    emotion: d.emotion || d.mood || null
+  }))
+
+  // Extract scene direction with fallbacks
+  const dir = scene.sceneDirection || {}
+  const sceneDirection = {
+    camera: typeof dir.camera === 'string' ? dir.camera : JSON.stringify(dir.camera || 'Standard coverage'),
+    lighting: typeof dir.lighting === 'string' ? dir.lighting : JSON.stringify(dir.lighting || 'Natural lighting'),
+    scene: typeof dir.scene === 'string' ? dir.scene : JSON.stringify(dir.scene || visualDescription),
+    talent: typeof dir.talent === 'string' ? dir.talent : JSON.stringify(dir.talent || 'Standard blocking'),
+    audio: typeof dir.audio === 'string' ? dir.audio : JSON.stringify(dir.audio || 'Ambient room tone')
   }
 
-  const dir = scene.sceneDirection
-  const parts: string[] = []
+  // Get scene frame URL
+  const sceneFrameUrl = scene.imageUrl || scene.thumbnailUrl || null
 
-  if (dir.camera) {
-    parts.push(`CAMERA: ${JSON.stringify(dir.camera, null, 2)}`)
-  }
-  if (dir.lighting) {
-    parts.push(`LIGHTING: ${JSON.stringify(dir.lighting, null, 2)}`)
-  }
-  if (dir.scene) {
-    parts.push(`SCENE: ${JSON.stringify(dir.scene, null, 2)}`)
-  }
-  if (dir.talent) {
-    parts.push(`TALENT: ${JSON.stringify(dir.talent, null, 2)}`)
-  }
-  if (dir.audio) {
-    parts.push(`AUDIO: ${JSON.stringify(dir.audio, null, 2)}`)
-  }
+  // Extract relevant characters
+  const sceneText = `${heading} ${visualDescription} ${narration || ''} ${dialogue.map((d: any) => `${d.character} ${d.text}`).join(' ')}`.toLowerCase()
+  
+  const relevantCharacters = characters
+    .filter((c: any) => {
+      const charName = (c.name || '').toLowerCase()
+      return sceneText.includes(charName)
+    })
+    .map((c: any) => ({
+      name: c.name || 'Unknown',
+      description: c.appearanceDescription || c.description || '',
+      hasReferenceImage: !!(c.referenceImageUrl || c.imageUrl)
+    }))
 
-  return parts.length > 0 ? parts.join('\n\n') : 'No specific director notes.'
+  // Estimate duration based on dialogue (approx 2.5 words per second) + action
+  const dialogueWords = dialogue.reduce((acc: number, d: any) => acc + (d.text?.split(' ').length || 0), 0)
+  const dialogueDuration = dialogueWords / 2.5
+  const actionDuration = Math.max(5, visualDescription.split(' ').length / 5) // Rough estimate
+  const estimatedTotalDuration = Math.max(dialogueDuration, actionDuration) + 2 // Buffer
+
+  return {
+    heading,
+    visualDescription,
+    narration,
+    dialogue,
+    sceneDirection,
+    sceneFrameUrl,
+    characters: relevantCharacters,
+    estimatedTotalDuration
+  }
 }
 
-function generateBreakdownPrompt(
-  script: string,
-  directorsNotes: string,
+function generateIntelligentSegmentationPrompt(
+  sceneData: ComprehensiveSceneData,
   preferredDuration: number
 ): string {
+  const characterList = sceneData.characters.length > 0
+    ? sceneData.characters.map(c => `- ${c.name}: ${c.description} ${c.hasReferenceImage ? '(Reference image available)' : ''}`).join('\n')
+    : '- No specific character references available'
+
+  const dialogueText = sceneData.dialogue.length > 0
+    ? sceneData.dialogue.map(d => `${d.character}${d.emotion ? ` (${d.emotion})` : ''}: "${d.text}"`).join('\n')
+    : 'No dialogue in this scene.'
+
   return `
-SYSTEM INSTRUCTION:
+**SYSTEM ROLE:** You are an AI Video Director and Editor optimized for Veo 3.1 generation workflows. Your goal is to translate a linear script and scene description into distinct, generation-ready video segments.
 
-You are an expert film editor and AI video generation specialist (using models like Veo). Your task is to break down a film scene into sequential, generation-ready segments (clips).
+**OPERATIONAL CONSTRAINTS:**
+1. **Duration:** Maximum ${preferredDuration} seconds per segment (8 seconds absolute max for Veo 3.1).
+2. **Continuity:** You must utilize specific **Methods** to ensure consistency (matching lighting, character appearance, and room tone).
+3. **Lookahead:** Each segment must define the "End Frame State" to prepare for the *next* segment's generation method.
 
-INPUTS:
+**INPUT DATA:**
 
-1. Scene Script (Dialogue & Action):
+## Scene Heading
+${sceneData.heading}
 
-${script}
+## Visual Description / Action
+${sceneData.visualDescription}
 
-2. Director's Chair (Cinematic Direction, Style, Mood):
+${sceneData.narration ? `## Narration\n${sceneData.narration}` : ''}
 
-${directorsNotes}
+## Dialogue
+${dialogueText}
 
-3. Target Segment Duration: ${preferredDuration} seconds. (Guideline: Prioritize natural breaks in action or dialogue over strict timing.)
+## Director's Chair Notes
+**Camera:** ${sceneData.sceneDirection.camera}
+**Lighting:** ${sceneData.sceneDirection.lighting}
+**Scene/Environment:** ${sceneData.sceneDirection.scene}
+**Talent/Blocking:** ${sceneData.sceneDirection.talent}
+**Audio/Atmosphere:** ${sceneData.sceneDirection.audio}
 
-RULES & OUTPUT:
+## Available Character References
+${characterList}
 
-1. Continuity is paramount. Segments must flow logically from one to the next.
+## Scene Frame Available
+${sceneData.sceneFrameUrl ? 'Yes - Master scene frame is available for I2V on Segment 1' : 'No - Use T2V with detailed prompts'}
 
-2. Ensure all dialogue and key actions are covered.
+## Estimated Scene Duration
+${Math.round(sceneData.estimatedTotalDuration)} seconds total
 
-3. Output must be a strict JSON array of objects.
+---
 
-SEGMENT FIELDS:
+**LOGIC WORKFLOW:**
+1. **Analyze Triggers:** Scan script for changes in Action, Speaker, Emotion, or Location. These are your "Cut Points."
+2. **Estimate Timing:** Assign estimated seconds to dialogue (approx. 2.5 words/sec) and action. If a specific beat exceeds ${preferredDuration} seconds, split it into Part A and Part B.
+3. **Select Method:**
+   - **I2V (Image-to-Video):** STRICTLY for Segment 1 (using the Master Scene Frame) or static establishing shots where we have a reference image.
+   - **EXT (Extend):** Use ONLY when the camera angle remains identical to the previous segment, and the action simply continues in time (e.g., continuous walk, uninterrupted monologue from same angle).
+   - **T2V (Text-to-Video with References):** Use for ALL angle changes (e.g., Wide to Close-Up, or Cutting from Character A to Character B). Always reference Scene Frame + Character Reference images.
+   - **FTV (Frame-to-Video):** When you need to transition from a specific start frame to guide the generation.
+4. **Draft Segment Prompt:** Construct a cinematic prompt using: [Shot Type] + [Subject/Character] + [Action/Dialogue Context] + [Camera Movement] + [Lighting/Mood] + [Lens/Technical Specs].
+5. **Define End Frame:** Describe exactly how the characters and camera represent the final millisecond of the clip to inform the *next* generation or extension.
 
-- sequence: (Integer) Sequential ID starting from 1.
+**CRITICAL RULES:**
+- NEVER use "EXT" (Extend) when cutting between different characters or changing camera angles. This causes character morphing/hallucinations.
+- Segment 1 should use I2V if scene frame is available to anchor the visual reality.
+- Include dialogue in prompts - Veo 3.1 supports speech generation. Format: He/She speaks, "dialogue text here."
+- Alternate camera styles based on character emotion (handheld for anxiety, locked-off for control/authority).
+- Use specific lens language: 35mm anamorphic, 85mm portrait, 24mm wide, etc.
+- Include technical specs: rack focus, shallow depth of field, motivated lighting, etc.
 
-- estimated_duration: (Float) Estimated time in seconds.
-
-- video_generation_prompt: (String) A highly detailed, vivid description optimized for video generation. Synthesize the script action, camera direction, lighting, and style cues for THIS SPECIFIC segment.
-
-- recommended_generation_type: (String) Recommend the best approach:
-    - "T2V" (Text-to-Video): Standard generation.
-    - "I2V" (Image-to-Video): Use when seamless continuity from the previous clip is critical (requires a starting frame).
-    - "T2I" (Text-to-Image): For static shots where motion is not required.
-
-EXAMPLE JSON OUTPUT:
+**OUTPUT FORMAT:**
+Return a JSON array of segment objects with these exact fields:
 
 [
   {
     "sequence": 1,
-    "estimated_duration": 6.5,
-    "video_generation_prompt": "Wide establishing shot, low angle. The lobby is futuristic, cold, and imposing with blue ambient lighting. Brian Anderson stands alone, center frame. Slow, smooth camera push-in.",
-    "recommended_generation_type": "T2V"
+    "estimated_duration": 6.0,
+    "trigger_reason": "Establishing shot - Set geography and mood",
+    "generation_method": "I2V",
+    "video_generation_prompt": "Cinematic wide shot of [detailed description]. [Character] is [action]. He/She speaks, '[Dialogue if any]'. [Camera movement]. [Lighting description]. [Lens/technical specs]. 8K, photorealistic.",
+    "reference_strategy": {
+      "use_scene_frame": true,
+      "use_character_refs": ["CharacterName"],
+      "start_frame_description": "Wide establishing shot showing full room"
+    },
+    "end_frame_description": "Character positioned [position], facing [direction], ready for [next action]",
+    "camera_notes": "Slow push-in, anamorphic 35mm",
+    "emotional_beat": "Tension building"
   }
 ]
 
-IMPORTANT: Return ONLY valid JSON. Do not include markdown code blocks or any explanatory text.
+**IMPORTANT:** 
+- Return ONLY valid JSON array. No markdown code blocks, no explanatory text before or after.
+- Ensure all dialogue from the script is covered across segments.
+- Use specific lens and camera language (35mm, 85mm, handheld, steadicam, rack focus, etc.)
+- Include actual dialogue text in prompts for Veo 3.1 speech generation using format: Character speaks, "dialogue"
+- Each segment prompt should be 50-150 words for optimal Veo 3.1 generation.
 `
 }
 
-async function callGeminiForSegmentation(prompt: string): Promise<Segment[]> {
+async function callGeminiForIntelligentSegmentation(prompt: string): Promise<IntelligentSegment[]> {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) {
     throw new Error('Google Gemini API key not configured')
   }
 
+  // Use Gemini 2.5 Pro for complex reasoning
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-preview-06-05:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -302,7 +390,7 @@ async function callGeminiForSegmentation(prompt: string): Promise<Segment[]> {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 8192,
+          maxOutputTokens: 16384,
           responseMimeType: 'application/json',
         },
       }),
@@ -312,10 +400,36 @@ async function callGeminiForSegmentation(prompt: string): Promise<Segment[]> {
   if (!response.ok) {
     const errorText = await response.text()
     console.error('[Scene Segmentation] Gemini API error:', response.status, errorText)
-    throw new Error(`Gemini API error: ${response.status}`)
+    
+    // Fallback to standard Gemini Pro if preview model fails
+    console.log('[Scene Segmentation] Attempting fallback to gemini-1.5-pro...')
+    const fallbackResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 16384,
+            responseMimeType: 'application/json',
+          },
+        }),
+      }
+    )
+    
+    if (!fallbackResponse.ok) {
+      throw new Error(`Gemini API error: ${response.status}`)
+    }
+    
+    return parseGeminiResponse(await fallbackResponse.json())
   }
 
-  const data = await response.json()
+  return parseGeminiResponse(await response.json())
+}
+
+function parseGeminiResponse(data: any): IntelligentSegment[] {
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text
 
   if (!text) {
@@ -323,15 +437,14 @@ async function callGeminiForSegmentation(prompt: string): Promise<Segment[]> {
     throw new Error('No segments generated from Gemini')
   }
 
-  // Parse JSON response
-  let segments: Segment[]
+  let segments: IntelligentSegment[]
   try {
     // Remove markdown code blocks if present
     const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
     segments = JSON.parse(cleanedText)
   } catch (parseError) {
     console.error('[Scene Segmentation] JSON parse error:', parseError)
-    console.error('[Scene Segmentation] Response text:', text.substring(0, 500))
+    console.error('[Scene Segmentation] Response text:', text.substring(0, 1000))
     throw new Error('Failed to parse segments JSON')
   }
 
@@ -340,16 +453,48 @@ async function callGeminiForSegmentation(prompt: string): Promise<Segment[]> {
     throw new Error('Invalid segments format: expected non-empty array')
   }
 
-  // Validate each segment
+  // Validate and normalize each segment
+  const validMethods = ['I2V', 'EXT', 'T2V', 'FTV']
   for (const seg of segments) {
-    if (!seg.sequence || !seg.estimated_duration || !seg.video_generation_prompt || !seg.recommended_generation_type) {
+    if (!seg.sequence || !seg.estimated_duration || !seg.video_generation_prompt) {
       throw new Error('Invalid segment format: missing required fields')
     }
-    if (!['T2V', 'I2V', 'T2I'].includes(seg.recommended_generation_type)) {
-      throw new Error(`Invalid generation type: ${seg.recommended_generation_type}`)
+    
+    // Normalize generation method
+    if (!seg.generation_method || !validMethods.includes(seg.generation_method)) {
+      seg.generation_method = 'T2V' // Default to T2V
+    }
+    
+    // Ensure reference_strategy exists
+    if (!seg.reference_strategy) {
+      seg.reference_strategy = {
+        use_scene_frame: seg.sequence === 1,
+        use_character_refs: []
+      }
+    }
+    
+    // Ensure end_frame_description exists
+    if (!seg.end_frame_description) {
+      seg.end_frame_description = 'Standard end position'
+    }
+    
+    // Ensure trigger_reason exists
+    if (!seg.trigger_reason) {
+      seg.trigger_reason = seg.sequence === 1 ? 'Establishing shot' : 'Scene continuation'
+    }
+    
+    // Ensure camera_notes exists
+    if (!seg.camera_notes) {
+      seg.camera_notes = 'Standard coverage'
+    }
+    
+    // Ensure emotional_beat exists
+    if (!seg.emotional_beat) {
+      seg.emotional_beat = 'Neutral'
     }
   }
 
+  console.log('[Scene Segmentation] Successfully parsed', segments.length, 'intelligent segments')
   return segments
 }
 
