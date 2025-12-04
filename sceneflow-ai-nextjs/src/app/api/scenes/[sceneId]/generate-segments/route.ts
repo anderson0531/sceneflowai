@@ -288,12 +288,13 @@ function generateIntelligentSegmentationPrompt(
     : 'No dialogue in this scene.'
 
   return `
-**SYSTEM ROLE:** You are an AI Video Director and Editor optimized for Veo 3.1 generation workflows. Your goal is to translate a linear script and scene description into distinct, generation-ready video segments.
+**SYSTEM ROLE:** You are an AI Video Director and Editor optimized for Veo 3.1 generation workflows. Your goal is to translate a linear script and scene description into distinct, generation-ready video segments with RICH CINEMATIC PROMPTS.
 
 **OPERATIONAL CONSTRAINTS:**
 1. **Duration:** Maximum ${preferredDuration} seconds per segment (8 seconds absolute max for Veo 3.1).
 2. **Continuity:** You must utilize specific **Methods** to ensure consistency (matching lighting, character appearance, and room tone).
 3. **Lookahead:** Each segment must define the "End Frame State" to prepare for the *next* segment's generation method.
+4. **Dialogue Integration:** Veo 3.1 generates speech from text. You MUST include character dialogue directly in prompts.
 
 **INPUT DATA:**
 
@@ -303,9 +304,9 @@ ${sceneData.heading}
 ## Visual Description / Action
 ${sceneData.visualDescription}
 
-${sceneData.narration ? `## Narration\n${sceneData.narration}` : ''}
+${sceneData.narration ? `## Narration (Audio Voiceover - NOT in video prompts)\n${sceneData.narration}` : ''}
 
-## Dialogue
+## Dialogue (MUST BE INCLUDED IN PROMPTS for Veo 3.1 speech generation)
 ${dialogueText}
 
 ## Director's Chair Notes
@@ -330,23 +331,43 @@ ${Math.round(sceneData.estimatedTotalDuration)} seconds total
 1. **Analyze Triggers:** Scan script for changes in Action, Speaker, Emotion, or Location. These are your "Cut Points."
 2. **Estimate Timing:** Assign estimated seconds to dialogue (approx. 2.5 words/sec) and action. If a specific beat exceeds ${preferredDuration} seconds, split it into Part A and Part B.
 3. **Select Method:**
-   - **I2V (Image-to-Video):** STRICTLY for Segment 1 (using the Master Scene Frame) or static establishing shots where we have a reference image.
-   - **EXT (Extend):** Use ONLY when the camera angle remains identical to the previous segment, and the action simply continues in time (e.g., continuous walk, uninterrupted monologue from same angle).
-   - **T2V (Text-to-Video with References):** Use for ALL angle changes (e.g., Wide to Close-Up, or Cutting from Character A to Character B). Always reference Scene Frame + Character Reference images.
-   - **FTV (Frame-to-Video):** When you need to transition from a specific start frame to guide the generation.
-4. **Draft Segment Prompt:** Construct a cinematic prompt using: [Shot Type] + [Subject/Character] + [Action/Dialogue Context] + [Camera Movement] + [Lighting/Mood] + [Lens/Technical Specs].
-5. **Define End Frame:** Describe exactly how the characters and camera represent the final millisecond of the clip to inform the *next* generation or extension.
+   - **I2V (Image-to-Video):** STRICTLY for Segment 1 (using the Master Scene Frame) or static establishing shots.
+   - **EXT (Extend):** Use ONLY when camera angle remains IDENTICAL and action simply continues (e.g., uninterrupted monologue from same angle, continuous walk). NEVER use when cutting between different characters.
+   - **T2V (Text-to-Video with References):** Use for ALL angle changes (Wide to Close-Up, cutting from Character A to Character B). Reference Scene Frame + Character Reference images.
+   - **FTV (Frame-to-Video):** When transitioning from a specific end frame.
 
-**CRITICAL RULES:**
-- NEVER use "EXT" (Extend) when cutting between different characters or changing camera angles. This causes character morphing/hallucinations.
-- Segment 1 should use I2V if scene frame is available to anchor the visual reality.
-- Include dialogue in prompts - Veo 3.1 supports speech generation. Format: He/She speaks, "dialogue text here."
-- Alternate camera styles based on character emotion (handheld for anxiety, locked-off for control/authority).
-- Use specific lens language: 35mm anamorphic, 85mm portrait, 24mm wide, etc.
-- Include technical specs: rack focus, shallow depth of field, motivated lighting, etc.
+**CRITICAL PROMPT CONSTRUCTION RULES:**
+Your video_generation_prompt field MUST follow this formula:
+
+[Shot Type] + [Lens] + [Subject with full visual description] + [Specific Action] + [DIALOGUE with exact text] + [Camera Movement] + [Lighting/Mood] + [Technical Specs]
+
+**DIALOGUE FORMAT IN PROMPTS:**
+When a character speaks, you MUST include it as: [Character Name] speaks, "[exact dialogue text]"
+Example: Alex speaks, "I don't know if we're ready for this, Dad."
+
+**EXAMPLE OF EXCELLENT SEGMENT PROMPTS:**
+
+For a scene with dialogue between Alex (anxious, pacing) and Ben (calm, authoritative):
+
+Segment 1 (Establishing - I2V):
+"Cinematic Wide Shot of Upscale TV Studio Green Room, high-end beige box. Alex Anderson is pacing nervously from left to right, checking his watch and smoothing his suit. Ben Anderson sits perfectly still on the leather sofa, swiping a tablet with minimal movement. Atmosphere is cold, sterile, and pressurized. Anamorphic 35mm lens, visible condensation on fruit basket in foreground. 8k, photorealistic."
+
+Segment 2 (Character dialogue - T2V):
+"Medium Shot, reflection in vanity mirror. Alex Anderson stares into the mirror, adjusting his tie with trembling hands. Alex speaks with rapid breathing, 'I don't know if we're ready for this, Dad. Vance has the entire board in her pocket.' Lighting is clinical with a soft top-light. Rack focus from reflection to actual face. High contrast, sweaty skin texture."
+
+Segment 3 (Reverse angle, new speaker - T2V):
+"Low Angle Medium Close-Up on Ben Anderson sitting on the sofa. He looks up from his tablet slowly, authoritative and calm. Ben speaks, 'We have the files, Alex. That's all that matters.' Rigid, locked-off camera. Background is out of focus beige walls. OLED screen pulsing blue in background. 85mm lens."
+
+**LENS LANGUAGE GUIDELINES:**
+- Use "Handheld" for anxious/nervous characters
+- Use "Locked-off/Static" for authoritative/controlled characters  
+- 35mm anamorphic for wide establishing shots
+- 85mm for intimate close-ups and dialogue
+- 24mm for environmental wides
+- Specify rack focus, shallow DOF, motivated lighting
 
 **OUTPUT FORMAT:**
-Return a JSON array of segment objects with these exact fields:
+Return a JSON array. Each segment object MUST have these fields:
 
 [
   {
@@ -354,24 +375,29 @@ Return a JSON array of segment objects with these exact fields:
     "estimated_duration": 6.0,
     "trigger_reason": "Establishing shot - Set geography and mood",
     "generation_method": "I2V",
-    "video_generation_prompt": "Cinematic wide shot of [detailed description]. [Character] is [action]. He/She speaks, '[Dialogue if any]'. [Camera movement]. [Lighting description]. [Lens/technical specs]. 8K, photorealistic.",
+    "video_generation_prompt": "[RICH 50-150 word cinematic prompt with exact dialogue if any, shot type, lens, character actions, camera movement, lighting, tech specs]",
     "reference_strategy": {
       "use_scene_frame": true,
       "use_character_refs": ["CharacterName"],
       "start_frame_description": "Wide establishing shot showing full room"
     },
-    "end_frame_description": "Character positioned [position], facing [direction], ready for [next action]",
-    "camera_notes": "Slow push-in, anamorphic 35mm",
+    "end_frame_description": "Character positioned near [location], facing [direction], expression [mood]",
+    "camera_notes": "Slow push-in, anamorphic 35mm, motivated key light from window",
     "emotional_beat": "Tension building"
   }
 ]
 
-**IMPORTANT:** 
-- Return ONLY valid JSON array. No markdown code blocks, no explanatory text before or after.
-- Ensure all dialogue from the script is covered across segments.
-- Use specific lens and camera language (35mm, 85mm, handheld, steadicam, rack focus, etc.)
-- Include actual dialogue text in prompts for Veo 3.1 speech generation using format: Character speaks, "dialogue"
-- Each segment prompt should be 50-150 words for optimal Veo 3.1 generation.
+**FINAL CHECKLIST:**
+✅ Every line of dialogue from the script appears in a segment prompt
+✅ Dialogue is formatted as: [Name] speaks, "[text]"
+✅ Each prompt is 50-150 words with specific lens/camera language
+✅ Segment 1 uses I2V if scene frame available
+✅ NEVER use EXT when cutting between characters or changing angles
+✅ End frame descriptions set up the next segment
+✅ Trigger reasons explain WHY we cut here
+✅ Narration is NOT included in prompts (it's a separate audio voiceover)
+
+Return ONLY valid JSON array. No markdown code blocks, no explanatory text.
 `
 }
 
