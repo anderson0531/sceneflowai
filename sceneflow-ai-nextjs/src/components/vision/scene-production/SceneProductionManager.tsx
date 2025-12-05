@@ -88,9 +88,22 @@ export function SceneProductionManager({
       }
     }
     
-    // Dialogue from scene
-    const dialogueArray = scene.dialogueAudio || scene.dialogue || []
-    if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
+    // Dialogue from scene - check multi-language structure (dialogueAudio.en) first, then legacy formats
+    let dialogueArray: any[] = []
+    if (scene.dialogueAudio) {
+      if (scene.dialogueAudio.en && Array.isArray(scene.dialogueAudio.en)) {
+        // Multi-language structure: dialogueAudio: { en: [...], es: [...] }
+        dialogueArray = scene.dialogueAudio.en
+      } else if (Array.isArray(scene.dialogueAudio)) {
+        // Legacy structure: dialogueAudio: [...]
+        dialogueArray = scene.dialogueAudio
+      }
+    } else if (scene.dialogue && Array.isArray(scene.dialogue)) {
+      // Fallback to scene.dialogue with audioUrl property
+      dialogueArray = scene.dialogue.filter((d: any) => d.audioUrl || d.url)
+    }
+    
+    if (dialogueArray.length > 0) {
       const dialogueClips: AudioTracksData['dialogue'] = []
       let currentTime = 0
       dialogueArray.forEach((d: any, idx: number) => {
@@ -102,7 +115,7 @@ export function SceneProductionManager({
             url,
             startTime: currentTime,
             duration: dur,
-            label: d.character || d.speaker || `Line ${idx + 1}`,
+            label: d.character || d.speaker || d.characterName || `Line ${idx + 1}`,
             volume: 1,
           })
           currentTime += dur + 0.5 // Small gap between dialogue
@@ -147,6 +160,14 @@ export function SceneProductionManager({
       }
     }
     
+    console.log('[SceneProductionManager] Built audio tracks:', {
+      voiceover: !!newTracks.voiceover,
+      dialogue: newTracks.dialogue?.length || 0,
+      music: !!newTracks.music,
+      sfx: newTracks.sfx?.length || 0,
+      dialogueAudioStructure: scene.dialogueAudio ? (scene.dialogueAudio.en ? 'multi-lang' : Array.isArray(scene.dialogueAudio) ? 'legacy-array' : 'unknown') : 'none',
+    })
+    
     setAudioTracksState(newTracks)
   }, [scene, productionData?.segments])
 
@@ -157,6 +178,16 @@ export function SceneProductionManager({
       ...externalAudioTracks,
     }
   }, [audioTracksState, externalAudioTracks])
+  
+  // Generate a key to force timeline refresh when audio changes
+  const audioTracksKey = useMemo(() => {
+    return JSON.stringify({
+      vo: audioTracks.voiceover?.url,
+      dialogue: audioTracks.dialogue?.map(d => d.url),
+      music: audioTracks.music?.url,
+      sfx: audioTracks.sfx?.map(s => s.url),
+    })
+  }, [audioTracks])
 
   const [isInitializing, setIsInitializing] = useState(false)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
@@ -451,6 +482,7 @@ export function SceneProductionManager({
           {/* Main Area: Scene Timeline with Video Player */}
           <div className="flex-1 min-w-0 flex flex-col min-w-[500px]">
             <SceneTimeline
+              key={audioTracksKey}
               segments={segments}
               selectedSegmentId={selectedSegmentId ?? undefined}
               onSegmentSelect={setSelectedSegmentId}

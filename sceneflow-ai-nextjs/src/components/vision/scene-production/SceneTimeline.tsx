@@ -77,21 +77,48 @@ export function SceneTimeline({
 }: SceneTimelineProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
-  const [mutedTracks, setMutedTracks] = useState<Set<string>>(new Set())
+  const [mutedTracks, setMutedTracks] = useState<Set<string>>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sceneflow-muted-tracks')
+      if (saved) return new Set(JSON.parse(saved))
+    }
+    return new Set()
+  })
   
-  // Track volume and enabled state
-  const [trackVolumes, setTrackVolumes] = useState<Record<string, number>>({
-    voiceover: 1,
-    dialogue: 1,
-    music: 0.6,
-    sfx: 0.8,
+  // Track volume and enabled state - persist to localStorage
+  const [trackVolumes, setTrackVolumes] = useState<Record<string, number>>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sceneflow-track-volumes')
+      if (saved) return JSON.parse(saved)
+    }
+    return { voiceover: 1, dialogue: 1, music: 0.6, sfx: 0.8 }
   })
-  const [trackEnabled, setTrackEnabled] = useState<Record<string, boolean>>({
-    voiceover: true,
-    dialogue: true,
-    music: true,
-    sfx: true,
+  const [trackEnabled, setTrackEnabled] = useState<Record<string, boolean>>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sceneflow-track-enabled')
+      if (saved) return JSON.parse(saved)
+    }
+    return { voiceover: true, dialogue: true, music: true, sfx: true }
   })
+  
+  // Persist track settings to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sceneflow-muted-tracks', JSON.stringify([...mutedTracks]))
+    }
+  }, [mutedTracks])
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sceneflow-track-volumes', JSON.stringify(trackVolumes))
+    }
+  }, [trackVolumes])
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sceneflow-track-enabled', JSON.stringify(trackEnabled))
+    }
+  }, [trackEnabled])
   
   // Drag/resize state
   const [dragState, setDragState] = useState<{
