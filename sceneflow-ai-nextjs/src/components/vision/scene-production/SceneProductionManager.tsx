@@ -4,7 +4,6 @@ import { useEffect, useState, useMemo, useCallback } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { SceneTimeline, AudioTracksData } from './SceneTimeline'
-import { VerticalSegmentSelector } from './VerticalSegmentSelector'
 import { SegmentStudio, GenerationType } from './SegmentStudio'
 import {
   SceneProductionData,
@@ -354,21 +353,10 @@ export function SceneProductionManager({
           )}
         </div>
 
-        {/* Main 3-Column Layout: Segment Selector | Timeline + Preview */}
-        <div className="flex gap-4">
-          {/* Left Panel: Vertical Segment Selector */}
-          <div className="w-48 flex-shrink-0 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 overflow-hidden h-[500px]">
-            <VerticalSegmentSelector
-              segments={segments}
-              selectedSegmentId={selectedSegmentId ?? undefined}
-              currentPlayingSegmentId={currentPlayingSegmentId ?? undefined}
-              onSelect={setSelectedSegmentId}
-            />
-          </div>
-
-          {/* Right Panel: Timeline + Segment Studio */}
-          <div className="flex-1 min-w-0 space-y-4">
-            {/* Unified Scene Timeline with Visual + Audio Tracks */}
+        {/* Optimized Layout: Timeline (left) + Segment Studio Panel (right) */}
+        <div className="flex gap-4 h-[520px]">
+          {/* Main Area: Scene Timeline with Video Player */}
+          <div className="flex-1 min-w-0 flex flex-col">
             <SceneTimeline
               segments={segments}
               selectedSegmentId={selectedSegmentId ?? undefined}
@@ -377,10 +365,14 @@ export function SceneProductionManager({
               onPlayheadChange={handlePlayheadChange}
               onGenerateSceneMp4={onGenerateSceneMp4}
             />
+          </div>
 
-            {/* Segment Studio for editing selected segment */}
+          {/* Right Panel: Segment Studio (scrollable) */}
+          <div className="w-80 flex-shrink-0">
             <SegmentStudio
               segment={selectedSegment}
+              segments={segments}
+              onSegmentChange={setSelectedSegmentId}
               previousSegmentLastFrame={previousSegmentLastFrame}
               onPromptChange={handlePromptChange}
               onGenerate={handleGenerate}
