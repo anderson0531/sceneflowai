@@ -3,11 +3,19 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { 
   Play, Pause, Volume2, VolumeX, Mic, Music, Zap, 
-  SkipBack, SkipForward, Film, Download
+  SkipBack, SkipForward, Film, Download, Plus, Trash2, X
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { SceneSegment } from './types'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 export interface AudioTrackClip {
   id: string
@@ -50,6 +58,8 @@ interface SceneTimelineProps {
   onGenerateSceneMp4?: () => void
   onVisualClipChange?: (clipId: string, changes: { startTime?: number; duration?: number; trimStart?: number; trimEnd?: number }) => void
   onAudioClipChange?: (trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
+  onAddSegment?: (afterSegmentId: string | null, duration: number) => void
+  onDeleteSegment?: (segmentId: string) => void
 }
 
 function formatTime(seconds: number): string {
@@ -74,9 +84,13 @@ export function SceneTimeline({
   onGenerateSceneMp4,
   onVisualClipChange,
   onAudioClipChange,
+  onAddSegment,
+  onDeleteSegment,
 }: SceneTimelineProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
+  const [showAddSegmentDialog, setShowAddSegmentDialog] = useState(false)
+  const [newSegmentDuration, setNewSegmentDuration] = useState(4)
   const [mutedTracks, setMutedTracks] = useState<Set<string>>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('sceneflow-muted-tracks')
@@ -545,6 +559,7 @@ export function SceneTimeline({
     const width = Math.max(clip.duration * pixelsPerSecond, 20)
     const isSelected = trackType === 'visual' && clip.id === selectedSegmentId
     const isDragging = dragState?.clipId === clip.id
+    const canDelete = trackType === 'visual' && visualClips.length > 1
     
     return (
       <div
@@ -570,6 +585,20 @@ export function SceneTimeline({
             />
           )}
         </div>
+        
+        {/* Delete button for visual clips */}
+        {trackType === 'visual' && canDelete && onDeleteSegment && (
+          <button
+            className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-red-500/80 hover:bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity z-30 flex items-center justify-center"
+            onClick={(e) => {
+              e.stopPropagation()
+              onDeleteSegment(clip.id)
+            }}
+            title="Delete segment"
+          >
+            <X className="w-2.5 h-2.5" />
+          </button>
+        )}
         
         {/* Left resize handle - more visible */}
         <div
@@ -601,31 +630,49 @@ export function SceneTimeline({
     )
   }
 
-  const renderVisualTrack = () => (
-    <div className="flex items-stretch h-16 group">
-      <div 
-        className="flex-shrink-0 flex items-center gap-1.5 px-2 bg-gray-100 dark:bg-gray-800 border-r border-gray-300 dark:border-gray-700"
-        style={{ width: AUDIO_TRACK_LABEL_WIDTH }}
-      >
-        <Film className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400" />
-        <span className="text-[10px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-          Visual
-        </span>
+  const renderVisualTrack = () => {
+    const lastClip = visualClips[visualClips.length - 1]
+    const addButtonLeft = lastClip ? (lastClip.startTime + lastClip.duration) * pixelsPerSecond + 4 : 4
+    
+    return (
+      <div className="flex items-stretch h-16 group">
+        <div 
+          className="flex-shrink-0 flex items-center gap-1.5 px-2 bg-gray-100 dark:bg-gray-800 border-r border-gray-300 dark:border-gray-700"
+          style={{ width: AUDIO_TRACK_LABEL_WIDTH }}
+        >
+          <Film className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400" />
+          <span className="text-[10px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+            Visual
+          </span>
+        </div>
+        <div className="flex-1 relative bg-gray-900 border-b border-gray-700">
+          {visualClips.map(clip => renderClip(
+            { ...clip, thumbnailUrl: clip.thumbnailUrl },
+            'visual',
+            clip.status === 'COMPLETE' || clip.status === 'UPLOADED'
+              ? 'bg-gradient-to-b from-gray-600 to-gray-700'
+              : clip.status === 'GENERATING'
+              ? 'bg-gradient-to-r from-amber-700 to-amber-800 animate-pulse'
+              : 'bg-gradient-to-b from-gray-500 to-gray-600 border border-dashed border-gray-400',
+            true
+          ))}
+          
+          {/* Add Segment Button */}
+          {onAddSegment && (
+            <button
+              className="absolute top-1/2 -translate-y-1/2 h-10 px-2 rounded bg-gray-700 hover:bg-gray-600 border border-dashed border-gray-500 hover:border-gray-400 text-gray-400 hover:text-gray-200 transition-all flex items-center gap-1 text-[10px] font-medium"
+              style={{ left: addButtonLeft }}
+              onClick={() => setShowAddSegmentDialog(true)}
+              title="Add new segment"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add</span>
+            </button>
+          )}
+        </div>
       </div>
-      <div className="flex-1 relative bg-gray-900 border-b border-gray-700">
-        {visualClips.map(clip => renderClip(
-          { ...clip, thumbnailUrl: clip.thumbnailUrl },
-          'visual',
-          clip.status === 'COMPLETE' || clip.status === 'UPLOADED'
-            ? 'bg-gradient-to-b from-gray-600 to-gray-700'
-            : clip.status === 'GENERATING'
-            ? 'bg-gradient-to-r from-amber-700 to-amber-800 animate-pulse'
-            : 'bg-gradient-to-b from-gray-500 to-gray-600 border border-dashed border-gray-400',
-          true
-        ))}
-      </div>
-    </div>
-  )
+    )
+  }
 
   const renderAudioTrack = (
     label: string,
@@ -843,6 +890,50 @@ export function SceneTimeline({
           />
         )
       ))}
+      
+      {/* Add Segment Dialog */}
+      <Dialog open={showAddSegmentDialog} onOpenChange={setShowAddSegmentDialog}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Add New Segment</DialogTitle>
+            <DialogDescription>
+              Create a new visual segment to extend the scene timeline.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Duration (seconds)
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={10}
+                step={0.5}
+                value={newSegmentDuration}
+                onChange={(e) => setNewSegmentDuration(parseFloat(e.target.value) || 4)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              />
+              <p className="mt-1 text-xs text-gray-500">Recommended: 3-5 seconds for smooth pacing</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddSegmentDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                const lastSegment = visualClips[visualClips.length - 1]
+                onAddSegment?.(lastSegment?.id || null, newSegmentDuration)
+                setShowAddSegmentDialog(false)
+                setNewSegmentDuration(4)
+              }}
+            >
+              Add Segment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

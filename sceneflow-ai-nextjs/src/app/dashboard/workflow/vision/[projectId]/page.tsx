@@ -942,6 +942,143 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [applySceneProductionUpdate]
   )
   
+  // Handle adding a new segment
+  const handleAddSegment = useCallback(
+    (sceneId: string, afterSegmentId: string | null, duration: number) => {
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        
+        const segments = [...current.segments]
+        const afterIndex = afterSegmentId 
+          ? segments.findIndex(s => s.segmentId === afterSegmentId)
+          : segments.length - 1
+        
+        // Calculate start time based on last segment
+        const lastSegment = segments[afterIndex]
+        const newStartTime = lastSegment ? lastSegment.endTime : 0
+        
+        // Create new segment
+        const newSegmentId = `seg_${sceneId}_${segments.length + 1}_${Date.now()}`
+        const newSegment = {
+          segmentId: newSegmentId,
+          sequenceIndex: segments.length,
+          startTime: newStartTime,
+          endTime: newStartTime + duration,
+          status: 'DRAFT' as const,
+          assetType: undefined,
+          activeAssetUrl: undefined,
+          generatedPrompt: 'New segment - add a prompt',
+          userEditedPrompt: '',
+          references: {
+            sceneImageUrl: lastSegment?.references?.sceneImageUrl,
+            thumbnailUrl: undefined,
+            startFrameUrl: lastSegment?.references?.endFrameUrl,
+            endFrameUrl: undefined,
+          },
+          takes: [],
+        }
+        
+        segments.push(newSegment)
+        
+        return { 
+          ...current, 
+          segments,
+          targetSegmentDuration: current.targetSegmentDuration 
+        }
+      })
+
+      try {
+        const { toast } = require('sonner')
+        toast.success(`Added new ${duration}s segment`)
+      } catch {}
+    },
+    [applySceneProductionUpdate]
+  )
+  
+  // Handle deleting a segment
+  const handleDeleteSegment = useCallback(
+    (sceneId: string, segmentId: string) => {
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        
+        const segments = current.segments.filter(s => s.segmentId !== segmentId)
+        
+        // Recalculate times and indices
+        let currentTime = 0
+        const updatedSegments = segments.map((segment, idx) => {
+          const duration = segment.endTime - segment.startTime
+          const updated = {
+            ...segment,
+            sequenceIndex: idx,
+            startTime: currentTime,
+            endTime: currentTime + duration,
+          }
+          currentTime += duration
+          return updated
+        })
+        
+        return { ...current, segments: updatedSegments }
+      })
+
+      try {
+        const { toast } = require('sonner')
+        toast.success('Segment deleted')
+      } catch {}
+    },
+    [applySceneProductionUpdate]
+  )
+  
+  // Handle audio clip changes (start time, duration)
+  const handleAudioClipChange = useCallback(
+    (sceneId: string, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => {
+      // Update the scene's audio track data
+      setScenes((prevScenes) => {
+        return prevScenes.map((scene, idx) => {
+          const key = getSceneProductionKey(scene as Scene, idx)
+          if (key !== sceneId) return scene
+          
+          const updatedScene = { ...scene }
+          
+          // Update the appropriate audio track based on trackType
+          if (trackType === 'voiceover' && changes.startTime !== undefined) {
+            // Store the start time offset for narration
+            updatedScene.narrationStartTime = changes.startTime
+          } else if (trackType === 'dialogue') {
+            // Update dialogue start times
+            if (updatedScene.dialogueAudio?.en) {
+              const dialogueIdx = parseInt(clipId.replace('dialogue-', ''))
+              if (!isNaN(dialogueIdx) && updatedScene.dialogueAudio.en[dialogueIdx]) {
+                updatedScene.dialogueAudio = {
+                  ...updatedScene.dialogueAudio,
+                  en: updatedScene.dialogueAudio.en.map((d: any, i: number) => 
+                    i === dialogueIdx 
+                      ? { ...d, startTime: changes.startTime ?? d.startTime }
+                      : d
+                  )
+                }
+              }
+            }
+          } else if (trackType === 'sfx') {
+            // Update SFX start times
+            const sfxIdx = parseInt(clipId.replace('sfx-', ''))
+            if (!isNaN(sfxIdx) && updatedScene.sfx?.[sfxIdx]) {
+              updatedScene.sfx = updatedScene.sfx.map((s: any, i: number) =>
+                i === sfxIdx
+                  ? { ...s, startTime: changes.startTime ?? s.startTime }
+                  : s
+              )
+            }
+          }
+          
+          return updatedScene
+        })
+      })
+      
+      console.log('[Audio Clip Change]', { sceneId, trackType, clipId, changes })
+    },
+    [setScenes, getSceneProductionKey]
+  )
+  
   // Script review state
   const [directorReview, setDirectorReview] = useState<any>(null)
   const [audienceReview, setAudienceReview] = useState<any>(null)
@@ -4612,6 +4749,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSegmentPromptChange={handleSegmentPromptChange}
                 onSegmentGenerate={handleSegmentGenerate}
                 onSegmentUpload={handleSegmentUpload}
+                onAddSegment={handleAddSegment}
+                onDeleteSegment={handleDeleteSegment}
+                onAudioClipChange={handleAudioClipChange}
                 sceneAudioTracks={{}}
                   bookmarkedScene={sceneBookmark}
                   onBookmarkScene={handleBookmarkScene}

@@ -42,6 +42,9 @@ interface SceneProductionManagerProps {
   onUpload: (sceneId: string, segmentId: string, file: File) => Promise<void>
   audioTracks?: AudioTracksData
   onGenerateSceneMp4?: () => void
+  onAddSegment?: (sceneId: string, afterSegmentId: string | null, duration: number) => void
+  onDeleteSegment?: (sceneId: string, segmentId: string) => void
+  onAudioClipChange?: (sceneId: string, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
 }
 
 export function SceneProductionManager({
@@ -57,6 +60,9 @@ export function SceneProductionManager({
   onUpload,
   audioTracks: externalAudioTracks,
   onGenerateSceneMp4,
+  onAddSegment,
+  onDeleteSegment,
+  onAudioClipChange,
 }: SceneProductionManagerProps) {
   const [targetDuration, setTargetDuration] = useState<number>(productionData?.targetSegmentDuration ?? 8)
   
@@ -495,6 +501,9 @@ export function SceneProductionManager({
               audioTracks={audioTracks}
               onPlayheadChange={handlePlayheadChange}
               onGenerateSceneMp4={onGenerateSceneMp4}
+              onAddSegment={onAddSegment ? (afterSegmentId, duration) => onAddSegment(sceneId, afterSegmentId, duration) : undefined}
+              onDeleteSegment={onDeleteSegment ? (segmentId) => onDeleteSegment(sceneId, segmentId) : undefined}
+              onAudioClipChange={onAudioClipChange ? (trackType, clipId, changes) => onAudioClipChange(sceneId, trackType, clipId, changes) : undefined}
             />
           </div>
 
