@@ -64,6 +64,16 @@ export function SceneProductionManager({
   onDeleteSegment,
   onAudioClipChange,
 }: SceneProductionManagerProps) {
+  // DEBUG: Log props on mount and when they change
+  useEffect(() => {
+    console.log('[SceneProductionManager] Props received:', {
+      sceneId,
+      hasOnAddSegment: typeof onAddSegment === 'function',
+      hasOnDeleteSegment: typeof onDeleteSegment === 'function',
+      hasOnAudioClipChange: typeof onAudioClipChange === 'function',
+    })
+  }, [sceneId, onAddSegment, onDeleteSegment, onAudioClipChange])
+  
   const [targetDuration, setTargetDuration] = useState<number>(productionData?.targetSegmentDuration ?? 8)
   
   // Build audio tracks from scene data if not provided externally

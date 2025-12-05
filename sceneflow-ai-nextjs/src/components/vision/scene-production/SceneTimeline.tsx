@@ -87,9 +87,22 @@ export function SceneTimeline({
   onAddSegment,
   onDeleteSegment,
 }: SceneTimelineProps) {
+  // DEBUG: Log props on every render
+  console.log('[SceneTimeline] Render with props:', {
+    segmentCount: segments?.length,
+    hasOnAddSegment: typeof onAddSegment === 'function',
+    onAddSegmentValue: onAddSegment,
+    hasOnDeleteSegment: typeof onDeleteSegment === 'function',
+  })
+  
   // Capture callbacks in stable refs to avoid closure issues
   const addSegmentCallback = onAddSegment
   const deleteSegmentCallback = onDeleteSegment
+  
+  console.log('[SceneTimeline] Callbacks assigned:', {
+    hasAddSegmentCallback: typeof addSegmentCallback === 'function',
+    hasDeleteSegmentCallback: typeof deleteSegmentCallback === 'function',
+  })
   
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -635,6 +648,8 @@ export function SceneTimeline({
   }
 
   const renderVisualTrack = () => {
+    console.log('[SceneTimeline:renderVisualTrack] Called, addSegmentCallback:', typeof addSegmentCallback)
+    
     const lastClip = visualClips[visualClips.length - 1]
     const addButtonLeft = lastClip ? (lastClip.startTime + lastClip.duration) * pixelsPerSecond + 4 : 4
     

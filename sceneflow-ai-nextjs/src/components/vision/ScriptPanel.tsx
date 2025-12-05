@@ -3801,6 +3801,12 @@ function SceneCard({
 
                 {activeWorkflowTab === 'callAction' && (
                   <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
+                    {/* DEBUG: Log what we're passing */}
+                    {console.log('[ScriptPanel] Rendering SceneProductionManager with:', {
+                      sceneId: scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                      hasOnAddSegment: typeof onAddSegment === 'function',
+                      hasOnDeleteSegment: typeof onDeleteSegment === 'function',
+                    })}
                     <SceneProductionManager
                       sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
                       sceneNumber={sceneNumber}
