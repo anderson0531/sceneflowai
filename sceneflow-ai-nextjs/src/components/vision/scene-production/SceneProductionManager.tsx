@@ -447,9 +447,9 @@ export function SceneProductionManager({
         </div>
 
         {/* Optimized Layout: Timeline (left) + Segment Studio Panel (right) */}
-        <div className="flex gap-4 h-[520px]">
+        <div className="flex gap-4 h-[680px] overflow-y-auto overflow-x-auto">
           {/* Main Area: Scene Timeline with Video Player */}
-          <div className="flex-1 min-w-0 flex flex-col">
+          <div className="flex-1 min-w-0 flex flex-col min-w-[500px]">
             <SceneTimeline
               segments={segments}
               selectedSegmentId={selectedSegmentId ?? undefined}
