@@ -220,7 +220,7 @@ export function VerticalSegmentSelector({
         ))}
         
         {/* Add Segment Button (placeholder) */}
-        {typeof onAddSegment === 'function' && (
+        {/* {typeof onAddSegment === 'function' && (
           <Button
             variant="outline"
             size="sm"
@@ -228,9 +228,9 @@ export function VerticalSegmentSelector({
             className="w-full h-12 border-dashed flex items-center justify-center gap-2 text-gray-400 hover:text-gray-600"
           >
             <Plus className="w-4 h-4" />
-            <span className="text-xs">Add Segment</span>
+            <span>Add Segment</span>
           </Button>
-        )}
+        )} */}
       </div>
       
       {/* Footer Stats */}

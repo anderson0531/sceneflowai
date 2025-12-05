@@ -96,8 +96,8 @@ export function SceneTimeline({
   })
   
   // Capture callbacks in stable refs to avoid closure issues
-  const addSegmentCallback = onAddSegment
-  const deleteSegmentCallback = onDeleteSegment
+  const addSegmentCallback = typeof onAddSegment === 'function' ? onAddSegment : undefined
+  const deleteSegmentCallback = typeof onDeleteSegment === 'function' ? onDeleteSegment : undefined
   
   console.log('[SceneTimeline] Callbacks assigned:', {
     hasAddSegmentCallback: typeof addSegmentCallback === 'function',
