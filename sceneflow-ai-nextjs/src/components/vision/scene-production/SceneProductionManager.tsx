@@ -388,7 +388,6 @@ export function SceneProductionManager({
               references={references}
               sceneImageUrl={scene?.imageUrl}
               audioTracks={audioTracks}
-              availableAudioAssets={availableAudioAssets}
             />
           </div>
         </div>

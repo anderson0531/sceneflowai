@@ -3,11 +3,10 @@
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { Button } from '@/components/ui/Button'
 import { SceneSegment, SceneProductionReferences, SceneSegmentStatus } from './types'
-import { Upload, Video, Image as ImageIcon, CheckCircle2, Link as LinkIcon, Sparkles, Loader2, Info, Film, Play, X, Maximize2, Volume2, VolumeX, Mic, Music, Zap, ChevronDown } from 'lucide-react'
+import { Upload, Video, Image as ImageIcon, CheckCircle2, Link as LinkIcon, Sparkles, Loader2, Info, Film, Play, X, Maximize2, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SegmentPromptBuilder, GeneratePromptData, VideoGenerationMethod } from './SegmentPromptBuilder'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AudioTrackClip, AudioTracksData } from './SceneTimeline'
 
 export type GenerationType = 'T2V' | 'I2V' | 'T2I' | 'UPLOAD'
@@ -19,16 +18,6 @@ interface SegmentPromptSummary {
   characterNames?: string[]
   sceneRefNames?: string[]
   objectNames?: string[]
-}
-
-// Audio asset option for selection
-interface AudioAssetOption {
-  id: string
-  label: string
-  url: string
-  type: 'voiceover' | 'dialogue' | 'music' | 'sfx'
-  duration?: number
-  source: 'scene' | 'take' | 'library'
 }
 
 interface SegmentStudioProps {
@@ -53,10 +42,8 @@ interface SegmentStudioProps {
   onOpenPromptBuilder?: () => void
   onOpenScenePreview?: () => void
   sceneImageUrl?: string
-  // Audio props
+  // Audio props for concurrent playback
   audioTracks?: AudioTracksData
-  availableAudioAssets?: AudioAssetOption[]
-  onAudioTrackChange?: (trackType: 'voiceover' | 'dialogue' | 'music' | 'sfx', assetId: string | null) => void
 }
 
 export function SegmentStudio({
@@ -72,8 +59,6 @@ export function SegmentStudio({
   onOpenScenePreview,
   sceneImageUrl,
   audioTracks,
-  availableAudioAssets = [],
-  onAudioTrackChange,
 }: SegmentStudioProps) {
   const [isAssetSelectorOpen, setIsAssetSelectorOpen] = useState(false)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
@@ -85,76 +70,39 @@ export function SegmentStudio({
   const [isPromptBuilderOpen, setIsPromptBuilderOpen] = useState(false)
   const [promptBuilderMode, setPromptBuilderMode] = useState<'image' | 'video'>('video')
   
-  // Audio playback state
+  // Audio playback state for segment preview
   const [isPlaying, setIsPlaying] = useState(false)
-  const [mutedTracks, setMutedTracks] = useState<Set<string>>(new Set())
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map())
   
-  // Selected audio assets per track
-  const [selectedAudio, setSelectedAudio] = useState<{
-    voiceover: string | null
-    dialogue: string | null
-    music: string | null
-    sfx: string | null
-  }>({
-    voiceover: null,
-    dialogue: null,
-    music: null,
-    sfx: null,
-  })
-  
-  // Filter available assets by type
-  const voiceoverAssets = useMemo(() => 
-    availableAudioAssets.filter(a => a.type === 'voiceover'), [availableAudioAssets])
-  const dialogueAssets = useMemo(() => 
-    availableAudioAssets.filter(a => a.type === 'dialogue'), [availableAudioAssets])
-  const musicAssets = useMemo(() => 
-    availableAudioAssets.filter(a => a.type === 'music'), [availableAudioAssets])
-  const sfxAssets = useMemo(() => 
-    availableAudioAssets.filter(a => a.type === 'sfx'), [availableAudioAssets])
-  
-  // Get current audio clips from audioTracks prop or selected assets
+  // Get audio clips from audioTracks prop for segment preview
   const currentAudioClips = useMemo(() => {
     const clips: Array<{ type: string; clip: AudioTrackClip }> = []
     
-    // Use audioTracks prop if available, otherwise use selected assets
     if (audioTracks?.voiceover?.url) {
       clips.push({ type: 'voiceover', clip: audioTracks.voiceover })
-    } else if (selectedAudio.voiceover) {
-      const asset = voiceoverAssets.find(a => a.id === selectedAudio.voiceover)
-      if (asset) clips.push({ type: 'voiceover', clip: { id: asset.id, url: asset.url, startTime: 0, duration: asset.duration || 5, label: asset.label } })
     }
     
     if (audioTracks?.dialogue?.length) {
       audioTracks.dialogue.forEach(d => d.url && clips.push({ type: 'dialogue', clip: d }))
-    } else if (selectedAudio.dialogue) {
-      const asset = dialogueAssets.find(a => a.id === selectedAudio.dialogue)
-      if (asset) clips.push({ type: 'dialogue', clip: { id: asset.id, url: asset.url, startTime: 0, duration: asset.duration || 5, label: asset.label } })
     }
     
     if (audioTracks?.music?.url) {
       clips.push({ type: 'music', clip: audioTracks.music })
-    } else if (selectedAudio.music) {
-      const asset = musicAssets.find(a => a.id === selectedAudio.music)
-      if (asset) clips.push({ type: 'music', clip: { id: asset.id, url: asset.url, startTime: 0, duration: asset.duration || 30, label: asset.label } })
     }
     
     if (audioTracks?.sfx?.length) {
       audioTracks.sfx.forEach(s => s.url && clips.push({ type: 'sfx', clip: s }))
-    } else if (selectedAudio.sfx) {
-      const asset = sfxAssets.find(a => a.id === selectedAudio.sfx)
-      if (asset) clips.push({ type: 'sfx', clip: { id: asset.id, url: asset.url, startTime: 0, duration: asset.duration || 3, label: asset.label } })
     }
     
     return clips
-  }, [audioTracks, selectedAudio, voiceoverAssets, dialogueAssets, musicAssets, sfxAssets])
+  }, [audioTracks])
   
   // Sync audio with video playback
   const handleVideoPlay = () => {
     setIsPlaying(true)
-    currentAudioClips.forEach(({ type, clip }) => {
-      if (!mutedTracks.has(type) && clip.url) {
+    currentAudioClips.forEach(({ clip }) => {
+      if (clip.url) {
         const audio = audioRefs.current.get(clip.id)
         if (audio && videoRef.current) {
           audio.currentTime = videoRef.current.currentTime
@@ -178,37 +126,6 @@ export function SegmentStudio({
         }
       })
     }
-  }
-  
-  const toggleMute = (trackType: string) => {
-    setMutedTracks(prev => {
-      const next = new Set(prev)
-      if (next.has(trackType)) {
-        next.delete(trackType)
-        // Resume audio if playing
-        if (isPlaying) {
-          currentAudioClips.filter(c => c.type === trackType).forEach(({ clip }) => {
-            const audio = audioRefs.current.get(clip.id)
-            if (audio && videoRef.current) {
-              audio.currentTime = videoRef.current.currentTime
-              audio.play().catch(() => {})
-            }
-          })
-        }
-      } else {
-        next.add(trackType)
-        // Pause audio for this track
-        currentAudioClips.filter(c => c.type === trackType).forEach(({ clip }) => {
-          audioRefs.current.get(clip.id)?.pause()
-        })
-      }
-      return next
-    })
-  }
-  
-  const handleAudioSelect = (trackType: 'voiceover' | 'dialogue' | 'music' | 'sfx', assetId: string | null) => {
-    setSelectedAudio(prev => ({ ...prev, [trackType]: assetId }))
-    onAudioTrackChange?.(trackType, assetId)
   }
 
   if (!segment) {
@@ -407,139 +324,10 @@ export function SegmentStudio({
         </div>
       </div>
 
-      {/* Video/Image Preview - Centered with Audio Controls */}
+      {/* Video/Image Preview - Centered */}
       {segment.activeAssetUrl && (segment.status === 'COMPLETE' || segment.status === 'UPLOADED') && (
         <div className="flex flex-col items-center">
-          {/* Audio Track Selectors */}
-          {(availableAudioAssets.length > 0 || currentAudioClips.length > 0) && (
-            <div className="w-full max-w-xl mb-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {/* V.O. Track */}
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-semibold text-gray-500 uppercase flex items-center gap-1">
-                    <Mic className="w-3 h-3" /> V.O.
-                  </span>
-                  <button
-                    onClick={() => toggleMute('voiceover')}
-                    className={cn("p-1 rounded transition-colors", mutedTracks.has('voiceover') ? "text-gray-400" : "text-blue-500")}
-                  >
-                    {mutedTracks.has('voiceover') ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
-                  </button>
-                </div>
-                <Select
-                  value={selectedAudio.voiceover || 'none'}
-                  onValueChange={(v) => handleAudioSelect('voiceover', v === 'none' ? null : v)}
-                >
-                  <SelectTrigger className="h-7 text-[10px]">
-                    <SelectValue placeholder="Select V.O." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {voiceoverAssets.map(asset => (
-                      <SelectItem key={asset.id} value={asset.id}>
-                        {asset.label} ({asset.source})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {/* Dialogue Track */}
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-semibold text-gray-500 uppercase flex items-center gap-1">
-                    <Mic className="w-3 h-3" /> Dialogue
-                  </span>
-                  <button
-                    onClick={() => toggleMute('dialogue')}
-                    className={cn("p-1 rounded transition-colors", mutedTracks.has('dialogue') ? "text-gray-400" : "text-emerald-500")}
-                  >
-                    {mutedTracks.has('dialogue') ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
-                  </button>
-                </div>
-                <Select
-                  value={selectedAudio.dialogue || 'none'}
-                  onValueChange={(v) => handleAudioSelect('dialogue', v === 'none' ? null : v)}
-                >
-                  <SelectTrigger className="h-7 text-[10px]">
-                    <SelectValue placeholder="Select Dialogue" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {dialogueAssets.map(asset => (
-                      <SelectItem key={asset.id} value={asset.id}>
-                        {asset.label} ({asset.source})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {/* Music Track */}
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-semibold text-gray-500 uppercase flex items-center gap-1">
-                    <Music className="w-3 h-3" /> Music
-                  </span>
-                  <button
-                    onClick={() => toggleMute('music')}
-                    className={cn("p-1 rounded transition-colors", mutedTracks.has('music') ? "text-gray-400" : "text-purple-500")}
-                  >
-                    {mutedTracks.has('music') ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
-                  </button>
-                </div>
-                <Select
-                  value={selectedAudio.music || 'none'}
-                  onValueChange={(v) => handleAudioSelect('music', v === 'none' ? null : v)}
-                >
-                  <SelectTrigger className="h-7 text-[10px]">
-                    <SelectValue placeholder="Select Music" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {musicAssets.map(asset => (
-                      <SelectItem key={asset.id} value={asset.id}>
-                        {asset.label} ({asset.source})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {/* SFX Track */}
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-semibold text-gray-500 uppercase flex items-center gap-1">
-                    <Zap className="w-3 h-3" /> SFX
-                  </span>
-                  <button
-                    onClick={() => toggleMute('sfx')}
-                    className={cn("p-1 rounded transition-colors", mutedTracks.has('sfx') ? "text-gray-400" : "text-amber-500")}
-                  >
-                    {mutedTracks.has('sfx') ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
-                  </button>
-                </div>
-                <Select
-                  value={selectedAudio.sfx || 'none'}
-                  onValueChange={(v) => handleAudioSelect('sfx', v === 'none' ? null : v)}
-                >
-                  <SelectTrigger className="h-7 text-[10px]">
-                    <SelectValue placeholder="Select SFX" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {sfxAssets.map(asset => (
-                      <SelectItem key={asset.id} value={asset.id}>
-                        {asset.label} ({asset.source})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-          
-          {/* Centered Video Player - 10% larger */}
+          {/* Centered Video Player */}
           <div className="rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden bg-black w-full max-w-xl">
             {segment.assetType === 'video' ? (
               <video
