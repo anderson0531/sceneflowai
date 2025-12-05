@@ -220,7 +220,7 @@ export function VerticalSegmentSelector({
         ))}
         
         {/* Add Segment Button (placeholder) */}
-        {onAddSegment && (
+        {typeof onAddSegment === 'function' && (
           <Button
             variant="outline"
             size="sm"
