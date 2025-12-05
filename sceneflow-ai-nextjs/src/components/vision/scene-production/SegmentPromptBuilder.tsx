@@ -1,15 +1,16 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Copy, Check, Sparkles, Info, Loader2, Video, Image as ImageIcon, Clock, ArrowRight, Film, Link as LinkIcon, Upload, Camera, Wand2 } from 'lucide-react'
+import { Copy, Check, Sparkles, Info, Loader2, Video, Image as ImageIcon, Clock, ArrowRight, Film, Link as LinkIcon, Upload, Camera, Wand2, Library, Users, Box, Clapperboard, X, Plus, MessageSquare } from 'lucide-react'
 import { artStylePresets } from '@/constants/artStylePresets'
-import { SceneSegment } from './types'
+import { SceneSegment, SceneSegmentTake } from './types'
+import { VisualReference } from '@/types/visionReferences'
 import { cn } from '@/lib/utils'
 
 // ============================================
@@ -17,6 +18,28 @@ import { cn } from '@/lib/utils'
 // ============================================
 
 export type VideoGenerationMethod = 'T2V' | 'I2V' | 'FTV' | 'EXT' | 'REF'
+
+// Reference selection types
+export type ReferenceType = 'scene' | 'character' | 'object'
+
+export interface SelectedReference {
+  id: string
+  type: ReferenceType
+  name: string
+  imageUrl: string
+  description?: string
+  // Connection to prompt - which character or element this reference represents
+  promptConnection?: string
+}
+
+export interface VideoTakeReference {
+  segmentId: string
+  segmentIndex: number
+  takeId: string
+  assetUrl: string
+  thumbnailUrl?: string
+  durationSec?: number
+}
 
 export interface PromptStructure {
   // Location & Setting
@@ -63,6 +86,11 @@ interface SegmentPromptBuilderProps {
   previousSegmentLastFrame?: string | null
   onGenerate: (promptData: GeneratePromptData) => void
   isGenerating?: boolean
+  // Enhanced: All segments for accessing takes from any segment
+  allSegments?: SceneSegment[]
+  // Enhanced: Reference library data
+  sceneReferences?: VisualReference[]
+  objectReferences?: VisualReference[]
 }
 
 export interface GeneratePromptData {
@@ -76,7 +104,14 @@ export interface GeneratePromptData {
   generationMethod?: VideoGenerationMethod
   startFrameUrl?: string
   endFrameUrl?: string
-  referenceImages?: Array<{ url: string; type: 'style' | 'character' }>
+  referenceImages?: Array<{ url: string; type: 'style' | 'character'; name?: string; promptConnection?: string }>
+  // Enhanced: Video reference for Extend mode
+  videoReferenceUrl?: string
+  videoReferenceTakeId?: string
+  // Enhanced: Selected references with connections
+  selectedReferences?: SelectedReference[]
+  // Enhanced: Character dialog guidance
+  characterDialogGuidance?: Array<{ characterName: string; referenceImageUrl?: string; dialogLines?: string[] }>
   // Style data
   artStyle?: string
   shotType?: string
@@ -97,7 +132,10 @@ export function SegmentPromptBuilder({
   sceneImageUrl,
   previousSegmentLastFrame,
   onGenerate,
-  isGenerating = false
+  isGenerating = false,
+  allSegments = [],
+  sceneReferences = [],
+  objectReferences = [],
 }: SegmentPromptBuilderProps) {
   const [activeTab, setActiveTab] = useState<'guided' | 'advanced'>('guided')
   
@@ -106,6 +144,120 @@ export function SegmentPromptBuilder({
   const [startFrameUrl, setStartFrameUrl] = useState<string | null>(null)
   const [endFrameUrl, setEndFrameUrl] = useState<string | null>(null)
   const [referenceImages, setReferenceImages] = useState<Array<{ url: string; type: 'style' | 'character' }>>([])
+  
+  // Enhanced: Selected references with prompt connections
+  const [selectedReferences, setSelectedReferences] = useState<SelectedReference[]>([])
+  const [showReferenceSelector, setShowReferenceSelector] = useState(false)
+  const [referenceSelectorContext, setReferenceSelectorContext] = useState<'startFrame' | 'endFrame' | 'reference'>('reference')
+  
+  // Enhanced: Selected video take for Extend mode
+  const [selectedVideoTake, setSelectedVideoTake] = useState<VideoTakeReference | null>(null)
+  const [showVideoTakeSelector, setShowVideoTakeSelector] = useState(false)
+  
+  // Enhanced: Character dialog connections
+  const [characterDialogConnections, setCharacterDialogConnections] = useState<Map<string, string>>(new Map())
+  
+  // Compute all available video takes from all segments
+  const allVideoTakes = useMemo((): VideoTakeReference[] => {
+    const takes: VideoTakeReference[] = []
+    allSegments.forEach((seg) => {
+      seg.takes.forEach((take) => {
+        if (take.assetUrl && take.status === 'COMPLETE') {
+          takes.push({
+            segmentId: seg.segmentId,
+            segmentIndex: seg.sequenceIndex,
+            takeId: take.id,
+            assetUrl: take.assetUrl,
+            thumbnailUrl: take.thumbnailUrl,
+            durationSec: take.durationSec,
+          })
+        }
+      })
+    })
+    return takes
+  }, [allSegments])
+
+  // Combined reference library for easy selection
+  const combinedReferenceLibrary = useMemo(() => {
+    const library: Array<{ id: string; type: ReferenceType; name: string; imageUrl: string; description?: string }> = []
+    
+    // Add scene references
+    sceneReferences.forEach(ref => {
+      if (ref.imageUrl) {
+        library.push({
+          id: ref.id,
+          type: 'scene',
+          name: ref.name,
+          imageUrl: ref.imageUrl,
+          description: ref.description,
+        })
+      }
+    })
+    
+    // Add character references
+    availableCharacters.forEach(char => {
+      if (char.referenceImage) {
+        library.push({
+          id: `char-${char.name}`,
+          type: 'character',
+          name: char.name,
+          imageUrl: char.referenceImage,
+          description: char.description || char.appearanceDescription,
+        })
+      }
+    })
+    
+    // Add object references
+    objectReferences.forEach(ref => {
+      if (ref.imageUrl) {
+        library.push({
+          id: ref.id,
+          type: 'object',
+          name: ref.name,
+          imageUrl: ref.imageUrl,
+          description: ref.description,
+        })
+      }
+    })
+    
+    return library
+  }, [sceneReferences, objectReferences, availableCharacters])
+
+  // Handle reference selection from library
+  const handleSelectReference = (ref: typeof combinedReferenceLibrary[0]) => {
+    if (referenceSelectorContext === 'startFrame') {
+      setStartFrameUrl(ref.imageUrl)
+    } else if (referenceSelectorContext === 'endFrame') {
+      setEndFrameUrl(ref.imageUrl)
+    } else {
+      // Add to selected references (max 3)
+      if (selectedReferences.length < 3 && !selectedReferences.find(r => r.id === ref.id)) {
+        setSelectedReferences(prev => [...prev, { ...ref, promptConnection: '' }])
+      }
+    }
+    setShowReferenceSelector(false)
+  }
+
+  // Handle video take selection
+  const handleSelectVideoTake = (take: VideoTakeReference) => {
+    setSelectedVideoTake(take)
+    setShowVideoTakeSelector(false)
+  }
+
+  // Remove a selected reference
+  const handleRemoveReference = (id: string) => {
+    setSelectedReferences(prev => prev.filter(r => r.id !== id))
+  }
+
+  // Update prompt connection for a reference
+  const handleUpdatePromptConnection = (id: string, connection: string) => {
+    setSelectedReferences(prev => prev.map(r => r.id === id ? { ...r, promptConnection: connection } : r))
+  }
+
+  // Update character dialog connection
+  const handleUpdateCharacterDialogConnection = (charName: string, referenceId: string) => {
+    setCharacterDialogConnections(prev => new Map(prev).set(charName, referenceId))
+  }
   
   // Video settings
   const [duration, setDuration] = useState<number>(8)
@@ -342,13 +494,49 @@ export function SegmentPromptBuilder({
         if (endFrameUrl) promptData.endFrameUrl = endFrameUrl
       }
       
-      if (generationMethod === 'EXT' && previousSegmentLastFrame) {
-        promptData.startFrameUrl = previousSegmentLastFrame
+      if (generationMethod === 'EXT') {
+        // Enhanced: Use selected video take or fallback to previous segment last frame
+        if (selectedVideoTake) {
+          promptData.videoReferenceUrl = selectedVideoTake.assetUrl
+          promptData.videoReferenceTakeId = selectedVideoTake.takeId
+          promptData.startFrameUrl = selectedVideoTake.assetUrl // For video extension
+        } else if (previousSegmentLastFrame) {
+          promptData.startFrameUrl = previousSegmentLastFrame
+        }
       }
       
-      if (generationMethod === 'REF' && referenceImages.length > 0) {
-        promptData.referenceImages = referenceImages
+      if (generationMethod === 'REF') {
+        // Enhanced: Use selected references with prompt connections
+        if (selectedReferences.length > 0) {
+          promptData.referenceImages = selectedReferences.map(ref => ({
+            url: ref.imageUrl,
+            type: ref.type === 'character' ? 'character' : 'style',
+            name: ref.name,
+            promptConnection: ref.promptConnection,
+          }))
+          promptData.selectedReferences = selectedReferences
+        } else if (referenceImages.length > 0) {
+          promptData.referenceImages = referenceImages
+        }
         if (startFrameUrl) promptData.startFrameUrl = startFrameUrl
+      }
+      
+      // Enhanced: Add character dialog guidance
+      const dialogGuidance = structure.characters
+        .map(charName => {
+          const char = availableCharacters.find(c => c.name === charName)
+          const connectedRefId = characterDialogConnections.get(charName)
+          const connectedRef = connectedRefId ? selectedReferences.find(r => r.id === connectedRefId) : null
+          return {
+            characterName: charName,
+            referenceImageUrl: char?.referenceImage || connectedRef?.imageUrl,
+            dialogLines: segment.action?.includes(charName) ? [segment.action] : undefined,
+          }
+        })
+        .filter(g => g.referenceImageUrl)
+      
+      if (dialogGuidance.length > 0) {
+        promptData.characterDialogGuidance = dialogGuidance
       }
     }
     
@@ -438,8 +626,16 @@ export function SegmentPromptBuilder({
               {/* Frame Selectors based on method */}
               {generationMethod === 'I2V' && (
                 <div className="mt-4 space-y-2">
-                  <label className="text-xs text-gray-400">Start Frame</label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs text-gray-400">Start Frame</label>
+                    <button
+                      onClick={() => { setReferenceSelectorContext('startFrame'); setShowReferenceSelector(true) }}
+                      className="text-[10px] text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                    >
+                      <Library className="w-3 h-3" /> Browse Library
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2">
                     {previousSegmentLastFrame && (
                       <button
                         onClick={() => setStartFrameUrl(previousSegmentLastFrame)}
@@ -464,11 +660,38 @@ export function SegmentPromptBuilder({
                         <div className="absolute bottom-1 left-1 text-[10px] bg-black/60 px-1.5 py-0.5 rounded">Scene</div>
                       </button>
                     )}
-                    <div className="aspect-video rounded-lg border border-dashed border-gray-700 flex flex-col items-center justify-center hover:border-gray-600 cursor-pointer">
-                      <Upload className="w-6 h-6 text-gray-500 mb-1" />
-                      <span className="text-[10px] text-gray-500">Upload</span>
-                    </div>
+                    {/* Show character reference images */}
+                    {availableCharacters.filter(c => c.referenceImage).slice(0, 2).map(char => (
+                      <button
+                        key={char.name}
+                        onClick={() => setStartFrameUrl(char.referenceImage!)}
+                        className={cn(
+                          'aspect-video rounded-lg border overflow-hidden relative',
+                          startFrameUrl === char.referenceImage ? 'border-blue-500 ring-2 ring-blue-500' : 'border-gray-700 hover:border-gray-600'
+                        )}
+                      >
+                        <img src={char.referenceImage} alt={char.name} className="w-full h-full object-cover" />
+                        <div className="absolute bottom-1 left-1 text-[10px] bg-black/60 px-1.5 py-0.5 rounded flex items-center gap-1">
+                          <Users className="w-2.5 h-2.5" /> {char.name}
+                        </div>
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => { setReferenceSelectorContext('startFrame'); setShowReferenceSelector(true) }}
+                      className="aspect-video rounded-lg border border-dashed border-gray-700 flex flex-col items-center justify-center hover:border-gray-600 cursor-pointer"
+                    >
+                      <Library className="w-5 h-5 text-gray-500 mb-1" />
+                      <span className="text-[10px] text-gray-500">Library</span>
+                    </button>
                   </div>
+                  {startFrameUrl && !previousSegmentLastFrame?.includes(startFrameUrl) && !sceneImageUrl?.includes(startFrameUrl) && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="aspect-video w-24 rounded-lg border border-blue-500 overflow-hidden">
+                        <img src={startFrameUrl} alt="Selected" className="w-full h-full object-cover" />
+                      </div>
+                      <button onClick={() => setStartFrameUrl(null)} className="text-xs text-red-400 hover:text-red-300">Clear</button>
+                    </div>
+                  )}
                 </div>
               )}
               
@@ -477,7 +700,15 @@ export function SegmentPromptBuilder({
                   <div className="text-xs text-blue-400 mb-3">Start frame required. End frame optional for controlled transitions.</div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-xs text-gray-400">Start Frame <span className="text-red-400">*</span></label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs text-gray-400">Start Frame <span className="text-red-400">*</span></label>
+                        <button
+                          onClick={() => { setReferenceSelectorContext('startFrame'); setShowReferenceSelector(true) }}
+                          className="text-[10px] text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                        >
+                          <Library className="w-3 h-3" /> Library
+                        </button>
+                      </div>
                       <div className="grid grid-cols-2 gap-2">
                         {previousSegmentLastFrame && (
                           <button
@@ -503,30 +734,52 @@ export function SegmentPromptBuilder({
                             <div className="absolute bottom-1 left-1 text-[10px] bg-black/60 px-1.5 py-0.5 rounded">Scene</div>
                           </button>
                         )}
-                        <div className="aspect-video rounded-lg border border-dashed border-gray-700 flex flex-col items-center justify-center hover:border-gray-600 cursor-pointer">
-                          <Upload className="w-5 h-5 text-gray-500 mb-1" />
-                          <span className="text-[10px] text-gray-500">Upload</span>
-                        </div>
+                        <button
+                          onClick={() => { setReferenceSelectorContext('startFrame'); setShowReferenceSelector(true) }}
+                          className="aspect-video rounded-lg border border-dashed border-gray-700 flex flex-col items-center justify-center hover:border-gray-600 cursor-pointer"
+                        >
+                          <Library className="w-5 h-5 text-gray-500 mb-1" />
+                          <span className="text-[10px] text-gray-500">Browse</span>
+                        </button>
                       </div>
                       {startFrameUrl && (
-                        <div className="aspect-video rounded-lg border border-blue-500 overflow-hidden">
+                        <div className="aspect-video rounded-lg border border-blue-500 overflow-hidden relative">
                           <img src={startFrameUrl} alt="Selected start" className="w-full h-full object-cover" />
+                          <button onClick={() => setStartFrameUrl(null)} className="absolute top-1 right-1 p-1 bg-black/60 rounded hover:bg-black/80">
+                            <X className="w-3 h-3" />
+                          </button>
                         </div>
                       )}
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs text-gray-400">End Frame <span className="text-gray-600">(optional)</span></label>
-                      <div className="aspect-video rounded-lg border border-dashed border-gray-700 flex flex-col items-center justify-center hover:border-gray-600 cursor-pointer">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs text-gray-400">End Frame <span className="text-gray-600">(optional)</span></label>
+                        <button
+                          onClick={() => { setReferenceSelectorContext('endFrame'); setShowReferenceSelector(true) }}
+                          className="text-[10px] text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                        >
+                          <Library className="w-3 h-3" /> Library
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => { setReferenceSelectorContext('endFrame'); setShowReferenceSelector(true) }}
+                        className="w-full aspect-video rounded-lg border border-dashed border-gray-700 flex flex-col items-center justify-center hover:border-gray-600 cursor-pointer"
+                      >
                         {endFrameUrl ? (
-                          <img src={endFrameUrl} alt="End" className="w-full h-full object-cover rounded-lg" />
+                          <div className="relative w-full h-full">
+                            <img src={endFrameUrl} alt="End" className="w-full h-full object-cover rounded-lg" />
+                            <button onClick={(e) => { e.stopPropagation(); setEndFrameUrl(null) }} className="absolute top-1 right-1 p-1 bg-black/60 rounded hover:bg-black/80">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
                         ) : (
                           <>
-                            <Upload className="w-6 h-6 text-gray-500 mb-1" />
+                            <Library className="w-6 h-6 text-gray-500 mb-1" />
                             <span className="text-xs text-gray-500">Select End Frame</span>
-                            <span className="text-[10px] text-gray-600">Optional transition target</span>
+                            <span className="text-[10px] text-gray-600">From library or upload</span>
                           </>
                         )}
-                      </div>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -534,19 +787,76 @@ export function SegmentPromptBuilder({
               
               {generationMethod === 'EXT' && (
                 <div className="mt-4">
-                  <div className="text-xs text-green-400 mb-3">Automatically uses the last frame from the previous segment</div>
-                  {previousSegmentLastFrame ? (
+                  <div className="text-xs text-green-400 mb-3 flex items-center justify-between">
+                    <span>Select a video take to extend from any segment</span>
+                    <button
+                      onClick={() => setShowVideoTakeSelector(true)}
+                      className="text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                    >
+                      <Clapperboard className="w-3 h-3" /> Browse All Takes
+                    </button>
+                  </div>
+                  
+                  {/* Selected Video Take */}
+                  {selectedVideoTake ? (
                     <div className="space-y-2">
-                      <label className="text-xs text-gray-400">Previous Segment Last Frame</label>
-                      <div className="aspect-video max-w-xs rounded-lg border border-green-500 overflow-hidden">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs text-gray-400">Selected Video Reference</label>
+                        <button onClick={() => setSelectedVideoTake(null)} className="text-xs text-red-400 hover:text-red-300">Clear</button>
+                      </div>
+                      <div className="relative aspect-video max-w-sm rounded-lg border border-green-500 overflow-hidden bg-black">
+                        <video 
+                          src={selectedVideoTake.assetUrl} 
+                          className="w-full h-full object-contain"
+                          controls
+                          muted
+                        />
+                        <div className="absolute top-2 left-2 text-[10px] bg-green-500/80 px-2 py-0.5 rounded">
+                          Segment {selectedVideoTake.segmentIndex + 1} · Take
+                        </div>
+                      </div>
+                      <div className="text-[10px] text-gray-500">This video will be used as the reference for extension</div>
+                    </div>
+                  ) : previousSegmentLastFrame ? (
+                    <div className="space-y-2">
+                      <label className="text-xs text-gray-400">Or use Previous Segment Last Frame (default)</label>
+                      <div className="aspect-video max-w-xs rounded-lg border border-green-500/50 overflow-hidden">
                         <img src={previousSegmentLastFrame} alt="Previous segment last frame" className="w-full h-full object-cover" />
                       </div>
-                      <div className="text-[10px] text-gray-500">This frame will be used to continue the video seamlessly</div>
+                      <div className="text-[10px] text-gray-500">Select a video take above for better continuity</div>
                     </div>
                   ) : (
                     <div className="p-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10">
-                      <div className="text-sm text-yellow-400 font-medium">No previous segment available</div>
-                      <div className="text-xs text-gray-400 mt-1">This is the first segment. Use Image-to-Video or Text-to-Video instead.</div>
+                      <div className="text-sm text-yellow-400 font-medium">No video takes available</div>
+                      <div className="text-xs text-gray-400 mt-1">Generate some video takes first, then use Extend mode.</div>
+                    </div>
+                  )}
+                  
+                  {/* Quick Video Take Grid */}
+                  {allVideoTakes.length > 0 && (
+                    <div className="mt-3">
+                      <label className="text-xs text-gray-400 mb-2 block">Recent Video Takes</label>
+                      <div className="grid grid-cols-4 gap-2">
+                        {allVideoTakes.slice(0, 4).map(take => (
+                          <button
+                            key={take.takeId}
+                            onClick={() => setSelectedVideoTake(take)}
+                            className={cn(
+                              'aspect-video rounded-lg border overflow-hidden relative bg-black',
+                              selectedVideoTake?.takeId === take.takeId ? 'border-green-500 ring-2 ring-green-500' : 'border-gray-700 hover:border-gray-600'
+                            )}
+                          >
+                            {take.thumbnailUrl ? (
+                              <img src={take.thumbnailUrl} alt="Take" className="w-full h-full object-cover" />
+                            ) : (
+                              <video src={take.assetUrl} className="w-full h-full object-cover" muted />
+                            )}
+                            <div className="absolute bottom-1 left-1 text-[10px] bg-black/60 px-1.5 py-0.5 rounded">
+                              Seg {take.segmentIndex + 1}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -556,29 +866,142 @@ export function SegmentPromptBuilder({
                 <div className="mt-4">
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-xs text-gray-400">Reference Images (max 3)</label>
-                    <span className="text-[10px] text-yellow-400">Cannot use with End Frame</span>
+                    <button
+                      onClick={() => { setReferenceSelectorContext('reference'); setShowReferenceSelector(true) }}
+                      className="text-[10px] text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                    >
+                      <Library className="w-3 h-3" /> Browse Library
+                    </button>
                   </div>
-                  <div className="grid grid-cols-4 gap-2">
-                    {[0, 1, 2].map((idx) => (
-                      <div
-                        key={idx}
-                        className="aspect-square rounded-lg border border-dashed border-gray-700 flex flex-col items-center justify-center hover:border-gray-600 cursor-pointer"
-                      >
-                        {referenceImages[idx] ? (
-                          <img src={referenceImages[idx].url} alt={`Ref ${idx + 1}`} className="w-full h-full object-cover rounded-lg" />
-                        ) : (
-                          <>
-                            <Upload className="w-5 h-5 text-gray-500 mb-1" />
-                            <span className="text-[10px] text-gray-500">Ref {idx + 1}</span>
-                          </>
-                        )}
-                      </div>
-                    ))}
-                    <div className="aspect-square rounded-lg border border-gray-700 flex flex-col items-center justify-center text-[10px] text-gray-500">
-                      <span>+ Start Frame</span>
-                      <span className="text-gray-600">(optional)</span>
+                  
+                  {/* Selected References with Prompt Connections */}
+                  {selectedReferences.length > 0 && (
+                    <div className="space-y-3 mb-3">
+                      {selectedReferences.map((ref, idx) => (
+                        <div key={ref.id} className="flex gap-3 p-2 rounded-lg border border-gray-700 bg-gray-800/50">
+                          <div className="relative w-16 h-16 flex-shrink-0">
+                            <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover rounded" />
+                            <button 
+                              onClick={() => handleRemoveReference(ref.id)}
+                              className="absolute -top-1 -right-1 p-0.5 bg-red-500 rounded-full hover:bg-red-600"
+                            >
+                              <X className="w-2.5 h-2.5" />
+                            </button>
+                            <div className={cn(
+                              "absolute bottom-0 left-0 right-0 text-[8px] text-center py-0.5 rounded-b",
+                              ref.type === 'character' ? 'bg-purple-500/80' : ref.type === 'scene' ? 'bg-blue-500/80' : 'bg-amber-500/80'
+                            )}>
+                              {ref.type === 'character' ? <Users className="w-2 h-2 inline mr-0.5" /> : ref.type === 'scene' ? <ImageIcon className="w-2 h-2 inline mr-0.5" /> : <Box className="w-2 h-2 inline mr-0.5" />}
+                              {ref.type}
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-white truncate">{ref.name}</div>
+                            <div className="mt-1">
+                              <Input
+                                value={ref.promptConnection || ''}
+                                onChange={(e) => handleUpdatePromptConnection(ref.id, e.target.value)}
+                                placeholder={`How should "${ref.name}" appear in the video?`}
+                                className="h-7 text-xs bg-gray-900 border-gray-600"
+                              />
+                              <div className="text-[9px] text-gray-500 mt-0.5">
+                                <LinkIcon className="w-2.5 h-2.5 inline mr-0.5" />
+                                Connect this reference to elements in your prompt
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
+                  )}
+                  
+                  {/* Reference Slots */}
+                  <div className="grid grid-cols-4 gap-2">
+                    {[0, 1, 2].map((idx) => {
+                      const ref = selectedReferences[idx]
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => { setReferenceSelectorContext('reference'); setShowReferenceSelector(true) }}
+                          disabled={!!ref}
+                          className={cn(
+                            "aspect-square rounded-lg border flex flex-col items-center justify-center cursor-pointer transition-all",
+                            ref 
+                              ? 'border-blue-500 bg-blue-500/10 cursor-default' 
+                              : 'border-dashed border-gray-700 hover:border-gray-600'
+                          )}
+                        >
+                          {ref ? (
+                            <div className="relative w-full h-full">
+                              <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover rounded-lg" />
+                              <div className="absolute bottom-1 left-1 text-[8px] bg-black/60 px-1 py-0.5 rounded truncate max-w-[90%]">{ref.name}</div>
+                            </div>
+                          ) : (
+                            <>
+                              <Plus className="w-5 h-5 text-gray-500 mb-1" />
+                              <span className="text-[10px] text-gray-500">Ref {idx + 1}</span>
+                            </>
+                          )}
+                        </button>
+                      )
+                    })}
+                    <button
+                      onClick={() => { setReferenceSelectorContext('startFrame'); setShowReferenceSelector(true) }}
+                      className="aspect-square rounded-lg border border-gray-700 flex flex-col items-center justify-center text-[10px] text-gray-500 hover:border-gray-600"
+                    >
+                      {startFrameUrl ? (
+                        <div className="relative w-full h-full">
+                          <img src={startFrameUrl} alt="Start" className="w-full h-full object-cover rounded-lg" />
+                          <div className="absolute bottom-1 left-1 text-[8px] bg-black/60 px-1 py-0.5 rounded">Start</div>
+                        </div>
+                      ) : (
+                        <>
+                          <Camera className="w-4 h-4 mb-0.5" />
+                          <span>+ Start Frame</span>
+                          <span className="text-gray-600">(optional)</span>
+                        </>
+                      )}
+                    </button>
                   </div>
+                  
+                  {/* Character Dialog Guidance */}
+                  {structure.characters.length > 0 && (
+                    <div className="mt-4 p-3 rounded-lg border border-purple-500/30 bg-purple-500/10">
+                      <div className="flex items-center gap-2 mb-2">
+                        <MessageSquare className="w-4 h-4 text-purple-400" />
+                        <label className="text-xs text-purple-300 font-medium">Character Dialog Guidance</label>
+                      </div>
+                      <div className="text-[10px] text-gray-400 mb-2">Connect characters to reference images for accurate dialog delivery</div>
+                      <div className="space-y-2">
+                        {structure.characters.map(charName => {
+                          const char = availableCharacters.find(c => c.name === charName)
+                          const connectedRefId = characterDialogConnections.get(charName)
+                          return (
+                            <div key={charName} className="flex items-center gap-2">
+                              {char?.referenceImage && (
+                                <img src={char.referenceImage} alt={charName} className="w-8 h-8 rounded-full object-cover border border-purple-500/50" />
+                              )}
+                              <span className="text-xs text-white flex-shrink-0">{charName}</span>
+                              <Select 
+                                value={connectedRefId || 'auto'} 
+                                onValueChange={(v) => handleUpdateCharacterDialogConnection(charName, v)}
+                              >
+                                <SelectTrigger className="h-7 text-xs flex-1">
+                                  <SelectValue placeholder="Auto-detect" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="auto">Auto-detect from prompt</SelectItem>
+                                  {selectedReferences.filter(r => r.type === 'character').map(ref => (
+                                    <SelectItem key={ref.id} value={ref.id}>{ref.name}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               
@@ -1035,6 +1458,212 @@ export function SegmentPromptBuilder({
           </div>
         )}
       </DialogContent>
+
+      {/* Reference Library Selector Dialog */}
+      <Dialog open={showReferenceSelector} onOpenChange={setShowReferenceSelector}>
+        <DialogContent className="max-w-2xl max-h-[70vh] bg-gray-900 text-white border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-white">
+              <Library className="w-5 h-5 text-blue-400" />
+              Select from Reference Library
+              <span className="text-sm font-normal text-gray-400 ml-2">
+                {referenceSelectorContext === 'startFrame' ? 'Start Frame' : referenceSelectorContext === 'endFrame' ? 'End Frame' : 'Reference Image'}
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="h-[50vh] overflow-y-auto pr-4">
+            {combinedReferenceLibrary.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <Library className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">No reference images available</p>
+                <p className="text-xs mt-1">Add scene images, character references, or object references to your project</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Characters Section */}
+                {combinedReferenceLibrary.filter(r => r.type === 'character').length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold text-purple-400 mb-2 flex items-center gap-1">
+                      <Users className="w-3.5 h-3.5" /> Characters
+                    </h3>
+                    <div className="grid grid-cols-4 gap-2">
+                      {combinedReferenceLibrary.filter(r => r.type === 'character').map(ref => (
+                        <button
+                          key={ref.id}
+                          onClick={() => handleSelectReference(ref)}
+                          className="group relative aspect-square rounded-lg border border-gray-700 overflow-hidden hover:border-purple-500 transition-all"
+                        >
+                          <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <div className="absolute bottom-0 left-0 right-0 p-1.5 text-left">
+                            <div className="text-[10px] text-white font-medium truncate">{ref.name}</div>
+                          </div>
+                          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Plus className="w-5 h-5 text-white bg-purple-500 rounded-full p-1" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Scenes Section */}
+                {combinedReferenceLibrary.filter(r => r.type === 'scene').length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold text-blue-400 mb-2 flex items-center gap-1">
+                      <ImageIcon className="w-3.5 h-3.5" /> Scene References
+                    </h3>
+                    <div className="grid grid-cols-3 gap-2">
+                      {combinedReferenceLibrary.filter(r => r.type === 'scene').map(ref => (
+                        <button
+                          key={ref.id}
+                          onClick={() => handleSelectReference(ref)}
+                          className="group relative aspect-video rounded-lg border border-gray-700 overflow-hidden hover:border-blue-500 transition-all"
+                        >
+                          <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <div className="absolute bottom-0 left-0 right-0 p-1.5 text-left">
+                            <div className="text-[10px] text-white font-medium truncate">{ref.name}</div>
+                            {ref.description && <div className="text-[9px] text-gray-300 truncate">{ref.description}</div>}
+                          </div>
+                          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Plus className="w-5 h-5 text-white bg-blue-500 rounded-full p-1" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Objects Section */}
+                {combinedReferenceLibrary.filter(r => r.type === 'object').length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold text-amber-400 mb-2 flex items-center gap-1">
+                      <Box className="w-3.5 h-3.5" /> Object References
+                    </h3>
+                    <div className="grid grid-cols-4 gap-2">
+                      {combinedReferenceLibrary.filter(r => r.type === 'object').map(ref => (
+                        <button
+                          key={ref.id}
+                          onClick={() => handleSelectReference(ref)}
+                          className="group relative aspect-square rounded-lg border border-gray-700 overflow-hidden hover:border-amber-500 transition-all"
+                        >
+                          <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <div className="absolute bottom-0 left-0 right-0 p-1.5 text-left">
+                            <div className="text-[10px] text-white font-medium truncate">{ref.name}</div>
+                          </div>
+                          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Plus className="w-5 h-5 text-white bg-amber-500 rounded-full p-1" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          
+          <div className="flex justify-end gap-2 pt-2 border-t border-gray-700">
+            <Button variant="outline" onClick={() => setShowReferenceSelector(false)}>
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Video Take Selector Dialog */}
+      <Dialog open={showVideoTakeSelector} onOpenChange={setShowVideoTakeSelector}>
+        <DialogContent className="max-w-3xl max-h-[70vh] bg-gray-900 text-white border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-white">
+              <Clapperboard className="w-5 h-5 text-green-400" />
+              Select Video Take
+              <span className="text-sm font-normal text-gray-400 ml-2">
+                Choose a video take to extend from
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="h-[50vh] overflow-y-auto pr-4">
+            {allVideoTakes.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <Video className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">No video takes available</p>
+                <p className="text-xs mt-1">Generate some video segments first to use Extend mode</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Group by segment */}
+                {Array.from(new Set(allVideoTakes.map(t => t.segmentIndex))).sort((a, b) => a - b).map(segIdx => {
+                  const segmentTakes = allVideoTakes.filter(t => t.segmentIndex === segIdx)
+                  return (
+                    <div key={segIdx}>
+                      <h3 className="text-xs font-semibold text-green-400 mb-2">
+                        Segment {segIdx + 1}
+                      </h3>
+                      <div className="grid grid-cols-3 gap-3">
+                        {segmentTakes.map(take => (
+                          <button
+                            key={take.takeId}
+                            onClick={() => handleSelectVideoTake(take)}
+                            className={cn(
+                              "group relative aspect-video rounded-lg border overflow-hidden transition-all bg-black",
+                              selectedVideoTake?.takeId === take.takeId 
+                                ? 'border-green-500 ring-2 ring-green-500' 
+                                : 'border-gray-700 hover:border-green-500'
+                            )}
+                          >
+                            {take.thumbnailUrl ? (
+                              <img src={take.thumbnailUrl} alt="Take" className="w-full h-full object-cover" />
+                            ) : (
+                              <video 
+                                src={take.assetUrl} 
+                                className="w-full h-full object-cover"
+                                muted
+                                onMouseEnter={(e) => e.currentTarget.play()}
+                                onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0 }}
+                              />
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="absolute bottom-0 left-0 right-0 p-2 text-left">
+                              <div className="text-xs text-white font-medium">
+                                Take · {take.durationSec ? `${take.durationSec}s` : 'Video'}
+                              </div>
+                            </div>
+                            {selectedVideoTake?.takeId === take.takeId && (
+                              <div className="absolute top-2 right-2">
+                                <Check className="w-5 h-5 text-green-400 bg-green-900/80 rounded-full p-1" />
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+          
+          <div className="flex justify-end gap-2 pt-2 border-t border-gray-700">
+            <Button variant="outline" onClick={() => setShowVideoTakeSelector(false)}>
+              Cancel
+            </Button>
+            {selectedVideoTake && (
+              <Button 
+                onClick={() => setShowVideoTakeSelector(false)}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Check className="w-4 h-4 mr-2" />
+                Confirm Selection
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }

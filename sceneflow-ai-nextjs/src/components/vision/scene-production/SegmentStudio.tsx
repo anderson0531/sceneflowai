@@ -435,6 +435,9 @@ export function SegmentStudio({
           previousSegmentLastFrame={previousSegmentLastFrame}
           onGenerate={handlePromptBuilderGenerate}
           isGenerating={segment.status === 'GENERATING'}
+          allSegments={segments}
+          sceneReferences={references.sceneReferences}
+          objectReferences={references.objectReferences}
         />
       )}
 
