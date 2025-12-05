@@ -74,6 +74,34 @@ export function SceneProductionManager({
     })
   }, [sceneId, onAddSegment, onDeleteSegment, onAudioClipChange])
   
+  // Create stable callback wrappers - these must be defined early to avoid minification issues
+  const handleAddSegmentWrapper = useCallback(
+    (afterSegmentId: string | null, duration: number) => {
+      if (onAddSegment) {
+        onAddSegment(sceneId, afterSegmentId, duration)
+      }
+    },
+    [sceneId, onAddSegment]
+  )
+  
+  const handleDeleteSegmentWrapper = useCallback(
+    (segmentId: string) => {
+      if (onDeleteSegment) {
+        onDeleteSegment(sceneId, segmentId)
+      }
+    },
+    [sceneId, onDeleteSegment]
+  )
+  
+  const handleAudioClipChangeWrapper = useCallback(
+    (trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => {
+      if (onAudioClipChange) {
+        onAudioClipChange(sceneId, trackType, clipId, changes)
+      }
+    },
+    [sceneId, onAudioClipChange]
+  )
+  
   const [targetDuration, setTargetDuration] = useState<number>(productionData?.targetSegmentDuration ?? 8)
   
   // Build audio tracks from scene data if not provided externally
@@ -511,9 +539,9 @@ export function SceneProductionManager({
               audioTracks={audioTracks}
               onPlayheadChange={handlePlayheadChange}
               onGenerateSceneMp4={onGenerateSceneMp4}
-              onAddSegment={onAddSegment ? (afterSegmentId, duration) => onAddSegment(sceneId, afterSegmentId, duration) : undefined}
-              onDeleteSegment={onDeleteSegment ? (segmentId) => onDeleteSegment(sceneId, segmentId) : undefined}
-              onAudioClipChange={onAudioClipChange ? (trackType, clipId, changes) => onAudioClipChange(sceneId, trackType, clipId, changes) : undefined}
+              onAddSegment={onAddSegment ? handleAddSegmentWrapper : undefined}
+              onDeleteSegment={onDeleteSegment ? handleDeleteSegmentWrapper : undefined}
+              onAudioClipChange={onAudioClipChange ? handleAudioClipChangeWrapper : undefined}
             />
           </div>
 
