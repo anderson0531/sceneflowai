@@ -1034,10 +1034,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Update the scene's audio track data
       setScenes((prevScenes) => {
         return prevScenes.map((scene, idx) => {
-          const key = getSceneProductionKey(scene as Scene, idx)
-          if (key !== sceneId) return scene
+          // Match by sceneId
+          const sceneKey = (scene as any).sceneId || (scene as any).id || `scene-${idx}`
+          if (sceneKey !== sceneId) return scene
           
-          const updatedScene = { ...scene }
+          const updatedScene = { ...scene } as any
           
           // Update the appropriate audio track based on trackType
           if (trackType === 'voiceover' && changes.startTime !== undefined) {
@@ -1076,7 +1077,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       console.log('[Audio Clip Change]', { sceneId, trackType, clipId, changes })
     },
-    [setScenes, getSceneProductionKey]
+    []
   )
   
   // Script review state
