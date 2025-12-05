@@ -150,6 +150,87 @@ export function SceneProductionManager({
     }
   }, [])
 
+  // Build available audio assets from scene data
+  const availableAudioAssets = useMemo(() => {
+    const assets: Array<{
+      id: string
+      label: string
+      url: string
+      type: 'voiceover' | 'dialogue' | 'music' | 'sfx'
+      duration?: number
+      source: 'scene' | 'take' | 'library'
+    }> = []
+    
+    // Add scene-level audio if available
+    if (scene?.narrationAudioUrl || scene?.narrationAudio?.en?.url) {
+      assets.push({
+        id: 'scene-narration',
+        label: 'Scene Narration',
+        url: scene.narrationAudioUrl || scene.narrationAudio?.en?.url,
+        type: 'voiceover',
+        source: 'scene',
+      })
+    }
+    
+    if (scene?.descriptionAudioUrl || scene?.descriptionAudio?.en?.url) {
+      assets.push({
+        id: 'scene-description',
+        label: 'Scene Description',
+        url: scene.descriptionAudioUrl || scene.descriptionAudio?.en?.url,
+        type: 'voiceover',
+        source: 'scene',
+      })
+    }
+    
+    // Add dialogue from scene
+    const dialogueArray = scene?.dialogueAudio || scene?.dialogue || []
+    if (Array.isArray(dialogueArray)) {
+      dialogueArray.forEach((d: any, idx: number) => {
+        const url = d.audioUrl || d.url
+        if (url) {
+          assets.push({
+            id: `scene-dialogue-${idx}`,
+            label: d.character || d.speaker || `Dialogue ${idx + 1}`,
+            url,
+            type: 'dialogue',
+            duration: d.duration,
+            source: 'scene',
+          })
+        }
+      })
+    }
+    
+    // Add music from scene
+    if (scene?.musicAudio || scene?.music?.url) {
+      assets.push({
+        id: 'scene-music',
+        label: 'Scene Music',
+        url: scene.musicAudio || scene.music?.url,
+        type: 'music',
+        source: 'scene',
+      })
+    }
+    
+    // Add SFX from scene
+    if (Array.isArray(scene?.sfxAudio)) {
+      scene.sfxAudio.forEach((sfxUrl: string, idx: number) => {
+        if (sfxUrl) {
+          const sfxDef = scene.sfx?.[idx]
+          assets.push({
+            id: `scene-sfx-${idx}`,
+            label: sfxDef?.name || sfxDef?.description || `SFX ${idx + 1}`,
+            url: sfxUrl,
+            type: 'sfx',
+            duration: sfxDef?.duration,
+            source: 'scene',
+          })
+        }
+      })
+    }
+    
+    return assets
+  }, [scene])
+
   if (!productionData || !productionData.isSegmented || productionData.segments.length === 0) {
     return (
       <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-900">
@@ -306,6 +387,8 @@ export function SceneProductionManager({
               onUploadMedia={handleUpload}
               references={references}
               sceneImageUrl={scene?.imageUrl}
+              audioTracks={audioTracks}
+              availableAudioAssets={availableAudioAssets}
             />
           </div>
         </div>
