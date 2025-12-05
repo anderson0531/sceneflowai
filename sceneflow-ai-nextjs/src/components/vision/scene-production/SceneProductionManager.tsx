@@ -55,15 +55,108 @@ export function SceneProductionManager({
   onPromptChange,
   onGenerate,
   onUpload,
-  audioTracks,
+  audioTracks: externalAudioTracks,
   onGenerateSceneMp4,
 }: SceneProductionManagerProps) {
   const [targetDuration, setTargetDuration] = useState<number>(productionData?.targetSegmentDuration ?? 8)
+  
+  // Build audio tracks from scene data if not provided externally
+  const [audioTracksState, setAudioTracksState] = useState<AudioTracksData>({})
   useEffect(() => {
     if (productionData?.targetSegmentDuration) {
       setTargetDuration(productionData.targetSegmentDuration)
     }
   }, [productionData?.targetSegmentDuration])
+
+  // Build audio tracks from scene data when scene changes
+  useEffect(() => {
+    if (!scene) return
+    
+    const newTracks: AudioTracksData = {}
+    const sceneDuration = productionData?.segments?.reduce((acc, seg) => Math.max(acc, seg.endTime), 10) || 10
+    
+    // Voiceover from scene narration
+    const voUrl = scene.narrationAudioUrl || scene.narrationAudio?.en?.url || scene.descriptionAudioUrl || scene.descriptionAudio?.en?.url
+    if (voUrl) {
+      newTracks.voiceover = {
+        id: 'vo-scene',
+        url: voUrl,
+        startTime: 0,
+        duration: scene.narrationDuration || scene.descriptionDuration || sceneDuration,
+        label: 'Narration',
+        volume: 1,
+      }
+    }
+    
+    // Dialogue from scene
+    const dialogueArray = scene.dialogueAudio || scene.dialogue || []
+    if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
+      const dialogueClips: AudioTracksData['dialogue'] = []
+      let currentTime = 0
+      dialogueArray.forEach((d: any, idx: number) => {
+        const url = d.audioUrl || d.url
+        if (url) {
+          const dur = d.duration || 3
+          dialogueClips.push({
+            id: `dialogue-${idx}`,
+            url,
+            startTime: currentTime,
+            duration: dur,
+            label: d.character || d.speaker || `Line ${idx + 1}`,
+            volume: 1,
+          })
+          currentTime += dur + 0.5 // Small gap between dialogue
+        }
+      })
+      if (dialogueClips.length > 0) {
+        newTracks.dialogue = dialogueClips
+      }
+    }
+    
+    // Music from scene
+    const musicUrl = scene.musicAudio || scene.music?.url || scene.musicUrl
+    if (musicUrl) {
+      newTracks.music = {
+        id: 'music-scene',
+        url: musicUrl,
+        startTime: 0,
+        duration: scene.musicDuration || sceneDuration,
+        label: scene.music?.name || 'Music',
+        volume: 0.6,
+      }
+    }
+    
+    // SFX from scene
+    if (Array.isArray(scene.sfxAudio) && scene.sfxAudio.length > 0) {
+      const sfxClips: AudioTracksData['sfx'] = []
+      scene.sfxAudio.forEach((sfxUrl: string, idx: number) => {
+        if (sfxUrl) {
+          const sfxDef = scene.sfx?.[idx]
+          sfxClips.push({
+            id: `sfx-${idx}`,
+            url: sfxUrl,
+            startTime: sfxDef?.startTime || idx * 2,
+            duration: sfxDef?.duration || 2,
+            label: sfxDef?.name || sfxDef?.description || `SFX ${idx + 1}`,
+            volume: 0.8,
+          })
+        }
+      })
+      if (sfxClips.length > 0) {
+        newTracks.sfx = sfxClips
+      }
+    }
+    
+    setAudioTracksState(newTracks)
+  }, [scene, productionData?.segments])
+
+  // Merge external audio tracks with scene-derived tracks
+  const audioTracks = useMemo(() => {
+    return {
+      ...audioTracksState,
+      ...externalAudioTracks,
+    }
+  }, [audioTracksState, externalAudioTracks])
 
   const [isInitializing, setIsInitializing] = useState(false)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)

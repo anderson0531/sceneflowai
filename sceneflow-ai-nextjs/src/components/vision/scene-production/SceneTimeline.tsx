@@ -426,20 +426,20 @@ export function SceneTimeline({
           )}
         </div>
         
-        {/* Left resize handle */}
+        {/* Left resize handle - more visible */}
         <div
-          className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize z-20 hover:bg-white/30 flex items-center justify-center"
+          className="absolute left-0 top-0 bottom-0 w-3 cursor-ew-resize z-20 bg-blue-500/0 hover:bg-blue-500/40 flex items-center justify-center transition-colors"
           onMouseDown={(e) => handleClipMouseDown(e, trackType, clip.id, 'resize-left', clip.startTime, clip.duration)}
         >
-          <div className="w-0.5 h-4 bg-white/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="w-1 h-6 bg-blue-400 rounded-full opacity-60 group-hover:opacity-100 transition-opacity shadow-sm" />
         </div>
         
-        {/* Right resize handle */}
+        {/* Right resize handle - more visible */}
         <div
-          className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize z-20 hover:bg-white/30 flex items-center justify-center"
+          className="absolute right-0 top-0 bottom-0 w-3 cursor-ew-resize z-20 bg-blue-500/0 hover:bg-blue-500/40 flex items-center justify-center transition-colors"
           onMouseDown={(e) => handleClipMouseDown(e, trackType, clip.id, 'resize-right', clip.startTime, clip.duration)}
         >
-          <div className="w-0.5 h-4 bg-white/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="w-1 h-6 bg-blue-400 rounded-full opacity-60 group-hover:opacity-100 transition-opacity shadow-sm" />
         </div>
         
         <div className="relative z-10 h-full flex items-end justify-between px-1 py-0.5 pointer-events-none">
@@ -596,7 +596,7 @@ export function SceneTimeline({
       </div>
       
       {/* Timeline Tracks */}
-      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 overflow-hidden">
+      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 overflow-hidden flex flex-col">
 
       {/* Timeline Header */}
       <div 
@@ -614,8 +614,8 @@ export function SceneTimeline({
         </div>
       </div>
 
-      {/* Tracks Container */}
-      <div ref={tracksContainerRef} className="relative" onClick={handleTimelineClick}>
+      {/* Tracks Container - Fixed height to show all 5 tracks */}
+      <div ref={tracksContainerRef} className="relative flex-1 min-h-[176px]" onClick={handleTimelineClick}>
         {renderVisualTrack()}
         {renderAudioTrack('V.O.', <Mic className="w-3 h-3" />, 'voiceover', audioTracks?.voiceover ? [audioTracks.voiceover] : [], 'bg-blue-500')}
         {renderAudioTrack('Dialogue', <Mic className="w-3 h-3" />, 'dialogue', audioTracks?.dialogue || [], 'bg-emerald-500')}
