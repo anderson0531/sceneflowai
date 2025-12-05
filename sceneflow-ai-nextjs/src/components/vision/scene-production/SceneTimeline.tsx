@@ -892,48 +892,50 @@ export function SceneTimeline({
       ))}
       
       {/* Add Segment Dialog */}
-      <Dialog open={showAddSegmentDialog} onOpenChange={setShowAddSegmentDialog}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>Add New Segment</DialogTitle>
-            <DialogDescription>
-              Create a new visual segment to extend the scene timeline.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Duration (seconds)
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={10}
-                step={0.5}
-                value={newSegmentDuration}
-                onChange={(e) => setNewSegmentDuration(parseFloat(e.target.value) || 4)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-              />
-              <p className="mt-1 text-xs text-gray-500">Recommended: 3-5 seconds for smooth pacing</p>
+      {onAddSegment && (
+        <Dialog open={showAddSegmentDialog} onOpenChange={setShowAddSegmentDialog}>
+          <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle>Add New Segment</DialogTitle>
+              <DialogDescription>
+                Create a new visual segment to extend the scene timeline.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Duration (seconds)
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={10}
+                  step={0.5}
+                  value={newSegmentDuration}
+                  onChange={(e) => setNewSegmentDuration(parseFloat(e.target.value) || 4)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                />
+                <p className="mt-1 text-xs text-gray-500">Recommended: 3-5 seconds for smooth pacing</p>
+              </div>
             </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddSegmentDialog(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                const lastSegment = visualClips[visualClips.length - 1]
-                onAddSegment?.(lastSegment?.id || null, newSegmentDuration)
-                setShowAddSegmentDialog(false)
-                setNewSegmentDuration(4)
-              }}
-            >
-              Add Segment
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAddSegmentDialog(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  const lastSegment = visualClips[visualClips.length - 1]
+                  onAddSegment(lastSegment?.id || null, newSegmentDuration)
+                  setShowAddSegmentDialog(false)
+                  setNewSegmentDuration(4)
+                }}
+              >
+                Add Segment
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
