@@ -87,6 +87,10 @@ export function SceneTimeline({
   onAddSegment,
   onDeleteSegment,
 }: SceneTimelineProps) {
+  // Capture callbacks in stable refs to avoid closure issues
+  const addSegmentCallback = onAddSegment
+  const deleteSegmentCallback = onDeleteSegment
+  
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [showAddSegmentDialog, setShowAddSegmentDialog] = useState(false)
@@ -587,12 +591,12 @@ export function SceneTimeline({
         </div>
         
         {/* Delete button for visual clips */}
-        {trackType === 'visual' && canDelete && onDeleteSegment && (
+        {trackType === 'visual' && canDelete && deleteSegmentCallback && (
           <button
             className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-red-500/80 hover:bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity z-30 flex items-center justify-center"
             onClick={(e) => {
               e.stopPropagation()
-              onDeleteSegment(clip.id)
+              deleteSegmentCallback(clip.id)
             }}
             title="Delete segment"
           >
@@ -658,7 +662,7 @@ export function SceneTimeline({
           ))}
           
           {/* Add Segment Button */}
-          {onAddSegment && (
+          {addSegmentCallback && (
             <button
               className="absolute top-1/2 -translate-y-1/2 h-10 px-2 rounded bg-gray-700 hover:bg-gray-600 border border-dashed border-gray-500 hover:border-gray-400 text-gray-400 hover:text-gray-200 transition-all flex items-center gap-1 text-[10px] font-medium"
               style={{ left: addButtonLeft }}
@@ -892,7 +896,7 @@ export function SceneTimeline({
       ))}
       
       {/* Add Segment Dialog */}
-      {onAddSegment && (
+      {addSegmentCallback && (
         <Dialog open={showAddSegmentDialog} onOpenChange={setShowAddSegmentDialog}>
           <DialogContent className="sm:max-w-[400px]">
             <DialogHeader>
@@ -924,9 +928,9 @@ export function SceneTimeline({
               </Button>
               <Button
                 onClick={() => {
-                  if (typeof onAddSegment === 'function') {
+                  if (typeof addSegmentCallback === 'function') {
                     const lastSegment = visualClips[visualClips.length - 1]
-                    onAddSegment(lastSegment?.id || null, newSegmentDuration)
+                    addSegmentCallback(lastSegment?.id || null, newSegmentDuration)
                     setShowAddSegmentDialog(false)
                     setNewSegmentDuration(4)
                   }
