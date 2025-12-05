@@ -924,10 +924,12 @@ export function SceneTimeline({
               </Button>
               <Button
                 onClick={() => {
-                  const lastSegment = visualClips[visualClips.length - 1]
-                  onAddSegment(lastSegment?.id || null, newSegmentDuration)
-                  setShowAddSegmentDialog(false)
-                  setNewSegmentDuration(4)
+                  if (typeof onAddSegment === 'function') {
+                    const lastSegment = visualClips[visualClips.length - 1]
+                    onAddSegment(lastSegment?.id || null, newSegmentDuration)
+                    setShowAddSegmentDialog(false)
+                    setNewSegmentDuration(4)
+                  }
                 }}
               >
                 Add Segment
