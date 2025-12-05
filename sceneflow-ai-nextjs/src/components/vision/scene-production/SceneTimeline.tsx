@@ -79,6 +79,20 @@ export function SceneTimeline({
   const [currentTime, setCurrentTime] = useState(0)
   const [mutedTracks, setMutedTracks] = useState<Set<string>>(new Set())
   
+  // Track volume and enabled state
+  const [trackVolumes, setTrackVolumes] = useState<Record<string, number>>({
+    voiceover: 1,
+    dialogue: 1,
+    music: 0.6,
+    sfx: 0.8,
+  })
+  const [trackEnabled, setTrackEnabled] = useState<Record<string, boolean>>({
+    voiceover: true,
+    dialogue: true,
+    music: true,
+    sfx: true,
+  })
+  
   // Drag/resize state
   const [dragState, setDragState] = useState<{
     type: 'move' | 'resize-left' | 'resize-right'
@@ -122,8 +136,9 @@ export function SceneTimeline({
   
   // Calculate pixels per second
   const [containerWidth, setContainerWidth] = useState(600)
-  const TRACK_LABEL_WIDTH = 80
-  const timelineWidth = containerWidth - TRACK_LABEL_WIDTH
+  const TRACK_LABEL_WIDTH = 80  // Base label width (audio tracks add +20 for controls)
+  const AUDIO_TRACK_LABEL_WIDTH = TRACK_LABEL_WIDTH + 20
+  const timelineWidth = containerWidth - AUDIO_TRACK_LABEL_WIDTH
   const pixelsPerSecond = useMemo(() => 
     timelineWidth / Math.max(sceneDuration, 1), 
     [timelineWidth, sceneDuration]
@@ -211,10 +226,23 @@ export function SceneTimeline({
           }
         }
         
-        // Sync audio tracks
+        // Sync audio tracks - respect enabled state, mute, and volume
         allAudioClips.forEach(({ type, clip }) => {
           const audio = audioRefs.current.get(clip.id)
-          if (audio && !mutedTracks.has(type)) {
+          const isEnabled = trackEnabled[type] ?? true
+          const isMuted = mutedTracks.has(type)
+          const volume = trackVolumes[type] ?? 1
+          
+          if (audio) {
+            // Set volume
+            audio.volume = isMuted ? 0 : volume
+            
+            // Only play if track is enabled and not muted
+            if (!isEnabled || isMuted) {
+              if (!audio.paused) audio.pause()
+              return
+            }
+            
             const clipStart = clip.startTime
             const clipEnd = clip.startTime + clip.duration
             
@@ -240,14 +268,14 @@ export function SceneTimeline({
       }
       animationRef.current = requestAnimationFrame(animate)
     }
-  }, [isPlaying, currentTime, sceneDuration, getCurrentVisualClip, allAudioClips, mutedTracks, onPlayheadChange])
+  }, [isPlaying, currentTime, sceneDuration, getCurrentVisualClip, allAudioClips, mutedTracks, trackEnabled, trackVolumes, onPlayheadChange])
 
   // Seek control
   const handleTimelineClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (dragState) return
     
     const rect = e.currentTarget.getBoundingClientRect()
-    const x = e.clientX - rect.left - TRACK_LABEL_WIDTH
+    const x = e.clientX - rect.left - (TRACK_LABEL_WIDTH + 20)
     if (x < 0) return
     
     const newTime = Math.max(0, Math.min(sceneDuration, x / pixelsPerSecond))
@@ -262,12 +290,17 @@ export function SceneTimeline({
     
     allAudioClips.forEach(({ type, clip }) => {
       const audio = audioRefs.current.get(clip.id)
+      const isEnabled = trackEnabled[type] ?? true
+      const isMuted = mutedTracks.has(type)
+      const volume = trackVolumes[type] ?? 1
+      
       if (audio) {
+        audio.volume = isMuted ? 0 : volume
         const clipStart = clip.startTime
         const clipEnd = clip.startTime + clip.duration
         if (newTime >= clipStart && newTime < clipEnd) {
           audio.currentTime = newTime - clipStart + (clip.trimStart || 0)
-          if (isPlaying && !mutedTracks.has(type)) {
+          if (isPlaying && isEnabled && !isMuted) {
             audio.play().catch(() => {})
           }
         } else {
@@ -278,7 +311,7 @@ export function SceneTimeline({
     })
     
     onPlayheadChange?.(newTime, currentClip?.segmentId)
-  }, [dragState, sceneDuration, pixelsPerSecond, getCurrentVisualClip, allAudioClips, isPlaying, mutedTracks, onPlayheadChange])
+  }, [dragState, sceneDuration, pixelsPerSecond, getCurrentVisualClip, allAudioClips, isPlaying, mutedTracks, trackEnabled, trackVolumes, onPlayheadChange])
 
   // Drag handlers for clip editing
   const handleClipMouseDown = useCallback((
@@ -460,7 +493,7 @@ export function SceneTimeline({
     <div className="flex items-stretch h-16 group">
       <div 
         className="flex-shrink-0 flex items-center gap-1.5 px-2 bg-gray-100 dark:bg-gray-800 border-r border-gray-300 dark:border-gray-700"
-        style={{ width: TRACK_LABEL_WIDTH }}
+        style={{ width: AUDIO_TRACK_LABEL_WIDTH }}
       >
         <Film className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400" />
         <span className="text-[10px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
@@ -490,24 +523,75 @@ export function SceneTimeline({
     color: string
   ) => {
     const isMuted = mutedTracks.has(trackType)
+    const isEnabled = trackEnabled[trackType] ?? true
+    const volume = trackVolumes[trackType] ?? 1
+    
+    const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newVolume = parseFloat(e.target.value)
+      setTrackVolumes(prev => ({ ...prev, [trackType]: newVolume }))
+      // Update audio element volumes
+      clips.forEach(clip => {
+        const audio = audioRefs.current.get(clip.id)
+        if (audio) audio.volume = newVolume
+      })
+    }
+    
+    const toggleEnabled = () => {
+      const newEnabled = !isEnabled
+      setTrackEnabled(prev => ({ ...prev, [trackType]: newEnabled }))
+      if (!newEnabled) {
+        // Pause audio when disabled
+        clips.forEach(clip => {
+          audioRefs.current.get(clip.id)?.pause()
+        })
+      }
+    }
     
     return (
-      <div className="flex items-stretch h-10 group">
+      <div className={cn("flex items-stretch h-12 group", !isEnabled && "opacity-50")}>
         <div 
-          className="flex-shrink-0 flex items-center gap-1 px-2 bg-gray-100 dark:bg-gray-800 border-r border-gray-300 dark:border-gray-700"
-          style={{ width: TRACK_LABEL_WIDTH }}
+          className="flex-shrink-0 flex flex-col justify-center gap-0.5 px-1.5 bg-gray-100 dark:bg-gray-800 border-r border-gray-300 dark:border-gray-700"
+          style={{ width: TRACK_LABEL_WIDTH + 20 }}
         >
-          <button
-            onClick={() => toggleMute(trackType)}
-            className={cn("p-0.5 rounded transition-colors", isMuted ? "text-gray-400" : "text-gray-600 dark:text-gray-300")}
-          >
-            {isMuted ? <VolumeX className="w-3 h-3" /> : icon}
-          </button>
-          <span className={cn("text-[10px] font-medium truncate", isMuted ? "text-gray-400 line-through" : "text-gray-700 dark:text-gray-300")}>
-            {label}
-          </span>
+          <div className="flex items-center gap-1">
+            {/* On/Off Toggle */}
+            <button
+              onClick={toggleEnabled}
+              className={cn(
+                "p-0.5 rounded transition-colors",
+                isEnabled ? "text-green-500 hover:text-green-400" : "text-gray-400 hover:text-gray-300"
+              )}
+              title={isEnabled ? 'Disable track' : 'Enable track'}
+            >
+              <div className={cn("w-2 h-2 rounded-full", isEnabled ? "bg-green-500" : "bg-gray-400")} />
+            </button>
+            {/* Mute Button */}
+            <button
+              onClick={() => toggleMute(trackType)}
+              disabled={!isEnabled}
+              className={cn("p-0.5 rounded transition-colors", isMuted || !isEnabled ? "text-gray-400" : "text-gray-600 dark:text-gray-300")}
+              title={isMuted ? 'Unmute' : 'Mute'}
+            >
+              {isMuted ? <VolumeX className="w-3 h-3" /> : icon}
+            </button>
+            <span className={cn("text-[9px] font-medium truncate flex-1", !isEnabled ? "text-gray-400" : isMuted ? "text-gray-400 line-through" : "text-gray-700 dark:text-gray-300")}>
+              {label}
+            </span>
+          </div>
+          {/* Volume Slider */}
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            value={volume}
+            onChange={handleVolumeChange}
+            disabled={!isEnabled}
+            className="w-full h-1 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-500 disabled:opacity-50"
+            title={`Volume: ${Math.round(volume * 100)}%`}
+          />
         </div>
-        <div className={cn("flex-1 relative border-b border-gray-200 dark:border-gray-800", isMuted ? "bg-gray-200 dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-900")}>
+        <div className={cn("flex-1 relative border-b border-gray-200 dark:border-gray-800", !isEnabled || isMuted ? "bg-gray-200 dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-900")}>
           {visualClips.map(clip => (
             <div
               key={`marker-${clip.id}`}
@@ -604,7 +688,7 @@ export function SceneTimeline({
         className="flex items-center h-5 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800 cursor-pointer"
         onClick={handleTimelineClick}
       >
-        <div className="flex-shrink-0" style={{ width: TRACK_LABEL_WIDTH }} />
+        <div className="flex-shrink-0" style={{ width: AUDIO_TRACK_LABEL_WIDTH }} />
         <div className="flex-1 relative">
           {timeMarkers.map(t => (
             <div key={t} className="absolute text-[9px] text-gray-500 font-mono" style={{ left: t * pixelsPerSecond - 8 }}>
@@ -615,9 +699,9 @@ export function SceneTimeline({
       </div>
 
       {/* Tracks Container - Fixed height to show all 5 tracks */}
-      <div ref={tracksContainerRef} className="relative flex-1 min-h-[176px]" onClick={handleTimelineClick}>
+      <div ref={tracksContainerRef} className="relative flex-1 min-h-[200px]" onClick={handleTimelineClick}>
         {renderVisualTrack()}
-        {renderAudioTrack('V.O.', <Mic className="w-3 h-3" />, 'voiceover', audioTracks?.voiceover ? [audioTracks.voiceover] : [], 'bg-blue-500')}
+        {renderAudioTrack('Narration', <Mic className="w-3 h-3" />, 'voiceover', audioTracks?.voiceover ? [audioTracks.voiceover] : [], 'bg-blue-500')}
         {renderAudioTrack('Dialogue', <Mic className="w-3 h-3" />, 'dialogue', audioTracks?.dialogue || [], 'bg-emerald-500')}
         {renderAudioTrack('Music', <Music className="w-3 h-3" />, 'music', audioTracks?.music ? [audioTracks.music] : [], 'bg-purple-500')}
         {renderAudioTrack('SFX', <Zap className="w-3 h-3" />, 'sfx', audioTracks?.sfx || [], 'bg-amber-500')}
@@ -625,7 +709,7 @@ export function SceneTimeline({
         {/* Playhead */}
         <div
           className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-30 pointer-events-none"
-          style={{ left: TRACK_LABEL_WIDTH + currentTime * pixelsPerSecond }}
+          style={{ left: AUDIO_TRACK_LABEL_WIDTH + currentTime * pixelsPerSecond }}
         >
           <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-red-500 rounded-full shadow-md" />
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-red-500" />
