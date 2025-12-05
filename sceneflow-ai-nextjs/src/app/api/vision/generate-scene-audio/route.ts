@@ -4,7 +4,7 @@ import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { optimizeTextForTTS } from '../../../../lib/tts/textOptimizer'
 import { getElevenLabsVoiceForLanguage } from '../../../../lib/audio/elevenlabsVoices'
-import { getAudioDuration } from '../../../../lib/audio/audioDuration'
+import { getAudioDurationFromBuffer } from '../../../../lib/audio/serverAudioDuration'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -146,16 +146,17 @@ export async function POST(req: NextRequest) {
     // Step 4: Generate audio using specified provider with optimized text
     const audioBuffer = await generateAudio(optimized.text, finalVoiceConfig, language)
 
-    // Step 5: Get audio duration
+    // Step 5: Get actual audio duration from buffer
     let audioDuration: number | null = null
     try {
-      // Upload temporarily to get duration, or estimate
-      // For now, we'll estimate based on text length (rough: ~150 words per minute)
+      const wordCount = optimized.text.split(/\s+/).length
+      audioDuration = await getAudioDurationFromBuffer(audioBuffer, wordCount)
+      console.log('[Scene Audio] Actual duration:', audioDuration, 'seconds')
+    } catch (error) {
+      console.warn('[Scene Audio] Could not get audio duration:', error)
+      // Fallback to estimation
       const wordCount = optimized.text.split(/\s+/).length
       audioDuration = (wordCount / 150) * 60
-      console.log('[Scene Audio] Estimated duration:', audioDuration, 'seconds')
-    } catch (error) {
-      console.warn('[Scene Audio] Could not estimate duration:', error)
     }
 
     // Step 6: Upload to Vercel Blob

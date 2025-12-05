@@ -75,14 +75,20 @@ export function SceneProductionManager({
     const newTracks: AudioTracksData = {}
     const sceneDuration = productionData?.segments?.reduce((acc, seg) => Math.max(acc, seg.endTime), 10) || 10
     
-    // Voiceover from scene narration
+    // Voiceover from scene narration - get duration from audio metadata
     const voUrl = scene.narrationAudioUrl || scene.narrationAudio?.en?.url || scene.descriptionAudioUrl || scene.descriptionAudio?.en?.url
     if (voUrl) {
+      // Try to get stored duration from audio metadata (set during generation)
+      const voDuration = scene.narrationAudio?.en?.duration 
+        || scene.narrationDuration 
+        || scene.descriptionAudio?.en?.duration
+        || scene.descriptionDuration 
+        || 0 // Will be calculated from actual audio file if 0
       newTracks.voiceover = {
         id: 'vo-scene',
         url: voUrl,
         startTime: 0,
-        duration: scene.narrationDuration || scene.descriptionDuration || sceneDuration,
+        duration: voDuration,
         label: 'Narration',
         volume: 1,
       }

@@ -182,19 +182,104 @@ export function SceneTimeline({
     return () => window.removeEventListener('resize', updateWidth)
   }, [])
 
-  // Collect all audio clips
+  // Collect all audio clips with resolved durations
+  const [resolvedDurations, setResolvedDurations] = useState<Record<string, number>>({})
+  
+  // Load actual durations from audio files when they're 0 or missing
+  useEffect(() => {
+    const loadDurations = async () => {
+      const toResolve: Array<{ id: string; url: string }> = []
+      
+      // Check voiceover
+      if (audioTracks?.voiceover?.url && (!audioTracks.voiceover.duration || audioTracks.voiceover.duration === 0)) {
+        toResolve.push({ id: 'vo-' + audioTracks.voiceover.id, url: audioTracks.voiceover.url })
+      }
+      
+      // Check dialogue
+      audioTracks?.dialogue?.forEach(d => {
+        if (d.url && (!d.duration || d.duration === 0)) {
+          toResolve.push({ id: 'dialogue-' + d.id, url: d.url })
+        }
+      })
+      
+      // Check sfx
+      audioTracks?.sfx?.forEach(s => {
+        if (s.url && (!s.duration || s.duration === 0)) {
+          toResolve.push({ id: 'sfx-' + s.id, url: s.url })
+        }
+      })
+      
+      if (toResolve.length === 0) return
+      
+      const newDurations: Record<string, number> = { ...resolvedDurations }
+      
+      await Promise.all(toResolve.map(async ({ id, url }) => {
+        if (newDurations[id]) return // Already resolved
+        
+        try {
+          const audio = new Audio(url)
+          await new Promise<void>((resolve, reject) => {
+            audio.addEventListener('loadedmetadata', () => {
+              newDurations[id] = audio.duration
+              resolve()
+            })
+            audio.addEventListener('error', () => reject(new Error('Failed to load audio')))
+            audio.load()
+            setTimeout(() => reject(new Error('Timeout')), 10000)
+          })
+        } catch (error) {
+          console.warn(`[Timeline] Failed to get duration for ${id}:`, error)
+          newDurations[id] = 3 // Default fallback
+        }
+      }))
+      
+      setResolvedDurations(newDurations)
+    }
+    
+    loadDurations()
+  }, [audioTracks])
+  
   const allAudioClips = useMemo(() => {
     const clips: Array<{ type: string; clip: AudioTrackClip }> = []
     if (audioTracks?.voiceover?.url) {
-      clips.push({ type: 'voiceover', clip: audioTracks.voiceover })
+      const resolvedDuration = resolvedDurations['vo-' + audioTracks.voiceover.id]
+      clips.push({ 
+        type: 'voiceover', 
+        clip: {
+          ...audioTracks.voiceover,
+          duration: audioTracks.voiceover.duration || resolvedDuration || 0
+        }
+      })
     }
-    audioTracks?.dialogue?.forEach(d => d.url && clips.push({ type: 'dialogue', clip: d }))
+    audioTracks?.dialogue?.forEach(d => {
+      if (d.url) {
+        const resolvedDuration = resolvedDurations['dialogue-' + d.id]
+        clips.push({ 
+          type: 'dialogue', 
+          clip: {
+            ...d,
+            duration: d.duration || resolvedDuration || 0
+          }
+        })
+      }
+    })
     if (audioTracks?.music?.url) {
       clips.push({ type: 'music', clip: audioTracks.music })
     }
-    audioTracks?.sfx?.forEach(s => s.url && clips.push({ type: 'sfx', clip: s }))
+    audioTracks?.sfx?.forEach(s => {
+      if (s.url) {
+        const resolvedDuration = resolvedDurations['sfx-' + s.id]
+        clips.push({ 
+          type: 'sfx', 
+          clip: {
+            ...s,
+            duration: s.duration || resolvedDuration || 0
+          }
+        })
+      }
+    })
     return clips
-  }, [audioTracks])
+  }, [audioTracks, resolvedDurations])
 
   // Find current visual clip at playhead
   const getCurrentVisualClip = useCallback((time: number): VisualClip | undefined => {
