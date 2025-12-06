@@ -38,6 +38,7 @@ export interface VideoTakeReference {
   takeId: string
   assetUrl: string
   thumbnailUrl?: string
+  lastFrameUrl?: string  // The last frame of the video - required for I2V/EXT mode
   durationSec?: number
 }
 
@@ -169,6 +170,9 @@ export function SegmentPromptBuilder({
             takeId: take.id,
             assetUrl: take.assetUrl,
             thumbnailUrl: take.thumbnailUrl,
+            // For I2V/EXT mode: use thumbnailUrl (which stores lastFrame for videos), 
+            // or fall back to segment's endFrameUrl
+            lastFrameUrl: take.thumbnailUrl || seg.references.endFrameUrl || undefined,
             durationSec: take.durationSec,
           })
         }
@@ -499,7 +503,9 @@ export function SegmentPromptBuilder({
         if (selectedVideoTake) {
           promptData.videoReferenceUrl = selectedVideoTake.assetUrl
           promptData.videoReferenceTakeId = selectedVideoTake.takeId
-          promptData.startFrameUrl = selectedVideoTake.assetUrl // For video extension
+          // Use the last frame (image) from the video take, NOT the video URL itself
+          // The Veo API requires an image for I2V/EXT mode, not a video file
+          promptData.startFrameUrl = selectedVideoTake.lastFrameUrl || selectedVideoTake.thumbnailUrl || previousSegmentLastFrame
         } else if (previousSegmentLastFrame) {
           promptData.startFrameUrl = previousSegmentLastFrame
         }

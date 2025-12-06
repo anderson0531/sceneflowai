@@ -860,7 +860,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               id: `${segmentId}-take-${Date.now()}`,
               createdAt: new Date().toISOString(),
               assetUrl: data.assetUrl,
-              thumbnailUrl: data.assetType === 'image' ? data.assetUrl : undefined,
+              // For images, use the image itself as thumbnail. For videos, use the extracted last frame.
+              thumbnailUrl: data.assetType === 'image' ? data.assetUrl : (data.lastFrameUrl || undefined),
               status: data.status === 'COMPLETE' ? 'COMPLETE' : 'GENERATING',
               durationSec: segment.endTime - segment.startTime,
             }
