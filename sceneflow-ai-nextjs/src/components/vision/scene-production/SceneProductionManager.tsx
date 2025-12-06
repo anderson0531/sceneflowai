@@ -64,16 +64,6 @@ export function SceneProductionManager({
   onDeleteSegment,
   onAudioClipChange,
 }: SceneProductionManagerProps) {
-  // DEBUG: Log props on mount and when they change
-  useEffect(() => {
-    console.log('[SceneProductionManager] Props received:', {
-      sceneId,
-      hasOnAddSegment: typeof onAddSegment === 'function',
-      hasOnDeleteSegment: typeof onDeleteSegment === 'function',
-      hasOnAudioClipChange: typeof onAudioClipChange === 'function',
-    })
-  }, [sceneId, onAddSegment, onDeleteSegment, onAudioClipChange])
-  
   // Create stable callback wrappers - these must be defined early to avoid minification issues
   const handleAddSegmentWrapper = useCallback(
     (afterSegmentId: string | null, duration: number) => {
@@ -209,14 +199,6 @@ export function SceneProductionManager({
         newTracks.sfx = sfxClips
       }
     }
-    
-    console.log('[SceneProductionManager] Built audio tracks:', {
-      voiceover: !!newTracks.voiceover,
-      dialogue: newTracks.dialogue?.length || 0,
-      music: !!newTracks.music,
-      sfx: newTracks.sfx?.length || 0,
-      dialogueAudioStructure: scene.dialogueAudio ? (scene.dialogueAudio.en ? 'multi-lang' : Array.isArray(scene.dialogueAudio) ? 'legacy-array' : 'unknown') : 'none',
-    })
     
     setAudioTracksState(newTracks)
   }, [scene, productionData?.segments])
