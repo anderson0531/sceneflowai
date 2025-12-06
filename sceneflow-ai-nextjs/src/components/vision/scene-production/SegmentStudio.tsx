@@ -282,33 +282,33 @@ export function SegmentStudio({
           </div>
         )}
 
-        {/* Segment Details - Compact Cards */}
+        {/* Segment Details - Readable Cards */}
         {(segment.triggerReason || segment.emotionalBeat || segment.cameraMovement) && (
-          <div className="space-y-1.5">
-            <div className="text-[9px] font-semibold uppercase text-gray-500 dark:text-gray-400">Details</div>
-            <div className="grid grid-cols-2 gap-1.5">
+          <div className="space-y-2">
+            <div className="text-xs font-bold uppercase text-gray-700 dark:text-gray-200 tracking-wide">Details</div>
+            <div className="grid grid-cols-2 gap-2">
               {segment.triggerReason && (
-                <div className="bg-amber-50 dark:bg-amber-900/20 p-1.5 rounded border border-amber-200 dark:border-amber-800">
-                  <div className="text-[8px] font-semibold uppercase text-amber-600 dark:text-amber-400">Cut</div>
-                  <div className="text-[10px] text-amber-900 dark:text-amber-100 truncate">{segment.triggerReason}</div>
+                <div className="bg-amber-50 dark:bg-amber-900/30 p-2 rounded-lg border border-amber-200 dark:border-amber-700">
+                  <div className="text-xs font-semibold uppercase text-amber-700 dark:text-amber-300 mb-1">Cut</div>
+                  <div className="text-sm font-medium text-amber-900 dark:text-amber-100 break-words">{segment.triggerReason}</div>
                 </div>
               )}
               {segment.emotionalBeat && (
-                <div className="bg-purple-50 dark:bg-purple-900/20 p-1.5 rounded border border-purple-200 dark:border-purple-800">
-                  <div className="text-[8px] font-semibold uppercase text-purple-600 dark:text-purple-400">Emotion</div>
-                  <div className="text-[10px] text-purple-900 dark:text-purple-100 truncate">{segment.emotionalBeat}</div>
+                <div className="bg-purple-50 dark:bg-purple-900/30 p-2 rounded-lg border border-purple-200 dark:border-purple-700">
+                  <div className="text-xs font-semibold uppercase text-purple-700 dark:text-purple-300 mb-1">Emotion</div>
+                  <div className="text-sm font-medium text-purple-900 dark:text-purple-100 break-words">{segment.emotionalBeat}</div>
                 </div>
               )}
               {segment.cameraMovement && (
-                <div className="bg-slate-50 dark:bg-slate-900/20 p-1.5 rounded border border-slate-200 dark:border-slate-800">
-                  <div className="text-[8px] font-semibold uppercase text-slate-600 dark:text-slate-400">Camera</div>
-                  <div className="text-[10px] text-slate-900 dark:text-slate-100 truncate">{segment.cameraMovement}</div>
+                <div className="bg-slate-50 dark:bg-slate-900/30 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <div className="text-xs font-semibold uppercase text-slate-700 dark:text-slate-300 mb-1">Camera</div>
+                  <div className="text-sm font-medium text-slate-900 dark:text-slate-100 break-words">{segment.cameraMovement}</div>
                 </div>
               )}
               {segment.endFrameDescription && (
-                <div className="bg-green-50 dark:bg-green-900/20 p-1.5 rounded border border-green-200 dark:border-green-800">
-                  <div className="text-[8px] font-semibold uppercase text-green-600 dark:text-green-400">End Frame</div>
-                  <div className="text-[10px] text-green-900 dark:text-green-100 truncate">{segment.endFrameDescription}</div>
+                <div className="bg-green-50 dark:bg-green-900/30 p-2 rounded-lg border border-green-200 dark:border-green-700">
+                  <div className="text-xs font-semibold uppercase text-green-700 dark:text-green-300 mb-1">End Frame</div>
+                  <div className="text-sm font-medium text-green-900 dark:text-green-100 break-words">{segment.endFrameDescription}</div>
                 </div>
               )}
             </div>
