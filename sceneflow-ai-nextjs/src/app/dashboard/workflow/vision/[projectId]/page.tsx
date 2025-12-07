@@ -4812,6 +4812,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 isGeneratingKeyframe={isGeneratingKeyframe}
                 generatingKeyframeSceneNumber={generatingKeyframeSceneNumber}
                 selectedSceneIndex={selectedSceneIndex}
+                onSelectSceneIndex={setSelectedSceneIndex}
               belowDashboardSlot={({ openGenerateAudio }) => (
                 <div className="rounded-2xl border border-white/10 bg-slate950/40 shadow-inner">
                   <div className="px-5 py-5">

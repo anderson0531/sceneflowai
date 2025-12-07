@@ -146,9 +146,10 @@ export function SceneSelector({
       {/* Scrollable Scene Cards */}
       <div 
         ref={scrollContainerRef}
-        className="flex gap-1.5 px-3 py-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent"
+        className="overflow-x-auto overflow-y-hidden"
         style={{ scrollbarWidth: 'thin' }}
       >
+        <div className="flex gap-1.5 px-3 py-2 w-max">
         {scenes.map((scene) => {
           const isSelected = scene.id === selectedSceneId
           
@@ -159,7 +160,7 @@ export function SceneSelector({
               onClick={() => onSelectScene(scene.id)}
               className={cn(
                 "relative flex-shrink-0 text-left transition-all duration-150",
-                "rounded-md border px-2 py-1.5 min-w-[100px] max-w-[120px]",
+                "rounded border px-1.5 py-1 w-[80px]",
                 isSelected
                   ? "bg-purple-900/50 border-purple-500 ring-1 ring-purple-500/30"
                   : "bg-gray-800/60 border-gray-700 hover:border-gray-600 hover:bg-gray-800"
@@ -173,9 +174,9 @@ export function SceneSelector({
               )}
               
               {/* Scene Number & Status */}
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-0.5">
                 <span className={cn(
-                  "text-[10px] font-bold px-1 py-0.5 rounded",
+                  "text-[9px] font-bold px-1 py-0.5 rounded",
                   isSelected 
                     ? "bg-purple-500 text-white" 
                     : "bg-gray-700 text-gray-300"
@@ -187,23 +188,24 @@ export function SceneSelector({
 
               {/* Scene Name - truncated */}
               <p className={cn(
-                "text-[10px] font-medium truncate mb-1",
+                "text-[9px] font-medium truncate mb-0.5",
                 isSelected ? "text-white" : "text-gray-300"
               )}>
                 {scene.name || `Scene ${scene.sceneNumber}`}
               </p>
 
               {/* Duration & Info */}
-              <div className="flex items-center justify-between text-[9px] text-gray-500">
+              <div className="flex items-center justify-between text-[8px] text-gray-500">
                 <span>{formatDuration(scene.estimatedDuration)}</span>
-                <div className="flex items-center gap-1">
-                  {scene.hasImage && <Image className="w-2.5 h-2.5 text-blue-400" />}
-                  {scene.hasAudio && <Volume2 className="w-2.5 h-2.5 text-green-400" />}
+                <div className="flex items-center gap-0.5">
+                  {scene.hasImage && <Image className="w-2 h-2 text-blue-400" />}
+                  {scene.hasAudio && <Volume2 className="w-2 h-2 text-green-400" />}
                 </div>
               </div>
             </button>
           )
         })}
+        </div>
       </div>
     </div>
   )
