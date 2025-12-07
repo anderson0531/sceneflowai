@@ -98,7 +98,8 @@ export function SceneSelector({
 
   return (
     <div className={cn(
-      "bg-gray-900/95 border border-gray-700 rounded-lg flex-shrink-0 w-full max-w-full overflow-hidden",
+      "bg-gray-900/95 border border-gray-700 rounded-lg flex-shrink-0 overflow-hidden",
+      "max-w-[850px]",
       className
     )}>
       {/* Header */}
