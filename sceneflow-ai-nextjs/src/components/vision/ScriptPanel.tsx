@@ -473,6 +473,15 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
   const scenes = useMemo(() => normalizeScenes(script), [script])
 
+  // Filter to only show selected scene when selectedSceneIndex is set
+  const displayedScenes = useMemo(() => {
+    if (selectedSceneIndex !== null && selectedSceneIndex >= 0 && selectedSceneIndex < scenes.length) {
+      return [{ scene: scenes[selectedSceneIndex], originalIndex: selectedSceneIndex }]
+    }
+    // When no scene is selected, show all scenes
+    return scenes.map((scene: any, idx: number) => ({ scene, originalIndex: idx }))
+  }, [scenes, selectedSceneIndex])
+
   const bookmarkedSceneIndex = useMemo(() => {
     if (!bookmarkedScene) return -1
     return scenes.findIndex((scene: any, idx: number) => {
@@ -2110,10 +2119,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={scenes.map((_: any, idx: number) => idx)}
+                  items={displayedScenes.map((item) => item.originalIndex)}
                   strategy={verticalListSortingStrategy}
                 >
-                          {scenes.map((scene: any, idx: number) => {
+                          {displayedScenes.map(({ scene, originalIndex: idx }) => {
                             const timelineStart = scenes.slice(0, idx).reduce((total: number, s: any) => total + calculateSceneDuration(s), 0)
                             const domId = getSceneDomId(scene, idx)
                     return (
