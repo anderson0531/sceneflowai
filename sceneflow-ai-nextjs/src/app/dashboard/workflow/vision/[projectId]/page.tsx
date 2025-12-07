@@ -4685,8 +4685,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       <div className="flex-1 overflow-hidden px-6 py-4">
         <PanelGroup direction="horizontal" className="h-full">
           {/* Main: Script with Scene Cards */}
-          <Panel defaultSize={75} minSize={50} maxSize={90} className="min-w-0">
-            <div className="h-full overflow-y-auto pr-6">
+          <Panel defaultSize={75} minSize={50} maxSize={90} className="min-w-0 overflow-hidden">
+            <div className="h-full overflow-y-auto pr-6 min-w-0">
               {/* Scene Timeline Selector */}
               <SceneSelector
                 scenes={(script?.script?.scenes || []).map((scene: any, idx: number) => {
