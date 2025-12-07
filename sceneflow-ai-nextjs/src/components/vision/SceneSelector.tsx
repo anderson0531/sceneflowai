@@ -100,9 +100,9 @@ export function SceneSelector({
 
   return (
     <div className={cn(
-      "bg-gray-900/95 border border-gray-700 rounded-lg overflow-hidden w-full max-w-full",
+      "bg-gray-900/95 border border-gray-700 rounded-lg overflow-hidden",
       className
-    )}>
+    )} style={{ maxWidth: '100%', width: '100%' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-800">
         <div className="flex items-center gap-2">
@@ -146,10 +146,10 @@ export function SceneSelector({
       {/* Scrollable Scene Cards */}
       <div 
         ref={scrollContainerRef}
-        className="overflow-x-auto overflow-y-hidden max-w-full"
-        style={{ scrollbarWidth: 'thin' }}
+        className="overflow-x-auto overflow-y-hidden"
+        style={{ scrollbarWidth: 'thin', maxWidth: '100%' }}
       >
-        <div className="flex gap-1.5 px-3 py-2">
+        <div className="flex gap-1.5 px-3 py-2 w-max">
         {scenes.map((scene) => {
           const isSelected = scene.id === selectedSceneId
           
