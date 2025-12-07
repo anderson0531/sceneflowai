@@ -49,7 +49,7 @@ export function ContextBar({
       {/* Top row: Title + actions (mobile stacks) */}
       <div className="px-6 lg:px-8">
         <div className={cn(
-          'h-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2',
+          'h-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 min-w-0 max-w-full overflow-x-hidden',
           titleVariant === 'page' ? 'py-3 md:py-4' : 'py-2 sm:py-0 sm:h-12'
         )}>
           <div className="min-w-0 flex items-center gap-3">

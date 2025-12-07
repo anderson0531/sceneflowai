@@ -4682,11 +4682,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       />
       
-      <div className="flex-1 overflow-hidden px-6 py-4">
-        <PanelGroup direction="horizontal" className="h-full">
+      <div className="flex-1 overflow-hidden overflow-x-hidden px-6 py-4 max-w-full min-w-0">
+        <PanelGroup direction="horizontal" className="h-full max-w-full min-w-0 overflow-x-hidden">
           {/* Main: Script with Scene Cards */}
-          <Panel defaultSize={70} minSize={50} maxSize={80} className="min-w-0 overflow-hidden">
-            <div className="h-full overflow-y-auto pr-6 min-w-0 w-full">
+          <Panel defaultSize={70} minSize={50} maxSize={80} className="min-w-0 overflow-hidden overflow-x-hidden">
+            <div className="h-full overflow-y-auto pr-6 min-w-0 w-full overflow-x-hidden">
               {/* Scene Timeline Selector */}
               <SceneSelector
                 scenes={(script?.script?.scenes || []).map((scene: any, idx: number) => {
@@ -4861,8 +4861,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           <PanelResizeHandle className="w-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors cursor-col-resize" />
           
           {/* Right Sidebar: Reference Library */}
-          <Panel defaultSize={30} minSize={20} maxSize={50} className="min-w-0">
-            <div className="h-full overflow-y-auto pl-6">
+          <Panel defaultSize={30} minSize={20} maxSize={50} className="min-w-0 overflow-x-hidden">
+            <div className="h-full overflow-y-auto overflow-x-hidden pl-6 min-w-0">
               {/* Merge Duplicates Button */}
               {findPotentialDuplicates(characters).length > 0 && (
                 <div className="mb-4 px-2">

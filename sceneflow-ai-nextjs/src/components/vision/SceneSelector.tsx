@@ -146,10 +146,10 @@ export function SceneSelector({
       {/* Scrollable Scene Cards */}
       <div 
         ref={scrollContainerRef}
-        className="overflow-x-auto overflow-y-hidden"
+        className="overflow-x-auto overflow-y-hidden w-full min-w-0"
         style={{ scrollbarWidth: 'thin', maxWidth: '100%' }}
       >
-        <div className="flex gap-1.5 px-3 py-2 w-max">
+        <div className="flex gap-1.5 px-3 py-2 w-max min-w-0">
         {scenes.map((scene) => {
           const isSelected = scene.id === selectedSceneId
           
