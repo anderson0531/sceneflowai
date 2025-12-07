@@ -172,7 +172,7 @@ export function SceneSelector({
                 </div>
               )}
               
-              {/* Scene Number & Status */}}
+              {/* Scene Number & Status */}
               <div className="flex items-center justify-between mb-1">
                 <span className={cn(
                   "text-[10px] font-bold px-1 py-0.5 rounded",
