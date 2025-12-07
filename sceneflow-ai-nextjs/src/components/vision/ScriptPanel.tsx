@@ -157,6 +157,8 @@ interface ScriptPanelProps {
   generatingKeyframeSceneNumber?: number | null
   // Below dashboard slot
   belowDashboardSlot?: (helpers: { openGenerateAudio: () => void }) => React.ReactNode
+  // Scene timeline filtering - only show selected scene when set
+  selectedSceneIndex?: number | null
 }
 
 // Transform score analysis data to review format
@@ -358,7 +360,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onAudioClipChange, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onAudioClipChange, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -470,6 +472,15 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [openSceneIdx, setOpenSceneIdx] = useState<number | null>(null)
 
   const scenes = useMemo(() => normalizeScenes(script), [script])
+
+  // Filter to only show selected scene when selectedSceneIndex is set
+  const displayedScenes = useMemo(() => {
+    if (selectedSceneIndex !== null && selectedSceneIndex >= 0 && selectedSceneIndex < scenes.length) {
+      return [{ scene: scenes[selectedSceneIndex], originalIndex: selectedSceneIndex }]
+    }
+    // When no scene is selected, show all scenes
+    return scenes.map((scene: any, idx: number) => ({ scene, originalIndex: idx }))
+  }, [scenes, selectedSceneIndex])
 
   const bookmarkedSceneIndex = useMemo(() => {
     if (!bookmarkedScene) return -1
@@ -2108,10 +2119,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={scenes.map((_: any, idx: number) => idx)}
+                  items={displayedScenes.map((item) => item.originalIndex)}
                   strategy={verticalListSortingStrategy}
                 >
-                          {scenes.map((scene: any, idx: number) => {
+                          {displayedScenes.map(({ scene, originalIndex: idx }) => {
                             const timelineStart = scenes.slice(0, idx).reduce((total: number, s: any) => total + calculateSceneDuration(s), 0)
                             const domId = getSceneDomId(scene, idx)
                     return (

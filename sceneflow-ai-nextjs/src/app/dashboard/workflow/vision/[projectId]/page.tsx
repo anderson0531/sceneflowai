@@ -8,6 +8,7 @@ import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels'
 import { toast } from 'sonner'
 import { ContextBar } from '@/components/layout/ContextBar'
 import { ScriptPanel } from '@/components/vision/ScriptPanel'
+import { SceneSelector } from '@/components/vision/SceneSelector'
 import { SceneGallery } from '@/components/vision/SceneGallery'
 import { GenerationProgress } from '@/components/vision/GenerationProgress'
 import { ScreeningRoom } from '@/components/vision/ScriptPlayer'
@@ -482,6 +483,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [script, setScript] = useState<any>(null)
   const [characters, setCharacters] = useState<any[]>([])
   const [scenes, setScenes] = useState<Scene[]>([])
+  const [selectedSceneIndex, setSelectedSceneIndex] = useState<number | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [uploadingRef, setUploadingRef] = useState<Record<string, boolean>>({})
@@ -541,6 +543,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       setSceneBookmark(null)
     }
   }, [project])
+
+  // Auto-select first scene when scenes are loaded
+  useEffect(() => {
+    const scriptScenes = script?.script?.scenes || []
+    if (scriptScenes.length > 0 && selectedSceneIndex === null) {
+      setSelectedSceneIndex(0)
+    }
+  }, [script?.script?.scenes, selectedSceneIndex])
 
   const handleBookmarkScene = useCallback(
     async (bookmark: SceneBookmark | null) => {
@@ -4677,6 +4687,46 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           {/* Main: Script with Scene Cards */}
           <Panel defaultSize={75} minSize={50} maxSize={90} className="min-w-0">
             <div className="h-full overflow-y-auto pr-6">
+              {/* Scene Timeline Selector */}
+              <SceneSelector
+                scenes={(script?.script?.scenes || []).map((scene: any, idx: number) => ({
+                  id: scene.id || scene.sceneId || `scene-${idx}`,
+                  sceneNumber: idx + 1,
+                  name: typeof scene.heading === 'string' ? scene.heading : scene.heading?.text || `Scene ${idx + 1}`,
+                  estimatedDuration: scene.estimatedDuration || scene.duration || 15,
+                  actualDuration: scene.actualDuration,
+                  status: sceneProductionState[scene.id || scene.sceneId || `scene-${idx}`]?.segments?.every(
+                    (s: any) => s.status === 'complete'
+                  )
+                    ? 'complete'
+                    : sceneProductionState[scene.id || scene.sceneId || `scene-${idx}`]?.segments?.some(
+                        (s: any) => s.status === 'complete' || s.status === 'generating'
+                      )
+                    ? 'in-progress'
+                    : 'not-started',
+                  segmentCount: sceneProductionState[scene.id || scene.sceneId || `scene-${idx}`]?.segments?.length || 0,
+                  hasImage: !!scene.imageUrl,
+                  hasAudio: !!(scene.narrationAudioUrl || scene.musicAudio),
+                }))}
+                selectedSceneId={
+                  selectedSceneIndex !== null
+                    ? (script?.script?.scenes?.[selectedSceneIndex]?.id ||
+                       script?.script?.scenes?.[selectedSceneIndex]?.sceneId ||
+                       `scene-${selectedSceneIndex}`)
+                    : undefined
+                }
+                onSelectScene={(sceneId) => {
+                  const scenes = script?.script?.scenes || []
+                  const idx = scenes.findIndex(
+                    (s: any, i: number) =>
+                      (s.id || s.sceneId || `scene-${i}`) === sceneId
+                  )
+                  if (idx !== -1) {
+                    setSelectedSceneIndex(idx)
+                  }
+                }}
+                className="mb-4"
+              />
               <ScriptPanel 
                 script={script}
                 onScriptChange={setScript}
@@ -4756,6 +4806,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onToggleDashboard={() => setShowDashboard(!showDashboard)}
                 isGeneratingKeyframe={isGeneratingKeyframe}
                 generatingKeyframeSceneNumber={generatingKeyframeSceneNumber}
+                selectedSceneIndex={selectedSceneIndex}
               belowDashboardSlot={({ openGenerateAudio }) => (
                 <div className="rounded-2xl border border-white/10 bg-slate950/40 shadow-inner">
                   <div className="px-5 py-5">
