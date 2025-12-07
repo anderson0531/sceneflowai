@@ -2196,10 +2196,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                           overlayStore={overlayStore}
                           projectId={projectId}
                           onUploadKeyframe={handleUploadKeyframe}
-                          isWorkflowOpen={openSceneIdx === idx}
+                          isWorkflowOpen={selectedSceneIndex !== null ? true : openSceneIdx === idx}
                           onWorkflowOpenChange={(isOpen: boolean) => {
                             // Single-scene-open behavior: close others when opening this one
-                            setOpenSceneIdx(isOpen ? idx : null)
+                            // When selectedSceneIndex is set, the scene is always open
+                            if (selectedSceneIndex === null) {
+                              setOpenSceneIdx(isOpen ? idx : null)
+                            }
                           }}
                 />
                     )
