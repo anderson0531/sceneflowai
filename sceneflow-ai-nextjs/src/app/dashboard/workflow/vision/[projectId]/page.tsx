@@ -4689,25 +4689,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             <div className="h-full overflow-y-auto pr-6">
               {/* Scene Timeline Selector */}
               <SceneSelector
-                scenes={(script?.script?.scenes || []).map((scene: any, idx: number) => ({
-                  id: scene.id || scene.sceneId || `scene-${idx}`,
-                  sceneNumber: idx + 1,
-                  name: typeof scene.heading === 'string' ? scene.heading : scene.heading?.text || `Scene ${idx + 1}`,
-                  estimatedDuration: scene.estimatedDuration || scene.duration || 15,
-                  actualDuration: scene.actualDuration,
-                  status: sceneProductionState[scene.id || scene.sceneId || `scene-${idx}`]?.segments?.every(
-                    (s: any) => s.status === 'complete'
-                  )
-                    ? 'complete'
-                    : sceneProductionState[scene.id || scene.sceneId || `scene-${idx}`]?.segments?.some(
-                        (s: any) => s.status === 'complete' || s.status === 'generating'
-                      )
-                    ? 'in-progress'
-                    : 'not-started',
-                  segmentCount: sceneProductionState[scene.id || scene.sceneId || `scene-${idx}`]?.segments?.length || 0,
-                  hasImage: !!scene.imageUrl,
-                  hasAudio: !!(scene.narrationAudioUrl || scene.musicAudio),
-                }))}
+                scenes={(script?.script?.scenes || []).map((scene: any, idx: number) => {
+                  const sceneId = scene.id || scene.sceneId || `scene-${idx}`
+                  const isBookmarked = sceneBookmark?.sceneId === sceneId || sceneBookmark?.sceneNumber === idx + 1
+                  return {
+                    id: sceneId,
+                    sceneNumber: idx + 1,
+                    name: typeof scene.heading === 'string' ? scene.heading : scene.heading?.text || `Scene ${idx + 1}`,
+                    estimatedDuration: scene.estimatedDuration || scene.duration || 15,
+                    actualDuration: scene.actualDuration,
+                    status: sceneProductionState[sceneId]?.segments?.every(
+                      (s: any) => s.status === 'complete'
+                    )
+                      ? 'complete'
+                      : sceneProductionState[sceneId]?.segments?.some(
+                          (s: any) => s.status === 'complete' || s.status === 'generating'
+                        )
+                      ? 'in-progress'
+                      : 'not-started',
+                    segmentCount: sceneProductionState[sceneId]?.segments?.length || 0,
+                    hasImage: !!scene.imageUrl,
+                    hasAudio: !!(scene.narrationAudioUrl || scene.musicAudio),
+                    isBookmarked,
+                  }
+                })}}
                 selectedSceneId={
                   selectedSceneIndex !== null
                     ? (script?.script?.scenes?.[selectedSceneIndex]?.id ||

@@ -11,7 +11,8 @@ import {
   Circle,
   PlayCircle,
   Image,
-  Volume2
+  Volume2,
+  Bookmark
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
@@ -25,6 +26,7 @@ export interface SceneItem {
   segmentCount?: number
   hasImage?: boolean
   hasAudio?: boolean
+  isBookmarked?: boolean
 }
 
 interface SceneSelectorProps {
@@ -156,14 +158,21 @@ export function SceneSelector({
               ref={isSelected ? selectedCardRef : null}
               onClick={() => onSelectScene(scene.id)}
               className={cn(
-                "flex-shrink-0 text-left transition-all duration-150",
+                "relative flex-shrink-0 text-left transition-all duration-150",
                 "rounded-md border px-2 py-1.5 min-w-[100px] max-w-[120px]",
                 isSelected
                   ? "bg-purple-900/50 border-purple-500 ring-1 ring-purple-500/30"
                   : "bg-gray-800/60 border-gray-700 hover:border-gray-600 hover:bg-gray-800"
               )}
             >
-              {/* Scene Number & Status */}
+              {/* Bookmark indicator */}
+              {scene.isBookmarked && (
+                <div className="absolute -top-1 -right-1">
+                  <Bookmark className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                </div>
+              )}
+              
+              {/* Scene Number & Status */}}
               <div className="flex items-center justify-between mb-1">
                 <span className={cn(
                   "text-[10px] font-bold px-1 py-0.5 rounded",
