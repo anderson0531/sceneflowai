@@ -4712,7 +4712,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     hasAudio: !!(scene.narrationAudioUrl || scene.musicAudio),
                     isBookmarked,
                   }
-                })}}
+                })}
                 selectedSceneId={
                   selectedSceneIndex !== null
                     ? (script?.script?.scenes?.[selectedSceneIndex]?.id ||
