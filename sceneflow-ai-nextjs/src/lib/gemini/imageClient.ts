@@ -17,6 +17,7 @@ interface ImageGenerationOptions {
   imageSize?: '1K' | '2K' | '4K'
   personGeneration?: 'allow_adult' | 'allow_all' | 'dont_allow'
   referenceImages?: ReferenceImage[]
+  negativePrompt?: string  // Terms to avoid in generation (e.g., "casual clothes, jeans")
 }
 
 /**
@@ -40,8 +41,15 @@ export async function generateImageWithGemini(
   const hasReferenceImages = options.referenceImages && options.referenceImages.length > 0
   const model = 'gemini-3-pro-image-preview'
   
+  // Build final prompt with negative prompt suffix if provided
+  let finalPrompt = prompt
+  if (options.negativePrompt) {
+    finalPrompt += `\n\nAvoid: ${options.negativePrompt}`
+    console.log('[Gemini Image] Adding negative prompt:', options.negativePrompt.substring(0, 100))
+  }
+  
   console.log(`[Gemini Image] Generating image with ${model}...`)
-  console.log('[Gemini Image] Prompt:', prompt.substring(0, 200))
+  console.log('[Gemini Image] Prompt:', finalPrompt.substring(0, 200))
   console.log('[Gemini Image] Has reference images:', hasReferenceImages)
   
   if (hasReferenceImages && options.referenceImages!.length > 5) {
@@ -52,8 +60,8 @@ export async function generateImageWithGemini(
   // Build contents array: prompt + reference images
   const contents: any[] = []
   
-  // Add text prompt
-  contents.push({ text: prompt })
+  // Add text prompt with negative prompt included
+  contents.push({ text: finalPrompt })
   
   // Add reference images if provided
   if (hasReferenceImages) {

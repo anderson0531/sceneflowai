@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
-import { optimizePromptForImagen, generateLinkingDescription } from '@/lib/imagen/promptOptimizer'
+import { optimizePromptForImagen, generateLinkingDescription, buildWardrobeNegatives } from '@/lib/imagen/promptOptimizer'
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
 import { waitForGCSURIs, checkGCSURIAccessibility } from '@/lib/storage/gcsAccessibility'
 import Project from '../../../../models/Project'
@@ -539,6 +539,12 @@ export async function POST(req: NextRequest) {
       if (char.appearanceDescription && char.appearanceDescription.toLowerCase().includes('smile')) {
         characterSpecificNegatives.push('frowning', 'sad expression', 'angry expression')
       }
+      
+      // Add wardrobe-specific negatives to prevent wardrobe hallucination
+      if (char.defaultWardrobe) {
+        const wardrobeNegatives = buildWardrobeNegatives(char.defaultWardrobe)
+        characterSpecificNegatives.push(...wardrobeNegatives)
+      }
     })
     
     // Combine base negative prompt with character-specific ones
@@ -549,7 +555,7 @@ export async function POST(req: NextRequest) {
     }
     const finalNegativePrompt = negativePromptParts.join(', ')
     
-    console.log(`[Scene Image] Negative prompt includes ${characterSpecificNegatives.length} character-specific exclusions`)
+    console.log(`[Scene Image] Negative prompt includes ${characterSpecificNegatives.length} character-specific exclusions (including wardrobe)`)
 
     // Generate with Gemini (with optional character references)
     // Add retry logic for reference image access issues
@@ -567,7 +573,8 @@ export async function POST(req: NextRequest) {
           numberOfImages: 1,
           imageSize: quality === 'max' ? '2K' : '1K',
           referenceImages: imageReferences.length > 0 ? imageReferences : undefined,
-          personGeneration: personGeneration || 'allow_adult' // Default to 'allow_adult' for backward compatibility
+          personGeneration: personGeneration || 'allow_adult', // Default to 'allow_adult' for backward compatibility
+          negativePrompt: finalNegativePrompt // Pass character-specific + wardrobe negatives
         })
         
         // Success - break out of retry loop

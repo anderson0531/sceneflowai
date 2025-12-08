@@ -24,6 +24,8 @@ interface OptimizePromptParams {
     ethnicity?: string       // For ethnicity injection
     keyFeatures?: string[]   // Key physical characteristics to emphasize
     linkingDescription?: string // Pre-computed linking text for text-matching
+    defaultWardrobe?: string    // Character's standard outfit (e.g., "tailored navy suit")
+    wardrobeAccessories?: string // Character's accessories (e.g., "gold watch, leather briefcase")
   }>
 }
 
@@ -103,6 +105,83 @@ export function generateLinkingDescription(description: string): string {
       return `a ${gender} with ${featureText}`
     }
   }
+}
+
+/**
+ * Build a structured wardrobe prefix for a character
+ * This creates a front-loaded wardrobe description that helps the model prioritize clothing
+ * 
+ * Format: "CHARACTER_NAME wears WARDROBE with ACCESSORIES"
+ * This prefix should appear BEFORE scene action to establish the wardrobe first
+ * 
+ * @param name - Character name
+ * @param defaultWardrobe - Standard outfit (e.g., "tailored navy suit")
+ * @param wardrobeAccessories - Accessories (e.g., "gold watch, leather briefcase")
+ * @returns Wardrobe prefix string or empty string if no wardrobe defined
+ */
+export function buildWardrobePrefix(
+  name: string,
+  defaultWardrobe?: string,
+  wardrobeAccessories?: string
+): string {
+  if (!defaultWardrobe && !wardrobeAccessories) {
+    return ''
+  }
+  
+  let prefix = name
+  
+  if (defaultWardrobe) {
+    prefix += ` wears ${defaultWardrobe}`
+    if (wardrobeAccessories) {
+      prefix += `, with ${wardrobeAccessories}`
+    }
+  } else if (wardrobeAccessories) {
+    prefix += ` has ${wardrobeAccessories}`
+  }
+  
+  return prefix
+}
+
+/**
+ * Build wardrobe-specific negative prompt terms
+ * Helps prevent "wardrobe hallucination" by explicitly excluding conflicting attire
+ * 
+ * @param defaultWardrobe - The intended wardrobe (e.g., "formal suit")
+ * @returns Array of negative prompt terms to exclude
+ */
+export function buildWardrobeNegatives(defaultWardrobe?: string): string[] {
+  if (!defaultWardrobe) {
+    return []
+  }
+  
+  const negatives: string[] = []
+  const wardrobeLower = defaultWardrobe.toLowerCase()
+  
+  // Formal vs casual conflicts
+  if (wardrobeLower.includes('suit') || wardrobeLower.includes('formal') || wardrobeLower.includes('tuxedo')) {
+    negatives.push('casual clothes', 'jeans', 't-shirt', 'hoodie', 'shorts', 'sneakers', 'sandals')
+  }
+  
+  if (wardrobeLower.includes('casual') || wardrobeLower.includes('jeans') || wardrobeLower.includes('t-shirt')) {
+    negatives.push('formal wear', 'suit', 'tuxedo', 'dress shoes', 'tie', 'bow tie')
+  }
+  
+  // Work attire vs casual
+  if (wardrobeLower.includes('uniform') || wardrobeLower.includes('scrubs') || wardrobeLower.includes('lab coat')) {
+    negatives.push('casual clothes', 'street clothes', 'business suit', 'formal wear')
+  }
+  
+  // Athletic wear
+  if (wardrobeLower.includes('athletic') || wardrobeLower.includes('sports') || wardrobeLower.includes('workout')) {
+    negatives.push('formal wear', 'suit', 'dress', 'business attire', 'jeans')
+  }
+  
+  // Dress/gown
+  if (wardrobeLower.includes('dress') || wardrobeLower.includes('gown') || wardrobeLower.includes('evening')) {
+    negatives.push('casual clothes', 'jeans', 'pants', 't-shirt', 'hoodie')
+  }
+  
+  return negatives
 }
 
 /**
@@ -383,7 +462,12 @@ ${visualStyle}`
 
 /**
  * Integrate character descriptions naturally into scene context
- * Instead of separate sections, weave character details where they're mentioned
+ * Uses HIERARCHICAL PROMPT STRUCTURE for better wardrobe consistency:
+ * 
+ * [WARDROBE DECLARATIONS] + [CHARACTER DEFS] + [SCENE ACTION]
+ * 
+ * This front-loads wardrobe information so the model prioritizes clothing/accessories
+ * before processing the scene action (which might override wardrobe otherwise).
  * 
  * For multi-character scenes (no reference images), provides more detailed descriptions
  * to help maintain visual consistency through text alone.
@@ -401,12 +485,22 @@ function integrateCharactersIntoScene(
     wardrobeAccessories?: string;
   }>
 ): string {
-  let integrated = sceneAction
   const isMultiCharacter = characterReferences.length > 1
   
-  // For each character, find their first mention and inject their description
+  // PHASE 1: Build WARDROBE DECLARATIONS (front-loaded for priority)
+  const wardrobeDeclarations: string[] = []
+  
+  // PHASE 2: Build CHARACTER DEFINITIONS with wardrobe integrated
+  const characterDefinitions: string[] = []
+  
   characterReferences.forEach(ref => {
-    // Build a detailed description for multi-character scenes
+    // Build wardrobe declaration for this character (front-loaded)
+    const wardrobePrefix = buildWardrobePrefix(ref.name, ref.defaultWardrobe, ref.wardrobeAccessories)
+    if (wardrobePrefix) {
+      wardrobeDeclarations.push(wardrobePrefix)
+    }
+    
+    // Build detailed character description
     let detailedDescription = ref.description
     
     // For multi-character scenes, add ethnicity and key features if available
@@ -423,7 +517,7 @@ function integrateCharactersIntoScene(
       }
     }
     
-    // Add wardrobe/attire for visual consistency
+    // Add wardrobe to description as well (reinforcement)
     if (ref.defaultWardrobe) {
       detailedDescription += `, wearing ${ref.defaultWardrobe}`
       if (ref.wardrobeAccessories) {
@@ -431,27 +525,51 @@ function integrateCharactersIntoScene(
       }
     }
     
+    characterDefinitions.push(`${ref.name}: ${detailedDescription}`)
+  })
+  
+  // PHASE 3: Process SCENE ACTION with character name replacements
+  let processedScene = sceneAction
+  characterReferences.forEach(ref => {
     // Match character name (case insensitive, word boundary)
     const namePattern = new RegExp(`\\b(${ref.name})\\b`, 'i')
-    const match = integrated.match(namePattern)
+    const match = processedScene.match(namePattern)
     
     if (match) {
+      // Build compact description for inline replacement
+      let inlineDesc = ref.description
+      if (ref.defaultWardrobe) {
+        inlineDesc += `, wearing ${ref.defaultWardrobe}`
+      }
       // Found character mention - inject description right after
-      const characterWithDescription = `${match[1]} (${detailedDescription})`
-      integrated = integrated.replace(namePattern, characterWithDescription)
-    } else {
-      // Character not explicitly mentioned in scene - add them at the start
-      const characterIntro = `${ref.name} (${detailedDescription}) is present. `
-      integrated = characterIntro + integrated
+      const characterWithDescription = `${match[1]} (${inlineDesc})`
+      processedScene = processedScene.replace(namePattern, characterWithDescription)
     }
   })
   
-  // For multi-character scenes, add explicit instruction for consistency
-  if (isMultiCharacter) {
-    integrated = `Multi-character scene with ${characterReferences.length} distinct people. ${integrated}`
+  // PHASE 4: ASSEMBLE HIERARCHICAL PROMPT
+  // Structure: [Wardrobe Lock] → [Character Definitions] → [Scene Action]
+  const promptParts: string[] = []
+  
+  // Add wardrobe declarations first (HIGHEST PRIORITY)
+  if (wardrobeDeclarations.length > 0) {
+    promptParts.push(`WARDROBE: ${wardrobeDeclarations.join('. ')}.`)
   }
   
-  return integrated
+  // Add multi-character header if needed
+  if (isMultiCharacter) {
+    promptParts.push(`Multi-character scene with ${characterReferences.length} distinct people.`)
+  }
+  
+  // Add character definitions
+  if (characterDefinitions.length > 0) {
+    promptParts.push(`CHARACTERS: ${characterDefinitions.join('; ')}.`)
+  }
+  
+  // Add scene action
+  promptParts.push(`SCENE: ${processedScene}`)
+  
+  return promptParts.join(' ')
 }
 
 /**
