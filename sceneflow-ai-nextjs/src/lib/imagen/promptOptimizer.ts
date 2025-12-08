@@ -347,11 +347,10 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
     // TEXT-MATCHING LINK MODE: subject_description text must appear in prompt
     // This is how the model links reference images to characters in the scene
     // 
-    // Example:
-    //   prompt: "a young man with curly hair sits at the table..."
-    //   subject_description: "a young man with curly hair"  <- MUST MATCH
-    //
-    // The model sees matching text and knows: "use this reference image for this person"
+    // STRUCTURE (per Gemini best practices):
+    // 1. SUBJECT & WARDROBE first (anchor appearance before actions)
+    // 2. ENVIRONMENT (setting, props)
+    // 3. MOOD & TECH (style, lighting)
     
     const characterRefs = params.characterReferences!
       .filter(ref => ref.referenceId !== undefined)
@@ -361,45 +360,76 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
         
         // Use pre-computed linking description OR generate it
         // This MUST match the subjectDescription passed to the Imagen API
-        // IMPORTANT: If linkingDescription is provided (e.g. "person [1]"), use it directly!
         const linkingDescription = ref.linkingDescription || generateLinkingDescription(ref.description)
+        
+        // Get wardrobe from the full character reference
+        const fullRef = params.characterReferences!.find(r => r.name === ref.name)
         
         return {
           name: ref.name,
           firstName: ref.name.split(' ')[0],
           refId: ref.referenceId!,
           isFemale,
-          linkingDescription // e.g., "person [1]" or "a young man with curly hair"
+          linkingDescription, // e.g., "person [1]" or "a young man with curly hair"
+          defaultWardrobe: fullRef?.defaultWardrobe,
+          wardrobeAccessories: fullRef?.wardrobeAccessories
         }
       })
     
-    // Replace character names with their linking descriptions
-    // "Alex Anderson sits..." -> "person [1] sits..."
-    let promptScene = cleanedAction
+    // PHASE 1: Build SUBJECT & WARDROBE section (placed FIRST)
+    // Format: "[linking description] wearing [wardrobe]"
+    const subjectWardrobeDescriptions: string[] = []
+    characterRefs.forEach(ref => {
+      if (ref.defaultWardrobe) {
+        let wardrobeDesc = `${ref.linkingDescription} wearing ${ref.defaultWardrobe}`
+        if (ref.wardrobeAccessories) {
+          wardrobeDesc += ` with ${ref.wardrobeAccessories}`
+        }
+        subjectWardrobeDescriptions.push(wardrobeDesc)
+      }
+    })
     
+    // PHASE 2: Strip dialogue/quotes from scene (prevents text rendering on image)
+    let promptScene = cleanedAction
+    // Remove quoted dialogue that might render as text
+    promptScene = promptScene.replace(/"[^"]*"/g, '')
+    promptScene = promptScene.replace(/'[^']*'/g, '')
+    // Remove dialogue attributions like "says", "said", "exclaims"
+    promptScene = promptScene.replace(/\b(says?|said|exclaims?|asks?|replies?|responds?|whispers?|shouts?)\b/gi, '')
+    // Clean up double spaces
+    promptScene = promptScene.replace(/\s+/g, ' ').trim()
+    
+    // PHASE 3: Replace character names with linking descriptions
     characterRefs.forEach(ref => {
       const fullNamePattern = new RegExp(`\\b${ref.name}\\b`, 'gi')
       promptScene = promptScene.replace(fullNamePattern, ref.linkingDescription)
       
       // Also replace first names only
       const firstNamePattern = new RegExp(`\\b${ref.firstName}\\b`, 'gi')
-      
-      // If using ID-based linking (e.g. "person [1]"), use that for first name too
-      // Otherwise use generic "the man"/"the woman" to avoid repetition of long descriptions
       const replacement = ref.linkingDescription.includes('[') 
         ? ref.linkingDescription 
         : (ref.isFemale ? 'the woman' : 'the man')
-        
       promptScene = promptScene.replace(firstNamePattern, replacement)
     })
     
-    // Build the final prompt with style
-    let prompt = promptScene + ` ${visualStyle}`
+    // PHASE 4: Assemble final prompt with SUBJECT & WARDROBE first
+    let prompt = ''
+    
+    // Add wardrobe section FIRST if we have wardrobe info
+    if (subjectWardrobeDescriptions.length > 0) {
+      prompt += `Subject & Wardrobe: ${subjectWardrobeDescriptions.join('; ')}. `
+    }
+    
+    // Add scene/environment
+    prompt += promptScene
+    
+    // Add visual style
+    prompt += ` ${visualStyle}`
     
     console.log('[Prompt Optimizer] Using TEXT-MATCHING LINK MODE with', characterRefs.length, 'reference(s)')
     console.log('[Prompt Optimizer] Linking descriptions (must match subjectDescription):')
     characterRefs.forEach(r => {
-      console.log(`  - ${r.name} -> "${r.linkingDescription}"`)
+      console.log(`  - ${r.name} -> "${r.linkingDescription}" | Wardrobe: ${r.defaultWardrobe || 'none'}`)
     })
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
     console.log(prompt)
@@ -520,8 +550,18 @@ function integrateCharactersIntoScene(
     characterIntros.push(`${ref.name} is ${fullDescription}`)
   })
   
-  // Process scene action: replace character names with wardrobe-reinforced descriptions
+  // Process scene action: strip dialogue and replace character names
   let processedScene = sceneAction
+  
+  // Strip dialogue/quotes that might render as text on image
+  processedScene = processedScene.replace(/"[^"]*"/g, '')
+  processedScene = processedScene.replace(/'[^']*'/g, '')
+  // Remove dialogue attributions
+  processedScene = processedScene.replace(/\b(says?|said|exclaims?|asks?|replies?|responds?|whispers?|shouts?)\b/gi, '')
+  // Clean up double spaces
+  processedScene = processedScene.replace(/\s+/g, ' ').trim()
+  
+  // Replace character names with wardrobe-reinforced descriptions
   characterReferences.forEach(ref => {
     const namePattern = new RegExp(`\\b(${ref.name})\\b`, 'gi')
     
