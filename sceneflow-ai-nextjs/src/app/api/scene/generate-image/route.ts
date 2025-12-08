@@ -522,7 +522,7 @@ export async function POST(req: NextRequest) {
     // Build character-specific negative prompts based on reference characteristics
     // NOTE: We focus on FACIAL/IDENTITY negatives only, not wardrobe negatives
     // Per Gemini docs: "Use positive descriptions instead of negatives" for better results
-    const baseNegativePrompt = 'elderly appearance, deeply wrinkled, aged beyond reference, geriatric, wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager, youthful appearance'
+    const baseNegativePrompt = 'elderly appearance, deeply wrinkled, aged beyond reference, geriatric, wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager, youthful appearance, text overlay, captions, subtitles, dialogue text, speech bubbles, text on image, watermark, logo text, title cards, intertitles, written words, typography overlay'
     
     const characterSpecificNegatives: string[] = []
     characterObjects.forEach((char: any) => {

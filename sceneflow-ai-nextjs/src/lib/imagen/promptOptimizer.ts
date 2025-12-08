@@ -415,6 +415,9 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
     // PHASE 4: Assemble final prompt with SUBJECT & WARDROBE first
     let prompt = ''
     
+    // Add explicit NO TEXT instruction at the very start
+    prompt += 'Clean cinematic frame with no text, captions, or overlays. '
+    
     // Add wardrobe section FIRST if we have wardrobe info
     if (subjectWardrobeDescriptions.length > 0) {
       prompt += `Subject & Wardrobe: ${subjectWardrobeDescriptions.join('; ')}. `
@@ -425,6 +428,9 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
     
     // Add visual style
     prompt += ` ${visualStyle}`
+    
+    // Add final reminder about no text
+    prompt += ' No text overlays, no captions, no dialogue on screen.'
     
     console.log('[Prompt Optimizer] Using TEXT-MATCHING LINK MODE with', characterRefs.length, 'reference(s)')
     console.log('[Prompt Optimizer] Linking descriptions (must match subjectDescription):')
@@ -451,9 +457,9 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
       params.characterReferences || []
     )
     
-    const prompt = `${integratedPrompt}
+    const prompt = `Clean cinematic frame with no text, captions, or overlays. ${integratedPrompt}
 
-${visualStyle}`
+${visualStyle} No text overlays, no captions, no dialogue on screen.`
 
     console.log('[Prompt Optimizer] Built naturally integrated prompt with', params.characterReferences?.length || 0, 'characters')
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
@@ -470,9 +476,9 @@ ${visualStyle}`
     return prompt.trim()
   } else {
     // NO CHARACTERS MODE: Just scene description with style
-    const prompt = `${cleanedAction}
+    const prompt = `Clean cinematic frame with no text, captions, or overlays. ${cleanedAction}
 
-${visualStyle}`
+${visualStyle} No text overlays, no captions, no dialogue on screen.`
 
     console.log('[Prompt Optimizer] Built scene-only prompt (no characters)')
     console.log('[Prompt Optimizer] ===== FULL PROMPT =====')
