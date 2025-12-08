@@ -4611,24 +4611,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant={showDashboard ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setShowDashboard(!showDashboard)}
-                    className={`flex items-center gap-1 ${showDashboard ? 'bg-sky-500/90 hover:bg-sky-500 text-white' : ''}`}
-                  >
-                    <BarChart3 className={`w-4 h-4 ${showDashboard ? 'text-white' : 'text-sky-400'}`} />
-                    <span className="hidden sm:inline">Dashboard</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                  {showDashboard ? 'Hide Dashboard section' : 'Show Dashboard section'}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
                   <Button 
                     variant="outline" 
                     size="icon"
@@ -4792,6 +4774,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       <span className="text-gray-500 dark:text-gray-400">Est. Duration</span>
                       <span className="font-medium text-gray-900 dark:text-white">
                         {Math.round((script?.script?.scenes || []).reduce((sum: number, s: any) => sum + (s.estimatedDuration || s.duration || 15), 0) / 60)}m
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500 dark:text-gray-400">Est. Credits</span>
+                      <span className="font-medium text-amber-500 dark:text-amber-400">
+                        {(() => {
+                          const sceneCount = script?.script?.scenes?.length || 0;
+                          const charCount = characters.length;
+                          // Rough estimate: 5 credits per scene (image) + 2 per character reference + 1 per audio
+                          const imageCredits = sceneCount * 5;
+                          const charCredits = charCount * 2;
+                          const audioCredits = sceneCount * 1;
+                          return imageCredits + charCredits + audioCredits;
+                        })()}
                       </span>
                     </div>
                     {(directorReview?.overallScore || audienceReview?.overallScore) && (
