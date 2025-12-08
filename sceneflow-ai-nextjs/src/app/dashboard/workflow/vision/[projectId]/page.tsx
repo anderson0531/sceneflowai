@@ -4568,7 +4568,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 dark:bg-sf-background">
+    <div className="h-screen flex flex-col bg-gray-50 dark:bg-sf-background overflow-x-hidden max-w-full">
       <ContextBar
         title="Scene Studio"
         titleIcon={

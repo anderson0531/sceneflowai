@@ -160,7 +160,7 @@ export function SceneSelector({
               onClick={() => onSelectScene(scene.id)}
               className={cn(
                 "relative flex-shrink-0 text-left transition-all duration-150",
-                "rounded border px-1.5 py-1 w-[80px]",
+                "rounded border px-1 py-1 w-[64px]",
                 isSelected
                   ? "bg-purple-900/50 border-purple-500 ring-1 ring-purple-500/30"
                   : "bg-gray-800/60 border-gray-700 hover:border-gray-600 hover:bg-gray-800"
