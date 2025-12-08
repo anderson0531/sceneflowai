@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2 } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Bot, PenTool } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
@@ -1702,19 +1702,108 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-sf-primary via-fuchsia-500 to-cyan-400 opacity-80" />
       {/* Header */}
       <div className="px-6 py-4 border-b border-white/10 flex-shrink-0 bg-slate-900/70 backdrop-blur rounded-t-3xl">
+        {/* Title and Action Buttons - Same Line */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold text-white">Scene Studio</h2>
-            {scenes.length > 0 && (
-              <span className="text-xs px-2.5 py-1 rounded-full bg-sf-primary/15 text-sf-primary border border-sf-primary/40 font-medium">
-                {scenes.length} {scenes.length === 1 ? 'Scene' : 'Scenes'}
-              </span>
-            )}
             {isGenerating && (
               <span className="text-xs text-cyan-300 flex items-center gap-1.5">
                 <Loader className="w-3.5 h-3.5 animate-spin" />
                 Generating...
               </span>
+            )}
+          </div>
+          
+          {/* Action Buttons - Right Justified */}
+          <div className="flex items-center gap-2">
+            {/* Flow / Co-Director Button (Coming Soon) */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled
+                    className="flex items-center gap-2 opacity-50 cursor-not-allowed border-purple-500/30 hover:border-purple-500/30"
+                  >
+                    <Bot className="w-5 h-5 text-purple-400" />
+                    <span className="text-sm">Flow</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-xs">
+                  <p className="font-medium">Intelligent Co-Director</p>
+                  <p className="text-xs text-gray-400 mt-1">Coming Soon - AI assistant that analyzes your project and guides you through the optimal workflow</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Build All Button (formerly Assets) */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (onOpenAssets) {
+                        onOpenAssets()
+                      } else {
+                        setGenerateAudioDialogOpen(true)
+                      }
+                    }}
+                    className="flex items-center gap-2 border-cyan-500/30 hover:border-cyan-500/50 hover:bg-cyan-500/10"
+                  >
+                    <Wand2 className="w-5 h-5 text-cyan-400" />
+                    <span className="text-sm">Build</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-xs">
+                  <p className="font-medium">Auto-Build Assets</p>
+                  <p className="text-xs text-gray-400 mt-1">Automatically generate characters, directions, scene frames, audio, and video segments</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Edit Script Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowScriptEditor(true)}
+                    className="flex items-center gap-2 border-blue-500/30 hover:border-blue-500/50 hover:bg-blue-500/10"
+                  >
+                    <PenTool className="w-5 h-5 text-blue-400" />
+                    <span className="text-sm">Edit</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                  <p>Edit screenplay script</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Export Button */}
+            {script && scenes && scenes.length > 0 && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setExportDialogOpen(true)}
+                      className="flex items-center gap-2 border-emerald-500/30 hover:border-emerald-500/50 hover:bg-emerald-500/10"
+                    >
+                      <Download className="w-5 h-5 text-emerald-400" />
+                      <span className="text-sm">Export</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                    <p>Export script, storyboard, or reports</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
         </div>
@@ -1751,75 +1840,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             </Select>
           </div>
 
-          {/* Assets Button */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (onOpenAssets) {
-                      onOpenAssets()
-                    } else {
-                      setGenerateAudioDialogOpen(true)
-                    }
-                  }}
-                  className="flex items-center gap-1"
-                >
-                  <Sparkles className="w-4 h-4 text-cyan-300" />
-                  <span className="hidden sm:inline">Assets</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                <p>Generate audio assets</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          {/* Edit Button */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowScriptEditor(true)}
-                  className="flex items-center gap-1"
-                >
-                  <Edit className="w-4 h-4 text-blue-400" />
-                  <span className="hidden sm:inline">Edit Script</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                <p>Edit script</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          {/* Export Button */}
-          {script && scenes && scenes.length > 0 && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setExportDialogOpen(true)}
-                    className="flex items-center gap-1"
-                  >
-                    <Download className="w-4 h-4 text-emerald-400" />
-                    <span className="hidden sm:inline">Export</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                  <p>Generate printable script, storyboard, or scene direction reports</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-
-          {/* Bookmark and Storyboard buttons moved to Quick Actions menu */}
+          {/* Action buttons moved to header row */}
 
           {dialogGenerationMode === 'background' && isDialogGenerating && backgroundProgressPercent !== null && (
             <div className="flex items-center gap-1 text-xs text-blue-400">
