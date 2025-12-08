@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Bot, PenTool } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Bot, PenTool, FolderPlus } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
@@ -163,6 +163,8 @@ interface ScriptPanelProps {
   onSelectSceneIndex?: (index: number | null) => void
   // Timeline slot to render above scenes
   timelineSlot?: React.ReactNode
+  // Callback to add scene frame to reference library
+  onAddToReferenceLibrary?: (imageUrl: string, name: string, sceneNumber: number) => Promise<void>
 }
 
 // Transform score analysis data to review format
@@ -364,7 +366,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onAudioClipChange, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onAudioClipChange, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -1976,6 +1978,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                           overlayStore={overlayStore}
                           projectId={projectId}
                           onUploadKeyframe={handleUploadKeyframe}
+                          onAddToReferenceLibrary={onAddToReferenceLibrary}
                           isWorkflowOpen={selectedSceneIndex !== null ? true : openSceneIdx === idx}
                           onWorkflowOpenChange={(isOpen: boolean) => {
                             // Single-scene-open behavior: close others when opening this one
@@ -2293,6 +2296,8 @@ interface SceneCardProps {
   // Single-scene-open control
   isWorkflowOpen?: boolean
   onWorkflowOpenChange?: (isOpen: boolean) => void
+  // Reference library
+  onAddToReferenceLibrary?: (imageUrl: string, name: string, sceneNumber: number) => Promise<void>
 }
 
 function SceneCard({
@@ -2363,6 +2368,7 @@ function SceneCard({
   onUploadKeyframe,
   isWorkflowOpen = false,
   onWorkflowOpenChange,
+  onAddToReferenceLibrary,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(null)
@@ -3597,6 +3603,47 @@ function SceneCard({
                            <Upload className="w-3 h-3 mr-2" />
                            Upload
                          </Button>
+                         {scene.imageUrl && (
+                           <>
+                             <Button
+                               size="sm"
+                               variant="secondary"
+                               className="bg-white/90 text-black hover:bg-white"
+                               onClick={async () => {
+                                 try {
+                                   const response = await fetch(scene.imageUrl);
+                                   const blob = await response.blob();
+                                   const url = window.URL.createObjectURL(blob);
+                                   const a = document.createElement('a');
+                                   a.href = url;
+                                   a.download = `scene-${sceneNumber}-frame.png`;
+                                   document.body.appendChild(a);
+                                   a.click();
+                                   document.body.removeChild(a);
+                                   window.URL.revokeObjectURL(url);
+                                 } catch (error) {
+                                   console.error('Failed to download image:', error);
+                                 }
+                               }}
+                             >
+                               <Download className="w-3 h-3 mr-2" />
+                               Download
+                             </Button>
+                             {onAddToReferenceLibrary && (
+                               <Button
+                                 size="sm"
+                                 variant="secondary"
+                                 className="bg-white/90 text-black hover:bg-white"
+                                 onClick={async () => {
+                                   await onAddToReferenceLibrary(scene.imageUrl, `Scene ${sceneNumber} Frame`, sceneNumber);
+                                 }}
+                               >
+                                 <FolderPlus className="w-3 h-3 mr-2" />
+                                 Add to Library
+                               </Button>
+                             )}
+                           </>
+                         )}
                       </div>
                     </div>
                   </div>
