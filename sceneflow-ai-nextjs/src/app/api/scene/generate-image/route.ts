@@ -373,6 +373,16 @@ export async function POST(req: NextRequest) {
       
       console.log(`[Scene Image] Extracted key features for ${char.name}:`, keyFeatures)
       
+      // Build wardrobe description if available
+      let wardrobeDescription = ''
+      if (char.defaultWardrobe) {
+        wardrobeDescription = `, wearing ${char.defaultWardrobe}`
+        if (char.wardrobeAccessories) {
+          wardrobeDescription += `, ${char.wardrobeAccessories}`
+        }
+        console.log(`[Scene Image] ${char.name} wardrobe: ${wardrobeDescription}`)
+      }
+      
       // Only assign referenceId if character has reference image (will be in referenceImages array)
       const hasReferenceImage = !!char.referenceImage
       const referenceId = hasReferenceImage ? ++gcsRefIndex : undefined
@@ -386,10 +396,12 @@ export async function POST(req: NextRequest) {
       return {
         referenceId,  // Only defined for characters with reference images
         name: char.name,
-        description: `${description}${ageClause}`,
+        description: `${description}${ageClause}${wardrobeDescription}`,
         imageUrl: char.referenceImage,      // Blob URL for both prompt text and API call
         ethnicity: char.ethnicity,           // For ethnicity injection in scene description
-        keyFeatures: keyFeatures.length > 0 ? keyFeatures : undefined  // Key physical characteristics
+        keyFeatures: keyFeatures.length > 0 ? keyFeatures : undefined,  // Key physical characteristics
+        defaultWardrobe: char.defaultWardrobe,  // Wardrobe for consistency
+        wardrobeAccessories: char.wardrobeAccessories  // Accessories for consistency
       }
     })
     

@@ -16,6 +16,10 @@ export interface EnhancedCharacter {
   expression: string         // "Constant slight smirk, weary but calculating"
   build: string              // "Wiry, compact, deceptively strong"
   
+  // Wardrobe/Attire (for visual consistency across scenes)
+  defaultWardrobe?: string           // Primary outfit (e.g., "Navy blue tailored suit, white dress shirt, burgundy silk tie")
+  wardrobeAccessories?: string       // Consistent accessories (e.g., "Silver wristwatch, rectangular glasses, gold wedding band")
+  
   // Optional fields
   description?: string         // Narrative description
   imagePrompt?: string         // Generated visual prompt

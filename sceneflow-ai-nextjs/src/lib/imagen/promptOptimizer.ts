@@ -397,6 +397,8 @@ function integrateCharactersIntoScene(
     gcsUri?: string;
     ethnicity?: string;
     keyFeatures?: string[];
+    defaultWardrobe?: string;
+    wardrobeAccessories?: string;
   }>
 ): string {
   let integrated = sceneAction
@@ -418,6 +420,14 @@ function integrateCharactersIntoScene(
       }
       if (extras.length > 0) {
         detailedDescription = `${extras.join(', ')}, ${detailedDescription}`
+      }
+    }
+    
+    // Add wardrobe/attire for visual consistency
+    if (ref.defaultWardrobe) {
+      detailedDescription += `, wearing ${ref.defaultWardrobe}`
+      if (ref.wardrobeAccessories) {
+        detailedDescription += `, ${ref.wardrobeAccessories}`
       }
     }
     

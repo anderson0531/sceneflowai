@@ -300,6 +300,8 @@ async function generateFilmTreatment(
             eyeColor: String(c?.eyeColor || ''),
             expression: String(c?.expression || ''),
             build: String(c?.build || ''),
+            defaultWardrobe: String(c?.defaultWardrobe || ''),
+            wardrobeAccessories: String(c?.wardrobeAccessories || ''),
             description: String(c?.description || ''),
             imagePrompt: c?.imagePrompt || c?.image_prompt ? String(c.imagePrompt || c.image_prompt) : undefined,
             referenceImage: null,

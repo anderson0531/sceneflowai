@@ -118,6 +118,8 @@ SCHEMA - GENERATE IN THIS EXACT ORDER:
       "eyeColor": "Exact eye color (e.g., 'Bright, electric amber')",
       "expression": "Typical facial expression/demeanor (e.g., 'Constant, slight smirk, weary but calculating, with crow's feet from years of exposure')",
       "build": "Body type, physique, movement style (e.g., 'Wiry, compact, and deceptively strong, favoring quick movements over bulk')",
+      "defaultWardrobe": "Primary outfit/attire appropriate to role and setting (e.g., 'Charcoal grey tailored business suit, crisp white dress shirt, dark blue silk tie, polished black oxford shoes')",
+      "wardrobeAccessories": "Consistent accessories worn throughout (e.g., 'Silver wristwatch with leather band, rectangular black-framed glasses, simple gold wedding band')",
       "description": "Brief character context for story (role in narrative)"
     }
   ],
