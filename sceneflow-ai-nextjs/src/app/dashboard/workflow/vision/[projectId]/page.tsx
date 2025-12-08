@@ -4570,7 +4570,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-sf-background overflow-x-hidden max-w-full">
       <ContextBar
-        title="Scene Studio"
+        title="Production"
         titleIcon={
           <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-gradient-to-br from-sf-primary/20 via-cyan-400/15 to-fuchsia-500/15 border-2 border-sf-primary/60 shadow-xl flex items-center justify-center">
             <DirectorChairIcon className="w-6 h-6 md:w-8 md:h-8 text-sf-primary flex-shrink-0" />
@@ -4684,98 +4684,115 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       <div className="flex-1 overflow-hidden overflow-x-hidden px-4 py-3 max-w-full min-w-0">
         <PanelGroup direction="horizontal" className="h-full max-w-full min-w-0 overflow-x-hidden">
-          {/* Main: Script with Scene Cards */}
-          <Panel defaultSize={70} minSize={50} maxSize={80} className="min-w-0 overflow-hidden overflow-x-hidden">
-            <div className="h-full overflow-y-auto pr-6 min-w-0 w-full overflow-x-hidden">
-              {/* Scene Timeline Selector */}
-              <SceneSelector
-                scenes={(script?.script?.scenes || []).map((scene: any, idx: number, allScenes: any[]) => {
-                  const sceneId = scene.id || scene.sceneId || `scene-${idx}`
-                  const isBookmarked = sceneBookmark?.sceneId === sceneId || sceneBookmark?.sceneNumber === idx + 1
-                  const productionData = sceneProductionState[sceneId]
-                  const segments = productionData?.segments || []
-                  
-                  // Calculate actual duration from segments if available
-                  let actualDuration = 0
-                  if (segments.length > 0) {
-                    const lastSegment = segments[segments.length - 1]
-                    if (lastSegment?.endTime) {
-                      actualDuration = lastSegment.endTime
-                    } else {
-                      // Sum up segment durations
-                      actualDuration = segments.reduce((sum: number, seg: any) => {
-                        const segDuration = (seg.endTime || 0) - (seg.startTime || 0)
-                        return sum + (segDuration > 0 ? segDuration : 0)
-                      }, 0)
-                    }
-                  }
-                  
-                  // Calculate start time by summing previous scene durations
-                  let startTime = 0
-                  for (let i = 0; i < idx; i++) {
-                    const prevScene = allScenes[i]
-                    const prevSceneId = prevScene.id || prevScene.sceneId || `scene-${i}`
-                    const prevProductionData = sceneProductionState[prevSceneId]
-                    const prevSegments = prevProductionData?.segments || []
-                    
-                    if (prevSegments.length > 0) {
-                      const lastPrevSeg = prevSegments[prevSegments.length - 1]
-                      if (lastPrevSeg?.endTime) {
-                        startTime += lastPrevSeg.endTime
-                      }
-                    } else {
-                      // Use estimated duration for scenes without segments
-                      startTime += prevScene.estimatedDuration || prevScene.duration || 15
-                    }
-                  }
-                  
-                  // Determine workflow status
-                  const hasScript = !!(scene.content || scene.dialog || scene.narration || scene.description)
-                  const hasDirection = !!(scene.direction || scene.sceneDirection || scene.cameraDirection)
-                  const hasFrame = !!scene.imageUrl
-                  const hasCallAction = segments.length > 0
-                  
-                  return {
-                    id: sceneId,
-                    sceneNumber: idx + 1,
-                    name: typeof scene.heading === 'string' ? scene.heading : scene.heading?.text || `Scene ${idx + 1}`,
-                    estimatedDuration: scene.estimatedDuration || scene.duration || 15,
-                    actualDuration: actualDuration > 0 ? actualDuration : undefined,
-                    startTime,
-                    status: segments.every((s: any) => s.status === 'complete' || s.status === 'COMPLETE')
-                      ? 'complete'
-                      : segments.some((s: any) => s.status === 'complete' || s.status === 'COMPLETE' || s.status === 'generating' || s.status === 'GENERATING')
-                      ? 'in-progress'
-                      : 'not-started',
-                    segmentCount: segments.length,
-                    hasImage: !!scene.imageUrl,
-                    hasAudio: !!(scene.narrationAudioUrl || scene.musicAudio),
-                    isBookmarked,
-                    hasScript,
-                    hasDirection,
-                    hasFrame,
-                    hasCallAction,
-                  }
-                })}
-                selectedSceneId={
-                  selectedSceneIndex !== null
-                    ? (script?.script?.scenes?.[selectedSceneIndex]?.id ||
-                       script?.script?.scenes?.[selectedSceneIndex]?.sceneId ||
-                       `scene-${selectedSceneIndex}`)
-                    : undefined
-                }
-                onSelectScene={(sceneId) => {
-                  const scenes = script?.script?.scenes || []
-                  const idx = scenes.findIndex(
-                    (s: any, i: number) =>
-                      (s.id || s.sceneId || `scene-${i}`) === sceneId
-                  )
-                  if (idx !== -1) {
-                    setSelectedSceneIndex(idx)
-                  }
-                }}
-                className="mb-4"
-              />
+          {/* Left Panel: Workflow Navigation & Tools */}
+          <Panel defaultSize={18} minSize={12} maxSize={25} className="min-w-0 overflow-hidden">
+            <div className="h-full overflow-y-auto pr-2 min-w-0">
+              <div className="bg-white/50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-800 h-full">
+                {/* Workflow Steps */}
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Workflow</h3>
+                  <nav className="space-y-1">
+                    <Link
+                      href={`/dashboard/studio/${projectId}`}
+                      className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      <span>The Blueprint</span>
+                    </Link>
+                    <div className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-sf-primary/10 text-sf-primary font-medium">
+                      <DirectorChairIcon size={16} className="flex-shrink-0" />
+                      <span>Production</span>
+                    </div>
+                    <Link
+                      href={`/dashboard/workflow/generation/${projectId}`}
+                      className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <Play className="w-4 h-4" />
+                      <span>Final Cut</span>
+                    </Link>
+                  </nav>
+                </div>
+                
+                {/* Quick Actions */}
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Quick Actions</h3>
+                  <div className="space-y-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start text-xs"
+                      onClick={() => setIsPlayerOpen(true)}
+                    >
+                      <Play className="w-3 h-3 mr-2" />
+                      Preview Script
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start text-xs"
+                      onClick={() => setShowAnimaticsStudio(true)}
+                    >
+                      <ImageIcon className="w-3 h-3 mr-2" />
+                      Animatics Studio
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start text-xs"
+                      onClick={handleGenerateReviews}
+                      disabled={isGeneratingReviews}
+                    >
+                      <BarChart3 className="w-3 h-3 mr-2" />
+                      Generate Reviews
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Project Stats */}
+                <div className="p-4">
+                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Project Stats</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500 dark:text-gray-400">Scenes</span>
+                      <span className="font-medium text-gray-900 dark:text-white">{script?.script?.scenes?.length || 0}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500 dark:text-gray-400">Characters</span>
+                      <span className="font-medium text-gray-900 dark:text-white">{characters.length}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500 dark:text-gray-400">Est. Duration</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {Math.round((script?.script?.scenes || []).reduce((sum: number, s: any) => sum + (s.estimatedDuration || s.duration || 15), 0) / 60)}m
+                      </span>
+                    </div>
+                    {(directorReview?.overallScore || audienceReview?.overallScore) && (
+                      <>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-500 dark:text-gray-400">Director Score</span>
+                          <span className={cn("font-medium", getScoreColorClass(directorReview?.overallScore || 0))}>
+                            {directorReview?.overallScore || '-'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-500 dark:text-gray-400">Audience Score</span>
+                          <span className={cn("font-medium", getScoreColorClass(audienceReview?.overallScore || 0))}>
+                            {audienceReview?.overallScore || '-'}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Panel>
+          
+          <PanelResizeHandle className="w-2 bg-transparent hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors cursor-col-resize" />
+          
+          {/* Center: Script with Scene Cards */}
+          <Panel defaultSize={57} minSize={40} maxSize={70} className="min-w-0 overflow-hidden overflow-x-hidden">
+            <div className="h-full overflow-y-auto px-4 min-w-0 w-full overflow-x-hidden">
               <ScriptPanel 
                 script={script}
                 onScriptChange={setScript}
@@ -4792,6 +4809,95 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onGenerateSceneAudio={handleGenerateSceneAudio}
                 onGenerateAllAudio={handleGenerateAllAudio}
                 isGeneratingAudio={isGeneratingAudio}
+                timelineSlot={
+                  <SceneSelector
+                    scenes={(script?.script?.scenes || []).map((scene: any, idx: number, allScenes: any[]) => {
+                      const sceneId = scene.id || scene.sceneId || `scene-${idx}`
+                      const isBookmarked = sceneBookmark?.sceneId === sceneId || sceneBookmark?.sceneNumber === idx + 1
+                      const productionData = sceneProductionState[sceneId]
+                      const segments = productionData?.segments || []
+                      
+                      // Calculate actual duration from segments if available
+                      let actualDuration = 0
+                      if (segments.length > 0) {
+                        const lastSegment = segments[segments.length - 1]
+                        if (lastSegment?.endTime) {
+                          actualDuration = lastSegment.endTime
+                        } else {
+                          // Sum up segment durations
+                          actualDuration = segments.reduce((sum: number, seg: any) => {
+                            const segDuration = (seg.endTime || 0) - (seg.startTime || 0)
+                            return sum + (segDuration > 0 ? segDuration : 0)
+                          }, 0)
+                        }
+                      }
+                      
+                      // Calculate start time by summing previous scene durations
+                      let startTime = 0
+                      for (let i = 0; i < idx; i++) {
+                        const prevScene = allScenes[i]
+                        const prevSceneId = prevScene.id || prevScene.sceneId || `scene-${i}`
+                        const prevProductionData = sceneProductionState[prevSceneId]
+                        const prevSegments = prevProductionData?.segments || []
+                        
+                        if (prevSegments.length > 0) {
+                          const lastPrevSeg = prevSegments[prevSegments.length - 1]
+                          if (lastPrevSeg?.endTime) {
+                            startTime += lastPrevSeg.endTime
+                          }
+                        } else {
+                          // Use estimated duration for scenes without segments
+                          startTime += prevScene.estimatedDuration || prevScene.duration || 15
+                        }
+                      }
+                      
+                      // Determine workflow status
+                      const hasScript = !!(scene.content || scene.dialog || scene.narration || scene.description)
+                      const hasDirection = !!(scene.direction || scene.sceneDirection || scene.cameraDirection)
+                      const hasFrame = !!scene.imageUrl
+                      const hasCallAction = segments.length > 0
+                      
+                      return {
+                        id: sceneId,
+                        sceneNumber: idx + 1,
+                        name: typeof scene.heading === 'string' ? scene.heading : scene.heading?.text || `Scene ${idx + 1}`,
+                        estimatedDuration: scene.estimatedDuration || scene.duration || 15,
+                        actualDuration: actualDuration > 0 ? actualDuration : undefined,
+                        startTime,
+                        status: segments.every((s: any) => s.status === 'complete' || s.status === 'COMPLETE')
+                          ? 'complete'
+                          : segments.some((s: any) => s.status === 'complete' || s.status === 'COMPLETE' || s.status === 'generating' || s.status === 'GENERATING')
+                          ? 'in-progress'
+                          : 'not-started',
+                        segmentCount: segments.length,
+                        hasImage: !!scene.imageUrl,
+                        hasAudio: !!(scene.narrationAudioUrl || scene.musicAudio),
+                        isBookmarked,
+                        hasScript,
+                        hasDirection,
+                        hasFrame,
+                        hasCallAction,
+                      }
+                    })}
+                    selectedSceneId={
+                      selectedSceneIndex !== null
+                        ? (script?.script?.scenes?.[selectedSceneIndex]?.id ||
+                           script?.script?.scenes?.[selectedSceneIndex]?.sceneId ||
+                           `scene-${selectedSceneIndex}`)
+                        : undefined
+                    }
+                    onSelectScene={(sceneId) => {
+                      const scenes = script?.script?.scenes || []
+                      const idx = scenes.findIndex(
+                        (s: any, i: number) =>
+                          (s.id || s.sceneId || `scene-${i}`) === sceneId
+                      )
+                      if (idx !== -1) {
+                        setSelectedSceneIndex(idx)
+                      }
+                    }}
+                  />
+                }
                 onPlayScript={() => setIsPlayerOpen(true)}
                 onOpenAnimaticsStudio={() => setShowAnimaticsStudio(true)}
                 onAddScene={handleAddScene}
@@ -4905,7 +5011,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           <PanelResizeHandle className="w-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors cursor-col-resize" />
           
           {/* Right Sidebar: Reference Library */}
-          <Panel defaultSize={30} minSize={20} maxSize={50} className="min-w-0 overflow-x-hidden">
+          <Panel defaultSize={25} minSize={15} maxSize={40} className="min-w-0 overflow-x-hidden">
             <div className="h-full overflow-y-auto overflow-x-hidden pl-6 min-w-0">
               {/* Merge Duplicates Button */}
               {findPotentialDuplicates(characters).length > 0 && (

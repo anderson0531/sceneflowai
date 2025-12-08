@@ -161,6 +161,8 @@ interface ScriptPanelProps {
   selectedSceneIndex?: number | null
   // Callback when scene selection changes (for timeline sync)
   onSelectSceneIndex?: (index: number | null) => void
+  // Timeline slot to render above scenes
+  timelineSlot?: React.ReactNode
 }
 
 // Transform score analysis data to review format
@@ -362,7 +364,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onAudioClipChange, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onOpenAnimaticsStudio, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onAudioClipChange, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -1909,23 +1911,21 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     <div className="relative rounded-3xl border border-slate-700/60 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900/60 h-full flex flex-col overflow-hidden shadow-[0_25px_80px_rgba(8,8,20,0.55)]">
       <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-sf-primary via-fuchsia-500 to-cyan-400 opacity-80" />
       {/* Header */}
-      <div className="px-6 py-6 border-b border-white/10 flex items-center justify-between flex-shrink-0 bg-slate-900/70 backdrop-blur rounded-t-3xl">
-        <div className="flex items-start gap-4">
-          <div>
-            <span className="text-[11px] uppercase tracking-[0.4em] text-slate-400 block mb-1">Scene Flow</span>
-            <div className="flex items-center gap-3">
-              {scenes.length > 0 && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-sf-primary/15 text-sf-primary border border-sf-primary/40 font-semibold">
-                  {scenes.length} {scenes.length === 1 ? 'Scene' : 'Scenes'}
-                </span>
-              )}
-              {isGenerating && (
-                <span className="text-xs text-cyan-300 flex items-center gap-1">
-                  <Loader className="w-3 h-3 animate-spin" />
-                  Generating...
-                </span>
-              )}
-            </div>
+      <div className="px-6 py-4 border-b border-white/10 flex-shrink-0 bg-slate-900/70 backdrop-blur rounded-t-3xl">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold text-white">Scene Studio</h2>
+            {scenes.length > 0 && (
+              <span className="text-xs px-2.5 py-1 rounded-full bg-sf-primary/15 text-sf-primary border border-sf-primary/40 font-medium">
+                {scenes.length} {scenes.length === 1 ? 'Scene' : 'Scenes'}
+              </span>
+            )}
+            {isGenerating && (
+              <span className="text-xs text-cyan-300 flex items-center gap-1.5">
+                <Loader className="w-3.5 h-3.5 animate-spin" />
+                Generating...
+              </span>
+            )}
           </div>
         </div>
         
@@ -2080,6 +2080,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             </div>
           )}
         </div>
+        
+        {/* Timeline Slot - renders scene timeline selector */}
+        {timelineSlot && (
+          <div className="mt-3">
+            {timelineSlot}
+          </div>
+        )}
       </div>
       
       {/* Optional slot between Dashboard and Scene Director */}

@@ -9,7 +9,7 @@ export const WORKFLOW_STEPS: WorkflowStep[] = [
 
 export const WORKFLOW_STEP_LABELS: Record<WorkflowStep, string> = {
   blueprint: 'The Blueprint',
-  vision: 'Scene Studio',
+  vision: 'Production',
   polish: 'Final Cut',
   launch: 'The Premiere',
 }
