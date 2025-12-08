@@ -12,7 +12,6 @@ import { SceneSelector } from '@/components/vision/SceneSelector'
 import { SceneGallery } from '@/components/vision/SceneGallery'
 import { GenerationProgress } from '@/components/vision/GenerationProgress'
 import { ScreeningRoom } from '@/components/vision/ScriptPlayer'
-import { AnimaticsStudio } from '@/components/vision/AnimaticsStudio'
 import { ImageQualitySelector } from '@/components/vision/ImageQualitySelector'
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
 import { Button, buttonVariants } from '@/components/ui/Button'
@@ -498,7 +497,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     dismissed?: boolean
   }>>({})
   const [isPlayerOpen, setIsPlayerOpen] = useState(false)
-  const [showAnimaticsStudio, setShowAnimaticsStudio] = useState(false)
   const [showSceneGallery, setShowSceneGallery] = useState(false)
   const [showDashboard, setShowDashboard] = useState(false)
   const [showNavigationWarning, setShowNavigationWarning] = useState(false)
@@ -2704,9 +2702,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   const handleGenerateScene = async (sceneIndex: number, prompt: string) => {
     if (!prompt?.trim()) return
+    if (!script?.script?.scenes) return
     
     try {
-      const scene = scenes[sceneIndex]
+      const scriptScenes = script.script.scenes
+      const scene = scriptScenes[sceneIndex]
       const sceneContext = {
         visualStyle: project?.metadata?.filmTreatmentVariant?.visual_style || project?.metadata?.filmTreatmentVariant?.style,
         tone: project?.metadata?.filmTreatmentVariant?.tone_description || project?.metadata?.filmTreatmentVariant?.tone
@@ -2726,13 +2726,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       if (json?.imageUrl) {
         // Update scene with generated image and prompt
-        const updatedScenes = scenes.map((s, idx) => 
+        const updatedScenes = scriptScenes.map((s: any, idx: number) => 
           idx === sceneIndex 
             ? { ...s, imageUrl: json.imageUrl, imagePrompt: prompt } 
             : s
         )
         
-        setScenes(updatedScenes)
+        // Update script state (which is the source of truth)
+        setScript((prev: any) => ({
+          ...prev,
+          script: {
+            ...prev?.script,
+            scenes: updatedScenes
+          }
+        }))
         
         // Persist to project metadata
         try {
@@ -2747,9 +2754,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 ...existingMetadata,
                 visionPhase: {
                   ...existingVisionPhase,
-                  script: script,
+                  script: {
+                    ...script,
+                    script: {
+                      ...script.script,
+                      scenes: updatedScenes
+                    }
+                  },
                   characters: characters,
-                  scenes: updatedScenes,
                   narrationVoice: narrationVoice,
                   descriptionVoice: descriptionVoice
                 }
@@ -2773,18 +2785,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   const handleUploadScene = async (sceneIndex: number, file: File) => {
+    if (!script?.script?.scenes) return
+    
     try {
+      const scriptScenes = script.script.scenes
       const reader = new FileReader()
       reader.onload = async (e) => {
         const dataUrl = e.target?.result as string
         
-        const updatedScenes = scenes.map((s, idx) => 
+        const updatedScenes = scriptScenes.map((s: any, idx: number) => 
           idx === sceneIndex 
             ? { ...s, imageUrl: dataUrl } 
             : s
         )
         
-        setScenes(updatedScenes)
+        // Update script state (which is the source of truth)
+        setScript((prev: any) => ({
+          ...prev,
+          script: {
+            ...prev?.script,
+            scenes: updatedScenes
+          }
+        }))
         
         // Persist to project metadata
         try {
@@ -2799,9 +2821,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 ...existingMetadata,
                 visionPhase: {
                   ...existingVisionPhase,
-                  script: script,
-                  characters: characters,
-                  scenes: updatedScenes
+                  script: {
+                    ...script,
+                    script: {
+                      ...script.script,
+                      scenes: updatedScenes
+                    }
+                  },
+                  characters: characters
                 }
               }
             })
@@ -4855,15 +4882,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       variant="outline"
                       size="sm"
                       className="w-full justify-start text-xs"
-                      onClick={() => setShowAnimaticsStudio(true)}
-                    >
-                      <ImageIcon className="w-3 h-3 mr-2" />
-                      Animatics Studio
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start text-xs"
                       onClick={handleGenerateReviews}
                       disabled={isGeneratingReviews}
                     >
@@ -5066,7 +5084,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   />
                 }
                 onPlayScript={() => setIsPlayerOpen(true)}
-                onOpenAnimaticsStudio={() => setShowAnimaticsStudio(true)}
                 onAddScene={handleAddScene}
                 onDeleteScene={handleDeleteScene}
                 onReorderScenes={handleReorderScenes}
@@ -5153,7 +5170,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         className="rounded-2xl border border-white/5 bg-slate-900/40 p-4 shadow-[0_15px_40px_rgba(8,8,20,0.35)]"
                       >
                           <SceneGallery
-                            scenes={scenes}
+                            scenes={script?.script?.scenes || []}
                             characters={characters}
                             projectTitle={project?.title}
                             onRegenerateScene={(index) => handleGenerateSceneImage(index)}
@@ -5258,14 +5275,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           script={script}
           characters={characters}
           onClose={() => setIsPlayerOpen(false)}
-        />
-      )}
-
-      {/* Animatics Studio (Full-screen overlay) */}
-      {showAnimaticsStudio && scenes && (
-        <AnimaticsStudio
-          scenes={scenes}
-          onClose={() => setShowAnimaticsStudio(false)}
         />
       )}
 
