@@ -703,7 +703,65 @@ function cleanSceneForVisuals(action: string, visualDesc: string): string {
   cleaned = cleaned.replace(/SOUND\s+of[^.!?]*[.!?]/gi, '')
   cleaned = cleaned.replace(/\b(hears?|listens?\s+to|sounds?\s+like)[^.!?]*[.!?]/gi, '')
   
-  // Remove specific audio descriptions
+  // ===== STATIC FRAME CONVERSION =====
+  // Convert video/action directions into static image descriptions
+  // The model generates text when it sees abstract concepts or sequences
+  
+  // Remove SEQUENTIAL ACTIONS (video-specific, can't be shown in one frame)
+  // "stops mid-stride, listens, then resumes pacing" -> just show the pose
+  cleaned = cleaned.replace(/,?\s*then\s+\w+\s+\w+/gi, '') // "then resumes pacing"
+  cleaned = cleaned.replace(/,?\s*and\s+then\s+[^,;.]+/gi, '') // "and then walks away"
+  cleaned = cleaned.replace(/\b(stops|pauses|listens|turns|resumes|begins|starts|continues)\s+(to\s+)?\w+/gi, '') // action verbs
+  
+  // Remove ABSTRACT MOOD/CONCEPT descriptions (model can't visualize, adds text instead)
+  // "conveying Kinetic anxiety (Alex) vs. Catatonic dread (Ben)"
+  cleaned = cleaned.replace(/,?\s*conveying\s+[^,;.]+/gi, '')
+  cleaned = cleaned.replace(/;\s*the\s+silence\s+should\s+feel\s+\w+/gi, '')
+  cleaned = cleaned.replace(/\b(should\s+feel|meant\s+to\s+convey|representing|symbolizing)\s+[^,;.]+/gi, '')
+  cleaned = cleaned.replace(/\s+vs\.?\s+[^,;.]+/gi, '') // "X vs Y" comparisons
+  cleaned = cleaned.replace(/\([^)]*anxiety[^)]*\)/gi, '') // "(Alex)" type annotations after mood words
+  cleaned = cleaned.replace(/\([^)]*dread[^)]*\)/gi, '')
+  cleaned = cleaned.replace(/\bKinetic\s+\w+/gi, '') // "Kinetic anxiety"
+  cleaned = cleaned.replace(/\bCatatonic\s+\w+/gi, '') // "Catatonic dread"
+  
+  // Remove MULTI-SHOT lens specifications (video coverage, not single frame)
+  // "35mm Prime for the room, 100mm Macro for sensory inserts"
+  cleaned = cleaned.replace(/\b\d+mm\s+(Prime|Macro|Zoom|Wide|Telephoto)\s+for\s+[^,;.]+/gi, (match, lens) => lens.toLowerCase())
+  cleaned = cleaned.replace(/,?\s*\d+mm\s+\w+\s+for\s+[^,;.]+/gi, '') // Remove additional lens specs
+  
+  // Simplify to single lens mention if multiple
+  const lensMatches = cleaned.match(/\b\d+mm\b/g)
+  if (lensMatches && lensMatches.length > 1) {
+    // Keep only the first lens mention
+    let firstLens = true
+    cleaned = cleaned.replace(/\b\d+mm\b/g, (match) => {
+      if (firstLens) {
+        firstLens = false
+        return match
+      }
+      return ''
+    })
+  }
+  
+  // Remove ACTION SEQUENCES that imply motion over time
+  // "Alex traverses a repetitive linear path" -> "Alex stands behind Ben"
+  cleaned = cleaned.replace(/\btraverses\s+a\s+repetitive\s+linear\s+path/gi, 'stands')
+  cleaned = cleaned.replace(/\bremains\s+anchored\s+in/gi, 'sits in')
+  cleaned = cleaned.replace(/\brubs\s+neck\s+tension\s+while\s+turning/gi, 'rubs neck')
+  cleaned = cleaned.replace(/\bstares\s+unblinking\s+at/gi, 'stares at')
+  
+  // Remove PARENTHETICAL action descriptions
+  // "(enhancing the claustrophobia of the walls)" -> just remove
+  cleaned = cleaned.replace(/\(enhancing\s+[^)]+\)/gi, '')
+  cleaned = cleaned.replace(/\(emphasizing\s+[^)]+\)/gi, '')
+  cleaned = cleaned.replace(/\(conveying\s+[^)]+\)/gi, '')
+  
+  // Remove quoted text that might appear as props but could render
+  // "'Anderson & Son' graphic" is OK, but full dialogue is not
+  cleaned = cleaned.replace(/"[^"]{20,}"/g, '') // Remove long quoted strings (likely dialogue)
+  cleaned = cleaned.replace(/'[^']{20,}'/g, '') // Remove long single-quoted strings
+  
+  // Specific audio descriptions
   const audioTerms = [
     'keyboard clicking',
     'office chatter', 
