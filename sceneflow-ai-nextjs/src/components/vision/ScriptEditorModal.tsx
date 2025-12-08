@@ -352,7 +352,22 @@ export function ScriptEditorModal({
     // Merge optimized scenes with original, only for selected indices
     const mergedScenes = script.scenes.map((originalScene: any, idx: number) => {
       if (selectedScenes.includes(idx) && optimizedScript.scenes[idx]) {
-        return optimizedScript.scenes[idx]
+        const optimizedScene = optimizedScript.scenes[idx]
+        
+        // CRITICAL FIX: Sync visualDescription with action when action changes
+        // The visualDescription is used for image generation prompts
+        // If action was updated but visualDescription wasn't returned, sync them
+        const mergedScene = {
+          ...originalScene,  // Preserve original metadata (imageUrl, etc.)
+          ...optimizedScene, // Apply optimized content
+        }
+        
+        // If the action changed and no visualDescription was returned, update visualDescription
+        if (optimizedScene.action && !optimizedScene.visualDescription) {
+          mergedScene.visualDescription = optimizedScene.action
+        }
+        
+        return mergedScene
       }
       return originalScene
     })
