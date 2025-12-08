@@ -187,7 +187,7 @@ export function SceneSelector({
               onClick={() => onSelectScene(scene.id)}
               className={cn(
                 "relative flex-shrink-0 text-left transition-all duration-150",
-                "rounded-lg border px-2 py-1.5 w-[100px]",
+                "rounded-lg border px-2.5 py-2 w-[120px]",
                 isSelected
                   ? "bg-purple-900/50 border-purple-500 ring-1 ring-purple-500/30"
                   : "bg-gray-800/60 border-gray-700 hover:border-gray-600 hover:bg-gray-800"
@@ -201,9 +201,9 @@ export function SceneSelector({
               )}
               
               {/* Scene Number & Status */}
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-1.5">
                 <span className={cn(
-                  "text-[10px] font-bold px-1.5 py-0.5 rounded",
+                  "text-[11px] font-bold px-1.5 py-0.5 rounded",
                   isSelected 
                     ? "bg-purple-500 text-white" 
                     : "bg-gray-700 text-gray-300"
@@ -215,54 +215,54 @@ export function SceneSelector({
 
               {/* Scene Name - truncated */}
               <p className={cn(
-                "text-[10px] font-medium truncate mb-1 leading-tight",
+                "text-[10px] font-medium truncate mb-1.5 leading-tight",
                 isSelected ? "text-white" : "text-gray-300"
               )} title={scene.name}>
                 {scene.name || `Scene ${scene.sceneNumber}`}
               </p>
 
               {/* Workflow Status Indicators */}
-              <div className="flex items-center gap-0.5 mb-1">
+              <div className="flex items-center gap-1 mb-1.5">
                 <div title="Script" className={cn(
-                  "w-4 h-4 rounded flex items-center justify-center",
+                  "w-5 h-5 rounded flex items-center justify-center",
                   scene.hasScript ? "bg-green-500/20" : "bg-gray-700/50"
                 )}>
                   <FileText className={cn(
-                    "w-2.5 h-2.5",
+                    "w-3 h-3",
                     scene.hasScript ? "text-green-400" : "text-gray-600"
                   )} />
                 </div>
                 <div title="Direction" className={cn(
-                  "w-4 h-4 rounded flex items-center justify-center",
+                  "w-5 h-5 rounded flex items-center justify-center",
                   scene.hasDirection ? "bg-blue-500/20" : "bg-gray-700/50"
                 )}>
                   <Compass className={cn(
-                    "w-2.5 h-2.5",
+                    "w-3 h-3",
                     scene.hasDirection ? "text-blue-400" : "text-gray-600"
                   )} />
                 </div>
                 <div title="Frame" className={cn(
-                  "w-4 h-4 rounded flex items-center justify-center",
+                  "w-5 h-5 rounded flex items-center justify-center",
                   scene.hasFrame ? "bg-purple-500/20" : "bg-gray-700/50"
                 )}>
                   <Frame className={cn(
-                    "w-2.5 h-2.5",
+                    "w-3 h-3",
                     scene.hasFrame ? "text-purple-400" : "text-gray-600"
                   )} />
                 </div>
                 <div title="Call Action" className={cn(
-                  "w-4 h-4 rounded flex items-center justify-center",
+                  "w-5 h-5 rounded flex items-center justify-center",
                   scene.hasCallAction ? "bg-amber-500/20" : "bg-gray-700/50"
                 )}>
                   <Clapperboard className={cn(
-                    "w-2.5 h-2.5",
+                    "w-3 h-3",
                     scene.hasCallAction ? "text-amber-400" : "text-gray-600"
                   )} />
                 </div>
               </div>
 
               {/* Duration & Start Time */}
-              <div className="flex items-center justify-between text-[9px]">
+              <div className="flex items-center justify-between text-[10px]">
                 <span className={cn(
                   "font-medium",
                   isActualDuration ? "text-green-400" : "text-gray-400"
@@ -273,19 +273,6 @@ export function SceneSelector({
                   @{formatStartTime(scene.startTime)}
                 </span>
               </div>
-
-              {/* Asset indicators */}
-              {(scene.hasImage || scene.hasAudio || (scene.segmentCount && scene.segmentCount > 0)) && (
-                <div className="flex items-center justify-end gap-1 mt-1">
-                  {scene.hasImage && <Image className="w-2.5 h-2.5 text-blue-400" />}
-                  {scene.hasAudio && <Volume2 className="w-2.5 h-2.5 text-green-400" />}
-                  {scene.segmentCount && scene.segmentCount > 0 && (
-                    <span className="text-[8px] text-gray-500 bg-gray-700/50 px-1 rounded">
-                      {scene.segmentCount}seg
-                    </span>
-                  )}
-                </div>
-              )}
             </button>
           )
         })}
