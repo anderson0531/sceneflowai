@@ -1,20 +1,33 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Loader } from 'lucide-react'
+import { getKenBurnsConfig, generateKenBurnsKeyframes } from '@/lib/animation/kenBurns'
+import type { KenBurnsIntensity } from '@/lib/animation/kenBurns'
 
 interface SceneDisplayProps {
   scene: any
   sceneNumber: number
+  sceneIndex: number // Added for alternating direction calculations
   totalScenes: number
   isLoading: boolean
   showCaptions: boolean
   translatedNarration?: string
   translatedDialogue?: string[]
-  kenBurnsIntensity?: 'subtle' | 'medium' | 'dramatic'
+  kenBurnsIntensity?: KenBurnsIntensity
 }
 
-export function SceneDisplay({ scene, sceneNumber, totalScenes, isLoading, showCaptions, translatedNarration, translatedDialogue, kenBurnsIntensity = 'medium' }: SceneDisplayProps) {        
+export function SceneDisplay({ 
+  scene, 
+  sceneNumber, 
+  sceneIndex,
+  totalScenes, 
+  isLoading, 
+  showCaptions, 
+  translatedNarration, 
+  translatedDialogue, 
+  kenBurnsIntensity = 'medium' 
+}: SceneDisplayProps) {        
   if (!scene) {
     return (
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">                                              
@@ -25,67 +38,42 @@ export function SceneDisplay({ scene, sceneNumber, totalScenes, isLoading, showC
     )
   }
 
-    // Fixed animation duration for consistent pan effect
-  // Use shorter durations for more visible animation
-  const animationDuration = kenBurnsIntensity === 'subtle' ? 15 : 
-                           kenBurnsIntensity === 'dramatic' ? 10 : 12
-
-  // Get animation class name based on intensity
-  const animationClass = `pan-${kenBurnsIntensity}`
+  // Get scene-aware Ken Burns configuration
+  // Memoize to prevent recalculation on every render
+  const kenBurnsConfig = useMemo(() => {
+    return getKenBurnsConfig(scene, sceneIndex, kenBurnsIntensity)
+  }, [scene, sceneIndex, kenBurnsIntensity])
+  
+  // Generate unique animation name per scene to allow different directions
+  const animationName = `kenBurns-${sceneIndex}`
+  
+  // Generate keyframes CSS for this scene
+  const keyframesCSS = useMemo(() => {
+    return generateKenBurnsKeyframes(animationName, kenBurnsConfig)
+  }, [animationName, kenBurnsConfig])
 
   return (
     <>
-      {/* Pan Animation Keyframes */}
+      {/* Scene-Aware Ken Burns Animation Keyframes */}
       <style jsx>{`
-        @keyframes panSubtle {
-          from {
-            transform: translate(0, 0);
-          }
-          to {
-            transform: translate(-3%, -3%);
-          }
-        }
-
-        @keyframes panMedium {
-          from {
-            transform: translate(0, 0);
-          }
-          to {
-            transform: translate(-5%, -5%);
-          }
-        }
-
-        @keyframes panDramatic {
-          from {
-            transform: translate(0, 0);
-          }
-          to {
-            transform: translate(-8%, -8%);
-          }
-        }
-
-        .pan-subtle {
-          animation: panSubtle ${animationDuration}s ease-in-out infinite alternate;
-        }
-
-        .pan-medium {
-          animation: panMedium ${animationDuration}s ease-in-out infinite alternate;
-        }
-
-        .pan-dramatic {
-          animation: panDramatic ${animationDuration}s ease-in-out infinite alternate;
+        ${keyframesCSS}
+        
+        .ken-burns-animated {
+          animation: ${animationName} ${kenBurnsConfig.duration}s ${kenBurnsConfig.easing} infinite alternate;
+          transform-origin: center center;
+          will-change: transform;
         }
       `}</style>
 
       <div className="absolute inset-0 w-full h-full">
-        {/* Full-Screen Background Image with Pan Effect */}
+        {/* Full-Screen Background Image with Scene-Aware Ken Burns Effect */}
         {scene.imageUrl ? (
           <div 
-            className={`absolute inset-0 bg-cover bg-center bg-no-repeat ${animationClass}`}
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat ken-burns-animated"
             style={{ 
               backgroundImage: `url(${scene.imageUrl})`,
               // Ensure image is larger than container to allow pan effect
-              backgroundSize: '110%'
+              backgroundSize: '115%'
             }}
           />
         ) : (

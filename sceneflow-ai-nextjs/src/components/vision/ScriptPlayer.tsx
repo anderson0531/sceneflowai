@@ -1010,6 +1010,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           <SceneDisplay
             scene={currentScene}
             sceneNumber={playerState.currentSceneIndex + 1}
+            sceneIndex={playerState.currentSceneIndex}
             totalScenes={scenes.length}
             isLoading={isLoadingAudio}
             showCaptions={showCaptions}
