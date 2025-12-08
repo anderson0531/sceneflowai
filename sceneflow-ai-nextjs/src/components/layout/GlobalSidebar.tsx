@@ -95,6 +95,9 @@ export function GlobalSidebar({ children }: { children?: React.ReactNode }) {
   const byokReady = useBYOKReady()
   const phaseLocks = usePhaseLocks(seriesId, episodeId)
 
+  // Hide sidebar on Production (vision) page - it has its own integrated navigation
+  const isProductionPage = pathname?.includes('/dashboard/workflow/vision/')
+  
   type WorkflowDisplayItem = { key: string; label: string; status: StepStatus }
   type NavigableItem = { key: string; label: string; href: string; requires?: number[]; byok?: boolean }
 
@@ -102,6 +105,11 @@ export function GlobalSidebar({ children }: { children?: React.ReactNode }) {
   if (seriesId && episodeId) flowItems = episodeNav(seriesId, episodeId)
   else if (seriesId) flowItems = seriesNav(seriesId)
   else flowItems = useLegacyWorkflow(pathname).items
+
+  // If on Production page, just render children without sidebar
+  if (isProductionPage) {
+    return <div className="min-h-screen">{children}</div>
+  }
 
   return (
     <div className="flex">

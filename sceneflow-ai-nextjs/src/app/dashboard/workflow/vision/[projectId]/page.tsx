@@ -19,7 +19,7 @@ import { Button, buttonVariants } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, Eye, Sparkles, BarChart3, Save } from 'lucide-react'
+import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User } from 'lucide-react'
 
 const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement> & { size?: number }> = ({ size = 32, className, ...props }) => (
   <svg
@@ -4687,7 +4687,35 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           {/* Left Panel: Workflow Navigation & Tools */}
           <Panel defaultSize={18} minSize={12} maxSize={25} className="min-w-0 overflow-hidden">
             <div className="h-full overflow-y-auto pr-2 min-w-0">
-              <div className="bg-white/50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-800 h-full">
+              <div className="bg-white/50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-800 h-full flex flex-col">
+                {/* Main Navigation */}
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Main</h3>
+                  <nav className="space-y-1">
+                    <Link
+                      href="/dashboard"
+                      className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <Home className="w-4 h-4" />
+                      <span>Dashboard</span>
+                    </Link>
+                    <Link
+                      href="/dashboard/projects"
+                      className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <FolderOpen className="w-4 h-4" />
+                      <span>Projects</span>
+                    </Link>
+                    <Link
+                      href="/dashboard/studio/new-project"
+                      className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      <span>Start Project</span>
+                    </Link>
+                  </nav>
+                </div>
+                
                 {/* Workflow Steps */}
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Workflow</h3>
@@ -4749,7 +4777,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 </div>
                 
                 {/* Project Stats */}
-                <div className="p-4">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-1">
                   <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Project Stats</h3>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-xs">
@@ -4784,6 +4812,34 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     )}
                   </div>
                 </div>
+                
+                {/* Settings */}
+                <div className="p-4 mt-auto">
+                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Settings</h3>
+                  <nav className="space-y-1">
+                    <Link
+                      href="/dashboard/settings/profile"
+                      className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <User className="w-4 h-4" />
+                      <span>Profile</span>
+                    </Link>
+                    <Link
+                      href="/dashboard/settings/byok"
+                      className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <Key className="w-4 h-4" />
+                      <span>BYOK Settings</span>
+                    </Link>
+                    <Link
+                      href="/dashboard/settings/billing"
+                      className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      <span>Billing & Credits</span>
+                    </Link>
+                  </nav>
+                </div>
               </div>
             </div>
           </Panel>
@@ -4792,7 +4848,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           
           {/* Center: Script with Scene Cards */}
           <Panel defaultSize={57} minSize={40} maxSize={70} className="min-w-0 overflow-hidden overflow-x-hidden">
-            <div className="h-full overflow-y-auto px-4 min-w-0 w-full overflow-x-hidden">
+            <div className="h-full overflow-y-auto px-4 pt-1 min-w-0 w-full overflow-x-hidden">
               <ScriptPanel 
                 script={script}
                 onScriptChange={setScript}
