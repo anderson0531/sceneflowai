@@ -6,6 +6,43 @@
 
 ---
 
+## 🤖 AI Session Checklist
+
+**For AI Coding Assistants: Complete this checklist at the start of EVERY session.**
+
+### Before Making Changes
+
+- [ ] **Read this document** - Especially the Design Decisions Log and Critical Architecture Patterns
+- [ ] **Check Deprecated Features** - Don't recreate removed functionality
+- [ ] **Review Planned Features** - Avoid duplicate implementations
+- [ ] **Understand state patterns** - `script.script.scenes` is the ONLY source of truth for scene data
+
+### Key Rules
+
+1. **Never create separate `scenes` state** - Use `script?.script?.scenes || []`
+2. **Update `script` state, not `scenes`** - When modifying scene data
+3. **Check if feature exists** - Before implementing anything new
+4. **AnimaticsStudio is DEPRECATED** - Use Screening Room (ScriptPlayer) instead
+
+### After Making Changes
+
+- [ ] **Update Design Decisions Log** - Add new decisions with date and rationale
+- [ ] **Update Deprecated Features** - If removing functionality
+- [ ] **Update Key File Locations** - If adding new important files
+- [ ] **Commit with descriptive message** - Reference what was changed and why
+
+### Quick Reference
+
+| Need | Location |
+|------|----------|
+| Scene data | `script.script.scenes` |
+| Characters | `visionPhase.characters` |
+| Screening Room | `src/components/vision/ScriptPlayer.tsx` |
+| Scene images | `src/components/vision/SceneGallery.tsx` |
+| Ken Burns | `src/lib/animation/kenBurns.ts` |
+
+---
+
 ## Design Decisions Log
 
 | Date | Decision | Rationale | Status |

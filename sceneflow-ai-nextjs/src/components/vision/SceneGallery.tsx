@@ -1,3 +1,15 @@
+/**
+ * SceneGallery - Visual storyboard display of scenes with images
+ * 
+ * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
+ * @see /CONTRIBUTING.md for development guidelines
+ * 
+ * RECEIVES: scenes from parent via props (sourced from script.script.scenes)
+ * Do NOT maintain separate scene state - parent component is source of truth.
+ * 
+ * When generating/uploading images, the parent (Vision page) updates
+ * script.script.scenes, which flows down to this component via props.
+ */
 'use client'
 
 import React, { useState } from 'react'

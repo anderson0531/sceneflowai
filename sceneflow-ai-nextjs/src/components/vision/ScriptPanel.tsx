@@ -1,3 +1,14 @@
+/**
+ * ScriptPanel - Displays and manages screenplay scenes
+ * 
+ * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
+ * @see /CONTRIBUTING.md for development guidelines
+ * 
+ * RECEIVES: scenes from parent via props (sourced from script.script.scenes)
+ * Do NOT maintain separate scene state in this component.
+ * 
+ * DEPRECATED: onOpenAnimaticsStudio prop (use Screening Room instead)
+ */
 'use client'
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'

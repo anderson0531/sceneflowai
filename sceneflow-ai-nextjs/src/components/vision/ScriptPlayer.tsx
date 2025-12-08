@@ -1,3 +1,21 @@
+/**
+ * ScriptPlayer / Screening Room - Cinematic preview of screenplay with audio
+ * 
+ * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
+ * @see /CONTRIBUTING.md for development guidelines
+ * 
+ * TWO USE CASES:
+ * 1. Screenplay Review: Full audio including scene description narration
+ * 2. Animatic Preview: Narration disabled, dialogue/music/SFX only
+ * 
+ * FEATURES:
+ * - Ken Burns effect on scene images (scene-aware animation)
+ * - Narration toggle (on/off)
+ * - Audio playback (narration, dialogue, music, SFX)
+ * - Scene-by-scene navigation
+ * 
+ * PLANNED: MP4 export via Shotstack integration
+ */
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'

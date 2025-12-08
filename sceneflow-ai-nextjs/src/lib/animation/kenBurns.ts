@@ -1,8 +1,19 @@
 /**
  * Ken Burns Animation Utility
  * 
+ * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
+ * @see /CONTRIBUTING.md for development guidelines
+ * 
  * Provides scene-aware, cinematically intelligent Ken Burns (pan/zoom) effects
  * with direction detection, shot-type intensity, and cinematic easing curves.
+ * 
+ * DESIGN DECISION (2024-12-09):
+ * Ken Burns chosen over Parallax 2.5D because:
+ * - Industry-standard cinematic look
+ * - No pre-processing/depth map generation needed
+ * - Works directly in browser with CSS animations
+ * 
+ * PLANNED: Maps to Shotstack effects for MP4 export
  */
 
 export type KenBurnsDirection = 

@@ -1,3 +1,16 @@
+/**
+ * Vision Page - Main workflow page for script and visual development
+ * 
+ * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
+ * @see /CONTRIBUTING.md for development guidelines
+ * 
+ * CRITICAL: Scene data source of truth is `script.script.scenes`
+ * Do NOT create separate `scenes` state - this causes sync bugs.
+ * 
+ * Key handlers:
+ * - handleGenerateScene: Updates script.script.scenes, not separate state
+ * - handleUploadScene: Updates script.script.scenes, not separate state
+ */
 'use client'
 // Force rebuild: 2024-11-01
 
