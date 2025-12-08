@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Users, Plus, Loader, Wand2, Upload, X, ChevronDown, Check, Sparkles, Lightbulb, Info, Volume2, ImageIcon, Edit, Trash2 } from 'lucide-react'
+import { Users, Plus, Loader, Wand2, Upload, X, ChevronDown, Check, Sparkles, Lightbulb, Info, Volume2, ImageIcon, Edit, Trash2, Shirt } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
@@ -22,6 +22,7 @@ export interface CharacterLibraryProps {
   onUpdateCharacterAppearance?: (characterId: string, description: string) => void
   onUpdateCharacterName?: (characterId: string, name: string) => void
   onUpdateCharacterRole?: (characterId: string, role: string) => void
+  onUpdateCharacterWardrobe?: (characterId: string, wardrobe: { defaultWardrobe?: string; wardrobeAccessories?: string }) => void
   onAddCharacter?: (characterData: any) => void
   onRemoveCharacter?: (characterName: string) => void
   ttsProvider: 'google' | 'elevenlabs'
@@ -50,6 +51,7 @@ interface CharacterCardProps {
   onUpdateAppearance?: (characterId: string, description: string) => void
   onUpdateCharacterName?: (characterId: string, name: string) => void
   onUpdateCharacterRole?: (characterId: string, role: string) => void
+  onUpdateWardrobe?: (characterId: string, wardrobe: { defaultWardrobe?: string; wardrobeAccessories?: string }) => void
   onRemove?: () => void
   ttsProvider: 'google' | 'elevenlabs'
   voiceSectionExpanded?: boolean
@@ -58,7 +60,7 @@ interface CharacterCardProps {
   onOpenCharacterPrompt?: () => void
 }
 
-export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onAddCharacter, onRemoveCharacter, ttsProvider, compact = false, uploadingRef = {}, setUploadingRef, enableDrag = false, showProTips: showProTipsProp }: CharacterLibraryProps) {                                
+export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateCharacterWardrobe, onAddCharacter, onRemoveCharacter, ttsProvider, compact = false, uploadingRef = {}, setUploadingRef, enableDrag = false, showProTips: showProTipsProp }: CharacterLibraryProps) {                                
   const [selectedChar, setSelectedChar] = useState<string | null>(null)
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(new Set())
   const [zoomedImage, setZoomedImage] = useState<{url: string; name: string} | null>(null)
@@ -323,6 +325,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                 onUpdateAppearance={onUpdateCharacterAppearance}
                 onUpdateCharacterName={onUpdateCharacterName}
                 onUpdateCharacterRole={onUpdateCharacterRole}
+                onUpdateWardrobe={onUpdateCharacterWardrobe}
                 onRemove={() => onRemoveCharacter?.(char.name)}
                 ttsProvider={ttsProvider}
                 voiceSectionExpanded={voiceSectionExpanded[charId] || false}
@@ -407,7 +410,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
   )
 }
 
-const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, isUploading = false, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onRemove, ttsProvider, voiceSectionExpanded, onToggleVoiceSection, enableDrag = false, onOpenCharacterPrompt }: CharacterCardProps) => {
+const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, isUploading = false, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateWardrobe, onRemove, ttsProvider, voiceSectionExpanded, onToggleVoiceSection, enableDrag = false, onOpenCharacterPrompt }: CharacterCardProps) => {
   const hasImage = !!character.referenceImage
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
@@ -415,6 +418,10 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   const [editingName, setEditingName] = useState(false)
   const [nameText, setNameText] = useState('')
   const [editingRole, setEditingRole] = useState(false)
+  const [wardrobeSectionExpanded, setWardrobeSectionExpanded] = useState(false)
+  const [editingWardrobe, setEditingWardrobe] = useState(false)
+  const [wardrobeText, setWardrobeText] = useState('')
+  const [accessoriesText, setAccessoriesText] = useState('')
   
   // Helper function to generate fallback description from attributes
   const generateFallbackDescription = (character: any): string => {
@@ -742,6 +749,114 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
         <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
           {character.description}
         </p>
+        
+        {/* Wardrobe Section - Collapsible */}
+        <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setWardrobeSectionExpanded(!wardrobeSectionExpanded)
+            }}
+            className="flex items-center justify-between w-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              <Shirt className="w-4 h-4" />
+              Wardrobe
+              {(character.defaultWardrobe || character.wardrobeAccessories) && (
+                <span className="text-xs px-1.5 py-0.5 bg-green-500/20 text-green-600 dark:text-green-400 rounded">
+                  Set
+                </span>
+              )}
+            </span>
+            <ChevronDown className={`w-4 h-4 transition-transform ${wardrobeSectionExpanded ? 'rotate-180' : ''}`} />
+          </button>
+          
+          {wardrobeSectionExpanded && (
+            <div className="mt-3 space-y-3">
+              {editingWardrobe ? (
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Default Outfit</label>
+                    <textarea
+                      value={wardrobeText}
+                      onChange={(e) => setWardrobeText(e.target.value)}
+                      placeholder="e.g., Charcoal grey tailored suit, white dress shirt, dark blue silk tie"
+                      className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none"
+                      rows={2}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Accessories</label>
+                    <textarea
+                      value={accessoriesText}
+                      onChange={(e) => setAccessoriesText(e.target.value)}
+                      placeholder="e.g., Silver wristwatch, rectangular glasses, gold wedding band"
+                      className="w-full px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none"
+                      rows={2}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onUpdateWardrobe?.(characterId, {
+                          defaultWardrobe: wardrobeText.trim() || undefined,
+                          wardrobeAccessories: accessoriesText.trim() || undefined
+                        })
+                        setEditingWardrobe(false)
+                        toast.success('Wardrobe updated')
+                      }}
+                      className="flex-1 px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setEditingWardrobe(false)
+                      }}
+                      className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div 
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setWardrobeText(character.defaultWardrobe || '')
+                    setAccessoriesText(character.wardrobeAccessories || '')
+                    setEditingWardrobe(true)
+                  }}
+                  className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded p-2 -m-2"
+                >
+                  {character.defaultWardrobe || character.wardrobeAccessories ? (
+                    <div className="space-y-1">
+                      {character.defaultWardrobe && (
+                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                          <span className="font-medium">Outfit:</span> {character.defaultWardrobe}
+                        </p>
+                      )}
+                      {character.wardrobeAccessories && (
+                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                          <span className="font-medium">Accessories:</span> {character.wardrobeAccessories}
+                        </p>
+                      )}
+                      <p className="text-xs text-blue-500 mt-1">Click to edit</p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-400 italic">
+                      Click to add wardrobe for visual consistency across scenes
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
         
         {/* Voice Section - Collapsible */}
         <div className="pt-2 border-t border-gray-200 dark:border-gray-700">

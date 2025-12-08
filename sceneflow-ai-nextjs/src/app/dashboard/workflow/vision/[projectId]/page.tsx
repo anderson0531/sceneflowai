@@ -1522,6 +1522,52 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
   
+  // Handle character wardrobe update
+  const handleUpdateCharacterWardrobe = async (characterId: string, wardrobe: { defaultWardrobe?: string; wardrobeAccessories?: string }) => {
+    try {
+      // Update local state first
+      const updatedCharacters = characters.map(char => {
+        const charId = char.id || characters.indexOf(char).toString()
+        return charId === characterId 
+          ? { ...char, defaultWardrobe: wardrobe.defaultWardrobe, wardrobeAccessories: wardrobe.wardrobeAccessories }
+          : char
+      })
+      
+      setCharacters(updatedCharacters)
+      
+      // Save to database using existing projects API
+      if (project) {
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: {
+              ...project.metadata,
+              visionPhase: {
+                ...project.metadata?.visionPhase,
+                characters: updatedCharacters,
+                script: script,
+                scenes: scenes,
+                narrationVoice: narrationVoice,
+                descriptionVoice: descriptionVoice
+              }
+            }
+          })
+        })
+        
+        if (!response.ok) throw new Error('Failed to update wardrobe')
+        
+        console.log('[Vision] Character wardrobe saved:', characterId, wardrobe)
+      }
+    } catch (error) {
+      console.error('[Update Wardrobe] Error:', error)
+      try { 
+        const { toast } = require('sonner')
+        toast.error('Failed to update character wardrobe')
+      } catch {}
+    }
+  }
+  
   // Handle validation warning dismiss
   const handleDismissValidationWarning = (sceneIdx: number) => {
     setValidationInfo(prev => ({
@@ -5183,6 +5229,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onUpdateCharacterAppearance={handleUpdateCharacterAppearance}
                 onUpdateCharacterName={handleUpdateCharacterName}
                 onUpdateCharacterRole={handleUpdateCharacterRole}
+                onUpdateCharacterWardrobe={handleUpdateCharacterWardrobe}
                 onAddCharacter={handleAddCharacter}
                 onRemoveCharacter={handleRemoveCharacter}
                 ttsProvider={ttsProvider}
