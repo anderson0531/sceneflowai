@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getStorageClient } from '@/lib/storage/gcs';
 import { getVertexAIAuthToken } from '@/lib/vertexai/client';
 
-export const maxDuration = 60; // Allow longer timeout for AI generation
+export const maxDuration = 120; // Increased for new AI image models
 
 export async function POST(req: NextRequest) {
   const logs: string[] = [];

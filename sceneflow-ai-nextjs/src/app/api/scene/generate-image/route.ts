@@ -8,7 +8,7 @@ import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 
 export const runtime = 'nodejs'
-export const maxDuration = 60
+export const maxDuration = 120  // Increased for new AI image models
 
 /**
  * @deprecated Use generateLinkingDescription from promptOptimizer instead

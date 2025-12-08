@@ -7,7 +7,7 @@ import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen } from '@/lib/imagen/promptOptimizer'
 
 export const runtime = 'nodejs'
-export const maxDuration = 60
+export const maxDuration = 120  // Increased for new AI image models
 
 export async function POST(request: NextRequest) {
   try {

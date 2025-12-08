@@ -3,7 +3,7 @@ import { callVertexAIImagen } from '@/lib/vertexai/client'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-export const maxDuration = 60
+export const maxDuration = 120  // Increased for new AI image models
 
 export async function POST(req: NextRequest) {
   try {
