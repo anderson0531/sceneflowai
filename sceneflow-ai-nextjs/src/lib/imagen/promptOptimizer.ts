@@ -462,15 +462,15 @@ ${visualStyle}`
 
 /**
  * Integrate character descriptions naturally into scene context
- * Uses HIERARCHICAL PROMPT STRUCTURE for better wardrobe consistency:
+ * Uses NARRATIVE PROSE for better wardrobe consistency (per Gemini best practices):
  * 
- * [WARDROBE DECLARATIONS] + [CHARACTER DEFS] + [SCENE ACTION]
+ * "A narrative, descriptive paragraph will almost always produce a better, 
+ * more coherent image than a list of disconnected words."
  * 
- * This front-loads wardrobe information so the model prioritizes clothing/accessories
- * before processing the scene action (which might override wardrobe otherwise).
- * 
- * For multi-character scenes (no reference images), provides more detailed descriptions
- * to help maintain visual consistency through text alone.
+ * Key techniques:
+ * 1. Wardrobe as physical attribute: "a tall man in a navy suit" not "tall man, wearing suit"
+ * 2. Reinforce wardrobe in action: "his suit jacket crisp, he enters..."
+ * 3. Natural prose flow, no structured labels like WARDROBE:/SCENE:
  */
 function integrateCharactersIntoScene(
   sceneAction: string,
@@ -487,89 +487,79 @@ function integrateCharactersIntoScene(
 ): string {
   const isMultiCharacter = characterReferences.length > 1
   
-  // PHASE 1: Build WARDROBE DECLARATIONS (front-loaded for priority)
-  const wardrobeDeclarations: string[] = []
-  
-  // PHASE 2: Build CHARACTER DEFINITIONS with wardrobe integrated
-  const characterDefinitions: string[] = []
+  // Build character introductions with wardrobe integrated as physical attribute
+  const characterIntros: string[] = []
   
   characterReferences.forEach(ref => {
-    // Build wardrobe declaration for this character (front-loaded)
-    const wardrobePrefix = buildWardrobePrefix(ref.name, ref.defaultWardrobe, ref.wardrobeAccessories)
-    if (wardrobePrefix) {
-      wardrobeDeclarations.push(wardrobePrefix)
+    // Build integrated description: wardrobe as part of appearance, not separate
+    let fullDescription = ''
+    
+    // Start with ethnicity if available (for multi-character differentiation)
+    if (isMultiCharacter && ref.ethnicity) {
+      fullDescription += `${ref.ethnicity} `
     }
     
-    // Build detailed character description
-    let detailedDescription = ref.description
+    // Core physical description
+    fullDescription += ref.description
     
-    // For multi-character scenes, add ethnicity and key features if available
-    if (isMultiCharacter) {
-      const extras: string[] = []
-      if (ref.ethnicity) {
-        extras.push(ref.ethnicity)
-      }
-      if (ref.keyFeatures && ref.keyFeatures.length > 0) {
-        extras.push(...ref.keyFeatures)
-      }
-      if (extras.length > 0) {
-        detailedDescription = `${extras.join(', ')}, ${detailedDescription}`
-      }
+    // Add key features for multi-character scenes
+    if (isMultiCharacter && ref.keyFeatures && ref.keyFeatures.length > 0) {
+      fullDescription += ` with ${ref.keyFeatures.join(' and ')}`
     }
     
-    // Add wardrobe to description as well (reinforcement)
+    // INTEGRATE wardrobe as physical attribute (not "wearing X" but "in X")
+    // This makes clothing feel like part of the character, not an afterthought
     if (ref.defaultWardrobe) {
-      detailedDescription += `, wearing ${ref.defaultWardrobe}`
+      // Use "dressed in" or "in" for natural flow
+      fullDescription += `, dressed in ${ref.defaultWardrobe}`
       if (ref.wardrobeAccessories) {
-        detailedDescription += `, ${ref.wardrobeAccessories}`
+        fullDescription += ` with ${ref.wardrobeAccessories}`
       }
     }
     
-    characterDefinitions.push(`${ref.name}: ${detailedDescription}`)
+    characterIntros.push(`${ref.name} is ${fullDescription}`)
   })
   
-  // PHASE 3: Process SCENE ACTION with character name replacements
+  // Process scene action: replace character names with wardrobe-reinforced descriptions
   let processedScene = sceneAction
   characterReferences.forEach(ref => {
-    // Match character name (case insensitive, word boundary)
-    const namePattern = new RegExp(`\\b(${ref.name})\\b`, 'i')
-    const match = processedScene.match(namePattern)
+    const namePattern = new RegExp(`\\b(${ref.name})\\b`, 'gi')
     
-    if (match) {
-      // Build compact description for inline replacement
-      let inlineDesc = ref.description
-      if (ref.defaultWardrobe) {
-        inlineDesc += `, wearing ${ref.defaultWardrobe}`
+    // Build a SHORT inline reinforcement that mentions wardrobe in action
+    // e.g., "Alex" -> "Alex, his navy suit immaculate,"
+    if (ref.defaultWardrobe) {
+      // Extract the key wardrobe item for brief reinforcement
+      const wardrobeShort = ref.defaultWardrobe.split(',')[0].trim() // Take first item
+      const pronoun = ref.description.toLowerCase().includes('woman') ? 'her' : 'his'
+      
+      // Only replace FIRST occurrence to avoid repetition
+      const firstMatch = processedScene.match(namePattern)
+      if (firstMatch) {
+        processedScene = processedScene.replace(
+          namePattern,
+          `${firstMatch[0]}, ${pronoun} ${wardrobeShort} impeccable,`
+        )
       }
-      // Found character mention - inject description right after
-      const characterWithDescription = `${match[1]} (${inlineDesc})`
-      processedScene = processedScene.replace(namePattern, characterWithDescription)
     }
   })
   
-  // PHASE 4: ASSEMBLE HIERARCHICAL PROMPT
-  // Structure: [Wardrobe Lock] → [Character Definitions] → [Scene Action]
-  const promptParts: string[] = []
+  // ASSEMBLE as natural prose narrative
+  let narrative = ''
   
-  // Add wardrobe declarations first (HIGHEST PRIORITY)
-  if (wardrobeDeclarations.length > 0) {
-    promptParts.push(`WARDROBE: ${wardrobeDeclarations.join('. ')}.`)
-  }
-  
-  // Add multi-character header if needed
+  // Multi-character scene opener
   if (isMultiCharacter) {
-    promptParts.push(`Multi-character scene with ${characterReferences.length} distinct people.`)
+    narrative += `In this scene with ${characterReferences.length} people: `
   }
   
-  // Add character definitions
-  if (characterDefinitions.length > 0) {
-    promptParts.push(`CHARACTERS: ${characterDefinitions.join('; ')}.`)
+  // Character introductions as flowing prose
+  if (characterIntros.length > 0) {
+    narrative += characterIntros.join('. ') + '. '
   }
   
-  // Add scene action
-  promptParts.push(`SCENE: ${processedScene}`)
+  // Scene action flows naturally after character establishment
+  narrative += processedScene
   
-  return promptParts.join(' ')
+  return narrative
 }
 
 /**

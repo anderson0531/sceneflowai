@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
-import { optimizePromptForImagen, generateLinkingDescription, buildWardrobeNegatives } from '@/lib/imagen/promptOptimizer'
+import { optimizePromptForImagen, generateLinkingDescription } from '@/lib/imagen/promptOptimizer'
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
 import { waitForGCSURIs, checkGCSURIAccessibility } from '@/lib/storage/gcsAccessibility'
 import Project from '../../../../models/Project'
@@ -520,6 +520,8 @@ export async function POST(req: NextRequest) {
     console.log(`[Scene Image] Using ${imageReferences.length} character references for structured API call`)
 
     // Build character-specific negative prompts based on reference characteristics
+    // NOTE: We focus on FACIAL/IDENTITY negatives only, not wardrobe negatives
+    // Per Gemini docs: "Use positive descriptions instead of negatives" for better results
     const baseNegativePrompt = 'elderly appearance, deeply wrinkled, aged beyond reference, geriatric, wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager, youthful appearance'
     
     const characterSpecificNegatives: string[] = []
@@ -535,19 +537,15 @@ export async function POST(req: NextRequest) {
       }
       
       // If reference shows specific expression, exclude opposite states that would change appearance
-      // This is handled by the base negative prompt already, but we can add more specific ones
       if (char.appearanceDescription && char.appearanceDescription.toLowerCase().includes('smile')) {
         characterSpecificNegatives.push('frowning', 'sad expression', 'angry expression')
       }
       
-      // Add wardrobe-specific negatives to prevent wardrobe hallucination
-      if (char.defaultWardrobe) {
-        const wardrobeNegatives = buildWardrobeNegatives(char.defaultWardrobe)
-        characterSpecificNegatives.push(...wardrobeNegatives)
-      }
+      // REMOVED: Wardrobe-specific negatives - using positive reinforcement in prompt instead
+      // Gemini docs recommend describing what you WANT, not what to avoid
     })
     
-    // Combine base negative prompt with character-specific ones
+    // Combine base negative prompt with character-specific ones (facial features only)
     const negativePromptParts = [baseNegativePrompt]
     if (characterSpecificNegatives.length > 0) {
       const uniqueNegatives = [...new Set(characterSpecificNegatives)] // Remove duplicates
@@ -555,7 +553,7 @@ export async function POST(req: NextRequest) {
     }
     const finalNegativePrompt = negativePromptParts.join(', ')
     
-    console.log(`[Scene Image] Negative prompt includes ${characterSpecificNegatives.length} character-specific exclusions (including wardrobe)`)
+    console.log(`[Scene Image] Negative prompt includes ${characterSpecificNegatives.length} character-specific exclusions (facial features only)`)
 
     // Generate with Gemini (with optional character references)
     // Add retry logic for reference image access issues
