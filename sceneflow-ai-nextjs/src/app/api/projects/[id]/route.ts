@@ -57,10 +57,19 @@ export async function GET(
     // Log direction data for debugging intermittent issues
     const scenes = project.metadata?.visionPhase?.script?.script?.scenes || []
     const scenesWithDirection = scenes.filter((s: any) => !!s.sceneDirection)
+    const characters = project.metadata?.visionPhase?.characters || []
+    
     console.log('[Projects GET] Loaded project:', {
       id: project.id,
       totalScenes: scenes.length,
       scenesWithDirection: scenesWithDirection.length,
+      charactersCount: characters.length,
+      charactersWithRefImage: characters.filter((c: any) => !!c.referenceImage).length,
+      characterDetails: characters.map((c: any) => ({
+        name: c.name,
+        hasRefImage: !!c.referenceImage,
+        refImagePrefix: c.referenceImage ? c.referenceImage.substring(0, 40) : 'none'
+      })),
       timestamp: new Date().toISOString()
     })
     
@@ -159,6 +168,41 @@ export async function PUT(
               })
             }
           }
+        }
+        
+        // CRITICAL: Deep merge characters to preserve referenceImage, voiceConfig, etc.
+        if (body.metadata.visionPhase.characters && existingMetadata.visionPhase.characters) {
+          const existingCharacters = existingMetadata.visionPhase.characters || []
+          const incomingCharacters = body.metadata.visionPhase.characters || []
+          
+          // Create a map of existing characters by name for quick lookup
+          const existingCharMap = new Map(existingCharacters.map((c: any) => [c.name?.toLowerCase(), c]))
+          
+          // Merge: incoming character data takes precedence, but preserve referenceImage, voiceConfig if not provided
+          mergedMetadata.visionPhase.characters = incomingCharacters.map((incomingChar: any) => {
+            const existingChar = existingCharMap.get(incomingChar.name?.toLowerCase())
+            if (existingChar) {
+              // Preserve generated/uploaded data from existing character if not in incoming
+              return {
+                ...existingChar,
+                ...incomingChar,
+                // CRITICAL: Preserve these fields unless explicitly set in incoming
+                referenceImage: incomingChar.referenceImage ?? existingChar.referenceImage,
+                voiceConfig: incomingChar.voiceConfig ?? existingChar.voiceConfig,
+                appearanceDescription: incomingChar.appearanceDescription ?? existingChar.appearanceDescription,
+                visionDescription: incomingChar.visionDescription ?? existingChar.visionDescription,
+                imageApproved: incomingChar.imageApproved ?? existingChar.imageApproved,
+              }
+            }
+            return incomingChar
+          })
+          
+          console.log('[Projects PUT] Deep merged characters:', {
+            existingCount: existingCharacters.length,
+            incomingCount: incomingCharacters.length,
+            mergedCount: mergedMetadata.visionPhase.characters.length,
+            withReferenceImage: mergedMetadata.visionPhase.characters.filter((c: any) => !!c.referenceImage).length
+          })
         }
       }
     }

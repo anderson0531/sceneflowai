@@ -189,6 +189,11 @@ export async function POST(req: NextRequest) {
 
       const allCharacters = project.metadata?.visionPhase?.characters || []
       console.log('[Scene Image] DEBUG - characters in project:', allCharacters.length)
+      console.log('[Scene Image] DEBUG - characters from DB:', allCharacters.map((c: any) => ({
+        name: c.name,
+        hasRefImage: !!c.referenceImage,
+        refImagePrefix: c.referenceImage ? c.referenceImage.substring(0, 40) : 'none'
+      })))
       
       // ALWAYS load characters from database if we have a projectId
       if (characterObjects.length > 0) {

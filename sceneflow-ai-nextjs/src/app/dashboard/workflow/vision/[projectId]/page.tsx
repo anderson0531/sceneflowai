@@ -1864,6 +1864,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             ? charactersWithNarrator
             : [...charactersWithNarrator, descriptionCharacter]
 
+          // DEBUG: Final characters being set to state
+          console.log('[loadProject] Final characters being set:', charactersWithDescription.map((c: any) => ({
+            name: c.name,
+            type: c.type,
+            hasReferenceImage: !!c.referenceImage,
+            referenceImageUrl: c.referenceImage ? c.referenceImage.substring(0, 60) + '...' : 'none'
+          })))
+          
           setCharacters(charactersWithDescription)
           
           // Sync narration voice from narrator character (single source of truth)
