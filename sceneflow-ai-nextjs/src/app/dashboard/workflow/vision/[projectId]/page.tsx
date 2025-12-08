@@ -4682,35 +4682,79 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       />
       
-      <div className="flex-1 overflow-hidden overflow-x-hidden px-6 py-4 max-w-full min-w-0">
+      <div className="flex-1 overflow-hidden overflow-x-hidden px-4 py-3 max-w-full min-w-0">
         <PanelGroup direction="horizontal" className="h-full max-w-full min-w-0 overflow-x-hidden">
           {/* Main: Script with Scene Cards */}
           <Panel defaultSize={70} minSize={50} maxSize={80} className="min-w-0 overflow-hidden overflow-x-hidden">
             <div className="h-full overflow-y-auto pr-6 min-w-0 w-full overflow-x-hidden">
               {/* Scene Timeline Selector */}
               <SceneSelector
-                scenes={(script?.script?.scenes || []).map((scene: any, idx: number) => {
+                scenes={(script?.script?.scenes || []).map((scene: any, idx: number, allScenes: any[]) => {
                   const sceneId = scene.id || scene.sceneId || `scene-${idx}`
                   const isBookmarked = sceneBookmark?.sceneId === sceneId || sceneBookmark?.sceneNumber === idx + 1
+                  const productionData = sceneProductionState[sceneId]
+                  const segments = productionData?.segments || []
+                  
+                  // Calculate actual duration from segments if available
+                  let actualDuration = 0
+                  if (segments.length > 0) {
+                    const lastSegment = segments[segments.length - 1]
+                    if (lastSegment?.endTime) {
+                      actualDuration = lastSegment.endTime
+                    } else {
+                      // Sum up segment durations
+                      actualDuration = segments.reduce((sum: number, seg: any) => {
+                        const segDuration = (seg.endTime || 0) - (seg.startTime || 0)
+                        return sum + (segDuration > 0 ? segDuration : 0)
+                      }, 0)
+                    }
+                  }
+                  
+                  // Calculate start time by summing previous scene durations
+                  let startTime = 0
+                  for (let i = 0; i < idx; i++) {
+                    const prevScene = allScenes[i]
+                    const prevSceneId = prevScene.id || prevScene.sceneId || `scene-${i}`
+                    const prevProductionData = sceneProductionState[prevSceneId]
+                    const prevSegments = prevProductionData?.segments || []
+                    
+                    if (prevSegments.length > 0) {
+                      const lastPrevSeg = prevSegments[prevSegments.length - 1]
+                      if (lastPrevSeg?.endTime) {
+                        startTime += lastPrevSeg.endTime
+                      }
+                    } else {
+                      // Use estimated duration for scenes without segments
+                      startTime += prevScene.estimatedDuration || prevScene.duration || 15
+                    }
+                  }
+                  
+                  // Determine workflow status
+                  const hasScript = !!(scene.content || scene.dialog || scene.narration || scene.description)
+                  const hasDirection = !!(scene.direction || scene.sceneDirection || scene.cameraDirection)
+                  const hasFrame = !!scene.imageUrl
+                  const hasCallAction = segments.length > 0
+                  
                   return {
                     id: sceneId,
                     sceneNumber: idx + 1,
                     name: typeof scene.heading === 'string' ? scene.heading : scene.heading?.text || `Scene ${idx + 1}`,
                     estimatedDuration: scene.estimatedDuration || scene.duration || 15,
-                    actualDuration: scene.actualDuration,
-                    status: sceneProductionState[sceneId]?.segments?.every(
-                      (s: any) => s.status === 'complete'
-                    )
+                    actualDuration: actualDuration > 0 ? actualDuration : undefined,
+                    startTime,
+                    status: segments.every((s: any) => s.status === 'complete' || s.status === 'COMPLETE')
                       ? 'complete'
-                      : sceneProductionState[sceneId]?.segments?.some(
-                          (s: any) => s.status === 'complete' || s.status === 'generating'
-                        )
+                      : segments.some((s: any) => s.status === 'complete' || s.status === 'COMPLETE' || s.status === 'generating' || s.status === 'GENERATING')
                       ? 'in-progress'
                       : 'not-started',
-                    segmentCount: sceneProductionState[sceneId]?.segments?.length || 0,
+                    segmentCount: segments.length,
                     hasImage: !!scene.imageUrl,
                     hasAudio: !!(scene.narrationAudioUrl || scene.musicAudio),
                     isBookmarked,
+                    hasScript,
+                    hasDirection,
+                    hasFrame,
+                    hasCallAction,
                   }
                 })}
                 selectedSceneId={

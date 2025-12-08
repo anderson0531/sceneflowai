@@ -12,7 +12,11 @@ import {
   PlayCircle,
   Image,
   Volume2,
-  Bookmark
+  Bookmark,
+  FileText,
+  Compass,
+  Frame,
+  Clapperboard
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
@@ -21,12 +25,18 @@ export interface SceneItem {
   sceneNumber: number
   name: string
   estimatedDuration?: number
-  actualDuration?: number
+  actualDuration?: number // From segments if available
+  startTime?: number // Cumulative start time
   status?: 'not-started' | 'in-progress' | 'complete'
   segmentCount?: number
   hasImage?: boolean
   hasAudio?: boolean
   isBookmarked?: boolean
+  // Workflow status indicators
+  hasScript?: boolean
+  hasDirection?: boolean
+  hasFrame?: boolean
+  hasCallAction?: boolean
 }
 
 interface SceneSelectorProps {
@@ -83,7 +93,7 @@ export function SceneSelector({
   }
 
   const formatDuration = (seconds?: number) => {
-    if (!seconds) return '--'
+    if (!seconds || seconds <= 0) return '--'
     const mins = Math.floor(seconds / 60)
     const secs = Math.round(seconds % 60)
     if (mins > 0) {
@@ -92,7 +102,22 @@ export function SceneSelector({
     return `${secs}s`
   }
 
-  const totalDuration = scenes.reduce((acc, s) => acc + (s.estimatedDuration || 0), 0)
+  const formatStartTime = (seconds?: number) => {
+    if (seconds === undefined || seconds < 0) return '0:00'
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.round(seconds % 60)
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+
+  // Use actual duration if available, otherwise estimated
+  const getDisplayDuration = (scene: SceneItem) => {
+    if (scene.actualDuration && scene.actualDuration > 0) {
+      return scene.actualDuration
+    }
+    return scene.estimatedDuration
+  }
+
+  const totalDuration = scenes.reduce((acc, s) => acc + (getDisplayDuration(s) || 0), 0)
 
   if (scenes.length === 0) {
     return null
@@ -149,9 +174,11 @@ export function SceneSelector({
         className="overflow-x-auto overflow-y-hidden w-full min-w-0"
         style={{ scrollbarWidth: 'thin', maxWidth: '100%' }}
       >
-        <div className="flex gap-1.5 px-3 py-2 w-max min-w-0">
+        <div className="flex gap-2 px-3 py-2 w-max min-w-0">
         {scenes.map((scene) => {
           const isSelected = scene.id === selectedSceneId
+          const displayDuration = getDisplayDuration(scene)
+          const isActualDuration = scene.actualDuration && scene.actualDuration > 0
           
           return (
             <button
@@ -160,7 +187,7 @@ export function SceneSelector({
               onClick={() => onSelectScene(scene.id)}
               className={cn(
                 "relative flex-shrink-0 text-left transition-all duration-150",
-                "rounded border px-1 py-1 w-[64px]",
+                "rounded-lg border px-2 py-1.5 w-[100px]",
                 isSelected
                   ? "bg-purple-900/50 border-purple-500 ring-1 ring-purple-500/30"
                   : "bg-gray-800/60 border-gray-700 hover:border-gray-600 hover:bg-gray-800"
@@ -174,9 +201,9 @@ export function SceneSelector({
               )}
               
               {/* Scene Number & Status */}
-              <div className="flex items-center justify-between mb-0.5">
+              <div className="flex items-center justify-between mb-1">
                 <span className={cn(
-                  "text-[9px] font-bold px-1 py-0.5 rounded",
+                  "text-[10px] font-bold px-1.5 py-0.5 rounded",
                   isSelected 
                     ? "bg-purple-500 text-white" 
                     : "bg-gray-700 text-gray-300"
@@ -188,20 +215,77 @@ export function SceneSelector({
 
               {/* Scene Name - truncated */}
               <p className={cn(
-                "text-[9px] font-medium truncate mb-0.5",
+                "text-[10px] font-medium truncate mb-1 leading-tight",
                 isSelected ? "text-white" : "text-gray-300"
-              )}>
+              )} title={scene.name}>
                 {scene.name || `Scene ${scene.sceneNumber}`}
               </p>
 
-              {/* Duration & Info */}
-              <div className="flex items-center justify-between text-[8px] text-gray-500">
-                <span>{formatDuration(scene.estimatedDuration)}</span>
-                <div className="flex items-center gap-0.5">
-                  {scene.hasImage && <Image className="w-2 h-2 text-blue-400" />}
-                  {scene.hasAudio && <Volume2 className="w-2 h-2 text-green-400" />}
+              {/* Workflow Status Indicators */}
+              <div className="flex items-center gap-0.5 mb-1">
+                <div title="Script" className={cn(
+                  "w-4 h-4 rounded flex items-center justify-center",
+                  scene.hasScript ? "bg-green-500/20" : "bg-gray-700/50"
+                )}>
+                  <FileText className={cn(
+                    "w-2.5 h-2.5",
+                    scene.hasScript ? "text-green-400" : "text-gray-600"
+                  )} />
+                </div>
+                <div title="Direction" className={cn(
+                  "w-4 h-4 rounded flex items-center justify-center",
+                  scene.hasDirection ? "bg-blue-500/20" : "bg-gray-700/50"
+                )}>
+                  <Compass className={cn(
+                    "w-2.5 h-2.5",
+                    scene.hasDirection ? "text-blue-400" : "text-gray-600"
+                  )} />
+                </div>
+                <div title="Frame" className={cn(
+                  "w-4 h-4 rounded flex items-center justify-center",
+                  scene.hasFrame ? "bg-purple-500/20" : "bg-gray-700/50"
+                )}>
+                  <Frame className={cn(
+                    "w-2.5 h-2.5",
+                    scene.hasFrame ? "text-purple-400" : "text-gray-600"
+                  )} />
+                </div>
+                <div title="Call Action" className={cn(
+                  "w-4 h-4 rounded flex items-center justify-center",
+                  scene.hasCallAction ? "bg-amber-500/20" : "bg-gray-700/50"
+                )}>
+                  <Clapperboard className={cn(
+                    "w-2.5 h-2.5",
+                    scene.hasCallAction ? "text-amber-400" : "text-gray-600"
+                  )} />
                 </div>
               </div>
+
+              {/* Duration & Start Time */}
+              <div className="flex items-center justify-between text-[9px]">
+                <span className={cn(
+                  "font-medium",
+                  isActualDuration ? "text-green-400" : "text-gray-400"
+                )} title={isActualDuration ? "Actual duration from segments" : "Estimated duration"}>
+                  {formatDuration(displayDuration)}
+                </span>
+                <span className="text-gray-500" title="Start time">
+                  @{formatStartTime(scene.startTime)}
+                </span>
+              </div>
+
+              {/* Asset indicators */}
+              {(scene.hasImage || scene.hasAudio || (scene.segmentCount && scene.segmentCount > 0)) && (
+                <div className="flex items-center justify-end gap-1 mt-1">
+                  {scene.hasImage && <Image className="w-2.5 h-2.5 text-blue-400" />}
+                  {scene.hasAudio && <Volume2 className="w-2.5 h-2.5 text-green-400" />}
+                  {scene.segmentCount && scene.segmentCount > 0 && (
+                    <span className="text-[8px] text-gray-500 bg-gray-700/50 px-1 rounded">
+                      {scene.segmentCount}seg
+                    </span>
+                  )}
+                </div>
+              )}
             </button>
           )
         })}
