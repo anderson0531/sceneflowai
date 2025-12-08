@@ -44,7 +44,7 @@ export const StoryboardRenderer = React.forwardRef<HTMLDivElement, RendererProps
       
       <div className="grid grid-cols-2 gap-6">
         {data.frames.map((frame, index) => (
-          <div key={index} className="border border-gray-300 p-4 print:break-inside-avoid">
+          <div key={`${index}-${frame.imageUrl || 'no-image'}`} className="border border-gray-300 p-4 print:break-inside-avoid">
             <h3 className="font-bold mb-2 !text-black">Scene {frame.sceneNumber}</h3>
             
             {frame.imageUrl && (
@@ -53,6 +53,7 @@ export const StoryboardRenderer = React.forwardRef<HTMLDivElement, RendererProps
                   src={frame.imageUrl} 
                   alt={`Scene ${frame.sceneNumber}`}
                   className="w-full h-full object-cover"
+                  key={frame.imageUrl}
                 />
               </div>
             )}

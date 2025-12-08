@@ -24,6 +24,7 @@ interface PlayerState {
   volume: number
   musicVolume: number
   autoAdvance: boolean
+  narrationEnabled: boolean
   kenBurnsIntensity: 'subtle' | 'medium' | 'dramatic'
   showVoicePanel: boolean
   voiceAssignments: {
@@ -113,6 +114,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     volume: 1.0,
     musicVolume: 0.15, // 15% default volume for music
     autoAdvance: true, // Auto-advance enabled by default
+    narrationEnabled: true, // Narration/description audio enabled by default
     kenBurnsIntensity: 'medium', // Default Ken Burns intensity
     showVoicePanel: false,
     voiceAssignments: {
@@ -581,6 +583,15 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         
         // Calculate audio timeline for concurrent playback
         const audioConfig = await calculateAudioTimeline(scene)
+        
+        // Filter out narration/description if narrationEnabled is false
+        if (!playerState.narrationEnabled) {
+          delete audioConfig.narration
+          delete audioConfig.description
+          delete audioConfig.narrationOffsetSeconds
+          delete audioConfig.descriptionOffsetSeconds
+          console.log('[Player] Narration disabled - filtered from audio config')
+        }
         
         // Ensure scene duration covers either calculated audio length or storyboard duration
         const fallbackDuration = scene.duration || 5
@@ -1082,6 +1093,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           playbackSpeed={playerState.playbackSpeed}
           musicVolume={playerState.musicVolume}
           autoAdvance={playerState.autoAdvance}
+          narrationEnabled={playerState.narrationEnabled}
           kenBurnsIntensity={playerState.kenBurnsIntensity}
           onTogglePlay={togglePlayPause}
           onPrevious={previousScene}
@@ -1096,6 +1108,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
             }
           }}
           onAutoAdvanceToggle={() => setPlayerState(prev => ({ ...prev, autoAdvance: !prev.autoAdvance }))}
+          onNarrationToggle={() => setPlayerState(prev => ({ ...prev, narrationEnabled: !prev.narrationEnabled }))}
           onKenBurnsIntensityChange={(intensity) => setPlayerState(prev => ({ ...prev, kenBurnsIntensity: intensity }))}
           isLoading={isLoadingAudio}
         />

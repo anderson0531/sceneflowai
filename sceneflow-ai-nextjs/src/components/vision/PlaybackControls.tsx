@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
-import { Play, Pause, SkipBack, SkipForward, Loader, Music, PlayCircle, Sparkles, ChevronDown, ChevronUp } from 'lucide-react'
+import { Play, Pause, SkipBack, SkipForward, Loader, Music, PlayCircle, Sparkles, ChevronDown, ChevronUp, AudioLines, VolumeX } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface PlaybackControlsProps {
@@ -12,6 +12,7 @@ interface PlaybackControlsProps {
   musicVolume: number
   autoAdvance: boolean
   kenBurnsIntensity?: 'subtle' | 'medium' | 'dramatic'
+  narrationEnabled?: boolean
   onTogglePlay: () => void
   onPrevious: () => void
   onNext: () => void
@@ -20,6 +21,7 @@ interface PlaybackControlsProps {
   onMusicVolumeChange: (volume: number) => void
   onAutoAdvanceToggle: () => void
   onKenBurnsIntensityChange?: (intensity: 'subtle' | 'medium' | 'dramatic') => void
+  onNarrationToggle?: () => void
   isLoading: boolean
 }
 
@@ -31,6 +33,7 @@ export function PlaybackControls({
   musicVolume,
   autoAdvance,
   kenBurnsIntensity = 'medium',
+  narrationEnabled = true,
   onTogglePlay,
   onPrevious,
   onNext,
@@ -39,6 +42,7 @@ export function PlaybackControls({
   onMusicVolumeChange,
   onAutoAdvanceToggle,
   onKenBurnsIntensityChange,
+  onNarrationToggle,
   isLoading
 }: PlaybackControlsProps) {
   const [isDragging, setIsDragging] = useState(false)
@@ -226,6 +230,27 @@ export function PlaybackControls({
           </button>
           {showAdvancedControls && (
             <div className="mt-2 space-y-3 pt-3 border-t border-gray-700">
+              {/* Narration Toggle */}
+              {onNarrationToggle && (
+                <button
+                  onClick={onNarrationToggle}
+                  className={`w-full flex items-center justify-center gap-2 p-2 rounded-lg transition-all min-h-[44px] ${
+                    narrationEnabled 
+                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white' 
+                      : 'bg-gray-800 hover:bg-gray-700 text-gray-400'
+                  }`}
+                  title={narrationEnabled ? 'Narration: ON' : 'Narration: OFF'}
+                  aria-label={narrationEnabled ? 'Disable narration' : 'Enable narration'}
+                >
+                  {narrationEnabled ? (
+                    <AudioLines className="w-4 h-4" />
+                  ) : (
+                    <VolumeX className="w-4 h-4" />
+                  )}
+                  <span className="text-xs">Narration: {narrationEnabled ? 'ON' : 'OFF'}</span>
+                </button>
+              )}
+
               {/* Music Volume Control */}
               <div className="flex items-center gap-3">
                 <Music className="w-4 h-4 text-gray-400" />
@@ -280,6 +305,26 @@ export function PlaybackControls({
 
         {/* Desktop: Always visible advanced controls */}
         <div className="hidden sm:flex items-center gap-4">
+          {/* Narration Toggle */}
+          {onNarrationToggle && (
+            <button
+              onClick={onNarrationToggle}
+              className={`p-2 rounded-lg transition-all min-h-[36px] min-w-[36px] flex items-center justify-center ${
+                narrationEnabled 
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white' 
+                  : 'bg-gray-800 hover:bg-gray-700 text-gray-400'
+              }`}
+              title={narrationEnabled ? 'Narration: ON' : 'Narration: OFF'}
+              aria-label={narrationEnabled ? 'Disable narration' : 'Enable narration'}
+            >
+              {narrationEnabled ? (
+                <AudioLines className="w-4 h-4" />
+              ) : (
+                <VolumeX className="w-4 h-4" />
+              )}
+            </button>
+          )}
+
           {/* Music Volume Control */}
           <div className="flex items-center gap-2">
             <Music className="w-4 h-4 text-gray-400" />
