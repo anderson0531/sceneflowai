@@ -1,8 +1,85 @@
 # SceneFlow AI - Application Design Document
 
-**Version**: 2.1  
-**Last Updated**: October 29, 2024  
+**Version**: 2.2  
+**Last Updated**: December 9, 2024  
 **Status**: Production
+
+---
+
+## Design Decisions Log
+
+| Date | Decision | Rationale | Status |
+|------|----------|-----------|--------|
+| 2024-12-09 | Ken Burns effect for scene images | Industry-standard cinematic look, no pre-processing needed, works in browser | ✅ Implemented |
+| 2024-12-09 | Scene-aware Ken Burns animation | Match animation direction to scene content (action, landscape, portrait) | ✅ Implemented |
+| 2024-12-09 | Prompt-based wardrobe (not reference images) | Reference images don't guarantee wardrobe consistency; prompt injection more reliable | ✅ Decided |
+| 2024-12-09 | Deprecate AnimaticsStudio component | Redundant with Screening Room (Preview Script); consolidate features | ✅ Removed |
+| 2024-12-09 | Single source of truth for scenes | Use `script.script.scenes` everywhere, not separate `scenes` state | ✅ Fixed |
+| 2024-12-09 | Narration toggle in Screening Room | Support both screenplay review (with narration) and animatic (without) use cases | ✅ Implemented |
+| 2024-12-09 | Shotstack for video export | Planned integration for MP4 export from animatics | 🔜 Planned |
+| 2024-10-29 | Vision replaces Storyboard phase | Unified script and visual development in single workflow | ✅ Implemented |
+| 2024-10-15 | Gemini as primary LLM | Cost-effective, quality output, consistent with Google stack | ✅ Implemented |
+| 2024-10-01 | Imagen 4 with GCS references | Character consistency via reference images | ✅ Implemented |
+
+---
+
+## Critical Architecture Patterns
+
+### State Management: Single Source of Truth
+
+**IMPORTANT**: Scene data must always flow from `script.script.scenes`. Never create separate state that duplicates this data.
+
+```typescript
+// ❌ WRONG - Creates sync issues
+const [scenes, setScenes] = useState([])
+useEffect(() => { setScenes(script?.script?.scenes || []) }, [script])
+// Later updates to script.script.scenes won't reflect in `scenes` state
+
+// ✅ CORRECT - Single source of truth
+const scenes = script?.script?.scenes || []
+// Updates to script automatically flow to scenes
+```
+
+**When updating scenes:**
+```typescript
+// ❌ WRONG - Updates separate state, doesn't persist
+setScenes(prev => prev.map(s => s.sceneNumber === num ? {...s, imageUrl} : s))
+
+// ✅ CORRECT - Updates canonical source
+setScript(prev => ({
+  ...prev,
+  script: {
+    ...prev.script,
+    scenes: prev.script.scenes.map(s => 
+      s.sceneNumber === num ? {...s, imageUrl} : s
+    )
+  }
+}))
+```
+
+### Component Data Flow
+
+```
+Vision Page (src/app/dashboard/workflow/vision/[projectId]/page.tsx)
+  ├── script state (canonical source)
+  │     └── script.script.scenes[] ← SINGLE SOURCE OF TRUTH
+  │
+  ├── ScriptPanel (receives scenes from script.script.scenes)
+  ├── SceneGallery (receives scenes from script.script.scenes)
+  ├── ScreeningRoom/ScriptPlayer (receives scenes from script.script.scenes)
+  └── StoryboardRenderer (receives scenes from script.script.scenes)
+```
+
+---
+
+## Deprecated Features & Components
+
+| Component/Feature | Deprecated Date | Replacement | Notes |
+|-------------------|-----------------|-------------|-------|
+| `AnimaticsStudio.tsx` | 2024-12-09 | Screening Room (ScriptPlayer) | Removed from UI, component file may still exist |
+| Separate `scenes` state | 2024-12-09 | `script.script.scenes` | Caused sync bugs |
+| `/dashboard/workflow/storyboard` | 2024-10-29 | `/dashboard/workflow/vision` | Legacy route may exist |
+| Parallax 2.5D effect | 2024-12-09 | Ken Burns effect | Never implemented; Ken Burns chosen instead |
 
 ---
 
@@ -157,11 +234,17 @@ The application follows a 6-step workflow:
 - Grid and timeline views
 - Visual storyboarding capabilities
 
-**Screening Room:**
-- Video playback with scenes
-- Audio playback (narration, dialogue, music)
+**Screening Room (ScriptPlayer):**
+- **Primary Component**: `src/components/vision/ScriptPlayer.tsx`
+- **Two Use Cases**:
+  1. **Screenplay Review**: Full audio including scene description narration. Great for reviewing and sharing for feedback.
+  2. **Animatic Preview**: Narration disabled, dialogue/music/SFX only. Standalone animated storyboard for presentations.
+- Ken Burns effect on scene images (scene-aware animation)
+- Audio playback (narration, dialogue, music, SFX)
+- Narration toggle (on/off)
 - Scene-by-scene navigation
-- Export capabilities
+- Fullscreen mode
+- Export capabilities (MP4 via Shotstack - planned)
 
 #### Scene Prompt Builder
 
@@ -691,6 +774,92 @@ ENCRYPTION_KEY=...
 
 ---
 
+## 12.1 Planned Feature: Shotstack MP4 Export
+
+**Status**: Planned for Final Cut workflow
+
+**Purpose**: Export Screening Room animatics as MP4 video files.
+
+**Integration Approach**:
+```
+SceneFlow Data → Shotstack Edit JSON → Shotstack Render API → MP4 Download
+```
+
+**Data Mapping**:
+| SceneFlow | Shotstack |
+|-----------|-----------|
+| `scene.imageUrl` | `clip.asset.src` |
+| `scene.duration` | `clip.length` |
+| `scene.startTime` | `clip.start` |
+| Ken Burns direction | `clip.effect` (zoomIn, panLeft, etc.) |
+| Audio URLs | Audio track clips |
+
+**Ken Burns → Shotstack Effect Mapping**:
+| SceneFlow Direction | Shotstack Effect |
+|---------------------|------------------|
+| `in` | `zoomIn` |
+| `out` | `zoomOut` |
+| `left` | `panLeft` |
+| `right` | `panRight` |
+| `up-left` | `panLeft` + `zoomIn` |
+| `up-right` | `panRight` + `zoomIn` |
+
+**API Routes (Planned)**:
+- `/api/export/animatic` — Generate Shotstack edit and submit render
+- `/api/export/animatic/[renderId]` — Poll render status, return download URL
+
+**User Flow**:
+1. User clicks "Export MP4" in Screening Room
+2. System builds Shotstack Edit JSON from scene data
+3. Submit to Shotstack API
+4. Poll for completion
+5. Return download URL
+
+**Options**:
+- Include/exclude narration audio
+- Resolution (HD, 4K)
+- Frame rate (24, 30 fps)
+
+---
+
+## 12.2 Ken Burns Effect Implementation
+
+**Status**: ✅ Implemented (December 2024)
+
+**Location**: `src/lib/animation/kenBurns.ts`
+
+**Scene-Aware Animation**:
+The Ken Burns effect analyzes scene content to choose appropriate animation:
+
+```typescript
+function getSceneAwareKenBurns(scene: Scene): KenBurnsConfig {
+  const visualDescription = scene.visualDescription?.toLowerCase() || ''
+  const heading = scene.heading?.toLowerCase() || ''
+  
+  // Action scenes: zoom out to show movement
+  if (hasActionKeywords(visualDescription)) return { direction: 'out', scale: 1.15 }
+  
+  // Landscapes/establishing: pan based on orientation
+  if (hasLandscapeKeywords(heading)) return { direction: 'right', scale: 1.1 }
+  
+  // Close-ups/portraits: slow zoom in
+  if (hasPortraitKeywords(visualDescription)) return { direction: 'in', scale: 1.08 }
+  
+  // Default: gentle zoom in
+  return { direction: 'in', scale: 1.1 }
+}
+```
+
+**CSS Implementation** (in ScriptPlayer):
+```css
+@keyframes kenburns-in {
+  from { transform: scale(1); }
+  to { transform: scale(1.1); }
+}
+```
+
+---
+
 ## 13. Development Guidelines
 
 ### 13.1 Code Organization
@@ -774,16 +943,24 @@ ENCRYPTION_KEY=...
 - Script Panel: `src/components/vision/ScriptPanel.tsx`
 - Character Library: `src/components/vision/CharacterLibrary.tsx`
 - Scene Gallery: `src/components/vision/SceneGallery.tsx`
+- Screening Room Player: `src/components/vision/ScriptPlayer.tsx`
+- Playback Controls: `src/components/vision/PlaybackControls.tsx`
+
+**Animation:**
+- Ken Burns Effect: `src/lib/animation/kenBurns.ts`
 
 **Services:**
 - Prompt Optimizer: `src/lib/imagen/promptOptimizer.ts`
 - Vertex AI Client: `src/lib/vertexai/client.ts`
 - Character Matching: `src/lib/character/matching.ts`
+- Creatomate Render: `src/services/CreatomateRenderService.ts`
 
 **API Routes:**
 - Scene Image Generation: `src/app/api/scene/generate-image/route.ts`
 - Vision Script: `src/app/api/vision/generate-script-v2/route.ts`
 - Character Save: `src/app/api/character/save/route.ts`
+- Batch Audio: `src/app/api/vision/generate-all-audio/route.ts`
+- Batch Images: `src/app/api/vision/generate-all-images/route.ts`
 
 **State Management:**
 - Enhanced Store: `src/store/enhancedStore.ts`
@@ -794,13 +971,17 @@ ENCRYPTION_KEY=...
 - Scene Direction: `src/app/dashboard/workflow/scene-direction/page.tsx`
 - Video Generation: `src/app/dashboard/workflow/video-generation/page.tsx`
 
+**Report Renderers:**
+- Script Renderer: `src/components/reports/renderers/ScriptRenderer.tsx`
+- Storyboard Renderer: `src/components/reports/renderers/StoryboardRenderer.tsx`
+
 ---
 
-**Document Version**: 2.1  
-**Last Updated**: October 29, 2024  
+**Document Version**: 2.2  
+**Last Updated**: December 9, 2024  
 **Maintained By**: SceneFlow AI Development Team
 
 ---
 
-*Note: This document reflects Vision as the unified workflow phase that replaced the separate Storyboard phase. Vision handles both script development and visual storyboarding in a single integrated interface.*
+*Note: This document reflects Vision as the unified workflow phase that replaced the separate Storyboard phase. Vision handles both script development and visual storyboarding in a single integrated interface. The Screening Room serves dual purposes: screenplay review (with narration) and animatic preview (without narration).*
 
