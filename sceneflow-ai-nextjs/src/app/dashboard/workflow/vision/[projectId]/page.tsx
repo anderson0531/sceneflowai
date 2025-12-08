@@ -19,7 +19,7 @@ import { Button, buttonVariants } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User } from 'lucide-react'
+import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark } from 'lucide-react'
 
 const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement> & { size?: number }> = ({ size = 32, className, ...props }) => (
   <svg
@@ -551,6 +551,31 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       setSelectedSceneIndex(0)
     }
   }, [script?.script?.scenes, selectedSceneIndex])
+
+  // Compute bookmark index for quick actions
+  const bookmarkedSceneIndex = useMemo(() => {
+    if (!sceneBookmark) return -1
+    const scriptScenes = script?.script?.scenes || []
+    return scriptScenes.findIndex((s: any, idx: number) => {
+      const sceneId = s.id || s.sceneId || `scene-${idx}`
+      if (sceneBookmark?.sceneId) {
+        return sceneId === sceneBookmark.sceneId
+      }
+      if (sceneBookmark?.sceneNumber != null) {
+        return idx === Number(sceneBookmark.sceneNumber) - 1
+      }
+      return false
+    })
+  }, [sceneBookmark, script?.script?.scenes])
+
+  // Handler to jump to bookmarked scene
+  const handleJumpToBookmark = useCallback(() => {
+    if (bookmarkedSceneIndex === -1) return
+    setSelectedSceneIndex(bookmarkedSceneIndex)
+    // Scroll to scene
+    const sceneElement = document.getElementById(`scene-card-${bookmarkedSceneIndex}`)
+    sceneElement?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [bookmarkedSceneIndex])
 
   const handleBookmarkScene = useCallback(
     async (bookmark: SceneBookmark | null) => {
@@ -1734,6 +1759,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // Process characters first (needed for dialogue migration)
         let charactersWithIds: any[] = []
         if (visionPhase.characters) {
+          
+          // DEBUG: Log character data including referenceImage status
+          console.log('[loadProject] Characters from DB:', visionPhase.characters.map((c: any) => ({
+            name: c.name,
+            hasReferenceImage: !!c.referenceImage,
+            referenceImageUrl: c.referenceImage ? c.referenceImage.substring(0, 60) + '...' : 'none'
+          })))
           
           // Ensure character roles are preserved (default to supporting if not specified)
           const charactersWithRole = visionPhase.characters.map((c: any) => {
@@ -3170,6 +3202,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         
         sceneCharacters = findSceneCharacters(sceneText, characters)
       }
+      
+      // DEBUG: Log character referenceImage status before sending to API
+      console.log('[generateSceneImage] Characters state referenceImage status:', 
+        characters.map(c => ({ name: c.name, hasReferenceImage: !!c.referenceImage })))
+      console.log('[generateSceneImage] Scene characters being sent:', 
+        sceneCharacters.map((c: any) => ({ 
+          name: c.name, 
+          hasReferenceImage: !!c.referenceImage,
+          referenceImageUrl: c.referenceImage ? c.referenceImage.substring(0, 50) + '...' : 'none' 
+        })))
       
       const response = await fetch('/api/scene/generate-image', {
         method: 'POST',
@@ -4731,6 +4773,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       variant="outline"
                       size="sm"
                       className="w-full justify-start text-xs"
+                      onClick={handleJumpToBookmark}
+                      disabled={bookmarkedSceneIndex === -1}
+                    >
+                      <Bookmark className={`w-3 h-3 mr-2 ${bookmarkedSceneIndex !== -1 ? 'text-amber-400' : ''}`} />
+                      {bookmarkedSceneIndex !== -1 ? `Go to Scene ${bookmarkedSceneIndex + 1}` : 'No Bookmark'}
+                    </Button>
+                    <Button
+                      variant={showSceneGallery ? 'default' : 'outline'}
+                      size="sm"
+                      className={`w-full justify-start text-xs ${showSceneGallery ? 'bg-cyan-500/90 hover:bg-cyan-500 text-white' : ''}`}
+                      onClick={() => setShowSceneGallery(!showSceneGallery)}
+                    >
+                      <ImageIcon className={`w-3 h-3 mr-2 ${showSceneGallery ? 'text-white' : 'text-cyan-400'}`} />
+                      {showSceneGallery ? 'Hide Storyboard' : 'Show Storyboard'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start text-xs"
                       onClick={() => setIsPlayerOpen(true)}
                     >
                       <Play className="w-3 h-3 mr-2" />
@@ -4844,7 +4905,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           
           {/* Center: Script with Scene Cards */}
           <Panel defaultSize={57} minSize={40} maxSize={70} className="min-w-0 overflow-hidden overflow-x-hidden">
-            <div className="h-full overflow-y-auto px-4 pt-1 min-w-0 w-full overflow-x-hidden">
+            <div className="h-full overflow-y-auto px-4 pt-4 min-w-0 w-full overflow-x-hidden">
               <ScriptPanel 
                 script={script}
                 onScriptChange={setScript}

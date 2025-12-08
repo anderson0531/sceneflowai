@@ -595,13 +595,56 @@ Generate COMPLETE scenes with full dialogue and action.`
 
     // Merge metadata properly (avoids SQL syntax errors)
     const existingMetadata = project.metadata || {}
+    
+    // IMPORTANT: Merge new characters with existing ones to preserve referenceImage and other generated data
+    const existingCharacters = existingMetadata.visionPhase?.characters || []
+    const newCharacters = scriptData.characters || []
+    
+    // Create a map of existing characters by name for quick lookup
+    const existingCharMap = new Map(existingCharacters.map((c: any) => [c.name?.toLowerCase(), c]))
+    
+    // Merge: use new character data but preserve referenceImage, voiceConfig, etc. from existing
+    const mergedCharacters = newCharacters.map((newChar: any) => {
+      const existingChar = existingCharMap.get(newChar.name?.toLowerCase())
+      if (existingChar) {
+        // Preserve generated data from existing character
+        return {
+          ...newChar,
+          id: existingChar.id || newChar.id,
+          referenceImage: existingChar.referenceImage || newChar.referenceImage,
+          voiceConfig: existingChar.voiceConfig || newChar.voiceConfig,
+          appearanceDescription: existingChar.appearanceDescription || newChar.appearanceDescription,
+          visionDescription: existingChar.visionDescription || newChar.visionDescription,
+          imageApproved: existingChar.imageApproved,
+          // Preserve any other fields that might have been set
+          ...Object.fromEntries(
+            Object.entries(existingChar).filter(([key, value]) => 
+              value !== undefined && value !== null && !['name', 'description', 'role', 'age', 'personality'].includes(key)
+            )
+          ),
+          // But always use the new name, description, role if provided
+          name: newChar.name || existingChar.name,
+          description: newChar.description || existingChar.description,
+          role: newChar.role || existingChar.role,
+        }
+      }
+      return newChar
+    })
+    
+    console.log('[Generate Script] Merged characters:', {
+      existing: existingCharacters.length,
+      new: newCharacters.length,
+      merged: mergedCharacters.length,
+      withReferenceImage: mergedCharacters.filter((c: any) => c.referenceImage).length
+    })
+    
     const updatedMetadata = {
       ...existingMetadata,
       visionPhase: {
         ...(existingMetadata.visionPhase || {}),
         script: scriptData,
         scriptGenerated: true,
-        characters: scriptData.characters || [],
+        characters: mergedCharacters,
         scenes: scriptData.script?.scenes || []
       }
     }

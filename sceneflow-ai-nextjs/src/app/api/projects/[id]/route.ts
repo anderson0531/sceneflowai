@@ -177,6 +177,14 @@ export async function PUT(
     const scenesAfterUpdate = mergedMetadata?.visionPhase?.script?.script?.scenes || []
     const scenesWithDirectionAfter = scenesAfterUpdate.filter((s: any) => !!s.sceneDirection)
     
+    // DEBUG: Log character referenceImages after save
+    const charactersAfterSave = (project.metadata as any)?.visionPhase?.characters || []
+    console.log('[Projects PUT] Characters after save:', charactersAfterSave.map((c: any) => ({
+      name: c.name,
+      hasReferenceImage: !!c.referenceImage,
+      referenceImageUrl: c.referenceImage ? c.referenceImage.substring(0, 60) + '...' : 'none'
+    })))
+    
     console.log('[Projects PUT] Project updated successfully:', {
       projectId: id,
       charactersInDb: mergedMetadata?.visionPhase?.characters?.length || 0,

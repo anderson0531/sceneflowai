@@ -1819,49 +1819,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             </TooltipProvider>
           )}
 
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleJumpToBookmark}
-                disabled={bookmarkedSceneIndex === -1}
-                className="flex items-center gap-1"
-              >
-                <ArrowRight className="w-4 h-4 text-amber-400" />
-                <span className="hidden sm:inline">Bookmark</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-              {bookmarkedSceneIndex === -1 ? 'No bookmarked scene yet' : 'Jump to your saved scene'}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
-          {/* Storyboard Toggle Button */}
-          {onToggleStoryboard && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant={showStoryboard ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={onToggleStoryboard}
-                    className={`flex items-center gap-1 ${showStoryboard ? 'bg-cyan-500/90 hover:bg-cyan-500 text-white' : ''}`}
-                  >
-                    <ImageIcon className={`w-4 h-4 ${showStoryboard ? 'text-white' : 'text-cyan-400'}`} />
-                    <span className="hidden sm:inline">Storyboard</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                  {showStoryboard ? 'Hide Storyboard section' : 'Show Storyboard section'}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-
-          {/* Preview moved to Storyboard header */}
+          {/* Bookmark and Storyboard buttons moved to Quick Actions menu */}
 
           {dialogGenerationMode === 'background' && isDialogGenerating && backgroundProgressPercent !== null && (
             <div className="flex items-center gap-1 text-xs text-blue-400">

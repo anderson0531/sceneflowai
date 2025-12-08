@@ -387,8 +387,38 @@ export async function POST(request: NextRequest) {
           totalDuration: totalEstimatedDuration
         }
 
-        // Save to project
+        // Save to project - merge new characters with existing to preserve referenceImage
         const existingVisionPhase = project.metadata?.visionPhase || {}
+        const savedCharacters = existingVisionPhase.characters || []
+        
+        // Create a map of existing characters by name for quick lookup
+        const existingCharMap = new Map(savedCharacters.map((c: any) => [c.name?.toLowerCase(), c]))
+        
+        // Merge: use new character data but preserve referenceImage, voiceConfig, etc. from existing
+        const mergedCharacters = allCharacters.map((newChar: any) => {
+          const existingChar = existingCharMap.get(newChar.name?.toLowerCase())
+          if (existingChar) {
+            // Preserve generated data from existing character
+            return {
+              ...newChar,
+              id: existingChar.id || newChar.id,
+              referenceImage: existingChar.referenceImage || newChar.referenceImage,
+              voiceConfig: existingChar.voiceConfig || newChar.voiceConfig,
+              appearanceDescription: existingChar.appearanceDescription || newChar.appearanceDescription,
+              visionDescription: existingChar.visionDescription || newChar.visionDescription,
+              imageApproved: existingChar.imageApproved,
+            }
+          }
+          return newChar
+        })
+        
+        console.log('[Script Gen V2] Merged characters:', {
+          existing: savedCharacters.length,
+          new: allCharacters.length,
+          merged: mergedCharacters.length,
+          withReferenceImage: mergedCharacters.filter((c: any) => c.referenceImage).length
+        })
+        
         await project.update({
           metadata: {
             ...project.metadata,
@@ -396,7 +426,7 @@ export async function POST(request: NextRequest) {
               ...existingVisionPhase,
               script,
               scriptGenerated: true,
-              characters: allCharacters,
+              characters: mergedCharacters,
               scenes: scenesWithCharacterIds
             }
           }
