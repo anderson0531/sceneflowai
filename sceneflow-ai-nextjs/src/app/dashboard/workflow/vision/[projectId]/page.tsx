@@ -5174,7 +5174,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   // Show success toast
                   toast.success(`Added "${name}" to Reference Library`)
                 }}
-              belowDashboardSlot={({ openGenerateAudio }) => (
+              belowDashboardSlot={({ openGenerateAudio, openPromptBuilder }) => (
                 <div className="rounded-2xl border border-white/10 bg-slate950/40 shadow-inner">
                   <div className="px-5 py-5">
                     {showSceneGallery && (
@@ -5187,9 +5187,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             characters={characters}
                             projectTitle={project?.title}
                             onRegenerateScene={(index) => handleGenerateSceneImage(index)}
+                            onOpenPromptBuilder={openPromptBuilder}
                             onGenerateScene={handleGenerateScene}
                             onUploadScene={handleUploadScene}
                             onClose={() => setShowSceneGallery(false)}
+                            onAddToSceneLibrary={(index, imageUrl) => {
+                              const scenes = script?.script?.scenes || []
+                              const scene = scenes[index]
+                              if (scene && imageUrl) {
+                                const newReference: VisualReference = {
+                                  id: crypto.randomUUID(),
+                                  type: 'scene',
+                                  name: `Scene ${index + 1} Frame`,
+                                  description: scene.heading || scene.visualDescription || `Scene ${index + 1}`,
+                                  imageUrl,
+                                  createdAt: new Date().toISOString(),
+                                }
+                                setSceneReferences((prev) => [...prev, newReference])
+                                toast.success(`Added Scene ${index + 1} to Reference Library`)
+                              }
+                            }}
                             sceneProductionState={sceneProductionState}
                             productionReferences={{
                               characters,

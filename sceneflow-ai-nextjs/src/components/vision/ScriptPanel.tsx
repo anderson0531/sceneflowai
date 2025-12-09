@@ -166,7 +166,10 @@ interface ScriptPanelProps {
   isGeneratingKeyframe?: boolean
   generatingKeyframeSceneNumber?: number | null
   // Below dashboard slot
-  belowDashboardSlot?: (helpers: { openGenerateAudio: () => void }) => React.ReactNode
+  belowDashboardSlot?: (helpers: { 
+    openGenerateAudio: () => void
+    openPromptBuilder: (sceneIdx: number) => void
+  }) => React.ReactNode
   // Scene timeline filtering - only show selected scene when set
   selectedSceneIndex?: number | null
   // Callback when scene selection changes (for timeline sync)
@@ -1870,15 +1873,18 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         )}
       </div>
       
-      {/* Optional slot between Dashboard and Scene Director */}
-      {belowDashboardSlot && showStoryboard ? (
-        <div className="mt-6">
-          {belowDashboardSlot({ openGenerateAudio: () => setGenerateAudioDialogOpen(true) })}
-        </div>
-      ) : null}
-      
-      {/* Script Content */}
+      {/* Script Content - scrollable area containing storyboard and scenes */}
       <div className="flex-1 overflow-y-auto bg-slate-950/20">
+        {/* Optional storyboard slot - now inside scrollable area */}
+        {belowDashboardSlot && showStoryboard ? (
+          <div className="px-6 pt-6">
+            {belowDashboardSlot({ 
+              openGenerateAudio: () => setGenerateAudioDialogOpen(true),
+              openPromptBuilder: handleOpenSceneBuilder
+            })}
+          </div>
+        ) : null}
+        
         {!script || isGenerating ? (
           <div className="h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
             {isGenerating ? (

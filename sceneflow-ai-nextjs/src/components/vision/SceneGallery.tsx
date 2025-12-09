@@ -13,7 +13,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, X, Upload, Download, FolderPlus } from 'lucide-react'
+import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, X, Upload, Download, FolderPlus, ImagePlus, PenSquare } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
@@ -28,10 +28,12 @@ interface SceneGalleryProps {
   characters: any[]
   projectTitle?: string
   onRegenerateScene: (sceneIndex: number) => void
+  onOpenPromptBuilder?: (sceneIndex: number) => void
   onGenerateScene: (sceneIndex: number, prompt: string) => void
   onUploadScene: (sceneIndex: number, file: File) => void
   onDownloadScene?: (sceneIndex: number) => void
   onAddToLibrary?: (sceneIndex: number) => void
+  onAddToSceneLibrary?: (sceneIndex: number, imageUrl: string) => void
   onClose?: () => void
   sceneProductionState: Record<string, SceneProductionData>
   productionReferences: SceneProductionReferences
@@ -50,10 +52,12 @@ export function SceneGallery({
   characters,
   projectTitle,
   onRegenerateScene,
+  onOpenPromptBuilder,
   onGenerateScene,
   onUploadScene,
   onDownloadScene,
   onAddToLibrary,
+  onAddToSceneLibrary,
   onClose,
   sceneProductionState,
   productionReferences,
@@ -202,6 +206,7 @@ export function SceneGallery({
                     setOpenProductionScene(isProductionOpen ? null : sceneKey)
                   }}
                   onRegenerate={() => onRegenerateScene(idx)}
+                  onOpenPromptBuilder={onOpenPromptBuilder ? () => onOpenPromptBuilder(idx) : undefined}
                   onGenerate={async (prompt) => {
                     setGeneratingScenes((prev) => new Set(prev).add(idx))
                     try {
@@ -217,6 +222,7 @@ export function SceneGallery({
                   onUpload={(file) => onUploadScene(idx, file)}
                   onDownload={onDownloadScene ? () => onDownloadScene(idx) : undefined}
                   onAddToLibrary={onAddToLibrary ? () => onAddToLibrary(idx) : undefined}
+                  onAddToSceneLibrary={onAddToSceneLibrary && scene.imageUrl ? () => onAddToSceneLibrary(idx, scene.imageUrl) : undefined}
                   prompt={scenePrompts[idx] || defaultPrompt}
                   onPromptChange={(prompt) => setScenePrompts((prev) => ({ ...prev, [idx]: prompt }))}
                   isGenerating={generatingScenes.has(idx)}
@@ -273,10 +279,12 @@ interface SceneCardProps {
   isProductionOpen: boolean
   onClick: () => void
   onRegenerate: () => void
+  onOpenPromptBuilder?: () => void
   onGenerate: (prompt: string) => void
   onUpload: (file: File) => void
   onDownload?: () => void
   onAddToLibrary?: () => void
+  onAddToSceneLibrary?: () => void
   prompt: string
   onPromptChange: (prompt: string) => void
   isGenerating: boolean
@@ -297,10 +305,12 @@ function SceneCard({
   isProductionOpen,
   onClick,
   onRegenerate,
+  onOpenPromptBuilder,
   onGenerate,
   onUpload,
   onDownload,
   onAddToLibrary,
+  onAddToSceneLibrary,
   prompt,
   onPromptChange,
   isGenerating,
@@ -431,17 +441,28 @@ function SceneCard({
             }}
           />
           
-          {/* Regenerate */}
+          {/* Edit Prompt / Regenerate */}
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  if (onOpenPromptBuilder) {
+                    onOpenPromptBuilder();
+                  } else {
+                    onRegenerate();
+                  }
+                }}
                 className="p-1.5 rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
               >
-                <RefreshCw className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                {onOpenPromptBuilder ? (
+                  <PenSquare className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                )}
               </button>
             </TooltipTrigger>
-            <TooltipContent>Regenerate</TooltipContent>
+            <TooltipContent>{onOpenPromptBuilder ? 'Edit Prompt' : 'Regenerate'}</TooltipContent>
           </Tooltip>
           
           {/* Upload */}
@@ -470,7 +491,22 @@ function SceneCard({
             <TooltipContent>Download</TooltipContent>
           </Tooltip>
           
-          {/* Add to Library */}
+          {/* Add to Scene Reference Library */}
+          {onAddToSceneLibrary && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onAddToSceneLibrary(); }}
+                  className="p-1.5 rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  <ImagePlus className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Add to Scene Library</TooltipContent>
+            </Tooltip>
+          )}
+          
+          {/* Add to Character Library */}
           {onAddToLibrary && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -481,7 +517,7 @@ function SceneCard({
                   <FolderPlus className="w-4 h-4 text-gray-700 dark:text-gray-300" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Add to Library</TooltipContent>
+              <TooltipContent>Add to Character Library</TooltipContent>
             </Tooltip>
           )}
         </div>
