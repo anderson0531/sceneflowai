@@ -49,6 +49,83 @@ interface ScenePromptBuilderProps {
   isGenerating?: boolean
 }
 
+/**
+ * Extract static position from video-style blocking instructions.
+ * Still images can only show a single frozen moment, so we extract
+ * the initial position and remove temporal/sequential instructions.
+ * 
+ * Example input:  "Ben Anderson begins downstage left facing the mirror (back to camera/Alex). 
+ *                  Alex Anderson is seated upstage right on the couch. Ben turns to face Alex 
+ *                  on 'I don't want the algorithm fixing me'."
+ * 
+ * Example output: "Ben Anderson is downstage left facing the mirror (back to camera/Alex). 
+ *                  Alex Anderson is seated upstage right on the couch."
+ */
+function extractStaticPositionFromBlocking(blocking: string): string {
+  if (!blocking) return ''
+  
+  let cleaned = blocking
+  
+  // Remove dialogue cue timing: "on 'I don't want...'" or "at 'line here'"
+  cleaned = cleaned.replace(/\b(on|at|during|after|before)\s+['"][^'"]+['"][^.]*\./gi, '.')
+  cleaned = cleaned.replace(/\b(on|at|during|after|before)\s+['"][^'"]+['"]/gi, '')
+  
+  // Remove "until X where Y" patterns: "remains seated until 'line' where he stands"
+  cleaned = cleaned.replace(/\buntil\s+['"][^'"]+['"]\s*,?\s*(where|when)?\s*[^,.]+/gi, '')
+  cleaned = cleaned.replace(/\buntil\s+[^,.]+\s+(where|when)\s+[^,.]+/gi, '')
+  
+  // Remove future action cues: "X turns to face Y" -> remove (describes future motion)
+  cleaned = cleaned.replace(/\b(\w+)\s+(turns?|moves?|walks?|rises?|stands?|sits?)\s+to\s+(face|approach|meet|join|leave|exit)\s+[^,.]+/gi, '')
+  
+  // Convert "begins" to static: "begins downstage left" -> "is downstage left"
+  cleaned = cleaned.replace(/\bbegins\s+(downstage|upstage|stage\s+left|stage\s+right|center)/gi, 'is $1')
+  
+  // Remove temporal continuity verbs: "remains/continues/keeps [verb]ing until..."
+  cleaned = cleaned.replace(/\b(remains|continues|keeps|stays)\s+\w+(ing|ed)?\s+(until|while|as|for|throughout)\s+[^,.]+/gi, '')
+  
+  // Clean up dangling punctuation and spaces
+  cleaned = cleaned.replace(/\s*,\s*,/g, ',')
+  cleaned = cleaned.replace(/\s*\.\s*\./g, '.')
+  cleaned = cleaned.replace(/,\s*\./g, '.')
+  cleaned = cleaned.replace(/\s{2,}/g, ' ')
+  cleaned = cleaned.replace(/^\s*[,.]\s*/g, '')
+  cleaned = cleaned.replace(/\s*[,]\s*$/g, '')
+  
+  return cleaned.trim()
+}
+
+/**
+ * Extract primary action from key actions array for still image.
+ * Takes the first action and removes motion/manner adverbs that imply continuous movement.
+ * 
+ * Example input:  ["Ben fumbles aggressively with the Windsor knot", 
+ *                  "Alex swipes casually through the air (miming holographic interaction)",
+ *                  "Ben shivers slightly"]
+ * 
+ * Example output: "Ben adjusts the Windsor knot"
+ */
+function extractPrimaryAction(keyActions: string[]): string {
+  if (!keyActions || keyActions.length === 0) return ''
+  
+  // Take only the first action for a still image
+  let primaryAction = keyActions[0]
+  
+  // Remove manner adverbs that imply continuous motion
+  primaryAction = primaryAction.replace(/\b(aggressively|nervously|repeatedly|continuously|frantically|vigorously)\s+/gi, '')
+  
+  // Convert continuous motion verbs to static poses where possible
+  primaryAction = primaryAction.replace(/\bfumbles\s+(with)?/gi, 'adjusts ')
+  primaryAction = primaryAction.replace(/\bpaces\b/gi, 'stands')
+  primaryAction = primaryAction.replace(/\bfidgets\s+(with)?/gi, 'touches ')
+  primaryAction = primaryAction.replace(/\bshivers\b/gi, 'appears cold')
+  primaryAction = primaryAction.replace(/\bswipes\s+/gi, 'gestures ')
+  
+  // Clean up double spaces
+  primaryAction = primaryAction.replace(/\s{2,}/g, ' ').trim()
+  
+  return primaryAction
+}
+
 export function ScenePromptBuilder({
   open,
   onClose,
@@ -199,15 +276,31 @@ export function ScenePromptBuilder({
       }
       
       // TALENT DIRECTION (Blocking & Actions)
+      // CRITICAL: Filter for still image generation - extract static positions only
+      // Video-style blocking contains temporal sequences that can't be shown in one frame
       if (sceneDirection.talent) {
-        // Blocking
+        // Blocking - extract static positions, remove temporal/dialogue cues
         if (sceneDirection.talent.blocking) {
-          updates.talentBlocking = sceneDirection.talent.blocking
+          const staticBlocking = extractStaticPositionFromBlocking(sceneDirection.talent.blocking)
+          if (staticBlocking) {
+            updates.talentBlocking = staticBlocking
+            console.log('[ScenePromptBuilder] Extracted static blocking:', {
+              original: sceneDirection.talent.blocking.substring(0, 100) + '...',
+              static: staticBlocking.substring(0, 100) + '...'
+            })
+          }
         }
         
-        // Key Actions -> Character Actions
+        // Key Actions -> Primary Action (first action only, motion adverbs stripped)
         if (sceneDirection.talent.keyActions && sceneDirection.talent.keyActions.length > 0) {
-          updates.characterActions = sceneDirection.talent.keyActions.join(', ')
+          const primaryAction = extractPrimaryAction(sceneDirection.talent.keyActions)
+          if (primaryAction) {
+            updates.characterActions = primaryAction
+            console.log('[ScenePromptBuilder] Extracted primary action:', {
+              original: sceneDirection.talent.keyActions,
+              primary: primaryAction
+            })
+          }
         }
         
         // Emotional Beat

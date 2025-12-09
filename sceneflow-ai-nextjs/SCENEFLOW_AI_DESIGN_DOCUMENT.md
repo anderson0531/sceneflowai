@@ -305,6 +305,23 @@ The application follows a 6-step workflow:
 
 #### Scene Prompt Builder
 
+**Static Frame Filtering (v2.3):**
+
+Scene Direction data contains video-style blocking and action sequences designed for cinematography. Since image generation produces a single frozen frame, the prompt builder automatically filters temporal/sequential instructions:
+
+- `extractStaticPositionFromBlocking()`: Converts video blocking to static positions
+  - Removes dialogue cue timing: `on 'I don't want...'` → removed
+  - Removes temporal sequences: `until X where Y` → removed  
+  - Converts motion verbs: `begins downstage left` → `is downstage left`
+  - Strips future actions: `turns to face Alex` → removed
+
+- `extractPrimaryAction()`: Extracts single action from key actions array
+  - Takes first action only (still image = one moment)
+  - Strips motion adverbs: `fumbles aggressively` → `adjusts`
+  - Converts continuous to static: `paces` → `stands`
+
+This ensures users see and edit a clean still-image prompt, not conflicting video choreography.
+
 **Guided Mode:**
 - Location & Setting inputs
 - Character selection (with reference images)
