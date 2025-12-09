@@ -192,6 +192,8 @@ export async function PUT(
                 appearanceDescription: incomingChar.appearanceDescription ?? existingChar.appearanceDescription,
                 visionDescription: incomingChar.visionDescription ?? existingChar.visionDescription,
                 imageApproved: incomingChar.imageApproved ?? existingChar.imageApproved,
+                defaultWardrobe: incomingChar.defaultWardrobe ?? existingChar.defaultWardrobe,
+                wardrobeAccessories: incomingChar.wardrobeAccessories ?? existingChar.wardrobeAccessories,
               }
             }
             return incomingChar
