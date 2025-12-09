@@ -758,16 +758,28 @@ function cleanSceneForVisuals(action: string, visualDesc: string): string {
   cleaned = cleaned.replace(/,?\s*and\s+then\s+[^,;.]+/gi, '') // "and then walks away"
   cleaned = cleaned.replace(/\b(stops|pauses|listens|turns|resumes|begins|starts|continues)\s+(to\s+)?\w+/gi, '') // action verbs
   
-  // Remove ABSTRACT MOOD/CONCEPT descriptions (model can't visualize, adds text instead)
-  // "conveying Kinetic anxiety (Alex) vs. Catatonic dread (Ben)"
-  cleaned = cleaned.replace(/,?\s*conveying\s+[^,;.]+/gi, '')
-  cleaned = cleaned.replace(/;\s*the\s+silence\s+should\s+feel\s+\w+/gi, '')
-  cleaned = cleaned.replace(/\b(should\s+feel|meant\s+to\s+convey|representing|symbolizing)\s+[^,;.]+/gi, '')
+  // Remove ABSTRACT META-DESCRIPTIONS that models can't visualize
+  // BUT PRESERVE emotional tone/mood - these ARE important for still images!
+  // 
+  // REMOVE: "meant to convey", "should feel", "representing", "symbolizing" (meta-commentary)
+  // PRESERVE: "conveying tension", "tense atmosphere", "anxious expression" (actual mood)
+  
+  // Only remove meta-commentary patterns, NOT emotional direction
+  cleaned = cleaned.replace(/;\s*the\s+silence\s+should\s+feel\s+\w+/gi, '') // narrative instruction
+  cleaned = cleaned.replace(/\b(should\s+feel|meant\s+to\s+convey|representing\s+the|symbolizing\s+the)\s+[^,;.]+/gi, '') // meta-descriptions
+  
+  // Remove overly abstract compound mood descriptions like "Kinetic anxiety vs. Catatonic dread"
+  // These are thematic analysis, not visual direction
   cleaned = cleaned.replace(/\s+vs\.?\s+[^,;.]+/gi, '') // "X vs Y" comparisons
-  cleaned = cleaned.replace(/\([^)]*anxiety[^)]*\)/gi, '') // "(Alex)" type annotations after mood words
-  cleaned = cleaned.replace(/\([^)]*dread[^)]*\)/gi, '')
-  cleaned = cleaned.replace(/\bKinetic\s+\w+/gi, '') // "Kinetic anxiety"
-  cleaned = cleaned.replace(/\bCatatonic\s+\w+/gi, '') // "Catatonic dread"
+  cleaned = cleaned.replace(/\bKinetic\s+anxiety\b/gi, 'anxious energy') // Convert to visual
+  cleaned = cleaned.replace(/\bCatatonic\s+dread\b/gi, 'frozen fear') // Convert to visual
+  
+  // Remove parenthetical character annotations after mood words: "(Alex)" 
+  // But keep the mood word itself
+  cleaned = cleaned.replace(/\((?:Alex|Ben|[A-Z][a-z]+)\)/gi, '')
+  
+  // NOTE: We intentionally KEEP "conveying X" patterns now
+  // "conveying tension", "conveying vulnerability" - these help set scene tone
   
   // Remove MULTI-SHOT lens specifications (video coverage, not single frame)
   // "35mm Prime for the room, 100mm Macro for sensory inserts"
