@@ -403,27 +403,37 @@ function SceneCard({
               rows={2}
             />
             <div className="flex gap-1">
-              <button
-                onClick={(e) => { e.stopPropagation(); onGenerate(prompt); }}
-                disabled={isGenerating || !prompt.trim()}
-                className="flex-1 text-xs px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {isGenerating ? 'Generating...' : 'Generate'}
-              </button>
-              <label className={`flex-1 text-xs px-2 py-1 rounded bg-gray-700 text-white text-center transition-colors ${isGenerating ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-600 cursor-pointer'}`}>
-                Upload
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  disabled={isGenerating}
-                  onChange={(e) => {
-                    e.stopPropagation()
-                    const file = e.target.files?.[0]
-                    if (file) onUpload(file)
-                  }}
-                />
-              </label>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onGenerate(prompt); }}
+                    disabled={isGenerating || !prompt.trim()}
+                    className="flex-1 p-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Generate Scene Image</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <label className={`flex-1 p-2 rounded bg-gray-700 text-white text-center transition-colors flex items-center justify-center ${isGenerating ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-600 cursor-pointer'}`}>
+                    <Upload className="w-4 h-4" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={isGenerating}
+                      onChange={(e) => {
+                        e.stopPropagation()
+                        const file = e.target.files?.[0]
+                        if (file) onUpload(file)
+                      }}
+                    />
+                  </label>
+                </TooltipTrigger>
+                <TooltipContent>Upload Image</TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </div>
