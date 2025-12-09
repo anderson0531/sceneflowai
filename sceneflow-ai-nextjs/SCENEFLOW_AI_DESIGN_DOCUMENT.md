@@ -1,7 +1,7 @@
 # SceneFlow AI - Application Design Document
 
-**Version**: 2.2  
-**Last Updated**: December 9, 2024  
+**Version**: 2.3  
+**Last Updated**: December 9, 2025  
 **Status**: Production
 
 ---
@@ -43,6 +43,7 @@
 | Direction prompt builder | `src/components/vision/SceneDirectionBuilder.tsx` |
 | Direction API | `src/app/api/scene/generate-direction/route.ts` |
 | Ken Burns | `src/lib/animation/kenBurns.ts` |
+| Script QA | `src/lib/script/qualityAssurance.ts` |
 
 ---
 
@@ -50,6 +51,9 @@
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2025-12-09 | Gemini 3.0 for script generation | Quality-critical operations use gemini-3.0-pro-preview-06-05 for best screenplay output | ✅ Implemented |
+| 2025-12-09 | Script quality assurance utility | Post-processing QA validates character consistency, dialogue attribution, scene continuity with auto-fix | ✅ Implemented |
+| 2025-12-09 | Enhanced script prompts | Professional screenwriting guidance: character voice, emotional beats, show-don't-tell, subtext | ✅ Implemented |
 | 2024-12-10 | Direction prompt builder | SceneDirectionBuilder with Guided/Advanced modes for editing direction before AI generation | ✅ Implemented |
 | 2024-12-10 | Pass characters to direction API | Scene direction was inventing characters; now passes scene.characters array with CRITICAL TALENT RULE | ✅ Fixed |
 | 2024-12-10 | Fix dialogue field in direction | Direction API used d.text but script uses d.line; now supports both | ✅ Fixed |
@@ -165,7 +169,8 @@ SceneFlow AI is an AI-powered video creation platform that helps users transform
 - Prisma (Database client)
 
 **AI Services:**
-- Google Gemini 2.0 Flash (Primary LLM for all text generation)
+- Google Gemini 3.0 Pro (Script generation - quality-critical)
+- Google Gemini 2.0 Flash (General text generation - cost-efficient)
 - Google Imagen 3 (Image Generation via Vertex AI)
 - Google Veo 2 (Video Generation via Vertex AI)
 - ElevenLabs (Voice Synthesis & Sound Effects)
@@ -518,10 +523,18 @@ Store in Project metadata
 ### 6.1 AI Providers
 
 **Primary Provider - Google Gemini:**
-- Model: `gemini-3.0-flash` / `gemini-1.5-pro`
+- Quality Model: `gemini-3.0-pro-preview-06-05` (Script generation, screenplay optimization)
+- Fast Model: `gemini-2.0-flash` (Analysis, quick tasks)
+- Legacy: `gemini-1.5-pro` (Fallback)
 - Usage: Script generation, analysis, ideation
-- Cost: Efficient for analysis tasks
+- Model Selection: Quality-critical routes (script gen, optimization) use 3.0 Pro; general routes use 2.0 Flash
 - Fallback: OpenAI GPT-4o-mini
+
+**Script Generation Quality Pipeline:**
+- Enhanced prompts with character voice profiles, emotional beats, show-don't-tell
+- Post-processing QA validation (character consistency, dialogue attribution)
+- Auto-fix for common issues (name variations, missing emotion tags)
+- QA routes: `/api/generate/script`, `/api/vision/generate-script-v2`, `/api/vision/optimize-script`
 
 **Image Generation - Google Imagen 4:**
 - Service: Vertex AI Imagen API
