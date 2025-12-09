@@ -1548,25 +1548,37 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Save to database using existing projects API
       if (project) {
+        // Build updated metadata with new character wardrobe
+        const updatedVisionPhase = {
+          ...project.metadata?.visionPhase,
+          characters: updatedCharacters,
+          script: script,
+          scenes: scenes,
+          narrationVoice: narrationVoice,
+          descriptionVoice: descriptionVoice
+        }
+        
+        const updatedMetadata = {
+          ...project.metadata,
+          visionPhase: updatedVisionPhase
+        }
+        
         const response = await fetch(`/api/projects/${projectId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            metadata: {
-              ...project.metadata,
-              visionPhase: {
-                ...project.metadata?.visionPhase,
-                characters: updatedCharacters,
-                script: script,
-                scenes: scenes,
-                narrationVoice: narrationVoice,
-                descriptionVoice: descriptionVoice
-              }
-            }
+            metadata: updatedMetadata
           })
         })
         
         if (!response.ok) throw new Error('Failed to update wardrobe')
+        
+        // CRITICAL: Also update the project state so subsequent operations 
+        // (like scene generation) use the updated wardrobe, not stale metadata
+        setProject({
+          ...project,
+          metadata: updatedMetadata
+        })
         
         console.log('[Vision] Character wardrobe saved:', characterId, wardrobe)
       }
@@ -3388,6 +3400,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       })
       
       // Persist to database
+      // CRITICAL: Use current `characters` state instead of stale project.metadata.visionPhase.characters
+      // This prevents wardrobe updates from being overwritten by stale project metadata
+      const { characters: _staleCharacters, ...visionPhaseWithoutCharacters } = project?.metadata?.visionPhase || {}
       await fetch(`/api/projects/${project?.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -3395,7 +3410,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           metadata: {
             ...project?.metadata,
             visionPhase: {
-              ...project?.metadata?.visionPhase,
+              ...visionPhaseWithoutCharacters,
+              characters: characters, // Use current state, not stale project.metadata
               script: {
                 ...script,
                 script: {
