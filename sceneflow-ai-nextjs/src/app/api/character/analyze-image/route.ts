@@ -46,7 +46,10 @@ Extract these specific fields as JSON:
 PART 2 - APPEARANCE DESCRIPTION (for image generation):
 Create a single concise sentence describing objective physical appearance ONLY.
 Focus on: Ethnicity/Race, Gender, Apparent Age (e.g., "in his late 40s"), Hair (color, style, texture), Skin Tone, and distinct Facial Features (e.g., "strong jawline", "clean-shaven", "glasses").
-DO NOT include: Emotion, Action, Lighting, Clothing, or Background.
+
+CRITICAL - DO NOT INCLUDE CLOTHING: Never mention what the person is wearing.
+DO NOT include: Clothing, Wardrobe, Attire, Outfit, Accessories (watch, jewelry), Emotion, Action, Lighting, or Background.
+The wardrobe is set separately - only describe physical features of the person's face and body.
 
 Format as:
 "appearanceDescription": "An [ethnicity] [gender] in [his/her] [age], with [hair details], [skin tone], and [facial features]"

@@ -185,6 +185,39 @@ export function buildWardrobeNegatives(defaultWardrobe?: string): string[] {
 }
 
 /**
+ * Strip clothing/wardrobe descriptors from character descriptions
+ * Used when explicit defaultWardrobe is set to prevent conflicts between
+ * clothing mentioned in visionDescription and the intended wardrobe
+ * 
+ * @param description - Character appearance description (may include clothing)
+ * @returns Description with clothing terms removed
+ */
+export function stripClothingDescriptors(description: string): string {
+  const clothingPatterns = [
+    // "wearing a blue suit", "wearing jeans"
+    /\bwearing\s+[^,.]*/gi,
+    // "dressed in formal attire", "dressed in a suit"  
+    /\bdressed\s+in\s+[^,.]*/gi,
+    // "in a blue dress", "in casual clothes" (but not "in his late 40s")
+    /\bin\s+a\s+([\w\s]+)?(suit|dress|shirt|pants|jeans|coat|jacket|uniform|outfit|attire|clothes|clothing|gown|tuxedo|vest|blazer|sweater|hoodie)\b[^,.]*/gi,
+    // Specific clothing items that appear standalone
+    /\b(wearing|clad in|sporting|donning)\b\s*[^,.]+/gi,
+    // "with a watch", "with glasses" when part of wardrobe description
+    /,?\s*with\s+(a\s+)?(silver|gold|leather|designer|vintage|modern)?\s*(watch|wristwatch|glasses|sunglasses|hat|cap|scarf|tie|bow tie|necklace|bracelet|ring|earrings?|bag|purse|briefcase)\b/gi,
+  ]
+  
+  let cleaned = description
+  clothingPatterns.forEach(pattern => {
+    cleaned = cleaned.replace(pattern, '')
+  })
+  
+  // Clean up dangling commas and double spaces
+  cleaned = cleaned.replace(/,\s*,/g, ',').replace(/\s{2,}/g, ' ').replace(/,\s*\./g, '.').replace(/^\s*,\s*/g, '').replace(/\s*,\s*$/g, '').trim()
+  
+  return cleaned
+}
+
+/**
  * Detect sanitization changes by comparing original and sanitized text
  * Returns array of change objects with original, sanitized, and reason
  */
@@ -535,8 +568,14 @@ function integrateCharactersIntoScene(
       fullDescription += `${ref.ethnicity} `
     }
     
-    // Core physical description
-    fullDescription += ref.description
+    // Core physical description - strip any clothing if explicit wardrobe is set
+    // This prevents conflicts like "wearing blue suit" (from visionDescription) 
+    // conflicting with "dressed in jeans and t-shirt" (from defaultWardrobe)
+    let cleanedDescription = ref.description
+    if (ref.defaultWardrobe) {
+      cleanedDescription = stripClothingDescriptors(ref.description)
+    }
+    fullDescription += cleanedDescription
     
     // Add key features for multi-character scenes
     if (isMultiCharacter && ref.keyFeatures && ref.keyFeatures.length > 0) {

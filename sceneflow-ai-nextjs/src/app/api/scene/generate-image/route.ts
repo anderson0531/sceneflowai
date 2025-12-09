@@ -138,6 +138,44 @@ function stripEmotionalDescriptors(description: string): string {
   return cleaned
 }
 
+/**
+ * Strip clothing/wardrobe descriptors from character descriptions
+ * Prevents conflicts when explicit wardrobe (defaultWardrobe) is set separately
+ * Only applied when character has explicit wardrobe to avoid duplicate/conflicting instructions
+ */
+function stripClothingDescriptors(description: string): string {
+  // Remove common clothing/wardrobe patterns
+  const clothingTerms = [
+    // "wearing a blue suit" patterns
+    /\b(wearing|dressed in|clothed in|clad in)\s+(a\s+)?[^,.]+?(suit|shirt|dress|coat|jacket|pants|jeans|trousers|uniform|outfit|attire|clothes|clothing|t-shirt|tee|sweater|hoodie|blazer|tie|blouse|skirt|shorts|vest|cardigan|polo|button-down|oxford)[^,.]*[,.]?/gi,
+    // ", in a blue suit," patterns
+    /[,\s]+in\s+(a\s+)?[^,.]+?(suit|shirt|dress|coat|jacket|pants|jeans|trousers|uniform|outfit|attire)[^,.]*[,.]?/gi,
+    // "with a tie", "with a watch" - wardrobe accessories (not physical features)
+    /\bwith\s+(a\s+)?(tie|bow tie|necklace|bracelet|watch|earrings|ring|scarf|hat|cap|glasses|sunglasses|handbag|purse|briefcase)\b/gi,
+    // Standalone clothing references at end of description
+    /[,\s]+(casual|formal|business|professional|smart|elegant)\s+(attire|clothes|clothing|wear|outfit|look)[,.]?$/gi,
+    // "dressed formally", "dressed casually"
+    /\bdressed\s+(formally|casually|professionally|elegantly|smartly)\b/gi,
+  ]
+  
+  let cleaned = description
+  clothingTerms.forEach(pattern => {
+    cleaned = cleaned.replace(pattern, '')
+  })
+  
+  // Clean up double spaces, dangling commas, and punctuation artifacts
+  cleaned = cleaned
+    .replace(/,\s*,/g, ',')       // double commas
+    .replace(/\s+,/g, ',')        // space before comma
+    .replace(/,\s*\./g, '.')      // comma before period
+    .replace(/\s{2,}/g, ' ')      // multiple spaces
+    .replace(/,\s*$/g, '')        // trailing comma
+    .replace(/^\s*,/g, '')        // leading comma
+    .trim()
+  
+  return cleaned
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -340,7 +378,19 @@ export async function POST(req: NextRequest) {
         `${char.ethnicity || ''} ${char.subject || 'person'}`.trim()
       
       // Strip emotional descriptors - let scene drive emotions
-      const description = stripEmotionalDescriptors(rawDescription)
+      let description = stripEmotionalDescriptors(rawDescription)
+      
+      // Strip clothing descriptors if explicit wardrobe is set to prevent conflicts
+      // Example: visionDescription says "wearing a blue suit" but defaultWardrobe says "casual jeans and t-shirt"
+      if (char.defaultWardrobe) {
+        const originalDescription = description
+        description = stripClothingDescriptors(description)
+        if (description !== originalDescription) {
+          console.log(`[Scene Image] Stripped clothing from description for ${char.name} (explicit wardrobe: "${char.defaultWardrobe}")`)
+          console.log(`[Scene Image]   Original: "${originalDescription}"`)
+          console.log(`[Scene Image]   Cleaned:  "${description}"`)
+        }
+      }
       
       console.log(`[Scene Image] Using ${char.visionDescription ? 'Gemini Vision' : 'manual'} description for ${char.name}`)
       
