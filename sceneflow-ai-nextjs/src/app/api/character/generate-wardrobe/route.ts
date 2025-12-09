@@ -168,8 +168,8 @@ GUIDELINES:
 - Use comma-separated lists of items
 - Focus on visual descriptors that AI image generators understand
 - Be creative but appropriate for the character's role and genre
-- Use specific color shades (e.g., "navy blue" not just "blue")
-- Include materials/textures (leather, silk, cotton, denim, etc.)
+- **Do NOT include bags, satchels, backpacks, or other casual accessories if the scene is a formal event, public debate, or stage performance.**
+- If the context is a debate, stage, or public event, only include accessories that would be appropriate on stage (e.g., glasses, watch, ring, but NOT satchel or backpack)
 
 Return ONLY the JSON object, no additional text.`
   }
