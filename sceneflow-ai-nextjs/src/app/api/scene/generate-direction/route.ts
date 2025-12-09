@@ -17,7 +17,8 @@ interface GenerateDirectionRequest {
     action?: string
     visualDescription?: string
     narration?: string
-    dialogue?: Array<{ character: string; text: string }>
+    dialogue?: Array<{ character: string; text?: string; line?: string }>
+    characters?: string[]  // List of characters appearing in this scene
     [key: string]: any
   }
 }
@@ -142,13 +143,22 @@ function buildSceneDirectionPrompt(scene: GenerateDirectionRequest['scene']): st
   const visualDescription = scene.visualDescription || ''
   const narration = scene.narration || ''
   const dialogue = scene.dialogue || []
+  const characters = scene.characters || []
   
-  const dialogueText = dialogue.map(d => `${d.character}: ${d.text}`).join('\n')
+  // Support both 'line' (from script generation) and 'text' (legacy) field names
+  const dialogueText = dialogue.map(d => `${d.character}: ${d.line || d.text || ''}`).join('\n')
+  const charactersList = characters.length > 0 
+    ? `\nCharacters in scene: ${characters.join(', ')}\n`
+    : ''
   
   return `You are a world-class film director and cinematographer. Your task is to generate detailed, professional-grade technical instructions for a live-action film crew based on the following scene information.
 
 SCENE INFORMATION:
-${heading ? `Heading: ${heading}\n` : ''}${action ? `Action: ${action}\n` : ''}${visualDescription ? `Visual Description: ${visualDescription}\n` : ''}${narration ? `Narration: ${narration}\n` : ''}${dialogueText ? `Dialogue:\n${dialogueText}\n` : ''}
+${heading ? `Heading: ${heading}\n` : ''}${charactersList}${action ? `Action: ${action}\n` : ''}${visualDescription ? `Visual Description: ${visualDescription}\n` : ''}${narration ? `Narration: ${narration}\n` : ''}${dialogueText ? `Dialogue:\n${dialogueText}\n` : ''}
+CRITICAL TALENT RULE:
+- The talent blocking MUST reference ONLY the characters listed above
+- DO NOT invent new characters or add characters not in this scene
+- Reference characters by name exactly as listed
 
 Generate comprehensive technical direction suitable for professional film production crews. Return ONLY valid JSON with this exact structure:
 

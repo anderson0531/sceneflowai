@@ -25,6 +25,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { ScenePromptBuilder } from './ScenePromptBuilder'
+import { SceneDirectionBuilder } from './SceneDirectionBuilder'
 import ScenePromptDrawer from './ScenePromptDrawer'
 import { AudioMixer, type AudioTrack } from './AudioMixer'
 import ScriptReviewModal from './ScriptReviewModal'
@@ -2390,6 +2391,7 @@ function SceneCard({
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(null)
   const [copilotPanelOpen, setCopilotPanelOpen] = useState(false)
   const [isImageExpanded, setIsImageExpanded] = useState(false)
+  const [directionBuilderOpen, setDirectionBuilderOpen] = useState(false)
   
   // Determine active step for Co-Pilot
   const activeStep: WorkflowStep | null = activeWorkflowTab
@@ -3481,28 +3483,49 @@ function SceneCard({
                           <Film className="w-4 h-4 text-purple-600 dark:text-purple-300" />
                           <span className="text-xs font-semibold text-purple-700 dark:text-purple-200">Scene Direction</span>
                         </div>
-                        <Button 
-                          size="sm"
-                          variant="ghost"
-                          className="h-6 text-xs text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:text-purple-300 dark:hover:bg-purple-800/50"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onGenerateSceneDirection?.(sceneIdx)
-                          }}
-                          disabled={!onGenerateSceneDirection || generatingDirectionFor === sceneIdx}
-                        >
-                          {generatingDirectionFor === sceneIdx ? (
-                            <>
-                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                              Generating...
-                            </>
-                          ) : (
-                            <>
-                              <Sparkles className="w-3 h-3 mr-1" />
-                              Generate
-                            </>
+                        <div className="flex items-center gap-2">
+                          {scene.sceneDirection && (
+                            <Button 
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 text-xs text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:text-purple-300 dark:hover:bg-purple-800/50"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setDirectionBuilderOpen(true)
+                              }}
+                            >
+                              <Edit className="w-3 h-3 mr-1" />
+                              Edit
+                            </Button>
                           )}
-                        </Button>
+                          <Button 
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 text-xs text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:text-purple-300 dark:hover:bg-purple-800/50"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setDirectionBuilderOpen(true)
+                            }}
+                            disabled={generatingDirectionFor === sceneIdx}
+                          >
+                            {generatingDirectionFor === sceneIdx ? (
+                              <>
+                                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                Generating...
+                              </>
+                            ) : scene.sceneDirection ? (
+                              <>
+                                <RefreshCw className="w-3 h-3 mr-1" />
+                                Regenerate
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="w-3 h-3 mr-1" />
+                                Generate
+                              </>
+                            )}
+                          </Button>
+                        </div>
                       </div>
                       {scene.sceneDirection ? (
                         <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
@@ -3549,6 +3572,19 @@ function SceneCard({
                         </div>
                       )}
                     </div>
+                    
+                    {/* Scene Direction Builder Dialog */}
+                    <SceneDirectionBuilder
+                      open={directionBuilderOpen}
+                      onClose={() => setDirectionBuilderOpen(false)}
+                      scene={scene}
+                      existingDirection={scene.sceneDirection}
+                      onGenerate={() => {
+                        setDirectionBuilderOpen(false)
+                        onGenerateSceneDirection?.(sceneIdx)
+                      }}
+                      isGenerating={generatingDirectionFor === sceneIdx}
+                    />
                   </div>
                 )}
 

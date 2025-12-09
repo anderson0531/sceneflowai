@@ -3526,7 +3526,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               action: scene.action,
               visualDescription: scene.visualDescription,
               narration: scene.narration,
-              dialogue: scene.dialogue
+              dialogue: scene.dialogue,
+              characters: scene.characters  // Include character list for accurate talent blocking
             }
           })
         })

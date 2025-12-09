@@ -39,6 +39,9 @@
 | Characters | `visionPhase.characters` |
 | Screening Room | `src/components/vision/ScriptPlayer.tsx` |
 | Scene images | `src/components/vision/SceneGallery.tsx` |
+| Image prompt builder | `src/components/vision/ScenePromptBuilder.tsx` |
+| Direction prompt builder | `src/components/vision/SceneDirectionBuilder.tsx` |
+| Direction API | `src/app/api/scene/generate-direction/route.ts` |
 | Ken Burns | `src/lib/animation/kenBurns.ts` |
 
 ---
@@ -47,6 +50,9 @@
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2024-12-10 | Direction prompt builder | SceneDirectionBuilder with Guided/Advanced modes for editing direction before AI generation | ✅ Implemented |
+| 2024-12-10 | Pass characters to direction API | Scene direction was inventing characters; now passes scene.characters array with CRITICAL TALENT RULE | ✅ Fixed |
+| 2024-12-10 | Fix dialogue field in direction | Direction API used d.text but script uses d.line; now supports both | ✅ Fixed |
 | 2024-12-09 | Storyboard inside scrollable area | Center panel wasn't scrolling; moved storyboard inside flex-1 overflow-y-auto div | ✅ Fixed |
 | 2024-12-09 | Storyboard regenerate opens prompt builder | Users need to edit prompts before regenerating; now opens ScenePromptBuilder dialog | ✅ Implemented |
 | 2024-12-09 | Add to Scene Reference Library button | Allow adding storyboard frames to scene reference library for consistency | ✅ Implemented |
