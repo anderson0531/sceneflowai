@@ -42,6 +42,7 @@
 | Image prompt builder | `src/components/vision/ScenePromptBuilder.tsx` |
 | Direction prompt builder | `src/components/vision/SceneDirectionBuilder.tsx` |
 | Direction API | `src/app/api/scene/generate-direction/route.ts` |
+| Wardrobe AI Assist | `src/app/api/character/generate-wardrobe/route.ts` |
 | Ken Burns | `src/lib/animation/kenBurns.ts` |
 | Script QA | `src/lib/script/qualityAssurance.ts` |
 
@@ -51,6 +52,7 @@
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2025-12-09 | AI Wardrobe Assist | User describes desired look in natural language; AI generates specific outfit/accessories for image consistency | ✅ Implemented |
 | 2025-12-09 | Gemini 3.0 for script generation | Quality-critical operations use gemini-3.0-pro-preview-06-05 for best screenplay output | ✅ Implemented |
 | 2025-12-09 | Script quality assurance utility | Post-processing QA validates character consistency, dialogue attribution, scene continuity with auto-fix | ✅ Implemented |
 | 2025-12-09 | Enhanced script prompts | Professional screenwriting guidance: character voice, emotional beats, show-don't-tell, subtext | ✅ Implemented |

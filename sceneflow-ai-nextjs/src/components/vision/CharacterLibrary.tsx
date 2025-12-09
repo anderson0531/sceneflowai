@@ -422,6 +422,9 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
   const [editingWardrobe, setEditingWardrobe] = useState(false)
   const [wardrobeText, setWardrobeText] = useState('')
   const [accessoriesText, setAccessoriesText] = useState('')
+  const [showAiAssist, setShowAiAssist] = useState(false)
+  const [aiPromptText, setAiPromptText] = useState('')
+  const [isGeneratingWardrobe, setIsGeneratingWardrobe] = useState(false)
   
   // Helper function to generate fallback description from attributes
   const generateFallbackDescription = (character: any): string => {
@@ -459,6 +462,48 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
     if (onUpdateCharacterRole) {
       await onUpdateCharacterRole(characterId, (document.getElementById(`role-select-${characterId}`) as HTMLSelectElement)?.value || 'supporting')
       setEditingRole(false)
+    }
+  }
+
+  const handleGenerateWardrobe = async () => {
+    if (!aiPromptText.trim()) {
+      toast.error('Please describe the wardrobe or image you want')
+      return
+    }
+
+    setIsGeneratingWardrobe(true)
+    try {
+      const response = await fetch('/api/character/generate-wardrobe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          characterName: character.name,
+          characterRole: character.role,
+          appearanceDescription: character.appearanceDescription || generateFallbackDescription(character),
+          wardrobeDescription: aiPromptText,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to generate wardrobe')
+      }
+
+      const { wardrobe } = await response.json()
+      
+      // Populate the wardrobe fields with AI-generated content
+      setWardrobeText(wardrobe.defaultWardrobe)
+      setAccessoriesText(wardrobe.wardrobeAccessories)
+      setShowAiAssist(false)
+      setAiPromptText('')
+      setEditingWardrobe(true)
+      
+      toast.success('Wardrobe generated! Review and save when ready.')
+    } catch (error) {
+      console.error('[AI Wardrobe] Error:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to generate wardrobe')
+    } finally {
+      setIsGeneratingWardrobe(false)
     }
   }
 
@@ -773,8 +818,74 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
           
           {wardrobeSectionExpanded && (
             <div className="mt-3 space-y-3">
-              {editingWardrobe ? (
+              {/* AI Assist Section */}
+              {showAiAssist ? (
+                <div className="space-y-2 p-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg">
+                  <div className="flex items-center gap-2 text-xs font-medium text-purple-700 dark:text-purple-300">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    AI Wardrobe Assistant
+                  </div>
+                  <textarea
+                    value={aiPromptText}
+                    onChange={(e) => setAiPromptText(e.target.value)}
+                    placeholder="Describe the look you want, e.g., 'Professional tech CEO, modern minimalist style' or 'Rugged adventurer, practical outdoor wear'"
+                    className="w-full px-2 py-1.5 text-xs rounded border border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                    rows={2}
+                    onClick={(e) => e.stopPropagation()}
+                    disabled={isGeneratingWardrobe}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleGenerateWardrobe()
+                      }}
+                      disabled={isGeneratingWardrobe || !aiPromptText.trim()}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isGeneratingWardrobe ? (
+                        <>
+                          <Loader className="w-3 h-3 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3 h-3" />
+                          Generate Wardrobe
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowAiAssist(false)
+                        setAiPromptText('')
+                      }}
+                      disabled={isGeneratingWardrobe}
+                      className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-purple-600 dark:text-purple-400">
+                    AI will generate specific outfit and accessory descriptions based on your input
+                  </p>
+                </div>
+              ) : editingWardrobe ? (
                 <div className="space-y-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Edit Wardrobe</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowAiAssist(true)
+                      }}
+                      className="flex items-center gap-1 px-2 py-0.5 text-[10px] bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded hover:bg-purple-200 dark:hover:bg-purple-800/40"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      AI Assist
+                    </button>
+                  </div>
                   <div>
                     <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Default Outfit</label>
                     <textarea
@@ -824,34 +935,48 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                   </div>
                 </div>
               ) : (
-                <div 
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setWardrobeText(character.defaultWardrobe || '')
-                    setAccessoriesText(character.wardrobeAccessories || '')
-                    setEditingWardrobe(true)
-                  }}
-                  className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded p-2 -m-2"
-                >
-                  {character.defaultWardrobe || character.wardrobeAccessories ? (
-                    <div className="space-y-1">
-                      {character.defaultWardrobe && (
-                        <p className="text-xs text-gray-600 dark:text-gray-400">
-                          <span className="font-medium">Outfit:</span> {character.defaultWardrobe}
-                        </p>
-                      )}
-                      {character.wardrobeAccessories && (
-                        <p className="text-xs text-gray-600 dark:text-gray-400">
-                          <span className="font-medium">Accessories:</span> {character.wardrobeAccessories}
-                        </p>
-                      )}
-                      <p className="text-xs text-blue-500 mt-1">Click to edit</p>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-gray-400 italic">
-                      Click to add wardrobe for visual consistency across scenes
-                    </p>
-                  )}
+                <div className="space-y-2">
+                  {/* AI Assist Button when not editing */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowAiAssist(true)
+                    }}
+                    className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded border border-purple-200 dark:border-purple-700 hover:bg-purple-200 dark:hover:bg-purple-800/40"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    AI Assist - Describe the look you want
+                  </button>
+                  
+                  <div 
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setWardrobeText(character.defaultWardrobe || '')
+                      setAccessoriesText(character.wardrobeAccessories || '')
+                      setEditingWardrobe(true)
+                    }}
+                    className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded p-2 -m-2"
+                  >
+                    {character.defaultWardrobe || character.wardrobeAccessories ? (
+                      <div className="space-y-1">
+                        {character.defaultWardrobe && (
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            <span className="font-medium">Outfit:</span> {character.defaultWardrobe}
+                          </p>
+                        )}
+                        {character.wardrobeAccessories && (
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            <span className="font-medium">Accessories:</span> {character.wardrobeAccessories}
+                          </p>
+                        )}
+                        <p className="text-xs text-blue-500 mt-1">Click to edit manually</p>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-400 italic">
+                        Or click here to add wardrobe manually
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
