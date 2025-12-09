@@ -4,6 +4,7 @@ import { sequelize } from '../../../../config/database'
 import { v4 as uuidv4 } from 'uuid'
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 import { SubscriptionService } from '../../../../services/SubscriptionService'
+import { runScriptQA, autoFixScript } from '@/lib/script/qualityAssurance'
 
 export const runtime = 'nodejs'
 export const maxDuration = 600  // 10 minutes for large script generation (requires Vercel Pro)
@@ -419,15 +420,66 @@ export async function POST(request: NextRequest) {
           withReferenceImage: mergedCharacters.filter((c: any) => c.referenceImage).length
         })
         
+        // Phase 3: Quality Assurance - Run QA and auto-fix
+        let finalScenes = scenesWithCharacterIds
+        try {
+          const qaResult = runScriptQA(scenesWithCharacterIds, mergedCharacters)
+          
+          console.log('[Script Gen V2] QA Result:', {
+            valid: qaResult.valid,
+            errors: qaResult.issues.filter((i: any) => i.type === 'error').length,
+            warnings: qaResult.issues.filter((i: any) => i.type === 'warning').length,
+            unmatchedCharacters: qaResult.stats.unmatchedCharacters,
+            missingEmotionTags: qaResult.stats.missingEmotionTags
+          })
+          
+          // Auto-fix issues where possible
+          if (qaResult.issues.some((i: any) => i.autoFixable)) {
+            const { scenes: fixedScenes, fixedCount } = autoFixScript(
+              scenesWithCharacterIds,
+              mergedCharacters,
+              qaResult
+            )
+            finalScenes = fixedScenes
+            console.log(`[Script Gen V2] Auto-fixed ${fixedCount} issues`)
+            
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'qa',
+              status: 'Auto-fixed script quality issues',
+              fixedCount,
+              totalIssues: qaResult.issues.length
+            })}\n\n`))
+          }
+          
+          // Report QA warnings (but don't block)
+          if (qaResult.stats.unmatchedCharacters.length > 0) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'warning',
+              message: `Found ${qaResult.stats.unmatchedCharacters.length} unmatched character names: ${qaResult.stats.unmatchedCharacters.join(', ')}`
+            })}\n\n`))
+          }
+        } catch (qaError) {
+          console.warn('[Script Gen V2] QA failed (non-blocking):', qaError)
+        }
+        
+        // Update script with QA-fixed scenes
+        const finalScript = {
+          title: treatment.title,
+          logline: treatment.logline,
+          script: { scenes: finalScenes },
+          characters: allCharacters,
+          totalDuration: totalEstimatedDuration
+        }
+        
         await project.update({
           metadata: {
             ...project.metadata,
             visionPhase: {
               ...existingVisionPhase,
-              script,
+              script: finalScript,
               scriptGenerated: true,
               characters: mergedCharacters,
-              scenes: scenesWithCharacterIds
+              scenes: finalScenes
             }
           }
         })

@@ -70,6 +70,11 @@ async function optimizeScript(script: any, instruction: string, characters: any[
   }).join('\n') || 'No scenes'
   
   const characterList = characters?.map((c: any) => c.name).join(', ') || 'No characters'
+  
+  // Build character voice profiles for consistency checking
+  const characterProfiles = characters?.map((c: any) => 
+    `- ${c.name}: ${c.description || ''} ${c.demeanor ? `(Demeanor: ${c.demeanor})` : ''}`
+  ).join('\n') || 'No character profiles'
 
   // Sanitize instruction to avoid undefined lines
   const normalizedInstruction = String(instruction || '')
@@ -78,60 +83,90 @@ async function optimizeScript(script: any, instruction: string, characters: any[
     .filter(line => line && line.toLowerCase() !== 'undefined')
     .join('\n') || 'Improve clarity, pacing, character depth, and visual storytelling across the script.'
   
-  const prompt = `You are an expert screenwriter and script doctor. Optimize this entire script based on the user's instruction.
+  const prompt = `You are an expert screenwriter and script doctor with deep understanding of narrative craft.
 
-USER INSTRUCTION:
+=== PRESERVATION PRINCIPLES (CRITICAL) ===
+
+PRESERVE AUTHOR'S VOICE:
+- Maintain the original tone, style, and creative vision
+- Enhance what's there, don't replace it with generic alternatives
+- Keep unique phrases, metaphors, and stylistic choices that work
+- If something is intentionally unconventional, respect that choice
+
+CHARACTER CONSISTENCY:
+- Each character has established speech patterns - maintain them
+- Character traits and motivations must remain consistent
+- Relationships and dynamics should stay intact
+- If a character speaks formally in Scene 1, they should in Scene 10
+
+CONTINUITY CHECK:
+- Ensure changes don't break story logic or established facts
+- Props, settings, and details must remain consistent
+- Character knowledge should match what they've learned in the story
+- Timeline and cause-effect relationships must hold
+
+QUALITY OVER QUANTITY:
+- Make meaningful improvements, not changes for change's sake
+- If something works, leave it alone
+- Focus energy on weak points, not rewriting strong scenes
+- Every change should clearly serve the story
+
+=== USER INSTRUCTION ===
 ${normalizedInstruction}
 
-CURRENT SCRIPT OVERVIEW:
+=== CURRENT SCRIPT OVERVIEW ===
 Total Scenes: ${script.scenes?.length || 0}
 Characters: ${characterList}
+
+CHARACTER PROFILES (for voice consistency):
+${characterProfiles}
 
 SCENES (${compact ? 'first 8' : 'all'}):
 ${sceneSummaries}
 
-${''}
-
-OPTIMIZATION TASK:
-Based on the user's instruction, optimize the ENTIRE script holistically. Consider:
+=== OPTIMIZATION AREAS ===
 
 1. NARRATIVE STRUCTURE:
-   - Overall story arc and pacing
-   - Scene order and flow
-   - Setup, conflict, and resolution
-   - Dramatic escalation
+   - Story arc clarity and pacing
+   - Scene order and transitions
+   - Setup, conflict, resolution balance
+   - Dramatic escalation and payoffs
 
-2. CHARACTER DEVELOPMENT:
-   - Consistent character voices
+2. CHARACTER CRAFT:
+   - Distinct character voices (each should sound different)
    - Character arc progression
-   - Dialogue authenticity
-   - Motivations and relationships
+   - Dialogue subtext and layers
+   - Motivations clarity and consistency
 
 3. VISUAL STORYTELLING:
-   - Visual consistency and style
-   - Show don't tell
+   - Show don't tell (action over exposition)
    - Cinematic opportunities
-   - Scene variety
+   - Specific sensory details
+   - Environmental storytelling
 
 4. EMOTIONAL JOURNEY:
-   - Audience engagement
-   - Emotional beats and payoffs
-   - Tone consistency
-   - Tension and release
+   - Emotional beat clarity
+   - Tension and release rhythm
+   - Payoff of earlier setups
+   - Audience engagement points
 
-5. TECHNICAL EXECUTION:
-   - Scene transitions
-   - Duration balance
-   - Production feasibility
-   - Visual clarity
+5. CRAFT IMPROVEMENTS:
+   - Replace exposition with action
+   - Add subtext to on-the-nose dialogue
+   - Strengthen weak transitions
+   - Enhance specificity of details
 
-PROVIDE:
-1. Complete optimized script ${compact ? '(limit to first 12 scenes to keep response size manageable)' : '(all scenes with all elements)'}
-2. Changes summary explaining major improvements
-3. Rationale for each category of changes
+=== QUALITY CHECKLIST (Apply to each scene) ===
+□ Does each character sound distinctly different?
+□ Are emotions shown through action, not stated?
+□ Does dialogue have layers beyond surface meaning?
+□ Is there clear conflict or tension?
+□ Are visual details specific and evocative?
+□ Does the scene connect smoothly to adjacent scenes?
+□ Is the author's original intent preserved?
 
-DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
-EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
+=== DIALOGUE AUDIO TAGS (Required for TTS) ===
+EVERY dialogue line MUST include emotional/vocal direction tags.
 
 STYLE TAGS (In square brackets BEFORE text):
 Emotions: [happy], [sad], [angry], [fearful], [surprised], [disgusted], [neutral]
@@ -141,9 +176,9 @@ Pace: [quickly], [slowly], [hesitantly], [confidently]
 
 EXAMPLES:
   * {"character": "JOHN", "line": "[very excited] I can't believe it!"}
-  * {"character": "MARY", "line": "[sadly] I wish things were different..."}
+  * {"character": "MARY", "line": "[sadly, hesitantly] I wish things were different..."}
 
-CRITICAL: Every single dialogue line must start with at least one emotion/style tag in [brackets].
+=== OUTPUT FORMAT ===
 
 Return ONLY JSON with this exact structure (no commentary, do NOT wrap in code fences; escape all embedded quotes; use \\n for newlines; plain ASCII punctuation; no trailing commas). For EVERY scene, the fields "heading", "action", "narration", "dialogue", "music", "sfx", and "duration" MUST be present. If reducing narration, REPLACE it with a concise 1–2 sentence narration (never null/empty/"None"):
 {
