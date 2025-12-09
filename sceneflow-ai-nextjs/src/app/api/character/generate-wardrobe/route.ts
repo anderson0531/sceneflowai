@@ -10,9 +10,13 @@ interface GenerateWardrobeRequest {
   characterName: string
   characterRole?: string
   appearanceDescription?: string
-  wardrobeDescription: string  // User's natural language description
+  wardrobeDescription?: string  // User's natural language description (optional in recommend mode)
   genre?: string
   setting?: string
+  tone?: string
+  logline?: string
+  visualStyle?: string
+  recommendMode?: boolean  // When true, AI recommends based on character profile + screenplay context
 }
 
 interface WardrobeResult {
@@ -124,6 +128,53 @@ async function callGeminiWithModel(apiKey: string, prompt: string, model: string
 }
 
 function buildWardrobePrompt(request: GenerateWardrobeRequest): string {
+  const isRecommendMode = request.recommendMode === true
+
+  if (isRecommendMode) {
+    return `You are a professional costume designer for film and television. Generate wardrobe recommendations that perfectly match a character's role, personality, and the overall screenplay context.
+
+CHARACTER PROFILE:
+- Name: ${request.characterName}
+${request.characterRole ? `- Role in Story: ${request.characterRole}` : ''}
+${request.appearanceDescription ? `- Physical Appearance: ${request.appearanceDescription}` : ''}
+
+SCREENPLAY CONTEXT:
+${request.genre ? `- Genre: ${request.genre}` : '- Genre: Not specified'}
+${request.tone ? `- Tone/Mood: ${request.tone}` : ''}
+${request.setting ? `- Setting/Era: ${request.setting}` : ''}
+${request.logline ? `- Story: ${request.logline}` : ''}
+${request.visualStyle ? `- Visual Style: ${request.visualStyle}` : ''}
+
+TASK:
+Based on the character profile and screenplay context, recommend a signature wardrobe that:
+1. Reflects the character's personality and role (${request.characterRole || 'supporting'})
+2. Fits the ${request.genre || 'drama'} genre conventions
+3. Matches the overall tone and setting
+4. Would be visually consistent across multiple AI-generated images
+
+Consider:
+- What would a ${request.characterRole || 'character'} in a ${request.genre || 'drama'} typically wear?
+- How should clothing reflect their status, personality, or arc?
+- What colors and materials convey the right mood?
+
+RESPONSE FORMAT (JSON):
+{
+  "defaultWardrobe": "Complete outfit description with specific colors, materials, and style details. Should be 1-2 sentences that can be injected into an image prompt.",
+  "wardrobeAccessories": "Specific accessories including jewelry, watches, glasses, bags, hats, etc. Be specific about materials and colors."
+}
+
+GUIDELINES:
+- Keep descriptions concise but specific (30-50 words each)
+- Use comma-separated lists of items
+- Focus on visual descriptors that AI image generators understand
+- Be creative but appropriate for the character's role and genre
+- Use specific color shades (e.g., "navy blue" not just "blue")
+- Include materials/textures (leather, silk, cotton, denim, etc.)
+
+Return ONLY the JSON object, no additional text.`
+  }
+
+  // Original user-description mode
   return `You are a professional costume designer for film and television. Generate specific, visually descriptive wardrobe specifications based on a character description.
 
 CHARACTER CONTEXT:
@@ -163,7 +214,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json() as GenerateWardrobeRequest
 
-    if (!body.wardrobeDescription?.trim()) {
+    // In recommend mode, wardrobeDescription is optional
+    if (!body.recommendMode && !body.wardrobeDescription?.trim()) {
       return NextResponse.json(
         { error: 'Wardrobe description is required' },
         { status: 400 }
@@ -186,7 +238,7 @@ export async function POST(request: NextRequest) {
     }
 
     const prompt = buildWardrobePrompt(body)
-    console.log('[Generate Wardrobe] Processing request for:', body.characterName)
+    console.log('[Generate Wardrobe] Processing request for:', body.characterName, body.recommendMode ? '(recommend mode)' : '(user description)')
 
     const responseText = await callGemini(apiKey, prompt)
     

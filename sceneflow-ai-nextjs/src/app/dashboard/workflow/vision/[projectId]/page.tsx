@@ -5288,6 +5288,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 objectReferences={objectReferences}
                 onCreateReference={(type, payload) => handleCreateReference(type, payload)}
                 onRemoveReference={(type, referenceId) => handleRemoveReference(type, referenceId)}
+                screenplayContext={{
+                  genre: project?.genre,
+                  tone: project?.tone || project?.metadata?.filmTreatmentVariant?.tone_description || project?.metadata?.filmTreatmentVariant?.tone,
+                  setting: project?.metadata?.filmTreatmentVariant?.setting,
+                  logline: script?.logline || project?.description,
+                  visualStyle: project?.metadata?.filmTreatmentVariant?.visual_style || project?.metadata?.filmTreatmentVariant?.style,
+                }}
               />
             </div>
           </Panel>

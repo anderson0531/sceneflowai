@@ -31,6 +31,14 @@ export interface CharacterLibraryProps {
   setUploadingRef?: (updater: (prev: Record<string, boolean>) => Record<string, boolean>) => void
   enableDrag?: boolean
   showProTips?: boolean
+  // Screenplay context for AI wardrobe recommendations
+  screenplayContext?: {
+    genre?: string
+    tone?: string
+    setting?: string
+    logline?: string
+    visualStyle?: string
+  }
 }
 
 interface CharacterCardProps {
@@ -58,9 +66,17 @@ interface CharacterCardProps {
   onToggleVoiceSection?: () => void
   enableDrag?: boolean
   onOpenCharacterPrompt?: () => void
+  // Screenplay context for AI wardrobe recommendations
+  screenplayContext?: {
+    genre?: string
+    tone?: string
+    setting?: string
+    logline?: string
+    visualStyle?: string
+  }
 }
 
-export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateCharacterWardrobe, onAddCharacter, onRemoveCharacter, ttsProvider, compact = false, uploadingRef = {}, setUploadingRef, enableDrag = false, showProTips: showProTipsProp }: CharacterLibraryProps) {                                
+export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerateCharacter, onUploadCharacter, onApproveCharacter, onUpdateCharacterAttributes, onUpdateCharacterVoice, onUpdateCharacterAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateCharacterWardrobe, onAddCharacter, onRemoveCharacter, ttsProvider, compact = false, uploadingRef = {}, setUploadingRef, enableDrag = false, showProTips: showProTipsProp, screenplayContext }: CharacterLibraryProps) {                                
   const [selectedChar, setSelectedChar] = useState<string | null>(null)
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(new Set())
   const [zoomedImage, setZoomedImage] = useState<{url: string; name: string} | null>(null)
@@ -332,6 +348,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
                 onToggleVoiceSection={() => handleToggleVoiceSection(charId)}
                 enableDrag={enableDrag}
                 onOpenCharacterPrompt={() => setPromptBuilderOpenFor(charId)}
+                screenplayContext={screenplayContext}
               />
             )
           })}
@@ -410,7 +427,7 @@ export function CharacterLibrary({ characters, onRegenerateCharacter, onGenerate
   )
 }
 
-const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, isUploading = false, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateWardrobe, onRemove, ttsProvider, voiceSectionExpanded, onToggleVoiceSection, enableDrag = false, onOpenCharacterPrompt }: CharacterCardProps) => {
+const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenerate, onGenerate, onUpload, onApprove, prompt, isGenerating, isUploading = false, expandedCharId, onToggleExpand, onUpdateCharacterVoice, onUpdateAppearance, onUpdateCharacterName, onUpdateCharacterRole, onUpdateWardrobe, onRemove, ttsProvider, voiceSectionExpanded, onToggleVoiceSection, enableDrag = false, onOpenCharacterPrompt, screenplayContext }: CharacterCardProps) => {
   const hasImage = !!character.referenceImage
   const isApproved = character.imageApproved === true
   const isCoreExpanded = expandedCharId === `${characterId}-core`
@@ -465,8 +482,8 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
     }
   }
 
-  const handleGenerateWardrobe = async () => {
-    if (!aiPromptText.trim()) {
+  const handleGenerateWardrobe = async (recommendMode: boolean = false) => {
+    if (!recommendMode && !aiPromptText.trim()) {
       toast.error('Please describe the wardrobe or image you want')
       return
     }
@@ -480,7 +497,14 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
           characterName: character.name,
           characterRole: character.role,
           appearanceDescription: character.appearanceDescription || generateFallbackDescription(character),
-          wardrobeDescription: aiPromptText,
+          wardrobeDescription: recommendMode ? undefined : aiPromptText,
+          recommendMode,
+          // Include screenplay context for smarter recommendations
+          genre: screenplayContext?.genre,
+          tone: screenplayContext?.tone,
+          setting: screenplayContext?.setting,
+          logline: screenplayContext?.logline,
+          visualStyle: screenplayContext?.visualStyle,
         }),
       })
 
@@ -498,7 +522,9 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
       setAiPromptText('')
       setEditingWardrobe(true)
       
-      toast.success('Wardrobe generated! Review and save when ready.')
+      toast.success(recommendMode 
+        ? 'Wardrobe recommended based on character & screenplay! Review and save.' 
+        : 'Wardrobe generated! Review and save when ready.')
     } catch (error) {
       console.error('[AI Wardrobe] Error:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to generate wardrobe')
@@ -838,7 +864,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleGenerateWardrobe()
+                        handleGenerateWardrobe(false)
                       }}
                       disabled={isGeneratingWardrobe || !aiPromptText.trim()}
                       className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -936,17 +962,40 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {/* AI Assist Button when not editing */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setShowAiAssist(true)
-                    }}
-                    className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded border border-purple-200 dark:border-purple-700 hover:bg-purple-200 dark:hover:bg-purple-800/40"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    AI Assist - Describe the look you want
-                  </button>
+                  {/* AI Wardrobe Buttons */}
+                  <div className="flex gap-2">
+                    {/* Recommend Button - Auto-generates based on character & screenplay */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleGenerateWardrobe(true)
+                      }}
+                      disabled={isGeneratingWardrobe}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="AI recommends wardrobe based on character profile and screenplay context"
+                    >
+                      {isGeneratingWardrobe ? (
+                        <Loader className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Wand2 className="w-3.5 h-3.5" />
+                      )}
+                      {isGeneratingWardrobe ? 'Generating...' : 'Recommend'}
+                    </button>
+                    
+                    {/* AI Assist Button - User describes what they want */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowAiAssist(true)
+                      }}
+                      disabled={isGeneratingWardrobe}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded border border-purple-200 dark:border-purple-700 hover:bg-purple-200 dark:hover:bg-purple-800/40 disabled:opacity-50"
+                      title="Describe the look you want"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Describe
+                    </button>
+                  </div>
                   
                   <div 
                     onClick={(e) => {

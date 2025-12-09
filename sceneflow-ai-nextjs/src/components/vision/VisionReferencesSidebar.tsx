@@ -233,6 +233,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     objectReferences,
     onCreateReference,
     onRemoveReference,
+    screenplayContext,
   } = props
 
   const [dialogType, setDialogType] = useState<VisualReferenceType | null>(null)
@@ -319,6 +320,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                   enableDrag={enableDrag}
                   compact
                   showProTips={showProTips}
+                  screenplayContext={screenplayContext}
                 />
               </div>
             )}
