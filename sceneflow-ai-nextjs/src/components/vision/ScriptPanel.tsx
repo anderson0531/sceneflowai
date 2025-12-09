@@ -3626,20 +3626,26 @@ function SceneCard({
                       
                       {/* Overlay Actions */}
                       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                         <Button
-                            size="sm"
-                            variant="secondary"
-                            className="bg-white/90 text-black hover:bg-white"
-                            onClick={() => onOpenPromptBuilder?.(sceneIdx)}
-                         >
-                           <Wand2 className="w-3 h-3 mr-2" />
-                           Generate
-                         </Button>
-                         <Button
-                            size="sm"
-                            variant="secondary"
-                            className="bg-white/90 text-black hover:bg-white"
-                            onClick={() => {
+                         <Tooltip>
+                           <TooltipTrigger asChild>
+                             <Button
+                                size="sm"
+                                variant="secondary"
+                                className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
+                                onClick={() => onOpenPromptBuilder?.(sceneIdx)}
+                             >
+                               <Wand2 className="w-4 h-4" />
+                             </Button>
+                           </TooltipTrigger>
+                           <TooltipContent>Generate</TooltipContent>
+                         </Tooltip>
+                         <Tooltip>
+                           <TooltipTrigger asChild>
+                             <Button
+                                size="sm"
+                                variant="secondary"
+                                className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
+                                onClick={() => {
                               const input = document.createElement('input');
                               input.type = 'file';
                               input.accept = 'image/*';
@@ -3651,48 +3657,58 @@ function SceneCard({
                               };
                               input.click();
                             }}
-                         >
-                           <Upload className="w-3 h-3 mr-2" />
-                           Upload
-                         </Button>
+                             >
+                               <Upload className="w-4 h-4" />
+                             </Button>
+                           </TooltipTrigger>
+                           <TooltipContent>Upload</TooltipContent>
+                         </Tooltip>
                          {scene.imageUrl && (
                            <>
-                             <Button
-                               size="sm"
-                               variant="secondary"
-                               className="bg-white/90 text-black hover:bg-white"
-                               onClick={async () => {
-                                 try {
-                                   const response = await fetch(scene.imageUrl);
-                                   const blob = await response.blob();
-                                   const url = window.URL.createObjectURL(blob);
-                                   const a = document.createElement('a');
-                                   a.href = url;
-                                   a.download = `scene-${sceneNumber}-frame.png`;
-                                   document.body.appendChild(a);
-                                   a.click();
-                                   document.body.removeChild(a);
-                                   window.URL.revokeObjectURL(url);
-                                 } catch (error) {
-                                   console.error('Failed to download image:', error);
-                                 }
-                               }}
-                             >
-                               <Download className="w-3 h-3 mr-2" />
-                               Download
-                             </Button>
+                             <Tooltip>
+                               <TooltipTrigger asChild>
+                                 <Button
+                                   size="sm"
+                                   variant="secondary"
+                                   className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
+                                   onClick={async () => {
+                                     try {
+                                       const response = await fetch(scene.imageUrl);
+                                       const blob = await response.blob();
+                                       const url = window.URL.createObjectURL(blob);
+                                       const a = document.createElement('a');
+                                       a.href = url;
+                                       a.download = `scene-${sceneNumber}-frame.png`;
+                                       document.body.appendChild(a);
+                                       a.click();
+                                       document.body.removeChild(a);
+                                       window.URL.revokeObjectURL(url);
+                                     } catch (error) {
+                                       console.error('Failed to download image:', error);
+                                     }
+                                   }}
+                                 >
+                                   <Download className="w-4 h-4" />
+                                 </Button>
+                               </TooltipTrigger>
+                               <TooltipContent>Download</TooltipContent>
+                             </Tooltip>
                              {onAddToReferenceLibrary && (
-                               <Button
-                                 size="sm"
-                                 variant="secondary"
-                                 className="bg-white/90 text-black hover:bg-white"
-                                 onClick={async () => {
-                                   await onAddToReferenceLibrary(scene.imageUrl, `Scene ${sceneNumber} Frame`, sceneNumber);
-                                 }}
-                               >
-                                 <FolderPlus className="w-3 h-3 mr-2" />
-                                 Add to Library
-                               </Button>
+                               <Tooltip>
+                                 <TooltipTrigger asChild>
+                                   <Button
+                                     size="sm"
+                                     variant="secondary"
+                                     className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
+                                     onClick={async () => {
+                                       await onAddToReferenceLibrary(scene.imageUrl, `Scene ${sceneNumber} Frame`, sceneNumber);
+                                     }}
+                                   >
+                                     <FolderPlus className="w-4 h-4" />
+                                   </Button>
+                                 </TooltipTrigger>
+                                 <TooltipContent>Add to Library</TooltipContent>
+                               </Tooltip>
                              )}
                            </>
                          )}
