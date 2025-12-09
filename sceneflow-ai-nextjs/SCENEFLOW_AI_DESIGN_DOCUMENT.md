@@ -47,6 +47,9 @@
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2024-12-09 | Allow in-world signage in image prompts | Previous "no text" directive blocked scene-relevant signage; now blocks only captions/subtitles/watermarks | ✅ Fixed |
+| 2024-12-09 | Storyboard close button | Added X button to storyboard header for intuitive closing (was only toggle via Quick Action) | ✅ Implemented |
+| 2024-12-09 | Storyboard icon buttons with tooltips | Regenerate, Upload, Download, Add to Library buttons on scene cards with tooltips | ✅ Implemented |
 | 2024-12-09 | Ken Burns effect for scene images | Industry-standard cinematic look, no pre-processing needed, works in browser | ✅ Implemented |
 | 2024-12-09 | Scene-aware Ken Burns animation | Match animation direction to scene content (action, landscape, portrait) | ✅ Implemented |
 | 2024-12-09 | Prompt-based wardrobe (not reference images) | Reference images don't guarantee wardrobe consistency; prompt injection more reliable | ✅ Decided |

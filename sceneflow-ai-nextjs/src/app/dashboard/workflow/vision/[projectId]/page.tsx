@@ -5189,6 +5189,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onRegenerateScene={(index) => handleGenerateSceneImage(index)}
                             onGenerateScene={handleGenerateScene}
                             onUploadScene={handleUploadScene}
+                            onClose={() => setShowSceneGallery(false)}
                             sceneProductionState={sceneProductionState}
                             productionReferences={{
                               characters,

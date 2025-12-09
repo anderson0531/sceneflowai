@@ -13,8 +13,9 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye } from 'lucide-react'
+import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, X, Upload, Download, FolderPlus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData } from '@/lib/types/reports'
 import { SceneProductionManager } from './scene-production'
@@ -29,6 +30,9 @@ interface SceneGalleryProps {
   onRegenerateScene: (sceneIndex: number) => void
   onGenerateScene: (sceneIndex: number, prompt: string) => void
   onUploadScene: (sceneIndex: number, file: File) => void
+  onDownloadScene?: (sceneIndex: number) => void
+  onAddToLibrary?: (sceneIndex: number) => void
+  onClose?: () => void
   sceneProductionState: Record<string, SceneProductionData>
   productionReferences: SceneProductionReferences
   onInitializeProduction: (sceneId: string, options: { targetDuration: number }) => Promise<void>
@@ -48,6 +52,9 @@ export function SceneGallery({
   onRegenerateScene,
   onGenerateScene,
   onUploadScene,
+  onDownloadScene,
+  onAddToLibrary,
+  onClose,
   sceneProductionState,
   productionReferences,
   onInitializeProduction,
@@ -96,6 +103,7 @@ export function SceneGallery({
   }
 
   return (
+    <TooltipProvider>
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6 h-full overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
@@ -106,7 +114,7 @@ export function SceneGallery({
           </span>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           {onOpenPreview && (
             <Button
               variant="outline"
@@ -119,15 +127,19 @@ export function SceneGallery({
             </Button>
           )}
           {scenes.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setReportPreviewOpen(true)}
-              className="flex items-center justify-center"
-              title="Print Storyboard"
-            >
-              <Printer className="w-4 h-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setReportPreviewOpen(true)}
+                  className="flex items-center justify-center"
+                >
+                  <Printer className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Print Storyboard</TooltipContent>
+            </Tooltip>
           )}
           <button 
             onClick={() => setViewMode('grid')}
@@ -143,6 +155,19 @@ export function SceneGallery({
           >
             <List className="w-4 h-4" />
           </button>
+          {onClose && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onClose}
+                  className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Close Storyboard</TooltipContent>
+            </Tooltip>
+          )}
         </div>
       </div>
       
@@ -190,6 +215,8 @@ export function SceneGallery({
                     }
                   }}
                   onUpload={(file) => onUploadScene(idx, file)}
+                  onDownload={onDownloadScene ? () => onDownloadScene(idx) : undefined}
+                  onAddToLibrary={onAddToLibrary ? () => onAddToLibrary(idx) : undefined}
                   prompt={scenePrompts[idx] || defaultPrompt}
                   onPromptChange={(prompt) => setScenePrompts((prev) => ({ ...prev, [idx]: prompt }))}
                   isGenerating={generatingScenes.has(idx)}
@@ -234,6 +261,7 @@ export function SceneGallery({
         />
       )}
     </div>
+    </TooltipProvider>
   )
 }
 
@@ -247,6 +275,8 @@ interface SceneCardProps {
   onRegenerate: () => void
   onGenerate: (prompt: string) => void
   onUpload: (file: File) => void
+  onDownload?: () => void
+  onAddToLibrary?: () => void
   prompt: string
   onPromptChange: (prompt: string) => void
   isGenerating: boolean
@@ -269,6 +299,8 @@ function SceneCard({
   onRegenerate,
   onGenerate,
   onUpload,
+  onDownload,
+  onAddToLibrary,
   prompt,
   onPromptChange,
   isGenerating,
@@ -281,6 +313,7 @@ function SceneCard({
   onSegmentUpload,
 }: SceneCardProps) {
   const hasImage = !!scene.imageUrl
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
   const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement
     if (target.closest('[data-scene-production]')) {
@@ -288,6 +321,16 @@ function SceneCard({
     }
     onClick()
   }
+  
+  const handleDownload = () => {
+    if (scene.imageUrl) {
+      const link = document.createElement('a')
+      link.href = scene.imageUrl
+      link.download = `scene-${sceneNumber}.png`
+      link.click()
+    }
+  }
+  
   const sceneHeading = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text
   const formattedHeading = formatSceneHeading(sceneHeading) || sceneHeading || 'Untitled'
   return (
@@ -376,13 +419,71 @@ function SceneCard({
         </div>
       ) : (
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-          <button
-            onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
-            className="p-1.5 rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
-            title="Regenerate"
-          >
-            <RefreshCw className="w-4 h-4 text-gray-700 dark:text-gray-300" />
-          </button>
+          {/* Hidden file input for upload */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) onUpload(file)
+            }}
+          />
+          
+          {/* Regenerate */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
+                className="p-1.5 rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                <RefreshCw className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Regenerate</TooltipContent>
+          </Tooltip>
+          
+          {/* Upload */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                className="p-1.5 rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                <Upload className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Upload Image</TooltipContent>
+          </Tooltip>
+          
+          {/* Download */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={(e) => { e.stopPropagation(); onDownload ? onDownload() : handleDownload(); }}
+                className="p-1.5 rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                <Download className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Download</TooltipContent>
+          </Tooltip>
+          
+          {/* Add to Library */}
+          {onAddToLibrary && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onAddToLibrary(); }}
+                  className="p-1.5 rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  <FolderPlus className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Add to Library</TooltipContent>
+            </Tooltip>
+          )}
         </div>
       )}
       
