@@ -26,7 +26,7 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ImageMaskEditor } from './ImageMaskEditor'
-import { ASPECT_RATIO_PRESETS, AspectRatioPreset } from '@/lib/imagen/editClient'
+import { ASPECT_RATIO_PRESETS, AspectRatioPreset } from '@/types/imageEdit'
 import { toast } from 'sonner'
 import {
   Wand2,

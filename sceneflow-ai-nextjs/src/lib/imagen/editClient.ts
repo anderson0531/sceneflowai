@@ -5,18 +5,16 @@
  * 1. Instruction-Based Editing (Gemini) - Conversational editing without masks
  * 2. Mask-Based Editing (Imagen 3) - Precise pixel control with inpainting/outpainting
  * 
+ * SERVER-SIDE ONLY - Do not import this file in client components
+ * 
  * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
  */
 
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
+import { EditMode, AspectRatioPreset } from '@/types/imageEdit'
 
-// ============================================================================
-// Types
-// ============================================================================
-
-export type EditMode = 'instruction' | 'inpaint' | 'outpaint'
-
-export type AspectRatioPreset = '16:9' | '21:9' | '1:1' | '9:16' | '4:3' | '3:4'
+// Re-export types for API route usage
+export type { EditMode, AspectRatioPreset }
 
 export interface InstructionEditOptions {
   /** The source image to edit (base64 or URL) */
@@ -436,17 +434,4 @@ export async function outpaintImage(
       error: error.message
     }
   }
-}
-
-// ============================================================================
-// Aspect Ratio Presets for Film Workflow
-// ============================================================================
-
-export const ASPECT_RATIO_PRESETS: Record<AspectRatioPreset, { label: string; description: string }> = {
-  '16:9': { label: 'HD Widescreen', description: 'Standard cinematic format (1920×1080)' },
-  '21:9': { label: 'Ultra-Wide', description: 'Anamorphic cinema format (2560×1080)' },
-  '1:1': { label: 'Square', description: 'Social media format (1080×1080)' },
-  '9:16': { label: 'Portrait', description: 'Vertical/mobile format (1080×1920)' },
-  '4:3': { label: 'Classic', description: 'Traditional TV format (1440×1080)' },
-  '3:4': { label: 'Portrait Classic', description: 'Vertical classic format (1080×1440)' }
 }
