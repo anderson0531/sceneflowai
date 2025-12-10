@@ -1,7 +1,7 @@
 # SceneFlow AI - Application Design Document
 
-**Version**: 2.3  
-**Last Updated**: December 9, 2025  
+**Version**: 2.4  
+**Last Updated**: December 10, 2025  
 **Status**: Production
 
 ---
@@ -40,6 +40,8 @@
 | Screening Room | `src/components/vision/ScriptPlayer.tsx` |
 | Scene images | `src/components/vision/SceneGallery.tsx` |
 | Image prompt builder | `src/components/vision/ScenePromptBuilder.tsx` |
+| Image editing | `src/components/vision/ImageEditModal.tsx` |
+| Image edit API | `src/app/api/image/edit/route.ts` |
 | Direction prompt builder | `src/components/vision/SceneDirectionBuilder.tsx` |
 | Direction API | `src/app/api/scene/generate-direction/route.ts` |
 | Wardrobe AI Assist | `src/app/api/character/generate-wardrobe/route.ts` |
@@ -76,6 +78,7 @@
 | 2024-10-29 | Vision replaces Storyboard phase | Unified script and visual development in single workflow | ✅ Implemented |
 | 2024-10-15 | Gemini as primary LLM | Cost-effective, quality output, consistent with Google stack | ✅ Implemented |
 | 2024-10-01 | Imagen 4 with GCS references | Character consistency via reference images | ✅ Implemented |
+| 2025-12-10 | Image editing feature | AI-powered image editing with instruction-based (Gemini), mask-based inpainting, and outpainting to cinematic aspect ratios | ✅ Implemented |
 | 2025-12-09 | Wardrobe recommendation accessory filtering | Wardrobe AI now excludes bags, satchels, backpacks for formal/stage/debate scenes; prompt builder instructs AI to only include appropriate accessories for public events | ✅ Implemented |
 
 ---
@@ -938,6 +941,80 @@ function getSceneAwareKenBurns(scene: Scene): KenBurnsConfig {
 @keyframes kenburns-in {
   from { transform: scale(1); }
   to { transform: scale(1.1); }
+}
+```
+
+---
+
+## 12.3 Image Editing Feature
+
+**Status**: ✅ Implemented (December 2025)
+
+**Purpose**: Enable AI-powered image editing for scene frames, character portraits, and objects to fix consistency issues before video generation.
+
+**Key Files**:
+- API Route: `src/app/api/image/edit/route.ts`
+- Edit Client: `src/lib/imagen/editClient.ts`
+- Mask Editor: `src/components/vision/ImageMaskEditor.tsx`
+- Edit Modal: `src/components/vision/ImageEditModal.tsx`
+
+### Three Editing Modes
+
+| Mode | API | Description | Use Case |
+|------|-----|-------------|----------|
+| **Quick Edit** | Gemini | Natural language instruction editing | "Change the suit to a tuxedo" |
+| **Precise Edit** | Imagen 3 Inpaint | Mask-based editing for specific regions | Remove artifacts, fix details |
+| **Outpaint** | Imagen 3 Outpaint | Expand image to new aspect ratio | Convert 1:1 to 16:9 cinematic |
+
+### Design Decisions
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Mask storage | On-the-fly (not stored) | Reduces storage costs, masks are one-time use |
+| Edit history | Before/after preview | Users compare before saving, no need for full history |
+| Aspect ratios | Preset cinematic ratios | 16:9, 21:9, 1:1 for film workflow, no custom dimensions |
+| Subject reference | Optional identity lock | Maintains character identity across edits |
+
+### Outpaint Aspect Ratio Presets
+
+```typescript
+const ASPECT_RATIO_PRESETS = {
+  '16:9': { label: 'HD Widescreen', description: 'Standard cinematic (1920×1080)' },
+  '21:9': { label: 'Ultra-Wide', description: 'Anamorphic cinema (2560×1080)' },
+  '1:1':  { label: 'Square', description: 'Social media (1080×1080)' },
+  '9:16': { label: 'Portrait', description: 'Vertical/mobile (1080×1920)' },
+  '4:3':  { label: 'Classic', description: 'Traditional TV (1440×1080)' },
+  '3:4':  { label: 'Portrait Classic', description: 'Vertical classic (1080×1440)' }
+}
+```
+
+### API Usage
+
+```typescript
+// Quick Edit (instruction-based)
+POST /api/image/edit
+{
+  "mode": "instruction",
+  "sourceImage": "https://...",
+  "instruction": "Change the background to a sunset"
+}
+
+// Precise Edit (mask-based inpainting)
+POST /api/image/edit
+{
+  "mode": "inpaint",
+  "sourceImage": "https://...",
+  "maskImage": "data:image/png;base64,...",
+  "prompt": "A clear blue sky"
+}
+
+// Outpaint (aspect ratio expansion)
+POST /api/image/edit
+{
+  "mode": "outpaint",
+  "sourceImage": "https://...",
+  "targetAspectRatio": "16:9",
+  "prompt": "Modern office interior with large windows"
 }
 ```
 

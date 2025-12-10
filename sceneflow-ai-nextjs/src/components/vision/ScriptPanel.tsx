@@ -12,7 +12,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Bot, PenTool, FolderPlus } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Bot, PenTool, FolderPlus, Pencil } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
@@ -31,6 +31,7 @@ import { AudioMixer, type AudioTrack } from './AudioMixer'
 import ScriptReviewModal from './ScriptReviewModal'
 import SceneReviewModal from './SceneReviewModal'
 import { ScriptEditorModal } from './ScriptEditorModal'
+import { ImageEditModal } from './ImageEditModal'
 import { toast } from 'sonner'
 import { useOverlayStore } from '@/store/useOverlayStore'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
@@ -393,6 +394,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [generateAudioDialogOpen, setGenerateAudioDialogOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en')
+  
+  // Image Edit Modal state
+  const [imageEditModalOpen, setImageEditModalOpen] = useState(false)
+  const [editingImageData, setEditingImageData] = useState<{ url: string; sceneIdx: number } | null>(null)
   
   // Audio playback state
   const [voices, setVoices] = useState<Array<CuratedVoice>>([])
@@ -2052,6 +2057,36 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         />
       )}
 
+      {/* Image Edit Modal */}
+      {editingImageData && (
+        <ImageEditModal
+          open={imageEditModalOpen}
+          onOpenChange={(open) => {
+            setImageEditModalOpen(open)
+            if (!open) setEditingImageData(null)
+          }}
+          imageUrl={editingImageData.url}
+          imageType="scene"
+          onSave={(newImageUrl) => {
+            // Update the scene with the new image URL
+            const updatedScenes = [...scenes]
+            updatedScenes[editingImageData.sceneIdx] = {
+              ...updatedScenes[editingImageData.sceneIdx],
+              imageUrl: newImageUrl
+            }
+            onScriptChange({
+              ...script,
+              script: {
+                ...script.script,
+                scenes: updatedScenes
+              }
+            })
+            setImageEditModalOpen(false)
+            setEditingImageData(null)
+          }}
+        />
+      )}
+
       {/* Scene Prompt Builder Modal */}
       {sceneBuilderIdx !== null && (
         <ScenePromptBuilder
@@ -3693,6 +3728,22 @@ function SceneCard({
                                    </Button>
                                  </TooltipTrigger>
                                  <TooltipContent>Download</TooltipContent>
+                               </Tooltip>
+                               <Tooltip>
+                                 <TooltipTrigger asChild>
+                                   <Button
+                                     size="sm"
+                                     variant="secondary"
+                                     className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
+                                     onClick={() => {
+                                       setEditingImageData({ url: scene.imageUrl, sceneIdx });
+                                       setImageEditModalOpen(true);
+                                     }}
+                                   >
+                                     <Pencil className="w-4 h-4" />
+                                   </Button>
+                                 </TooltipTrigger>
+                                 <TooltipContent>Edit Image</TooltipContent>
                                </Tooltip>
                                {onAddToReferenceLibrary && (
                                  <Tooltip>
