@@ -4653,6 +4653,32 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return 'bg-red-500 text-white dark:bg-red-600'
     }
   }
+
+  // Helper function to get stoplight gradient colors for score cards
+  const getScoreCardClasses = (score: number): { gradient: string; border: string; text: string; label: string } => {
+    if (score >= 85) {
+      return {
+        gradient: 'bg-gradient-to-br from-green-500/10 to-green-600/5 dark:from-green-500/20 dark:to-green-600/10',
+        border: 'border-green-200/50 dark:border-green-500/20',
+        text: 'text-green-600 dark:text-green-400',
+        label: 'text-green-500/70 dark:text-green-400/60'
+      }
+    } else if (score >= 75) {
+      return {
+        gradient: 'bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 dark:from-yellow-500/20 dark:to-yellow-600/10',
+        border: 'border-yellow-200/50 dark:border-yellow-500/20',
+        text: 'text-yellow-600 dark:text-yellow-400',
+        label: 'text-yellow-500/70 dark:text-yellow-400/60'
+      }
+    } else {
+      return {
+        gradient: 'bg-gradient-to-br from-red-500/10 to-red-600/5 dark:from-red-500/20 dark:to-red-600/10',
+        border: 'border-red-200/50 dark:border-red-500/20',
+        text: 'text-red-600 dark:text-red-400',
+        label: 'text-red-500/70 dark:text-red-400/60'
+      }
+    }
+  }
   const saveScenesToDatabase = async (updatedScenes: any[]) => {
     try {
       // DEBUG: Log what we're about to save, including sceneDirection
@@ -4836,7 +4862,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       <div className="flex-1 overflow-hidden overflow-x-hidden px-4 py-3 max-w-full min-w-0">
         <PanelGroup direction="horizontal" className="h-full max-w-full min-w-0 overflow-x-hidden">
           {/* Left Panel: Workflow Navigation & Tools */}
-          <Panel defaultSize={18} minSize={12} maxSize={25} className="min-w-0 overflow-hidden">
+          <Panel defaultSize={12} minSize={12} maxSize={25} className="min-w-0 overflow-hidden">
             <div className="h-full overflow-y-auto pr-2 min-w-0">
               <div className="bg-white/50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-800 h-full flex flex-col">
                 {/* Main Navigation */}
@@ -4957,26 +4983,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 </div>
                 
                 {/* Project Stats - Mini Dashboard */}
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-1">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Project Stats</h3>
                   {/* Stats Grid */}
-                  <div className="grid grid-cols-2 gap-2 mb-3">
-                    <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 dark:from-purple-500/20 dark:to-purple-600/10 rounded-lg p-2.5 border border-purple-200/50 dark:border-purple-500/20">
-                      <div className="text-lg font-bold text-purple-600 dark:text-purple-400">{script?.script?.scenes?.length || 0}</div>
-                      <div className="text-[10px] text-purple-500/70 dark:text-purple-400/60 uppercase tracking-wide">Scenes</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 dark:from-purple-500/20 dark:to-purple-600/10 rounded-lg p-2.5 border border-purple-200/50 dark:border-purple-500/20 text-center">
+                      <div className="text-xl font-bold text-purple-600 dark:text-purple-400">{script?.script?.scenes?.length || 0}</div>
+                      <div className="text-xs text-purple-500/80 dark:text-purple-400/70 uppercase tracking-wide font-medium">Scenes</div>
                     </div>
-                    <div className="bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 dark:from-cyan-500/20 dark:to-cyan-600/10 rounded-lg p-2.5 border border-cyan-200/50 dark:border-cyan-500/20">
-                      <div className="text-lg font-bold text-cyan-600 dark:text-cyan-400">{characters.length}</div>
-                      <div className="text-[10px] text-cyan-500/70 dark:text-cyan-400/60 uppercase tracking-wide">Cast</div>
+                    <div className="bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 dark:from-cyan-500/20 dark:to-cyan-600/10 rounded-lg p-2.5 border border-cyan-200/50 dark:border-cyan-500/20 text-center">
+                      <div className="text-xl font-bold text-cyan-600 dark:text-cyan-400">{characters.length}</div>
+                      <div className="text-xs text-cyan-500/80 dark:text-cyan-400/70 uppercase tracking-wide font-medium">Cast</div>
                     </div>
-                    <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 dark:from-green-500/20 dark:to-green-600/10 rounded-lg p-2.5 border border-green-200/50 dark:border-green-500/20">
-                      <div className="text-lg font-bold text-green-600 dark:text-green-400">
+                    <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 dark:from-green-500/20 dark:to-green-600/10 rounded-lg p-2.5 border border-green-200/50 dark:border-green-500/20 text-center">
+                      <div className="text-xl font-bold text-green-600 dark:text-green-400">
                         {Math.round((script?.script?.scenes || []).reduce((sum: number, s: any) => sum + (s.estimatedDuration || s.duration || 15), 0) / 60)}m
                       </div>
-                      <div className="text-[10px] text-green-500/70 dark:text-green-400/60 uppercase tracking-wide">Duration</div>
+                      <div className="text-xs text-green-500/80 dark:text-green-400/70 uppercase tracking-wide font-medium">Duration</div>
                     </div>
-                    <div className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 dark:from-amber-500/20 dark:to-amber-600/10 rounded-lg p-2.5 border border-amber-200/50 dark:border-amber-500/20">
-                      <div className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                    <div className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 dark:from-amber-500/20 dark:to-amber-600/10 rounded-lg p-2.5 border border-amber-200/50 dark:border-amber-500/20 text-center">
+                      <div className="text-xl font-bold text-amber-600 dark:text-amber-400">
                         {(() => {
                           const sceneCount = script?.script?.scenes?.length || 0;
                           const charCount = characters.length;
@@ -4986,39 +5012,41 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                           return imageCredits + charCredits + audioCredits;
                         })()}
                       </div>
-                      <div className="text-[10px] text-amber-500/70 dark:text-amber-400/60 uppercase tracking-wide">Credits</div>
+                      <div className="text-xs text-amber-500/80 dark:text-amber-400/70 uppercase tracking-wide font-medium">Credits</div>
                     </div>
                   </div>
-                  {/* Review Scores */}
-                  {(directorReview?.overallScore || audienceReview?.overallScore) && (
-                    <div className="bg-gray-100/80 dark:bg-gray-800/50 rounded-lg p-2.5 border border-gray-200/50 dark:border-gray-700/50">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-rose-500/10 flex items-center justify-center">
-                            <span className="text-xs">🎬</span>
-                          </div>
-                          <div>
-                            <div className={cn("text-sm font-bold", getScoreColorClass(directorReview?.overallScore || 0))}>
+                </div>
+                
+                {/* Review Scores - Stoplight Cards */}
+                {(directorReview?.overallScore || audienceReview?.overallScore) && (
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Review Scores</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {(() => {
+                        const directorColors = getScoreCardClasses(directorReview?.overallScore || 0)
+                        return (
+                          <div className={cn("rounded-lg p-2.5 border text-center", directorColors.gradient, directorColors.border)}>
+                            <div className={cn("text-xl font-bold", directorColors.text)}>
                               {directorReview?.overallScore || '-'}
                             </div>
-                            <div className="text-[9px] text-gray-500 uppercase">Director</div>
+                            <div className={cn("text-xs uppercase tracking-wide font-medium", directorColors.label)}>Director</div>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div>
-                            <div className={cn("text-sm font-bold text-right", getScoreColorClass(audienceReview?.overallScore || 0))}>
+                        )
+                      })()}
+                      {(() => {
+                        const audienceColors = getScoreCardClasses(audienceReview?.overallScore || 0)
+                        return (
+                          <div className={cn("rounded-lg p-2.5 border text-center", audienceColors.gradient, audienceColors.border)}>
+                            <div className={cn("text-xl font-bold", audienceColors.text)}>
                               {audienceReview?.overallScore || '-'}
                             </div>
-                            <div className="text-[9px] text-gray-500 uppercase text-right">Audience</div>
+                            <div className={cn("text-xs uppercase tracking-wide font-medium", audienceColors.label)}>Audience</div>
                           </div>
-                          <div className="w-6 h-6 rounded-full bg-blue-500/10 flex items-center justify-center">
-                            <span className="text-xs">👥</span>
-                          </div>
-                        </div>
-                      </div>
+                        )
+                      })()}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
                 
                 {/* Settings */}
                 <div className="p-4 mt-auto">
