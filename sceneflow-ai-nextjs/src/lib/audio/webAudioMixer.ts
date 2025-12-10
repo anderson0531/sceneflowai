@@ -89,17 +89,30 @@ export class WebAudioMixer {
 
   /**
    * Load audio file from URL and decode to AudioBuffer
+   * Uses cache-busting to ensure fresh audio files are loaded
    */
   async loadAudioFile(url: string, type?: AudioType): Promise<AudioBuffer> {
-    // Check cache
-    if (this.audioBuffers.has(url)) {
-      return this.audioBuffers.get(url)!
+    // Check cache - use normalized URL without query params for cache key
+    const cacheKey = url.split('?')[0]
+    if (this.audioBuffers.has(cacheKey)) {
+      console.log('[WebAudioMixer] Using cached buffer for:', cacheKey.slice(-50))
+      return this.audioBuffers.get(cacheKey)!
     }
 
     const context = await this.initAudioContext()
 
     try {
-      const response = await fetch(url)
+      // Add cache-busting and no-cache headers to bypass browser cache
+      const fetchUrl = url.includes('?') ? url : `${url}?_t=${Date.now()}`
+      console.log('[WebAudioMixer] Fetching fresh audio:', fetchUrl.slice(-80))
+      
+      const response = await fetch(fetchUrl, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      })
       if (!response.ok) {
         throw new Error(`Failed to load audio: ${response.status} ${response.statusText}`)
       }
@@ -116,8 +129,9 @@ export class WebAudioMixer {
         throw new Error(`Audio decoding failed: ${decodeError.message}. This may indicate a corrupted audio file or unsupported format.`)
       }
       
-      // Cache buffer
-      this.audioBuffers.set(url, audioBuffer)
+      // Cache buffer using normalized URL (without query params)
+      this.audioBuffers.set(cacheKey, audioBuffer)
+      console.log('[WebAudioMixer] Cached audio buffer for:', cacheKey.slice(-50))
       
       return audioBuffer
     } catch (error) {

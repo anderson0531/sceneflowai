@@ -77,31 +77,38 @@ async function resolveAudioDuration(url: string, stored?: unknown): Promise<numb
     return 0
   }
 
-  const cached = audioDurationCache.get(url)
+  // Use URL without query params as cache key
+  const cacheKey = url.split('?')[0]
+  const cached = audioDurationCache.get(cacheKey)
   if (typeof cached === 'number') {
+    console.log('[Duration] Cache HIT:', { url: cacheKey.slice(-50), cached })
     return cached
   }
 
   const storedDuration = normalizeDuration(stored) ?? null
+  console.log('[Duration] Cache MISS, stored duration:', { url: cacheKey.slice(-50), storedDuration })
 
   try {
     const measured = await getAudioDuration(url)
     if (Number.isFinite(measured) && measured > 0) {
       const finalDuration = Math.max(measured, storedDuration ?? 0)
-      audioDurationCache.set(url, finalDuration)
+      audioDurationCache.set(cacheKey, finalDuration)
+      console.log('[Duration] Measured and cached:', { url: cacheKey.slice(-50), measured, final: finalDuration })
       return finalDuration
     }
   } catch (error) {
-    console.warn('[Timeline] Failed to measure duration, using stored/fallback', { url, error })
+    console.warn('[Timeline] Failed to measure duration, using stored/fallback', { url: url.slice(-50), error })
   }
 
   if (storedDuration) {
-    audioDurationCache.set(url, storedDuration)
+    audioDurationCache.set(cacheKey, storedDuration)
+    console.log('[Duration] Using stored:', { url: cacheKey.slice(-50), storedDuration })
     return storedDuration
   }
 
   const fallback = 3
-  audioDurationCache.set(url, fallback)
+  audioDurationCache.set(cacheKey, fallback)
+  console.log('[Duration] Using fallback:', { url: cacheKey.slice(-50), fallback })
   return fallback
 }
 
@@ -508,8 +515,21 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     // Dialogue waits for narration/SFX to finish and plays sequentially
     const resolvedDialogue: AudioSource[] = []
     dialogueCursor = Math.max(sfxCursor, voiceAnchorTime)
+    
+    // Debug: Log dialogue array details
+    console.log('[Timeline] Dialogue array for scene:', {
+      isArray: Array.isArray(dialogueArray),
+      length: Array.isArray(dialogueArray) ? dialogueArray.length : 0,
+      dialogueUrls: Array.isArray(dialogueArray) ? dialogueArray.map((d: any, i: number) => ({
+        index: i,
+        audioUrl: d.audioUrl?.slice(-60),
+        storedDuration: d.duration
+      })) : []
+    })
+    
     if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
-      for (const dialogue of dialogueArray) {
+      for (let i = 0; i < dialogueArray.length; i++) {
+        const dialogue = dialogueArray[i]
         if (dialogue.audioUrl) {
           const startTime = Math.max(dialogueCursor, voiceAnchorTime)
           resolvedDialogue.push({
@@ -518,6 +538,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           })
 
           const dialogueDuration = await resolveAudioDuration(dialogue.audioUrl, dialogue.duration)
+          console.log(`[Timeline] Dialogue ${i}: startTime=${startTime.toFixed(2)}s, duration=${dialogueDuration.toFixed(2)}s, url=${dialogue.audioUrl.slice(-60)}`)
           dialogueCursor = startTime + dialogueDuration + DIALOGUE_GAP_SECONDS
           totalDuration = Math.max(totalDuration, dialogueCursor)
         }
