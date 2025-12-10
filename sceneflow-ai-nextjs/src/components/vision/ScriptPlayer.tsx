@@ -154,33 +154,44 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
 
   // Create a fingerprint of audio URLs in scenes to detect content changes
   // This catches cases where script object reference doesn't change but audio URLs do
+  // Includes entry COUNTS to detect when dialogue/SFX lines are added/removed
   const audioFingerprint = React.useMemo(() => {
     return scenes.map((s: any, i: number) => {
-      const dialogueUrls = s.dialogueAudio?.en?.map((d: any) => d.audioUrl || '').join(',') || 
-                           (Array.isArray(s.dialogueAudio) ? s.dialogueAudio.map((d: any) => d.audioUrl || '').join(',') : '')
-      return `${i}:${s.narrationAudioUrl || ''}|${dialogueUrls}|${s.sfxAudioUrl || ''}`
+      // Dialogue: get URLs from multi-language or legacy array format, include count
+      const dialogueArray = s.dialogueAudio?.en || (Array.isArray(s.dialogueAudio) ? s.dialogueAudio : [])
+      const dialogueUrls = dialogueArray.map((d: any) => d.audioUrl || '').filter(Boolean).join(',')
+      const dialogueCount = dialogueArray.length
+      
+      // SFX: properly handle array format (NOT sfxAudioUrl singular)
+      const sfxArray = Array.isArray(s.sfxAudio) ? s.sfxAudio : []
+      const sfxUrls = sfxArray.filter(Boolean).join(',')
+      const sfxCount = sfxArray.length
+      
+      // Include counts to detect added/removed entries even if URLs reused
+      return `${i}:${s.narrationAudioUrl || ''}|D${dialogueCount}:${dialogueUrls}|S${sfxCount}:${sfxUrls}`
     }).join('||')
   }, [scenes])
 
-  // CRITICAL: Stop all audio playback and clear caches when script/audio content changes
-  // This prevents "ghost audio" where old audio plays alongside new audio
+  // CRITICAL: Clear audio caches when script/audio content changes
+  // This prevents "ghost audio" where old cached audio plays alongside new audio
+  // NOTE: Do NOT reset isPlaying here - let user control playback state
+  const previousFingerprintRef = React.useRef<string>('')
   React.useEffect(() => {
-    // Stop any currently playing audio FIRST - this is critical!
-    if (audioMixerRef.current) {
-      audioMixerRef.current.stop()  // Stop active playback
-      audioMixerRef.current.clearCache()  // Clear cached audio buffers
+    // Skip on initial mount - only react to CHANGES
+    if (previousFingerprintRef.current && previousFingerprintRef.current !== audioFingerprint) {
+      // Stop any currently playing audio and clear caches
+      if (audioMixerRef.current) {
+        audioMixerRef.current.stop()  // Stop active playback
+        audioMixerRef.current.clearCache()  // Clear cached audio buffers
+      }
+      
+      // Clear duration cache so durations are recalculated
+      audioDurationCache.clear()
+      
+      // DO NOT reset isPlaying - the previous fix broke playback by doing this
+      // User-initiated playback should continue; cache is cleared so new audio loads
     }
-    
-    // Clear duration cache so durations are recalculated
-    audioDurationCache.clear()
-    
-    // Reset player state to prevent auto-resumption with stale state
-    setPlayerState(prev => ({
-      ...prev,
-      isPlaying: false
-    }))
-    
-    console.log('[ScriptPlayer] Audio reset - script/audio content changed')
+    previousFingerprintRef.current = audioFingerprint
   }, [audioFingerprint])  // Trigger on actual audio content changes, not just object reference
   
   const [playerState, setPlayerState] = useState<PlayerState>({

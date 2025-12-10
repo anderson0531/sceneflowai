@@ -54,6 +54,7 @@
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2025-12-11 | Fix ghost audio fingerprint & playback | Root cause: fingerprint used `sfxAudioUrl` (singular) but SFX stored as `sfxAudio[]` (array) - SFX changes weren't detected. Also `isPlaying: false` reset on fingerprint change broke new audio playback. Fixed: 1) Fingerprint now reads SFX array + includes entry counts (D3/S2), 2) Only clear caches on CHANGE (skip initial mount), 3) Don't reset isPlaying, 4) Added clearCacheForUrls() for targeted invalidation | ✅ Fixed |
 | 2025-12-11 | Comprehensive ghost audio fix | Multiple audio sources causing ghost playback: 1) audioDuration.ts now cancels preload with src='', 2) ScriptPanel tracks orphan Audio objects with cleanup on unmount, 3) URL.revokeObjectURL frees blob memory, 4) ScriptPlayer resets isPlaying state on fingerprint change. Centralized audio cleanup prevents orphan HTMLAudioElements | ✅ Fixed |
 | 2025-12-11 | UI Style Guide created | Vision page is canonical UI reference. Created `UI_STYLE_GUIDE.md` documenting colors, buttons, cards, panels, typography, spacing, and interactive states to ensure consistency across app | ✅ Implemented |
 | 2025-12-11 | Fix ghost audio in Screening Room | Audio fingerprint (hash of all audio URLs) triggers stop() + clearCache() when content changes. Previous fix only cleared cache on script object reference change, missing in-place mutations. Now properly stops active AudioBufferSourceNodes before clearing | ✅ Fixed |

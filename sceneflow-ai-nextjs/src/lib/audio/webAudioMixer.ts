@@ -456,6 +456,25 @@ export class WebAudioMixer {
   }
 
   /**
+   * Clear cache for specific URLs
+   * Useful for targeted invalidation without affecting other scenes
+   */
+  clearCacheForUrls(urls: string[]): void {
+    urls.forEach(url => {
+      const cacheKey = url.split('?')[0]
+      this.audioBuffers.delete(cacheKey)
+    })
+  }
+
+  /**
+   * Check if a URL is cached
+   */
+  isCached(url: string): boolean {
+    const cacheKey = url.split('?')[0]
+    return this.audioBuffers.has(cacheKey)
+  }
+
+  /**
    * Check if currently playing
    */
   getPlaying(): boolean {
