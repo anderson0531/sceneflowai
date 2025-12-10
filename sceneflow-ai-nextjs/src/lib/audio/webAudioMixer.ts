@@ -101,15 +101,14 @@ export class WebAudioMixer {
     const context = await this.initAudioContext()
 
     try {
-      // Add cache-busting and no-cache headers to bypass browser cache
+      // Add cache-busting query param to bypass browser cache
+      // Note: Do NOT add custom headers like Cache-Control as they trigger CORS preflight
+      // which Vercel Blob Storage doesn't handle for cross-origin requests
       const fetchUrl = url.includes('?') ? url : `${url}?_t=${Date.now()}`
       
       const response = await fetch(fetchUrl, {
         cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
+        mode: 'cors'
       })
       if (!response.ok) {
         throw new Error(`Failed to load audio: ${response.status} ${response.statusText}`)
