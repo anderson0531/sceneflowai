@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Loader, Edit, Wand2, Check, Eye, Sparkles, Clapperboard, Mic, Square } from 'lucide-react'
+import { Loader, Edit, Wand2, Check, Eye, Sparkles, Clapperboard, Mic, Square, Star } from 'lucide-react'
 import ScriptRecommendationCard from './ScriptRecommendationCard'
 import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
