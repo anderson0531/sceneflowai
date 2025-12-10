@@ -270,29 +270,29 @@ export class WebAudioMixer {
       }
 
       const narrationAnchor = narrationBuffer ? narrationEndTime : descriptionEndTime
-      const speechAnchor = narrationAnchor
 
-      const validSfx = sfxResults.filter((entry): entry is { source: AudioSource; buffer: AudioBuffer } => !!entry)
-      let sfxCursor = narrationAnchor
-      validSfx.forEach(({ source, buffer }) => {
-        const requestedStart = typeof source.startTime === 'number'
-          ? Math.max(source.startTime, speechAnchor)
-          : Math.max(sfxCursor, speechAnchor)
-        const startTime = Math.max(requestedStart, sfxCursor)
-        this.playAudioBuffer(buffer, 'sfx', startTime, false)
-        sfxCursor = startTime + buffer.duration + SFX_GAP_SECONDS
-      })
-
+      // Dialogue plays after narration
       const validDialogues = dialogueResults.filter((entry): entry is { source: AudioSource; buffer: AudioBuffer } => !!entry)
-      const dialogueAnchor = validSfx.length > 0 ? sfxCursor : narrationAnchor
-      let dialogueCursor = Math.max(dialogueAnchor, speechAnchor)
+      let dialogueCursor = narrationAnchor
       validDialogues.forEach(({ source, buffer }) => {
         const requestedStart = typeof source.startTime === 'number'
-          ? Math.max(source.startTime, speechAnchor)
-          : Math.max(dialogueCursor, speechAnchor)
+          ? Math.max(source.startTime, narrationAnchor)
+          : dialogueCursor
         const startTime = Math.max(requestedStart, dialogueCursor)
         this.playAudioBuffer(buffer, 'dialogue', startTime, false)
         dialogueCursor = startTime + buffer.duration + DIALOGUE_GAP_SECONDS
+      })
+
+      // SFX starts with dialogue (at narrationAnchor), plays concurrently
+      const validSfx = sfxResults.filter((entry): entry is { source: AudioSource; buffer: AudioBuffer } => !!entry)
+      let sfxCursor = narrationAnchor // SFX starts when dialogue starts
+      validSfx.forEach(({ source, buffer }) => {
+        const requestedStart = typeof source.startTime === 'number'
+          ? Math.max(source.startTime, narrationAnchor)
+          : sfxCursor
+        const startTime = Math.max(requestedStart, sfxCursor)
+        this.playAudioBuffer(buffer, 'sfx', startTime, false)
+        sfxCursor = startTime + buffer.duration + SFX_GAP_SECONDS
       })
 
       // If no non-looping sources, use scene duration (for music-only scenes)
