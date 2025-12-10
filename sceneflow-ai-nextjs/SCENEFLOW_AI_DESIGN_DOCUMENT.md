@@ -54,6 +54,8 @@
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2025-12-10 | Review Analysis modal enhancements | Revise Script button auto-opens Script Editor with recommendations, TTS playback for review sections, ElevenLabs voice selector | ✅ Implemented |
+| 2025-12-10 | Script optimization timeout increase | Increased API timeout from 120s to 300s for large scripts to prevent batching (which loses context) | ✅ Implemented |
 | 2025-12-10 | Project Stats & Review Scores enhancement | Centered cards, larger labels, stoplight colors for scores, separate Review Scores section | ✅ Implemented |
 | 2025-12-10 | Vision page UI polish | Reference Library sticky header, minimized right panel default, colored Quick Action icons, Project Stats mini dashboard | ✅ Implemented |
 | 2025-12-10 | SFX audio timing fix | SFX now plays concurrently with dialogue (starts after narration) instead of sequentially | ✅ Fixed |
