@@ -4,7 +4,7 @@
 
 ### Required Reading
 
-**Before making any code changes, read the design document:**
+**Before making any code changes, read these documents:**
 
 📖 **[SCENEFLOW_AI_DESIGN_DOCUMENT.md](./SCENEFLOW_AI_DESIGN_DOCUMENT.md)**
 
@@ -14,6 +14,15 @@ This document contains:
 - Deprecated features and their replacements
 - Planned features and roadmap
 - Key file locations
+
+🎨 **[UI_STYLE_GUIDE.md](./UI_STYLE_GUIDE.md)**
+
+This document contains:
+- Color palette and theme tokens
+- Button, card, panel, and modal patterns
+- Typography and spacing standards
+- Interactive states (hover, focus, disabled)
+- Component checklist for consistency
 
 ---
 
@@ -82,8 +91,9 @@ Update `SCENEFLOW_AI_DESIGN_DOCUMENT.md`:
 ## Key Files Reference
 
 | Purpose | Location |
-|---------|----------|
+|---------|---------|
 | Design Document | `SCENEFLOW_AI_DESIGN_DOCUMENT.md` |
+| UI Style Guide | `UI_STYLE_GUIDE.md` |
 | Vision Page | `src/app/dashboard/workflow/vision/[projectId]/page.tsx` |
 | Screening Room | `src/components/vision/ScriptPlayer.tsx` |
 | Script Panel | `src/components/vision/ScriptPanel.tsx` |
