@@ -146,21 +146,36 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     }, 500)
   }, [])
   
-  // Clear audio duration cache when script changes to prevent stale audio
-  // This is critical for when dialogue/audio is regenerated
-  React.useEffect(() => {
-    audioDurationCache.clear()
-    // Also clear the Web Audio mixer's buffer cache if it exists
-    if (audioMixerRef.current) {
-      audioMixerRef.current.clearCache()
-    }
-  }, [script])
-  
   // Extract scenes with proper reactivity to script changes
   const scenes = React.useMemo(() => {
     const extractedScenes = script?.script?.scenes || script?.scenes || []
     return extractedScenes
   }, [script])
+
+  // Create a fingerprint of audio URLs in scenes to detect content changes
+  // This catches cases where script object reference doesn't change but audio URLs do
+  const audioFingerprint = React.useMemo(() => {
+    return scenes.map((s: any, i: number) => {
+      const dialogueUrls = s.dialogueAudio?.en?.map((d: any) => d.audioUrl || '').join(',') || 
+                           (Array.isArray(s.dialogueAudio) ? s.dialogueAudio.map((d: any) => d.audioUrl || '').join(',') : '')
+      return `${i}:${s.narrationAudioUrl || ''}|${dialogueUrls}|${s.sfxAudioUrl || ''}`
+    }).join('||')
+  }, [scenes])
+
+  // CRITICAL: Stop all audio playback and clear caches when script/audio content changes
+  // This prevents "ghost audio" where old audio plays alongside new audio
+  React.useEffect(() => {
+    // Stop any currently playing audio FIRST - this is critical!
+    if (audioMixerRef.current) {
+      audioMixerRef.current.stop()  // Stop active playback
+      audioMixerRef.current.clearCache()  // Clear cached audio buffers
+    }
+    
+    // Clear duration cache so durations are recalculated
+    audioDurationCache.clear()
+    
+    console.log('[ScriptPlayer] Audio reset - script/audio content changed')
+  }, [audioFingerprint])  // Trigger on actual audio content changes, not just object reference
   
   const [playerState, setPlayerState] = useState<PlayerState>({
     isPlaying: false,
