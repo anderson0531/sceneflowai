@@ -104,12 +104,13 @@ function detectMimeType(imageSource: string): string {
 }
 
 // ============================================================================
-// Instruction-Based Editing (Gemini Native)
+// Instruction-Based Editing (Imagen 3)
 // ============================================================================
 
 /**
- * Edit image using natural language instruction (Gemini)
+ * Edit image using natural language instruction (Imagen 3)
  * No mask required - AI understands context from the instruction
+ * Uses Imagen 3's inpainting with auto-generated mask for instruction-based modifications
  * 
  * @example
  * await editImageWithInstruction({
@@ -122,87 +123,92 @@ export async function editImageWithInstruction(
 ): Promise<EditResult> {
   const { sourceImage, instruction, subjectReference } = options
   
-  console.log('[Image Edit] Starting instruction-based edit...')
+  console.log('[Image Edit] Starting instruction-based edit with Imagen 3...')
   console.log('[Image Edit] Instruction:', instruction.substring(0, 100))
   
   try {
-    const apiKey = process.env.GEMINI_API_KEY
-    if (!apiKey) {
-      throw new Error('GEMINI_API_KEY not configured')
+    const projectId = process.env.GCP_PROJECT_ID
+    const region = process.env.GCP_REGION || 'us-central1'
+    
+    if (!projectId) {
+      throw new Error('GCP_PROJECT_ID not configured')
     }
+    
+    const accessToken = await getVertexAIAuthToken()
     
     // Convert source image to base64
     const sourceBase64 = await imageToBase64(sourceImage)
-    const sourceMimeType = detectMimeType(sourceImage)
     
-    // Build contents array for Gemini
-    const contents: any[] = []
+    // Imagen 3 edit endpoint
+    const MODEL_ID = 'imagen-3.0-capability-001'
+    const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${MODEL_ID}:predict`
     
-    // Add the source image first
-    contents.push({
-      inline_data: {
-        mime_type: sourceMimeType,
-        data: sourceBase64
-      }
-    })
+    // Build request body for Imagen 3 editing
+    // The prompt should describe the desired result, not just the change
+    const editPrompt = `${instruction}. Maintain the overall composition and style of the original image.`
     
-    // Add subject reference if provided (for identity consistency)
-    if (subjectReference) {
-      const refBase64 = await imageToBase64(subjectReference.imageUrl)
-      contents.push({
-        inline_data: {
-          mime_type: 'image/jpeg',
-          data: refBase64
+    // For instruction-based editing, we provide the image and use 'product-image' edit mode
+    // which allows AI-driven modifications based on the prompt without explicit mask
+    const requestBody: any = {
+      instances: [{
+        prompt: editPrompt,
+        image: {
+          bytesBase64Encoded: sourceBase64
         }
-      })
-    }
-    
-    // Build the edit instruction prompt
-    let editPrompt = `Edit this image according to the following instruction: ${instruction}`
-    if (subjectReference) {
-      editPrompt += `\n\nMaintain the identity of the person shown in the reference image. Subject description: ${subjectReference.description}`
-    }
-    editPrompt += '\n\nGenerate only the edited image, no text or explanation.'
-    
-    contents.push({ text: editPrompt })
-    
-    // Call Gemini API for image editing
-    const model = 'gemini-2.0-flash-exp' // Use flash for faster editing
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
-    
-    const requestBody = {
-      contents: [{ parts: contents }],
-      generationConfig: {
-        responseModalities: ['IMAGE', 'TEXT'],
-        responseMimeType: 'image/png'
+      }],
+      parameters: {
+        sampleCount: 1,
+        // Use 'product-image' mode for AI-driven edits without explicit mask
+        // This mode uses the image as reference and applies prompt-based modifications
+        editMode: 'product-image',
+        safetySetting: 'block_some',
+        personGeneration: 'allow_adult'
       }
     }
+    
+    // Add subject reference for identity consistency if provided
+    if (subjectReference) {
+      console.log('[Image Edit] Adding subject reference for identity consistency')
+      const refBase64 = await imageToBase64(subjectReference.imageUrl)
+      
+      // Match the working structure from callVertexAIImagen
+      requestBody.instances[0].referenceImages = [{
+        referenceType: 'REFERENCE_TYPE_SUBJECT',
+        referenceId: 1,
+        referenceImage: {
+          bytesBase64Encoded: refBase64
+        },
+        subjectImageConfig: {
+          subjectType: 'SUBJECT_TYPE_PERSON',
+          subjectDescription: subjectReference.description
+        }
+      }]
+    }
+    
+    console.log('[Image Edit] Calling Imagen 3 API with edit mode: product-image')
     
     const response = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(requestBody)
     })
     
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`Gemini API error: ${response.status} - ${errorText}`)
+      throw new Error(`Imagen API error: ${response.status} - ${errorText}`)
     }
     
     const data = await response.json()
     
-    // Extract generated image
-    const parts = data?.candidates?.[0]?.content?.parts
-    if (!parts) {
-      throw new Error('No response from Gemini')
+    const imageBytes = data?.predictions?.[0]?.bytesBase64Encoded
+    if (!imageBytes) {
+      throw new Error('No image returned from Imagen edit')
     }
     
-    const imagePart = parts.find((p: any) => p.inline_data?.data)
-    if (!imagePart) {
-      throw new Error('No image generated by Gemini')
-    }
-    
-    const editedImageDataUrl = `data:${imagePart.inline_data.mime_type || 'image/png'};base64,${imagePart.inline_data.data}`
+    const editedImageDataUrl = `data:image/png;base64,${imageBytes}`
     
     console.log('[Image Edit] Instruction-based edit completed successfully')
     
