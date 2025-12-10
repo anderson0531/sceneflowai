@@ -438,6 +438,15 @@ export class WebAudioMixer {
   }
 
   /**
+   * Clear the audio buffer cache
+   * Use when audio files have been regenerated and fresh versions are needed
+   */
+  clearCache(): void {
+    console.log('[WebAudioMixer] Clearing audio buffer cache')
+    this.audioBuffers.clear()
+  }
+
+  /**
    * Check if currently playing
    */
   getPlaying(): boolean {

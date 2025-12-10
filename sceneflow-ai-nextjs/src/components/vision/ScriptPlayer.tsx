@@ -106,6 +106,20 @@ async function resolveAudioDuration(url: string, stored?: unknown): Promise<numb
 }
 
 export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }: ScreeningRoomProps) {
+  // Audio mixer ref - defined early so it can be used in script change effect
+  const audioMixerRef = useRef<WebAudioMixer | null>(null)
+  
+  // Clear audio duration cache when script changes to prevent stale audio
+  // This is critical for when dialogue/audio is regenerated
+  React.useEffect(() => {
+    console.log('[Screening Room] Script changed - clearing audio caches')
+    audioDurationCache.clear()
+    // Also clear the Web Audio mixer's buffer cache if it exists
+    if (audioMixerRef.current) {
+      audioMixerRef.current.clearCache()
+    }
+  }, [script])
+  
   // Extract scenes with proper reactivity to script changes
   const scenes = React.useMemo(() => {
     const extractedScenes = script?.script?.scenes || script?.scenes || []
@@ -307,7 +321,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [isLoadingAudio, setIsLoadingAudio] = useState(false)
-  const audioMixerRef = useRef<WebAudioMixer | null>(null)
   
   const handleClose = useCallback(() => {
     onClose()
