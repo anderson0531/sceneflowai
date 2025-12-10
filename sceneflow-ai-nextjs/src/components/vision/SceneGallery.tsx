@@ -112,7 +112,7 @@ export function SceneGallery({
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <Clapperboard className="w-5 h-5 text-sf-primary" />
-          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">Storyboard</h3>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">Scene Gallery and Production</h3>
           <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
             {scenes.length} {scenes.length === 1 ? 'scene' : 'scenes'}
           </span>
@@ -127,7 +127,7 @@ export function SceneGallery({
               className="flex items-center gap-2"
             >
               <Eye className="w-4 h-4 text-purple-300" />
-              <span>Preview</span>
+              <span>Screening Room</span>
             </Button>
           )}
           {scenes.length > 0 && (
@@ -562,9 +562,14 @@ function SceneCard({
         >
           <span className="flex items-center gap-2">
             <Clapperboard className="w-4 h-4 text-sf-primary" />
-            Scene Production
+            <span className="truncate">SCENE {sceneNumber}: {(() => {
+              // Extract simplified location from heading (remove INT/EXT prefix)
+              const heading = sceneHeading || ''
+              const simplified = heading.replace(/^(INT\.?\/EXT\.?|EXT\.?\/INT\.?|INT\.?|EXT\.?)\s*/i, '').trim()
+              return simplified || 'Untitled'
+            })()}</span>
           </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 ml-2">
             {isProductionOpen ? 'Hide' : 'Expand'}
           </span>
         </button>

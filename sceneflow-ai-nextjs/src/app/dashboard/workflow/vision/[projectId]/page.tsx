@@ -31,7 +31,7 @@ import { Button, buttonVariants } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark } from 'lucide-react'
+import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText } from 'lucide-react'
 
 const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement> & { size?: number }> = ({ size = 32, className, ...props }) => (
   <svg
@@ -4917,6 +4917,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     >
                       <BarChart3 className="w-3 h-3 mr-2" />
                       Update Review Scores
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "w-full justify-start text-xs",
+                        reviewsOutdated && (directorReview?.overallScore || audienceReview?.overallScore) && "border-amber-400 dark:border-amber-500 text-amber-600 dark:text-amber-400"
+                      )}
+                      onClick={() => setShowReviewModal(true)}
+                      disabled={!directorReview?.overallScore && !audienceReview?.overallScore}
+                    >
+                      <FileText className={cn(
+                        "w-3 h-3 mr-2",
+                        reviewsOutdated && (directorReview?.overallScore || audienceReview?.overallScore) ? "text-amber-500" : ""
+                      )} />
+                      Review Analysis
+                      {reviewsOutdated && (directorReview?.overallScore || audienceReview?.overallScore) && (
+                        <span className="ml-auto text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded">Outdated</span>
+                      )}
                     </Button>
                   </div>
                 </div>

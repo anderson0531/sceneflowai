@@ -547,11 +547,11 @@ Store in Project metadata
 ### 6.1 AI Providers
 
 **Primary Provider - Google Gemini:**
-- Quality Model: `gemini-3.0-pro-preview-06-05` (Script generation, screenplay optimization)
+- Quality Model: `gemini-3-pro-preview` (Script generation, screenplay optimization, script reviews)
 - Fast Model: `gemini-2.0-flash` (Analysis, quick tasks)
 - Legacy: `gemini-1.5-pro` (Fallback)
 - Usage: Script generation, analysis, ideation
-- Model Selection: Quality-critical routes (script gen, optimization) use 3.0 Pro; general routes use 2.0 Flash
+- Model Selection: Quality-critical routes (script gen, optimization, reviews) use 3.0 Pro; general routes use 2.0 Flash
 - Fallback: OpenAI GPT-4o-mini
 
 **Script Generation Quality Pipeline:**
@@ -720,6 +720,16 @@ type WorkflowStep =
 - Regeneration controls
 - Prompt builder integration
 - Visual storyboarding interface
+
+**Quick Actions Menu (Vision Sidebar):**
+- Bookmark navigation (Go to Scene X)
+- Scene Gallery toggle (Open/Close)
+- Screening Room launcher
+- Update Review Scores (regenerate reviews)
+- **Review Analysis** — Opens ScriptReviewModal with Director/Audience analysis
+  - Visual indicator (amber accent) when reviews are outdated
+  - Disabled until reviews exist
+  - Shows detailed scoring breakdown, strengths, improvements, recommendations
 
 ---
 
