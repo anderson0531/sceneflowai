@@ -421,6 +421,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [playingAudio, setPlayingAudio] = useState<string | null>(null)
   const individualAudioRef = useRef<HTMLAudioElement | null>(null)
   
+  // Track orphan audio objects for cleanup (prevents ghost audio)
+  const orphanAudioRefs = useRef<Set<HTMLAudioElement>>(new Set())
+  
   // Dialogue generation state
   const [generatingDialogue, setGeneratingDialogue] = useState<{sceneIdx: number, character: string, dialogueIndex?: number} | null>(null)
   
@@ -480,6 +483,35 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       setWarningExpanded(prev => ({ ...prev, ...newExpanded }))
     }
   }, [validationWarnings, warningExpanded])
+  
+  // Cleanup orphan audio objects on unmount (prevents ghost audio)
+  useEffect(() => {
+    return () => {
+      // Stop and clean up all tracked audio objects
+      orphanAudioRefs.current.forEach(audio => {
+        try {
+          audio.pause()
+          audio.src = ''  // Cancel any ongoing preload
+          audio.load()    // Reset the element
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      })
+      orphanAudioRefs.current.clear()
+      
+      // Also stop the individual audio ref
+      if (individualAudioRef.current) {
+        individualAudioRef.current.pause()
+        individualAudioRef.current.src = ''
+      }
+      
+      // Stop the TTS audio ref
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.src = ''
+      }
+    }
+  }, [])
   
   // Scene prompt builder state
   const [sceneBuilderOpen, setSceneBuilderOpen] = useState(false)
@@ -1555,6 +1587,19 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       const blob = await response.blob()
       const audioUrl = URL.createObjectURL(blob)
       const audio = new Audio(audioUrl)
+      
+      // Track the audio object for cleanup (prevents ghost audio)
+      orphanAudioRefs.current.add(audio)
+      
+      audio.onended = () => {
+        orphanAudioRefs.current.delete(audio)
+        URL.revokeObjectURL(audioUrl)  // Free memory
+      }
+      audio.onerror = () => {
+        orphanAudioRefs.current.delete(audio)
+        URL.revokeObjectURL(audioUrl)
+      }
+      
       audio.play()
     } catch (error: any) {
       console.error('[SFX Playback] Error:', error)
@@ -1586,6 +1631,19 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       const blob = await response.blob()
       const audioUrl = URL.createObjectURL(blob)
       const audio = new Audio(audioUrl)
+      
+      // Track the audio object for cleanup (prevents ghost audio)
+      orphanAudioRefs.current.add(audio)
+      
+      audio.onended = () => {
+        orphanAudioRefs.current.delete(audio)
+        URL.revokeObjectURL(audioUrl)  // Free memory
+      }
+      audio.onerror = () => {
+        orphanAudioRefs.current.delete(audio)
+        URL.revokeObjectURL(audioUrl)
+      }
+      
       audio.play()
     } catch (error: any) {
       console.error('[Music Playback] Error:', error)

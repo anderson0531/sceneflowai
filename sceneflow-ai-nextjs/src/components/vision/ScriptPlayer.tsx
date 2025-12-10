@@ -174,6 +174,12 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     // Clear duration cache so durations are recalculated
     audioDurationCache.clear()
     
+    // Reset player state to prevent auto-resumption with stale state
+    setPlayerState(prev => ({
+      ...prev,
+      isPlaying: false
+    }))
+    
     console.log('[ScriptPlayer] Audio reset - script/audio content changed')
   }, [audioFingerprint])  // Trigger on actual audio content changes, not just object reference
   
