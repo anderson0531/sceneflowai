@@ -104,13 +104,13 @@ function detectMimeType(imageSource: string): string {
 }
 
 // ============================================================================
-// Instruction-Based Editing (Imagen 3)
+// Instruction-Based Editing (Gemini 3 Pro Image Preview)
 // ============================================================================
 
 /**
- * Edit image using natural language instruction (Imagen 3)
+ * Edit image using natural language instruction (Gemini)
  * No mask required - AI understands context from the instruction
- * Uses Imagen 3's inpainting with auto-generated mask for instruction-based modifications
+ * Uses Gemini 3 Pro Image Preview for intelligent image editing
  * 
  * @example
  * await editImageWithInstruction({
@@ -123,92 +123,109 @@ export async function editImageWithInstruction(
 ): Promise<EditResult> {
   const { sourceImage, instruction, subjectReference } = options
   
-  console.log('[Image Edit] Starting instruction-based edit with Imagen 3...')
+  console.log('[Image Edit] Starting instruction-based edit with Gemini...')
   console.log('[Image Edit] Instruction:', instruction.substring(0, 100))
   
   try {
-    const projectId = process.env.GCP_PROJECT_ID
-    const region = process.env.GCP_REGION || 'us-central1'
+    const apiKey = process.env.GEMINI_API_KEY
     
-    if (!projectId) {
-      throw new Error('GCP_PROJECT_ID not configured')
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY not configured')
     }
-    
-    const accessToken = await getVertexAIAuthToken()
     
     // Convert source image to base64
     const sourceBase64 = await imageToBase64(sourceImage)
+    const sourceMimeType = detectMimeType(sourceImage)
     
-    // Imagen 3 edit endpoint
-    const MODEL_ID = 'imagen-3.0-capability-001'
-    const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${MODEL_ID}:predict`
+    // Build contents array: source image first, then instruction
+    const contents: any[] = []
     
-    // Build request body for Imagen 3 editing
-    // The prompt should describe the desired result, not just the change
-    const editPrompt = `${instruction}. Maintain the overall composition and style of the original image.`
-    
-    // For instruction-based editing, we provide the image and use 'product-image' edit mode
-    // which allows AI-driven modifications based on the prompt without explicit mask
-    const requestBody: any = {
-      instances: [{
-        prompt: editPrompt,
-        image: {
-          bytesBase64Encoded: sourceBase64
-        }
-      }],
-      parameters: {
-        sampleCount: 1,
-        // Use 'product-image' mode for AI-driven edits without explicit mask
-        // This mode uses the image as reference and applies prompt-based modifications
-        editMode: 'product-image',
-        safetySetting: 'block_some',
-        personGeneration: 'allow_adult'
+    // Add source image to edit
+    contents.push({
+      inline_data: {
+        mime_type: sourceMimeType,
+        data: sourceBase64
       }
-    }
+    })
     
-    // Add subject reference for identity consistency if provided
+    // Add subject reference if provided (for identity consistency)
     if (subjectReference) {
       console.log('[Image Edit] Adding subject reference for identity consistency')
       const refBase64 = await imageToBase64(subjectReference.imageUrl)
-      
-      // Match the working structure from callVertexAIImagen
-      requestBody.instances[0].referenceImages = [{
-        referenceType: 'REFERENCE_TYPE_SUBJECT',
-        referenceId: 1,
-        referenceImage: {
-          bytesBase64Encoded: refBase64
-        },
-        subjectImageConfig: {
-          subjectType: 'SUBJECT_TYPE_PERSON',
-          subjectDescription: subjectReference.description
+      contents.push({
+        inline_data: {
+          mime_type: 'image/jpeg',
+          data: refBase64
         }
-      }]
+      })
     }
     
-    console.log('[Image Edit] Calling Imagen 3 API with edit mode: product-image')
+    // Build the edit instruction prompt
+    let editPrompt = `Edit this image: ${instruction}`
+    if (subjectReference) {
+      editPrompt += `\n\nMaintain the identity of the person shown in the reference image. Subject: ${subjectReference.description}`
+    }
+    editPrompt += '\n\nKeep the same overall composition, lighting, and style. Generate the edited image.'
+    
+    contents.push({ text: editPrompt })
+    
+    // Use Gemini 3 Pro Image Preview which supports image generation
+    const model = 'gemini-3-pro-image-preview'
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+    
+    const requestBody = {
+      contents: [{ parts: contents }],
+      generationConfig: {
+        response_modalities: ['IMAGE']
+      }
+    }
+    
+    console.log('[Image Edit] Calling Gemini API...')
     
     const response = await fetch(endpoint, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody)
     })
     
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`Imagen API error: ${response.status} - ${errorText}`)
+      throw new Error(`Gemini API error: ${response.status} - ${errorText}`)
     }
     
     const data = await response.json()
     
-    const imageBytes = data?.predictions?.[0]?.bytesBase64Encoded
-    if (!imageBytes) {
-      throw new Error('No image returned from Imagen edit')
+    // Check for API errors
+    if (data.error) {
+      throw new Error(`Gemini API error: ${data.error.message || 'Unknown error'}`)
     }
     
-    const editedImageDataUrl = `data:image/png;base64,${imageBytes}`
+    // Extract image from Gemini response
+    const candidates = data?.candidates
+    if (!candidates || candidates.length === 0) {
+      throw new Error('Image editing was filtered due to content policies. Try adjusting the instruction.')
+    }
+    
+    const parts = candidates[0]?.content?.parts
+    if (!parts || parts.length === 0) {
+      throw new Error('Unexpected response format from Gemini API')
+    }
+    
+    // Find the image part
+    let imageData: string | null = null
+    for (const part of parts) {
+      const inlineData = part.inline_data || part.inlineData
+      if (inlineData && (inlineData.mime_type || inlineData.mimeType)?.startsWith?.('image/') && !part.thought) {
+        imageData = inlineData.data
+        break
+      }
+    }
+    
+    if (!imageData) {
+      throw new Error('No image generated by Gemini')
+    }
+    
+    const editedImageDataUrl = `data:image/png;base64,${imageData}`
     
     console.log('[Image Edit] Instruction-based edit completed successfully')
     
