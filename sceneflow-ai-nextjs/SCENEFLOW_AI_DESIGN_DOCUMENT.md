@@ -54,6 +54,8 @@
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2025-12-10 | Consolidate review recommendations into Edit Script | Replace redundant Flow Direction tab with Review Insights sourcing from existing Director/Audience reviews | ✅ Implemented |
+| 2025-12-10 | Remove /api/analyze-script API | Flow Direction used separate AI analysis; now uses quality Gemini 3 Pro review recommendations instead | ✅ Removed |
 | 2025-12-09 | AI Wardrobe Recommend | AI auto-recommends wardrobe based on character profile + screenplay context (genre, tone, setting) | ✅ Implemented |
 | 2025-12-09 | AI Wardrobe Assist | User describes desired look in natural language; AI generates specific outfit/accessories for image consistency | ✅ Implemented |
 | 2025-12-09 | Gemini 3.0 for script generation | Quality-critical operations use gemini-3.0-pro-preview-06-05 for best screenplay output | ✅ Implemented |
@@ -707,6 +709,17 @@ type WorkflowStep =
 - Dialogue editing
 - Scene expansion controls
 - Score display
+
+**Script Editor Modal (Edit Script):**
+- **Your Direction tab** — Manual optimization with instruction templates and custom directions
+- **Review Insights tab** — AI-powered recommendations sourced from Director/Audience script reviews
+  - Consolidates high-quality Gemini 3 Pro review analysis into actionable recommendations
+  - Replaces redundant "Flow Direction" AI analysis (removed `/api/analyze-script`)
+  - Director recommendations marked as High Priority (craft/execution focus)
+  - Audience recommendations marked as Medium Priority (viewer experience focus)
+  - Selectable checkbox UI with source filtering (Director/Audience)
+  - Empty state when reviews not yet generated (prompts user to run reviews)
+  - Generate Preview applies selected recommendations to optimize script
 
 **Character Library:**
 - Character cards with reference images

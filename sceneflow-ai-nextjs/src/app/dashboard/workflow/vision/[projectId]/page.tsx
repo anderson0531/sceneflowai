@@ -5145,6 +5145,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onGenerateReviews={handleGenerateReviews}
                 isGeneratingReviews={isGeneratingReviews}
                 onShowReviews={() => setShowReviewModal(true)}
+                directorReview={directorReview}
+                audienceReview={audienceReview}
                 hasBYOK={!!byokSettings?.videoProvider}
                 onOpenBYOK={() => setShowBYOKSettings(true)}
                 onGenerateSceneDirection={handleGenerateSceneDirection}

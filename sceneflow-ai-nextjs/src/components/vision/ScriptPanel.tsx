@@ -125,6 +125,8 @@ interface ScriptPanelProps {
   onGenerateReviews?: () => void
   isGeneratingReviews?: boolean
   onShowReviews?: () => void
+  directorReview?: any
+  audienceReview?: any
   // NEW: Scene editing props
   onEditScene?: (sceneIndex: number) => void
   // NEW: Scene score generation props
@@ -2051,6 +2053,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           script={script?.script || script}
           projectId={projectId || ''}
           characters={characters}
+          directorReview={directorReview}
+          audienceReview={audienceReview}
           onApplyChanges={(revisedScript) => {
             const updatedScript = {
               ...script,

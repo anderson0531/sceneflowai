@@ -14,6 +14,19 @@ import { useProcessWithOverlay } from '../../hooks/useProcessWithOverlay'
 import { detectCharacterChanges } from '@/lib/character/detection'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 
+interface Review {
+  overallScore: number
+  categories: {
+    name: string
+    score: number
+  }[]
+  analysis: string
+  strengths: string[]
+  improvements: string[]
+  recommendations: string[]
+  generatedAt: string
+}
+
 interface ScriptEditorModalProps {
   isOpen: boolean
   onClose: () => void
@@ -21,6 +34,8 @@ interface ScriptEditorModalProps {
   projectId: string
   characters: any[]
   onApplyChanges: (revisedScript: any) => void
+  directorReview?: Review | null
+  audienceReview?: Review | null
 }
 
 const SCRIPT_INSTRUCTION_TEMPLATES = [
@@ -72,7 +87,9 @@ export function ScriptEditorModal({
   script,
   projectId,
   characters,
-  onApplyChanges
+  onApplyChanges,
+  directorReview,
+  audienceReview
 }: ScriptEditorModalProps) {
   const [tab, setTab] = useState<'instructions' | 'flow'>('instructions')
   const [customInstruction, setCustomInstruction] = useState('')
@@ -132,11 +149,10 @@ export function ScriptEditorModal({
     }
   }, [selectedOptimizations])
 
-  // Auto-trigger analysis when user opens Flow Assist tab, if not already analyzed
+  // Auto-load review insights when user opens Review Insights tab
   useEffect(() => {
-    if (tab === 'flow' && !isAnalyzing && (recommendations?.length || 0) === 0) {
-      // Trigger once per open
-      handleAnalyze()
+    if (tab === 'flow' && (recommendations?.length || 0) === 0) {
+      handleLoadReviewInsights()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab])
@@ -163,37 +179,46 @@ export function ScriptEditorModal({
     startMic()
   }
 
-  const handleAnalyze = async () => {
-    setIsAnalyzing(true)
-    try {
-      await execute(async () => {
-        let response = await fetch('/api/vision/analyze-script', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ projectId, script, characters })
+  // Transform review recommendations into selectable format
+  const transformReviewRecommendations = () => {
+    const recommendations: any[] = []
+    
+    // Add Director recommendations
+    if (directorReview?.recommendations) {
+      directorReview.recommendations.forEach((rec, idx) => {
+        recommendations.push({
+          id: `director-${idx}`,
+          title: rec.length > 60 ? rec.substring(0, 60) + '...' : rec,
+          fullText: rec,
+          priority: 'high' as const,
+          category: 'director' as const,
+          source: 'Director Review'
         })
-        if (!response.ok) {
-          if (response.status === 504) {
-            const msg = 'Analysis took too long; retrying compact analysis...'
-            console.warn('[Script Analysis] 504 timeout. ' + msg)
-            toast.message(msg)
-            response = await fetch('/api/vision/analyze-script', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ projectId, script, characters, compact: true })
-            })
-          }
-          if (!response.ok) throw new Error('Analysis failed')
-        }
-        const data = await response.json()
-        setRecommendations(data.recommendations || [])
-        toast.success('Script analysis complete')
-      }, { message: 'Analyzing your script and preparing Flow Direction recommendations...', estimatedDuration: 15 })
-    } catch (error: any) {
-      console.error('[Script Analysis] Error:', error)
-      toast.error(error.message || 'Failed to analyze script')
-    } finally {
-      setIsAnalyzing(false)
+      })
+    }
+    
+    // Add Audience recommendations
+    if (audienceReview?.recommendations) {
+      audienceReview.recommendations.forEach((rec, idx) => {
+        recommendations.push({
+          id: `audience-${idx}`,
+          title: rec.length > 60 ? rec.substring(0, 60) + '...' : rec,
+          fullText: rec,
+          priority: 'medium' as const,
+          category: 'audience' as const,
+          source: 'Audience Review'
+        })
+      })
+    }
+    
+    return recommendations
+  }
+
+  const handleLoadReviewInsights = () => {
+    const reviewRecs = transformReviewRecommendations()
+    setRecommendations(reviewRecs)
+    if (reviewRecs.length > 0) {
+      toast.success(`Loaded ${reviewRecs.length} recommendations from reviews`)
     }
   }
 
@@ -409,8 +434,8 @@ export function ScriptEditorModal({
               Your Direction
             </TabsTrigger>
             <TabsTrigger value="flow" className="flex items-center">
-              <Clapperboard className="w-4 h-4 mr-2" />
-              Flow Direction
+              <Star className="w-4 h-4 mr-2" />
+              Review Insights
             </TabsTrigger>
           </TabsList>
 
@@ -718,47 +743,50 @@ Examples:
 
             {tab === 'flow' && (
               <div className="space-y-4">
-                <div className="p-4 rounded-lg bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-purple-500/20">
+                <div className="p-4 rounded-lg bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20">
                   <div className="flex items-start gap-3">
-                    <Clapperboard className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
+                    <Star className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
                     <div>
-                      <h3 className="text-sm font-semibold text-white mb-1">AI-Powered Script Analysis</h3>
+                      <h3 className="text-sm font-semibold text-white mb-1">Review-Powered Insights</h3>
                       <p className="text-xs text-gray-300 leading-relaxed">
-                        Let AI analyze your script and provide specific optimization recommendations.
+                        High-quality recommendations from Director and Audience script reviews analyzed by Gemini 3 Pro.
                       </p>
                     </div>
                   </div>
                 </div>
                 
-                <div className="flex gap-3 justify-end">
-                  <Button
-                    onClick={handleAnalyze}
-                    disabled={isAnalyzing}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white shadow-lg disabled:opacity-50 px-6"
-                  >
-                    {isAnalyzing ? (
-                      <>
-                        <Loader className="w-4 h-4 mr-2 animate-spin" />
-                        Recommending...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Recommend
-                      </>
-                    )}
-                  </Button>
-                </div>
+                {/* Empty State: No reviews generated yet */}
+                {!directorReview && !audienceReview && (
+                  <div className="p-8 text-center border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
+                    <Star className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      No Reviews Available
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                      Generate Director and Audience reviews first to see AI-powered optimization recommendations here.
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={onClose}
+                      className="mx-auto"
+                    >
+                      Close and Generate Reviews
+                    </Button>
+                  </div>
+                )}
                 
                 {/* Recommendations Controls + List */}
                 {recommendations.length > 0 && (
                   <div className="space-y-3">
                     {/* Explainer */}
                     <div className="text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded p-3">
-                      These Flow Direction recommendations highlight issues (Problem), why they matter (Impact), and concrete fixes (Solution), with examples. Select the suggestions you want, then Generate Preview.
+                      These recommendations come from your Director and Audience script reviews. Director insights focus on craft and execution (High priority), while Audience feedback addresses viewer experience (Medium priority). Select the ones you want to apply, then Generate Preview.
                     </div>
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Recommendations</h3>
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        {recommendations.length} Recommendation{recommendations.length !== 1 ? 's' : ''}
+                      </h3>
                       <div className="flex items-center gap-2">
                         <Button
                           size="sm"
@@ -776,47 +804,74 @@ Examples:
                         </Button>
                         <select
                           className="text-xs bg-transparent border rounded px-2 py-1"
-                          value={filterPriority}
-                          onChange={(e) => setFilterPriority(e.target.value as any)}
-                        >
-                          <option value="all">All Priorities</option>
-                          <option value="high">High</option>
-                          <option value="medium">Medium</option>
-                          <option value="low">Low</option>
-                        </select>
-                        <select
-                          className="text-xs bg-transparent border rounded px-2 py-1"
                           value={filterCategory}
                           onChange={(e) => setFilterCategory(e.target.value as any)}
                         >
-                          <option value="all">All Categories</option>
-                          <option value="pacing">Pacing</option>
-                          <option value="dialogue">Dialogue</option>
-                          <option value="visual">Visual</option>
-                          <option value="character">Character</option>
-                          <option value="clarity">Clarity</option>
-                          <option value="emotion">Emotion</option>
+                          <option value="all">All Sources</option>
+                          <option value="director">Director Only</option>
+                          <option value="audience">Audience Only</option>
                         </select>
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       {recommendations
-                        .filter((r: any) => filterPriority === 'all' || (r.priority || '').toLowerCase() === filterPriority)
                         .filter((r: any) => filterCategory === 'all' || (r.category || '').toLowerCase() === filterCategory)
                         .map((rec: any) => (
-                          <ScriptRecommendationCard
+                          <div
                             key={rec.id}
-                            rec={rec}
-                            selected={selectedRecommendations.includes(rec.id)}
-                            onToggle={() => {
+                            onClick={() => {
                               if (selectedRecommendations.includes(rec.id)) {
                                 setSelectedRecommendations(prev => prev.filter(id => id !== rec.id))
                               } else {
                                 setSelectedRecommendations(prev => [...prev, rec.id])
                               }
                             }}
-                          />
+                            className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                              selectedRecommendations.includes(rec.id)
+                                ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+                                : 'border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-700'
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                                selectedRecommendations.includes(rec.id)
+                                  ? 'border-amber-500 bg-amber-500'
+                                  : 'border-gray-300 dark:border-gray-600'
+                              }`}>
+                                {selectedRecommendations.includes(rec.id) && (
+                                  <Check className="w-3 h-3 text-white" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Badge
+                                    variant={rec.category === 'director' ? 'default' : 'secondary'}
+                                    className={`text-[10px] px-2 py-0.5 ${
+                                      rec.category === 'director'
+                                        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                                        : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                                    }`}
+                                  >
+                                    {rec.source}
+                                  </Badge>
+                                  <Badge
+                                    variant="outline"
+                                    className={`text-[10px] px-2 py-0.5 ${
+                                      rec.priority === 'high'
+                                        ? 'border-red-500 text-red-600 dark:text-red-400'
+                                        : 'border-yellow-500 text-yellow-600 dark:text-yellow-400'
+                                    }`}
+                                  >
+                                    {rec.priority === 'high' ? 'High Priority' : 'Medium Priority'}
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed">
+                                  {rec.fullText}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
                       ))}
                     </div>
                   </div>
