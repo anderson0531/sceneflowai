@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-export const maxDuration = 120 // Longer timeout for full script
+export const maxDuration = 300 // Increased timeout for large scripts
 export const runtime = 'nodejs'
 
 interface OptimizeScriptRequest {
