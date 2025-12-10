@@ -3839,9 +3839,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             )
           })
         }
-      }
 
-      
         if (!character) {
           console.error('[Generate Scene Audio] Character not found after normalization:', {
             original: characterName,
