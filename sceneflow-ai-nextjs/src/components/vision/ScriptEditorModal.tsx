@@ -36,6 +36,7 @@ interface ScriptEditorModalProps {
   onApplyChanges: (revisedScript: any) => void
   directorReview?: Review | null
   audienceReview?: Review | null
+  initialInstruction?: string
 }
 
 const SCRIPT_INSTRUCTION_TEMPLATES = [
@@ -89,14 +90,22 @@ export function ScriptEditorModal({
   characters,
   onApplyChanges,
   directorReview,
-  audienceReview
+  audienceReview,
+  initialInstruction
 }: ScriptEditorModalProps) {
   const [tab, setTab] = useState<'instructions' | 'flow'>('instructions')
-  const [customInstruction, setCustomInstruction] = useState('')
+  const [customInstruction, setCustomInstruction] = useState(initialInstruction || '')
   const [isOptimizing, setIsOptimizing] = useState(false)
   const [optimizedScript, setOptimizedScript] = useState<any | null>(null)
   const [changesSummary, setChangesSummary] = useState<any[]>([])
   const [showComparison, setShowComparison] = useState(false)
+  
+  // Update custom instruction when initialInstruction changes (e.g., from Revise Script button)
+  useEffect(() => {
+    if (initialInstruction) {
+      setCustomInstruction(initialInstruction)
+    }
+  }, [initialInstruction])
   
   // Multi-select state
   const [selectedOptimizations, setSelectedOptimizations] = useState<string[]>([])

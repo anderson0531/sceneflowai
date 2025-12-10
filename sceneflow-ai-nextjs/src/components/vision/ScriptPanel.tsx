@@ -183,6 +183,9 @@ interface ScriptPanelProps {
   timelineSlot?: React.ReactNode
   // Callback to add scene frame to reference library
   onAddToReferenceLibrary?: (imageUrl: string, name: string, sceneNumber: number) => Promise<void>
+  // Open script editor with initial instruction (from Review Analysis)
+  openScriptEditorWithInstruction?: string | null
+  onClearScriptEditorInstruction?: () => void
 }
 
 // Transform score analysis data to review format
@@ -385,12 +388,13 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onAudioClipChange, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onAudioClipChange, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
   const [expandingScenes, setExpandingScenes] = useState<Set<number>>(new Set())
   const [showScriptEditor, setShowScriptEditor] = useState(false)
+  const [scriptEditorInitialInstruction, setScriptEditorInitialInstruction] = useState<string | null>(null)
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
   const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
   const [storyboardPreviewOpen, setStoryboardPreviewOpen] = useState(false)
@@ -579,6 +583,16 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   useEffect(() => {
     generationModeRef.current = dialogGenerationMode
   }, [dialogGenerationMode])
+
+  // Open script editor when instruction is provided from parent (e.g., Review Analysis modal)
+  useEffect(() => {
+    if (openScriptEditorWithInstruction) {
+      setScriptEditorInitialInstruction(openScriptEditorWithInstruction)
+      setShowScriptEditor(true)
+      // Clear the instruction in parent after opening
+      onClearScriptEditorInstruction?.()
+    }
+  }, [openScriptEditorWithInstruction, onClearScriptEditorInstruction])
 
   const toastVisualStyle = {
     background: '#111827',
@@ -2050,12 +2064,16 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       {showScriptEditor && (
         <ScriptEditorModal
           isOpen={showScriptEditor}
-          onClose={() => setShowScriptEditor(false)}
+          onClose={() => {
+            setShowScriptEditor(false)
+            setScriptEditorInitialInstruction(null) // Clear instruction when closing
+          }}
           script={script?.script || script}
           projectId={projectId || ''}
           characters={characters}
           directorReview={directorReview}
           audienceReview={audienceReview}
+          initialInstruction={scriptEditorInitialInstruction || undefined}
           onApplyChanges={(revisedScript) => {
             // Clean up stale audio when script scenes are edited
             const originalScenes = script?.script?.scenes || script?.scenes || []
@@ -2071,6 +2089,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             }
             onScriptChange(updatedScript)
             setShowScriptEditor(false)
+            setScriptEditorInitialInstruction(null) // Clear instruction after applying
           }}
         />
       )}

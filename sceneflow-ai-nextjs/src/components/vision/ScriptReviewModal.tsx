@@ -1,11 +1,19 @@
 'use client'
 
-import { useState } from 'react'
-import { X, Film, Users, Star, Download, RefreshCw, Loader } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { X, Film, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
+interface Voice {
+  voice_id: string
+  name: string
+  category?: string
+  labels?: Record<string, string>
+}
 
 interface Review {
   overallScore: number
@@ -27,6 +35,7 @@ interface ScriptReviewModalProps {
   audienceReview: Review | null
   onRegenerate: () => void
   isGenerating: boolean
+  onReviseScript?: (recommendations: string[]) => void
 }
 
 export default function ScriptReviewModal({
@@ -35,9 +44,123 @@ export default function ScriptReviewModal({
   directorReview,
   audienceReview,
   onRegenerate,
-  isGenerating
+  isGenerating,
+  onReviseScript
 }: ScriptReviewModalProps) {
   const [activeTab, setActiveTab] = useState<'director' | 'audience'>('director')
+  const [voices, setVoices] = useState<Voice[]>([])
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('pNInz6obpgDQGcFmaJgB') // Adam default
+  const [playingSection, setPlayingSection] = useState<string | null>(null)
+  const [loadingSection, setLoadingSection] = useState<string | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  // Fetch ElevenLabs voices on mount
+  useEffect(() => {
+    if (isOpen) {
+      fetchVoices()
+    }
+    return () => {
+      // Cleanup audio on unmount
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+    }
+  }, [isOpen])
+
+  const fetchVoices = async () => {
+    try {
+      const res = await fetch('/api/tts/elevenlabs/voices', { cache: 'no-store' })
+      if (res.ok) {
+        const data = await res.json()
+        setVoices(data.voices || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch voices:', err)
+    }
+  }
+
+  const playSection = async (sectionId: string, text: string) => {
+    // Stop current playback
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
+    }
+
+    // If clicking same section, just stop
+    if (playingSection === sectionId) {
+      setPlayingSection(null)
+      return
+    }
+
+    setLoadingSection(sectionId)
+    try {
+      const response = await fetch('/api/tts/elevenlabs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          voiceId: selectedVoiceId,
+          stability: 0.5,
+          similarityBoost: 0.75
+        })
+      })
+
+      if (!response.ok) throw new Error('TTS failed')
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      
+      audioRef.current = new Audio(url)
+      audioRef.current.onended = () => {
+        setPlayingSection(null)
+        URL.revokeObjectURL(url)
+      }
+      audioRef.current.onerror = () => {
+        setPlayingSection(null)
+        URL.revokeObjectURL(url)
+      }
+      
+      await audioRef.current.play()
+      setPlayingSection(sectionId)
+    } catch (err) {
+      console.error('TTS error:', err)
+    } finally {
+      setLoadingSection(null)
+    }
+  }
+
+  const stopPlayback = () => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
+    }
+    setPlayingSection(null)
+  }
+
+  const AudioButton = ({ sectionId, text }: { sectionId: string; text: string }) => {
+    const isPlaying = playingSection === sectionId
+    const isLoading = loadingSection === sectionId
+
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => playSection(sectionId, text)}
+        disabled={isLoading}
+        className="h-7 w-7 p-0"
+        title={isPlaying ? 'Stop' : 'Play audio'}
+      >
+        {isLoading ? (
+          <Loader className="w-4 h-4 animate-spin" />
+        ) : isPlaying ? (
+          <VolumeX className="w-4 h-4 text-red-500" />
+        ) : (
+          <Volume2 className="w-4 h-4 text-blue-500" />
+        )}
+      </Button>
+    )
+  }
 
   if (!isOpen) return null
 
@@ -127,8 +250,9 @@ export default function ScriptReviewModal({
 
         {/* Analysis */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">💡 Analysis</CardTitle>
+            <AudioButton sectionId={`${type}-analysis`} text={review.analysis} />
           </CardHeader>
           <CardContent>
             <p className="text-sm leading-relaxed whitespace-pre-wrap">
@@ -139,8 +263,9 @@ export default function ScriptReviewModal({
 
         {/* Strengths */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">✨ Strengths</CardTitle>
+            <AudioButton sectionId={`${type}-strengths`} text={`Strengths: ${review.strengths.join('. ')}`} />
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
@@ -156,8 +281,9 @@ export default function ScriptReviewModal({
 
         {/* Areas for Improvement */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">⚠️ Areas for Improvement</CardTitle>
+            <AudioButton sectionId={`${type}-improvements`} text={`Areas for improvement: ${review.improvements.join('. ')}`} />
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
@@ -173,8 +299,22 @@ export default function ScriptReviewModal({
 
         {/* Recommendations */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">🎯 Recommendations</CardTitle>
+            <div className="flex items-center gap-2">
+              <AudioButton sectionId={`${type}-recommendations`} text={`Recommendations: ${review.recommendations.join('. ')}`} />
+              {onReviseScript && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => onReviseScript(review.recommendations)}
+                  className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  <Wand2 className="w-3 h-3" />
+                  Revise Script
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
@@ -200,21 +340,22 @@ export default function ScriptReviewModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold">Script Review & Analysis</h2>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={exportAsPDF}
-              className="flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Export PDF
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+        <div className="flex flex-col gap-4 p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Script Review & Analysis</h2>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportAsPDF}
+                className="flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Export PDF
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
               onClick={onRegenerate}
               disabled={isGenerating}
               className="flex items-center gap-2"
@@ -229,15 +370,48 @@ export default function ScriptReviewModal({
             <Button
               variant="ghost"
               size="sm"
-              onClick={onClose}
+              onClick={() => {
+                stopPlayback()
+                onClose()
+              }}
             >
               <X className="w-4 h-4" />
             </Button>
           </div>
+          </div>
+          
+          {/* Voice Selector Row */}
+          <div className="flex items-center gap-3">
+            <Volume2 className="w-4 h-4 text-gray-500" />
+            <span className="text-sm text-gray-600 dark:text-gray-400">Playback Voice:</span>
+            <Select value={selectedVoiceId} onValueChange={setSelectedVoiceId}>
+              <SelectTrigger className="w-[200px] h-8 text-sm">
+                <SelectValue placeholder="Select voice" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {voices.map((voice) => (
+                  <SelectItem key={voice.voice_id} value={voice.voice_id}>
+                    {voice.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {playingSection && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={stopPlayback}
+                className="flex items-center gap-1 text-red-500 border-red-300"
+              >
+                <VolumeX className="w-3 h-3" />
+                Stop
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'director' | 'audience')}>
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="director" className="flex items-center gap-2">

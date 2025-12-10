@@ -1133,6 +1133,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [isGeneratingReviews, setIsGeneratingReviews] = useState(false)
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [reviewsOutdated, setReviewsOutdated] = useState(false)
+  const [reviseScriptInstruction, setReviseScriptInstruction] = useState<string>('')
   
   // Scene editor state
     const [editingSceneIndex, setEditingSceneIndex] = useState<number | null>(null)                                                                               
@@ -5269,6 +5270,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   // Show success toast
                   toast.success(`Added "${name}" to Reference Library`)
                 }}
+                openScriptEditorWithInstruction={reviseScriptInstruction || null}
+                onClearScriptEditorInstruction={() => setReviseScriptInstruction('')}
               belowDashboardSlot={({ openGenerateAudio, openPromptBuilder }) => (
                 <div className="rounded-2xl border border-white/10 bg-slate950/40 shadow-inner">
                   <div className="px-5 py-5">
@@ -5427,6 +5430,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         audienceReview={audienceReview}
         onRegenerate={handleGenerateReviews}
         isGenerating={isGeneratingReviews}
+        onReviseScript={(recommendations: string[]) => {
+          // Format recommendations as instruction text
+          const instruction = recommendations.map((rec, i) => `${i + 1}. ${rec}`).join('\n\n')
+          setReviseScriptInstruction(instruction)
+          setShowReviewModal(false)
+          // Script editor will open automatically via openScriptEditorWithInstruction prop
+          toast.success('Opening Script Editor with review recommendations...')
+        }}
       />
 
       {/* Scene Editor Modal */}
