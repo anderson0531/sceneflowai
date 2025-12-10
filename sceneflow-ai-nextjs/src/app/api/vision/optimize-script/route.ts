@@ -321,16 +321,23 @@ ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce si
 
   console.log('[Script Optimization] Calling Gemini API...')
   
+  // Calculate appropriate token limit based on scene count
+  // Each scene needs ~200-300 tokens in output, plus changesSummary
+  const sceneCount = script.scenes?.length || 0
+  const estimatedTokens = Math.min(65536, Math.max(16384, sceneCount * 400 + 2000))
+  
+  console.log('[Script Optimization] Calling Gemini 3.0 Preview API...')
+  
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-pro-preview:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 8192,
+          temperature: 0.2,
+          maxOutputTokens: estimatedTokens,
           responseMimeType: 'application/json'
         }
       })
@@ -422,6 +429,49 @@ ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce si
     // If JSON ended while still in a string, close it
     if (inStr) out += '"'
     return out
+  }
+
+  // More aggressive JSON repair for common model issues
+  const aggressiveJsonRepair = (input: string): string => {
+    let s = normalizeForJson(input)
+    
+    // Fix unescaped quotes inside string values (common in dialogue)
+    // Look for patterns like "line": "He said "hello" to her"
+    // and convert to "line": "He said \"hello\" to her"
+    s = s.replace(/"([^"]*)":\s*"([^"]*)"/g, (match, key, value) => {
+      // Check if value has unbalanced quotes (odd number suggests nested quotes)
+      const quoteCount = (value.match(/"/g) || []).length
+      if (quoteCount % 2 === 1) {
+        // Escape internal quotes
+        const escapedValue = value.replace(/(?<!\\)"/g, '\\"')
+        return `"${key}": "${escapedValue}"`
+      }
+      return match
+    })
+    
+    // Fix truncated JSON by attempting to close open structures
+    let openBraces = 0
+    let openBrackets = 0
+    let inString = false
+    let escaped = false
+    
+    for (const c of s) {
+      if (escaped) { escaped = false; continue }
+      if (c === '\\') { escaped = true; continue }
+      if (c === '"') { inString = !inString; continue }
+      if (inString) continue
+      if (c === '{') openBraces++
+      if (c === '}') openBraces--
+      if (c === '[') openBrackets++
+      if (c === ']') openBrackets--
+    }
+    
+    // Close any unclosed structures
+    if (inString) s += '"'
+    while (openBrackets > 0) { s += ']'; openBrackets-- }
+    while (openBraces > 0) { s += '}'; openBraces-- }
+    
+    return s
   }
 
   try {
