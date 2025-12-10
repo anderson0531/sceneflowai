@@ -3841,23 +3841,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       }
 
-            // ADD: Debug logging with normalized names
-      if (audioType === 'dialogue') {
-        const normalizedSearchName = toCanonicalName(characterName || '')
-        console.log('[Generate Scene Audio] Character lookup:', {
-          originalName: characterName,
-          normalizedName: normalizedSearchName,
-          dialogueCharacterId: dialogueLine?.characterId,
-          foundCharacter: character ? { id: character.id, name: character.name } : null,                                                                        
-          hasVoiceConfig: !!character?.voiceConfig,
-          allCharacters: characters.map(c => ({ 
-            id: c.id, 
-            name: c.name, 
-            normalizedName: toCanonicalName(c.name),
-            hasVoice: !!c.voiceConfig 
-          }))
-        })
-        
+      
         if (!character) {
           console.error('[Generate Scene Audio] Character not found after normalization:', {
             original: characterName,
@@ -4411,14 +4395,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       index: idx
     }))
 
-    console.log('[Cleanup Audio] Original dialogue count:', originalDialogueLines.length)
-    console.log('[Cleanup Audio] Revised dialogue count:', revisedDialogueLines.length)
-
     // Check if narration text changed - if so, clear narration audio
     const originalNarration = originalScene?.narration || ''
     const revisedNarration = revisedScene.narration || ''
     if (originalNarration !== revisedNarration && originalScene?.narrationAudio) {
-      console.log('[Cleanup Audio] Narration text changed - clearing narration audio')
       delete cleanedScene.narrationAudio
       delete cleanedScene.narrationAudioUrl
     }
@@ -4427,7 +4407,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const originalDescription = originalScene?.description || originalScene?.action || ''
     const revisedDescription = revisedScene.description || revisedScene.action || ''
     if (originalDescription !== revisedDescription && originalScene?.descriptionAudio) {
-      console.log('[Cleanup Audio] Description text changed - clearing description audio')
       delete cleanedScene.descriptionAudio
       delete cleanedScene.descriptionAudioUrl
     }
@@ -4458,20 +4437,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               originalLine.line === revisedLine.line  // Text must match
             )
             
-            if (!shouldKeep) {
-              const reason = !revisedLine ? 'dialogue removed' :
-                revisedLine.character !== audio.character ? 'character changed' :
-                'text changed'
-              console.log(`[Cleanup Audio] Removing ${language} audio for ${audio.character} at index ${dialogueIdx} (${reason})`)
-            }
-            
             return shouldKeep
           })
           
           if (filteredAudio.length > 0) {
             cleanedScene.dialogueAudio[language] = filteredAudio
           }
-          console.log(`[Cleanup Audio] ${language}: ${audioArray.length} -> ${filteredAudio.length} audio entries`)
         }
       }
       
@@ -4494,10 +4465,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           originalLine.line === revisedLine.line
         )
         
-        if (!shouldKeep) {
-          console.log(`[Cleanup Audio] Removing audio for ${audio.character} at index ${dialogueIdx}`)
-        }
-        
         return shouldKeep
       })
       
@@ -4506,8 +4473,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       } else {
         delete cleanedScene.dialogueAudio
       }
-      
-      console.log(`[Cleanup Audio] Legacy format: ${originalScene.dialogueAudio.length} -> ${filteredAudio.length} audio entries`)
     }
 
     return cleanedScene
@@ -4682,19 +4647,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
   const saveScenesToDatabase = async (updatedScenes: any[]) => {
     try {
-      // DEBUG: Log what we're about to save, including sceneDirection
-      console.log('[saveScenesToDatabase] Saving scenes with assets:', updatedScenes.map((s, idx) => ({
-        idx,
-        sceneNumber: s.sceneNumber,
-        hasImage: !!s.imageUrl,
-        hasNarration: !!s.narrationAudioUrl,
-        hasMusic: !!s.musicAudio,
-        hasSceneDirection: !!s.sceneDirection,
-        sceneDirectionKeys: s.sceneDirection ? Object.keys(s.sceneDirection) : [],
-        imageUrl: s.imageUrl?.substring(0, 50) + '...',
-        narrationUrl: s.narrationAudioUrl?.substring(0, 50) + '...'
-      })))
-      
       const existingMetadata = project?.metadata || {}
       const existingVisionPhase = existingMetadata.visionPhase || {}
       
@@ -4727,8 +4679,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         throw new Error(`Failed to save: ${response.status} ${errorText}`)
       }
       
-      const result = await response.json()
-      console.log('[saveScenesToDatabase] Save successful')
+      await response.json()
       
     } catch (error) {
       console.error('[saveScenesToDatabase] Failed to save scenes:', error)

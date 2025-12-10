@@ -1229,7 +1229,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     
     if (!hasPreGeneratedAudio) {
       // Fall back to legacy TTS generation if no pre-generated audio
-      console.log('[ScriptPanel] No pre-generated audio found, falling back to TTS generation')
       const fullText = buildSceneNarrationText(scene)
       if (!fullText.trim()) {
         setLoadingSceneId(null)
@@ -3365,8 +3364,6 @@ function SceneCard({
                               <button
                                 onClick={async (e) => {
                                   e.stopPropagation()
-                                  console.log('[ScriptPanel] Generate dialogue clicked:', { sceneIdx, character: d.character, dialogueIndex: i })
-                                  
                                   if (!onGenerateSceneAudio) {
                                     console.error('[ScriptPanel] onGenerateSceneAudio is not defined!')
                                     return
