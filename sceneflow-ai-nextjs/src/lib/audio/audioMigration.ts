@@ -18,7 +18,6 @@ export function migrateSceneAudio(scene: any): any {
       }
     }
     needsMigration = true
-    console.log('[Audio Migration] Migrated narration audio for scene', scene.sceneNumber || 'unknown')
   }
   
   // Migrate dialogue audio
@@ -32,7 +31,6 @@ export function migrateSceneAudio(scene: any): any {
         en: scene.dialogueAudio
       }
       needsMigration = true
-      console.log('[Audio Migration] Migrated dialogue audio for scene', scene.sceneNumber || 'unknown')
     }
   }
   

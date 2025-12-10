@@ -8,9 +8,6 @@
 export function getAvailableLanguages(scenes: any[]): string[] {
   const languages = new Set<string>()
   
-  // Debug logging
-  console.log('[Language Detection] Checking', scenes.length, 'scenes for available languages')
-  
   scenes.forEach((scene, sceneIndex) => {
     // Check narration audio - new multi-language structure
     if (scene.narrationAudio && typeof scene.narrationAudio === 'object' && !Array.isArray(scene.narrationAudio)) {
@@ -21,16 +18,12 @@ export function getAvailableLanguages(scenes: any[]): string[] {
         const hasUrl = narrationData?.url || (typeof narrationData === 'string' && narrationData.length > 0)
         if (hasUrl) {
           languages.add(lang)
-          console.log(`[Language Detection] Found narration audio for language "${lang}" in scene ${sceneIndex + 1}`)
-        } else {
-          console.log(`[Language Detection] Scene ${sceneIndex + 1} has narrationAudio[${lang}] but no valid URL:`, narrationData)
         }
       })
     }
     // Legacy support - check old narrationAudioUrl
     if (scene.narrationAudioUrl && !scene.narrationAudio) {
       languages.add('en')
-      console.log(`[Language Detection] Found legacy narrationAudioUrl in scene ${sceneIndex + 1}`)
     }
 
     // Check description audio - mirrors narration structure
@@ -39,13 +32,11 @@ export function getAvailableLanguages(scenes: any[]): string[] {
         const hasUrl = data?.url || (typeof data === 'string' && data.length > 0)
         if (hasUrl) {
           languages.add(lang)
-          console.log(`[Language Detection] Found description audio for language "${lang}" in scene ${sceneIndex + 1}`)
         }
       })
     }
     if (scene.descriptionAudioUrl && !scene.descriptionAudio) {
       languages.add('en')
-      console.log(`[Language Detection] Found legacy descriptionAudioUrl in scene ${sceneIndex + 1}`)
     }
     
     // Check dialogue audio - new multi-language structure
@@ -58,7 +49,6 @@ export function getAvailableLanguages(scenes: any[]): string[] {
           const hasAudio = dialogueArray.some((d: any) => d.audioUrl)
           if (hasAudio) {
             languages.add(lang)
-            console.log(`[Language Detection] Found dialogue audio for language "${lang}" in scene ${sceneIndex + 1}`)
           }
         }
       })
@@ -68,14 +58,11 @@ export function getAvailableLanguages(scenes: any[]): string[] {
       const hasAudio = scene.dialogueAudio.some((d: any) => d.audioUrl)
       if (hasAudio) {
         languages.add('en')
-        console.log(`[Language Detection] Found legacy dialogueAudio array in scene ${sceneIndex + 1}`)
       }
     }
   })
   
-  const detectedLanguages = Array.from(languages).sort()
-  console.log('[Language Detection] Detected languages:', detectedLanguages)
-  return detectedLanguages
+  return Array.from(languages).sort()
 }
 
 /**

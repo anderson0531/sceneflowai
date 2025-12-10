@@ -82,19 +82,16 @@ async function resolveAudioDuration(url: string, stored?: unknown): Promise<numb
   const cacheKey = url.split('?')[0]
   const cached = audioDurationCache.get(cacheKey)
   if (typeof cached === 'number') {
-    console.log('[Duration] Cache HIT:', { url: cacheKey.slice(-50), cached })
     return cached
   }
 
   const storedDuration = normalizeDuration(stored) ?? null
-  console.log('[Duration] Cache MISS, stored duration:', { url: cacheKey.slice(-50), storedDuration })
 
   try {
     const measured = await getAudioDuration(url)
     if (Number.isFinite(measured) && measured > 0) {
       const finalDuration = Math.max(measured, storedDuration ?? 0)
       audioDurationCache.set(cacheKey, finalDuration)
-      console.log('[Duration] Measured and cached:', { url: cacheKey.slice(-50), measured, final: finalDuration })
       return finalDuration
     }
   } catch (error) {
@@ -103,13 +100,11 @@ async function resolveAudioDuration(url: string, stored?: unknown): Promise<numb
 
   if (storedDuration) {
     audioDurationCache.set(cacheKey, storedDuration)
-    console.log('[Duration] Using stored:', { url: cacheKey.slice(-50), storedDuration })
     return storedDuration
   }
 
   const fallback = 3
   audioDurationCache.set(cacheKey, fallback)
-  console.log('[Duration] Using fallback:', { url: cacheKey.slice(-50), fallback })
   return fallback
 }
 
@@ -126,13 +121,11 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     
     // Clear module-level duration cache
     audioDurationCache.clear()
-    console.log('[Screening Room] Cleared audio duration cache')
     
     // Clear Web Audio mixer's buffer cache
     if (audioMixerRef.current) {
       audioMixerRef.current.stop()
       audioMixerRef.current.clearCache()
-      console.log('[Screening Room] Cleared WebAudioMixer cache')
     }
     
     // Clear browser caches for audio (if supported)
@@ -141,7 +134,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
         names.forEach(name => {
           if (name.includes('audio')) {
             caches.delete(name)
-            console.log('[Screening Room] Cleared cache:', name)
           }
         })
       })
@@ -157,7 +149,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   // Clear audio duration cache when script changes to prevent stale audio
   // This is critical for when dialogue/audio is regenerated
   React.useEffect(() => {
-    console.log('[Screening Room] Script changed - clearing audio caches')
     audioDurationCache.clear()
     // Also clear the Web Audio mixer's buffer cache if it exists
     if (audioMixerRef.current) {
@@ -168,19 +159,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   // Extract scenes with proper reactivity to script changes
   const scenes = React.useMemo(() => {
     const extractedScenes = script?.script?.scenes || script?.scenes || []
-    console.log('[Screening Room] Scenes extracted:', extractedScenes.length, 'scenes')
-    // Log first scene structure for debugging
-    if (extractedScenes.length > 0) {
-      const firstScene = extractedScenes[0]
-      console.log('[Screening Room] First scene structure:', {
-        hasNarrationAudio: !!firstScene.narrationAudio,
-        narrationAudioType: typeof firstScene.narrationAudio,
-        narrationAudioKeys: firstScene.narrationAudio ? Object.keys(firstScene.narrationAudio) : [],
-        hasDialogueAudio: !!firstScene.dialogueAudio,
-        dialogueAudioType: typeof firstScene.dialogueAudio,
-        dialogueAudioKeys: firstScene.dialogueAudio && typeof firstScene.dialogueAudio === 'object' && !Array.isArray(firstScene.dialogueAudio) ? Object.keys(firstScene.dialogueAudio) : []
-      })
-    }
     return extractedScenes
   }, [script])
   
@@ -217,36 +195,22 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   
   // Get available languages from scenes - recalculate when scenes or script changes
   const availableLanguages = React.useMemo(() => {
-    console.log('[Screening Room] Recalculating available languages from', scenes.length, 'scenes')
     const detected = getAvailableLanguages(scenes)
-    console.log('[Screening Room] Available languages detected:', detected)
     return detected
   }, [scenes, script]) // Add script as dependency to force recalculation
   
   // Filter supported languages to only show those with audio files
   const selectableLanguages = React.useMemo(() => {
     const filtered = SUPPORTED_LANGUAGES.filter(lang => availableLanguages.includes(lang.code))
-    console.log('[Screening Room] Selectable languages:', filtered.map(l => l.code))
     return filtered
   }, [availableLanguages])
   
   // Set default language to first available if current selection is not available
   React.useEffect(() => {
-    console.log('[Screening Room] Language selection check:', {
-      availableLanguages,
-      selectedLanguage,
-      selectableLanguages: selectableLanguages.map(l => l.code)
-    })
     if (availableLanguages.length > 0 && !availableLanguages.includes(selectedLanguage)) {
-      console.log('[Screening Room] Switching to first available language:', availableLanguages[0])
       setSelectedLanguage(availableLanguages[0])
     }
   }, [availableLanguages, selectedLanguage, selectableLanguages])
-  
-  // Debug effect to log script changes
-  React.useEffect(() => {
-    console.log('[Screening Room] Script prop changed, scenes count:', scenes.length)
-  }, [script, scenes.length])
   
   // Translate captions when language or scene changes
   useEffect(() => {
@@ -476,25 +440,9 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     const descriptionUrl = getAudioForLanguage(scene, selectedLanguage, 'description')
     const dialogueArray = scene.dialogueAudio?.[selectedLanguage] || (selectedLanguage === 'en' ? scene.dialogueAudio : null)
     
-    // Debug logging
-    console.log('[Timeline] Calculating audio timeline for scene (language:', selectedLanguage, '):', {
-      hasMusic: !!scene.musicAudio,
-      musicUrl: scene.musicAudio,
-      hasDescription: !!descriptionUrl,
-      descriptionUrl,
-      hasNarration: !!narrationUrl,
-      narrationUrl,
-      hasDialogue: !!(Array.isArray(dialogueArray) && dialogueArray.length > 0),
-      dialogueCount: Array.isArray(dialogueArray) ? dialogueArray.length : 0,
-      hasSFX: !!(scene.sfxAudio && scene.sfxAudio.length > 0),
-      sfxCount: scene.sfxAudio?.length || 0,
-      sfxUrls: scene.sfxAudio
-    })
-    
     // Music starts at scene beginning (concurrent with everything)
     if (scene.musicAudio) {
       config.music = scene.musicAudio
-      console.log('[Timeline] Added music:', scene.musicAudio)
     }
     
     // Scene description plays before narration
@@ -554,17 +502,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     const resolvedDialogue: AudioSource[] = []
     dialogueCursor = Math.max(sfxCursor, voiceAnchorTime)
     
-    // Debug: Log dialogue array details
-    console.log('[Timeline] Dialogue array for scene:', {
-      isArray: Array.isArray(dialogueArray),
-      length: Array.isArray(dialogueArray) ? dialogueArray.length : 0,
-      dialogueUrls: Array.isArray(dialogueArray) ? dialogueArray.map((d: any, i: number) => ({
-        index: i,
-        audioUrl: d.audioUrl?.slice(-60),
-        storedDuration: d.duration
-      })) : []
-    })
-    
     if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
       for (let i = 0; i < dialogueArray.length; i++) {
         const dialogue = dialogueArray[i]
@@ -576,7 +513,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           })
 
           const dialogueDuration = await resolveAudioDuration(dialogue.audioUrl, dialogue.duration)
-          console.log(`[Timeline] Dialogue ${i}: startTime=${startTime.toFixed(2)}s, duration=${dialogueDuration.toFixed(2)}s, url=${dialogue.audioUrl.slice(-60)}`)
           dialogueCursor = startTime + dialogueDuration + DIALOGUE_GAP_SECONDS
           totalDuration = Math.max(totalDuration, dialogueCursor)
         }
@@ -587,15 +523,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     }
 
     totalDuration = Math.max(totalDuration, dialogueCursor, narrationEndTime, sfxCursor, descriptionEndTime)
-
-    console.log('[Timeline] Final config:', {
-      hasMusic: !!config.music,
-      hasDescription: !!config.description,
-      hasNarration: !!config.narration,
-      dialogueCount: config.dialogue?.length || 0,
-      sfxCount: config.sfx?.length || 0,
-      estimatedDuration: totalDuration
-    })
     
     const declaredDuration = normalizeDuration(scene?.duration)
     const resolvedDuration = Math.max(totalDuration, declaredDuration ?? 0)
@@ -612,7 +539,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
     
     // Check if playback was cancelled before starting
     if (playbackCancelledRef.current) {
-      console.log('[Player] Playback cancelled for scene', sceneIndex + 1)
       return
     }
 
@@ -651,14 +577,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       const hasPreGeneratedAudio = hasValidNarration || hasValidDescription || hasValidMusic || hasValidDialogue || hasValidSFX
       
       if (hasPreGeneratedAudio) {
-        console.log('[Player] Using pre-generated audio with Web Audio Mixer for scene', sceneIndex + 1, 'language:', selectedLanguage, {
-          description: !!descriptionUrl,
-          narration: !!narrationUrl,
-          music: !!scene.musicAudio,
-          dialogue: hasValidDialogue,
-          sfx: !!(scene.sfxAudio && scene.sfxAudio.length > 0)
-        })
-        
         // Fade out and stop any currently playing audio
         if (audioMixerRef.current && audioMixerRef.current.getPlaying()) {
           await audioMixerRef.current.fadeOut(1000) // 1 second fade out
@@ -680,7 +598,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           delete audioConfig.description
           delete audioConfig.narrationOffsetSeconds
           delete audioConfig.descriptionOffsetSeconds
-          console.log('[Player] Narration disabled - filtered from audio config')
         }
         
         // Ensure scene duration covers either calculated audio length or storyboard duration
@@ -716,14 +633,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           return
         }
         
-        console.log('[Player] Audio config validated, proceeding to play:', {
-          music: !!audioConfig.music,
-          description: !!audioConfig.description,
-          narration: !!audioConfig.narration,
-          dialogueCount: audioConfig.dialogue?.length || 0,
-          sfxCount: audioConfig.sfx?.length || 0
-        })
-        
         // Check cancellation before starting playback
         if (playbackCancelledRef.current) {
           setIsLoadingAudio(false)
@@ -738,12 +647,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
             // Set music volume before playing
             audioMixerRef.current.setVolume('music', playerState.musicVolume)
             
-            console.log('[Player] Playing scene with Web Audio Mixer, config:', audioConfig, 'musicVolume:', playerState.musicVolume)
-            
             // Wait for actual audio completion - playScene() returns a promise that resolves when all non-looping audio finishes
             await audioMixerRef.current.playScene(audioConfig)
-            
-            console.log('[Player] Scene audio playback completed')
             
             // Check cancellation after audio completes
             if (playbackCancelledRef.current) {
@@ -789,17 +694,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
             // FALLBACK: Generate audio on-the-fly (existing code)
       console.warn('[Player] ⚠️ No pre-generated audio found! This will make expensive API calls.')                                                              
       console.warn('[Player] Please generate audio for all scenes before using Screening Room.')                                                                
-      console.log('[Player] Audio check results for scene', sceneIndex + 1, ':', {
-        narrationAudioUrl: scene.narrationAudioUrl ? (scene.narrationAudioUrl.startsWith('blob:') ? 'blob URL (temporary)' : 'persistent URL') : 'none',
-        musicAudio: scene.musicAudio ? (scene.musicAudio.startsWith('blob:') ? 'blob URL (temporary)' : 'persistent URL') : 'none',
-        dialogueAudioCount: scene.dialogueAudio?.length || 0,
-        sfxAudioCount: scene.sfxAudio?.length || 0,
-        hasValidNarration,
-        hasValidMusic,
-        hasValidDialogue,
-        hasValidSFX
-      })
-      console.log('[Player] Generating on-the-fly for scene', sceneIndex + 1)
       
       // Build narration text from action
       const narrationText = scene.action || scene.visualDescription || ''
@@ -813,7 +707,6 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
       const fullText = `${scene.heading}. ${narrationText} ${dialogueText}`.trim()
 
       if (!fullText) {
-        console.log('[Player] No text for scene', sceneIndex)
         setIsLoadingAudio(false)
         // Minimum scene display time (3 seconds) even if no text, plus 3 second delay before advancing
         const minDisplayTime = 3000
@@ -930,14 +823,11 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
   }
 
     const nextScene = () => {
-    console.log('[Player] nextScene called - advancing from', playerState.currentSceneIndex)
     isManualNavigationRef.current = true
     setPlayerState(prev => {
       const nextIndex = prev.currentSceneIndex + 1
-      console.log('[Player] Advancing to scene', nextIndex)
       if (nextIndex >= scenes.length) {
         // End of script
-        console.log('[Player] End of script reached')
         return { ...prev, isPlaying: false, currentSceneIndex: scenes.length - 1 }                                                                              
       }
       return { ...prev, currentSceneIndex: nextIndex }

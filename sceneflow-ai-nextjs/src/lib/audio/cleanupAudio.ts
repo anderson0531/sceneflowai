@@ -31,14 +31,10 @@ export function cleanupStaleAudio(originalScene: any, revisedScene: any): any {
     index: idx
   }))
 
-  console.log('[Cleanup Audio] Original dialogue count:', originalDialogueLines.length)
-  console.log('[Cleanup Audio] Revised dialogue count:', revisedDialogueLines.length)
-
   // Check if narration text changed - if so, clear narration audio
   const originalNarration = originalScene?.narration || ''
   const revisedNarration = revisedScene.narration || ''
   if (originalNarration !== revisedNarration && originalScene?.narrationAudio) {
-    console.log('[Cleanup Audio] Narration text changed - clearing narration audio')
     delete cleanedScene.narrationAudio
     delete cleanedScene.narrationAudioUrl
   }
@@ -47,7 +43,6 @@ export function cleanupStaleAudio(originalScene: any, revisedScene: any): any {
   const originalDescription = originalScene?.description || originalScene?.action || ''
   const revisedDescription = revisedScene.description || revisedScene.action || ''
   if (originalDescription !== revisedDescription && originalScene?.descriptionAudio) {
-    console.log('[Cleanup Audio] Description text changed - clearing description audio')
     delete cleanedScene.descriptionAudio
     delete cleanedScene.descriptionAudioUrl
   }
@@ -78,20 +73,12 @@ export function cleanupStaleAudio(originalScene: any, revisedScene: any): any {
             originalLine.line === revisedLine.line  // Text must match
           )
           
-          if (!shouldKeep) {
-            const reason = !revisedLine ? 'dialogue removed' :
-              revisedLine.character !== audio.character ? 'character changed' :
-              'text changed'
-            console.log(`[Cleanup Audio] Removing ${language} audio for ${audio.character} at index ${dialogueIdx} (${reason})`)
-          }
-          
           return shouldKeep
         })
         
         if (filteredAudio.length > 0) {
           cleanedScene.dialogueAudio[language] = filteredAudio
         }
-        console.log(`[Cleanup Audio] ${language}: ${(audioArray as any[]).length} -> ${filteredAudio.length} audio entries`)
       }
     }
     
@@ -114,10 +101,6 @@ export function cleanupStaleAudio(originalScene: any, revisedScene: any): any {
         originalLine.line === revisedLine.line
       )
       
-      if (!shouldKeep) {
-        console.log(`[Cleanup Audio] Removing audio for ${audio.character} at index ${dialogueIdx}`)
-      }
-      
       return shouldKeep
     })
     
@@ -126,8 +109,6 @@ export function cleanupStaleAudio(originalScene: any, revisedScene: any): any {
     } else {
       delete cleanedScene.dialogueAudio
     }
-    
-    console.log(`[Cleanup Audio] Legacy format: ${originalScene.dialogueAudio.length} -> ${filteredAudio.length} audio entries`)
   }
 
   return cleanedScene
@@ -149,8 +130,6 @@ export function clearAllSceneAudio(scene: any): any {
   delete cleanedScene.musicAudio
   delete cleanedScene.sfxAudio
   delete cleanedScene.dialogueAudioGeneratedAt
-  
-  console.log('[Cleanup Audio] Cleared all audio from scene')
   
   return cleanedScene
 }

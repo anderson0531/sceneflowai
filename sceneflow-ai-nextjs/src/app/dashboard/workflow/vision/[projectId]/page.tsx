@@ -1828,14 +1828,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // Process characters first (needed for dialogue migration)
         let charactersWithIds: any[] = []
         if (visionPhase.characters) {
-          
-          // DEBUG: Log character data including referenceImage status
-          console.log('[loadProject] Characters from DB:', visionPhase.characters.map((c: any) => ({
-            name: c.name,
-            hasReferenceImage: !!c.referenceImage,
-            referenceImageUrl: c.referenceImage ? c.referenceImage.substring(0, 60) + '...' : 'none'
-          })))
-          
           // Ensure character roles are preserved (default to supporting if not specified)
           const charactersWithRole = visionPhase.characters.map((c: any) => {
             const char = {
@@ -1932,14 +1924,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const charactersWithDescription = charactersWithNarrator.some(c => c.type === 'description')
             ? charactersWithNarrator
             : [...charactersWithNarrator, descriptionCharacter]
-
-          // DEBUG: Final characters being set to state
-          console.log('[loadProject] Final characters being set:', charactersWithDescription.map((c: any) => ({
-            name: c.name,
-            type: c.type,
-            hasReferenceImage: !!c.referenceImage,
-            referenceImageUrl: c.referenceImage ? c.referenceImage.substring(0, 60) + '...' : 'none'
-          })))
           
           setCharacters(charactersWithDescription)
           
@@ -3779,8 +3763,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   // Handle generate scene audio
   const handleGenerateSceneAudio = async (sceneIdx: number, audioType: 'narration' | 'dialogue' | 'description', characterName?: string, dialogueIndex?: number, language: string = 'en') => {
-    console.log('[Generate Scene Audio] START:', { sceneIdx, audioType, characterName, dialogueIndex })
-    
     const scene = script?.script?.scenes?.[sceneIdx]
     if (!scene) {
       console.error('[Generate Scene Audio] Scene not found')
@@ -3896,8 +3878,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           ? descriptionVoice
           : narrationVoice
 
-      console.log('[Generate Scene Audio] Voice config determined:', { voiceConfig, audioType })
-
       if (!voiceConfig) {
         // Show specific error message based on audio type
         if (audioType === 'narration') {
@@ -3925,17 +3905,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return
       }
 
-      console.log('[Generate Scene Audio] API Request:', {
-        projectId,
-        sceneIndex: sceneIdx,
-        audioType,
-        text: text.substring(0, 50),
-        voiceId: voiceConfig.voiceId,
-        language,
-        characterName,
-        dialogueIndex
-      })
-
       const response = await fetch('/api/vision/generate-scene-audio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -3953,8 +3922,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       const data = await response.json()
       if (data.success) {
-        console.log('[Audio] Audio generated successfully:', data)
-        
         // Update script state immediately with audio URL (multi-language structure)
         // Create a new object reference to ensure React detects the change
         setScript((prevScript: any) => {
@@ -3989,8 +3956,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               
               updatedScenes[sceneIdx] = scene
               updated.script = { ...updated.script, scenes: updatedScenes }
-              
-              console.log('[Generate Scene Audio] Updated script with narration audio for language:', language, 'Scene:', sceneIdx)
             } else if (audioType === 'description') {
               if (!scene.descriptionAudio) {
                 scene.descriptionAudio = {}
@@ -4060,17 +4025,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               
               updatedScenes[sceneIdx] = scene
               updated.script = { ...updated.script, scenes: updatedScenes }
-              
-              console.log('[Generate Scene Audio] Updated script with dialogue audio for language:', language, 'Scene:', sceneIdx)
             }
           }
           return updated
         })
         
         try { const { toast } = require('sonner'); toast.success('Audio generated!') } catch {}
-        
-        // Audio URL already updated in state - no need to reload entire project
-        console.log('[Audio] Audio generated and state updated successfully')
       } else {
         try { const { toast } = require('sonner'); toast.error(data.error || 'Failed to generate audio') } catch {}
       }

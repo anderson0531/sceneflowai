@@ -95,7 +95,6 @@ export class WebAudioMixer {
     // Check cache - use normalized URL without query params for cache key
     const cacheKey = url.split('?')[0]
     if (this.audioBuffers.has(cacheKey)) {
-      console.log('[WebAudioMixer] Using cached buffer for:', cacheKey.slice(-50))
       return this.audioBuffers.get(cacheKey)!
     }
 
@@ -104,7 +103,6 @@ export class WebAudioMixer {
     try {
       // Add cache-busting and no-cache headers to bypass browser cache
       const fetchUrl = url.includes('?') ? url : `${url}?_t=${Date.now()}`
-      console.log('[WebAudioMixer] Fetching fresh audio:', fetchUrl.slice(-80))
       
       const response = await fetch(fetchUrl, {
         cache: 'no-store',
@@ -131,7 +129,6 @@ export class WebAudioMixer {
       
       // Cache buffer using normalized URL (without query params)
       this.audioBuffers.set(cacheKey, audioBuffer)
-      console.log('[WebAudioMixer] Cached audio buffer for:', cacheKey.slice(-50))
       
       return audioBuffer
     } catch (error) {
@@ -456,7 +453,6 @@ export class WebAudioMixer {
    * Use when audio files have been regenerated and fresh versions are needed
    */
   clearCache(): void {
-    console.log('[WebAudioMixer] Clearing audio buffer cache')
     this.audioBuffers.clear()
   }
 
