@@ -166,24 +166,38 @@ export function ScriptEditorModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab])
 
+  // Track the base instruction text (before voice input started)
+  const baseInstructionRef = useRef<string>('')
+  
+  // When recording starts, save the current instruction as base
+  useEffect(() => {
+    if (isMicRecording) {
+      baseInstructionRef.current = customInstruction
+    }
+  }, [isMicRecording])
+  
+  // Update instruction with voice transcript
   useEffect(() => {
     if (!isMicRecording) return
     if (!micTranscript) return
-    setCustomInstruction(prev => {
-      const current = prev || ''
-      if (current.endsWith(micTranscript)) return current
-      const next = current.trimEnd()
-      return next ? `${next} ${micTranscript}` : micTranscript
-    })
+    
+    // Combine base instruction with current transcript
+    const base = baseInstructionRef.current.trim()
+    const newInstruction = base ? `${base} ${micTranscript}` : micTranscript
+    setCustomInstruction(newInstruction)
   }, [isMicRecording, micTranscript])
 
   const handleVoiceToggle = () => {
     if (!sttSupported || !sttSecure) return
     if (isMicRecording) {
       stopMic()
+      // Keep the final transcript in the instruction
+      baseInstructionRef.current = customInstruction
       setMicTranscript('')
       return
     }
+    // Save current instruction as base before starting
+    baseInstructionRef.current = customInstruction
     setMicTranscript('')
     startMic()
   }

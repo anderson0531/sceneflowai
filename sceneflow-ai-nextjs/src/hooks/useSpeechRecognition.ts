@@ -45,18 +45,35 @@ export function useSpeechRecognition() {
     ;(recognition as any).continuous = true
     ;(recognition as any).interimResults = true
 
+    // Track final results to avoid duplication
+    let finalTranscript = ''
+
     ;(recognition as any).onresult = (event: any) => {
-      let transcript = ''
+      let interimTranscript = ''
+      
+      // Process results starting from the new ones
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        transcript += event.results[i][0].transcript
+        const result = event.results[i]
+        const text = result[0].transcript
+        
+        if (result.isFinal) {
+          // Final result - add to cumulative final transcript
+          finalTranscript += text
+        } else {
+          // Interim result - show as preview
+          interimTranscript += text
+        }
       }
-      setTranscript(transcript)
+      
+      // Show final + current interim for live preview
+      setTranscript(finalTranscript + interimTranscript)
     }
 
     recognition.onstart = () => {
       setIsRecording(true)
       setError(null)
       setTranscript('')
+      finalTranscript = '' // Reset final transcript on new recording
     }
 
     recognition.onend = () => {
