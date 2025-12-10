@@ -326,10 +326,10 @@ ${compact ? '- Keep dialogue concise; prefer summaries where needed to reduce si
   const sceneCount = script.scenes?.length || 0
   const estimatedTokens = Math.min(65536, Math.max(16384, sceneCount * 400 + 2000))
   
-  console.log('[Script Optimization] Calling Gemini 3.0 Preview API...')
+  console.log('[Script Optimization] Calling Gemini 3 Pro Preview API...')
   
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-pro-preview:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
