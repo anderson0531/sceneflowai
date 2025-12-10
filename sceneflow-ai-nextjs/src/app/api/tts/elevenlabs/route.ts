@@ -24,12 +24,12 @@ export async function POST(request: NextRequest) {
     const id = typeof voiceId === 'string' && voiceId.length > 0 ? voiceId : DEFAULT_VOICE_ID
     console.log('🔍 Debug: Using voice ID:', id)
 
-    const url = `https://api.elevenlabs.io/v1/text-to-speech/${id}?optimize_streaming_latency=0&output_format=mp3_44100_128`
+    const url = `https://api.elevenlabs.io/v1/text-to-speech/${id}?optimize_streaming_latency=4&output_format=mp3_44100_128`
     console.log('🔍 Debug: Calling ElevenLabs API:', url)
 
     const body = {
       text,
-      model_id: 'eleven_turbo_v2_5', // v3 model supports [audio tags]
+      model_id: 'eleven_turbo_v2_5', // Fastest model with best latency
       voice_settings: {
         stability: 0.25,
         similarity_boost: 0.8,

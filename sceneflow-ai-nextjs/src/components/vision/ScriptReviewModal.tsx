@@ -53,6 +53,20 @@ export default function ScriptReviewModal({
   const [playingSection, setPlayingSection] = useState<string | null>(null)
   const [loadingSection, setLoadingSection] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  
+  // Audio cache: maps sectionId to { url: string, voiceId: string, textHash: string }
+  const audioCacheRef = useRef<Map<string, { url: string; voiceId: string; textHash: string }>>(new Map())
+  
+  // Simple hash function for text comparison
+  const hashText = (text: string): string => {
+    let hash = 0
+    for (let i = 0; i < text.length; i++) {
+      const char = text.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash // Convert to 32bit integer
+    }
+    return hash.toString(36)
+  }
 
   // Fetch ElevenLabs voices on mount
   useEffect(() => {
@@ -80,7 +94,34 @@ export default function ScriptReviewModal({
     }
   }
 
-  const playSection = async (sectionId: string, text: string) => {
+  // Check if we have a valid cached audio for this section
+  const getCachedAudio = (sectionId: string, text: string): string | null => {
+    const cached = audioCacheRef.current.get(sectionId)
+    if (!cached) return null
+    
+    const textHash = hashText(text)
+    // Cache is valid if same voice and same text
+    if (cached.voiceId === selectedVoiceId && cached.textHash === textHash) {
+      return cached.url
+    }
+    return null
+  }
+
+  // Store audio in cache
+  const cacheAudio = (sectionId: string, text: string, url: string) => {
+    audioCacheRef.current.set(sectionId, {
+      url,
+      voiceId: selectedVoiceId,
+      textHash: hashText(text)
+    })
+  }
+
+  // Check if section has cached audio
+  const hasCachedAudio = (sectionId: string, text: string): boolean => {
+    return getCachedAudio(sectionId, text) !== null
+  }
+
+  const playSection = async (sectionId: string, text: string, forceRegenerate = false) => {
     // Stop current playback
     if (audioRef.current) {
       audioRef.current.pause()
@@ -90,6 +131,23 @@ export default function ScriptReviewModal({
     // If clicking same section, just stop
     if (playingSection === sectionId) {
       setPlayingSection(null)
+      return
+    }
+
+    // Check cache first (unless force regenerating)
+    const cachedUrl = !forceRegenerate ? getCachedAudio(sectionId, text) : null
+    
+    if (cachedUrl) {
+      // Play from cache - instant playback!
+      audioRef.current = new Audio(cachedUrl)
+      audioRef.current.onended = () => setPlayingSection(null)
+      audioRef.current.onerror = () => {
+        setPlayingSection(null)
+        // Remove from cache if playback fails
+        audioCacheRef.current.delete(sectionId)
+      }
+      await audioRef.current.play()
+      setPlayingSection(sectionId)
       return
     }
 
@@ -111,15 +169,12 @@ export default function ScriptReviewModal({
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       
+      // Cache the generated audio
+      cacheAudio(sectionId, text, url)
+      
       audioRef.current = new Audio(url)
-      audioRef.current.onended = () => {
-        setPlayingSection(null)
-        URL.revokeObjectURL(url)
-      }
-      audioRef.current.onerror = () => {
-        setPlayingSection(null)
-        URL.revokeObjectURL(url)
-      }
+      audioRef.current.onended = () => setPlayingSection(null)
+      audioRef.current.onerror = () => setPlayingSection(null)
       
       await audioRef.current.play()
       setPlayingSection(sectionId)
@@ -141,24 +196,41 @@ export default function ScriptReviewModal({
   const AudioButton = ({ sectionId, text }: { sectionId: string; text: string }) => {
     const isPlaying = playingSection === sectionId
     const isLoading = loadingSection === sectionId
+    const isCached = hasCachedAudio(sectionId, text)
 
     return (
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => playSection(sectionId, text)}
-        disabled={isLoading}
-        className="h-7 w-7 p-0"
-        title={isPlaying ? 'Stop' : 'Play audio'}
-      >
-        {isLoading ? (
-          <Loader className="w-4 h-4 animate-spin" />
-        ) : isPlaying ? (
-          <VolumeX className="w-4 h-4 text-red-500" />
-        ) : (
-          <Volume2 className="w-4 h-4 text-blue-500" />
+      <div className="flex items-center gap-0.5">
+        {/* Play/Stop Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => playSection(sectionId, text, false)}
+          disabled={isLoading}
+          className="h-7 w-7 p-0"
+          title={isPlaying ? 'Stop' : isCached ? 'Play (cached)' : 'Generate & play audio'}
+        >
+          {isLoading ? (
+            <Loader className="w-4 h-4 animate-spin" />
+          ) : isPlaying ? (
+            <VolumeX className="w-4 h-4 text-red-500" />
+          ) : (
+            <Volume2 className={`w-4 h-4 ${isCached ? 'text-green-500' : 'text-blue-500'}`} />
+          )}
+        </Button>
+        {/* Regenerate Button - only show if cached */}
+        {isCached && !isPlaying && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => playSection(sectionId, text, true)}
+            disabled={isLoading}
+            className="h-6 w-6 p-0 opacity-60 hover:opacity-100"
+            title="Regenerate audio"
+          >
+            <RefreshCw className="w-3 h-3 text-gray-400" />
+          </Button>
         )}
-      </Button>
+      </div>
     )
   }
 
