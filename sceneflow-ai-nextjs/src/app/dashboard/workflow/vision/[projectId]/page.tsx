@@ -4897,7 +4897,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       onClick={() => setShowSceneGallery(!showSceneGallery)}
                     >
                       <ImageIcon className={`w-3 h-3 mr-2 ${showSceneGallery ? 'text-white' : 'text-cyan-400'}`} />
-                      {showSceneGallery ? 'Hide Storyboard' : 'Show Storyboard'}
+                      {showSceneGallery ? 'Close Scene Gallery' : 'Open Scene Gallery'}
                     </Button>
                     <Button
                       variant="outline"
@@ -4906,7 +4906,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       onClick={() => setIsPlayerOpen(true)}
                     >
                       <Play className="w-3 h-3 mr-2" />
-                      Preview Script
+                      Screening Room
                     </Button>
                     <Button
                       variant="outline"
@@ -4916,7 +4916,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       disabled={isGeneratingReviews}
                     >
                       <BarChart3 className="w-3 h-3 mr-2" />
-                      Generate Reviews
+                      Update Review Scores
                     </Button>
                   </div>
                 </div>
