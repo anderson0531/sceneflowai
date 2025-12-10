@@ -1,16 +1,16 @@
 /**
  * Image Editing Client for SceneFlow AI
  * 
- * Provides two editing approaches:
- * 1. Instruction-Based Editing (Gemini) - Conversational editing without masks
- * 2. Mask-Based Editing (Imagen 3) - Precise pixel control with inpainting/outpainting
+ * All editing modes use Gemini 3 Pro Image Preview via REST API with GEMINI_API_KEY:
+ * 1. Instruction-Based Editing - Natural language editing without masks
+ * 2. Mask-Based Editing (Inpainting) - Precise pixel control with masks
+ * 3. Outpainting - Expand image to new aspect ratios
  * 
  * SERVER-SIDE ONLY - Do not import this file in client components
  * 
  * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
  */
 
-import { getVertexAIAuthToken } from '@/lib/vertexai/client'
 import { EditMode, AspectRatioPreset } from '@/types/imageEdit'
 
 // Re-export types for API route usage
@@ -248,12 +248,13 @@ export async function editImageWithInstruction(
 }
 
 // ============================================================================
-// Mask-Based Editing (Imagen 3 Inpainting)
+// Mask-Based Editing (Gemini with Mask)
 // ============================================================================
 
 /**
- * Edit image using a binary mask (Imagen 3 Inpainting)
+ * Edit image using a binary mask (Gemini Inpainting)
  * White areas in mask will be regenerated based on prompt
+ * Uses Gemini 3 Pro Image Preview for mask-guided editing
  * 
  * @example
  * await inpaintImage({
@@ -267,73 +268,110 @@ export async function inpaintImage(
 ): Promise<EditResult> {
   const { sourceImage, maskImage, prompt, negativePrompt } = options
   
-  console.log('[Image Edit] Starting mask-based inpainting...')
+  console.log('[Image Edit] Starting mask-based inpainting with Gemini...')
   console.log('[Image Edit] Prompt:', prompt.substring(0, 100))
   
   try {
-    const projectId = process.env.GCP_PROJECT_ID
-    const region = process.env.GCP_REGION || 'us-central1'
+    const apiKey = process.env.GEMINI_API_KEY
     
-    if (!projectId) {
-      throw new Error('GCP_PROJECT_ID not configured')
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY not configured')
     }
-    
-    const accessToken = await getVertexAIAuthToken()
     
     // Convert images to base64
     const sourceBase64 = await imageToBase64(sourceImage)
     const maskBase64 = await imageToBase64(maskImage)
+    const sourceMimeType = detectMimeType(sourceImage)
     
-    // Imagen 3 inpainting endpoint
-    const MODEL_ID = 'imagen-3.0-capability-001'
-    const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${MODEL_ID}:predict`
+    // Build contents array: source image, mask, then instruction
+    const contents: any[] = []
     
-    const requestBody: any = {
-      instances: [{
-        prompt: prompt,
-        image: {
-          bytesBase64Encoded: sourceBase64
-        },
-        mask: {
-          image: {
-            bytesBase64Encoded: maskBase64
-          }
-        }
-      }],
-      parameters: {
-        sampleCount: 1,
-        editMode: 'inpainting',
-        safetySetting: 'block_some',
-        personGeneration: 'allow_adult'
+    // Add source image
+    contents.push({
+      inline_data: {
+        mime_type: sourceMimeType,
+        data: sourceBase64
+      }
+    })
+    
+    // Add mask image
+    contents.push({
+      inline_data: {
+        mime_type: 'image/png',
+        data: maskBase64
+      }
+    })
+    
+    // Build the inpainting prompt
+    let editPrompt = `Edit this image. The second image is a mask where WHITE areas should be replaced/edited and BLACK areas should remain unchanged.
+
+In the WHITE masked areas, generate: ${prompt}`
+    
+    if (negativePrompt) {
+      editPrompt += `\n\nAvoid: ${negativePrompt}`
+    }
+    
+    editPrompt += '\n\nKeep the BLACK masked areas exactly as they are in the original. Generate the edited image.'
+    
+    contents.push({ text: editPrompt })
+    
+    // Use Gemini 3 Pro Image Preview
+    const model = 'gemini-3-pro-image-preview'
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+    
+    const requestBody = {
+      contents: [{ parts: contents }],
+      generationConfig: {
+        response_modalities: ['IMAGE']
       }
     }
     
-    if (negativePrompt) {
-      requestBody.parameters.negativePrompt = negativePrompt
-    }
+    console.log('[Image Edit] Calling Gemini API for inpainting...')
     
     const response = await fetch(endpoint, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody)
     })
     
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`Imagen API error: ${response.status} - ${errorText}`)
+      throw new Error(`Gemini API error: ${response.status} - ${errorText}`)
     }
     
     const data = await response.json()
     
-    const imageBytes = data?.predictions?.[0]?.bytesBase64Encoded
-    if (!imageBytes) {
-      throw new Error('No image returned from Imagen inpainting')
+    // Check for API errors
+    if (data.error) {
+      throw new Error(`Gemini API error: ${data.error.message || 'Unknown error'}`)
     }
     
-    const editedImageDataUrl = `data:image/png;base64,${imageBytes}`
+    // Extract image from response
+    const candidates = data?.candidates
+    if (!candidates || candidates.length === 0) {
+      throw new Error('Image editing was filtered due to content policies. Try adjusting the prompt.')
+    }
+    
+    const parts = candidates[0]?.content?.parts
+    if (!parts || parts.length === 0) {
+      throw new Error('Unexpected response format from Gemini API')
+    }
+    
+    // Find the image part
+    let imageData: string | null = null
+    for (const part of parts) {
+      const inlineData = part.inline_data || part.inlineData
+      if (inlineData && (inlineData.mime_type || inlineData.mimeType)?.startsWith?.('image/') && !part.thought) {
+        imageData = inlineData.data
+        break
+      }
+    }
+    
+    if (!imageData) {
+      throw new Error('No image generated by Gemini')
+    }
+    
+    const editedImageDataUrl = `data:image/png;base64,${imageData}`
     
     console.log('[Image Edit] Inpainting completed successfully')
     
@@ -356,12 +394,13 @@ export async function inpaintImage(
 }
 
 // ============================================================================
-// Outpainting (Aspect Ratio Expansion)
+// Outpainting (Aspect Ratio Expansion with Gemini)
 // ============================================================================
 
 /**
- * Expand image to a new aspect ratio (Imagen 3 Outpainting)
+ * Expand image to a new aspect ratio (Gemini Outpainting)
  * AI fills in the new areas based on the prompt
+ * Uses Gemini 3 Pro Image Preview for intelligent canvas expansion
  * 
  * @example
  * await outpaintImage({
@@ -375,69 +414,117 @@ export async function outpaintImage(
 ): Promise<EditResult> {
   const { sourceImage, targetAspectRatio, prompt, negativePrompt } = options
   
-  console.log('[Image Edit] Starting outpainting...')
+  console.log('[Image Edit] Starting outpainting with Gemini...')
   console.log('[Image Edit] Target aspect ratio:', targetAspectRatio)
   console.log('[Image Edit] Prompt:', prompt.substring(0, 100))
   
   try {
-    const projectId = process.env.GCP_PROJECT_ID
-    const region = process.env.GCP_REGION || 'us-central1'
+    const apiKey = process.env.GEMINI_API_KEY
     
-    if (!projectId) {
-      throw new Error('GCP_PROJECT_ID not configured')
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY not configured')
     }
-    
-    const accessToken = await getVertexAIAuthToken()
     
     // Convert source image to base64
     const sourceBase64 = await imageToBase64(sourceImage)
+    const sourceMimeType = detectMimeType(sourceImage)
     
-    // Imagen 3 outpainting endpoint
-    const MODEL_ID = 'imagen-3.0-capability-001'
-    const endpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${MODEL_ID}:predict`
+    // Build contents array
+    const contents: any[] = []
+    
+    // Add source image
+    contents.push({
+      inline_data: {
+        mime_type: sourceMimeType,
+        data: sourceBase64
+      }
+    })
+    
+    // Build the outpainting prompt
+    let editPrompt = `Expand this image to a ${targetAspectRatio} aspect ratio. 
+
+The original image should remain in the center, and you should extend/expand the canvas outward to fill the new aspect ratio.
+
+For the newly expanded areas, generate: ${prompt}
+
+Make sure the expanded areas blend seamlessly with the original image, matching the lighting, style, and perspective.`
+    
+    if (negativePrompt) {
+      editPrompt += `\n\nAvoid: ${negativePrompt}`
+    }
+    
+    contents.push({ text: editPrompt })
+    
+    // Use Gemini 3 Pro Image Preview
+    const model = 'gemini-3-pro-image-preview'
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+    
+    // Map aspect ratio to image_config
+    const aspectRatioMap: Record<string, string> = {
+      '16:9': '16:9',
+      '21:9': '21:9',
+      '1:1': '1:1',
+      '9:16': '9:16',
+      '4:3': '4:3',
+      '3:4': '3:4'
+    }
     
     const requestBody: any = {
-      instances: [{
-        prompt: prompt,
-        image: {
-          bytesBase64Encoded: sourceBase64
+      contents: [{ parts: contents }],
+      generationConfig: {
+        response_modalities: ['IMAGE'],
+        image_config: {
+          aspect_ratio: aspectRatioMap[targetAspectRatio] || '16:9'
         }
-      }],
-      parameters: {
-        sampleCount: 1,
-        editMode: 'outpainting',
-        aspectRatio: targetAspectRatio,
-        safetySetting: 'block_some',
-        personGeneration: 'allow_adult'
       }
     }
     
-    if (negativePrompt) {
-      requestBody.parameters.negativePrompt = negativePrompt
-    }
+    console.log('[Image Edit] Calling Gemini API for outpainting...')
     
     const response = await fetch(endpoint, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody)
     })
     
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`Imagen API error: ${response.status} - ${errorText}`)
+      throw new Error(`Gemini API error: ${response.status} - ${errorText}`)
     }
     
     const data = await response.json()
     
-    const imageBytes = data?.predictions?.[0]?.bytesBase64Encoded
-    if (!imageBytes) {
-      throw new Error('No image returned from Imagen outpainting')
+    // Check for API errors
+    if (data.error) {
+      throw new Error(`Gemini API error: ${data.error.message || 'Unknown error'}`)
     }
     
-    const editedImageDataUrl = `data:image/png;base64,${imageBytes}`
+    // Extract image from response
+    const candidates = data?.candidates
+    if (!candidates || candidates.length === 0) {
+      throw new Error('Image outpainting was filtered due to content policies. Try adjusting the prompt.')
+    }
+    
+    const parts = candidates[0]?.content?.parts
+    if (!parts || parts.length === 0) {
+      throw new Error('Unexpected response format from Gemini API')
+    }
+    
+    // Find the image part
+    let imageData: string | null = null
+    for (const part of parts) {
+      const inlineData = part.inline_data || part.inlineData
+      if (inlineData && (inlineData.mime_type || inlineData.mimeType)?.startsWith?.('image/') && !part.thought) {
+        imageData = inlineData.data
+        break
+      }
+    }
+    
+    if (!imageData) {
+      throw new Error('No image generated by Gemini')
+    }
+    
+    const editedImageDataUrl = `data:image/png;base64,${imageData}`
     
     console.log('[Image Edit] Outpainting completed successfully')
     

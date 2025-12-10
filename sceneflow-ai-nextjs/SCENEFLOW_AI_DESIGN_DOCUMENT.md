@@ -960,16 +960,19 @@ function getSceneAwareKenBurns(scene: Scene): KenBurnsConfig {
 
 ### Three Editing Modes
 
-| Mode | API | Description | Use Case |
-|------|-----|-------------|----------|
-| **Quick Edit** | Gemini | Natural language instruction editing | "Change the suit to a tuxedo" |
-| **Precise Edit** | Imagen 3 Inpaint | Mask-based editing for specific regions | Remove artifacts, fix details |
-| **Outpaint** | Imagen 3 Outpaint | Expand image to new aspect ratio | Convert 1:1 to 16:9 cinematic |
+All modes use **Gemini 3 Pro Image Preview** via REST API with `GEMINI_API_KEY`:
+
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| **Quick Edit** | Natural language instruction editing | "Change the suit to a tuxedo" |
+| **Precise Edit** | Mask-based editing for specific regions | Remove artifacts, fix details |
+| **Outpaint** | Expand image to new aspect ratio | Convert 1:1 to 16:9 cinematic |
 
 ### Design Decisions
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
+| API Provider | Gemini REST API (GEMINI_API_KEY) | No GCP setup required, simpler authentication |
 | Mask storage | On-the-fly (not stored) | Reduces storage costs, masks are one-time use |
 | Edit history | Before/after preview | Users compare before saving, no need for full history |
 | Aspect ratios | Preset cinematic ratios | 16:9, 21:9, 1:1 for film workflow, no custom dimensions |
