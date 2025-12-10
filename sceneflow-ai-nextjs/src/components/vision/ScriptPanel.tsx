@@ -350,7 +350,7 @@ const getSceneDomId = (scene: any, index: number) => {
 }
 
 // Sortable Scene Card Wrapper for drag-and-drop
-function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, ...props }: any) {
+function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onEditImage, ...props }: any) {
   const {
     attributes,
     listeners,
@@ -376,6 +376,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
         getScoreColorClass={getScoreColorClass}
         dragHandleProps={listeners}
         onOpenSceneReview={props.onOpenSceneReview}
+        onEditImage={onEditImage}
       />
     </div>
   )
@@ -2001,6 +2002,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                           projectId={projectId}
                           onUploadKeyframe={handleUploadKeyframe}
                           onAddToReferenceLibrary={onAddToReferenceLibrary}
+                          onEditImage={(url: string, sceneIdx: number) => {
+                            setEditingImageData({ url, sceneIdx });
+                            setImageEditModalOpen(true);
+                          }}
                           isWorkflowOpen={selectedSceneIndex !== null ? true : openSceneIdx === idx}
                           onWorkflowOpenChange={(isOpen: boolean) => {
                             // Single-scene-open behavior: close others when opening this one
@@ -2350,6 +2355,8 @@ interface SceneCardProps {
   onWorkflowOpenChange?: (isOpen: boolean) => void
   // Reference library
   onAddToReferenceLibrary?: (imageUrl: string, name: string, sceneNumber: number) => Promise<void>
+  // Image editing
+  onEditImage?: (url: string, sceneIdx: number) => void
 }
 
 function SceneCard({
@@ -2421,6 +2428,7 @@ function SceneCard({
   isWorkflowOpen = false,
   onWorkflowOpenChange,
   onAddToReferenceLibrary,
+  onEditImage,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(null)
@@ -3729,22 +3737,21 @@ function SceneCard({
                                  </TooltipTrigger>
                                  <TooltipContent>Download</TooltipContent>
                                </Tooltip>
-                               <Tooltip>
-                                 <TooltipTrigger asChild>
-                                   <Button
-                                     size="sm"
-                                     variant="secondary"
-                                     className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
-                                     onClick={() => {
-                                       setEditingImageData({ url: scene.imageUrl, sceneIdx });
-                                       setImageEditModalOpen(true);
-                                     }}
-                                   >
-                                     <Pencil className="w-4 h-4" />
-                                   </Button>
-                                 </TooltipTrigger>
-                                 <TooltipContent>Edit Image</TooltipContent>
-                               </Tooltip>
+                               {onEditImage && (
+                                 <Tooltip>
+                                   <TooltipTrigger asChild>
+                                     <Button
+                                       size="sm"
+                                       variant="secondary"
+                                       className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
+                                       onClick={() => onEditImage(scene.imageUrl, sceneIdx)}
+                                     >
+                                       <Pencil className="w-4 h-4" />
+                                     </Button>
+                                   </TooltipTrigger>
+                                   <TooltipContent>Edit Image</TooltipContent>
+                                 </Tooltip>
+                               )}
                                {onAddToReferenceLibrary && (
                                  <Tooltip>
                                    <TooltipTrigger asChild>
