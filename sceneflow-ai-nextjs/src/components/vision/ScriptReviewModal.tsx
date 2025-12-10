@@ -159,6 +159,7 @@ export default function ScriptReviewModal({
         body: JSON.stringify({
           text,
           voiceId: selectedVoiceId,
+          parallel: true, // Enable parallel paragraph processing for faster TTS
           stability: 0.5,
           similarityBoost: 0.75
         })

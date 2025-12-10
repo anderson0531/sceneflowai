@@ -54,6 +54,8 @@
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2025-12-10 | Parallel TTS for Review Analysis | Split large text into paragraphs, process 3 concurrent requests with eleven_flash_v2_5 model for 3-4x faster audio generation | ✅ Implemented |
+| 2025-12-10 | Voice-to-text duplication fix | Fixed useSpeechRecognition to properly track final vs interim results; ScriptEditorModal uses base ref pattern | ✅ Fixed |
 | 2025-12-10 | Review Analysis modal enhancements | Revise Script button auto-opens Script Editor with recommendations, TTS playback for review sections, ElevenLabs voice selector | ✅ Implemented |
 | 2025-12-10 | Script optimization timeout increase | Increased API timeout from 120s to 300s for large scripts to prevent batching (which loses context) | ✅ Implemented |
 | 2025-12-10 | Project Stats & Review Scores enhancement | Centered cards, larger labels, stoplight colors for scores, separate Review Scores section | ✅ Implemented |
