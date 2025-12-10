@@ -173,6 +173,20 @@ DIRECTOR'S PERSPECTIVE - Analyze for:
 4. Technical Execution (scene structure, transitions, production feasibility)
 5. Dialogue Quality (natural flow, character voice, subtext, purpose)
 
+SCORING RUBRIC (be generous - assume the writer is competent):
+- 95-100: Excellent. No issues or only trivial polish suggestions. Ready for production.
+- 90-94: Very Good. Minor refinements possible but scene works well. Most scenes should fall here.
+- 85-89: Good. A few noticeable issues but fundamentally solid.
+- 80-84: Needs Work. Multiple issues that affect scene quality.
+- 70-79: Significant Issues. Structural or major problems need addressing.
+- Below 70: Major Rewrite Needed. Fundamental problems with the scene.
+
+IMPORTANT SCORING GUIDANCE:
+- If your recommendations are minor polish or "nice to have" improvements, score should be 90+
+- Only give scores below 85 if there are genuine structural, clarity, or quality problems
+- The presence of recommendations does NOT automatically mean a low score
+- A scene can be very good (90+) while still having room for optional improvements
+
 For each issue found, provide:
 - Specific problem identified
 - Before/after text examples
@@ -181,25 +195,25 @@ For each issue found, provide:
 
 Format as JSON with this exact structure:
 {
-  "score": 75,
+  "score": 92,
   "recommendations": [
     {
       "id": "pacing-1",
       "category": "pacing",
-      "priority": "high",
+      "priority": "medium",
       "title": "Tighten Opening",
-      "description": "The scene opening is too slow and loses momentum",
+      "description": "The scene opening could be slightly tighter for better momentum",
       "before": "Current opening text...",
       "after": "Revised opening text...",
-      "rationale": "Faster opening creates immediate engagement and maintains audience attention",
-      "impact": "Will increase scene energy by 40% and improve pacing flow"
+      "rationale": "A more concise opening creates immediate engagement",
+      "impact": "Minor improvement to scene energy and pacing flow"
     }
   ]
 }
 
 Focus on practical, implementable suggestions that a director would give to improve the scene.
 
-IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maximum.`
+IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maximum. Remember: recommendations for polish don't mean the scene is bad - score generously!`
 
   console.log('[Director Analysis] Sending prompt (first 500 chars):', prompt.substring(0, 500))
   console.log('[Director Analysis] API endpoint:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent`)
@@ -374,6 +388,20 @@ AUDIENCE PERSPECTIVE - Analyze for:
 4. Character Relatability (audience connection, likable characters, investment)
 5. Satisfying Payoff (fulfilling conclusion, resolution, closure)
 
+SCORING RUBRIC (be generous - assume the writer is competent):
+- 95-100: Excellent. Highly engaging, emotionally resonant, audience will love it.
+- 90-94: Very Good. Entertaining and clear with minor polish opportunities. Most scenes should fall here.
+- 85-89: Good. Engaging but with a few areas that could connect better with audiences.
+- 80-84: Needs Work. Some disconnect with audience or clarity issues.
+- 70-79: Significant Issues. Audience may struggle to engage or follow the scene.
+- Below 70: Major Rewrite Needed. Fundamental engagement or clarity problems.
+
+IMPORTANT SCORING GUIDANCE:
+- If your recommendations are minor polish or "nice to have" improvements, score should be 90+
+- Only give scores below 85 if there are genuine engagement, clarity, or connection problems
+- The presence of recommendations does NOT automatically mean a low score
+- A scene can be very good (90+) while still having room for optional improvements
+
 For each issue found, provide:
 - Specific problem identified
 - Before/after text examples
@@ -382,25 +410,25 @@ For each issue found, provide:
 
 Format as JSON with this exact structure:
 {
-  "score": 78,
+  "score": 91,
   "recommendations": [
     {
       "id": "emotion-1",
       "category": "emotion",
-      "priority": "high",
-      "title": "Add Emotional Stakes",
-      "description": "Scene lacks emotional connection for audience",
+      "priority": "medium",
+      "title": "Strengthen Emotional Stakes",
+      "description": "Scene could benefit from slightly more emotional grounding",
       "before": "Current text...",
       "after": "Revised text with emotional stakes...",
-      "rationale": "Audiences need to care about what happens to connect emotionally",
-      "impact": "Will increase audience engagement by 60% and emotional investment"
+      "rationale": "Adding a small emotional beat helps audiences connect more deeply",
+      "impact": "Minor improvement to audience engagement and emotional investment"
     }
   ]
 }
 
 Focus on what audiences will love and what will make them more engaged with the story.
 
-IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maximum.`
+IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maximum. Remember: recommendations for polish don't mean the scene is bad - score generously!`
 
   console.log('[Audience Analysis] Sending prompt (first 500 chars):', prompt.substring(0, 500))
   console.log('[Audience Analysis] API endpoint:', `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-flash:generateContent`)

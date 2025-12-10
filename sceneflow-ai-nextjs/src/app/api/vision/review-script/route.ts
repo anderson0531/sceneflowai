@@ -98,6 +98,21 @@ Evaluate these aspects (score each 1-100):
 4. Visual Storytelling (cinematic potential, visual elements, shot opportunities)
 5. Dialogue Quality (natural, purposeful, character voice, subtext)
 
+SCORING RUBRIC (be encouraging - assume competent work unless proven otherwise):
+- 95-100: Exceptional. Professional-level craft. Ready for production.
+- 90-94: Very Good. Strong work with only minor polish opportunities. Most competent scripts fall here.
+- 85-89: Good. Solid fundamentals with a few areas needing attention.
+- 80-84: Needs Improvement. Multiple noticeable issues but salvageable.
+- 70-79: Significant Work Needed. Structural or major craft issues.
+- Below 70: Major Revision Required. Fundamental problems throughout.
+
+IMPORTANT SCORING GUIDANCE:
+- If your improvements/recommendations are minor polish or "nice to have" suggestions, scores should be 90+
+- Only give scores below 85 if there are genuine structural, craft, or quality problems
+- Having recommendations does NOT mean the score should be low
+- A script can be very good (90+) while still having room for optional improvements
+- Most functional scripts with clear story and characters should score 85+
+
 Provide a comprehensive review with:
 1. Overall Score (1-100) - weighted average of categories
 2. Category scores (1-100 each)
@@ -109,6 +124,7 @@ Provide a comprehensive review with:
 CRITICAL: Calculate scores based on YOUR ANALYSIS of THIS SCRIPT. 
 The example below shows structure only - DO NOT copy these placeholder values.
 Your scores should reflect the actual quality of this specific screenplay.
+Remember: Recommendations for polish don't indicate a bad script - score generously!
 
 Format as JSON with this structure:
 {
@@ -232,6 +248,21 @@ Evaluate these aspects (score each 1-100):
 4. Character Relatability (audience connection, likable characters, investment)
 5. Satisfying Payoff (fulfilling conclusion, resolution, closure)
 
+SCORING RUBRIC (be encouraging - audiences appreciate good storytelling):
+- 95-100: Exceptional. Highly entertaining, emotionally powerful, unforgettable.
+- 90-94: Very Good. Engaging and emotionally resonant with minor polish opportunities. Most good scripts fall here.
+- 85-89: Good. Entertaining and clear with a few areas that could connect better.
+- 80-84: Needs Improvement. Some disconnect with audience but fundamentally watchable.
+- 70-79: Significant Work Needed. Audience may struggle to stay engaged.
+- Below 70: Major Revision Required. Fundamental engagement or clarity problems.
+
+IMPORTANT SCORING GUIDANCE:
+- If your improvements/recommendations are minor polish or "nice to have" suggestions, scores should be 90+
+- Only give scores below 85 if there are genuine engagement, clarity, or connection problems
+- Having recommendations does NOT mean the score should be low
+- A script can be very good (90+) while still having room for optional improvements
+- Most coherent stories with identifiable characters should score 85+
+
 Provide a comprehensive review with:
 1. Overall Score (1-100) - weighted average of categories
 2. Category scores (1-100 each)
@@ -243,6 +274,7 @@ Provide a comprehensive review with:
 CRITICAL: Calculate scores based on YOUR ANALYSIS of THIS SCRIPT.
 The example below shows structure only - DO NOT copy these placeholder values.
 Your scores should reflect the actual entertainment value of this specific screenplay.
+Remember: Recommendations for polish don't indicate a bad script - score generously!
 
 Format as JSON with this structure:
 {

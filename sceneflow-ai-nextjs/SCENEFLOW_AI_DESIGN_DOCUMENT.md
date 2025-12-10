@@ -54,6 +54,7 @@
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2025-12-10 | Calibrated review scoring rubric | Added explicit scoring guidance to analyze-scene and review-script APIs - scores 90+ for minor polish suggestions, 85+ baseline for competent work. LLM was scoring too harshly (low 80s) when recommendations were trivial | ✅ Implemented |
 | 2025-12-10 | Review-driven script optimization | Pass full Director/Audience reviews (scores, analysis, strengths, improvements, recommendations) to optimize-script API. Model receives complete review context + full scene content for targeted improvements targeting 85+ scores | ✅ Implemented |
 | 2025-12-10 | Parallel TTS for Review Analysis | Split large text into paragraphs, process 3 concurrent requests with eleven_flash_v2_5 model for 3-4x faster audio generation | ✅ Implemented |
 | 2025-12-10 | Voice-to-text duplication fix | Fixed useSpeechRecognition to properly track final vs interim results; ScriptEditorModal uses base ref pattern | ✅ Fixed |
