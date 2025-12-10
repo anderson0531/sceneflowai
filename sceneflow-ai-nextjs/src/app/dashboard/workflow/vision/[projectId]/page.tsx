@@ -4903,7 +4903,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       onClick={handleJumpToBookmark}
                       disabled={bookmarkedSceneIndex === -1}
                     >
-                      <Bookmark className={`w-3 h-3 mr-2 ${bookmarkedSceneIndex !== -1 ? 'text-amber-400' : ''}`} />
+                      <Bookmark className={`w-3 h-3 mr-2 ${bookmarkedSceneIndex !== -1 ? 'text-amber-500' : 'text-amber-400'}`} />
                       {bookmarkedSceneIndex !== -1 ? `Go to Scene ${bookmarkedSceneIndex + 1}` : 'No Bookmark'}
                     </Button>
                     <Button
@@ -4921,7 +4921,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       className="w-full justify-start text-xs"
                       onClick={() => setIsPlayerOpen(true)}
                     >
-                      <Play className="w-3 h-3 mr-2" />
+                      <Play className="w-3 h-3 mr-2 text-green-500" />
                       Screening Room
                     </Button>
                     <Button
@@ -4931,7 +4931,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       onClick={handleGenerateReviews}
                       disabled={isGeneratingReviews}
                     >
-                      <BarChart3 className="w-3 h-3 mr-2" />
+                      <BarChart3 className="w-3 h-3 mr-2 text-purple-500" />
                       Update Review Scores
                     </Button>
                     <Button
@@ -4946,7 +4946,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     >
                       <FileText className={cn(
                         "w-3 h-3 mr-2",
-                        reviewsOutdated && (directorReview?.overallScore || audienceReview?.overallScore) ? "text-amber-500" : ""
+                        reviewsOutdated && (directorReview?.overallScore || audienceReview?.overallScore) ? "text-amber-500" : "text-blue-500"
                       )} />
                       Review Analysis
                       {reviewsOutdated && (directorReview?.overallScore || audienceReview?.overallScore) && (
@@ -4956,55 +4956,68 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   </div>
                 </div>
                 
-                {/* Project Stats */}
+                {/* Project Stats - Mini Dashboard */}
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-1">
                   <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Project Stats</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-500 dark:text-gray-400">Scenes</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{script?.script?.scenes?.length || 0}</span>
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 dark:from-purple-500/20 dark:to-purple-600/10 rounded-lg p-2.5 border border-purple-200/50 dark:border-purple-500/20">
+                      <div className="text-lg font-bold text-purple-600 dark:text-purple-400">{script?.script?.scenes?.length || 0}</div>
+                      <div className="text-[10px] text-purple-500/70 dark:text-purple-400/60 uppercase tracking-wide">Scenes</div>
                     </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-500 dark:text-gray-400">Characters</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{characters.length}</span>
+                    <div className="bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 dark:from-cyan-500/20 dark:to-cyan-600/10 rounded-lg p-2.5 border border-cyan-200/50 dark:border-cyan-500/20">
+                      <div className="text-lg font-bold text-cyan-600 dark:text-cyan-400">{characters.length}</div>
+                      <div className="text-[10px] text-cyan-500/70 dark:text-cyan-400/60 uppercase tracking-wide">Cast</div>
                     </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-500 dark:text-gray-400">Est. Duration</span>
-                      <span className="font-medium text-gray-900 dark:text-white">
+                    <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 dark:from-green-500/20 dark:to-green-600/10 rounded-lg p-2.5 border border-green-200/50 dark:border-green-500/20">
+                      <div className="text-lg font-bold text-green-600 dark:text-green-400">
                         {Math.round((script?.script?.scenes || []).reduce((sum: number, s: any) => sum + (s.estimatedDuration || s.duration || 15), 0) / 60)}m
-                      </span>
+                      </div>
+                      <div className="text-[10px] text-green-500/70 dark:text-green-400/60 uppercase tracking-wide">Duration</div>
                     </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-500 dark:text-gray-400">Est. Credits</span>
-                      <span className="font-medium text-amber-500 dark:text-amber-400">
+                    <div className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 dark:from-amber-500/20 dark:to-amber-600/10 rounded-lg p-2.5 border border-amber-200/50 dark:border-amber-500/20">
+                      <div className="text-lg font-bold text-amber-600 dark:text-amber-400">
                         {(() => {
                           const sceneCount = script?.script?.scenes?.length || 0;
                           const charCount = characters.length;
-                          // Rough estimate: 5 credits per scene (image) + 2 per character reference + 1 per audio
                           const imageCredits = sceneCount * 5;
                           const charCredits = charCount * 2;
                           const audioCredits = sceneCount * 1;
                           return imageCredits + charCredits + audioCredits;
                         })()}
-                      </span>
+                      </div>
+                      <div className="text-[10px] text-amber-500/70 dark:text-amber-400/60 uppercase tracking-wide">Credits</div>
                     </div>
-                    {(directorReview?.overallScore || audienceReview?.overallScore) && (
-                      <>
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-gray-500 dark:text-gray-400">Director Score</span>
-                          <span className={cn("font-medium", getScoreColorClass(directorReview?.overallScore || 0))}>
-                            {directorReview?.overallScore || '-'}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-gray-500 dark:text-gray-400">Audience Score</span>
-                          <span className={cn("font-medium", getScoreColorClass(audienceReview?.overallScore || 0))}>
-                            {audienceReview?.overallScore || '-'}
-                          </span>
-                        </div>
-                      </>
-                    )}
                   </div>
+                  {/* Review Scores */}
+                  {(directorReview?.overallScore || audienceReview?.overallScore) && (
+                    <div className="bg-gray-100/80 dark:bg-gray-800/50 rounded-lg p-2.5 border border-gray-200/50 dark:border-gray-700/50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-rose-500/10 flex items-center justify-center">
+                            <span className="text-xs">🎬</span>
+                          </div>
+                          <div>
+                            <div className={cn("text-sm font-bold", getScoreColorClass(directorReview?.overallScore || 0))}>
+                              {directorReview?.overallScore || '-'}
+                            </div>
+                            <div className="text-[9px] text-gray-500 uppercase">Director</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div>
+                            <div className={cn("text-sm font-bold text-right", getScoreColorClass(audienceReview?.overallScore || 0))}>
+                              {audienceReview?.overallScore || '-'}
+                            </div>
+                            <div className="text-[9px] text-gray-500 uppercase text-right">Audience</div>
+                          </div>
+                          <div className="w-6 h-6 rounded-full bg-blue-500/10 flex items-center justify-center">
+                            <span className="text-xs">👥</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Settings */}
@@ -5294,7 +5307,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           <PanelResizeHandle className="w-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors cursor-col-resize" />
           
           {/* Right Sidebar: Reference Library */}
-          <Panel defaultSize={25} minSize={15} maxSize={40} className="min-w-0 overflow-x-hidden">
+          <Panel defaultSize={15} minSize={15} maxSize={40} className="min-w-0 overflow-x-hidden">
             <div className="h-full overflow-y-auto overflow-x-hidden pl-6 min-w-0">
               {/* Merge Duplicates Button */}
               {findPotentialDuplicates(characters).length > 0 && (

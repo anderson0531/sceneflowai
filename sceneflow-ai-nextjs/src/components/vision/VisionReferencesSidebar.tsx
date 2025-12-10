@@ -270,7 +270,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     <DndContext>
       <div className="space-y-6">
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Reference Library</h3>
+          <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide sticky top-0 bg-gray-50 dark:bg-gray-950 py-3 -mt-3 z-10">Reference Library</h3>
           
           {/* Cast Section */}
           <div className="border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900">
