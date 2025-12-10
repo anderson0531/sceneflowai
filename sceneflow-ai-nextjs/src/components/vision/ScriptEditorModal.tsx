@@ -259,7 +259,14 @@ export function ScriptEditorModal({
         let response = await fetch('/api/vision/optimize-script', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ projectId, script, instruction, characters })
+          body: JSON.stringify({ 
+            projectId, 
+            script, 
+            instruction, 
+            characters,
+            directorReview: directorReview || null,
+            audienceReview: audienceReview || null
+          })
         })
         if (!response.ok) {
           if (response.status === 422) {
@@ -270,7 +277,15 @@ export function ScriptEditorModal({
             response = await fetch('/api/vision/optimize-script', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ projectId, script, instruction, characters, compact: true })
+              body: JSON.stringify({ 
+                projectId, 
+                script, 
+                instruction, 
+                characters, 
+                compact: true,
+                directorReview: directorReview || null,
+                audienceReview: audienceReview || null
+              })
             })
           }
           if (!response.ok) throw new Error('Optimization failed')

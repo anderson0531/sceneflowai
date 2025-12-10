@@ -3,17 +3,34 @@ import { NextRequest, NextResponse } from 'next/server'
 export const maxDuration = 300 // Increased timeout for large scripts
 export const runtime = 'nodejs'
 
+interface ReviewCategory {
+  name: string
+  score: number
+}
+
+interface Review {
+  overallScore: number
+  categories: ReviewCategory[]
+  analysis: string
+  strengths: string[]
+  improvements: string[]
+  recommendations: string[]
+  generatedAt: string
+}
+
 interface OptimizeScriptRequest {
   projectId: string
   script: any  // { scenes: Scene[] }
   instruction: string
   characters: any[]
   compact?: boolean
+  directorReview?: Review | null
+  audienceReview?: Review | null
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, script, instruction, characters, compact }: OptimizeScriptRequest = await req.json()
+    const { projectId, script, instruction, characters, compact, directorReview, audienceReview }: OptimizeScriptRequest = await req.json()
     
     if (!projectId || !script || !instruction) {
       return NextResponse.json(
@@ -25,16 +42,17 @@ export async function POST(req: NextRequest) {
     console.log('[Script Optimization] Optimizing script for project:', projectId)
     console.log('[Script Optimization] Instruction:', instruction)
     console.log('[Script Optimization] Scene count:', script.scenes?.length || 0)
+    console.log('[Script Optimization] Has reviews:', { director: !!directorReview, audience: !!audienceReview })
     
     let result: any
     try {
-      result = await optimizeScript(script, instruction, characters, !!compact)
+      result = await optimizeScript(script, instruction, characters, !!compact, directorReview, audienceReview)
     } catch (e: any) {
       const msg = String(e?.message || '')
       const parseErr = msg.includes('Failed to parse optimization response') || msg.includes('no JSON found')
       if (parseErr && !compact) {
         console.warn('[Script Optimization] Parse failed. Retrying compact...')
-        result = await optimizeScript(script, instruction, characters, true)
+        result = await optimizeScript(script, instruction, characters, true, directorReview, audienceReview)
       } else {
         throw e
       }
@@ -58,9 +76,19 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function optimizeScript(script: any, instruction: string, characters: any[], compact: boolean) {
+async function optimizeScript(
+  script: any, 
+  instruction: string, 
+  characters: any[], 
+  compact: boolean,
+  directorReview?: Review | null,
+  audienceReview?: Review | null
+) {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) throw new Error('Google API key not configured')
+  
+  // When reviews are present, include full scene content for targeted improvements
+  const hasReviewContext = !!(directorReview || audienceReview)
   
   // Build condensed script summary for context
   const sceneSummaries = (script.scenes || []).slice(0, compact ? 8 : Math.min((script.scenes?.length || 0), 16)).map((scene: any, idx: number) => {
@@ -68,6 +96,23 @@ async function optimizeScript(script: any, instruction: string, characters: any[
     const duration = scene.duration || 0
     return `Scene ${idx + 1}: ${scene.heading || 'Untitled'} (${duration}s, ${dialogueCount} dialogue lines)`
   }).join('\n') || 'No scenes'
+  
+  // Build full scene content for review-driven optimization
+  const fullSceneContent = hasReviewContext ? (script.scenes || []).map((scene: any, idx: number) => {
+    const dialogueLines = (scene.dialogue || []).map((d: any) => 
+      `  ${d.character}: "${d.line}"`
+    ).join('\n')
+    return `
+--- SCENE ${idx + 1}: ${scene.heading || 'Untitled'} ---
+Action: ${scene.action || 'None'}
+Narration: ${scene.narration || 'None'}
+Dialogue:
+${dialogueLines || '  (no dialogue)'}
+Music: ${scene.music || 'None'}
+SFX: ${Array.isArray(scene.sfx) ? scene.sfx.join(', ') : scene.sfx || 'None'}
+Duration: ${scene.duration || 0}s
+`
+  }).join('\n') : ''
   
   const characterList = characters?.map((c: any) => c.name).join(', ') || 'No characters'
   
@@ -82,6 +127,60 @@ async function optimizeScript(script: any, instruction: string, characters: any[
     .map(line => (line || '').trim())
     .filter(line => line && line.toLowerCase() !== 'undefined')
     .join('\n') || 'Improve clarity, pacing, character depth, and visual storytelling across the script.'
+  
+  // Build comprehensive review context for targeted improvements
+  let reviewContext = ''
+  if (directorReview || audienceReview) {
+    reviewContext = `
+=== REVIEW ANALYSIS CONTEXT (CRITICAL) ===
+Apply these specific improvements to achieve scores of 85+ in all categories.
+
+`
+    if (directorReview) {
+      reviewContext += `DIRECTOR REVIEW (Current Score: ${directorReview.overallScore}/100):
+
+Analysis:
+${directorReview.analysis}
+
+Category Scores (Target 85+ for each):
+${directorReview.categories.map(c => `- ${c.name}: ${c.score}/100 ${c.score < 80 ? '⚠️ PRIORITY: NEEDS SIGNIFICANT IMPROVEMENT' : c.score < 85 ? '⚡ NEEDS IMPROVEMENT' : '✓ Good'}`).join('\n')}
+
+Strengths to PRESERVE (Do NOT change these aspects):
+${directorReview.strengths.map(s => `✓ ${s}`).join('\n')}
+
+Areas Requiring Improvement (Focus optimization here):
+${directorReview.improvements.map(i => `⚠️ ${i}`).join('\n')}
+
+Specific Recommendations to Implement:
+${directorReview.recommendations.map((r, i) => `${i+1}. ${r}`).join('\n')}
+
+`
+    }
+    
+    if (audienceReview) {
+      reviewContext += `AUDIENCE REVIEW (Current Score: ${audienceReview.overallScore}/100):
+
+Analysis:
+${audienceReview.analysis}
+
+Category Scores (Target 85+ for each):
+${audienceReview.categories.map(c => `- ${c.name}: ${c.score}/100 ${c.score < 80 ? '⚠️ PRIORITY: NEEDS SIGNIFICANT IMPROVEMENT' : c.score < 85 ? '⚡ NEEDS IMPROVEMENT' : '✓ Good'}`).join('\n')}
+
+Areas Requiring Improvement:
+${audienceReview.improvements.map(i => `⚠️ ${i}`).join('\n')}
+
+`
+    }
+    
+    reviewContext += `=== OPTIMIZATION MANDATE ===
+Your task is to rewrite the script to address ALL the issues identified above.
+- Every low-scoring category (<85) MUST be improved
+- Every recommendation MUST be implemented
+- The result should score 85+ in ALL categories
+- Do NOT just make minor tweaks - make substantive improvements
+
+`
+  }
   
   const prompt = `You are an expert screenwriter and script doctor with deep understanding of narrative craft.
 
@@ -114,6 +213,7 @@ QUALITY OVER QUANTITY:
 === USER INSTRUCTION ===
 ${normalizedInstruction}
 
+${reviewContext}
 === CURRENT SCRIPT OVERVIEW ===
 Total Scenes: ${script.scenes?.length || 0}
 Characters: ${characterList}
@@ -121,9 +221,12 @@ Characters: ${characterList}
 CHARACTER PROFILES (for voice consistency):
 ${characterProfiles}
 
-SCENES (${compact ? 'first 8' : 'all'}):
+SCENE SUMMARIES:
 ${sceneSummaries}
-
+${hasReviewContext ? `
+=== FULL SCENE CONTENT (for targeted improvements) ===
+${fullSceneContent}
+` : ''}
 === OPTIMIZATION AREAS ===
 
 1. NARRATIVE STRUCTURE:
