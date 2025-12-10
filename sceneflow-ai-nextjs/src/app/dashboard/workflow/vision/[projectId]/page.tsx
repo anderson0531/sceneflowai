@@ -4432,24 +4432,49 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  // Helper: Clean up audio assets for removed dialogue lines
+  // Helper: Clean up audio assets when scene content changes
+  // This ensures stale audio doesn't play after edits
   const cleanupRemovedDialogueAudio = (originalScene: any, revisedScene: any) => {
-    // If no dialogue audio exists, return revised scene as-is
-    if (!originalScene?.dialogueAudio) {
-      return revisedScene
-    }
-
     const cleanedScene = { ...revisedScene }
     
-    // Get the dialogue lines in the revised scene
+    // Get dialogue lines from both scenes for comparison
+    const originalDialogueLines = (originalScene?.dialogue || []).map((d: any, idx: number) => ({
+      character: d.character,
+      line: d.line || d.text || '',
+      index: idx
+    }))
+    
     const revisedDialogueLines = (revisedScene.dialogue || []).map((d: any, idx: number) => ({
       character: d.character,
-      line: d.line || d.text,
+      line: d.line || d.text || '',
       index: idx
     }))
 
-    console.log('[Cleanup Dialogue Audio] Original dialogue count:', originalScene.dialogue?.length || 0)
-    console.log('[Cleanup Dialogue Audio] Revised dialogue count:', revisedDialogueLines.length)
+    console.log('[Cleanup Audio] Original dialogue count:', originalDialogueLines.length)
+    console.log('[Cleanup Audio] Revised dialogue count:', revisedDialogueLines.length)
+
+    // Check if narration text changed - if so, clear narration audio
+    const originalNarration = originalScene?.narration || ''
+    const revisedNarration = revisedScene.narration || ''
+    if (originalNarration !== revisedNarration && originalScene?.narrationAudio) {
+      console.log('[Cleanup Audio] Narration text changed - clearing narration audio')
+      delete cleanedScene.narrationAudio
+      delete cleanedScene.narrationAudioUrl
+    }
+    
+    // Check if description text changed - if so, clear description audio
+    const originalDescription = originalScene?.description || originalScene?.action || ''
+    const revisedDescription = revisedScene.description || revisedScene.action || ''
+    if (originalDescription !== revisedDescription && originalScene?.descriptionAudio) {
+      console.log('[Cleanup Audio] Description text changed - clearing description audio')
+      delete cleanedScene.descriptionAudio
+      delete cleanedScene.descriptionAudioUrl
+    }
+
+    // If no dialogue audio exists, we're done
+    if (!originalScene?.dialogueAudio) {
+      return cleanedScene
+    }
 
     // Handle multi-language audio format (object with language keys)
     if (typeof originalScene.dialogueAudio === 'object' && !Array.isArray(originalScene.dialogueAudio)) {
@@ -4458,39 +4483,70 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Process each language
       for (const [language, audioArray] of Object.entries(originalScene.dialogueAudio)) {
         if (Array.isArray(audioArray)) {
-          // Filter audio to only keep entries that still exist in revised dialogue
+          // Filter audio: keep only if character+index exists AND text hasn't changed
           const filteredAudio = audioArray.filter((audio: any) => {
-            const stillExists = revisedDialogueLines.some((d: any) => 
-              d.character === audio.character && d.index === audio.dialogueIndex
+            const dialogueIdx = audio.dialogueIndex
+            const originalLine = originalDialogueLines[dialogueIdx]
+            const revisedLine = revisedDialogueLines[dialogueIdx]
+            
+            // Remove if: dialogue was removed, character changed, or text changed
+            const shouldKeep = (
+              revisedLine && 
+              originalLine &&
+              revisedLine.character === audio.character &&
+              originalLine.line === revisedLine.line  // Text must match
             )
             
-            if (!stillExists) {
-              console.log(`[Cleanup Dialogue Audio] Removing ${language} audio for ${audio.character} (dialogue index ${audio.dialogueIndex})`)
+            if (!shouldKeep) {
+              const reason = !revisedLine ? 'dialogue removed' :
+                revisedLine.character !== audio.character ? 'character changed' :
+                'text changed'
+              console.log(`[Cleanup Audio] Removing ${language} audio for ${audio.character} at index ${dialogueIdx} (${reason})`)
             }
             
-            return stillExists
+            return shouldKeep
           })
           
-          cleanedScene.dialogueAudio[language] = filteredAudio
-          console.log(`[Cleanup Dialogue Audio] ${language}: ${audioArray.length} -> ${filteredAudio.length} audio entries`)
+          if (filteredAudio.length > 0) {
+            cleanedScene.dialogueAudio[language] = filteredAudio
+          }
+          console.log(`[Cleanup Audio] ${language}: ${audioArray.length} -> ${filteredAudio.length} audio entries`)
         }
+      }
+      
+      // Clean up empty dialogueAudio object
+      if (Object.keys(cleanedScene.dialogueAudio).length === 0) {
+        delete cleanedScene.dialogueAudio
       }
     }
     // Handle legacy array format
     else if (Array.isArray(originalScene.dialogueAudio)) {
-      cleanedScene.dialogueAudio = originalScene.dialogueAudio.filter((audio: any) => {
-        const stillExists = revisedDialogueLines.some((d: any) => 
-          d.character === audio.character && d.index === audio.dialogueIndex
+      const filteredAudio = originalScene.dialogueAudio.filter((audio: any) => {
+        const dialogueIdx = audio.dialogueIndex
+        const originalLine = originalDialogueLines[dialogueIdx]
+        const revisedLine = revisedDialogueLines[dialogueIdx]
+        
+        const shouldKeep = (
+          revisedLine && 
+          originalLine &&
+          revisedLine.character === audio.character &&
+          originalLine.line === revisedLine.line
         )
         
-        if (!stillExists) {
-          console.log(`[Cleanup Dialogue Audio] Removing audio for ${audio.character} (dialogue index ${audio.dialogueIndex})`)
+        if (!shouldKeep) {
+          console.log(`[Cleanup Audio] Removing audio for ${audio.character} at index ${dialogueIdx}`)
         }
         
-        return stillExists
+        return shouldKeep
       })
       
-      console.log(`[Cleanup Dialogue Audio] Legacy format: ${originalScene.dialogueAudio.length} -> ${cleanedScene.dialogueAudio.length} audio entries`)
+      if (filteredAudio.length > 0) {
+        cleanedScene.dialogueAudio = filteredAudio
+      } else {
+        delete cleanedScene.dialogueAudio
+      }
+      
+      console.log(`[Cleanup Audio] Legacy format: ${originalScene.dialogueAudio.length} -> ${filteredAudio.length} audio entries`)
     }
 
     return cleanedScene

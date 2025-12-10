@@ -19,7 +19,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { X, Subtitles, Menu } from 'lucide-react'
+import { X, Subtitles, Menu, RefreshCw } from 'lucide-react'
 import { SceneDisplay } from './SceneDisplay'
 import { PlaybackControls } from './PlaybackControls'
 import { VoiceAssignmentPanel } from './VoiceAssignmentPanel'
@@ -28,6 +28,7 @@ import { WebAudioMixer, SceneAudioConfig, type AudioSource } from '@/lib/audio/w
 import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAvailableLanguages, getAudioUrl, getAudioDuration as getStoredAudioDuration } from '@/lib/audio/languageDetection'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
+import { toast } from 'sonner'
 interface ScreeningRoomProps {
   script: any
   characters: Array<{ name: string; description?: string }>
@@ -115,6 +116,43 @@ async function resolveAudioDuration(url: string, stored?: unknown): Promise<numb
 export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }: ScreeningRoomProps) {
   // Audio mixer ref - defined early so it can be used in script change effect
   const audioMixerRef = useRef<WebAudioMixer | null>(null)
+  
+  // Refresh state
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  
+  // Handler to refresh audio caches - clears all caches and forces fresh load
+  const handleRefreshAudio = useCallback(() => {
+    setIsRefreshing(true)
+    
+    // Clear module-level duration cache
+    audioDurationCache.clear()
+    console.log('[Screening Room] Cleared audio duration cache')
+    
+    // Clear Web Audio mixer's buffer cache
+    if (audioMixerRef.current) {
+      audioMixerRef.current.stop()
+      audioMixerRef.current.clearCache()
+      console.log('[Screening Room] Cleared WebAudioMixer cache')
+    }
+    
+    // Clear browser caches for audio (if supported)
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        names.forEach(name => {
+          if (name.includes('audio')) {
+            caches.delete(name)
+            console.log('[Screening Room] Cleared cache:', name)
+          }
+        })
+      })
+    }
+    
+    toast.success('Audio caches cleared! Audio will reload fresh.')
+    
+    setTimeout(() => {
+      setIsRefreshing(false)
+    }, 500)
+  }, [])
   
   // Clear audio duration cache when script changes to prevent stale audio
   // This is critical for when dialogue/audio is regenerated
@@ -1038,6 +1076,17 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }:
           aria-label="Open menu"
         >
           <Menu className="w-6 h-6" />
+        </button>
+        
+        {/* Refresh button - clears audio caches */}
+        <button
+          onClick={handleRefreshAudio}
+          disabled={isRefreshing}
+          className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center ml-2 disabled:opacity-50"
+          title="Refresh Audio (clears caches)"
+          aria-label="Refresh audio"
+        >
+          <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>
         
         {/* Close button - always visible */}

@@ -43,6 +43,7 @@ import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { WebAudioMixer, type SceneAudioConfig, type AudioSource } from '@/lib/audio/webAudioMixer'
 import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAudioUrl } from '@/lib/audio/languageDetection'
+import { cleanupScriptAudio } from '@/lib/audio/cleanupAudio'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '@/components/ui/dialog'
 
@@ -2056,9 +2057,17 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           directorReview={directorReview}
           audienceReview={audienceReview}
           onApplyChanges={(revisedScript) => {
+            // Clean up stale audio when script scenes are edited
+            const originalScenes = script?.script?.scenes || script?.scenes || []
+            const revisedScenes = revisedScript.scenes || []
+            const cleanedScenes = cleanupScriptAudio(originalScenes, revisedScenes)
+            
             const updatedScript = {
               ...script,
-              script: revisedScript
+              script: {
+                ...revisedScript,
+                scenes: cleanedScenes
+              }
             }
             onScriptChange(updatedScript)
             setShowScriptEditor(false)
