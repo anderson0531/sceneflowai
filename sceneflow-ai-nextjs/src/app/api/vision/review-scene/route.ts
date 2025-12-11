@@ -192,9 +192,28 @@ Format as JSON:
 
   // Extract JSON from markdown code blocks if present
   let jsonText = reviewText.trim()
-  const codeBlockMatch = jsonText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
-  if (codeBlockMatch) {
-    jsonText = codeBlockMatch[1].trim()
+  
+  // Try multiple patterns to extract JSON from code fences
+  const codeBlockPatterns = [
+    /```json\s*([\s\S]*?)\s*```/,
+    /```\s*([\s\S]*?)\s*```/,
+    /`([\s\S]*?)`/
+  ]
+  
+  for (const pattern of codeBlockPatterns) {
+    const match = jsonText.match(pattern)
+    if (match && match[1]) {
+      const extracted = match[1].trim()
+      if (extracted.startsWith('{')) {
+        jsonText = extracted
+        break
+      }
+    }
+  }
+  
+  // If still has backticks at start, remove them
+  if (jsonText.startsWith('`')) {
+    jsonText = jsonText.replace(/^`+/, '').replace(/`+$/, '').trim()
   }
 
   const review = JSON.parse(jsonText)
@@ -331,9 +350,28 @@ Format as JSON:
 
   // Extract JSON from markdown code blocks if present
   let jsonText = reviewText.trim()
-  const codeBlockMatch = jsonText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
-  if (codeBlockMatch) {
-    jsonText = codeBlockMatch[1].trim()
+  
+  // Try multiple patterns to extract JSON from code fences
+  const audienceCodeBlockPatterns = [
+    /```json\s*([\s\S]*?)\s*```/,
+    /```\s*([\s\S]*?)\s*```/,
+    /`([\s\S]*?)`/
+  ]
+  
+  for (const pattern of audienceCodeBlockPatterns) {
+    const match = jsonText.match(pattern)
+    if (match && match[1]) {
+      const extracted = match[1].trim()
+      if (extracted.startsWith('{')) {
+        jsonText = extracted
+        break
+      }
+    }
+  }
+  
+  // If still has backticks at start, remove them
+  if (jsonText.startsWith('`')) {
+    jsonText = jsonText.replace(/^`+/, '').replace(/`+$/, '').trim()
   }
 
   const review = JSON.parse(jsonText)
