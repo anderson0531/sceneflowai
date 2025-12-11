@@ -44,5 +44,7 @@ export interface DetailedSceneDirection {
   talent: TalentDirection
   audio: AudioDirection
   generatedAt?: string
+  /** Content hash of the scene when this direction was generated (for workflow sync tracking) */
+  basedOnContentHash?: string
 }
 

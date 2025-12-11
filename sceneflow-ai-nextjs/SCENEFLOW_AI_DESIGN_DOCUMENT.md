@@ -54,6 +54,7 @@
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2025-12-11 | Workflow Sync Tracking | Assets (direction, images) can become stale when script is edited. Added content hash tracking: Direction API stores `basedOnContentHash`, Image API stores `basedOnDirectionHash`. ScriptPanel now shows amber 'stale' indicators with 'Regenerate' CTAs when assets are out of sync. New utility: `src/lib/utils/contentHash.ts` | ✅ Implemented |
 | 2025-12-11 | Fix State vs DB persistence bug | Script changes & reference library additions only updated React state, not database. On page refresh, old data loaded from DB. Fixed: handleScriptChange, handleCreateReference, handleRemoveReference, onAddToReferenceLibrary, onAddToSceneLibrary now all save to DB via PUT /api/projects. Added critical pattern to design doc. | ✅ Fixed |
 | 2025-12-11 | Enhanced sidebar menu UX | Added collapsible sections with chevron controls, breadcrumb-style workflow with progress indicators, Project Progress section with completion metrics, Credits balance display with "Get More Credits" link, moved Review Scores above Project Stats, Settings link moved to Quick Actions, deprecated BYOK settings link removed | ✅ Implemented |
 | 2025-12-11 | Fix ghost audio fingerprint & playback | Root cause: fingerprint used `sfxAudioUrl` (singular) but SFX stored as `sfxAudio[]` (array) - SFX changes weren't detected. Also `isPlaying: false` reset on fingerprint change broke new audio playback. Fixed: 1) Fingerprint now reads SFX array + includes entry counts (D3/S2), 2) Only clear caches on CHANGE (skip initial mount), 3) Don't reset isPlaying, 4) Added clearCacheForUrls() for targeted invalidation | ✅ Fixed |
@@ -1203,6 +1204,7 @@ POST /api/image/edit
 - Vertex AI Client: `src/lib/vertexai/client.ts`
 - Character Matching: `src/lib/character/matching.ts`
 - Creatomate Render: `src/services/CreatomateRenderService.ts`
+- Content Hash (Workflow Sync): `src/lib/utils/contentHash.ts`
 
 **API Routes:**
 - Scene Image Generation: `src/app/api/scene/generate-image/route.ts`
@@ -1226,8 +1228,8 @@ POST /api/image/edit
 
 ---
 
-**Document Version**: 2.2  
-**Last Updated**: December 9, 2024  
+**Document Version**: 2.3  
+**Last Updated**: December 11, 2025  
 **Maintained By**: SceneFlow AI Development Team
 
 ---

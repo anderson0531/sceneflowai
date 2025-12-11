@@ -3510,12 +3510,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       }
       
-      // Update scene with image
+      // Update scene with image and workflow sync hashes
       const updatedScenes = [...(script.script.scenes || [])]
       updatedScenes[sceneIdx] = {
         ...updatedScenes[sceneIdx],
         imageUrl: data.imageUrl,
-        imagePrompt: prompt
+        imagePrompt: prompt,
+        // Track which direction and references this image was based on (for workflow sync)
+        basedOnDirectionHash: data.basedOnDirectionHash,
+        basedOnReferencesHash: data.basedOnReferencesHash
       }
       
       // Update local state

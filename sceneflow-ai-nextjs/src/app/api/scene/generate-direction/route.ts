@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { DetailedSceneDirection } from '../../../../types/scene-direction'
+import { generateSceneContentHash } from '../../../../lib/utils/contentHash'
 
 export const maxDuration = 300
 export const runtime = 'nodejs'
@@ -270,8 +271,10 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Add timestamp
+    // Add timestamp and content hash for workflow sync tracking
     sceneDirection.generatedAt = new Date().toISOString()
+    // Track which version of the scene content this direction was based on
+    sceneDirection.basedOnContentHash = generateSceneContentHash(scene)
 
     // Update project metadata
     const metadata = project.metadata || {}

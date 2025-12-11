@@ -4,6 +4,7 @@ import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen, generateLinkingDescription } from '@/lib/imagen/promptOptimizer'
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
 import { waitForGCSURIs, checkGCSURIAccessibility } from '@/lib/storage/gcsAccessibility'
+import { generateDirectionHash, generateImageSourceHash } from '@/lib/utils/contentHash'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 
@@ -342,10 +343,14 @@ export async function POST(req: NextRequest) {
     
     // Load scene data (reuse same project variable)
     let fullSceneContext = scenePrompt || ''
+    let sceneData: any = null  // Store scene for hash calculation
+    let references: any[] = []  // Store references for hash calculation
 
     if (project && typeof sceneIndex === 'number') {
       const scenes = project.metadata?.visionPhase?.script?.script?.scenes || []
       const scene = scenes[sceneIndex]
+      sceneData = scene  // Capture for hash calculation
+      references = project.metadata?.visionPhase?.references || []  // Capture references
       
       if (scene) {
         // Prefer action (detailed) over visualDescription (camera-focused)
@@ -711,6 +716,10 @@ export async function POST(req: NextRequest) {
       } // Close the else block
     }
 
+    // Calculate workflow sync hashes for tracking staleness
+    const basedOnDirectionHash = sceneData ? generateDirectionHash(sceneData) : undefined
+    const basedOnReferencesHash = sceneData ? generateImageSourceHash(sceneData) : undefined
+
     // Prepare response based on validation results
     const response: any = {
       success: true,
@@ -718,7 +727,10 @@ export async function POST(req: NextRequest) {
       model: 'gemini-3-pro-image-preview',
       quality: quality,
       provider: 'gemini',
-      storage: 'vercel-blob'
+      storage: 'vercel-blob',
+      // Include hashes for workflow sync tracking
+      basedOnDirectionHash,
+      basedOnReferencesHash
     }
 
     // Add validation info (informational only for storyboards)

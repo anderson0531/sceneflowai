@@ -38,6 +38,7 @@ import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData, SceneDirectionData } from '@/lib/types/reports'
 import { ProjectCostCalculator } from './ProjectCostCalculator'
 import { ExportDialog } from './ExportDialog'
+import { isDirectionStale, isImageStale } from '@/lib/utils/contentHash'
 import { GenerateAudioDialog } from './GenerateAudioDialog'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { WebAudioMixer, type SceneAudioConfig, type AudioSource } from '@/lib/audio/webAudioMixer'
@@ -2594,11 +2595,24 @@ function SceneCard({
     }
   }, [stepCompletion])
   
-  // Determine status for each step
-  type StepStatus = 'complete' | 'in-progress' | 'todo' | 'locked'
+  // Compute staleness for workflow sync tracking
+  const stepStaleness = useMemo(() => {
+    return {
+      directorsChair: isDirectionStale(scene),
+      storyboardPreViz: isImageStale(scene)
+    }
+  }, [scene])
+  
+  // Determine status for each step (includes 'stale' for workflow sync warnings)
+  type StepStatus = 'complete' | 'stale' | 'in-progress' | 'todo' | 'locked'
 
   const getStepStatus = (stepKey: keyof typeof stepCompletion): StepStatus => {
-    if (stepCompletion[stepKey]) return 'complete'
+    if (stepCompletion[stepKey]) {
+      // Check for staleness on completed steps
+      if (stepKey === 'directorsChair' && stepStaleness.directorsChair) return 'stale'
+      if (stepKey === 'storyboardPreViz' && stepStaleness.storyboardPreViz) return 'stale'
+      return 'complete'
+    }
     if (activeWorkflowTab === stepKey) return 'in-progress'
     if (!stepUnlocked[stepKey as keyof typeof stepUnlocked]) return 'locked'
     return 'todo'
@@ -2606,6 +2620,7 @@ function SceneCard({
 
   const chipClassByStatus: Record<StepStatus, string> = {
     complete: 'bg-emerald-500/15 text-emerald-200 border border-emerald-400/40',
+    stale: 'bg-amber-500/15 text-amber-200 border border-amber-400/40',
     'in-progress': 'bg-sf-primary/20 text-sf-primary border border-sf-primary/40',
     todo: 'bg-white/5 text-slate-300 border border-white/10',
     locked: 'bg-slate-800/60 text-slate-500 border border-white/10'
@@ -2613,6 +2628,7 @@ function SceneCard({
 
   const chipDotClass: Record<StepStatus, string> = {
     complete: 'bg-emerald-300',
+    stale: 'bg-amber-300',
     'in-progress': 'bg-sf-primary',
     todo: 'bg-slate-400',
     locked: 'bg-slate-600'
@@ -2820,24 +2836,43 @@ function SceneCard({
               {workflowTabs.map((tab) => {
                 const status = getStepStatus(tab.key)
                 const isComplete = status === 'complete'
+                const isStale = status === 'stale'
                 const isInProgress = status === 'in-progress'
+                
+                // Build tooltip message
+                let tooltipMessage = `${tab.label}: `
+                if (isStale) {
+                  tooltipMessage += 'Needs Update (script changed)'
+                } else if (isComplete) {
+                  tooltipMessage += 'Complete'
+                } else if (isInProgress) {
+                  tooltipMessage += 'In Progress'
+                } else {
+                  tooltipMessage += 'Pending'
+                }
                 
                 return (
                   <TooltipProvider key={tab.key}>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className={`flex items-center justify-center w-6 h-6 rounded-full border transition-colors ${
-                          isComplete 
-                            ? 'bg-green-500/20 border-green-500/50 text-green-400' 
-                            : isInProgress
-                              ? 'bg-sf-primary/20 border-sf-primary/50 text-sf-primary'
-                              : 'bg-slate-800 border-slate-700 text-slate-500'
+                          isStale
+                            ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
+                            : isComplete 
+                              ? 'bg-green-500/20 border-green-500/50 text-green-400' 
+                              : isInProgress
+                                ? 'bg-sf-primary/20 border-sf-primary/50 text-sf-primary'
+                                : 'bg-slate-800 border-slate-700 text-slate-500'
                         }`}>
-                          {React.cloneElement(tab.icon as React.ReactElement, { className: "w-3 h-3" })}
+                          {isStale ? (
+                            <AlertTriangle className="w-3 h-3" />
+                          ) : (
+                            React.cloneElement(tab.icon as React.ReactElement, { className: "w-3 h-3" })
+                          )}
                         </div>
                       </TooltipTrigger>
                       <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                        {tab.label}: {status === 'complete' ? 'Complete' : status === 'in-progress' ? 'In Progress' : 'Pending'}
+                        {tooltipMessage}
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -3037,6 +3072,7 @@ function SceneCard({
                   const isActive = activeWorkflowTab === tab.key
                   const status = getStepStatus(tab.key)
                   const isLocked = !stepUnlocked[tab.key as keyof typeof stepUnlocked]
+                  const isStale = status === 'stale'
                   
                   return (
                     <button
@@ -3056,14 +3092,16 @@ function SceneCard({
                       `}
                     >
                       <div className="flex items-center gap-2">
-                        {status === 'complete' ? (
+                        {isStale ? (
+                          <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                        ) : status === 'complete' ? (
                           <CheckCircle className="w-3.5 h-3.5 text-green-500" />
                         ) : (
                           React.cloneElement(tab.icon as React.ReactElement, { 
                             className: `w-3.5 h-3.5 ${isActive ? 'text-sf-primary' : ''}` 
                           })
                         )}
-                        {tab.label}
+                        <span className={isStale ? 'text-amber-300' : ''}>{tab.label}</span>
                       </div>
                     </button>
                   )
@@ -3104,6 +3142,40 @@ function SceneCard({
               
               {/* Tab Content Container */}
               <div className="bg-slate-800/30 rounded-b-lg rounded-tr-lg p-4 min-h-[200px]">
+                {/* Staleness Warning Banner */}
+                {(() => {
+                  const directionStale = activeWorkflowTab === 'directorsChair' && stepStaleness.directorsChair
+                  const imageStale = activeWorkflowTab === 'storyboardPreViz' && stepStaleness.storyboardPreViz
+                  
+                  if (!directionStale && !imageStale) return null
+                  
+                  return (
+                    <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                      <div className="flex items-center gap-2 text-amber-300">
+                        <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                        <span className="text-sm font-medium">
+                          {directionStale 
+                            ? 'Script has changed. Consider regenerating Direction.' 
+                            : 'Direction has changed. Consider regenerating Frame.'}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (directionStale && onGenerateSceneDirection) {
+                              onGenerateSceneDirection(sceneIdx)
+                            } else if (imageStale && onGenerateImage) {
+                              onGenerateImage(sceneIdx)
+                            }
+                          }}
+                          className="ml-auto px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs rounded border border-amber-500/40 transition-colors"
+                        >
+                          {directionStale ? 'Regenerate Direction' : 'Regenerate Frame'}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })()}
+                
                 {activeWorkflowTab === 'dialogueAction' && (
                   <div className="space-y-4">
                   {/* Scene Description (plays before narration) */}
