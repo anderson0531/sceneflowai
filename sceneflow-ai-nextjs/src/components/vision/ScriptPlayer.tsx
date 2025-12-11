@@ -559,11 +559,30 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
     if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
       // Sort dialogue by dialogueIndex to ensure correct playback order
       // (dialogue audio may be generated/stored out of order due to parallel generation)
-      const sortedDialogue = [...dialogueArray].sort((a: any, b: any) => {
-        const indexA = typeof a.dialogueIndex === 'number' ? a.dialogueIndex : 0
-        const indexB = typeof b.dialogueIndex === 'number' ? b.dialogueIndex : 0
-        return indexA - indexB
-      })
+      // If dialogueIndex is undefined/missing, use a large fallback to preserve relative order
+      const sortedDialogue = [...dialogueArray]
+        .map((d: any, originalIndex: number) => ({ ...d, __originalIndex: originalIndex }))
+        .sort((a: any, b: any) => {
+          // Use dialogueIndex if available, otherwise use original array position + 1000
+          // This ensures entries with dialogueIndex sort correctly, while entries without
+          // maintain their relative order at the end
+          const indexA = typeof a.dialogueIndex === 'number' ? a.dialogueIndex : (1000 + a.__originalIndex)
+          const indexB = typeof b.dialogueIndex === 'number' ? b.dialogueIndex : (1000 + b.__originalIndex)
+          return indexA - indexB
+        })
+      
+      console.log('[ScriptPlayer] Dialogue sort order:', sortedDialogue.map((d: any) => ({
+        character: d.character,
+        dialogueIndex: d.dialogueIndex,
+        originalIndex: d.__originalIndex,
+        audioUrl: d.audioUrl?.slice(-40) // Last 40 chars of URL for identification
+      })))
+      console.log('[ScriptPlayer] Raw dialogue array (before sort):', dialogueArray.map((d: any, i: number) => ({
+        arrayPos: i,
+        character: d.character,
+        dialogueIndex: d.dialogueIndex,
+        audioUrl: d.audioUrl?.slice(-40)
+      })))
       
       for (let i = 0; i < sortedDialogue.length; i++) {
         const dialogue = sortedDialogue[i]
