@@ -28,6 +28,83 @@ interface SceneReviewRequest {
   }
 }
 
+/**
+ * Extracts and parses JSON from LLM response, handling various formats
+ */
+function extractAndParseJSON(rawText: string, context: string): any {
+  let jsonText = rawText.trim()
+  
+  // Try multiple patterns to extract JSON from code fences
+  const codeBlockPatterns = [
+    /```json\s*([\s\S]*?)\s*```/,
+    /```\s*([\s\S]*?)\s*```/,
+    /`([\s\S]*?)`/
+  ]
+  
+  for (const pattern of codeBlockPatterns) {
+    const match = jsonText.match(pattern)
+    if (match && match[1]) {
+      const extracted = match[1].trim()
+      if (extracted.startsWith('{')) {
+        jsonText = extracted
+        break
+      }
+    }
+  }
+  
+  // If still has backticks at start, remove them
+  if (jsonText.startsWith('`')) {
+    jsonText = jsonText.replace(/^`+/, '').replace(/`+$/, '').trim()
+  }
+  
+  // Handle "json\n{" format (word json followed by JSON)
+  if (jsonText.startsWith('json')) {
+    jsonText = jsonText.replace(/^json\s*/, '').trim()
+  }
+  
+  // Find first { and last } to extract JSON object
+  const firstBrace = jsonText.indexOf('{')
+  const lastBrace = jsonText.lastIndexOf('}')
+  if (firstBrace !== -1 && lastBrace !== -1 && firstBrace < lastBrace) {
+    jsonText = jsonText.substring(firstBrace, lastBrace + 1)
+  }
+  
+  // Try parsing as-is first
+  try {
+    return JSON.parse(jsonText)
+  } catch (firstError: any) {
+    console.warn(`[${context}] First parse attempt failed at position ${firstError.message.match(/position (\d+)/)?.[1] || 'unknown'}`)
+    
+    // Log problematic area for debugging
+    const errorPos = parseInt(firstError.message.match(/position (\d+)/)?.[1] || '0')
+    if (errorPos > 0) {
+      console.warn(`[${context}] JSON around error: ...${jsonText.substring(Math.max(0, errorPos - 50), errorPos + 50)}...`)
+    }
+    
+    // Try to repair common JSON issues
+    let repairedJson = jsonText
+      // Fix unescaped quotes in strings (common LLM issue)
+      .replace(/([^\\])"/g, (match, before, offset, str) => {
+        // Only replace if we're inside a string value
+        const beforeMatch = str.substring(0, offset)
+        const quoteCount = (beforeMatch.match(/(?<!\\)"/g) || []).length
+        return quoteCount % 2 === 1 ? `${before}\\"` : match
+      })
+      // Fix trailing commas before ] or }
+      .replace(/,(\s*[}\]])/g, '$1')
+      // Fix missing commas between array elements (common: "text""text")
+      .replace(/"(\s*)"/g, '","')
+    
+    try {
+      return JSON.parse(repairedJson)
+    } catch (secondError: any) {
+      console.error(`[${context}] JSON repair failed:`, secondError.message)
+      console.error(`[${context}] Raw text (first 500 chars):`, rawText.substring(0, 500))
+      throw new Error(`Failed to parse ${context} JSON: ${firstError.message}`)
+    }
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { projectId, sceneIndex, scene, script }: SceneReviewRequest = await req.json()
@@ -190,45 +267,7 @@ Format as JSON:
     throw new Error('No review generated - empty response from Gemini')
   }
 
-  // Extract JSON from markdown code blocks if present
-  let jsonText = reviewText.trim()
-  
-  // Try multiple patterns to extract JSON from code fences
-  const codeBlockPatterns = [
-    /```json\s*([\s\S]*?)\s*```/,
-    /```\s*([\s\S]*?)\s*```/,
-    /`([\s\S]*?)`/
-  ]
-  
-  for (const pattern of codeBlockPatterns) {
-    const match = jsonText.match(pattern)
-    if (match && match[1]) {
-      const extracted = match[1].trim()
-      if (extracted.startsWith('{')) {
-        jsonText = extracted
-        break
-      }
-    }
-  }
-  
-  // If still has backticks at start, remove them
-  if (jsonText.startsWith('`')) {
-    jsonText = jsonText.replace(/^`+/, '').replace(/`+$/, '').trim()
-  }
-  
-  // Handle "json\n{" format (word json followed by JSON)
-  if (jsonText.startsWith('json')) {
-    jsonText = jsonText.replace(/^json\s*/, '').trim()
-  }
-  
-  // Find first { and last } to extract JSON object
-  const firstBrace = jsonText.indexOf('{')
-  const lastBrace = jsonText.lastIndexOf('}')
-  if (firstBrace !== -1 && lastBrace !== -1 && firstBrace < lastBrace) {
-    jsonText = jsonText.substring(firstBrace, lastBrace + 1)
-  }
-
-  const review = JSON.parse(jsonText)
+  const review = extractAndParseJSON(reviewText, 'Director Scene Review')
   
   return {
     ...review,
@@ -360,45 +399,7 @@ Format as JSON:
     throw new Error('No review generated - empty response from Gemini')
   }
 
-  // Extract JSON from markdown code blocks if present
-  let jsonText = reviewText.trim()
-  
-  // Try multiple patterns to extract JSON from code fences
-  const audienceCodeBlockPatterns = [
-    /```json\s*([\s\S]*?)\s*```/,
-    /```\s*([\s\S]*?)\s*```/,
-    /`([\s\S]*?)`/
-  ]
-  
-  for (const pattern of audienceCodeBlockPatterns) {
-    const match = jsonText.match(pattern)
-    if (match && match[1]) {
-      const extracted = match[1].trim()
-      if (extracted.startsWith('{')) {
-        jsonText = extracted
-        break
-      }
-    }
-  }
-  
-  // If still has backticks at start, remove them
-  if (jsonText.startsWith('`')) {
-    jsonText = jsonText.replace(/^`+/, '').replace(/`+$/, '').trim()
-  }
-  
-  // Handle "json\n{" format (word json followed by JSON)
-  if (jsonText.startsWith('json')) {
-    jsonText = jsonText.replace(/^json\s*/, '').trim()
-  }
-  
-  // Find first { and last } to extract JSON object
-  const firstBrace = jsonText.indexOf('{')
-  const lastBrace = jsonText.lastIndexOf('}')
-  if (firstBrace !== -1 && lastBrace !== -1 && firstBrace < lastBrace) {
-    jsonText = jsonText.substring(firstBrace, lastBrace + 1)
-  }
-
-  const review = JSON.parse(jsonText)
+  const review = extractAndParseJSON(reviewText, 'Audience Scene Review')
   
   return {
     ...review,
