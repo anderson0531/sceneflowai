@@ -77,6 +77,31 @@ export function SceneEditorModal({
   const [reviewError, setReviewError] = useState<string | null>(null)
   const [leftPanelTab, setLeftPanelTab] = useState<'scene' | 'director' | 'audience'>('scene')
   
+  // Constants for instruction limits
+  const MAX_INSTRUCTIONS = 5
+  
+  // Count instructions (numbered lines starting with digit+period)
+  const countInstructions = (text: string): number => {
+    if (text.trim() === '') return 0
+    const numberedLines = text.match(/^\d+\.\s/gm)
+    return numberedLines ? numberedLines.length : (text.trim() ? 1 : 0)
+  }
+  
+  const instructionCount = countInstructions(customInstruction)
+  const canAddMoreInstructions = instructionCount < MAX_INSTRUCTIONS
+
+  // Append instruction with numbered format
+  const appendInstruction = (newText: string) => {
+    if (!canAddMoreInstructions) return
+    
+    if (customInstruction.trim() === '') {
+      setCustomInstruction(`1. ${newText}`)
+    } else {
+      const nextNum = instructionCount + 1
+      setCustomInstruction(`${customInstruction}\n\n${nextNum}. ${newText}`)
+    }
+  }
+
   // Voice input
   const {
     supported: voiceSupported,
@@ -438,18 +463,21 @@ export function SceneEditorModal({
                 {review.recommendations.map((rec, idx) => (
                   <li key={idx} className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2">
                     <Lightbulb className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
-                    <div>
+                    <div className="flex-1">
                       <span>{rec}</span>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="ml-2 h-6 text-xs"
+                        className={`ml-2 h-6 text-xs ${
+                          !canAddMoreInstructions ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                        disabled={!canAddMoreInstructions}
                         onClick={() => {
-                          setCustomInstruction(rec)
+                          appendInstruction(rec)
                           setLeftPanelTab('scene')
                         }}
                       >
-                        Use as instruction
+                        + Add to instructions
                       </Button>
                     </div>
                   </li>
