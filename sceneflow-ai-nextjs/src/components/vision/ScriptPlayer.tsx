@@ -653,6 +653,11 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
     }
     if (resolvedDialogue.length > 0) {
       config.dialogue = resolvedDialogue
+      console.log('[ScriptPlayer] Final config.dialogue being sent to WebAudioMixer:', resolvedDialogue.map((d, i) => ({
+        index: i,
+        url: d.url.slice(-40),
+        startTime: d.startTime
+      })))
     }
 
     totalDuration = Math.max(totalDuration, dialogueCursor, narrationEndTime, sfxCursor, descriptionEndTime)

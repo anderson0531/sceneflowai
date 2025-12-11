@@ -235,6 +235,16 @@ export class WebAudioMixer {
       const descriptionDuration = descriptionBuffer?.duration ?? 0
       const descriptionEndTime = descriptionOffset + descriptionDuration
 
+      console.log('[WebAudioMixer] Scene audio timing:', {
+        descriptionOffset,
+        descriptionDuration,
+        descriptionEndTime,
+        hasNarration: !!narrationBuffer,
+        hasDialogue: dialogueResults.filter(Boolean).length,
+        hasSfx: sfxResults.filter(Boolean).length,
+        hasMusic: !!config.music
+      })
+
       if (descriptionBuffer) {
         this.playAudioBuffer(
           descriptionBuffer,
@@ -274,11 +284,32 @@ export class WebAudioMixer {
       // Dialogue plays after narration
       const validDialogues = dialogueResults.filter((entry): entry is { source: AudioSource; buffer: AudioBuffer } => !!entry)
       let dialogueCursor = narrationAnchor
-      validDialogues.forEach(({ source, buffer }) => {
+      
+      console.log('[WebAudioMixer] Dialogue scheduling:', {
+        narrationAnchor,
+        dialogueCount: validDialogues.length,
+        dialogueOrder: validDialogues.map((d, i) => ({
+          index: i,
+          url: d.source.url.slice(-40),
+          sourceStartTime: d.source.startTime,
+          bufferDuration: d.buffer.duration
+        }))
+      })
+      
+      validDialogues.forEach(({ source, buffer }, idx) => {
         const requestedStart = typeof source.startTime === 'number'
           ? Math.max(source.startTime, narrationAnchor)
           : dialogueCursor
         const startTime = Math.max(requestedStart, dialogueCursor)
+        
+        console.log(`[WebAudioMixer] Dialogue ${idx + 1}/${validDialogues.length}:`, {
+          url: source.url.slice(-40),
+          requestedStart,
+          actualStartTime: startTime,
+          bufferDuration: buffer.duration,
+          dialogueCursorBefore: dialogueCursor
+        })
+        
         this.playAudioBuffer(buffer, 'dialogue', startTime, false)
         dialogueCursor = startTime + buffer.duration + DIALOGUE_GAP_SECONDS
       })
@@ -286,11 +317,25 @@ export class WebAudioMixer {
       // SFX starts with dialogue (at narrationAnchor), plays concurrently
       const validSfx = sfxResults.filter((entry): entry is { source: AudioSource; buffer: AudioBuffer } => !!entry)
       let sfxCursor = narrationAnchor // SFX starts when dialogue starts
-      validSfx.forEach(({ source, buffer }) => {
+      
+      console.log('[WebAudioMixer] SFX scheduling:', {
+        sfxStartsAt: narrationAnchor,
+        sfxCount: validSfx.length
+      })
+      
+      validSfx.forEach(({ source, buffer }, idx) => {
         const requestedStart = typeof source.startTime === 'number'
           ? Math.max(source.startTime, narrationAnchor)
           : sfxCursor
         const startTime = Math.max(requestedStart, sfxCursor)
+        
+        console.log(`[WebAudioMixer] SFX ${idx + 1}/${validSfx.length}:`, {
+          url: source.url.slice(-40),
+          requestedStart,
+          actualStartTime: startTime,
+          bufferDuration: buffer.duration
+        })
+        
         this.playAudioBuffer(buffer, 'sfx', startTime, false)
         sfxCursor = startTime + buffer.duration + SFX_GAP_SECONDS
       })
