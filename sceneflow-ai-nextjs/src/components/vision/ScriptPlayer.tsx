@@ -34,6 +34,8 @@ interface ScreeningRoomProps {
   characters: Array<{ name: string; description?: string }>
   onClose: () => void
   initialScene?: number
+  /** Timestamp updated whenever script is edited - forces full cache clear */
+  scriptEditedAt?: number
 }
 
 interface PlayerState {
@@ -108,12 +110,32 @@ async function resolveAudioDuration(url: string, stored?: unknown): Promise<numb
   return fallback
 }
 
-export function ScreeningRoom({ script, characters, onClose, initialScene = 0 }: ScreeningRoomProps) {
+export function ScreeningRoom({ script, characters, onClose, initialScene = 0, scriptEditedAt }: ScreeningRoomProps) {
   // Audio mixer ref - defined early so it can be used in script change effect
   const audioMixerRef = useRef<WebAudioMixer | null>(null)
   
   // Refresh state
   const [isRefreshing, setIsRefreshing] = useState(false)
+  
+  // CRITICAL: Clear ALL audio caches when script is edited
+  // This prevents ghost audio from old cached audio playing alongside new audio
+  const previousScriptEditedAtRef = React.useRef<number | undefined>(scriptEditedAt)
+  React.useEffect(() => {
+    if (previousScriptEditedAtRef.current !== undefined && 
+        scriptEditedAt !== undefined && 
+        previousScriptEditedAtRef.current !== scriptEditedAt) {
+      // Script was edited - clear all audio caches unconditionally
+      console.log('[ScreeningRoom] Script edited, clearing all audio caches')
+      
+      audioDurationCache.clear()
+      
+      if (audioMixerRef.current) {
+        audioMixerRef.current.stop()
+        audioMixerRef.current.clearCache()
+      }
+    }
+    previousScriptEditedAtRef.current = scriptEditedAt
+  }, [scriptEditedAt])
   
   // Handler to refresh audio caches - clears all caches and forces fresh load
   const handleRefreshAudio = useCallback(() => {

@@ -494,6 +494,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [mounted, setMounted] = useState(false)
   const [project, setProject] = useState<Project | null>(null)
   const [script, setScript] = useState<any>(null)
+  // Timestamp updated when script is edited - used to clear audio caches in ScreeningRoom
+  const [scriptEditedAt, setScriptEditedAt] = useState<number>(Date.now())
   const [characters, setCharacters] = useState<any[]>([])
   const [scenes, setScenes] = useState<Scene[]>([])
   const [selectedSceneIndex, setSelectedSceneIndex] = useState<number | null>(null)
@@ -548,6 +550,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }, [project?.metadata?.visionPhase?.production?.scenes])
 
+  // Wrapper for setScript that also updates the edit timestamp
+  // This ensures ScreeningRoom clears audio caches when script is edited via ScriptEditorModal
+  const handleScriptChange = useCallback((updatedScript: any) => {
+    setScript(updatedScript)
+    setScriptEditedAt(Date.now())
+  }, [])
 
   useEffect(() => {
     const references = project?.metadata?.visionPhase?.references as VisionReferencesPayload | undefined
@@ -4521,6 +4529,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           scenes: updatedScenes
         }
       })
+      
+      // Update script edit timestamp to force cache clear in ScreeningRoom
+      setScriptEditedAt(Date.now())
 
       // Close the editor
       setIsSceneEditorOpen(false)
@@ -5191,7 +5202,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             <div className="h-full overflow-y-auto px-4 pt-4 min-w-0 w-full overflow-x-hidden">
               <ScriptPanel 
                 script={script}
-                onScriptChange={setScript}
+                onScriptChange={handleScriptChange}
                 isGenerating={isGenerating}
                 onExpandScene={expandScene}
                 onExpandAllScenes={expandAllScenes}
@@ -5515,6 +5526,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           script={script}
           characters={characters}
           onClose={() => setIsPlayerOpen(false)}
+          scriptEditedAt={scriptEditedAt}
         />
       )}
 
