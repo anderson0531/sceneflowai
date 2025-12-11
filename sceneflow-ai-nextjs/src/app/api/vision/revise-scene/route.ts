@@ -174,6 +174,16 @@ EXAMPLES:
 
 CRITICAL: Every single dialogue line must start with at least one emotion/style tag in [brackets].
 
+DIALOGUE NEGATIVE CONSTRAINTS (DO NOT DO THESE):
+- ❌ Do NOT create dialogue lines that only contain stage directions without spoken words
+- ❌ Do NOT put action/movement descriptions in the dialogue "line" field
+- ❌ WRONG: {"character": "ALEX", "line": "[shaky breath] [Alex retrieves the cufflink]"} ← This is a stage direction, NOT dialogue!
+- ❌ WRONG: {"character": "JOHN", "line": "[He walks to the door]"} ← This belongs in "action" field!
+- ✅ CORRECT: {"character": "ALEX", "line": "[shaky breath, defeated] I found it... the cufflink."}
+- ✅ CORRECT: Action description in "action" field + spoken words in dialogue "line"
+
+If a character performs an action without speaking, put it in the "action" field, NOT as a dialogue entry.
+
 REQUIREMENTS:
 1. Maintain the same scene structure and format
 2. Use EXACT character names as provided - no abbreviations or variations
