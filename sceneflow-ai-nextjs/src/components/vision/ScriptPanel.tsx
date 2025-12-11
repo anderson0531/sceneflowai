@@ -1159,34 +1159,14 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
       config.dialogue = []
       
-      // Helper to detect direction-only dialogue lines (no spoken content)
-      // These are lines that only contain stage directions in brackets, not actual speech
-      const isDirectionOnly = (dialogueText: string): boolean => {
-        if (!dialogueText) return true
-        // Remove all bracketed content (stage directions)
-        const withoutBrackets = dialogueText.replace(/\[[^\]]*\]/g, '').trim()
-        // If nothing remains, it's direction-only
-        return withoutBrackets.length === 0
-      }
-      
       // Helper to extract timestamp from URL filename
       const getUrlTimestamp = (url: string): number => {
         const match = url.match(/(\d{13})/)
         return match ? parseInt(match[1], 10) : 0
       }
       
-      // Filter out direction-only dialogue entries and sort by timestamp
-      const validDialogue = dialogueArray.filter((d: any) => {
-        const dialogueText = d.line || d.text || ''
-        if (isDirectionOnly(dialogueText)) {
-          console.log('[ScriptPanel] ⚠️ Filtering out direction-only dialogue:', d.character, dialogueText)
-          return false
-        }
-        return true
-      })
-      
-      // Sort dialogue by URL timestamp (oldest first = correct order)
-      const sortedDialogue = [...validDialogue].sort((a, b) => {
+      // Sort dialogue by URL timestamp (oldest first = correct generation order)
+      const sortedDialogue = [...dialogueArray].sort((a, b) => {
         const urlA = a.audioUrl || a.url || ''
         const urlB = b.audioUrl || b.url || ''
         const tsA = getUrlTimestamp(urlA)
@@ -1195,7 +1175,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       })
       
       console.log('[ScriptPanel] 🔊🔊🔊 TIMESTAMP SORTING ACTIVE - Dialogue sorted by URL timestamp')
-      console.log('[ScriptPanel] Original count:', dialogueArray.length, 'Valid count:', validDialogue.length)
+      console.log('[ScriptPanel] Dialogue count:', dialogueArray.length)
       console.log('[ScriptPanel] Sorted order:', sortedDialogue.map((d: any) => (d.audioUrl || d.url || '').split('/').pop()))
       
       for (const dialogue of sortedDialogue) {

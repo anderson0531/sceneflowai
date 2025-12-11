@@ -72,7 +72,7 @@ export class WebAudioMixer {
       
                     // Set default volumes
       if (type === 'music') {
-        gainNode.gain.value = 0.15  // 15% volume for music
+        gainNode.gain.value = 0.40  // 40% volume for music (background)
       } else if (type === 'dialogue') {
         gainNode.gain.value = 2.1  // 210% volume for dialogue (140% boost)
       } else if (type === 'narration' || type === 'description') {
@@ -167,7 +167,7 @@ export class WebAudioMixer {
     const musicGain = this.gainNodes.get('music')
     if (musicGain) {
       musicGain.gain.cancelScheduledValues(context.currentTime)
-      musicGain.gain.setValueAtTime(0.15, context.currentTime) // Reset to 15% default
+      musicGain.gain.setValueAtTime(0.40, context.currentTime) // Reset to 40% default
     }
 
     // Create promise that resolves when all non-looping audio completes
