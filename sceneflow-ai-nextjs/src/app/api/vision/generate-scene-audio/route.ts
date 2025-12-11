@@ -61,6 +61,20 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Check for direction-only dialogue (lines that only contain stage directions)
+    // These should not have audio generated - they belong in the action field
+    if (audioType === 'dialogue') {
+      const withoutBrackets = text.replace(/\[[^\]]*\]/g, '').trim()
+      if (withoutBrackets.length === 0) {
+        console.warn(`[Scene Audio] ⚠️ Skipping direction-only dialogue (no spoken content): "${text.substring(0, 100)}"`)
+        return NextResponse.json({
+          error: 'Direction-only dialogue',
+          message: 'This dialogue line contains only stage directions, not spoken content. Stage directions should be in the action field.',
+          skipped: true
+        }, { status: 400 })
+      }
+    }
+
     console.log(`[Scene Audio] Generating ${audioType} for scene ${sceneIndex} in language: ${language}`)
 
     // Step 1: Translate text if language is not English

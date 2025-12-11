@@ -587,6 +587,13 @@ EXAMPLES:
 
 CRITICAL: Every single dialogue line must start with at least one emotion/style tag in [brackets].
 
+IMPORTANT - DIALOGUE VS STAGE DIRECTION:
+- Stage directions (actions, movements, descriptions) go in the "action" field, NOT in dialogue
+- Dialogue lines must contain SPOKEN WORDS, not just bracketed directions
+- WRONG: {"character": "ALEX", "line": "[shaky breath] [Alex retrieves the cufflink]"} ← This is a stage direction, not dialogue!
+- CORRECT: {"character": "ALEX", "line": "[shaky breath, defeated] I found it... the cufflink."}
+- If a character performs an action without speaking, put it in the "action" field, NOT as a dialogue line
+
 SCENE PLANNING:
 - Total target: ${targetDuration}s (±10% is fine)
 - REQUIRED total scenes: ${suggested} scenes (you MUST use ${suggested}, can adjust ±2 if absolutely necessary for story flow)
