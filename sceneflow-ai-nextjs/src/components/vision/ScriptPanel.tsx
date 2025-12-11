@@ -1159,7 +1159,26 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
       config.dialogue = []
       
-      for (const dialogue of dialogueArray) {
+      // Helper to extract timestamp from URL filename
+      const getUrlTimestamp = (url: string): number => {
+        const match = url.match(/(\d{13})/)
+        return match ? parseInt(match[1], 10) : 0
+      }
+      
+      // Sort dialogue by URL timestamp (oldest first = correct order)
+      const sortedDialogue = [...dialogueArray].sort((a, b) => {
+        const urlA = a.audioUrl || a.url || ''
+        const urlB = b.audioUrl || b.url || ''
+        const tsA = getUrlTimestamp(urlA)
+        const tsB = getUrlTimestamp(urlB)
+        return tsA - tsB  // Ascending order - oldest first
+      })
+      
+      console.log('[ScriptPanel] 🔊🔊🔊 TIMESTAMP SORTING ACTIVE - Dialogue sorted by URL timestamp')
+      console.log('[ScriptPanel] Original order:', dialogueArray.map((d: any) => (d.audioUrl || d.url || '').split('/').pop()))
+      console.log('[ScriptPanel] Sorted order:', sortedDialogue.map((d: any) => (d.audioUrl || d.url || '').split('/').pop()))
+      
+      for (const dialogue of sortedDialogue) {
         const audioUrl = dialogue.audioUrl || dialogue.url
         if (audioUrl) {
           config.dialogue.push({
