@@ -557,110 +557,56 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
     dialogueCursor = Math.max(sfxCursor, voiceAnchorTime)
     
     if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
-      // DEFINITIVE FIX: Match audio to script dialogue order
-      // The script.dialogue array is the source of truth for order
-      // We match audio entries to script entries and play in script order
+      // NUCLEAR FIX: Sort audio by generation timestamp to ensure correct order
+      // Since audio is generated sequentially (line 1, 2, 3...), timestamps should be sequential
+      // This bypasses any issues with stored dialogueIndex values
+      
       const scriptDialogue = scene.dialogue || []
       
-      console.log('[ScriptPlayer] Script dialogue order:', scriptDialogue.map((d: any, i: number) => ({
-        scriptIndex: i,
-        character: d.character,
-        linePreview: d.line?.substring(0, 30) || d.text?.substring(0, 30)
-      })))
-      
-      console.log('[ScriptPlayer] Audio entries (raw):', dialogueArray.map((d: any, i: number) => ({
-        arrayPos: i,
-        character: d.character,
-        dialogueIndex: d.dialogueIndex,
-        audioUrl: d.audioUrl?.slice(-40)
-      })))
-      
-      // Helper: Extract timestamp from audio URL for determining which is newer
+      // Helper: Extract timestamp from audio URL for ordering
       const getUrlTimestamp = (url: string): number => {
         // URLs like: scene-0-ALEX%20ANDERSON-1765440437476.mp3
         const match = url?.match(/(\d{13})\.mp3/)
         return match ? parseInt(match[1], 10) : 0
       }
       
-      // Strategy: Use dialogueIndex if available and valid, otherwise match by character + position
-      // Create a map of audio entries by dialogueIndex for O(1) lookup
-      // If duplicate dialogueIndex found, keep the NEWER one (by URL timestamp)
-      const audioByIndex = new Map<number, any>()
-      const unmatchedAudio: any[] = []
-      
-      for (const audio of dialogueArray) {
-        if (typeof audio.dialogueIndex === 'number' && audio.dialogueIndex >= 0 && audio.dialogueIndex < scriptDialogue.length) {
-          // Validate that the dialogueIndex makes sense (character should match)
-          const expectedChar = scriptDialogue[audio.dialogueIndex]?.character
-          if (expectedChar && audio.character?.toLowerCase() === expectedChar?.toLowerCase()) {
-            // Check if we already have an entry for this dialogueIndex
-            const existing = audioByIndex.get(audio.dialogueIndex)
-            if (existing) {
-              // Keep the NEWER one (higher timestamp in URL)
-              const existingTs = getUrlTimestamp(existing.audioUrl)
-              const newTs = getUrlTimestamp(audio.audioUrl)
-              console.log('[ScriptPlayer] Duplicate dialogueIndex found:', {
-                dialogueIndex: audio.dialogueIndex,
-                existingUrl: existing.audioUrl?.slice(-40),
-                existingTs,
-                newUrl: audio.audioUrl?.slice(-40),
-                newTs,
-                keeping: newTs > existingTs ? 'new' : 'existing'
-              })
-              if (newTs > existingTs) {
-                audioByIndex.set(audio.dialogueIndex, audio)
-              }
-            } else {
-              audioByIndex.set(audio.dialogueIndex, audio)
-            }
-          } else {
-            // dialogueIndex doesn't match expected character - treat as unmatched
-            console.warn('[ScriptPlayer] Audio dialogueIndex mismatch:', {
-              audioChar: audio.character,
-              expectedChar,
-              dialogueIndex: audio.dialogueIndex
-            })
-            unmatchedAudio.push(audio)
-          }
-        } else {
-          unmatchedAudio.push(audio)
-        }
-      }
-      
-      // Build final ordered list based on script order
-      const orderedAudio: any[] = []
-      const usedUnmatched = new Set<number>()
-      
-      for (let scriptIdx = 0; scriptIdx < scriptDialogue.length; scriptIdx++) {
-        const scriptLine = scriptDialogue[scriptIdx]
-        
-        // First try: exact dialogueIndex match
-        if (audioByIndex.has(scriptIdx)) {
-          orderedAudio.push(audioByIndex.get(scriptIdx))
-          continue
-        }
-        
-        // Second try: find unmatched audio with same character (first match wins)
-        const unmatchedIdx = unmatchedAudio.findIndex((audio, idx) => 
-          !usedUnmatched.has(idx) && 
-          audio.character?.toLowerCase() === scriptLine.character?.toLowerCase()
-        )
-        
-        if (unmatchedIdx >= 0) {
-          orderedAudio.push(unmatchedAudio[unmatchedIdx])
-          usedUnmatched.add(unmatchedIdx)
-          continue
-        }
-        
-        // No audio found for this script line
-        console.warn('[ScriptPlayer] No audio found for script line:', scriptIdx, scriptLine.character)
-      }
-      
-      console.log('[ScriptPlayer] Final ordered audio:', orderedAudio.map((d: any, i: number) => ({
-        playOrder: i,
+      console.log('[ScriptPlayer] Script dialogue count:', scriptDialogue.length)
+      console.log('[ScriptPlayer] Audio entries count:', dialogueArray.length)
+      console.log('[ScriptPlayer] Audio entries with timestamps:', dialogueArray.map((d: any, i: number) => ({
+        arrayPos: i,
         character: d.character,
         dialogueIndex: d.dialogueIndex,
-        audioUrl: d.audioUrl?.slice(-40)
+        timestamp: getUrlTimestamp(d.audioUrl),
+        url: d.audioUrl?.slice(-50)
+      })))
+      
+      // Sort audio entries by timestamp (generation order)
+      // This ensures audio plays in the order it was generated
+      const sortedByTimestamp = [...dialogueArray]
+        .filter((d: any) => d.audioUrl) // Only entries with audio
+        .sort((a: any, b: any) => {
+          const tsA = getUrlTimestamp(a.audioUrl)
+          const tsB = getUrlTimestamp(b.audioUrl)
+          return tsA - tsB
+        })
+      
+      console.log('[ScriptPlayer] Sorted by timestamp:', sortedByTimestamp.map((d: any, i: number) => ({
+        order: i,
+        character: d.character,
+        dialogueIndex: d.dialogueIndex,
+        timestamp: getUrlTimestamp(d.audioUrl)
+      })))
+      
+      // Use script dialogue count to determine how many to play
+      // Take only as many audio entries as there are script lines
+      const orderedAudio = sortedByTimestamp.slice(0, scriptDialogue.length)
+      
+      console.log('[ScriptPlayer] Final ordered audio (by timestamp):', orderedAudio.map((d: any, i: number) => ({
+        playOrder: i,
+        character: d.character,
+        storedDialogueIndex: d.dialogueIndex,
+        timestamp: getUrlTimestamp(d.audioUrl),
+        url: d.audioUrl?.slice(-40)
       })))
       
       for (let i = 0; i < orderedAudio.length; i++) {
