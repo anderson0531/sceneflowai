@@ -1930,19 +1930,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         </div>
         
         <div className="flex items-center gap-3 flex-wrap text-slate-200">
-          
-          {/* Stop button if playing */}
-          {loadingSceneId !== null && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={stopAudio}
-              className="flex items-center gap-1 bg-red-50 hover:bg-red-100 text-red-600 border-red-200 dark:bg-red-900 dark:hover:bg-red-800 dark:text-red-100 dark:border-red-700"
-            >
-              <Square className="w-4 h-4" />
-              <span className="hidden sm:inline">Stop</span>
-            </Button>
-          )}
           {/* Generate Audio button moved to Storyboard header */}
           
           {/* Language Selector */}
@@ -2920,7 +2907,7 @@ function SceneCard({
               </TooltipProvider>
             )}
             
-            {/* Play Audio Button */}
+            {/* Play/Stop Audio Button */}
             {!isOutline && (
               <TooltipProvider>
                 <Tooltip>
@@ -2928,13 +2915,20 @@ function SceneCard({
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        if (onPlayScene) onPlayScene(sceneIdx)
+                        if (isPlaying) {
+                          if (onStopAudio) onStopAudio()
+                        } else {
+                          if (onPlayScene) onPlayScene(sceneIdx)
+                        }
                       }}
-                      disabled={isPlaying}
-                      className="flex items-center gap-1 px-2 py-1 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20 rounded transition-colors disabled:opacity-50"
+                      className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${
+                        isPlaying 
+                          ? 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20' 
+                          : 'text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20'
+                      }`}
                     >
                       {isPlaying ? (
-                        <Pause className="w-4 h-4" />
+                        <Square className="w-4 h-4" />
                       ) : (
                         <Volume2 className="w-4 h-4" />
                       )}
