@@ -253,21 +253,14 @@ Provide a comprehensive review with:
 5. Areas for Improvement (3-5 specific areas that could be stronger)
 6. Actionable Recommendations (3-5 specific, practical suggestions for this scene)
 
-Format as JSON:
-{
-  "overallScore": <score 1-100>,
-  "categories": [
-    {"name": "Scene Structure", "score": <score>},
-    {"name": "Character Moments", "score": <score>},
-    {"name": "Pacing", "score": <score>},
-    {"name": "Visual Storytelling", "score": <score>},
-    {"name": "Script Integration", "score": <score>}
-  ],
-  "analysis": "<detailed analysis of this scene>",
-  "strengths": ["<strength 1>", "<strength 2>", ...],
-  "improvements": ["<improvement 1>", "<improvement 2>", ...],
-  "recommendations": ["<recommendation 1>", "<recommendation 2>", ...]
-}`
+CRITICAL JSON FORMATTING RULES:
+- Output ONLY valid JSON, no markdown code fences
+- All string values must be on a single line (no line breaks inside strings)
+- Use escaped characters for quotes inside strings: \\"
+- Keep analysis concise (under 500 characters) to avoid formatting issues
+
+Output this exact JSON structure:
+{"overallScore": <number>, "categories": [{"name": "Scene Structure", "score": <number>}, {"name": "Character Moments", "score": <number>}, {"name": "Pacing", "score": <number>}, {"name": "Visual Storytelling", "score": <number>}, {"name": "Script Integration", "score": <number>}], "analysis": "<single line analysis>", "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"], "improvements": ["<improvement 1>", "<improvement 2>", "<improvement 3>"], "recommendations": ["<recommendation 1>", "<recommendation 2>", "<recommendation 3>"]}`
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -278,7 +271,8 @@ Format as JSON:
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 4096
+          maxOutputTokens: 4096,
+          responseMimeType: 'application/json'
         }
       })
     }
@@ -385,21 +379,14 @@ Provide a comprehensive review with:
 5. Areas for Improvement (3-5 audience experience concerns)
 6. Actionable Recommendations (3-5 suggestions to improve audience appeal)
 
-Format as JSON:
-{
-  "overallScore": <score 1-100>,
-  "categories": [
-    {"name": "Entertainment Value", "score": <score>},
-    {"name": "Emotional Impact", "score": <score>},
-    {"name": "Clarity", "score": <score>},
-    {"name": "Character Connection", "score": <score>},
-    {"name": "Story Momentum", "score": <score>}
-  ],
-  "analysis": "<detailed analysis of audience appeal>",
-  "strengths": ["<strength 1>", "<strength 2>", ...],
-  "improvements": ["<improvement 1>", "<improvement 2>", ...],
-  "recommendations": ["<recommendation 1>", "<recommendation 2>", ...]
-}`
+CRITICAL JSON FORMATTING RULES:
+- Output ONLY valid JSON, no markdown code fences
+- All string values must be on a single line (no line breaks inside strings)
+- Use escaped characters for quotes inside strings: \\"
+- Keep analysis concise (under 500 characters) to avoid formatting issues
+
+Output this exact JSON structure:
+{"overallScore": <number>, "categories": [{"name": "Entertainment Value", "score": <number>}, {"name": "Emotional Impact", "score": <number>}, {"name": "Clarity", "score": <number>}, {"name": "Character Connection", "score": <number>}, {"name": "Story Momentum", "score": <number>}], "analysis": "<single line analysis>", "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"], "improvements": ["<improvement 1>", "<improvement 2>", "<improvement 3>"], "recommendations": ["<recommendation 1>", "<recommendation 2>", "<recommendation 3>"]}`
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
@@ -410,7 +397,8 @@ Format as JSON:
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 4096
+          maxOutputTokens: 4096,
+          responseMimeType: 'application/json'
         }
       })
     }
