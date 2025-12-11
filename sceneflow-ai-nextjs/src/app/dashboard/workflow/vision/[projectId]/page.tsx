@@ -808,24 +808,98 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         createdAt: new Date().toISOString(),
       }
 
+      // Update local state
+      let updatedSceneRefs = sceneReferences
+      let updatedObjectRefs = objectReferences
+      
       if (type === 'scene') {
-        setSceneReferences((prev) => [...prev, newReference])
+        updatedSceneRefs = [...sceneReferences, newReference]
+        setSceneReferences(updatedSceneRefs)
       } else {
-        setObjectReferences((prev) => [...prev, newReference])
+        updatedObjectRefs = [...objectReferences, newReference]
+        setObjectReferences(updatedObjectRefs)
+      }
+      
+      // Save to database
+      try {
+        const existingMetadata = project?.metadata || {}
+        const existingVisionPhase = existingMetadata.visionPhase || {}
+        
+        const payload = {
+          metadata: {
+            ...existingMetadata,
+            visionPhase: {
+              ...existingVisionPhase,
+              references: {
+                sceneReferences: updatedSceneRefs,
+                objectReferences: updatedObjectRefs
+              }
+            }
+          }
+        }
+        
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        
+        if (!response.ok) {
+          console.error('[handleCreateReference] Failed to save reference to database')
+        }
+      } catch (error) {
+        console.error('[handleCreateReference] Error saving reference:', error)
       }
     },
-    [project?.id]
+    [project, projectId, sceneReferences, objectReferences]
   )
 
   const handleRemoveReference = useCallback(
-    (type: VisualReferenceType, referenceId: string) => {
+    async (type: VisualReferenceType, referenceId: string) => {
+      // Update local state
+      let updatedSceneRefs = sceneReferences
+      let updatedObjectRefs = objectReferences
+      
       if (type === 'scene') {
-        setSceneReferences((prev) => prev.filter((reference) => reference.id !== referenceId))
+        updatedSceneRefs = sceneReferences.filter((reference) => reference.id !== referenceId)
+        setSceneReferences(updatedSceneRefs)
       } else {
-        setObjectReferences((prev) => prev.filter((reference) => reference.id !== referenceId))
+        updatedObjectRefs = objectReferences.filter((reference) => reference.id !== referenceId)
+        setObjectReferences(updatedObjectRefs)
+      }
+      
+      // Save to database
+      try {
+        const existingMetadata = project?.metadata || {}
+        const existingVisionPhase = existingMetadata.visionPhase || {}
+        
+        const payload = {
+          metadata: {
+            ...existingMetadata,
+            visionPhase: {
+              ...existingVisionPhase,
+              references: {
+                sceneReferences: updatedSceneRefs,
+                objectReferences: updatedObjectRefs
+              }
+            }
+          }
+        }
+        
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        
+        if (!response.ok) {
+          console.error('[handleRemoveReference] Failed to save reference removal to database')
+        }
+      } catch (error) {
+        console.error('[handleRemoveReference] Error saving reference removal:', error)
       }
     },
-    []
+    [project, projectId, sceneReferences, objectReferences]
   )
 
   const handleInitializeSceneProduction = useCallback(
@@ -5425,7 +5499,34 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     imageUrl,
                     createdAt: new Date().toISOString(),
                   }
-                  setSceneReferences((prev) => [...prev, newReference])
+                  const updatedSceneRefs = [...sceneReferences, newReference]
+                  setSceneReferences(updatedSceneRefs)
+                  
+                  // Save to database
+                  try {
+                    const existingMetadata = project?.metadata || {}
+                    const existingVisionPhase = existingMetadata.visionPhase || {}
+                    
+                    await fetch(`/api/projects/${projectId}`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        metadata: {
+                          ...existingMetadata,
+                          visionPhase: {
+                            ...existingVisionPhase,
+                            references: {
+                              sceneReferences: updatedSceneRefs,
+                              objectReferences
+                            }
+                          }
+                        }
+                      })
+                    })
+                  } catch (error) {
+                    console.error('[onAddToReferenceLibrary] Error saving:', error)
+                  }
+                  
                   // Show success toast
                   toast.success(`Added "${name}" to Reference Library`)
                 }}
@@ -5448,7 +5549,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onGenerateScene={handleGenerateScene}
                             onUploadScene={handleUploadScene}
                             onClose={() => setShowSceneGallery(false)}
-                            onAddToSceneLibrary={(index, imageUrl) => {
+                            onAddToSceneLibrary={async (index, imageUrl) => {
                               const scenes = script?.script?.scenes || []
                               const scene = scenes[index]
                               if (scene && imageUrl) {
@@ -5460,7 +5561,34 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                                   imageUrl,
                                   createdAt: new Date().toISOString(),
                                 }
-                                setSceneReferences((prev) => [...prev, newReference])
+                                const updatedSceneRefs = [...sceneReferences, newReference]
+                                setSceneReferences(updatedSceneRefs)
+                                
+                                // Save to database
+                                try {
+                                  const existingMetadata = project?.metadata || {}
+                                  const existingVisionPhase = existingMetadata.visionPhase || {}
+                                  
+                                  await fetch(`/api/projects/${projectId}`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      metadata: {
+                                        ...existingMetadata,
+                                        visionPhase: {
+                                          ...existingVisionPhase,
+                                          references: {
+                                            sceneReferences: updatedSceneRefs,
+                                            objectReferences
+                                          }
+                                        }
+                                      }
+                                    })
+                                  })
+                                } catch (error) {
+                                  console.error('[onAddToSceneLibrary] Error saving:', error)
+                                }
+                                
                                 toast.success(`Added Scene ${index + 1} to Reference Library`)
                               }
                             }}

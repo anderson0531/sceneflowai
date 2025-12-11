@@ -54,6 +54,7 @@
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2025-12-11 | Fix State vs DB persistence bug | Script changes & reference library additions only updated React state, not database. On page refresh, old data loaded from DB. Fixed: handleScriptChange, handleCreateReference, handleRemoveReference, onAddToReferenceLibrary, onAddToSceneLibrary now all save to DB via PUT /api/projects. Added critical pattern to design doc. | ✅ Fixed |
 | 2025-12-11 | Enhanced sidebar menu UX | Added collapsible sections with chevron controls, breadcrumb-style workflow with progress indicators, Project Progress section with completion metrics, Credits balance display with "Get More Credits" link, moved Review Scores above Project Stats, Settings link moved to Quick Actions, deprecated BYOK settings link removed | ✅ Implemented |
 | 2025-12-11 | Fix ghost audio fingerprint & playback | Root cause: fingerprint used `sfxAudioUrl` (singular) but SFX stored as `sfxAudio[]` (array) - SFX changes weren't detected. Also `isPlaying: false` reset on fingerprint change broke new audio playback. Fixed: 1) Fingerprint now reads SFX array + includes entry counts (D3/S2), 2) Only clear caches on CHANGE (skip initial mount), 3) Don't reset isPlaying, 4) Added clearCacheForUrls() for targeted invalidation | ✅ Fixed |
 | 2025-12-11 | Comprehensive ghost audio fix | Multiple audio sources causing ghost playback: 1) audioDuration.ts now cancels preload with src='', 2) ScriptPanel tracks orphan Audio objects with cleanup on unmount, 3) URL.revokeObjectURL frees blob memory, 4) ScriptPlayer resets isPlaying state on fingerprint change. Centralized audio cleanup prevents orphan HTMLAudioElements | ✅ Fixed |
@@ -100,6 +101,54 @@
 ---
 
 ## Critical Architecture Patterns
+
+### 🚨 State vs Database Persistence (CRITICAL BUG PATTERN)
+
+**CRITICAL**: Any state change that should persist across page refreshes MUST save to the database. React state is lost on refresh!
+
+**Symptoms of this bug:**
+- Changes work during session, but revert on page refresh
+- Data appears correct until deploy/reload
+- User loses work unexpectedly
+
+**Affected areas (all fixed as of 2025-12-11):**
+- Script changes via ScriptEditorModal
+- Reference library additions/removals
+- Scene edits via SceneEditorModal
+
+**The pattern:**
+```typescript
+// ❌ WRONG - State-only, lost on refresh
+const handleChange = (data: any) => {
+  setState(data)  // Only in-memory, not persisted!
+}
+
+// ✅ CORRECT - State + Database persistence
+const handleChange = async (data: any) => {
+  // 1. Update local state immediately (responsive UI)
+  setState(data)
+  
+  // 2. Save to database (persistence)
+  await fetch(`/api/projects/${projectId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      metadata: {
+        ...existingMetadata,
+        visionPhase: {
+          ...existingVisionPhase,
+          [dataKey]: data  // Persist to metadata.visionPhase
+        }
+      }
+    })
+  })
+}
+```
+
+**Checklist when adding new features:**
+- [ ] Does this data need to persist across refreshes?
+- [ ] If yes, does the handler save to DB?
+- [ ] Is the data loaded from DB on page load?
 
 ### State Management: Single Source of Truth
 
