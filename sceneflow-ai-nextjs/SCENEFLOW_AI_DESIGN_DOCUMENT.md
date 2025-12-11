@@ -54,7 +54,7 @@
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
-| 2025-12-11 | Workflow Sync Tracking | Assets (direction, images) can become stale when script is edited. Added content hash tracking: Direction API stores `basedOnContentHash`, Image API stores `basedOnDirectionHash`. ScriptPanel now shows amber 'stale' indicators with 'Regenerate' CTAs when assets are out of sync. New utility: `src/lib/utils/contentHash.ts` | ✅ Implemented |
+| 2025-12-11 | Workflow Sync Tracking | Detects stale assets after script edits. Leverages EXISTING workflow status icons (Script/Direction/Frame/Call Action) - turns amber when stale. Direction stores `basedOnContentHash`, Image stores `basedOnDirectionHash`. Staleness banner appears inside tab content with "Regenerate" CTA. See "Workflow Sync Tracking" section in Critical Architecture Patterns. | ✅ Implemented |
 | 2025-12-11 | Fix State vs DB persistence bug | Script changes & reference library additions only updated React state, not database. On page refresh, old data loaded from DB. Fixed: handleScriptChange, handleCreateReference, handleRemoveReference, onAddToReferenceLibrary, onAddToSceneLibrary now all save to DB via PUT /api/projects. Added critical pattern to design doc. | ✅ Fixed |
 | 2025-12-11 | Enhanced sidebar menu UX | Added collapsible sections with chevron controls, breadcrumb-style workflow with progress indicators, Project Progress section with completion metrics, Credits balance display with "Get More Credits" link, moved Review Scores above Project Stats, Settings link moved to Quick Actions, deprecated BYOK settings link removed | ✅ Implemented |
 | 2025-12-11 | Fix ghost audio fingerprint & playback | Root cause: fingerprint used `sfxAudioUrl` (singular) but SFX stored as `sfxAudio[]` (array) - SFX changes weren't detected. Also `isPlaying: false` reset on fingerprint change broke new audio playback. Fixed: 1) Fingerprint now reads SFX array + includes entry counts (D3/S2), 2) Only clear caches on CHANGE (skip initial mount), 3) Don't reset isPlaying, 4) Added clearCacheForUrls() for targeted invalidation | ✅ Fixed |
@@ -195,6 +195,45 @@ Vision Page (src/app/dashboard/workflow/vision/[projectId]/page.tsx)
   ├── ScreeningRoom/ScriptPlayer (receives scenes from script.script.scenes)
   └── StoryboardRenderer (receives scenes from script.script.scenes)
 ```
+
+### Workflow Sync Tracking (Asset Staleness Detection)
+
+**Purpose**: Detect when scene assets (Direction, Frame/Image) are out of sync with their source content after script edits.
+
+**Visual Indicators (leverages existing UI):**
+The existing workflow status icons on each scene card (Script, Direction, Frame, Call Action) now show:
+- 🟢 **Green** = Complete and up-to-date
+- 🟡 **Amber** = Complete but STALE (needs regeneration due to upstream changes)
+- ⚫ **Gray** = Incomplete/pending
+- 🔵 **Blue** = Currently in-progress
+
+**How staleness detection works:**
+```
+Script → Direction → Frame → Call Action
+   │         │          │
+   │         │          └── basedOnDirectionHash (stored when Frame generated)
+   │         └── basedOnContentHash (stored when Direction generated)
+   └── Current content hash computed from narration + dialogue + action
+```
+
+When script is edited:
+1. `generateSceneContentHash(scene)` produces a new hash
+2. Compare against `scene.sceneDirection.basedOnContentHash`
+3. If different → Direction shows amber (stale)
+4. If Direction changed → compare Frame's `basedOnDirectionHash` → amber if stale
+
+**IMPORTANT - Backward Compatibility:**
+- Assets generated BEFORE this feature was deployed have no stored hash
+- These assets will NOT show as stale (to avoid overwhelming existing projects)
+- Staleness detection only activates for newly generated assets
+
+**Key Files:**
+- `src/lib/utils/contentHash.ts` - Hash generation and staleness check utilities
+- `src/components/vision/ScriptPanel.tsx` - Workflow status indicator display
+
+**DO NOT:**
+- Create separate staleness UI elements - use the existing workflow status icons
+- Store hashes in separate location - they belong in the asset's data structure
 
 ---
 
