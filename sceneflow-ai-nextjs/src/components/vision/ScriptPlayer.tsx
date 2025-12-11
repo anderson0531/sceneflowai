@@ -575,8 +575,16 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
         audioUrl: d.audioUrl?.slice(-40)
       })))
       
+      // Helper: Extract timestamp from audio URL for determining which is newer
+      const getUrlTimestamp = (url: string): number => {
+        // URLs like: scene-0-ALEX%20ANDERSON-1765440437476.mp3
+        const match = url?.match(/(\d{13})\.mp3/)
+        return match ? parseInt(match[1], 10) : 0
+      }
+      
       // Strategy: Use dialogueIndex if available and valid, otherwise match by character + position
       // Create a map of audio entries by dialogueIndex for O(1) lookup
+      // If duplicate dialogueIndex found, keep the NEWER one (by URL timestamp)
       const audioByIndex = new Map<number, any>()
       const unmatchedAudio: any[] = []
       
@@ -585,7 +593,26 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
           // Validate that the dialogueIndex makes sense (character should match)
           const expectedChar = scriptDialogue[audio.dialogueIndex]?.character
           if (expectedChar && audio.character?.toLowerCase() === expectedChar?.toLowerCase()) {
-            audioByIndex.set(audio.dialogueIndex, audio)
+            // Check if we already have an entry for this dialogueIndex
+            const existing = audioByIndex.get(audio.dialogueIndex)
+            if (existing) {
+              // Keep the NEWER one (higher timestamp in URL)
+              const existingTs = getUrlTimestamp(existing.audioUrl)
+              const newTs = getUrlTimestamp(audio.audioUrl)
+              console.log('[ScriptPlayer] Duplicate dialogueIndex found:', {
+                dialogueIndex: audio.dialogueIndex,
+                existingUrl: existing.audioUrl?.slice(-40),
+                existingTs,
+                newUrl: audio.audioUrl?.slice(-40),
+                newTs,
+                keeping: newTs > existingTs ? 'new' : 'existing'
+              })
+              if (newTs > existingTs) {
+                audioByIndex.set(audio.dialogueIndex, audio)
+              }
+            } else {
+              audioByIndex.set(audio.dialogueIndex, audio)
+            }
           } else {
             // dialogueIndex doesn't match expected character - treat as unmatched
             console.warn('[ScriptPlayer] Audio dialogueIndex mismatch:', {

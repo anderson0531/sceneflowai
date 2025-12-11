@@ -423,9 +423,20 @@ async function updateSceneAudio(
       }
       
       const dialogueArray = [...scene.dialogueAudio[language]]
-      const existingIndex = dialogueArray.findIndex((d: any) => 
-        d.character === characterName && d.dialogueIndex === dialogueIndex
+      
+      // Find existing entry by dialogueIndex (primary match) or character+index combo
+      // This handles cases where old entries might have mismatched data
+      let existingIndex = dialogueArray.findIndex((d: any) => 
+        d.dialogueIndex === dialogueIndex
       )
+      
+      // If not found by dialogueIndex alone, try character + dialogueIndex
+      if (existingIndex < 0) {
+        existingIndex = dialogueArray.findIndex((d: any) => 
+          d.character?.toLowerCase() === characterName?.toLowerCase() && 
+          d.dialogueIndex === dialogueIndex
+        )
+      }
       
       const dialogueEntry = {
         character: characterName!,
@@ -441,7 +452,18 @@ async function updateSceneAudio(
         dialogueArray.push(dialogueEntry)
       }
       
-      scene.dialogueAudio[language] = dialogueArray
+      // CRITICAL: Deduplicate - remove any other entries with the same dialogueIndex
+      // This cleans up any duplicate entries from previous bugs
+      const deduplicatedArray = dialogueArray.filter((d: any, idx: number, arr: any[]) => {
+        if (d.dialogueIndex === dialogueIndex) {
+          // For entries with this dialogueIndex, only keep the one we just set/updated
+          const lastIdx = arr.findLastIndex((x: any) => x.dialogueIndex === dialogueIndex)
+          return idx === lastIdx
+        }
+        return true
+      })
+      
+      scene.dialogueAudio[language] = deduplicatedArray
       
       // Maintain backward compatibility: set legacy dialogueAudio array for English ONLY if object structure doesn't exist
       // DO NOT overwrite the object structure - this would delete other languages!
