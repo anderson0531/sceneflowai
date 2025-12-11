@@ -4897,6 +4897,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                           </div>
                           <span className="group-hover:text-gray-600 dark:group-hover:text-gray-300">Final Cut</span>
                         </Link>
+                        <Link
+                          href={`/dashboard/workflow/premiere/${projectId}`}
+                          className="flex items-center gap-3 px-3 py-2 text-sm rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
+                        >
+                          <div className="w-[14px] h-[14px] rounded-full bg-gray-300 dark:bg-gray-600 border-2 border-white dark:border-gray-900 shadow-sm z-10">
+                            <Circle className="w-2.5 h-2.5 text-gray-400 dark:text-gray-500" />
+                          </div>
+                          <span className="group-hover:text-gray-600 dark:group-hover:text-gray-300">Premiere</span>
+                        </Link>
                       </nav>
                     </div>
                   )}
