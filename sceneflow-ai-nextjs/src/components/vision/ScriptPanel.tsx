@@ -12,7 +12,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Bot, PenTool, FolderPlus, Pencil } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Bot, PenTool, FolderPlus, Pencil } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
@@ -356,7 +356,7 @@ const getSceneDomId = (scene: any, index: number) => {
 }
 
 // Sortable Scene Card Wrapper for drag-and-drop
-function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onEditImage, ...props }: any) {
+function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, onEditImage, totalScenes, onNavigateScene, ...props }: any) {
   const {
     attributes,
     listeners,
@@ -383,6 +383,8 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
         dragHandleProps={listeners}
         onOpenSceneReview={props.onOpenSceneReview}
         onEditImage={onEditImage}
+        totalScenes={totalScenes}
+        onNavigateScene={onNavigateScene}
       />
     </div>
   )
@@ -2098,6 +2100,22 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                               setOpenSceneIdx(isOpen ? idx : null)
                             }
                           }}
+                          totalScenes={scenes.length}
+                          onNavigateScene={(newIdx: number) => {
+                            // Navigate to scene: scroll and open it
+                            const targetScene = scenes[newIdx]
+                            if (targetScene) {
+                              const targetDomId = getSceneDomId(targetScene, newIdx)
+                              const targetEl = document.getElementById(targetDomId)
+                              if (targetEl) {
+                                targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                              }
+                              // Close current scene and open target
+                              if (selectedSceneIndex === null) {
+                                setOpenSceneIdx(newIdx)
+                              }
+                            }
+                          }}
                 />
                     )
                   })}
@@ -2456,6 +2474,9 @@ interface SceneCardProps {
   onAddToReferenceLibrary?: (imageUrl: string, name: string, sceneNumber: number) => Promise<void>
   // Image editing
   onEditImage?: (url: string, sceneIdx: number) => void
+  // Scene navigation
+  totalScenes?: number
+  onNavigateScene?: (sceneIdx: number) => void
 }
 
 function SceneCard({
@@ -2528,6 +2549,8 @@ function SceneCard({
   onWorkflowOpenChange,
   onAddToReferenceLibrary,
   onEditImage,
+  totalScenes,
+  onNavigateScene,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(null)
@@ -2683,22 +2706,51 @@ function SceneCard({
       <div className="relative z-[1]">
         {/* Top Row: Control Buttons */}
         <div className="flex items-center justify-between gap-3 py-2 border-b border-gray-200 dark:border-gray-700 mb-2">
-          {/* Left Side: Scene Management Controls */}
+          {/* Left Side: Scene Navigation & Management Controls */}
           <div className="flex items-center gap-2">
+            {/* Previous Scene Button */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div
-                    className="p-1 cursor-move text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-                    {...(dragHandleProps || {})}
-                    onClick={(e) => e.stopPropagation()}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (onNavigateScene && sceneIdx > 0) {
+                        onNavigateScene(sceneIdx - 1)
+                      }
+                    }}
+                    disabled={sceneIdx === 0}
+                    className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
-                    <GripVertical className="w-4 h-4" />
-                  </div>
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
                 </TooltipTrigger>
-                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Drag to reorder</TooltipContent>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Previous scene</TooltipContent>
               </Tooltip>
             </TooltipProvider>
+            
+            {/* Next Scene Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (onNavigateScene && totalScenes && sceneIdx < totalScenes - 1) {
+                        onNavigateScene(sceneIdx + 1)
+                      }
+                    }}
+                    disabled={!totalScenes || sceneIdx >= totalScenes - 1}
+                    className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Next scene</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <div className="w-px h-4 bg-gray-700" />
             
             <TooltipProvider>
               <Tooltip>
@@ -2839,19 +2891,6 @@ function SceneCard({
                 </Tooltip>
               </TooltipProvider>
             )}
-
-            {/* Open/Close Button */}
-            <button
-              onClick={toggleOpen}
-              className="p-1.5 text-gray-400 hover:text-gray-200 hover:bg-white/10 rounded-full transition-colors"
-              title={isWorkflowOpen ? "Collapse scene" : "Expand scene"}
-            >
-              {isWorkflowOpen ? (
-                <ChevronUp className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
-            </button>
 
             {/* Bookmark toggle button */}
             {onBookmarkToggle && (
