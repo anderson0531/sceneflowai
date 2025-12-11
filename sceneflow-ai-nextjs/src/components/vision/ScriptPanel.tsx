@@ -2919,7 +2919,7 @@ function SceneCard({
                       ) : (
                         <Volume2 className="w-4 h-4" />
                       )}
-                      <span className="text-xs">{isPlaying ? 'Stop' : 'Audio'}</span>
+                      <span className="text-xs">{isPlaying ? 'Stop' : 'Play'}</span>
                     </button>
                   </TooltipTrigger>
                   <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
