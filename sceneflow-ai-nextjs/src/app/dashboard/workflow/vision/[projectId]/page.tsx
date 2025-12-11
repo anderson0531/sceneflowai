@@ -5022,6 +5022,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         </div>
                         <Link
                           href={`/dashboard/workflow/generation/${projectId}`}
+                          prefetch={false}
                           className="flex items-center gap-3 px-3 py-2 text-sm rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
                         >
                           <div className="w-[14px] h-[14px] rounded-full bg-gray-300 dark:bg-gray-600 border-2 border-white dark:border-gray-900 shadow-sm z-10">
@@ -5031,6 +5032,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         </Link>
                         <Link
                           href={`/dashboard/workflow/premiere/${projectId}`}
+                          prefetch={false}
                           className="flex items-center gap-3 px-3 py-2 text-sm rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
                         >
                           <div className="w-[14px] h-[14px] rounded-full bg-gray-300 dark:bg-gray-600 border-2 border-white dark:border-gray-900 shadow-sm z-10">
