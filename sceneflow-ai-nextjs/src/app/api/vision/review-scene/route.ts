@@ -83,17 +83,22 @@ function extractAndParseJSON(rawText: string, context: string): any {
     
     // Try to repair common JSON issues
     let repairedJson = jsonText
-      // Fix unescaped quotes in strings (common LLM issue)
-      .replace(/([^\\])"/g, (match, before, offset, str) => {
-        // Only replace if we're inside a string value
-        const beforeMatch = str.substring(0, offset)
-        const quoteCount = (beforeMatch.match(/(?<!\\)"/g) || []).length
-        return quoteCount % 2 === 1 ? `${before}\\"` : match
-      })
-      // Fix trailing commas before ] or }
-      .replace(/,(\s*[}\]])/g, '$1')
-      // Fix missing commas between array elements (common: "text""text")
-      .replace(/"(\s*)"/g, '","')
+    
+    // CRITICAL: Fix control characters (newlines, tabs) inside string values
+    // This regex finds string values and escapes control characters within them
+    repairedJson = repairedJson.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (match) => {
+      // Escape unescaped control characters inside the string
+      return match
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '\\r')
+        .replace(/\t/g, '\\t')
+    })
+    
+    // Fix trailing commas before ] or }
+    repairedJson = repairedJson.replace(/,(\s*[}\]])/g, '$1')
+    
+    // Fix missing commas between array elements (common: "text""text")
+    repairedJson = repairedJson.replace(/"(\s*)"/g, '","')
     
     try {
       return JSON.parse(repairedJson)
