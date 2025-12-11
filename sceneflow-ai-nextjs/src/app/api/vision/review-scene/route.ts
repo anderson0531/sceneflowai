@@ -29,6 +29,46 @@ interface SceneReviewRequest {
 }
 
 /**
+ * Escape control characters inside JSON string values
+ * Processes character by character to handle strings with embedded newlines
+ */
+function escapeControlCharsInJsonStrings(json: string): string {
+  let result = ''
+  let inString = false
+  let i = 0
+  
+  while (i < json.length) {
+    const char = json[i]
+    const nextChar = json[i + 1]
+    
+    if (char === '"' && (i === 0 || json[i - 1] !== '\\')) {
+      // Toggle string state on unescaped quotes
+      inString = !inString
+      result += char
+    } else if (inString) {
+      // Inside a string - escape control characters
+      if (char === '\n') {
+        result += '\\n'
+      } else if (char === '\r') {
+        result += '\\r'
+      } else if (char === '\t') {
+        result += '\\t'
+      } else if (char === '\\' && nextChar && !['n', 'r', 't', '"', '\\', '/', 'b', 'f', 'u'].includes(nextChar)) {
+        // Escape lone backslashes that aren't part of valid escape sequences
+        result += '\\\\'
+      } else {
+        result += char
+      }
+    } else {
+      result += char
+    }
+    i++
+  }
+  
+  return result
+}
+
+/**
  * Extracts and parses JSON from LLM response, handling various formats
  */
 function extractAndParseJSON(rawText: string, context: string): any {
@@ -81,18 +121,8 @@ function extractAndParseJSON(rawText: string, context: string): any {
       console.warn(`[${context}] JSON around error: ...${jsonText.substring(Math.max(0, errorPos - 50), errorPos + 50)}...`)
     }
     
-    // Try to repair common JSON issues
-    let repairedJson = jsonText
-    
     // CRITICAL: Fix control characters (newlines, tabs) inside string values
-    // This regex finds string values and escapes control characters within them
-    repairedJson = repairedJson.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (match) => {
-      // Escape unescaped control characters inside the string
-      return match
-        .replace(/\n/g, '\\n')
-        .replace(/\r/g, '\\r')
-        .replace(/\t/g, '\\t')
-    })
+    let repairedJson = escapeControlCharsInJsonStrings(jsonText)
     
     // Fix trailing commas before ] or }
     repairedJson = repairedJson.replace(/,(\s*[}\]])/g, '$1')
