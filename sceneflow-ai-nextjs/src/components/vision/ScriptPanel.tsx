@@ -2110,8 +2110,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                               if (targetEl) {
                                 targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
                               }
-                              // Close current scene and open target
-                              if (selectedSceneIndex === null) {
+                              // Update the open scene - use parent's handler if available, otherwise local state
+                              if (selectedSceneIndex !== null && onSelectSceneIndex) {
+                                onSelectSceneIndex(newIdx)
+                              } else {
                                 setOpenSceneIdx(newIdx)
                               }
                             }
