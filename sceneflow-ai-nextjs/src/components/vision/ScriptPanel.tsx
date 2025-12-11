@@ -433,6 +433,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // Script overview visibility state
   const [showScriptOverview, setShowScriptOverview] = useState(false)
   
+  // Scene timeline visibility state
+  const [showTimeline, setShowTimeline] = useState(true)
+  
   // Scene review modal state
   const [showSceneReviewModal, setShowSceneReviewModal] = useState(false)
   const [selectedSceneForReview, setSelectedSceneForReview] = useState<number | null>(null)
@@ -1949,7 +1952,14 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         {/* Timeline Slot - renders scene timeline selector */}
         {timelineSlot && (
           <div className="mt-3">
-            {timelineSlot}
+            <button 
+              onClick={() => setShowTimeline(!showTimeline)}
+              className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            >
+              <span>Scene Timeline</span>
+              {showTimeline ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </button>
+            {showTimeline && timelineSlot}
           </div>
         )}
       </div>
