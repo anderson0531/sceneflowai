@@ -215,6 +215,18 @@ Format as JSON:
   if (jsonText.startsWith('`')) {
     jsonText = jsonText.replace(/^`+/, '').replace(/`+$/, '').trim()
   }
+  
+  // Handle "json\n{" format (word json followed by JSON)
+  if (jsonText.startsWith('json')) {
+    jsonText = jsonText.replace(/^json\s*/, '').trim()
+  }
+  
+  // Find first { and last } to extract JSON object
+  const firstBrace = jsonText.indexOf('{')
+  const lastBrace = jsonText.lastIndexOf('}')
+  if (firstBrace !== -1 && lastBrace !== -1 && firstBrace < lastBrace) {
+    jsonText = jsonText.substring(firstBrace, lastBrace + 1)
+  }
 
   const review = JSON.parse(jsonText)
   
@@ -372,6 +384,18 @@ Format as JSON:
   // If still has backticks at start, remove them
   if (jsonText.startsWith('`')) {
     jsonText = jsonText.replace(/^`+/, '').replace(/`+$/, '').trim()
+  }
+  
+  // Handle "json\n{" format (word json followed by JSON)
+  if (jsonText.startsWith('json')) {
+    jsonText = jsonText.replace(/^json\s*/, '').trim()
+  }
+  
+  // Find first { and last } to extract JSON object
+  const firstBrace = jsonText.indexOf('{')
+  const lastBrace = jsonText.lastIndexOf('}')
+  if (firstBrace !== -1 && lastBrace !== -1 && firstBrace < lastBrace) {
+    jsonText = jsonText.substring(firstBrace, lastBrace + 1)
   }
 
   const review = JSON.parse(jsonText)
