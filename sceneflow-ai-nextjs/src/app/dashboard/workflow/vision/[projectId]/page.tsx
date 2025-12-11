@@ -550,12 +550,56 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }, [project?.metadata?.visionPhase?.production?.scenes])
 
-  // Wrapper for setScript that also updates the edit timestamp
+  // Wrapper for setScript that also updates the edit timestamp AND saves to database
   // This ensures ScreeningRoom clears audio caches when script is edited via ScriptEditorModal
-  const handleScriptChange = useCallback((updatedScript: any) => {
+  // and that changes are persisted to the database
+  const handleScriptChange = useCallback(async (updatedScript: any) => {
+    // Update local state immediately for responsive UI
     setScript(updatedScript)
     setScriptEditedAt(Date.now())
-  }, [])
+    
+    // Save to database
+    const updatedScenes = updatedScript?.script?.scenes || []
+    if (updatedScenes.length > 0 && project) {
+      try {
+        const existingMetadata = project?.metadata || {}
+        const existingVisionPhase = existingMetadata.visionPhase || {}
+        
+        const payload = {
+          metadata: {
+            ...existingMetadata,
+            visionPhase: {
+              ...existingVisionPhase,
+              script: updatedScript,
+              scenes: updatedScenes
+            }
+          }
+        }
+        
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        
+        if (!response.ok) {
+          console.error('[handleScriptChange] Failed to save script to database')
+          try {
+            const { toast } = require('sonner')
+            toast.error('Failed to save script changes')
+          } catch {}
+        } else {
+          console.log('[handleScriptChange] Script saved to database')
+        }
+      } catch (error) {
+        console.error('[handleScriptChange] Error saving script:', error)
+        try {
+          const { toast } = require('sonner')
+          toast.error('Failed to save script changes')
+        } catch {}
+      }
+    }
+  }, [project, projectId])
 
   useEffect(() => {
     const references = project?.metadata?.visionPhase?.references as VisionReferencesPayload | undefined
