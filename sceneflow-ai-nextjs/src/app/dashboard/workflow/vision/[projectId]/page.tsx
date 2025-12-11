@@ -31,7 +31,8 @@ import { Button, buttonVariants } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText } from 'lucide-react'
+import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, ChevronRight, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText, Coins, ExternalLink, CheckCircle2, Circle, Music, Video } from 'lucide-react'
+import { useStore } from '@/store/useStore'
 
 const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement> & { size?: number }> = ({ size = 32, className, ...props }) => (
   <svg
@@ -518,6 +519,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [objectReferences, setObjectReferences] = useState<VisualReference[]>([])
   const [sceneProductionState, setSceneProductionState] = useState<Record<string, SceneProductionData>>({})
   const [sceneBookmark, setSceneBookmark] = useState<SceneBookmark | null>(null)
+  
+  // Collapsible sidebar sections
+  const [sectionsOpen, setSectionsOpen] = useState({
+    workflow: true,
+    progress: true,
+    quickActions: true,
+    reviewScores: true,
+    projectStats: false,
+    credits: true
+  })
+  const toggleSection = (section: keyof typeof sectionsOpen) => {
+    setSectionsOpen(prev => ({ ...prev, [section]: !prev[section] }))
+  }
+  
+  // Get user credits from store
+  const user = useStore((state) => state.user)
   useEffect(() => {
     const productionScenes =
       project?.metadata?.visionPhase?.production?.scenes as Record<string, SceneProductionData> | undefined
@@ -4843,187 +4860,316 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   </nav>
                 </div>
                 
-                {/* Workflow Steps */}
+                {/* Workflow Steps - Breadcrumb Style */}
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Workflow</h3>
-                  <nav className="space-y-1">
-                    <Link
-                      href={`/dashboard/studio/${projectId}`}
-                      className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      <span>The Blueprint</span>
-                    </Link>
-                    <div className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-sf-primary/10 text-sf-primary font-medium">
-                      <DirectorChairIcon size={16} className="flex-shrink-0" />
-                      <span>Production</span>
+                  <button 
+                    onClick={() => toggleSection('workflow')}
+                    className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                  >
+                    <span>Workflow</span>
+                    {sectionsOpen.workflow ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  </button>
+                  {sectionsOpen.workflow && (
+                    <div className="relative">
+                      {/* Vertical connector line */}
+                      <div className="absolute left-[11px] top-4 bottom-4 w-0.5 bg-gradient-to-b from-gray-300 via-sf-primary to-gray-300 dark:from-gray-600 dark:via-sf-primary dark:to-gray-600" />
+                      <nav className="space-y-0 relative">
+                        <Link
+                          href={`/dashboard/studio/${projectId}`}
+                          className="flex items-center gap-3 px-3 py-2 text-sm rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
+                        >
+                          <div className="w-[14px] h-[14px] rounded-full bg-green-500 border-2 border-white dark:border-gray-900 shadow-sm flex items-center justify-center z-10">
+                            <CheckCircle2 className="w-2.5 h-2.5 text-white" />
+                          </div>
+                          <span className="group-hover:text-gray-700 dark:group-hover:text-gray-200">Blueprint</span>
+                        </Link>
+                        <div className="flex items-center gap-3 px-3 py-2 text-sm rounded-lg bg-sf-primary/10 text-sf-primary font-medium">
+                          <div className="w-[14px] h-[14px] rounded-full bg-sf-primary border-2 border-white dark:border-gray-900 shadow-sm animate-pulse z-10" />
+                          <span>Production</span>
+                          <span className="ml-auto text-[10px] bg-sf-primary/20 px-1.5 py-0.5 rounded">Current</span>
+                        </div>
+                        <Link
+                          href={`/dashboard/workflow/generation/${projectId}`}
+                          className="flex items-center gap-3 px-3 py-2 text-sm rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
+                        >
+                          <div className="w-[14px] h-[14px] rounded-full bg-gray-300 dark:bg-gray-600 border-2 border-white dark:border-gray-900 shadow-sm z-10">
+                            <Circle className="w-2.5 h-2.5 text-gray-400 dark:text-gray-500" />
+                          </div>
+                          <span className="group-hover:text-gray-600 dark:group-hover:text-gray-300">Final Cut</span>
+                        </Link>
+                      </nav>
                     </div>
-                    <Link
-                      href={`/dashboard/workflow/generation/${projectId}`}
-                      className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <Play className="w-4 h-4" />
-                      <span>Final Cut</span>
-                    </Link>
-                  </nav>
+                  )}
+                </div>
+                
+                {/* Project Progress */}
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                  <button 
+                    onClick={() => toggleSection('progress')}
+                    className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                  >
+                    <span>Progress</span>
+                    {sectionsOpen.progress ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  </button>
+                  {sectionsOpen.progress && (() => {
+                    const scenes = script?.script?.scenes || []
+                    const sceneCount = scenes.length
+                    const hasFilmTreatment = !!(project?.metadata?.filmTreatment || project?.metadata?.filmTreatmentVariant)
+                    const hasScreenplay = sceneCount > 0
+                    const refLibraryCount = sceneReferences.length + objectReferences.length
+                    const scenesWithImages = scenes.filter((s: any) => s.imageUrl).length
+                    const scenesWithAudio = scenes.filter((s: any) => 
+                      s.narrationAudioUrl || s.dialogueAudio?.en?.length || (Array.isArray(s.dialogueAudio) && s.dialogueAudio.length)
+                    ).length
+                    const imageProgress = sceneCount > 0 ? Math.round((scenesWithImages / sceneCount) * 100) : 0
+                    const audioProgress = sceneCount > 0 ? Math.round((scenesWithAudio / sceneCount) * 100) : 0
+                    
+                    return (
+                      <div className="space-y-2">
+                        {/* Film Treatment */}
+                        <div className="flex items-center gap-2 text-xs">
+                          <div className={cn("w-5 h-5 rounded flex items-center justify-center", hasFilmTreatment ? "bg-green-500/20 text-green-500" : "bg-gray-200 dark:bg-gray-700 text-gray-400")}>
+                            {hasFilmTreatment ? <CheckCircle2 className="w-3 h-3" /> : <Circle className="w-3 h-3" />}
+                          </div>
+                          <span className={hasFilmTreatment ? "text-gray-700 dark:text-gray-300" : "text-gray-400"}>Film Treatment</span>
+                        </div>
+                        {/* Screenplay */}
+                        <div className="flex items-center gap-2 text-xs">
+                          <div className={cn("w-5 h-5 rounded flex items-center justify-center", hasScreenplay ? "bg-green-500/20 text-green-500" : "bg-gray-200 dark:bg-gray-700 text-gray-400")}>
+                            {hasScreenplay ? <CheckCircle2 className="w-3 h-3" /> : <Circle className="w-3 h-3" />}
+                          </div>
+                          <span className={hasScreenplay ? "text-gray-700 dark:text-gray-300" : "text-gray-400"}>Screenplay</span>
+                          {hasScreenplay && <span className="ml-auto text-gray-400">{sceneCount} scenes</span>}
+                        </div>
+                        {/* Reference Library */}
+                        <div className="flex items-center gap-2 text-xs">
+                          <div className={cn("w-5 h-5 rounded flex items-center justify-center", refLibraryCount > 0 ? "bg-cyan-500/20 text-cyan-500" : "bg-gray-200 dark:bg-gray-700 text-gray-400")}>
+                            {refLibraryCount > 0 ? <ImageIcon className="w-3 h-3" /> : <Circle className="w-3 h-3" />}
+                          </div>
+                          <span className={refLibraryCount > 0 ? "text-gray-700 dark:text-gray-300" : "text-gray-400"}>References</span>
+                          {refLibraryCount > 0 && <span className="ml-auto text-gray-400">{refLibraryCount}</span>}
+                        </div>
+                        {/* Scene Images */}
+                        <div className="flex items-center gap-2 text-xs">
+                          <div className={cn("w-5 h-5 rounded flex items-center justify-center", imageProgress === 100 ? "bg-green-500/20 text-green-500" : imageProgress > 0 ? "bg-amber-500/20 text-amber-500" : "bg-gray-200 dark:bg-gray-700 text-gray-400")}>
+                            {imageProgress === 100 ? <CheckCircle2 className="w-3 h-3" /> : <ImageIcon className="w-3 h-3" />}
+                          </div>
+                          <span className={imageProgress > 0 ? "text-gray-700 dark:text-gray-300" : "text-gray-400"}>Scene Images</span>
+                          <span className="ml-auto text-gray-400">{imageProgress}%</span>
+                        </div>
+                        {/* Audio */}
+                        <div className="flex items-center gap-2 text-xs">
+                          <div className={cn("w-5 h-5 rounded flex items-center justify-center", audioProgress === 100 ? "bg-green-500/20 text-green-500" : audioProgress > 0 ? "bg-amber-500/20 text-amber-500" : "bg-gray-200 dark:bg-gray-700 text-gray-400")}>
+                            {audioProgress === 100 ? <CheckCircle2 className="w-3 h-3" /> : <Music className="w-3 h-3" />}
+                          </div>
+                          <span className={audioProgress > 0 ? "text-gray-700 dark:text-gray-300" : "text-gray-400"}>Audio</span>
+                          <span className="ml-auto text-gray-400">{audioProgress}%</span>
+                        </div>
+                        {/* Video Export */}
+                        <div className="flex items-center gap-2 text-xs">
+                          <div className="w-5 h-5 rounded flex items-center justify-center bg-gray-200 dark:bg-gray-700 text-gray-400">
+                            <Video className="w-3 h-3" />
+                          </div>
+                          <span className="text-gray-400">Video Export</span>
+                          <span className="ml-auto text-[10px] bg-gray-200 dark:bg-gray-700 text-gray-500 px-1.5 py-0.5 rounded">Soon</span>
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
                 
                 {/* Quick Actions */}
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Quick Actions</h3>
-                  <div className="space-y-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start text-xs"
-                      onClick={handleJumpToBookmark}
-                      disabled={bookmarkedSceneIndex === -1}
-                    >
-                      <Bookmark className={`w-3 h-3 mr-2 ${bookmarkedSceneIndex !== -1 ? 'text-amber-500' : 'text-amber-400'}`} />
-                      {bookmarkedSceneIndex !== -1 ? `Go to Scene ${bookmarkedSceneIndex + 1}` : 'No Bookmark'}
-                    </Button>
-                    <Button
-                      variant={showSceneGallery ? 'default' : 'outline'}
-                      size="sm"
-                      className={`w-full justify-start text-xs ${showSceneGallery ? 'bg-cyan-500/90 hover:bg-cyan-500 text-white' : ''}`}
-                      onClick={() => setShowSceneGallery(!showSceneGallery)}
-                    >
-                      <ImageIcon className={`w-3 h-3 mr-2 ${showSceneGallery ? 'text-white' : 'text-cyan-400'}`} />
-                      {showSceneGallery ? 'Close Scene Gallery' : 'Open Scene Gallery'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start text-xs"
-                      onClick={() => setIsPlayerOpen(true)}
-                    >
-                      <Play className="w-3 h-3 mr-2 text-green-500" />
-                      Screening Room
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start text-xs"
-                      onClick={handleGenerateReviews}
-                      disabled={isGeneratingReviews}
-                    >
-                      <BarChart3 className="w-3 h-3 mr-2 text-purple-500" />
-                      Update Review Scores
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={cn(
-                        "w-full justify-start text-xs",
-                        reviewsOutdated && (directorReview?.overallScore || audienceReview?.overallScore) && "border-amber-400 dark:border-amber-500 text-amber-600 dark:text-amber-400"
-                      )}
-                      onClick={() => setShowReviewModal(true)}
-                      disabled={!directorReview?.overallScore && !audienceReview?.overallScore}
-                    >
-                      <FileText className={cn(
-                        "w-3 h-3 mr-2",
-                        reviewsOutdated && (directorReview?.overallScore || audienceReview?.overallScore) ? "text-amber-500" : "text-blue-500"
-                      )} />
-                      Review Analysis
-                      {reviewsOutdated && (directorReview?.overallScore || audienceReview?.overallScore) && (
-                        <span className="ml-auto text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded">Outdated</span>
-                      )}
-                    </Button>
-                  </div>
+                  <button 
+                    onClick={() => toggleSection('quickActions')}
+                    className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                  >
+                    <span>Quick Actions</span>
+                    {sectionsOpen.quickActions ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  </button>
+                  {sectionsOpen.quickActions && (
+                    <div className="space-y-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start text-xs"
+                        onClick={handleJumpToBookmark}
+                        disabled={bookmarkedSceneIndex === -1}
+                      >
+                        <Bookmark className={`w-3 h-3 mr-2 ${bookmarkedSceneIndex !== -1 ? 'text-amber-500' : 'text-amber-400'}`} />
+                        {bookmarkedSceneIndex !== -1 ? `Go to Scene ${bookmarkedSceneIndex + 1}` : 'No Bookmark'}
+                      </Button>
+                      <Button
+                        variant={showSceneGallery ? 'default' : 'outline'}
+                        size="sm"
+                        className={`w-full justify-start text-xs ${showSceneGallery ? 'bg-cyan-500/90 hover:bg-cyan-500 text-white' : ''}`}
+                        onClick={() => setShowSceneGallery(!showSceneGallery)}
+                      >
+                        <ImageIcon className={`w-3 h-3 mr-2 ${showSceneGallery ? 'text-white' : 'text-cyan-400'}`} />
+                        {showSceneGallery ? 'Close Scene Gallery' : 'Open Scene Gallery'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start text-xs"
+                        onClick={() => setIsPlayerOpen(true)}
+                      >
+                        <Play className="w-3 h-3 mr-2 text-green-500" />
+                        Screening Room
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start text-xs"
+                        onClick={handleGenerateReviews}
+                        disabled={isGeneratingReviews}
+                      >
+                        <BarChart3 className="w-3 h-3 mr-2 text-purple-500" />
+                        Update Review Scores
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "w-full justify-start text-xs",
+                          reviewsOutdated && (directorReview?.overallScore || audienceReview?.overallScore) && "border-amber-400 dark:border-amber-500 text-amber-600 dark:text-amber-400"
+                        )}
+                        onClick={() => setShowReviewModal(true)}
+                        disabled={!directorReview?.overallScore && !audienceReview?.overallScore}
+                      >
+                        <FileText className={cn(
+                          "w-3 h-3 mr-2",
+                          reviewsOutdated && (directorReview?.overallScore || audienceReview?.overallScore) ? "text-amber-500" : "text-blue-500"
+                        )} />
+                        Review Analysis
+                        {reviewsOutdated && (directorReview?.overallScore || audienceReview?.overallScore) && (
+                          <span className="ml-auto text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded">Outdated</span>
+                        )}
+                      </Button>
+                      <Link
+                        href="/dashboard/settings/profile"
+                        className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                      >
+                        <Settings className="w-3 h-3 text-gray-400" />
+                        <span>Settings</span>
+                      </Link>
+                    </div>
+                  )}
                 </div>
                 
-                {/* Project Stats - Mini Dashboard */}
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Project Stats</h3>
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 dark:from-purple-500/20 dark:to-purple-600/10 rounded-lg p-2.5 border border-purple-200/50 dark:border-purple-500/20 text-center">
-                      <div className="text-xl font-bold text-purple-600 dark:text-purple-400">{script?.script?.scenes?.length || 0}</div>
-                      <div className="text-xs text-purple-500/80 dark:text-purple-400/70 uppercase tracking-wide font-medium">Scenes</div>
-                    </div>
-                    <div className="bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 dark:from-cyan-500/20 dark:to-cyan-600/10 rounded-lg p-2.5 border border-cyan-200/50 dark:border-cyan-500/20 text-center">
-                      <div className="text-xl font-bold text-cyan-600 dark:text-cyan-400">{characters.length}</div>
-                      <div className="text-xs text-cyan-500/80 dark:text-cyan-400/70 uppercase tracking-wide font-medium">Cast</div>
-                    </div>
-                    <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 dark:from-green-500/20 dark:to-green-600/10 rounded-lg p-2.5 border border-green-200/50 dark:border-green-500/20 text-center">
-                      <div className="text-xl font-bold text-green-600 dark:text-green-400">
-                        {Math.round((script?.script?.scenes || []).reduce((sum: number, s: any) => sum + (s.estimatedDuration || s.duration || 15), 0) / 60)}m
-                      </div>
-                      <div className="text-xs text-green-500/80 dark:text-green-400/70 uppercase tracking-wide font-medium">Duration</div>
-                    </div>
-                    <div className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 dark:from-amber-500/20 dark:to-amber-600/10 rounded-lg p-2.5 border border-amber-200/50 dark:border-amber-500/20 text-center">
-                      <div className="text-xl font-bold text-amber-600 dark:text-amber-400">
-                        {(() => {
-                          const sceneCount = script?.script?.scenes?.length || 0;
-                          const charCount = characters.length;
-                          const imageCredits = sceneCount * 5;
-                          const charCredits = charCount * 2;
-                          const audioCredits = sceneCount * 1;
-                          return imageCredits + charCredits + audioCredits;
-                        })()}
-                      </div>
-                      <div className="text-xs text-amber-500/80 dark:text-amber-400/70 uppercase tracking-wide font-medium">Credits</div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Review Scores - Stoplight Cards */}
+                {/* Review Scores - Stoplight Cards (moved above Project Stats) */}
                 {(directorReview?.overallScore || audienceReview?.overallScore) && (
                   <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Review Scores</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      {(() => {
-                        const directorColors = getScoreCardClasses(directorReview?.overallScore || 0)
-                        return (
-                          <div className={cn("rounded-lg p-2.5 border text-center", directorColors.gradient, directorColors.border)}>
-                            <div className={cn("text-xl font-bold", directorColors.text)}>
-                              {directorReview?.overallScore || '-'}
+                    <button 
+                      onClick={() => toggleSection('reviewScores')}
+                      className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                    >
+                      <span>Review Scores</span>
+                      {sectionsOpen.reviewScores ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    </button>
+                    {sectionsOpen.reviewScores && (
+                      <div className="grid grid-cols-2 gap-2">
+                        {(() => {
+                          const directorColors = getScoreCardClasses(directorReview?.overallScore || 0)
+                          return (
+                            <div className={cn("rounded-lg p-2.5 border text-center", directorColors.gradient, directorColors.border)}>
+                              <div className={cn("text-xl font-bold", directorColors.text)}>
+                                {directorReview?.overallScore || '-'}
+                              </div>
+                              <div className={cn("text-xs uppercase tracking-wide font-medium", directorColors.label)}>Director</div>
                             </div>
-                            <div className={cn("text-xs uppercase tracking-wide font-medium", directorColors.label)}>Director</div>
-                          </div>
-                        )
-                      })()}
-                      {(() => {
-                        const audienceColors = getScoreCardClasses(audienceReview?.overallScore || 0)
-                        return (
-                          <div className={cn("rounded-lg p-2.5 border text-center", audienceColors.gradient, audienceColors.border)}>
-                            <div className={cn("text-xl font-bold", audienceColors.text)}>
-                              {audienceReview?.overallScore || '-'}
+                          )
+                        })()}
+                        {(() => {
+                          const audienceColors = getScoreCardClasses(audienceReview?.overallScore || 0)
+                          return (
+                            <div className={cn("rounded-lg p-2.5 border text-center", audienceColors.gradient, audienceColors.border)}>
+                              <div className={cn("text-xl font-bold", audienceColors.text)}>
+                                {audienceReview?.overallScore || '-'}
+                              </div>
+                              <div className={cn("text-xs uppercase tracking-wide font-medium", audienceColors.label)}>Audience</div>
                             </div>
-                            <div className={cn("text-xs uppercase tracking-wide font-medium", audienceColors.label)}>Audience</div>
-                          </div>
-                        )
-                      })()}
-                    </div>
+                          )
+                        })()}
+                      </div>
+                    )}
                   </div>
                 )}
                 
-                {/* Settings */}
+                {/* Project Stats - Mini Dashboard */}
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                  <button 
+                    onClick={() => toggleSection('projectStats')}
+                    className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                  >
+                    <span>Project Stats</span>
+                    {sectionsOpen.projectStats ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  </button>
+                  {sectionsOpen.projectStats && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 dark:from-purple-500/20 dark:to-purple-600/10 rounded-lg p-2.5 border border-purple-200/50 dark:border-purple-500/20 text-center">
+                        <div className="text-xl font-bold text-purple-600 dark:text-purple-400">{script?.script?.scenes?.length || 0}</div>
+                        <div className="text-xs text-purple-500/80 dark:text-purple-400/70 uppercase tracking-wide font-medium">Scenes</div>
+                      </div>
+                      <div className="bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 dark:from-cyan-500/20 dark:to-cyan-600/10 rounded-lg p-2.5 border border-cyan-200/50 dark:border-cyan-500/20 text-center">
+                        <div className="text-xl font-bold text-cyan-600 dark:text-cyan-400">{characters.length}</div>
+                        <div className="text-xs text-cyan-500/80 dark:text-cyan-400/70 uppercase tracking-wide font-medium">Cast</div>
+                      </div>
+                      <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 dark:from-green-500/20 dark:to-green-600/10 rounded-lg p-2.5 border border-green-200/50 dark:border-green-500/20 text-center">
+                        <div className="text-xl font-bold text-green-600 dark:text-green-400">
+                          {Math.round((script?.script?.scenes || []).reduce((sum: number, s: any) => sum + (s.estimatedDuration || s.duration || 15), 0) / 60)}m
+                        </div>
+                        <div className="text-xs text-green-500/80 dark:text-green-400/70 uppercase tracking-wide font-medium">Duration</div>
+                      </div>
+                      <div className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 dark:from-amber-500/20 dark:to-amber-600/10 rounded-lg p-2.5 border border-amber-200/50 dark:border-amber-500/20 text-center">
+                        <div className="text-xl font-bold text-amber-600 dark:text-amber-400">
+                          {(() => {
+                            const sceneCount = script?.script?.scenes?.length || 0;
+                            const charCount = characters.length;
+                            const imageCredits = sceneCount * 5;
+                            const charCredits = charCount * 2;
+                            const audioCredits = sceneCount * 1;
+                            return imageCredits + charCredits + audioCredits;
+                          })()}
+                        </div>
+                        <div className="text-xs text-amber-500/80 dark:text-amber-400/70 uppercase tracking-wide font-medium">Est. Credits</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Credits Balance */}
                 <div className="p-4 mt-auto">
-                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Settings</h3>
-                  <nav className="space-y-1">
-                    <Link
-                      href="/dashboard/settings/profile"
-                      className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <User className="w-4 h-4" />
-                      <span>Profile</span>
-                    </Link>
-                    <Link
-                      href="/dashboard/settings/byok"
-                      className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <Key className="w-4 h-4" />
-                      <span>BYOK Settings</span>
-                    </Link>
-                    <Link
-                      href="/dashboard/settings/billing"
-                      className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <CreditCard className="w-4 h-4" />
-                      <span>Billing & Credits</span>
-                    </Link>
-                  </nav>
+                  <button 
+                    onClick={() => toggleSection('credits')}
+                    className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                  >
+                    <span>Credits</span>
+                    {sectionsOpen.credits ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  </button>
+                  {sectionsOpen.credits && (
+                    <div className="space-y-3">
+                      <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 dark:from-emerald-500/20 dark:to-emerald-600/10 rounded-lg p-3 border border-emerald-200/50 dark:border-emerald-500/20">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Coins className="w-4 h-4 text-emerald-500" />
+                            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Balance</span>
+                          </div>
+                          <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                            {user?.credits ?? '—'}
+                          </div>
+                        </div>
+                      </div>
+                      <Link
+                        href="/dashboard/settings/billing"
+                        className="flex items-center justify-center gap-2 px-3 py-2 text-xs rounded-lg bg-sf-primary/10 text-sf-primary hover:bg-sf-primary/20 transition-colors font-medium"
+                      >
+                        <CreditCard className="w-3 h-3" />
+                        <span>Get More Credits</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
