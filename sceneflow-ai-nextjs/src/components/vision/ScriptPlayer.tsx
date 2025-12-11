@@ -557,35 +557,87 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
     dialogueCursor = Math.max(sfxCursor, voiceAnchorTime)
     
     if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
-      // Sort dialogue by dialogueIndex to ensure correct playback order
-      // (dialogue audio may be generated/stored out of order due to parallel generation)
-      // If dialogueIndex is undefined/missing, use a large fallback to preserve relative order
-      const sortedDialogue = [...dialogueArray]
-        .map((d: any, originalIndex: number) => ({ ...d, __originalIndex: originalIndex }))
-        .sort((a: any, b: any) => {
-          // Use dialogueIndex if available, otherwise use original array position + 1000
-          // This ensures entries with dialogueIndex sort correctly, while entries without
-          // maintain their relative order at the end
-          const indexA = typeof a.dialogueIndex === 'number' ? a.dialogueIndex : (1000 + a.__originalIndex)
-          const indexB = typeof b.dialogueIndex === 'number' ? b.dialogueIndex : (1000 + b.__originalIndex)
-          return indexA - indexB
-        })
+      // DEFINITIVE FIX: Match audio to script dialogue order
+      // The script.dialogue array is the source of truth for order
+      // We match audio entries to script entries and play in script order
+      const scriptDialogue = scene.dialogue || []
       
-      console.log('[ScriptPlayer] Dialogue sort order:', sortedDialogue.map((d: any) => ({
+      console.log('[ScriptPlayer] Script dialogue order:', scriptDialogue.map((d: any, i: number) => ({
+        scriptIndex: i,
         character: d.character,
-        dialogueIndex: d.dialogueIndex,
-        originalIndex: d.__originalIndex,
-        audioUrl: d.audioUrl?.slice(-40) // Last 40 chars of URL for identification
+        linePreview: d.line?.substring(0, 30) || d.text?.substring(0, 30)
       })))
-      console.log('[ScriptPlayer] Raw dialogue array (before sort):', dialogueArray.map((d: any, i: number) => ({
+      
+      console.log('[ScriptPlayer] Audio entries (raw):', dialogueArray.map((d: any, i: number) => ({
         arrayPos: i,
         character: d.character,
         dialogueIndex: d.dialogueIndex,
         audioUrl: d.audioUrl?.slice(-40)
       })))
       
-      for (let i = 0; i < sortedDialogue.length; i++) {
-        const dialogue = sortedDialogue[i]
+      // Strategy: Use dialogueIndex if available and valid, otherwise match by character + position
+      // Create a map of audio entries by dialogueIndex for O(1) lookup
+      const audioByIndex = new Map<number, any>()
+      const unmatchedAudio: any[] = []
+      
+      for (const audio of dialogueArray) {
+        if (typeof audio.dialogueIndex === 'number' && audio.dialogueIndex >= 0 && audio.dialogueIndex < scriptDialogue.length) {
+          // Validate that the dialogueIndex makes sense (character should match)
+          const expectedChar = scriptDialogue[audio.dialogueIndex]?.character
+          if (expectedChar && audio.character?.toLowerCase() === expectedChar?.toLowerCase()) {
+            audioByIndex.set(audio.dialogueIndex, audio)
+          } else {
+            // dialogueIndex doesn't match expected character - treat as unmatched
+            console.warn('[ScriptPlayer] Audio dialogueIndex mismatch:', {
+              audioChar: audio.character,
+              expectedChar,
+              dialogueIndex: audio.dialogueIndex
+            })
+            unmatchedAudio.push(audio)
+          }
+        } else {
+          unmatchedAudio.push(audio)
+        }
+      }
+      
+      // Build final ordered list based on script order
+      const orderedAudio: any[] = []
+      const usedUnmatched = new Set<number>()
+      
+      for (let scriptIdx = 0; scriptIdx < scriptDialogue.length; scriptIdx++) {
+        const scriptLine = scriptDialogue[scriptIdx]
+        
+        // First try: exact dialogueIndex match
+        if (audioByIndex.has(scriptIdx)) {
+          orderedAudio.push(audioByIndex.get(scriptIdx))
+          continue
+        }
+        
+        // Second try: find unmatched audio with same character (first match wins)
+        const unmatchedIdx = unmatchedAudio.findIndex((audio, idx) => 
+          !usedUnmatched.has(idx) && 
+          audio.character?.toLowerCase() === scriptLine.character?.toLowerCase()
+        )
+        
+        if (unmatchedIdx >= 0) {
+          orderedAudio.push(unmatchedAudio[unmatchedIdx])
+          usedUnmatched.add(unmatchedIdx)
+          continue
+        }
+        
+        // No audio found for this script line
+        console.warn('[ScriptPlayer] No audio found for script line:', scriptIdx, scriptLine.character)
+      }
+      
+      console.log('[ScriptPlayer] Final ordered audio:', orderedAudio.map((d: any, i: number) => ({
+        playOrder: i,
+        character: d.character,
+        dialogueIndex: d.dialogueIndex,
+        audioUrl: d.audioUrl?.slice(-40)
+      })))
+      
+      for (let i = 0; i < orderedAudio.length; i++) {
+        const dialogue = orderedAudio[i]
         if (dialogue.audioUrl) {
           const startTime = Math.max(dialogueCursor, voiceAnchorTime)
           resolvedDialogue.push({
