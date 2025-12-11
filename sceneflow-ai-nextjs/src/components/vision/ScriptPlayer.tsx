@@ -561,6 +561,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       // Since audio is generated sequentially (line 1, 2, 3...), timestamps should be sequential
       // This bypasses any issues with stored dialogueIndex values
       
+      console.log('🔴🔴🔴 [ScriptPlayer] NUCLEAR TIMESTAMP SORTING ACTIVE 🔴🔴🔴')
+      
       const scriptDialogue = scene.dialogue || []
       
       // Helper: Extract timestamp from audio URL for ordering

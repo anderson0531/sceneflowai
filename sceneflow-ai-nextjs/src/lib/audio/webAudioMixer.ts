@@ -178,8 +178,10 @@ export class WebAudioMixer {
     try {
       // Music can start loading/playing immediately
       if (config.music) {
+        console.log('[WebAudioMixer] Loading music:', config.music?.slice(-50))
         this.loadAudioFile(config.music, 'music')
           .then(musicBuffer => {
+            console.log('[WebAudioMixer] Music loaded, playing at time 0, duration:', musicBuffer.duration)
             this.playAudioBuffer(
               musicBuffer,
               'music',
@@ -190,6 +192,8 @@ export class WebAudioMixer {
           .catch(error => {
             console.error('[WebAudioMixer] Music load/play failed:', error)
           })
+      } else {
+        console.log('[WebAudioMixer] No music URL in config')
       }
 
       const descriptionPromise = config.description
