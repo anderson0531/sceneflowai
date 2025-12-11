@@ -2901,7 +2901,7 @@ function SceneCard({
               </TooltipProvider>
             )}
             
-            {/* Play Button */}
+            {/* Play Audio Button */}
             {!isOutline && (
               <TooltipProvider>
                 <Tooltip>
@@ -2917,13 +2917,13 @@ function SceneCard({
                       {isPlaying ? (
                         <Pause className="w-4 h-4" />
                       ) : (
-                        <Play className="w-4 h-4" />
+                        <Volume2 className="w-4 h-4" />
                       )}
-                      <span className="text-xs">{isPlaying ? 'Stop' : 'Play'}</span>
+                      <span className="text-xs">{isPlaying ? 'Stop' : 'Audio'}</span>
                     </button>
                   </TooltipTrigger>
                   <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                    {isPlaying ? 'Stop playing scene' : 'Play scene'}
+                    {isPlaying ? 'Stop playing audio' : 'Play scene audio'}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

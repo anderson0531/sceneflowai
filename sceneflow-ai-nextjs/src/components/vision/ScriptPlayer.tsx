@@ -557,8 +557,16 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
     dialogueCursor = Math.max(sfxCursor, voiceAnchorTime)
     
     if (Array.isArray(dialogueArray) && dialogueArray.length > 0) {
-      for (let i = 0; i < dialogueArray.length; i++) {
-        const dialogue = dialogueArray[i]
+      // Sort dialogue by dialogueIndex to ensure correct playback order
+      // (dialogue audio may be generated/stored out of order due to parallel generation)
+      const sortedDialogue = [...dialogueArray].sort((a: any, b: any) => {
+        const indexA = typeof a.dialogueIndex === 'number' ? a.dialogueIndex : 0
+        const indexB = typeof b.dialogueIndex === 'number' ? b.dialogueIndex : 0
+        return indexA - indexB
+      })
+      
+      for (let i = 0; i < sortedDialogue.length; i++) {
+        const dialogue = sortedDialogue[i]
         if (dialogue.audioUrl) {
           const startTime = Math.max(dialogueCursor, voiceAnchorTime)
           resolvedDialogue.push({
