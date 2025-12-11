@@ -53,7 +53,7 @@ const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement> & { size?: numbe
 )
 import Link from 'next/link'
 import ScriptReviewModal from '@/components/vision/ScriptReviewModal'
-import { SceneEditorModal } from '@/components/vision/SceneEditorModal'
+import { SceneEditorModal } from '@/components/vision/SceneEditorModalV2'
 import { NavigationWarningDialog } from '@/components/workflow/NavigationWarningDialog'
 import { findSceneCharacters } from '../../../../../lib/character/matching'
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
@@ -5747,6 +5747,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           characters={characters}
           previousScene={editingSceneIndex > 0 ? script.script.scenes[editingSceneIndex - 1] : undefined}
           nextScene={editingSceneIndex < script.script.scenes.length - 1 ? script.script.scenes[editingSceneIndex + 1] : undefined}
+          script={{
+            title: script.title,
+            logline: script.logline,
+            scenes: script.script.scenes,
+            characters: characters
+          }}
           onApplyChanges={handleApplySceneChanges}
         />
       )}
