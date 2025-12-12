@@ -141,6 +141,8 @@ export function SceneProductionManager({
   const [showInitialDialog, setShowInitialDialog] = useState(false)
   
   // Phase 2: Dialogue Coverage - parse scene dialogue into trackable lines
+  // NOTE: sceneDialogueLines can be computed early, but dialogue assignment state
+  // must be defined after selectedSegmentId (see below)
   const sceneDialogueLines = useMemo(() => {
     if (!scene?.dialogue || !Array.isArray(scene.dialogue)) return []
     return scene.dialogue.map((d: any, idx: number) => ({
@@ -149,55 +151,6 @@ export function SceneProductionManager({
       line: d.line || d.text || '',
     }))
   }, [scene?.dialogue])
-  
-  // Local state for dialogue assignments (segment -> dialogue ids)
-  // This tracks which dialogue lines are assigned to which segment
-  const [dialogueAssignments, setDialogueAssignments] = useState<Record<string, Set<string>>>({})
-  
-  // Get dialogue lines assigned to the selected segment
-  const selectedSegmentDialogue = useMemo(() => {
-    if (!selectedSegmentId) return []
-    const assigned = dialogueAssignments[selectedSegmentId] || new Set()
-    return sceneDialogueLines
-      .filter(d => assigned.has(d.id))
-      .map(d => ({ ...d, covered: true }))
-  }, [selectedSegmentId, dialogueAssignments, sceneDialogueLines])
-  
-  // Handler to toggle dialogue assignment to selected segment
-  const handleToggleDialogue = useCallback((dialogueId: string) => {
-    if (!selectedSegmentId) return
-    
-    setDialogueAssignments(prev => {
-      const currentSet = prev[selectedSegmentId] || new Set()
-      const newSet = new Set(currentSet)
-      
-      if (newSet.has(dialogueId)) {
-        // Remove from this segment
-        newSet.delete(dialogueId)
-        toast.success('Dialogue removed from segment')
-      } else {
-        // First, remove from any other segment
-        const updated: Record<string, Set<string>> = {}
-        Object.entries(prev).forEach(([segId, dialSet]) => {
-          const newDialSet = new Set(dialSet)
-          newDialSet.delete(dialogueId)
-          if (newDialSet.size > 0) {
-            updated[segId] = newDialSet
-          }
-        })
-        // Add to current segment
-        newSet.add(dialogueId)
-        updated[selectedSegmentId] = newSet
-        toast.success('Dialogue assigned to segment')
-        return updated
-      }
-      
-      return {
-        ...prev,
-        [selectedSegmentId]: newSet
-      }
-    })
-  }, [selectedSegmentId])
   
   // Build audio tracks from scene data if not provided externally
   const [audioTracksState, setAudioTracksState] = useState<AudioTracksData>({})
@@ -345,6 +298,54 @@ export function SceneProductionManager({
 
   const selectedSegment: SceneSegment | null =
     segments.find((segment) => segment.segmentId === selectedSegmentId) ?? null
+
+  // Phase 2: Dialogue assignments - must be after selectedSegmentId is defined
+  const [dialogueAssignments, setDialogueAssignments] = useState<Record<string, Set<string>>>({})
+  
+  // Get dialogue lines assigned to the selected segment
+  const selectedSegmentDialogue = useMemo(() => {
+    if (!selectedSegmentId) return []
+    const assigned = dialogueAssignments[selectedSegmentId] || new Set()
+    return sceneDialogueLines
+      .filter(d => assigned.has(d.id))
+      .map(d => ({ ...d, covered: true }))
+  }, [selectedSegmentId, dialogueAssignments, sceneDialogueLines])
+  
+  // Handler to toggle dialogue assignment to selected segment
+  const handleToggleDialogue = useCallback((dialogueId: string) => {
+    if (!selectedSegmentId) return
+    
+    setDialogueAssignments(prev => {
+      const currentSet = prev[selectedSegmentId] || new Set()
+      const newSet = new Set(currentSet)
+      
+      if (newSet.has(dialogueId)) {
+        // Remove from this segment
+        newSet.delete(dialogueId)
+        toast.success('Dialogue removed from segment')
+      } else {
+        // First, remove from any other segment
+        const updated: Record<string, Set<string>> = {}
+        Object.entries(prev).forEach(([segId, dialSet]) => {
+          const newDialSet = new Set(dialSet)
+          newDialSet.delete(dialogueId)
+          if (newDialSet.size > 0) {
+            updated[segId] = newDialSet
+          }
+        })
+        // Add to current segment
+        newSet.add(dialogueId)
+        updated[selectedSegmentId] = newSet
+        toast.success('Dialogue assigned to segment')
+        return updated
+      }
+      
+      return {
+        ...prev,
+        [selectedSegmentId]: newSet
+      }
+    })
+  }, [selectedSegmentId])
 
   const handleInitialize = async () => {
     setShowConfirmDialog(false)
