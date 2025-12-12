@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { 
   Play, Pause, Volume2, VolumeX, Mic, Music, Zap, 
-  SkipBack, SkipForward, Film, Download, Plus, Trash2, X
+  SkipBack, SkipForward, Film, Download, Plus, Trash2, X, Maximize2, Minimize2
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
@@ -93,6 +93,7 @@ export function SceneTimeline({
   
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
+  const [isPlayerExpanded, setIsPlayerExpanded] = useState(false)
   const [showAddSegmentDialog, setShowAddSegmentDialog] = useState(false)
   const [newSegmentDuration, setNewSegmentDuration] = useState(4)
   const [mutedTracks, setMutedTracks] = useState<Set<string>>(() => {
@@ -787,7 +788,10 @@ export function SceneTimeline({
     <div className="space-y-4">
       {/* Scene Video Player - Above Timeline */}
       <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-black overflow-hidden">
-        <div className="relative w-full max-w-xl mx-auto aspect-video bg-black">
+        <div className={cn(
+          "relative mx-auto aspect-video bg-black transition-all duration-200",
+          isPlayerExpanded ? "w-full max-w-3xl" : "w-full max-w-sm"
+        )}>
           {currentVisualClip?.url ? (
             <video 
               ref={videoRef} 
@@ -802,6 +806,15 @@ export function SceneTimeline({
               <Film className="w-12 h-12 text-gray-600" />
             </div>
           )}
+          {/* Expand/Collapse Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsPlayerExpanded(!isPlayerExpanded)}
+            className="absolute top-2 right-2 h-7 w-7 p-0 bg-black/50 hover:bg-black/70 text-white"
+          >
+            {isPlayerExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </Button>
         </div>
         
         {/* Transport Controls Bar */}

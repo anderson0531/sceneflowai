@@ -481,17 +481,12 @@ export function SceneProductionManager({
         </DialogContent>
       </Dialog>
     
-      <div className="space-y-4">
-        {/* Header with scene info and regenerate button */}
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-              Scene {sceneNumber}: {heading || 'Untitled'}
-            </h4>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {productionData.segments.length} segments · Target {productionData.targetSegmentDuration}s
-            </p>
-          </div>
+      <div className="space-y-3">
+        {/* Header with segment count and regenerate button */}
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {productionData.segments.length} segments · Target {productionData.targetSegmentDuration}s
+          </p>
           {productionData?.isSegmented && (
             <Button
               variant="outline"
@@ -503,8 +498,8 @@ export function SceneProductionManager({
               }}
               className="shrink-0"
             >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Segments
+              <Film className="w-4 h-4 mr-2" />
+              Generate
             </Button>
           )}
         </div>

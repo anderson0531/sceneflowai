@@ -2984,11 +2984,8 @@ function SceneCard({
           className="mt-2 cursor-pointer hover:bg-white/5 -mx-2 px-2 py-1 rounded-lg transition-colors"
           onClick={toggleOpen}
         >
-          <p className="text-xl font-semibold text-white leading-tight flex items-center gap-2">
+          <p className="text-xl font-semibold text-white leading-tight">
             SCENE {sceneNumber}: {formattedHeading}
-            <span className="text-xs text-gray-500 font-normal">
-              {isWorkflowOpen ? '(click to collapse)' : '(click to expand)'}
-            </span>
           </p>
         </div>
       </div>
