@@ -64,7 +64,7 @@ import { cn } from '@/lib/utils'
 import { VisionReferencesSidebar } from '@/components/vision/VisionReferencesSidebar'
 import { VisualReference, VisualReferenceType, VisionReferencesPayload } from '@/types/visionReferences'
 import { uploadAssetToBlob } from '@/lib/storage/upload'
-import { SceneProductionData, SceneProductionReferences } from '@/components/vision/scene-production'
+import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production'
 
 // Scene Analysis interface for score generation
 interface SceneAnalysis {
@@ -957,6 +957,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 userEditedPrompt: prompt,
                 status: segment.status === 'DRAFT' ? 'READY' : segment.status,
               }
+            : segment
+        )
+        return { ...current, segments }
+      })
+    },
+    [applySceneProductionUpdate]
+  )
+
+  // Phase 5: Handle segment keyframe settings changes (persists to DB)
+  const handleSegmentKeyframeChange = useCallback(
+    (sceneId: string, segmentId: string, keyframeSettings: SegmentKeyframeSettings) => {
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        const segments = current.segments.map((segment) =>
+          segment.segmentId === segmentId
+            ? { ...segment, keyframeSettings }
             : segment
         )
         return { ...current, segments }
@@ -5539,6 +5555,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 })()}
                 onInitializeSceneProduction={handleInitializeSceneProduction}
                 onSegmentPromptChange={handleSegmentPromptChange}
+                onSegmentKeyframeChange={handleSegmentKeyframeChange}
                 onSegmentGenerate={handleSegmentGenerate}
                 onSegmentUpload={handleSegmentUpload}
                 onAddSegment={handleAddSegment}

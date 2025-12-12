@@ -47,6 +47,7 @@ interface SceneProductionManagerProps {
   references: SceneProductionReferences
   onInitialize: (sceneId: string, options: { targetDuration: number; generationOptions?: SegmentGenerationOptions }) => Promise<void>
   onPromptChange: (sceneId: string, segmentId: string, prompt: string) => void
+  onKeyframeChange?: (sceneId: string, segmentId: string, keyframeSettings: SegmentKeyframeSettings) => void
   onGenerate: (sceneId: string, segmentId: string, mode: GenerationType, options?: { 
     startFrameUrl?: string
     prompt?: string
@@ -73,6 +74,7 @@ export function SceneProductionManager({
   references,
   onInitialize,
   onPromptChange,
+  onKeyframeChange,
   onGenerate,
   onUpload,
   audioTracks: externalAudioTracks,
@@ -355,16 +357,20 @@ export function SceneProductionManager({
   const handleKeyframeChange = useCallback((settings: SegmentKeyframeSettings) => {
     if (!selectedSegmentId) return
     
+    // Update local state for immediate UI feedback
     setSegmentKeyframes(prev => ({
       ...prev,
       [selectedSegmentId]: settings,
     }))
     
+    // Phase 5: Persist keyframe settings to database
+    onKeyframeChange?.(sceneId, selectedSegmentId, settings)
+    
     toast.success('Animation settings updated', {
       description: settings.useAutoDetect ? 'Auto-detect enabled' : `${settings.direction || 'custom'} with ${settings.easingType} easing`,
       duration: 1500,
     })
-  }, [selectedSegmentId])
+  }, [selectedSegmentId, sceneId, onKeyframeChange])
   
   // Get the selected segment with merged keyframe settings
   const selectedSegmentWithKeyframes = useMemo(() => {

@@ -16,7 +16,7 @@ import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, 
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
-import { SceneProductionData, SceneProductionReferences } from './scene-production/types'
+import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from './scene-production/types'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -147,6 +147,7 @@ interface ScriptPanelProps {
   sceneProductionReferences?: Record<string, SceneProductionReferences>
   onInitializeSceneProduction?: (sceneId: string, options: { targetDuration: number; segments?: any[] }) => Promise<void>
   onSegmentPromptChange?: (sceneId: string, segmentId: string, prompt: string) => void
+  onSegmentKeyframeChange?: (sceneId: string, segmentId: string, keyframeSettings: SegmentKeyframeSettings) => void
   onSegmentGenerate?: (sceneId: string, segmentId: string, mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD', options?: { startFrameUrl?: string; prompt?: string; negativePrompt?: string; duration?: number; aspectRatio?: '16:9' | '9:16'; resolution?: '720p' | '1080p' }) => Promise<void>
   onSegmentUpload?: (sceneId: string, segmentId: string, file: File) => Promise<void>
   onAddSegment?: (sceneId: string, afterSegmentId: string | null, duration: number) => void
@@ -392,7 +393,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onSegmentResize, onAudioClipChange, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onSegmentResize, onAudioClipChange, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -2082,6 +2083,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       sceneProductionReferences={sceneProductionReferences[scene.sceneId || scene.id || `scene-${idx}`] || undefined}
                       onInitializeSceneProduction={onInitializeSceneProduction}
                       onSegmentPromptChange={onSegmentPromptChange}
+                      onSegmentKeyframeChange={onSegmentKeyframeChange}
                       onSegmentGenerate={onSegmentGenerate}
                       onSegmentUpload={onSegmentUpload}
                       onAddSegment={onAddSegment}
@@ -2460,6 +2462,7 @@ interface SceneCardProps {
   belowDashboardSlot?: (helpers: { openGenerateAudio: () => void }) => React.ReactNode
   onInitializeSceneProduction?: (sceneId: string, options: { targetDuration: number; segments?: any[] }) => Promise<void>
   onSegmentPromptChange?: (sceneId: string, segmentId: string, prompt: string) => void
+  onSegmentKeyframeChange?: (sceneId: string, segmentId: string, keyframeSettings: SegmentKeyframeSettings) => void
   onSegmentGenerate?: (sceneId: string, segmentId: string, mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD', options?: { startFrameUrl?: string; prompt?: string; negativePrompt?: string; duration?: number; aspectRatio?: '16:9' | '9:16'; resolution?: '720p' | '1080p' }) => Promise<void>
   onSegmentUpload?: (sceneId: string, segmentId: string, file: File) => Promise<void>
   onAddSegment?: (sceneId: string, afterSegmentId: string | null, duration: number) => void
@@ -2544,6 +2547,7 @@ function SceneCard({
   sceneProductionReferences,
   onInitializeSceneProduction,
   onSegmentPromptChange,
+  onSegmentKeyframeChange,
   onSegmentGenerate,
   onSegmentUpload,
   onAddSegment,
@@ -4019,6 +4023,7 @@ function SceneCard({
                       onDeleteSegment={onDeleteSegment}
                       onSegmentResize={onSegmentResize}
                       onAudioClipChange={onAudioClipChange}
+                      onKeyframeChange={onSegmentKeyframeChange}
                     />
                   </div>
                 )}
