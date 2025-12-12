@@ -981,6 +981,53 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [applySceneProductionUpdate]
   )
 
+  // Phase 6: Handle segment dialogue assignment changes (persists to DB)
+  const handleSegmentDialogueAssignmentChange = useCallback(
+    (sceneId: string, segmentId: string, dialogueLineIds: string[]) => {
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        const segments = current.segments.map((segment) =>
+          segment.segmentId === segmentId
+            ? { ...segment, dialogueLineIds }
+            : segment
+        )
+        return { ...current, segments }
+      })
+    },
+    [applySceneProductionUpdate]
+  )
+
+  // Phase 7: Handle segment reordering (drag-and-drop)
+  const handleReorderSegments = useCallback(
+    (sceneId: string, oldIndex: number, newIndex: number) => {
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        
+        // Create new array with reordered segments
+        const newSegments = [...current.segments]
+        const [removed] = newSegments.splice(oldIndex, 1)
+        newSegments.splice(newIndex, 0, removed)
+        
+        // Recalculate sequenceIndex and timing for all segments
+        let currentTime = 0
+        const updatedSegments = newSegments.map((segment, idx) => {
+          const duration = segment.endTime - segment.startTime
+          const updated = {
+            ...segment,
+            sequenceIndex: idx,
+            startTime: currentTime,
+            endTime: currentTime + duration,
+          }
+          currentTime += duration
+          return updated
+        })
+        
+        return { ...current, segments: updatedSegments }
+      })
+    },
+    [applySceneProductionUpdate]
+  )
+
   const handleSegmentGenerate = useCallback(
     async (
       sceneId: string,
@@ -5556,11 +5603,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onInitializeSceneProduction={handleInitializeSceneProduction}
                 onSegmentPromptChange={handleSegmentPromptChange}
                 onSegmentKeyframeChange={handleSegmentKeyframeChange}
+                onSegmentDialogueAssignmentChange={handleSegmentDialogueAssignmentChange}
                 onSegmentGenerate={handleSegmentGenerate}
                 onSegmentUpload={handleSegmentUpload}
                 onAddSegment={handleAddSegment}
                 onDeleteSegment={handleDeleteSegment}
                 onSegmentResize={handleSegmentResize}
+                onReorderSegments={handleReorderSegments}
                 onAudioClipChange={handleAudioClipChange}
                 sceneAudioTracks={{}}
                   bookmarkedScene={sceneBookmark}

@@ -48,6 +48,7 @@ interface SceneProductionManagerProps {
   onInitialize: (sceneId: string, options: { targetDuration: number; generationOptions?: SegmentGenerationOptions }) => Promise<void>
   onPromptChange: (sceneId: string, segmentId: string, prompt: string) => void
   onKeyframeChange?: (sceneId: string, segmentId: string, keyframeSettings: SegmentKeyframeSettings) => void
+  onDialogueAssignmentChange?: (sceneId: string, segmentId: string, dialogueLineIds: string[]) => void
   onGenerate: (sceneId: string, segmentId: string, mode: GenerationType, options?: { 
     startFrameUrl?: string
     prompt?: string
@@ -63,6 +64,8 @@ interface SceneProductionManagerProps {
   onDeleteSegment?: (sceneId: string, segmentId: string) => void
   onSegmentResize?: (sceneId: string, segmentId: string, changes: { startTime?: number; duration?: number }) => void
   onAudioClipChange?: (sceneId: string, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
+  // Phase 7: Segment reordering
+  onReorderSegments?: (sceneId: string, oldIndex: number, newIndex: number) => void
 }
 
 export function SceneProductionManager({
@@ -75,6 +78,7 @@ export function SceneProductionManager({
   onInitialize,
   onPromptChange,
   onKeyframeChange,
+  onDialogueAssignmentChange,
   onGenerate,
   onUpload,
   audioTracks: externalAudioTracks,
@@ -83,6 +87,7 @@ export function SceneProductionManager({
   onDeleteSegment,
   onSegmentResize,
   onAudioClipChange,
+  onReorderSegments,
 }: SceneProductionManagerProps) {
   // Create stable callback wrappers - these must be defined early to avoid minification issues
   const handleAddSegmentWrapper = useCallback(
@@ -101,6 +106,16 @@ export function SceneProductionManager({
       }
     },
     [sceneId, onDeleteSegment]
+  )
+  
+  // Phase 7: Wrapper for segment reordering
+  const handleReorderSegmentsWrapper = useCallback(
+    (oldIndex: number, newIndex: number) => {
+      if (onReorderSegments) {
+        onReorderSegments(sceneId, oldIndex, newIndex)
+      }
+    },
+    [sceneId, onReorderSegments]
   )
   
   // Wrapper for segment resize/move (maps to onVisualClipChange in SceneTimeline)
@@ -305,6 +320,19 @@ export function SceneProductionManager({
   // Phase 2: Dialogue assignments - must be after selectedSegmentId is defined
   const [dialogueAssignments, setDialogueAssignments] = useState<Record<string, Set<string>>>({})
   
+  // Phase 6: Initialize dialogue assignments from persisted dialogueLineIds
+  useEffect(() => {
+    const initialAssignments: Record<string, Set<string>> = {}
+    segments.forEach((segment) => {
+      if (segment.dialogueLineIds && segment.dialogueLineIds.length > 0) {
+        initialAssignments[segment.segmentId] = new Set(segment.dialogueLineIds)
+      }
+    })
+    if (Object.keys(initialAssignments).length > 0) {
+      setDialogueAssignments(initialAssignments)
+    }
+  }, []) // Only run once on mount
+  
   // Get dialogue lines assigned to the selected segment
   const selectedSegmentDialogue = useMemo(() => {
     if (!selectedSegmentId) return []
@@ -321,34 +349,39 @@ export function SceneProductionManager({
     setDialogueAssignments(prev => {
       const currentSet = prev[selectedSegmentId] || new Set()
       const newSet = new Set(currentSet)
+      let updatedAssignments: Record<string, Set<string>>
       
       if (newSet.has(dialogueId)) {
         // Remove from this segment
         newSet.delete(dialogueId)
+        updatedAssignments = {
+          ...prev,
+          [selectedSegmentId]: newSet
+        }
         toast.success('Dialogue removed from segment')
       } else {
         // First, remove from any other segment
-        const updated: Record<string, Set<string>> = {}
+        updatedAssignments = {}
         Object.entries(prev).forEach(([segId, dialSet]) => {
           const newDialSet = new Set(dialSet)
           newDialSet.delete(dialogueId)
           if (newDialSet.size > 0) {
-            updated[segId] = newDialSet
+            updatedAssignments[segId] = newDialSet
           }
         })
         // Add to current segment
         newSet.add(dialogueId)
-        updated[selectedSegmentId] = newSet
+        updatedAssignments[selectedSegmentId] = newSet
         toast.success('Dialogue assigned to segment')
-        return updated
       }
       
-      return {
-        ...prev,
-        [selectedSegmentId]: newSet
-      }
+      // Phase 6: Persist dialogue assignment to database
+      const dialogueLineIds = Array.from(newSet)
+      onDialogueAssignmentChange?.(sceneId, selectedSegmentId, dialogueLineIds)
+      
+      return updatedAssignments
     })
-  }, [selectedSegmentId])
+  }, [selectedSegmentId, sceneId, onDialogueAssignmentChange])
 
   // Phase 3: Local state for keyframe settings per segment (for preview in Screening Room)
   const [segmentKeyframes, setSegmentKeyframes] = useState<Record<string, SegmentKeyframeSettings>>({})
@@ -811,6 +844,7 @@ export function SceneProductionManager({
               onDeleteSegment={onDeleteSegment ? handleDeleteSegmentWrapper : undefined}
               onAudioClipChange={onAudioClipChange ? handleAudioClipChangeWrapper : undefined}
               dialogueAssignments={dialogueAssignments}
+              onReorderSegments={onReorderSegments ? handleReorderSegmentsWrapper : undefined}
             />
           </div>
 

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { 
   Play, Pause, Volume2, VolumeX, Mic, Music, Zap, 
-  SkipBack, SkipForward, Film, Download, Plus, Trash2, X, Maximize2, Minimize2, Info, MessageSquare
+  SkipBack, SkipForward, Film, Download, Plus, Trash2, X, Maximize2, Minimize2, Info, MessageSquare, GripVertical
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
@@ -16,6 +16,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+// Phase 7: Drag-and-drop segment reordering
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 export interface AudioTrackClip {
   id: string
@@ -63,6 +67,8 @@ interface SceneTimelineProps {
   onDeleteSegment?: (segmentId: string) => void
   // Phase 2: Dialogue coverage indicators
   dialogueAssignments?: Record<string, Set<string>>
+  // Phase 7: Segment reordering
+  onReorderSegments?: (oldIndex: number, newIndex: number) => void
 }
 
 function formatTime(seconds: number): string {
@@ -78,6 +84,37 @@ function formatTimeShort(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
+// Phase 7: Sortable wrapper for visual clips
+interface SortableClipWrapperProps {
+  id: string
+  children: React.ReactNode
+  disabled?: boolean
+}
+
+function SortableClipWrapper({ id, children, disabled }: SortableClipWrapperProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id, disabled })
+  
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.8 : 1,
+  }
+  
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      {children}
+    </div>
+  )
+}
+
 export function SceneTimeline({
   segments,
   selectedSegmentId,
@@ -90,10 +127,34 @@ export function SceneTimeline({
   onAddSegment,
   onDeleteSegment,
   dialogueAssignments,
+  onReorderSegments,
 }: SceneTimelineProps) {
   // Capture callbacks in stable refs to avoid closure issues
   const addSegmentCallback = typeof onAddSegment === 'function' ? onAddSegment : undefined
   const deleteSegmentCallback = typeof onDeleteSegment === 'function' ? onDeleteSegment : undefined
+  const reorderSegmentsCallback = typeof onReorderSegments === 'function' ? onReorderSegments : undefined
+  
+  // Phase 7: DnD sensors for segment reordering
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px drag before activating
+      },
+    })
+  )
+  
+  // Phase 7: Handle drag end for segment reordering
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id || !reorderSegmentsCallback) return
+    
+    const oldIndex = segments.findIndex(s => s.segmentId === active.id)
+    const newIndex = segments.findIndex(s => s.segmentId === over.id)
+    
+    if (oldIndex !== -1 && newIndex !== -1) {
+      reorderSegmentsCallback(oldIndex, newIndex)
+    }
+  }, [segments, reorderSegmentsCallback])
   
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -676,8 +737,9 @@ export function SceneTimeline({
   const renderVisualTrack = () => {
     const lastClip = visualClips[visualClips.length - 1]
     const addButtonLeft = lastClip ? (lastClip.startTime + lastClip.duration) * pixelsPerSecond + 4 : 4
+    const clipIds = visualClips.map(clip => clip.segmentId)
     
-    return (
+    const trackContent = (
       <div className="flex items-stretch h-16 group">
         <div 
           className="flex-shrink-0 flex items-center gap-1.5 px-2 bg-gray-100 dark:bg-gray-800 border-r border-gray-300 dark:border-gray-700"
@@ -687,6 +749,9 @@ export function SceneTimeline({
           <span className="text-[10px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
             Visual
           </span>
+          {reorderSegmentsCallback && (
+            <GripVertical className="w-3 h-3 text-gray-400 ml-auto" title="Drag segments to reorder" />
+          )}
         </div>
         <div className="flex-1 relative bg-gray-900 border-b border-gray-700">
           {visualClips.map(clip => renderClip(
@@ -715,6 +780,19 @@ export function SceneTimeline({
         </div>
       </div>
     )
+    
+    // Phase 7: Wrap in DndContext only if reordering is enabled
+    if (reorderSegmentsCallback) {
+      return (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={clipIds} strategy={horizontalListSortingStrategy}>
+            {trackContent}
+          </SortableContext>
+        </DndContext>
+      )
+    }
+    
+    return trackContent
   }
 
   const renderAudioTrack = (

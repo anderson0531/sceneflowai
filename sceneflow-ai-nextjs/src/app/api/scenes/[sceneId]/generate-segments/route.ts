@@ -25,6 +25,8 @@ interface IntelligentSegment {
   end_frame_description: string // For lookahead/continuity
   camera_notes: string
   emotional_beat: string
+  // Phase 8: AI-assigned dialogue coverage
+  assigned_dialogue_indices?: number[] // 0-based indices of dialogue lines covered by this segment
 }
 
 export async function POST(
@@ -149,6 +151,11 @@ export async function POST(
         ? sceneData.sceneFrameUrl 
         : null
 
+      // Phase 8: Transform dialogue indices to dialogue line IDs
+      const dialogueLineIds = (seg.assigned_dialogue_indices || []).map((index: number) => 
+        `dialogue-${index}`
+      )
+
       return {
         segmentId: `seg_${sceneId}_${seg.sequence}`,
         sequenceIndex: Math.max(0, (Number(seg.sequence) || (idx + 1)) - 1),
@@ -166,6 +173,8 @@ export async function POST(
         endFrameDescription: seg.end_frame_description,
         cameraMovement: seg.camera_notes,
         emotionalBeat: seg.emotional_beat,
+        // Phase 8: AI-assigned dialogue coverage (persisted to DB)
+        dialogueLineIds,
         references: {
           startFrameUrl: startFrameUrl,
           endFrameUrl: null,
@@ -297,7 +306,7 @@ function generateIntelligentSegmentationPrompt(
     : '- No specific character references available'
 
   const dialogueText = sceneData.dialogue.length > 0
-    ? sceneData.dialogue.map(d => `${d.character}${d.emotion ? ` (${d.emotion})` : ''}: "${d.text}"`).join('\n')
+    ? sceneData.dialogue.map((d, idx) => `[${idx}] ${d.character}${d.emotion ? ` (${d.emotion})` : ''}: "${d.text}"`).join('\n')
     : 'No dialogue in this scene.'
 
   return `
@@ -396,12 +405,21 @@ Return a JSON array. Each segment object MUST have these fields:
     },
     "end_frame_description": "Character positioned near [location], facing [direction], expression [mood]",
     "camera_notes": "Slow push-in, anamorphic 35mm, motivated key light from window",
-    "emotional_beat": "Tension building"
+    "emotional_beat": "Tension building",
+    "assigned_dialogue_indices": [0, 1]
   }
 ]
 
+**DIALOGUE ASSIGNMENT RULES:**
+- Include "assigned_dialogue_indices" array with 0-based indices of dialogue lines covered by this segment
+- Dialogue lines are numbered [0], [1], [2], etc. in the input
+- Each dialogue line should appear in EXACTLY ONE segment
+- If dialogue [0] and [1] are spoken in segment 1, include "assigned_dialogue_indices": [0, 1]
+- Empty segments (establishing shots, reactions) should have "assigned_dialogue_indices": []
+
 **FINAL CHECKLIST:**
 ✅ Every line of dialogue from the script appears in a segment prompt
+✅ Each dialogue line is assigned to exactly one segment via assigned_dialogue_indices
 ✅ Dialogue is formatted as: [Name] speaks, "[text]"
 ✅ Each prompt is 50-150 words with specific lens/camera language
 ✅ Segment 1 uses I2V if scene frame available

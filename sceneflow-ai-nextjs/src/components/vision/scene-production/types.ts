@@ -60,6 +60,7 @@ export interface SceneSegment {
   // Phase 1: Character and Dialogue mapping for scene coverage
   characters?: SegmentCharacter[]  // Characters present in this segment
   dialogueLines?: SegmentDialogueLine[]  // Dialogue lines assigned to this segment
+  dialogueLineIds?: string[]  // Phase 6: IDs of assigned dialogue lines (persisted to DB)
   // Phase 3: Keyframe settings for Ken Burns animation
   keyframeSettings?: SegmentKeyframeSettings
 }
