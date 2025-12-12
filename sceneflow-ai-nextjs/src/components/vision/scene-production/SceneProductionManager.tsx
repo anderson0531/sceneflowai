@@ -140,6 +140,65 @@ export function SceneProductionManager({
   const [focusMode, setFocusMode] = useState<'balanced' | 'action' | 'dialogue' | 'cinematic'>('balanced')
   const [showInitialDialog, setShowInitialDialog] = useState(false)
   
+  // Phase 2: Dialogue Coverage - parse scene dialogue into trackable lines
+  const sceneDialogueLines = useMemo(() => {
+    if (!scene?.dialogue || !Array.isArray(scene.dialogue)) return []
+    return scene.dialogue.map((d: any, idx: number) => ({
+      id: `dialogue-${idx}`,
+      character: d.character || 'Unknown',
+      line: d.line || d.text || '',
+    }))
+  }, [scene?.dialogue])
+  
+  // Local state for dialogue assignments (segment -> dialogue ids)
+  // This tracks which dialogue lines are assigned to which segment
+  const [dialogueAssignments, setDialogueAssignments] = useState<Record<string, Set<string>>>({})
+  
+  // Get dialogue lines assigned to the selected segment
+  const selectedSegmentDialogue = useMemo(() => {
+    if (!selectedSegmentId) return []
+    const assigned = dialogueAssignments[selectedSegmentId] || new Set()
+    return sceneDialogueLines
+      .filter(d => assigned.has(d.id))
+      .map(d => ({ ...d, covered: true }))
+  }, [selectedSegmentId, dialogueAssignments, sceneDialogueLines])
+  
+  // Handler to toggle dialogue assignment to selected segment
+  const handleToggleDialogue = useCallback((dialogueId: string) => {
+    if (!selectedSegmentId) return
+    
+    setDialogueAssignments(prev => {
+      const currentSet = prev[selectedSegmentId] || new Set()
+      const newSet = new Set(currentSet)
+      
+      if (newSet.has(dialogueId)) {
+        // Remove from this segment
+        newSet.delete(dialogueId)
+        toast.success('Dialogue removed from segment')
+      } else {
+        // First, remove from any other segment
+        const updated: Record<string, Set<string>> = {}
+        Object.entries(prev).forEach(([segId, dialSet]) => {
+          const newDialSet = new Set(dialSet)
+          newDialSet.delete(dialogueId)
+          if (newDialSet.size > 0) {
+            updated[segId] = newDialSet
+          }
+        })
+        // Add to current segment
+        newSet.add(dialogueId)
+        updated[selectedSegmentId] = newSet
+        toast.success('Dialogue assigned to segment')
+        return updated
+      }
+      
+      return {
+        ...prev,
+        [selectedSegmentId]: newSet
+      }
+    })
+  }, [selectedSegmentId])
+  
   // Build audio tracks from scene data if not provided externally
   const [audioTracksState, setAudioTracksState] = useState<AudioTracksData>({})
   useEffect(() => {
@@ -732,6 +791,9 @@ export function SceneProductionManager({
               references={references}
               sceneImageUrl={scene?.imageUrl}
               audioTracks={audioTracks}
+              sceneDialogueLines={sceneDialogueLines}
+              segmentDialogueLines={selectedSegmentDialogue}
+              onToggleDialogue={handleToggleDialogue}
             />
           </div>
         </div>

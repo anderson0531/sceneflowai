@@ -74,9 +74,32 @@ export async function GET(
     })
     
     return response
-  } catch (error) {
-    console.error('[Projects GET by ID] Error:', error)
-    return NextResponse.json({ error: 'Failed to load project' }, { status: 500 })
+  } catch (error: any) {
+    console.error('[Projects GET by ID] Error:', {
+      message: error?.message,
+      name: error?.name,
+      code: error?.code,
+      stack: error?.stack?.substring(0, 500)
+    })
+    
+    // Provide more specific error messages
+    let errorMessage = 'Failed to load project'
+    let statusCode = 500
+    
+    if (error?.name === 'SequelizeConnectionError' || error?.code === 'ECONNREFUSED') {
+      errorMessage = 'Database connection failed'
+    } else if (error?.name === 'SequelizeAuthenticationError') {
+      errorMessage = 'Database authentication failed'
+    } else if (error?.name === 'SequelizeConnectionRefusedError') {
+      errorMessage = 'Database connection refused'
+    } else if (error?.message?.includes('SSL')) {
+      errorMessage = 'Database SSL configuration error'
+    }
+    
+    return NextResponse.json({ 
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? error?.message : undefined
+    }, { status: statusCode })
   }
 }
 

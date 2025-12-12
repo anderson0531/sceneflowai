@@ -4,13 +4,28 @@ import { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { SceneSegment, SceneProductionReferences, SceneSegmentStatus } from './types'
-import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer } from 'lucide-react'
+import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer, MessageSquare, User, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SegmentPromptBuilder, GeneratePromptData, VideoGenerationMethod } from './SegmentPromptBuilder'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { AudioTrackClip, AudioTracksData } from './SceneTimeline'
 
 export type GenerationType = 'T2V' | 'I2V' | 'T2I' | 'UPLOAD'
+
+// Dialogue line from scene (for display)
+interface SceneDialogueLine {
+  id: string
+  character: string
+  line: string
+}
+
+// Dialogue line assigned to segment (with coverage status)
+interface SegmentDialogueAssignment {
+  id: string
+  character: string
+  line: string
+  covered: boolean
+}
 
 interface SegmentStudioProps {
   segment: SceneSegment | null
@@ -34,6 +49,10 @@ interface SegmentStudioProps {
   references: SceneProductionReferences
   sceneImageUrl?: string
   audioTracks?: AudioTracksData
+  // Phase 2: Dialogue coverage
+  sceneDialogueLines?: SceneDialogueLine[]
+  segmentDialogueLines?: SegmentDialogueAssignment[]
+  onToggleDialogue?: (dialogueId: string) => void
 }
 
 export function SegmentStudio({
@@ -48,6 +67,9 @@ export function SegmentStudio({
   references,
   sceneImageUrl,
   audioTracks,
+  sceneDialogueLines = [],
+  segmentDialogueLines = [],
+  onToggleDialogue,
 }: SegmentStudioProps) {
   const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -379,6 +401,71 @@ export function SegmentStudio({
           <div className="bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
             <div className="text-[9px] font-semibold uppercase text-gray-500 dark:text-gray-400 mb-1">Prompt</div>
             <p className="text-[10px] text-gray-700 dark:text-gray-300 line-clamp-4">{segment.prompt}</p>
+          </div>
+        )}
+
+        {/* Phase 2: Dialogue Coverage Panel */}
+        {sceneDialogueLines.length > 0 && (
+          <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-2.5">
+            <div className="flex items-center gap-1.5 mb-2">
+              <MessageSquare className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 uppercase tracking-wide">
+                Dialogue Coverage
+              </span>
+              <span className="ml-auto text-[9px] text-emerald-600 dark:text-emerald-400">
+                {segmentDialogueLines.filter(d => d.covered).length}/{sceneDialogueLines.length} covered
+              </span>
+            </div>
+            <div className="space-y-1.5 max-h-32 overflow-y-auto">
+              {sceneDialogueLines.map((dialogue) => {
+                const isAssigned = segmentDialogueLines.some(d => d.id === dialogue.id)
+                const isCovered = segmentDialogueLines.find(d => d.id === dialogue.id)?.covered ?? false
+                
+                // Character color based on name hash
+                const charHash = dialogue.character.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
+                const charColors = [
+                  'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
+                  'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
+                  'bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-300',
+                  'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
+                  'bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300',
+                ]
+                const charColor = charColors[charHash % charColors.length]
+                
+                return (
+                  <div 
+                    key={dialogue.id}
+                    onClick={() => onToggleDialogue?.(dialogue.id)}
+                    className={cn(
+                      "flex items-start gap-2 p-1.5 rounded cursor-pointer transition-all",
+                      isAssigned 
+                        ? "bg-emerald-100 dark:bg-emerald-800/40 ring-1 ring-emerald-300 dark:ring-emerald-700"
+                        : "bg-white dark:bg-gray-900 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-4 h-4 rounded flex-shrink-0 flex items-center justify-center border transition-colors",
+                      isAssigned 
+                        ? "bg-emerald-500 border-emerald-500 text-white"
+                        : "border-gray-300 dark:border-gray-600"
+                    )}>
+                      {isAssigned && <Check className="w-2.5 h-2.5" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className={cn("text-[9px] font-bold px-1 py-0.5 rounded", charColor)}>
+                        {dialogue.character}
+                      </span>
+                      <p className="text-[10px] text-gray-700 dark:text-gray-300 mt-0.5 line-clamp-2">
+                        "{dialogue.line}"
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <p className="text-[9px] text-emerald-600 dark:text-emerald-500 mt-2 text-center">
+              Click to assign dialogue to this segment
+            </p>
           </div>
         )}
 
