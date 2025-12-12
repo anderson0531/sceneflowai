@@ -10,7 +10,7 @@ import {
   SceneProductionReferences,
   SceneSegment,
 } from './types'
-import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Film } from 'lucide-react'
+import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Film, Clock, Sliders, MessageSquare, Settings2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
 import {
@@ -21,6 +21,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
+// Segment generation options
+export interface SegmentGenerationOptions {
+  targetDuration: number
+  alignWithNarration: boolean
+  addLeadInSegment: boolean
+  leadInDuration: number
+  customInstructions: string
+  focusMode: 'balanced' | 'action' | 'dialogue' | 'cinematic'
+}
 
 interface SceneProductionManagerProps {
   sceneId: string
@@ -29,7 +44,7 @@ interface SceneProductionManagerProps {
   scene?: any // Add scene prop
   productionData?: SceneProductionData | null
   references: SceneProductionReferences
-  onInitialize: (sceneId: string, options: { targetDuration: number }) => Promise<void>
+  onInitialize: (sceneId: string, options: { targetDuration: number; generationOptions?: SegmentGenerationOptions }) => Promise<void>
   onPromptChange: (sceneId: string, segmentId: string, prompt: string) => void
   onGenerate: (sceneId: string, segmentId: string, mode: GenerationType, options?: { 
     startFrameUrl?: string
@@ -93,6 +108,14 @@ export function SceneProductionManager({
   )
   
   const [targetDuration, setTargetDuration] = useState<number>(productionData?.targetSegmentDuration ?? 8)
+  
+  // Enhanced generation options state
+  const [alignWithNarration, setAlignWithNarration] = useState(true)
+  const [addLeadInSegment, setAddLeadInSegment] = useState(true)
+  const [leadInDuration, setLeadInDuration] = useState(2)
+  const [customInstructions, setCustomInstructions] = useState('')
+  const [focusMode, setFocusMode] = useState<'balanced' | 'action' | 'dialogue' | 'cinematic'>('balanced')
+  const [showInitialDialog, setShowInitialDialog] = useState(false)
   
   // Build audio tracks from scene data if not provided externally
   const [audioTracksState, setAudioTracksState] = useState<AudioTracksData>({})
@@ -243,8 +266,19 @@ export function SceneProductionManager({
 
   const handleInitialize = async () => {
     setShowConfirmDialog(false)
+    setShowInitialDialog(false)
     setIsInitializing(true)
     setGenerationProgress(10)
+    
+    // Build generation options
+    const generationOptions: SegmentGenerationOptions = {
+      targetDuration,
+      alignWithNarration,
+      addLeadInSegment,
+      leadInDuration,
+      customInstructions,
+      focusMode,
+    }
     
     // Simulate progress updates
     const progressInterval = setInterval(() => {
@@ -252,7 +286,7 @@ export function SceneProductionManager({
     }, 2000)
     
     try {
-      await onInitialize(sceneId, { targetDuration })
+      await onInitialize(sceneId, { targetDuration, generationOptions })
       setGenerationProgress(100)
       toast.success('Segments generated successfully', {
         description: `Created intelligent video segments with cinematic prompts`
@@ -386,48 +420,224 @@ export function SceneProductionManager({
     return assets
   }, [scene])
 
+  // Reusable segment generation dialog content
+  const SegmentGenerationDialogContent = ({ isRegenerate = false }: { isRegenerate?: boolean }) => (
+    <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto">
+      <DialogHeader>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+            <Film className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <DialogTitle className="text-left">
+              {isRegenerate ? 'Regenerate Scene Segments' : 'Generate Scene Segments'}
+            </DialogTitle>
+            <DialogDescription className="text-left">
+              Configure how segments are created for this scene.
+            </DialogDescription>
+          </div>
+        </div>
+      </DialogHeader>
+      
+      <Tabs defaultValue="timing" className="mt-4">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="timing" className="flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Timing</span>
+          </TabsTrigger>
+          <TabsTrigger value="alignment" className="flex items-center gap-1.5">
+            <Sliders className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Alignment</span>
+          </TabsTrigger>
+          <TabsTrigger value="instructions" className="flex items-center gap-1.5">
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Instructions</span>
+          </TabsTrigger>
+        </TabsList>
+        
+        {/* Timing Tab */}
+        <TabsContent value="timing" className="space-y-4 mt-4">
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Target Segment Duration</Label>
+              <div className="flex items-center gap-3">
+                <Input
+                  type="number"
+                  min={4}
+                  max={8}
+                  step={0.5}
+                  value={targetDuration}
+                  onChange={(e) => setTargetDuration(Number(e.target.value))}
+                  className="w-24"
+                />
+                <span className="text-sm text-gray-500">seconds (4-8s recommended for Veo 3.1)</span>
+              </div>
+              <p className="text-xs text-gray-400">
+                Shorter segments (4-5s) work better for dialogue-heavy scenes. Longer segments (6-8s) suit action sequences.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Focus Mode</Label>
+              <Select value={focusMode} onValueChange={(v) => setFocusMode(v as typeof focusMode)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select focus" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="balanced">Balanced - Auto-detect optimal cuts</SelectItem>
+                  <SelectItem value="dialogue">Dialogue Focus - Cut on speaker changes</SelectItem>
+                  <SelectItem value="action">Action Focus - Emphasize movement/blocking</SelectItem>
+                  <SelectItem value="cinematic">Cinematic - Longer takes, fewer cuts</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </TabsContent>
+        
+        {/* Alignment Tab */}
+        <TabsContent value="alignment" className="space-y-4 mt-4">
+          <div className="space-y-4">
+            <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+              <div className="flex-1">
+                <Label className="text-sm font-medium">Align with Narration</Label>
+                <p className="text-xs text-gray-500 mt-1">
+                  Add non-dialogue segments at the beginning to align visuals with narration/voiceover timing.
+                </p>
+              </div>
+              <Switch 
+                checked={alignWithNarration} 
+                onCheckedChange={setAlignWithNarration}
+              />
+            </div>
+            
+            <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+              <div className="flex-1">
+                <Label className="text-sm font-medium">Add Lead-In Segment</Label>
+                <p className="text-xs text-gray-500 mt-1">
+                  Insert an establishing shot before dialogue begins to set the scene.
+                </p>
+              </div>
+              <Switch 
+                checked={addLeadInSegment} 
+                onCheckedChange={setAddLeadInSegment}
+              />
+            </div>
+            
+            {addLeadInSegment && (
+              <div className="pl-4 border-l-2 border-blue-200 dark:border-blue-800">
+                <Label className="text-sm font-medium">Lead-In Duration</Label>
+                <div className="flex items-center gap-3 mt-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={4}
+                    step={0.5}
+                    value={leadInDuration}
+                    onChange={(e) => setLeadInDuration(Number(e.target.value))}
+                    className="w-20"
+                  />
+                  <span className="text-sm text-gray-500">seconds</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+        
+        {/* Instructions Tab */}
+        <TabsContent value="instructions" className="space-y-4 mt-4">
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Custom Instructions</Label>
+              <Textarea
+                placeholder="Add any special instructions for segment generation...&#10;&#10;Examples:&#10;- Focus on character reactions&#10;- Include more establishing shots&#10;- Emphasize the tension between characters"
+                value={customInstructions}
+                onChange={(e) => setCustomInstructions(e.target.value)}
+                className="min-h-[120px] text-sm"
+              />
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm"
+                onClick={() => setCustomInstructions(prev => prev + (prev ? '\n' : '') + 'Focus on character reactions and emotional beats')}
+              >
+                + Reactions
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm"
+                onClick={() => setCustomInstructions(prev => prev + (prev ? '\n' : '') + 'Include wide establishing shots at scene transitions')}
+              >
+                + Establishing
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm"
+                onClick={() => setCustomInstructions(prev => prev + (prev ? '\n' : '') + 'Prefer close-ups for dialogue moments')}
+              >
+                + Close-ups
+              </Button>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+      
+      <DialogFooter className="mt-6">
+        <Button 
+          variant="outline" 
+          onClick={() => isRegenerate ? setShowConfirmDialog(false) : setShowInitialDialog(false)}
+        >
+          Cancel
+        </Button>
+        <Button onClick={handleInitialize} disabled={isInitializing}>
+          <Sparkles className="w-4 h-4 mr-2" />
+          {isRegenerate ? 'Regenerate Segments' : 'Generate Segments'}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  )
+
   if (!productionData || !productionData.isSegmented || productionData.segments.length === 0) {
     return (
-      <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-900">
-        <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
-          Initialize Scene Production
-        </h4>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-          Break this scene into generation-ready segments. We’ll analyze the direction & script to propose
-          keyframes and produce expert prompts for each cut.
-        </p>
-        <div className="flex flex-col gap-3 md:flex-row md:items-center">
-          <label className="text-xs font-medium text-gray-600 dark:text-gray-300 flex flex-col gap-1">
-            Target Segment Duration (seconds)
-            <Input
-              type="number"
-              min={4}
-              step={0.5}
-              value={targetDuration}
-              onChange={(event) => setTargetDuration(Number(event.target.value))}
-              className="w-32"
-            />
-          </label>
-          <Button 
-            onClick={(e) => {
-              e.stopPropagation()
-              handleInitialize()
-            }} 
-            disabled={isInitializing} 
-            className="flex items-center gap-2"
-          >
-            <Film className="w-4 h-4" />
-            {isInitializing ? 'Generating…' : 'Generate'}
-          </Button>
+      <>
+        {/* Initial Dialog for Generation */}
+        <Dialog open={showInitialDialog} onOpenChange={setShowInitialDialog}>
+          <SegmentGenerationDialogContent isRegenerate={false} />
+        </Dialog>
+        
+        <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-900">
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            Initialize Scene Production
+          </h4>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+            Break this scene into generation-ready segments. We will analyze the direction & script to propose
+            keyframes and produce expert prompts for each cut.
+          </p>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <Button 
+              onClick={(e) => {
+                e.stopPropagation()
+                setShowInitialDialog(true)
+              }} 
+              disabled={isInitializing} 
+              className="flex items-center gap-2"
+            >
+              <Settings2 className="w-4 h-4" />
+              Configure & Generate
+            </Button>
+          </div>
+          <p className="text-xs text-gray-400 mt-3 flex items-center gap-2">
+            <Calculator className="w-4 h-4" />
+            We will balance keyframes with natural breaks to keep continuity tight across segments.
+          </p>
         </div>
-        <p className="text-xs text-gray-400 mt-3 flex items-center gap-2">
-          <Calculator className="w-4 h-4" />
-          We’ll balance keyframes with natural breaks to keep continuity tight across segments.
-        </p>
-      </div>
+      </>
     )
   }
-
   return (
     <>
       {/* Freeze Screen Overlay during generation */}
@@ -438,47 +648,9 @@ export function SceneProductionManager({
         subtext="Analyzing dialogue, scene direction, and character blocking with Gemini 3.0"
       />
       
-      {/* Confirmation Dialog */}
+      {/* Enhanced Segment Generation Dialog - for regeneration */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-                <RefreshCw className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <DialogTitle className="text-left">Update Scene Segments</DialogTitle>
-                <DialogDescription className="text-left">
-                  This will regenerate all segments for this scene.
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-          
-          <div className="py-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Confirm that you want to update the current Scene Segments? 
-              New segments will be generated using the latest script, dialogue, and scene direction.
-            </p>
-          </div>
-
-          <DialogFooter className="flex gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setShowConfirmDialog(false)}
-              className="flex-1 sm:flex-none"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleInitialize}
-              className="flex-1 sm:flex-none"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Generate Segments
-            </Button>
-          </DialogFooter>
-        </DialogContent>
+        <SegmentGenerationDialogContent isRegenerate={true} />
       </Dialog>
     
       <div className="space-y-3">
