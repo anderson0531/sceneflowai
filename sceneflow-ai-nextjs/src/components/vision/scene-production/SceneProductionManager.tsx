@@ -59,6 +59,7 @@ interface SceneProductionManagerProps {
   onGenerateSceneMp4?: () => void
   onAddSegment?: (sceneId: string, afterSegmentId: string | null, duration: number) => void
   onDeleteSegment?: (sceneId: string, segmentId: string) => void
+  onSegmentResize?: (sceneId: string, segmentId: string, changes: { startTime?: number; duration?: number }) => void
   onAudioClipChange?: (sceneId: string, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
 }
 
@@ -77,6 +78,7 @@ export function SceneProductionManager({
   onGenerateSceneMp4,
   onAddSegment,
   onDeleteSegment,
+  onSegmentResize,
   onAudioClipChange,
 }: SceneProductionManagerProps) {
   // Create stable callback wrappers - these must be defined early to avoid minification issues
@@ -96,6 +98,17 @@ export function SceneProductionManager({
       }
     },
     [sceneId, onDeleteSegment]
+  )
+  
+  // Wrapper for segment resize/move (maps to onVisualClipChange in SceneTimeline)
+  const handleSegmentResizeWrapper = useCallback(
+    (segmentId: string, changes: { startTime?: number; duration?: number; trimStart?: number; trimEnd?: number }) => {
+      if (onSegmentResize) {
+        // Only pass startTime and duration - trimStart/trimEnd handled locally
+        onSegmentResize(sceneId, segmentId, { startTime: changes.startTime, duration: changes.duration })
+      }
+    },
+    [sceneId, onSegmentResize]
   )
   
   const handleAudioClipChangeWrapper = useCallback(
@@ -688,6 +701,7 @@ export function SceneProductionManager({
               audioTracks={audioTracks}
               onPlayheadChange={handlePlayheadChange}
               onGenerateSceneMp4={onGenerateSceneMp4}
+              onVisualClipChange={onSegmentResize ? handleSegmentResizeWrapper : undefined}
               onAddSegment={onAddSegment ? handleAddSegmentWrapper : undefined}
               onDeleteSegment={onDeleteSegment ? handleDeleteSegmentWrapper : undefined}
               onAudioClipChange={onAudioClipChange ? handleAudioClipChangeWrapper : undefined}

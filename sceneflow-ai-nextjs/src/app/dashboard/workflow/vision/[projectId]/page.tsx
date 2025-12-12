@@ -1218,6 +1218,67 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [applySceneProductionUpdate]
   )
   
+  // Handle segment resize/move (visual clip changes)
+  const handleSegmentResize = useCallback(
+    (sceneId: string, segmentId: string, changes: { startTime?: number; duration?: number }) => {
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        
+        const segmentIndex = current.segments.findIndex(s => s.segmentId === segmentId)
+        if (segmentIndex === -1) return current
+        
+        const segment = current.segments[segmentIndex]
+        const originalDuration = segment.endTime - segment.startTime
+        
+        // Calculate new values with 8-second max constraint
+        let newStartTime = changes.startTime ?? segment.startTime
+        let newDuration = changes.duration ?? originalDuration
+        
+        // Enforce maximum 8 seconds for Veo 3.1 model limits
+        newDuration = Math.min(8, Math.max(0.5, newDuration))
+        
+        // Ensure start time is not negative and doesn't overlap with previous segment
+        if (segmentIndex > 0) {
+          const prevSegment = current.segments[segmentIndex - 1]
+          newStartTime = Math.max(prevSegment.endTime, newStartTime)
+        } else {
+          newStartTime = Math.max(0, newStartTime)
+        }
+        
+        const newEndTime = newStartTime + newDuration
+        
+        // Update the segment and cascade timing changes to subsequent segments
+        let currentTime = 0
+        const updatedSegments = current.segments.map((seg, idx) => {
+          if (idx < segmentIndex) {
+            currentTime = seg.endTime
+            return seg
+          } else if (idx === segmentIndex) {
+            currentTime = newEndTime
+            return {
+              ...seg,
+              startTime: newStartTime,
+              endTime: newEndTime,
+            }
+          } else {
+            // Cascade: subsequent segments shift based on new position
+            const segDuration = seg.endTime - seg.startTime
+            const updated = {
+              ...seg,
+              startTime: currentTime,
+              endTime: currentTime + segDuration,
+            }
+            currentTime += segDuration
+            return updated
+          }
+        })
+        
+        return { ...current, segments: updatedSegments }
+      })
+    },
+    [applySceneProductionUpdate]
+  )
+  
   // Handle audio clip changes (start time, duration)
   const handleAudioClipChange = useCallback(
     (sceneId: string, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => {
@@ -5482,6 +5543,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSegmentUpload={handleSegmentUpload}
                 onAddSegment={handleAddSegment}
                 onDeleteSegment={handleDeleteSegment}
+                onSegmentResize={handleSegmentResize}
                 onAudioClipChange={handleAudioClipChange}
                 sceneAudioTracks={{}}
                   bookmarkedScene={sceneBookmark}

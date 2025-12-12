@@ -57,6 +57,23 @@ export interface SceneSegment {
   triggerReason?: string // Why we cut here (speaker change, action change, etc.)
   endFrameDescription?: string // Lookahead for next segment
   emotionalBeat?: string // The emotional intent of this segment
+  // Phase 1: Character and Dialogue mapping for scene coverage
+  characters?: SegmentCharacter[]  // Characters present in this segment
+  dialogueLines?: SegmentDialogueLine[]  // Dialogue lines assigned to this segment
+}
+
+// Character presence in a segment
+export interface SegmentCharacter {
+  name: string
+  role: 'speaking' | 'present' | 'background'
+}
+
+// Dialogue line assigned to a segment
+export interface SegmentDialogueLine {
+  id: string
+  character: string
+  line: string
+  covered: boolean  // User confirms this dialogue is covered by the segment
 }
 
 export interface SceneProductionData {
