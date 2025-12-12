@@ -1,7 +1,7 @@
 # SceneFlow AI - Application Design Document
 
 **Version**: 2.4  
-**Last Updated**: December 10, 2025  
+**Last Updated**: December 12, 2025  
 **Status**: Production
 
 ---
@@ -54,6 +54,8 @@
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2025-12-12 | Enhanced Segment Generation Dialog | Added full-featured SegmentGenerationDialogContent with 3 tabs (Timing/Alignment/Instructions). Timing: target duration 4-8s, focus mode (balanced/dialogue/action/cinematic). Alignment: align-with-narration toggle adds non-dialogue segments for voiceover sync, lead-in segment toggle for establishing shots. Instructions: custom instructions textarea with quick-add presets (reactions/establishing/close-ups). SegmentGenerationOptions interface exported. Both initial and regenerate flows use enhanced dialog. Replaced inline form with "Configure & Generate" button. | ✅ Implemented |
+| 2025-12-12 | Scene card video player improvements | Made video player smaller by default (max-w-sm) with expand/collapse control. Added isPlayerExpanded state to SceneTimeline. Removed "(click to collapse)" label. Removed redundant scene title from Call Action section. Changed Segments button icon to Film, label to "Generate". | ✅ Implemented |
 | 2025-12-13 | Fix audio Play/Stop button UX | Consolidated audio controls: per-scene button now toggles between Play (green, Volume2 icon) and Stop (red, Square icon). Removed redundant header-level Stop button. Fixed `disabled={isPlaying}` that prevented stop action. Button turns red when playing and calls onStopAudio. ScriptPanel.tsx updated. | ✅ Fixed |
 | 2025-12-13 | Multi-instruction scene editing | Scene Edit modal now APPENDS instructions instead of replacing. Buttons show "+ Add" prefix, counter shows "X/5 instructions", Clear All button to reset. Review recommendations also append. Limit of 5 instructions per revision prevents model confusion while reducing iterative API calls. InstructionsPanel and SceneEditorModalV2 updated. | ✅ Implemented |
 | 2025-12-13 | Scene Editor Modal V2 | Complete redesign: removed legacy Ask Flow (ineffective), added tabbed left panel (Current Scene/Director Review/Audience Review), added voice input via useSpeechRecognition hook, created new /api/vision/review-scene API for scene-specific reviews with full script context, caches reviews per scene (clears on scene change), responsive layout stacks tabs on mobile | ✅ Implemented |
