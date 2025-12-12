@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { 
   Play, Pause, Volume2, VolumeX, Mic, Music, Zap, 
-  SkipBack, SkipForward, Film, Download, Plus, Trash2, X, Maximize2, Minimize2, Info
+  SkipBack, SkipForward, Film, Download, Plus, Trash2, X, Maximize2, Minimize2, Info, MessageSquare
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
@@ -61,6 +61,8 @@ interface SceneTimelineProps {
   onAudioClipChange?: (trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
   onAddSegment?: (afterSegmentId: string | null, duration: number) => void
   onDeleteSegment?: (segmentId: string) => void
+  // Phase 2: Dialogue coverage indicators
+  dialogueAssignments?: Record<string, Set<string>>
 }
 
 function formatTime(seconds: number): string {
@@ -87,6 +89,7 @@ export function SceneTimeline({
   onAudioClipChange,
   onAddSegment,
   onDeleteSegment,
+  dialogueAssignments,
 }: SceneTimelineProps) {
   // Capture callbacks in stable refs to avoid closure issues
   const addSegmentCallback = typeof onAddSegment === 'function' ? onAddSegment : undefined
@@ -627,6 +630,17 @@ export function SceneTimeline({
           >
             <X className="w-2.5 h-2.5" />
           </button>
+        )}
+        
+        {/* Dialogue indicator badge for visual clips */}
+        {trackType === 'visual' && dialogueAssignments && dialogueAssignments[clip.id] && dialogueAssignments[clip.id].size > 0 && (
+          <div
+            className="absolute top-0.5 left-0.5 flex items-center gap-0.5 px-1 py-0.5 rounded bg-purple-500/90 text-white z-20"
+            title={`${dialogueAssignments[clip.id].size} dialogue line(s) assigned`}
+          >
+            <MessageSquare className="w-2.5 h-2.5" />
+            <span className="text-[7px] font-bold">{dialogueAssignments[clip.id].size}</span>
+          </div>
         )}
         
         {/* Left resize handle - more visible */}

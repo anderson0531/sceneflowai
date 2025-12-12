@@ -775,6 +775,7 @@ export function SceneProductionManager({
               onAddSegment={onAddSegment ? handleAddSegmentWrapper : undefined}
               onDeleteSegment={onDeleteSegment ? handleDeleteSegmentWrapper : undefined}
               onAudioClipChange={onAudioClipChange ? handleAudioClipChangeWrapper : undefined}
+              dialogueAssignments={dialogueAssignments}
             />
           </div>
 
