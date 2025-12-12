@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { SegmentPromptBuilder, GeneratePromptData, VideoGenerationMethod } from './SegmentPromptBuilder'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { AudioTrackClip, AudioTracksData } from './SceneTimeline'
+import { SegmentAnimationPreview } from './SegmentAnimationPreview'
 
 export type GenerationType = 'T2V' | 'I2V' | 'T2I' | 'UPLOAD'
 
@@ -80,6 +81,9 @@ export function SegmentStudio({
   // Prompt Builder State
   const [isPromptBuilderOpen, setIsPromptBuilderOpen] = useState(false)
   const [promptBuilderMode, setPromptBuilderMode] = useState<'image' | 'video'>('video')
+  
+  // Phase 4: Animation preview state
+  const [showAnimationPreview, setShowAnimationPreview] = useState(false)
   
   // Phase 3: Default keyframe settings
   const defaultKeyframeSettings: SegmentKeyframeSettings = {
@@ -621,7 +625,7 @@ export function SegmentStudio({
             </div>
 
             {/* Easing */}
-            <div>
+            <div className="mb-2">
               <div className="text-[9px] font-medium text-indigo-600 dark:text-indigo-400 mb-1">Easing</div>
               <div className="grid grid-cols-4 gap-1">
                 {(['smooth', 'drift', 'push', 'dramatic'] as KeyframeEasingType[]).map((easing) => (
@@ -639,6 +643,32 @@ export function SegmentStudio({
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Animation Preview */}
+            <div className="pt-2 border-t border-indigo-200 dark:border-indigo-800">
+              {showAnimationPreview ? (
+                <SegmentAnimationPreview
+                  imageUrl={segment.activeAssetUrl || sceneImageUrl || ''}
+                  duration={segment.endTime - segment.startTime}
+                  keyframeSettings={keyframeSettings}
+                  onClose={() => setShowAnimationPreview(false)}
+                />
+              ) : (
+                <button
+                  onClick={() => setShowAnimationPreview(true)}
+                  disabled={!segment.activeAssetUrl && !sceneImageUrl}
+                  className={cn(
+                    "w-full py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-colors",
+                    segment.activeAssetUrl || sceneImageUrl
+                      ? "bg-indigo-500 hover:bg-indigo-600 text-white"
+                      : "bg-indigo-200 dark:bg-indigo-800/30 text-indigo-400 cursor-not-allowed"
+                  )}
+                >
+                  <Play className="w-3.5 h-3.5" />
+                  <span className="text-xs font-medium">Preview Animation</span>
+                </button>
+              )}
             </div>
           </div>
         )}
