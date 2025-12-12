@@ -9,6 +9,7 @@ import {
   SceneProductionData,
   SceneProductionReferences,
   SceneSegment,
+  SegmentKeyframeSettings,
 } from './types'
 import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Film, Clock, Sliders, MessageSquare, Settings2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -346,6 +347,34 @@ export function SceneProductionManager({
       }
     })
   }, [selectedSegmentId])
+
+  // Phase 3: Local state for keyframe settings per segment (for preview in Screening Room)
+  const [segmentKeyframes, setSegmentKeyframes] = useState<Record<string, SegmentKeyframeSettings>>({})
+  
+  // Handler to update keyframe settings for selected segment
+  const handleKeyframeChange = useCallback((settings: SegmentKeyframeSettings) => {
+    if (!selectedSegmentId) return
+    
+    setSegmentKeyframes(prev => ({
+      ...prev,
+      [selectedSegmentId]: settings,
+    }))
+    
+    toast.success('Animation settings updated', {
+      description: settings.useAutoDetect ? 'Auto-detect enabled' : `${settings.direction || 'custom'} with ${settings.easingType} easing`,
+      duration: 1500,
+    })
+  }, [selectedSegmentId])
+  
+  // Get the selected segment with merged keyframe settings
+  const selectedSegmentWithKeyframes = useMemo(() => {
+    if (!selectedSegment) return null
+    const keyframes = segmentKeyframes[selectedSegment.segmentId]
+    if (keyframes) {
+      return { ...selectedSegment, keyframeSettings: keyframes }
+    }
+    return selectedSegment
+  }, [selectedSegment, segmentKeyframes])
 
   const handleInitialize = async () => {
     setShowConfirmDialog(false)
@@ -782,7 +811,7 @@ export function SceneProductionManager({
           {/* Right Panel: Segment Studio (scrollable) */}
           <div className="w-80 flex-shrink-0">
             <SegmentStudio
-              segment={selectedSegment}
+              segment={selectedSegmentWithKeyframes}
               segments={segments}
               onSegmentChange={setSelectedSegmentId}
               previousSegmentLastFrame={previousSegmentLastFrame}
@@ -796,6 +825,7 @@ export function SceneProductionManager({
               sceneDialogueLines={sceneDialogueLines}
               segmentDialogueLines={selectedSegmentDialogue}
               onToggleDialogue={handleToggleDialogue}
+              onKeyframeChange={handleKeyframeChange}
             />
           </div>
         </div>

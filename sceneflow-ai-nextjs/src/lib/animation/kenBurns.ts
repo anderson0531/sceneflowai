@@ -387,3 +387,75 @@ export function getKenBurnsAnimationStyle(config: KenBurnsConfig): React.CSSProp
     transformOrigin: 'center center',
   }
 }
+
+// Easing curves mapping for segment keyframe settings
+const SEGMENT_EASING_CURVES: Record<string, string> = {
+  smooth: 'cubic-bezier(0.4, 0.0, 0.2, 1)',
+  drift: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
+  push: 'cubic-bezier(0.0, 0.0, 0.2, 1)',
+  dramatic: 'cubic-bezier(0.4, 0.0, 0.6, 1)',
+}
+
+/**
+ * Segment keyframe settings interface (matches types.ts)
+ */
+export interface SegmentKeyframeInput {
+  zoomStart: number
+  zoomEnd: number
+  panStartX: number
+  panStartY: number
+  panEndX: number
+  panEndY: number
+  easingType: 'smooth' | 'drift' | 'push' | 'dramatic'
+  direction?: string
+  useAutoDetect: boolean
+}
+
+/**
+ * Creates Ken Burns config from segment keyframe settings
+ * Use this when playing individual segments with custom animation settings
+ */
+export function getKenBurnsConfigFromKeyframes(
+  keyframes: SegmentKeyframeInput,
+  duration: number = 10
+): KenBurnsConfig {
+  const { zoomStart, zoomEnd, panStartX, panStartY, panEndX, panEndY, easingType } = keyframes
+  
+  // Determine direction from keyframe values
+  let direction: KenBurnsDirection = 'right' // fallback
+  if (keyframes.direction && keyframes.direction !== 'none') {
+    direction = keyframes.direction as KenBurnsDirection
+  } else if (panEndX !== panStartX || panEndY !== panStartY) {
+    // Infer direction from pan values
+    const dx = panEndX - panStartX
+    const dy = panEndY - panStartY
+    if (Math.abs(dx) > Math.abs(dy)) {
+      direction = dx > 0 ? 'right' : 'left'
+    } else if (Math.abs(dy) > Math.abs(dx)) {
+      direction = dy > 0 ? 'down' : 'up'
+    } else if (dx !== 0 && dy !== 0) {
+      direction = `${dy > 0 ? 'down' : 'up'}-${dx > 0 ? 'right' : 'left'}` as KenBurnsDirection
+    }
+  } else if (zoomEnd > zoomStart) {
+    direction = 'zoom-in'
+  } else if (zoomEnd < zoomStart) {
+    direction = 'zoom-out'
+  }
+  
+  // Build transform strings from keyframe values
+  const fromTransform = `translate(${panStartX}%, ${panStartY}%) scale(${zoomStart})`
+  const toTransform = `translate(${panEndX}%, ${panEndY}%) scale(${zoomEnd})`
+  
+  return {
+    direction,
+    intensity: 'medium', // Not directly applicable for custom keyframes
+    easing: SEGMENT_EASING_CURVES[easingType] || SEGMENT_EASING_CURVES.smooth,
+    duration,
+    holdStart: 0.05,
+    holdEnd: 0.05,
+    transform: {
+      from: fromTransform,
+      to: toTransform,
+    },
+  }
+}

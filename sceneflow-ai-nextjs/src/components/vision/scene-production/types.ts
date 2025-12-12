@@ -60,6 +60,8 @@ export interface SceneSegment {
   // Phase 1: Character and Dialogue mapping for scene coverage
   characters?: SegmentCharacter[]  // Characters present in this segment
   dialogueLines?: SegmentDialogueLine[]  // Dialogue lines assigned to this segment
+  // Phase 3: Keyframe settings for Ken Burns animation
+  keyframeSettings?: SegmentKeyframeSettings
 }
 
 // Character presence in a segment
@@ -74,6 +76,27 @@ export interface SegmentDialogueLine {
   character: string
   line: string
   covered: boolean  // User confirms this dialogue is covered by the segment
+}
+
+// Ken Burns keyframe settings for manual animation control
+export type KeyframeEasingType = 'smooth' | 'drift' | 'push' | 'dramatic'
+export type KeyframePanDirection = 'none' | 'left' | 'right' | 'up' | 'down' | 'up-left' | 'up-right' | 'down-left' | 'down-right'
+
+export interface SegmentKeyframeSettings {
+  // Zoom keyframes (1.0 = no zoom, 1.2 = 20% zoom in)
+  zoomStart: number  // 0.8 - 1.5
+  zoomEnd: number    // 0.8 - 1.5
+  // Pan keyframes (percentage offset from center, -50 to 50)
+  panStartX: number
+  panStartY: number
+  panEndX: number
+  panEndY: number
+  // Easing for the transition
+  easingType: KeyframeEasingType
+  // Preset direction (overrides individual pan values)
+  direction?: KeyframePanDirection
+  // Whether to use auto-detected values or manual settings
+  useAutoDetect: boolean
 }
 
 export interface SceneProductionData {

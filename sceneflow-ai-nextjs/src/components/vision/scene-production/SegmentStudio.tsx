@@ -3,8 +3,8 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { SceneSegment, SceneProductionReferences, SceneSegmentStatus } from './types'
-import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer, MessageSquare, User, Check } from 'lucide-react'
+import { SceneSegment, SceneProductionReferences, SceneSegmentStatus, SegmentKeyframeSettings, KeyframeEasingType, KeyframePanDirection } from './types'
+import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer, MessageSquare, User, Check, Move, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SegmentPromptBuilder, GeneratePromptData, VideoGenerationMethod } from './SegmentPromptBuilder'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
@@ -53,6 +53,8 @@ interface SegmentStudioProps {
   sceneDialogueLines?: SceneDialogueLine[]
   segmentDialogueLines?: SegmentDialogueAssignment[]
   onToggleDialogue?: (dialogueId: string) => void
+  // Phase 3: Keyframe settings
+  onKeyframeChange?: (settings: SegmentKeyframeSettings) => void
 }
 
 export function SegmentStudio({
@@ -70,6 +72,7 @@ export function SegmentStudio({
   sceneDialogueLines = [],
   segmentDialogueLines = [],
   onToggleDialogue,
+  onKeyframeChange,
 }: SegmentStudioProps) {
   const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -77,6 +80,59 @@ export function SegmentStudio({
   // Prompt Builder State
   const [isPromptBuilderOpen, setIsPromptBuilderOpen] = useState(false)
   const [promptBuilderMode, setPromptBuilderMode] = useState<'image' | 'video'>('video')
+  
+  // Phase 3: Default keyframe settings
+  const defaultKeyframeSettings: SegmentKeyframeSettings = {
+    zoomStart: 1.0,
+    zoomEnd: 1.1,
+    panStartX: 0,
+    panStartY: 0,
+    panEndX: 0,
+    panEndY: 0,
+    easingType: 'smooth',
+    direction: 'none',
+    useAutoDetect: true,
+  }
+  
+  // Get current keyframe settings (from segment or defaults)
+  const keyframeSettings = segment?.keyframeSettings || defaultKeyframeSettings
+  
+  // Direction presets with pan values
+  const directionPresets: Record<KeyframePanDirection, { panEndX: number; panEndY: number }> = {
+    'none': { panEndX: 0, panEndY: 0 },
+    'left': { panEndX: -5, panEndY: 0 },
+    'right': { panEndX: 5, panEndY: 0 },
+    'up': { panEndX: 0, panEndY: -5 },
+    'down': { panEndX: 0, panEndY: 5 },
+    'up-left': { panEndX: -4, panEndY: -4 },
+    'up-right': { panEndX: 4, panEndY: -4 },
+    'down-left': { panEndX: -4, panEndY: 4 },
+    'down-right': { panEndX: 4, panEndY: 4 },
+  }
+  
+  // Update keyframe settings
+  const updateKeyframe = useCallback((updates: Partial<SegmentKeyframeSettings>) => {
+    const newSettings: SegmentKeyframeSettings = {
+      ...keyframeSettings,
+      ...updates,
+      useAutoDetect: false, // Manual edit disables auto-detect
+    }
+    // If direction is set, apply preset pan values
+    if (updates.direction && updates.direction !== 'none') {
+      const preset = directionPresets[updates.direction]
+      newSettings.panEndX = preset.panEndX
+      newSettings.panEndY = preset.panEndY
+    }
+    onKeyframeChange?.(newSettings)
+  }, [keyframeSettings, onKeyframeChange])
+  
+  // Reset to auto-detect
+  const resetToAutoDetect = useCallback(() => {
+    onKeyframeChange?.({
+      ...defaultKeyframeSettings,
+      useAutoDetect: true,
+    })
+  }, [onKeyframeChange])
   
   // Audio playback state
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -466,6 +522,124 @@ export function SegmentStudio({
             <p className="text-[9px] text-emerald-600 dark:text-emerald-500 mt-2 text-center">
               Click to assign dialogue to this segment
             </p>
+          </div>
+        )}
+
+        {/* Phase 3: Keyframe Settings Panel */}
+        {onKeyframeChange && (
+          <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-2.5">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Move className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+              <span className="text-[10px] font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wide">
+                Animation (Ken Burns)
+              </span>
+              {keyframeSettings.useAutoDetect ? (
+                <span className="ml-auto text-[9px] text-indigo-500 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-800/50 px-1.5 py-0.5 rounded">
+                  Auto
+                </span>
+              ) : (
+                <button
+                  onClick={resetToAutoDetect}
+                  className="ml-auto text-[9px] text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center gap-0.5"
+                  title="Reset to auto-detect"
+                >
+                  <RotateCcw className="w-2.5 h-2.5" />
+                  Reset
+                </button>
+              )}
+            </div>
+
+            {/* Direction Presets */}
+            <div className="mb-2">
+              <div className="text-[9px] font-medium text-indigo-600 dark:text-indigo-400 mb-1">Direction</div>
+              <div className="grid grid-cols-5 gap-1">
+                {(['none', 'left', 'right', 'up', 'down'] as KeyframePanDirection[]).map((dir) => (
+                  <button
+                    key={dir}
+                    onClick={() => updateKeyframe({ direction: dir })}
+                    className={cn(
+                      "text-[8px] py-1 px-1.5 rounded transition-colors capitalize",
+                      keyframeSettings.direction === dir
+                        ? "bg-indigo-500 text-white"
+                        : "bg-indigo-100 dark:bg-indigo-800/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-800"
+                    )}
+                  >
+                    {dir === 'none' ? 'Static' : dir}
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-4 gap-1 mt-1">
+                {(['up-left', 'up-right', 'down-left', 'down-right'] as KeyframePanDirection[]).map((dir) => (
+                  <button
+                    key={dir}
+                    onClick={() => updateKeyframe({ direction: dir })}
+                    className={cn(
+                      "text-[8px] py-1 px-1 rounded transition-colors",
+                      keyframeSettings.direction === dir
+                        ? "bg-indigo-500 text-white"
+                        : "bg-indigo-100 dark:bg-indigo-800/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-800"
+                    )}
+                  >
+                    {dir.replace('-', ' ')}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Zoom Controls */}
+            <div className="mb-2">
+              <div className="text-[9px] font-medium text-indigo-600 dark:text-indigo-400 mb-1 flex items-center gap-1">
+                <ZoomIn className="w-3 h-3" />
+                Zoom
+              </div>
+              <div className="flex gap-2 items-center">
+                <div className="flex-1">
+                  <div className="text-[8px] text-indigo-500 dark:text-indigo-400 mb-0.5">Start: {keyframeSettings.zoomStart.toFixed(1)}x</div>
+                  <input
+                    type="range"
+                    min="0.8"
+                    max="1.5"
+                    step="0.05"
+                    value={keyframeSettings.zoomStart}
+                    onChange={(e) => updateKeyframe({ zoomStart: parseFloat(e.target.value) })}
+                    className="w-full h-1.5 bg-indigo-200 dark:bg-indigo-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="text-[8px] text-indigo-500 dark:text-indigo-400 mb-0.5">End: {keyframeSettings.zoomEnd.toFixed(1)}x</div>
+                  <input
+                    type="range"
+                    min="0.8"
+                    max="1.5"
+                    step="0.05"
+                    value={keyframeSettings.zoomEnd}
+                    onChange={(e) => updateKeyframe({ zoomEnd: parseFloat(e.target.value) })}
+                    className="w-full h-1.5 bg-indigo-200 dark:bg-indigo-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Easing */}
+            <div>
+              <div className="text-[9px] font-medium text-indigo-600 dark:text-indigo-400 mb-1">Easing</div>
+              <div className="grid grid-cols-4 gap-1">
+                {(['smooth', 'drift', 'push', 'dramatic'] as KeyframeEasingType[]).map((easing) => (
+                  <button
+                    key={easing}
+                    onClick={() => updateKeyframe({ easingType: easing })}
+                    className={cn(
+                      "text-[8px] py-1 px-1.5 rounded transition-colors capitalize",
+                      keyframeSettings.easingType === easing
+                        ? "bg-indigo-500 text-white"
+                        : "bg-indigo-100 dark:bg-indigo-800/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-800"
+                    )}
+                  >
+                    {easing}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
