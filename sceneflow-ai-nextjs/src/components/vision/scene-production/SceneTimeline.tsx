@@ -98,8 +98,8 @@ export function SceneTimeline({
   const [showAddSegmentDialog, setShowAddSegmentDialog] = useState(false)
   const [newSegmentDuration, setNewSegmentDuration] = useState(4)
   
-  // Tooltip state for hovering over segments
-  const [hoveredSegmentId, setHoveredSegmentId] = useState<string | null>(null)
+  // Tooltip state for hovering over clips (visual segments and audio)
+  const [hoveredClip, setHoveredClip] = useState<{ id: string; trackType: string; label?: string; startTime: number; duration: number; prompt?: string } | null>(null)
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null)
   
   const [mutedTracks, setMutedTracks] = useState<Set<string>>(() => {
@@ -572,7 +572,7 @@ export function SceneTimeline({
     const isSelected = trackType === 'visual' && clip.id === selectedSegmentId
     const isDragging = dragState?.clipId === clip.id
     const canDelete = trackType === 'visual' && visualClips.length > 1
-    const isHovered = hoveredSegmentId === clip.id
+    const isHovered = hoveredClip?.id === clip.id
     
     return (
       <div
@@ -590,17 +590,20 @@ export function SceneTimeline({
           handleClipMouseDown(e, trackType, clip.id, 'move', clip.startTime, clip.duration)
         }}
         onMouseEnter={(e) => {
-          if (trackType === 'visual') {
-            setHoveredSegmentId(clip.id)
-            const rect = e.currentTarget.getBoundingClientRect()
-            setTooltipPosition({ x: rect.left + rect.width / 2, y: rect.top - 8 })
-          }
+          setHoveredClip({
+            id: clip.id,
+            trackType,
+            label: clip.label,
+            startTime: clip.startTime,
+            duration: clip.duration,
+            prompt: clip.prompt,
+          })
+          const rect = e.currentTarget.getBoundingClientRect()
+          setTooltipPosition({ x: rect.left + rect.width / 2, y: rect.top - 8 })
         }}
         onMouseLeave={() => {
-          if (trackType === 'visual') {
-            setHoveredSegmentId(null)
-            setTooltipPosition(null)
-          }
+          setHoveredClip(null)
+          setTooltipPosition(null)
         }}
       >
         <div className={cn("absolute inset-0", color)}>
@@ -914,10 +917,35 @@ export function SceneTimeline({
       </div>
       </div>
 
-      {/* Segment Hover Tooltip */}
-      {hoveredSegmentId && tooltipPosition && (() => {
-        const hoveredClip = visualClips.find(c => c.id === hoveredSegmentId)
-        if (!hoveredClip) return null
+      {/* Clip Hover Tooltip - works for visual segments and audio clips */}
+      {hoveredClip && tooltipPosition && (() => {
+        // For visual clips, get extra info from visualClips
+        const visualInfo = hoveredClip.trackType === 'visual' 
+          ? visualClips.find(c => c.id === hoveredClip.id) 
+          : null
+        
+        const getTrackLabel = (trackType: string) => {
+          switch (trackType) {
+            case 'visual': return 'Segment'
+            case 'voiceover': return 'Narration'
+            case 'dialogue': return 'Dialogue'
+            case 'music': return 'Music'
+            case 'sfx': return 'SFX'
+            default: return 'Clip'
+          }
+        }
+        
+        const getTrackColor = (trackType: string) => {
+          switch (trackType) {
+            case 'visual': return 'bg-gray-600'
+            case 'voiceover': return 'bg-blue-600'
+            case 'dialogue': return 'bg-emerald-600'
+            case 'music': return 'bg-purple-600'
+            case 'sfx': return 'bg-amber-600'
+            default: return 'bg-gray-600'
+          }
+        }
+        
         return (
           <div 
             className="fixed z-50 bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-3 max-w-xs pointer-events-none"
@@ -928,29 +956,44 @@ export function SceneTimeline({
             }}
           >
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-xs font-bold text-white">
-                Segment {(hoveredClip.sequenceIndex ?? 0) + 1}
+              <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded text-white", getTrackColor(hoveredClip.trackType))}>
+                {getTrackLabel(hoveredClip.trackType)}
               </span>
-              <span className={cn(
-                "text-[9px] font-bold px-1.5 py-0.5 rounded",
-                hoveredClip.status === 'COMPLETE' || hoveredClip.status === 'UPLOADED'
-                  ? 'bg-green-900/50 text-green-400'
-                  : hoveredClip.status === 'GENERATING'
-                  ? 'bg-amber-900/50 text-amber-400'
-                  : 'bg-gray-700 text-gray-400'
-              )}>
-                {hoveredClip.status || 'PENDING'}
-              </span>
+              {visualInfo && (
+                <>
+                  <span className="text-xs font-bold text-white">
+                    #{(visualInfo.sequenceIndex ?? 0) + 1}
+                  </span>
+                  <span className={cn(
+                    "text-[9px] font-bold px-1.5 py-0.5 rounded",
+                    visualInfo.status === 'COMPLETE' || visualInfo.status === 'UPLOADED'
+                      ? 'bg-green-900/50 text-green-400'
+                      : visualInfo.status === 'GENERATING'
+                      ? 'bg-amber-900/50 text-amber-400'
+                      : 'bg-gray-700 text-gray-400'
+                  )}>
+                    {visualInfo.status || 'PENDING'}
+                  </span>
+                </>
+              )}
             </div>
             <div className="text-[10px] text-gray-400 mb-2">
               {hoveredClip.startTime.toFixed(1)}s – {(hoveredClip.startTime + hoveredClip.duration).toFixed(1)}s ({hoveredClip.duration.toFixed(1)}s)
             </div>
+            {hoveredClip.label && hoveredClip.trackType !== 'visual' && (
+              <p className="text-xs text-gray-300 leading-relaxed line-clamp-3 mb-1">
+                <span className="text-gray-500">Label:</span> {hoveredClip.label}
+              </p>
+            )}
             {hoveredClip.prompt && (
               <p className="text-xs text-gray-300 leading-relaxed line-clamp-4">
                 {hoveredClip.prompt}
               </p>
             )}
-            {!hoveredClip.prompt && (
+            {!hoveredClip.prompt && !hoveredClip.label && hoveredClip.trackType !== 'visual' && (
+              <p className="text-xs text-gray-500 italic">Audio clip</p>
+            )}
+            {!hoveredClip.prompt && hoveredClip.trackType === 'visual' && (
               <p className="text-xs text-gray-500 italic">No description</p>
             )}
           </div>

@@ -254,10 +254,22 @@ export function SegmentStudio({
                 min={0.5}
                 max={8}
                 step={0.5}
-                value={(segment.endTime - segment.startTime).toFixed(1)}
-                onChange={(e) => {
+                defaultValue={(segment.endTime - segment.startTime).toFixed(1)}
+                key={`duration-${segment.id}-${segment.endTime - segment.startTime}`}
+                onBlur={(e) => {
                   const newDuration = Math.min(8, Math.max(0.5, parseFloat(e.target.value) || 0.5))
-                  onDurationChange?.(segment.id, newDuration)
+                  if (newDuration !== (segment.endTime - segment.startTime)) {
+                    onDurationChange?.(segment.id, newDuration)
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const newDuration = Math.min(8, Math.max(0.5, parseFloat((e.target as HTMLInputElement).value) || 0.5))
+                    if (newDuration !== (segment.endTime - segment.startTime)) {
+                      onDurationChange?.(segment.id, newDuration)
+                    }
+                    (e.target as HTMLInputElement).blur()
+                  }
                 }}
                 disabled={!onDurationChange}
                 className="h-7 px-2 text-xs font-medium text-center bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
