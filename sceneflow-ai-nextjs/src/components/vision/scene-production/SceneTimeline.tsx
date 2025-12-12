@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { 
   Play, Pause, Volume2, VolumeX, Mic, Music, Zap, 
-  SkipBack, SkipForward, Film, Download, Plus, Trash2, X, Maximize2, Minimize2
+  SkipBack, SkipForward, Film, Download, Plus, Trash2, X, Maximize2, Minimize2, Info
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
@@ -40,6 +40,7 @@ export interface VisualClip {
   trimEnd: number
   status: 'DRAFT' | 'READY' | 'GENERATING' | 'COMPLETE' | 'UPLOADED' | 'ERROR'
   sequenceIndex: number
+  prompt?: string
 }
 
 export interface AudioTracksData {
@@ -96,6 +97,11 @@ export function SceneTimeline({
   const [isPlayerExpanded, setIsPlayerExpanded] = useState(false)
   const [showAddSegmentDialog, setShowAddSegmentDialog] = useState(false)
   const [newSegmentDuration, setNewSegmentDuration] = useState(4)
+  
+  // Tooltip state for hovering over segments
+  const [hoveredSegmentId, setHoveredSegmentId] = useState<string | null>(null)
+  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null)
+  
   const [mutedTracks, setMutedTracks] = useState<Set<string>>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('sceneflow-muted-tracks')
@@ -170,6 +176,7 @@ export function SceneTimeline({
       trimEnd: 0,
       status: seg.status,
       sequenceIndex: seg.sequenceIndex,
+      prompt: seg.prompt,
     }))
   }, [segments])
   
@@ -555,7 +562,7 @@ export function SceneTimeline({
 
   // Render a draggable/resizable clip
   const renderClip = (
-    clip: { id: string; startTime: number; duration: number; label?: string; url?: string; thumbnailUrl?: string; sequenceIndex?: number },
+    clip: { id: string; startTime: number; duration: number; label?: string; url?: string; thumbnailUrl?: string; sequenceIndex?: number; prompt?: string; status?: string },
     trackType: 'visual' | 'voiceover' | 'dialogue' | 'music' | 'sfx',
     color: string,
     showThumbnail: boolean = false
@@ -565,6 +572,7 @@ export function SceneTimeline({
     const isSelected = trackType === 'visual' && clip.id === selectedSegmentId
     const isDragging = dragState?.clipId === clip.id
     const canDelete = trackType === 'visual' && visualClips.length > 1
+    const isHovered = hoveredSegmentId === clip.id
     
     return (
       <div
@@ -580,6 +588,19 @@ export function SceneTimeline({
         onMouseDown={(e) => {
           if (trackType === 'visual') onSegmentSelect(clip.id)
           handleClipMouseDown(e, trackType, clip.id, 'move', clip.startTime, clip.duration)
+        }}
+        onMouseEnter={(e) => {
+          if (trackType === 'visual') {
+            setHoveredSegmentId(clip.id)
+            const rect = e.currentTarget.getBoundingClientRect()
+            setTooltipPosition({ x: rect.left + rect.width / 2, y: rect.top - 8 })
+          }
+        }}
+        onMouseLeave={() => {
+          if (trackType === 'visual') {
+            setHoveredSegmentId(null)
+            setTooltipPosition(null)
+          }
         }}
       >
         <div className={cn("absolute inset-0", color)}>
@@ -892,6 +913,49 @@ export function SceneTimeline({
         </div>
       </div>
       </div>
+
+      {/* Segment Hover Tooltip */}
+      {hoveredSegmentId && tooltipPosition && (() => {
+        const hoveredClip = visualClips.find(c => c.id === hoveredSegmentId)
+        if (!hoveredClip) return null
+        return (
+          <div 
+            className="fixed z-50 bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-3 max-w-xs pointer-events-none"
+            style={{ 
+              left: tooltipPosition.x, 
+              top: tooltipPosition.y,
+              transform: 'translate(-50%, -100%)'
+            }}
+          >
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-xs font-bold text-white">
+                Segment {(hoveredClip.sequenceIndex ?? 0) + 1}
+              </span>
+              <span className={cn(
+                "text-[9px] font-bold px-1.5 py-0.5 rounded",
+                hoveredClip.status === 'COMPLETE' || hoveredClip.status === 'UPLOADED'
+                  ? 'bg-green-900/50 text-green-400'
+                  : hoveredClip.status === 'GENERATING'
+                  ? 'bg-amber-900/50 text-amber-400'
+                  : 'bg-gray-700 text-gray-400'
+              )}>
+                {hoveredClip.status || 'PENDING'}
+              </span>
+            </div>
+            <div className="text-[10px] text-gray-400 mb-2">
+              {hoveredClip.startTime.toFixed(1)}s – {(hoveredClip.startTime + hoveredClip.duration).toFixed(1)}s ({hoveredClip.duration.toFixed(1)}s)
+            </div>
+            {hoveredClip.prompt && (
+              <p className="text-xs text-gray-300 leading-relaxed line-clamp-4">
+                {hoveredClip.prompt}
+              </p>
+            )}
+            {!hoveredClip.prompt && (
+              <p className="text-xs text-gray-500 italic">No description</p>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Hidden Audio Elements */}
       {allAudioClips.map(({ clip }) => (

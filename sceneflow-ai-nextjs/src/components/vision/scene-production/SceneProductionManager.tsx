@@ -120,6 +120,16 @@ export function SceneProductionManager({
     [sceneId, onAudioClipChange]
   )
   
+  // Wrapper for duration changes from SegmentStudio settings panel
+  const handleDurationChangeWrapper = useCallback(
+    (segmentId: string, newDuration: number) => {
+      if (onSegmentResize) {
+        onSegmentResize(sceneId, segmentId, { duration: newDuration })
+      }
+    },
+    [sceneId, onSegmentResize]
+  )
+  
   const [targetDuration, setTargetDuration] = useState<number>(productionData?.targetSegmentDuration ?? 8)
   
   // Enhanced generation options state
@@ -716,6 +726,7 @@ export function SceneProductionManager({
               onSegmentChange={setSelectedSegmentId}
               previousSegmentLastFrame={previousSegmentLastFrame}
               onPromptChange={handlePromptChange}
+              onDurationChange={onSegmentResize ? handleDurationChangeWrapper : undefined}
               onGenerate={handleGenerate}
               onUploadMedia={handleUpload}
               references={references}

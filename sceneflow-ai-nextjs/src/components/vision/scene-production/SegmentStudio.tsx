@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState, useRef, useMemo } from 'react'
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
 import { SceneSegment, SceneProductionReferences, SceneSegmentStatus } from './types'
-import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react'
+import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SegmentPromptBuilder, GeneratePromptData, VideoGenerationMethod } from './SegmentPromptBuilder'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
@@ -29,6 +30,7 @@ interface SegmentStudioProps {
   }) => Promise<void>
   onUploadMedia: (file: File) => Promise<void>
   onPromptChange?: (prompt: string) => void
+  onDurationChange?: (segmentId: string, newDuration: number) => void
   references: SceneProductionReferences
   sceneImageUrl?: string
   audioTracks?: AudioTracksData
@@ -42,6 +44,7 @@ export function SegmentStudio({
   onGenerate,
   onUploadMedia,
   onPromptChange,
+  onDurationChange,
   references,
   sceneImageUrl,
   audioTracks,
@@ -221,6 +224,50 @@ export function SegmentStudio({
             </div>
           </div>
         )}
+
+        {/* Timing Settings Panel */}
+        <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-2.5">
+          <div className="flex items-center gap-1.5 mb-2">
+            <Clock className="w-3.5 h-3.5 text-gray-500" />
+            <span className="text-[10px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Timing</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {/* Order (Read-only) */}
+            <div className="flex flex-col">
+              <span className="text-[9px] text-gray-500 dark:text-gray-400 mb-0.5">#</span>
+              <div className="flex items-center h-7 px-2 bg-gray-100 dark:bg-gray-800 rounded text-xs font-medium text-gray-700 dark:text-gray-300">
+                {segment.sequenceIndex + 1}
+              </div>
+            </div>
+            {/* Start Time (Read-only) */}
+            <div className="flex flex-col">
+              <span className="text-[9px] text-gray-500 dark:text-gray-400 mb-0.5">Start</span>
+              <div className="flex items-center h-7 px-2 bg-gray-100 dark:bg-gray-800 rounded text-xs font-medium text-gray-700 dark:text-gray-300">
+                {segment.startTime.toFixed(1)}s
+              </div>
+            </div>
+            {/* Duration (Editable) */}
+            <div className="flex flex-col">
+              <span className="text-[9px] text-gray-500 dark:text-gray-400 mb-0.5">Duration</span>
+              <Input
+                type="number"
+                min={0.5}
+                max={8}
+                step={0.5}
+                value={(segment.endTime - segment.startTime).toFixed(1)}
+                onChange={(e) => {
+                  const newDuration = Math.min(8, Math.max(0.5, parseFloat(e.target.value) || 0.5))
+                  onDurationChange?.(segment.id, newDuration)
+                }}
+                disabled={!onDurationChange}
+                className="h-7 px-2 text-xs font-medium text-center bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
+              />
+            </div>
+          </div>
+          <p className="text-[9px] text-gray-400 dark:text-gray-500 mt-1.5 text-center">
+            Max 8s per segment · Changing duration cascades to following segments
+          </p>
+        </div>
 
         {/* Generation Controls - Compact */}
         <div className="flex items-center gap-1.5">
