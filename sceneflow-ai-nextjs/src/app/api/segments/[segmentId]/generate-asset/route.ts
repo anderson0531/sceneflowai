@@ -93,11 +93,12 @@ export async function POST(
         console.log('[Segment Asset Generation] Using start frame for', method)
       }
       
-      // Source Video - used for EXT (extend) mode
-      // Veo API handles frame continuity automatically - no FFmpeg needed
-      if (method === 'EXT' && sourceVideoUrl) {
-        videoOptions.sourceVideoUrl = sourceVideoUrl
-        console.log('[Segment Asset Generation] Using source video for extension mode')
+      // EXT (Extend) mode: Veo video extension only works with videos still in Gemini's system.
+      // For our workflow (videos in Vercel Blob), we use I2V with the last frame instead.
+      // The SegmentPromptBuilder passes lastFrameUrl as startFrameUrl for EXT mode.
+      if (method === 'EXT' && startFrameUrl) {
+        videoOptions.startFrame = startFrameUrl
+        console.log('[Segment Asset Generation] Using last frame as start frame for EXT mode (I2V fallback)')
       }
       
       // End Frame - used for FTV (Frame-to-Video) only when end frame is provided

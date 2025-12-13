@@ -107,29 +107,14 @@ export async function generateVideoWithVeo(
     console.log('[Veo Video] Added start frame for I2V generation, mimeType:', mimeType)
   }
 
-  // Add source video for extension (EXT mode)
-  // Veo API handles frame continuity automatically - no need to extract last frame manually
+  // Note: Video extension (EXT mode) only works with Veo-generated videos that are still
+  // in Gemini's system (from a previous operation.response). For videos stored externally
+  // (like Vercel Blob), we use I2V with the last frame instead.
+  // The sourceVideoUrl option is kept for future use if we implement proper Veo operation chaining.
   if (options.sourceVideoUrl) {
-    // Convert video URL to base64 for inline data (required for Gemini API)
-    console.log('[Veo Video] Adding source video for extension mode...')
-    try {
-      const videoResponse = await fetch(options.sourceVideoUrl)
-      if (!videoResponse.ok) {
-        throw new Error(`Failed to fetch source video: ${videoResponse.status}`)
-      }
-      const contentType = videoResponse.headers.get('content-type') || 'video/mp4'
-      const videoBuffer = await videoResponse.arrayBuffer()
-      const videoBase64 = Buffer.from(videoBuffer).toString('base64')
-      
-      instance.video = {
-        bytesBase64Encoded: videoBase64,
-        mimeType: contentType.split(';')[0]
-      }
-      console.log('[Veo Video] Added source video for extension, size:', videoBuffer.byteLength, 'bytes')
-    } catch (error) {
-      console.error('[Veo Video] Failed to load source video:', error)
-      throw new Error(`Failed to load source video for extension: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    }
+    console.log('[Veo Video] sourceVideoUrl provided, but video extension only works with Veo-generated videos.')
+    console.log('[Veo Video] For external videos, use I2V with the last frame as startFrame instead.')
+    // Don't add video to instance - caller should extract last frame and use I2V
   }
 
   // Build parameters object
