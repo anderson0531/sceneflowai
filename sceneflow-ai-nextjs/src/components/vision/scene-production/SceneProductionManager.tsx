@@ -69,7 +69,7 @@ interface SceneProductionManagerProps {
   // Image editing (reuses ImageEditModal from Frame step)
   onEditImage?: (imageUrl: string) => void
   // Establishing Shot support
-  onAddEstablishingShot?: (sceneId: string, sceneData: { imageUrl?: string; heading?: string; visualDescription?: string }) => void
+  onAddEstablishingShot?: (sceneId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
 }
 
@@ -107,18 +107,14 @@ export function SceneProductionManager({
     [sceneId, onAddSegment]
   )
   
-  // Wrapper for adding establishing shot - pass scene data from props
+  // Wrapper for adding establishing shot - pass scene data and style from props
   const handleAddEstablishingShotWrapper = useCallback(
-    () => {
+    (style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => {
       if (onAddEstablishingShot) {
-        onAddEstablishingShot(sceneId, {
-          imageUrl: scene?.imageUrl,
-          heading: scene?.heading || heading,
-          visualDescription: scene?.visualDescription,
-        })
+        onAddEstablishingShot(sceneId, style)
       }
     },
-    [sceneId, onAddEstablishingShot, scene, heading]
+    [sceneId, onAddEstablishingShot]
   )
   
   // NOTE: handleEstablishingShotStyleChangeWrapper is defined AFTER selectedSegmentId (line ~350)
@@ -755,17 +751,17 @@ export function SceneProductionManager({
                 type="button" 
                 variant="outline" 
                 size="sm"
-                onClick={() => setCustomInstructions(prev => prev + (prev ? '\n' : '') + 'Include wide establishing shots at scene transitions')}
+                onClick={() => setCustomInstructions(prev => prev + (prev ? '\n' : '') + 'Prefer close-ups for dialogue moments')}
               >
-                + Establishing
+                + Close-ups
               </Button>
               <Button 
                 type="button" 
                 variant="outline" 
                 size="sm"
-                onClick={() => setCustomInstructions(prev => prev + (prev ? '\n' : '') + 'Prefer close-ups for dialogue moments')}
+                onClick={() => setCustomInstructions(prev => prev + (prev ? '\n' : '') + 'Include wide shots to show character positions')}
               >
-                + Close-ups
+                + Wide Shots
               </Button>
             </div>
           </div>
@@ -899,11 +895,13 @@ export function SceneProductionManager({
               references={references}
               sceneImageUrl={scene?.imageUrl}
               audioTracks={audioTracks}
+              segmentIndex={segments.findIndex(s => s.segmentId === selectedSegmentId)}
               sceneDialogueLines={sceneDialogueLines}
               segmentDialogueLines={selectedSegmentDialogue}
               onToggleDialogue={handleToggleDialogue}
               onKeyframeChange={handleKeyframeChange}
               onEditImage={onEditImage}
+              onAddEstablishingShot={onAddEstablishingShot && !segments.some(s => s.isEstablishingShot) ? handleAddEstablishingShotWrapper : undefined}
               onEstablishingShotStyleChange={onEstablishingShotStyleChange ? handleEstablishingShotStyleChangeWrapper : undefined}
             />
           </div>

@@ -50,6 +50,8 @@ interface SegmentStudioProps {
   references: SceneProductionReferences
   sceneImageUrl?: string
   audioTracks?: AudioTracksData
+  // Segment position for establishing shot logic
+  segmentIndex?: number
   // Phase 2: Dialogue coverage
   sceneDialogueLines?: SceneDialogueLine[]
   segmentDialogueLines?: SegmentDialogueAssignment[]
@@ -58,7 +60,8 @@ interface SegmentStudioProps {
   onKeyframeChange?: (settings: SegmentKeyframeSettings) => void
   // Image editing (reuses same modal as Frame step)
   onEditImage?: (imageUrl: string) => void
-  // Establishing Shot style change
+  // Establishing Shot handlers
+  onAddEstablishingShot?: (style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   onEstablishingShotStyleChange?: (style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
 }
 
@@ -74,11 +77,13 @@ export function SegmentStudio({
   references,
   sceneImageUrl,
   audioTracks,
+  segmentIndex = 0,
   sceneDialogueLines = [],
   segmentDialogueLines = [],
   onToggleDialogue,
   onKeyframeChange,
   onEditImage,
+  onAddEstablishingShot,
   onEstablishingShotStyleChange,
 }: SegmentStudioProps) {
   const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null)
@@ -400,6 +405,38 @@ export function SegmentStudio({
             </span>
           </label>
         </div>
+
+        {/* Add Establishing Shot Button - Only show when segment index is 0 and not already an establishing shot */}
+        {segmentIndex === 0 && !segment.isEstablishingShot && onAddEstablishingShot && (
+          <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-2.5">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Film className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+              <span className="text-[10px] font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wide">
+                Add Establishing Shot
+              </span>
+            </div>
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-2">
+              Insert a scene-setting shot before this segment using the scene's keyframe image.
+            </p>
+            <div className="grid grid-cols-1 gap-1.5">
+              {([
+                { value: 'scale-switch' as const, label: '🎬 Scale Switch', desc: 'Ken Burns zoom, cut to dialogue' },
+                { value: 'living-painting' as const, label: '🌊 Living Painting', desc: 'Ambient motion (clouds, water)' },
+                { value: 'b-roll-cutaway' as const, label: '🎞️ B-Roll', desc: 'Detail shots for long narration' },
+              ]).map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => onAddEstablishingShot(option.value)}
+                  className="w-full text-left p-2 rounded-lg border border-purple-300 dark:border-purple-700 hover:border-purple-500 dark:hover:border-purple-500 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all"
+                >
+                  <div className="text-xs font-medium text-gray-900 dark:text-gray-100">{option.label}</div>
+                  <p className="text-[9px] text-gray-500 dark:text-gray-400">{option.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Segment Preview */}
         {segment.activeAssetUrl && (segment.status === 'COMPLETE' || segment.status === 'UPLOADED') && (

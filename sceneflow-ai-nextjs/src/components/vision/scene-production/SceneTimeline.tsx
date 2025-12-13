@@ -782,19 +782,6 @@ export function SceneTimeline({
           )}
         </div>
         <div className="flex-1 relative bg-gray-900 border-b border-gray-700">
-          {/* Add Establishing Shot Button - appears before first segment if no establishing shot exists */}
-          {addEstablishingShotCallback && !hasEstablishingShot && sceneFrameUrl && visualClips.length > 0 && (
-            <button
-              className="absolute top-1/2 -translate-y-1/2 h-10 px-2 rounded bg-purple-700 hover:bg-purple-600 border border-dashed border-purple-400 hover:border-purple-300 text-purple-200 hover:text-white transition-all flex items-center gap-1 text-[10px] font-medium z-10"
-              style={{ left: 4 }}
-              onClick={addEstablishingShotCallback}
-              title="Add establishing shot at the start of the scene"
-            >
-              <Film className="w-3.5 h-3.5" />
-              <span>+ Estab.</span>
-            </button>
-          )}
-          
           {visualClips.map(clip => {
             // Determine color based on establishing shot status and generation status
             let clipColor: string
