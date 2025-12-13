@@ -159,38 +159,46 @@ export async function generateVideoWithVeo(
     }
   }
 
-  // Add reference images (Veo 3.1 feature)
+  // Add reference images (Veo 3.1 feature - T2V only, NOT compatible with I2V)
+  // IMPORTANT: referenceImages cannot be used with startFrame (image parameter)
   if (options.referenceImages && options.referenceImages.length > 0) {
-    const refs = await Promise.all(
-      options.referenceImages.slice(0, 3).map(async (ref) => {
-        // Support both imageUrl and url field names
-        const imageSource = ref.base64Image || ref.imageUrl || ref.url
-        if (!imageSource) return null
-        
-        let imageData: string
-        let mimeType = 'image/png'
-        
-        if (imageSource.startsWith('http')) {
-          const result = await urlToBase64(imageSource)
-          imageData = result.base64
-          mimeType = result.mimeType
-        } else {
-          imageData = imageSource
-        }
+    // Safety check: referenceImages is T2V only
+    if (options.startFrame) {
+      console.warn('[Veo Video] WARNING: referenceImages cannot be used with startFrame (I2V)')
+      console.warn('[Veo Video] Ignoring referenceImages - using I2V mode instead')
+      // Skip adding referenceImages when startFrame is present
+    } else {
+      const refs = await Promise.all(
+        options.referenceImages.slice(0, 3).map(async (ref) => {
+          // Support both imageUrl and url field names
+          const imageSource = ref.base64Image || ref.imageUrl || ref.url
+          if (!imageSource) return null
           
-        // Map 'character' type to 'asset', keep 'style' as 'style'
-        const refType = ref.referenceType || (ref.type === 'style' ? 'style' : 'asset')
-        
-        return {
-          image: {
-            bytesBase64Encoded: imageData,
-            mimeType: mimeType
-          },
-          referenceType: refType
-        }
-      })
-    )
-    parameters.referenceImages = refs.filter(Boolean)
+          let imageData: string
+          let mimeType = 'image/png'
+          
+          if (imageSource.startsWith('http')) {
+            const result = await urlToBase64(imageSource)
+            imageData = result.base64
+            mimeType = result.mimeType
+          } else {
+            imageData = imageSource
+          }
+            
+          // Map 'character' type to 'asset', keep 'style' as 'style'
+          const refType = ref.referenceType || (ref.type === 'style' ? 'style' : 'asset')
+          
+          return {
+            image: {
+              bytesBase64Encoded: imageData,
+              mimeType: mimeType
+            },
+            referenceType: refType
+          }
+        })
+      )
+      parameters.referenceImages = refs.filter(Boolean)
+    }
   }
 
   // Build request body (Vertex AI-style format for predictLongRunning)

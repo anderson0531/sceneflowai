@@ -110,19 +110,18 @@ export async function POST(
       }
       
       // Reference Images - used for REF method (up to 3 images for style/character consistency)
-      // NOTE: Cannot use referenceImages together with endFrame per Veo 3.1 API constraints
+      // IMPORTANT: referenceImages is T2V only - CANNOT be combined with startFrame (I2V)
+      // Per Veo 3.1 API: referenceImages guides T2V generation, it's NOT compatible with image parameter
       if (method === 'REF' && referenceImages && referenceImages.length > 0) {
         // Pass the full reference image objects to preserve type information
         videoOptions.referenceImages = referenceImages.map(img => ({
           url: img.url,
           type: img.type  // 'style' or 'character' - videoClient will map to Veo's referenceType
         }))
-        console.log('[Segment Asset Generation] Using', referenceImages.length, 'reference images')
+        console.log('[Segment Asset Generation] Using', referenceImages.length, 'reference images (T2V mode)')
         
-        // REF can also include a start frame optionally
-        if (startFrameUrl) {
-          videoOptions.startFrame = startFrameUrl
-        }
+        // NOTE: Do NOT add startFrame here - referenceImages is T2V only, not compatible with I2V
+        // If user wants I2V with character consistency, they should use I2V mode without referenceImages
       }
       
       // Trigger video generation
