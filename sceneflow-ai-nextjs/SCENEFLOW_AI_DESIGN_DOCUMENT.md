@@ -1,7 +1,7 @@
 # SceneFlow AI - Application Design Document
 
-**Version**: 2.4  
-**Last Updated**: December 12, 2025  
+**Version**: 2.5  
+**Last Updated**: December 13, 2025  
 **Status**: Production
 
 ---
@@ -54,6 +54,9 @@
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2025-12-13 | Workflow Mark as Done feature | Added manual completion override for workflow steps. Users can mark any step (Script/Direction/Frame/Call Action) as complete via "Mark Done" toggle button in tab header. Uses `scene.workflowCompletions` object for persistence. Enables users to proceed with workflow when automatic detection doesn't match their intent. Button shows checkmark when marked complete. | ✅ Implemented |
+| 2025-12-13 | Auto-open first incomplete workflow section | Scene card now opens to the first **incomplete** (not marked as done) and unlocked workflow step, instead of just the first unlocked step. Modified useEffect in ScriptPanel.tsx to find first step where `!stepCompletion[key]`. Improves UX by directing users to work that still needs attention. | ✅ Implemented |
+| 2025-12-13 | Dismissible staleness warnings | Added ability to dismiss false-positive stale warnings. "Dismiss" button on staleness banner stores dismissed state in `scene.dismissedStaleWarnings`. Prevents warning from reappearing after user acknowledges and chooses not to regenerate. Addresses cases where hash-based detection incorrectly flags stale content. | ✅ Implemented |
 | 2025-12-12 | Phase 9: MP4 Export with Keyframes | Export animatic to MP4 via Shotstack API. Created `ShotstackService.ts` with `buildShotstackEdit()` and `getEffectFromKeyframes()` for Ken Burns → Shotstack effect mapping. API routes: POST `/api/export/animatic` builds edit JSON and submits render, GET `/api/export/animatic/[renderId]` polls status. Direction mapping: in→zoomIn, out→zoomOut, left→slideLeft, etc. Supports audio tracks (narration, music, dialogue). Preview mode when SHOTSTACK_API_KEY not set. | ✅ Implemented |
 | 2025-12-12 | Phase 8: AI Pre-assignment of Dialogue | AI automatically assigns dialogue to segments during generation. Modified `/api/scenes/[sceneId]/generate-segments` prompt to include numbered dialogue indices [0], [1], etc. AI returns `assigned_dialogue_indices: [0, 1]` per segment. Transformed to `dialogueLineIds: ['dialogue-0', 'dialogue-1']` in segment data. Segments now come with pre-mapped dialogue coverage that persists to DB. | ✅ Implemented |
 | 2025-12-12 | Phase 7: Segment Drag-and-Drop Reordering | Reorder timeline segments via drag-and-drop. Added @dnd-kit imports to SceneTimeline.tsx. `DndContext` wraps visual track, `SortableContext` with `horizontalListSortingStrategy`. `handleDragEnd` recalculates `sequenceIndex`, `startTime`, `endTime` for all segments. Handler chain: VisionPage `handleReorderSegments` → ScriptPanel → SceneCard → SceneProductionManager → SceneTimeline. Persists reorder via `applySceneProductionUpdate()`. | ✅ Implemented |
