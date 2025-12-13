@@ -94,6 +94,9 @@ export async function GET(
       errorMessage = 'Database connection refused'
     } else if (error?.message?.includes('SSL')) {
       errorMessage = 'Database SSL configuration error'
+    } else if (error?.message?.includes('MaxClientsInSessionMode') || error?.message?.includes('max clients reached')) {
+      errorMessage = 'Database temporarily overloaded. Please try again.'
+      statusCode = 503 // Service Unavailable - indicates temporary issue
     }
     
     return NextResponse.json({ 
@@ -263,8 +266,17 @@ export async function PUT(
     })
     
     return NextResponse.json({ success: true, project })
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Projects PUT] Error:', error)
+    
+    // Check for pool exhaustion error
+    if (error?.message?.includes('MaxClientsInSessionMode') || error?.message?.includes('max clients reached')) {
+      return NextResponse.json({ 
+        error: 'Database temporarily overloaded. Please try again.',
+        retryable: true
+      }, { status: 503 })
+    }
+    
     return NextResponse.json({ error: 'Failed to update project' }, { status: 500 })
   }
 }
