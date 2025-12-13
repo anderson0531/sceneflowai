@@ -52,6 +52,9 @@ export interface SceneSegmentTake {
   durationSec?: number
   status: SceneSegmentStatus
   notes?: string
+  // Veo video reference for extension - stores the Gemini Files API reference (e.g., "files/xxx")
+  // This is needed for Veo video extension which only works with Veo-generated videos still in Gemini's system
+  veoVideoRef?: string
 }
 
 export interface SceneSegmentReferences {

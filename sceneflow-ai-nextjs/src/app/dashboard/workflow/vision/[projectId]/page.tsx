@@ -1261,6 +1261,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               thumbnailUrl: data.assetType === 'image' ? data.assetUrl : (lastFrameUrl || undefined),
               status: data.status === 'COMPLETE' ? 'COMPLETE' : 'GENERATING',
               durationSec: segment.endTime - segment.startTime,
+              // Store Veo video reference for future video extension
+              veoVideoRef: data.veoVideoRef,
             }
 
             return {

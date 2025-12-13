@@ -30,6 +30,7 @@ interface VideoGenerationResult {
   status: 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED'
   operationName?: string
   videoUrl?: string
+  veoVideoRef?: string  // Gemini Files API reference (e.g., "files/xxx") for video extension
   error?: string
   estimatedWaitSeconds?: number
 }
@@ -341,12 +342,15 @@ export async function checkVideoGenerationStatus(
       if (generatedSamples && generatedSamples.length > 0) {
         const video = generatedSamples[0].video
         const videoUrl = video?.uri || video?.url
+        const veoVideoRef = video?.name  // Store the Files API reference for video extension
         
         if (videoUrl) {
           console.log('[Veo Video] Video completed! URI:', videoUrl.substring(0, 100))
+          console.log('[Veo Video] Video reference for extension:', veoVideoRef)
           return {
             status: 'COMPLETED',
             videoUrl: videoUrl,
+            veoVideoRef: veoVideoRef,
             operationName: operationName
           }
         } else if (video?.name) {
@@ -354,7 +358,8 @@ export async function checkVideoGenerationStatus(
           return {
             status: 'COMPLETED',
             operationName: operationName,
-            videoUrl: `file:${video.name}`
+            videoUrl: `file:${video.name}`,
+            veoVideoRef: video.name
           }
         }
       }
@@ -363,19 +368,23 @@ export async function checkVideoGenerationStatus(
       if (generatedVideos && generatedVideos.length > 0) {
         const video = generatedVideos[0].video
         const videoUrl = video?.uri || video?.url
+        const veoVideoRef = video?.name  // Store the Files API reference for video extension
         
         if (videoUrl) {
           console.log('[Veo Video] Video completed! URI:', videoUrl.substring(0, 100))
+          console.log('[Veo Video] Video reference for extension:', veoVideoRef)
           return {
             status: 'COMPLETED',
             videoUrl: videoUrl,
+            veoVideoRef: veoVideoRef,
             operationName: operationName
           }
         } else if (video?.name) {
           return {
             status: 'COMPLETED',
             operationName: operationName,
-            videoUrl: `file:${video.name}`
+            videoUrl: `file:${video.name}`,
+            veoVideoRef: video.name
           }
         }
       }

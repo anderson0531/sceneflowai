@@ -69,6 +69,7 @@ export async function POST(
     let assetUrl: string
     let assetType: 'video' | 'image'
     let lastFrameUrl: string | null = null
+    let veoVideoRef: string | undefined = undefined  // Store Veo video reference for video extension
 
     if (genType === 'T2V' || genType === 'I2V') {
       // Video generation using Veo 3.1 (platform credentials)
@@ -195,6 +196,13 @@ export async function POST(
       }
       
       assetType = 'video'
+      
+      // Store Veo video reference for future video extension
+      // This allows using Veo's native video extension with this video
+      veoVideoRef = finalResult.veoVideoRef
+      if (veoVideoRef) {
+        console.log('[Segment Asset Generation] Stored Veo video reference:', veoVideoRef)
+      }
 
       // Extract last frame for I2V continuity
       try {
@@ -233,6 +241,7 @@ export async function POST(
       assetUrl,
       assetType,
       lastFrameUrl,
+      veoVideoRef,  // Gemini Files API reference for video extension
       status: assetType === 'video' && assetUrl.startsWith('job:') ? 'QUEUED' : 'COMPLETE',
       jobId: assetType === 'video' && assetUrl.startsWith('job:') ? assetUrl.replace('job:', '') : undefined,
     })
