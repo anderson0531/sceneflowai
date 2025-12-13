@@ -15,6 +15,7 @@ interface GenerateAssetRequest {
   referenceImageIds?: string[]
   startFrameUrl?: string
   endFrameUrl?: string  // Veo 3.1: For Frame-to-Video (FTV) generation with end frame
+  sourceVideoUrl?: string  // Veo 3.1: Source video URL for extension mode - Veo handles frame continuity automatically
   referenceImages?: Array<{ url: string; type: 'style' | 'character' }>  // Veo 3.1: Up to 3 reference images
   generationMethod?: 'T2V' | 'I2V' | 'FTV' | 'EXT' | 'REF'  // Veo 3.1: Explicit generation method (EXT = extend from previous)
   sceneId: string
@@ -39,6 +40,7 @@ export async function POST(
       referenceImageIds, 
       startFrameUrl, 
       endFrameUrl,
+      sourceVideoUrl,
       referenceImages,
       generationMethod,
       sceneId, 
@@ -85,10 +87,17 @@ export async function POST(
       // Handle different Veo 3.1 generation methods
       const method = generationMethod || genType
       
-      // Start Frame - used for I2V, FTV, and EXT methods
-      if ((method === 'I2V' || method === 'FTV' || method === 'EXT') && startFrameUrl) {
+      // Start Frame - used for I2V and FTV methods
+      if ((method === 'I2V' || method === 'FTV') && startFrameUrl) {
         videoOptions.startFrame = startFrameUrl
         console.log('[Segment Asset Generation] Using start frame for', method)
+      }
+      
+      // Source Video - used for EXT (extend) mode
+      // Veo API handles frame continuity automatically - no FFmpeg needed
+      if (method === 'EXT' && sourceVideoUrl) {
+        videoOptions.sourceVideoUrl = sourceVideoUrl
+        console.log('[Segment Asset Generation] Using source video for extension mode')
       }
       
       // End Frame - used for FTV (Frame-to-Video) only when end frame is provided

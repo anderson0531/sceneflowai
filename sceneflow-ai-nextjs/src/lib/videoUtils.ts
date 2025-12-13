@@ -1,6 +1,9 @@
 /**
- * Video utilities for FFmpeg operations
- * Used for extracting frames, processing video, and continuity features
+ * Video utilities for frame extraction and video processing
+ * 
+ * NOTE: FFmpeg is not available in Vercel serverless environment.
+ * Server-side extraction will be skipped, and client-side extraction
+ * should be used instead when needed.
  */
 
 import { exec } from 'child_process'
@@ -11,16 +14,50 @@ import * as path from 'path'
 
 const execPromise = promisify(exec)
 
+// Cache the FFmpeg availability check
+let ffmpegAvailable: boolean | null = null
+
+/**
+ * Check if FFmpeg is available in the system
+ */
+export async function checkFFmpegAvailable(): Promise<boolean> {
+  if (ffmpegAvailable !== null) {
+    return ffmpegAvailable
+  }
+  
+  try {
+    await execPromise('which ffmpeg')
+    ffmpegAvailable = true
+  } catch {
+    ffmpegAvailable = false
+    console.log('[Video Utils] FFmpeg not available - server-side frame extraction will be skipped')
+  }
+  
+  return ffmpegAvailable
+}
+
 /**
  * Extract the last frame from a video and upload it to cloud storage
+ * 
  * @param videoUrl - URL of the video file
  * @param segmentId - Segment ID for naming the output file
- * @returns URL of the uploaded frame image, or null if extraction failed
+ * @returns URL of the uploaded frame image, or null if extraction failed/unavailable
+ * 
+ * NOTE: This requires FFmpeg which is not available on Vercel.
+ * Returns null gracefully when FFmpeg is unavailable.
  */
 export async function extractAndStoreLastFrame(
   videoUrl: string,
   segmentId: string
 ): Promise<string | null> {
+  // Check if FFmpeg is available first
+  const hasFFmpeg = await checkFFmpegAvailable()
+  if (!hasFFmpeg) {
+    console.log('[Video Utils] Skipping last frame extraction - FFmpeg not available')
+    console.log('[Video Utils] Client-side extraction will be used when needed')
+    return null
+  }
+  
   try {
     // Create temporary directory for processing
     const tmpDir = path.join('/tmp', `frames_${segmentId}_${Date.now()}`)
@@ -99,17 +136,5 @@ function parseDuration(durationStr: string): number {
   const seconds = parseFloat(parts[2]) || 0
   
   return hours * 3600 + minutes * 60 + seconds
-}
-
-/**
- * Check if FFmpeg is available in the system
- */
-export async function checkFFmpegAvailable(): Promise<boolean> {
-  try {
-    await execPromise('ffmpeg -version')
-    return true
-  } catch {
-    return false
-  }
 }
 

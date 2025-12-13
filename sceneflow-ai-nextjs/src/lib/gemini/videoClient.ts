@@ -23,6 +23,7 @@ interface VideoGenerationOptions {
   startFrame?: string // Base64 or URL for I2V
   lastFrame?: string // For interpolation
   referenceImages?: ReferenceImage[] // Up to 3 for Veo 3.1
+  sourceVideoUrl?: string // URL of video to extend (EXT mode) - Veo handles frame continuity automatically
 }
 
 interface VideoGenerationResult {
@@ -104,6 +105,31 @@ export async function generateVideoWithVeo(
       mimeType: mimeType
     }
     console.log('[Veo Video] Added start frame for I2V generation, mimeType:', mimeType)
+  }
+
+  // Add source video for extension (EXT mode)
+  // Veo API handles frame continuity automatically - no need to extract last frame manually
+  if (options.sourceVideoUrl) {
+    // Convert video URL to base64 for inline data (required for Gemini API)
+    console.log('[Veo Video] Adding source video for extension mode...')
+    try {
+      const videoResponse = await fetch(options.sourceVideoUrl)
+      if (!videoResponse.ok) {
+        throw new Error(`Failed to fetch source video: ${videoResponse.status}`)
+      }
+      const contentType = videoResponse.headers.get('content-type') || 'video/mp4'
+      const videoBuffer = await videoResponse.arrayBuffer()
+      const videoBase64 = Buffer.from(videoBuffer).toString('base64')
+      
+      instance.video = {
+        bytesBase64Encoded: videoBase64,
+        mimeType: contentType.split(';')[0]
+      }
+      console.log('[Veo Video] Added source video for extension, size:', videoBuffer.byteLength, 'bytes')
+    } catch (error) {
+      console.error('[Veo Video] Failed to load source video:', error)
+      throw new Error(`Failed to load source video for extension: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
   }
 
   // Build parameters object

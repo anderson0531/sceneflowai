@@ -230,6 +230,8 @@ export function SegmentStudio({
       endFrameUrl: promptData.endFrameUrl,
       referenceImages: promptData.referenceImages,
       generationMethod: promptData.generationMethod,
+      // For EXT mode: pass source video URL so Veo can extend directly (no FFmpeg needed)
+      sourceVideoUrl: promptData.videoReferenceUrl,
     })
   }
 

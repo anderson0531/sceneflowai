@@ -1157,11 +1157,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       mode: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD',
       options?: { 
         startFrameUrl?: string
+        sourceVideoUrl?: string  // For EXT mode: Veo extends video directly (no FFmpeg needed)
         prompt?: string
         negativePrompt?: string
         duration?: number
         aspectRatio?: '16:9' | '9:16'
         resolution?: '720p' | '1080p'
+        generationMethod?: 'T2V' | 'I2V' | 'FTV' | 'EXT' | 'REF'
+        endFrameUrl?: string
+        referenceImages?: Array<{ url: string; type: 'style' | 'character' }>
       }
     ) => {
       if (!project?.id) {
@@ -1204,6 +1208,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             prompt,
             genType: mode,
             startFrameUrl: options?.startFrameUrl,
+            sourceVideoUrl: options?.sourceVideoUrl,  // For EXT mode: Veo extends video directly
+            endFrameUrl: options?.endFrameUrl,
+            referenceImages: options?.referenceImages,
+            generationMethod: options?.generationMethod,
             sceneId,
             projectId: project.id,
             // Pass video-specific options from prompt builder
@@ -1224,6 +1232,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           throw new Error(data.error || 'Asset generation failed')
         }
 
+        // If video was generated but server couldn't extract last frame (FFmpeg not available),
+        // extract it client-side for continuity
+        let lastFrameUrl = data.lastFrameUrl
+        if (data.assetType === 'video' && data.assetUrl && !lastFrameUrl) {
+          try {
+            console.log('[Segment Generate] Server did not return lastFrameUrl, extracting client-side...')
+            const { extractAndUploadLastFrame } = await import('@/lib/video/clientVideoUtils')
+            lastFrameUrl = await extractAndUploadLastFrame(data.assetUrl, segmentId)
+            console.log('[Segment Generate] Client-side frame extracted:', lastFrameUrl)
+          } catch (frameError) {
+            console.warn('[Segment Generate] Client-side frame extraction failed:', frameError)
+            // Not critical - continue without last frame
+          }
+        }
+
         // Update segment with generated asset
         applySceneProductionUpdate(sceneId, (current) => {
           if (!current) return current
@@ -1235,7 +1258,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               createdAt: new Date().toISOString(),
               assetUrl: data.assetUrl,
               // For images, use the image itself as thumbnail. For videos, use the extracted last frame.
-              thumbnailUrl: data.assetType === 'image' ? data.assetUrl : (data.lastFrameUrl || undefined),
+              thumbnailUrl: data.assetType === 'image' ? data.assetUrl : (lastFrameUrl || undefined),
               status: data.status === 'COMPLETE' ? 'COMPLETE' : 'GENERATING',
               durationSec: segment.endTime - segment.startTime,
             }
@@ -1249,7 +1272,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               references: {
                 ...segment.references,
                 startFrameUrl: options?.startFrameUrl || segment.references.startFrameUrl,
-                endFrameUrl: data.lastFrameUrl || segment.references.endFrameUrl,
+                endFrameUrl: lastFrameUrl || segment.references.endFrameUrl,
               },
             }
           })
