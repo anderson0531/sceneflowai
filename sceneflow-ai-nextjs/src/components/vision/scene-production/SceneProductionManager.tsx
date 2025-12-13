@@ -69,8 +69,8 @@ interface SceneProductionManagerProps {
   // Image editing (reuses ImageEditModal from Frame step)
   onEditImage?: (imageUrl: string) => void
   // Establishing Shot support
-  onAddEstablishingShot?: (sceneId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
-  onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
+  onAddEstablishingShot?: (sceneId: string, style: 'single-shot' | 'beat-matched' | 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => Promise<void>
+  onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'single-shot' | 'beat-matched' | 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   // Take selection - allows user to choose which take to use as active asset
   onSelectTake?: (sceneId: string, segmentId: string, takeId: string, takeAssetUrl: string) => void
 }
@@ -112,7 +112,7 @@ export function SceneProductionManager({
   
   // Wrapper for adding establishing shot - pass scene data and style from props
   const handleAddEstablishingShotWrapper = useCallback(
-    (style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => {
+    (style: 'single-shot' | 'beat-matched' | 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => {
       if (onAddEstablishingShot) {
         onAddEstablishingShot(sceneId, style)
       }
@@ -343,7 +343,7 @@ export function SceneProductionManager({
 
   // Wrapper for changing establishing shot style - MUST be defined after selectedSegmentId
   const handleEstablishingShotStyleChangeWrapper = useCallback(
-    (style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => {
+    (style: 'single-shot' | 'beat-matched' | 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => {
       if (onEstablishingShotStyleChange && selectedSegmentId) {
         onEstablishingShotStyleChange(sceneId, selectedSegmentId, style)
       }

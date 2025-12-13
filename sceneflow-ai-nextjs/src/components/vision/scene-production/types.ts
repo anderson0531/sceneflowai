@@ -2,14 +2,39 @@ import { VisualReference } from '@/types/visionReferences'
 
 export type SceneSegmentStatus = 'DRAFT' | 'READY' | 'GENERATING' | 'COMPLETE' | 'UPLOADED' | 'ERROR'
 
-// Establishing Shot Types
-export type EstablishingShotType = 'scale-switch' | 'living-painting' | 'b-roll-cutaway' | 'none'
+// Establishing Shot Types - Video-focused modes for narration backdrops
+// DEPRECATED: 'scale-switch' | 'living-painting' | 'b-roll-cutaway' (photo-based tricks)
+// NEW: Video generation modes that work with AI video clips
+export type EstablishingShotType = 
+  | 'single-shot'    // One continuous video for entire narration (loops if needed)
+  | 'beat-matched'   // AI splits narration into visual beats, generates multiple segments
+  | 'manual-cuts'    // User defines cut points manually
+  // Legacy support (deprecated but still valid for existing projects)
+  | 'scale-switch' 
+  | 'living-painting' 
+  | 'b-roll-cutaway' 
+  | 'none'
+
+// Beat metadata for beat-matched establishing shots
+export interface EstablishingShotBeat {
+  beatNumber: number
+  startPercent: number
+  endPercent: number
+  narrationText: string
+  visualFocus: string
+  shotType: 'wide' | 'medium' | 'close-up' | 'detail' | 'tracking'
+  cameraMotion: string
+  videoPrompt: string
+}
 
 export interface EstablishingShotSettings {
   enabled: boolean
   type: EstablishingShotType
   duration: number // 4-12 seconds
   useExistingFrame: boolean // Use scene's pre-generated frame
+  // Beat-matched specific settings
+  beats?: EstablishingShotBeat[]
+  narrationDuration?: number
 }
 
 export type SceneSegmentAssetType = 'video' | 'image' | null

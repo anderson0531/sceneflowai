@@ -1370,9 +1370,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [applySceneProductionUpdate]
   )
   
-  // Handle adding an establishing shot segment at the beginning of the scene
+  // Handle adding establishing shot segment(s) at the beginning of the scene
+  // Supports: single-shot, beat-matched (AI splits narration), and legacy modes
   const handleAddEstablishingShot = useCallback(
-    (sceneId: string, type: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => {
+    async (sceneId: string, type: 'single-shot' | 'beat-matched' | 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => {
       // Find the scene to get image and heading for the establishing shot
       const scenes = script?.script?.scenes || []
       const scene = scenes.find((s: any) => (s.id || `scene-${scenes.indexOf(s)}`) === sceneId)
@@ -1383,7 +1384,116 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       const sceneImageUrl = scene.imageUrl || ''
       const heading = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text || 'Unknown Location'
+      const narrationText = scene.narration || scene.action || ''
+      const narrationDuration = scene.narrationAudio?.en?.duration || scene.narrationDuration || 0
+      const sceneDescription = scene.description || scene.action || ''
       
+      // For beat-matched mode, use AI to analyze narration
+      if (type === 'beat-matched' && narrationText) {
+        toast.info('Analyzing narration for visual beats...')
+        
+        try {
+          // Get character descriptions for reference
+          const characterDescriptions: Record<string, string> = {}
+          if (script?.script?.characters) {
+            for (const char of script.script.characters) {
+              if (char.name && char.visualDescription) {
+                characterDescriptions[char.name] = char.visualDescription
+              }
+            }
+          }
+          
+          const response = await fetch('/api/vision/analyze-narration-beats', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              narrationText,
+              sceneHeading: heading,
+              sceneDescription,
+              sceneImageUrl,
+              estimatedDuration: narrationDuration > 0 ? narrationDuration : undefined,
+              mode: 'beat-matched',
+              characterDescriptions,
+            }),
+          })
+          
+          if (!response.ok) {
+            throw new Error('Failed to analyze narration')
+          }
+          
+          const { analysis } = await response.json()
+          
+          // Create segments for each beat
+          applySceneProductionUpdate(sceneId, (current) => {
+            if (!current) return current
+            
+            if (current.segments.some(s => s.isEstablishingShot)) {
+              toast.error('Scene already has an establishing shot')
+              return current
+            }
+            
+            const totalEstablishingDuration = analysis.narrationDurationEstimate || (analysis.beats.length * 5)
+            const durationPerBeat = totalEstablishingDuration / analysis.beats.length
+            
+            // Create establishing shot segments for each beat
+            const establishingSegments = analysis.beats.map((beat: any, idx: number) => {
+              const startTime = idx * durationPerBeat
+              const endTime = (idx + 1) * durationPerBeat
+              
+              return {
+                segmentId: `seg_${sceneId}_establishing_beat${idx + 1}_${Date.now()}`,
+                sequenceIndex: idx,
+                startTime,
+                endTime,
+                status: 'DRAFT' as const,
+                assetType: undefined,
+                activeAssetUrl: undefined,
+                isEstablishingShot: true,
+                establishingShotType: 'beat-matched' as const,
+                shotNumber: idx + 1,
+                generatedPrompt: beat.videoPrompt,
+                userEditedPrompt: '',
+                cameraMovement: beat.cameraMotion,
+                shotType: beat.shotType,
+                emotionalBeat: beat.visualFocus,
+                references: {
+                  sceneImageUrl,
+                  thumbnailUrl: sceneImageUrl,
+                  startFrameUrl: sceneImageUrl,
+                  endFrameUrl: undefined,
+                  characterIds: [],
+                  sceneRefIds: [],
+                  objectRefIds: [],
+                },
+                takes: [],
+              }
+            })
+            
+            // Shift all existing segments forward in time
+            const updatedSegments = current.segments.map((segment, idx) => ({
+              ...segment,
+              sequenceIndex: idx + establishingSegments.length,
+              startTime: segment.startTime + totalEstablishingDuration,
+              endTime: segment.endTime + totalEstablishingDuration,
+            }))
+            
+            return {
+              ...current,
+              segments: [...establishingSegments, ...updatedSegments],
+            }
+          })
+          
+          toast.success(`Added ${analysis.beats.length} beat-matched establishing shot segments`)
+          return
+          
+        } catch (error) {
+          console.error('Failed to analyze narration beats:', error)
+          toast.error('Failed to analyze narration, falling back to single shot')
+          // Fall through to single-shot mode
+        }
+      }
+      
+      // Single-shot or legacy modes
       applySceneProductionUpdate(sceneId, (current) => {
         if (!current) return current
         
@@ -1393,9 +1503,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           return current
         }
         
-        const establishingDuration = 4 // 4 seconds for establishing shot
+        // For single-shot, use narration duration if available, else 6 seconds
+        const establishingDuration = type === 'single-shot' && narrationDuration > 0 
+          ? Math.min(narrationDuration, 8) // Cap at 8 seconds for single clip
+          : 5
         
-        // Create the establishing shot segment
+        // Generate appropriate prompt based on type
+        let generatedPrompt: string
+        if (type === 'single-shot') {
+          generatedPrompt = `Cinematic establishing shot of ${heading}. ${sceneDescription ? sceneDescription.substring(0, 100) + '. ' : ''}Slow, ambient camera motion revealing the environment. Atmospheric lighting, film grain. The camera slowly pushes in, capturing the mood and atmosphere of the scene.`
+        } else {
+          // Legacy prompts for backwards compatibility
+          generatedPrompt = `Establishing shot of ${heading}. Camera ${
+            type === 'scale-switch' ? 'slowly zooms out to reveal the full scene' 
+            : type === 'living-painting' ? 'holds steady with subtle ambient motion' 
+            : 'captures ambient details and atmosphere'
+          }.`
+        }
+        
         const establishingSegmentId = `seg_${sceneId}_establishing_${Date.now()}`
         const establishingSegment = {
           segmentId: establishingSegmentId,
@@ -1407,13 +1532,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           activeAssetUrl: undefined,
           isEstablishingShot: true,
           establishingShotType: type,
-          generatedPrompt: `Establishing shot of ${heading}. Camera ${type === 'scale-switch' ? 'slowly zooms out to reveal the full scene' : type === 'living-painting' ? 'holds steady with subtle ambient motion' : 'captures ambient details and atmosphere'}.`,
+          generatedPrompt,
           userEditedPrompt: '',
+          cameraMovement: type === 'single-shot' ? 'slow-dolly-in' : undefined,
           references: {
-            sceneImageUrl: sceneImageUrl,
+            sceneImageUrl,
             thumbnailUrl: sceneImageUrl,
             startFrameUrl: sceneImageUrl,
             endFrameUrl: undefined,
+            characterIds: [],
+            sceneRefIds: [],
+            objectRefIds: [],
           },
           takes: [],
         }
@@ -1426,7 +1555,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           endTime: segment.endTime + establishingDuration,
         }))
         
-        // Insert establishing shot at the beginning
         return {
           ...current,
           segments: [establishingSegment, ...updatedSegments],
@@ -1435,16 +1563,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       toast.success(`Added ${type.replace('-', ' ')} establishing shot`)
     },
-    [applySceneProductionUpdate, script?.script?.scenes]
+    [applySceneProductionUpdate, script?.script?.scenes, script?.script?.characters]
   )
   
   // Handle changing the establishing shot style/type
   const handleEstablishingShotStyleChange = useCallback(
-    (sceneId: string, segmentId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => {
+    (sceneId: string, segmentId: string, style: 'single-shot' | 'beat-matched' | 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => {
       // Find the scene to get heading for updated prompt
       const scenes = script?.script?.scenes || []
       const scene = scenes.find((s: any) => (s.id || `scene-${scenes.indexOf(s)}`) === sceneId)
       const heading = scene ? (typeof scene.heading === 'string' ? scene.heading : scene.heading?.text || 'Unknown Location') : 'Unknown Location'
+      const sceneDescription = scene?.description || scene?.action || ''
       
       applySceneProductionUpdate(sceneId, (current) => {
         if (!current) return current
@@ -1452,7 +1581,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const segments = current.segments.map((segment) => {
           if (segment.segmentId === segmentId && segment.isEstablishingShot) {
             // Generate new prompt based on style
-            const stylePrompts = {
+            const stylePrompts: Record<string, string> = {
+              'single-shot': `Cinematic establishing shot of ${heading}. ${sceneDescription ? sceneDescription.substring(0, 100) + '. ' : ''}Slow, ambient camera motion revealing the environment. Atmospheric lighting, film grain. The camera slowly pushes in, capturing the mood and atmosphere of the scene.`,
+              'beat-matched': segment.generatedPrompt || `Establishing shot of ${heading}. Atmospheric, cinematic reveal.`,
               'scale-switch': `Establishing shot of ${heading}. Camera slowly zooms out to reveal the full scene, transitioning from detail to wide shot.`,
               'living-painting': `Establishing shot of ${heading}. Camera holds steady with subtle ambient motion - gentle wind, drifting clouds, or environmental details adding life to the frame.`,
               'b-roll-cutaway': `Establishing shot of ${heading}. Camera captures ambient details and atmosphere - environmental textures, lighting changes, or contextual elements that set the mood.`,
@@ -1461,7 +1592,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             return {
               ...segment,
               establishingShotType: style,
-              generatedPrompt: stylePrompts[style],
+              generatedPrompt: stylePrompts[style] || stylePrompts['single-shot'],
               // Clear user edited prompt so they see the new generated one
               userEditedPrompt: '',
               // Mark as draft since prompt changed

@@ -61,8 +61,8 @@ interface SegmentStudioProps {
   // Image editing (reuses same modal as Frame step)
   onEditImage?: (imageUrl: string) => void
   // Establishing Shot handlers
-  onAddEstablishingShot?: (style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
-  onEstablishingShotStyleChange?: (style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
+  onAddEstablishingShot?: (style: 'single-shot' | 'beat-matched' | 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
+  onEstablishingShotStyleChange?: (style: 'single-shot' | 'beat-matched' | 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   // Take selection - allows user to choose which take to use as active asset
   onSelectTake?: (takeId: string, takeAssetUrl: string) => void
 }
@@ -419,13 +419,12 @@ export function SegmentStudio({
               </span>
             </div>
             <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-2">
-              Insert a scene-setting shot before this segment using the scene's keyframe image.
+              Add AI-generated video backdrop for narrated scene introductions.
             </p>
             <div className="grid grid-cols-1 gap-1.5">
               {([
-                { value: 'scale-switch' as const, label: '🎬 Scale Switch', desc: 'Ken Burns zoom, cut to dialogue' },
-                { value: 'living-painting' as const, label: '🌊 Living Painting', desc: 'Ambient motion (clouds, water)' },
-                { value: 'b-roll-cutaway' as const, label: '🎞️ B-Roll', desc: 'Detail shots for long narration' },
+                { value: 'single-shot' as const, label: '🎬 Single Shot', desc: 'One continuous video clip (loops if needed)' },
+                { value: 'beat-matched' as const, label: '🎯 Beat Matched', desc: 'AI splits narration into visual beats' },
               ]).map(option => (
                 <button
                   key={option.value}
@@ -490,26 +489,25 @@ export function SegmentStudio({
               <span className="text-[10px] font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wide">
                 Establishing Shot Style
               </span>
+              {segment.shotNumber && (
+                <span className="text-[9px] bg-purple-200 dark:bg-purple-800 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded-full">
+                  Beat {segment.shotNumber}
+                </span>
+              )}
             </div>
             <div className="space-y-1.5">
               {([
                 { 
-                  value: 'scale-switch' as const, 
-                  label: '🎬 Scale Switch', 
-                  desc: 'Wide → Medium cut (Ken Burns zoom)',
-                  keyframes: { direction: 'in' as const, zoomStart: 1.0, zoomEnd: 1.3 }
+                  value: 'single-shot' as const, 
+                  label: '🎬 Single Shot', 
+                  desc: 'One continuous video clip',
+                  keyframes: { direction: 'in' as const, zoomStart: 1.0, zoomEnd: 1.2 }
                 },
                 { 
-                  value: 'living-painting' as const, 
-                  label: '🌊 Living Painting', 
-                  desc: 'Ambient motion (clouds, water, particles)',
+                  value: 'beat-matched' as const, 
+                  label: '🎯 Beat Matched', 
+                  desc: 'AI-generated visual beat (current)',
                   keyframes: { direction: 'none' as const, zoomStart: 1.0, zoomEnd: 1.0 }
-                },
-                { 
-                  value: 'b-roll-cutaway' as const, 
-                  label: '🎞️ B-Roll Cutaway', 
-                  desc: 'Wide + detail shots for long narration',
-                  keyframes: { direction: 'right' as const, zoomStart: 1.0, zoomEnd: 1.0 }
                 },
               ]).map(option => (
                 <button
@@ -540,9 +538,12 @@ export function SegmentStudio({
                 </button>
               ))}
             </div>
-            <p className="text-[9px] text-purple-600 dark:text-purple-500 mt-2 text-center">
-              Select a style to configure animation and prompt
-            </p>
+            {segment.emotionalBeat && (
+              <div className="mt-2 p-2 bg-purple-100 dark:bg-purple-900/30 rounded text-[10px]">
+                <span className="font-medium text-purple-700 dark:text-purple-300">Visual Focus:</span>{' '}
+                <span className="text-purple-600 dark:text-purple-400">{segment.emotionalBeat}</span>
+              </div>
+            )}
           </div>
         )}
 
