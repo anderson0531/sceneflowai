@@ -150,7 +150,8 @@ if (connectionEnvName === 'DB_DATABASE_URL') {
     dialect: 'postgres',
     dialectModule: pg,
     dialectOptions,
-    pool: { max: 10, min: 0, acquire: 30000, idle: 10000 },
+    // Reduced pool size for Neon Session mode (limited to pool_size)
+    pool: { max: 3, min: 0, acquire: 30000, idle: 5000, evict: 1000 },
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     timezone: '+00:00',
     define: { timestamps: true, underscored: true, freezeTableName: true }
@@ -160,7 +161,8 @@ if (connectionEnvName === 'DB_DATABASE_URL') {
     dialect: 'postgres',
     dialectModule: pg,
     dialectOptions,
-    pool: { max: 10, min: 0, acquire: 30000, idle: 10000 },
+    // Reduced pool size for Neon Session mode (limited to pool_size)
+    pool: { max: 3, min: 0, acquire: 30000, idle: 5000, evict: 1000 },
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     timezone: '+00:00',
     define: { timestamps: true, underscored: true, freezeTableName: true }
