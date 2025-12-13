@@ -1370,6 +1370,115 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [applySceneProductionUpdate]
   )
   
+  // Handle adding an establishing shot segment at the beginning of the scene
+  const handleAddEstablishingShot = useCallback(
+    (sceneId: string, type: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => {
+      // Find the scene to get image and heading for the establishing shot
+      const scenes = script?.script?.scenes || []
+      const scene = scenes.find((s: any) => (s.id || `scene-${scenes.indexOf(s)}`) === sceneId)
+      if (!scene) {
+        toast.error('Scene not found')
+        return
+      }
+      
+      const sceneImageUrl = scene.imageUrl || ''
+      const heading = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text || 'Unknown Location'
+      
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        
+        // Don't add if already has an establishing shot
+        if (current.segments.some(s => s.isEstablishingShot)) {
+          toast.error('Scene already has an establishing shot')
+          return current
+        }
+        
+        const establishingDuration = 4 // 4 seconds for establishing shot
+        
+        // Create the establishing shot segment
+        const establishingSegmentId = `seg_${sceneId}_establishing_${Date.now()}`
+        const establishingSegment = {
+          segmentId: establishingSegmentId,
+          sequenceIndex: 0,
+          startTime: 0,
+          endTime: establishingDuration,
+          status: 'DRAFT' as const,
+          assetType: undefined,
+          activeAssetUrl: undefined,
+          isEstablishingShot: true,
+          establishingShotType: type,
+          generatedPrompt: `Establishing shot of ${heading}. Camera ${type === 'scale-switch' ? 'slowly zooms out to reveal the full scene' : type === 'living-painting' ? 'holds steady with subtle ambient motion' : 'captures ambient details and atmosphere'}.`,
+          userEditedPrompt: '',
+          references: {
+            sceneImageUrl: sceneImageUrl,
+            thumbnailUrl: sceneImageUrl,
+            startFrameUrl: sceneImageUrl,
+            endFrameUrl: undefined,
+          },
+          takes: [],
+        }
+        
+        // Shift all existing segments forward in time
+        const updatedSegments = current.segments.map((segment, idx) => ({
+          ...segment,
+          sequenceIndex: idx + 1,
+          startTime: segment.startTime + establishingDuration,
+          endTime: segment.endTime + establishingDuration,
+        }))
+        
+        // Insert establishing shot at the beginning
+        return {
+          ...current,
+          segments: [establishingSegment, ...updatedSegments],
+        }
+      })
+      
+      toast.success(`Added ${type.replace('-', ' ')} establishing shot`)
+    },
+    [applySceneProductionUpdate, script?.script?.scenes]
+  )
+  
+  // Handle changing the establishing shot style/type
+  const handleEstablishingShotStyleChange = useCallback(
+    (sceneId: string, segmentId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => {
+      // Find the scene to get heading for updated prompt
+      const scenes = script?.script?.scenes || []
+      const scene = scenes.find((s: any) => (s.id || `scene-${scenes.indexOf(s)}`) === sceneId)
+      const heading = scene ? (typeof scene.heading === 'string' ? scene.heading : scene.heading?.text || 'Unknown Location') : 'Unknown Location'
+      
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        
+        const segments = current.segments.map((segment) => {
+          if (segment.segmentId === segmentId && segment.isEstablishingShot) {
+            // Generate new prompt based on style
+            const stylePrompts = {
+              'scale-switch': `Establishing shot of ${heading}. Camera slowly zooms out to reveal the full scene, transitioning from detail to wide shot.`,
+              'living-painting': `Establishing shot of ${heading}. Camera holds steady with subtle ambient motion - gentle wind, drifting clouds, or environmental details adding life to the frame.`,
+              'b-roll-cutaway': `Establishing shot of ${heading}. Camera captures ambient details and atmosphere - environmental textures, lighting changes, or contextual elements that set the mood.`,
+            }
+            
+            return {
+              ...segment,
+              establishingShotType: style,
+              generatedPrompt: stylePrompts[style],
+              // Clear user edited prompt so they see the new generated one
+              userEditedPrompt: '',
+              // Mark as draft since prompt changed
+              status: 'DRAFT' as const,
+            }
+          }
+          return segment
+        })
+        
+        return { ...current, segments }
+      })
+      
+      toast.success(`Changed establishing shot style to ${style.replace('-', ' ')}`)
+    },
+    [applySceneProductionUpdate, script?.script?.scenes]
+  )
+  
   // Handle deleting a segment
   const handleDeleteSegment = useCallback(
     (sceneId: string, segmentId: string) => {
@@ -5733,8 +5842,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSegmentResize={handleSegmentResize}
                 onReorderSegments={handleReorderSegments}
                 onAudioClipChange={handleAudioClipChange}
-                onAddEstablishingShot={undefined}
-                onEstablishingShotStyleChange={undefined}
+                onAddEstablishingShot={handleAddEstablishingShot}
+                onEstablishingShotStyleChange={handleEstablishingShotStyleChange}
                 sceneAudioTracks={{}}
                   bookmarkedScene={sceneBookmark}
                   onBookmarkScene={handleBookmarkScene}

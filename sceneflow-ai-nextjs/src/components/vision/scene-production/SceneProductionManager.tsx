@@ -121,15 +121,8 @@ export function SceneProductionManager({
     [sceneId, onAddEstablishingShot, scene, heading]
   )
   
-  // Wrapper for changing establishing shot style
-  const handleEstablishingShotStyleChangeWrapper = useCallback(
-    (style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => {
-      if (onEstablishingShotStyleChange && selectedSegmentId) {
-        onEstablishingShotStyleChange(sceneId, selectedSegmentId, style)
-      }
-    },
-    [sceneId, selectedSegmentId, onEstablishingShotStyleChange]
-  )
+  // NOTE: handleEstablishingShotStyleChangeWrapper is defined AFTER selectedSegmentId (line ~350)
+  // to avoid TDZ (Temporal Dead Zone) errors in minified production builds
   
   const handleDeleteSegmentWrapper = useCallback(
     (segmentId: string) => {
@@ -348,6 +341,16 @@ export function SceneProductionManager({
 
   const selectedSegment: SceneSegment | null =
     segments.find((segment) => segment.segmentId === selectedSegmentId) ?? null
+
+  // Wrapper for changing establishing shot style - MUST be defined after selectedSegmentId
+  const handleEstablishingShotStyleChangeWrapper = useCallback(
+    (style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => {
+      if (onEstablishingShotStyleChange && selectedSegmentId) {
+        onEstablishingShotStyleChange(sceneId, selectedSegmentId, style)
+      }
+    },
+    [sceneId, selectedSegmentId, onEstablishingShotStyleChange]
+  )
 
   // Phase 2: Dialogue assignments - must be after selectedSegmentId is defined
   const [dialogueAssignments, setDialogueAssignments] = useState<Record<string, Set<string>>>({})
