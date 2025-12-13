@@ -1372,10 +1372,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Handle adding an establishing shot at the start of the scene
   const handleAddEstablishingShot = useCallback(
-    (sceneId: string) => {
-      // Find the scene to get its imageUrl - use scenes state (more reliable than script)
-      const scene = scenes.find((s: any) => (s.sceneId || s.id) === sceneId)
-      const sceneImageUrl = scene?.imageUrl || null
+    (sceneId: string, sceneData: { imageUrl?: string; heading?: string; visualDescription?: string }) => {
+      // Scene data passed from call site to avoid reading from scenes state (prevents TDZ issues)
+      const sceneImageUrl = sceneData.imageUrl || null
       
       applySceneProductionUpdate(sceneId, (current) => {
         if (!current) return current
@@ -1398,7 +1397,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           status: 'DRAFT' as const,
           assetType: sceneImageUrl ? 'image' as const : undefined,
           activeAssetUrl: sceneImageUrl,
-          generatedPrompt: `Cinematic Wide Establishing Shot. ${scene?.heading || 'Scene'}. ${scene?.visualDescription || ''}. Select a style below to configure animation.`,
+          generatedPrompt: `Cinematic Wide Establishing Shot. ${sceneData.heading || 'Scene'}. ${sceneData.visualDescription || ''}. Select a style below to configure animation.`,
           userEditedPrompt: null,
           isEstablishingShot: true,
           establishingShotType: 'scale-switch' as const,
@@ -1448,7 +1447,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         toast.success('Added establishing shot - select a style in the segment panel')
       } catch {}
     },
-    [applySceneProductionUpdate, scenes]
+    [applySceneProductionUpdate]
   )
   
   // Handle changing establishing shot style

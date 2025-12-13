@@ -69,7 +69,7 @@ interface SceneProductionManagerProps {
   // Image editing (reuses ImageEditModal from Frame step)
   onEditImage?: (imageUrl: string) => void
   // Establishing Shot support
-  onAddEstablishingShot?: (sceneId: string) => void
+  onAddEstablishingShot?: (sceneId: string, sceneData: { imageUrl?: string; heading?: string; visualDescription?: string }) => void
   onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
 }
 
@@ -107,14 +107,18 @@ export function SceneProductionManager({
     [sceneId, onAddSegment]
   )
   
-  // Wrapper for adding establishing shot
+  // Wrapper for adding establishing shot - pass scene data from props
   const handleAddEstablishingShotWrapper = useCallback(
     () => {
       if (onAddEstablishingShot) {
-        onAddEstablishingShot(sceneId)
+        onAddEstablishingShot(sceneId, {
+          imageUrl: scene?.imageUrl,
+          heading: scene?.heading || heading,
+          visualDescription: scene?.visualDescription,
+        })
       }
     },
-    [sceneId, onAddEstablishingShot]
+    [sceneId, onAddEstablishingShot, scene, heading]
   )
   
   // Wrapper for changing establishing shot style

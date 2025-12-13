@@ -156,7 +156,7 @@ interface ScriptPanelProps {
   onSegmentResize?: (sceneId: string, segmentId: string, changes: { startTime?: number; duration?: number }) => void
   onReorderSegments?: (sceneId: string, oldIndex: number, newIndex: number) => void
   onAudioClipChange?: (sceneId: string, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
-  onAddEstablishingShot?: (sceneId: string) => void
+  onAddEstablishingShot?: (sceneId: string, sceneData: { imageUrl?: string; heading?: string; visualDescription?: string }) => void
   onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   sceneAudioTracks?: Record<string, {
     narration?: { url?: string; startTime: number; duration: number }
@@ -2484,7 +2484,7 @@ interface SceneCardProps {
   onSegmentResize?: (sceneId: string, segmentId: string, changes: { startTime?: number; duration?: number }) => void
   onReorderSegments?: (sceneId: string, oldIndex: number, newIndex: number) => void
   onAudioClipChange?: (sceneId: string, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
-  onAddEstablishingShot?: (sceneId: string) => void
+  onAddEstablishingShot?: (sceneId: string, sceneData: { imageUrl?: string; heading?: string; visualDescription?: string }) => void
   onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   sceneAudioTracks?: {
     narration?: { url?: string; startTime: number; duration: number }
