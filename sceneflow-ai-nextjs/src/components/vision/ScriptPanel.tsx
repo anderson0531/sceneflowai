@@ -2631,14 +2631,29 @@ function SceneCard({
   }, [scene.narration, scene.dialogue, scene.sceneDirection, scene.imageUrl, sceneProductionData, workflowCompletions])
   
   // Sequential activation logic - steps unlock based on prerequisite completion
+  // Call Action also requires scene image for visual consistency (soft requirement - shows warning)
+  const hasSceneImage = !!scene.imageUrl
   const stepUnlocked = useMemo(() => {
     return {
       dialogueAction: true, // Always unlocked
       directorsChair: stepCompletion.dialogueAction,
       storyboardPreViz: stepCompletion.directorsChair,
-      callAction: stepCompletion.storyboardPreViz,
+      callAction: stepCompletion.storyboardPreViz,  // Unlocks after Frame step, but will show warning if no image
     }
   }, [stepCompletion])
+  
+  // Scene image requirement warning for Call Action
+  // Soft requirement: Allow proceeding but show warning for better quality
+  const sceneImageWarning = useMemo(() => {
+    if (stepUnlocked.callAction && !hasSceneImage) {
+      return {
+        show: true,
+        message: 'Generate a scene image first for better video consistency',
+        severity: 'warning' as const
+      }
+    }
+    return { show: false, message: '', severity: 'info' as const }
+  }, [stepUnlocked.callAction, hasSceneImage])
   
   // Compute staleness for workflow sync tracking
   // User can dismiss stale warnings - stored in scene.dismissedStaleWarnings
@@ -4106,6 +4121,30 @@ function SceneCard({
 
                 {activeWorkflowTab === 'callAction' && (
                   <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
+                    {/* Scene Image Requirement Warning */}
+                    {sceneImageWarning.show && (
+                      <div className="flex items-center gap-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                        <svg className="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <div className="flex-1">
+                          <p className="text-sm text-amber-200">{sceneImageWarning.message}</p>
+                          <p className="text-xs text-amber-200/60 mt-0.5">
+                            Reference images help maintain character and scene consistency across video segments.
+                          </p>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            // Switch to Frame tab to generate scene image
+                            setActiveWorkflowTab?.('storyboardPreViz')
+                          }}
+                          className="px-3 py-1.5 text-xs font-medium bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 rounded transition-colors"
+                        >
+                          Generate Image
+                        </button>
+                      </div>
+                    )}
                     <SceneProductionManager
                       sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
                       sceneNumber={sceneNumber}

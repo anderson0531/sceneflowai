@@ -69,6 +69,7 @@ The user-facing terminology differs from internal code names for branding purpos
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2025-12-14 | Intelligent Segment Method Selection | **AUTO method selection for Veo video generation**. New service analyzes segment context (position, references, shot type, dialogue) to select optimal method: 1) First segment + scene image → I2V (precise control), 2) First segment + character refs → REF (consistency), 3) Close-up + dialogue + previous video → EXT (seamless continuation), 4) Shot type change → REF (creative freedom). Added scene image warning in Call Action tab - soft requirement encourages generating scene image before video for consistency. Files: `src/lib/vision/intelligentMethodSelection.ts`, `src/lib/vision/referenceBuilder.ts`, `generate-asset/route.ts`, `ScriptPanel.tsx`. | ✅ Implemented |
 | 2025-12-14 | Fix: referenceImages is T2V only | **BUG FIX**: referenceImages cannot be combined with startFrame (I2V). Per Veo 3.1 API spec, these are mutually exclusive: 1) `referenceImages` = T2V mode with style/character guidance, 2) `image` (startFrame) = I2V mode to animate a frame. Fixed generate-asset route to NOT add startFrame when using REF method. Added safety check in videoClient.ts to warn and skip referenceImages if startFrame is present. | ✅ Fixed |
 | 2025-12-14 | Veo 3.1 Migration for Video Generation | **Upgraded from Veo 3.0 to Veo 3.1** (`veo-3.1-generate-preview`). Veo 3.0 does NOT support referenceImages (character/style consistency), video extension, or frame-to-video (FTV) features. Veo 3.1 enables: 1) Up to 3 referenceImages per request (type: 'style' or 'character'), 2) Video extension for Veo-generated videos within 2-day retention window, 3) First+last frame interpolation. Added `veoVideoRef` field to store Gemini Files API reference for future extension. EXT mode falls back to I2V with last frame since external videos (Vercel Blob) cannot use native extension. Rate limits: 2 RPM, 10 RPD (Paid tier 1). File: `src/lib/gemini/videoClient.ts`. | ✅ Implemented |
 | 2025-12-14 | Establishing Shot Refactor: Manual Add + Style Selector | **Refactored from automatic to manual approach**. Bug fix: Original implementation mixed Gemini dialogue prompts with establishing shot segments. Now: 1) "Add Establishing Shot" button in SceneTimeline inserts segment at position 0 with scene image, 2) Style selector in SegmentStudio offers 3 options: **Scale Switch** (Ken Burns zoom 1.0→1.3, cinematic), **Living Painting** (ambient motion, static camera), **B-Roll Cutaway** (pan with detail shots). Removed: EstablishingShotSection from dialog, automatic generation in API. Added: `handleAddEstablishingShot`, `handleEstablishingShotStyleChange` handlers. Files: `page.tsx`, `SceneTimeline.tsx`, `SegmentStudio.tsx`, `SceneProductionManager.tsx`, `generate-segments/route.ts`. | ✅ Refactored |
@@ -1291,9 +1292,13 @@ POST /api/image/edit
 - Character Matching: `src/lib/character/matching.ts`
 - Creatomate Render: `src/services/CreatomateRenderService.ts`
 - Content Hash (Workflow Sync): `src/lib/utils/contentHash.ts`
+- Intelligent Method Selection: `src/lib/vision/intelligentMethodSelection.ts`
+- Reference Builder: `src/lib/vision/referenceBuilder.ts`
+- Veo Video Client: `src/lib/gemini/videoClient.ts`
 
 **API Routes:**
 - Scene Image Generation: `src/app/api/scene/generate-image/route.ts`
+- Segment Asset Generation: `src/app/api/segments/[segmentId]/generate-asset/route.ts`
 - Vision Script: `src/app/api/vision/generate-script-v2/route.ts`
 - Character Save: `src/app/api/character/save/route.ts`
 - Batch Audio: `src/app/api/vision/generate-all-audio/route.ts`

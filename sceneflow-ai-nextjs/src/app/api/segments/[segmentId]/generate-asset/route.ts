@@ -5,6 +5,12 @@ import { uploadImageToBlob, uploadVideoToBlob } from '@/lib/storage/blob'
 import { extractAndStoreLastFrame } from '@/lib/videoUtils'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { 
+  getMethodWithFallback, 
+  buildMethodSelectionContext,
+  VideoGenerationMethod,
+  MethodSelectionResult
+} from '@/lib/vision/intelligentMethodSelection'
 
 export const maxDuration = 300 // 5 minutes for video generation
 export const runtime = 'nodejs'
@@ -17,7 +23,7 @@ interface GenerateAssetRequest {
   endFrameUrl?: string  // Veo 3.1: For Frame-to-Video (FTV) generation with end frame
   sourceVideoUrl?: string  // Veo 3.1: Source video URL for extension mode - Veo handles frame continuity automatically
   referenceImages?: Array<{ url: string; type: 'style' | 'character' }>  // Veo 3.1: Up to 3 reference images
-  generationMethod?: 'T2V' | 'I2V' | 'FTV' | 'EXT' | 'REF'  // Veo 3.1: Explicit generation method (EXT = extend from previous)
+  generationMethod?: 'T2V' | 'I2V' | 'FTV' | 'EXT' | 'REF' | 'AUTO'  // Veo 3.1: Explicit generation method (AUTO = intelligent selection)
   sceneId: string
   projectId: string
   // Optional video settings from prompt builder
@@ -25,6 +31,13 @@ interface GenerateAssetRequest {
   duration?: number
   aspectRatio?: '16:9' | '9:16'
   resolution?: '720p' | '1080p'
+  // Context for intelligent method selection
+  segmentIndex?: number
+  totalSegments?: number
+  sceneImageUrl?: string
+  previousSegmentAssetUrl?: string
+  previousSegmentVeoRef?: string
+  isEstablishingShot?: boolean
 }
 
 export async function POST(
@@ -48,7 +61,14 @@ export async function POST(
       negativePrompt,
       duration,
       aspectRatio,
-      resolution
+      resolution,
+      // Context for intelligent method selection
+      segmentIndex = 0,
+      totalSegments = 1,
+      sceneImageUrl,
+      previousSegmentAssetUrl,
+      previousSegmentVeoRef,
+      isEstablishingShot = false
     } = body
 
     // Get user session for authentication
@@ -70,13 +90,49 @@ export async function POST(
     let assetType: 'video' | 'image'
     let lastFrameUrl: string | null = null
     let veoVideoRef: string | undefined = undefined  // Store Veo video reference for video extension
+    let methodSelectionResult: MethodSelectionResult | undefined = undefined  // Store method selection details
 
     if (genType === 'T2V' || genType === 'I2V') {
       // Video generation using Veo 3.1 (platform credentials)
       console.log('[Segment Asset Generation] Using Veo 3.1 for video generation')
-      console.log('[Segment Asset Generation] Method:', generationMethod || genType)
       
-      // Build video generation options based on generation method
+      // Intelligent Method Selection
+      // Build context for method selection
+      const methodContext = buildMethodSelectionContext(
+        {
+          segmentId,
+          sequenceIndex: segmentIndex,
+          generatedPrompt: prompt,
+          isEstablishingShot,
+          references: {
+            startFrameUrl,
+            characterIds: referenceImages?.filter(r => r.type === 'character').map((_, i) => `char-${i}`) || [],
+          }
+        },
+        { imageUrl: sceneImageUrl },
+        previousSegmentAssetUrl ? {
+          activeAssetUrl: previousSegmentAssetUrl,
+          takes: previousSegmentVeoRef ? [{ veoVideoRef: previousSegmentVeoRef }] : []
+        } : undefined,
+        totalSegments,
+        referenceImages?.filter(r => r.type === 'character').map(r => r.url) || []
+      )
+      
+      // Get optimal method (handles AUTO and validates user-selected methods)
+      const requestedMethod = (generationMethod || genType) as VideoGenerationMethod
+      methodSelectionResult = getMethodWithFallback(requestedMethod, methodContext)
+      const effectiveMethod = methodSelectionResult.method
+      
+      console.log('[Segment Asset Generation] Requested method:', requestedMethod)
+      console.log('[Segment Asset Generation] Effective method:', effectiveMethod)
+      console.log('[Segment Asset Generation] Selection confidence:', methodSelectionResult.confidence)
+      console.log('[Segment Asset Generation] Reasoning:', methodSelectionResult.reasoning)
+      
+      if (methodSelectionResult.warnings) {
+        methodSelectionResult.warnings.forEach(w => console.warn('[Segment Asset Generation] Warning:', w))
+      }
+      
+      // Build video generation options based on effective method
       const videoOptions: any = {
         aspectRatio: aspectRatio || '16:9',
         resolution: resolution || '720p',
@@ -85,8 +141,8 @@ export async function POST(
         personGeneration: 'allow_adult'
       }
       
-      // Handle different Veo 3.1 generation methods
-      const method = generationMethod || genType
+      // Handle different Veo 3.1 generation methods based on EFFECTIVE method
+      const method = effectiveMethod
       
       // Start Frame - used for I2V and FTV methods
       if ((method === 'I2V' || method === 'FTV') && startFrameUrl) {
@@ -243,6 +299,13 @@ export async function POST(
       veoVideoRef,  // Gemini Files API reference for video extension
       status: assetType === 'video' && assetUrl.startsWith('job:') ? 'QUEUED' : 'COMPLETE',
       jobId: assetType === 'video' && assetUrl.startsWith('job:') ? assetUrl.replace('job:', '') : undefined,
+      // Method selection info for UI feedback
+      methodSelection: methodSelectionResult ? {
+        method: methodSelectionResult.method,
+        confidence: methodSelectionResult.confidence,
+        reasoning: methodSelectionResult.reasoning,
+        warnings: methodSelectionResult.warnings,
+      } : undefined,
     })
   } catch (error: any) {
     console.error('[Segment Asset Generation] Error:', error)
