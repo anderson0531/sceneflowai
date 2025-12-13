@@ -1,6 +1,6 @@
 # SceneFlow AI - Application Design Document
 
-**Version**: 2.6  
+**Version**: 2.7  
 **Last Updated**: December 13, 2025  
 **Status**: Production
 
@@ -48,12 +48,26 @@
 | Ken Burns | `src/lib/animation/kenBurns.ts` |
 | Script QA | `src/lib/script/qualityAssurance.ts` |
 
+### Terminology Mapping (UI → Code)
+
+The user-facing terminology differs from internal code names for branding purposes:
+
+| UI Label | Code Name | Route/Component | Notes |
+|----------|-----------|-----------------|-------|
+| **Virtual Production** | `vision` | `/dashboard/workflow/vision/[projectId]` | Workflow phase 2. Industry term (The Mandalorian, etc.) |
+| **The Soundstage** | `ScriptPanel` | `src/components/vision/ScriptPanel.tsx` | Script + scene editing panel inside Vision page |
+| **The Blueprint** | `blueprint` | `/dashboard/studio/[projectId]` | Workflow phase 1 (ideation & scripting) |
+| **Final Cut** | `polish` | `/dashboard/workflow/generation` | Workflow phase 3 (screening & editing) |
+| **The Premiere** | `launch` | `/dashboard/workflow/creation/[projectId]` | Workflow phase 4 (final export) |
+| **Screening Room** | `ScriptPlayer` | `src/components/vision/ScriptPlayer.tsx` | Animatic playback component |
+
 ---
 
 ## Design Decisions Log
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2025-12-13 | UI Terminology: Virtual Production & The Soundstage | Renamed workflow phase "Production" → "Virtual Production" (industry term from The Mandalorian, etc.). Renamed script panel "Scene Studio" → "The Soundstage". See Terminology Mapping section below for code-to-UI mappings. Updated: `Sidebar.tsx`, `workflowSteps.ts`, `page.tsx` (ContextBar), `ScriptPanel.tsx`, `NavigationWarningDialog.tsx`. | ✅ Implemented |
 | 2025-12-13 | Image Edit in Call Action step | Added image editing capability to the Call Action (SceneProductionManager) workflow step, reusing the same ImageEditModal from Frame step. Added `onEditImage` prop to SceneProductionManager → SegmentStudio. Edit button (Pencil icon) appears on segment image previews. Enables AI-powered editing of segment keyframe images without duplicating code. Routes: `/api/image/edit`. | ✅ Implemented |
 | 2025-12-13 | Workflow Mark as Done feature | Added manual completion override for workflow steps. Users can mark any step (Script/Direction/Frame/Call Action) as complete via "Mark Done" toggle button in tab header. Uses `scene.workflowCompletions` object for persistence. Enables users to proceed with workflow when automatic detection doesn't match their intent. Button shows checkmark when marked complete. | ✅ Implemented |
 | 2025-12-13 | Auto-open first incomplete workflow section | Scene card now opens to the first **incomplete** (not marked as done) and unlocked workflow step, instead of just the first unlocked step. Modified useEffect in ScriptPanel.tsx to find first step where `!stepCompletion[key]`. Improves UX by directing users to work that still needs attention. | ✅ Implemented |
