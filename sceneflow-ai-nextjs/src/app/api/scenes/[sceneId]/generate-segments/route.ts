@@ -4,19 +4,10 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 export const maxDuration = 120
 export const runtime = 'nodejs'
 
-// Establishing Shot settings interface
-interface EstablishingShotSettings {
-  enabled: boolean
-  type: 'scale-switch' | 'living-painting' | 'b-roll-cutaway'
-  duration: number // 4-12 seconds
-  useExistingFrame: boolean
-}
-
 interface GenerateSegmentsRequest {
   preferredDuration: number
   sceneId?: string
   projectId?: string
-  establishingShot?: EstablishingShotSettings
   focusMode?: string
   customInstructions?: string
 }
@@ -47,7 +38,7 @@ export async function POST(
   try {
     const { sceneId } = await params
     const body: GenerateSegmentsRequest = await req.json()
-    const { preferredDuration, projectId, establishingShot, focusMode, customInstructions } = body
+    const { preferredDuration, projectId, focusMode, customInstructions } = body
 
     if (!sceneId || !projectId) {
       return NextResponse.json(
@@ -64,9 +55,6 @@ export async function POST(
     }
 
     console.log('[Scene Segmentation] Generating intelligent segments for scene:', sceneId)
-    if (establishingShot?.enabled) {
-      console.log('[Scene Segmentation] Establishing shot enabled:', establishingShot.type, establishingShot.duration + 's')
-    }
 
     // Fetch project and scene data
     const projectResponse = await fetch(`${req.nextUrl.origin}/api/projects/${projectId}`)
@@ -209,218 +197,13 @@ export async function POST(
       console.log(`[Scene Segmentation] Segment ${idx + 1}: method=${seg.generationMethod}, trigger="${seg.triggerReason?.substring(0, 50)}...", prompt="${seg.generatedPrompt?.substring(0, 100)}..."`)
     })
 
-    // Generate establishing shot segments if enabled
-    let allSegments = [...transformedSegments]
-    
-    if (establishingShot?.enabled && sceneData.narration) {
-      const estDuration = establishingShot.duration || 6
-      const estType = establishingShot.type || 'scale-switch'
-      
-      console.log('[Scene Segmentation] Creating establishing shot:', estType, estDuration + 's')
-      
-      const establishingSegments: any[] = []
-      
-      if (estType === 'scale-switch') {
-        // Single wide shot with Ken Burns zoom
-        establishingSegments.push({
-          segmentId: `seg_${sceneId}_est_0`,
-          sequenceIndex: 0,
-          startTime: 0,
-          endTime: estDuration,
-          status: 'DRAFT' as const,
-          generatedPrompt: `Cinematic Wide Establishing Shot. ${sceneData.heading}. ${sceneData.visualDescription}. Slow Ken Burns zoom in, atmospheric lighting, high cinematic production value. 35mm anamorphic lens, golden hour lighting. 8K resolution, photorealistic. This shot covers the narration voiceover.`,
-          userEditedPrompt: null,
-          activeAssetUrl: sceneData.sceneFrameUrl || null, // Use existing scene frame if available
-          assetType: sceneData.sceneFrameUrl ? 'image' as const : null,
-          generationMethod: 'I2V',
-          triggerReason: 'Establishing shot - Cover V.O. narration before dialogue',
-          endFrameDescription: 'Camera has pushed in from wide to medium, ready for dialogue coverage',
-          cameraMovement: 'Slow zoom in (1.0x → 1.3x over ' + estDuration + 's)',
-          emotionalBeat: 'Scene introduction, atmosphere building',
-          dialogueLineIds: [],
-          isEstablishingShot: true,
-          establishingShotType: 'scale-switch',
-          keyframeSettings: {
-            direction: 'in',
-            zoomStart: 1.0,
-            zoomEnd: 1.3,
-            panStartX: 0,
-            panStartY: 0,
-            panEndX: 0,
-            panEndY: 0,
-            easingType: 'smooth',
-            useAutoDetect: false,
-          },
-          references: {
-            startFrameUrl: sceneData.sceneFrameUrl || null,
-            endFrameUrl: null,
-            useSceneFrame: establishingShot.useExistingFrame ?? true,
-            characterRefs: [],
-            startFrameDescription: 'Wide establishing shot',
-            characterIds: [],
-            sceneRefIds: [],
-            objectRefIds: [],
-          },
-          takes: [],
-        })
-      } else if (estType === 'living-painting') {
-        // Single ambient motion shot
-        establishingSegments.push({
-          segmentId: `seg_${sceneId}_est_0`,
-          sequenceIndex: 0,
-          startTime: 0,
-          endTime: estDuration,
-          status: 'DRAFT' as const,
-          generatedPrompt: `${sceneData.heading}. ${sceneData.visualDescription}. Subtle ambient motion - gentle movement in clouds, water reflections, dust particles, flickering lights, or atmospheric haze. Static camera, loopable ambient video. Atmospheric, cinematic, 8K. This shot covers the narration voiceover with living, breathing atmosphere.`,
-          userEditedPrompt: null,
-          activeAssetUrl: sceneData.sceneFrameUrl || null,
-          assetType: sceneData.sceneFrameUrl ? 'image' as const : null,
-          generationMethod: 'I2V',
-          triggerReason: 'Living Painting - Ambient motion covers V.O. narration',
-          endFrameDescription: 'Scene atmosphere established, ambient motion loops seamlessly',
-          cameraMovement: 'Static with ambient environmental motion',
-          emotionalBeat: 'Atmospheric immersion, scene breathing',
-          dialogueLineIds: [],
-          isEstablishingShot: true,
-          establishingShotType: 'living-painting',
-          keyframeSettings: {
-            direction: 'none',
-            zoomStart: 1.0,
-            zoomEnd: 1.0,
-            panStartX: 0,
-            panStartY: 0,
-            panEndX: 0,
-            panEndY: 0,
-            easingType: 'drift',
-            useAutoDetect: false,
-          },
-          references: {
-            startFrameUrl: sceneData.sceneFrameUrl || null,
-            endFrameUrl: null,
-            useSceneFrame: establishingShot.useExistingFrame ?? true,
-            characterRefs: [],
-            startFrameDescription: 'Ambient motion establishing shot',
-            characterIds: [],
-            sceneRefIds: [],
-            objectRefIds: [],
-          },
-          takes: [],
-        })
-      } else if (estType === 'b-roll-cutaway') {
-        // Multiple B-Roll shots for longer narration
-        const shot1Duration = Math.floor(estDuration / 2)
-        const shot2Duration = estDuration - shot1Duration
-        
-        // Shot 1: Wide establishing
-        establishingSegments.push({
-          segmentId: `seg_${sceneId}_est_0`,
-          sequenceIndex: 0,
-          startTime: 0,
-          endTime: shot1Duration,
-          status: 'DRAFT' as const,
-          generatedPrompt: `Wide Establishing Shot of ${sceneData.heading}. ${sceneData.visualDescription}. Cinematic composition, slow pan right revealing the environment. 24mm wide lens, atmospheric lighting. Sets geography and mood for the scene.`,
-          userEditedPrompt: null,
-          activeAssetUrl: sceneData.sceneFrameUrl || null,
-          assetType: sceneData.sceneFrameUrl ? 'image' as const : null,
-          generationMethod: 'I2V',
-          triggerReason: 'B-Roll 1/2 - Wide establishing for V.O. narration',
-          endFrameDescription: 'Wide shot completed, ready for detail cutaway',
-          cameraMovement: 'Slow pan right',
-          emotionalBeat: 'Scene geography established',
-          dialogueLineIds: [],
-          isEstablishingShot: true,
-          establishingShotType: 'b-roll-cutaway',
-          shotNumber: 1,
-          keyframeSettings: {
-            direction: 'right',
-            zoomStart: 1.0,
-            zoomEnd: 1.0,
-            panStartX: -10,
-            panStartY: 0,
-            panEndX: 10,
-            panEndY: 0,
-            easingType: 'drift',
-            useAutoDetect: false,
-          },
-          references: {
-            startFrameUrl: sceneData.sceneFrameUrl || null,
-            endFrameUrl: null,
-            useSceneFrame: establishingShot.useExistingFrame ?? true,
-            characterRefs: [],
-            startFrameDescription: 'Wide B-Roll shot 1',
-            characterIds: [],
-            sceneRefIds: [],
-            objectRefIds: [],
-          },
-          takes: [],
-        })
-        
-        // Shot 2: Detail cutaway
-        establishingSegments.push({
-          segmentId: `seg_${sceneId}_est_1`,
-          sequenceIndex: 1,
-          startTime: shot1Duration,
-          endTime: estDuration,
-          status: 'DRAFT' as const,
-          generatedPrompt: `Close-up detail shot. A meaningful object or texture from the scene - could be hands, an important prop, environmental detail, or character silhouette. 85mm lens, shallow depth of field. Adds texture and intimacy to the narration.`,
-          userEditedPrompt: null,
-          activeAssetUrl: null,
-          assetType: null,
-          generationMethod: 'T2V',
-          triggerReason: 'B-Roll 2/2 - Detail cutaway for V.O. narration',
-          endFrameDescription: 'Detail shot completed, ready for dialogue coverage',
-          cameraMovement: 'Static with slow push in',
-          emotionalBeat: 'Intimate detail, texture',
-          dialogueLineIds: [],
-          isEstablishingShot: true,
-          establishingShotType: 'b-roll-cutaway',
-          shotNumber: 2,
-          keyframeSettings: {
-            direction: 'in',
-            zoomStart: 1.0,
-            zoomEnd: 1.15,
-            panStartX: 0,
-            panStartY: 0,
-            panEndX: 0,
-            panEndY: 0,
-            easingType: 'smooth',
-            useAutoDetect: false,
-          },
-          references: {
-            startFrameUrl: null,
-            endFrameUrl: null,
-            useSceneFrame: false,
-            characterRefs: [],
-            startFrameDescription: 'Detail B-Roll shot 2',
-            characterIds: [],
-            sceneRefIds: [],
-            objectRefIds: [],
-          },
-          takes: [],
-        })
-      }
-      
-      // Offset all dialogue segments by the establishing shot duration
-      const offsetDialogueSegments = transformedSegments.map((seg: any, idx: number) => ({
-        ...seg,
-        segmentId: `seg_${sceneId}_${idx + establishingSegments.length}`,
-        sequenceIndex: idx + establishingSegments.length,
-        startTime: seg.startTime + estDuration,
-        endTime: seg.endTime + estDuration,
-      }))
-      
-      // Combine: establishing shots first, then dialogue segments
-      allSegments = [...establishingSegments, ...offsetDialogueSegments]
-      
-      console.log('[Scene Segmentation] Total segments with establishing shot:', allSegments.length)
-    }
+    // Note: Establishing shots are now added manually via the UI using the "Add Establishing Shot" button
+    // The user can then apply a style (Scale Switch, Living Painting, B-Roll Cutaway) to the segment
 
     return NextResponse.json({
       success: true,
-      segments: allSegments,
+      segments: transformedSegments,
       targetSegmentDuration: preferredDuration,
-      hasEstablishingShot: establishingShot?.enabled || false,
-      establishingShotType: establishingShot?.type,
     })
   } catch (error: any) {
     console.error('[Scene Segmentation] Error:', error)

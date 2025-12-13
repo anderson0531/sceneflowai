@@ -156,6 +156,8 @@ interface ScriptPanelProps {
   onSegmentResize?: (sceneId: string, segmentId: string, changes: { startTime?: number; duration?: number }) => void
   onReorderSegments?: (sceneId: string, oldIndex: number, newIndex: number) => void
   onAudioClipChange?: (sceneId: string, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
+  onAddEstablishingShot?: (sceneId: string) => void
+  onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   sceneAudioTracks?: Record<string, {
     narration?: { url?: string; startTime: number; duration: number }
     dialogue?: Array<{ url?: string; startTime: number; duration: number; character?: string }>
@@ -398,7 +400,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onAddEstablishingShot, onEstablishingShotStyleChange, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -2097,6 +2099,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       onSegmentResize={onSegmentResize}
                       onReorderSegments={onReorderSegments}
                       onAudioClipChange={onAudioClipChange}
+                      onAddEstablishingShot={onAddEstablishingShot}
+                      onEstablishingShotStyleChange={onEstablishingShotStyleChange}
                       sceneAudioTracks={sceneAudioTracks[scene.sceneId || scene.id || `scene-${idx}`]}
                           domId={domId}
                           isBookmarked={bookmarkedSceneIndex === idx}
@@ -2480,6 +2484,8 @@ interface SceneCardProps {
   onSegmentResize?: (sceneId: string, segmentId: string, changes: { startTime?: number; duration?: number }) => void
   onReorderSegments?: (sceneId: string, oldIndex: number, newIndex: number) => void
   onAudioClipChange?: (sceneId: string, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
+  onAddEstablishingShot?: (sceneId: string) => void
+  onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   sceneAudioTracks?: {
     narration?: { url?: string; startTime: number; duration: number }
     dialogue?: Array<{ url?: string; startTime: number; duration: number; character?: string }>
@@ -2570,6 +2576,8 @@ function SceneCard({
   onSegmentResize,
   onReorderSegments,
   onAudioClipChange,
+  onAddEstablishingShot,
+  onEstablishingShotStyleChange,
   sceneAudioTracks,
   domId,
   isBookmarked = false,
@@ -4118,6 +4126,8 @@ function SceneCard({
                       onKeyframeChange={onSegmentKeyframeChange}
                       onDialogueAssignmentChange={onSegmentDialogueAssignmentChange}
                       onEditImage={onEditImage ? (imageUrl: string) => onEditImage(imageUrl, sceneIdx) : undefined}
+                      onAddEstablishingShot={onAddEstablishingShot}
+                      onEstablishingShotStyleChange={onEstablishingShotStyleChange}
                     />
                   </div>
                 )}

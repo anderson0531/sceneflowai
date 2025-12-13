@@ -73,6 +73,9 @@ interface SceneTimelineProps {
   dialogueAssignments?: Record<string, Set<string>>
   // Phase 7: Segment reordering
   onReorderSegments?: (oldIndex: number, newIndex: number) => void
+  // Establishing Shot support
+  onAddEstablishingShot?: () => void
+  sceneFrameUrl?: string | null
 }
 
 function formatTime(seconds: number): string {
@@ -132,11 +135,14 @@ export function SceneTimeline({
   onDeleteSegment,
   dialogueAssignments,
   onReorderSegments,
+  onAddEstablishingShot,
+  sceneFrameUrl,
 }: SceneTimelineProps) {
   // Capture callbacks in stable refs to avoid closure issues
   const addSegmentCallback = typeof onAddSegment === 'function' ? onAddSegment : undefined
   const deleteSegmentCallback = typeof onDeleteSegment === 'function' ? onDeleteSegment : undefined
   const reorderSegmentsCallback = typeof onReorderSegments === 'function' ? onReorderSegments : undefined
+  const addEstablishingShotCallback = typeof onAddEstablishingShot === 'function' ? onAddEstablishingShot : undefined
   
   // Phase 7: DnD sensors for segment reordering
   const sensors = useSensors(
@@ -758,6 +764,9 @@ export function SceneTimeline({
     const addButtonLeft = lastClip ? (lastClip.startTime + lastClip.duration) * pixelsPerSecond + 4 : 4
     const clipIds = visualClips.map(clip => clip.segmentId)
     
+    // Check if there's already an establishing shot
+    const hasEstablishingShot = visualClips.some(clip => clip.isEstablishingShot)
+    
     const trackContent = (
       <div className="flex items-stretch h-16 group">
         <div 
@@ -773,6 +782,19 @@ export function SceneTimeline({
           )}
         </div>
         <div className="flex-1 relative bg-gray-900 border-b border-gray-700">
+          {/* Add Establishing Shot Button - appears before first segment if no establishing shot exists */}
+          {addEstablishingShotCallback && !hasEstablishingShot && sceneFrameUrl && visualClips.length > 0 && (
+            <button
+              className="absolute top-1/2 -translate-y-1/2 h-10 px-2 rounded bg-purple-700 hover:bg-purple-600 border border-dashed border-purple-400 hover:border-purple-300 text-purple-200 hover:text-white transition-all flex items-center gap-1 text-[10px] font-medium z-10"
+              style={{ left: 4 }}
+              onClick={addEstablishingShotCallback}
+              title="Add establishing shot at the start of the scene"
+            >
+              <Film className="w-3.5 h-3.5" />
+              <span>+ Estab.</span>
+            </button>
+          )}
+          
           {visualClips.map(clip => {
             // Determine color based on establishing shot status and generation status
             let clipColor: string

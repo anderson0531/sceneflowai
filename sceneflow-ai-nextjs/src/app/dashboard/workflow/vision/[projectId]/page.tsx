@@ -1370,6 +1370,174 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [applySceneProductionUpdate]
   )
   
+  // Handle adding an establishing shot at the start of the scene
+  const handleAddEstablishingShot = useCallback(
+    (sceneId: string) => {
+      // Find the scene to get its imageUrl
+      const allScenes = script?.script?.scenes || []
+      const scene = allScenes.find((s: any) => (s.sceneId || s.id) === sceneId)
+      const sceneImageUrl = scene?.imageUrl || null
+      
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        
+        // Check if there's already an establishing shot
+        const hasEstablishing = current.segments.some((s: any) => s.isEstablishingShot)
+        if (hasEstablishing) {
+          return current // Don't add another one
+        }
+        
+        const estDuration = 6 // Default 6 seconds
+        
+        // Create the establishing shot segment
+        const newSegmentId = `seg_${sceneId}_est_${Date.now()}`
+        const establishingSegment = {
+          segmentId: newSegmentId,
+          sequenceIndex: 0,
+          startTime: 0,
+          endTime: estDuration,
+          status: 'DRAFT' as const,
+          assetType: sceneImageUrl ? 'image' as const : undefined,
+          activeAssetUrl: sceneImageUrl,
+          generatedPrompt: `Cinematic Wide Establishing Shot. ${scene?.heading || 'Scene'}. ${scene?.visualDescription || ''}. Select a style below to configure animation.`,
+          userEditedPrompt: null,
+          isEstablishingShot: true,
+          establishingShotType: 'scale-switch' as const,
+          triggerReason: 'Establishing shot - Set geography, mood, and initial atmosphere',
+          emotionalBeat: 'Scene introduction',
+          cameraMovement: 'Slow Ken Burns zoom (configure in style selector)',
+          references: {
+            startFrameUrl: sceneImageUrl,
+            endFrameUrl: null,
+            useSceneFrame: true,
+            characterRefs: [],
+            startFrameDescription: 'Wide establishing shot',
+            characterIds: [],
+            sceneRefIds: [],
+            objectRefIds: [],
+          },
+          keyframeSettings: {
+            direction: 'in',
+            zoomStart: 1.0,
+            zoomEnd: 1.3,
+            panStartX: 0,
+            panStartY: 0,
+            panEndX: 0,
+            panEndY: 0,
+            easingType: 'smooth',
+            useAutoDetect: false,
+          },
+          takes: [],
+        }
+        
+        // Offset all existing segments by the establishing shot duration
+        const offsetSegments = current.segments.map((seg: any, idx: number) => ({
+          ...seg,
+          sequenceIndex: idx + 1,
+          startTime: seg.startTime + estDuration,
+          endTime: seg.endTime + estDuration,
+        }))
+        
+        return {
+          ...current,
+          segments: [establishingSegment, ...offsetSegments],
+        }
+      })
+
+      try {
+        const { toast } = require('sonner')
+        toast.success('Added establishing shot - select a style in the segment panel')
+      } catch {}
+    },
+    [applySceneProductionUpdate, script]
+  )
+  
+  // Handle changing establishing shot style
+  const handleEstablishingShotStyleChange = useCallback(
+    (sceneId: string, segmentId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => {
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        
+        const segments = current.segments.map((seg: any) => {
+          if (seg.segmentId !== segmentId) return seg
+          
+          // Update style and corresponding prompt/keyframes
+          let updatedPrompt = seg.generatedPrompt
+          let keyframeSettings = { ...seg.keyframeSettings }
+          
+          switch (style) {
+            case 'scale-switch':
+              updatedPrompt = seg.generatedPrompt?.replace(
+                /Select a style below to configure animation\.|Ambient motion.*|Multiple detail shots.*/,
+                'Slow Ken Burns zoom from wide to medium, atmospheric lighting, 35mm anamorphic.'
+              ) || seg.generatedPrompt
+              keyframeSettings = {
+                ...keyframeSettings,
+                direction: 'in',
+                zoomStart: 1.0,
+                zoomEnd: 1.3,
+                panStartX: 0,
+                panStartY: 0,
+                panEndX: 0,
+                panEndY: 0,
+                easingType: 'smooth',
+              }
+              break
+            case 'living-painting':
+              updatedPrompt = seg.generatedPrompt?.replace(
+                /Select a style below to configure animation\.|Slow Ken Burns.*|Multiple detail shots.*/,
+                'Subtle ambient motion - clouds drifting, water rippling, dust particles, atmospheric haze. Static camera, loopable.'
+              ) || seg.generatedPrompt
+              keyframeSettings = {
+                ...keyframeSettings,
+                direction: 'none',
+                zoomStart: 1.0,
+                zoomEnd: 1.0,
+                panStartX: 0,
+                panStartY: 0,
+                panEndX: 0,
+                panEndY: 0,
+                easingType: 'drift',
+              }
+              break
+            case 'b-roll-cutaway':
+              updatedPrompt = seg.generatedPrompt?.replace(
+                /Select a style below to configure animation\.|Slow Ken Burns.*|Subtle ambient motion.*/,
+                'Wide establishing with slow pan, ready for detail cutaway. Cinematic B-Roll style.'
+              ) || seg.generatedPrompt
+              keyframeSettings = {
+                ...keyframeSettings,
+                direction: 'right',
+                zoomStart: 1.0,
+                zoomEnd: 1.0,
+                panStartX: -5,
+                panStartY: 0,
+                panEndX: 5,
+                panEndY: 0,
+                easingType: 'drift',
+              }
+              break
+          }
+          
+          return {
+            ...seg,
+            establishingShotType: style,
+            generatedPrompt: updatedPrompt,
+            keyframeSettings,
+          }
+        })
+        
+        return { ...current, segments }
+      })
+
+      try {
+        const { toast } = require('sonner')
+        toast.success(`Applied ${style.replace('-', ' ')} style`)
+      } catch {}
+    },
+    [applySceneProductionUpdate]
+  )
+  
   // Handle deleting a segment
   const handleDeleteSegment = useCallback(
     (sceneId: string, segmentId: string) => {
@@ -5733,6 +5901,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSegmentResize={handleSegmentResize}
                 onReorderSegments={handleReorderSegments}
                 onAudioClipChange={handleAudioClipChange}
+                onAddEstablishingShot={handleAddEstablishingShot}
+                onEstablishingShotStyleChange={handleEstablishingShotStyleChange}
                 sceneAudioTracks={{}}
                   bookmarkedScene={sceneBookmark}
                   onBookmarkScene={handleBookmarkScene}

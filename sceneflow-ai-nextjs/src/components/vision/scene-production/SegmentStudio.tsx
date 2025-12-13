@@ -58,6 +58,8 @@ interface SegmentStudioProps {
   onKeyframeChange?: (settings: SegmentKeyframeSettings) => void
   // Image editing (reuses same modal as Frame step)
   onEditImage?: (imageUrl: string) => void
+  // Establishing Shot style change
+  onEstablishingShotStyleChange?: (style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
 }
 
 export function SegmentStudio({
@@ -77,6 +79,7 @@ export function SegmentStudio({
   onToggleDialogue,
   onKeyframeChange,
   onEditImage,
+  onEstablishingShotStyleChange,
 }: SegmentStudioProps) {
   const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -436,6 +439,70 @@ export function SegmentStudio({
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Establishing Shot Style Selector - Only show for establishing shots */}
+        {segment.isEstablishingShot && onEstablishingShotStyleChange && (
+          <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-2.5">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Film className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+              <span className="text-[10px] font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wide">
+                Establishing Shot Style
+              </span>
+            </div>
+            <div className="space-y-1.5">
+              {([
+                { 
+                  value: 'scale-switch' as const, 
+                  label: '🎬 Scale Switch', 
+                  desc: 'Wide → Medium cut (Ken Burns zoom)',
+                  keyframes: { direction: 'in' as const, zoomStart: 1.0, zoomEnd: 1.3 }
+                },
+                { 
+                  value: 'living-painting' as const, 
+                  label: '🌊 Living Painting', 
+                  desc: 'Ambient motion (clouds, water, particles)',
+                  keyframes: { direction: 'none' as const, zoomStart: 1.0, zoomEnd: 1.0 }
+                },
+                { 
+                  value: 'b-roll-cutaway' as const, 
+                  label: '🎞️ B-Roll Cutaway', 
+                  desc: 'Wide + detail shots for long narration',
+                  keyframes: { direction: 'right' as const, zoomStart: 1.0, zoomEnd: 1.0 }
+                },
+              ]).map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    onEstablishingShotStyleChange(option.value)
+                    // Also update keyframe settings for preview
+                    if (onKeyframeChange) {
+                      onKeyframeChange({
+                        ...keyframeSettings,
+                        direction: option.keyframes.direction,
+                        zoomStart: option.keyframes.zoomStart,
+                        zoomEnd: option.keyframes.zoomEnd,
+                        useAutoDetect: false,
+                      })
+                    }
+                  }}
+                  className={cn(
+                    "w-full text-left p-2 rounded-lg border transition-all",
+                    segment.establishingShotType === option.value
+                      ? 'border-purple-500 bg-purple-100 dark:bg-purple-900/40'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600'
+                  )}
+                >
+                  <div className="text-xs font-medium text-gray-900 dark:text-gray-100">{option.label}</div>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">{option.desc}</p>
+                </button>
+              ))}
+            </div>
+            <p className="text-[9px] text-purple-600 dark:text-purple-500 mt-2 text-center">
+              Select a style to configure animation and prompt
+            </p>
           </div>
         )}
 

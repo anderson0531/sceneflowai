@@ -1,7 +1,7 @@
 # SceneFlow AI - Application Design Document
 
-**Version**: 2.8  
-**Last Updated**: December 13, 2025  
+**Version**: 2.9  
+**Last Updated**: December 14, 2025  
 **Status**: Production
 
 ---
@@ -69,7 +69,8 @@ The user-facing terminology differs from internal code names for branding purpos
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
-| 2025-12-13 | Establishing Shot Feature | Added optional establishing shot for scenes with V.O. narration. Three production-ready approaches: **Scale Switch** (wide shot with Ken Burns zoom, cuts to dialogue - recommended), **Living Painting** (ambient motion on static scene for atmosphere), **B-Roll Cutaway** (2 detail shots for long narration 12s+). Settings include type selection, duration slider (4-12s), use-existing-frame toggle. API generates establishing segment(s) before dialogue segments with appropriate keyframe settings. Timeline shows purple gradient with Film icon for establishing shots. Files: `types.ts`, `SceneProductionManager.tsx`, `SceneTimeline.tsx`, `generate-segments/route.ts`. | ✅ Implemented |
+| 2025-12-14 | Establishing Shot Refactor: Manual Add + Style Selector | **Refactored from automatic to manual approach**. Bug fix: Original implementation mixed Gemini dialogue prompts with establishing shot segments. Now: 1) "Add Establishing Shot" button in SceneTimeline inserts segment at position 0 with scene image, 2) Style selector in SegmentStudio offers 3 options: **Scale Switch** (Ken Burns zoom 1.0→1.3, cinematic), **Living Painting** (ambient motion, static camera), **B-Roll Cutaway** (pan with detail shots). Removed: EstablishingShotSection from dialog, automatic generation in API. Added: `handleAddEstablishingShot`, `handleEstablishingShotStyleChange` handlers. Files: `page.tsx`, `SceneTimeline.tsx`, `SegmentStudio.tsx`, `SceneProductionManager.tsx`, `generate-segments/route.ts`. | ✅ Refactored |
+| 2025-12-13 | Establishing Shot Feature (v1 - SUPERSEDED) | Initial implementation with dialog-based approach. Superseded by 2025-12-14 refactor due to prompt contamination bug. | ⚠️ Superseded |
 | 2025-12-13 | Service Worker caching: NetworkFirst for JS/CSS | Changed `StaleWhileRevalidate` → `NetworkFirst` for JS and CSS bundles in `next.config.js`. StaleWhileRevalidate was causing users to see stale UI (e.g., old labels) after deployments because cached JS served first. NetworkFirst ensures fresh bundles load immediately, with 3s timeout fallback to cache for slow networks. Also updated Next.js data files to NetworkFirst. | ✅ Fixed |
 | 2025-12-13 | UI Terminology: Virtual Production & The Soundstage | Renamed workflow phase "Production" → "Virtual Production" (industry term from The Mandalorian, etc.). Renamed script panel "Scene Studio" → "The Soundstage". See Terminology Mapping section below for code-to-UI mappings. Updated: `Sidebar.tsx`, `workflowSteps.ts`, `page.tsx` (ContextBar), `ScriptPanel.tsx`, `NavigationWarningDialog.tsx`. | ✅ Implemented |
 | 2025-12-13 | Image Edit in Call Action step | Added image editing capability to the Call Action (SceneProductionManager) workflow step, reusing the same ImageEditModal from Frame step. Added `onEditImage` prop to SceneProductionManager → SegmentStudio. Edit button (Pencil icon) appears on segment image previews. Enables AI-powered editing of segment keyframe images without duplicating code. Routes: `/api/image/edit`. | ✅ Implemented |

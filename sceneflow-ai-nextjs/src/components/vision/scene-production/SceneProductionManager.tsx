@@ -10,8 +10,6 @@ import {
   SceneProductionReferences,
   SceneSegment,
   SegmentKeyframeSettings,
-  EstablishingShotSettings,
-  EstablishingShotType,
 } from './types'
 import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Film, Clock, Sliders, MessageSquare, Settings2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -38,8 +36,6 @@ export interface SegmentGenerationOptions {
   leadInDuration: number
   customInstructions: string
   focusMode: 'balanced' | 'action' | 'dialogue' | 'cinematic'
-  // Establishing Shot settings (optional)
-  establishingShot?: EstablishingShotSettings
 }
 
 interface SceneProductionManagerProps {
@@ -72,6 +68,9 @@ interface SceneProductionManagerProps {
   onReorderSegments?: (sceneId: string, oldIndex: number, newIndex: number) => void
   // Image editing (reuses ImageEditModal from Frame step)
   onEditImage?: (imageUrl: string) => void
+  // Establishing Shot support
+  onAddEstablishingShot?: (sceneId: string) => void
+  onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
 }
 
 export function SceneProductionManager({
@@ -95,6 +94,8 @@ export function SceneProductionManager({
   onAudioClipChange,
   onReorderSegments,
   onEditImage,
+  onAddEstablishingShot,
+  onEstablishingShotStyleChange,
 }: SceneProductionManagerProps) {
   // Create stable callback wrappers - these must be defined early to avoid minification issues
   const handleAddSegmentWrapper = useCallback(
@@ -104,6 +105,26 @@ export function SceneProductionManager({
       }
     },
     [sceneId, onAddSegment]
+  )
+  
+  // Wrapper for adding establishing shot
+  const handleAddEstablishingShotWrapper = useCallback(
+    () => {
+      if (onAddEstablishingShot) {
+        onAddEstablishingShot(sceneId)
+      }
+    },
+    [sceneId, onAddEstablishingShot]
+  )
+  
+  // Wrapper for changing establishing shot style
+  const handleEstablishingShotStyleChangeWrapper = useCallback(
+    (style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => {
+      if (onEstablishingShotStyleChange && selectedSegmentId) {
+        onEstablishingShotStyleChange(sceneId, selectedSegmentId, style)
+      }
+    },
+    [sceneId, selectedSegmentId, onEstablishingShotStyleChange]
   )
   
   const handleDeleteSegmentWrapper = useCallback(
@@ -164,14 +185,6 @@ export function SceneProductionManager({
   const [customInstructions, setCustomInstructions] = useState('')
   const [focusMode, setFocusMode] = useState<'balanced' | 'action' | 'dialogue' | 'cinematic'>('balanced')
   const [showInitialDialog, setShowInitialDialog] = useState(false)
-  
-  // Establishing Shot settings
-  const [establishingShot, setEstablishingShot] = useState<EstablishingShotSettings>({
-    enabled: false,
-    type: 'scale-switch',
-    duration: 6,
-    useExistingFrame: true,
-  })
   
   // Phase 2: Dialogue Coverage - parse scene dialogue into trackable lines
   // NOTE: sceneDialogueLines can be computed early, but dialogue assignment state
@@ -444,8 +457,6 @@ export function SceneProductionManager({
       leadInDuration,
       customInstructions,
       focusMode,
-      // Establishing Shot settings (only include if enabled)
-      establishingShot: establishingShot.enabled ? establishingShot : undefined,
     }
     
     // Simulate progress updates
@@ -754,127 +765,6 @@ export function SceneProductionManager({
         </TabsContent>
       </Tabs>
       
-      {/* Establishing Shot Section - Only show if scene has narration */}
-      {scene?.narration && (
-        <div className="mt-4 p-4 rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-900/20">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Film className="w-4 h-4 text-purple-500" />
-              <Label className="text-sm font-medium">Establishing Shot</Label>
-            </div>
-            <Switch 
-              checked={establishingShot.enabled} 
-              onCheckedChange={(checked) => setEstablishingShot(prev => ({ ...prev, enabled: checked }))}
-            />
-          </div>
-          
-          {/* Show narration preview */}
-          <p className="text-xs text-gray-500 dark:text-gray-400 italic mb-3 line-clamp-2">
-            V.O.: &ldquo;{scene.narration.substring(0, 120)}{scene.narration.length > 120 ? '...' : ''}&rdquo;
-          </p>
-          
-          {establishingShot.enabled && (
-            <div className="space-y-4 pt-2 border-t border-purple-200 dark:border-purple-700">
-              {/* Shot Type Selection */}
-              <div className="space-y-2">
-                <Label className="text-xs text-gray-600 dark:text-gray-400">Shot Type</Label>
-                <div className="grid grid-cols-1 gap-2">
-                  {([
-                    { 
-                      value: 'scale-switch' as EstablishingShotType, 
-                      label: '🎬 Scale Switch', 
-                      desc: 'Wide shot with Ken Burns zoom, hard cut to dialogue (Recommended)'
-                    },
-                    { 
-                      value: 'living-painting' as EstablishingShotType, 
-                      label: '🌊 Living Painting', 
-                      desc: 'Ambient motion (clouds, water, particles) on static scene'
-                    },
-                    { 
-                      value: 'b-roll-cutaway' as EstablishingShotType, 
-                      label: '🎞️ B-Roll Cutaway', 
-                      desc: 'Multiple detail shots for long narration (12s+)'
-                    },
-                  ]).map(option => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setEstablishingShot(prev => ({ ...prev, type: option.value }))}
-                      className={`text-left p-2.5 rounded-lg border transition-all ${
-                        establishingShot.type === option.value
-                          ? 'border-purple-500 bg-purple-100 dark:bg-purple-900/40'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600'
-                      }`}
-                    >
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{option.label}</div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{option.desc}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Duration Slider */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs text-gray-600 dark:text-gray-400">Duration</Label>
-                  <span className="text-sm font-medium text-purple-600 dark:text-purple-400">{establishingShot.duration}s</span>
-                </div>
-                <input
-                  type="range"
-                  min="4"
-                  max="12"
-                  step="1"
-                  value={establishingShot.duration}
-                  onChange={(e) => setEstablishingShot(prev => ({ ...prev, duration: parseInt(e.target.value) }))}
-                  className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
-                />
-                <div className="flex justify-between text-[10px] text-gray-400">
-                  <span>4s</span>
-                  <span>8s</span>
-                  <span>12s</span>
-                </div>
-              </div>
-              
-              {/* Use Existing Frame Toggle */}
-              <div className="flex items-center justify-between p-2 rounded bg-gray-100 dark:bg-gray-800">
-                <div>
-                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Use Scene Frame</span>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400">Apply effects to existing storyboard image</p>
-                </div>
-                <Switch 
-                  checked={establishingShot.useExistingFrame} 
-                  onCheckedChange={(checked) => setEstablishingShot(prev => ({ ...prev, useExistingFrame: checked }))}
-                />
-              </div>
-              
-              {/* Preview Summary */}
-              <div className="p-2 rounded bg-gray-50 dark:bg-gray-800/50 text-xs">
-                <span className="text-gray-500 dark:text-gray-400">Preview: </span>
-                {establishingShot.type === 'scale-switch' && (
-                  <span className="text-gray-700 dark:text-gray-300">
-                    <span className="text-purple-500">0-{establishingShot.duration}s:</span> Wide (Slow zoom) → 
-                    <span className="text-blue-500"> {establishingShot.duration}s+:</span> Dialogue
-                  </span>
-                )}
-                {establishingShot.type === 'living-painting' && (
-                  <span className="text-gray-700 dark:text-gray-300">
-                    <span className="text-purple-500">0-{establishingShot.duration}s:</span> Ambient motion → 
-                    <span className="text-blue-500"> {establishingShot.duration}s+:</span> Dialogue
-                  </span>
-                )}
-                {establishingShot.type === 'b-roll-cutaway' && (
-                  <span className="text-gray-700 dark:text-gray-300">
-                    <span className="text-purple-500">0-{Math.floor(establishingShot.duration/2)}s:</span> Wide → 
-                    <span className="text-amber-500"> {Math.floor(establishingShot.duration/2)}-{establishingShot.duration}s:</span> Detail → 
-                    <span className="text-blue-500"> {establishingShot.duration}s+:</span> Dialogue
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-      
       <DialogFooter className="mt-6">
         <Button 
           variant="outline" 
@@ -983,6 +873,8 @@ export function SceneProductionManager({
               onAudioClipChange={onAudioClipChange ? handleAudioClipChangeWrapper : undefined}
               dialogueAssignments={dialogueAssignments}
               onReorderSegments={onReorderSegments ? handleReorderSegmentsWrapper : undefined}
+              onAddEstablishingShot={onAddEstablishingShot ? handleAddEstablishingShotWrapper : undefined}
+              sceneFrameUrl={scene?.imageUrl}
             />
           </div>
 
@@ -1005,6 +897,7 @@ export function SceneProductionManager({
               onToggleDialogue={handleToggleDialogue}
               onKeyframeChange={handleKeyframeChange}
               onEditImage={onEditImage}
+              onEstablishingShotStyleChange={onEstablishingShotStyleChange ? handleEstablishingShotStyleChangeWrapper : undefined}
             />
           </div>
         </div>
