@@ -1,6 +1,6 @@
 # SceneFlow AI - Application Design Document
 
-**Version**: 2.7  
+**Version**: 2.8  
 **Last Updated**: December 13, 2025  
 **Status**: Production
 
@@ -47,6 +47,8 @@
 | Wardrobe AI Assist | `src/app/api/character/generate-wardrobe/route.ts` |
 | Ken Burns | `src/lib/animation/kenBurns.ts` |
 | Script QA | `src/lib/script/qualityAssurance.ts` |
+| Establishing Shot UI | `src/components/vision/scene-production/SceneProductionManager.tsx` |
+| Segment Generation API | `src/app/api/scenes/[sceneId]/generate-segments/route.ts` |
 
 ### Terminology Mapping (UI → Code)
 
@@ -67,6 +69,7 @@ The user-facing terminology differs from internal code names for branding purpos
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2025-12-13 | Establishing Shot Feature | Added optional establishing shot for scenes with V.O. narration. Three production-ready approaches: **Scale Switch** (wide shot with Ken Burns zoom, cuts to dialogue - recommended), **Living Painting** (ambient motion on static scene for atmosphere), **B-Roll Cutaway** (2 detail shots for long narration 12s+). Settings include type selection, duration slider (4-12s), use-existing-frame toggle. API generates establishing segment(s) before dialogue segments with appropriate keyframe settings. Timeline shows purple gradient with Film icon for establishing shots. Files: `types.ts`, `SceneProductionManager.tsx`, `SceneTimeline.tsx`, `generate-segments/route.ts`. | ✅ Implemented |
 | 2025-12-13 | Service Worker caching: NetworkFirst for JS/CSS | Changed `StaleWhileRevalidate` → `NetworkFirst` for JS and CSS bundles in `next.config.js`. StaleWhileRevalidate was causing users to see stale UI (e.g., old labels) after deployments because cached JS served first. NetworkFirst ensures fresh bundles load immediately, with 3s timeout fallback to cache for slow networks. Also updated Next.js data files to NetworkFirst. | ✅ Fixed |
 | 2025-12-13 | UI Terminology: Virtual Production & The Soundstage | Renamed workflow phase "Production" → "Virtual Production" (industry term from The Mandalorian, etc.). Renamed script panel "Scene Studio" → "The Soundstage". See Terminology Mapping section below for code-to-UI mappings. Updated: `Sidebar.tsx`, `workflowSteps.ts`, `page.tsx` (ContextBar), `ScriptPanel.tsx`, `NavigationWarningDialog.tsx`. | ✅ Implemented |
 | 2025-12-13 | Image Edit in Call Action step | Added image editing capability to the Call Action (SceneProductionManager) workflow step, reusing the same ImageEditModal from Frame step. Added `onEditImage` prop to SceneProductionManager → SegmentStudio. Edit button (Pencil icon) appears on segment image previews. Enables AI-powered editing of segment keyframe images without duplicating code. Routes: `/api/image/edit`. | ✅ Implemented |

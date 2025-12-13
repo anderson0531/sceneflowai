@@ -1021,7 +1021,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   const handleInitializeSceneProduction = useCallback(
-    async (sceneId: string, { targetDuration }: { targetDuration: number }) => {
+    async (sceneId: string, { targetDuration, generationOptions }: { targetDuration: number; generationOptions?: any }) => {
       if (!project?.id) {
         throw new Error('Project must be loaded before segmenting a scene.')
       }
@@ -1032,6 +1032,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         body: JSON.stringify({
           projectId: project.id,
           preferredDuration: targetDuration,
+          // Pass establishing shot settings if provided
+          establishingShot: generationOptions?.establishingShot,
+          focusMode: generationOptions?.focusMode,
+          customInstructions: generationOptions?.customInstructions,
         }),
       })
 

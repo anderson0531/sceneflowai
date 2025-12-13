@@ -2,6 +2,16 @@ import { VisualReference } from '@/types/visionReferences'
 
 export type SceneSegmentStatus = 'DRAFT' | 'READY' | 'GENERATING' | 'COMPLETE' | 'UPLOADED' | 'ERROR'
 
+// Establishing Shot Types
+export type EstablishingShotType = 'scale-switch' | 'living-painting' | 'b-roll-cutaway' | 'none'
+
+export interface EstablishingShotSettings {
+  enabled: boolean
+  type: EstablishingShotType
+  duration: number // 4-12 seconds
+  useExistingFrame: boolean // Use scene's pre-generated frame
+}
+
 export type SceneSegmentAssetType = 'video' | 'image' | null
 
 export type GenerationType = 'T2V' | 'I2V' | 'T2I' | 'UPLOAD'
@@ -63,6 +73,10 @@ export interface SceneSegment {
   dialogueLineIds?: string[]  // Phase 6: IDs of assigned dialogue lines (persisted to DB)
   // Phase 3: Keyframe settings for Ken Burns animation
   keyframeSettings?: SegmentKeyframeSettings
+  // Establishing Shot metadata
+  isEstablishingShot?: boolean
+  establishingShotType?: EstablishingShotType
+  shotNumber?: number // For B-Roll multi-shot sequences (1, 2, etc.)
 }
 
 // Character presence in a segment

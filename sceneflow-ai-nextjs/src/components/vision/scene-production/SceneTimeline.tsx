@@ -45,6 +45,10 @@ export interface VisualClip {
   status: 'DRAFT' | 'READY' | 'GENERATING' | 'COMPLETE' | 'UPLOADED' | 'ERROR'
   sequenceIndex: number
   prompt?: string
+  // Establishing shot metadata
+  isEstablishingShot?: boolean
+  establishingShotType?: string
+  shotNumber?: number
 }
 
 export interface AudioTracksData {
@@ -241,6 +245,10 @@ export function SceneTimeline({
       status: seg.status,
       sequenceIndex: seg.sequenceIndex,
       prompt: seg.prompt,
+      // Establishing shot metadata
+      isEstablishingShot: seg.isEstablishingShot,
+      establishingShotType: seg.establishingShotType,
+      shotNumber: seg.shotNumber,
     }))
   }, [segments])
   
@@ -626,7 +634,7 @@ export function SceneTimeline({
 
   // Render a draggable/resizable clip
   const renderClip = (
-    clip: { id: string; startTime: number; duration: number; label?: string; url?: string; thumbnailUrl?: string; sequenceIndex?: number; prompt?: string; status?: string },
+    clip: { id: string; startTime: number; duration: number; label?: string; url?: string; thumbnailUrl?: string; sequenceIndex?: number; prompt?: string; status?: string; isEstablishingShot?: boolean; establishingShotType?: string; shotNumber?: number },
     trackType: 'visual' | 'voiceover' | 'dialogue' | 'music' | 'sfx',
     color: string,
     showThumbnail: boolean = false
@@ -721,8 +729,19 @@ export function SceneTimeline({
         </div>
         
         <div className="relative z-10 h-full flex items-end justify-between px-1 py-0.5 pointer-events-none">
-          <span className="text-[8px] font-bold text-white/90 truncate">
-            {clip.label || (trackType === 'visual' && typeof clip.sequenceIndex === 'number' ? `Seg ${clip.sequenceIndex + 1}` : '')}
+          <span className="text-[8px] font-bold text-white/90 truncate flex items-center gap-1">
+            {clip.isEstablishingShot ? (
+              <>
+                <Film className="w-2.5 h-2.5 text-purple-200" />
+                {clip.establishingShotType === 'b-roll-cutaway' 
+                  ? `B-Roll ${clip.shotNumber || ''}`
+                  : clip.establishingShotType === 'living-painting'
+                    ? 'Ambient'
+                    : 'Estab.'}
+              </>
+            ) : (
+              clip.label || (trackType === 'visual' && typeof clip.sequenceIndex === 'number' ? `Seg ${clip.sequenceIndex + 1}` : '')
+            )}
           </span>
           {width > 40 && (
             <span className="text-[7px] text-white/70 font-mono">
@@ -754,16 +773,31 @@ export function SceneTimeline({
           )}
         </div>
         <div className="flex-1 relative bg-gray-900 border-b border-gray-700">
-          {visualClips.map(clip => renderClip(
-            { ...clip, thumbnailUrl: clip.thumbnailUrl },
-            'visual',
-            clip.status === 'COMPLETE' || clip.status === 'UPLOADED'
-              ? 'bg-gradient-to-b from-gray-600 to-gray-700'
-              : clip.status === 'GENERATING'
-              ? 'bg-gradient-to-r from-amber-700 to-amber-800 animate-pulse'
-              : 'bg-gradient-to-b from-gray-500 to-gray-600 border border-dashed border-gray-400',
-            true
-          ))}
+          {visualClips.map(clip => {
+            // Determine color based on establishing shot status and generation status
+            let clipColor: string
+            if (clip.isEstablishingShot) {
+              // Purple gradient for establishing shots
+              clipColor = clip.status === 'COMPLETE' || clip.status === 'UPLOADED'
+                ? 'bg-gradient-to-b from-purple-600 to-purple-700'
+                : clip.status === 'GENERATING'
+                ? 'bg-gradient-to-r from-purple-700 to-purple-800 animate-pulse'
+                : 'bg-gradient-to-b from-purple-500 to-purple-600 border border-dashed border-purple-400'
+            } else {
+              // Standard colors for dialogue segments
+              clipColor = clip.status === 'COMPLETE' || clip.status === 'UPLOADED'
+                ? 'bg-gradient-to-b from-gray-600 to-gray-700'
+                : clip.status === 'GENERATING'
+                ? 'bg-gradient-to-r from-amber-700 to-amber-800 animate-pulse'
+                : 'bg-gradient-to-b from-gray-500 to-gray-600 border border-dashed border-gray-400'
+            }
+            return renderClip(
+              { ...clip, thumbnailUrl: clip.thumbnailUrl },
+              'visual',
+              clipColor,
+              true
+            )
+          })}
           
           {/* Add Segment Button */}
           {addSegmentCallback && (
