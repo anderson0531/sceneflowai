@@ -63,6 +63,8 @@ interface SegmentStudioProps {
   // Establishing Shot handlers
   onAddEstablishingShot?: (style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   onEstablishingShotStyleChange?: (style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
+  // Take selection - allows user to choose which take to use as active asset
+  onSelectTake?: (takeId: string, takeAssetUrl: string) => void
 }
 
 export function SegmentStudio({
@@ -85,6 +87,7 @@ export function SegmentStudio({
   onEditImage,
   onAddEstablishingShot,
   onEstablishingShotStyleChange,
+  onSelectTake,
 }: SegmentStudioProps) {
   const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -844,6 +847,33 @@ export function SegmentStudio({
           </button>
           {playingVideoUrl && (
             <video src={playingVideoUrl} controls autoPlay className="w-full aspect-video" />
+          )}
+          {/* Use This Take Button */}
+          {playingVideoUrl && onSelectTake && playingVideoUrl !== segment.activeAssetUrl && (
+            <div className="px-3 py-2 bg-gray-900/80 border-t border-gray-800">
+              <Button
+                size="sm"
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                onClick={() => {
+                  const selectedTake = segment.takes.find(t => t.assetUrl === playingVideoUrl)
+                  if (selectedTake && selectedTake.assetUrl) {
+                    onSelectTake(selectedTake.id, selectedTake.assetUrl)
+                    setPlayingVideoUrl(null)
+                  }
+                }}
+              >
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                Use This Take
+              </Button>
+            </div>
+          )}
+          {playingVideoUrl && playingVideoUrl === segment.activeAssetUrl && (
+            <div className="px-3 py-2 bg-gray-900/80 border-t border-gray-800">
+              <div className="flex items-center justify-center text-green-400 text-sm">
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                Currently Active Take
+              </div>
+            </div>
           )}
           {segment.takes.length > 1 && (
             <div className="p-2 bg-gray-900 border-t border-gray-800">

@@ -1478,6 +1478,34 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     },
     [applySceneProductionUpdate, script?.script?.scenes]
   )
+
+  // Handle selecting a take as the active asset for a segment
+  const handleSelectTake = useCallback(
+    (sceneId: string, segmentId: string, takeId: string, takeAssetUrl: string) => {
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        
+        const segments = current.segments.map((segment) => {
+          if (segment.segmentId === segmentId) {
+            // Find the take to get its thumbnail
+            const selectedTake = segment.takes?.find(t => t.id === takeId)
+            
+            return {
+              ...segment,
+              activeAssetUrl: takeAssetUrl,
+              thumbnailUrl: selectedTake?.thumbnailUrl || segment.thumbnailUrl,
+            }
+          }
+          return segment
+        })
+        
+        return { ...current, segments }
+      })
+      
+      toast.success('Take selected as active')
+    },
+    [applySceneProductionUpdate]
+  )
   
   // Handle deleting a segment
   const handleDeleteSegment = useCallback(
@@ -5844,6 +5872,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onAudioClipChange={handleAudioClipChange}
                 onAddEstablishingShot={handleAddEstablishingShot}
                 onEstablishingShotStyleChange={handleEstablishingShotStyleChange}
+                onSelectTake={handleSelectTake}
                 sceneAudioTracks={{}}
                   bookmarkedScene={sceneBookmark}
                   onBookmarkScene={handleBookmarkScene}

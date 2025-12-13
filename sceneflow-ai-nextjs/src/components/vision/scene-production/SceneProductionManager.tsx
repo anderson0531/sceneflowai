@@ -71,6 +71,8 @@ interface SceneProductionManagerProps {
   // Establishing Shot support
   onAddEstablishingShot?: (sceneId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
+  // Take selection - allows user to choose which take to use as active asset
+  onSelectTake?: (sceneId: string, segmentId: string, takeId: string, takeAssetUrl: string) => void
 }
 
 export function SceneProductionManager({
@@ -96,6 +98,7 @@ export function SceneProductionManager({
   onEditImage,
   onAddEstablishingShot,
   onEstablishingShotStyleChange,
+  onSelectTake,
 }: SceneProductionManagerProps) {
   // Create stable callback wrappers - these must be defined early to avoid minification issues
   const handleAddSegmentWrapper = useCallback(
@@ -346,6 +349,16 @@ export function SceneProductionManager({
       }
     },
     [sceneId, selectedSegmentId, onEstablishingShotStyleChange]
+  )
+
+  // Wrapper for selecting a take as the active asset - MUST be defined after selectedSegmentId
+  const handleSelectTakeWrapper = useCallback(
+    (takeId: string, takeAssetUrl: string) => {
+      if (onSelectTake && selectedSegmentId) {
+        onSelectTake(sceneId, selectedSegmentId, takeId, takeAssetUrl)
+      }
+    },
+    [sceneId, selectedSegmentId, onSelectTake]
   )
 
   // Phase 2: Dialogue assignments - must be after selectedSegmentId is defined
@@ -903,6 +916,7 @@ export function SceneProductionManager({
               onEditImage={onEditImage}
               onAddEstablishingShot={onAddEstablishingShot && !segments.some(s => s.isEstablishingShot) ? handleAddEstablishingShotWrapper : undefined}
               onEstablishingShotStyleChange={onEstablishingShotStyleChange ? handleEstablishingShotStyleChangeWrapper : undefined}
+              onSelectTake={onSelectTake ? handleSelectTakeWrapper : undefined}
             />
           </div>
         </div>

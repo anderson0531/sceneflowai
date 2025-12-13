@@ -955,8 +955,7 @@ export function SceneTimeline({
             <video 
               ref={videoRef} 
               className="w-full h-full object-contain" 
-              src={currentVisualClip.url} 
-              muted 
+              src={currentVisualClip.url}
             />
           ) : currentVisualClip?.thumbnailUrl ? (
             <img src={currentVisualClip.thumbnailUrl} alt="Preview" className="w-full h-full object-contain" />
