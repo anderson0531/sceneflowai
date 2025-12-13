@@ -99,33 +99,40 @@ const withPWA = require('next-pwa')({
         },
       },
     },
+    // CRITICAL: JS bundles use NetworkFirst to ensure fresh content after deployments
+    // StaleWhileRevalidate was causing users to see stale UI labels after deployment
     {
       urlPattern: /\.(?:js)$/i,
-      handler: 'StaleWhileRevalidate',
+      handler: 'NetworkFirst',
       options: {
         cacheName: 'static-js-assets',
+        networkTimeoutSeconds: 3, // Fast fallback to cache if network slow
         expiration: {
-          maxEntries: 32,
+          maxEntries: 64,
           maxAgeSeconds: 86400,
         },
       },
     },
+    // CSS also uses NetworkFirst for consistent UI after deployments
     {
       urlPattern: /\.(?:css|less)$/i,
-      handler: 'StaleWhileRevalidate',
+      handler: 'NetworkFirst',
       options: {
         cacheName: 'static-style-assets',
+        networkTimeoutSeconds: 3,
         expiration: {
           maxEntries: 32,
           maxAgeSeconds: 86400,
         },
       },
     },
+    // Next.js data files - NetworkFirst for fresh page data
     {
       urlPattern: /\/_next\/data\/.+\/.+\.json$/i,
-      handler: 'StaleWhileRevalidate',
+      handler: 'NetworkFirst',
       options: {
         cacheName: 'next-data',
+        networkTimeoutSeconds: 5,
         expiration: {
           maxEntries: 32,
           maxAgeSeconds: 86400,
