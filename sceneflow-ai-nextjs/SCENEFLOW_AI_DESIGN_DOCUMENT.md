@@ -1,6 +1,6 @@
 # SceneFlow AI - Application Design Document
 
-**Version**: 2.5  
+**Version**: 2.6  
 **Last Updated**: December 13, 2025  
 **Status**: Production
 
@@ -54,6 +54,7 @@
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2025-12-13 | Image Edit in Call Action step | Added image editing capability to the Call Action (SceneProductionManager) workflow step, reusing the same ImageEditModal from Frame step. Added `onEditImage` prop to SceneProductionManager → SegmentStudio. Edit button (Pencil icon) appears on segment image previews. Enables AI-powered editing of segment keyframe images without duplicating code. Routes: `/api/image/edit`. | ✅ Implemented |
 | 2025-12-13 | Workflow Mark as Done feature | Added manual completion override for workflow steps. Users can mark any step (Script/Direction/Frame/Call Action) as complete via "Mark Done" toggle button in tab header. Uses `scene.workflowCompletions` object for persistence. Enables users to proceed with workflow when automatic detection doesn't match their intent. Button shows checkmark when marked complete. | ✅ Implemented |
 | 2025-12-13 | Auto-open first incomplete workflow section | Scene card now opens to the first **incomplete** (not marked as done) and unlocked workflow step, instead of just the first unlocked step. Modified useEffect in ScriptPanel.tsx to find first step where `!stepCompletion[key]`. Improves UX by directing users to work that still needs attention. | ✅ Implemented |
 | 2025-12-13 | Dismissible staleness warnings | Added ability to dismiss false-positive stale warnings. "Dismiss" button on staleness banner stores dismissed state in `scene.dismissedStaleWarnings`. Prevents warning from reappearing after user acknowledges and chooses not to regenerate. Addresses cases where hash-based detection incorrectly flags stale content. | ✅ Implemented |

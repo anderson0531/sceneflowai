@@ -4117,6 +4117,7 @@ function SceneCard({
                       onAudioClipChange={onAudioClipChange}
                       onKeyframeChange={onSegmentKeyframeChange}
                       onDialogueAssignmentChange={onSegmentDialogueAssignmentChange}
+                      onEditImage={onEditImage ? (imageUrl: string) => onEditImage(imageUrl, sceneIdx) : undefined}
                     />
                   </div>
                 )}

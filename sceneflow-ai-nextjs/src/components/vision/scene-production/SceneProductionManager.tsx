@@ -66,6 +66,8 @@ interface SceneProductionManagerProps {
   onAudioClipChange?: (sceneId: string, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
   // Phase 7: Segment reordering
   onReorderSegments?: (sceneId: string, oldIndex: number, newIndex: number) => void
+  // Image editing (reuses ImageEditModal from Frame step)
+  onEditImage?: (imageUrl: string) => void
 }
 
 export function SceneProductionManager({
@@ -88,6 +90,7 @@ export function SceneProductionManager({
   onSegmentResize,
   onAudioClipChange,
   onReorderSegments,
+  onEditImage,
 }: SceneProductionManagerProps) {
   // Create stable callback wrappers - these must be defined early to avoid minification issues
   const handleAddSegmentWrapper = useCallback(
@@ -866,6 +869,7 @@ export function SceneProductionManager({
               segmentDialogueLines={selectedSegmentDialogue}
               onToggleDialogue={handleToggleDialogue}
               onKeyframeChange={handleKeyframeChange}
+              onEditImage={onEditImage}
             />
           </div>
         </div>

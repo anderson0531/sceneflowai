@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { SceneSegment, SceneProductionReferences, SceneSegmentStatus, SegmentKeyframeSettings, KeyframeEasingType, KeyframePanDirection } from './types'
-import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer, MessageSquare, User, Check, Move, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react'
+import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer, MessageSquare, User, Check, Move, ZoomIn, ZoomOut, RotateCcw, Pencil } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SegmentPromptBuilder, GeneratePromptData, VideoGenerationMethod } from './SegmentPromptBuilder'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
@@ -56,6 +56,8 @@ interface SegmentStudioProps {
   onToggleDialogue?: (dialogueId: string) => void
   // Phase 3: Keyframe settings
   onKeyframeChange?: (settings: SegmentKeyframeSettings) => void
+  // Image editing (reuses same modal as Frame step)
+  onEditImage?: (imageUrl: string) => void
 }
 
 export function SegmentStudio({
@@ -74,6 +76,7 @@ export function SegmentStudio({
   segmentDialogueLines = [],
   onToggleDialogue,
   onKeyframeChange,
+  onEditImage,
 }: SegmentStudioProps) {
   const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -413,12 +416,25 @@ export function SegmentStudio({
                   className="w-full h-full object-contain"
                 />
               )}
-              <button
-                onClick={() => setIsFullscreen(true)}
-                className="absolute top-1 right-1 p-1 bg-black/60 hover:bg-black/80 rounded text-white transition-colors"
-              >
-                <Maximize2 className="w-3 h-3" />
-              </button>
+              <div className="absolute top-1 right-1 flex gap-1">
+                {/* Edit button - only for images */}
+                {segment.assetType !== 'video' && onEditImage && (
+                  <button
+                    onClick={() => onEditImage(segment.activeAssetUrl!)}
+                    className="p-1 bg-black/60 hover:bg-black/80 rounded text-white transition-colors"
+                    title="Edit Image"
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsFullscreen(true)}
+                  className="p-1 bg-black/60 hover:bg-black/80 rounded text-white transition-colors"
+                  title="Fullscreen"
+                >
+                  <Maximize2 className="w-3 h-3" />
+                </button>
+              </div>
             </div>
           </div>
         )}
