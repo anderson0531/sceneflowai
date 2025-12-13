@@ -703,6 +703,124 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [projectId, project]
   )
 
+  // Handle marking workflow steps as complete
+  const handleMarkWorkflowComplete = useCallback(
+    async (sceneIdx: number, stepKey: string, isComplete: boolean) => {
+      if (!script?.script?.scenes) return
+      
+      const updatedScenes = [...script.script.scenes]
+      const currentScene = updatedScenes[sceneIdx]
+      
+      // Update workflow completions on the scene
+      const workflowCompletions = currentScene.workflowCompletions || {}
+      updatedScenes[sceneIdx] = {
+        ...currentScene,
+        workflowCompletions: {
+          ...workflowCompletions,
+          [stepKey]: isComplete
+        },
+        // Clear dismissed stale warning when unmarking (they may want to see the warning again)
+        ...(isComplete ? {} : {
+          dismissedStaleWarnings: {
+            ...(currentScene.dismissedStaleWarnings || {}),
+            [stepKey]: false
+          }
+        })
+      }
+      
+      // Update local state
+      const updatedScript = {
+        ...script,
+        script: {
+          ...script.script,
+          scenes: updatedScenes
+        }
+      }
+      setScript(updatedScript)
+      
+      // Persist to database
+      try {
+        const existingMetadata = project?.metadata || {}
+        const existingVisionPhase = existingMetadata.visionPhase || {}
+        
+        await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: {
+              ...existingMetadata,
+              visionPhase: {
+                ...existingVisionPhase,
+                script: updatedScript
+              }
+            }
+          })
+        })
+        
+        const { toast } = require('sonner')
+        toast.success(isComplete ? `Marked as complete` : `Unmarked`)
+      } catch (error) {
+        console.error('[MarkWorkflowComplete] Failed to save:', error)
+        const { toast } = require('sonner')
+        toast.error('Failed to save workflow status')
+      }
+    },
+    [script, project, projectId]
+  )
+
+  // Handle dismissing stale warnings
+  const handleDismissStaleWarning = useCallback(
+    async (sceneIdx: number, stepKey: string) => {
+      if (!script?.script?.scenes) return
+      
+      const updatedScenes = [...script.script.scenes]
+      const currentScene = updatedScenes[sceneIdx]
+      
+      // Update dismissed stale warnings on the scene
+      const dismissedStaleWarnings = currentScene.dismissedStaleWarnings || {}
+      updatedScenes[sceneIdx] = {
+        ...currentScene,
+        dismissedStaleWarnings: {
+          ...dismissedStaleWarnings,
+          [stepKey]: true
+        }
+      }
+      
+      // Update local state
+      const updatedScript = {
+        ...script,
+        script: {
+          ...script.script,
+          scenes: updatedScenes
+        }
+      }
+      setScript(updatedScript)
+      
+      // Persist to database
+      try {
+        const existingMetadata = project?.metadata || {}
+        const existingVisionPhase = existingMetadata.visionPhase || {}
+        
+        await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: {
+              ...existingMetadata,
+              visionPhase: {
+                ...existingVisionPhase,
+                script: updatedScript
+              }
+            }
+          })
+        })
+      } catch (error) {
+        console.error('[DismissStaleWarning] Failed to save:', error)
+      }
+    },
+    [script, project, projectId]
+  )
+
   // Scene production handlers
   const persistSceneProduction = useCallback(
     async (nextState: Record<string, SceneProductionData>, nextScenes: Scene[]) => {
@@ -5614,6 +5732,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 sceneAudioTracks={{}}
                   bookmarkedScene={sceneBookmark}
                   onBookmarkScene={handleBookmarkScene}
+                  onMarkWorkflowComplete={handleMarkWorkflowComplete}
+                  onDismissStaleWarning={handleDismissStaleWarning}
                 showStoryboard={showSceneGallery}
                 onToggleStoryboard={() => setShowSceneGallery(!showSceneGallery)}
                 showDashboard={showDashboard}

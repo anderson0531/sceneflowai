@@ -191,6 +191,9 @@ interface ScriptPanelProps {
   // Open script editor with initial instruction (from Review Analysis)
   openScriptEditorWithInstruction?: string | null
   onClearScriptEditorInstruction?: () => void
+  // Workflow completion overrides
+  onMarkWorkflowComplete?: (sceneIdx: number, stepKey: string, isComplete: boolean) => void
+  onDismissStaleWarning?: (sceneIdx: number, stepKey: string) => void
 }
 
 // Transform score analysis data to review format
@@ -395,7 +398,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -2133,6 +2136,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                               }
                             }
                           }}
+                          onMarkWorkflowComplete={onMarkWorkflowComplete}
+                          onDismissStaleWarning={onDismissStaleWarning}
                 />
                     )
                   })}
@@ -2498,6 +2503,9 @@ interface SceneCardProps {
   // Scene navigation
   totalScenes?: number
   onNavigateScene?: (sceneIdx: number) => void
+  // Workflow completion overrides
+  onMarkWorkflowComplete?: (sceneIdx: number, stepKey: string, isComplete: boolean) => void
+  onDismissStaleWarning?: (sceneIdx: number, stepKey: string) => void
 }
 
 function SceneCard({
@@ -2576,6 +2584,8 @@ function SceneCard({
   onEditImage,
   totalScenes,
   onNavigateScene,
+  onMarkWorkflowComplete,
+  onDismissStaleWarning,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(null)
@@ -2586,26 +2596,31 @@ function SceneCard({
   // Determine active step for Co-Pilot
   const activeStep: WorkflowStep | null = activeWorkflowTab
   
-  // Completion status detection for workflow steps
+  // Manual workflow completion overrides (user marked as done)
+  const workflowCompletions = scene.workflowCompletions || {}
+  
+  // Completion status detection for workflow steps (combines auto-detection + manual overrides)
   const stepCompletion = useMemo(() => {
-    const dialogueActionComplete = !!(scene.narration || (scene.dialogue && scene.dialogue.length > 0))
-    const directorsChairComplete = !!scene.sceneDirection
-    const storyboardPreVizComplete = !!scene.imageUrl
+    // Auto-detected completions
+    const dialogueActionAuto = !!(scene.narration || (scene.dialogue && scene.dialogue.length > 0))
+    const directorsChairAuto = !!scene.sceneDirection
+    const storyboardPreVizAuto = !!scene.imageUrl
     // Check if Call Action is complete: scene must be segmented and all segments must have assets
-    const callActionComplete = (() => {
+    const callActionAuto = (() => {
       if (!sceneProductionData) return false
       if (!sceneProductionData.isSegmented || sceneProductionData.segments.length === 0) return false
       // All segments should have active assets (video or image)
       return sceneProductionData.segments.every(segment => segment.activeAssetUrl && segment.assetType)
     })()
     
+    // Combine auto-detection with manual overrides (manual override wins)
     return {
-      dialogueAction: dialogueActionComplete,
-      directorsChair: directorsChairComplete,
-      storyboardPreViz: storyboardPreVizComplete,
-      callAction: callActionComplete,
+      dialogueAction: workflowCompletions.dialogueAction ?? dialogueActionAuto,
+      directorsChair: workflowCompletions.directorsChair ?? directorsChairAuto,
+      storyboardPreViz: workflowCompletions.storyboardPreViz ?? storyboardPreVizAuto,
+      callAction: workflowCompletions.callAction ?? callActionAuto,
     }
-  }, [scene.narration, scene.dialogue, scene.sceneDirection, scene.imageUrl, sceneProductionData])
+  }, [scene.narration, scene.dialogue, scene.sceneDirection, scene.imageUrl, sceneProductionData, workflowCompletions])
   
   // Sequential activation logic - steps unlock based on prerequisite completion
   const stepUnlocked = useMemo(() => {
@@ -2618,12 +2633,14 @@ function SceneCard({
   }, [stepCompletion])
   
   // Compute staleness for workflow sync tracking
+  // User can dismiss stale warnings - stored in scene.dismissedStaleWarnings
+  const dismissedWarnings = scene.dismissedStaleWarnings || {}
   const stepStaleness = useMemo(() => {
     return {
-      directorsChair: isDirectionStale(scene),
-      storyboardPreViz: isImageStale(scene)
+      directorsChair: isDirectionStale(scene) && !dismissedWarnings.directorsChair,
+      storyboardPreViz: isImageStale(scene) && !dismissedWarnings.storyboardPreViz
     }
-  }, [scene])
+  }, [scene, dismissedWarnings])
   
   // Determine status for each step (includes 'stale' for workflow sync warnings)
   type StepStatus = 'complete' | 'stale' | 'in-progress' | 'todo' | 'locked'
@@ -2663,15 +2680,25 @@ function SceneCard({
     { key: 'callAction', label: 'Call Action', icon: <Clapperboard className="w-4 h-4" /> }
   ], [])
   
-  // Set default tab to first unlocked step
+  // Set default tab to first incomplete unlocked step (Feature 3: auto-open first incomplete)
   useEffect(() => {
     if (!activeWorkflowTab && !isOutline) {
-      const firstUnlocked = workflowTabs.find(tab => stepUnlocked[tab.key as keyof typeof stepUnlocked])
-      if (firstUnlocked) {
-        setActiveWorkflowTab(firstUnlocked.key)
+      // Priority: First incomplete & unlocked step
+      const firstIncomplete = workflowTabs.find(tab => {
+        const isUnlocked = stepUnlocked[tab.key as keyof typeof stepUnlocked]
+        const isComplete = stepCompletion[tab.key as keyof typeof stepCompletion]
+        return isUnlocked && !isComplete
+      })
+      
+      // Fall back to first unlocked step if all are complete
+      const fallback = workflowTabs.find(tab => stepUnlocked[tab.key as keyof typeof stepUnlocked])
+      
+      const targetTab = firstIncomplete || fallback
+      if (targetTab) {
+        setActiveWorkflowTab(targetTab.key)
       }
     }
-  }, [isOutline, activeWorkflowTab, stepUnlocked, workflowTabs])
+  }, [isOutline, activeWorkflowTab, stepUnlocked, stepCompletion, workflowTabs])
   
   const handleExpand = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -3133,9 +3160,49 @@ function SceneCard({
                   )
                 })}
                 
-                {/* AI Co-Pilot Help Button */}
+                {/* Right-side buttons: Mark Complete + Co-Pilot Help */}
                 {activeStep && (
-                  <div className="ml-auto mb-1">
+                  <div className="ml-auto mb-1 flex items-center gap-1">
+                    {/* Mark as Done / Unmark button */}
+                    {onMarkWorkflowComplete && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                const currentlyComplete = stepCompletion[activeStep as keyof typeof stepCompletion]
+                                onMarkWorkflowComplete(sceneIdx, activeStep, !currentlyComplete)
+                              }}
+                              className={`px-2 py-1 text-xs rounded-lg transition flex items-center gap-1 ${
+                                stepCompletion[activeStep as keyof typeof stepCompletion]
+                                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
+                                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700'
+                              }`}
+                            >
+                              {stepCompletion[activeStep as keyof typeof stepCompletion] ? (
+                                <>
+                                  <CheckCircle className="w-3 h-3" />
+                                  <span>Done</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Circle className="w-3 h-3" />
+                                  <span>Mark Done</span>
+                                </>
+                              )}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                            {stepCompletion[activeStep as keyof typeof stepCompletion]
+                              ? 'Click to unmark as complete'
+                              : 'Mark this step as complete'}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    
+                    {/* AI Co-Pilot Help Button */}
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -3175,6 +3242,8 @@ function SceneCard({
                   
                   if (!directionStale && !imageStale) return null
                   
+                  const staleStepKey = directionStale ? 'directorsChair' : 'storyboardPreViz'
+                  
                   return (
                     <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
                       <div className="flex items-center gap-2 text-amber-300">
@@ -3184,19 +3253,33 @@ function SceneCard({
                             ? 'Script has changed. Consider regenerating Direction.' 
                             : 'Direction has changed. Consider regenerating Frame.'}
                         </span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            if (directionStale && onGenerateSceneDirection) {
-                              onGenerateSceneDirection(sceneIdx)
-                            } else if (imageStale && onGenerateImage) {
-                              onGenerateImage(sceneIdx)
-                            }
-                          }}
-                          className="ml-auto px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs rounded border border-amber-500/40 transition-colors"
-                        >
-                          {directionStale ? 'Regenerate Direction' : 'Regenerate Frame'}
-                        </button>
+                        <div className="ml-auto flex items-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (directionStale && onGenerateSceneDirection) {
+                                onGenerateSceneDirection(sceneIdx)
+                              } else if (imageStale && onGenerateImage) {
+                                onGenerateImage(sceneIdx)
+                              }
+                            }}
+                            className="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs rounded border border-amber-500/40 transition-colors"
+                          >
+                            {directionStale ? 'Regenerate Direction' : 'Regenerate Frame'}
+                          </button>
+                          {onDismissStaleWarning && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onDismissStaleWarning(sceneIdx, staleStepKey)
+                              }}
+                              className="px-2 py-1 text-amber-300/70 hover:text-amber-200 text-xs transition-colors"
+                              title="Dismiss this warning"
+                            >
+                              Dismiss
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )
