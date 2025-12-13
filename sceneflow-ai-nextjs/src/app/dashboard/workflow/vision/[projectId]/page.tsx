@@ -1373,9 +1373,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Handle adding an establishing shot at the start of the scene
   const handleAddEstablishingShot = useCallback(
     (sceneId: string) => {
-      // Find the scene to get its imageUrl
-      const allScenes = script?.script?.scenes || []
-      const scene = allScenes.find((s: any) => (s.sceneId || s.id) === sceneId)
+      // Find the scene to get its imageUrl - use scenes state (more reliable than script)
+      const scene = scenes.find((s: any) => (s.sceneId || s.id) === sceneId)
       const sceneImageUrl = scene?.imageUrl || null
       
       applySceneProductionUpdate(sceneId, (current) => {
@@ -1449,7 +1448,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         toast.success('Added establishing shot - select a style in the segment panel')
       } catch {}
     },
-    [applySceneProductionUpdate, script]
+    [applySceneProductionUpdate, scenes]
   )
   
   // Handle changing establishing shot style
