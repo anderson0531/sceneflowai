@@ -5899,8 +5899,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSegmentResize={handleSegmentResize}
                 onReorderSegments={handleReorderSegments}
                 onAudioClipChange={handleAudioClipChange}
-                onAddEstablishingShot={handleAddEstablishingShot}
-                onEstablishingShotStyleChange={handleEstablishingShotStyleChange}
+                onAddEstablishingShot={undefined}
+                onEstablishingShotStyleChange={undefined}
                 sceneAudioTracks={{}}
                   bookmarkedScene={sceneBookmark}
                   onBookmarkScene={handleBookmarkScene}
