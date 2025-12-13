@@ -69,6 +69,7 @@ The user-facing terminology differs from internal code names for branding purpos
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2025-12-14 | Veo 3.1 Migration for Video Generation | **Upgraded from Veo 3.0 to Veo 3.1** (`veo-3.1-generate-preview`). Veo 3.0 does NOT support referenceImages (character/style consistency), video extension, or frame-to-video (FTV) features. Veo 3.1 enables: 1) Up to 3 referenceImages per request (type: 'style' or 'character'), 2) Video extension for Veo-generated videos within 2-day retention window, 3) First+last frame interpolation. Added `veoVideoRef` field to store Gemini Files API reference for future extension. EXT mode falls back to I2V with last frame since external videos (Vercel Blob) cannot use native extension. Rate limits: 2 RPM, 10 RPD (Paid tier 1). File: `src/lib/gemini/videoClient.ts`. | ✅ Implemented |
 | 2025-12-14 | Establishing Shot Refactor: Manual Add + Style Selector | **Refactored from automatic to manual approach**. Bug fix: Original implementation mixed Gemini dialogue prompts with establishing shot segments. Now: 1) "Add Establishing Shot" button in SceneTimeline inserts segment at position 0 with scene image, 2) Style selector in SegmentStudio offers 3 options: **Scale Switch** (Ken Burns zoom 1.0→1.3, cinematic), **Living Painting** (ambient motion, static camera), **B-Roll Cutaway** (pan with detail shots). Removed: EstablishingShotSection from dialog, automatic generation in API. Added: `handleAddEstablishingShot`, `handleEstablishingShotStyleChange` handlers. Files: `page.tsx`, `SceneTimeline.tsx`, `SegmentStudio.tsx`, `SceneProductionManager.tsx`, `generate-segments/route.ts`. | ✅ Refactored |
 | 2025-12-13 | Establishing Shot Feature (v1 - SUPERSEDED) | Initial implementation with dialog-based approach. Superseded by 2025-12-14 refactor due to prompt contamination bug. | ⚠️ Superseded |
 | 2025-12-13 | Service Worker caching: NetworkFirst for JS/CSS | Changed `StaleWhileRevalidate` → `NetworkFirst` for JS and CSS bundles in `next.config.js`. StaleWhileRevalidate was causing users to see stale UI (e.g., old labels) after deployments because cached JS served first. NetworkFirst ensures fresh bundles load immediately, with 3s timeout fallback to cache for slow networks. Also updated Next.js data files to NetworkFirst. | ✅ Fixed |
@@ -711,12 +712,20 @@ Store in Project metadata
   - Quality: `max` or `auto`
   - Aspect ratios: 1:1, 9:16, 16:9, 4:3, 3:4
 
-**Video Generation - Google Veo / BYOK:**
-- Service: Google Veo (BYOK - Bring Your Own Key)
+**Video Generation - Google Veo 3.1:**
+- Model: `veo-3.1-generate-preview` (via Gemini API)
+- Client: `src/lib/gemini/videoClient.ts`
 - Features:
-  - Text-to-video generation
-  - Custom provider configuration
-  - Cost estimation
+  - Text-to-Video (T2V): Generate videos from text prompts
+  - Image-to-Video (I2V): Generate videos from starting frame
+  - Reference Images: Up to 3 images for style/character consistency
+  - Video Extension: Extend Veo-generated videos (2-day retention in Gemini)
+  - Frame-to-Video (FTV): Interpolate between first and last frames
+  - Aspect ratios: 16:9, 9:16
+  - Durations: 4s, 6s, 8s
+  - Resolution: 720p, 1080p
+- Rate Limits (Paid tier 1): 2 RPM, 10 RPD
+- veoVideoRef: Stores Gemini Files API reference for video extension capability
 
 **Text-to-Speech:**
 - Google TTS (Primary)
