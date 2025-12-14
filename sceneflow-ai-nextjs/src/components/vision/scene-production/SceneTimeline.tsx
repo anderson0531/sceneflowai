@@ -252,6 +252,17 @@ export function SceneTimeline({
   const animationRef = useRef<number | null>(null)
   const startTimeRef = useRef<number>(0)
   
+  // Clear audio refs when audioTracks changes to ensure fresh audio elements
+  useEffect(() => {
+    // Pause all current audio
+    audioRefs.current.forEach(audio => {
+      audio.pause()
+      audio.currentTime = 0
+    })
+    // Clear the map - new elements will be created by the render
+    audioRefs.current.clear()
+  }, [audioTracks])
+  
   // Build visual clips from segments
   const visualClips = useMemo<VisualClip[]>(() => {
     return segments.map(seg => ({
@@ -1166,11 +1177,11 @@ export function SceneTimeline({
         document.body
       )}
 
-      {/* Hidden Audio Elements */}
+      {/* Hidden Audio Elements - key includes URL to force new element when audio changes */}
       {allAudioClips.map(({ clip }) => (
         clip.url && (
           <audio
-            key={clip.id}
+            key={`${clip.id}-${clip.url}`}
             ref={el => {
               if (el) audioRefs.current.set(clip.id, el)
               else audioRefs.current.delete(clip.id)
