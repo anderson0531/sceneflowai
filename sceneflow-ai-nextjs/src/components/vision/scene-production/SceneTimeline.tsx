@@ -425,6 +425,14 @@ export function SceneTimeline({
       if (animationRef.current) cancelAnimationFrame(animationRef.current)
       setIsPlaying(false)
     } else {
+      // Log what audio elements we're about to play
+      console.log('[SceneTimeline] Starting playback - audio refs:', 
+        Array.from(audioRefs.current.entries()).map(([id, el]) => ({
+          id,
+          src: el.src?.slice(-50)
+        }))
+      )
+      
       startTimeRef.current = performance.now() - currentTime * 1000
       setIsPlaying(true)
       
@@ -1165,7 +1173,14 @@ export function SceneTimeline({
           <audio
             key={`${clip.id}-${clip.url}`}
             ref={el => {
-              if (el) audioRefs.current.set(clip.id, el)
+              if (el) {
+                audioRefs.current.set(clip.id, el)
+                console.log('[SceneTimeline] Audio element mounted:', {
+                  clipId: clip.id,
+                  src: el.src?.slice(-50),
+                  clipUrl: clip.url?.slice(-50),
+                })
+              }
               else audioRefs.current.delete(clip.id)
             }}
             src={clip.url}
