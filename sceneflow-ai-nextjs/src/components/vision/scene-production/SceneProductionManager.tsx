@@ -923,7 +923,7 @@ export function SceneProductionManager({
               onReorderSegments={onReorderSegments ? handleReorderSegmentsWrapper : undefined}
               onAddEstablishingShot={onAddEstablishingShot ? handleAddEstablishingShotWrapper : undefined}
               sceneFrameUrl={scene?.imageUrl}
-              onSyncAudio={onSyncAudio ? handleSyncAudioWrapper : undefined}
+              onSyncAudio={handleSyncAudioWrapper}
               isSyncingAudio={isSyncingAudio}
             />
           </div>
