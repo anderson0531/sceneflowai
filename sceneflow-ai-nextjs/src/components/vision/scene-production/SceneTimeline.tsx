@@ -243,19 +243,15 @@ export function SceneTimeline({
   const animationRef = useRef<number | null>(null)
   const startTimeRef = useRef<number>(0)
   
-  // Clear audio refs when audioTracks changes to ensure fresh audio elements
+  // Pause audio when audioTracks changes (new elements will be rendered by React)
   useEffect(() => {
-    console.log('[SceneTimeline] audioTracks changed - clearing refs:', {
-      voiceoverUrl: audioTracks?.voiceover?.url?.slice(-40),
-      dialogueCount: audioTracks?.dialogue?.length,
-    })
-    // Pause all current audio
+    // Pause all current audio when tracks change
     audioRefs.current.forEach(audio => {
       audio.pause()
       audio.currentTime = 0
     })
-    // Clear the map - new elements will be created by the render
-    audioRefs.current.clear()
+    // Note: We don't clear the map here because React's ref callbacks handle adding/removing
+    // The key={clip.id}-${clip.url} ensures new elements are created when URLs change
   }, [audioTracks])
   
   // Build visual clips from segments
@@ -1175,13 +1171,15 @@ export function SceneTimeline({
             ref={el => {
               if (el) {
                 audioRefs.current.set(clip.id, el)
-                console.log('[SceneTimeline] Audio element mounted:', {
-                  clipId: clip.id,
-                  src: el.src?.slice(-50),
-                  clipUrl: clip.url?.slice(-50),
-                })
+              } else {
+                // Only delete if the stored element is the one being removed
+                // This prevents race condition where new element is added before old is removed
+                // React can call ref(null) for old element AFTER ref(newEl) for new element
+                const stored = audioRefs.current.get(clip.id)
+                if (stored && stored.src === clip.url) {
+                  audioRefs.current.delete(clip.id)
+                }
               }
-              else audioRefs.current.delete(clip.id)
             }}
             src={clip.url}
             preload="auto"
