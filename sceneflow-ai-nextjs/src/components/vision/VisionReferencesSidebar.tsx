@@ -15,7 +15,6 @@ import { CharacterLibrary, CharacterLibraryProps } from './CharacterLibrary'
 import { VisualReference, VisualReferenceType } from '@/types/visionReferences'
 import { BackdropGeneratorModal, SceneForBackdrop, CharacterForBackdrop } from './BackdropGeneratorModal'
 import { BackdropMode } from '@/lib/vision/backdropGenerator'
-import { SceneProductionData } from './scene-production/types'
 
 /** Simplified scene info for timeline selection */
 interface TimelineSceneInfo {
