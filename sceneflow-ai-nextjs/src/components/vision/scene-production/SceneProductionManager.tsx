@@ -11,7 +11,8 @@ import {
   SceneSegment,
   SegmentKeyframeSettings,
 } from './types'
-import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Film, Clock, Sliders, MessageSquare, Settings2 } from 'lucide-react'
+import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Film, Clock, Sliders, MessageSquare, Settings2, Volume2 } from 'lucide-react'
+import { AudioAssetsDialog, AudioTrackClip } from './AudioAssetsDialog'
 import { toast } from 'sonner'
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
 import {
@@ -43,6 +44,7 @@ interface SceneProductionManagerProps {
   sceneNumber: number
   heading?: string
   scene?: any // Add scene prop
+  projectId?: string // For audio file uploads
   productionData?: SceneProductionData | null
   references: SceneProductionReferences
   onInitialize: (sceneId: string, options: { targetDuration: number; generationOptions?: SegmentGenerationOptions }) => Promise<void>
@@ -80,6 +82,7 @@ export function SceneProductionManager({
   sceneNumber,
   heading,
   scene, // Destructure scene
+  projectId,
   productionData,
   references,
   onInitialize,
@@ -387,6 +390,7 @@ export function SceneProductionManager({
 
   const [isInitializing, setIsInitializing] = useState(false)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [showAudioAssetsDialog, setShowAudioAssetsDialog] = useState(false)
   const [generationProgress, setGenerationProgress] = useState(0)
   const [currentPlayingSegmentId, setCurrentPlayingSegmentId] = useState<string | null>(null)
   const segments = productionData?.segments ?? []
@@ -423,6 +427,136 @@ export function SceneProductionManager({
       }
     },
     [sceneId, selectedSegmentId, onSelectTake]
+  )
+
+  // Audio Assets Management handlers
+  const handleAddAudioClip = useCallback(
+    (trackType: 'voiceover' | 'dialogue' | 'music' | 'sfx', clip: AudioTrackClip) => {
+      setAudioTracksState((prev) => {
+        const newState = { ...prev }
+        switch (trackType) {
+          case 'voiceover':
+            newState.voiceover = clip
+            break
+          case 'dialogue':
+            newState.dialogue = [...(prev.dialogue || []), clip]
+            break
+          case 'music':
+            newState.music = clip
+            break
+          case 'sfx':
+            newState.sfx = [...(prev.sfx || []), clip]
+            break
+        }
+        return newState
+      })
+    },
+    []
+  )
+
+  const handleRemoveAudioClip = useCallback(
+    async (trackType: 'voiceover' | 'dialogue' | 'music' | 'sfx', clipId: string, url?: string) => {
+      // Delete blob if URL provided
+      if (url && url.includes('blob.vercel-storage.com')) {
+        try {
+          await fetch('/api/blobs/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ urls: [url] }),
+          })
+        } catch (error) {
+          console.error('[AudioAssets] Failed to delete blob:', error)
+        }
+      }
+
+      setAudioTracksState((prev) => {
+        const newState = { ...prev }
+        switch (trackType) {
+          case 'voiceover':
+            delete newState.voiceover
+            break
+          case 'dialogue':
+            newState.dialogue = (prev.dialogue || []).filter((c) => c.id !== clipId)
+            break
+          case 'music':
+            delete newState.music
+            break
+          case 'sfx':
+            newState.sfx = (prev.sfx || []).filter((c) => c.id !== clipId)
+            break
+        }
+        return newState
+      })
+      toast.success('Audio clip removed')
+    },
+    []
+  )
+
+  const handleClearTrack = useCallback(
+    async (trackType: 'voiceover' | 'dialogue' | 'music' | 'sfx') => {
+      // Collect URLs to delete
+      const urlsToDelete: string[] = []
+      switch (trackType) {
+        case 'voiceover':
+          if (audioTracksState.voiceover?.url?.includes('blob.vercel-storage.com')) {
+            urlsToDelete.push(audioTracksState.voiceover.url)
+          }
+          break
+        case 'dialogue':
+          (audioTracksState.dialogue || []).forEach((c) => {
+            if (c.url?.includes('blob.vercel-storage.com')) {
+              urlsToDelete.push(c.url)
+            }
+          })
+          break
+        case 'music':
+          if (audioTracksState.music?.url?.includes('blob.vercel-storage.com')) {
+            urlsToDelete.push(audioTracksState.music.url)
+          }
+          break
+        case 'sfx':
+          (audioTracksState.sfx || []).forEach((c) => {
+            if (c.url?.includes('blob.vercel-storage.com')) {
+              urlsToDelete.push(c.url)
+            }
+          })
+          break
+      }
+
+      // Delete blobs
+      if (urlsToDelete.length > 0) {
+        try {
+          await fetch('/api/blobs/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ urls: urlsToDelete }),
+          })
+        } catch (error) {
+          console.error('[AudioAssets] Failed to delete blobs:', error)
+        }
+      }
+
+      setAudioTracksState((prev) => {
+        const newState = { ...prev }
+        switch (trackType) {
+          case 'voiceover':
+            delete newState.voiceover
+            break
+          case 'dialogue':
+            newState.dialogue = []
+            break
+          case 'music':
+            delete newState.music
+            break
+          case 'sfx':
+            newState.sfx = []
+            break
+        }
+        return newState
+      })
+      toast.success(`Cleared all ${trackType} clips`)
+    },
+    [audioTracksState]
   )
 
   // Phase 2: Dialogue assignments - must be after selectedSegmentId is defined
@@ -911,6 +1045,20 @@ export function SceneProductionManager({
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <SegmentGenerationDialogContent isRegenerate={true} />
       </Dialog>
+
+      {/* Audio Assets Management Dialog */}
+      <AudioAssetsDialog
+        open={showAudioAssetsDialog}
+        onOpenChange={setShowAudioAssetsDialog}
+        audioTracks={audioTracks}
+        sceneId={sceneId}
+        sceneNumber={sceneNumber}
+        onAddAudioClip={handleAddAudioClip}
+        onRemoveAudioClip={handleRemoveAudioClip}
+        onClearTrack={handleClearTrack}
+        onSyncFromScript={handleSyncAudio}
+        projectId={projectId || ''}
+      />
     
       <div className="space-y-3">
         {/* Header with segment count and action buttons */}
@@ -919,6 +1067,20 @@ export function SceneProductionManager({
             {productionData.segments.length} segments · Target {productionData.targetSegmentDuration}s
           </p>
           <div className="flex items-center gap-2">
+            {/* Manage Audio button - opens full audio management dialog */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation()
+                setShowAudioAssetsDialog(true)
+              }}
+              className="shrink-0"
+              title="Manage audio assets for this scene"
+            >
+              <Volume2 className="w-4 h-4 mr-2" />
+              Manage Audio
+            </Button>
             {/* Sync Audio button - rebuilds audio tracks from current scene data */}
             <Button
               variant="outline"

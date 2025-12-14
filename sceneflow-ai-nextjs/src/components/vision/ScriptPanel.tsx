@@ -4150,6 +4150,7 @@ function SceneCard({
                       sceneNumber={sceneNumber}
                       heading={scene.heading}
                       scene={scene}
+                      projectId={projectId}
                       productionData={sceneProductionData || null}
                       references={sceneProductionReferences || {}}
                       onInitialize={onInitializeSceneProduction || (async () => {})}
