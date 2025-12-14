@@ -202,21 +202,22 @@ export function SceneProductionManager({
     }
   }, [productionData?.targetSegmentDuration])
 
-  // Build audio tracks from scene data when scene changes
-  useEffect(() => {
-    if (!scene) return
+  // Reusable function to build audio tracks from scene data
+  // This is extracted so it can be called both by the useEffect and by the manual Sync Audio button
+  const buildAudioTracksFromScene = useCallback((sceneData: any, segmentsData?: SceneSegment[]): AudioTracksData => {
+    if (!sceneData) return {}
     
     const newTracks: AudioTracksData = {}
-    const sceneDuration = productionData?.segments?.reduce((acc, seg) => Math.max(acc, seg.endTime), 10) || 10
+    const sceneDuration = segmentsData?.reduce((acc, seg) => Math.max(acc, seg.endTime), 10) || 10
     
     // Voiceover from scene narration - get duration from audio metadata
-    const voUrl = scene.narrationAudioUrl || scene.narrationAudio?.en?.url || scene.descriptionAudioUrl || scene.descriptionAudio?.en?.url
+    const voUrl = sceneData.narrationAudioUrl || sceneData.narrationAudio?.en?.url || sceneData.descriptionAudioUrl || sceneData.descriptionAudio?.en?.url
     if (voUrl) {
       // Try to get stored duration from audio metadata (set during generation)
-      const voDuration = scene.narrationAudio?.en?.duration 
-        || scene.narrationDuration 
-        || scene.descriptionAudio?.en?.duration
-        || scene.descriptionDuration 
+      const voDuration = sceneData.narrationAudio?.en?.duration 
+        || sceneData.narrationDuration 
+        || sceneData.descriptionAudio?.en?.duration
+        || sceneData.descriptionDuration 
         || 0 // Will be calculated from actual audio file if 0
       newTracks.voiceover = {
         id: 'vo-scene',
@@ -230,17 +231,17 @@ export function SceneProductionManager({
     
     // Dialogue from scene - check multi-language structure (dialogueAudio.en) first, then legacy formats
     let dialogueArray: any[] = []
-    if (scene.dialogueAudio) {
-      if (scene.dialogueAudio.en && Array.isArray(scene.dialogueAudio.en)) {
+    if (sceneData.dialogueAudio) {
+      if (sceneData.dialogueAudio.en && Array.isArray(sceneData.dialogueAudio.en)) {
         // Multi-language structure: dialogueAudio: { en: [...], es: [...] }
-        dialogueArray = scene.dialogueAudio.en
-      } else if (Array.isArray(scene.dialogueAudio)) {
+        dialogueArray = sceneData.dialogueAudio.en
+      } else if (Array.isArray(sceneData.dialogueAudio)) {
         // Legacy structure: dialogueAudio: [...]
-        dialogueArray = scene.dialogueAudio
+        dialogueArray = sceneData.dialogueAudio
       }
-    } else if (scene.dialogue && Array.isArray(scene.dialogue)) {
+    } else if (sceneData.dialogue && Array.isArray(sceneData.dialogue)) {
       // Fallback to scene.dialogue with audioUrl property
-      dialogueArray = scene.dialogue.filter((d: any) => d.audioUrl || d.url)
+      dialogueArray = sceneData.dialogue.filter((d: any) => d.audioUrl || d.url)
     }
     
     if (dialogueArray.length > 0) {
@@ -267,24 +268,24 @@ export function SceneProductionManager({
     }
     
     // Music from scene
-    const musicUrl = scene.musicAudio || scene.music?.url || scene.musicUrl
+    const musicUrl = sceneData.musicAudio || sceneData.music?.url || sceneData.musicUrl
     if (musicUrl) {
       newTracks.music = {
         id: 'music-scene',
         url: musicUrl,
         startTime: 0,
-        duration: scene.musicDuration || sceneDuration,
-        label: scene.music?.name || 'Music',
+        duration: sceneData.musicDuration || sceneDuration,
+        label: sceneData.music?.name || 'Music',
         volume: 0.6,
       }
     }
     
     // SFX from scene
-    if (Array.isArray(scene.sfxAudio) && scene.sfxAudio.length > 0) {
+    if (Array.isArray(sceneData.sfxAudio) && sceneData.sfxAudio.length > 0) {
       const sfxClips: AudioTracksData['sfx'] = []
-      scene.sfxAudio.forEach((sfxUrl: string, idx: number) => {
+      sceneData.sfxAudio.forEach((sfxUrl: string, idx: number) => {
         if (sfxUrl) {
-          const sfxDef = scene.sfx?.[idx]
+          const sfxDef = sceneData.sfx?.[idx]
           sfxClips.push({
             id: `sfx-${idx}`,
             url: sfxUrl,
@@ -300,6 +301,13 @@ export function SceneProductionManager({
       }
     }
     
+    return newTracks
+  }, [])
+
+  // Build audio tracks from scene data when scene changes
+  useEffect(() => {
+    if (!scene) return
+    const newTracks = buildAudioTracksFromScene(scene, productionData?.segments)
     setAudioTracksState(newTracks)
   // Explicit dependencies on audio-related scene properties to ensure refresh when audio changes
   // Using JSON.stringify on nested objects to detect deep changes (shallow comparison misses nested URL changes)
@@ -314,7 +322,33 @@ export function SceneProductionManager({
     scene?.dialogue?.length,
     scene?.musicAudio,
     JSON.stringify(scene?.sfxAudio),
+    buildAudioTracksFromScene,
   ])
+
+  // Manual sync audio handler - rebuilds audio tracks from scene data
+  // Use this when auto-sync doesn't catch changes or to force a refresh
+  const handleSyncAudio = useCallback(() => {
+    if (!scene) {
+      toast.error('No scene data available')
+      return
+    }
+    const newTracks = buildAudioTracksFromScene(scene, productionData?.segments)
+    setAudioTracksState(newTracks)
+    
+    // Count what was synced for feedback
+    const trackCount = [
+      newTracks.voiceover ? 1 : 0,
+      newTracks.dialogue?.length || 0,
+      newTracks.music ? 1 : 0,
+      newTracks.sfx?.length || 0,
+    ].reduce((a, b) => a + b, 0)
+    
+    if (trackCount > 0) {
+      toast.success(`Synced ${trackCount} audio track${trackCount !== 1 ? 's' : ''} from script`)
+    } else {
+      toast.info('No audio tracks found in scene data')
+    }
+  }, [scene, productionData?.segments, buildAudioTracksFromScene])
 
   // Merge external audio tracks with scene-derived tracks
   const audioTracks = useMemo(() => {
@@ -862,26 +896,42 @@ export function SceneProductionManager({
       </Dialog>
     
       <div className="space-y-3">
-        {/* Header with segment count and regenerate button */}
+        {/* Header with segment count and action buttons */}
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {productionData.segments.length} segments · Target {productionData.targetSegmentDuration}s
           </p>
-          {productionData?.isSegmented && (
+          <div className="flex items-center gap-2">
+            {/* Sync Audio button - rebuilds audio tracks from current scene data */}
             <Button
               variant="outline"
               size="sm"
-              disabled={isInitializing}
               onClick={(e) => {
                 e.stopPropagation()
-                setShowConfirmDialog(true)
+                handleSyncAudio()
               }}
               className="shrink-0"
+              title="Sync audio tracks from script to timeline"
             >
-              <Film className="w-4 h-4 mr-2" />
-              Generate
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Sync Audio
             </Button>
-          )}
+            {productionData?.isSegmented && (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isInitializing}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowConfirmDialog(true)
+                }}
+                className="shrink-0"
+              >
+                <Film className="w-4 h-4 mr-2" />
+                Generate
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Optimized Layout: Timeline (left) + Segment Studio Panel (right) */}
