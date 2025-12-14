@@ -90,7 +90,7 @@ function DraggableReferenceCard({ reference, timelineScenes, onAddReferenceToSeg
   const availableSegments = selectedScene?.segments || []
 
   // Check if we have scenes with segments
-  const hasTimelineScenes = timelineScenes && timelineScenes.length > 0 && timelineScenes.some(s => s.segments.length > 0)
+  const hasTimelineScenes = Boolean(timelineScenes && timelineScenes.length > 0)
 
   const handleAddToTimeline = () => {
     if (selectedSceneId && selectedSegmentId && onAddReferenceToSegment) {
