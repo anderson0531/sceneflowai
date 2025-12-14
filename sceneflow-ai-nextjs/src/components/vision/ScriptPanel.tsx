@@ -446,7 +446,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [showScriptOverview, setShowScriptOverview] = useState(false)
   
   // Scene timeline visibility state
-  const [showTimeline, setShowTimeline] = useState(true)
+  const [showTimeline, setShowTimeline] = useState(false)
   
   // Scene review modal state
   const [showSceneReviewModal, setShowSceneReviewModal] = useState(false)

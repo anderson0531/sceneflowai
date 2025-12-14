@@ -154,11 +154,11 @@ function ReferenceSection({ title, type, references, icon, onAdd, onRemove, show
         onClick={() => setOpen((prev) => !prev)}
         className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-100"
       >
-        <span className="flex items-center gap-2">
-          {icon}
-          {title}
+        <span className="flex items-center gap-2 min-w-0 flex-1">
+          <span className="flex-shrink-0">{icon}</span>
+          <span className="truncate">{title}</span>
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {/* Generate button for scenes */}
           {showGenerateButton && onGenerate && (
             <Button
@@ -366,7 +366,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     }
   }
 
-  const [castOpen, setCastOpen] = useState(true)
+  const [castOpen, setCastOpen] = useState(false)
   const [showProTips, setShowProTips] = useState(false)
 
   return (
