@@ -4,19 +4,24 @@ import { useState } from 'react'
 import { DndContext } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/textarea'
 import { CharacterLibrary, CharacterLibraryProps } from './CharacterLibrary'
 import { VisualReference, VisualReferenceType } from '@/types/visionReferences'
+import { SceneReferenceGeneratorModal, SceneForReferenceGeneration } from './SceneReferenceGeneratorModal'
 
 interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'compact'> {
   sceneReferences: VisualReference[]
   objectReferences: VisualReference[]
   onCreateReference: (type: VisualReferenceType, payload: { name: string; description?: string; file?: File | null }) => Promise<void> | void
   onRemoveReference: (type: VisualReferenceType, referenceId: string) => void
+  /** Scenes for reference generation (with sceneDirection) */
+  scenes?: SceneForReferenceGeneration[]
+  /** Callback when a scene reference is generated */
+  onSceneReferenceGenerated?: (reference: { name: string; description?: string; imageUrl: string; sourceSceneNumber?: number }) => void
 }
 
 interface ReferenceSectionProps {
@@ -26,6 +31,9 @@ interface ReferenceSectionProps {
   icon: React.ReactNode
   onAdd: (type: VisualReferenceType) => void
   onRemove: (type: VisualReferenceType, id: string) => void
+  /** Show "Generate" button for scenes */
+  showGenerateButton?: boolean
+  onGenerate?: () => void
 }
 
 function DraggableReferenceCard({ reference }: { reference: VisualReference }) {
@@ -40,36 +48,76 @@ function DraggableReferenceCard({ reference }: { reference: VisualReference }) {
     },
   })
 
+  const [isExpanded, setIsExpanded] = useState(false)
+
   return (
-    <div
-      ref={setNodeRef}
-      style={{
-        transform: transform ? CSS.Translate.toString(transform) : undefined,
-        opacity: isDragging ? 0.65 : 1,
-        cursor: 'grab',
-      }}
-      {...listeners}
-      {...attributes}
-      className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm"
-    >
-      <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-        {reference.imageUrl ? (
-          <img src={reference.imageUrl} alt={reference.name} className="w-full h-full object-cover" />
-        ) : (
-          <Images className="w-5 h-5 text-gray-400" />
-        )}
+    <>
+      <div
+        ref={setNodeRef}
+        style={{
+          transform: transform ? CSS.Translate.toString(transform) : undefined,
+          opacity: isDragging ? 0.65 : 1,
+          cursor: 'grab',
+        }}
+        {...listeners}
+        {...attributes}
+        className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm group"
+      >
+        <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center relative">
+          {reference.imageUrl ? (
+            <>
+              <img src={reference.imageUrl} alt={reference.name} className="w-full h-full object-cover" />
+              {/* Expand button overlay */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setIsExpanded(true)
+                }}
+                className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                title="View full size"
+              >
+                <Maximize2 className="w-4 h-4 text-white" />
+              </button>
+            </>
+          ) : (
+            <Images className="w-5 h-5 text-gray-400" />
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{reference.name}</div>
+          {reference.description ? (
+            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{reference.description}</div>
+          ) : null}
+        </div>
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{reference.name}</div>
-        {reference.description ? (
-          <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{reference.description}</div>
-        ) : null}
-      </div>
-    </div>
+
+      {/* Expanded View Dialog */}
+      {reference.imageUrl && (
+        <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
+          <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 bg-black border-none">
+            <DialogHeader className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent z-10">
+              <DialogTitle className="text-white">{reference.name}</DialogTitle>
+              {reference.description && (
+                <DialogDescription className="text-gray-300">
+                  {reference.description}
+                </DialogDescription>
+              )}
+            </DialogHeader>
+            <div className="flex items-center justify-center w-full h-full p-4">
+              <img
+                src={reference.imageUrl}
+                alt={reference.name}
+                className="max-w-full max-h-[85vh] object-contain rounded-lg"
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   )
 }
 
-function ReferenceSection({ title, type, references, icon, onAdd, onRemove }: ReferenceSectionProps) {
+function ReferenceSection({ title, type, references, icon, onAdd, onRemove, showGenerateButton, onGenerate }: ReferenceSectionProps) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -82,7 +130,22 @@ function ReferenceSection({ title, type, references, icon, onAdd, onRemove }: Re
           {icon}
           {title}
         </span>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {/* Generate button for scenes */}
+          {showGenerateButton && onGenerate && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation()
+                onGenerate()
+              }}
+              className="text-sf-primary border-sf-primary/30 hover:bg-sf-primary/10"
+            >
+              <Sparkles className="w-4 h-4 mr-1" />
+              Generate
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -92,7 +155,7 @@ function ReferenceSection({ title, type, references, icon, onAdd, onRemove }: Re
             }}
           >
             <Plus className="w-4 h-4 mr-1" />
-            Add Reference
+            Add
           </Button>
           {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </div>
@@ -234,11 +297,14 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onCreateReference,
     onRemoveReference,
     screenplayContext,
+    scenes = [],
+    onSceneReferenceGenerated,
   } = props
 
   const [dialogType, setDialogType] = useState<VisualReferenceType | null>(null)
   const [isDialogOpen, setDialogOpen] = useState(false)
   const [isSubmitting, setSubmitting] = useState(false)
+  const [isGeneratorModalOpen, setGeneratorModalOpen] = useState(false)
 
   const handleOpenDialog = (type: VisualReferenceType) => {
     setDialogType(type)
@@ -260,6 +326,13 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
       setDialogType(null)
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleSceneReferenceGenerated = (reference: { name: string; description?: string; imageUrl: string; sourceSceneNumber?: number }) => {
+    // Forward to parent handler if provided
+    if (onSceneReferenceGenerated) {
+      onSceneReferenceGenerated(reference)
     }
   }
 
@@ -333,6 +406,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
             icon={<Images className="w-4 h-4 text-sf-primary" />}
             onAdd={handleOpenDialog}
             onRemove={onRemoveReference}
+            showGenerateButton={scenes.length > 0}
+            onGenerate={() => setGeneratorModalOpen(true)}
           />
           <ReferenceSection
             title="Objects"
@@ -350,6 +425,14 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
         onSubmit={handleCreateReference}
         type={dialogType}
         isSubmitting={isSubmitting}
+      />
+      
+      {/* Scene Reference Generator Modal */}
+      <SceneReferenceGeneratorModal
+        open={isGeneratorModalOpen}
+        onClose={() => setGeneratorModalOpen(false)}
+        scenes={scenes}
+        onGenerated={handleSceneReferenceGenerated}
       />
     </DndContext>
   )

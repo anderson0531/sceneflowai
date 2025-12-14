@@ -1020,6 +1020,56 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [project, projectId, sceneReferences, objectReferences]
   )
 
+  // Handler for when a scene reference is generated via AI
+  const handleSceneReferenceGenerated = useCallback(
+    async (reference: { name: string; description?: string; imageUrl: string; sourceSceneNumber?: number }) => {
+      const newReference: VisualReference = {
+        id: crypto.randomUUID(),
+        type: 'scene',
+        name: reference.name,
+        description: reference.description,
+        imageUrl: reference.imageUrl,
+        createdAt: new Date().toISOString(),
+      }
+
+      // Update local state
+      const updatedSceneRefs = [...sceneReferences, newReference]
+      setSceneReferences(updatedSceneRefs)
+
+      // Save to database
+      try {
+        const existingMetadata = project?.metadata || {}
+        const existingVisionPhase = existingMetadata.visionPhase || {}
+
+        const payload = {
+          metadata: {
+            ...existingMetadata,
+            visionPhase: {
+              ...existingVisionPhase,
+              references: {
+                sceneReferences: updatedSceneRefs,
+                objectReferences
+              }
+            }
+          }
+        }
+
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+
+        if (!response.ok) {
+          console.error('[handleSceneReferenceGenerated] Failed to save reference to database')
+        }
+      } catch (error) {
+        console.error('[handleSceneReferenceGenerated] Error saving reference:', error)
+      }
+    },
+    [project, projectId, sceneReferences, objectReferences]
+  )
+
   const handleInitializeSceneProduction = useCallback(
     async (sceneId: string, { targetDuration, generationOptions }: { targetDuration: number; generationOptions?: any }) => {
       if (!project?.id) {
@@ -6225,6 +6275,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 objectReferences={objectReferences}
                 onCreateReference={(type, payload) => handleCreateReference(type, payload)}
                 onRemoveReference={(type, referenceId) => handleRemoveReference(type, referenceId)}
+                scenes={script?.script?.scenes || []}
+                onSceneReferenceGenerated={handleSceneReferenceGenerated}
                 screenplayContext={{
                   genre: project?.genre,
                   tone: project?.tone || project?.metadata?.filmTreatmentVariant?.tone_description || project?.metadata?.filmTreatmentVariant?.tone,
