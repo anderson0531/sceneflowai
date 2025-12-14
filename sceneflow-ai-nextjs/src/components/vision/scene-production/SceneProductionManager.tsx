@@ -301,7 +301,19 @@ export function SceneProductionManager({
     }
     
     setAudioTracksState(newTracks)
-  }, [scene, productionData?.segments])
+  // Explicit dependencies on audio-related scene properties to ensure refresh when script changes clear audio
+  }, [
+    scene, 
+    productionData?.segments,
+    scene?.narrationAudioUrl,
+    scene?.narrationAudio,
+    scene?.descriptionAudioUrl,
+    scene?.descriptionAudio,
+    scene?.dialogueAudio,
+    scene?.dialogue,
+    scene?.musicAudio,
+    scene?.sfxAudio,
+  ])
 
   // Merge external audio tracks with scene-derived tracks
   const audioTracks = useMemo(() => {

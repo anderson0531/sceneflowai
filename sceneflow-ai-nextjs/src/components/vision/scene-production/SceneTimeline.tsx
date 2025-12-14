@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { 
   Play, Pause, Volume2, VolumeX, Mic, Music, Zap, 
   SkipBack, SkipForward, Film, Download, Plus, Trash2, X, Maximize2, Minimize2, Info, MessageSquare, GripVertical
@@ -218,6 +219,12 @@ export function SceneTimeline({
       localStorage.setItem('sceneflow-track-enabled', JSON.stringify(trackEnabled))
     }
   }, [trackEnabled])
+  
+  // Portal mount state for tooltips (needed to render outside Dialog transform context)
+  const [isMounted, setIsMounted] = useState(false)
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
   
   // Drag/resize state
   const [dragState, setDragState] = useState<{
@@ -1051,8 +1058,9 @@ export function SceneTimeline({
       </div>
       </div>
 
-      {/* Clip Hover Tooltip - works for visual segments and audio clips */}
-      {hoveredClip && tooltipPosition && (() => {
+      {/* Clip Hover Tooltip - rendered via portal to escape Dialog transform context */}
+      {isMounted && hoveredClip && tooltipPosition && createPortal(
+        (() => {
         // For visual clips, get extra info from visualClips
         const visualInfo = hoveredClip.trackType === 'visual' 
           ? visualClips.find(c => c.id === hoveredClip.id) 
@@ -1082,7 +1090,7 @@ export function SceneTimeline({
         
         return (
           <div 
-            className="fixed z-50 bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-3 max-w-xs pointer-events-none"
+            className="fixed z-[9999] bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-3 max-w-xs pointer-events-none"
             style={{ 
               left: tooltipPosition.x, 
               top: tooltipPosition.y,
@@ -1132,7 +1140,9 @@ export function SceneTimeline({
             )}
           </div>
         )
-      })()}
+      })(),
+        document.body
+      )}
 
       {/* Hidden Audio Elements */}
       {allAudioClips.map(({ clip }) => (
