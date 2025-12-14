@@ -1073,18 +1073,79 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [project, projectId, sceneReferences, objectReferences]
   )
 
-  // Handler for adding backdrop reference to timeline via helpful toast
-  const handleAddBackdropToTimeline = useCallback(
-    (reference: VisualReference) => {
-      toast.info(
-        `To add "${reference.name}" to the timeline, drag it onto a segment in the Call Action editor.`,
-        {
-          duration: 5000,
-          description: 'Drag the image thumbnail from the sidebar onto any segment.',
+  // Compute timeline scenes for Add to Timeline dialog
+  const timelineScenes = useMemo(() => {
+    const scenes = script?.script?.scenes || []
+    return Object.entries(sceneProductionState)
+      .filter(([_, data]) => data?.segments && data.segments.length > 0)
+      .map(([sceneId, data]) => {
+        // Find the scene to get its number and heading
+        const sceneIndex = scenes.findIndex((s: any) => 
+          (s.sceneId || s.id || `scene-${scenes.indexOf(s)}`) === sceneId
+        )
+        const scene = scenes[sceneIndex]
+        return {
+          sceneId,
+          sceneNumber: sceneIndex + 1,
+          heading: typeof scene?.heading === 'string' ? scene.heading : scene?.heading?.text,
+          segments: data.segments.map(seg => ({
+            segmentId: seg.segmentId,
+            sequenceIndex: seg.sequenceIndex,
+            label: seg.shotType || seg.action,
+          }))
         }
-      )
+      })
+      .filter(s => s.sceneNumber > 0) // Only include scenes we found
+      .sort((a, b) => a.sceneNumber - b.sceneNumber)
+  }, [script?.script?.scenes, sceneProductionState])
+
+  // Handler for adding a reference to a specific segment
+  const handleAddReferenceToSegment = useCallback(
+    async (sceneId: string, segmentId: string, referenceId: string) => {
+      const currentProduction = sceneProductionState[sceneId]
+      if (!currentProduction) {
+        toast.error('Scene not found')
+        return
+      }
+
+      const segmentIndex = currentProduction.segments.findIndex(s => s.segmentId === segmentId)
+      if (segmentIndex === -1) {
+        toast.error('Segment not found')
+        return
+      }
+
+      const segment = currentProduction.segments[segmentIndex]
+      const currentSceneRefIds = segment.references?.sceneRefIds || []
+      
+      // Don't add duplicate
+      if (currentSceneRefIds.includes(referenceId)) {
+        toast.info('This reference is already added to the segment')
+        return
+      }
+
+      // Update the segment's sceneRefIds
+      const updatedSegments = [...currentProduction.segments]
+      updatedSegments[segmentIndex] = {
+        ...segment,
+        references: {
+          ...segment.references,
+          sceneRefIds: [...currentSceneRefIds, referenceId],
+        }
+      }
+
+      const updatedData: SceneProductionData = {
+        ...currentProduction,
+        segments: updatedSegments,
+      }
+
+      // Apply update
+      await applySceneProductionUpdate(sceneId, updatedData)
+      
+      // Find reference name for toast
+      const reference = sceneReferences.find(r => r.id === referenceId)
+      toast.success(`Added "${reference?.name || 'reference'}" to Segment ${segment.sequenceIndex + 1}`)
     },
-    []
+    [sceneProductionState, applySceneProductionUpdate, sceneReferences]
   )
 
   const handleInitializeSceneProduction = useCallback(
@@ -6361,7 +6422,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 scenes={script?.script?.scenes || []}
                 backdropCharacters={characters.map(c => ({ id: c.id, name: c.name, description: c.description, appearance: c.appearance }))}
                 onBackdropGenerated={handleBackdropGenerated}
-                onAddBackdropToTimeline={handleAddBackdropToTimeline}
+                timelineScenes={timelineScenes}
+                onAddReferenceToSegment={handleAddReferenceToSegment}
                 screenplayContext={{
                   genre: project?.genre,
                   tone: project?.tone || project?.metadata?.filmTreatmentVariant?.tone_description || project?.metadata?.filmTreatmentVariant?.tone,
