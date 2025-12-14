@@ -17,7 +17,8 @@
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels'
- import { upload } from '@vercel/blob/client'
+import { upload } from '@vercel/blob/client'
+import { cleanupStaleAudio } from '@/lib/audio/cleanupAudio'
 import { toast } from 'sonner'
 import { ContextBar } from '@/components/layout/ContextBar'
 import { ScriptPanel } from '@/components/vision/ScriptPanel'
@@ -4758,112 +4759,115 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       const data = await response.json()
       if (data.success) {
-        // Update script state immediately with audio URL (multi-language structure)
-        // Create a new object reference to ensure React detects the change
-        setScript((prevScript: any) => {
-          const updated = { ...prevScript }
-          if (updated.script?.scenes?.[sceneIdx]) {
-            // Create a new scenes array to ensure reference change
-            const updatedScenes = [...updated.script.scenes]
-            const scene = { ...updatedScenes[sceneIdx] }
-            
-            if (audioType === 'narration') {
-              // Initialize narrationAudio if it doesn't exist
-              if (!scene.narrationAudio) {
-                scene.narrationAudio = {}
-              } else {
-                // Create a new object to ensure reference change
-                scene.narrationAudio = { ...scene.narrationAudio }
-              }
-              
-              // Store language-specific narration audio
-              scene.narrationAudio[language] = {
-                url: data.audioUrl,
-                duration: data.duration || undefined,
-                generatedAt: new Date().toISOString(),
-                voiceId: voiceConfig.voiceId
-              }
-              
-              // Maintain backward compatibility: set narrationAudioUrl for English
-              if (language === 'en') {
-                scene.narrationAudioUrl = data.audioUrl
-                scene.narrationAudioGeneratedAt = new Date().toISOString()
-              }
-              
-              updatedScenes[sceneIdx] = scene
-              updated.script = { ...updated.script, scenes: updatedScenes }
-            } else if (audioType === 'description') {
-              if (!scene.descriptionAudio) {
-                scene.descriptionAudio = {}
-              } else {
-                scene.descriptionAudio = { ...scene.descriptionAudio }
-              }
-
-              scene.descriptionAudio[language] = {
-                url: data.audioUrl,
-                duration: data.duration || undefined,
-                generatedAt: new Date().toISOString(),
-                voiceId: voiceConfig.voiceId
-              }
-
-              // Maintain backward compatibility: set descriptionAudioUrl for English
-              if (language === 'en') {
-                scene.descriptionAudioUrl = data.audioUrl
-                scene.descriptionAudioGeneratedAt = new Date().toISOString()
-              }
-
-              updatedScenes[sceneIdx] = scene
-              updated.script = { ...updated.script, scenes: updatedScenes }
-            } else if (audioType === 'dialogue' && characterName) {
-              // Initialize dialogueAudio object if needed
-              if (!scene.dialogueAudio || Array.isArray(scene.dialogueAudio)) {
-                // Migrate old array format if exists
-                if (Array.isArray(scene.dialogueAudio) && scene.dialogueAudio.length > 0) {
-                  scene.dialogueAudio = { en: scene.dialogueAudio }
-                } else {
-                  scene.dialogueAudio = {}
-                }
-              } else {
-                // Create a new object to ensure reference change
-                scene.dialogueAudio = { ...scene.dialogueAudio }
-              }
-              
-              // Initialize language array if it doesn't exist
-              if (!scene.dialogueAudio[language]) {
-                scene.dialogueAudio[language] = []
-              }
-              
-              const dialogueArray = [...scene.dialogueAudio[language]]
-              const existingIndex = dialogueArray.findIndex((d: any) => 
-                d.character === characterName && d.dialogueIndex === dialogueIndex
-              )
-              
-              const dialogueEntry = {
-                character: characterName,
-                dialogueIndex: dialogueIndex!,
-                audioUrl: data.audioUrl,
-                duration: data.duration || undefined,
-                voiceId: voiceConfig.voiceId
-              }
-              
-              if (existingIndex >= 0) {
-                dialogueArray[existingIndex] = dialogueEntry
-              } else {
-                dialogueArray.push(dialogueEntry)
-              }
-              
-              scene.dialogueAudio[language] = dialogueArray
-              
-              // Maintain backward compatibility: DO NOT overwrite the object structure
-              // The object structure { en: [...], th: [...], es: [...] } must be preserved
-              // Setting scene.dialogueAudio = dialogueArray would delete all other languages!
-              scene.dialogueAudioGeneratedAt = new Date().toISOString()
-              
-              updatedScenes[sceneIdx] = scene
-              updated.script = { ...updated.script, scenes: updatedScenes }
-            }
+        // Build updated scenes with new audio URL
+        const currentScenes = script?.script?.scenes || []
+        if (!currentScenes[sceneIdx]) {
+          console.error('[Generate Scene Audio] Scene not found at index:', sceneIdx)
+          return
+        }
+        
+        const updatedScenes = [...currentScenes]
+        const scene = { ...updatedScenes[sceneIdx] }
+        
+        if (audioType === 'narration') {
+          // Initialize narrationAudio if it doesn't exist
+          if (!scene.narrationAudio) {
+            scene.narrationAudio = {}
+          } else {
+            scene.narrationAudio = { ...scene.narrationAudio }
           }
-          return updated
+          
+          // Store language-specific narration audio
+          scene.narrationAudio[language] = {
+            url: data.audioUrl,
+            duration: data.duration || undefined,
+            generatedAt: new Date().toISOString(),
+            voiceId: voiceConfig.voiceId
+          }
+          
+          // Maintain backward compatibility: set narrationAudioUrl for English
+          if (language === 'en') {
+            scene.narrationAudioUrl = data.audioUrl
+            scene.narrationAudioGeneratedAt = new Date().toISOString()
+          }
+          
+          updatedScenes[sceneIdx] = scene
+        } else if (audioType === 'description') {
+          if (!scene.descriptionAudio) {
+            scene.descriptionAudio = {}
+          } else {
+            scene.descriptionAudio = { ...scene.descriptionAudio }
+          }
+
+          scene.descriptionAudio[language] = {
+            url: data.audioUrl,
+            duration: data.duration || undefined,
+            generatedAt: new Date().toISOString(),
+            voiceId: voiceConfig.voiceId
+          }
+
+          // Maintain backward compatibility: set descriptionAudioUrl for English
+          if (language === 'en') {
+            scene.descriptionAudioUrl = data.audioUrl
+            scene.descriptionAudioGeneratedAt = new Date().toISOString()
+          }
+
+          updatedScenes[sceneIdx] = scene
+        } else if (audioType === 'dialogue' && characterName) {
+          // Initialize dialogueAudio object if needed
+          if (!scene.dialogueAudio || Array.isArray(scene.dialogueAudio)) {
+            // Migrate old array format if exists
+            if (Array.isArray(scene.dialogueAudio) && scene.dialogueAudio.length > 0) {
+              scene.dialogueAudio = { en: scene.dialogueAudio }
+            } else {
+              scene.dialogueAudio = {}
+            }
+          } else {
+            scene.dialogueAudio = { ...scene.dialogueAudio }
+          }
+          
+          // Initialize language array if it doesn't exist
+          if (!scene.dialogueAudio[language]) {
+            scene.dialogueAudio[language] = []
+          }
+          
+          const dialogueArray = [...scene.dialogueAudio[language]]
+          const existingIndex = dialogueArray.findIndex((d: any) => 
+            d.character === characterName && d.dialogueIndex === dialogueIndex
+          )
+          
+          const dialogueEntry = {
+            character: characterName,
+            dialogueIndex: dialogueIndex!,
+            audioUrl: data.audioUrl,
+            duration: data.duration || undefined,
+            voiceId: voiceConfig.voiceId
+          }
+          
+          if (existingIndex >= 0) {
+            dialogueArray[existingIndex] = dialogueEntry
+          } else {
+            dialogueArray.push(dialogueEntry)
+          }
+          
+          scene.dialogueAudio[language] = dialogueArray
+          scene.dialogueAudioGeneratedAt = new Date().toISOString()
+          
+          updatedScenes[sceneIdx] = scene
+        }
+        
+        // Update React state
+        setScript((prevScript: any) => ({
+          ...prevScript,
+          script: {
+            ...prevScript?.script,
+            scenes: updatedScenes
+          }
+        }))
+        
+        // Persist to database (fire and forget, don't block UI)
+        saveScenesToDatabase(updatedScenes).catch(err => {
+          console.error('[Generate Scene Audio] Failed to save to database:', err)
         })
         
         try { const { toast } = require('sonner'); toast.success('Audio generated!') } catch {}
@@ -5228,107 +5232,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  // Helper: Clean up audio assets when scene content changes
-  // This ensures stale audio doesn't play after edits
-  const cleanupRemovedDialogueAudio = (originalScene: any, revisedScene: any) => {
-    const cleanedScene = { ...revisedScene }
-    
-    // Get dialogue lines from both scenes for comparison
-    const originalDialogueLines = (originalScene?.dialogue || []).map((d: any, idx: number) => ({
-      character: d.character,
-      line: d.line || d.text || '',
-      index: idx
-    }))
-    
-    const revisedDialogueLines = (revisedScene.dialogue || []).map((d: any, idx: number) => ({
-      character: d.character,
-      line: d.line || d.text || '',
-      index: idx
-    }))
-
-    // Check if narration text changed - if so, clear narration audio
-    const originalNarration = originalScene?.narration || ''
-    const revisedNarration = revisedScene.narration || ''
-    if (originalNarration !== revisedNarration && originalScene?.narrationAudio) {
-      delete cleanedScene.narrationAudio
-      delete cleanedScene.narrationAudioUrl
-    }
-    
-    // Check if description text changed - if so, clear description audio
-    const originalDescription = originalScene?.description || originalScene?.action || ''
-    const revisedDescription = revisedScene.description || revisedScene.action || ''
-    if (originalDescription !== revisedDescription && originalScene?.descriptionAudio) {
-      delete cleanedScene.descriptionAudio
-      delete cleanedScene.descriptionAudioUrl
-    }
-
-    // If no dialogue audio exists, we're done
-    if (!originalScene?.dialogueAudio) {
-      return cleanedScene
-    }
-
-    // Handle multi-language audio format (object with language keys)
-    if (typeof originalScene.dialogueAudio === 'object' && !Array.isArray(originalScene.dialogueAudio)) {
-      cleanedScene.dialogueAudio = {}
-      
-      // Process each language
-      for (const [language, audioArray] of Object.entries(originalScene.dialogueAudio)) {
-        if (Array.isArray(audioArray)) {
-          // Filter audio: keep only if character+index exists AND text hasn't changed
-          const filteredAudio = audioArray.filter((audio: any) => {
-            const dialogueIdx = audio.dialogueIndex
-            const originalLine = originalDialogueLines[dialogueIdx]
-            const revisedLine = revisedDialogueLines[dialogueIdx]
-            
-            // Remove if: dialogue was removed, character changed, or text changed
-            const shouldKeep = (
-              revisedLine && 
-              originalLine &&
-              revisedLine.character === audio.character &&
-              originalLine.line === revisedLine.line  // Text must match
-            )
-            
-            return shouldKeep
-          })
-          
-          if (filteredAudio.length > 0) {
-            cleanedScene.dialogueAudio[language] = filteredAudio
-          }
-        }
-      }
-      
-      // Clean up empty dialogueAudio object
-      if (Object.keys(cleanedScene.dialogueAudio).length === 0) {
-        delete cleanedScene.dialogueAudio
-      }
-    }
-    // Handle legacy array format
-    else if (Array.isArray(originalScene.dialogueAudio)) {
-      const filteredAudio = originalScene.dialogueAudio.filter((audio: any) => {
-        const dialogueIdx = audio.dialogueIndex
-        const originalLine = originalDialogueLines[dialogueIdx]
-        const revisedLine = revisedDialogueLines[dialogueIdx]
-        
-        const shouldKeep = (
-          revisedLine && 
-          originalLine &&
-          revisedLine.character === audio.character &&
-          originalLine.line === revisedLine.line
-        )
-        
-        return shouldKeep
-      })
-      
-      if (filteredAudio.length > 0) {
-        cleanedScene.dialogueAudio = filteredAudio
-      } else {
-        delete cleanedScene.dialogueAudio
-      }
-    }
-
-    return cleanedScene
-  }
-
   // Scene editor handlers
   const handleEditScene = (sceneIndex: number) => {
     setEditingSceneIndex(sceneIndex)
@@ -5341,8 +5244,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const updatedScenes = [...(script.script?.scenes || [])]
     const originalScene = updatedScenes[sceneIndex]
     
-    // Clean up dialogue audio for removed dialogue lines
-    const cleanedScene = cleanupRemovedDialogueAudio(originalScene, revisedScene)
+    // Clean up stale audio for changed/removed dialogue lines using shared utility
+    const cleanedScene = cleanupStaleAudio(originalScene, revisedScene)
     updatedScenes[sceneIndex] = cleanedScene
 
     // Save to database FIRST
