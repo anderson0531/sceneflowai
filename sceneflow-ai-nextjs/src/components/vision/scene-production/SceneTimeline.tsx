@@ -139,15 +139,6 @@ export function SceneTimeline({
   onAddEstablishingShot,
   sceneFrameUrl,
 }: SceneTimelineProps) {
-  // Debug: log what audioTracks SceneTimeline receives
-  console.log('[SceneTimeline] Received audioTracks:', {
-    hasVoiceover: !!audioTracks?.voiceover,
-    voiceoverUrl: audioTracks?.voiceover?.url?.substring(0, 50),
-    dialogueCount: audioTracks?.dialogue?.length || 0,
-    hasMusic: !!audioTracks?.music,
-    sfxCount: audioTracks?.sfx?.length || 0,
-  })
-  
   // Capture callbacks in stable refs to avoid closure issues
   const addSegmentCallback = typeof onAddSegment === 'function' ? onAddSegment : undefined
   const deleteSegmentCallback = typeof onDeleteSegment === 'function' ? onDeleteSegment : undefined
@@ -371,13 +362,6 @@ export function SceneTimeline({
   }, [audioTracks])
   
   const allAudioClips = useMemo(() => {
-    console.log('[SceneTimeline] allAudioClips memo recalculating:', {
-      hasVoiceover: !!audioTracks?.voiceover?.url,
-      dialogueCount: audioTracks?.dialogue?.filter(d => d.url).length || 0,
-      hasMusic: !!audioTracks?.music?.url,
-      sfxCount: audioTracks?.sfx?.filter(s => s.url).length || 0,
-      resolvedDurationsCount: Object.keys(resolvedDurations).length,
-    })
     const clips: Array<{ type: string; clip: AudioTrackClip }> = []
     if (audioTracks?.voiceover?.url) {
       const resolvedDuration = resolvedDurations['vo-' + audioTracks.voiceover.id]
@@ -879,12 +863,6 @@ export function SceneTimeline({
     clips: AudioTrackClip[],
     color: string
   ) => {
-    // Debug: log what clips are being rendered
-    console.log(`[SceneTimeline] renderAudioTrack ${trackType}:`, {
-      clipsCount: clips.length,
-      clipDetails: clips.map(c => ({ id: c.id, url: c.url?.substring(0, 30), duration: c.duration, startTime: c.startTime })),
-    })
-    
     const isMuted = mutedTracks.has(trackType)
     const isEnabled = trackEnabled[trackType] ?? true
     const volume = trackVolumes[trackType] ?? 1

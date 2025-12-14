@@ -103,17 +103,8 @@ export function SceneProductionManager({
   // Ref to always access the latest scene data (avoids stale closure in callbacks)
   const sceneRef = useRef(scene)
   useEffect(() => {
-    console.log('[SceneProductionManager] Scene prop updated:', {
-      sceneId,
-      hasNarrationAudioUrl: !!scene?.narrationAudioUrl,
-      narrationAudioUrl: scene?.narrationAudioUrl?.substring(0, 60),
-      hasNarrationAudio: !!scene?.narrationAudio,
-      narrationAudioEnUrl: scene?.narrationAudio?.en?.url?.substring(0, 60),
-      hasDialogueAudio: !!scene?.dialogueAudio,
-      dialogueAudioEnLength: scene?.dialogueAudio?.en?.length,
-    })
     sceneRef.current = scene
-  }, [scene, sceneId])
+  }, [scene])
   
   // Create stable callback wrappers - these must be defined early to avoid minification issues
   const handleAddSegmentWrapper = useCallback(
@@ -351,17 +342,6 @@ export function SceneProductionManager({
       return
     }
     
-    console.log('[Sync Audio] Starting sync with scene data:', {
-      sceneId,
-      hasNarrationAudioUrl: !!currentScene.narrationAudioUrl,
-      narrationAudioUrl: currentScene.narrationAudioUrl?.substring(0, 50),
-      hasNarrationAudio: !!currentScene.narrationAudio,
-      narrationAudioEn: currentScene.narrationAudio?.en?.url?.substring(0, 50),
-      hasDialogueAudio: !!currentScene.dialogueAudio,
-      dialogueAudioEnLength: currentScene.dialogueAudio?.en?.length,
-      hasMusicAudio: !!currentScene.musicAudio,
-    })
-    
     // Step 1: Clear existing audio tracks completely (treat as fresh build)
     setAudioTracksState({})
     
@@ -370,17 +350,8 @@ export function SceneProductionManager({
     setTimeout(() => {
       const newTracks = buildAudioTracksFromScene(currentScene, productionData?.segments)
       
-      console.log('[Sync Audio] Built new tracks:', {
-        hasVoiceover: !!newTracks.voiceover,
-        voiceoverUrl: newTracks.voiceover?.url?.substring(0, 50),
-        voiceoverDuration: newTracks.voiceover?.duration,
-        dialogueCount: newTracks.dialogue?.length || 0,
-        dialogueDurations: newTracks.dialogue?.map(d => d.duration),
-        hasMusic: !!newTracks.music,
-        musicDuration: newTracks.music?.duration,
-        sfxCount: newTracks.sfx?.length || 0,
-        sfxDurations: newTracks.sfx?.map(s => s.duration),
-      })
+      // Log the voiceover URL so we can verify it's the new one
+      console.log('[Sync Audio] Syncing voiceover URL:', newTracks.voiceover?.url)
       
       setAudioTracksState(newTracks)
       
