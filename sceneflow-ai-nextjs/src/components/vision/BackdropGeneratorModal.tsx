@@ -198,7 +198,7 @@ export function BackdropGeneratorModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Wand2 className="h-5 w-5 text-sf-primary" />
-            Generate Backdrop
+            Generate Scene Reference
           </DialogTitle>
           <DialogDescription>
             Create a visual backdrop from your scene direction. Choose a mode that fits your narrative needs.
@@ -408,7 +408,7 @@ export function BackdropGeneratorModal({
             ) : (
               <>
                 <Sparkles className="w-4 h-4 mr-2" />
-                Generate Backdrop
+                Generate
               </>
             )}
           </Button>
