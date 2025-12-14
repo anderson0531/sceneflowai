@@ -73,6 +73,8 @@ interface SceneProductionManagerProps {
   onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'single-shot' | 'beat-matched' | 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   // Take selection - allows user to choose which take to use as active asset
   onSelectTake?: (sceneId: string, segmentId: string, takeId: string, takeAssetUrl: string) => void
+  // Sync Audio: Refresh scene data from database to get latest audio URLs
+  onRefreshSceneData?: () => Promise<void>
 }
 
 export function SceneProductionManager({
@@ -99,6 +101,7 @@ export function SceneProductionManager({
   onAddEstablishingShot,
   onEstablishingShotStyleChange,
   onSelectTake,
+  onRefreshSceneData,
 }: SceneProductionManagerProps) {
   // Create stable callback wrappers - these must be defined early to avoid minification issues
   const handleAddSegmentWrapper = useCallback(
@@ -325,30 +328,46 @@ export function SceneProductionManager({
     buildAudioTracksFromScene,
   ])
 
-  // Manual sync audio handler - rebuilds audio tracks from scene data
-  // Use this when auto-sync doesn't catch changes or to force a refresh
-  const handleSyncAudio = useCallback(() => {
+  // Manual sync audio handler - refreshes scene data from database then rebuilds audio tracks
+  // This ensures we get the latest audio URLs, not stale React state
+  const handleSyncAudio = useCallback(async () => {
     if (!scene) {
       toast.error('No scene data available')
       return
     }
-    const newTracks = buildAudioTracksFromScene(scene, productionData?.segments)
-    setAudioTracksState(newTracks)
     
-    // Count what was synced for feedback
-    const trackCount = [
-      newTracks.voiceover ? 1 : 0,
-      newTracks.dialogue?.length || 0,
-      newTracks.music ? 1 : 0,
-      newTracks.sfx?.length || 0,
-    ].reduce((a, b) => a + b, 0)
-    
-    if (trackCount > 0) {
-      toast.success(`Synced ${trackCount} audio track${trackCount !== 1 ? 's' : ''} from script`)
-    } else {
-      toast.info('No audio tracks found in scene data')
+    try {
+      // Primary approach: Refresh from database, then useEffect rebuilds tracks automatically
+      if (onRefreshSceneData) {
+        toast.info('Syncing audio from database...')
+        await onRefreshSceneData()
+        // After refresh, the useEffect will automatically rebuild audio tracks
+        // because the scene prop will have updated audio URLs
+        toast.success('Audio synced from database')
+      } else {
+        // Fallback: Rebuild from current scene data (may be stale)
+        const newTracks = buildAudioTracksFromScene(scene, productionData?.segments)
+        setAudioTracksState(newTracks)
+        
+        // Count what was synced for feedback
+        const trackCount = [
+          newTracks.voiceover ? 1 : 0,
+          newTracks.dialogue?.length || 0,
+          newTracks.music ? 1 : 0,
+          newTracks.sfx?.length || 0,
+        ].reduce((a, b) => a + b, 0)
+        
+        if (trackCount > 0) {
+          toast.success(`Synced ${trackCount} audio track${trackCount !== 1 ? 's' : ''} from script`)
+        } else {
+          toast.info('No audio tracks found in scene data')
+        }
+      }
+    } catch (error) {
+      console.error('[Sync Audio] Error:', error)
+      toast.error('Failed to sync audio')
     }
-  }, [scene, productionData?.segments, buildAudioTracksFromScene])
+  }, [scene, productionData?.segments, buildAudioTracksFromScene, onRefreshSceneData])
 
   // Merge external audio tracks with scene-derived tracks
   const audioTracks = useMemo(() => {

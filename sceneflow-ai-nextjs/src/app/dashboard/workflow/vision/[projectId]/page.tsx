@@ -1766,6 +1766,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [applySceneProductionUpdate]
   )
   
+  // Handle refreshing scene data from database (used by Sync Audio button)
+  // This ensures the timeline gets fresh audio URLs, not stale React state
+  const handleRefreshSceneData = useCallback(async () => {
+    await loadProject(true) // skipAutoGeneration = true
+  }, [])
+  
   // Handle deleting a segment
   const handleDeleteSegment = useCallback(
     (sceneId: string, segmentId: string) => {
@@ -6105,6 +6111,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   onBookmarkScene={handleBookmarkScene}
                   onMarkWorkflowComplete={handleMarkWorkflowComplete}
                   onDismissStaleWarning={handleDismissStaleWarning}
+                  onRefreshSceneData={handleRefreshSceneData}
                 showStoryboard={showSceneGallery}
                 onToggleStoryboard={() => setShowSceneGallery(!showSceneGallery)}
                 showDashboard={showDashboard}
