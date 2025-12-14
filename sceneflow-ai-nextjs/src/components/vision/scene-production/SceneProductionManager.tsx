@@ -73,6 +73,8 @@ interface SceneProductionManagerProps {
   onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'single-shot' | 'beat-matched' | 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   // Take selection - allows user to choose which take to use as active asset
   onSelectTake?: (sceneId: string, segmentId: string, takeId: string, takeAssetUrl: string) => void
+  // Audio sync - refresh scene data from database
+  onSyncAudio?: (sceneId: string) => Promise<void>
 }
 
 export function SceneProductionManager({
@@ -99,6 +101,7 @@ export function SceneProductionManager({
   onAddEstablishingShot,
   onEstablishingShotStyleChange,
   onSelectTake,
+  onSyncAudio,
 }: SceneProductionManagerProps) {
   // Create stable callback wrappers - these must be defined early to avoid minification issues
   const handleAddSegmentWrapper = useCallback(
@@ -171,6 +174,23 @@ export function SceneProductionManager({
     },
     [sceneId, onSegmentResize]
   )
+  
+  // Audio sync state and wrapper
+  const [isSyncingAudio, setIsSyncingAudio] = useState(false)
+  const handleSyncAudioWrapper = useCallback(async () => {
+    if (onSyncAudio) {
+      setIsSyncingAudio(true)
+      try {
+        await onSyncAudio(sceneId)
+        toast.success('Audio synced from database')
+      } catch (error) {
+        console.error('Failed to sync audio:', error)
+        toast.error('Failed to sync audio')
+      } finally {
+        setIsSyncingAudio(false)
+      }
+    }
+  }, [sceneId, onSyncAudio])
   
   const [targetDuration, setTargetDuration] = useState<number>(productionData?.targetSegmentDuration ?? 8)
   
@@ -903,6 +923,8 @@ export function SceneProductionManager({
               onReorderSegments={onReorderSegments ? handleReorderSegmentsWrapper : undefined}
               onAddEstablishingShot={onAddEstablishingShot ? handleAddEstablishingShotWrapper : undefined}
               sceneFrameUrl={scene?.imageUrl}
+              onSyncAudio={onSyncAudio ? handleSyncAudioWrapper : undefined}
+              isSyncingAudio={isSyncingAudio}
             />
           </div>
 

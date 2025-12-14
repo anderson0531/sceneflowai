@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { 
   Play, Pause, Volume2, VolumeX, Mic, Music, Zap, 
-  SkipBack, SkipForward, Film, Download, Plus, Trash2, X, Maximize2, Minimize2, Info, MessageSquare, GripVertical
+  SkipBack, SkipForward, Film, Download, Plus, Trash2, X, Maximize2, Minimize2, Info, MessageSquare, GripVertical, RefreshCw
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
@@ -77,6 +77,10 @@ interface SceneTimelineProps {
   // Establishing Shot support
   onAddEstablishingShot?: () => void
   sceneFrameUrl?: string | null
+  // Audio sync support
+  onSyncAudio?: () => void
+  isSyncingAudio?: boolean
+  pendingAudioCount?: number
 }
 
 function formatTime(seconds: number): string {
@@ -138,6 +142,9 @@ export function SceneTimeline({
   onReorderSegments,
   onAddEstablishingShot,
   sceneFrameUrl,
+  onSyncAudio,
+  isSyncingAudio,
+  pendingAudioCount,
 }: SceneTimelineProps) {
   // Capture callbacks in stable refs to avoid closure issues
   const addSegmentCallback = typeof onAddSegment === 'function' ? onAddSegment : undefined
@@ -1007,6 +1014,32 @@ export function SceneTimeline({
           <span className="text-xs text-gray-400">
             Seg {(visualClips.findIndex(c => c.id === currentVisualClip?.id) ?? 0) + 1} / {visualClips.length}
           </span>
+          
+          {/* Sync Audio Button */}
+          {onSyncAudio && (
+            <>
+              <div className="w-px h-5 bg-gray-700" />
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onSyncAudio} 
+                disabled={isSyncingAudio}
+                className={cn(
+                  "h-8 text-xs gap-1.5 text-gray-300 hover:bg-gray-800 relative",
+                  pendingAudioCount && pendingAudioCount > 0 && "text-amber-400"
+                )}
+                title={pendingAudioCount && pendingAudioCount > 0 ? `${pendingAudioCount} new audio clip(s) available` : "Refresh audio from database"}
+              >
+                <RefreshCw className={cn("w-3.5 h-3.5", isSyncingAudio && "animate-spin")} />
+                Sync Audio
+                {pendingAudioCount && pendingAudioCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {pendingAudioCount}
+                  </span>
+                )}
+              </Button>
+            </>
+          )}
           
           {onGenerateSceneMp4 && (
             <>
