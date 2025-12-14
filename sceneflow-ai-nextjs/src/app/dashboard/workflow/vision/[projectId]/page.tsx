@@ -1073,6 +1073,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [project, projectId, sceneReferences, objectReferences]
   )
 
+  // Handler for adding backdrop reference to timeline via helpful toast
+  const handleAddBackdropToTimeline = useCallback(
+    (reference: VisualReference) => {
+      toast.info(
+        `To add "${reference.name}" to the timeline, drag it onto a segment in the Call Action editor.`,
+        {
+          duration: 5000,
+          description: 'Drag the image thumbnail from the sidebar onto any segment.',
+        }
+      )
+    },
+    []
+  )
+
   const handleInitializeSceneProduction = useCallback(
     async (sceneId: string, { targetDuration, generationOptions }: { targetDuration: number; generationOptions?: any }) => {
       if (!project?.id) {
@@ -6347,6 +6361,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 scenes={script?.script?.scenes || []}
                 backdropCharacters={characters.map(c => ({ id: c.id, name: c.name, description: c.description, appearance: c.appearance }))}
                 onBackdropGenerated={handleBackdropGenerated}
+                onAddBackdropToTimeline={handleAddBackdropToTimeline}
                 screenplayContext={{
                   genre: project?.genre,
                   tone: project?.tone || project?.metadata?.filmTreatmentVariant?.tone_description || project?.metadata?.filmTreatmentVariant?.tone,

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { DndContext } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/Input'
@@ -25,6 +25,8 @@ interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'comp
   backdropCharacters?: CharacterForBackdrop[]
   /** Callback when a backdrop is generated */
   onBackdropGenerated?: (reference: { name: string; description?: string; imageUrl: string; sourceSceneNumber?: number; backdropMode: BackdropMode }) => void
+  /** Callback to add backdrop to timeline */
+  onAddBackdropToTimeline?: (reference: VisualReference) => void
 }
 
 interface ReferenceSectionProps {
@@ -37,9 +39,16 @@ interface ReferenceSectionProps {
   /** Show "Generate" button for scenes */
   showGenerateButton?: boolean
   onGenerate?: () => void
+  /** Callback for adding to timeline (scene references only) */
+  onAddToTimeline?: (reference: VisualReference) => void
 }
 
-function DraggableReferenceCard({ reference }: { reference: VisualReference }) {
+interface DraggableReferenceCardProps {
+  reference: VisualReference
+  onAddToTimeline?: (reference: VisualReference) => void
+}
+
+function DraggableReferenceCard({ reference, onAddToTimeline }: DraggableReferenceCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `visual-reference-${reference.id}`,
     data: {
@@ -70,17 +79,18 @@ function DraggableReferenceCard({ reference }: { reference: VisualReference }) {
           {reference.imageUrl ? (
             <>
               <img src={reference.imageUrl} alt={reference.name} className="w-full h-full object-cover" />
-              {/* Expand button overlay */}
-              <button
-                onClick={(e) => {
+              {/* Expand button overlay - use onPointerDown to prevent drag interference */}
+              <div
+                onPointerDown={(e) => {
                   e.stopPropagation()
+                  e.preventDefault()
                   setIsExpanded(true)
                 }}
                 className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                 title="View full size"
               >
                 <Maximize2 className="w-4 h-4 text-white" />
-              </button>
+              </div>
             </>
           ) : (
             <Images className="w-5 h-5 text-gray-400" />
@@ -92,6 +102,21 @@ function DraggableReferenceCard({ reference }: { reference: VisualReference }) {
             <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{reference.description}</div>
           ) : null}
         </div>
+        
+        {/* Add to Timeline button - only for scene references */}
+        {onAddToTimeline && (
+          <button
+            onPointerDown={(e) => {
+              e.stopPropagation()
+              e.preventDefault()
+              onAddToTimeline(reference)
+            }}
+            className="p-1.5 rounded-md bg-sf-primary/10 hover:bg-sf-primary/20 text-sf-primary opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Add to Timeline"
+          >
+            <Film className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Expanded View Dialog */}
@@ -120,7 +145,7 @@ function DraggableReferenceCard({ reference }: { reference: VisualReference }) {
   )
 }
 
-function ReferenceSection({ title, type, references, icon, onAdd, onRemove, showGenerateButton, onGenerate }: ReferenceSectionProps) {
+function ReferenceSection({ title, type, references, icon, onAdd, onRemove, showGenerateButton, onGenerate, onAddToTimeline }: ReferenceSectionProps) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -172,7 +197,7 @@ function ReferenceSection({ title, type, references, icon, onAdd, onRemove, show
           ) : (
             references.map((reference) => (
               <div key={reference.id} className="flex items-center gap-3">
-                <DraggableReferenceCard reference={reference} />
+                <DraggableReferenceCard reference={reference} onAddToTimeline={onAddToTimeline} />
                 <Button
                   variant="ghost"
                   size="icon"
@@ -303,6 +328,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     scenes = [],
     backdropCharacters = [],
     onBackdropGenerated,
+    onAddBackdropToTimeline,
   } = props
 
   const [dialogType, setDialogType] = useState<VisualReferenceType | null>(null)
@@ -412,6 +438,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
             onRemove={onRemoveReference}
             showGenerateButton={scenes.length > 0}
             onGenerate={() => setGeneratorModalOpen(true)}
+            onAddToTimeline={onAddBackdropToTimeline}
           />
           <ReferenceSection
             title="Objects"
