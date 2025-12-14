@@ -245,6 +245,10 @@ export function SceneTimeline({
   
   // Clear audio refs when audioTracks changes to ensure fresh audio elements
   useEffect(() => {
+    console.log('[SceneTimeline] audioTracks changed - clearing refs:', {
+      voiceoverUrl: audioTracks?.voiceover?.url?.slice(-40),
+      dialogueCount: audioTracks?.dialogue?.length,
+    })
     // Pause all current audio
     audioRefs.current.forEach(audio => {
       audio.pause()

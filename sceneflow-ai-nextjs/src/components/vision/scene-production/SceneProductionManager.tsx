@@ -314,6 +314,12 @@ export function SceneProductionManager({
   useEffect(() => {
     if (!scene) return
     const newTracks = buildAudioTracksFromScene(scene, productionData?.segments)
+    console.log('[SceneProductionManager] useEffect triggered - scene audio updated:', {
+      sceneId,
+      narrationUrl: scene?.narrationAudioUrl?.slice(-40),
+      narrationAudioEn: scene?.narrationAudio?.en?.url?.slice(-40),
+      voiceoverUrl: newTracks.voiceover?.url?.slice(-40),
+    })
     setAudioTracksState(newTracks)
   // Explicit dependencies on audio-related scene properties to ensure refresh when audio changes
   // Using JSON.stringify on nested objects to detect deep changes (shallow comparison misses nested URL changes)
