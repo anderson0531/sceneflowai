@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { DndContext } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/Input'
@@ -25,6 +25,8 @@ interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'comp
   backdropCharacters?: CharacterForBackdrop[]
   /** Callback when a backdrop is generated */
   onBackdropGenerated?: (reference: { name: string; description?: string; imageUrl: string; sourceSceneNumber?: number; backdropMode: BackdropMode }) => void
+  /** Callback to insert a backdrop segment at the beginning of a scene */
+  onInsertBackdropSegment?: (sceneId: string, referenceId: string, imageUrl: string, name: string) => void
 }
 
 interface ReferenceSectionProps {
@@ -37,14 +39,22 @@ interface ReferenceSectionProps {
   /** Show "Generate" button for scenes */
   showGenerateButton?: boolean
   onGenerate?: () => void
+  /** Scenes for Add to Timeline feature (scene backdrops only) */
+  scenes?: SceneForBackdrop[]
+  /** Callback to insert a backdrop segment */
+  onInsertBackdropSegment?: (sceneId: string, referenceId: string, imageUrl: string, name: string) => void
 }
 
 interface DraggableReferenceCardProps {
   reference: VisualReference
   onRemove?: () => void
+  /** Scenes for Add to Timeline feature (scene backdrops only) */
+  scenes?: SceneForBackdrop[]
+  /** Callback to insert a backdrop segment */
+  onInsertBackdropSegment?: (sceneId: string, referenceId: string, imageUrl: string, name: string) => void
 }
 
-function DraggableReferenceCard({ reference, onRemove }: DraggableReferenceCardProps) {
+function DraggableReferenceCard({ reference, onRemove, scenes, onInsertBackdropSegment }: DraggableReferenceCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `visual-reference-${reference.id}`,
     data: {
@@ -57,6 +67,17 @@ function DraggableReferenceCard({ reference, onRemove }: DraggableReferenceCardP
   })
 
   const [isExpanded, setIsExpanded] = useState(false)
+  const [showSceneSelector, setShowSceneSelector] = useState(false)
+
+  // Helper to get scene label
+  const getSceneLabel = (scene: SceneForBackdrop): string => {
+    const num = scene.scene_number ?? 0
+    const headingText = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text
+    return headingText ? `Scene ${num}: ${headingText}` : `Scene ${num}`
+  }
+
+  // Check if we can show the Add to Timeline button
+  const canAddToTimeline = scenes && scenes.length > 0 && onInsertBackdropSegment && reference.imageUrl
 
   return (
     <>
@@ -102,8 +123,23 @@ function DraggableReferenceCard({ reference, onRemove }: DraggableReferenceCardP
           ) : null}
         </div>
         
-        {/* Row 3: Delete Button */}
+        {/* Row 3: Action Buttons */}
         <div className="flex items-center gap-2">
+          {/* Add to Timeline button - only for scene backdrops */}
+          {canAddToTimeline && (
+            <button
+              onPointerDown={(e) => {
+                e.stopPropagation()
+                e.preventDefault()
+                setShowSceneSelector(true)
+              }}
+              className="flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-sf-primary/10 hover:bg-sf-primary/20 text-sf-primary text-xs font-medium transition-colors"
+              title="Add to Timeline"
+            >
+              <Film className="w-3.5 h-3.5" />
+              <span>Add to Timeline</span>
+            </button>
+          )}
           {onRemove && (
             <button
               onPointerDown={(e) => {
@@ -142,11 +178,49 @@ function DraggableReferenceCard({ reference, onRemove }: DraggableReferenceCardP
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Scene Selector Dialog for Add to Timeline */}
+      {canAddToTimeline && (
+        <Dialog open={showSceneSelector} onOpenChange={setShowSceneSelector}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add to Timeline</DialogTitle>
+              <DialogDescription>
+                Select a scene to add "{reference.name}" as a new segment at the beginning.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="max-h-[300px] overflow-y-auto space-y-2 py-2">
+              {scenes?.map((scene) => {
+                const sceneId = scene.id || `scene-${scene.scene_number}`
+                return (
+                  <button
+                    key={sceneId}
+                    onClick={() => {
+                      onInsertBackdropSegment!(sceneId, reference.id, reference.imageUrl!, reference.name)
+                      setShowSceneSelector(false)
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-700"
+                  >
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {getSceneLabel(scene)}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowSceneSelector(false)}>
+                Cancel
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   )
 }
 
-function ReferenceSection({ title, type, references, icon, onAdd, onRemove, showGenerateButton, onGenerate }: ReferenceSectionProps) {
+function ReferenceSection({ title, type, references, icon, onAdd, onRemove, showGenerateButton, onGenerate, scenes, onInsertBackdropSegment }: ReferenceSectionProps) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -201,6 +275,8 @@ function ReferenceSection({ title, type, references, icon, onAdd, onRemove, show
                 key={reference.id}
                 reference={reference} 
                 onRemove={() => onRemove(type, reference.id)}
+                scenes={scenes}
+                onInsertBackdropSegment={onInsertBackdropSegment}
               />
             ))
           )}
@@ -322,6 +398,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     scenes = [],
     backdropCharacters = [],
     onBackdropGenerated,
+    onInsertBackdropSegment,
   } = props
 
   const [dialogType, setDialogType] = useState<VisualReferenceType | null>(null)
@@ -431,6 +508,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
             onRemove={onRemoveReference}
             showGenerateButton={scenes.length > 0}
             onGenerate={() => setGeneratorModalOpen(true)}
+            scenes={scenes}
+            onInsertBackdropSegment={onInsertBackdropSegment}
           />
           <ReferenceSection
             title="Objects"
