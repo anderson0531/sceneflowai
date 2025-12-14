@@ -5,7 +5,7 @@
  * @see /CONTRIBUTING.md for development guidelines
  * 
  * CRITICAL: Scene data source of truth is `script.script.scenes`
- * Do NOT create separate `scenes` state - this causes sync bugs.
+Implement the fix * Do NOT create separate `scenes` state - this causes sync bugs.
  * 
  * Key handlers:
  * - handleGenerateScene: Updates script.script.scenes, not separate state

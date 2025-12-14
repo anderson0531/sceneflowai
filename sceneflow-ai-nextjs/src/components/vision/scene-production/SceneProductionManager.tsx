@@ -301,18 +301,19 @@ export function SceneProductionManager({
     }
     
     setAudioTracksState(newTracks)
-  // Explicit dependencies on audio-related scene properties to ensure refresh when script changes clear audio
+  // Explicit dependencies on audio-related scene properties to ensure refresh when audio changes
+  // Using JSON.stringify on nested objects to detect deep changes (shallow comparison misses nested URL changes)
   }, [
     scene, 
     productionData?.segments,
     scene?.narrationAudioUrl,
-    scene?.narrationAudio,
+    JSON.stringify(scene?.narrationAudio),
     scene?.descriptionAudioUrl,
-    scene?.descriptionAudio,
-    scene?.dialogueAudio,
-    scene?.dialogue,
+    JSON.stringify(scene?.descriptionAudio),
+    JSON.stringify(scene?.dialogueAudio),
+    scene?.dialogue?.length,
     scene?.musicAudio,
-    scene?.sfxAudio,
+    JSON.stringify(scene?.sfxAudio),
   ])
 
   // Merge external audio tracks with scene-derived tracks
