@@ -325,36 +325,45 @@ export function SceneProductionManager({
     buildAudioTracksFromScene,
   ])
 
-  // Manual sync audio handler - rebuilds audio tracks from scene data
-  // Use this when auto-sync doesn't catch changes or to force a refresh
+  // Manual sync audio handler - clears existing tracks and rebuilds fresh from scene data
+  // This treats the build as completely new, ensuring no stale references persist
   const handleSyncAudio = useCallback(() => {
     if (!scene) {
       toast.error('No scene data available')
       return
     }
-    const newTracks = buildAudioTracksFromScene(scene, productionData?.segments)
-    setAudioTracksState(newTracks)
     
-    // Count what was synced for feedback
-    const trackCount = [
-      newTracks.voiceover ? 1 : 0,
-      newTracks.dialogue?.length || 0,
-      newTracks.music ? 1 : 0,
-      newTracks.sfx?.length || 0,
-    ].reduce((a, b) => a + b, 0)
+    // Step 1: Clear existing audio tracks completely (treat as fresh build)
+    setAudioTracksState({})
     
-    if (trackCount > 0) {
-      toast.success(`Synced ${trackCount} audio track${trackCount !== 1 ? 's' : ''} from script`)
-    } else {
-      toast.info('No audio tracks found in scene data')
-    }
+    // Step 2: Rebuild from scene data after a microtask to ensure clear happened
+    // This mimics the initial load behavior
+    setTimeout(() => {
+      const newTracks = buildAudioTracksFromScene(scene, productionData?.segments)
+      setAudioTracksState(newTracks)
+      
+      // Count what was synced for feedback
+      const trackCount = [
+        newTracks.voiceover ? 1 : 0,
+        newTracks.dialogue?.length || 0,
+        newTracks.music ? 1 : 0,
+        newTracks.sfx?.length || 0,
+      ].reduce((a, b) => a + b, 0)
+      
+      if (trackCount > 0) {
+        toast.success(`Synced ${trackCount} audio track${trackCount !== 1 ? 's' : ''} from script`)
+      } else {
+        toast.info('No audio tracks found in scene data')
+      }
+    }, 0)
   }, [scene, productionData?.segments, buildAudioTracksFromScene])
 
   // Merge external audio tracks with scene-derived tracks
+  // Scene-derived tracks take priority (spread last) to ensure fresh data overrides stale external state
   const audioTracks = useMemo(() => {
     return {
-      ...audioTracksState,
       ...externalAudioTracks,
+      ...audioTracksState,
     }
   }, [audioTracksState, externalAudioTracks])
   
