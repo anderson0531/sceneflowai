@@ -868,6 +868,12 @@ export function SceneTimeline({
     clips: AudioTrackClip[],
     color: string
   ) => {
+    // Debug: log what clips are being rendered
+    console.log(`[SceneTimeline] renderAudioTrack ${trackType}:`, {
+      clipsCount: clips.length,
+      clipDetails: clips.map(c => ({ id: c.id, url: c.url?.substring(0, 30), duration: c.duration, startTime: c.startTime })),
+    })
+    
     const isMuted = mutedTracks.has(trackType)
     const isEnabled = trackEnabled[trackType] ?? true
     const volume = trackVolumes[trackType] ?? 1

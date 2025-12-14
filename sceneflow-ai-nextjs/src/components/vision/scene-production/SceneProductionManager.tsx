@@ -373,9 +373,13 @@ export function SceneProductionManager({
       console.log('[Sync Audio] Built new tracks:', {
         hasVoiceover: !!newTracks.voiceover,
         voiceoverUrl: newTracks.voiceover?.url?.substring(0, 50),
+        voiceoverDuration: newTracks.voiceover?.duration,
         dialogueCount: newTracks.dialogue?.length || 0,
+        dialogueDurations: newTracks.dialogue?.map(d => d.duration),
         hasMusic: !!newTracks.music,
+        musicDuration: newTracks.music?.duration,
         sfxCount: newTracks.sfx?.length || 0,
+        sfxDurations: newTracks.sfx?.map(s => s.duration),
       })
       
       setAudioTracksState(newTracks)
