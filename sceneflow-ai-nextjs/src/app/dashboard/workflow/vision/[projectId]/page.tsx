@@ -4856,6 +4856,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           updatedScenes[sceneIdx] = scene
         }
         
+        // DEBUG: Log what we're about to set in state
+        console.log('[Generate Scene Audio] Updating script state with new audio:', {
+          sceneIdx,
+          audioType,
+          updatedScene: {
+            narrationAudioUrl: updatedScenes[sceneIdx]?.narrationAudioUrl?.substring(0, 60),
+            narrationAudioEn: updatedScenes[sceneIdx]?.narrationAudio?.en?.url?.substring(0, 60),
+            dialogueAudioEnLength: updatedScenes[sceneIdx]?.dialogueAudio?.en?.length,
+          }
+        })
+        
         // Update React state
         setScript((prevScript: any) => ({
           ...prevScript,

@@ -103,8 +103,18 @@ export function SceneProductionManager({
   // Ref to always access the latest scene data (avoids stale closure in callbacks)
   const sceneRef = useRef(scene)
   useEffect(() => {
+    console.log('[SceneProductionManager] Scene prop updated:', {
+      sceneId,
+      hasNarrationAudioUrl: !!scene?.narrationAudioUrl,
+      narrationAudioUrl: scene?.narrationAudioUrl?.substring(0, 60),
+      hasNarrationAudio: !!scene?.narrationAudio,
+      narrationAudioEnUrl: scene?.narrationAudio?.en?.url?.substring(0, 60),
+      hasDialogueAudio: !!scene?.dialogueAudio,
+      dialogueAudioEnLength: scene?.dialogueAudio?.en?.length,
+    })
     sceneRef.current = scene
-  }, [scene])
+  }, [scene, sceneId])
+  
   // Create stable callback wrappers - these must be defined early to avoid minification issues
   const handleAddSegmentWrapper = useCallback(
     (afterSegmentId: string | null, duration: number) => {
