@@ -4,29 +4,15 @@ import { useState } from 'react'
 import { DndContext } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
 import { CharacterLibrary, CharacterLibraryProps } from './CharacterLibrary'
 import { VisualReference, VisualReferenceType } from '@/types/visionReferences'
 import { BackdropGeneratorModal, SceneForBackdrop, CharacterForBackdrop } from './BackdropGeneratorModal'
 import { BackdropMode } from '@/lib/vision/backdropGenerator'
-
-/** Simplified scene info for timeline selection */
-interface TimelineSceneInfo {
-  sceneId: string
-  sceneNumber: number
-  heading?: string
-  segments: Array<{
-    segmentId: string
-    sequenceIndex: number
-    label?: string
-  }>
-}
 
 interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'compact'> {
   sceneReferences: VisualReference[]
@@ -39,10 +25,6 @@ interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'comp
   backdropCharacters?: CharacterForBackdrop[]
   /** Callback when a backdrop is generated */
   onBackdropGenerated?: (reference: { name: string; description?: string; imageUrl: string; sourceSceneNumber?: number; backdropMode: BackdropMode }) => void
-  /** Scenes with initialized segments for Add to Timeline feature */
-  timelineScenes?: TimelineSceneInfo[]
-  /** Callback to add backdrop reference to a specific segment */
-  onAddReferenceToSegment?: (sceneId: string, segmentId: string, referenceId: string) => void
 }
 
 interface ReferenceSectionProps {
@@ -55,20 +37,14 @@ interface ReferenceSectionProps {
   /** Show "Generate" button for scenes */
   showGenerateButton?: boolean
   onGenerate?: () => void
-  /** Timeline scenes for Add to Timeline dialog */
-  timelineScenes?: TimelineSceneInfo[]
-  /** Callback for adding reference to a segment */
-  onAddReferenceToSegment?: (sceneId: string, segmentId: string, referenceId: string) => void
 }
 
 interface DraggableReferenceCardProps {
   reference: VisualReference
-  timelineScenes?: TimelineSceneInfo[]
-  onAddReferenceToSegment?: (sceneId: string, segmentId: string, referenceId: string) => void
   onRemove?: () => void
 }
 
-function DraggableReferenceCard({ reference, timelineScenes, onAddReferenceToSegment, onRemove }: DraggableReferenceCardProps) {
+function DraggableReferenceCard({ reference, onRemove }: DraggableReferenceCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `visual-reference-${reference.id}`,
     data: {
@@ -81,25 +57,6 @@ function DraggableReferenceCard({ reference, timelineScenes, onAddReferenceToSeg
   })
 
   const [isExpanded, setIsExpanded] = useState(false)
-  const [showAddToTimelineDialog, setShowAddToTimelineDialog] = useState(false)
-  const [selectedSceneId, setSelectedSceneId] = useState<string>('')
-  const [selectedSegmentId, setSelectedSegmentId] = useState<string>('')
-
-  // Get segments for selected scene
-  const selectedScene = timelineScenes?.find(s => s.sceneId === selectedSceneId)
-  const availableSegments = selectedScene?.segments || []
-
-  // Check if we have scenes with segments
-  const hasTimelineScenes = Boolean(timelineScenes && timelineScenes.length > 0)
-
-  const handleAddToTimeline = () => {
-    if (selectedSceneId && selectedSegmentId && onAddReferenceToSegment) {
-      onAddReferenceToSegment(selectedSceneId, selectedSegmentId, reference.id)
-      setShowAddToTimelineDialog(false)
-      setSelectedSceneId('')
-      setSelectedSegmentId('')
-    }
-  }
 
   return (
     <>
@@ -145,22 +102,8 @@ function DraggableReferenceCard({ reference, timelineScenes, onAddReferenceToSeg
           ) : null}
         </div>
         
-        {/* Row 3: Control Buttons */}
+        {/* Row 3: Delete Button */}
         <div className="flex items-center gap-2">
-          {hasTimelineScenes && onAddReferenceToSegment && (
-            <button
-              onPointerDown={(e) => {
-                e.stopPropagation()
-                e.preventDefault()
-                setShowAddToTimelineDialog(true)
-              }}
-              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-sf-primary/10 hover:bg-sf-primary/20 text-sf-primary text-xs font-medium transition-colors"
-              title="Add to Timeline"
-            >
-              <Film className="w-3.5 h-3.5" />
-              <span>Add to Timeline</span>
-            </button>
-          )}
           {onRemove && (
             <button
               onPointerDown={(e) => {
@@ -176,83 +119,6 @@ function DraggableReferenceCard({ reference, timelineScenes, onAddReferenceToSeg
           )}
         </div>
       </div>
-
-      {/* Add to Timeline Dialog */}
-      <Dialog open={showAddToTimelineDialog} onOpenChange={setShowAddToTimelineDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add to Timeline</DialogTitle>
-            <DialogDescription>
-              Select a scene and segment to add "{reference.name}" as a visual reference.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            {/* Scene Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="scene-select">Scene</Label>
-              <Select value={selectedSceneId} onValueChange={(value) => {
-                setSelectedSceneId(value)
-                setSelectedSegmentId('') // Reset segment when scene changes
-              }}>
-                <SelectTrigger id="scene-select">
-                  <SelectValue placeholder="Select a scene..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {timelineScenes?.filter(s => s.segments.length > 0).map((scene) => (
-                    <SelectItem key={scene.sceneId} value={scene.sceneId}>
-                      Scene {scene.sceneNumber}{scene.heading ? `: ${scene.heading}` : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Segment Selection */}
-            {selectedSceneId && (
-              <div className="space-y-2">
-                <Label htmlFor="segment-select">Segment</Label>
-                <Select value={selectedSegmentId} onValueChange={setSelectedSegmentId}>
-                  <SelectTrigger id="segment-select">
-                    <SelectValue placeholder="Select a segment..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableSegments.map((segment) => (
-                      <SelectItem key={segment.segmentId} value={segment.segmentId}>
-                        Segment {segment.sequenceIndex + 1}{segment.label ? `: ${segment.label}` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Preview */}
-            {reference.imageUrl && (
-              <div className="mt-4">
-                <Label>Reference Preview</Label>
-                <div className="mt-2 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-                  <img 
-                    src={reference.imageUrl} 
-                    alt={reference.name}
-                    className="w-full h-32 object-cover"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddToTimelineDialog(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleAddToTimeline}
-              disabled={!selectedSceneId || !selectedSegmentId}
-            >
-              Add to Segment
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Expanded View Dialog */}
       {reference.imageUrl && (
@@ -280,7 +146,7 @@ function DraggableReferenceCard({ reference, timelineScenes, onAddReferenceToSeg
   )
 }
 
-function ReferenceSection({ title, type, references, icon, onAdd, onRemove, showGenerateButton, onGenerate, timelineScenes, onAddReferenceToSegment }: ReferenceSectionProps) {
+function ReferenceSection({ title, type, references, icon, onAdd, onRemove, showGenerateButton, onGenerate }: ReferenceSectionProps) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -327,15 +193,13 @@ function ReferenceSection({ title, type, references, icon, onAdd, onRemove, show
         <div className="px-4 pb-4 space-y-3">
           {references.length === 0 ? (
             <div className="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg py-6 text-center">
-              No references yet. Click “Add Reference” to upload imagery for this section.
+              No references yet. Click "Add Reference" to upload imagery for this section.
             </div>
           ) : (
             references.map((reference) => (
               <DraggableReferenceCard 
                 key={reference.id}
                 reference={reference} 
-                timelineScenes={timelineScenes}
-                onAddReferenceToSegment={onAddReferenceToSegment}
                 onRemove={() => onRemove(type, reference.id)}
               />
             ))
@@ -458,8 +322,6 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     scenes = [],
     backdropCharacters = [],
     onBackdropGenerated,
-    timelineScenes,
-    onAddReferenceToSegment,
   } = props
 
   const [dialogType, setDialogType] = useState<VisualReferenceType | null>(null)
@@ -569,8 +431,6 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
             onRemove={onRemoveReference}
             showGenerateButton={scenes.length > 0}
             onGenerate={() => setGeneratorModalOpen(true)}
-            timelineScenes={timelineScenes}
-            onAddReferenceToSegment={onAddReferenceToSegment}
           />
           <ReferenceSection
             title="Objects"
