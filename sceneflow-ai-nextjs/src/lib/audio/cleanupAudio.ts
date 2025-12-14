@@ -6,6 +6,14 @@
  */
 
 /**
+ * Result type for cleanupStaleAudio with URLs for deletion
+ */
+export interface CleanupResult {
+  cleanedScene: any
+  deletedUrls: string[]
+}
+
+/**
  * Compare two scenes and clean up stale audio from the revised scene
  * 
  * Clears audio when:
@@ -14,9 +22,12 @@
  * - Character changes for a dialogue line
  * - Narration text changes
  * - Description text changes
+ * 
+ * @returns Object with cleanedScene and deletedUrls (URLs of audio blobs to delete)
  */
-export function cleanupStaleAudio(originalScene: any, revisedScene: any): any {
+export function cleanupStaleAudio(originalScene: any, revisedScene: any): CleanupResult {
   const cleanedScene = { ...revisedScene }
+  const deletedUrls: string[] = []
   
   // Get dialogue lines from both scenes for comparison
   const originalDialogueLines = (originalScene?.dialogue || []).map((d: any, idx: number) => ({
@@ -35,6 +46,20 @@ export function cleanupStaleAudio(originalScene: any, revisedScene: any): any {
   const originalNarration = originalScene?.narration || ''
   const revisedNarration = revisedScene.narration || ''
   if (originalNarration !== revisedNarration && originalScene?.narrationAudio) {
+    // Collect URLs from all languages before deleting
+    if (typeof originalScene.narrationAudio === 'object') {
+      for (const langAudio of Object.values(originalScene.narrationAudio)) {
+        if ((langAudio as any)?.url) {
+          deletedUrls.push((langAudio as any).url)
+        }
+      }
+    }
+    if (originalScene.narrationAudioUrl) {
+      // Only add if not already in deletedUrls (avoid duplicates with .en.url)
+      if (!deletedUrls.includes(originalScene.narrationAudioUrl)) {
+        deletedUrls.push(originalScene.narrationAudioUrl)
+      }
+    }
     delete cleanedScene.narrationAudio
     delete cleanedScene.narrationAudioUrl
   }
@@ -43,13 +68,26 @@ export function cleanupStaleAudio(originalScene: any, revisedScene: any): any {
   const originalDescription = originalScene?.description || originalScene?.action || ''
   const revisedDescription = revisedScene.description || revisedScene.action || ''
   if (originalDescription !== revisedDescription && originalScene?.descriptionAudio) {
+    // Collect URLs from all languages before deleting
+    if (typeof originalScene.descriptionAudio === 'object') {
+      for (const langAudio of Object.values(originalScene.descriptionAudio)) {
+        if ((langAudio as any)?.url) {
+          deletedUrls.push((langAudio as any).url)
+        }
+      }
+    }
+    if (originalScene.descriptionAudioUrl) {
+      if (!deletedUrls.includes(originalScene.descriptionAudioUrl)) {
+        deletedUrls.push(originalScene.descriptionAudioUrl)
+      }
+    }
     delete cleanedScene.descriptionAudio
     delete cleanedScene.descriptionAudioUrl
   }
 
   // If no dialogue audio exists, we're done
   if (!originalScene?.dialogueAudio) {
-    return cleanedScene
+    return { cleanedScene, deletedUrls }
   }
 
   // Handle multi-language audio format (object with language keys)
@@ -59,8 +97,10 @@ export function cleanupStaleAudio(originalScene: any, revisedScene: any): any {
     // Process each language
     for (const [language, audioArray] of Object.entries(originalScene.dialogueAudio)) {
       if (Array.isArray(audioArray)) {
+        const keptAudio: any[] = []
+        
         // Filter audio: keep only if character+index exists AND text hasn't changed
-        const filteredAudio = (audioArray as any[]).filter((audio: any) => {
+        for (const audio of audioArray as any[]) {
           const dialogueIdx = audio.dialogueIndex
           const originalLine = originalDialogueLines[dialogueIdx]
           const revisedLine = revisedDialogueLines[dialogueIdx]
@@ -73,11 +113,18 @@ export function cleanupStaleAudio(originalScene: any, revisedScene: any): any {
             originalLine.line === revisedLine.line  // Text must match
           )
           
-          return shouldKeep
-        })
+          if (shouldKeep) {
+            keptAudio.push(audio)
+          } else {
+            // Collect URL for deletion
+            if (audio.audioUrl) {
+              deletedUrls.push(audio.audioUrl)
+            }
+          }
+        }
         
-        if (filteredAudio.length > 0) {
-          cleanedScene.dialogueAudio[language] = filteredAudio
+        if (keptAudio.length > 0) {
+          cleanedScene.dialogueAudio[language] = keptAudio
         }
       }
     }
@@ -89,7 +136,9 @@ export function cleanupStaleAudio(originalScene: any, revisedScene: any): any {
   }
   // Handle legacy array format
   else if (Array.isArray(originalScene.dialogueAudio)) {
-    const filteredAudio = originalScene.dialogueAudio.filter((audio: any) => {
+    const keptAudio: any[] = []
+    
+    for (const audio of originalScene.dialogueAudio) {
       const dialogueIdx = audio.dialogueIndex
       const originalLine = originalDialogueLines[dialogueIdx]
       const revisedLine = revisedDialogueLines[dialogueIdx]
@@ -101,25 +150,70 @@ export function cleanupStaleAudio(originalScene: any, revisedScene: any): any {
         originalLine.line === revisedLine.line
       )
       
-      return shouldKeep
-    })
+      if (shouldKeep) {
+        keptAudio.push(audio)
+      } else {
+        if (audio.audioUrl) {
+          deletedUrls.push(audio.audioUrl)
+        }
+      }
+    }
     
-    if (filteredAudio.length > 0) {
-      cleanedScene.dialogueAudio = filteredAudio
+    if (keptAudio.length > 0) {
+      cleanedScene.dialogueAudio = keptAudio
     } else {
       delete cleanedScene.dialogueAudio
     }
   }
 
-  return cleanedScene
+  return { cleanedScene, deletedUrls }
 }
 
 /**
- * Clear ALL audio from a scene
+ * Clear ALL audio from a scene and return URLs for deletion
  * Use when you want to force audio regeneration
  */
-export function clearAllSceneAudio(scene: any): any {
+export function clearAllSceneAudio(scene: any): CleanupResult {
   const cleanedScene = { ...scene }
+  const deletedUrls: string[] = []
+  
+  // Collect URLs before deleting
+  // Narration audio
+  if (scene.narrationAudio && typeof scene.narrationAudio === 'object') {
+    for (const langAudio of Object.values(scene.narrationAudio)) {
+      if ((langAudio as any)?.url) deletedUrls.push((langAudio as any).url)
+    }
+  }
+  if (scene.narrationAudioUrl && !deletedUrls.includes(scene.narrationAudioUrl)) {
+    deletedUrls.push(scene.narrationAudioUrl)
+  }
+  
+  // Description audio
+  if (scene.descriptionAudio && typeof scene.descriptionAudio === 'object') {
+    for (const langAudio of Object.values(scene.descriptionAudio)) {
+      if ((langAudio as any)?.url) deletedUrls.push((langAudio as any).url)
+    }
+  }
+  if (scene.descriptionAudioUrl && !deletedUrls.includes(scene.descriptionAudioUrl)) {
+    deletedUrls.push(scene.descriptionAudioUrl)
+  }
+  
+  // Dialogue audio
+  if (scene.dialogueAudio) {
+    if (typeof scene.dialogueAudio === 'object' && !Array.isArray(scene.dialogueAudio)) {
+      for (const audioArray of Object.values(scene.dialogueAudio)) {
+        if (Array.isArray(audioArray)) {
+          for (const audio of audioArray) {
+            if ((audio as any).audioUrl) deletedUrls.push((audio as any).audioUrl)
+          }
+        }
+      }
+    } else if (Array.isArray(scene.dialogueAudio)) {
+      for (const audio of scene.dialogueAudio) {
+        if (audio.audioUrl) deletedUrls.push(audio.audioUrl)
+      }
+    }
+  }
   
   // Clear all audio fields
   delete cleanedScene.dialogueAudio
@@ -131,18 +225,32 @@ export function clearAllSceneAudio(scene: any): any {
   delete cleanedScene.sfxAudio
   delete cleanedScene.dialogueAudioGeneratedAt
   
-  return cleanedScene
+  return { cleanedScene, deletedUrls }
+}
+
+/**
+ * Result type for cleanupScriptAudio
+ */
+export interface ScriptCleanupResult {
+  cleanedScenes: any[]
+  deletedUrls: string[]
 }
 
 /**
  * Clean up stale audio from all scenes in a script
  */
-export function cleanupScriptAudio(originalScenes: any[], revisedScenes: any[]): any[] {
-  return revisedScenes.map((revisedScene, idx) => {
+export function cleanupScriptAudio(originalScenes: any[], revisedScenes: any[]): ScriptCleanupResult {
+  const allDeletedUrls: string[] = []
+  
+  const cleanedScenes = revisedScenes.map((revisedScene, idx) => {
     const originalScene = originalScenes[idx]
     if (originalScene) {
-      return cleanupStaleAudio(originalScene, revisedScene)
+      const { cleanedScene, deletedUrls } = cleanupStaleAudio(originalScene, revisedScene)
+      allDeletedUrls.push(...deletedUrls)
+      return cleanedScene
     }
     return revisedScene
   })
+  
+  return { cleanedScenes, deletedUrls: allDeletedUrls }
 }

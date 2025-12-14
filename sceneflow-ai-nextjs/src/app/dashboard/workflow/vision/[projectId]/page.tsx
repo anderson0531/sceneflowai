@@ -5256,12 +5256,31 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const originalScene = updatedScenes[sceneIndex]
     
     // Clean up stale audio for changed/removed dialogue lines using shared utility
-    const cleanedScene = cleanupStaleAudio(originalScene, revisedScene)
+    // This now returns both the cleaned scene and URLs of deleted audio blobs
+    const { cleanedScene, deletedUrls } = cleanupStaleAudio(originalScene, revisedScene)
     updatedScenes[sceneIndex] = cleanedScene
 
     // Save to database FIRST
     try {
       await saveScenesToDatabase(updatedScenes)
+      
+      // Delete orphaned audio blobs in background (don't block UI)
+      if (deletedUrls.length > 0) {
+        console.log(`[Vision] Deleting ${deletedUrls.length} orphaned audio blob(s)...`)
+        fetch('/api/blobs/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ urls: deletedUrls })
+        }).then(res => res.json()).then(result => {
+          if (result.success) {
+            console.log(`[Vision] Deleted ${result.deleted} audio blob(s)`)
+          } else {
+            console.warn('[Vision] Failed to delete some audio blobs:', result.error)
+          }
+        }).catch(err => {
+          console.warn('[Vision] Error deleting audio blobs:', err)
+        })
+      }
       
       // Then update local state
       setScript({

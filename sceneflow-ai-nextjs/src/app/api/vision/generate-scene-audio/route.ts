@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { put } from '@vercel/blob'
+import { put, del } from '@vercel/blob'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { optimizeTextForTTS } from '../../../../lib/tts/textOptimizer'
@@ -375,6 +375,23 @@ async function updateSceneAudio(
     language
   })
 
+  // Find old audio URL to delete after successful update
+  let oldAudioUrl: string | null = null
+  const currentScene = existingScenes[sceneIndex]
+  if (currentScene) {
+    if (audioType === 'narration') {
+      oldAudioUrl = currentScene.narrationAudio?.[language]?.url || 
+                    (language === 'en' ? currentScene.narrationAudioUrl : null)
+    } else if (audioType === 'description') {
+      oldAudioUrl = currentScene.descriptionAudio?.[language]?.url ||
+                    (language === 'en' ? currentScene.descriptionAudioUrl : null)
+    } else if (audioType === 'dialogue' && dialogueIndex !== undefined) {
+      const dialogueArray = currentScene.dialogueAudio?.[language] || []
+      const existingEntry = dialogueArray.find((d: any) => d.dialogueIndex === dialogueIndex)
+      oldAudioUrl = existingEntry?.audioUrl || null
+    }
+  }
+
   // Update the specific scene
   const updatedScenes = existingScenes.map((s: any, idx: number) => {
     if (idx !== sceneIndex) return s
@@ -511,4 +528,16 @@ async function updateSceneAudio(
   })
   
   console.log('[Update Scene Audio] Project updated successfully for language:', language)
+  
+  // Delete old audio blob if it exists and is different from new URL
+  if (oldAudioUrl && oldAudioUrl !== audioUrl) {
+    try {
+      console.log('[Update Scene Audio] Deleting old audio blob:', oldAudioUrl)
+      await del(oldAudioUrl)
+      console.log('[Update Scene Audio] Successfully deleted old audio blob')
+    } catch (deleteError) {
+      // Log but don't fail - the new audio was saved successfully
+      console.warn('[Update Scene Audio] Failed to delete old audio blob:', deleteError)
+    }
+  }
 }
