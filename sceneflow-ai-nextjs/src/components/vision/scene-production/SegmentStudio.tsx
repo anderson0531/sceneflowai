@@ -10,6 +10,7 @@ import { SegmentPromptBuilder, GeneratePromptData, VideoGenerationMethod } from 
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { AudioTrackClip, AudioTracksData } from './SceneTimeline'
 import { SegmentAnimationPreview } from './SegmentAnimationPreview'
+import { toast } from 'sonner'
 
 export type GenerationType = 'T2V' | 'I2V' | 'T2I' | 'UPLOAD'
 
@@ -65,6 +66,10 @@ interface SegmentStudioProps {
   onEstablishingShotStyleChange?: (style: 'single-shot' | 'beat-matched' | 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   // Take selection - allows user to choose which take to use as active asset
   onSelectTake?: (takeId: string, takeAssetUrl: string) => void
+  // Generate Backdrop Video - opens the backdrop generator modal for this segment's scene
+  onGenerateBackdropVideo?: () => void
+  // Scene direction text for backdrop generation
+  sceneDirection?: string
 }
 
 export function SegmentStudio({
@@ -88,6 +93,8 @@ export function SegmentStudio({
   onAddEstablishingShot,
   onEstablishingShotStyleChange,
   onSelectTake,
+  onGenerateBackdropVideo,
+  sceneDirection,
 }: SegmentStudioProps) {
   const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -409,6 +416,25 @@ export function SegmentStudio({
               Upload
             </span>
           </label>
+          <Button
+            onClick={() => {
+              if (onGenerateBackdropVideo) {
+                onGenerateBackdropVideo()
+              } else {
+                toast.info('Generate Scene Backdrop', {
+                  description: 'Use the "Generate Scene" button in the Scene Backdrops section of the right sidebar to create AI-generated backdrop images.',
+                  duration: 5000,
+                })
+              }
+            }}
+            disabled={segment.status === 'GENERATING'}
+            size="sm"
+            className="flex-1 h-8 bg-green-600 hover:bg-green-700 text-white text-xs gap-1"
+            title="Generate AI backdrop video from scene direction"
+          >
+            <Film className="w-3.5 h-3.5" />
+            Backdrop
+          </Button>
         </div>
 
         {/* Add Establishing Shot Button - Only show when segment index is 0 and not already an establishing shot */}

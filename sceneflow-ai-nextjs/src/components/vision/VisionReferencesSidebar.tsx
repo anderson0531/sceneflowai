@@ -234,7 +234,7 @@ function ReferenceSection({ title, type, references, icon, onAdd, onRemove, show
           <span className="truncate">{title}</span>
         </span>
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Generate button for scenes */}
+          {/* Generate Scene button for scene backdrop images */}
           {showGenerateButton && onGenerate && (
             <Button
               variant="outline"
@@ -246,7 +246,7 @@ function ReferenceSection({ title, type, references, icon, onAdd, onRemove, show
               className="text-sf-primary border-sf-primary/30 hover:bg-sf-primary/10"
             >
               <Sparkles className="w-4 h-4 mr-1" />
-              Generate
+              Generate Scene
             </Button>
           )}
           <Button
