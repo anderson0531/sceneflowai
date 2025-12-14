@@ -2973,13 +2973,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  // Handle syncing audio from database - reloads project to get latest audio
-  const handleSyncAudio = async (sceneId: string) => {
-    console.log('[handleSyncAudio] Syncing audio for scene:', sceneId)
-    // Reload project to get latest audio data from database
-    await loadProject(true) // Skip auto-generation
-  }
-
   const initiateGeneration = async (proj: Project) => {
     setIsGenerating(true)
     
@@ -6203,7 +6196,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onAudioClipChange={handleAudioClipChange}
                 onAddEstablishingShot={handleAddEstablishingShot}
                 onEstablishingShotStyleChange={handleEstablishingShotStyleChange}
-                onSyncAudio={handleSyncAudio}
                 onSelectTake={handleSelectTake}
                 sceneAudioTracks={{}}
                   bookmarkedScene={sceneBookmark}
