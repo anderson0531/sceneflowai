@@ -46,9 +46,10 @@ interface ReferenceSectionProps {
 interface DraggableReferenceCardProps {
   reference: VisualReference
   onAddToTimeline?: (reference: VisualReference) => void
+  onRemove?: () => void
 }
 
-function DraggableReferenceCard({ reference, onAddToTimeline }: DraggableReferenceCardProps) {
+function DraggableReferenceCard({ reference, onAddToTimeline, onRemove }: DraggableReferenceCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `visual-reference-${reference.id}`,
     data: {
@@ -73,9 +74,10 @@ function DraggableReferenceCard({ reference, onAddToTimeline }: DraggableReferen
         }}
         {...listeners}
         {...attributes}
-        className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm group"
+        className="flex flex-col p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm group w-full"
       >
-        <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center relative">
+        {/* Row 1: Larger Image */}
+        <div className="w-full aspect-video rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center relative mb-2">
           {reference.imageUrl ? (
             <>
               <img src={reference.imageUrl} alt={reference.name} className="w-full h-full object-cover" />
@@ -89,34 +91,52 @@ function DraggableReferenceCard({ reference, onAddToTimeline }: DraggableReferen
                 className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                 title="View full size"
               >
-                <Maximize2 className="w-4 h-4 text-white" />
+                <Maximize2 className="w-5 h-5 text-white" />
               </div>
             </>
           ) : (
-            <Images className="w-5 h-5 text-gray-400" />
+            <Images className="w-8 h-8 text-gray-400" />
           )}
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{reference.name}</div>
+        
+        {/* Row 2: Name and Description */}
+        <div className="mb-2">
+          <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">{reference.name}</div>
           {reference.description ? (
-            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{reference.description}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-0.5">{reference.description}</div>
           ) : null}
         </div>
         
-        {/* Add to Timeline button - only for scene references */}
-        {onAddToTimeline && (
-          <button
-            onPointerDown={(e) => {
-              e.stopPropagation()
-              e.preventDefault()
-              onAddToTimeline(reference)
-            }}
-            className="p-1.5 rounded-md bg-sf-primary/10 hover:bg-sf-primary/20 text-sf-primary opacity-0 group-hover:opacity-100 transition-opacity"
-            title="Add to Timeline"
-          >
-            <Film className="w-4 h-4" />
-          </button>
-        )}
+        {/* Row 3: Control Buttons */}
+        <div className="flex items-center gap-2">
+          {onAddToTimeline && (
+            <button
+              onPointerDown={(e) => {
+                e.stopPropagation()
+                e.preventDefault()
+                onAddToTimeline(reference)
+              }}
+              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-sf-primary/10 hover:bg-sf-primary/20 text-sf-primary text-xs font-medium transition-colors"
+              title="Add to Timeline"
+            >
+              <Film className="w-3.5 h-3.5" />
+              <span>Add to Timeline</span>
+            </button>
+          )}
+          {onRemove && (
+            <button
+              onPointerDown={(e) => {
+                e.stopPropagation()
+                e.preventDefault()
+                onRemove()
+              }}
+              className="p-1.5 rounded-md text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              title="Remove reference"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Expanded View Dialog */}
@@ -196,18 +216,12 @@ function ReferenceSection({ title, type, references, icon, onAdd, onRemove, show
             </div>
           ) : (
             references.map((reference) => (
-              <div key={reference.id} className="flex items-center gap-3">
-                <DraggableReferenceCard reference={reference} onAddToTimeline={onAddToTimeline} />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onRemove(type, reference.id)}
-                  className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                  title="Remove reference"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
+              <DraggableReferenceCard 
+                key={reference.id}
+                reference={reference} 
+                onAddToTimeline={onAddToTimeline} 
+                onRemove={() => onRemove(type, reference.id)}
+              />
             ))
           )}
         </div>
