@@ -1020,9 +1020,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [project, projectId, sceneReferences, objectReferences]
   )
 
-  // Handler for when a scene reference is generated via AI
-  const handleSceneReferenceGenerated = useCallback(
-    async (reference: { name: string; description?: string; imageUrl: string; sourceSceneNumber?: number }) => {
+  // Handler for when a backdrop is generated via AI
+  const handleBackdropGenerated = useCallback(
+    async (reference: { name: string; description?: string; imageUrl: string; sourceSceneNumber?: number; backdropMode?: string }) => {
       const newReference: VisualReference = {
         id: crypto.randomUUID(),
         type: 'scene',
@@ -1061,10 +1061,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
 
         if (!response.ok) {
-          console.error('[handleSceneReferenceGenerated] Failed to save reference to database')
+          console.error('[handleBackdropGenerated] Failed to save reference to database')
         }
       } catch (error) {
-        console.error('[handleSceneReferenceGenerated] Error saving reference:', error)
+        console.error('[handleBackdropGenerated] Error saving reference:', error)
       }
     },
     [project, projectId, sceneReferences, objectReferences]
@@ -6276,7 +6276,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onCreateReference={(type, payload) => handleCreateReference(type, payload)}
                 onRemoveReference={(type, referenceId) => handleRemoveReference(type, referenceId)}
                 scenes={script?.script?.scenes || []}
-                onSceneReferenceGenerated={handleSceneReferenceGenerated}
+                backdropCharacters={characters.map(c => ({ id: c.id, name: c.name, description: c.description, appearance: c.appearance }))}
+                onBackdropGenerated={handleBackdropGenerated}
                 screenplayContext={{
                   genre: project?.genre,
                   tone: project?.tone || project?.metadata?.filmTreatmentVariant?.tone_description || project?.metadata?.filmTreatmentVariant?.tone,

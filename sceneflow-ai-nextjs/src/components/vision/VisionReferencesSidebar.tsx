@@ -11,17 +11,20 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/textarea'
 import { CharacterLibrary, CharacterLibraryProps } from './CharacterLibrary'
 import { VisualReference, VisualReferenceType } from '@/types/visionReferences'
-import { SceneReferenceGeneratorModal, SceneForReferenceGeneration } from './SceneReferenceGeneratorModal'
+import { BackdropGeneratorModal, SceneForBackdrop, CharacterForBackdrop } from './BackdropGeneratorModal'
+import { BackdropMode } from '@/lib/vision/backdropGenerator'
 
 interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'compact'> {
   sceneReferences: VisualReference[]
   objectReferences: VisualReference[]
   onCreateReference: (type: VisualReferenceType, payload: { name: string; description?: string; file?: File | null }) => Promise<void> | void
   onRemoveReference: (type: VisualReferenceType, referenceId: string) => void
-  /** Scenes for reference generation (with sceneDirection) */
-  scenes?: SceneForReferenceGeneration[]
-  /** Callback when a scene reference is generated */
-  onSceneReferenceGenerated?: (reference: { name: string; description?: string; imageUrl: string; sourceSceneNumber?: number }) => void
+  /** Scenes for backdrop generation (with sceneDirection) */
+  scenes?: SceneForBackdrop[]
+  /** Characters for Silent Portrait mode */
+  backdropCharacters?: CharacterForBackdrop[]
+  /** Callback when a backdrop is generated */
+  onBackdropGenerated?: (reference: { name: string; description?: string; imageUrl: string; sourceSceneNumber?: number; backdropMode: BackdropMode }) => void
 }
 
 interface ReferenceSectionProps {
@@ -298,7 +301,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onRemoveReference,
     screenplayContext,
     scenes = [],
-    onSceneReferenceGenerated,
+    backdropCharacters = [],
+    onBackdropGenerated,
   } = props
 
   const [dialogType, setDialogType] = useState<VisualReferenceType | null>(null)
@@ -329,10 +333,10 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     }
   }
 
-  const handleSceneReferenceGenerated = (reference: { name: string; description?: string; imageUrl: string; sourceSceneNumber?: number }) => {
+  const handleBackdropGenerated = (reference: { name: string; description?: string; imageUrl: string; sourceSceneNumber?: number; backdropMode: BackdropMode }) => {
     // Forward to parent handler if provided
-    if (onSceneReferenceGenerated) {
-      onSceneReferenceGenerated(reference)
+    if (onBackdropGenerated) {
+      onBackdropGenerated(reference)
     }
   }
 
@@ -400,7 +404,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
           </div>
 
           <ReferenceSection
-            title="Scenes"
+            title="Scene Backdrops"
             type="scene"
             references={sceneReferences}
             icon={<Images className="w-4 h-4 text-sf-primary" />}
@@ -427,12 +431,13 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
         isSubmitting={isSubmitting}
       />
       
-      {/* Scene Reference Generator Modal */}
-      <SceneReferenceGeneratorModal
+      {/* Backdrop Generator Modal */}
+      <BackdropGeneratorModal
         open={isGeneratorModalOpen}
         onClose={() => setGeneratorModalOpen(false)}
         scenes={scenes}
-        onGenerated={handleSceneReferenceGenerated}
+        characters={backdropCharacters}
+        onGenerated={handleBackdropGenerated}
       />
     </DndContext>
   )
