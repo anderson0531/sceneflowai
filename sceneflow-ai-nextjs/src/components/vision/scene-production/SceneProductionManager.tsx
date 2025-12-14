@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { SceneTimeline, AudioTracksData } from './SceneTimeline'
@@ -100,6 +100,11 @@ export function SceneProductionManager({
   onEstablishingShotStyleChange,
   onSelectTake,
 }: SceneProductionManagerProps) {
+  // Ref to always access the latest scene data (avoids stale closure in callbacks)
+  const sceneRef = useRef(scene)
+  useEffect(() => {
+    sceneRef.current = scene
+  }, [scene])
   // Create stable callback wrappers - these must be defined early to avoid minification issues
   const handleAddSegmentWrapper = useCallback(
     (afterSegmentId: string | null, duration: number) => {
@@ -326,12 +331,26 @@ export function SceneProductionManager({
   ])
 
   // Manual sync audio handler - clears existing tracks and rebuilds fresh from scene data
-  // This treats the build as completely new, ensuring no stale references persist
+  // Uses sceneRef to always get the latest scene data (avoids stale closure)
   const handleSyncAudio = useCallback(() => {
-    if (!scene) {
+    // Use ref to get the latest scene data (not stale from closure)
+    const currentScene = sceneRef.current
+    
+    if (!currentScene) {
       toast.error('No scene data available')
       return
     }
+    
+    console.log('[Sync Audio] Starting sync with scene data:', {
+      sceneId,
+      hasNarrationAudioUrl: !!currentScene.narrationAudioUrl,
+      narrationAudioUrl: currentScene.narrationAudioUrl?.substring(0, 50),
+      hasNarrationAudio: !!currentScene.narrationAudio,
+      narrationAudioEn: currentScene.narrationAudio?.en?.url?.substring(0, 50),
+      hasDialogueAudio: !!currentScene.dialogueAudio,
+      dialogueAudioEnLength: currentScene.dialogueAudio?.en?.length,
+      hasMusicAudio: !!currentScene.musicAudio,
+    })
     
     // Step 1: Clear existing audio tracks completely (treat as fresh build)
     setAudioTracksState({})
@@ -339,7 +358,16 @@ export function SceneProductionManager({
     // Step 2: Rebuild from scene data after a microtask to ensure clear happened
     // This mimics the initial load behavior
     setTimeout(() => {
-      const newTracks = buildAudioTracksFromScene(scene, productionData?.segments)
+      const newTracks = buildAudioTracksFromScene(currentScene, productionData?.segments)
+      
+      console.log('[Sync Audio] Built new tracks:', {
+        hasVoiceover: !!newTracks.voiceover,
+        voiceoverUrl: newTracks.voiceover?.url?.substring(0, 50),
+        dialogueCount: newTracks.dialogue?.length || 0,
+        hasMusic: !!newTracks.music,
+        sfxCount: newTracks.sfx?.length || 0,
+      })
+      
       setAudioTracksState(newTracks)
       
       // Count what was synced for feedback
@@ -353,10 +381,10 @@ export function SceneProductionManager({
       if (trackCount > 0) {
         toast.success(`Synced ${trackCount} audio track${trackCount !== 1 ? 's' : ''} from script`)
       } else {
-        toast.info('No audio tracks found in scene data')
+        toast.info('No audio tracks found in scene data. Generate audio first.')
       }
     }, 0)
-  }, [scene, productionData?.segments, buildAudioTracksFromScene])
+  }, [sceneId, productionData?.segments, buildAudioTracksFromScene])
 
   // Merge external audio tracks with scene-derived tracks
   // Scene-derived tracks take priority (spread last) to ensure fresh data overrides stale external state
