@@ -165,6 +165,13 @@ export function SceneProductionManager({
     [sceneId, onAudioClipChange]
   )
   
+  // Wrapper for backdrop video generation - must be stable to avoid minification issues
+  const handleGenerateBackdropVideoWrapper = useCallback(() => {
+    if (onGenerateBackdropVideo) {
+      onGenerateBackdropVideo(sceneId)
+    }
+  }, [sceneId, onGenerateBackdropVideo])
+  
   // Wrapper for duration changes from SegmentStudio settings panel
   const handleDurationChangeWrapper = useCallback(
     (segmentId: string, newDuration: number) => {
@@ -932,7 +939,7 @@ export function SceneProductionManager({
               onAddEstablishingShot={onAddEstablishingShot && !segments.some(s => s.isEstablishingShot) ? handleAddEstablishingShotWrapper : undefined}
               onEstablishingShotStyleChange={onEstablishingShotStyleChange ? handleEstablishingShotStyleChangeWrapper : undefined}
               onSelectTake={onSelectTake ? handleSelectTakeWrapper : undefined}
-              onGenerateBackdropVideo={onGenerateBackdropVideo ? () => onGenerateBackdropVideo(sceneId) : undefined}
+              onGenerateBackdropVideo={onGenerateBackdropVideo ? handleGenerateBackdropVideoWrapper : undefined}
               sceneDirection={scene?.sceneDirection || scene?.direction || ''}
             />
           </div>
