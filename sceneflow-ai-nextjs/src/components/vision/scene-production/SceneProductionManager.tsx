@@ -73,8 +73,6 @@ interface SceneProductionManagerProps {
   onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'single-shot' | 'beat-matched' | 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   // Take selection - allows user to choose which take to use as active asset
   onSelectTake?: (sceneId: string, segmentId: string, takeId: string, takeAssetUrl: string) => void
-  // Generate Backdrop Video - opens the backdrop generator modal for this scene
-  onGenerateBackdropVideo?: (sceneId: string) => void
 }
 
 export function SceneProductionManager({
@@ -101,7 +99,6 @@ export function SceneProductionManager({
   onAddEstablishingShot,
   onEstablishingShotStyleChange,
   onSelectTake,
-  onGenerateBackdropVideo,
 }: SceneProductionManagerProps) {
   // Create stable callback wrappers - these must be defined early to avoid minification issues
   const handleAddSegmentWrapper = useCallback(
@@ -164,13 +161,6 @@ export function SceneProductionManager({
     },
     [sceneId, onAudioClipChange]
   )
-  
-  // Wrapper for backdrop video generation - must be stable to avoid minification issues
-  const handleGenerateBackdropVideoWrapper = useCallback(() => {
-    if (onGenerateBackdropVideo) {
-      onGenerateBackdropVideo(sceneId)
-    }
-  }, [sceneId, onGenerateBackdropVideo])
   
   // Wrapper for duration changes from SegmentStudio settings panel
   const handleDurationChangeWrapper = useCallback(
@@ -939,7 +929,6 @@ export function SceneProductionManager({
               onAddEstablishingShot={onAddEstablishingShot && !segments.some(s => s.isEstablishingShot) ? handleAddEstablishingShotWrapper : undefined}
               onEstablishingShotStyleChange={onEstablishingShotStyleChange ? handleEstablishingShotStyleChangeWrapper : undefined}
               onSelectTake={onSelectTake ? handleSelectTakeWrapper : undefined}
-              onGenerateBackdropVideo={onGenerateBackdropVideo ? handleGenerateBackdropVideoWrapper : undefined}
               sceneDirection={scene?.sceneDirection || scene?.direction || ''}
             />
           </div>
