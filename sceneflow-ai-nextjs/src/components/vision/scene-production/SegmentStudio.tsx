@@ -159,6 +159,18 @@ export function SegmentStudio({
     })
   }, [onKeyframeChange])
   
+  // Handle backdrop button click - shows toast guiding user to sidebar
+  const handleBackdropClick = useCallback(() => {
+    if (onGenerateBackdropVideo) {
+      onGenerateBackdropVideo()
+    } else {
+      toast.info('Generate Scene Backdrop', {
+        description: 'Use the "Generate Scene" button in the Scene Backdrops section of the right sidebar to create AI-generated backdrop images.',
+        duration: 5000,
+      })
+    }
+  }, [onGenerateBackdropVideo])
+  
   // Audio playback state
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map())
@@ -417,16 +429,7 @@ export function SegmentStudio({
             </span>
           </label>
           <Button
-            onClick={() => {
-              if (onGenerateBackdropVideo) {
-                onGenerateBackdropVideo()
-              } else {
-                toast.info('Generate Scene Backdrop', {
-                  description: 'Use the "Generate Scene" button in the Scene Backdrops section of the right sidebar to create AI-generated backdrop images.',
-                  duration: 5000,
-                })
-              }
-            }}
+            onClick={handleBackdropClick}
             disabled={segment.status === 'GENERATING'}
             size="sm"
             className="flex-1 h-8 bg-green-600 hover:bg-green-700 text-white text-xs gap-1"
