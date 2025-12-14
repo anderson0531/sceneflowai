@@ -1067,34 +1067,6 @@ export function SceneProductionManager({
             {productionData.segments.length} segments · Target {productionData.targetSegmentDuration}s
           </p>
           <div className="flex items-center gap-2">
-            {/* Manage Audio button - opens full audio management dialog */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation()
-                setShowAudioAssetsDialog(true)
-              }}
-              className="shrink-0"
-              title="Manage audio assets for this scene"
-            >
-              <Volume2 className="w-4 h-4 mr-2" />
-              Manage Audio
-            </Button>
-            {/* Sync Audio button - rebuilds audio tracks from current scene data */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleSyncAudio()
-              }}
-              className="shrink-0"
-              title="Sync audio tracks from script to timeline"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Sync Audio
-            </Button>
             {productionData?.isSegmented && (
               <Button
                 variant="outline"

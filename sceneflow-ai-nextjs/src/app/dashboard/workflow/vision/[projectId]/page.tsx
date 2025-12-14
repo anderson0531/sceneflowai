@@ -18,7 +18,7 @@ import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels'
 import { upload } from '@vercel/blob/client'
-import { cleanupStaleAudio } from '@/lib/audio/cleanupAudio'
+import { cleanupStaleAudio, clearAllSceneAudio } from '@/lib/audio/cleanupAudio'
 import { toast } from 'sonner'
 import { ContextBar } from '@/components/layout/ContextBar'
 import { ScriptPanel } from '@/components/vision/ScriptPanel'
@@ -5253,11 +5253,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (!script) return
 
     const updatedScenes = [...(script.script?.scenes || [])]
-    const originalScene = updatedScenes[sceneIndex]
     
-    // Clean up stale audio for changed/removed dialogue lines using shared utility
-    // This now returns both the cleaned scene and URLs of deleted audio blobs
-    const { cleanedScene, deletedUrls } = cleanupStaleAudio(originalScene, revisedScene)
+    // Clear ALL audio from the scene after editing
+    // This ensures no stale audio remains regardless of content changes
+    const { cleanedScene, deletedUrls } = clearAllSceneAudio(revisedScene)
     updatedScenes[sceneIndex] = cleanedScene
 
     // Save to database FIRST
@@ -5266,7 +5265,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Delete orphaned audio blobs in background (don't block UI)
       if (deletedUrls.length > 0) {
-        console.log(`[Vision] Deleting ${deletedUrls.length} orphaned audio blob(s)...`)
+        console.log(`[Vision] Deleting ${deletedUrls.length} scene audio blob(s)...`)
         fetch('/api/blobs/delete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -5301,7 +5300,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Show success message
       try {
         const { toast } = require('sonner')
-        toast.success('Scene changes applied successfully')
+        toast.success('Scene changes applied - use Update Audio to regenerate audio')
       } catch {}
       
       // Reload project to ensure consistency
@@ -5313,6 +5312,102 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         toast.error('Failed to save scene changes')
       } catch {}
     }
+  }
+
+  // Update all scene audio - clears existing audio and regenerates sequentially
+  const handleUpdateSceneAudio = async (sceneIndex: number) => {
+    if (!script?.script?.scenes?.[sceneIndex]) {
+      console.error('[Update Scene Audio] Scene not found')
+      return
+    }
+
+    const scene = script.script.scenes[sceneIndex]
+    
+    // First, clear all existing audio from the scene
+    const { cleanedScene, deletedUrls } = clearAllSceneAudio(scene)
+    
+    // Update state with cleaned scene
+    const updatedScenes = [...script.script.scenes]
+    updatedScenes[sceneIndex] = cleanedScene
+    
+    setScript({
+      ...script,
+      script: {
+        ...script.script,
+        scenes: updatedScenes
+      }
+    })
+    
+    // Delete audio blobs
+    if (deletedUrls.length > 0) {
+      console.log(`[Update Scene Audio] Deleting ${deletedUrls.length} audio blob(s)...`)
+      try {
+        await fetch('/api/blobs/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ urls: deletedUrls })
+        })
+      } catch (err) {
+        console.warn('[Update Scene Audio] Error deleting audio blobs:', err)
+      }
+    }
+    
+    // Save cleaned scene to database
+    try {
+      await saveScenesToDatabase(updatedScenes)
+    } catch (error) {
+      console.error('[Update Scene Audio] Failed to save cleaned scene:', error)
+      toast.error('Failed to clear audio')
+      return
+    }
+
+    toast.info(`Regenerating audio for Scene ${sceneIndex + 1}...`)
+    
+    // Track what needs to be generated
+    const generationTasks: Array<{type: 'description' | 'narration' | 'dialogue', character?: string, dialogueIndex?: number}> = []
+    
+    // Add description if scene has visual content
+    if (cleanedScene.visualDescription || cleanedScene.action || cleanedScene.summary) {
+      generationTasks.push({ type: 'description' })
+    }
+    
+    // Add narration if scene has narration
+    if (cleanedScene.narration) {
+      generationTasks.push({ type: 'narration' })
+    }
+    
+    // Add all dialogue lines
+    if (cleanedScene.dialogue && cleanedScene.dialogue.length > 0) {
+      cleanedScene.dialogue.forEach((d: any, idx: number) => {
+        if (d.line && d.character) {
+          generationTasks.push({ type: 'dialogue', character: d.character, dialogueIndex: idx })
+        }
+      })
+    }
+    
+    // Generate audio sequentially
+    let successCount = 0
+    for (const task of generationTasks) {
+      try {
+        await handleGenerateSceneAudio(sceneIndex, task.type, task.character, task.dialogueIndex)
+        successCount++
+      } catch (error) {
+        console.error(`[Update Scene Audio] Failed to generate ${task.type}:`, error)
+      }
+    }
+    
+    if (successCount === generationTasks.length) {
+      toast.success(`All audio regenerated for Scene ${sceneIndex + 1}`)
+    } else if (successCount > 0) {
+      toast.warning(`Regenerated ${successCount}/${generationTasks.length} audio files for Scene ${sceneIndex + 1}`)
+    } else if (generationTasks.length > 0) {
+      toast.error('Failed to regenerate audio')
+    } else {
+      toast.info('No audio content to generate for this scene')
+    }
+    
+    // Reload project to ensure consistency
+    await loadProject()
   }
 
   // Scene score generation handler
@@ -6073,6 +6168,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onDeleteScene={handleDeleteScene}
                 onReorderScenes={handleReorderScenes}
                 onEditScene={handleEditScene}
+                onUpdateSceneAudio={handleUpdateSceneAudio}
                 onGenerateSceneScore={handleGenerateSceneScore}
                 generatingScoreFor={generatingScoreFor}
                 getScoreColorClass={getScoreColorClass}

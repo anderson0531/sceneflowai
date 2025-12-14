@@ -131,6 +131,7 @@ interface ScriptPanelProps {
   audienceReview?: any
   // NEW: Scene editing props
   onEditScene?: (sceneIndex: number) => void
+  onUpdateSceneAudio?: (sceneIndex: number) => Promise<void>
   // NEW: Scene score generation props
   onGenerateSceneScore?: (sceneIndex: number) => void
   generatingScoreFor?: number | null
@@ -387,6 +388,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
         onAddScene={onAddScene}
         onDeleteScene={onDeleteScene}
         onEditScene={onEditScene}
+        onUpdateSceneAudio={props.onUpdateSceneAudio}
         onGenerateSceneScore={onGenerateSceneScore}
         generatingScoreFor={generatingScoreFor}
         getScoreColorClass={getScoreColorClass}
@@ -400,7 +402,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onAddEstablishingShot, onEstablishingShotStyleChange, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onAddEstablishingShot, onEstablishingShotStyleChange, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -2070,6 +2072,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       onAddScene={onAddScene}
                       onDeleteScene={onDeleteScene}
                       onEditScene={onEditScene}
+                      onUpdateSceneAudio={onUpdateSceneAudio}
                       onGenerateSceneScore={onGenerateSceneScore}
                       generatingScoreFor={generatingScoreFor}
                       getScoreColorClass={getScoreColorClass}
@@ -2449,6 +2452,7 @@ interface SceneCardProps {
   onAddScene?: (afterIndex?: number) => void
   onDeleteScene?: (sceneIndex: number) => void
   onEditScene?: (sceneIndex: number) => void
+  onUpdateSceneAudio?: (sceneIndex: number) => Promise<void>
   // NEW: Scene score generation props
   onGenerateSceneScore?: (sceneIndex: number) => void
   generatingScoreFor?: number | null
@@ -2550,6 +2554,7 @@ function SceneCard({
   onAddScene,
   onDeleteScene,
   onEditScene,
+  onUpdateSceneAudio,
   onGenerateSceneScore,
   generatingScoreFor,
   getScoreColorClass,
@@ -2600,6 +2605,7 @@ function SceneCard({
   const [copilotPanelOpen, setCopilotPanelOpen] = useState(false)
   const [isImageExpanded, setIsImageExpanded] = useState(false)
   const [directionBuilderOpen, setDirectionBuilderOpen] = useState(false)
+  const [isUpdatingAudio, setIsUpdatingAudio] = useState(false)
   
   // Determine active step for Co-Pilot
   const activeStep: WorkflowStep | null = activeWorkflowTab
@@ -2969,6 +2975,37 @@ function SceneCard({
                     </button>
                   </TooltipTrigger>
                   <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Edit scene</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            
+            {/* Update Audio Button */}
+            {!isOutline && onUpdateSceneAudio && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      disabled={isUpdatingAudio}
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        setIsUpdatingAudio(true)
+                        try {
+                          await onUpdateSceneAudio(sceneIdx)
+                        } finally {
+                          setIsUpdatingAudio(false)
+                        }
+                      }}
+                      className="flex items-center gap-1 px-2 py-1 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded transition-colors disabled:opacity-50"
+                    >
+                      {isUpdatingAudio ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4" />
+                      )}
+                      <span className="text-xs">{isUpdatingAudio ? 'Updating...' : 'Update Audio'}</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Regenerate all audio for this scene</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             )}
