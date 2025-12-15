@@ -314,12 +314,19 @@ export function SceneProductionManager({
   }, [])
 
   // Build audio tracks from scene data when scene changes
+  // Create a stable key for dialogue audio URLs to detect when audio is added/removed
+  const dialogueAudioKey = useMemo(() => {
+    if (!scene?.dialogue || !Array.isArray(scene.dialogue)) return ''
+    return scene.dialogue.map((d: any) => d.audioUrl || d.url || '').join('|')
+  }, [scene?.dialogue])
+  
   useEffect(() => {
     if (!scene) return
     const newTracks = buildAudioTracksFromScene(scene, productionData?.segments)
     setAudioTracksState(newTracks)
   // Explicit dependencies on audio-related scene properties to ensure refresh when audio changes
   // Using JSON.stringify on nested objects to detect deep changes (shallow comparison misses nested URL changes)
+  // dialogueAudioKey captures changes to individual dialogue item audioUrl/url properties
   }, [
     scene, 
     productionData?.segments,
@@ -328,7 +335,7 @@ export function SceneProductionManager({
     scene?.descriptionAudioUrl,
     JSON.stringify(scene?.descriptionAudio),
     JSON.stringify(scene?.dialogueAudio),
-    scene?.dialogue?.length,
+    dialogueAudioKey,  // Detects when dialogue[].audioUrl changes (including clearing)
     scene?.musicAudio,
     JSON.stringify(scene?.sfxAudio),
     buildAudioTracksFromScene,
