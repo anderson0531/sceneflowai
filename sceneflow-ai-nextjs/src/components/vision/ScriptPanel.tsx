@@ -1897,6 +1897,22 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               </Tooltip>
             </TooltipProvider>
 
+            {/* Language Selector */}
+            <div className="w-[120px]">
+              <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700 text-slate-200">
+                  <SelectValue placeholder="Language" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700 text-slate-200">
+                  {SUPPORTED_LANGUAGES.map((lang) => (
+                    <SelectItem key={lang.code} value={lang.code} className="text-xs focus:bg-slate-700 focus:text-slate-100">
+                      {lang.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Edit Script Button */}
             <TooltipProvider>
               <Tooltip>
@@ -1941,34 +1957,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           </div>
         </div>
         
-        <div className="flex items-center gap-3 flex-wrap text-slate-200">
-          {/* Generate Audio button moved to Storyboard header */}
-          
-          {/* Language Selector */}
-          <div className="w-[140px]">
-            <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-              <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700 text-slate-200">
-                <SelectValue placeholder="Language" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700 text-slate-200">
-                {SUPPORTED_LANGUAGES.map((lang) => (
-                  <SelectItem key={lang.code} value={lang.code} className="text-xs focus:bg-slate-700 focus:text-slate-100">
-                    {lang.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* Background generation progress indicator */}
+        {dialogGenerationMode === 'background' && isDialogGenerating && backgroundProgressPercent !== null && (
+          <div className="flex items-center gap-1 text-xs text-blue-400 mt-2">
+            <Loader className="w-3 h-3 animate-spin" />
+            <span>BG {backgroundProgressPercent}%</span>
           </div>
-
-          {/* Action buttons moved to header row */}
-
-          {dialogGenerationMode === 'background' && isDialogGenerating && backgroundProgressPercent !== null && (
-            <div className="flex items-center gap-1 text-xs text-blue-400">
-              <Loader className="w-3 h-3 animate-spin" />
-              <span>BG {backgroundProgressPercent}%</span>
-            </div>
-          )}
-        </div>
+        )}
         
         {/* Timeline Slot - renders scene timeline selector */}
         {timelineSlot && (
