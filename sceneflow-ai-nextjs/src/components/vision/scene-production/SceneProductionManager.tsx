@@ -79,6 +79,15 @@ interface SceneProductionManagerProps {
   onSelectTake?: (sceneId: string, segmentId: string, takeId: string, takeAssetUrl: string) => void
   // Stale audio cleanup - removes 404'd audio URLs from scene data
   onCleanupStaleAudioUrl?: (sceneId: string, staleUrl: string) => void
+  // Backdrop video generation - inserts new segment with video before specified segment
+  onBackdropVideoGenerated?: (sceneId: string, beforeSegmentIndex: number, result: {
+    videoUrl: string
+    prompt: string
+    backdropMode: string
+    duration: number
+  }) => void
+  // Characters for backdrop video modal
+  characters?: Array<{ id: string; name: string; description?: string; appearance?: string }>
 }
 
 export function SceneProductionManager({
@@ -107,6 +116,8 @@ export function SceneProductionManager({
   onEstablishingShotStyleChange,
   onSelectTake,
   onCleanupStaleAudioUrl,
+  onBackdropVideoGenerated,
+  characters = [],
 }: SceneProductionManagerProps) {
   // Ref to always access the latest scene data (avoids stale closure in callbacks)
   const sceneRef = useRef(scene)
@@ -185,6 +196,40 @@ export function SceneProductionManager({
     },
     [sceneId, onSegmentResize]
   )
+  
+  // Wrapper for backdrop video generation - inserts segment before current
+  const handleBackdropVideoGeneratedWrapper = useCallback(
+    (result: { videoUrl: string; prompt: string; backdropMode: string; duration: number }) => {
+      if (onBackdropVideoGenerated && selectedSegmentId) {
+        const segmentIndex = segments.findIndex(s => s.segmentId === selectedSegmentId)
+        onBackdropVideoGenerated(sceneId, segmentIndex >= 0 ? segmentIndex : 0, result)
+      }
+    },
+    [sceneId, onBackdropVideoGenerated, selectedSegmentId, segments]
+  )
+  
+  // Build scene data for backdrop video modal
+  const sceneForBackdrop = useMemo(() => {
+    if (!scene) return undefined
+    return {
+      id: sceneId,
+      scene_number: sceneNumber,
+      scene_name: heading,
+      heading: heading,
+      description: scene.description || scene.action,
+      sceneDirection: scene.sceneDirection,
+    }
+  }, [scene, sceneId, sceneNumber, heading])
+  
+  // Map characters for backdrop modal
+  const charactersForBackdrop = useMemo(() => {
+    return characters.map(c => ({
+      id: c.id,
+      name: c.name,
+      description: c.description,
+      appearance: c.appearance,
+    }))
+  }, [characters])
   
   const [targetDuration, setTargetDuration] = useState<number>(productionData?.targetSegmentDuration ?? 8)
   
@@ -1180,6 +1225,9 @@ export function SceneProductionManager({
               onEstablishingShotStyleChange={onEstablishingShotStyleChange ? handleEstablishingShotStyleChangeWrapper : undefined}
               onSelectTake={onSelectTake ? handleSelectTakeWrapper : undefined}
               sceneDirection={scene?.sceneDirection || scene?.direction || ''}
+              sceneForBackdrop={sceneForBackdrop}
+              charactersForBackdrop={charactersForBackdrop}
+              onBackdropVideoGenerated={onBackdropVideoGenerated ? handleBackdropVideoGeneratedWrapper : undefined}
             />
           </div>
         </div>

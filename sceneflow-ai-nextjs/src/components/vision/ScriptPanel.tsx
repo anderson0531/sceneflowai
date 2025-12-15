@@ -160,6 +160,13 @@ interface ScriptPanelProps {
   onCleanupStaleAudioUrl?: (sceneId: string, staleUrl: string) => void
   onAddEstablishingShot?: (sceneId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
+  // Backdrop video generation - inserts new segment with video before specified segment
+  onBackdropVideoGenerated?: (sceneId: string, beforeSegmentIndex: number, result: {
+    videoUrl: string
+    prompt: string
+    backdropMode: string
+    duration: number
+  }) => void
   sceneAudioTracks?: Record<string, {
     narration?: { url?: string; startTime: number; duration: number }
     dialogue?: Array<{ url?: string; startTime: number; duration: number; character?: string }>
@@ -403,7 +410,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -2100,6 +2107,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       onAudioClipChange={onAudioClipChange}
                       onAddEstablishingShot={onAddEstablishingShot}
                       onEstablishingShotStyleChange={onEstablishingShotStyleChange}
+                      onBackdropVideoGenerated={onBackdropVideoGenerated}
+                      characters={characters}
                       sceneAudioTracks={sceneAudioTracks[scene.sceneId || scene.id || `scene-${idx}`]}
                           domId={domId}
                           isBookmarked={bookmarkedSceneIndex === idx}
@@ -2487,6 +2496,15 @@ interface SceneCardProps {
   onCleanupStaleAudioUrl?: (sceneId: string, staleUrl: string) => void
   onAddEstablishingShot?: (sceneId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
+  // Backdrop video generation - inserts new segment with video before specified segment
+  onBackdropVideoGenerated?: (sceneId: string, beforeSegmentIndex: number, result: {
+    videoUrl: string
+    prompt: string
+    backdropMode: string
+    duration: number
+  }) => void
+  // Characters for backdrop video modal
+  characters?: Array<{ id: string; name: string; description?: string; appearance?: string }>
   sceneAudioTracks?: {
     narration?: { url?: string; startTime: number; duration: number }
     dialogue?: Array<{ url?: string; startTime: number; duration: number; character?: string }>
@@ -2581,6 +2599,8 @@ function SceneCard({
   onCleanupStaleAudioUrl,
   onAddEstablishingShot,
   onEstablishingShotStyleChange,
+  onBackdropVideoGenerated,
+  characters = [],
   sceneAudioTracks,
   domId,
   isBookmarked = false,
@@ -4204,6 +4224,8 @@ function SceneCard({
                       onEditImage={onEditImage ? (imageUrl: string) => onEditImage(imageUrl, sceneIdx) : undefined}
                       onAddEstablishingShot={onAddEstablishingShot}
                       onEstablishingShotStyleChange={onEstablishingShotStyleChange}
+                      onBackdropVideoGenerated={onBackdropVideoGenerated}
+                      characters={characters}
                     />
                   </div>
                 )}

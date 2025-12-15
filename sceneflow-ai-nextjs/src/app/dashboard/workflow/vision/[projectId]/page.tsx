@@ -1123,6 +1123,79 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [sceneProductionState, applySceneProductionUpdate]
   )
 
+  // Handler for inserting a backdrop VIDEO segment before a specified segment index
+  const handleBackdropVideoGenerated = useCallback(
+    async (sceneId: string, beforeSegmentIndex: number, result: {
+      videoUrl: string
+      prompt: string
+      backdropMode: string
+      duration: number
+    }) => {
+      const currentProduction = sceneProductionState[sceneId]
+      
+      const duration = result.duration || 5
+      
+      // Calculate insertion point
+      let insertTime = 0
+      if (currentProduction?.segments && beforeSegmentIndex > 0) {
+        const prevSegment = currentProduction.segments[beforeSegmentIndex - 1]
+        if (prevSegment) {
+          insertTime = prevSegment.endTime
+        }
+      } else if (currentProduction?.segments && beforeSegmentIndex === 0 && currentProduction.segments.length > 0) {
+        insertTime = 0 // Insert at the very beginning
+      }
+      
+      // Create a new segment with the generated video
+      const newSegment = {
+        segmentId: `seg_${sceneId}_backdrop_video_${Date.now()}`,
+        sequenceIndex: beforeSegmentIndex,
+        startTime: insertTime,
+        endTime: insertTime + duration,
+        action: `Backdrop Video: ${result.backdropMode}`,
+        shotType: 'establishing' as const,
+        assetType: 'video' as const,
+        activeAssetUrl: result.videoUrl,
+        status: 'COMPLETE' as const,
+        generatedPrompt: result.prompt,
+        isEstablishingShot: true,
+        establishingShotType: result.backdropMode,
+      }
+
+      if (!currentProduction || !currentProduction.segments || currentProduction.segments.length === 0) {
+        // No existing production data, create new with just this segment
+        const newData: SceneProductionData = {
+          sceneId,
+          lastGenerated: Date.now(),
+          segments: [newSegment],
+          audioTracks: { dialogue: [], sfx: [], music: [], narration: [] },
+        }
+        await applySceneProductionUpdate(sceneId, newData)
+      } else {
+        // Insert at the specified position and shift subsequent segments
+        const segmentsBefore = currentProduction.segments.slice(0, beforeSegmentIndex)
+        const segmentsAfter = currentProduction.segments.slice(beforeSegmentIndex)
+        
+        // Update sequence indices and times for segments after insertion point
+        const updatedSegmentsAfter = segmentsAfter.map((seg, idx) => ({
+          ...seg,
+          sequenceIndex: beforeSegmentIndex + 1 + idx,
+          startTime: seg.startTime + duration,
+          endTime: seg.endTime + duration,
+        }))
+        
+        const updatedData: SceneProductionData = {
+          ...currentProduction,
+          segments: [...segmentsBefore, newSegment, ...updatedSegmentsAfter],
+        }
+        await applySceneProductionUpdate(sceneId, updatedData)
+      }
+      
+      toast.success(`Backdrop video added before segment #${beforeSegmentIndex + 1}`)
+    },
+    [sceneProductionState, applySceneProductionUpdate]
+  )
+
   const handleInitializeSceneProduction = useCallback(
     async (sceneId: string, { targetDuration, generationOptions }: { targetDuration: number; generationOptions?: any }) => {
       if (!project?.id) {
@@ -6419,6 +6492,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onCleanupStaleAudioUrl={handleCleanupStaleAudioUrl}
                 onAddEstablishingShot={handleAddEstablishingShot}
                 onEstablishingShotStyleChange={handleEstablishingShotStyleChange}
+                onBackdropVideoGenerated={handleBackdropVideoGenerated}
                 onSelectTake={handleSelectTake}
                 sceneAudioTracks={{}}
                   bookmarkedScene={sceneBookmark}

@@ -10,6 +10,8 @@ import { SegmentPromptBuilder, GeneratePromptData, VideoGenerationMethod } from 
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { AudioTrackClip, AudioTracksData } from './SceneTimeline'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { BackdropVideoModal, SceneForBackdrop, CharacterForBackdrop } from '@/components/vision/BackdropVideoModal'
+import { BackdropMode } from '@/lib/vision/backdropGenerator'
 
 export type GenerationType = 'T2V' | 'I2V' | 'T2I' | 'UPLOAD'
 
@@ -74,6 +76,16 @@ interface SegmentStudioProps {
   sceneHeading?: string
   sceneDescription?: string
   sceneNarration?: string
+  // Backdrop Video Modal data
+  sceneForBackdrop?: SceneForBackdrop
+  charactersForBackdrop?: CharacterForBackdrop[]
+  // Callback when backdrop video is generated - inserts segment before current
+  onBackdropVideoGenerated?: (result: {
+    videoUrl: string
+    prompt: string
+    backdropMode: BackdropMode
+    duration: number
+  }) => void
 }
 
 export function SegmentStudio({
@@ -102,6 +114,9 @@ export function SegmentStudio({
   sceneHeading,
   sceneDescription,
   sceneNarration,
+  sceneForBackdrop,
+  charactersForBackdrop = [],
+  onBackdropVideoGenerated,
 }: SegmentStudioProps) {
   const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -111,6 +126,9 @@ export function SegmentStudio({
   const [isPromptBuilderOpen, setIsPromptBuilderOpen] = useState(false)
   const [promptBuilderMode, setPromptBuilderMode] = useState<'image' | 'video'>('video')
   const [isBackdropMode, setIsBackdropMode] = useState(false)
+  
+  // Backdrop Video Modal State
+  const [isBackdropVideoModalOpen, setIsBackdropVideoModalOpen] = useState(false)
   
   // Audio playback state
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -429,8 +447,8 @@ export function SegmentStudio({
             </div>
           </div>
 
-          {/* Generate Backdrop Video - Only show when segment index is 0 */}
-          {segmentIndex === 0 && (
+          {/* Generate Backdrop Video - Show for all segments, inserts before current segment */}
+          {sceneForBackdrop && onBackdropVideoGenerated && (
             <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-2">
                 <div className="p-1.5 bg-indigo-500 rounded">
@@ -441,22 +459,22 @@ export function SegmentStudio({
                     Generate Backdrop Video
                   </div>
                   <div className="text-[10px] text-indigo-600 dark:text-indigo-400">
-                    AI video for scene transitions & narration
+                    Inserts before segment #{segmentIndex + 1}
                   </div>
                 </div>
               </div>
               <p className="text-[10px] text-gray-600 dark:text-gray-400 mb-2.5">
-                Create an atmospheric video backdrop using Veo 3.1. Perfect for establishing shots, 
-                scene transitions, and narration visuals.
+                Create an atmospheric video backdrop using Veo 3.1. Choose from 4 modes: 
+                Atmospheric B-Roll, Silent Portrait, Establishing Master, or Storybeat Animatic.
               </p>
               <Button
-                onClick={handleOpenBackdropBuilder}
+                onClick={() => setIsBackdropVideoModalOpen(true)}
                 disabled={segment.status === 'GENERATING'}
                 size="sm"
                 className="w-full h-9 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs gap-2"
               >
                 <Clapperboard className="w-4 h-4" />
-                Open Backdrop Builder
+                Generate Backdrop Video
               </Button>
             </div>
           )}
@@ -814,6 +832,18 @@ export function SegmentStudio({
           sceneHeading={sceneHeading}
           sceneDescription={sceneDescription}
           sceneNarration={sceneNarration}
+        />
+      )}
+
+      {/* Backdrop Video Modal */}
+      {sceneForBackdrop && onBackdropVideoGenerated && (
+        <BackdropVideoModal
+          open={isBackdropVideoModalOpen}
+          onClose={() => setIsBackdropVideoModalOpen(false)}
+          scene={sceneForBackdrop}
+          characters={charactersForBackdrop}
+          onGenerated={onBackdropVideoGenerated}
+          currentSegmentIndex={segmentIndex}
         />
       )}
 
