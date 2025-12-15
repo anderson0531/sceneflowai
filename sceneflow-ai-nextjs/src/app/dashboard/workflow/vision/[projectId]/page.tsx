@@ -1978,125 +1978,166 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [project?.id, project?.metadata]
   )
   
+  // Track stale URLs pending cleanup - used to avoid race conditions with regeneration
+  const pendingStaleUrlCleanupRef = useRef<Map<string, Set<string>>>(new Map()) // sceneId -> Set<staleUrls>
+  const staleCleanupTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
   // Handle cleanup of stale audio URLs (404 errors) - removes the URL from scene data and persists
+  // Uses a ref-based approach to avoid race conditions with audio regeneration
   const handleCleanupStaleAudioUrl = useCallback(
     (sceneId: string, staleUrl: string) => {
-      console.log('[Stale Audio Cleanup] Removing stale URL:', staleUrl)
+      console.log('[Stale Audio Cleanup] Queuing stale URL for cleanup:', staleUrl)
       
-      setScenes((prevScenes) => {
-        const updatedScenes = prevScenes.map((scene, idx) => {
-          const sceneKey = (scene as any).sceneId || (scene as any).id || `scene-${idx}`
-          if (sceneKey !== sceneId) return scene
+      // Add to pending cleanup set
+      if (!pendingStaleUrlCleanupRef.current.has(sceneId)) {
+        pendingStaleUrlCleanupRef.current.set(sceneId, new Set())
+      }
+      pendingStaleUrlCleanupRef.current.get(sceneId)!.add(staleUrl)
+      
+      // Debounce the actual cleanup to batch multiple stale URL removals
+      // and allow time for regeneration to complete first
+      if (staleCleanupTimeoutRef.current) {
+        clearTimeout(staleCleanupTimeoutRef.current)
+      }
+      
+      staleCleanupTimeoutRef.current = setTimeout(() => {
+        // Get the CURRENT scenes state (not a stale closure)
+        setScenes((currentScenes) => {
+          const urlsToClean = pendingStaleUrlCleanupRef.current
+          if (urlsToClean.size === 0) return currentScenes
           
-          const updatedScene = JSON.parse(JSON.stringify(scene)) // Deep clone
-          
-          // Check and clear narration audio if URL matches
-          if ((updatedScene as any).narrationAudioUrl === staleUrl) {
-            delete (updatedScene as any).narrationAudioUrl
-          }
-          if ((updatedScene as any).narrationAudio) {
-            // Handle multi-language format
-            if (typeof (updatedScene as any).narrationAudio === 'object') {
-              for (const lang of Object.keys((updatedScene as any).narrationAudio)) {
-                if ((updatedScene as any).narrationAudio[lang]?.url === staleUrl) {
-                  delete (updatedScene as any).narrationAudio[lang]
-                }
+          let hasChanges = false
+          const updatedScenes = currentScenes.map((scene, idx) => {
+            const sceneKey = (scene as any).sceneId || (scene as any).id || `scene-${idx}`
+            const staleUrlsForScene = urlsToClean.get(sceneKey)
+            if (!staleUrlsForScene || staleUrlsForScene.size === 0) return scene
+            
+            const updatedScene = JSON.parse(JSON.stringify(scene)) // Deep clone
+            
+            for (const staleUrl of staleUrlsForScene) {
+              // Check and clear narration audio if URL still matches (wasn't regenerated)
+              if ((updatedScene as any).narrationAudioUrl === staleUrl) {
+                delete (updatedScene as any).narrationAudioUrl
+                hasChanges = true
               }
-              // Clean up empty narrationAudio object
-              if (Object.keys((updatedScene as any).narrationAudio).length === 0) {
-                delete (updatedScene as any).narrationAudio
-              }
-            }
-          }
-          
-          // Check and clear description audio if URL matches
-          if ((updatedScene as any).descriptionAudioUrl === staleUrl) {
-            delete (updatedScene as any).descriptionAudioUrl
-          }
-          if ((updatedScene as any).descriptionAudio) {
-            if (typeof (updatedScene as any).descriptionAudio === 'object') {
-              for (const lang of Object.keys((updatedScene as any).descriptionAudio)) {
-                if ((updatedScene as any).descriptionAudio[lang]?.url === staleUrl) {
-                  delete (updatedScene as any).descriptionAudio[lang]
-                }
-              }
-              if (Object.keys((updatedScene as any).descriptionAudio).length === 0) {
-                delete (updatedScene as any).descriptionAudio
-              }
-            }
-          }
-          
-          // Check and clear dialogue audio if URL matches
-          if ((updatedScene as any).dialogueAudio) {
-            for (const lang of Object.keys((updatedScene as any).dialogueAudio)) {
-              const dialogueArray = (updatedScene as any).dialogueAudio[lang]
-              if (Array.isArray(dialogueArray)) {
-                (updatedScene as any).dialogueAudio[lang] = dialogueArray.filter(
-                  (d: any) => d?.url !== staleUrl
-                )
-              }
-            }
-          }
-          
-          // Check and clear SFX if URL matches
-          if (Array.isArray((updatedScene as any).sfx)) {
-            (updatedScene as any).sfx = (updatedScene as any).sfx.filter(
-              (s: any) => s?.url !== staleUrl
-            )
-          }
-          
-          // Check and clear music if URL matches
-          if ((updatedScene as any).musicUrl === staleUrl) {
-            delete (updatedScene as any).musicUrl
-          }
-          
-          return updatedScene
-        })
-        
-        // Persist the cleanup
-        if (project?.id) {
-          // Use a separate debounce for cleanup to batch multiple stale URL removals
-          const cleanupTimeout = setTimeout(async () => {
-            try {
-              const currentMetadata = project.metadata ?? {}
-              const currentVisionPhase = currentMetadata.visionPhase ?? {}
-              
-              const nextVisionPhase = {
-                ...currentVisionPhase,
-                scenes: updatedScenes,
-                script: currentVisionPhase.script
-                  ? {
-                      ...currentVisionPhase.script,
-                      script: {
-                        ...currentVisionPhase.script.script,
-                        scenes: updatedScenes,
-                      },
+              if ((updatedScene as any).narrationAudio) {
+                if (typeof (updatedScene as any).narrationAudio === 'object') {
+                  for (const lang of Object.keys((updatedScene as any).narrationAudio)) {
+                    if ((updatedScene as any).narrationAudio[lang]?.url === staleUrl) {
+                      delete (updatedScene as any).narrationAudio[lang]
+                      hasChanges = true
                     }
-                  : currentVisionPhase.script,
+                  }
+                  if (Object.keys((updatedScene as any).narrationAudio).length === 0) {
+                    delete (updatedScene as any).narrationAudio
+                  }
+                }
               }
               
-              const nextMetadata = {
-                ...currentMetadata,
-                visionPhase: nextVisionPhase,
+              // Check and clear description audio if URL still matches
+              if ((updatedScene as any).descriptionAudioUrl === staleUrl) {
+                delete (updatedScene as any).descriptionAudioUrl
+                hasChanges = true
+              }
+              if ((updatedScene as any).descriptionAudio) {
+                if (typeof (updatedScene as any).descriptionAudio === 'object') {
+                  for (const lang of Object.keys((updatedScene as any).descriptionAudio)) {
+                    if ((updatedScene as any).descriptionAudio[lang]?.url === staleUrl) {
+                      delete (updatedScene as any).descriptionAudio[lang]
+                      hasChanges = true
+                    }
+                  }
+                  if (Object.keys((updatedScene as any).descriptionAudio).length === 0) {
+                    delete (updatedScene as any).descriptionAudio
+                  }
+                }
               }
               
-              await fetch(`/api/projects/${project.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ metadata: nextMetadata }),
-              })
+              // Check and clear dialogue audio if URL still matches
+              if ((updatedScene as any).dialogueAudio) {
+                for (const lang of Object.keys((updatedScene as any).dialogueAudio)) {
+                  const dialogueArray = (updatedScene as any).dialogueAudio[lang]
+                  if (Array.isArray(dialogueArray)) {
+                    const before = dialogueArray.length
+                    ;(updatedScene as any).dialogueAudio[lang] = dialogueArray.filter(
+                      (d: any) => d?.url !== staleUrl
+                    )
+                    if ((updatedScene as any).dialogueAudio[lang].length !== before) {
+                      hasChanges = true
+                    }
+                  }
+                }
+              }
               
-              console.log('[Stale Audio Cleanup] Persisted cleanup for:', staleUrl)
-            } catch (error) {
-              console.error('[Stale Audio Cleanup] Failed to persist', error)
+              // Check and clear SFX if URL still matches
+              if (Array.isArray((updatedScene as any).sfx)) {
+                const before = (updatedScene as any).sfx.length
+                ;(updatedScene as any).sfx = (updatedScene as any).sfx.filter(
+                  (s: any) => s?.url !== staleUrl
+                )
+                if ((updatedScene as any).sfx.length !== before) {
+                  hasChanges = true
+                }
+              }
+              
+              // Check and clear music if URL still matches
+              if ((updatedScene as any).musicUrl === staleUrl) {
+                delete (updatedScene as any).musicUrl
+                hasChanges = true
+              }
             }
-          }, 1000) // Debounce by 1s to batch multiple stale URL cleanups
+            
+            return updatedScene
+          })
           
-          return () => clearTimeout(cleanupTimeout)
-        }
-        
-        return updatedScenes
-      })
+          // Clear the pending cleanup set
+          pendingStaleUrlCleanupRef.current.clear()
+          
+          // Only persist if there were actual changes
+          if (hasChanges && project?.id) {
+            // Persist asynchronously (don't block state update)
+            setTimeout(async () => {
+              try {
+                const currentMetadata = project.metadata ?? {}
+                const currentVisionPhase = currentMetadata.visionPhase ?? {}
+                
+                const nextVisionPhase = {
+                  ...currentVisionPhase,
+                  scenes: updatedScenes,
+                  script: currentVisionPhase.script
+                    ? {
+                        ...currentVisionPhase.script,
+                        script: {
+                          ...currentVisionPhase.script.script,
+                          scenes: updatedScenes,
+                        },
+                      }
+                    : currentVisionPhase.script,
+                }
+                
+                const nextMetadata = {
+                  ...currentMetadata,
+                  visionPhase: nextVisionPhase,
+                }
+                
+                await fetch(`/api/projects/${project.id}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ metadata: nextMetadata }),
+                })
+                
+                console.log('[Stale Audio Cleanup] Persisted cleanup')
+              } catch (error) {
+                console.error('[Stale Audio Cleanup] Failed to persist', error)
+              }
+            }, 0)
+          } else if (!hasChanges) {
+            console.log('[Stale Audio Cleanup] No changes needed - URLs may have been regenerated')
+          }
+          
+          return hasChanges ? updatedScenes : currentScenes
+        })
+      }, 3000) // Wait 3 seconds before cleanup to allow regeneration to complete
     },
     [project?.id, project?.metadata]
   )
