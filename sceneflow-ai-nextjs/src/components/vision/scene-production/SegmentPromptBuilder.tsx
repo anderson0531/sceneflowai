@@ -92,6 +92,11 @@ interface SegmentPromptBuilderProps {
   // Enhanced: Reference library data
   sceneReferences?: VisualReference[]
   objectReferences?: VisualReference[]
+  // Backdrop mode: Pre-fills prompt with scene context for establishing shots
+  isBackdropMode?: boolean
+  sceneHeading?: string
+  sceneDescription?: string
+  sceneNarration?: string
 }
 
 export interface GeneratePromptData {
@@ -137,6 +142,10 @@ export function SegmentPromptBuilder({
   allSegments = [],
   sceneReferences = [],
   objectReferences = [],
+  isBackdropMode = false,
+  sceneHeading,
+  sceneDescription,
+  sceneNarration,
 }: SegmentPromptBuilderProps) {
   const [activeTab, setActiveTab] = useState<'guided' | 'advanced'>('guided')
   
@@ -343,8 +352,46 @@ export function SegmentPromptBuilder({
       if ([4, 6, 8].includes(segmentDuration)) {
         setDuration(segmentDuration as 4 | 6 | 8)
       }
+      
+      // Backdrop mode: Pre-fill prompt with scene context for establishing shots
+      if (isBackdropMode && (sceneHeading || sceneDescription || sceneNarration)) {
+        const backdropParts: string[] = []
+        
+        // Parse location from scene heading (e.g., "INT. COFFEE SHOP - DAY")
+        if (sceneHeading) {
+          const headingClean = sceneHeading
+            .replace(/^(INT\.|EXT\.|INT\/EXT\.|I\/E\.)\s*/i, '')
+            .replace(/\s*-\s*(DAY|NIGHT|DAWN|DUSK|MORNING|EVENING|CONTINUOUS|LATER)$/i, '')
+            .trim()
+          if (headingClean) {
+            backdropParts.push(`Establishing shot of ${headingClean}`)
+          }
+        }
+        
+        // Add atmosphere from scene description
+        if (sceneDescription) {
+          backdropParts.push(sceneDescription.slice(0, 200))
+        }
+        
+        // Create cinematic backdrop prompt
+        const backdropPrompt = backdropParts.length > 0
+          ? `Cinematic establishing shot. ${backdropParts.join('. ')}. Atmospheric, moody lighting. Slow, gentle camera movement. No people in frame. Perfect for scene transition or narration backdrop.`
+          : 'Cinematic establishing shot with atmospheric lighting and gentle camera movement. Perfect for scene transition or narration backdrop.'
+        
+        setAdvancedPrompt(backdropPrompt)
+        setActiveTab('advanced')
+        
+        // Set structure for guided mode
+        setStructure(prev => ({
+          ...prev,
+          shotType: 'wide-shot',
+          cameraMovement: 'slow-push',
+          atmosphere: 'cinematic',
+          location: sceneHeading?.replace(/^(INT\.|EXT\.|INT\/EXT\.)\s*/i, '').replace(/\s*-\s*(DAY|NIGHT|DAWN|DUSK|MORNING|EVENING)$/i, '').trim() || '',
+        }))
+      }
     }
-  }, [open, segment, previousSegmentLastFrame, sceneImageUrl, mode])
+  }, [open, segment, previousSegmentLastFrame, sceneImageUrl, mode, isBackdropMode, sceneHeading, sceneDescription, sceneNarration])
 
   // Auto-detect characters from segment
   useEffect(() => {
