@@ -222,6 +222,7 @@ export function SceneTimelineV2({
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [isPlayerExpanded, setIsPlayerExpanded] = useState(false)
+  const [isTimelineExpanded, setIsTimelineExpanded] = useState(false)
   
   // Track volume and enabled state - persist to localStorage
   const [trackVolumes, setTrackVolumes] = useState<Record<string, number>>(() => {
@@ -684,7 +685,7 @@ export function SceneTimelineV2({
     const isEnabled = trackEnabled[trackType] ?? true
     
     return (
-      <div className="flex items-stretch h-10 border-t border-gray-200 dark:border-gray-700">
+      <div className={cn("flex items-stretch border-t border-gray-200 dark:border-gray-700 transition-all duration-200", isTimelineExpanded ? "h-14" : "h-10")}>
         <div 
           className="flex-shrink-0 flex items-center justify-between px-2 bg-gray-100 dark:bg-gray-800"
           style={{ width: TRACK_LABEL_WIDTH }}
@@ -886,14 +887,15 @@ export function SceneTimelineV2({
             </Select>
           )}
           
-          {/* Expand toggle */}
+          {/* Timeline expand toggle - increases track heights for better visibility */}
           <Button
             variant="ghost"
             size="sm"
             className="h-7 w-7 p-0"
-            onClick={() => setIsPlayerExpanded(!isPlayerExpanded)}
+            onClick={() => setIsTimelineExpanded(!isTimelineExpanded)}
+            title={isTimelineExpanded ? 'Collapse timeline tracks' : 'Expand timeline tracks'}
           >
-            {isPlayerExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+            {isTimelineExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
           </Button>
         </div>
       </div>
@@ -923,7 +925,7 @@ export function SceneTimelineV2({
         
         {/* Visual track */}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <div className="flex items-stretch h-16">
+          <div className={cn("flex items-stretch transition-all duration-200", isTimelineExpanded ? "h-24" : "h-16")}>
             <div 
               className="flex-shrink-0 flex items-center gap-1.5 px-2 bg-gray-100 dark:bg-gray-800"
               style={{ width: TRACK_LABEL_WIDTH }}

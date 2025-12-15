@@ -498,31 +498,9 @@ export function SegmentStudio({
               </div>
               <div>
                 <span className="text-[10px] text-gray-500 dark:text-gray-400 block mb-1">Duration</span>
-                <Input
-                  type="number"
-                  min={0.5}
-                  max={8}
-                  step={0.5}
-                  defaultValue={(segment.endTime - segment.startTime).toFixed(1)}
-                  key={`duration-${segment.segmentId}-${segment.endTime - segment.startTime}`}
-                  onBlur={(e) => {
-                    const newDuration = Math.min(8, Math.max(0.5, parseFloat(e.target.value) || 0.5))
-                    if (newDuration !== (segment.endTime - segment.startTime)) {
-                      onDurationChange?.(segment.segmentId, newDuration)
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      const newDuration = Math.min(8, Math.max(0.5, parseFloat((e.target as HTMLInputElement).value) || 0.5))
-                      if (newDuration !== (segment.endTime - segment.startTime)) {
-                        onDurationChange?.(segment.segmentId, newDuration)
-                      }
-                      (e.target as HTMLInputElement).blur()
-                    }
-                  }}
-                  disabled={!onDurationChange}
-                  className="h-8 px-2.5 text-sm font-medium text-center"
-                />
+                <div className="flex items-center h-8 px-2.5 bg-gray-100 dark:bg-gray-800 rounded text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {(segment.endTime - segment.startTime).toFixed(1)}s
+                </div>
               </div>
             </div>
             <p className="text-[9px] text-gray-400 dark:text-gray-500 mt-2 text-center">
