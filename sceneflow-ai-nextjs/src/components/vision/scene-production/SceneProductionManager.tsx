@@ -17,6 +17,7 @@ import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Film, Clock, Sli
 import { AudioAssetsDialog, AudioTrackClip } from './AudioAssetsDialog'
 import { toast } from 'sonner'
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
+import { cn } from '@/lib/utils'
 import {
   Dialog,
   DialogContent,
@@ -77,6 +78,8 @@ interface SceneProductionManagerProps {
   onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'single-shot' | 'beat-matched' | 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   // Take selection - allows user to choose which take to use as active asset
   onSelectTake?: (sceneId: string, segmentId: string, takeId: string, takeAssetUrl: string) => void
+  // Take deletion - allows user to delete a take
+  onDeleteTake?: (sceneId: string, segmentId: string, takeId: string) => void
   // Stale audio cleanup - removes 404'd audio URLs from scene data
   onCleanupStaleAudioUrl?: (sceneId: string, staleUrl: string) => void
   // Backdrop video generation - inserts new segment with video before specified segment
@@ -115,6 +118,7 @@ export function SceneProductionManager({
   onAddEstablishingShot,
   onEstablishingShotStyleChange,
   onSelectTake,
+  onDeleteTake,
   onCleanupStaleAudioUrl,
   onBackdropVideoGenerated,
   characters = [],
@@ -450,6 +454,7 @@ export function SceneProductionManager({
   const [showAudioAssetsDialog, setShowAudioAssetsDialog] = useState(false)
   const [generationProgress, setGenerationProgress] = useState(0)
   const [currentPlayingSegmentId, setCurrentPlayingSegmentId] = useState<string | null>(null)
+  const [isSidePanelVisible, setIsSidePanelVisible] = useState(true)
   const segments = productionData?.segments ?? []
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(segments[0]?.segmentId ?? null)
   
@@ -518,6 +523,16 @@ export function SceneProductionManager({
       }
     },
     [sceneId, selectedSegmentId, onSelectTake]
+  )
+  
+  // Wrapper for deleting a take - MUST be defined after selectedSegmentId
+  const handleDeleteTakeWrapper = useCallback(
+    (takeId: string) => {
+      if (onDeleteTake && selectedSegmentId) {
+        onDeleteTake(sceneId, selectedSegmentId, takeId)
+      }
+    },
+    [sceneId, selectedSegmentId, onDeleteTake]
   )
 
   // Audio Assets Management handlers
@@ -1176,10 +1191,10 @@ export function SceneProductionManager({
           </div>
         </div>
 
-        {/* Optimized Layout: Timeline (left) + Segment Studio Panel (right) */}
-        <div className="flex gap-4 h-[680px] overflow-y-auto overflow-x-auto">
+        {/* Optimized Layout: Timeline (left) + Segment Studio Panel (right, toggleable) */}
+        <div className="flex gap-4 h-[680px] overflow-y-auto">
           {/* Main Area: Scene Timeline V2 with Video Player - Single Source of Truth */}
-          <div className="flex-1 min-w-0 flex flex-col min-w-[500px]">
+          <div className={cn("flex-1 min-w-0 flex flex-col", !isSidePanelVisible && "max-w-full")}>
             <SceneTimelineV2
               segments={segments}
               scene={scene}
@@ -1198,10 +1213,13 @@ export function SceneProductionManager({
               onAddEstablishingShot={onAddEstablishingShot ? () => handleAddEstablishingShotWrapper('single-shot') : undefined}
               onAudioError={handleAudioError}
               sceneFrameUrl={scene?.imageUrl}
+              isSidePanelVisible={isSidePanelVisible}
+              onToggleSidePanel={() => setIsSidePanelVisible(!isSidePanelVisible)}
             />
           </div>
 
-          {/* Right Panel: Segment Studio (scrollable) */}
+          {/* Right Panel: Segment Studio (scrollable, toggleable) */}
+          {isSidePanelVisible && (
           <div className="w-80 flex-shrink-0">
             <SegmentStudio
               segment={selectedSegmentWithKeyframes}
@@ -1224,12 +1242,14 @@ export function SceneProductionManager({
               onAddEstablishingShot={onAddEstablishingShot && !segments.some(s => s.isEstablishingShot) ? handleAddEstablishingShotWrapper : undefined}
               onEstablishingShotStyleChange={onEstablishingShotStyleChange ? handleEstablishingShotStyleChangeWrapper : undefined}
               onSelectTake={onSelectTake ? handleSelectTakeWrapper : undefined}
+              onDeleteTake={onDeleteTake ? handleDeleteTakeWrapper : undefined}
               sceneDirection={scene?.sceneDirection || scene?.direction || ''}
               sceneForBackdrop={sceneForBackdrop}
               charactersForBackdrop={charactersForBackdrop}
               onBackdropVideoGenerated={onBackdropVideoGenerated ? handleBackdropVideoGeneratedWrapper : undefined}
             />
           </div>
+          )}
         </div>
       </div>
     </>

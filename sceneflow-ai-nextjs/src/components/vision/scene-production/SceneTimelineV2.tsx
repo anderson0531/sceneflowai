@@ -167,7 +167,12 @@ export function SceneTimelineV2({
   onAudioError,
   sceneFrameUrl,
   dialogueAssignments,
-}: SceneTimelineV2Props) {
+  isSidePanelVisible = true,
+  onToggleSidePanel,
+}: SceneTimelineV2Props & {
+  isSidePanelVisible?: boolean
+  onToggleSidePanel?: () => void
+}) {
   // ============================================================================
   // Audio Tracks - Single Source of Truth (derived from scene prop)
   // ============================================================================
@@ -223,6 +228,7 @@ export function SceneTimelineV2({
   const [currentTime, setCurrentTime] = useState(0)
   const [isPlayerExpanded, setIsPlayerExpanded] = useState(false)
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false)
+  const [isTimelineWide, setIsTimelineWide] = useState(false)
   
   // Track volume and enabled state - persist to localStorage
   const [trackVolumes, setTrackVolumes] = useState<Record<string, number>>(() => {
@@ -870,6 +876,34 @@ export function SceneTimelineV2({
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Add/Delete Segment Controls */}
+          {onAddSegment && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1 px-2"
+              onClick={() => onAddSegment(selectedSegmentId || null, 4)}
+              title="Add new segment"
+            >
+              <Plus className="w-3 h-3" />
+              Add
+            </Button>
+          )}
+          {onDeleteSegment && selectedSegmentId && segments.length > 1 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1 px-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+              onClick={() => onDeleteSegment(selectedSegmentId)}
+              title="Delete selected segment"
+            >
+              <Trash2 className="w-3 h-3" />
+              Delete
+            </Button>
+          )}
+          
+          <div className="w-px h-5 bg-gray-300 dark:bg-gray-600" />
+          
           {/* Language selector */}
           {availableLanguages.length > 1 && (
             <Select value={selectedLanguage} onValueChange={onLanguageChange}>
@@ -892,16 +926,37 @@ export function SceneTimelineV2({
             variant="ghost"
             size="sm"
             className="h-7 w-7 p-0"
-            onClick={() => setIsTimelineExpanded(!isTimelineExpanded)}
-            title={isTimelineExpanded ? 'Collapse timeline tracks' : 'Expand timeline tracks'}
+            onClick={() => {
+              setIsTimelineExpanded(!isTimelineExpanded)
+              setIsTimelineWide(!isTimelineWide)
+            }}
+            title={isTimelineExpanded ? 'Collapse timeline' : 'Expand timeline'}
           >
             {isTimelineExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
           </Button>
+          
+          {/* Side panel toggle */}
+          {onToggleSidePanel && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs gap-1 px-2"
+              onClick={onToggleSidePanel}
+              title={isSidePanelVisible ? 'Hide details panel' : 'Show details panel'}
+            >
+              {isSidePanelVisible ? (
+                <><X className="w-3.5 h-3.5" /> Panel</>
+              ) : (
+                <><MessageSquare className="w-3.5 h-3.5" /> Panel</>
+              )}
+            </Button>
+          )}
         </div>
       </div>
       
-      {/* Timeline tracks */}
-      <div ref={timelineRef} className="relative" onClick={handleTimelineClick}>
+      {/* Timeline tracks - horizontal scroll enabled */}
+      <div ref={timelineRef} className="relative overflow-x-auto" onClick={handleTimelineClick}>
+        <div className={cn("min-w-[600px]", isTimelineWide && "min-w-[1000px]")}>
         {/* Time ruler */}
         <div className="flex items-stretch h-6 border-b border-gray-200 dark:border-gray-700">
           <div 
@@ -1026,6 +1081,7 @@ export function SceneTimelineV2({
         >
           <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rotate-45" />
         </div>
+        </div>{/* End scrollable min-width container */}
       </div>
       
       {/* Hidden audio elements - keyed by ID:URL to force re-mount when URL changes */}

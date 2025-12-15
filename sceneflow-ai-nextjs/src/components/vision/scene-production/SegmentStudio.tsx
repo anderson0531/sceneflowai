@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { SceneSegment, SceneProductionReferences, SceneSegmentStatus, SegmentKeyframeSettings, KeyframeEasingType, KeyframePanDirection } from './types'
-import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer, MessageSquare, User, Check, Move, ZoomIn, ZoomOut, RotateCcw, Pencil, Layers, Info, Clapperboard, Camera, Sparkles, Users, FileText } from 'lucide-react'
+import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer, MessageSquare, User, Check, Move, ZoomIn, ZoomOut, RotateCcw, Pencil, Layers, Info, Clapperboard, Camera, Sparkles, Users, FileText, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SegmentPromptBuilder, GeneratePromptData, VideoGenerationMethod } from './SegmentPromptBuilder'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
@@ -70,6 +70,8 @@ interface SegmentStudioProps {
   onEstablishingShotStyleChange?: (style: 'single-shot' | 'beat-matched' | 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   // Take selection - allows user to choose which take to use as active asset
   onSelectTake?: (takeId: string, takeAssetUrl: string) => void
+  // Take deletion - allows user to delete a take
+  onDeleteTake?: (takeId: string) => void
   // Scene direction text for backdrop generation
   sceneDirection?: string
   // Scene data for backdrop prompt building
@@ -110,6 +112,7 @@ export function SegmentStudio({
   onAddEstablishingShot,
   onEstablishingShotStyleChange,
   onSelectTake,
+  onDeleteTake,
   sceneDirection,
   sceneHeading,
   sceneDescription,
@@ -393,18 +396,35 @@ export function SegmentStudio({
 
       {/* Tabbed Content Area */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-        <TabsList className="flex-shrink-0 grid grid-cols-3 mx-2 mt-2">
-          <TabsTrigger value="generate" className="text-xs gap-1">
-            <Sparkles className="w-3 h-3" />
-            Generate
+        <TabsList className="flex-shrink-0 h-9 p-1 mx-2 mt-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+          <TabsTrigger 
+            value="generate" 
+            className="flex-1 h-7 text-[11px] font-medium gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-md"
+            title="Generate assets"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Generate</span>
           </TabsTrigger>
-          <TabsTrigger value="details" className="text-xs gap-1">
-            <Info className="w-3 h-3" />
-            Details
+          <TabsTrigger 
+            value="details" 
+            className="flex-1 h-7 text-[11px] font-medium gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-md"
+            title="Segment details"
+          >
+            <Info className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Details</span>
           </TabsTrigger>
-          <TabsTrigger value="takes" className="text-xs gap-1">
-            <Layers className="w-3 h-3" />
-            Takes {segment.takes.length > 0 && `(${segment.takes.length})`}
+          <TabsTrigger 
+            value="takes" 
+            className="flex-1 h-7 text-[11px] font-medium gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-md"
+            title="Manage takes"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Takes</span>
+            {segment.takes.length > 0 && (
+              <span className="text-[9px] font-bold bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 px-1 py-0.5 rounded">
+                {segment.takes.length}
+              </span>
+            )}
           </TabsTrigger>
         </TabsList>
         
@@ -688,14 +708,14 @@ export function SegmentStudio({
                   <div
                     key={take.id}
                     className={cn(
-                      'cursor-pointer rounded-lg overflow-hidden border-2 transition-all hover:border-blue-400 dark:hover:border-blue-500',
+                      'cursor-pointer rounded-lg overflow-hidden border-2 transition-all hover:border-blue-400 dark:hover:border-blue-500 relative group',
                       take.assetUrl === segment.activeAssetUrl
                         ? 'border-green-500 ring-2 ring-green-500/30'
                         : 'border-gray-200 dark:border-gray-700'
                     )}
                     onClick={() => take.assetUrl && setPlayingVideoUrl(take.assetUrl)}
                   >
-                    <div className="aspect-video bg-gray-100 dark:bg-gray-800 relative group">
+                    <div className="aspect-video bg-gray-100 dark:bg-gray-800 relative">
                       {take.thumbnailUrl ? (
                         <img src={take.thumbnailUrl} alt={`Take ${idx + 1}`} className="w-full h-full object-cover" />
                       ) : (
@@ -710,6 +730,21 @@ export function SegmentStudio({
                         <div className="absolute top-1 right-1 bg-green-500 rounded-full p-0.5">
                           <CheckCircle2 className="w-3 h-3 text-white" />
                         </div>
+                      )}
+                      {/* Delete button - shown on hover, only if not the active take */}
+                      {onDeleteTake && take.assetUrl !== segment.activeAssetUrl && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (confirm(`Delete Take ${idx + 1}? This cannot be undone.`)) {
+                              onDeleteTake(take.id)
+                            }
+                          }}
+                          className="absolute top-1 left-1 p-1 bg-red-500/90 hover:bg-red-600 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                          title="Delete this take"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
                       )}
                       <div className="absolute bottom-1 left-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded">
                         Take {idx + 1}
