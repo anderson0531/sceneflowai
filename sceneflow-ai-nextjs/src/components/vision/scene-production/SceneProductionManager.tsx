@@ -77,6 +77,8 @@ interface SceneProductionManagerProps {
   onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'single-shot' | 'beat-matched' | 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   // Take selection - allows user to choose which take to use as active asset
   onSelectTake?: (sceneId: string, segmentId: string, takeId: string, takeAssetUrl: string) => void
+  // Stale audio cleanup - removes 404'd audio URLs from scene data
+  onCleanupStaleAudioUrl?: (sceneId: string, staleUrl: string) => void
 }
 
 export function SceneProductionManager({
@@ -104,6 +106,7 @@ export function SceneProductionManager({
   onAddEstablishingShot,
   onEstablishingShotStyleChange,
   onSelectTake,
+  onCleanupStaleAudioUrl,
 }: SceneProductionManagerProps) {
   // Ref to always access the latest scene data (avoids stale closure in callbacks)
   const sceneRef = useRef(scene)
@@ -433,8 +436,11 @@ export function SceneProductionManager({
   // V2 Timeline: Handle stale audio URLs (404 errors)
   const handleAudioError = useCallback((clipId: string, url: string) => {
     console.warn(`[SceneProductionManager] Stale audio URL detected: ${url}`)
-    // Could trigger cleanup here if needed
-  }, [])
+    // Clean up the stale URL from scene data and persist
+    if (onCleanupStaleAudioUrl) {
+      onCleanupStaleAudioUrl(sceneId, url)
+    }
+  }, [sceneId, onCleanupStaleAudioUrl])
 
   useEffect(() => {
     if (segments.length > 0) {

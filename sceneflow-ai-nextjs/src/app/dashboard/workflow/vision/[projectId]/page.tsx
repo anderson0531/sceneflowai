@@ -1978,6 +1978,129 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [project?.id, project?.metadata]
   )
   
+  // Handle cleanup of stale audio URLs (404 errors) - removes the URL from scene data and persists
+  const handleCleanupStaleAudioUrl = useCallback(
+    (sceneId: string, staleUrl: string) => {
+      console.log('[Stale Audio Cleanup] Removing stale URL:', staleUrl)
+      
+      setScenes((prevScenes) => {
+        const updatedScenes = prevScenes.map((scene, idx) => {
+          const sceneKey = (scene as any).sceneId || (scene as any).id || `scene-${idx}`
+          if (sceneKey !== sceneId) return scene
+          
+          const updatedScene = JSON.parse(JSON.stringify(scene)) // Deep clone
+          
+          // Check and clear narration audio if URL matches
+          if ((updatedScene as any).narrationAudioUrl === staleUrl) {
+            delete (updatedScene as any).narrationAudioUrl
+          }
+          if ((updatedScene as any).narrationAudio) {
+            // Handle multi-language format
+            if (typeof (updatedScene as any).narrationAudio === 'object') {
+              for (const lang of Object.keys((updatedScene as any).narrationAudio)) {
+                if ((updatedScene as any).narrationAudio[lang]?.url === staleUrl) {
+                  delete (updatedScene as any).narrationAudio[lang]
+                }
+              }
+              // Clean up empty narrationAudio object
+              if (Object.keys((updatedScene as any).narrationAudio).length === 0) {
+                delete (updatedScene as any).narrationAudio
+              }
+            }
+          }
+          
+          // Check and clear description audio if URL matches
+          if ((updatedScene as any).descriptionAudioUrl === staleUrl) {
+            delete (updatedScene as any).descriptionAudioUrl
+          }
+          if ((updatedScene as any).descriptionAudio) {
+            if (typeof (updatedScene as any).descriptionAudio === 'object') {
+              for (const lang of Object.keys((updatedScene as any).descriptionAudio)) {
+                if ((updatedScene as any).descriptionAudio[lang]?.url === staleUrl) {
+                  delete (updatedScene as any).descriptionAudio[lang]
+                }
+              }
+              if (Object.keys((updatedScene as any).descriptionAudio).length === 0) {
+                delete (updatedScene as any).descriptionAudio
+              }
+            }
+          }
+          
+          // Check and clear dialogue audio if URL matches
+          if ((updatedScene as any).dialogueAudio) {
+            for (const lang of Object.keys((updatedScene as any).dialogueAudio)) {
+              const dialogueArray = (updatedScene as any).dialogueAudio[lang]
+              if (Array.isArray(dialogueArray)) {
+                (updatedScene as any).dialogueAudio[lang] = dialogueArray.filter(
+                  (d: any) => d?.url !== staleUrl
+                )
+              }
+            }
+          }
+          
+          // Check and clear SFX if URL matches
+          if (Array.isArray((updatedScene as any).sfx)) {
+            (updatedScene as any).sfx = (updatedScene as any).sfx.filter(
+              (s: any) => s?.url !== staleUrl
+            )
+          }
+          
+          // Check and clear music if URL matches
+          if ((updatedScene as any).musicUrl === staleUrl) {
+            delete (updatedScene as any).musicUrl
+          }
+          
+          return updatedScene
+        })
+        
+        // Persist the cleanup
+        if (project?.id) {
+          // Use a separate debounce for cleanup to batch multiple stale URL removals
+          const cleanupTimeout = setTimeout(async () => {
+            try {
+              const currentMetadata = project.metadata ?? {}
+              const currentVisionPhase = currentMetadata.visionPhase ?? {}
+              
+              const nextVisionPhase = {
+                ...currentVisionPhase,
+                scenes: updatedScenes,
+                script: currentVisionPhase.script
+                  ? {
+                      ...currentVisionPhase.script,
+                      script: {
+                        ...currentVisionPhase.script.script,
+                        scenes: updatedScenes,
+                      },
+                    }
+                  : currentVisionPhase.script,
+              }
+              
+              const nextMetadata = {
+                ...currentMetadata,
+                visionPhase: nextVisionPhase,
+              }
+              
+              await fetch(`/api/projects/${project.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ metadata: nextMetadata }),
+              })
+              
+              console.log('[Stale Audio Cleanup] Persisted cleanup for:', staleUrl)
+            } catch (error) {
+              console.error('[Stale Audio Cleanup] Failed to persist', error)
+            }
+          }, 1000) // Debounce by 1s to batch multiple stale URL cleanups
+          
+          return () => clearTimeout(cleanupTimeout)
+        }
+        
+        return updatedScenes
+      })
+    },
+    [project?.id, project?.metadata]
+  )
+  
   // Script review state
   const [directorReview, setDirectorReview] = useState<any>(null)
   const [audienceReview, setAudienceReview] = useState<any>(null)
@@ -6252,6 +6375,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSegmentResize={handleSegmentResize}
                 onReorderSegments={handleReorderSegments}
                 onAudioClipChange={handleAudioClipChange}
+                onCleanupStaleAudioUrl={handleCleanupStaleAudioUrl}
                 onAddEstablishingShot={handleAddEstablishingShot}
                 onEstablishingShotStyleChange={handleEstablishingShotStyleChange}
                 onSelectTake={handleSelectTake}
