@@ -5253,10 +5253,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (!script) return
 
     const updatedScenes = [...(script.script?.scenes || [])]
+    const originalScene = updatedScenes[sceneIndex]
     
-    // Clear ALL audio from the scene after editing
-    // This ensures no stale audio remains regardless of content changes
-    const { cleanedScene, deletedUrls } = clearAllSceneAudio(revisedScene)
+    // Clear ALL audio from BOTH original and revised scenes to catch all URLs
+    // The revised scene may not have audio URLs (editor doesn't copy them)
+    // So we need to get URLs from the original scene in the database
+    const { deletedUrls: originalDeletedUrls } = clearAllSceneAudio(originalScene)
+    const { cleanedScene, deletedUrls: revisedDeletedUrls } = clearAllSceneAudio(revisedScene)
+    
+    // Combine and dedupe URLs from both scenes
+    const allDeletedUrls = [...new Set([...originalDeletedUrls, ...revisedDeletedUrls])]
+    
     updatedScenes[sceneIndex] = cleanedScene
 
     // Save to database FIRST
@@ -5264,12 +5271,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       await saveScenesToDatabase(updatedScenes)
       
       // Delete orphaned audio blobs in background (don't block UI)
-      if (deletedUrls.length > 0) {
-        console.log(`[Vision] Deleting ${deletedUrls.length} scene audio blob(s)...`)
+      if (allDeletedUrls.length > 0) {
+        console.log(`[Vision] Deleting ${allDeletedUrls.length} scene audio blob(s)...`)
         fetch('/api/blobs/delete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ urls: deletedUrls })
+          body: JSON.stringify({ urls: allDeletedUrls })
         }).then(res => res.json()).then(result => {
           if (result.success) {
             console.log(`[Vision] Deleted ${result.deleted} audio blob(s)`)
