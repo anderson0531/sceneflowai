@@ -968,10 +968,15 @@ export function SceneTimelineV2({
           </div>
         </DndContext>
         
-        {/* Audio tracks */}
+        {/* Audio tracks - narration/description combined track */}
         {(filteredAudioTracks.voiceover || filteredAudioTracks.description) && renderAudioTrack(
           'voiceover',
-          'Narration',
+          // Dynamic label based on what's present
+          filteredAudioTracks.voiceover && filteredAudioTracks.description 
+            ? 'Narration / Description'
+            : filteredAudioTracks.voiceover 
+              ? 'Narration' 
+              : 'Description',
           <Mic className="w-3.5 h-3.5 text-green-500" />,
           [filteredAudioTracks.voiceover, filteredAudioTracks.description].filter((c): c is AudioTrackClipV2 => !!c),
           'bg-gradient-to-r from-green-500 to-green-600'
