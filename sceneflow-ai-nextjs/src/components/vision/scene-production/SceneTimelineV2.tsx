@@ -18,7 +18,7 @@ import { createPortal } from 'react-dom'
 import { 
   Play, Pause, Volume2, VolumeX, Mic, Music, Zap, 
   SkipBack, SkipForward, Film, Plus, Trash2, X, Maximize2, Minimize2, 
-  MessageSquare, GripVertical, Globe, AlertCircle
+  MessageSquare, GripVertical, Globe, AlertCircle, Download
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
@@ -738,7 +738,99 @@ export function SceneTimelineV2({
   const hasAudio = hasAudioForLanguage(filteredAudioTracks)
   
   return (
-    <div className="w-full bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="space-y-4">
+      {/* Scene Video Player - Above Timeline */}
+      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-black overflow-hidden">
+        <div className={cn(
+          "relative mx-auto aspect-video bg-black transition-all duration-200",
+          isPlayerExpanded ? "w-full max-w-3xl" : "w-full max-w-sm"
+        )}>
+          {currentVisualClip?.url ? (
+            <video 
+              ref={videoRef} 
+              className="w-full h-full object-contain" 
+              src={currentVisualClip.url}
+            />
+          ) : currentVisualClip?.thumbnailUrl ? (
+            <img src={currentVisualClip.thumbnailUrl} alt="Preview" className="w-full h-full object-contain" />
+          ) : sceneFrameUrl ? (
+            <img src={sceneFrameUrl} alt="Scene Frame" className="w-full h-full object-contain" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <Film className="w-12 h-12 text-gray-600" />
+            </div>
+          )}
+          {/* Expand/Collapse Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsPlayerExpanded(!isPlayerExpanded)}
+            className="absolute top-2 right-2 h-7 w-7 p-0 bg-black/50 hover:bg-black/70 text-white"
+          >
+            {isPlayerExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </Button>
+        </div>
+        
+        {/* Transport Controls Bar */}
+        <div className="flex items-center justify-center gap-4 px-4 py-2 bg-gray-900 border-t border-gray-800">
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={() => skipTo(0)} className="h-8 w-8 p-0 text-white hover:bg-gray-800">
+              <SkipBack className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={togglePlayback} className="h-10 w-10 p-0 text-white hover:bg-gray-800">
+              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => skipTo(sceneDuration)} className="h-8 w-8 p-0 text-white hover:bg-gray-800">
+              <SkipForward className="w-4 h-4" />
+            </Button>
+          </div>
+          
+          <div className="w-px h-5 bg-gray-700" />
+          
+          <span className="text-sm font-mono text-gray-300">
+            {formatTime(currentTime)} / {formatTime(sceneDuration)}
+          </span>
+          
+          <div className="w-px h-5 bg-gray-700" />
+          
+          <span className="text-xs text-gray-400">
+            Seg {(visualClips.findIndex(c => c.id === currentVisualClip?.id) ?? 0) + 1} / {visualClips.length}
+          </span>
+          
+          {/* Language selector in transport bar */}
+          {availableLanguages.length > 1 && (
+            <>
+              <div className="w-px h-5 bg-gray-700" />
+              <Select value={selectedLanguage} onValueChange={onLanguageChange}>
+                <SelectTrigger className="h-7 w-[100px] text-xs bg-gray-800 border-gray-700 text-gray-300">
+                  <Globe className="w-3 h-3 mr-1" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableLanguages.map(lang => (
+                    <SelectItem key={lang} value={lang} className="text-xs">
+                      {LANGUAGE_LABELS[lang] || lang.toUpperCase()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          )}
+          
+          {onGenerateSceneMp4 && (
+            <>
+              <div className="flex-1" />
+              <Button variant="outline" size="sm" onClick={onGenerateSceneMp4} className="h-8 text-xs gap-1.5 border-gray-700 text-gray-300 hover:bg-gray-800">
+                <Download className="w-3.5 h-3.5" />
+                Generate MP4
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+      
+      {/* Timeline Tracks Section */}
+      <div className="w-full bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
       {/* Header with controls */}
       <div className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-3">
@@ -946,14 +1038,7 @@ export function SceneTimelineV2({
           onError={() => handleAudioError(clip.id, clip.url!)}
         />
       ))}
-      
-      {/* Hidden video element for visual preview during playback */}
-      <video
-        ref={videoRef}
-        className="hidden"
-        playsInline
-        muted={false}
-      />
+      </div>{/* End Timeline Tracks Section */}
     </div>
   )
 }
