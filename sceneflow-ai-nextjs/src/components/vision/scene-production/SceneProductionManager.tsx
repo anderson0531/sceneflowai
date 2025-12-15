@@ -201,16 +201,8 @@ export function SceneProductionManager({
     [sceneId, onSegmentResize]
   )
   
-  // Wrapper for backdrop video generation - inserts segment before current
-  const handleBackdropVideoGeneratedWrapper = useCallback(
-    (result: { videoUrl: string; prompt: string; backdropMode: string; duration: number }) => {
-      if (onBackdropVideoGenerated && selectedSegmentId) {
-        const segmentIndex = segments.findIndex(s => s.segmentId === selectedSegmentId)
-        onBackdropVideoGenerated(sceneId, segmentIndex >= 0 ? segmentIndex : 0, result)
-      }
-    },
-    [sceneId, onBackdropVideoGenerated, selectedSegmentId, segments]
-  )
+  // NOTE: handleBackdropVideoGeneratedWrapper is defined after selectedSegmentId (line ~540)
+  // to avoid TDZ (Temporal Dead Zone) errors in minified production builds
   
   // Build scene data for backdrop video modal
   const sceneForBackdrop = useMemo(() => {
@@ -533,6 +525,17 @@ export function SceneProductionManager({
       }
     },
     [sceneId, selectedSegmentId, onDeleteTake]
+  )
+  
+  // Wrapper for backdrop video generation - MUST be defined after selectedSegmentId
+  const handleBackdropVideoGeneratedWrapper = useCallback(
+    (result: { videoUrl: string; prompt: string; backdropMode: string; duration: number }) => {
+      if (onBackdropVideoGenerated && selectedSegmentId) {
+        const segmentIndex = segments.findIndex(s => s.segmentId === selectedSegmentId)
+        onBackdropVideoGenerated(sceneId, segmentIndex >= 0 ? segmentIndex : 0, result)
+      }
+    },
+    [sceneId, onBackdropVideoGenerated, selectedSegmentId, segments]
   )
 
   // Audio Assets Management handlers
