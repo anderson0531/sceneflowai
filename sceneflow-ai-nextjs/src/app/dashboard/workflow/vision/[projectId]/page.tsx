@@ -5331,118 +5331,112 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     // Get the CURRENT scene from state (has all audio references)
     const currentScene = script.script.scenes[sceneIndex]
     
-    // Show screen freeze and generation toast
-    setIsGeneratingAudio(true)
-    toast.info(`Updating audio for Scene ${sceneIndex + 1}...`, { duration: 3000 })
-    
-    try {
-      // First, clear ALL existing audio from the scene
-      // This removes all audio URLs from the scene object
-      const { cleanedScene, deletedUrls } = clearAllSceneAudio(currentScene)
-      
-      console.log(`[Update Scene Audio] Clearing ${deletedUrls.length} audio reference(s) from Scene ${sceneIndex + 1}`)
-      
-      // Update state with cleaned scene FIRST to stop any playback attempts
-      const updatedScenes = [...script.script.scenes]
-      updatedScenes[sceneIndex] = cleanedScene
-      
-      setScript({
-        ...script,
-        script: {
-          ...script.script,
-          scenes: updatedScenes
-        }
-      })
-      
-      // Force cache clear in ScreeningRoom
-      setScriptEditedAt(Date.now())
-      
-      // Save cleaned scene to database BEFORE deleting blobs
-      // This ensures no UI tries to load the old URLs
-      await saveScenesToDatabase(updatedScenes)
-      console.log(`[Update Scene Audio] Saved cleaned scene to database`)
-      
-      // Delete audio blobs from storage (in background, don't block)
-      if (deletedUrls.length > 0) {
-        console.log(`[Update Scene Audio] Deleting ${deletedUrls.length} audio blob(s) from storage...`)
-        fetch('/api/blobs/delete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ urls: deletedUrls })
-        }).then(res => res.json()).then(result => {
-          if (result.success) {
-            console.log(`[Update Scene Audio] Deleted ${result.deleted} blob(s)`)
-          }
-        }).catch(err => {
-          console.warn('[Update Scene Audio] Error deleting blobs:', err)
-        })
-      }
-      
-      // Now build list of audio to generate based on CLEANED scene content
-      const generationTasks: Array<{type: 'description' | 'narration' | 'dialogue', character?: string, dialogueIndex?: number, label: string}> = []
-      
-      // Add description if scene has visual content
-      if (cleanedScene.visualDescription || cleanedScene.action || cleanedScene.summary) {
-        generationTasks.push({ type: 'description', label: 'description' })
-      }
-      
-      // Add narration if scene has narration text
-      if (cleanedScene.narration) {
-        generationTasks.push({ type: 'narration', label: 'narration' })
-      }
-      
-      // Add all dialogue lines
-      if (cleanedScene.dialogue && cleanedScene.dialogue.length > 0) {
-        cleanedScene.dialogue.forEach((d: any, idx: number) => {
-          if (d.line && d.character) {
-            generationTasks.push({ 
-              type: 'dialogue', 
-              character: d.character, 
-              dialogueIndex: idx,
-              label: `dialogue (${d.character})`
-            })
+    // Use the standard freeze screen overlay pattern
+    await execute(
+      async () => {
+        // First, clear ALL existing audio from the scene
+        // This removes all audio URLs from the scene object AND from dialogue items
+        const { cleanedScene, deletedUrls } = clearAllSceneAudio(currentScene)
+        
+        console.log(`[Update Scene Audio] Clearing ${deletedUrls.length} audio reference(s) from Scene ${sceneIndex + 1}`)
+        
+        // Update state with cleaned scene FIRST to stop any playback attempts
+        const updatedScenes = [...script.script.scenes]
+        updatedScenes[sceneIndex] = cleanedScene
+        
+        setScript({
+          ...script,
+          script: {
+            ...script.script,
+            scenes: updatedScenes
           }
         })
-      }
-      
-      if (generationTasks.length === 0) {
-        toast.info(`No audio content to generate for Scene ${sceneIndex + 1}`)
-        return
-      }
-      
-      toast.info(`Generating ${generationTasks.length} audio file(s) for Scene ${sceneIndex + 1}...`)
-      
-      // Generate audio sequentially
-      let successCount = 0
-      for (let i = 0; i < generationTasks.length; i++) {
-        const task = generationTasks[i]
-        try {
-          await handleGenerateSceneAudio(sceneIndex, task.type, task.character, task.dialogueIndex)
-          successCount++
-        } catch (error) {
-          console.error(`[Update Scene Audio] Failed to generate ${task.label}:`, error)
+        
+        // Force cache clear in ScreeningRoom
+        setScriptEditedAt(Date.now())
+        
+        // Save cleaned scene to database BEFORE deleting blobs
+        // This ensures no UI tries to load the old URLs
+        await saveScenesToDatabase(updatedScenes)
+        console.log(`[Update Scene Audio] Saved cleaned scene to database`)
+        
+        // Delete audio blobs from storage (in background, don't block)
+        if (deletedUrls.length > 0) {
+          console.log(`[Update Scene Audio] Deleting ${deletedUrls.length} audio blob(s) from storage...`)
+          fetch('/api/blobs/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ urls: deletedUrls })
+          }).then(res => res.json()).then(result => {
+            if (result.success) {
+              console.log(`[Update Scene Audio] Deleted ${result.deleted} blob(s)`)
+            }
+          }).catch(err => {
+            console.warn('[Update Scene Audio] Error deleting blobs:', err)
+          })
         }
+        
+        // Now build list of audio to generate based on CLEANED scene content
+        const generationTasks: Array<{type: 'description' | 'narration' | 'dialogue', character?: string, dialogueIndex?: number, label: string}> = []
+        
+        // Add description if scene has visual content
+        if (cleanedScene.visualDescription || cleanedScene.action || cleanedScene.summary) {
+          generationTasks.push({ type: 'description', label: 'description' })
+        }
+        
+        // Add narration if scene has narration text
+        if (cleanedScene.narration) {
+          generationTasks.push({ type: 'narration', label: 'narration' })
+        }
+        
+        // Add all dialogue lines
+        if (cleanedScene.dialogue && cleanedScene.dialogue.length > 0) {
+          cleanedScene.dialogue.forEach((d: any, idx: number) => {
+            if (d.line && d.character) {
+              generationTasks.push({ 
+                type: 'dialogue', 
+                character: d.character, 
+                dialogueIndex: idx,
+                label: `dialogue (${d.character})`
+              })
+            }
+          })
+        }
+        
+        if (generationTasks.length === 0) {
+          toast.info(`No audio content to generate for Scene ${sceneIndex + 1}`)
+          return
+        }
+        
+        // Generate audio sequentially
+        let successCount = 0
+        for (let i = 0; i < generationTasks.length; i++) {
+          const task = generationTasks[i]
+          try {
+            await handleGenerateSceneAudio(sceneIndex, task.type, task.character, task.dialogueIndex)
+            successCount++
+          } catch (error) {
+            console.error(`[Update Scene Audio] Failed to generate ${task.label}:`, error)
+          }
+        }
+        
+        // Show completion message
+        if (successCount === generationTasks.length) {
+          toast.success(`All audio regenerated for Scene ${sceneIndex + 1}`)
+        } else if (successCount > 0) {
+          toast.warning(`Regenerated ${successCount}/${generationTasks.length} audio files for Scene ${sceneIndex + 1}`)
+        } else {
+          toast.error('Failed to regenerate audio')
+        }
+        
+        // Reload project to ensure consistency
+        await loadProject()
+      },
+      {
+        title: `Updating Audio for Scene ${sceneIndex + 1}`,
+        estimatedDuration: 30, // Estimate 30 seconds for audio generation
       }
-      
-      // Show completion message
-      if (successCount === generationTasks.length) {
-        toast.success(`All audio regenerated for Scene ${sceneIndex + 1}`)
-      } else if (successCount > 0) {
-        toast.warning(`Regenerated ${successCount}/${generationTasks.length} audio files for Scene ${sceneIndex + 1}`)
-      } else {
-        toast.error('Failed to regenerate audio')
-      }
-      
-      // Reload project to ensure consistency
-      await loadProject()
-      
-    } catch (error) {
-      console.error('[Update Scene Audio] Error:', error)
-      toast.error('Failed to update scene audio')
-    } finally {
-      // Always clear the generating state
-      setIsGeneratingAudio(false)
-    }
+    )
   }
 
   // Scene score generation handler

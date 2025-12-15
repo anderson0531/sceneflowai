@@ -198,20 +198,52 @@ export function clearAllSceneAudio(scene: any): CleanupResult {
     deletedUrls.push(scene.descriptionAudioUrl)
   }
   
-  // Dialogue audio
+  // Dialogue audio - from dialogueAudio object
   if (scene.dialogueAudio) {
     if (typeof scene.dialogueAudio === 'object' && !Array.isArray(scene.dialogueAudio)) {
       for (const audioArray of Object.values(scene.dialogueAudio)) {
         if (Array.isArray(audioArray)) {
           for (const audio of audioArray) {
             if ((audio as any).audioUrl) deletedUrls.push((audio as any).audioUrl)
+            if ((audio as any).url) deletedUrls.push((audio as any).url)
           }
         }
       }
     } else if (Array.isArray(scene.dialogueAudio)) {
       for (const audio of scene.dialogueAudio) {
         if (audio.audioUrl) deletedUrls.push(audio.audioUrl)
+        if (audio.url) deletedUrls.push(audio.url)
       }
+    }
+  }
+  
+  // Dialogue audio - from individual dialogue items (scene.dialogue[].audioUrl)
+  // Also clear the audioUrl from each dialogue item
+  if (scene.dialogue && Array.isArray(scene.dialogue)) {
+    cleanedScene.dialogue = scene.dialogue.map((d: any) => {
+      if (d.audioUrl) deletedUrls.push(d.audioUrl)
+      if (d.url) deletedUrls.push(d.url)
+      // Return dialogue item without audio properties
+      const { audioUrl, url, audioDuration, ...dialogueWithoutAudio } = d
+      return dialogueWithoutAudio
+    })
+  }
+  
+  // Music audio
+  if (scene.musicAudio) {
+    deletedUrls.push(scene.musicAudio)
+  }
+  if (scene.music?.url) {
+    deletedUrls.push(scene.music.url)
+  }
+  if (scene.musicUrl) {
+    deletedUrls.push(scene.musicUrl)
+  }
+  
+  // SFX audio
+  if (Array.isArray(scene.sfxAudio)) {
+    for (const sfxUrl of scene.sfxAudio) {
+      if (sfxUrl) deletedUrls.push(sfxUrl)
     }
   }
   
@@ -219,13 +251,23 @@ export function clearAllSceneAudio(scene: any): CleanupResult {
   delete cleanedScene.dialogueAudio
   delete cleanedScene.narrationAudio
   delete cleanedScene.narrationAudioUrl
+  delete cleanedScene.narrationDuration
   delete cleanedScene.descriptionAudio
   delete cleanedScene.descriptionAudioUrl
+  delete cleanedScene.descriptionDuration
   delete cleanedScene.musicAudio
+  delete cleanedScene.musicUrl
+  delete cleanedScene.musicDuration
+  if (cleanedScene.music) {
+    delete cleanedScene.music.url
+  }
   delete cleanedScene.sfxAudio
   delete cleanedScene.dialogueAudioGeneratedAt
   
-  return { cleanedScene, deletedUrls }
+  // Dedupe URLs
+  const uniqueUrls = [...new Set(deletedUrls.filter(url => url && typeof url === 'string'))]
+  
+  return { cleanedScene, deletedUrls: uniqueUrls }
 }
 
 /**
