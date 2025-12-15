@@ -155,3 +155,89 @@ export interface SceneProductionReferences {
   objectReferences: VisualReference[]
 }
 
+// ============================================================================
+// V2 Audio Timeline Types - Multi-Language Support & Single Source of Truth
+// ============================================================================
+
+/**
+ * Supported audio track types in the timeline
+ */
+export type AudioTrackType = 'voiceover' | 'dialogue' | 'music' | 'sfx'
+
+/**
+ * Source of an audio clip - used for debugging and cleanup
+ */
+export type AudioClipSource = 'scene' | 'upload' | 'generated'
+
+/**
+ * Base audio clip definition (extends V1 AudioTrackClip for compatibility)
+ */
+export interface AudioTrackClipV2 {
+  id: string
+  url: string | null  // null = no audio, avoids stale URL references
+  startTime: number   // In seconds, relative to scene start
+  duration: number    // In seconds
+  label?: string
+  volume?: number     // 0-1
+  trimStart?: number  // Offset from start of source
+  trimEnd?: number    // Offset from end of source
+  // V2 additions
+  language: string    // 'en', 'es', 'th', etc.
+  source: AudioClipSource
+  scenePropertyPath?: string  // e.g., 'narrationAudio.en.url' for debugging
+  characterName?: string      // For dialogue clips
+  dialogueIndex?: number      // Index in scene.dialogue array
+}
+
+/**
+ * Multi-language audio tracks - stores all languages, keyed by language code
+ */
+export interface MultiLanguageAudioTracks {
+  [language: string]: AudioTracksDataV2
+}
+
+/**
+ * Audio tracks for a single language
+ */
+export interface AudioTracksDataV2 {
+  voiceover: AudioTrackClipV2 | null
+  description: AudioTrackClipV2 | null
+  dialogue: AudioTrackClipV2[]
+  music: AudioTrackClipV2 | null
+  sfx: AudioTrackClipV2[]
+}
+
+/**
+ * Complete timeline audio state - tracks selected language and available options
+ */
+export interface TimelineAudioState {
+  selectedLanguage: string
+  availableLanguages: string[]
+  tracks: MultiLanguageAudioTracks
+  audioHash: string  // Hash of all URLs for change detection
+}
+
+/**
+ * Props for SceneTimelineV2 component
+ */
+export interface SceneTimelineV2Props {
+  segments: SceneSegment[]
+  scene: any  // Scene object from script.script.scenes[idx]
+  selectedSegmentId?: string
+  selectedLanguage: string
+  onLanguageChange: (language: string) => void
+  onSegmentSelect: (segmentId: string) => void
+  onPlayheadChange?: (time: number, segmentId?: string) => void
+  onGenerateSceneMp4?: () => void
+  onVisualClipChange?: (clipId: string, changes: { startTime?: number; duration?: number; trimStart?: number; trimEnd?: number }) => void
+  onAudioClipChange?: (trackType: AudioTrackType, clipId: string, changes: { startTime?: number; duration?: number }) => void
+  onAddSegment?: (afterSegmentId: string | null, duration: number) => void
+  onDeleteSegment?: (segmentId: string) => void
+  onReorderSegments?: (oldIndex: number, newIndex: number) => void
+  onAddEstablishingShot?: () => void
+  onAudioError?: (clipId: string, url: string) => void  // Handle 404s
+  sceneFrameUrl?: string | null
+  // Phase 2: Dialogue coverage indicators
+  dialogueAssignments?: Record<string, Set<string>>
+}
+

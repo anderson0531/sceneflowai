@@ -4,12 +4,14 @@ import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { SceneTimeline, AudioTracksData } from './SceneTimeline'
+import { SceneTimelineV2 } from './SceneTimelineV2'
 import { SegmentStudio, GenerationType } from './SegmentStudio'
 import {
   SceneProductionData,
   SceneProductionReferences,
   SceneSegment,
   SegmentKeyframeSettings,
+  AudioTrackType,
 } from './types'
 import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Film, Clock, Sliders, MessageSquare, Settings2, Volume2 } from 'lucide-react'
 import { AudioAssetsDialog, AudioTrackClip } from './AudioAssetsDialog'
@@ -402,6 +404,37 @@ export function SceneProductionManager({
   const [currentPlayingSegmentId, setCurrentPlayingSegmentId] = useState<string | null>(null)
   const segments = productionData?.segments ?? []
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(segments[0]?.segmentId ?? null)
+  
+  // V2 Timeline: Multi-language support - persist selected language
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('sceneflow-selected-language') || 'en'
+    }
+    return 'en'
+  })
+  
+  // Persist language selection
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sceneflow-selected-language', selectedLanguage)
+    }
+  }, [selectedLanguage])
+  
+  // V2 Timeline: Audio clip change wrapper with AudioTrackType
+  const handleAudioClipChangeV2Wrapper = useCallback(
+    (trackType: AudioTrackType, clipId: string, changes: { startTime?: number; duration?: number }) => {
+      if (onAudioClipChange) {
+        onAudioClipChange(sceneId, trackType, clipId, changes)
+      }
+    },
+    [sceneId, onAudioClipChange]
+  )
+  
+  // V2 Timeline: Handle stale audio URLs (404 errors)
+  const handleAudioError = useCallback((clipId: string, url: string) => {
+    console.warn(`[SceneProductionManager] Stale audio URL detected: ${url}`)
+    // Could trigger cleanup here if needed
+  }, [])
 
   useEffect(() => {
     if (segments.length > 0) {
@@ -1094,23 +1127,25 @@ export function SceneProductionManager({
 
         {/* Optimized Layout: Timeline (left) + Segment Studio Panel (right) */}
         <div className="flex gap-4 h-[680px] overflow-y-auto overflow-x-auto">
-          {/* Main Area: Scene Timeline with Video Player */}
+          {/* Main Area: Scene Timeline V2 with Video Player - Single Source of Truth */}
           <div className="flex-1 min-w-0 flex flex-col min-w-[500px]">
-            <SceneTimeline
-              key={audioTracksKey}
+            <SceneTimelineV2
               segments={segments}
+              scene={scene}
               selectedSegmentId={selectedSegmentId ?? undefined}
+              selectedLanguage={selectedLanguage}
+              onLanguageChange={setSelectedLanguage}
               onSegmentSelect={setSelectedSegmentId}
-              audioTracks={audioTracks}
               onPlayheadChange={handlePlayheadChange}
               onGenerateSceneMp4={onGenerateSceneMp4}
               onVisualClipChange={onSegmentResize ? handleSegmentResizeWrapper : undefined}
               onAddSegment={onAddSegment ? handleAddSegmentWrapper : undefined}
               onDeleteSegment={onDeleteSegment ? handleDeleteSegmentWrapper : undefined}
-              onAudioClipChange={onAudioClipChange ? handleAudioClipChangeWrapper : undefined}
+              onAudioClipChange={onAudioClipChange ? handleAudioClipChangeV2Wrapper : undefined}
               dialogueAssignments={dialogueAssignments}
               onReorderSegments={onReorderSegments ? handleReorderSegmentsWrapper : undefined}
-              onAddEstablishingShot={onAddEstablishingShot ? handleAddEstablishingShotWrapper : undefined}
+              onAddEstablishingShot={onAddEstablishingShot ? () => handleAddEstablishingShotWrapper('single-shot') : undefined}
+              onAudioError={handleAudioError}
               sceneFrameUrl={scene?.imageUrl}
             />
           </div>
