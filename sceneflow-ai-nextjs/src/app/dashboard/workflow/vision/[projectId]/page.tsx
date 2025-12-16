@@ -4996,127 +4996,139 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       const data = await response.json()
       if (data.success) {
-        // Build updated scenes with new audio URL
-        const currentScenes = script?.script?.scenes || []
-        if (!currentScenes[sceneIdx]) {
-          console.error('[Generate Scene Audio] Scene not found at index:', sceneIdx)
-          return
-        }
+        // Use functional update to ensure we're working with latest state
+        // This is critical when multiple audio generations run sequentially
+        let updatedScenesForDb: any[] = []
         
-        const updatedScenes = [...currentScenes]
-        const scene = { ...updatedScenes[sceneIdx] }
-        
-        if (audioType === 'narration') {
-          // Initialize narrationAudio if it doesn't exist
-          if (!scene.narrationAudio) {
-            scene.narrationAudio = {}
-          } else {
-            scene.narrationAudio = { ...scene.narrationAudio }
+        setScript((prevScript: any) => {
+          const currentScenes = prevScript?.script?.scenes || []
+          if (!currentScenes[sceneIdx]) {
+            console.error('[Generate Scene Audio] Scene not found at index:', sceneIdx)
+            return prevScript
           }
           
-          // Store language-specific narration audio
-          scene.narrationAudio[language] = {
-            url: data.audioUrl,
-            duration: data.duration || undefined,
-            generatedAt: new Date().toISOString(),
-            voiceId: voiceConfig.voiceId
-          }
+          const updatedScenes = [...currentScenes]
+          const scene = { ...updatedScenes[sceneIdx] }
           
-          // Maintain backward compatibility: set narrationAudioUrl for English
-          if (language === 'en') {
-            scene.narrationAudioUrl = data.audioUrl
-            scene.narrationAudioGeneratedAt = new Date().toISOString()
-          }
-          
-          updatedScenes[sceneIdx] = scene
-        } else if (audioType === 'description') {
-          if (!scene.descriptionAudio) {
-            scene.descriptionAudio = {}
-          } else {
-            scene.descriptionAudio = { ...scene.descriptionAudio }
-          }
-
-          scene.descriptionAudio[language] = {
-            url: data.audioUrl,
-            duration: data.duration || undefined,
-            generatedAt: new Date().toISOString(),
-            voiceId: voiceConfig.voiceId
-          }
-
-          // Maintain backward compatibility: set descriptionAudioUrl for English
-          if (language === 'en') {
-            scene.descriptionAudioUrl = data.audioUrl
-            scene.descriptionAudioGeneratedAt = new Date().toISOString()
-          }
-
-          updatedScenes[sceneIdx] = scene
-        } else if (audioType === 'dialogue' && characterName) {
-          // Initialize dialogueAudio object if needed
-          if (!scene.dialogueAudio || Array.isArray(scene.dialogueAudio)) {
-            // Migrate old array format if exists
-            if (Array.isArray(scene.dialogueAudio) && scene.dialogueAudio.length > 0) {
-              scene.dialogueAudio = { en: scene.dialogueAudio }
+          if (audioType === 'narration') {
+            // Initialize narrationAudio if it doesn't exist
+            if (!scene.narrationAudio) {
+              scene.narrationAudio = {}
             } else {
-              scene.dialogueAudio = {}
+              scene.narrationAudio = { ...scene.narrationAudio }
             }
-          } else {
-            scene.dialogueAudio = { ...scene.dialogueAudio }
+            
+            // Store language-specific narration audio
+            scene.narrationAudio[language] = {
+              url: data.audioUrl,
+              duration: data.duration || undefined,
+              generatedAt: new Date().toISOString(),
+              voiceId: voiceConfig.voiceId
+            }
+            
+            // Maintain backward compatibility: set narrationAudioUrl for English
+            if (language === 'en') {
+              scene.narrationAudioUrl = data.audioUrl
+              scene.narrationAudioGeneratedAt = new Date().toISOString()
+            }
+            
+            updatedScenes[sceneIdx] = scene
+          } else if (audioType === 'description') {
+            if (!scene.descriptionAudio) {
+              scene.descriptionAudio = {}
+            } else {
+              scene.descriptionAudio = { ...scene.descriptionAudio }
+            }
+
+            scene.descriptionAudio[language] = {
+              url: data.audioUrl,
+              duration: data.duration || undefined,
+              generatedAt: new Date().toISOString(),
+              voiceId: voiceConfig.voiceId
+            }
+
+            // Maintain backward compatibility: set descriptionAudioUrl for English
+            if (language === 'en') {
+              scene.descriptionAudioUrl = data.audioUrl
+              scene.descriptionAudioGeneratedAt = new Date().toISOString()
+            }
+
+            updatedScenes[sceneIdx] = scene
+          } else if (audioType === 'dialogue' && characterName) {
+            // Initialize dialogueAudio object if needed
+            if (!scene.dialogueAudio || Array.isArray(scene.dialogueAudio)) {
+              // Migrate old array format if exists
+              if (Array.isArray(scene.dialogueAudio) && scene.dialogueAudio.length > 0) {
+                scene.dialogueAudio = { en: scene.dialogueAudio }
+              } else {
+                scene.dialogueAudio = {}
+              }
+            } else {
+              scene.dialogueAudio = { ...scene.dialogueAudio }
+            }
+            
+            // Initialize language array if it doesn't exist
+            if (!scene.dialogueAudio[language]) {
+              scene.dialogueAudio[language] = []
+            }
+            
+            const dialogueArray = [...scene.dialogueAudio[language]]
+            const existingIndex = dialogueArray.findIndex((d: any) => 
+              d.character === characterName && d.dialogueIndex === dialogueIndex
+            )
+            
+            const dialogueEntry = {
+              character: characterName,
+              dialogueIndex: dialogueIndex!,
+              audioUrl: data.audioUrl,
+              duration: data.duration || undefined,
+              voiceId: voiceConfig.voiceId
+            }
+            
+            if (existingIndex >= 0) {
+              dialogueArray[existingIndex] = dialogueEntry
+            } else {
+              dialogueArray.push(dialogueEntry)
+            }
+            
+            scene.dialogueAudio[language] = dialogueArray
+            scene.dialogueAudioGeneratedAt = new Date().toISOString()
+            
+            updatedScenes[sceneIdx] = scene
           }
           
-          // Initialize language array if it doesn't exist
-          if (!scene.dialogueAudio[language]) {
-            scene.dialogueAudio[language] = []
-          }
+          // DEBUG: Log what we're about to set in state
+          console.log('[Generate Scene Audio] Updating script state with new audio:', {
+            sceneIdx,
+            audioType,
+            updatedScene: {
+              narrationAudioUrl: updatedScenes[sceneIdx]?.narrationAudioUrl?.substring(0, 60),
+              narrationAudioEn: updatedScenes[sceneIdx]?.narrationAudio?.en?.url?.substring(0, 60),
+              dialogueAudioEnLength: updatedScenes[sceneIdx]?.dialogueAudio?.en?.length,
+            }
+          })
           
-          const dialogueArray = [...scene.dialogueAudio[language]]
-          const existingIndex = dialogueArray.findIndex((d: any) => 
-            d.character === characterName && d.dialogueIndex === dialogueIndex
-          )
+          // Capture for database save (outside the callback)
+          updatedScenesForDb = updatedScenes
           
-          const dialogueEntry = {
-            character: characterName,
-            dialogueIndex: dialogueIndex!,
-            audioUrl: data.audioUrl,
-            duration: data.duration || undefined,
-            voiceId: voiceConfig.voiceId
-          }
-          
-          if (existingIndex >= 0) {
-            dialogueArray[existingIndex] = dialogueEntry
-          } else {
-            dialogueArray.push(dialogueEntry)
-          }
-          
-          scene.dialogueAudio[language] = dialogueArray
-          scene.dialogueAudioGeneratedAt = new Date().toISOString()
-          
-          updatedScenes[sceneIdx] = scene
-        }
-        
-        // DEBUG: Log what we're about to set in state
-        console.log('[Generate Scene Audio] Updating script state with new audio:', {
-          sceneIdx,
-          audioType,
-          updatedScene: {
-            narrationAudioUrl: updatedScenes[sceneIdx]?.narrationAudioUrl?.substring(0, 60),
-            narrationAudioEn: updatedScenes[sceneIdx]?.narrationAudio?.en?.url?.substring(0, 60),
-            dialogueAudioEnLength: updatedScenes[sceneIdx]?.dialogueAudio?.en?.length,
+          return {
+            ...prevScript,
+            script: {
+              ...prevScript?.script,
+              scenes: updatedScenes
+            }
           }
         })
-        
-        // Update React state
-        setScript((prevScript: any) => ({
-          ...prevScript,
-          script: {
-            ...prevScript?.script,
-            scenes: updatedScenes
-          }
-        }))
         
         // Persist to database (fire and forget, don't block UI)
-        saveScenesToDatabase(updatedScenes).catch(err => {
-          console.error('[Generate Scene Audio] Failed to save to database:', err)
-        })
+        // Use a small delay to ensure state update has processed
+        setTimeout(() => {
+          if (updatedScenesForDb.length > 0) {
+            saveScenesToDatabase(updatedScenesForDb).catch(err => {
+              console.error('[Generate Scene Audio] Failed to save to database:', err)
+            })
+          }
+        }, 100)
         
         try { const { toast } = require('sonner'); toast.success('Audio generated!') } catch {}
       } else {
@@ -5667,8 +5679,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           toast.error('Failed to regenerate audio')
         }
         
-        // Reload project to ensure consistency
-        await loadProject()
+        // NOTE: Removed loadProject() - it was causing race condition where
+        // state would be overwritten with stale data before all DB writes completed.
+        // Each handleGenerateSceneAudio call updates state with functional updates.
       },
       {
         title: `Updating Audio for Scene ${sceneIndex + 1}`,
