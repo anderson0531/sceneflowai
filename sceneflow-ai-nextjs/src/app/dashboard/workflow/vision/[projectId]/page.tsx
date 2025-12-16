@@ -5547,8 +5547,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         toast.success('Scene changes applied - use Update Audio to regenerate audio')
       } catch {}
       
-      // Reload project to ensure consistency
-      await loadProject()
+      // NOTE: Removed loadProject() call - it was causing race condition
+      // where stale data would be reloaded before DB write completed.
+      // Local state update above is sufficient since saveScenesToDatabase was awaited.
     } catch (error) {
       console.error('[Vision] Failed to save scene changes:', error)
       try {
