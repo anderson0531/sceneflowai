@@ -5571,6 +5571,157 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  // Generate music for a scene (used by handleUpdateSceneAudio)
+  const generateMusicForScene = async (sceneIndex: number, scene: any) => {
+    const music = scene.music
+    if (!music) return
+    
+    const description = typeof music === 'string' ? music : music.description
+    const duration = scene.duration || 30
+    
+    console.log(`[Update Scene Audio] Generating music for Scene ${sceneIndex + 1}...`)
+    
+    const response = await fetch('/api/tts/elevenlabs/music', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: description, duration })
+    })
+    
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.details || 'Music generation failed')
+    }
+    
+    const blob = await response.blob()
+    
+    // Upload to blob storage
+    const formData = new FormData()
+    const fileName = `music-${projectId}-scene-${sceneIndex}-${Date.now()}.mp3`
+    formData.append('file', blob, fileName)
+    
+    const uploadResponse = await fetch('/api/audio/upload', {
+      method: 'POST',
+      body: formData
+    })
+    
+    if (!uploadResponse.ok) {
+      throw new Error('Failed to upload music audio')
+    }
+    
+    const uploadData = await uploadResponse.json()
+    const audioUrl = uploadData.audioUrl
+    
+    // Update state with music URL
+    setScript((prevScript: any) => {
+      const updatedScenes = [...(prevScript?.script?.scenes || [])]
+      if (updatedScenes[sceneIndex]) {
+        updatedScenes[sceneIndex] = {
+          ...updatedScenes[sceneIndex],
+          musicAudio: audioUrl
+        }
+      }
+      
+      // Save to DB in background
+      setTimeout(() => {
+        saveScenesToDatabase(updatedScenes).catch(err => {
+          console.error('[Update Scene Audio] Failed to save music to database:', err)
+        })
+      }, 100)
+      
+      return {
+        ...prevScript,
+        script: {
+          ...prevScript?.script,
+          scenes: updatedScenes
+        }
+      }
+    })
+    
+    console.log(`[Update Scene Audio] Music generated for Scene ${sceneIndex + 1}`)
+  }
+  
+  // Generate SFX for a scene (used by handleUpdateSceneAudio)
+  const generateSFXForScene = async (sceneIndex: number, sfxIndex: number, scene: any) => {
+    const sfx = scene.sfx?.[sfxIndex]
+    if (!sfx) return
+    
+    const description = typeof sfx === 'string' ? sfx : sfx.description
+    
+    console.log(`[Update Scene Audio] Generating SFX ${sfxIndex + 1} for Scene ${sceneIndex + 1}...`)
+    
+    const response = await fetch('/api/tts/elevenlabs/sound-effects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: description, duration: 2.0 })
+    })
+    
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.details || 'SFX generation failed')
+    }
+    
+    const blob = await response.blob()
+    
+    // Upload to blob storage
+    const formData = new FormData()
+    const fileName = `sfx-${projectId}-scene-${sceneIndex}-sfx-${sfxIndex}-${Date.now()}.mp3`
+    formData.append('file', blob, fileName)
+    
+    const uploadResponse = await fetch('/api/audio/upload', {
+      method: 'POST',
+      body: formData
+    })
+    
+    if (!uploadResponse.ok) {
+      throw new Error('Failed to upload SFX audio')
+    }
+    
+    const uploadData = await uploadResponse.json()
+    const audioUrl = uploadData.audioUrl
+    
+    // Update state with SFX URL
+    setScript((prevScript: any) => {
+      const updatedScenes = [...(prevScript?.script?.scenes || [])]
+      if (updatedScenes[sceneIndex]) {
+        const updatedSfx = [...(updatedScenes[sceneIndex].sfx || [])]
+        if (typeof updatedSfx[sfxIndex] === 'string') {
+          // Convert string SFX to object with audioUrl
+          updatedSfx[sfxIndex] = {
+            description: updatedSfx[sfxIndex],
+            audioUrl: audioUrl
+          }
+        } else {
+          updatedSfx[sfxIndex] = {
+            ...updatedSfx[sfxIndex],
+            audioUrl: audioUrl
+          }
+        }
+        updatedScenes[sceneIndex] = {
+          ...updatedScenes[sceneIndex],
+          sfx: updatedSfx,
+          sfxAudio: updatedSfx.map((s: any) => typeof s === 'string' ? null : s.audioUrl).filter(Boolean)
+        }
+      }
+      
+      // Save to DB in background
+      setTimeout(() => {
+        saveScenesToDatabase(updatedScenes).catch(err => {
+          console.error('[Update Scene Audio] Failed to save SFX to database:', err)
+        })
+      }, 100)
+      
+      return {
+        ...prevScript,
+        script: {
+          ...prevScript?.script,
+          scenes: updatedScenes
+        }
+      }
+    })
+    
+    console.log(`[Update Scene Audio] SFX ${sfxIndex + 1} generated for Scene ${sceneIndex + 1}`)
+  }
+
   // Update all scene audio - clears existing audio and regenerates sequentially
   const handleUpdateSceneAudio = async (sceneIndex: number) => {
     if (!script?.script?.scenes?.[sceneIndex]) {
@@ -5627,7 +5778,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
         
         // Now build list of audio to generate based on CLEANED scene content
-        const generationTasks: Array<{type: 'description' | 'narration' | 'dialogue', character?: string, dialogueIndex?: number, label: string}> = []
+        // Include TTS audio (description, narration, dialogue) and also music/SFX
+        const generationTasks: Array<{type: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx', character?: string, dialogueIndex?: number, sfxIndex?: number, label: string}> = []
         
         // Add description if scene has visual content
         if (cleanedScene.visualDescription || cleanedScene.action || cleanedScene.summary) {
@@ -5653,6 +5805,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           })
         }
         
+        // Add music if scene has music description
+        const musicDescription = cleanedScene.music 
+          ? (typeof cleanedScene.music === 'string' ? cleanedScene.music : cleanedScene.music.description)
+          : null
+        if (musicDescription) {
+          generationTasks.push({ type: 'music', label: 'background music' })
+        }
+        
+        // Add all SFX
+        if (cleanedScene.sfx && cleanedScene.sfx.length > 0) {
+          cleanedScene.sfx.forEach((sfx: any, idx: number) => {
+            const sfxDescription = typeof sfx === 'string' ? sfx : sfx.description
+            if (sfxDescription) {
+              generationTasks.push({
+                type: 'sfx',
+                sfxIndex: idx,
+                label: `SFX ${idx + 1}`
+              })
+            }
+          })
+        }
+        
         if (generationTasks.length === 0) {
           toast.info(`No audio content to generate for Scene ${sceneIndex + 1}`)
           return
@@ -5663,7 +5837,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         for (let i = 0; i < generationTasks.length; i++) {
           const task = generationTasks[i]
           try {
-            await handleGenerateSceneAudio(sceneIndex, task.type, task.character, task.dialogueIndex)
+            if (task.type === 'description' || task.type === 'narration' || task.type === 'dialogue') {
+              await handleGenerateSceneAudio(sceneIndex, task.type, task.character, task.dialogueIndex)
+            } else if (task.type === 'music') {
+              await generateMusicForScene(sceneIndex, cleanedScene)
+            } else if (task.type === 'sfx' && task.sfxIndex !== undefined) {
+              await generateSFXForScene(sceneIndex, task.sfxIndex, cleanedScene)
+            }
             successCount++
           } catch (error) {
             console.error(`[Update Scene Audio] Failed to generate ${task.label}:`, error)
