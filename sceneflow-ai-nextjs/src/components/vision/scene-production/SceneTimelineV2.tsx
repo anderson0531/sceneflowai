@@ -205,8 +205,36 @@ export function SceneTimelineV2({
     }
   }, [audioTracks, staleUrls])
   
-  // Flatten to array for playback
-  const allAudioClips = useMemo(() => flattenAudioTracks(filteredAudioTracks), [filteredAudioTracks])
+  // Track actual audio durations from loaded metadata
+  const [actualDurations, setActualDurations] = useState<Record<string, number>>({})
+  
+  // Handle audio metadata loaded - capture actual duration
+  const handleAudioLoaded = useCallback((clipId: string, url: string, actualDuration: number) => {
+    const key = `${clipId}:${url}`
+    setActualDurations(prev => {
+      // Only update if duration is valid and different
+      if (actualDuration > 0 && actualDuration !== Infinity && prev[key] !== actualDuration) {
+        console.log(`[SceneTimelineV2] Audio ${clipId} actual duration: ${actualDuration.toFixed(2)}s`)
+        return { ...prev, [key]: actualDuration }
+      }
+      return prev
+    })
+  }, [])
+  
+  // Flatten to array for playback, using actual durations when available
+  const allAudioClips = useMemo(() => {
+    const clips = flattenAudioTracks(filteredAudioTracks)
+    // Apply actual durations from loaded audio metadata
+    return clips.map(clip => {
+      const key = `${clip.id}:${clip.url}`
+      const actualDuration = actualDurations[key]
+      if (actualDuration && actualDuration > 0 && Math.abs(actualDuration - clip.duration) > 0.1) {
+        // Use actual duration if significantly different
+        return { ...clip, duration: actualDuration }
+      }
+      return clip
+    })
+  }, [filteredAudioTracks, actualDurations])
   
   // Handle audio load errors
   const handleAudioError = useCallback((clipId: string, url: string) => {
@@ -219,6 +247,16 @@ export function SceneTimelineV2({
   useEffect(() => {
     setStaleUrls(new Set())
   }, [audioHash])
+  
+  // ============================================================================
+  // Refs (defined early so they're available for effects)
+  // ============================================================================
+  
+  const timelineRef = useRef<HTMLDivElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map())
+  const animationRef = useRef<number | null>(null)
+  const startTimeRef = useRef<number>(0)
   
   // ============================================================================
   // Playback State
@@ -260,15 +298,29 @@ export function SceneTimelineV2({
     }
   }, [trackEnabled])
   
-  // ============================================================================
-  // Refs
-  // ============================================================================
-  
-  const timelineRef = useRef<HTMLDivElement>(null)
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map())
-  const animationRef = useRef<number | null>(null)
-  const startTimeRef = useRef<number>(0)
+  // Immediately mute/pause audio when track is disabled
+  useEffect(() => {
+    // Apply mute/pause to all audio elements when trackEnabled changes
+    allAudioClips.forEach(clip => {
+      const trackType = clip.id.startsWith('vo-') ? 'voiceover' 
+        : clip.id.startsWith('desc-') ? 'description'
+        : clip.id.startsWith('dialogue-') ? 'dialogue'
+        : clip.id.startsWith('music-') ? 'music'
+        : 'sfx'
+      
+      const audioKey = `${clip.id}:${clip.url}`
+      const audio = audioRefs.current.get(audioKey)
+      const isEnabled = trackEnabled[trackType] ?? true
+      const volume = trackVolumes[trackType] ?? 1
+      
+      if (audio) {
+        audio.volume = isEnabled ? volume : 0
+        if (!isEnabled && !audio.paused) {
+          audio.pause()
+        }
+      }
+    })
+  }, [trackEnabled, trackVolumes, allAudioClips])
   
   // ============================================================================
   // Visual Clips (from segments)
@@ -1098,6 +1150,12 @@ export function SceneTimelineV2({
           }}
           src={clip.url}
           preload="auto"
+          onLoadedMetadata={(e) => {
+            const audio = e.currentTarget
+            if (audio.duration && audio.duration !== Infinity) {
+              handleAudioLoaded(clip.id, clip.url!, audio.duration)
+            }
+          }}
           onError={() => handleAudioError(clip.id, clip.url!)}
         />
       ))}

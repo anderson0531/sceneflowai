@@ -150,12 +150,53 @@ export function buildAudioTracksForLanguage(
     ? (tracks.voiceover.startTime + tracks.voiceover.duration + 0.5) 
     : 0
   
+  // Get current dialogue lines for validation
+  const currentDialogue: any[] = Array.isArray(scene.dialogue) ? scene.dialogue : []
+  
+  // Helper to check if audio entry matches a valid dialogue line
+  const isValidDialogueAudio = (audio: any, fallbackIdx: number): boolean => {
+    // If no current dialogue, audio is stale
+    if (currentDialogue.length === 0) return false
+    
+    // Check if dialogueIndex is valid
+    const targetIdx = audio.dialogueIndex ?? fallbackIdx
+    if (targetIdx >= 0 && targetIdx < currentDialogue.length) {
+      // Index is valid - check if character matches (loose validation)
+      const dialogueLine = currentDialogue[targetIdx]
+      const audioChar = (audio.character || audio.speaker || audio.characterName || '').toLowerCase().trim()
+      const dialogueChar = (dialogueLine?.character || '').toLowerCase().trim()
+      
+      // If characters match or audio doesn't have character info, it's valid
+      if (!audioChar || !dialogueChar || audioChar === dialogueChar) {
+        return true
+      }
+    }
+    
+    // Fallback: check if any dialogue line has matching character
+    // This helps when indices are out of sync but content matches
+    const audioChar = (audio.character || audio.speaker || audio.characterName || '').toLowerCase().trim()
+    if (audioChar) {
+      return currentDialogue.some(d => 
+        (d?.character || '').toLowerCase().trim() === audioChar
+      )
+    }
+    
+    // No way to validate, consider stale
+    return false
+  }
+  
   // Source 1: dialogueAudio[language] array (preferred)
   const dialogueAudioArray = scene.dialogueAudio?.[language] || scene.dialogueAudio?.en
   if (Array.isArray(dialogueAudioArray)) {
     dialogueAudioArray.forEach((audio: any, idx: number) => {
       const url = audio?.audioUrl || audio?.url
       if (url && typeof url === 'string' && url.trim()) {
+        // Filter out stale dialogue audio that doesn't match current script
+        if (!isValidDialogueAudio(audio, idx)) {
+          console.log(`[audioTrackBuilder] Skipping stale dialogue audio at index ${idx}, character: ${audio.character || 'unknown'}`)
+          return
+        }
+        
         const duration = audio.duration || 3
         dialogueClips.push({
           id: `dialogue-${idx}`,
