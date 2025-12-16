@@ -944,7 +944,7 @@ export function VideoEditingDialog({
 
   // Reset state when dialog opens or tab changes
   useEffect(() => {
-    if (open) {
+    if (open && segment) {
       setActiveTab(initialTab)
       setPrompt(segment.userEditedPrompt || segment.generatedPrompt || '')
       // Pre-select source video for extension
@@ -1035,9 +1035,9 @@ export function VideoEditingDialog({
     }
   }, [activeTab, prompt, sourceVideoUrl, startFrameUrl, endFrameUrl, selectedReferences])
 
-  // Shared props for tab components
+  // Shared props for tab components - use null fallback for segment to satisfy TypeScript
   const tabProps: TabContentProps = {
-    segment,
+    segment: segment!,
     allSegments,
     sceneReferences,
     objectReferences,
@@ -1062,6 +1062,11 @@ export function VideoEditingDialog({
     setEndFrameUrl,
     selectedReferences,
     setSelectedReferences
+  }
+
+  // Early return after all hooks if segment is not available
+  if (!segment) {
+    return null
   }
 
   return (
