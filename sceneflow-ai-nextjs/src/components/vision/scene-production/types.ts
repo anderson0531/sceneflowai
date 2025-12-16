@@ -162,7 +162,7 @@ export interface SceneProductionReferences {
 /**
  * Supported audio track types in the timeline
  */
-export type AudioTrackType = 'voiceover' | 'dialogue' | 'music' | 'sfx'
+export type AudioTrackType = 'voiceover' | 'description' | 'dialogue' | 'music' | 'sfx'
 
 /**
  * Source of an audio clip - used for debugging and cleanup

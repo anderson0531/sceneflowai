@@ -269,9 +269,10 @@ export function SceneTimelineV2({
   const [isTimelineWide, setIsTimelineWide] = useState(false)
   
   // Track volume and enabled state - persist to localStorage
+  // Note: description is now a separate track from voiceover (narration)
   const [trackVolumes, setTrackVolumes] = useState<Record<string, number>>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sceneflow-track-volumes-v2')
+      const saved = localStorage.getItem('sceneflow-track-volumes-v3')
       if (saved) return JSON.parse(saved)
     }
     return { voiceover: 1, description: 1, dialogue: 1, music: 0.6, sfx: 0.8 }
@@ -279,7 +280,7 @@ export function SceneTimelineV2({
   
   const [trackEnabled, setTrackEnabled] = useState<Record<string, boolean>>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sceneflow-track-enabled-v2')
+      const saved = localStorage.getItem('sceneflow-track-enabled-v3')
       if (saved) return JSON.parse(saved)
     }
     return { voiceover: true, description: true, dialogue: true, music: true, sfx: true }
@@ -288,13 +289,13 @@ export function SceneTimelineV2({
   // Persist track settings
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('sceneflow-track-volumes-v2', JSON.stringify(trackVolumes))
+      localStorage.setItem('sceneflow-track-volumes-v3', JSON.stringify(trackVolumes))
     }
   }, [trackVolumes])
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('sceneflow-track-enabled-v2', JSON.stringify(trackEnabled))
+      localStorage.setItem('sceneflow-track-enabled-v3', JSON.stringify(trackEnabled))
     }
   }, [trackEnabled])
   
@@ -1077,18 +1078,21 @@ export function SceneTimelineV2({
           </div>
         </DndContext>
         
-        {/* Audio tracks - narration/description combined track */}
-        {(filteredAudioTracks.voiceover || filteredAudioTracks.description) && renderAudioTrack(
+        {/* Audio tracks - separate Narration and Description tracks */}
+        {filteredAudioTracks.voiceover && renderAudioTrack(
           'voiceover',
-          // Dynamic label based on what's present
-          filteredAudioTracks.voiceover && filteredAudioTracks.description 
-            ? 'Narration / Description'
-            : filteredAudioTracks.voiceover 
-              ? 'Narration' 
-              : 'Description',
+          'Narration',
           <Mic className="w-3.5 h-3.5 text-green-500" />,
-          [filteredAudioTracks.voiceover, filteredAudioTracks.description].filter((c): c is AudioTrackClipV2 => !!c),
+          [filteredAudioTracks.voiceover],
           'bg-gradient-to-r from-green-500 to-green-600'
+        )}
+        
+        {filteredAudioTracks.description && renderAudioTrack(
+          'description',
+          'Description',
+          <Film className="w-3.5 h-3.5 text-teal-500" />,
+          [filteredAudioTracks.description],
+          'bg-gradient-to-r from-teal-500 to-teal-600'
         )}
         
         {filteredAudioTracks.dialogue.length > 0 && renderAudioTrack(
