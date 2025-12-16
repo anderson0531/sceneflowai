@@ -243,8 +243,9 @@ export function SegmentStudio({
   }
 
   // Handle generation from VideoEditingDialog
-  const handleVideoEditingGenerate = async (mode: VideoGenerationMethod, options: {
-    prompt?: string
+  const handleVideoEditingGenerate = async (data: {
+    method: VideoGenerationMethod
+    prompt: string
     negativePrompt?: string
     duration?: number
     aspectRatio?: '16:9' | '9:16'
@@ -253,25 +254,23 @@ export function SegmentStudio({
     endFrameUrl?: string
     referenceImages?: Array<{ url: string; type: 'style' | 'character' }>
     sourceVideoUrl?: string
-    audioOption?: 'no_audio' | 'music_and_ambient' | 'dialogue_and_ambient'
-    generateAudio?: boolean
   }) => {
     // Map mode to GenerationType
     let genType: GenerationType = 'T2V'
-    if (mode === 'I2V') genType = 'T2V' // I2V maps to T2V with startFrame
-    else if (mode === 'FTV') genType = 'T2V' // FTV maps to T2V with start+end frames
+    if (data.method === 'I2V') genType = 'T2V' // I2V maps to T2V with startFrame
+    else if (data.method === 'FTV') genType = 'T2V' // FTV maps to T2V with start+end frames
     
     await onGenerate(genType, {
-      prompt: options.prompt,
-      negativePrompt: options.negativePrompt,
-      duration: options.duration,
-      aspectRatio: options.aspectRatio,
-      resolution: options.resolution,
-      startFrameUrl: options.startFrameUrl,
-      endFrameUrl: options.endFrameUrl,
-      referenceImages: options.referenceImages,
-      generationMethod: mode,
-      sourceVideoUrl: options.sourceVideoUrl,
+      prompt: data.prompt,
+      negativePrompt: data.negativePrompt,
+      duration: data.duration,
+      aspectRatio: data.aspectRatio,
+      resolution: data.resolution,
+      startFrameUrl: data.startFrameUrl,
+      endFrameUrl: data.endFrameUrl,
+      referenceImages: data.referenceImages,
+      generationMethod: data.method,
+      sourceVideoUrl: data.sourceVideoUrl,
     })
     
     // Close dialog after generation starts
