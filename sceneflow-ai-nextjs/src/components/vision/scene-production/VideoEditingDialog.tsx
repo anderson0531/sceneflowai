@@ -452,310 +452,69 @@ function FrameControlTab({
 
 // ============================================
 // Reference Images Tab (REF - Ingredients-to-Video)
+// Coming Soon - REST API doesn't support referenceImages yet
 // ============================================
 
-function ReferenceImagesTab({
-  sceneReferences = [],
-  objectReferences = [],
-  characters = [],
-  prompt,
-  setPrompt,
-  selectedReferences,
-  setSelectedReferences
-}: TabContentProps) {
-  const [showLibraryPicker, setShowLibraryPicker] = useState(false)
-
-  const addReference = (ref: SelectedReference) => {
-    if (selectedReferences.length >= 3) {
-      toast.error('Maximum 3 reference images allowed')
-      return
-    }
-    if (selectedReferences.some(r => r.id === ref.id)) {
-      toast.error('Reference already added')
-      return
-    }
-    setSelectedReferences([...selectedReferences, ref])
-  }
-
-  const removeReference = (id: string) => {
-    setSelectedReferences(selectedReferences.filter(r => r.id !== id))
-  }
-
-  const updateReferenceConnection = (id: string, connection: string) => {
-    setSelectedReferences(selectedReferences.map(r => 
-      r.id === id ? { ...r, promptConnection: connection } : r
-    ))
-  }
-
-  // Combine all available references by category
-  const allReferences = useMemo(() => {
-    const refs: Array<{ id: string; name: string; imageUrl: string; type: 'style' | 'character'; source: string }> = []
-    
-    // Add character references
-    characters.forEach(char => {
-      if (char.referenceImage) {
-        refs.push({
-          id: `char-${char.name}`,
-          name: char.name,
-          imageUrl: char.referenceImage,
-          type: 'character',
-          source: 'Characters'
-        })
-      }
-    })
-    
-    // Add scene references
-    sceneReferences.forEach(ref => {
-      if (ref.imageUrl) {
-        refs.push({
-          id: ref.id,
-          name: ref.name,
-          imageUrl: ref.imageUrl,
-          type: 'style',
-          source: 'Scene Backdrops'
-        })
-      }
-    })
-    
-    // Add object references
-    objectReferences.forEach(ref => {
-      if (ref.imageUrl) {
-        refs.push({
-          id: ref.id,
-          name: ref.name,
-          imageUrl: ref.imageUrl,
-          type: 'style',
-          source: 'Props & Objects'
-        })
-      }
-    })
-    
-    return refs
-  }, [characters, sceneReferences, objectReferences])
-
-  // Group references by source for better UI organization
-  const groupedReferences = useMemo(() => {
-    return {
-      characters: allReferences.filter(r => r.source === 'Characters'),
-      sceneBackdrops: allReferences.filter(r => r.source === 'Scene Backdrops'),
-      propsObjects: allReferences.filter(r => r.source === 'Props & Objects')
-    }
-  }, [allReferences])
-
+function ReferenceImagesTab() {
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-start gap-3 p-3 bg-pink-50 dark:bg-pink-900/20 rounded-lg border border-pink-200 dark:border-pink-800">
         <Users className="w-5 h-5 text-pink-600 dark:text-pink-400 mt-0.5 flex-shrink-0" />
-        <div>
-          <h4 className="font-medium text-pink-900 dark:text-pink-100">Reference Images (Ingredients-to-Video)</h4>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <h4 className="font-medium text-pink-900 dark:text-pink-100">Reference Images (Ingredients-to-Video)</h4>
+            <span className="text-[10px] px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded">Coming Soon</span>
+          </div>
           <p className="text-sm text-pink-700 dark:text-pink-300 mt-0.5">
             Supply up to 3 reference images to ensure visual consistency. Use character images for actor consistency or style images for visual coherence.
           </p>
         </div>
       </div>
 
-      {/* T2V Only Warning */}
-      <div className="flex items-start gap-2 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700">
-        <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-        <p className="text-xs text-amber-700 dark:text-amber-300">
-          <strong>Note:</strong> Reference images work with Text-to-Video only. Cannot combine with Image-to-Video or Frame Control.
-        </p>
+      {/* API Limitation Notice */}
+      <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700">
+        <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+        <div>
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-200">API Limitation</p>
+          <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+            The Veo 3.1 <code className="bg-amber-100 dark:bg-amber-900 px-1 rounded">referenceImages</code> feature is currently only available through Google's Python SDK, not the REST API we use. 
+            We're monitoring for REST API support. In the meantime, use <strong>Image-to-Video</strong> with a scene frame as the starting image for visual consistency.
+          </p>
+        </div>
       </div>
 
-      {/* Selected References */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Reference Images ({selectedReferences.length}/3)
-          </label>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setShowLibraryPicker(true)}
-            disabled={selectedReferences.length >= 3}
-            className="h-7 text-xs gap-1"
-          >
-            <Plus className="w-3 h-3" />
-            Add Reference
-          </Button>
+      {/* Feature Preview */}
+      <div className="space-y-3">
+        <div className="p-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg text-center">
+          <Users className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+          <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Reference-Guided Video</h5>
+          <p className="text-xs text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+            When available, this feature will let you provide character portraits and style references to maintain visual consistency across generated videos.
+          </p>
         </div>
 
-        {selectedReferences.length === 0 ? (
-          <div className="flex items-center justify-center p-6 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
-            <div className="text-center">
-              <Library className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">No references selected</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Add character or style references for consistency</p>
-            </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+            <h6 className="text-xs font-medium text-purple-900 dark:text-purple-100 mb-1">Character Consistency</h6>
+            <p className="text-[10px] text-purple-700 dark:text-purple-300">
+              "Use Alex's portrait to keep the same face throughout"
+            </p>
           </div>
-        ) : (
-          <div className="space-y-2">
-            {selectedReferences.map((ref, idx) => (
-              <div key={ref.id} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                  <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
-                  <div className={cn(
-                    "absolute top-1 left-1 text-[9px] px-1.5 py-0.5 rounded font-medium text-white",
-                    ref.type === 'character' ? "bg-purple-500" : "bg-blue-500"
-                  )}>
-                    {ref.type}
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{ref.name}</span>
-                    <button
-                      onClick={() => removeReference(ref.id)}
-                      className="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    value={ref.promptConnection || ''}
-                    onChange={(e) => updateReferenceConnection(ref.id, e.target.value)}
-                    placeholder="How to use in prompt? e.g., 'the hero'"
-                    className="mt-1 w-full text-xs p-1.5 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
-                  />
-                </div>
-              </div>
-            ))}
+          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <h6 className="text-xs font-medium text-blue-900 dark:text-blue-100 mb-1">Style Matching</h6>
+            <p className="text-[10px] text-blue-700 dark:text-blue-300">
+              "Match the lighting and color grading of this reference"
+            </p>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Library Picker - Grouped by Category */}
-      {showLibraryPicker && (
-        <div className="space-y-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 max-h-80 overflow-y-auto">
-          <div className="flex items-center justify-between sticky top-0 bg-gray-50 dark:bg-gray-800 pb-2">
-            <span className="text-sm font-medium">Select from Library</span>
-            <button onClick={() => setShowLibraryPicker(false)} className="p-1 text-gray-400 hover:text-gray-600">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          
-          {/* Characters Section */}
-          {groupedReferences.characters.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-purple-500" />
-                <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide">Characters ({groupedReferences.characters.length})</span>
-              </div>
-              <div className="grid grid-cols-4 gap-2">
-                {groupedReferences.characters.map(ref => (
-                  <button
-                    key={ref.id}
-                    onClick={() => {
-                      addReference({ id: ref.id, type: ref.type, name: ref.name, imageUrl: ref.imageUrl })
-                      setShowLibraryPicker(false)
-                    }}
-                    disabled={selectedReferences.some(r => r.id === ref.id)}
-                    className={cn(
-                      "relative aspect-square rounded-lg overflow-hidden border-2 transition-all",
-                      selectedReferences.some(r => r.id === ref.id) ? "border-green-500 opacity-50" : "border-transparent hover:border-purple-400"
-                    )}
-                  >
-                    <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
-                    <div className="absolute inset-x-0 bottom-0 bg-black/70 p-1">
-                      <p className="text-[9px] text-white truncate">{ref.name}</p>
-                    </div>
-                    <div className="absolute top-1 left-1 bg-purple-500 text-[8px] text-white px-1 py-0.5 rounded">char</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Scene Backdrops Section */}
-          {groupedReferences.sceneBackdrops.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <ImageIcon className="w-4 h-4 text-blue-500" />
-                <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide">Scene Backdrops ({groupedReferences.sceneBackdrops.length})</span>
-              </div>
-              <div className="grid grid-cols-4 gap-2">
-                {groupedReferences.sceneBackdrops.map(ref => (
-                  <button
-                    key={ref.id}
-                    onClick={() => {
-                      addReference({ id: ref.id, type: ref.type, name: ref.name, imageUrl: ref.imageUrl })
-                      setShowLibraryPicker(false)
-                    }}
-                    disabled={selectedReferences.some(r => r.id === ref.id)}
-                    className={cn(
-                      "relative aspect-square rounded-lg overflow-hidden border-2 transition-all",
-                      selectedReferences.some(r => r.id === ref.id) ? "border-green-500 opacity-50" : "border-transparent hover:border-blue-400"
-                    )}
-                  >
-                    <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
-                    <div className="absolute inset-x-0 bottom-0 bg-black/70 p-1">
-                      <p className="text-[9px] text-white truncate">{ref.name}</p>
-                    </div>
-                    <div className="absolute top-1 left-1 bg-blue-500 text-[8px] text-white px-1 py-0.5 rounded">style</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Props & Objects Section */}
-          {groupedReferences.propsObjects.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Library className="w-4 h-4 text-amber-500" />
-                <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide">Props & Objects ({groupedReferences.propsObjects.length})</span>
-              </div>
-              <div className="grid grid-cols-4 gap-2">
-                {groupedReferences.propsObjects.map(ref => (
-                  <button
-                    key={ref.id}
-                    onClick={() => {
-                      addReference({ id: ref.id, type: ref.type, name: ref.name, imageUrl: ref.imageUrl })
-                      setShowLibraryPicker(false)
-                    }}
-                    disabled={selectedReferences.some(r => r.id === ref.id)}
-                    className={cn(
-                      "relative aspect-square rounded-lg overflow-hidden border-2 transition-all",
-                      selectedReferences.some(r => r.id === ref.id) ? "border-green-500 opacity-50" : "border-transparent hover:border-amber-400"
-                    )}
-                  >
-                    <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
-                    <div className="absolute inset-x-0 bottom-0 bg-black/70 p-1">
-                      <p className="text-[9px] text-white truncate">{ref.name}</p>
-                    </div>
-                    <div className="absolute top-1 left-1 bg-amber-500 text-[8px] text-white px-1 py-0.5 rounded">prop</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Empty state */}
-          {allReferences.length === 0 && (
-            <div className="text-center py-6 text-gray-500 dark:text-gray-400">
-              <Library className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No references available</p>
-              <p className="text-xs mt-1">Generate character portraits, scene backdrops, or prop images first</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Generation Prompt */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Video Prompt
-        </label>
-        <Textarea
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Describe the video scene... Reference images will guide visual consistency."
-          className="min-h-[100px]"
-        />
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Tip: Mention the reference connections (e.g., "the hero walks toward the castle") to link visuals.
+      {/* Workaround Suggestion */}
+      <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+        <h6 className="text-xs font-medium text-green-900 dark:text-green-100 mb-1">💡 Current Workaround</h6>
+        <p className="text-xs text-green-700 dark:text-green-300">
+          Use the <strong>Frames tab</strong> with a scene reference image as the first frame. This anchors the video's visual style to your reference and provides better consistency than text-only generation.
         </p>
       </div>
     </div>
@@ -1114,7 +873,7 @@ export function VideoEditingDialog({
               <FrameControlTab {...tabProps} />
             </TabsContent>
             <TabsContent value="reference" className="mt-0">
-              <ReferenceImagesTab {...tabProps} />
+              <ReferenceImagesTab />
             </TabsContent>
             <TabsContent value="audio" className="mt-0">
               <AudioSyncTab {...tabProps} />
@@ -1165,7 +924,7 @@ export function VideoEditingDialog({
             </Button>
             <Button
               onClick={handleGenerate}
-              disabled={!canGenerate || isGenerating || activeTab === 'inpaint'}
+              disabled={!canGenerate || isGenerating || activeTab === 'inpaint' || activeTab === 'reference'}
               className="gap-2"
             >
               {isGenerating ? (
