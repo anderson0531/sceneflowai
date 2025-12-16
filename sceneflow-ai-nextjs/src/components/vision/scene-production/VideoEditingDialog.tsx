@@ -58,7 +58,7 @@ export interface VideoEditingDialogProps {
   sceneReferences?: VisualReference[]
   objectReferences?: VisualReference[]
   // Character references
-  availableCharacters?: Array<{
+  characters?: Array<{
     name: string
     description?: string
     referenceImage?: string
@@ -92,7 +92,7 @@ interface TabContentProps {
   allSegments?: SceneSegment[]
   sceneReferences?: VisualReference[]
   objectReferences?: VisualReference[]
-  availableCharacters?: Array<{
+  characters?: Array<{
     name: string
     description?: string
     referenceImage?: string
@@ -457,7 +457,7 @@ function FrameControlTab({
 function ReferenceImagesTab({
   sceneReferences = [],
   objectReferences = [],
-  availableCharacters = [],
+  characters = [],
   prompt,
   setPrompt,
   selectedReferences,
@@ -487,12 +487,12 @@ function ReferenceImagesTab({
     ))
   }
 
-  // Combine all available references
+  // Combine all available references by category
   const allReferences = useMemo(() => {
     const refs: Array<{ id: string; name: string; imageUrl: string; type: 'style' | 'character'; source: string }> = []
     
     // Add character references
-    availableCharacters.forEach(char => {
+    characters.forEach(char => {
       if (char.referenceImage) {
         refs.push({
           id: `char-${char.name}`,
@@ -531,7 +531,16 @@ function ReferenceImagesTab({
     })
     
     return refs
-  }, [availableCharacters, sceneReferences, objectReferences])
+  }, [characters, sceneReferences, objectReferences])
+
+  // Group references by source for better UI organization
+  const groupedReferences = useMemo(() => {
+    return {
+      characters: allReferences.filter(r => r.source === 'Characters'),
+      sceneBackdrops: allReferences.filter(r => r.source === 'Scene Backdrops'),
+      propsObjects: allReferences.filter(r => r.source === 'Props & Objects')
+    }
+  }, [allReferences])
 
   return (
     <div className="space-y-4">
@@ -617,43 +626,120 @@ function ReferenceImagesTab({
         )}
       </div>
 
-      {/* Library Picker */}
+      {/* Library Picker - Grouped by Category */}
       {showLibraryPicker && (
-        <div className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
+        <div className="space-y-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 max-h-80 overflow-y-auto">
+          <div className="flex items-center justify-between sticky top-0 bg-gray-50 dark:bg-gray-800 pb-2">
             <span className="text-sm font-medium">Select from Library</span>
             <button onClick={() => setShowLibraryPicker(false)} className="p-1 text-gray-400 hover:text-gray-600">
               <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
-            {allReferences.map(ref => (
-              <button
-                key={ref.id}
-                onClick={() => {
-                  addReference({
-                    id: ref.id,
-                    type: ref.type,
-                    name: ref.name,
-                    imageUrl: ref.imageUrl
-                  })
-                  setShowLibraryPicker(false)
-                }}
-                disabled={selectedReferences.some(r => r.id === ref.id)}
-                className={cn(
-                  "relative aspect-square rounded-lg overflow-hidden border-2 transition-all",
-                  selectedReferences.some(r => r.id === ref.id)
-                    ? "border-green-500 opacity-50"
-                    : "border-transparent hover:border-pink-400"
-                )}
-              >
-                <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
-                <div className="absolute inset-x-0 bottom-0 bg-black/70 p-1">
-                  <p className="text-[9px] text-white truncate">{ref.name}</p>
-                </div>
-              </button>
-            ))}
-          </div>
+          
+          {/* Characters Section */}
+          {groupedReferences.characters.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-purple-500" />
+                <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide">Characters ({groupedReferences.characters.length})</span>
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {groupedReferences.characters.map(ref => (
+                  <button
+                    key={ref.id}
+                    onClick={() => {
+                      addReference({ id: ref.id, type: ref.type, name: ref.name, imageUrl: ref.imageUrl })
+                      setShowLibraryPicker(false)
+                    }}
+                    disabled={selectedReferences.some(r => r.id === ref.id)}
+                    className={cn(
+                      "relative aspect-square rounded-lg overflow-hidden border-2 transition-all",
+                      selectedReferences.some(r => r.id === ref.id) ? "border-green-500 opacity-50" : "border-transparent hover:border-purple-400"
+                    )}
+                  >
+                    <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
+                    <div className="absolute inset-x-0 bottom-0 bg-black/70 p-1">
+                      <p className="text-[9px] text-white truncate">{ref.name}</p>
+                    </div>
+                    <div className="absolute top-1 left-1 bg-purple-500 text-[8px] text-white px-1 py-0.5 rounded">char</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Scene Backdrops Section */}
+          {groupedReferences.sceneBackdrops.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <ImageIcon className="w-4 h-4 text-blue-500" />
+                <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide">Scene Backdrops ({groupedReferences.sceneBackdrops.length})</span>
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {groupedReferences.sceneBackdrops.map(ref => (
+                  <button
+                    key={ref.id}
+                    onClick={() => {
+                      addReference({ id: ref.id, type: ref.type, name: ref.name, imageUrl: ref.imageUrl })
+                      setShowLibraryPicker(false)
+                    }}
+                    disabled={selectedReferences.some(r => r.id === ref.id)}
+                    className={cn(
+                      "relative aspect-square rounded-lg overflow-hidden border-2 transition-all",
+                      selectedReferences.some(r => r.id === ref.id) ? "border-green-500 opacity-50" : "border-transparent hover:border-blue-400"
+                    )}
+                  >
+                    <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
+                    <div className="absolute inset-x-0 bottom-0 bg-black/70 p-1">
+                      <p className="text-[9px] text-white truncate">{ref.name}</p>
+                    </div>
+                    <div className="absolute top-1 left-1 bg-blue-500 text-[8px] text-white px-1 py-0.5 rounded">style</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Props & Objects Section */}
+          {groupedReferences.propsObjects.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Library className="w-4 h-4 text-amber-500" />
+                <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide">Props & Objects ({groupedReferences.propsObjects.length})</span>
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {groupedReferences.propsObjects.map(ref => (
+                  <button
+                    key={ref.id}
+                    onClick={() => {
+                      addReference({ id: ref.id, type: ref.type, name: ref.name, imageUrl: ref.imageUrl })
+                      setShowLibraryPicker(false)
+                    }}
+                    disabled={selectedReferences.some(r => r.id === ref.id)}
+                    className={cn(
+                      "relative aspect-square rounded-lg overflow-hidden border-2 transition-all",
+                      selectedReferences.some(r => r.id === ref.id) ? "border-green-500 opacity-50" : "border-transparent hover:border-amber-400"
+                    )}
+                  >
+                    <img src={ref.imageUrl} alt={ref.name} className="w-full h-full object-cover" />
+                    <div className="absolute inset-x-0 bottom-0 bg-black/70 p-1">
+                      <p className="text-[9px] text-white truncate">{ref.name}</p>
+                    </div>
+                    <div className="absolute top-1 left-1 bg-amber-500 text-[8px] text-white px-1 py-0.5 rounded">prop</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {allReferences.length === 0 && (
+            <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+              <Library className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No references available</p>
+              <p className="text-xs mt-1">Generate character portraits, scene backdrops, or prop images first</p>
+            </div>
+          )}
         </div>
       )}
 
@@ -835,7 +921,7 @@ export function VideoEditingDialog({
   allSegments = [],
   sceneReferences = [],
   objectReferences = [],
-  availableCharacters = [],
+  characters = [],
   sceneImageUrl,
   previousSegmentLastFrame,
   onGenerate,
@@ -955,7 +1041,7 @@ export function VideoEditingDialog({
     allSegments,
     sceneReferences,
     objectReferences,
-    availableCharacters,
+    characters,
     sceneImageUrl,
     previousSegmentLastFrame,
     prompt,
