@@ -379,7 +379,7 @@ export function SceneTimelineV2({
   // ============================================================================
   
   const [containerWidth, setContainerWidth] = useState(600)
-  const TRACK_LABEL_WIDTH = 130
+  const TRACK_LABEL_WIDTH = 140
   const timelineWidth = containerWidth - TRACK_LABEL_WIDTH
   const pixelsPerSecond = useMemo(() => 
     timelineWidth / Math.max(sceneDuration, 1), 
