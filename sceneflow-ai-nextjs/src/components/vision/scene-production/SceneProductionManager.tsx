@@ -80,6 +80,8 @@ interface SceneProductionManagerProps {
   onSelectTake?: (sceneId: string, segmentId: string, takeId: string, takeAssetUrl: string) => void
   // Take deletion - allows user to delete a take
   onDeleteTake?: (sceneId: string, segmentId: string, takeId: string) => void
+  // Open scene references panel - to add reference images for generation
+  onOpenReferences?: () => void
   // Stale audio cleanup - removes 404'd audio URLs from scene data
   onCleanupStaleAudioUrl?: (sceneId: string, staleUrl: string) => void
   // Backdrop video generation - inserts new segment with video before specified segment
@@ -119,6 +121,7 @@ export function SceneProductionManager({
   onEstablishingShotStyleChange,
   onSelectTake,
   onDeleteTake,
+  onOpenReferences,
   onCleanupStaleAudioUrl,
   onBackdropVideoGenerated,
   characters = [],
@@ -1246,6 +1249,7 @@ export function SceneProductionManager({
               onEstablishingShotStyleChange={onEstablishingShotStyleChange ? handleEstablishingShotStyleChangeWrapper : undefined}
               onSelectTake={onSelectTake ? handleSelectTakeWrapper : undefined}
               onDeleteTake={onDeleteTake ? handleDeleteTakeWrapper : undefined}
+              onOpenReferences={onOpenReferences}
               sceneDirection={scene?.sceneDirection || scene?.direction || ''}
               sceneForBackdrop={sceneForBackdrop}
               charactersForBackdrop={charactersForBackdrop}

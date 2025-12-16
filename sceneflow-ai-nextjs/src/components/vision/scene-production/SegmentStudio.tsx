@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { SceneSegment, SceneProductionReferences, SceneSegmentStatus, SegmentKeyframeSettings, KeyframeEasingType, KeyframePanDirection } from './types'
-import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer, MessageSquare, User, Check, Move, ZoomIn, ZoomOut, RotateCcw, Pencil, Layers, Info, Clapperboard, Camera, Sparkles, Users, FileText, Trash2 } from 'lucide-react'
+import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer, MessageSquare, User, Check, Move, ZoomIn, ZoomOut, RotateCcw, Pencil, Layers, Info, Clapperboard, Camera, Sparkles, Users, FileText, Trash2, ImagePlus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SegmentPromptBuilder, GeneratePromptData, VideoGenerationMethod } from './SegmentPromptBuilder'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
@@ -73,6 +73,8 @@ interface SegmentStudioProps {
   onSelectTake?: (takeId: string, takeAssetUrl: string) => void
   // Take deletion - allows user to delete a take
   onDeleteTake?: (takeId: string) => void
+  // Open scene references panel
+  onOpenReferences?: () => void
   // Scene direction text for backdrop generation
   sceneDirection?: string
   // Scene data for backdrop prompt building
@@ -114,6 +116,7 @@ export function SegmentStudio({
   onEstablishingShotStyleChange,
   onSelectTake,
   onDeleteTake,
+  onOpenReferences,
   sceneDirection,
   sceneHeading,
   sceneDescription,
@@ -490,35 +493,72 @@ export function SegmentStudio({
             <div className="text-[10px] font-semibold uppercase text-gray-500 dark:text-gray-400 tracking-wide">
               Generate Asset
             </div>
-            <div className="flex items-center gap-1.5">
-              <Button
-                onClick={handleOpenVideoBuilder}
-                disabled={segment.status === 'GENERATING'}
-                size="sm"
-                className="flex-1 h-9 bg-blue-600 hover:bg-blue-700 text-white text-xs gap-1.5"
-              >
-                <Video className="w-4 h-4" />
-                Video
-              </Button>
-              <Button
-                onClick={handleOpenImageBuilder}
-                disabled={segment.status === 'GENERATING'}
-                size="sm"
-                className="flex-1 h-9 bg-purple-600 hover:bg-purple-700 text-white text-xs gap-1.5"
-              >
-                <ImageIcon className="w-4 h-4" />
-                Image
-              </Button>
-              <label className="flex-1">
-                <input type="file" className="hidden" accept="video/*,image/*" onChange={handleUploadChange} />
-                <span className={cn(
-                  "flex items-center justify-center gap-1.5 h-9 text-xs font-medium border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors",
-                  segment.status === 'GENERATING' && 'opacity-50 cursor-not-allowed'
-                )}>
-                  <Upload className="w-4 h-4" />
-                  Upload
-                </span>
-              </label>
+            <div className="flex items-center justify-center gap-3">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={handleOpenVideoBuilder}
+                      disabled={segment.status === 'GENERATING'}
+                      className={cn(
+                        "w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105",
+                        "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white",
+                        segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
+                      )}
+                    >
+                      <Video className="w-6 h-6" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="bg-gray-900 text-white border-gray-700">
+                    <p className="font-medium">Generate Video</p>
+                    <p className="text-xs text-gray-400">Create video using Veo 3.1</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={handleOpenImageBuilder}
+                      disabled={segment.status === 'GENERATING'}
+                      className={cn(
+                        "w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105",
+                        "bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white",
+                        segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
+                      )}
+                    >
+                      <ImageIcon className="w-6 h-6" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="bg-gray-900 text-white border-gray-700">
+                    <p className="font-medium">Generate Image</p>
+                    <p className="text-xs text-gray-400">Create image using Imagen 4</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => onOpenReferences?.()}
+                      disabled={segment.status === 'GENERATING' || !onOpenReferences}
+                      className={cn(
+                        "w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105",
+                        "bg-gradient-to-br from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white",
+                        (segment.status === 'GENERATING' || !onOpenReferences) && "opacity-50 cursor-not-allowed"
+                      )}
+                    >
+                      <ImagePlus className="w-6 h-6" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="bg-gray-900 text-white border-gray-700">
+                    <p className="font-medium">Add Scene Reference</p>
+                    <p className="text-xs text-gray-400">Add reference images for generation</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
 
