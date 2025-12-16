@@ -10,6 +10,7 @@ import { SegmentPromptBuilder, GeneratePromptData, VideoGenerationMethod } from 
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { AudioTrackClip, AudioTracksData } from './SceneTimeline'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { BackdropVideoModal, SceneForBackdrop, CharacterForBackdrop } from '@/components/vision/BackdropVideoModal'
 import { BackdropMode } from '@/lib/vision/backdropGenerator'
 
@@ -396,36 +397,90 @@ export function SegmentStudio({
 
       {/* Tabbed Content Area */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-        <TabsList className="flex-shrink-0 h-9 p-1 mx-2 mt-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-          <TabsTrigger 
-            value="generate" 
-            className="flex-1 h-7 text-[11px] font-medium gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-md"
-            title="Generate assets"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Generate</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="details" 
-            className="flex-1 h-7 text-[11px] font-medium gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-md"
-            title="Segment details"
-          >
-            <Info className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Details</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="takes" 
-            className="flex-1 h-7 text-[11px] font-medium gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 rounded-md"
-            title="Manage takes"
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Takes</span>
-            {segment.takes.length > 0 && (
-              <span className="text-[9px] font-bold bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 px-1 py-0.5 rounded">
-                {segment.takes.length}
-              </span>
-            )}
-          </TabsTrigger>
+        {/* Large Icon-Only Tab Controls */}
+        <div className="flex-shrink-0 flex items-center justify-center gap-3 px-3 py-3 border-b border-gray-200 dark:border-gray-800">
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setActiveTab('generate')}
+                  className={cn(
+                    "flex items-center justify-center w-14 h-14 rounded-xl transition-all duration-200",
+                    activeTab === 'generate'
+                      ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400"
+                  )}
+                >
+                  <Sparkles className="w-7 h-7" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-gray-900 text-white border-gray-700">
+                <p className="font-medium">Generate</p>
+                <p className="text-xs text-gray-400">Create video or image</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setActiveTab('details')}
+                  className={cn(
+                    "flex items-center justify-center w-14 h-14 rounded-xl transition-all duration-200",
+                    activeTab === 'details'
+                      ? "bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/30 scale-105"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:text-purple-600 dark:hover:text-purple-400"
+                  )}
+                >
+                  <Info className="w-7 h-7" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-gray-900 text-white border-gray-700">
+                <p className="font-medium">Details</p>
+                <p className="text-xs text-gray-400">Timing & shot info</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setActiveTab('takes')}
+                  className={cn(
+                    "relative flex items-center justify-center w-14 h-14 rounded-xl transition-all duration-200",
+                    activeTab === 'takes'
+                      ? "bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30 scale-105"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 hover:text-amber-600 dark:hover:text-amber-400"
+                  )}
+                >
+                  <Layers className="w-7 h-7" />
+                  {segment.takes.length > 0 && (
+                    <span className={cn(
+                      "absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center text-[10px] font-bold rounded-full px-1",
+                      activeTab === 'takes'
+                        ? "bg-white text-amber-600"
+                        : "bg-amber-500 text-white"
+                    )}>
+                      {segment.takes.length}
+                    </span>
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-gray-900 text-white border-gray-700">
+                <p className="font-medium">Takes</p>
+                <p className="text-xs text-gray-400">{segment.takes.length} generated version{segment.takes.length !== 1 ? 's' : ''}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        
+        {/* Hidden TabsList for Tabs component state management */}
+        <TabsList className="hidden">
+          <TabsTrigger value="generate">Generate</TabsTrigger>
+          <TabsTrigger value="details">Details</TabsTrigger>
+          <TabsTrigger value="takes">Takes</TabsTrigger>
         </TabsList>
         
         {/* Generate Tab */}
