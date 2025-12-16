@@ -243,10 +243,31 @@ export function SceneTimelineV2({
     onAudioError?.(clipId, url)
   }, [onAudioError])
   
-  // Reset stale URLs when scene changes (audioHash changes)
+  // Clean up stale URLs that are no longer in current tracks
+  // Don't reset entirely - keep tracking URLs that already 404'd
   useEffect(() => {
-    setStaleUrls(new Set())
-  }, [audioHash])
+    // Get all current URLs in the tracks
+    const currentUrls = new Set<string>()
+    if (audioTracks.voiceover?.url) currentUrls.add(audioTracks.voiceover.url)
+    if (audioTracks.description?.url) currentUrls.add(audioTracks.description.url)
+    if (audioTracks.music?.url) currentUrls.add(audioTracks.music.url)
+    audioTracks.dialogue.forEach(d => { if (d.url) currentUrls.add(d.url) })
+    audioTracks.sfx.forEach(s => { if (s.url) currentUrls.add(s.url) })
+    
+    // Only remove stale entries that are no longer in current tracks
+    // This keeps tracking 404'd URLs that are still being referenced
+    setStaleUrls(prev => {
+      const updated = new Set<string>()
+      prev.forEach(url => {
+        if (currentUrls.has(url)) {
+          // URL is still in current tracks, keep it marked as stale
+          updated.add(url)
+        }
+        // URLs no longer in tracks are automatically dropped
+      })
+      return updated
+    })
+  }, [audioTracks])
   
   // ============================================================================
   // Refs (defined early so they're available for effects)

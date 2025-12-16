@@ -240,11 +240,21 @@ export function clearAllSceneAudio(scene: any): CleanupResult {
     deletedUrls.push(scene.musicUrl)
   }
   
-  // SFX audio
+  // SFX audio - from sfxAudio array
   if (Array.isArray(scene.sfxAudio)) {
     for (const sfxUrl of scene.sfxAudio) {
       if (sfxUrl) deletedUrls.push(sfxUrl)
     }
+  }
+  
+  // SFX audio - from sfx objects (sfx[n].audioUrl)
+  if (Array.isArray(scene.sfx)) {
+    cleanedScene.sfx = scene.sfx.map((sfx: any) => {
+      if (sfx.audioUrl) deletedUrls.push(sfx.audioUrl)
+      // Return sfx without audio properties
+      const { audioUrl, audioDuration, ...sfxWithoutAudio } = (typeof sfx === 'string' ? { description: sfx } : sfx)
+      return sfxWithoutAudio
+    })
   }
   
   // Clear all audio fields
