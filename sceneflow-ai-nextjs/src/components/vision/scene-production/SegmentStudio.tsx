@@ -229,6 +229,42 @@ export function SegmentStudio({
     })
   }
 
+  // === Edit Video Handlers (Veo 3.1 Features) ===
+  
+  // Extend Video - Uses EXT mode to continue video beyond current length
+  const handleExtendVideo = () => {
+    // Find the active take with a Veo video reference
+    const activeTake = segment.takes?.find(t => t.assetUrl === segment.activeAssetUrl && t.veoVideoRef)
+    if (!activeTake?.veoVideoRef) {
+      // Fallback: show message that only Veo-generated videos can be extended
+      return
+    }
+    
+    // Open prompt builder with EXT mode pre-selected
+    setPromptBuilderMode('video')
+    setIsBackdropMode(false)
+    setIsPromptBuilderOpen(true)
+    // The PromptBuilder will detect the source video and enable EXT mode
+  }
+
+  // Interpolate Frames - Uses FTV mode with first and last frame images
+  const handleInterpolateFrames = () => {
+    // Open prompt builder - user will set first and last frame images
+    setPromptBuilderMode('video')
+    setIsBackdropMode(false)
+    setIsPromptBuilderOpen(true)
+    // User can then use the FTV (Frame-to-Video) option in the prompt builder
+  }
+
+  // Reference-Guided Regen - Uses REF mode with style/character references
+  const handleReferenceGuidedRegen = () => {
+    // Open prompt builder - references can be selected there
+    setPromptBuilderMode('video')
+    setIsBackdropMode(false)
+    setIsPromptBuilderOpen(true)
+    // User can then select reference images from the library
+  }
+
   const displayStatus = (status: SceneSegmentStatus) => {
     switch (status) {
       case 'GENERATING':
@@ -488,128 +524,193 @@ export function SegmentStudio({
         
         {/* Generate Tab */}
         <TabsContent value="generate" className="flex-1 overflow-y-auto p-3 space-y-3 m-0">
-          {/* Generation Controls */}
+          {/* Generate Actions - List Format */}
           <div className="space-y-2">
             <div className="text-[10px] font-semibold uppercase text-gray-500 dark:text-gray-400 tracking-wide">
               Generate Asset
             </div>
-            <div className="flex items-center justify-center gap-3">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={handleOpenVideoBuilder}
-                      disabled={segment.status === 'GENERATING'}
-                      className={cn(
-                        "w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105",
-                        "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white",
-                        segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
-                      )}
-                    >
-                      <Video className="w-6 h-6" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="bg-gray-900 text-white border-gray-700">
-                    <p className="font-medium">Generate Video</p>
-                    <p className="text-xs text-gray-400">Create video using Veo 3.1</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={handleOpenImageBuilder}
-                      disabled={segment.status === 'GENERATING'}
-                      className={cn(
-                        "w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105",
-                        "bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white",
-                        segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
-                      )}
-                    >
-                      <ImageIcon className="w-6 h-6" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="bg-gray-900 text-white border-gray-700">
-                    <p className="font-medium">Generate Image</p>
-                    <p className="text-xs text-gray-400">Create image using Imagen 4</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => onOpenReferences?.()}
-                      disabled={segment.status === 'GENERATING' || !onOpenReferences}
-                      className={cn(
-                        "w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105",
-                        "bg-gradient-to-br from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white",
-                        (segment.status === 'GENERATING' || !onOpenReferences) && "opacity-50 cursor-not-allowed"
-                      )}
-                    >
-                      <ImagePlus className="w-6 h-6" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="bg-gray-900 text-white border-gray-700">
-                    <p className="font-medium">Add Scene Reference</p>
-                    <p className="text-xs text-gray-400">Add reference images for generation</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <div className="space-y-2">
+              {/* Generate Video */}
+              <button
+                onClick={handleOpenVideoBuilder}
+                disabled={segment.status === 'GENERATING'}
+                className={cn(
+                  "w-full p-3 rounded-xl border text-left transition-all",
+                  "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20",
+                  segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
+                    <Video className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Generate Video</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Create video using Veo 3.1</p>
+                  </div>
+                </div>
+              </button>
+
+              {/* Generate Image */}
+              <button
+                onClick={handleOpenImageBuilder}
+                disabled={segment.status === 'GENERATING'}
+                className={cn(
+                  "w-full p-3 rounded-xl border text-left transition-all",
+                  "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-purple-400 dark:hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20",
+                  segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400">
+                    <ImageIcon className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Generate Image</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Create image using Imagen 4</p>
+                  </div>
+                </div>
+              </button>
+
+              {/* Add Scene Reference */}
+              {onOpenReferences && (
+                <button
+                  onClick={() => onOpenReferences?.()}
+                  disabled={segment.status === 'GENERATING'}
+                  className={cn(
+                    "w-full p-3 rounded-xl border text-left transition-all",
+                    "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20",
+                    segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400">
+                      <ImagePlus className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Add Scene Reference</h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Add reference images for generation</p>
+                    </div>
+                  </div>
+                </button>
+              )}
+
+              {/* Generate Backdrop Video */}
+              {sceneForBackdrop && onBackdropVideoGenerated && (
+                <button
+                  onClick={() => setIsBackdropVideoModalOpen(true)}
+                  disabled={segment.status === 'GENERATING'}
+                  className={cn(
+                    "w-full p-3 rounded-xl border text-left transition-all",
+                    "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20",
+                    segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400">
+                      <Clapperboard className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Generate Backdrop</h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Inserts before segment #{segmentIndex !== undefined ? segmentIndex + 1 : 1}</p>
+                    </div>
+                  </div>
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Generate Backdrop Video - Show for all segments, inserts before current segment */}
-          {sceneForBackdrop && onBackdropVideoGenerated && (
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="p-1.5 bg-indigo-500 rounded">
-                  <Film className="w-4 h-4 text-white" />
-                </div>
-                <div>
-                  <div className="text-xs font-semibold text-indigo-900 dark:text-indigo-100">
-                    Generate Backdrop Video
-                  </div>
-                  <div className="text-[10px] text-indigo-600 dark:text-indigo-400">
-                    Inserts before segment #{segmentIndex + 1}
-                  </div>
-                </div>
+          {/* Edit Video Actions - Veo 3.1 Features */}
+          {segment.activeAssetUrl && segment.assetType === 'video' && (
+            <div className="space-y-2">
+              <div className="text-[10px] font-semibold uppercase text-gray-500 dark:text-gray-400 tracking-wide">
+                Edit Video
               </div>
-              <p className="text-[10px] text-gray-600 dark:text-gray-400 mb-2.5">
-                Create an atmospheric video backdrop using Veo 3.1. Choose from 4 modes: 
-                Atmospheric B-Roll, Silent Portrait, Establishing Master, or Storybeat Animatic.
-              </p>
-              <Button
-                onClick={() => setIsBackdropVideoModalOpen(true)}
-                disabled={segment.status === 'GENERATING'}
-                size="sm"
-                className="w-full h-9 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-xs gap-2"
-              >
-                <Clapperboard className="w-4 h-4" />
-                Generate Backdrop Video
-              </Button>
-            </div>
-          )}
+              <div className="space-y-2">
+                {/* Extend Video - Only for Veo-generated videos */}
+                {segment.takes?.some(t => t.veoVideoRef) && (
+                  <button
+                    onClick={() => handleExtendVideo()}
+                    disabled={segment.status === 'GENERATING'}
+                    className={cn(
+                      "w-full p-3 rounded-xl border text-left transition-all",
+                      "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-green-400 dark:hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20",
+                      segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400">
+                        <Film className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Extend Video</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Continue video beyond current length (EXT mode)</p>
+                      </div>
+                    </div>
+                  </button>
+                )}
 
-          {/* Segment Prompt Preview */}
-          {(segment.generatedPrompt || segment.userEditedPrompt) && (
-            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-2.5">
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <FileText className="w-3.5 h-3.5 text-gray-500" />
-                <span className="text-[10px] font-semibold uppercase text-gray-500 dark:text-gray-400">Current Prompt</span>
+                {/* Interpolate Frames (FTV) */}
+                <button
+                  onClick={() => handleInterpolateFrames()}
+                  disabled={segment.status === 'GENERATING'}
+                  className={cn(
+                    "w-full p-3 rounded-xl border text-left transition-all",
+                    "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-cyan-400 dark:hover:border-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-900/20",
+                    segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-cyan-100 dark:bg-cyan-900/50 text-cyan-600 dark:text-cyan-400">
+                      <Layers className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Interpolate Frames</h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Generate transition between first/last frames</p>
+                    </div>
+                  </div>
+                </button>
+
+                {/* Reference-Guided Regen */}
+                <button
+                  onClick={() => handleReferenceGuidedRegen()}
+                  disabled={segment.status === 'GENERATING'}
+                  className={cn(
+                    "w-full p-3 rounded-xl border text-left transition-all",
+                    "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-pink-400 dark:hover:border-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/20",
+                    segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-pink-100 dark:bg-pink-900/50 text-pink-600 dark:text-pink-400">
+                      <Users className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Reference-Guided Regen</h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Regenerate with character/style references</p>
+                    </div>
+                  </div>
+                </button>
               </div>
-              <p className="text-[11px] text-gray-700 dark:text-gray-300 line-clamp-4 leading-relaxed">
-                {segment.userEditedPrompt || segment.generatedPrompt}
-              </p>
             </div>
           )}
         </TabsContent>
         
         {/* Details Tab */}
         <TabsContent value="details" className="flex-1 overflow-y-auto p-3 space-y-3 m-0">
+          {/* Current Prompt - Moved from Generate tab */}
+          {(segment.generatedPrompt || segment.userEditedPrompt) && (
+            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-1.5 mb-2">
+                <FileText className="w-4 h-4 text-gray-500" />
+                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Current Prompt</span>
+              </div>
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                {segment.userEditedPrompt || segment.generatedPrompt}
+              </p>
+            </div>
+          )}
+
           {/* Timing Settings */}
           <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
             <div className="flex items-center gap-1.5 mb-2.5">
