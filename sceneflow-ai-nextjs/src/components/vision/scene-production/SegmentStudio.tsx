@@ -759,18 +759,23 @@ export function SegmentStudio({
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {segment.takes.map((take, idx) => (
+                {segment.takes.map((take, idx) => {
+                  const isActive = take.assetUrl === segment.activeAssetUrl
+                  return (
                   <div
                     key={take.id}
                     className={cn(
-                      'cursor-pointer rounded-lg overflow-hidden border-2 transition-all hover:border-blue-400 dark:hover:border-blue-500 relative group',
-                      take.assetUrl === segment.activeAssetUrl
+                      'rounded-lg overflow-hidden border-2 transition-all relative group',
+                      isActive
                         ? 'border-green-500 ring-2 ring-green-500/30'
-                        : 'border-gray-200 dark:border-gray-700'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500'
                     )}
-                    onClick={() => take.assetUrl && setPlayingVideoUrl(take.assetUrl)}
                   >
-                    <div className="aspect-video bg-gray-100 dark:bg-gray-800 relative">
+                    {/* Clickable thumbnail area */}
+                    <div 
+                      className="aspect-video bg-gray-100 dark:bg-gray-800 relative cursor-pointer"
+                      onClick={() => take.assetUrl && setPlayingVideoUrl(take.assetUrl)}
+                    >
                       {take.thumbnailUrl ? (
                         <img src={take.thumbnailUrl} alt={`Take ${idx + 1}`} className="w-full h-full object-cover" />
                       ) : (
@@ -781,13 +786,42 @@ export function SegmentStudio({
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <Play className="w-8 h-8 text-white" />
                       </div>
-                      {take.assetUrl === segment.activeAssetUrl && (
+                      {isActive && (
                         <div className="absolute top-1 right-1 bg-green-500 rounded-full p-0.5">
                           <CheckCircle2 className="w-3 h-3 text-white" />
                         </div>
                       )}
-                      {/* Delete button - shown on hover, only if not the active take */}
-                      {onDeleteTake && take.assetUrl !== segment.activeAssetUrl && (
+                      <div className="absolute bottom-1 left-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded">
+                        Take {idx + 1}
+                      </div>
+                    </div>
+                    
+                    {/* Action buttons row */}
+                    <div className="flex items-center justify-between px-1.5 py-1 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+                      {/* Select button */}
+                      {onSelectTake && !isActive && take.assetUrl ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onSelectTake(take.id, take.assetUrl!)
+                          }}
+                          className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/30 rounded transition-colors"
+                          title="Use this take in timeline"
+                        >
+                          <Check className="w-3 h-3" />
+                          Select
+                        </button>
+                      ) : isActive ? (
+                        <span className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium text-green-600 dark:text-green-400">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Active
+                        </span>
+                      ) : (
+                        <span />
+                      )}
+                      
+                      {/* Delete button */}
+                      {onDeleteTake && !isActive && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
@@ -795,18 +829,17 @@ export function SegmentStudio({
                               onDeleteTake(take.id)
                             }
                           }}
-                          className="absolute top-1 left-1 p-1 bg-red-500/90 hover:bg-red-600 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                          className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 rounded transition-colors"
                           title="Delete this take"
                         >
                           <Trash2 className="w-3 h-3" />
+                          Delete
                         </button>
                       )}
-                      <div className="absolute bottom-1 left-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded">
-                        Take {idx + 1}
-                      </div>
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
