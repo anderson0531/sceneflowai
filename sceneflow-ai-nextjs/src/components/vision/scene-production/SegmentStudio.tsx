@@ -7,6 +7,7 @@ import { SceneSegment, SceneProductionReferences, SceneSegmentStatus, SegmentKey
 import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer, MessageSquare, User, Check, Move, ZoomIn, ZoomOut, RotateCcw, Pencil, Layers, Info, Clapperboard, Camera, Sparkles, Users, FileText, Trash2, ImagePlus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SegmentPromptBuilder, GeneratePromptData, VideoGenerationMethod } from './SegmentPromptBuilder'
+import { VideoEditingDialog, VideoEditingTab } from './VideoEditingDialog'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { AudioTrackClip, AudioTracksData } from './SceneTimeline'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -137,6 +138,10 @@ export function SegmentStudio({
   // Backdrop Video Modal State
   const [isBackdropVideoModalOpen, setIsBackdropVideoModalOpen] = useState(false)
   
+  // Video Editing Dialog State
+  const [isVideoEditingOpen, setIsVideoEditingOpen] = useState(false)
+  const [videoEditingInitialTab, setVideoEditingInitialTab] = useState<VideoEditingTab>('extend')
+  
   // Audio playback state
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map())
@@ -229,40 +234,48 @@ export function SegmentStudio({
     })
   }
 
-  // === Edit Video Handlers (Veo 3.1 Features) ===
+  // === Edit Video Handler (Opens VideoEditingDialog) ===
   
-  // Extend Video - Uses EXT mode to continue video beyond current length
-  const handleExtendVideo = () => {
-    // Find the active take with a Veo video reference
-    const activeTake = segment.takes?.find(t => t.assetUrl === segment.activeAssetUrl && t.veoVideoRef)
-    if (!activeTake?.veoVideoRef) {
-      // Fallback: show message that only Veo-generated videos can be extended
-      return
-    }
+  // Open Video Editing Dialog with specified tab
+  const handleOpenVideoEditing = (initialTab: VideoEditingTab = 'extend') => {
+    setVideoEditingInitialTab(initialTab)
+    setIsVideoEditingOpen(true)
+  }
+
+  // Handle generation from VideoEditingDialog
+  const handleVideoEditingGenerate = async (mode: VideoGenerationMethod, options: {
+    prompt?: string
+    negativePrompt?: string
+    duration?: number
+    aspectRatio?: '16:9' | '9:16'
+    resolution?: '720p' | '1080p'
+    startFrameUrl?: string
+    endFrameUrl?: string
+    referenceImages?: Array<{ url: string; type: 'style' | 'character' }>
+    sourceVideoUrl?: string
+    audioOption?: 'no_audio' | 'music_and_ambient' | 'dialogue_and_ambient'
+    generateAudio?: boolean
+  }) => {
+    // Map mode to GenerationType
+    let genType: GenerationType = 'T2V'
+    if (mode === 'I2V') genType = 'T2V' // I2V maps to T2V with startFrame
+    else if (mode === 'FTV') genType = 'T2V' // FTV maps to T2V with start+end frames
     
-    // Open prompt builder with EXT mode pre-selected
-    setPromptBuilderMode('video')
-    setIsBackdropMode(false)
-    setIsPromptBuilderOpen(true)
-    // The PromptBuilder will detect the source video and enable EXT mode
-  }
-
-  // Interpolate Frames - Uses FTV mode with first and last frame images
-  const handleInterpolateFrames = () => {
-    // Open prompt builder - user will set first and last frame images
-    setPromptBuilderMode('video')
-    setIsBackdropMode(false)
-    setIsPromptBuilderOpen(true)
-    // User can then use the FTV (Frame-to-Video) option in the prompt builder
-  }
-
-  // Reference-Guided Regen - Uses REF mode with style/character references
-  const handleReferenceGuidedRegen = () => {
-    // Open prompt builder - references can be selected there
-    setPromptBuilderMode('video')
-    setIsBackdropMode(false)
-    setIsPromptBuilderOpen(true)
-    // User can then select reference images from the library
+    await onGenerate(genType, {
+      prompt: options.prompt,
+      negativePrompt: options.negativePrompt,
+      duration: options.duration,
+      aspectRatio: options.aspectRatio,
+      resolution: options.resolution,
+      startFrameUrl: options.startFrameUrl,
+      endFrameUrl: options.endFrameUrl,
+      referenceImages: options.referenceImages,
+      generationMethod: mode,
+      sourceVideoUrl: options.sourceVideoUrl,
+    })
+    
+    // Close dialog after generation starts
+    setIsVideoEditingOpen(false)
   }
 
   const displayStatus = (status: SceneSegmentStatus) => {
@@ -620,78 +633,31 @@ export function SegmentStudio({
             </div>
           </div>
 
-          {/* Edit Video Actions - Veo 3.1 Features */}
+          {/* Edit Video Action - Opens VideoEditingDialog */}
           {segment.activeAssetUrl && segment.assetType === 'video' && (
             <div className="space-y-2">
               <div className="text-[10px] font-semibold uppercase text-gray-500 dark:text-gray-400 tracking-wide">
                 Edit Video
               </div>
-              <div className="space-y-2">
-                {/* Extend Video - Only for Veo-generated videos */}
-                {segment.takes?.some(t => t.veoVideoRef) && (
-                  <button
-                    onClick={() => handleExtendVideo()}
-                    disabled={segment.status === 'GENERATING'}
-                    className={cn(
-                      "w-full p-3 rounded-xl border text-left transition-all",
-                      "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-green-400 dark:hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20",
-                      segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
-                    )}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400">
-                        <Film className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Extend Video</h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Continue video beyond current length (EXT mode)</p>
-                      </div>
-                    </div>
-                  </button>
+              <button
+                onClick={() => handleOpenVideoEditing()}
+                disabled={segment.status === 'GENERATING'}
+                className={cn(
+                  "w-full p-3 rounded-xl border text-left transition-all",
+                  "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-orange-400 dark:hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20",
+                  segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
                 )}
-
-                {/* Interpolate Frames (FTV) */}
-                <button
-                  onClick={() => handleInterpolateFrames()}
-                  disabled={segment.status === 'GENERATING'}
-                  className={cn(
-                    "w-full p-3 rounded-xl border text-left transition-all",
-                    "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-cyan-400 dark:hover:border-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-900/20",
-                    segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-cyan-100 dark:bg-cyan-900/50 text-cyan-600 dark:text-cyan-400">
-                      <Layers className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Interpolate Frames</h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Generate transition between first/last frames</p>
-                    </div>
+              >
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400">
+                    <Film className="w-5 h-5" />
                   </div>
-                </button>
-
-                {/* Reference-Guided Regen */}
-                <button
-                  onClick={() => handleReferenceGuidedRegen()}
-                  disabled={segment.status === 'GENERATING'}
-                  className={cn(
-                    "w-full p-3 rounded-xl border text-left transition-all",
-                    "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-pink-400 dark:hover:border-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/20",
-                    segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-pink-100 dark:bg-pink-900/50 text-pink-600 dark:text-pink-400">
-                      <Users className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Reference-Guided Regen</h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Regenerate with character/style references</p>
-                    </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Edit Video</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Extend, interpolate, add references & audio</p>
                   </div>
-                </button>
-              </div>
+                </div>
+              </button>
             </div>
           )}
         </TabsContent>
@@ -1108,6 +1074,24 @@ export function SegmentStudio({
           characters={charactersForBackdrop}
           onGenerated={onBackdropVideoGenerated}
           currentSegmentIndex={segmentIndex}
+        />
+      )}
+
+      {/* Video Editing Dialog */}
+      {segment && (
+        <VideoEditingDialog
+          open={isVideoEditingOpen}
+          onClose={() => setIsVideoEditingOpen(false)}
+          segment={segment}
+          sceneReferences={references.sceneReferences}
+          objectReferences={references.objectReferences}
+          characters={references.characters}
+          sceneImageUrl={sceneImageUrl}
+          previousSegmentLastFrame={previousSegmentLastFrame}
+          allSegments={segments}
+          onGenerate={handleVideoEditingGenerate}
+          isGenerating={segment.status === 'GENERATING'}
+          initialTab={videoEditingInitialTab}
         />
       )}
 
