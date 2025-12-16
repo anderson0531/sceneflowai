@@ -379,7 +379,7 @@ export function SceneTimelineV2({
   // ============================================================================
   
   const [containerWidth, setContainerWidth] = useState(600)
-  const TRACK_LABEL_WIDTH = 100
+  const TRACK_LABEL_WIDTH = 130
   const timelineWidth = containerWidth - TRACK_LABEL_WIDTH
   const pixelsPerSecond = useMemo(() => 
     timelineWidth / Math.max(sceneDuration, 1), 
@@ -767,16 +767,16 @@ export function SceneTimelineV2({
     return (
       <div className={cn("flex items-stretch border-t border-gray-200 dark:border-gray-700 transition-all duration-200", isTimelineExpanded ? "h-14" : "h-10")}>
         <div 
-          className="flex-shrink-0 flex items-center justify-between px-2 bg-gray-100 dark:bg-gray-800"
+          className="flex-shrink-0 flex items-center justify-between px-3 bg-gray-100 dark:bg-gray-800"
           style={{ width: TRACK_LABEL_WIDTH }}
         >
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             {icon}
-            <span className="text-[10px] font-medium text-gray-600 dark:text-gray-300">{label}</span>
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-300">{label}</span>
           </div>
           <button
             className={cn(
-              "p-1 rounded transition-colors",
+              "p-1.5 rounded transition-colors",
               isEnabled 
                 ? "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" 
                 : "text-red-400 hover:text-red-500"
@@ -784,7 +784,7 @@ export function SceneTimelineV2({
             onClick={() => toggleTrack(trackType)}
             title={isEnabled ? 'Mute track' : 'Unmute track'}
           >
-            {isEnabled ? <Volume2 className="w-3 h-3" /> : <VolumeX className="w-3 h-3" />}
+            {isEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
           </button>
         </div>
         
@@ -803,7 +803,7 @@ export function SceneTimelineV2({
           
           {clips.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-[10px] text-gray-400 italic">No audio</span>
+              <span className="text-xs text-gray-400 italic">No audio</span>
             </div>
           )}
         </div>
@@ -1056,11 +1056,11 @@ export function SceneTimelineV2({
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <div className={cn("flex items-stretch transition-all duration-200", isTimelineExpanded ? "h-24" : "h-16")}>
             <div 
-              className="flex-shrink-0 flex items-center gap-1.5 px-2 bg-gray-100 dark:bg-gray-800"
+              className="flex-shrink-0 flex items-center gap-2 px-3 bg-gray-100 dark:bg-gray-800"
               style={{ width: TRACK_LABEL_WIDTH }}
             >
-              <Film className="w-3.5 h-3.5 text-sf-primary" />
-              <span className="text-[10px] font-medium text-gray-600 dark:text-gray-300">Video</span>
+              <Film className="w-4 h-4 text-sf-primary" />
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-300">Video</span>
             </div>
             
             <div className="flex-1 relative bg-gray-50 dark:bg-gray-900/50">
@@ -1103,7 +1103,7 @@ export function SceneTimelineV2({
         {filteredAudioTracks.voiceover && renderAudioTrack(
           'voiceover',
           'Narration',
-          <Mic className="w-3.5 h-3.5 text-green-500" />,
+          <Mic className="w-4 h-4 text-green-500" />,
           [filteredAudioTracks.voiceover],
           'bg-gradient-to-r from-green-500 to-green-600'
         )}
@@ -1111,7 +1111,7 @@ export function SceneTimelineV2({
         {filteredAudioTracks.description && renderAudioTrack(
           'description',
           'Description',
-          <Film className="w-3.5 h-3.5 text-teal-500" />,
+          <Film className="w-4 h-4 text-teal-500" />,
           [filteredAudioTracks.description],
           'bg-gradient-to-r from-teal-500 to-teal-600'
         )}
@@ -1119,7 +1119,7 @@ export function SceneTimelineV2({
         {filteredAudioTracks.dialogue.length > 0 && renderAudioTrack(
           'dialogue',
           'Dialogue',
-          <MessageSquare className="w-3.5 h-3.5 text-purple-500" />,
+          <MessageSquare className="w-4 h-4 text-purple-500" />,
           filteredAudioTracks.dialogue,
           'bg-gradient-to-r from-purple-500 to-purple-600'
         )}
@@ -1127,7 +1127,7 @@ export function SceneTimelineV2({
         {filteredAudioTracks.music && renderAudioTrack(
           'music',
           'Music',
-          <Music className="w-3.5 h-3.5 text-amber-500" />,
+          <Music className="w-4 h-4 text-amber-500" />,
           [filteredAudioTracks.music],
           'bg-gradient-to-r from-amber-500 to-amber-600'
         )}
@@ -1135,7 +1135,7 @@ export function SceneTimelineV2({
         {filteredAudioTracks.sfx.length > 0 && renderAudioTrack(
           'sfx',
           'SFX',
-          <Zap className="w-3.5 h-3.5 text-red-500" />,
+          <Zap className="w-4 h-4 text-red-500" />,
           filteredAudioTracks.sfx,
           'bg-gradient-to-r from-red-500 to-red-600'
         )}
