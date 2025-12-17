@@ -1,11 +1,20 @@
 #!/bin/bash
 
-echo "🚀 DOL Production Deployment Script"
-echo "=================================="
+echo "🚀 SceneFlow AI Production Deployment Script"
+echo "============================================="
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Navigate to the script's directory (the Next.js project root)
+cd "$SCRIPT_DIR"
+
+echo "📁 Working directory: $(pwd)"
+echo ""
 
 # Check if we're in the right directory
 if [ ! -f "package.json" ]; then
-    echo "❌ Error: Must run from project root directory"
+    echo "❌ Error: package.json not found in $SCRIPT_DIR"
     exit 1
 fi
 
@@ -103,18 +112,15 @@ fi
 
 # Final status
 echo ""
-echo "🎉 DOL Production Deployment Complete!"
-echo "====================================="
+echo "🎉 SceneFlow AI Production Deployment Complete!"
+echo "================================================"
 echo "✅ Application built successfully"
 echo "✅ Database migrated successfully"
 echo "✅ Tests passed"
 echo "✅ Deployed to production"
 echo "✅ Health check passed"
 echo ""
-echo "🌐 Production URL: https://your-domain.vercel.app"
-echo "📊 Admin Dashboard: https://your-domain.vercel.app/admin/dol"
-echo "📈 Analytics: https://your-domain.vercel.app/admin/dol/analytics"
-echo "🔧 Optimization: https://your-domain.vercel.app/admin/dol/optimization"
-echo "🎬 Video Monitoring: https://your-domain.vercel.app/admin/dol/video-monitoring"
+echo "🌐 Production URL: https://sceneflow.app"
+echo "📊 Dashboard: https://sceneflow.app/dashboard"
 echo ""
-echo "🚀 Your DOL architecture is now live in production!"
+echo "🎬 SceneFlow AI is now live in production!"
