@@ -407,8 +407,96 @@ export function SegmentPromptBuilder({
     }
   }, [open, segment, availableCharacters])
 
+  // Helper: Build action-focused prompt for I2V/FTV modes
+  // Strips static scene descriptions and focuses on temporal changes/motion
+  const constructActionFocusedPrompt = (): string => {
+    const actionParts: string[] = []
+    
+    // Character actions are the primary focus for I2V
+    // Use positional references instead of proper names when possible
+    if (structure.characterActions) {
+      // Replace character names with positional references for better I2V coherence
+      let actionText = structure.characterActions
+      structure.characters.forEach((charName, index) => {
+        const positionalRef = structure.characters.length === 1 
+          ? 'The figure' 
+          : index === 0 ? 'The figure on the left' : 'The figure on the right'
+        // Only replace if the character name appears in the action text
+        const nameRegex = new RegExp(`\\b${charName}\\b`, 'gi')
+        actionText = actionText.replace(nameRegex, positionalRef)
+      })
+      actionParts.push(actionText)
+    }
+    
+    // Talent blocking describes movement and positioning
+    if (structure.talentBlocking) {
+      let blockingText = structure.talentBlocking
+      structure.characters.forEach((charName, index) => {
+        const positionalRef = structure.characters.length === 1 
+          ? 'The figure' 
+          : index === 0 ? 'The figure on the left' : 'The figure on the right'
+        const nameRegex = new RegExp(`\\b${charName}\\b`, 'gi')
+        blockingText = blockingText.replace(nameRegex, positionalRef)
+      })
+      actionParts.push(blockingText)
+    }
+    
+    // Camera movement is temporal - include it
+    if (structure.cameraMovement && structure.cameraMovement !== 'static') {
+      const cameraMovements: Record<string, string> = {
+        'push-in': 'Camera slowly pushes in',
+        'pull-out': 'Camera pulls back',
+        'pan-left': 'Camera pans left',
+        'pan-right': 'Camera pans right',
+        'tilt-up': 'Camera tilts upward',
+        'tilt-down': 'Camera tilts downward',
+        'dolly': 'Camera dollies forward',
+        'truck': 'Camera trucks sideways',
+        'crane-up': 'Camera cranes up',
+        'crane-down': 'Camera cranes down',
+        'slow-push': 'Camera slowly pushes in',
+        'track': 'Camera tracks the subject',
+        'handheld': 'Subtle handheld movement',
+        'steadicam': 'Smooth steadicam movement',
+      }
+      actionParts.push(cameraMovements[structure.cameraMovement] || `${structure.cameraMovement} camera movement`)
+    }
+    
+    // Emotional beat can inform motion intensity - keep it subtle
+    if (structure.emotionalBeat) {
+      // Convert emotional beats to motion descriptors
+      const emotionToMotion: Record<string, string> = {
+        'tense': 'with restrained, controlled movements',
+        'joyful': 'with light, energetic movement',
+        'somber': 'with slow, deliberate motion',
+        'anxious': 'with nervous, subtle fidgeting',
+        'peaceful': 'with calm, relaxed movement',
+        'angry': 'with sharp, aggressive motion',
+        'surprised': 'with sudden, reactive movement',
+        'contemplative': 'with still, thoughtful pauses',
+      }
+      const motionDesc = emotionToMotion[structure.emotionalBeat.toLowerCase()]
+      if (motionDesc) actionParts.push(motionDesc)
+    }
+    
+    // If no action parts, provide generic motion guidance
+    if (actionParts.length === 0) {
+      actionParts.push('Subtle ambient motion. Figures remain in place with natural micro-movements.')
+    }
+    
+    return actionParts.join('. ') + '.'
+  }
+
   // Construct prompt from structure
   const constructPrompt = (): string => {
+    // For I2V and FTV modes, use action-focused prompts
+    // The start frame already contains all visual information (set design, lighting, costumes)
+    // so the text prompt should only describe temporal changes and motion
+    if (mode === 'video' && (generationMethod === 'I2V' || generationMethod === 'FTV')) {
+      return constructActionFocusedPrompt()
+    }
+    
+    // For T2V, EXT, REF modes, use full scene description
     const parts: string[] = []
     
     // Shot type
