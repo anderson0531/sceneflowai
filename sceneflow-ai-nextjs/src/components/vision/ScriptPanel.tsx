@@ -2115,6 +2115,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       onEstablishingShotStyleChange={onEstablishingShotStyleChange}
                       onBackdropVideoGenerated={onBackdropVideoGenerated}
                       characters={characters}
+                      onSelectTake={onSelectTake}
+                      onDeleteTake={onDeleteTake}
                       sceneAudioTracks={sceneAudioTracks[scene.sceneId || scene.id || `scene-${idx}`]}
                           domId={domId}
                           isBookmarked={bookmarkedSceneIndex === idx}
@@ -2513,6 +2515,9 @@ interface SceneCardProps {
   }) => void
   // Characters for backdrop video modal
   characters?: Array<{ id: string; name: string; description?: string; appearance?: string }>
+  // Take management
+  onSelectTake?: (sceneId: string, segmentId: string, takeId: string, assetUrl: string) => void
+  onDeleteTake?: (sceneId: string, segmentId: string, takeId: string) => void
   sceneAudioTracks?: {
     narration?: { url?: string; startTime: number; duration: number }
     dialogue?: Array<{ url?: string; startTime: number; duration: number; character?: string }>
@@ -2625,6 +2630,8 @@ function SceneCard({
   onNavigateScene,
   onMarkWorkflowComplete,
   onDismissStaleWarning,
+  onSelectTake,
+  onDeleteTake,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(null)
@@ -4234,8 +4241,8 @@ function SceneCard({
                       onEstablishingShotStyleChange={onEstablishingShotStyleChange}
                       onBackdropVideoGenerated={onBackdropVideoGenerated}
                       characters={characters}
-                      onSelectTake={onSelectTake}
-                      onDeleteTake={onDeleteTake}
+                      onSelectTake={onSelectTake ? (takeSceneId: string, segmentId: string, takeId: string, assetUrl: string) => onSelectTake(takeSceneId, segmentId, takeId, assetUrl) : undefined}
+                      onDeleteTake={onDeleteTake ? (takeSceneId: string, segmentId: string, takeId: string) => onDeleteTake(takeSceneId, segmentId, takeId) : undefined}
                     />
                   </div>
                 )}
