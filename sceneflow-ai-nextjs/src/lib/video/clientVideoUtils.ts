@@ -166,6 +166,7 @@ export async function extractThumbnail(
 
 /**
  * Upload a base64 image to the server for storage
+ * Uses dedicated /api/segments/upload-frame endpoint for client-side frame extraction
  * @param base64Image - Base64 encoded image
  * @param filename - Desired filename
  * @returns URL of the uploaded image
@@ -174,9 +175,10 @@ export async function uploadFrameToServer(
   base64Image: string,
   filename: string
 ): Promise<string> {
-  const response = await fetch('/api/scene/upload-image', {
+  const response = await fetch('/api/segments/upload-frame', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify({
       image: base64Image,
       filename,
@@ -184,7 +186,9 @@ export async function uploadFrameToServer(
   })
   
   if (!response.ok) {
-    throw new Error('Failed to upload frame')
+    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+    console.error('[uploadFrameToServer] Upload failed:', response.status, errorData)
+    throw new Error(`Failed to upload frame: ${errorData.error || response.statusText}`)
   }
   
   const data = await response.json()

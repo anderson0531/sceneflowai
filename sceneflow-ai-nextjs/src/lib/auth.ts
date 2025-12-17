@@ -3,8 +3,25 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import { isDemoMode, allowDemoFallback } from '@/lib/env'
 
 export const authOptions: NextAuthOptions = {
-  session: { strategy: 'jwt' },
+  session: { 
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
   secret: process.env.NEXT_AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'sceneflow-dev-secret',
+  // Ensure cookies work in production with secure settings
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === 'production' 
+        ? '__Secure-next-auth.session-token' 
+        : 'next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+  },
   providers: [
     CredentialsProvider({
       name: 'Credentials',
