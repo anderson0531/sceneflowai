@@ -7,10 +7,11 @@ import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Copy, Check, Sparkles, Info, Loader2 } from 'lucide-react'
+import { Copy, Check, Sparkles, Info, Loader2, ChevronDown, ChevronUp, Image as ImageIcon, Box } from 'lucide-react'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { findSceneCharacters } from '../../lib/character/matching'
 import { DetailedSceneDirection } from '@/types/scene-direction'
+import { VisualReference } from '@/types/visionReferences'
 
 interface ScenePromptStructure {
   location: string
@@ -45,6 +46,10 @@ interface ScenePromptBuilderProps {
     ethnicity?: string
     subject?: string
   }>
+  /** Scene backdrop references from the Reference Library */
+  sceneReferences?: VisualReference[]
+  /** Prop/object references from the Reference Library */
+  objectReferences?: VisualReference[]
   onGenerateImage: (selectedCharacters: any[] | any) => void
   isGenerating?: boolean
 }
@@ -131,10 +136,17 @@ export function ScenePromptBuilder({
   onClose,
   scene,
   availableCharacters = [],
+  sceneReferences = [],
+  objectReferences = [],
   onGenerateImage,
   isGenerating = false
 }: ScenePromptBuilderProps) {
   const [mode, setMode] = useState<'guided' | 'advanced'>('guided')
+  
+  // Reference Library state
+  const [selectedSceneRefIds, setSelectedSceneRefIds] = useState<string[]>([])
+  const [selectedObjectRefIds, setSelectedObjectRefIds] = useState<string[]>([])
+  const [referenceLibraryOpen, setReferenceLibraryOpen] = useState(false)
   const [structure, setStructure] = useState<ScenePromptStructure>({
     location: '',
     timeOfDay: 'day',
@@ -500,6 +512,22 @@ export function ScenePromptBuilder({
       parts.push(`with ${structure.keyProps}`)
     }
     
+    // Scene backdrop references (from Reference Library)
+    const selectedSceneRefs = sceneReferences.filter(r => selectedSceneRefIds.includes(r.id))
+    if (selectedSceneRefs.length > 0) {
+      const backdropDescriptions = selectedSceneRefs
+        .map(r => r.description || r.name)
+        .join(', ')
+      parts.push(`matching the visual style of ${backdropDescriptions}`)
+    }
+    
+    // Object/prop references (from Reference Library)
+    const selectedObjectRefs = objectReferences.filter(r => selectedObjectRefIds.includes(r.id))
+    if (selectedObjectRefs.length > 0) {
+      const objectNames = selectedObjectRefs.map(r => r.name).join(', ')
+      parts.push(`featuring ${objectNames}`)
+    }
+    
     // Additional details
     if (structure.additionalDetails) parts.push(structure.additionalDetails)
     
@@ -530,6 +558,10 @@ export function ScenePromptBuilder({
       })
       .filter(Boolean)
     
+    // Collect selected scene/object references for style matching
+    const selectedSceneRefs = sceneReferences.filter(r => selectedSceneRefIds.includes(r.id))
+    const selectedObjectRefs = objectReferences.filter(r => selectedObjectRefIds.includes(r.id))
+    
     // Pass prompt builder selections to API
     // Send raw prompt as scenePrompt (API will handle optimization)
     const rawPrompt = getRawPrompt()
@@ -539,7 +571,22 @@ export function ScenePromptBuilder({
       artStyle: structure.artStyle,         // Selected art style
       shotType: structure.shotType,        // Camera framing
       cameraAngle: structure.cameraAngle,   // Camera angle
-      lighting: structure.lighting          // Lighting selection
+      lighting: structure.lighting,         // Lighting selection
+      // NEW: Include reference images for style matching
+      sceneReferences: selectedSceneRefs.map(ref => ({
+        id: ref.id,
+        name: ref.name,
+        description: ref.description,
+        imageUrl: ref.imageUrl,
+        type: 'scene' as const
+      })),
+      objectReferences: selectedObjectRefs.map(ref => ({
+        id: ref.id,
+        name: ref.name,
+        description: ref.description,
+        imageUrl: ref.imageUrl,
+        type: 'object' as const
+      }))
     }
     
     // Call parent handler - it will update isGenerating prop
@@ -569,7 +616,7 @@ export function ScenePromptBuilder({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl h-[85vh] bg-gray-900 text-white border-gray-700 flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="text-white">Scene Prompt Builder - {scene?.heading || `Scene ${scene?.sceneNumber || ''}`}</DialogTitle>
+          <DialogTitle className="text-white">Opening Frame — {scene?.heading || `Scene ${scene?.sceneNumber || ''}`}</DialogTitle>
         </DialogHeader>
 
         {/* Scrollable Content Area */}
@@ -577,10 +624,10 @@ export function ScenePromptBuilder({
         <Tabs value={mode} onValueChange={handleModeChange}>
           <TabsList className="w-full">
             <TabsTrigger value="guided" className="flex-1">
-              Guided Mode
+              Visual Setup
             </TabsTrigger>
             <TabsTrigger value="advanced" className="flex-1">
-              Advanced Mode
+              Custom Prompt
             </TabsTrigger>
           </TabsList>
 
@@ -732,6 +779,138 @@ export function ScenePromptBuilder({
               </div>
             )}
 
+            {/* Reference Library - Scene Backdrops & Props */}
+            {(sceneReferences.length > 0 || objectReferences.length > 0) && (
+              <div className="space-y-3 p-3 rounded border border-gray-700 bg-gray-800/50">
+                <button
+                  onClick={() => setReferenceLibraryOpen(!referenceLibraryOpen)}
+                  className="w-full flex items-center justify-between text-sm font-semibold text-gray-200 hover:text-white transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    Reference Library 📚
+                    {(selectedSceneRefIds.length > 0 || selectedObjectRefIds.length > 0) && (
+                      <span className="text-xs text-green-400 font-normal">
+                        ({selectedSceneRefIds.length + selectedObjectRefIds.length} selected)
+                      </span>
+                    )}
+                  </span>
+                  {referenceLibraryOpen ? (
+                    <ChevronUp className="w-4 h-4 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                  )}
+                </button>
+                
+                {referenceLibraryOpen && (
+                  <div className="space-y-4 pt-2">
+                    {/* Scene Backdrops */}
+                    {sceneReferences.length > 0 && (
+                      <div>
+                        <label className="text-xs text-gray-400 flex items-center gap-1 mb-2">
+                          <ImageIcon className="w-3 h-3" />
+                          Scene Backdrops
+                        </label>
+                        <div className="grid grid-cols-4 gap-2">
+                          {sceneReferences.map(ref => (
+                            <button
+                              key={ref.id}
+                              onClick={() => {
+                                setSelectedSceneRefIds(prev => 
+                                  prev.includes(ref.id) 
+                                    ? prev.filter(id => id !== ref.id)
+                                    : [...prev, ref.id]
+                                )
+                              }}
+                              className={`relative aspect-video rounded overflow-hidden border-2 transition-all ${
+                                selectedSceneRefIds.includes(ref.id)
+                                  ? 'border-blue-500 ring-2 ring-blue-500/50'
+                                  : 'border-gray-700 hover:border-gray-500'
+                              }`}
+                              title={ref.description || ref.name}
+                            >
+                              {ref.imageUrl ? (
+                                <img
+                                  src={ref.imageUrl}
+                                  alt={ref.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                                  <ImageIcon className="w-4 h-4 text-gray-500" />
+                                </div>
+                              )}
+                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1">
+                                <div className="text-[9px] text-white truncate">{ref.name}</div>
+                              </div>
+                              {selectedSceneRefIds.includes(ref.id) && (
+                                <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                                  <Check className="w-3 h-3 text-white" />
+                                </div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Props & Objects */}
+                    {objectReferences.length > 0 && (
+                      <div>
+                        <label className="text-xs text-gray-400 flex items-center gap-1 mb-2">
+                          <Box className="w-3 h-3" />
+                          Props & Objects
+                        </label>
+                        <div className="grid grid-cols-4 gap-2">
+                          {objectReferences.map(ref => (
+                            <button
+                              key={ref.id}
+                              onClick={() => {
+                                setSelectedObjectRefIds(prev => 
+                                  prev.includes(ref.id) 
+                                    ? prev.filter(id => id !== ref.id)
+                                    : [...prev, ref.id]
+                                )
+                              }}
+                              className={`relative aspect-square rounded overflow-hidden border-2 transition-all ${
+                                selectedObjectRefIds.includes(ref.id)
+                                  ? 'border-purple-500 ring-2 ring-purple-500/50'
+                                  : 'border-gray-700 hover:border-gray-500'
+                              }`}
+                              title={ref.description || ref.name}
+                            >
+                              {ref.imageUrl ? (
+                                <img
+                                  src={ref.imageUrl}
+                                  alt={ref.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                                  <Box className="w-4 h-4 text-gray-500" />
+                                </div>
+                              )}
+                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1">
+                                <div className="text-[9px] text-white truncate">{ref.name}</div>
+                              </div>
+                              {selectedObjectRefIds.includes(ref.id) && (
+                                <div className="absolute top-1 right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
+                                  <Check className="w-3 h-3 text-white" />
+                                </div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <p className="text-[10px] text-gray-500">
+                      Selected references will be used for visual style consistency in the generated image.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Camera & Composition */}
             <div className="space-y-3 p-3 rounded border border-gray-700 bg-gray-800/50">
               <h3 className="text-sm font-semibold text-gray-200">Camera & Composition 🎬</h3>
@@ -790,29 +969,6 @@ export function ScenePromptBuilder({
                       <SelectItem value="high-angle">High Angle</SelectItem>
                       <SelectItem value="birds-eye">Bird's Eye</SelectItem>
                       <SelectItem value="dutch-angle">Dutch Angle</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-gray-400">Camera Movement</label>
-                  <Select value={structure.cameraMovement} onValueChange={(v) => setStructure(prev => ({ ...prev, cameraMovement: v }))}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="static">Static</SelectItem>
-                      <SelectItem value="handheld">Handheld</SelectItem>
-                      <SelectItem value="steadicam">Steadicam</SelectItem>
-                      <SelectItem value="dolly-in">Dolly In</SelectItem>
-                      <SelectItem value="dolly-out">Dolly Out</SelectItem>
-                      <SelectItem value="pan-left">Pan Left</SelectItem>
-                      <SelectItem value="pan-right">Pan Right</SelectItem>
-                      <SelectItem value="tilt-up">Tilt Up</SelectItem>
-                      <SelectItem value="tilt-down">Tilt Down</SelectItem>
-                      <SelectItem value="jib-up">Jib Up</SelectItem>
-                      <SelectItem value="crane-shot">Crane Shot</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

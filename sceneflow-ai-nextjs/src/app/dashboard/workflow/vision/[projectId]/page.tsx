@@ -6693,6 +6693,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   onBookmarkScene={handleBookmarkScene}
                   onMarkWorkflowComplete={handleMarkWorkflowComplete}
                   onDismissStaleWarning={handleDismissStaleWarning}
+                sceneReferences={sceneReferences}
+                objectReferences={objectReferences}
                 showStoryboard={showSceneGallery}
                 onToggleStoryboard={() => setShowSceneGallery(!showSceneGallery)}
                 showDashboard={showDashboard}
