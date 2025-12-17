@@ -158,11 +158,26 @@ export async function POST(
         console.log('[Segment Asset Generation] Using last frame as start frame for EXT mode (I2V fallback)')
       }
       
-      // End Frame - used for FTV (Frame-to-Video) only when end frame is provided
+      // End Frame - used for FTV (Frame-to-Video/Interpolation) mode
+      // FTV requires BOTH startFrame AND lastFrame for proper interpolation
       // NOTE: Cannot use endFrame together with referenceImages per Veo 3.1 API constraints
-      if (method === 'FTV' && endFrameUrl) {
-        videoOptions.lastFrame = endFrameUrl
-        console.log('[Segment Asset Generation] Using end frame for FTV')
+      if (method === 'FTV') {
+        if (endFrameUrl) {
+          videoOptions.lastFrame = endFrameUrl
+          console.log('[Segment Asset Generation] Using end frame for FTV interpolation')
+        } else {
+          // FTV without endFrame will behave like I2V - warn the user
+          console.warn('[Segment Asset Generation] WARNING: FTV mode requested but no endFrameUrl provided')
+          console.warn('[Segment Asset Generation] FTV requires both startFrame AND lastFrame for interpolation')
+          console.warn('[Segment Asset Generation] Falling back to I2V behavior (start frame only)')
+          // Add warning to method selection result for UI feedback
+          if (!methodSelectionResult.warnings) {
+            methodSelectionResult.warnings = []
+          }
+          methodSelectionResult.warnings.push(
+            'FTV mode requires an ending frame for interpolation. Without it, the video will animate from the start frame only (I2V behavior).'
+          )
+        }
       }
       
       // Reference Images - used for REF method (up to 3 images for style/character consistency)

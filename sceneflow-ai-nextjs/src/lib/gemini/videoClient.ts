@@ -1,7 +1,20 @@
 /**
  * Gemini API Video Generation Client
  * Uses Veo 3.1 (veo-3.1-generate-preview) for video generation
- * Supports Text-to-Video (T2V) and Image-to-Video (I2V)
+ * 
+ * Supported Generation Modes:
+ * 1. T2V (Text-to-Video): Prompt only, basic generation
+ * 2. REF (Reference Images): T2V + up to 3 reference images for style/character guidance
+ *    - CANNOT be combined with startFrame (I2V)
+ *    - referenceImages goes in 'config' object per Gemini API format
+ * 3. I2V (Image-to-Video): Uses startFrame as the first frame
+ *    - Animates from a static image
+ * 4. FTV (Frame-to-Video/Interpolation): Uses BOTH startFrame AND lastFrame
+ *    - Creates smooth transition between two frames
+ *    - lastFrame is REQUIRED for proper interpolation
+ * 5. EXT (Extension): Extends a previous Veo-generated video
+ *    - Only works with videos still in Gemini's system
+ *    - For external videos, use I2V with last frame instead
  * 
  * Based on: https://ai.google.dev/gemini-api/docs/video
  */
@@ -159,7 +172,12 @@ export async function generateVideoWithVeo(
     }
   }
 
-  // Add reference images (Veo 3.1 feature - T2V only, NOT compatible with I2V)
+  // Build config object for Gemini API-style parameters
+  // The Gemini API uses 'config' for certain features like referenceImages
+  const config: Record<string, any> = {}
+
+  // Add reference images to config (Veo 3.1 feature - T2V only, NOT compatible with I2V)
+  // Per Gemini API docs: referenceImages goes in config.reference_images, not parameters
   // IMPORTANT: referenceImages cannot be used with startFrame (image parameter)
   if (options.referenceImages && options.referenceImages.length > 0) {
     // Safety check: referenceImages is T2V only
@@ -197,14 +215,26 @@ export async function generateVideoWithVeo(
           }
         })
       )
-      parameters.referenceImages = refs.filter(Boolean)
+      const validRefs = refs.filter(Boolean)
+      if (validRefs.length > 0) {
+        // Per Gemini API: reference_images goes in config object, not parameters
+        config.referenceImages = validRefs
+        console.log('[Veo Video] Added', validRefs.length, 'reference images to config')
+      }
     }
   }
 
-  // Build request body (Vertex AI-style format for predictLongRunning)
+  // Build request body
+  // The Gemini API predictLongRunning uses instances + parameters + config structure
   const requestBody: Record<string, any> = {
     instances: [instance],
     parameters: parameters
+  }
+  
+  // Add config object if it has any properties (e.g., referenceImages)
+  if (Object.keys(config).length > 0) {
+    requestBody.config = config
+    console.log('[Veo Video] Request includes config object with keys:', Object.keys(config))
   }
 
   try {
