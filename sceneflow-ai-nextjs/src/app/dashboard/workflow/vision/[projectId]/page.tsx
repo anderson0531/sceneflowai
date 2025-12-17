@@ -1380,6 +1380,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const response = await fetch(`/api/segments/${encodeURIComponent(segmentId)}/generate-asset`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include', // Ensure cookies/session tokens are sent
           body: JSON.stringify({
             prompt,
             genType: mode,
@@ -1400,6 +1401,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
         if (!response.ok) {
           const errorText = await response.text()
+          // Handle specific error codes with user-friendly messages
+          if (response.status === 401) {
+            throw new Error('Session expired. Please refresh the page and sign in again.')
+          }
+          if (response.status === 403) {
+            throw new Error('You do not have permission to generate assets.')
+          }
+          if (response.status === 429) {
+            throw new Error('Rate limit exceeded. Please wait a moment and try again.')
+          }
           throw new Error(errorText || 'Failed to generate asset')
         }
 
