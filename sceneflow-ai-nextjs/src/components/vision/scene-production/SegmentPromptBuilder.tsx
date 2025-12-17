@@ -640,7 +640,7 @@ export function SegmentPromptBuilder({
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-white">
             {mode === 'video' ? <Video className="w-5 h-5 text-blue-400" /> : <ImageIcon className="w-5 h-5 text-purple-400" />}
-            {mode === 'video' ? 'Video Prompt Builder' : 'Image Prompt Builder'}
+            {mode === 'video' ? 'Generate Video' : 'Generate Image'}
             <span className="text-sm font-normal text-gray-400 ml-2">
               Segment {segment.sequenceIndex + 1} · {(segment.endTime - segment.startTime).toFixed(1)}s
             </span>

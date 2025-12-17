@@ -335,12 +335,18 @@ export function buildMethodSelectionContext(
   // Check character references
   const hasCharacterRefs = (segment.references?.characterIds?.length || 0) > 0 || allCharacterRefs.length > 0
   
+  // hasSceneImage is true if:
+  // 1. Scene has an imageUrl, OR
+  // 2. Segment has a startFrameUrl explicitly set (user selected a start frame)
+  const hasStartFrame = !!segment.references?.startFrameUrl
+  const hasSceneImage = !!scene.imageUrl || hasStartFrame
+  
   return {
     segmentIndex: segment.sequenceIndex,
     totalSegments,
-    hasSceneImage: !!scene.imageUrl,
+    hasSceneImage,
     hasCharacterRefs,
-    hasPreviousLastFrame,
+    hasPreviousLastFrame: hasPreviousLastFrame || hasStartFrame,  // Also consider explicit startFrameUrl
     hasPreviousVeoRef,
     isEstablishingShot: segment.isEstablishingShot || false,
     shotType,
