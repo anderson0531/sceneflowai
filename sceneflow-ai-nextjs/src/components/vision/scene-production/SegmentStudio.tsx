@@ -898,7 +898,7 @@ export function SegmentStudio({
                         </div>
                       )}
                       <div className="absolute bottom-1 left-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded">
-                        Take {idx + 1}
+                        Take {segment.takes.length - idx}
                       </div>
                     </div>
                     
@@ -931,7 +931,7 @@ export function SegmentStudio({
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            if (confirm(`Delete Take ${idx + 1}? This cannot be undone.`)) {
+                            if (confirm(`Delete Take ${segment.takes.length - idx}? This cannot be undone.`)) {
                               onDeleteTake(take.id)
                             }
                           }}

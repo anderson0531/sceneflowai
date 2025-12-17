@@ -1839,6 +1839,31 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [applySceneProductionUpdate]
   )
   
+  // Handle deleting a take from a segment
+  const handleDeleteTake = useCallback(
+    (sceneId: string, segmentId: string, takeId: string) => {
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        
+        const segments = current.segments.map((segment) => {
+          if (segment.segmentId === segmentId) {
+            const updatedTakes = (segment.takes || []).filter(t => t.id !== takeId)
+            return {
+              ...segment,
+              takes: updatedTakes,
+            }
+          }
+          return segment
+        })
+        
+        return { ...current, segments }
+      })
+      
+      toast.success('Take deleted')
+    },
+    [applySceneProductionUpdate]
+  )
+  
   // Handle deleting a segment
   const handleDeleteSegment = useCallback(
     (sceneId: string, segmentId: string) => {
@@ -6688,6 +6713,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onEstablishingShotStyleChange={handleEstablishingShotStyleChange}
                 onBackdropVideoGenerated={handleBackdropVideoGenerated}
                 onSelectTake={handleSelectTake}
+                onDeleteTake={handleDeleteTake}
                 sceneAudioTracks={{}}
                   bookmarkedScene={sceneBookmark}
                   onBookmarkScene={handleBookmarkScene}
