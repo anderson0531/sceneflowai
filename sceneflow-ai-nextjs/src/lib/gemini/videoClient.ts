@@ -1,3 +1,22 @@
+import { GoogleAuth } from 'google-auth-library';
+
+/**
+ * Get Google OAuth2 Bearer token for Vertex AI
+ */
+async function getVertexAccessToken(): Promise<string> {
+  const auth = new GoogleAuth({
+    scopes: [
+      'https://www.googleapis.com/auth/cloud-platform',
+      'https://www.googleapis.com/auth/aiplatform'
+    ]
+  });
+  const client = await auth.getClient();
+  const tokenResponse = await client.getAccessToken();
+  if (!tokenResponse || !tokenResponse.token) {
+    throw new Error('Failed to obtain Vertex AI access token');
+  }
+  return tokenResponse.token;
+}
 /**
  * Gemini API Video Generation Client
  * Uses Veo 3.1 (veo-3.1-generate-preview) for video generation
@@ -72,16 +91,14 @@ export async function generateVideoWithVeo(
   prompt: string,
   options: VideoGenerationOptions = {}
 ): Promise<VideoGenerationResult> {
-  const apiKey = process.env.GEMINI_API_KEY
-
-  if (!apiKey) {
-    throw new Error('GEMINI_API_KEY not configured')
-  }
-
-  // Available models: veo-2.0-generate-001, veo-3.0-generate-001, veo-3.0-fast-generate-001, veo-3.1-generate-preview
-  // Using Veo 3.1 for referenceImages, video extension, and frame-to-video support
+  // Vertex AI endpoint config
+  const project = process.env.VERTEX_PROJECT_ID
+  const location = process.env.VERTEX_LOCATION || 'us-central1'
   const model = 'veo-3.1-generate-preview'
-  console.log(`[Veo Video] Generating video with ${model}...`)
+  if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
+  // Vertex endpoint: https://LOCATION-aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/LOCATION/publishers/google/models/MODEL:predictLongRunning
+  const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:predictLongRunning`
+  console.log(`[Veo Video] Generating video with ${model} on Vertex AI...`)
   console.log('[Veo Video] Prompt:', prompt.substring(0, 200))
   console.log('[Veo Video] Options:', JSON.stringify({
     aspectRatio: options.aspectRatio || '16:9',
@@ -91,10 +108,6 @@ export async function generateVideoWithVeo(
     hasLastFrame: !!options.lastFrame,
     referenceImagesCount: options.referenceImages?.length || 0
   }))
-
-  // Build request body for Veo API
-  // Video generation uses predictLongRunning endpoint for async operation
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:predictLongRunning?key=${apiKey}`
 
   // Build instances array (Veo uses Vertex AI-style request format)
   const instance: Record<string, any> = {
@@ -238,72 +251,62 @@ export async function generateVideoWithVeo(
   }
 
   try {
+    const accessToken = await getVertexAccessToken();
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
       },
       body: JSON.stringify(requestBody)
     })
 
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('[Veo Video] Error response:', errorText)
-
-      let hint = ''
-      if (response.status === 403) {
-        hint = 'API key invalid or unauthorized for Veo.'
-      } else if (response.status === 404) {
-        hint = `Model ${model} not found or not accessible.`
-      } else if (response.status === 400) {
-        hint = 'Bad request. Check prompt and parameters.'
-      } else if (response.status === 429) {
-        hint = 'Rate limit exceeded. Please wait and try again.'
-      }
-
+      const errorText = await response.text();
+      console.error('[Veo Video] Error response:', errorText);
       return {
         status: 'FAILED',
-        error: `Veo API error ${response.status}: ${errorText}. ${hint}`
-      }
+        error: `Vertex AI error ${response.status}: ${errorText}`
+      };
     }
 
-    const data = await response.json()
-    console.log('[Veo Video] Response:', JSON.stringify(data).substring(0, 500))
+    const data = await response.json();
+    console.log('[Veo Video] Response:', JSON.stringify(data).substring(0, 500));
 
     // Check for immediate error in response
     if (data.error) {
       return {
         status: 'FAILED',
-        error: data.error.message || 'Unknown Veo error'
-      }
+        error: data.error.message || 'Unknown Vertex AI error'
+      };
     }
 
-    // Veo returns an operation for async processing
+    // Vertex AI returns an operation for async processing
     // The operation name is used for polling
-    const operationName = data.name || data.operation?.name
+    // Vertex AI returns the full operation name as data.name
+    const operationName = data.name || data.operation?.name;
     if (!operationName) {
       // Check if video is already done (unlikely but possible)
       if (data.done && data.response?.generatedVideos?.[0]?.video) {
-        const videoFile = data.response.generatedVideos[0].video
+        const videoFile = data.response.generatedVideos[0].video;
         return {
           status: 'COMPLETED',
           videoUrl: videoFile.uri || videoFile.url,
           operationName: 'completed'
-        }
+        };
       }
-
-      console.error('[Veo Video] No operation name in response:', data)
+      console.error('[Veo Video] No operation name in response:', data);
       return {
         status: 'FAILED',
-        error: 'No operation ID returned from Veo API'
-      }
+        error: 'No operation ID returned from Vertex AI'
+      };
     }
 
     return {
       status: 'QUEUED',
       operationName: operationName,
       estimatedWaitSeconds: 120 // Veo typically takes 1-3 minutes
-    }
+    };
   } catch (error: any) {
     console.error('[Veo Video] Request error:', error)
     return {
@@ -319,23 +322,26 @@ export async function generateVideoWithVeo(
 export async function checkVideoGenerationStatus(
   operationName: string
 ): Promise<VideoGenerationResult> {
-  const apiKey = process.env.GEMINI_API_KEY
-
-  if (!apiKey) {
-    throw new Error('GEMINI_API_KEY not configured')
+  const project = process.env.VERTEX_PROJECT_ID
+  const location = process.env.VERTEX_LOCATION || 'us-central1'
+  if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
+  // Vertex operation endpoint: https://LOCATION-aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/LOCATION/operations/OPERATION_ID
+  // operationName may be full or just the ID; handle both
+  let opId = operationName
+  if (operationName.startsWith('projects/')) {
+    // Already full path
+    opId = operationName.split('/operations/')[1] || operationName
   }
-
-  // Use the full operation name in the endpoint
-  // The operation name is like "models/veo-3.0-generate-001/operations/xyz123"
-  // So the endpoint should be /v1beta/{operationName}
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/${operationName}?key=${apiKey}`
-  console.log('[Veo Video] Checking status at:', endpoint.replace(apiKey, 'API_KEY'))
+  const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/operations/${opId}`
+  console.log('[Veo Video] Checking status at:', endpoint)
 
   try {
+    const accessToken = await getVertexAccessToken();
     const response = await fetch(endpoint, {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
       }
     })
 
@@ -457,30 +463,31 @@ export async function checkVideoGenerationStatus(
 export async function downloadVideoFile(
   fileName: string
 ): Promise<Buffer | null> {
-  const apiKey = process.env.GEMINI_API_KEY
-
-  if (!apiKey) {
-    throw new Error('GEMINI_API_KEY not configured')
-  }
-
+  const project = process.env.VERTEX_PROJECT_ID
+  const location = process.env.VERTEX_LOCATION || 'us-central1'
+  if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
   // Extract file name from file: prefix if present
   const cleanName = fileName.startsWith('file:') ? fileName.substring(5) : fileName
-
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/files/${cleanName}:download?key=${apiKey}`
+  // Vertex AI files endpoint: https://LOCATION-aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/LOCATION/files/FILE_ID:download
+  const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/files/${cleanName}:download`
 
   try {
-    const response = await fetch(endpoint)
-    
+    const accessToken = await getVertexAccessToken();
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
     if (!response.ok) {
       console.error('[Veo Video] File download failed:', response.status)
-      return null
+      return null;
     }
-
-    const buffer = await response.arrayBuffer()
-    return Buffer.from(buffer)
+    const buffer = await response.arrayBuffer();
+    return Buffer.from(buffer);
   } catch (error) {
-    console.error('[Veo Video] File download error:', error)
-    return null
+    console.error('[Veo Video] File download error:', error);
+    return null;
   }
 }
 
