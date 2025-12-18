@@ -355,23 +355,23 @@ export async function checkVideoGenerationStatus(
   operationName: string
 ): Promise<VideoGenerationResult> {
   const location = process.env.VERTEX_LOCATION || 'us-central1'
+  const project = process.env.VERTEX_PROJECT_ID
+  if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
   
-  // Vertex AI Veo returns the full operation path - use it directly
-  // Format: projects/{project}/locations/{location}/publishers/google/models/{model}/operations/{opId}
-  // We need to call: GET https://{location}-aiplatform.googleapis.com/v1/{operationName}
-  let endpoint: string
-  
-  if (operationName.startsWith('projects/')) {
-    // Full operation path - use it directly
-    endpoint = `https://${location}-aiplatform.googleapis.com/v1/${operationName}`
-  } else {
-    // Just an operation ID - construct the path (legacy fallback)
-    const project = process.env.VERTEX_PROJECT_ID
-    if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
-    endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/veo-3.1-generate-preview/operations/${operationName}`
+  // Extract the operation ID from the full path
+  // Input format: projects/{project}/locations/{location}/publishers/google/models/{model}/operations/{opId}
+  // We need to call: GET https://{location}-aiplatform.googleapis.com/v1/projects/{project}/locations/{location}/operations/{opId}
+  let opId = operationName
+  if (operationName.includes('/operations/')) {
+    opId = operationName.split('/operations/').pop() || operationName
   }
   
+  // Use the standard Vertex AI operations endpoint (not the publisher-specific one)
+  const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/operations/${opId}`
+  
   console.log('[Veo Video] Checking status at:', endpoint)
+  console.log('[Veo Video] Original operation name:', operationName)
+  console.log('[Veo Video] Extracted operation ID:', opId)
 
   try {
     const accessToken = await getVertexAccessToken();
