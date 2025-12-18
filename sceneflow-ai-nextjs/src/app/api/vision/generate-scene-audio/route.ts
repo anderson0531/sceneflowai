@@ -308,11 +308,33 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig, l
     v3Languages: v3Languages.join(', ')
   })
 
-  // Adjust voice settings for better quality, especially for non-English languages
-  // Higher stability and similarity_boost can improve quality for complex languages like Thai
-  const isNonEnglish = language !== 'en'
-  const defaultStability = isNonEnglish ? 0.6 : 0.5  // Slightly higher stability for non-English
-  const defaultSimilarityBoost = isNonEnglish ? 0.8 : 0.75  // Higher similarity for non-English
+  // Build voice_settings based on model
+  // eleven_v3 uses different settings than turbo_v2_5:
+  // - v3: stability must be 0.0 (Creative), 0.5 (Natural), or 1.0 (Robust)
+  // - v3: does NOT support similarity_boost, style, or use_speaker_boost
+  // - turbo: supports stability (0-1), similarity_boost (0-1), style (0-1), use_speaker_boost
+  
+  let voiceSettings: Record<string, any>
+  
+  if (modelId === 'eleven_v3') {
+    // v3 model - simpler settings
+    // Use 0.5 (Natural) for balanced quality, or 1.0 (Robust) for more consistent output
+    voiceSettings = {
+      stability: 0.5, // Natural - best balance for most content
+    }
+  } else {
+    // turbo_v2_5 and other models - full settings
+    const isNonEnglish = language !== 'en'
+    const defaultStability = isNonEnglish ? 0.6 : 0.5
+    const defaultSimilarityBoost = isNonEnglish ? 0.8 : 0.75
+    
+    voiceSettings = {
+      stability: voiceConfig.stability || defaultStability,
+      similarity_boost: voiceConfig.similarityBoost || defaultSimilarityBoost,
+      style: hasAudioTags ? 0.5 : undefined,
+      use_speaker_boost: hasAudioTags ? true : (isNonEnglish ? true : undefined),
+    }
+  }
 
   const response = await fetch(url, {
     method: 'POST',
@@ -324,12 +346,7 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig, l
     body: JSON.stringify({
       text: text,
       model_id: modelId,
-      voice_settings: {
-        stability: voiceConfig.stability || defaultStability,
-        similarity_boost: voiceConfig.similarityBoost || defaultSimilarityBoost,
-        style: hasAudioTags ? 0.5 : undefined,
-        use_speaker_boost: hasAudioTags ? true : (isNonEnglish ? true : undefined),  // Enable speaker boost for non-English
-      },
+      voice_settings: voiceSettings,
     }),
   })
 
