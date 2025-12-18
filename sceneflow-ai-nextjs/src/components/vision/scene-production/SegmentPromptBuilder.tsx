@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
-import { Copy, Check, Sparkles, Info, Loader2, Video, Image as ImageIcon, Clock, ArrowRight, Film, Link as LinkIcon, Upload, Camera, Wand2, Library, Users, Box, Clapperboard, X, Plus, MessageSquare } from 'lucide-react'
+import { Copy, Check, Sparkles, Info, Loader2, Video, Image as ImageIcon, Clock, ArrowRight, Film, Link as LinkIcon, Upload, Camera, Wand2, Library, Users, Box, Clapperboard, X, Plus, MessageSquare, AlertCircle } from 'lucide-react'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { SceneSegment, SceneSegmentTake } from './types'
 import { VisualReference } from '@/types/visionReferences'
@@ -149,6 +149,10 @@ export function SegmentPromptBuilder({
 }: SegmentPromptBuilderProps) {
   const [activeTab, setActiveTab] = useState<'guided' | 'advanced'>('guided')
   
+  // Track if we started a generation (to know when to auto-close on success)
+  const [generationStarted, setGenerationStarted] = useState(false)
+  const [localError, setLocalError] = useState<string | null>(null)
+  
   // Video generation method (only for video mode)
   const [generationMethod, setGenerationMethod] = useState<VideoGenerationMethod>('T2V')
   const [startFrameUrl, setStartFrameUrl] = useState<string | null>(null)
@@ -166,6 +170,34 @@ export function SegmentPromptBuilder({
   
   // Enhanced: Character dialog connections
   const [characterDialogConnections, setCharacterDialogConnections] = useState<Map<string, string>>(new Map())
+  
+  // Watch for segment status changes after generation starts
+  // Note: We don't auto-close on success - user may want to generate multiple takes
+  useEffect(() => {
+    if (!generationStarted) return
+    
+    // If generation completed successfully, just reset the flag
+    // User can continue generating more takes or close manually
+    if (segment.status === 'COMPLETE' || segment.status === 'UPLOADED') {
+      setGenerationStarted(false)
+      setLocalError(null)
+      // Don't auto-close - user controls when to close
+    }
+    
+    // If generation failed, show the error but keep dialog open
+    if (segment.status === 'ERROR') {
+      setGenerationStarted(false)
+      setLocalError(segment.errorMessage || 'Generation failed. Please try again.')
+    }
+  }, [segment.status, segment.errorMessage, generationStarted])
+  
+  // Reset state when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setGenerationStarted(false)
+      setLocalError(null)
+    }
+  }, [open])
   
   // Compute all available video takes from all segments
   const allVideoTakes = useMemo((): VideoTakeReference[] => {
@@ -681,8 +713,11 @@ export function SegmentPromptBuilder({
       }
     }
     
+    // Clear any previous error and mark generation as started
+    setLocalError(null)
+    setGenerationStarted(true)
     onGenerate(promptData)
-    onClose()
+    // Don't close here - wait for status to change to COMPLETE or ERROR
   }
 
   const handleCopy = async () => {
@@ -723,7 +758,12 @@ export function SegmentPromptBuilder({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(value) => {
+      // Prevent closing while generating
+      if (isGenerating && !value) return
+      // Allow closing otherwise (including with errors - user can dismiss)
+      if (!value) onClose()
+    }}>
       <DialogContent className="max-w-4xl h-[85vh] bg-gray-900 text-white border-gray-700 flex flex-col overflow-hidden" aria-describedby={undefined}>
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-white">
@@ -734,6 +774,26 @@ export function SegmentPromptBuilder({
             </span>
           </DialogTitle>
         </DialogHeader>
+
+        {/* Error Banner - Show when generation fails */}
+        {localError && (
+          <div className="flex-shrink-0 mx-6 mt-2 p-3 rounded-lg bg-red-900/30 border border-red-700 max-h-[200px] overflow-y-auto">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <pre className="text-xs text-red-200 whitespace-pre-wrap font-sans leading-relaxed">
+                  {localError}
+                </pre>
+                <button
+                  onClick={() => setLocalError(null)}
+                  className="mt-2 text-xs text-red-400 hover:text-red-300 underline"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
           {/* Video Generation Method Selector */}
