@@ -81,7 +81,11 @@ export async function POST(req: NextRequest) {
     let textToGenerate = text
     if (language !== 'en') {
       try {
-        console.log('[Scene Audio] Translating text to', language)
+        console.log('[Scene Audio] ==================== TRANSLATION DEBUG ====================')
+        console.log('[Scene Audio] Source language: en')
+        console.log('[Scene Audio] Target language:', language)
+        console.log('[Scene Audio] Original text:', text)
+        console.log('[Scene Audio] Original text length:', text.length)
         
         // Use Google Translate API directly
         const apiKey = process.env.GOOGLE_API_KEY
@@ -108,7 +112,11 @@ export async function POST(req: NextRequest) {
 
         const translateData = await translateResponse.json()
         textToGenerate = translateData.data.translations[0].translatedText
-        console.log('[Scene Audio] Translation complete:', text.substring(0, 50), '→', textToGenerate.substring(0, 50))
+        
+        console.log('[Scene Audio] Translated text:', textToGenerate)
+        console.log('[Scene Audio] Translated text length:', textToGenerate.length)
+        console.log('[Scene Audio] Translated text (first 200 chars):', textToGenerate.substring(0, 200))
+        console.log('[Scene Audio] ==================== END TRANSLATION DEBUG ====================')
       } catch (error: any) {
         console.error('[Scene Audio] Translation error:', error)
         return NextResponse.json(
@@ -158,6 +166,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Step 4: Generate audio using specified provider with optimized text
+    console.log('[Scene Audio] ==================== TTS INPUT DEBUG ====================')
+    console.log('[Scene Audio] Language:', language)
+    console.log('[Scene Audio] Provider:', finalVoiceConfig.provider)
+    console.log('[Scene Audio] Voice ID:', finalVoiceConfig.voiceId)
+    console.log('[Scene Audio] Text being sent to TTS:', optimized.text)
+    console.log('[Scene Audio] Text length:', optimized.text.length)
+    console.log('[Scene Audio] ==================== END TTS INPUT DEBUG ====================')
+    
     const audioBuffer = await generateAudio(optimized.text, finalVoiceConfig, language)
 
     // Step 5: Get actual audio duration from buffer
@@ -262,8 +278,31 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig, l
   // Always use standard endpoint (ElevenLabs doesn't have a separate SSML endpoint)
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceConfig.voiceId}?optimize_streaming_latency=0&output_format=${outputFormat}`
 
-  // Pin to ElevenLabs v2.5 unless overridden via environment variable
-  const modelId = process.env.ELEVENLABS_MODEL_ID || 'eleven_turbo_v2_5'
+  // Select model based on language:
+  // - eleven_turbo_v2_5: Fast, production-ready, supports 32 languages including Thai
+  // - eleven_v3: Newest flagship model with best quality for 70+ languages (Alpha)
+  // 
+  // Languages that work well with turbo_v2_5: en, es, fr, de, it, pt, pl, nl, ru, cs, tr, th, etc.
+  // For maximum quality on complex tonal languages, use eleven_v3
+  // 
+  // NOTE: Do NOT use eleven_multilingual_v2 for Thai - it only supports 29 languages
+  // and does not officially support Thai (will produce gibberish)
+  
+  // Use eleven_v3 for best quality on Asian/tonal languages, turbo_v2_5 for others
+  // eleven_v3 handles Thai tones and nuances much better than turbo_v2_5
+  const v3Languages = ['th', 'vi', 'id', 'ms'] // Languages that benefit from v3's improved tonal handling
+  const useV3Model = v3Languages.includes(language)
+  
+  // Default model selection: v3 for tonal languages, turbo_v2_5 for everything else
+  const defaultModelId = useV3Model ? 'eleven_v3' : 'eleven_turbo_v2_5'
+  const modelId = process.env.ELEVENLABS_MODEL_ID || defaultModelId
+  
+  console.log('[Scene Audio] Model selection:', {
+    language,
+    useV3Model,
+    selectedModel: modelId,
+    v3Languages: v3Languages.join(', ')
+  })
 
   // Adjust voice settings for better quality, especially for non-English languages
   // Higher stability and similarity_boost can improve quality for complex languages like Thai
