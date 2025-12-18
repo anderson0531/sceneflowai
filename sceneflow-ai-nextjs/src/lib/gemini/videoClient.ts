@@ -9,6 +9,11 @@ async function getVertexAccessToken(): Promise<string> {
   // For serverless environments (Vercel), use JSON credentials from env var
   const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
   
+  // Debug logging
+  console.log('[Vertex AI Auth] GOOGLE_APPLICATION_CREDENTIALS_JSON exists:', !!credentialsJson);
+  console.log('[Vertex AI Auth] GOOGLE_APPLICATION_CREDENTIALS_JSON length:', credentialsJson?.length || 0);
+  console.log('[Vertex AI Auth] GOOGLE_APPLICATION_CREDENTIALS exists:', !!process.env.GOOGLE_APPLICATION_CREDENTIALS);
+  
   let authOptions: any = {
     scopes: [
       'https://www.googleapis.com/auth/cloud-platform',
@@ -18,23 +23,43 @@ async function getVertexAccessToken(): Promise<string> {
   
   if (credentialsJson) {
     try {
-      const credentials = JSON.parse(credentialsJson);
+      // Handle case where the JSON might be double-encoded or have extra escaping
+      let jsonToParse = credentialsJson;
+      
+      // If it starts with a quote, it might be double-stringified
+      if (jsonToParse.startsWith('"') && jsonToParse.endsWith('"')) {
+        jsonToParse = JSON.parse(jsonToParse);
+      }
+      
+      const credentials = JSON.parse(jsonToParse);
+      console.log('[Vertex AI Auth] Parsed credentials successfully');
+      console.log('[Vertex AI Auth] Service account email:', credentials.client_email);
+      console.log('[Vertex AI Auth] Project ID:', credentials.project_id);
+      
       authOptions.credentials = credentials;
       authOptions.projectId = credentials.project_id;
     } catch (e) {
-      console.error('[Vertex AI] Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON:', e);
-      throw new Error('Invalid GOOGLE_APPLICATION_CREDENTIALS_JSON format');
+      console.error('[Vertex AI Auth] Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON:', e);
+      console.error('[Vertex AI Auth] First 100 chars:', credentialsJson?.substring(0, 100));
+      throw new Error('Invalid GOOGLE_APPLICATION_CREDENTIALS_JSON format: ' + (e as Error).message);
     }
+  } else {
+    console.warn('[Vertex AI Auth] No GOOGLE_APPLICATION_CREDENTIALS_JSON found, falling back to ADC');
   }
-  // Otherwise, GoogleAuth will use GOOGLE_APPLICATION_CREDENTIALS file path or ADC
   
-  const auth = new GoogleAuth(authOptions);
-  const client = await auth.getClient();
-  const tokenResponse = await client.getAccessToken();
-  if (!tokenResponse || !tokenResponse.token) {
-    throw new Error('Failed to obtain Vertex AI access token');
+  try {
+    const auth = new GoogleAuth(authOptions);
+    const client = await auth.getClient();
+    const tokenResponse = await client.getAccessToken();
+    if (!tokenResponse || !tokenResponse.token) {
+      throw new Error('Failed to obtain Vertex AI access token');
+    }
+    console.log('[Vertex AI Auth] Successfully obtained access token');
+    return tokenResponse.token;
+  } catch (authError) {
+    console.error('[Vertex AI Auth] Authentication failed:', authError);
+    throw authError;
   }
-  return tokenResponse.token;
 }
 /**
  * Gemini API Video Generation Client
