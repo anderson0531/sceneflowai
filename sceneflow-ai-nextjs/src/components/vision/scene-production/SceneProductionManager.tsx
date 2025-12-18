@@ -1191,7 +1191,7 @@ export function SceneProductionManager({
                 className="shrink-0"
               >
                 <Film className="w-4 h-4 mr-2" />
-                Generate
+                Generate Segments
               </Button>
             )}
           </div>

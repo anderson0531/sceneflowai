@@ -383,10 +383,11 @@ function generateIntelligentSegmentationPrompt(
 **SYSTEM ROLE:** You are an AI Video Director and Editor optimized for Veo 3.1 generation workflows. Your goal is to translate a linear script and scene description into distinct, generation-ready video segments with RICH CINEMATIC PROMPTS.
 
 **OPERATIONAL CONSTRAINTS:**
-1. **Duration:** Maximum ${preferredDuration} seconds per segment (8 seconds absolute max for Veo 3.1).
+1. **Duration:** Target ${preferredDuration} seconds per segment (8 seconds absolute max for Veo 3.1). **MINIMUM 4 seconds per segment** unless absolutely necessary for a dramatic cut.
 2. **Continuity:** You must utilize specific **Methods** to ensure consistency (matching lighting, character appearance, and room tone).
 3. **Lookahead:** Each segment must define the "End Frame State" to prepare for the *next* segment's generation method.
 4. **Dialogue Integration:** Veo 3.1 generates speech from text. You MUST include character dialogue directly in prompts.
+5. **SEGMENT EFFICIENCY:** Create as FEW segments as possible while respecting the duration limit. **Combine multiple dialogue lines into a single segment** when they occur in the same shot/angle or in a two-shot conversation. A segment with 2-4 lines of back-and-forth dialogue is PREFERRED over creating a new segment for each line.
 
 **INPUT DATA:**
 
@@ -420,9 +421,10 @@ ${Math.round(sceneData.estimatedTotalDuration)} seconds total
 ---
 
 **LOGIC WORKFLOW:**
-1. **Analyze Triggers:** Scan script for changes in Action, Speaker, Emotion, or Location. These are your "Cut Points."
-2. **Estimate Timing:** Assign estimated seconds to dialogue (approx. 2.5 words/sec) and action. If a specific beat exceeds ${preferredDuration} seconds, split it into Part A and Part B.
-3. **Select Method:**
+1. **Analyze Triggers:** Scan script for MAJOR changes in Action, Location, or dramatic emotional shift. These are your "Cut Points." **DO NOT create a new segment just because the speaker changes** - dialogue between characters in the same location should be combined into one segment when possible.
+2. **Estimate Timing:** Assign estimated seconds to dialogue (approx. 2.5 words/sec) and action. **Combine short dialogue lines (under 3 seconds each) with adjacent dialogue in the same segment.** Only split into Part A and Part B if the combined duration exceeds ${preferredDuration} seconds.
+3. **Aim for Efficiency:** Target 3-6 segments for most scenes. If you have more than 8 segments, reconsider whether some can be combined.
+4. **Select Method:
    - **I2V (Image-to-Video):** STRICTLY for Segment 1 (using the Master Scene Frame) or static establishing shots.
    - **EXT (Extend):** Use ONLY when camera angle remains IDENTICAL and action simply continues (e.g., uninterrupted monologue from same angle, continuous walk). NEVER use when cutting between different characters.
    - **T2V (Text-to-Video with References):** Use for ALL angle changes (Wide to Close-Up, cutting from Character A to Character B). Reference Scene Frame + Character Reference images.
