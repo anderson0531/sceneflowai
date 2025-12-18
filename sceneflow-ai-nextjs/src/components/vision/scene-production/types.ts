@@ -169,6 +169,8 @@ export interface SceneSegment {
   isStale?: boolean
   // User instruction - general text instruction that overrides/augments prompts
   userInstruction?: string
+  // Error message - stored when generation fails for detailed display
+  errorMessage?: string
 }
 
 // Character presence in a segment

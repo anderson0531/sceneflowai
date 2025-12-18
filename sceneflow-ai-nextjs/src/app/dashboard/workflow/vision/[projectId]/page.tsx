@@ -1474,18 +1474,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         } catch {}
       } catch (error) {
         console.error('[Segment Generate] Error:', error)
-        // Update status to ERROR
+        const errorMessage = error instanceof Error ? error.message : 'Failed to generate asset'
+        
+        // Update status to ERROR and store error message
         applySceneProductionUpdate(sceneId, (current) => {
           if (!current) return current
           const segments = current.segments.map((segment) =>
-            segment.segmentId === segmentId ? { ...segment, status: 'ERROR' } : segment
+            segment.segmentId === segmentId ? { ...segment, status: 'ERROR', errorMessage } : segment
           )
           return { ...current, segments }
         })
 
+        // Show brief toast - detailed error is stored in segment
         try {
           const { toast } = require('sonner')
-          toast.error(error instanceof Error ? error.message : 'Failed to generate asset')
+          const isContentFiltered = errorMessage.includes('Content Safety Filter')
+          toast.error(isContentFiltered 
+            ? 'Content filtered - click segment for details'
+            : 'Generation failed - click segment for details'
+          )
         } catch {}
       }
     },
