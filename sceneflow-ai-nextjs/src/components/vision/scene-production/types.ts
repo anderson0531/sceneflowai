@@ -241,3 +241,315 @@ export interface SceneTimelineV2Props {
   dialogueAssignments?: Record<string, Set<string>>
 }
 
+// ============================================================================
+// Smart Prompt Video Editing Types - Constraint-Based UI for Veo 3.1
+// ============================================================================
+
+/**
+ * Camera movement types supported by Veo 3.1
+ */
+export type CameraMovementType = 
+  | 'static'
+  | 'dolly-in'
+  | 'pull-out'
+  | 'pan-left'
+  | 'pan-right'
+  | 'tilt-up'
+  | 'tilt-down'
+  | 'crane'
+  | 'handheld'
+  | 'steadicam'
+  | 'track'
+  | 'orbit'
+  | 'whip-pan'
+
+/**
+ * Shot framing types
+ */
+export type ShotFramingType =
+  | 'extreme-wide'
+  | 'wide'
+  | 'medium-wide'
+  | 'medium'
+  | 'medium-close'
+  | 'close-up'
+  | 'extreme-close-up'
+  | 'over-shoulder'
+  | 'two-shot'
+  | 'insert'
+
+/**
+ * Camera movement velocity
+ */
+export type CameraVelocity = 'slow' | 'medium' | 'fast'
+
+/**
+ * Focus behavior for camera
+ */
+export type FocusMode = 'locked' | 'rack' | 'follow' | 'deep'
+
+/**
+ * Camera & Temporal Control Settings
+ * Module 1: Controls camera movement, framing, and temporal aspects
+ */
+export interface CameraControlSettings {
+  // Movement
+  movementType: CameraMovementType
+  velocity: CameraVelocity
+  // Framing
+  shotFraming: ShotFramingType
+  // Focus
+  focusMode: FocusMode
+  focusTarget?: string  // Character name or "subject"
+  // Duration override (if different from segment duration)
+  durationOverride?: number
+  // Temporal controls
+  motionIntensity: number  // 0-100, how much action/movement
+  pacingStyle: 'contemplative' | 'natural' | 'dynamic' | 'frenetic'
+}
+
+/**
+ * Lip-sync priority for performance
+ */
+export type LipSyncPriority = 'off' | 'loose' | 'tight'
+
+/**
+ * Eye contact behavior
+ */
+export type EyeContactMode = 'natural' | 'camera-aware' | 'avoid' | 'scene-specific'
+
+/**
+ * Performance & Dialog Sync Settings
+ * Module 2: Controls actor performance and dialogue synchronization
+ */
+export interface PerformanceSettings {
+  // Lip-sync (Phase 1 - Coming Soon placeholder)
+  lipSyncEnabled: boolean
+  lipSyncPriority: LipSyncPriority
+  // Expression intensity (how much facial expression change)
+  expressionIntensity: number  // 0-100
+  // Micro-expressions toggle
+  microExpressionsEnabled: boolean
+  // Eye contact behavior
+  eyeContactMode: EyeContactMode
+  // Character focus (which character is primary in this segment)
+  primaryCharacter?: string
+  // Emotional state override
+  emotionalState?: string  // "calm", "tense", "joyful", etc.
+  // Body language intensity
+  bodyLanguageIntensity: number  // 0-100
+}
+
+/**
+ * Visual style presets
+ */
+export type VisualStylePreset = 
+  | 'cinematic'
+  | 'documentary'
+  | 'commercial'
+  | 'music-video'
+  | 'horror'
+  | 'romantic'
+  | 'noir'
+  | 'vintage'
+  | 'custom'
+
+/**
+ * Lighting style
+ */
+export type LightingStyle = 
+  | 'natural'
+  | 'studio'
+  | 'dramatic'
+  | 'soft'
+  | 'high-key'
+  | 'low-key'
+  | 'golden-hour'
+  | 'blue-hour'
+  | 'neon'
+  | 'practical'
+
+/**
+ * Color grading preset
+ */
+export type ColorGradingPreset =
+  | 'neutral'
+  | 'warm'
+  | 'cool'
+  | 'teal-orange'
+  | 'bleach-bypass'
+  | 'vintage'
+  | 'high-contrast'
+  | 'desaturated'
+  | 'vibrant'
+
+/**
+ * Visual Style Settings
+ * Module 3: Controls look and feel of the generated video
+ */
+export interface VisualStyleSettings {
+  // Style preset (quick selection)
+  stylePreset: VisualStylePreset
+  // Lighting
+  lighting: LightingStyle
+  lightingIntensity: number  // 0-100
+  // Color grading
+  colorGrading: ColorGradingPreset
+  saturation: number  // 0-100, 50 = neutral
+  contrast: number    // 0-100, 50 = neutral
+  // Film grain / texture
+  filmGrainEnabled: boolean
+  filmGrainIntensity: number  // 0-100
+  // Depth of field
+  depthOfFieldEnabled: boolean
+  apertureStyle: 'wide' | 'normal' | 'shallow'
+  // Atmosphere
+  atmosphereType?: 'none' | 'haze' | 'fog' | 'rain' | 'snow' | 'dust'
+  atmosphereIntensity?: number  // 0-100
+}
+
+/**
+ * Magic Edit selection method
+ */
+export type MagicEditSelectionMethod = 'auto' | 'mask' | 'prompt'
+
+/**
+ * Magic Edit operation type
+ */
+export type MagicEditOperationType = 
+  | 'replace'      // Replace object with something else
+  | 'remove'       // Remove object from scene
+  | 'add'          // Add object to scene
+  | 'modify'       // Modify existing object
+  | 'style-transfer'  // Apply style to selection
+
+/**
+ * Magic Edit Settings (In-Painting / Object Manipulation)
+ * Module 4: Targeted edits to specific regions or objects
+ */
+export interface MagicEditSettings {
+  // Whether magic edit is enabled for this generation
+  enabled: boolean
+  // How the target is selected
+  selectionMethod: MagicEditSelectionMethod
+  // What to do with the selection
+  operationType: MagicEditOperationType
+  // The target description (what to select)
+  targetDescription: string
+  // What to do with the target
+  changeDescription: string
+  // Face preservation (important for character consistency)
+  preserveFaces: boolean
+  // Mask image URL (if using mask-based selection)
+  maskUrl?: string
+  // Blend mode for the edit
+  blendStrength: number  // 0-100, how much the edit blends with original
+}
+
+/**
+ * Combined settings for all Smart Prompt modules
+ */
+export interface SmartPromptSettings {
+  camera: CameraControlSettings
+  performance: PerformanceSettings
+  visualStyle: VisualStyleSettings
+  magicEdit: MagicEditSettings
+}
+
+/**
+ * Default settings factory for Smart Prompt
+ */
+export const createDefaultSmartPromptSettings = (): SmartPromptSettings => ({
+  camera: {
+    movementType: 'static',
+    velocity: 'medium',
+    shotFraming: 'medium',
+    focusMode: 'locked',
+    motionIntensity: 50,
+    pacingStyle: 'natural',
+  },
+  performance: {
+    lipSyncEnabled: false,
+    lipSyncPriority: 'off',
+    expressionIntensity: 50,
+    microExpressionsEnabled: true,
+    eyeContactMode: 'natural',
+    bodyLanguageIntensity: 50,
+  },
+  visualStyle: {
+    stylePreset: 'cinematic',
+    lighting: 'natural',
+    lightingIntensity: 50,
+    colorGrading: 'neutral',
+    saturation: 50,
+    contrast: 50,
+    filmGrainEnabled: false,
+    filmGrainIntensity: 0,
+    depthOfFieldEnabled: true,
+    apertureStyle: 'normal',
+  },
+  magicEdit: {
+    enabled: false,
+    selectionMethod: 'auto',
+    operationType: 'modify',
+    targetDescription: '',
+    changeDescription: '',
+    preserveFaces: true,
+    blendStrength: 80,
+  },
+})
+
+/**
+ * Video Prompt Payload - Final output to Veo 3.1 API
+ * This is what the prompt compiler produces from SmartPromptSettings
+ */
+export interface VideoPromptPayload {
+  // Core prompt text (compiled from all settings)
+  basePrompt: string
+  // Negative prompt (things to avoid)
+  negativePrompt: string
+  // Generation method
+  method: VideoGenerationMethod
+  // Duration in seconds
+  durationSeconds: number
+  // Aspect ratio
+  aspectRatio: '16:9' | '9:16' | '1:1'
+  // Reference frames
+  startFrameUrl?: string
+  endFrameUrl?: string
+  // Reference images (character/scene refs)
+  referenceImages?: string[]
+  // Video extension source
+  sourceVideoRef?: string  // Veo video reference for extension
+  // Control signals derived from SmartPromptSettings
+  controlSignals: {
+    cameraMovement: string
+    cameraVelocity: string
+    shotFraming: string
+    motionIntensity: number
+    lightingStyle: string
+    colorGrading: string
+    atmosphereType?: string
+  }
+  // Audio guidance (for lip-sync and dialog sync)
+  audioGuidance?: {
+    audioUrl?: string
+    lipSyncEnabled: boolean
+    syncPriority: LipSyncPriority
+  }
+  // Temporal consistency hints
+  temporalConsistency: {
+    preserveCharacters: string[]  // Character names to preserve
+    preserveEnvironment: boolean
+    previousSegmentUrl?: string   // For continuity
+  }
+  // Magic edit payload (if enabled)
+  magicEditPayload?: {
+    targetMask?: string
+    targetPrompt: string
+    changePrompt: string
+    preserveFaces: boolean
+    blendStrength: number
+  }
+}
+
