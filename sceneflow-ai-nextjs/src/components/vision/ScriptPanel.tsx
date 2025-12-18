@@ -2955,31 +2955,15 @@ function SceneCard({
             </TooltipProvider>
           </div>
           
-          {/* Right Side: Scene Actions & Status */}
-          <div className="flex items-center gap-2">
-            {/* Workflow Status Tabs - Clickable to switch workflow step */}
-            <div className="flex items-center gap-1 mr-2">
+          {/* Center: Workflow Tabs - Folder Tab Style */}
+          {!isOutline && (
+            <div className="flex items-end border-b border-gray-700/50">
               {workflowTabs.map((tab) => {
                 const status = getStepStatus(tab.key)
                 const isComplete = status === 'complete'
                 const isStale = status === 'stale'
-                const isInProgress = status === 'in-progress'
                 const isLocked = !stepUnlocked[tab.key as keyof typeof stepUnlocked]
                 const isActive = activeWorkflowTab === tab.key
-                
-                // Build tooltip message
-                let tooltipMessage = `${tab.label}: `
-                if (isLocked) {
-                  tooltipMessage += 'Locked (complete previous steps)'
-                } else if (isStale) {
-                  tooltipMessage += 'Needs Update (script changed)'
-                } else if (isComplete) {
-                  tooltipMessage += 'Complete'
-                } else if (isInProgress) {
-                  tooltipMessage += 'In Progress'
-                } else {
-                  tooltipMessage += 'Pending'
-                }
                 
                 return (
                   <TooltipProvider key={tab.key}>
@@ -2990,43 +2974,47 @@ function SceneCard({
                             e.stopPropagation()
                             if (!isLocked) {
                               setActiveWorkflowTab(tab.key)
-                              // Auto-open workflow if closed
                               if (!isWorkflowOpen && onWorkflowOpenChange) {
                                 onWorkflowOpenChange(true)
                               }
                             }
                           }}
                           disabled={isLocked}
-                          className={`flex items-center gap-1.5 px-2 py-1 rounded-full border transition-all text-xs font-medium
-                            ${isLocked 
-                              ? 'opacity-40 cursor-not-allowed bg-slate-800/50 border-slate-700/50 text-slate-500'
-                              : isActive
-                                ? 'bg-sf-primary/25 border-sf-primary/60 text-sf-primary ring-1 ring-sf-primary/30'
-                                : isStale
-                                  ? 'bg-amber-500/20 border-amber-500/50 text-amber-400 hover:bg-amber-500/30 cursor-pointer'
-                                  : isComplete 
-                                    ? 'bg-green-500/20 border-green-500/50 text-green-400 hover:bg-green-500/30 cursor-pointer' 
-                                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-slate-200 cursor-pointer'
-                            }`}
+                          className={`
+                            relative px-3 py-1.5 text-xs font-medium rounded-t-lg transition-all mr-0.5
+                            ${isActive 
+                              ? 'bg-slate-800/80 text-white border-t border-x border-gray-600/50 -mb-px' 
+                              : 'bg-slate-900/40 text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 border-transparent'
+                            }
+                            ${isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                          `}
                         >
-                          {isStale ? (
-                            <AlertTriangle className="w-3 h-3" />
-                          ) : isComplete ? (
-                            <CheckCircle className="w-3 h-3" />
-                          ) : (
-                            React.cloneElement(tab.icon as React.ReactElement, { className: "w-3 h-3" })
-                          )}
-                          <span className="hidden sm:inline">{tab.label}</span>
+                          <div className="flex items-center gap-1.5">
+                            {isStale ? (
+                              <AlertTriangle className="w-3 h-3 text-amber-400" />
+                            ) : isComplete ? (
+                              <CheckCircle className="w-3 h-3 text-green-500" />
+                            ) : (
+                              React.cloneElement(tab.icon as React.ReactElement, { 
+                                className: `w-3 h-3 ${isActive ? 'text-sf-primary' : ''}` 
+                              })
+                            )}
+                            <span className={isStale ? 'text-amber-300' : ''}>{tab.label}</span>
+                          </div>
                         </button>
                       </TooltipTrigger>
                       <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                        {tooltipMessage}
+                        {isLocked ? 'Complete previous steps' : isStale ? 'Needs update' : isComplete ? 'Complete' : 'In progress'}
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 )
               })}
             </div>
+          )}
+          
+          {/* Right Side: Scene Actions */}
+          <div className="flex items-center gap-2">
             
             {/* Edit Button */}
             {!isOutline && (
@@ -3152,14 +3140,83 @@ function SceneCard({
           </div>
         </div>
 
-        {/* Line 2: Scene Title - Click to toggle open/close */}
+        {/* Line 2: Scene Title with Mark Done and Help controls */}
         <div 
-          className="mt-2 cursor-pointer hover:bg-white/5 -mx-2 px-2 py-1 rounded-lg transition-colors"
+          className="mt-2 flex items-center justify-between cursor-pointer hover:bg-white/5 -mx-2 px-2 py-1 rounded-lg transition-colors"
           onClick={toggleOpen}
         >
           <p className="text-xl font-semibold text-white leading-tight">
             SCENE {sceneNumber}: {formattedHeading}
           </p>
+          
+          {/* Mark Done and Help controls */}
+          {!isOutline && activeStep && (
+            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+              {/* Mark as Done / Unmark button */}
+              {onMarkWorkflowComplete && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          const currentlyComplete = stepCompletion[activeStep as keyof typeof stepCompletion]
+                          onMarkWorkflowComplete(sceneIdx, activeStep, !currentlyComplete)
+                        }}
+                        className={`px-2 py-1 text-xs rounded-lg transition flex items-center gap-1 ${
+                          stepCompletion[activeStep as keyof typeof stepCompletion]
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
+                            : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700'
+                        }`}
+                      >
+                        {stepCompletion[activeStep as keyof typeof stepCompletion] ? (
+                          <>
+                            <CheckCircle className="w-3 h-3" />
+                            <span>Done</span>
+                          </>
+                        ) : (
+                          <>
+                            <Circle className="w-3 h-3" />
+                            <span>Mark Done</span>
+                          </>
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                      {stepCompletion[activeStep as keyof typeof stepCompletion]
+                        ? 'Click to unmark as complete'
+                        : 'Mark this step as complete'}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              
+              {/* AI Co-Pilot Help Button */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setCopilotPanelOpen(!copilotPanelOpen)
+                      }}
+                      className={`p-1.5 rounded-lg transition ${
+                        copilotPanelOpen
+                          ? 'bg-sf-primary/20 text-sf-primary border border-sf-primary/40'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700'
+                      }`}
+                      aria-label="Get help"
+                    >
+                      <Lightbulb className="w-4 h-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                    Get help with {activeStep === 'dialogueAction' ? 'Script' : activeStep === 'directorsChair' ? 'Direction' : activeStep === 'storyboardPreViz' ? 'Frame' : 'Call Action'} workflow
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          )}
         </div>
       </div>
 
@@ -3247,124 +3304,10 @@ function SceneCard({
             return null
           })()}
           
-          {/* Folder Tab Navigation */}
+          {/* Tab Content Container - No duplicate tabs, tabs are in header */}
           {!isOutline && (
             <div className="mt-4">
-              <div className="flex items-end border-b border-gray-700/50 px-2">
-                {workflowTabs.map((tab) => {
-                  const isActive = activeWorkflowTab === tab.key
-                  const status = getStepStatus(tab.key)
-                  const isLocked = !stepUnlocked[tab.key as keyof typeof stepUnlocked]
-                  const isStale = status === 'stale'
-                  
-                  return (
-                    <button
-                      key={tab.key}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        if (!isLocked) setActiveWorkflowTab(tab.key)
-                      }}
-                      disabled={isLocked}
-                      className={`
-                        relative px-4 py-2 text-sm font-medium rounded-t-lg transition-all mr-1
-                        ${isActive 
-                          ? 'bg-slate-800/80 text-white border-t border-x border-gray-600/50 border-b-slate-900' 
-                          : 'bg-slate-900/40 text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 border-transparent'
-                        }
-                        ${isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                      `}
-                    >
-                      <div className="flex items-center gap-2">
-                        {isStale ? (
-                          <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-                        ) : status === 'complete' ? (
-                          <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-                        ) : (
-                          React.cloneElement(tab.icon as React.ReactElement, { 
-                            className: `w-3.5 h-3.5 ${isActive ? 'text-sf-primary' : ''}` 
-                          })
-                        )}
-                        <span className={isStale ? 'text-amber-300' : ''}>{tab.label}</span>
-                      </div>
-                    </button>
-                  )
-                })}
-                
-                {/* Right-side buttons: Mark Complete + Co-Pilot Help */}
-                {activeStep && (
-                  <div className="ml-auto mb-1 flex items-center gap-1">
-                    {/* Mark as Done / Unmark button */}
-                    {onMarkWorkflowComplete && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                const currentlyComplete = stepCompletion[activeStep as keyof typeof stepCompletion]
-                                onMarkWorkflowComplete(sceneIdx, activeStep, !currentlyComplete)
-                              }}
-                              className={`px-2 py-1 text-xs rounded-lg transition flex items-center gap-1 ${
-                                stepCompletion[activeStep as keyof typeof stepCompletion]
-                                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
-                                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700'
-                              }`}
-                            >
-                              {stepCompletion[activeStep as keyof typeof stepCompletion] ? (
-                                <>
-                                  <CheckCircle className="w-3 h-3" />
-                                  <span>Done</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Circle className="w-3 h-3" />
-                                  <span>Mark Done</span>
-                                </>
-                              )}
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                            {stepCompletion[activeStep as keyof typeof stepCompletion]
-                              ? 'Click to unmark as complete'
-                              : 'Mark this step as complete'}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
-                    
-                    {/* AI Co-Pilot Help Button */}
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setCopilotPanelOpen(!copilotPanelOpen)
-                            }}
-                            className={`p-1.5 rounded-lg transition ${
-                              copilotPanelOpen
-                                ? 'bg-sf-primary/20 text-sf-primary border border-sf-primary/40'
-                                : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700'
-                            }`}
-                            aria-label={activeStep === 'dialogueAction' ? 'Script help' : activeStep === 'directorsChair' ? 'Direction help' : activeStep === 'storyboardPreViz' ? 'Frame help' : 'Call Action help'}
-                          >
-                            <Lightbulb className="w-4 h-4" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                          {activeStep === 'dialogueAction' && 'Get help with Script workflow'}
-                          {activeStep === 'directorsChair' && 'Get help with Direction workflow'}
-                          {activeStep === 'storyboardPreViz' && 'Get help with Frame workflow'}
-                          {activeStep === 'callAction' && 'Get help with Call Action workflow'}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                )}
-              </div>
-              
-              {/* Tab Content Container */}
-              <div className="bg-slate-800/30 rounded-b-lg rounded-tr-lg p-4 min-h-[200px]">
+              <div className="bg-slate-800/30 rounded-lg p-4 min-h-[200px]">
                 {/* Staleness Warning Banner */}
                 {(() => {
                   const directionStale = activeWorkflowTab === 'directorsChair' && stepStaleness.directorsChair
