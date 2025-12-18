@@ -239,11 +239,10 @@ export async function POST(req: NextRequest) {
       dialogueIndex
     })
   } catch (error: any) {
+    // Safely log error details - avoid referencing variables that might not be defined
     console.error('[Scene Audio] Error:', {
       message: error?.message || String(error),
       stack: error?.stack,
-      audioType,
-      language: (typeof language !== 'undefined') ? language : undefined,
     })
     return NextResponse.json(
       { error: error.message || 'Audio generation failed' },
@@ -274,9 +273,6 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig, l
   // MP3 44.1kHz 192kbps provides better quality for complex languages like Thai
   // For English, we can use 128kbps to save bandwidth
   const outputFormat = language !== 'en' ? 'mp3_44100_192' : 'mp3_44100_128'
-  
-  // Always use standard endpoint (ElevenLabs doesn't have a separate SSML endpoint)
-  const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceConfig.voiceId}?optimize_streaming_latency=0&output_format=${outputFormat}`
 
   // Select model based on language:
   // - eleven_turbo_v2_5: Fast, production-ready, supports 32 languages including Thai
@@ -296,6 +292,14 @@ async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig, l
   // Default model selection: v3 for tonal languages, turbo_v2_5 for everything else
   const defaultModelId = useV3Model ? 'eleven_v3' : 'eleven_turbo_v2_5'
   const modelId = process.env.ELEVENLABS_MODEL_ID || defaultModelId
+  
+  // Build URL - eleven_v3 does NOT support optimize_streaming_latency parameter
+  // Only add it for non-v3 models
+  const urlParams = new URLSearchParams({ output_format: outputFormat })
+  if (modelId !== 'eleven_v3') {
+    urlParams.append('optimize_streaming_latency', '0')
+  }
+  const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceConfig.voiceId}?${urlParams.toString()}`
   
   console.log('[Scene Audio] Model selection:', {
     language,
