@@ -402,7 +402,7 @@ export async function checkVideoGenerationStatus(
     }
 
     const data = await response.json()
-    console.log('[Veo Video] Status check response:', JSON.stringify(data).substring(0, 300))
+    console.log('[Veo Video] Status check response:', JSON.stringify(data).substring(0, 500))
 
     if (data.error) {
       return {
@@ -419,21 +419,31 @@ export async function checkVideoGenerationStatus(
           error: data.error.message || 'Generation failed'
         }
       }
+      
+      // Check for RAI (Responsible AI) content filtering
+      const raiFilteredCount = data.response?.raiMediaFilteredCount
+      const raiReasons = data.response?.raiMediaFilteredReasons
+      if (raiFilteredCount && raiFilteredCount > 0) {
+        const reason = raiReasons?.[0] || 'Content was filtered by safety policies'
+        console.error('[Veo Video] Content filtered by RAI:', reason)
+        return {
+          status: 'FAILED',
+          error: `Content filtered: ${reason}`
+        }
+      }
 
       // Extract video URL from response
-      // The API may return in different formats:
-      // 1. data.response.generateVideoResponse.generatedSamples[].video (predictLongRunning format)
-      // 2. data.response.generatedVideos[].video (generateVideos format)
-      // 3. data.result.generatedVideos[].video (alternative format)
-      const generateVideoResponse = data.response?.generateVideoResponse
-      const generatedSamples = generateVideoResponse?.generatedSamples
-      const generatedVideos = data.response?.generatedVideos || data.result?.generatedVideos
+      // Vertex AI Veo response format:
+      // data.response.generatedSamples[].video.uri (for Vertex AI predictLongRunning)
+      // data.response.generatedSamples[].video.gcsUri (alternative GCS format)
+      const generatedSamples = data.response?.generatedSamples
       
-      // Try generatedSamples first (predictLongRunning response format)
+      // Try generatedSamples first (Vertex AI predictLongRunning response format)
       if (generatedSamples && generatedSamples.length > 0) {
-        const video = generatedSamples[0].video
-        const videoUrl = video?.uri || video?.url
-        const veoVideoRef = video?.name  // Store the Files API reference for video extension
+        const sample = generatedSamples[0]
+        const video = sample.video
+        const videoUrl = video?.uri || video?.gcsUri || video?.url
+        const veoVideoRef = video?.name  // Store the reference for video extension
         
         if (videoUrl) {
           console.log('[Veo Video] Video completed! URI:', videoUrl.substring(0, 100))
@@ -455,7 +465,8 @@ export async function checkVideoGenerationStatus(
         }
       }
       
-      // Fallback to generatedVideos format
+      // Alternative: check for videos directly in response (different API versions)
+      const generatedVideos = data.response?.generatedVideos || data.result?.generatedVideos
       if (generatedVideos && generatedVideos.length > 0) {
         const video = generatedVideos[0].video
         const videoUrl = video?.uri || video?.url
