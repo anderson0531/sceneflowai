@@ -12,7 +12,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Bot, PenTool, FolderPlus, Pencil } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Bot, PenTool, FolderPlus, Pencil, Layers } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
@@ -1883,6 +1883,28 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               </Tooltip>
             </TooltipProvider>
 
+            {/* Scene Timeline Toggle */}
+            {timelineSlot && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowTimeline(!showTimeline)}
+                      className={`flex items-center gap-2 border-amber-500/30 hover:border-amber-500/50 hover:bg-amber-500/10 ${showTimeline ? 'bg-amber-500/10 border-amber-500/50' : ''}`}
+                    >
+                      <Layers className={`w-5 h-5 ${showTimeline ? 'text-amber-400' : 'text-amber-400/70'}`} />
+                      <span className="text-sm">Timeline</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                    <p>{showTimeline ? 'Hide scene timeline' : 'Show scene timeline'}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+
             {/* Build All Button (formerly Assets) */}
             <TooltipProvider>
               <Tooltip>
@@ -1978,17 +2000,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           </div>
         )}
         
-        {/* Timeline Slot - renders scene timeline selector */}
-        {timelineSlot && (
+        {/* Timeline Slot - renders scene timeline selector (toggle is in header) */}
+        {timelineSlot && showTimeline && (
           <div className="mt-3">
-            <button 
-              onClick={() => setShowTimeline(!showTimeline)}
-              className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-            >
-              <span>Scene Timeline</span>
-              {showTimeline ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            </button>
-            {showTimeline && timelineSlot}
+            {timelineSlot}
           </div>
         )}
       </div>
@@ -2942,17 +2957,21 @@ function SceneCard({
           
           {/* Right Side: Scene Actions & Status */}
           <div className="flex items-center gap-2">
-            {/* Workflow Status Indicators */}
+            {/* Workflow Status Tabs - Clickable to switch workflow step */}
             <div className="flex items-center gap-1 mr-2">
               {workflowTabs.map((tab) => {
                 const status = getStepStatus(tab.key)
                 const isComplete = status === 'complete'
                 const isStale = status === 'stale'
                 const isInProgress = status === 'in-progress'
+                const isLocked = !stepUnlocked[tab.key as keyof typeof stepUnlocked]
+                const isActive = activeWorkflowTab === tab.key
                 
                 // Build tooltip message
                 let tooltipMessage = `${tab.label}: `
-                if (isStale) {
+                if (isLocked) {
+                  tooltipMessage += 'Locked (complete previous steps)'
+                } else if (isStale) {
                   tooltipMessage += 'Needs Update (script changed)'
                 } else if (isComplete) {
                   tooltipMessage += 'Complete'
@@ -2966,21 +2985,39 @@ function SceneCard({
                   <TooltipProvider key={tab.key}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div className={`flex items-center justify-center w-6 h-6 rounded-full border transition-colors ${
-                          isStale
-                            ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
-                            : isComplete 
-                              ? 'bg-green-500/20 border-green-500/50 text-green-400' 
-                              : isInProgress
-                                ? 'bg-sf-primary/20 border-sf-primary/50 text-sf-primary'
-                                : 'bg-slate-800 border-slate-700 text-slate-500'
-                        }`}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (!isLocked) {
+                              setActiveWorkflowTab(tab.key)
+                              // Auto-open workflow if closed
+                              if (!isWorkflowOpen && onWorkflowOpenChange) {
+                                onWorkflowOpenChange(true)
+                              }
+                            }
+                          }}
+                          disabled={isLocked}
+                          className={`flex items-center gap-1.5 px-2 py-1 rounded-full border transition-all text-xs font-medium
+                            ${isLocked 
+                              ? 'opacity-40 cursor-not-allowed bg-slate-800/50 border-slate-700/50 text-slate-500'
+                              : isActive
+                                ? 'bg-sf-primary/25 border-sf-primary/60 text-sf-primary ring-1 ring-sf-primary/30'
+                                : isStale
+                                  ? 'bg-amber-500/20 border-amber-500/50 text-amber-400 hover:bg-amber-500/30 cursor-pointer'
+                                  : isComplete 
+                                    ? 'bg-green-500/20 border-green-500/50 text-green-400 hover:bg-green-500/30 cursor-pointer' 
+                                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-slate-200 cursor-pointer'
+                            }`}
+                        >
                           {isStale ? (
                             <AlertTriangle className="w-3 h-3" />
+                          ) : isComplete ? (
+                            <CheckCircle className="w-3 h-3" />
                           ) : (
                             React.cloneElement(tab.icon as React.ReactElement, { className: "w-3 h-3" })
                           )}
-                        </div>
+                          <span className="hidden sm:inline">{tab.label}</span>
+                        </button>
                       </TooltipTrigger>
                       <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
                         {tooltipMessage}
