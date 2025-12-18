@@ -328,12 +328,12 @@ export function PerformanceModule({ settings, onChange, characters = [] }: Perfo
           {/* Primary Character */}
           {characters.length > 0 && (
             <ControlRow icon={<User className="w-3.5 h-3.5" />} label="Focus Character">
-              <Select value={settings.primaryCharacter || ''} onValueChange={(v) => update('primaryCharacter', v || undefined)}>
+              <Select value={settings.primaryCharacter || '__any__'} onValueChange={(v) => update('primaryCharacter', v === '__any__' ? undefined : v)}>
                 <SelectTrigger className="w-28 h-7 text-xs">
                   <SelectValue placeholder="Any" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="" className="text-xs">Any</SelectItem>
+                  <SelectItem value="__any__" className="text-xs">Any</SelectItem>
                   {characters.map(c => (
                     <SelectItem key={c.name} value={c.name} className="text-xs">{c.name}</SelectItem>
                   ))}
