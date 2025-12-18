@@ -2932,15 +2932,16 @@ function SceneCard({
               </Tooltip>
             </TooltipProvider>
             
-            {/* Scene & Time Pill - Consolidated Timeline Metadata */}
+            {/* Scene & Time Pill - Secondary Timeline Metadata */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="flex items-center space-x-2 bg-indigo-900/40 rounded-full px-3 py-1 text-xs border border-indigo-700 cursor-help">
-                    <span className="text-indigo-300 font-extrabold">S {sceneNumber}</span>
+                  <div className="flex items-center space-x-1.5 bg-indigo-900/30 rounded-full px-2 py-0.5 text-[10px] border border-indigo-700/50 cursor-help">
+                    <span className="text-indigo-300 font-semibold">S{sceneNumber}</span>
                     <span className="text-gray-500">|</span>
-                    <span className="text-white font-bold tracking-wider">{formatDuration(calculateSceneDuration(scene))}</span>
-                    <span className="text-gray-400">@ {formatDuration(timelineStart || 0)}</span>
+                    <span className="text-white/80 font-medium">{formatDuration(calculateSceneDuration(scene))}</span>
+                    <span className="text-gray-500">@</span>
+                    <span className="text-gray-400">{formatDuration(timelineStart || 0)}</span>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
