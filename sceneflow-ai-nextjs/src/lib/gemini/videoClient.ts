@@ -84,6 +84,7 @@ interface VideoGenerationOptions {
   durationSeconds?: 4 | 6 | 8
   negativePrompt?: string
   personGeneration?: 'allow_adult' | 'allow_all' | 'dont_allow'
+  safetySetting?: 'block_most' | 'block_some' | 'block_few' | 'block_only_high' // Safety filter threshold
   startFrame?: string // Base64 or URL for I2V
   lastFrame?: string // For interpolation
   referenceImages?: ReferenceImage[] // Up to 3 for Veo 3.1
@@ -180,11 +181,20 @@ export async function generateVideoWithVeo(
   // Note: For Veo 3 text-to-video, personGeneration must be 'allow_all'
   // For image-to-video, it should be 'allow_adult'
   const isImageToVideo = !!options.startFrame
+  
+  // Safety setting: Use 'block_only_high' for creative content (least restrictive public setting)
+  // This reduces false positives for dramatic/cinematic content while still blocking egregious content
+  // Options: 'block_most' (default/strict), 'block_some', 'block_few', 'block_only_high' (least restrictive)
+  const safetySetting = options.safetySetting || process.env.VEO_SAFETY_SETTING || 'block_only_high'
+  
   const parameters: Record<string, any> = {
     aspectRatio: options.aspectRatio || '16:9',
     durationSeconds: options.durationSeconds || 8,
-    personGeneration: isImageToVideo ? 'allow_adult' : 'allow_all'
+    personGeneration: isImageToVideo ? 'allow_adult' : 'allow_all',
+    safetySetting: safetySetting
   }
+  
+  console.log('[Veo Video] Safety setting:', safetySetting)
 
   // Add resolution if 1080p (720p is default)
   if (options.resolution === '1080p') {
