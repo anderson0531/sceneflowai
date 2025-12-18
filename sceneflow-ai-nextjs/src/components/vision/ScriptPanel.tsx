@@ -4060,7 +4060,7 @@ function SceneCard({
                               </div>
                             </div>
                           </DialogTrigger>
-                          <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 border-none bg-black">
+                          <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 border-none bg-black" aria-describedby={undefined}>
                             <DialogTitle className="sr-only">Scene {sceneNumber} Frame</DialogTitle>
                             <div className="relative w-full h-full flex items-center justify-center">
                               <img 

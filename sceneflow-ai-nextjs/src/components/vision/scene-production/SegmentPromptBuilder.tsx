@@ -724,7 +724,7 @@ export function SegmentPromptBuilder({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[85vh] bg-gray-900 text-white border-gray-700 flex flex-col overflow-hidden">
+      <DialogContent className="max-w-4xl h-[85vh] bg-gray-900 text-white border-gray-700 flex flex-col overflow-hidden" aria-describedby={undefined}>
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-white">
             {mode === 'video' ? <Video className="w-5 h-5 text-blue-400" /> : <ImageIcon className="w-5 h-5 text-purple-400" />}
@@ -1602,7 +1602,7 @@ export function SegmentPromptBuilder({
 
       {/* Reference Library Selector Dialog */}
       <Dialog open={showReferenceSelector} onOpenChange={setShowReferenceSelector}>
-        <DialogContent className="max-w-2xl max-h-[70vh] bg-gray-900 text-white border-gray-700">
+        <DialogContent className="max-w-2xl max-h-[70vh] bg-gray-900 text-white border-gray-700" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-white">
               <Library className="w-5 h-5 text-blue-400" />
@@ -1717,7 +1717,7 @@ export function SegmentPromptBuilder({
 
       {/* Video Take Selector Dialog */}
       <Dialog open={showVideoTakeSelector} onOpenChange={setShowVideoTakeSelector}>
-        <DialogContent className="max-w-3xl max-h-[70vh] bg-gray-900 text-white border-gray-700">
+        <DialogContent className="max-w-3xl max-h-[70vh] bg-gray-900 text-white border-gray-700" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-white">
               <Clapperboard className="w-5 h-5 text-green-400" />

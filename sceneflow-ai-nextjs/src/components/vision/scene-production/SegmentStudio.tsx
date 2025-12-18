@@ -8,7 +8,7 @@ import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X
 import { cn } from '@/lib/utils'
 import { SegmentPromptBuilder, GeneratePromptData, VideoGenerationMethod } from './SegmentPromptBuilder'
 import { VideoEditingDialog, VideoEditingTab } from './VideoEditingDialog'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { AudioTrackClip, AudioTracksData } from './SceneTimeline'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -954,7 +954,8 @@ export function SegmentStudio({
 
       {/* Take Player Dialog */}
       <Dialog open={playingVideoUrl !== null} onOpenChange={(open) => !open && setPlayingVideoUrl(null)}>
-        <DialogContent className="sm:max-w-[700px] p-0 bg-black overflow-hidden">
+        <DialogContent className="sm:max-w-[700px] p-0 bg-black overflow-hidden" aria-describedby={undefined}>
+          <DialogTitle className="sr-only">Video Take Preview</DialogTitle>
           <button
             onClick={() => setPlayingVideoUrl(null)}
             className="absolute top-2 right-2 z-10 p-1.5 bg-black/60 hover:bg-black/80 rounded-full text-white"
@@ -1021,7 +1022,8 @@ export function SegmentStudio({
 
       {/* Fullscreen Preview Dialog */}
       <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
-        <DialogContent className="sm:max-w-[90vw] max-h-[90vh] p-0 bg-black">
+        <DialogContent className="sm:max-w-[90vw] max-h-[90vh] p-0 bg-black" aria-describedby={undefined}>
+          <DialogTitle className="sr-only">Fullscreen Preview</DialogTitle>
           <button
             onClick={() => setIsFullscreen(false)}
             className="absolute top-3 right-3 z-10 p-2 bg-black/60 hover:bg-black/80 rounded-full text-white"
