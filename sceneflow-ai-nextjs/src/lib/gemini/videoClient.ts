@@ -475,12 +475,28 @@ export async function checkVideoGenerationStatus(
         }
       }
       
-      // Alternative: check for videos directly in response (different API versions)
-      const generatedVideos = data.response?.generatedVideos || data.result?.generatedVideos
-      if (generatedVideos && generatedVideos.length > 0) {
-        const video = generatedVideos[0].video
-        const videoUrl = video?.uri || video?.url
-        const veoVideoRef = video?.name  // Store the Files API reference for video extension
+      // Alternative: check for videos directly in response (Vertex AI Veo 3.1 format)
+      // Response format: { videos: [{ bytesBase64Encoded: "..." }] }
+      const videos = data.response?.videos
+      if (videos && videos.length > 0) {
+        const video = videos[0]
+        
+        // Handle inline base64-encoded video data (Vertex AI Veo 3.1 response format)
+        if (video.bytesBase64Encoded) {
+          console.log('[Veo Video] Video completed with inline base64 data!')
+          console.log('[Veo Video] Base64 data length:', video.bytesBase64Encoded.length)
+          // Return as data URL for direct use
+          const dataUrl = `data:video/mp4;base64,${video.bytesBase64Encoded}`
+          return {
+            status: 'COMPLETED',
+            videoUrl: dataUrl,
+            operationName: operationName
+          }
+        }
+        
+        // Handle URL-based video response
+        const videoUrl = video?.uri || video?.url || video?.gcsUri
+        const veoVideoRef = video?.name
         
         if (videoUrl) {
           console.log('[Veo Video] Video completed! URI:', videoUrl.substring(0, 100))
@@ -497,6 +513,24 @@ export async function checkVideoGenerationStatus(
             operationName: operationName,
             videoUrl: `file:${video.name}`,
             veoVideoRef: video.name
+          }
+        }
+      }
+      
+      // Legacy format: check for generatedVideos (older API versions)
+      const generatedVideos = data.response?.generatedVideos || data.result?.generatedVideos
+      if (generatedVideos && generatedVideos.length > 0) {
+        const video = generatedVideos[0].video
+        const videoUrl = video?.uri || video?.url
+        const veoVideoRef = video?.name
+        
+        if (videoUrl) {
+          console.log('[Veo Video] Video completed! URI:', videoUrl.substring(0, 100))
+          return {
+            status: 'COMPLETED',
+            videoUrl: videoUrl,
+            veoVideoRef: veoVideoRef,
+            operationName: operationName
           }
         }
       }
