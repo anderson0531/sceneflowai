@@ -49,6 +49,72 @@ async function getVertexAccessToken(): Promise<string> {
     throw new Error('Vertex AI authentication failed: ' + error.message);
   }
 }
+
+/**
+ * Words that commonly trigger Veo's content safety filters
+ * Mapped to cinematically-appropriate alternatives
+ */
+const TRIGGER_WORD_ALTERNATIVES: Record<string, string[]> = {
+  'necrotic': ['darkened', 'discolored', 'shadowed', 'blackened', 'withered'],
+  'rotting': ['deteriorating', 'decaying slowly', 'weathered', 'aged'],
+  'decaying': ['deteriorating', 'fading', 'withering', 'crumbling'],
+  'gore': ['visceral detail', 'intense imagery', 'dramatic effect'],
+  'blood': ['dark liquid', 'crimson', 'red fluid'],
+  'bloody': ['stained', 'marked', 'crimson-covered'],
+  'corpse': ['motionless figure', 'still form', 'lifeless body'],
+  'dead body': ['motionless figure', 'fallen form', 'still figure'],
+  'wound': ['injury', 'mark', 'damage'],
+  'mutilated': ['damaged', 'scarred', 'marked'],
+  'severed': ['separated', 'detached', 'cut'],
+  'dismembered': ['broken apart', 'separated'],
+  'death': ['end', 'final moment', 'passing'],
+  'dying': ['fading', 'weakening', 'failing'],
+  'kill': ['stop', 'end', 'defeat'],
+  'murder': ['crime', 'act', 'incident'],
+  'torture': ['suffering', 'ordeal', 'distress'],
+  'violent': ['intense', 'dramatic', 'forceful'],
+  'gruesome': ['unsettling', 'disturbing', 'haunting'],
+};
+
+/**
+ * Build a helpful error message when content is filtered by RAI
+ * Includes explanation and specific recommendations
+ */
+function buildRAIFilteredErrorMessage(originalReason: string): string {
+  const lines: string[] = [
+    '⚠️ Content Safety Filter Triggered',
+    '',
+    'Veo\'s AI safety system flagged this prompt as potentially containing sensitive content.',
+    ''
+  ];
+  
+  // Add the original reason
+  lines.push(`Original message: ${originalReason}`);
+  lines.push('');
+  
+  // Add recommendations
+  lines.push('📝 Recommendations to fix this:');
+  lines.push('');
+  lines.push('1. **Rephrase trigger words** - Replace medical/graphic terms with cinematic alternatives:');
+  
+  // List common replacements
+  const commonReplacements = [
+    '   • "necrotic" → "darkened", "discolored", "shadowed"',
+    '   • "rotting/decaying" → "deteriorating", "weathered", "aged"',
+    '   • "blood/bloody" → "crimson", "stained", "marked"',
+    '   • "corpse/dead body" → "motionless figure", "still form"',
+    '   • "wound" → "injury", "mark"',
+    '   • "violent" → "intense", "dramatic", "forceful"',
+  ];
+  lines.push(...commonReplacements);
+  lines.push('');
+  lines.push('2. **Focus on visual description** - Describe what the camera sees, not the medical/violent nature');
+  lines.push('');
+  lines.push('3. **Edit the segment prompt** - Use the edit button to modify the prompt before regenerating');
+  
+  return lines.join('\n');
+}
+
 /**
  * Gemini API Video Generation Client
  * Uses Veo 3.1 (veo-3.1-generate-preview) for video generation
@@ -436,9 +502,13 @@ export async function checkVideoGenerationStatus(
       if (raiFilteredCount && raiFilteredCount > 0) {
         const reason = raiReasons?.[0] || 'Content was filtered by safety policies'
         console.error('[Veo Video] Content filtered by RAI:', reason)
+        
+        // Build helpful error message with recommendations
+        const errorMessage = buildRAIFilteredErrorMessage(reason)
+        
         return {
           status: 'FAILED',
-          error: `Content filtered: ${reason}`
+          error: errorMessage
         }
       }
 
