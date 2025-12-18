@@ -350,6 +350,7 @@ export async function generateVideoWithVeo(
 
 /**
  * Check the status of a video generation operation
+ * For Veo predictLongRunning, we use fetchPredictOperation endpoint
  */
 export async function checkVideoGenerationStatus(
   operationName: string
@@ -358,29 +359,37 @@ export async function checkVideoGenerationStatus(
   const project = process.env.VERTEX_PROJECT_ID
   if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
   
-  // Extract the operation ID from the full path
-  // Input format: projects/{project}/locations/{location}/publishers/google/models/{model}/operations/{opId}
-  // We need to call: GET https://{location}-aiplatform.googleapis.com/v1/projects/{project}/locations/{location}/operations/{opId}
+  // For Veo predictLongRunning operations, use fetchPredictOperation
+  // The operation name format: projects/{project}/locations/{location}/publishers/google/models/{model}/operations/{opId}
+  // We call: POST https://{location}-aiplatform.googleapis.com/v1/{operationName}:fetchPredictOperation
+  // But actually, the simpler approach is to use the full operation name with a GET request
+  
+  // Veo uses the publisher endpoint format for fetching operation status
+  const model = 'veo-3.1-generate-preview'
   let opId = operationName
   if (operationName.includes('/operations/')) {
     opId = operationName.split('/operations/').pop() || operationName
   }
   
-  // Use the standard Vertex AI operations endpoint (not the publisher-specific one)
-  const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/operations/${opId}`
+  // Use the fetchPredictOperation endpoint for Veo
+  const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:fetchPredictOperation`
   
   console.log('[Veo Video] Checking status at:', endpoint)
-  console.log('[Veo Video] Original operation name:', operationName)
-  console.log('[Veo Video] Extracted operation ID:', opId)
+  console.log('[Veo Video] Operation ID:', opId)
 
   try {
     const accessToken = await getVertexAccessToken();
+    
+    // fetchPredictOperation requires POST with the operation ID in the body
     const response = await fetch(endpoint, {
-      method: 'GET',
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${accessToken}`
-      }
+      },
+      body: JSON.stringify({
+        operationName: operationName
+      })
     })
 
     if (!response.ok) {
