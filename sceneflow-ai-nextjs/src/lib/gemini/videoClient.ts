@@ -2,14 +2,33 @@ import { GoogleAuth } from 'google-auth-library';
 
 /**
  * Get Google OAuth2 Bearer token for Vertex AI
+ * Supports both file-based credentials (GOOGLE_APPLICATION_CREDENTIALS) 
+ * and JSON string credentials (GOOGLE_APPLICATION_CREDENTIALS_JSON) for serverless
  */
 async function getVertexAccessToken(): Promise<string> {
-  const auth = new GoogleAuth({
+  // For serverless environments (Vercel), use JSON credentials from env var
+  const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+  
+  let authOptions: any = {
     scopes: [
       'https://www.googleapis.com/auth/cloud-platform',
       'https://www.googleapis.com/auth/aiplatform'
     ]
-  });
+  };
+  
+  if (credentialsJson) {
+    try {
+      const credentials = JSON.parse(credentialsJson);
+      authOptions.credentials = credentials;
+      authOptions.projectId = credentials.project_id;
+    } catch (e) {
+      console.error('[Vertex AI] Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON:', e);
+      throw new Error('Invalid GOOGLE_APPLICATION_CREDENTIALS_JSON format');
+    }
+  }
+  // Otherwise, GoogleAuth will use GOOGLE_APPLICATION_CREDENTIALS file path or ADC
+  
+  const auth = new GoogleAuth(authOptions);
   const client = await auth.getClient();
   const tokenResponse = await client.getAccessToken();
   if (!tokenResponse || !tokenResponse.token) {
