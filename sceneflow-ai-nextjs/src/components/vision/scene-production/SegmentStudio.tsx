@@ -663,6 +663,11 @@ export function SegmentStudio({
         
         {/* Details Tab */}
         <TabsContent value="details" className="flex-1 overflow-y-auto p-3 space-y-3 m-0">
+          {/* Build Marker - v2.17 Smart Video Generation */}
+          <div className="text-[9px] text-gray-400 dark:text-gray-500 text-right font-mono">
+            v2.17-svgw
+          </div>
+          
           {/* Current Prompt - Moved from Generate tab */}
           {(segment.generatedPrompt || segment.userEditedPrompt) && (
             <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
