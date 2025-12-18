@@ -1,64 +1,52 @@
-import { GoogleAuth } from 'google-auth-library';
+import { JWT } from 'google-auth-library';
 
 /**
  * Get Google OAuth2 Bearer token for Vertex AI
- * Supports both file-based credentials (GOOGLE_APPLICATION_CREDENTIALS) 
- * and JSON string credentials (GOOGLE_APPLICATION_CREDENTIALS_JSON) for serverless
+ * Uses JWT client directly for better serverless compatibility
  */
 async function getVertexAccessToken(): Promise<string> {
-  // For serverless environments (Vercel), use JSON credentials from env var
   const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
   
-  // Debug logging
   console.log('[Vertex AI Auth] GOOGLE_APPLICATION_CREDENTIALS_JSON exists:', !!credentialsJson);
   console.log('[Vertex AI Auth] GOOGLE_APPLICATION_CREDENTIALS_JSON length:', credentialsJson?.length || 0);
-  console.log('[Vertex AI Auth] GOOGLE_APPLICATION_CREDENTIALS exists:', !!process.env.GOOGLE_APPLICATION_CREDENTIALS);
   
-  let authOptions: any = {
-    scopes: [
-      'https://www.googleapis.com/auth/cloud-platform',
-      'https://www.googleapis.com/auth/aiplatform'
-    ]
-  };
-  
-  if (credentialsJson) {
-    try {
-      // Handle case where the JSON might be double-encoded or have extra escaping
-      let jsonToParse = credentialsJson;
-      
-      // If it starts with a quote, it might be double-stringified
-      if (jsonToParse.startsWith('"') && jsonToParse.endsWith('"')) {
-        jsonToParse = JSON.parse(jsonToParse);
-      }
-      
-      const credentials = JSON.parse(jsonToParse);
-      console.log('[Vertex AI Auth] Parsed credentials successfully');
-      console.log('[Vertex AI Auth] Service account email:', credentials.client_email);
-      console.log('[Vertex AI Auth] Project ID:', credentials.project_id);
-      
-      authOptions.credentials = credentials;
-      authOptions.projectId = credentials.project_id;
-    } catch (e) {
-      console.error('[Vertex AI Auth] Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON:', e);
-      console.error('[Vertex AI Auth] First 100 chars:', credentialsJson?.substring(0, 100));
-      throw new Error('Invalid GOOGLE_APPLICATION_CREDENTIALS_JSON format: ' + (e as Error).message);
-    }
-  } else {
-    console.warn('[Vertex AI Auth] No GOOGLE_APPLICATION_CREDENTIALS_JSON found, falling back to ADC');
+  if (!credentialsJson) {
+    throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is required for Vertex AI');
   }
   
   try {
-    const auth = new GoogleAuth(authOptions);
-    const client = await auth.getClient();
-    const tokenResponse = await client.getAccessToken();
-    if (!tokenResponse || !tokenResponse.token) {
-      throw new Error('Failed to obtain Vertex AI access token');
+    // Handle case where the JSON might be double-encoded
+    let jsonToParse = credentialsJson;
+    if (jsonToParse.startsWith('"') && jsonToParse.endsWith('"')) {
+      jsonToParse = JSON.parse(jsonToParse);
     }
+    
+    const credentials = JSON.parse(jsonToParse);
+    console.log('[Vertex AI Auth] Parsed credentials successfully');
+    console.log('[Vertex AI Auth] Service account email:', credentials.client_email);
+    console.log('[Vertex AI Auth] Project ID:', credentials.project_id);
+    console.log('[Vertex AI Auth] Private key exists:', !!credentials.private_key);
+    console.log('[Vertex AI Auth] Private key length:', credentials.private_key?.length || 0);
+    
+    // Use JWT client directly - more reliable in serverless environments
+    const jwtClient = new JWT({
+      email: credentials.client_email,
+      key: credentials.private_key,
+      scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+    });
+    
+    const tokenResponse = await jwtClient.getAccessToken();
+    if (!tokenResponse || !tokenResponse.token) {
+      throw new Error('Failed to obtain Vertex AI access token - empty response');
+    }
+    
     console.log('[Vertex AI Auth] Successfully obtained access token');
     return tokenResponse.token;
-  } catch (authError) {
-    console.error('[Vertex AI Auth] Authentication failed:', authError);
-    throw authError;
+  } catch (e) {
+    const error = e as Error;
+    console.error('[Vertex AI Auth] Authentication failed:', error.message);
+    console.error('[Vertex AI Auth] Error stack:', error.stack);
+    throw new Error('Vertex AI authentication failed: ' + error.message);
   }
 }
 /**
