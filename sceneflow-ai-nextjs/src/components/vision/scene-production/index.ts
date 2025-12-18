@@ -10,3 +10,8 @@ export { SceneTimeline } from './SceneTimeline'
 export type { AudioTracksData, AudioTrackClip } from './SceneTimeline'
 export { VerticalSegmentSelector } from './VerticalSegmentSelector'
 export * from './types'
+
+// Prompt utilities
+export * from './methodPromptBuilder'
+export * from './promptSyncService'
+export { compileVideoPrompt, formatPayloadForDisplay, extractSettingsFromSegment } from './videoPromptCompiler'

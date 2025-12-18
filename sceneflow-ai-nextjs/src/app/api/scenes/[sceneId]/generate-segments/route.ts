@@ -4,6 +4,17 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 export const maxDuration = 120
 export const runtime = 'nodejs'
 
+// Simple hash function for staleness detection
+function simpleHash(str: string): string {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash // Convert to 32-bit integer
+  }
+  return Math.abs(hash).toString(16)
+}
+
 interface GenerateSegmentsRequest {
   preferredDuration: number
   sceneId?: string
@@ -29,6 +40,13 @@ interface IntelligentSegment {
   emotional_beat: string
   // Phase 8: AI-assigned dialogue coverage
   assigned_dialogue_indices?: number[] // 0-based indices of dialogue lines covered by this segment
+  // NEW: AI-recommended generation plan
+  generation_plan?: {
+    confidence: number
+    reasoning: string
+    fallback_method?: string
+    warnings?: string[]
+  }
 }
 
 export async function POST(
@@ -158,6 +176,43 @@ export async function POST(
         `dialogue-${index}`
       )
 
+      // Build prompt context for staleness detection
+      const assignedDialogue = sceneData.dialogue
+        .filter((_, didx) => (seg.assigned_dialogue_indices || []).includes(didx))
+      const dialogueText = assignedDialogue.map(d => `${d.character}:${d.text}`).join('|')
+      const dialogueHash = simpleHash(dialogueText)
+      const visualDescriptionHash = simpleHash(sceneData.visualDescription || '')
+
+      // Build generation plan with prerequisites
+      const hasSceneFrame = !!sceneData.sceneFrameUrl
+      const generatedMethod = methodMap[seg.generation_method] || 'T2V'
+      
+      const generationPlan = {
+        recommendedMethod: generatedMethod,
+        confidence: seg.generation_plan?.confidence || (isFirstSegment && hasSceneFrame ? 90 : 70),
+        reasoning: seg.generation_plan?.reasoning || seg.trigger_reason || 'AI-recommended method based on segment context',
+        fallbackMethod: seg.generation_plan?.fallback_method || (generatedMethod === 'I2V' ? 'T2V' : undefined),
+        fallbackReason: generatedMethod === 'I2V' ? 'Use T2V if I2V produces unwanted motion' : undefined,
+        prerequisites: [
+          {
+            type: 'scene-image',
+            label: 'Scene keyframe image',
+            met: hasSceneFrame,
+            required: isFirstSegment,
+            assetUrl: sceneData.sceneFrameUrl || undefined,
+          },
+          ...(idx > 0 ? [{
+            type: 'previous-frame',
+            label: 'Previous segment last frame',
+            met: false, // Will be updated at runtime
+            required: false,
+          }] : []),
+        ],
+        batchPriority: idx,
+        qualityEstimate: hasSceneFrame ? 85 : 65,
+        warnings: seg.generation_plan?.warnings,
+      }
+
       return {
         segmentId: `seg_${sceneId}_${seg.sequence}`,
         sequenceIndex: Math.max(0, (Number(seg.sequence) || (idx + 1)) - 1),
@@ -170,13 +225,23 @@ export async function POST(
         activeAssetUrl: null,
         assetType: null as 'video' | 'image' | null,
         // Enhanced metadata for Veo 3.1
-        generationMethod: methodMap[seg.generation_method] || 'T2V',
+        generationMethod: generatedMethod,
         triggerReason: seg.trigger_reason,
         endFrameDescription: seg.end_frame_description,
         cameraMovement: seg.camera_notes,
         emotionalBeat: seg.emotional_beat,
         // Phase 8: AI-assigned dialogue coverage (persisted to DB)
         dialogueLineIds,
+        // NEW: Generation plan for batch automation
+        generationPlan,
+        // NEW: Prompt context for staleness detection
+        promptContext: {
+          dialogueHash,
+          visualDescriptionHash,
+          generatedAt: new Date().toISOString(),
+          sceneNumber: scene.sceneNumber || (typeof sceneId === 'string' ? parseInt(sceneId) : undefined),
+        },
+        isStale: false,
         references: {
           startFrameUrl: startFrameUrl,
           endFrameUrl: null,
@@ -411,9 +476,23 @@ Return a JSON array. Each segment object MUST have these fields:
     "end_frame_description": "Character positioned near [location], facing [direction], expression [mood]",
     "camera_notes": "Slow push-in, anamorphic 35mm, motivated key light from window",
     "emotional_beat": "Tension building",
-    "assigned_dialogue_indices": [0, 1]
+    "assigned_dialogue_indices": [0, 1],
+    "generation_plan": {
+      "confidence": 90,
+      "reasoning": "I2V recommended for segment 1 with available scene frame - provides best visual continuity",
+      "fallback_method": "T2V",
+      "warnings": []
+    }
   }
 ]
+
+**GENERATION PLAN RULES:**
+- Include "generation_plan" object with your confidence (0-100) and reasoning for the recommended method
+- Explain WHY this method is best for this specific segment (continuity, angle change, dialogue, etc.)
+- Include fallback_method if the primary method might not work (e.g., "T2V" if I2V fails)
+- Add warnings for potential issues (e.g., "Speaker change may require T2V instead of EXT")
+- Higher confidence (80+) for segments with clear method requirements
+- Lower confidence (50-70) for ambiguous cases
 
 **DIALOGUE ASSIGNMENT RULES:**
 - Include "assigned_dialogue_indices" array with 0-based indices of dialogue lines covered by this segment

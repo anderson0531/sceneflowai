@@ -44,6 +44,62 @@ export type GenerationType = 'T2V' | 'I2V' | 'T2I' | 'UPLOAD'
 // Veo 3.1 generation methods
 export type VideoGenerationMethod = 'T2V' | 'I2V' | 'EXT' | 'FTV' | 'REF'
 
+// ============================================================================
+// Generation Plan Types - Recommended generation strategy per segment
+// ============================================================================
+
+/**
+ * Prerequisite status for a generation plan
+ */
+export interface GenerationPrerequisite {
+  type: 'scene-image' | 'previous-frame' | 'character-ref' | 'veo-ref' | 'start-frame' | 'end-frame'
+  label: string
+  met: boolean
+  required: boolean
+  assetUrl?: string
+}
+
+/**
+ * Generation Plan - Recommended strategy for generating a segment
+ * Provides guidance for batch automation and user decision-making
+ */
+export interface GenerationPlan {
+  // Primary recommendation
+  recommendedMethod: VideoGenerationMethod
+  // Confidence in the recommendation (0-100)
+  confidence: number
+  // Human-readable reasoning
+  reasoning: string
+  // Fallback if primary method fails or prerequisites not met
+  fallbackMethod?: VideoGenerationMethod
+  fallbackReason?: string
+  // Prerequisites that must be met
+  prerequisites: GenerationPrerequisite[]
+  // Batch priority (lower = generate first)
+  batchPriority: number
+  // Estimated quality score if using this plan (0-100)
+  qualityEstimate: number
+  // Warnings or considerations
+  warnings?: string[]
+}
+
+/**
+ * Prompt context for staleness detection
+ * Stores hashes of the source data used to generate the prompt
+ */
+export interface PromptContext {
+  // Hash of dialogue lines covered by this segment
+  dialogueHash: string
+  // Hash of visual description at generation time
+  visualDescriptionHash: string
+  // Timestamp when prompt was generated
+  generatedAt: string
+  // Scene number at generation time
+  sceneNumber?: number
+  // Script version identifier (if available)
+  scriptVersion?: string
+}
+
 export interface SceneSegmentTake {
   id: string
   createdAt: string
@@ -105,6 +161,14 @@ export interface SceneSegment {
   isEstablishingShot?: boolean
   establishingShotType?: EstablishingShotType
   shotNumber?: number // For B-Roll multi-shot sequences (1, 2, etc.)
+  // Generation Plan - recommended strategy for batch automation
+  generationPlan?: GenerationPlan
+  // Prompt Context - for staleness detection when script changes
+  promptContext?: PromptContext
+  // Staleness flag - set when script changes invalidate the prompt
+  isStale?: boolean
+  // User instruction - general text instruction that overrides/augments prompts
+  userInstruction?: string
 }
 
 // Character presence in a segment

@@ -115,6 +115,9 @@ interface SmartPromptTabProps {
   setUseStartFrame: (u: boolean) => void
   startFrameUrl: string
   setStartFrameUrl: (u: string) => void
+  // NEW: General instruction for quick text-based guidance
+  generalInstruction: string
+  setGeneralInstruction: (i: string) => void
 }
 
 function SmartPromptTab({
@@ -134,13 +137,18 @@ function SmartPromptTab({
   setUseStartFrame,
   startFrameUrl,
   setStartFrameUrl,
+  generalInstruction,
+  setGeneralInstruction,
 }: SmartPromptTabProps) {
   const [showCompiledPrompt, setShowCompiledPrompt] = useState(false)
 
-  // Compile prompt for preview
+  // Compile prompt for preview - prepend general instruction if provided
   const compiledPayload = useMemo(() => {
+    const baseWithInstruction = generalInstruction 
+      ? `${generalInstruction}. ${prompt}`.trim()
+      : prompt
     return compileVideoPrompt({
-      basePrompt: prompt,
+      basePrompt: baseWithInstruction,
       settings: smartPromptSettings,
       method: useStartFrame && startFrameUrl ? 'I2V' : 'T2V',
       durationSeconds: duration,
@@ -148,7 +156,7 @@ function SmartPromptTab({
       startFrameUrl: useStartFrame ? startFrameUrl : undefined,
       preserveCharacters: characters.map(c => c.name),
     })
-  }, [prompt, smartPromptSettings, useStartFrame, startFrameUrl, duration, aspectRatio, characters])
+  }, [prompt, generalInstruction, smartPromptSettings, useStartFrame, startFrameUrl, duration, aspectRatio, characters])
 
   return (
     <div className="h-full flex flex-col">
@@ -168,6 +176,24 @@ function SmartPromptTab({
           {showCompiledPrompt ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
           {showCompiledPrompt ? 'Hide' : 'Show'} Compiled
         </button>
+      </div>
+
+      {/* General Instruction - Quick text-based guidance (most effective) */}
+      <div className="space-y-2 mb-4">
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+          <Wand2 className="w-4 h-4 text-sf-primary" />
+          General Instruction
+          <span className="text-xs font-normal text-gray-500">(Optional - most effective)</span>
+        </label>
+        <Textarea
+          value={generalInstruction}
+          onChange={(e) => setGeneralInstruction(e.target.value)}
+          placeholder="e.g., Make it more dramatic, Add slow motion, Darker mood, More intimate framing..."
+          className="min-h-[50px] resize-none text-sm bg-gradient-to-r from-sf-primary/5 to-transparent border-sf-primary/30 focus:border-sf-primary/50"
+        />
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          This instruction is prepended to the prompt and takes priority. Use natural language to guide the generation.
+        </p>
       </div>
 
       {/* Base Prompt */}
@@ -895,6 +921,7 @@ export function VideoEditingDialog({
   // Smart Prompt state
   const [smartPromptSettings, setSmartPromptSettings] = useState<SmartPromptSettings>(createDefaultSmartPromptSettings())
   const [useStartFrame, setUseStartFrame] = useState(false)
+  const [generalInstruction, setGeneralInstruction] = useState('')
   
   // Tab-specific state
   const [sourceVideoUrl, setSourceVideoUrl] = useState('')
@@ -907,6 +934,8 @@ export function VideoEditingDialog({
     if (open && segment) {
       setActiveTab(initialTab)
       setPrompt(segment.userEditedPrompt || segment.generatedPrompt || '')
+      // Pre-load general instruction from segment if saved
+      setGeneralInstruction(segment.userInstruction || '')
       // Pre-select source video for extension
       const currentVideoTake = segment.takes?.find(t => t.assetUrl === segment.activeAssetUrl && t.veoVideoRef)
       if (currentVideoTake) {
@@ -936,9 +965,12 @@ export function VideoEditingDialog({
 
     switch (activeTab) {
       case 'smart-prompt':
-        // Compile the smart prompt settings
+        // Compile the smart prompt settings with general instruction prepended
+        const baseWithInstruction = generalInstruction 
+          ? `${generalInstruction}. ${prompt}`.trim()
+          : prompt
         const payload = compileVideoPrompt({
-          basePrompt: prompt,
+          basePrompt: baseWithInstruction,
           settings: smartPromptSettings,
           method: useStartFrame && startFrameUrl ? 'I2V' : 'T2V',
           durationSeconds: duration,
@@ -1100,6 +1132,8 @@ export function VideoEditingDialog({
                     setUseStartFrame={setUseStartFrame}
                     startFrameUrl={startFrameUrl}
                     setStartFrameUrl={setStartFrameUrl}
+                    generalInstruction={generalInstruction}
+                    setGeneralInstruction={setGeneralInstruction}
                   />
                 </TabsContent>
                 <TabsContent value="extend" className="mt-0">

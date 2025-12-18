@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { SceneSegment, SceneProductionReferences, SceneSegmentStatus, SegmentKeyframeSettings, KeyframeEasingType, KeyframePanDirection } from './types'
-import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer, MessageSquare, User, Check, Move, ZoomIn, ZoomOut, RotateCcw, Pencil, Layers, Info, Clapperboard, Camera, Sparkles, Users, FileText, Trash2, ImagePlus } from 'lucide-react'
+import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer, MessageSquare, User, Check, Move, ZoomIn, ZoomOut, RotateCcw, Pencil, Layers, Info, Clapperboard, Camera, Sparkles, Users, FileText, Trash2, ImagePlus, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SegmentPromptBuilder, GeneratePromptData, VideoGenerationMethod } from './SegmentPromptBuilder'
 import { VideoEditingDialog, VideoEditingTab } from './VideoEditingDialog'
@@ -706,6 +706,124 @@ export function SegmentStudio({
               Max 8s per segment • Duration changes cascade to following segments
             </p>
           </div>
+
+          {/* Generation Plan - Recommended Strategy */}
+          {segment.generationPlan && (
+            <div className="bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-900/30 dark:to-cyan-900/30 border border-teal-200 dark:border-teal-700 rounded-lg p-3">
+              <div className="flex items-center gap-1.5 mb-2.5">
+                <Sparkles className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                <span className="text-xs font-semibold text-teal-700 dark:text-teal-300">Recommended Plan</span>
+                <span className={cn(
+                  "ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full",
+                  segment.generationPlan.confidence >= 80 
+                    ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300"
+                    : segment.generationPlan.confidence >= 60
+                    ? "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300"
+                    : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                )}>
+                  {segment.generationPlan.confidence}% confident
+                </span>
+              </div>
+              
+              {/* Recommended Method Badge */}
+              <div className="flex items-center gap-2 mb-2">
+                <span className={cn(
+                  "text-xs font-bold px-2 py-1 rounded",
+                  segment.generationPlan.recommendedMethod === 'I2V' ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300' :
+                  segment.generationPlan.recommendedMethod === 'EXT' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' :
+                  segment.generationPlan.recommendedMethod === 'FTV' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300' :
+                  segment.generationPlan.recommendedMethod === 'REF' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300' :
+                  'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                )}>
+                  {segment.generationPlan.recommendedMethod}
+                </span>
+                {segment.generationPlan.fallbackMethod && (
+                  <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                    fallback: {segment.generationPlan.fallbackMethod}
+                  </span>
+                )}
+              </div>
+              
+              {/* Reasoning */}
+              <p className="text-xs text-teal-800 dark:text-teal-200 leading-relaxed mb-2">
+                {segment.generationPlan.reasoning}
+              </p>
+              
+              {/* Prerequisites */}
+              {segment.generationPlan.prerequisites && segment.generationPlan.prerequisites.length > 0 && (
+                <div className="space-y-1 mb-2">
+                  <span className="text-[10px] font-semibold text-teal-600 dark:text-teal-400">Prerequisites:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {segment.generationPlan.prerequisites.map((prereq, idx) => (
+                      <span 
+                        key={idx}
+                        className={cn(
+                          "text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1",
+                          prereq.met 
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
+                            : prereq.required 
+                            ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
+                            : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                        )}
+                      >
+                        {prereq.met ? <CheckCircle2 className="w-3 h-3" /> : null}
+                        {prereq.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Warnings */}
+              {segment.generationPlan.warnings && segment.generationPlan.warnings.length > 0 && (
+                <div className="bg-amber-100/50 dark:bg-amber-900/30 rounded p-2 border border-amber-200 dark:border-amber-700">
+                  {segment.generationPlan.warnings.map((warning, idx) => (
+                    <p key={idx} className="text-[10px] text-amber-800 dark:text-amber-200">
+                      ⚠️ {warning}
+                    </p>
+                  ))}
+                </div>
+              )}
+              
+              {/* Quality Estimate */}
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-teal-200 dark:border-teal-700">
+                <span className="text-[10px] text-teal-600 dark:text-teal-400">Est. Quality</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-24 h-1.5 bg-teal-200 dark:bg-teal-800 rounded-full overflow-hidden">
+                    <div 
+                      className={cn(
+                        "h-full rounded-full transition-all",
+                        segment.generationPlan.qualityEstimate >= 80 ? "bg-green-500" :
+                        segment.generationPlan.qualityEstimate >= 60 ? "bg-amber-500" :
+                        "bg-gray-400"
+                      )}
+                      style={{ width: `${segment.generationPlan.qualityEstimate}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-medium text-teal-700 dark:text-teal-300">
+                    {segment.generationPlan.qualityEstimate}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Stale Prompt Warning */}
+          {segment.isStale && (
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-3">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <span className="text-xs font-semibold text-amber-700 dark:text-amber-300 block mb-1">
+                    Prompt May Be Outdated
+                  </span>
+                  <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                    The script has changed since this prompt was generated. Consider regenerating the prompt to sync with current dialogue.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Shot Metadata Cards */}
           {(segment.triggerReason || segment.emotionalBeat || segment.cameraMovement || segment.endFrameDescription || segment.shotType) && (
