@@ -354,17 +354,23 @@ export async function generateVideoWithVeo(
 export async function checkVideoGenerationStatus(
   operationName: string
 ): Promise<VideoGenerationResult> {
-  const project = process.env.VERTEX_PROJECT_ID
   const location = process.env.VERTEX_LOCATION || 'us-central1'
-  if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
-  // Vertex operation endpoint: https://LOCATION-aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/LOCATION/operations/OPERATION_ID
-  // operationName may be full or just the ID; handle both
-  let opId = operationName
+  
+  // Vertex AI Veo returns the full operation path - use it directly
+  // Format: projects/{project}/locations/{location}/publishers/google/models/{model}/operations/{opId}
+  // We need to call: GET https://{location}-aiplatform.googleapis.com/v1/{operationName}
+  let endpoint: string
+  
   if (operationName.startsWith('projects/')) {
-    // Already full path
-    opId = operationName.split('/operations/')[1] || operationName
+    // Full operation path - use it directly
+    endpoint = `https://${location}-aiplatform.googleapis.com/v1/${operationName}`
+  } else {
+    // Just an operation ID - construct the path (legacy fallback)
+    const project = process.env.VERTEX_PROJECT_ID
+    if (!project) throw new Error('VERTEX_PROJECT_ID not configured')
+    endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/veo-3.1-generate-preview/operations/${operationName}`
   }
-  const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/operations/${opId}`
+  
   console.log('[Veo Video] Checking status at:', endpoint)
 
   try {
