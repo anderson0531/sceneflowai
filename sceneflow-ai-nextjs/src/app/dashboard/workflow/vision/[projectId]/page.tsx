@@ -842,84 +842,78 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   // Scene production handlers
-  const persistSceneProduction = useCallback(
-    async (nextState: Record<string, SceneProductionData>, nextScenes: Scene[]) => {
+  // Lightweight persist function that only sends specific scene's production data
+  // This avoids 413 errors by not sending the entire project metadata
+  const persistSceneProductionLightweight = useCallback(
+    async (sceneId: string, productionData: SceneProductionData) => {
       if (!project?.id) return
       try {
-        const currentMetadata = project.metadata ?? {}
-        const currentVisionPhase = currentMetadata.visionPhase ?? {}
-        
-        // Strip heavy data from scenes to reduce payload size
-        // Only persist essential scene data, not the full productionData which is already in nextState
-        const lightweightScenes = nextScenes.map((scene: any) => {
-          // Remove productionData from scene objects - it's stored separately in production.scenes
-          const { productionData, ...sceneWithoutProduction } = scene
-          return sceneWithoutProduction
-        })
-
-        // Optimize production state - ensure we're not storing redundant data
-        const optimizedProductionState: Record<string, any> = {}
-        for (const [sceneId, production] of Object.entries(nextState)) {
-          if (production) {
-            // Create a lighter copy - segments are already optimized with URLs
-            optimizedProductionState[sceneId] = {
-              ...production,
-              // Ensure segments don't have any heavy inline data
-              segments: production.segments?.map((seg: any) => ({
-                ...seg,
-                // Keep only essential fields, strip any temporary state
-              })),
-            }
-          }
-        }
-
-        const nextVisionPhase = {
-          ...currentVisionPhase,
-          references: {
-            sceneReferences,
-            objectReferences,
-          },
-          scenes: lightweightScenes,
-          script: currentVisionPhase.script
-            ? {
-                ...currentVisionPhase.script,
-                script: {
-                  ...currentVisionPhase.script.script,
-                  scenes: lightweightScenes,
-                },
-              }
-            : currentVisionPhase.script,
-          production: {
-            ...(currentVisionPhase.production ?? {}),
-            lastUpdated: new Date().toISOString(),
-            scenes: optimizedProductionState,
-          },
-        }
-
-        const nextMetadata = {
-          ...currentMetadata,
-          visionPhase: nextVisionPhase,
-        }
-
-        const response = await fetch(`/api/projects/${project.id}`, {
-          method: 'PUT',
+        const response = await fetch(`/api/projects/${project.id}/production`, {
+          method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ metadata: nextMetadata }),
+          body: JSON.stringify({ sceneId, productionData }),
         })
         
         if (!response.ok) {
           const errorText = await response.text()
-          console.error('[SceneProduction] Persist failed:', response.status, errorText.substring(0, 200))
-          // Don't throw - just log the error and continue
+          console.error('[SceneProduction] Lightweight persist failed:', response.status, errorText.substring(0, 200))
           return
         }
-
-        setProject((prev) => (prev ? { ...prev, metadata: nextMetadata } : prev))
+        
+        console.log('[SceneProduction] Lightweight persist successful for scene:', sceneId)
       } catch (error) {
-        console.error('[SceneProduction] Failed to persist production data', error)
+        console.error('[SceneProduction] Failed to persist production data (lightweight)', error)
       }
     },
-    [project?.id, project?.metadata, sceneReferences, objectReferences, setProject]
+    [project?.id]
+  )
+  
+  const persistSceneProduction = useCallback(
+    async (nextState: Record<string, SceneProductionData>, nextScenes: Scene[], changedSceneId?: string) => {
+      if (!project?.id) return
+      
+      // If we know which scene changed, use the lightweight endpoint
+      if (changedSceneId && nextState[changedSceneId]) {
+        await persistSceneProductionLightweight(changedSceneId, nextState[changedSceneId])
+        
+        // Update local project state without re-fetching
+        setProject((prev) => {
+          if (!prev) return prev
+          const currentMetadata = prev.metadata ?? {}
+          const currentVisionPhase = currentMetadata.visionPhase ?? {}
+          const currentProduction = currentVisionPhase.production ?? {}
+          const currentProductionScenes = currentProduction.scenes ?? {}
+          
+          return {
+            ...prev,
+            metadata: {
+              ...currentMetadata,
+              visionPhase: {
+                ...currentVisionPhase,
+                production: {
+                  ...currentProduction,
+                  lastUpdated: new Date().toISOString(),
+                  scenes: {
+                    ...currentProductionScenes,
+                    [changedSceneId]: nextState[changedSceneId]
+                  }
+                }
+              }
+            }
+          }
+        })
+        return
+      }
+      
+      // Fallback: persist all scenes one by one (for bulk updates)
+      // This is slower but avoids the 413 error
+      for (const [sceneId, production] of Object.entries(nextState)) {
+        if (production) {
+          await persistSceneProductionLightweight(sceneId, production)
+        }
+      }
+    },
+    [project?.id, persistSceneProductionLightweight, setProject]
   )
 
   const applySceneProductionUpdate = useCallback(
@@ -942,7 +936,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           return nextScenesRef
         })
 
-        void persistSceneProduction(nextState, nextScenesRef)
+        // Pass the changed sceneId so we can use lightweight persist
+        void persistSceneProduction(nextState, nextScenesRef, sceneId)
         return nextState
       })
     },
