@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 
+// Increase timeout for large project updates
+export const maxDuration = 60 // 60 seconds timeout
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

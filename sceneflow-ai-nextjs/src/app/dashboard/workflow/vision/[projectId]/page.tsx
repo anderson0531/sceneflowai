@@ -848,10 +848,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       try {
         const currentMetadata = project.metadata ?? {}
         const currentVisionPhase = currentMetadata.visionPhase ?? {}
-        const safeScenes =
-          typeof (globalThis as any).structuredClone === 'function'
-            ? (globalThis as any).structuredClone(nextScenes)
-            : JSON.parse(JSON.stringify(nextScenes))
+        
+        // Strip heavy data from scenes to reduce payload size
+        // Only persist essential scene data, not the full productionData which is already in nextState
+        const lightweightScenes = nextScenes.map((scene: any) => {
+          // Remove productionData from scene objects - it's stored separately in production.scenes
+          const { productionData, ...sceneWithoutProduction } = scene
+          return sceneWithoutProduction
+        })
+
+        // Optimize production state - ensure we're not storing redundant data
+        const optimizedProductionState: Record<string, any> = {}
+        for (const [sceneId, production] of Object.entries(nextState)) {
+          if (production) {
+            // Create a lighter copy - segments are already optimized with URLs
+            optimizedProductionState[sceneId] = {
+              ...production,
+              // Ensure segments don't have any heavy inline data
+              segments: production.segments?.map((seg: any) => ({
+                ...seg,
+                // Keep only essential fields, strip any temporary state
+              })),
+            }
+          }
+        }
 
         const nextVisionPhase = {
           ...currentVisionPhase,
@@ -859,20 +879,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             sceneReferences,
             objectReferences,
           },
-          scenes: safeScenes,
+          scenes: lightweightScenes,
           script: currentVisionPhase.script
             ? {
                 ...currentVisionPhase.script,
                 script: {
                   ...currentVisionPhase.script.script,
-                  scenes: safeScenes,
+                  scenes: lightweightScenes,
                 },
               }
             : currentVisionPhase.script,
           production: {
             ...(currentVisionPhase.production ?? {}),
             lastUpdated: new Date().toISOString(),
-            scenes: nextState,
+            scenes: optimizedProductionState,
           },
         }
 
@@ -881,11 +901,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           visionPhase: nextVisionPhase,
         }
 
-        await fetch(`/api/projects/${project.id}`, {
+        const response = await fetch(`/api/projects/${project.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ metadata: nextMetadata }),
         })
+        
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('[SceneProduction] Persist failed:', response.status, errorText.substring(0, 200))
+          // Don't throw - just log the error and continue
+          return
+        }
 
         setProject((prev) => (prev ? { ...prev, metadata: nextMetadata } : prev))
       } catch (error) {

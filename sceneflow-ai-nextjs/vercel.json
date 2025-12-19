@@ -7,6 +7,10 @@
     },
     "src/app/api/character/upload-reference/route.ts": {
       "maxDuration": 30
+    },
+    "src/app/api/projects/[id]/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
     }
   }
 }
