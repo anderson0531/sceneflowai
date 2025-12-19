@@ -94,17 +94,9 @@ export async function POST(
       numberOfImages: 1
     })
 
-    // Extract base64 data from data URL
-    const base64Match = imageDataUrl.match(/^data:image\/\w+;base64,(.+)$/)
-    if (!base64Match) {
-      throw new Error('Invalid image data URL format')
-    }
-    const base64Data = base64Match[1]
-    const imageBuffer = Buffer.from(base64Data, 'base64')
-
-    // Upload to blob storage
+    // Upload to blob storage (uploadImageToBlob accepts base64 data URL directly)
     const endFrameUrl = await uploadImageToBlob(
-      imageBuffer,
+      imageDataUrl,
       `segments/${segmentId}/end-frame-${Date.now()}.png`
     )
 
