@@ -541,15 +541,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Get user credits from store
   const user = useStore((state) => state.user)
+  
+  // Track if we've done initial production state load to avoid resetting during active generation
+  const hasInitializedProductionState = useRef(false)
+  
   useEffect(() => {
+    // Only run sanitization on initial load, not on subsequent project changes
+    // This prevents resetting GENERATING status during active video generation
+    if (hasInitializedProductionState.current) {
+      return
+    }
+    
     const productionScenes =
       project?.metadata?.visionPhase?.production?.scenes as Record<string, SceneProductionData> | undefined
     if (productionScenes && typeof productionScenes === 'object') {
+      hasInitializedProductionState.current = true
       try {
         const cloned = JSON.parse(JSON.stringify(productionScenes)) as Record<string, SceneProductionData>
         
         // Sanitize stuck 'GENERATING' statuses - reset them to 'PENDING'
         // This handles cases where generation was interrupted (page refresh, network error, etc.)
+        // Only runs on initial load, not during active generation
         for (const sceneId of Object.keys(cloned)) {
           const production = cloned[sceneId]
           if (production?.segments) {
