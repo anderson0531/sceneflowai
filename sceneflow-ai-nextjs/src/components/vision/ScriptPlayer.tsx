@@ -480,18 +480,18 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
    * Calculate audio timeline for a scene
    * Returns timing information for concurrent playback
    * Uses language-specific audio files and stored durations
+   * 
+   * NOTE: Scene description audio is DISABLED - not played in Screening Room
    */
   const calculateAudioTimeline = useCallback(async (scene: any): Promise<SceneAudioConfig> => {
     const config: SceneAudioConfig = {}
     let totalDuration = 0
     let narrationEndTime = 0
-    let descriptionEndTime = 0
     let sfxCursor = 0
     let dialogueCursor = 0
     
-    // Get language-specific audio URLs
+    // Get language-specific audio URLs (description excluded - not played)
     const narrationUrl = getAudioForLanguage(scene, selectedLanguage, 'narration')
-    const descriptionUrl = getAudioForLanguage(scene, selectedLanguage, 'description')
     const dialogueArray = scene.dialogueAudio?.[selectedLanguage] || (selectedLanguage === 'en' ? scene.dialogueAudio : null)
     
     // Music starts at scene beginning (concurrent with everything)
@@ -499,32 +499,24 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       config.music = scene.musicAudio
     }
     
-    // Scene description plays before narration
-    if (descriptionUrl) {
-      config.description = descriptionUrl
-      config.descriptionOffsetSeconds = 0
-      const storedDescriptionDuration = getStoredAudioDuration(scene, selectedLanguage, 'description')
-      const descriptionDuration = await resolveAudioDuration(descriptionUrl, storedDescriptionDuration)
-      descriptionEndTime = descriptionDuration
-      totalDuration = Math.max(totalDuration, descriptionEndTime)
-    }
+    // DISABLED: Scene description audio is no longer played in Screening Room
+    // Description audio was previously played before narration, but this has been
+    // removed per user request. The description audio is still generated and stored
+    // for potential future use, but not played during screening room playback.
 
-    // Narration starts after configured offset
+    // Narration starts after configured delay (no longer waits for description)
     if (narrationUrl) {
       config.narration = narrationUrl
-      const narrationOffset = descriptionUrl
-        ? descriptionEndTime + DESCRIPTION_TO_NARRATION_GAP_SECONDS
-        : NARRATION_DELAY_SECONDS
+      const narrationOffset = NARRATION_DELAY_SECONDS
       config.narrationOffsetSeconds = narrationOffset
       const storedDuration = getStoredAudioDuration(scene, selectedLanguage, 'narration')
       const narrationDuration = await resolveAudioDuration(narrationUrl, storedDuration)
       narrationEndTime = narrationOffset + narrationDuration
       totalDuration = Math.max(totalDuration, narrationEndTime)
-    } else {
-      narrationEndTime = descriptionEndTime
     }
 
-    const voiceAnchorTime = Math.max(narrationEndTime, descriptionEndTime)
+    // Voice anchor time is when narration ends (description is disabled)
+    const voiceAnchorTime = narrationEndTime
 
     // SFX queue begins after narration finishes
     const resolvedSfx: AudioSource[] = []
@@ -635,7 +627,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       })))
     }
 
-    totalDuration = Math.max(totalDuration, dialogueCursor, narrationEndTime, sfxCursor, descriptionEndTime)
+    // Calculate total duration (description no longer included since it's disabled)
+    totalDuration = Math.max(totalDuration, dialogueCursor, narrationEndTime, sfxCursor)
     
     const declaredDuration = normalizeDuration(scene?.duration)
     const resolvedDuration = Math.max(totalDuration, declaredDuration ?? 0)
@@ -671,9 +664,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       const hasValidNarration = narrationUrl && 
                 (narrationUrl.startsWith('http://') || narrationUrl.startsWith('https://'))
 
-      const descriptionUrl = getAudioForLanguage(scene, selectedLanguage, 'description')
-      const hasValidDescription = descriptionUrl &&
-                  (descriptionUrl.startsWith('http://') || descriptionUrl.startsWith('https://'))
+      // Note: Description audio is no longer played in Screening Room (disabled per user request)
+      // We still check for other audio types but exclude description from playback
       
       // Check dialogue audio for selected language
       const dialogueArray = scene.dialogueAudio?.[selectedLanguage] || (selectedLanguage === 'en' ? scene.dialogueAudio : null)
@@ -687,7 +679,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
                          scene.sfxAudio.some((url: string) => url && 
                            (url.startsWith('http://') || url.startsWith('https://')))
       
-      const hasPreGeneratedAudio = hasValidNarration || hasValidDescription || hasValidMusic || hasValidDialogue || hasValidSFX
+      // Description audio excluded from this check since it's no longer played
+      const hasPreGeneratedAudio = hasValidNarration || hasValidMusic || hasValidDialogue || hasValidSFX
       
       if (hasPreGeneratedAudio) {
         // Fade out and stop any currently playing audio
@@ -705,12 +698,11 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
         // Calculate audio timeline for concurrent playback
         const audioConfig = await calculateAudioTimeline(scene)
         
-        // Filter out narration/description if narrationEnabled is false
+        // Filter out narration if narrationEnabled is false
+        // (Description is already not included in the timeline)
         if (!playerState.narrationEnabled) {
           delete audioConfig.narration
-          delete audioConfig.description
           delete audioConfig.narrationOffsetSeconds
-          delete audioConfig.descriptionOffsetSeconds
         }
         
         // Ensure scene duration covers either calculated audio length or storyboard duration
@@ -723,8 +715,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
           return
         }
         
-                // Check if we have any audio to play
-        if (!audioConfig.music && !audioConfig.narration && !audioConfig.description &&
+                // Check if we have any audio to play (description excluded since it's disabled)
+        if (!audioConfig.music && !audioConfig.narration &&
             (!audioConfig.dialogue || audioConfig.dialogue.length === 0) &&
             (!audioConfig.sfx || audioConfig.sfx.length === 0)) {
           console.warn('[Player] No audio available in calculated config for scene', sceneIndex + 1, 'Config:', audioConfig)                                    
