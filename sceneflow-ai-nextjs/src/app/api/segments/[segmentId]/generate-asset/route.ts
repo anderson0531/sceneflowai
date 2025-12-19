@@ -225,6 +225,16 @@ export async function POST(
         if (!videoBuffer) {
           throw new Error('Failed to download video file')
         }
+      } else if (finalResult.videoUrl.startsWith('data:video/')) {
+        // Handle inline base64 video data from Veo 3.1
+        console.log('[Segment Asset Generation] Processing inline base64 video data...')
+        const base64Match = finalResult.videoUrl.match(/^data:video\/[^;]+;base64,(.+)$/)
+        if (base64Match) {
+          videoBuffer = Buffer.from(base64Match[1], 'base64')
+          console.log('[Segment Asset Generation] Decoded video buffer size:', videoBuffer.length, 'bytes')
+        } else {
+          throw new Error('Invalid base64 video data format')
+        }
       }
 
       // Upload video to blob storage
