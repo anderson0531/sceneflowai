@@ -93,6 +93,10 @@ interface SceneProductionManagerProps {
   }) => void
   // Characters for backdrop video modal
   characters?: Array<{ id: string; name: string; description?: string; appearance?: string }>
+  // Frame Anchoring: Generate end frame for improved video quality
+  onGenerateEndFrame?: (sceneId: string, segmentId: string, startFrameUrl: string, segmentPrompt: string) => Promise<string | null>
+  // Frame Anchoring: Update segment's end frame URL
+  onEndFrameGenerated?: (sceneId: string, segmentId: string, endFrameUrl: string) => void
 }
 
 export function SceneProductionManager({
@@ -125,6 +129,8 @@ export function SceneProductionManager({
   onCleanupStaleAudioUrl,
   onBackdropVideoGenerated,
   characters = [],
+  onGenerateEndFrame,
+  onEndFrameGenerated,
 }: SceneProductionManagerProps) {
   // Ref to always access the latest scene data (avoids stale closure in callbacks)
   const sceneRef = useRef(scene)
@@ -539,6 +545,27 @@ export function SceneProductionManager({
       }
     },
     [sceneId, onBackdropVideoGenerated, selectedSegmentId, segments]
+  )
+  
+  // Wrapper for end frame generation - MUST be defined after selectedSegmentId
+  const handleGenerateEndFrameWrapper = useCallback(
+    async (segmentId: string, startFrameUrl: string, segmentPrompt: string): Promise<string | null> => {
+      if (onGenerateEndFrame) {
+        return await onGenerateEndFrame(sceneId, segmentId, startFrameUrl, segmentPrompt)
+      }
+      return null
+    },
+    [sceneId, onGenerateEndFrame]
+  )
+  
+  // Wrapper for end frame generated callback
+  const handleEndFrameGeneratedWrapper = useCallback(
+    (segmentId: string, endFrameUrl: string) => {
+      if (onEndFrameGenerated) {
+        onEndFrameGenerated(sceneId, segmentId, endFrameUrl)
+      }
+    },
+    [sceneId, onEndFrameGenerated]
   )
 
   // Audio Assets Management handlers
@@ -1254,6 +1281,8 @@ export function SceneProductionManager({
               sceneForBackdrop={sceneForBackdrop}
               charactersForBackdrop={charactersForBackdrop}
               onBackdropVideoGenerated={onBackdropVideoGenerated ? handleBackdropVideoGeneratedWrapper : undefined}
+              onGenerateEndFrame={onGenerateEndFrame ? handleGenerateEndFrameWrapper : undefined}
+              onEndFrameGenerated={onEndFrameGenerated ? handleEndFrameGeneratedWrapper : undefined}
             />
           </div>
           )}

@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { SceneSegment, SceneProductionReferences, SceneSegmentStatus, SegmentKeyframeSettings, KeyframeEasingType, KeyframePanDirection } from './types'
-import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer, MessageSquare, User, Check, Move, ZoomIn, ZoomOut, RotateCcw, Pencil, Layers, Info, Clapperboard, Camera, Sparkles, Users, FileText, Trash2, ImagePlus, AlertCircle } from 'lucide-react'
+import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer, MessageSquare, User, Check, Move, ZoomIn, ZoomOut, RotateCcw, Pencil, Layers, Info, Clapperboard, Camera, Sparkles, Users, FileText, Trash2, ImagePlus, AlertCircle, FrameIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SegmentPromptBuilder, GeneratePromptData, VideoGenerationMethod } from './SegmentPromptBuilder'
 import { VideoEditingDialog, VideoEditingTab } from './VideoEditingDialog'
@@ -92,6 +92,10 @@ interface SegmentStudioProps {
     backdropMode: BackdropMode
     duration: number
   }) => void
+  // Frame Anchoring: Generate end frame for improved video quality
+  onGenerateEndFrame?: (segmentId: string, startFrameUrl: string, segmentPrompt: string) => Promise<string | null>
+  // Frame Anchoring: Update segment's end frame URL
+  onEndFrameGenerated?: (segmentId: string, endFrameUrl: string) => void
 }
 
 export function SegmentStudio({
@@ -125,6 +129,8 @@ export function SegmentStudio({
   sceneForBackdrop,
   charactersForBackdrop = [],
   onBackdropVideoGenerated,
+  onGenerateEndFrame,
+  onEndFrameGenerated,
 }: SegmentStudioProps) {
   const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -134,6 +140,9 @@ export function SegmentStudio({
   const [isPromptBuilderOpen, setIsPromptBuilderOpen] = useState(false)
   const [promptBuilderMode, setPromptBuilderMode] = useState<'image' | 'video'>('video')
   const [isBackdropMode, setIsBackdropMode] = useState(false)
+  
+  // Frame Anchoring State
+  const [isGeneratingEndFrame, setIsGeneratingEndFrame] = useState(false)
   
   // Backdrop Video Modal State
   const [isBackdropVideoModalOpen, setIsBackdropVideoModalOpen] = useState(false)
@@ -207,6 +216,38 @@ export function SegmentStudio({
     setPromptBuilderMode('video')
     setIsBackdropMode(true)
     setIsPromptBuilderOpen(true)
+  }
+  
+  // === Frame Anchoring Handler ===
+  // Generate end frame for the segment using the start frame as reference
+  const handleGenerateEndFrame = async () => {
+    if (!segment || !onGenerateEndFrame) return
+    
+    // Get the start frame URL - prioritize references, then scene image, then previous segment's last frame
+    const startFrameUrl = segment.references.startFrameUrl || sceneImageUrl || previousSegmentLastFrame
+    if (!startFrameUrl) {
+      console.warn('[SegmentStudio] Cannot generate end frame: no start frame available')
+      return
+    }
+    
+    // Get the segment prompt
+    const segmentPrompt = segment.userEditedPrompt || segment.generatedPrompt
+    if (!segmentPrompt) {
+      console.warn('[SegmentStudio] Cannot generate end frame: no segment prompt available')
+      return
+    }
+    
+    setIsGeneratingEndFrame(true)
+    try {
+      const endFrameUrl = await onGenerateEndFrame(segment.segmentId, startFrameUrl, segmentPrompt)
+      if (endFrameUrl && onEndFrameGenerated) {
+        onEndFrameGenerated(segment.segmentId, endFrameUrl)
+      }
+    } catch (error) {
+      console.error('[SegmentStudio] Failed to generate end frame:', error)
+    } finally {
+      setIsGeneratingEndFrame(false)
+    }
   }
   
   // Handle generation from the SegmentPromptBuilder
@@ -645,6 +686,132 @@ export function SegmentStudio({
               )}
             </div>
           </div>
+
+          {/* Frame Anchoring Section - Generate end frame for better video quality */}
+          {onGenerateEndFrame && (segment.references.startFrameUrl || sceneImageUrl || previousSegmentLastFrame) && (segment.userEditedPrompt || segment.generatedPrompt) && (
+            <div className="space-y-2">
+              <div className="text-[10px] font-semibold uppercase text-gray-500 dark:text-gray-400 tracking-wide flex items-center gap-1.5">
+                <span>Frame Anchoring</span>
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="w-3 h-3 text-gray-400 cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs bg-gray-900 text-white border-gray-700">
+                      <p className="text-xs">Generate an end frame to anchor both ends of your video segment. This dramatically reduces character drift and improves visual consistency.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              
+              {/* Frame Preview Row */}
+              <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 rounded-xl border border-green-200 dark:border-green-700">
+                {/* Start Frame */}
+                <div className="flex-1 text-center">
+                  <div className="text-[10px] font-medium text-green-600 dark:text-green-400 mb-1">Start Frame</div>
+                  <div className="relative aspect-video bg-green-100 dark:bg-green-800/50 rounded-lg overflow-hidden border border-green-200 dark:border-green-700">
+                    {(segment.references.startFrameUrl || sceneImageUrl || previousSegmentLastFrame) ? (
+                      <img 
+                        src={segment.references.startFrameUrl || sceneImageUrl || previousSegmentLastFrame!} 
+                        alt="Start frame" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <ImageIcon className="w-4 h-4 text-green-400" />
+                      </div>
+                    )}
+                    <div className="absolute bottom-0 left-0 right-0 bg-green-600/80 text-white text-[8px] font-bold py-0.5 text-center">
+                      ✓ SET
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Arrow */}
+                <div className="flex flex-col items-center px-1">
+                  <div className="text-[9px] text-gray-500 dark:text-gray-400 mb-1">{(segment.endTime - segment.startTime).toFixed(0)}s</div>
+                  <div className="text-teal-500 dark:text-teal-400 text-lg">→</div>
+                </div>
+                
+                {/* End Frame */}
+                <div className="flex-1 text-center">
+                  <div className="text-[10px] font-medium text-teal-600 dark:text-teal-400 mb-1">End Frame</div>
+                  <div className="relative aspect-video bg-teal-100 dark:bg-teal-800/50 rounded-lg overflow-hidden border border-teal-200 dark:border-teal-700">
+                    {segment.references.endFrameUrl ? (
+                      <>
+                        <img 
+                          src={segment.references.endFrameUrl} 
+                          alt="End frame" 
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute bottom-0 left-0 right-0 bg-teal-600/80 text-white text-[8px] font-bold py-0.5 text-center">
+                          ✓ SET
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <span className="text-[9px] text-teal-500 dark:text-teal-400 font-medium">Not set</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Generate End Frame Button */}
+              <button
+                onClick={handleGenerateEndFrame}
+                disabled={segment.status === 'GENERATING' || isGeneratingEndFrame}
+                className={cn(
+                  "w-full p-3 rounded-xl border text-left transition-all",
+                  segment.references.endFrameUrl
+                    ? "border-teal-300 dark:border-teal-600 bg-teal-50 dark:bg-teal-900/30 hover:border-teal-400 dark:hover:border-teal-500"
+                    : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-teal-400 dark:hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/20",
+                  (segment.status === 'GENERATING' || isGeneratingEndFrame) && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={cn(
+                    "p-2 rounded-lg",
+                    segment.references.endFrameUrl
+                      ? "bg-teal-200 dark:bg-teal-800 text-teal-700 dark:text-teal-300"
+                      : "bg-teal-100 dark:bg-teal-900/50 text-teal-600 dark:text-teal-400"
+                  )}>
+                    {isGeneratingEndFrame ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <FrameIcon className="w-5 h-5" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">
+                      {segment.references.endFrameUrl ? 'Regenerate End Frame' : 'Generate End Frame'}
+                    </h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {isGeneratingEndFrame 
+                        ? 'Generating end frame with Imagen 3...'
+                        : segment.references.endFrameUrl
+                        ? 'Create a new end frame for this segment'
+                        : 'Anchor video with start AND end frames for 40% less drift'
+                      }
+                    </p>
+                  </div>
+                  {segment.references.endFrameUrl && !isGeneratingEndFrame && (
+                    <CheckCircle2 className="w-5 h-5 text-teal-500 flex-shrink-0" />
+                  )}
+                </div>
+              </button>
+              
+              {/* FTV Mode Hint */}
+              {segment.references.endFrameUrl && segment.references.startFrameUrl && (
+                <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-700 rounded-lg p-2">
+                  <p className="text-[10px] text-teal-700 dark:text-teal-300 flex items-center gap-1.5">
+                    <Sparkles className="w-3 h-3" />
+                    <span><strong>FTV Mode Ready</strong> — Use "Generate Video" to create frame-anchored video with both start and end frames.</span>
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Edit Video Action - Opens VideoEditingDialog */}
           {segment.activeAssetUrl && segment.assetType === 'video' && (

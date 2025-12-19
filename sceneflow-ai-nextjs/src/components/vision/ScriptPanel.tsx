@@ -167,6 +167,10 @@ interface ScriptPanelProps {
     backdropMode: string
     duration: number
   }) => void
+  // Frame Anchoring: Generate end frame for improved video quality
+  onGenerateEndFrame?: (sceneId: string, segmentId: string, startFrameUrl: string, segmentPrompt: string) => Promise<string | null>
+  // Frame Anchoring: Update segment's end frame URL
+  onEndFrameGenerated?: (sceneId: string, segmentId: string, endFrameUrl: string) => void
   sceneAudioTracks?: Record<string, {
     narration?: { url?: string; startTime: number; duration: number }
     dialogue?: Array<{ url?: string; startTime: number; duration: number; character?: string }>
@@ -416,7 +420,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -2129,6 +2133,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       onAddEstablishingShot={onAddEstablishingShot}
                       onEstablishingShotStyleChange={onEstablishingShotStyleChange}
                       onBackdropVideoGenerated={onBackdropVideoGenerated}
+                      onGenerateEndFrame={onGenerateEndFrame}
+                      onEndFrameGenerated={onEndFrameGenerated}
                       characters={characters}
                       onSelectTake={onSelectTake}
                       onDeleteTake={onDeleteTake}
@@ -2528,6 +2534,10 @@ interface SceneCardProps {
     backdropMode: string
     duration: number
   }) => void
+  // Frame Anchoring: Generate end frame for improved video quality
+  onGenerateEndFrame?: (sceneId: string, segmentId: string, startFrameUrl: string, segmentPrompt: string) => Promise<string | null>
+  // Frame Anchoring: Update segment's end frame URL
+  onEndFrameGenerated?: (sceneId: string, segmentId: string, endFrameUrl: string) => void
   // Characters for backdrop video modal
   characters?: Array<{ id: string; name: string; description?: string; appearance?: string }>
   // Take management
@@ -2628,6 +2638,8 @@ function SceneCard({
   onAddEstablishingShot,
   onEstablishingShotStyleChange,
   onBackdropVideoGenerated,
+  onGenerateEndFrame,
+  onEndFrameGenerated,
   characters = [],
   sceneAudioTracks,
   domId,
@@ -4221,6 +4233,8 @@ function SceneCard({
                       onAddEstablishingShot={onAddEstablishingShot}
                       onEstablishingShotStyleChange={onEstablishingShotStyleChange}
                       onBackdropVideoGenerated={onBackdropVideoGenerated}
+                      onGenerateEndFrame={onGenerateEndFrame}
+                      onEndFrameGenerated={onEndFrameGenerated}
                       characters={characters}
                       onSelectTake={onSelectTake ? (takeSceneId: string, segmentId: string, takeId: string, assetUrl: string) => onSelectTake(takeSceneId, segmentId, takeId, assetUrl) : undefined}
                       onDeleteTake={onDeleteTake ? (takeSceneId: string, segmentId: string, takeId: string) => onDeleteTake(takeSceneId, segmentId, takeId) : undefined}

@@ -1196,6 +1196,73 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [sceneProductionState, applySceneProductionUpdate]
   )
 
+  // Handler for generating an end frame for a segment using Imagen 3
+  // This enables Frame-Anchored Video Production for better character consistency
+  const handleGenerateEndFrame = useCallback(
+    async (sceneId: string, segmentId: string, startFrameUrl: string, segmentPrompt: string): Promise<string | null> => {
+      try {
+        console.log('[VisionPage] Generating end frame for segment:', segmentId)
+        
+        const response = await fetch(`/api/segments/${segmentId}/generate-end-frame`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            startFrameUrl,
+            segmentPrompt,
+            segmentDuration: 8, // Standard Veo segment duration
+            aspectRatio: '16:9'
+          })
+        })
+        
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.details || error.error || 'Failed to generate end frame')
+        }
+        
+        const data = await response.json()
+        console.log('[VisionPage] End frame generated:', data.endFrameUrl)
+        
+        toast.success('End frame generated successfully')
+        return data.endFrameUrl
+      } catch (error) {
+        console.error('[VisionPage] Failed to generate end frame:', error)
+        toast.error(error instanceof Error ? error.message : 'Failed to generate end frame')
+        return null
+      }
+    },
+    []
+  )
+
+  // Handler for updating a segment's end frame URL in the production data
+  const handleEndFrameGenerated = useCallback(
+    async (sceneId: string, segmentId: string, endFrameUrl: string) => {
+      const currentProduction = sceneProductionState[sceneId]
+      if (!currentProduction?.segments) return
+      
+      const updatedSegments = currentProduction.segments.map(seg => {
+        if (seg.segmentId === segmentId) {
+          return {
+            ...seg,
+            references: {
+              ...seg.references,
+              endFrameUrl
+            }
+          }
+        }
+        return seg
+      })
+      
+      const updatedData: SceneProductionData = {
+        ...currentProduction,
+        segments: updatedSegments
+      }
+      
+      await applySceneProductionUpdate(sceneId, updatedData)
+      console.log('[VisionPage] End frame URL saved for segment:', segmentId)
+    },
+    [sceneProductionState, applySceneProductionUpdate]
+  )
+
   const handleInitializeSceneProduction = useCallback(
     async (sceneId: string, { targetDuration, generationOptions }: { targetDuration: number; generationOptions?: any }) => {
       if (!project?.id) {
@@ -6730,6 +6797,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onAddEstablishingShot={handleAddEstablishingShot}
                 onEstablishingShotStyleChange={handleEstablishingShotStyleChange}
                 onBackdropVideoGenerated={handleBackdropVideoGenerated}
+                onGenerateEndFrame={handleGenerateEndFrame}
+                onEndFrameGenerated={handleEndFrameGenerated}
                 onSelectTake={handleSelectTake}
                 onDeleteTake={handleDeleteTake}
                 sceneAudioTracks={{}}
