@@ -44,9 +44,11 @@ export async function POST(req: NextRequest) {
     console.log(`[Upload Frame] Uploading frame: ${filename}, size: ${Math.round(buffer.length / 1024)}KB`)
 
     // Upload to Vercel Blob - use filename directly (should include path like segments/seg_xxx/last_frame.jpg)
+    // addRandomSuffix ensures unique filenames even if the same segment frame is re-extracted
     const blob = await put(filename, buffer, {
       access: 'public',
       contentType,
+      addRandomSuffix: true,
     })
 
     console.log(`[Upload Frame] Upload successful: ${blob.url.substring(0, 60)}...`)

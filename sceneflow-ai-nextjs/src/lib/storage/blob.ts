@@ -14,10 +14,11 @@ export async function uploadImageToBlob(
   const base64WithoutPrefix = base64Data.replace(/^data:image\/\w+;base64,/, '')
   const buffer = Buffer.from(base64WithoutPrefix, 'base64')
   
-  // Upload to Vercel Blob
+  // Upload to Vercel Blob - use addRandomSuffix to avoid conflicts on re-uploads
   const blob = await put(filename, buffer, {
     access: 'public',
-    contentType: 'image/png'
+    contentType: 'image/png',
+    addRandomSuffix: true,
   })
   
   return blob.url // Returns permanent public URL
@@ -33,10 +34,11 @@ export async function uploadVideoToBlob(
   videoBuffer: Buffer,
   filename: string
 ): Promise<string> {
-  // Upload to Vercel Blob
+  // Upload to Vercel Blob - use addRandomSuffix to avoid conflicts on re-uploads
   const blob = await put(filename, videoBuffer, {
     access: 'public',
-    contentType: 'video/mp4'
+    contentType: 'video/mp4',
+    addRandomSuffix: true,
   })
   
   return blob.url // Returns permanent public URL
