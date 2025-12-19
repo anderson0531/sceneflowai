@@ -412,10 +412,19 @@ export function ScriptEditorModal({
       return
     }
     
+    // Defensive check for script.scenes
+    const originalScenes = Array.isArray(script?.scenes) ? script.scenes : []
+    const optimizedScenes = Array.isArray(optimizedScript?.scenes) ? optimizedScript.scenes : []
+    
+    if (originalScenes.length === 0) {
+      toast.error('No scenes to apply changes to')
+      return
+    }
+    
     // Merge optimized scenes with original, only for selected indices
-    const mergedScenes = script.scenes.map((originalScene: any, idx: number) => {
-      if (selectedScenes.includes(idx) && optimizedScript.scenes[idx]) {
-        const optimizedScene = optimizedScript.scenes[idx]
+    const mergedScenes = originalScenes.map((originalScene: any, idx: number) => {
+      if (selectedScenes.includes(idx) && optimizedScenes[idx]) {
+        const optimizedScene = optimizedScenes[idx]
         
         // CRITICAL FIX: Sync visualDescription with action when action changes
         // The visualDescription is used for image generation prompts
@@ -541,7 +550,7 @@ export function ScriptEditorModal({
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => setSelectedScenes(optimizedScript.scenes.map((_: any, idx: number) => idx))}
+                          onClick={() => setSelectedScenes((optimizedScript?.scenes || []).map((_: any, idx: number) => idx))}
                         >
                           Select All
                         </Button>
@@ -753,23 +762,6 @@ Examples:
                           <>
                             <Eye className="w-4 h-4 mr-2" />
                             Generate Preview
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        onClick={handleBatchOptimize}
-                        disabled={isOptimizing}
-                        className="bg-purple-600 hover:bg-purple-500 text-white px-6"
-                      >
-                        {isOptimizing ? (
-                          <>
-                            <Loader className="w-4 h-4 mr-2 animate-spin" />
-                            Batch Optimizing...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            Batch Optimize
                           </>
                         )}
                       </Button>
