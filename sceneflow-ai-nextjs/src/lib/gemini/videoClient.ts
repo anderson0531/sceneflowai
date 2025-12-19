@@ -293,12 +293,8 @@ export async function generateVideoWithVeo(
     }
   }
 
-  // Build config object for Gemini API-style parameters
-  // The Gemini API uses 'config' for certain features like referenceImages
-  const config: Record<string, any> = {}
-
-  // Add reference images to config (Veo 3.1 feature - T2V only, NOT compatible with I2V)
-  // Per Gemini API docs: referenceImages goes in config.reference_images, not parameters
+  // Add reference images to instance (Veo 3.1 feature - T2V only, NOT compatible with I2V)
+  // Vertex AI uses instance.referenceImages, not a separate config object
   // IMPORTANT: referenceImages cannot be used with startFrame (image parameter)
   if (options.referenceImages && options.referenceImages.length > 0) {
     // Safety check: referenceImages is T2V only
@@ -338,24 +334,18 @@ export async function generateVideoWithVeo(
       )
       const validRefs = refs.filter(Boolean)
       if (validRefs.length > 0) {
-        // Per Gemini API: reference_images goes in config object, not parameters
-        config.referenceImages = validRefs
-        console.log('[Veo Video] Added', validRefs.length, 'reference images to config')
+        // Vertex AI: referenceImages goes in the instance object
+        instance.referenceImages = validRefs
+        console.log('[Veo Video] Added', validRefs.length, 'reference images to instance')
       }
     }
   }
 
   // Build request body
-  // The Gemini API predictLongRunning uses instances + parameters + config structure
+  // Vertex AI predictLongRunning uses instances + parameters structure
   const requestBody: Record<string, any> = {
     instances: [instance],
     parameters: parameters
-  }
-  
-  // Add config object if it has any properties (e.g., referenceImages)
-  if (Object.keys(config).length > 0) {
-    requestBody.config = config
-    console.log('[Veo Video] Request includes config object with keys:', Object.keys(config))
   }
 
   try {

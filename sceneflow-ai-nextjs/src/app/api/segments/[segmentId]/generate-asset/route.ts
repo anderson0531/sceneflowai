@@ -336,13 +336,45 @@ export async function POST(
     })
   } catch (error: any) {
     console.error('[Segment Asset Generation] Error:', error)
+    
+    // Parse and simplify Vertex AI error messages
+    let errorMessage = error.message || 'Failed to generate asset'
+    
+    // Extract cleaner error from Vertex AI JSON responses
+    if (errorMessage.includes('Vertex AI error')) {
+      try {
+        // Try to parse the JSON error from Vertex AI
+        const jsonMatch = errorMessage.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0])
+          if (parsed.error?.message) {
+            errorMessage = `Vertex AI: ${parsed.error.message}`
+          }
+        }
+      } catch {
+        // Keep original message if parsing fails
+      }
+    }
+    
+    // Handle common error types with user-friendly messages
+    if (errorMessage.includes('Content Safety Filter') || errorMessage.includes('filtered')) {
+      errorMessage = 'Content Safety Filter: The prompt was flagged by safety policies. Try adjusting the prompt to be less dramatic or violent.'
+    } else if (errorMessage.includes('Invalid JSON payload') || errorMessage.includes('INVALID_ARGUMENT')) {
+      errorMessage = 'API Error: Invalid request format. Please try a different generation method.'
+    } else if (errorMessage.includes('quota') || errorMessage.includes('RESOURCE_EXHAUSTED')) {
+      errorMessage = 'Rate limit reached. Please wait a moment and try again.'
+    } else if (errorMessage.includes('timeout') || errorMessage.includes('DEADLINE_EXCEEDED')) {
+      errorMessage = 'Request timed out. The video generation is taking too long. Please try again.'
+    }
+    
     return NextResponse.json(
       {
-        error: error.message || 'Failed to generate asset',
-        details: error instanceof Error ? error.stack : undefined,
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined,
       },
       { status: 500 }
     )
   }
 }
+
 
