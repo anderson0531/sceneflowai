@@ -1552,6 +1552,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           throw new Error(data.error || 'Asset generation failed')
         }
 
+        // SAFETY CHECK: If server returned base64 data, something is wrong
+        // The server should always upload to blob storage and return a URL
+        if (data.assetUrl?.startsWith('data:')) {
+          console.error('[Segment Generate] ERROR: Server returned base64 data instead of URL!')
+          console.error('[Segment Generate] assetUrl length:', data.assetUrl.length)
+          throw new Error('Server returned base64 data instead of uploaded URL. Please try again.')
+        }
+
         // If video was generated but server couldn't extract last frame (FFmpeg not available),
         // extract it client-side for continuity
         let lastFrameUrl = data.lastFrameUrl

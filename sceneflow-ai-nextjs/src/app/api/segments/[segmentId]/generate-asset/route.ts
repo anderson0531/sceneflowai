@@ -239,10 +239,12 @@ export async function POST(
 
       // Upload video to blob storage
       if (videoBuffer) {
+        console.log('[Segment Asset Generation] Uploading video buffer to blob storage...')
         assetUrl = await uploadVideoToBlob(
           videoBuffer,
           `segments/${segmentId}-${Date.now()}.mp4`
         )
+        console.log('[Segment Asset Generation] Video uploaded to:', assetUrl.substring(0, 100))
       } else if (finalResult.videoUrl.startsWith('http')) {
         // Download from URL and re-upload to our storage
         // Gemini Files API requires API key for authentication
