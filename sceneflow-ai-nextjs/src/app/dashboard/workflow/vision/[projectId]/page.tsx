@@ -848,10 +848,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     async (sceneId: string, productionData: SceneProductionData) => {
       if (!project?.id) return
       try {
+        // Debug: Log the size of what we're sending
+        const payload = JSON.stringify({ sceneId, productionData })
+        console.log(`[SceneProduction] Payload size for ${sceneId}: ${(payload.length / 1024).toFixed(2)} KB`)
+        
+        // Check if any segment has base64 data (shouldn't happen)
+        productionData.segments.forEach((seg, i) => {
+          if (seg.activeAssetUrl?.startsWith('data:')) {
+            console.error(`[SceneProduction] ERROR: Segment ${i} has base64 activeAssetUrl!`)
+          }
+          seg.takes.forEach((take, j) => {
+            if (take.assetUrl?.startsWith('data:')) {
+              console.error(`[SceneProduction] ERROR: Segment ${i} take ${j} has base64 assetUrl!`)
+            }
+          })
+        })
+        
         const response = await fetch(`/api/projects/${project.id}/production`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sceneId, productionData }),
+          body: payload,
         })
         
         if (!response.ok) {
