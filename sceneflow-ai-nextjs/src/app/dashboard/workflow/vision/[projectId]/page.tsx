@@ -547,6 +547,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (productionScenes && typeof productionScenes === 'object') {
       try {
         const cloned = JSON.parse(JSON.stringify(productionScenes)) as Record<string, SceneProductionData>
+        
+        // Sanitize stuck 'GENERATING' statuses - reset them to 'PENDING'
+        // This handles cases where generation was interrupted (page refresh, network error, etc.)
+        for (const sceneId of Object.keys(cloned)) {
+          const production = cloned[sceneId]
+          if (production?.segments) {
+            production.segments = production.segments.map((segment) => {
+              if (segment.status === 'GENERATING') {
+                console.log(`[VisionPage] Resetting stuck GENERATING status for segment ${segment.segmentId}`)
+                return { ...segment, status: 'PENDING' as const }
+              }
+              return segment
+            })
+          }
+        }
+        
         setSceneProductionState(cloned)
       } catch {
         setSceneProductionState(productionScenes)
