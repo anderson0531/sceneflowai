@@ -38,6 +38,7 @@ import type {
   SceneProductionData,
 } from './types'
 import { DirectorDialog } from './DirectorDialog'
+import { SceneVideoPlayer } from './SceneVideoPlayer'
 import { useVideoQueue } from '@/hooks/useVideoQueue'
 
 interface DirectorConsoleProps {
@@ -105,6 +106,9 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   
   // Selected segment for DirectorDialog
   const [selectedSegment, setSelectedSegment] = useState<SceneSegment | null>(null)
+  
+  // Scene video player modal state
+  const [isScenePlayerOpen, setIsScenePlayerOpen] = useState(false)
   
   // Handle saving config from dialog
   const handleSaveConfig = useCallback((config: VideoGenerationConfig) => {
@@ -203,6 +207,17 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                 <Play className="w-4 h-4 mr-2" />
                 Render All Segments
               </Button>
+              {statusCounts.rendered > 0 && (
+                <Button 
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsScenePlayerOpen(true)}
+                  className="bg-emerald-600/20 border-emerald-500/50 text-emerald-300 hover:bg-emerald-600/30"
+                >
+                  <Film className="w-4 h-4 mr-2" />
+                  Play Scene ({statusCounts.rendered})
+                </Button>
+              )}
             </>
           )}
         </div>
@@ -359,6 +374,14 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           onSaveConfig={handleSaveConfig}
         />
       )}
+      
+      {/* SceneVideoPlayer Modal */}
+      <SceneVideoPlayer
+        segments={segments}
+        sceneNumber={sceneNumber}
+        isOpen={isScenePlayerOpen}
+        onClose={() => setIsScenePlayerOpen(false)}
+      />
     </div>
   )
 }

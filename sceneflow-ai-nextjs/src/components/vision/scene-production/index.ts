@@ -18,6 +18,7 @@ export { SegmentFrameTimeline } from './SegmentFrameTimeline'
 // Director's Console Components
 export { DirectorDialog } from './DirectorDialog'
 export { DirectorConsole } from './DirectorConsole'
+export { SceneVideoPlayer } from './SceneVideoPlayer'
 
 // Prompt utilities
 export * from './methodPromptBuilder'
