@@ -36,6 +36,7 @@ export interface SegmentFrameTimelineProps {
   onGenerateFrames: (segmentId: string, frameType: 'start' | 'end' | 'both') => Promise<void>
   onGenerateAllFrames: () => Promise<void>
   onGenerateVideo: (segmentId: string) => void
+  onEditFrame?: (segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
   isGenerating: boolean
   generatingSegmentId?: string | null
   generatingPhase?: 'start' | 'end' | 'video'
@@ -96,6 +97,7 @@ export function SegmentFrameTimeline({
   onGenerateFrames,
   onGenerateAllFrames,
   onGenerateVideo,
+  onEditFrame,
   isGenerating,
   generatingSegmentId,
   generatingPhase,
@@ -222,6 +224,7 @@ export function SegmentFrameTimeline({
                 onGenerateEndFrame={() => handleGenerateFrames(segment.segmentId, 'end')}
                 onGenerateBothFrames={() => handleGenerateFrames(segment.segmentId, 'both')}
                 onGenerateVideo={() => onGenerateVideo(segment.segmentId)}
+                onEditFrame={onEditFrame ? (frameType, frameUrl) => onEditFrame(segment.segmentId, frameType, frameUrl) : undefined}
                 isGenerating={isGenerating && generatingSegmentId === segment.segmentId}
                 generatingPhase={generatingSegmentId === segment.segmentId ? generatingPhase : undefined}
                 previousSegmentEndFrame={getPreviousEndFrame(index)}

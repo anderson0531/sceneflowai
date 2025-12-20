@@ -1329,6 +1329,49 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [sceneProductionState, applySceneProductionUpdate]
   )
 
+  // Handler for updating a segment's frame URL after editing in ImageEditModal
+  const handleEditFrame = useCallback(
+    async (sceneId: string, segmentId: string, frameType: 'start' | 'end', newFrameUrl: string) => {
+      const currentProduction = sceneProductionState[sceneId]
+      if (!currentProduction?.segments) return
+      
+      const updatedSegments = currentProduction.segments.map(seg => {
+        if (seg.segmentId === segmentId) {
+          if (frameType === 'start') {
+            return {
+              ...seg,
+              startFrameUrl: newFrameUrl,
+              references: {
+                ...seg.references,
+                startFrameUrl: newFrameUrl
+              }
+            }
+          } else {
+            return {
+              ...seg,
+              endFrameUrl: newFrameUrl,
+              references: {
+                ...seg.references,
+                endFrameUrl: newFrameUrl
+              }
+            }
+          }
+        }
+        return seg
+      })
+      
+      const updatedData: SceneProductionData = {
+        ...currentProduction,
+        segments: updatedSegments
+      }
+      
+      applySceneProductionUpdate(sceneId, () => updatedData)
+      toast.success(`${frameType === 'start' ? 'Start' : 'End'} frame updated`)
+      console.log(`[VisionPage] ${frameType} frame edited for segment:`, segmentId)
+    },
+    [sceneProductionState, applySceneProductionUpdate]
+  )
+
   // Keyframe State Machine: Generate frames for a specific segment
   // Uses the /api/production/generate-segment-frames endpoint
   const handleGenerateSegmentFrames = useCallback(
@@ -7039,6 +7082,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onDeleteTake={handleDeleteTake}
                 onGenerateSegmentFrames={handleGenerateSegmentFrames}
                 onGenerateAllSegmentFrames={handleGenerateAllSegmentFrames}
+                onEditFrame={handleEditFrame}
                 generatingFrameForSegment={generatingFrameForSegment}
                 generatingFramePhase={generatingFramePhase}
                 sceneAudioTracks={{}}

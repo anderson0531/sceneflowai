@@ -12,7 +12,8 @@ import {
   CheckCircle2,
   Clock,
   Scissors,
-  Link2
+  Link2,
+  Pencil
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
@@ -38,6 +39,7 @@ export interface SegmentPairCardProps {
   onGenerateEndFrame: () => void
   onGenerateBothFrames: () => void
   onGenerateVideo: () => void
+  onEditFrame?: (frameType: 'start' | 'end', frameUrl: string) => void
   isGenerating: boolean
   generatingPhase?: 'start' | 'end' | 'video'
   previousSegmentEndFrame?: string | null
@@ -105,6 +107,7 @@ export function SegmentPairCard({
   onGenerateEndFrame,
   onGenerateBothFrames,
   onGenerateVideo,
+  onEditFrame,
   isGenerating,
   generatingPhase,
   previousSegmentEndFrame,
@@ -211,6 +214,23 @@ export function SegmentPairCard({
                     alt="Start frame" 
                     className="w-full h-full object-cover"
                   />
+                  {/* Edit button overlay */}
+                  {onEditFrame && !isGenerating && (
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="h-7 text-xs bg-white/90 hover:bg-white text-slate-900"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onEditFrame('start', startFrameUrl)
+                        }}
+                      >
+                        <Pencil className="w-3 h-3 mr-1" />
+                        Edit
+                      </Button>
+                    </div>
+                  )}
                   {isGenerating && generatingPhase === 'start' && (
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                       <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full" />
@@ -258,6 +278,23 @@ export function SegmentPairCard({
                     alt="End frame" 
                     className="w-full h-full object-cover"
                   />
+                  {/* Edit button overlay */}
+                  {onEditFrame && !isGenerating && (
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="h-7 text-xs bg-white/90 hover:bg-white text-slate-900"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onEditFrame('end', endFrameUrl)
+                        }}
+                      >
+                        <Pencil className="w-3 h-3 mr-1" />
+                        Edit
+                      </Button>
+                    </div>
+                  )}
                   {isGenerating && generatingPhase === 'end' && (
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                       <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full" />

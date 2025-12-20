@@ -220,6 +220,7 @@ interface ScriptPanelProps {
   // Keyframe State Machine - Frame step handlers
   onGenerateSegmentFrames?: (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both') => Promise<void>
   onGenerateAllSegmentFrames?: (sceneId: string) => Promise<void>
+  onEditFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
   generatingFrameForSegment?: string | null
   generatingFramePhase?: 'start' | 'end' | 'video' | null
 }
@@ -427,7 +428,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, generatingFrameForSegment = null, generatingFramePhase = null }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, onEditFrame, generatingFrameForSegment = null, generatingFramePhase = null }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -444,7 +445,14 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   
   // Image Edit Modal state
   const [imageEditModalOpen, setImageEditModalOpen] = useState(false)
-  const [editingImageData, setEditingImageData] = useState<{ url: string; sceneIdx: number } | null>(null)
+  const [editingImageData, setEditingImageData] = useState<{ 
+    url: string
+    sceneIdx: number
+    // Frame editing context (optional)
+    segmentId?: string
+    frameType?: 'start' | 'end'
+    sceneId?: string
+  } | null>(null)
   
   // Audio playback state
   const [voices, setVoices] = useState<Array<CuratedVoice>>([])
@@ -2263,20 +2271,35 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           }}
           imageUrl={editingImageData.url}
           imageType="scene"
+          title={editingImageData.segmentId 
+            ? `Edit ${editingImageData.frameType === 'start' ? 'Start' : 'End'} Frame`
+            : undefined
+          }
           onSave={(newImageUrl) => {
-            // Update the scene with the new image URL
-            const updatedScenes = [...scenes]
-            updatedScenes[editingImageData.sceneIdx] = {
-              ...updatedScenes[editingImageData.sceneIdx],
-              imageUrl: newImageUrl
-            }
-            onScriptChange({
-              ...script,
-              script: {
-                ...script.script,
-                scenes: updatedScenes
+            // Check if this is a frame edit or scene image edit
+            if (editingImageData.segmentId && editingImageData.sceneId && editingImageData.frameType) {
+              // Frame edit - call onEditFrame callback which persists to production data
+              onEditFrame?.(
+                editingImageData.sceneId,
+                editingImageData.segmentId,
+                editingImageData.frameType,
+                newImageUrl
+              )
+            } else {
+              // Scene image edit - update scene directly
+              const updatedScenes = [...scenes]
+              updatedScenes[editingImageData.sceneIdx] = {
+                ...updatedScenes[editingImageData.sceneIdx],
+                imageUrl: newImageUrl
               }
-            })
+              onScriptChange({
+                ...script,
+                script: {
+                  ...script.script,
+                  scenes: updatedScenes
+                }
+              })
+            }
             setImageEditModalOpen(false)
             setEditingImageData(null)
           }}
@@ -4143,6 +4166,17 @@ function SceneCard({
                             'I2V'
                           )
                         }
+                        onEditFrame={(segmentId, frameType, frameUrl) => {
+                          // Open the image edit modal with frame context
+                          setEditingImageData({
+                            url: frameUrl,
+                            sceneIdx,
+                            sceneId: scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                            segmentId,
+                            frameType
+                          })
+                          setImageEditModalOpen(true)
+                        }}
                         isGenerating={!!generatingFrameForSegment}
                         generatingSegmentId={generatingFrameForSegment}
                         generatingPhase={generatingFramePhase}
