@@ -3225,6 +3225,98 @@ function SceneCard({
           {/* Mark Done and Help controls */}
           {!isOutline && activeStep && (
             <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+              {/* Audio Buttons - Only visible in Script tab */}
+              {activeStep === 'dialogueAction' && (
+                <>
+                  {/* Update Audio Button (Regenerate) */}
+                  {onUpdateSceneAudio && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            disabled={isUpdatingAudio}
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              setIsUpdatingAudio(true)
+                              try {
+                                await onUpdateSceneAudio(sceneIdx)
+                              } finally {
+                                setIsUpdatingAudio(false)
+                              }
+                            }}
+                            className="p-1.5 rounded-lg transition bg-purple-500/20 text-purple-400 border border-purple-500/40 hover:bg-purple-500/30 disabled:opacity-50"
+                          >
+                            {isUpdatingAudio ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <RefreshCw className="w-4 h-4" />
+                            )}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Regenerate all audio for this scene</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  
+                  {/* Play/Stop Audio Button */}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (isPlaying) {
+                              if (onStopAudio) onStopAudio()
+                            } else {
+                              if (onPlayScene) onPlayScene(sceneIdx)
+                            }
+                          }}
+                          className={`p-1.5 rounded-lg transition ${
+                            isPlaying 
+                              ? 'bg-red-500/20 text-red-400 border border-red-500/40 hover:bg-red-500/30' 
+                              : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30'
+                          }`}
+                        >
+                          {isPlaying ? (
+                            <Square className="w-4 h-4" />
+                          ) : (
+                            <Volume2 className="w-4 h-4" />
+                          )}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                        {isPlaying ? 'Stop playing audio' : 'Play scene audio'}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </>
+              )}
+              
+              {/* AI Co-Pilot Help Button */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setCopilotPanelOpen(!copilotPanelOpen)
+                      }}
+                      className={`p-1.5 rounded-lg transition ${
+                        copilotPanelOpen
+                          ? 'bg-sf-primary/20 text-sf-primary border border-sf-primary/40'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700'
+                      }`}
+                      aria-label="Get help"
+                    >
+                      <Lightbulb className="w-4 h-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                    Get help with {activeStep === 'dialogueAction' ? 'Script' : activeStep === 'directorsChair' ? 'Direction' : activeStep === 'storyboardPreViz' ? 'Frame' : 'Call Action'} workflow
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
               {/* Mark as Done / Unmark button */}
               {onMarkWorkflowComplete && (
                 <TooltipProvider>
@@ -3262,98 +3354,6 @@ function SceneCard({
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-              )}
-              
-              {/* AI Co-Pilot Help Button */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setCopilotPanelOpen(!copilotPanelOpen)
-                      }}
-                      className={`p-1.5 rounded-lg transition ${
-                        copilotPanelOpen
-                          ? 'bg-sf-primary/20 text-sf-primary border border-sf-primary/40'
-                          : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700'
-                      }`}
-                      aria-label="Get help"
-                    >
-                      <Lightbulb className="w-4 h-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                    Get help with {activeStep === 'dialogueAction' ? 'Script' : activeStep === 'directorsChair' ? 'Direction' : activeStep === 'storyboardPreViz' ? 'Frame' : 'Call Action'} workflow
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
-              {/* Audio Buttons - Only visible in Script tab */}
-              {activeStep === 'dialogueAction' && (
-                <>
-                  {/* Play/Stop Audio Button */}
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            if (isPlaying) {
-                              if (onStopAudio) onStopAudio()
-                            } else {
-                              if (onPlayScene) onPlayScene(sceneIdx)
-                            }
-                          }}
-                          className={`p-1.5 rounded-lg transition ${
-                            isPlaying 
-                              ? 'bg-red-500/20 text-red-400 border border-red-500/40 hover:bg-red-500/30' 
-                              : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30'
-                          }`}
-                        >
-                          {isPlaying ? (
-                            <Square className="w-4 h-4" />
-                          ) : (
-                            <Volume2 className="w-4 h-4" />
-                          )}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                        {isPlaying ? 'Stop playing audio' : 'Play scene audio'}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  
-                  {/* Update Audio Button */}
-                  {onUpdateSceneAudio && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            disabled={isUpdatingAudio}
-                            onClick={async (e) => {
-                              e.stopPropagation()
-                              setIsUpdatingAudio(true)
-                              try {
-                                await onUpdateSceneAudio(sceneIdx)
-                              } finally {
-                                setIsUpdatingAudio(false)
-                              }
-                            }}
-                            className="p-1.5 rounded-lg transition bg-purple-500/20 text-purple-400 border border-purple-500/40 hover:bg-purple-500/30 disabled:opacity-50"
-                          >
-                            {isUpdatingAudio ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <RefreshCw className="w-4 h-4" />
-                            )}
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Regenerate all audio for this scene</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                </>
               )}
             </div>
           )}
