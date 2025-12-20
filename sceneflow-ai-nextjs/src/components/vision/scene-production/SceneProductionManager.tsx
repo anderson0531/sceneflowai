@@ -13,7 +13,7 @@ import {
   SegmentKeyframeSettings,
   AudioTrackType,
 } from './types'
-import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Film, Clock, Sliders, MessageSquare, Settings2, Volume2, Users, ImageIcon, Layers } from 'lucide-react'
+import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Film, Clock, Sliders, MessageSquare, Settings2, Volume2, Users, ImageIcon, Layers, Mic2 } from 'lucide-react'
 import { AudioAssetsDialog, AudioTrackClip } from './AudioAssetsDialog'
 import { toast } from 'sonner'
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
@@ -44,6 +44,11 @@ export interface SegmentGenerationOptions {
   selectedCharacterIds?: string[]
   includeReferencesInPrompts?: boolean
   optimizeForTransitions?: boolean
+  // Narration-driven segmentation
+  narrationDriven?: boolean
+  narrationText?: string
+  narrationDuration?: number
+  narrationAudioUrl?: string
 }
 
 interface SceneProductionManagerProps {
@@ -249,6 +254,10 @@ export function SceneProductionManager({
   const [customInstructions, setCustomInstructions] = useState('')
   const [focusMode, setFocusMode] = useState<'balanced' | 'action' | 'dialogue' | 'cinematic'>('balanced')
   const [showInitialDialog, setShowInitialDialog] = useState(false)
+  
+  // NEW: Narration-driven segmentation state
+  const [narrationDriven, setNarrationDriven] = useState(false)
+  const [narrationDurationSeconds, setNarrationDurationSeconds] = useState<number | undefined>(undefined)
   
   // Reference selection state for enhanced segmentation
   const [selectedCharacterRefs, setSelectedCharacterRefs] = useState<string[]>([])
@@ -823,6 +832,11 @@ export function SceneProductionManager({
       selectedCharacterIds: selectedCharacterRefs,
       includeReferencesInPrompts,
       optimizeForTransitions,
+      // Narration-driven segmentation options
+      narrationDriven,
+      narrationText: narrationDriven ? scene?.narration : undefined,
+      narrationDuration: narrationDriven && narrationDuration ? narrationDuration : undefined,
+      narrationAudioUrl: narrationDriven ? scene?.narrationAudioUrl : undefined,
     }
     
     // Simulate progress updates
@@ -1007,6 +1021,37 @@ export function SceneProductionManager({
         {/* Timing Tab */}
         <TabsContent value="timing" className="space-y-4 mt-4">
           <div className="space-y-3">
+            {/* NEW: Narration-Driven Mode Toggle */}
+            {(scene?.narration || scene?.narrationAudioUrl) && (
+              <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-purple-700">
+                <div className="flex-1">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-purple-100 dark:bg-purple-800 flex items-center justify-center">
+                      🎙️
+                    </span>
+                    Narration-Driven Segmentation
+                  </Label>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Create segments that align with and illustrate the narration. Each segment becomes a cinematic backdrop for the voiceover.
+                  </p>
+                  {narrationDriven && (
+                    <div className="mt-2 text-xs text-purple-600 dark:text-purple-400">
+                      ✓ Segments will match narration timing ({scene?.duration ? `${scene.duration.toFixed(1)}s` : 'auto-detected'})
+                    </div>
+                  )}
+                </div>
+                <Switch 
+                  checked={narrationDriven} 
+                  onCheckedChange={(checked) => {
+                    setNarrationDriven(checked)
+                    if (checked && scene?.duration) {
+                      setNarrationDurationSeconds(scene.duration)
+                    }
+                  }}
+                />
+              </div>
+            )}
+            
             <div className="space-y-2">
               <Label className="text-sm font-medium">Target Segment Duration</Label>
               <div className="flex items-center gap-3">
@@ -1165,6 +1210,37 @@ export function SceneProductionManager({
                 />
               </div>
             </div>
+
+            {/* Narration Preview */}
+            {scene?.narration && (
+              <div className="space-y-2 p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700">
+                <Label className="text-sm font-medium flex items-center gap-2 text-purple-700 dark:text-purple-300">
+                  <Mic2 className="w-4 h-4" />
+                  Scene Narration
+                </Label>
+                <p className="text-xs text-purple-600 dark:text-purple-400 italic leading-relaxed max-h-24 overflow-y-auto">
+                  "{scene.narration}"
+                </p>
+                {scene?.narrationAudioUrl && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <audio
+                      controls
+                      className="h-8 flex-1"
+                      src={scene.narrationAudioUrl}
+                    />
+                    <span className="text-xs text-purple-500">
+                      {narrationDuration ? `${narrationDuration.toFixed(1)}s` : 'Audio'}
+                    </span>
+                  </div>
+                )}
+                {narrationDriven && (
+                  <p className="text-xs text-purple-500 dark:text-purple-400 mt-1 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" />
+                    Segments will be synchronized with this narration
+                  </p>
+                )}
+              </div>
+            )}
             
             {/* Quick Select */}
             <div className="flex gap-2">

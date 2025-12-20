@@ -38,6 +38,14 @@ interface GenerateAssetRequest {
   previousSegmentAssetUrl?: string
   previousSegmentVeoRef?: string
   isEstablishingShot?: boolean
+  // Audio context for atmospheric guidance (Veo 3.1 supports voice/SFX)
+  audioContext?: {
+    hasNarration?: boolean
+    narrationText?: string
+    emotionalTone?: string
+    dialogueBeat?: string
+    suggestedAtmosphere?: string
+  }
 }
 
 export async function POST(
@@ -68,7 +76,9 @@ export async function POST(
       sceneImageUrl,
       previousSegmentAssetUrl,
       previousSegmentVeoRef,
-      isEstablishingShot = false
+      isEstablishingShot = false,
+      // Audio context for atmospheric guidance
+      audioContext
     } = body
 
     // Get user session for authentication
@@ -195,8 +205,34 @@ export async function POST(
         // If user wants I2V with character consistency, they should use I2V mode without referenceImages
       }
       
+      // Enhance prompt with audio context for atmospheric guidance
+      // Veo 3.1 supports voice and SFX, so we can guide the atmosphere
+      let enhancedPrompt = prompt
+      if (audioContext) {
+        const atmosphericGuidance: string[] = []
+        
+        if (audioContext.emotionalTone) {
+          atmosphericGuidance.push(`Emotional atmosphere: ${audioContext.emotionalTone}`)
+        }
+        if (audioContext.suggestedAtmosphere) {
+          atmosphericGuidance.push(`Visual mood: ${audioContext.suggestedAtmosphere}`)
+        }
+        if (audioContext.hasNarration && audioContext.narrationText) {
+          // Add a subtle note about the narration context without overwhelming the visual prompt
+          atmosphericGuidance.push(`Scene accompanies narration about: ${audioContext.narrationText.slice(0, 100)}...`)
+        }
+        if (audioContext.dialogueBeat) {
+          atmosphericGuidance.push(`Dialogue moment: ${audioContext.dialogueBeat}`)
+        }
+        
+        if (atmosphericGuidance.length > 0) {
+          enhancedPrompt = `${prompt}\n\n[Audio-Visual Sync Context]\n${atmosphericGuidance.join('\n')}`
+          console.log('[Segment Asset Generation] Enhanced prompt with audio context')
+        }
+      }
+      
       // Trigger video generation
-      const veoResult = await generateVideoWithVeo(prompt, videoOptions)
+      const veoResult = await generateVideoWithVeo(enhancedPrompt, videoOptions)
 
       if (veoResult.status === 'FAILED') {
         throw new Error(veoResult.error || 'Video generation failed')

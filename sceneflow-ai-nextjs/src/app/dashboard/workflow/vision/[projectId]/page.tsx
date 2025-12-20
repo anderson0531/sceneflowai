@@ -1550,6 +1550,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           selectedCharacterIds: generationOptions?.selectedCharacterIds,
           includeReferencesInPrompts: generationOptions?.includeReferencesInPrompts,
           optimizeForTransitions: generationOptions?.optimizeForTransitions,
+          // Narration-driven segmentation options
+          narrationDriven: generationOptions?.narrationDriven,
+          narrationText: generationOptions?.narrationText,
+          narrationDuration: generationOptions?.narrationDuration,
+          narrationAudioUrl: generationOptions?.narrationAudioUrl,
         }),
       })
 

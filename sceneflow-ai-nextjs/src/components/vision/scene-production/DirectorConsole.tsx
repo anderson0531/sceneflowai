@@ -30,6 +30,10 @@ import {
   Settings2,
   Sparkles,
   Clapperboard,
+  Mic2,
+  Volume2,
+  MessageSquare,
+  Music,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -46,6 +50,11 @@ interface DirectorConsoleProps {
   sceneNumber: number
   productionData: SceneProductionData | null
   sceneImageUrl?: string
+  scene?: {
+    narration?: string
+    narrationAudioUrl?: string
+    dialogueLines?: Array<{ character?: string; line?: string }>
+  }
   onGenerate: (
     sceneId: string,
     segmentId: string,
@@ -87,6 +96,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   sceneNumber,
   productionData,
   sceneImageUrl,
+  scene,
   onGenerate,
 }) => {
   const segments = productionData?.segments || []
@@ -353,6 +363,96 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           )
         })}
       </div>
+
+      {/* Audio Tracks Section */}
+      {(scene?.narration || scene?.dialogueLines?.length) && (
+        <div className="p-4 bg-slate-800/50 border border-slate-700/50 rounded-lg space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+              <Volume2 className="w-4 h-4 text-purple-400" />
+              Audio Tracks
+            </h3>
+            <span className="text-xs text-slate-500">Post-Production Audio</span>
+          </div>
+          
+          <div className="space-y-3">
+            {/* Narration Track */}
+            {scene?.narration && (
+              <div className="flex items-center gap-3 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
+                  <Mic2 className="w-4 h-4 text-purple-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-purple-300">Narration</span>
+                    {scene?.narrationAudioUrl && (
+                      <Badge variant="outline" className="text-[10px] bg-purple-500/10 border-purple-500/30 text-purple-400">
+                        Audio Ready
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5 line-clamp-1 italic">
+                    "{scene.narration}"
+                  </p>
+                </div>
+                {scene?.narrationAudioUrl && (
+                  <audio
+                    controls
+                    className="h-8 w-40"
+                    src={scene.narrationAudioUrl}
+                  />
+                )}
+              </div>
+            )}
+            
+            {/* Dialogue Track */}
+            {scene?.dialogueLines && scene.dialogueLines.length > 0 && (
+              <div className="flex items-center gap-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                  <MessageSquare className="w-4 h-4 text-blue-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-blue-300">Dialogue</span>
+                    <Badge variant="outline" className="text-[10px] bg-blue-500/10 border-blue-500/30 text-blue-400">
+                      {scene.dialogueLines.length} Lines
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
+                    {scene.dialogueLines[0]?.character}: "{scene.dialogueLines[0]?.line}"
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            {/* SFX Placeholder */}
+            <div className="flex items-center gap-3 p-3 bg-slate-700/30 border border-slate-600/30 rounded-lg opacity-60">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-600/20 flex items-center justify-center">
+                <Volume2 className="w-4 h-4 text-slate-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-medium text-slate-400">Sound Effects</span>
+                <p className="text-xs text-slate-500 mt-0.5">Added in post-production</p>
+              </div>
+            </div>
+            
+            {/* Music Placeholder */}
+            <div className="flex items-center gap-3 p-3 bg-slate-700/30 border border-slate-600/30 rounded-lg opacity-60">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-600/20 flex items-center justify-center">
+                <Music className="w-4 h-4 text-slate-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-medium text-slate-400">Background Music</span>
+                <p className="text-xs text-slate-500 mt-0.5">Added in post-production</p>
+              </div>
+            </div>
+          </div>
+          
+          <p className="text-xs text-slate-500 text-center">
+            💡 Veo 3.1 renders video with voice/SFX. Music is added in post-production.
+          </p>
+        </div>
+      )}
       
       {/* AI Tip */}
       <div className="flex items-start gap-3 p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-lg">

@@ -25,6 +25,11 @@ interface GenerateSegmentsRequest {
   selectedCharacterIds?: string[]
   includeReferencesInPrompts?: boolean
   optimizeForTransitions?: boolean
+  // NEW: Narration-driven segmentation
+  narrationDriven?: boolean
+  narrationDurationSeconds?: number
+  narrationText?: string
+  narrationAudioUrl?: string
 }
 
 // Enhanced segment structure for Veo 3.1 intelligent generation
@@ -67,7 +72,12 @@ export async function POST(
       customInstructions,
       selectedCharacterIds = [],
       includeReferencesInPrompts = true,
-      optimizeForTransitions = true 
+      optimizeForTransitions = true,
+      // NEW: Narration-driven segmentation options
+      narrationDriven = false,
+      narrationDurationSeconds,
+      narrationText,
+      narrationAudioUrl
     } = body
 
     if (!sceneId || !projectId) {
@@ -156,7 +166,12 @@ export async function POST(
     const sceneData = buildComprehensiveSceneData(scene, characters, {
       selectedCharacterIds,
       includeReferencesInPrompts,
-      optimizeForTransitions
+      optimizeForTransitions,
+      // NEW: Narration-driven options
+      narrationDriven,
+      narrationDurationSeconds,
+      narrationText,
+      narrationAudioUrl
     })
     
     // Generate intelligent segmentation prompt
@@ -322,6 +337,17 @@ interface ComprehensiveSceneData {
   // Reference options
   includeReferencesInPrompts?: boolean
   optimizeForTransitions?: boolean
+  // NEW: Narration-driven segmentation data
+  narrationDriven?: boolean
+  narrationDurationSeconds?: number
+  narrationText?: string
+  narrationAudioUrl?: string
+  narrationBeats?: Array<{
+    text: string
+    estimatedDuration: number
+    visualSuggestion: string
+    emotionalTone: string
+  }>
 }
 
 function buildComprehensiveSceneData(
@@ -331,6 +357,11 @@ function buildComprehensiveSceneData(
     selectedCharacterIds?: string[]
     includeReferencesInPrompts?: boolean
     optimizeForTransitions?: boolean
+    // NEW: Narration-driven options
+    narrationDriven?: boolean
+    narrationDurationSeconds?: number
+    narrationText?: string
+    narrationAudioUrl?: string
   }
 ): ComprehensiveSceneData {
   // Extract heading
@@ -391,7 +422,17 @@ function buildComprehensiveSceneData(
   const dialogueWords = dialogue.reduce((acc: number, d: any) => acc + (d.text?.split(' ').length || 0), 0)
   const dialogueDuration = dialogueWords / 2.5
   const actionDuration = Math.max(5, visualDescription.split(' ').length / 5) // Rough estimate
-  const estimatedTotalDuration = Math.max(dialogueDuration, actionDuration) + 2 // Buffer
+  
+  // NEW: Use narration duration if narration-driven mode is enabled
+  let estimatedTotalDuration = Math.max(dialogueDuration, actionDuration) + 2 // Buffer
+  if (options?.narrationDriven && options.narrationDurationSeconds) {
+    estimatedTotalDuration = options.narrationDurationSeconds
+  }
+  
+  // NEW: Analyze narration beats for segment alignment
+  const narrationBeats = options?.narrationDriven && (options.narrationText || narration)
+    ? analyzeNarrationBeats(options.narrationText || narration || '', estimatedTotalDuration)
+    : undefined
 
   return {
     heading,
@@ -403,8 +444,157 @@ function buildComprehensiveSceneData(
     characters: relevantCharacters,
     estimatedTotalDuration,
     includeReferencesInPrompts: options?.includeReferencesInPrompts ?? true,
-    optimizeForTransitions: options?.optimizeForTransitions ?? true
+    optimizeForTransitions: options?.optimizeForTransitions ?? true,
+    // NEW: Narration-driven data
+    narrationDriven: options?.narrationDriven ?? false,
+    narrationDurationSeconds: options?.narrationDurationSeconds,
+    narrationText: options?.narrationText || narration,
+    narrationAudioUrl: options?.narrationAudioUrl,
+    narrationBeats
   }
+}
+
+/**
+ * Analyze narration text to identify visual beats and estimate timing
+ * Used for narration-driven segmentation to create segments that illustrate the narration
+ */
+function analyzeNarrationBeats(
+  narrationText: string,
+  totalDurationSeconds: number
+): Array<{ text: string; estimatedDuration: number; visualSuggestion: string; emotionalTone: string }> {
+  if (!narrationText || !narrationText.trim()) {
+    return []
+  }
+  
+  // Split narration into sentences
+  const sentences = narrationText
+    .split(/[.!?]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 0)
+  
+  if (sentences.length === 0) {
+    return []
+  }
+  
+  // Estimate duration per sentence based on word count
+  const wordsPerSecond = 2.5
+  const sentenceData = sentences.map(sentence => {
+    const wordCount = sentence.split(/\s+/).length
+    const duration = wordCount / wordsPerSecond
+    return { sentence, wordCount, duration }
+  })
+  
+  const totalEstimatedDuration = sentenceData.reduce((acc, s) => acc + s.duration, 0)
+  const durationScale = totalDurationSeconds / Math.max(totalEstimatedDuration, 1)
+  
+  // Group sentences into beats (target 6-8 seconds per beat)
+  const targetBeatDuration = 7
+  const beats: Array<{ text: string; estimatedDuration: number; visualSuggestion: string; emotionalTone: string }> = []
+  
+  let currentBeat = { sentences: [] as string[], duration: 0 }
+  
+  for (const data of sentenceData) {
+    const scaledDuration = data.duration * durationScale
+    
+    // If adding this sentence would exceed target, start new beat
+    if (currentBeat.duration + scaledDuration > targetBeatDuration * 1.3 && currentBeat.sentences.length > 0) {
+      beats.push({
+        text: currentBeat.sentences.join(' '),
+        estimatedDuration: currentBeat.duration,
+        visualSuggestion: generateVisualSuggestion(currentBeat.sentences.join(' ')),
+        emotionalTone: detectEmotionalTone(currentBeat.sentences.join(' '))
+      })
+      currentBeat = { sentences: [], duration: 0 }
+    }
+    
+    currentBeat.sentences.push(data.sentence)
+    currentBeat.duration += scaledDuration
+  }
+  
+  // Add remaining sentences as final beat
+  if (currentBeat.sentences.length > 0) {
+    beats.push({
+      text: currentBeat.sentences.join(' '),
+      estimatedDuration: currentBeat.duration,
+      visualSuggestion: generateVisualSuggestion(currentBeat.sentences.join(' ')),
+      emotionalTone: detectEmotionalTone(currentBeat.sentences.join(' '))
+    })
+  }
+  
+  return beats
+}
+
+/**
+ * Generate visual suggestion for a narration beat based on text analysis
+ */
+function generateVisualSuggestion(text: string): string {
+  const lowerText = text.toLowerCase()
+  
+  // Location/setting keywords
+  if (lowerText.includes('city') || lowerText.includes('building') || lowerText.includes('street')) {
+    return 'Urban establishing shot or city environment'
+  }
+  if (lowerText.includes('forest') || lowerText.includes('nature') || lowerText.includes('tree')) {
+    return 'Natural environment wide shot'
+  }
+  if (lowerText.includes('ocean') || lowerText.includes('water') || lowerText.includes('sea')) {
+    return 'Water/ocean vista or waterside scene'
+  }
+  
+  // Action keywords
+  if (lowerText.includes('run') || lowerText.includes('chase') || lowerText.includes('escape')) {
+    return 'Dynamic action sequence with movement'
+  }
+  if (lowerText.includes('walk') || lowerText.includes('journey') || lowerText.includes('travel')) {
+    return 'Walking/traveling sequence'
+  }
+  
+  // Emotional keywords
+  if (lowerText.includes('alone') || lowerText.includes('lonely') || lowerText.includes('silent')) {
+    return 'Solitary character in contemplative moment'
+  }
+  if (lowerText.includes('together') || lowerText.includes('friend') || lowerText.includes('family')) {
+    return 'Group interaction or relationship moment'
+  }
+  
+  // Default: atmospheric backdrop
+  return 'Atmospheric visual that captures the mood of the narration'
+}
+
+/**
+ * Detect emotional tone of narration text
+ */
+function detectEmotionalTone(text: string): string {
+  const lowerText = text.toLowerCase()
+  
+  // Positive tones
+  if (lowerText.match(/happy|joy|hope|bright|love|warm|beautiful/)) {
+    return 'hopeful'
+  }
+  if (lowerText.match(/excit|thrill|adventure|discover/)) {
+    return 'exciting'
+  }
+  
+  // Negative tones
+  if (lowerText.match(/dark|fear|danger|threat|shadow/)) {
+    return 'ominous'
+  }
+  if (lowerText.match(/sad|loss|grief|pain|sorrow/)) {
+    return 'melancholic'
+  }
+  if (lowerText.match(/anger|fury|rage|fight|battle/)) {
+    return 'intense'
+  }
+  
+  // Neutral/contemplative
+  if (lowerText.match(/think|wonder|remember|past|history/)) {
+    return 'contemplative'
+  }
+  if (lowerText.match(/mystery|secret|hidden|unknown/)) {
+    return 'mysterious'
+  }
+  
+  return 'neutral'
 }
 
 function generateIntelligentSegmentationPrompt(
@@ -448,9 +638,30 @@ For EVERY segment featuring a character with a reference image:
 `
     : ''
 
+  // NEW: Narration-driven segmentation instructions
+  const narrationInstructions = sceneData.narrationDriven
+    ? `
+**NARRATION-DRIVEN SEGMENTATION (ENABLED):**
+This scene has narration that will be played as a cinematic voiceover. Your segments MUST:
+1. **ALIGN with narration timing**: Total segment duration must match narration duration (${sceneData.narrationDurationSeconds || sceneData.estimatedTotalDuration} seconds)
+2. **ILLUSTRATE the narration**: Each segment's visuals should be an effective BACKDROP to the narration being spoken
+3. **DO NOT include narration text in video prompts**: The narration is a separate audio track, not in-video speech
+4. **Create EVOCATIVE visuals**: Focus on cinematic imagery that enhances the emotional impact of the narration
+5. **Use atmospheric shots**: Wide establishing shots, detail inserts, and mood-setting visuals work well for narration
+6. **Match emotional beats**: Segment visuals should match the emotional tone of the corresponding narration section
+
+**NARRATION BEATS TO ILLUSTRATE:**
+${sceneData.narrationBeats?.map((beat, idx) => 
+  `Beat ${idx + 1} (~${beat.estimatedDuration.toFixed(1)}s): "${beat.text.substring(0, 100)}${beat.text.length > 100 ? '...' : ''}"
+   - Suggested visual: ${beat.visualSuggestion}
+   - Emotional tone: ${beat.emotionalTone}`
+).join('\n\n') || 'Analyze narration and create segments that effectively illustrate the story.'}
+`
+    : ''
+
   return `
 **SYSTEM ROLE:** You are an AI Video Director and Editor optimized for Veo 3.1 generation workflows. Your goal is to translate a linear script and scene description into distinct, generation-ready video segments with RICH CINEMATIC PROMPTS.
-${referenceInstructions}${transitionInstructions}
+${referenceInstructions}${transitionInstructions}${narrationInstructions}
 **OPERATIONAL CONSTRAINTS:**
 1. **Duration:** Target ${preferredDuration} seconds per segment (8 seconds absolute max for Veo 3.1). **MINIMUM 4 seconds per segment** unless absolutely necessary for a dramatic cut.
 2. **Continuity:** You must utilize specific **Methods** to ensure consistency (matching lighting, character appearance, and room tone).

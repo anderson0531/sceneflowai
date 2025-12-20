@@ -4416,6 +4416,7 @@ function SceneCard({
                         sceneNumber={sceneNumber}
                         productionData={sceneProductionData}
                         sceneImageUrl={scene.imageUrl}
+                        scene={scene}
                         onGenerate={onSegmentGenerate || (async () => {})}
                       />
                     ) : (
