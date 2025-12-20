@@ -2,6 +2,49 @@ import { VisualReference } from '@/types/visionReferences'
 
 export type SceneSegmentStatus = 'DRAFT' | 'READY' | 'GENERATING' | 'COMPLETE' | 'UPLOADED' | 'ERROR'
 
+// ============================================================================
+// Keyframe State Machine Types
+// ============================================================================
+
+/**
+ * Transition type between segments
+ * CONTINUE: End frame of previous segment becomes start frame (visual continuity)
+ * CUT: Fresh start frame generated (scene change, location change, etc.)
+ */
+export type TransitionType = 'CONTINUE' | 'CUT'
+
+/**
+ * Anchor status for the Keyframe State Machine
+ * Tracks the progression of frame generation for a segment
+ */
+export type AnchorStatus = 
+  | 'pending'           // No frames generated yet
+  | 'start-locked'      // Start frame is ready
+  | 'end-pending'       // Start locked, waiting for end frame
+  | 'fully-anchored'    // Both start and end frames ready for FTV
+
+/**
+ * Action type classification for inverse proportionality weights
+ */
+export type ActionType = 
+  | 'static'           // Character holds pose, no movement
+  | 'subtle'           // Micro-expressions, eye movement, breathing
+  | 'speaking'         // Dialogue delivery, mouth movement
+  | 'gesture'          // Hand gestures, head turns
+  | 'movement'         // Walking, repositioning
+  | 'action'           // Running, fighting, physical activity
+  | 'transformation'   // Major change (costume, lighting, time skip)
+
+/**
+ * Frame anchor data for Start/End keyframes
+ */
+export interface FrameAnchor {
+  url: string
+  description: string
+  generatedAt: string
+  actionType?: ActionType
+}
+
 // Establishing Shot Types - Video-focused modes for narration backdrops
 // DEPRECATED: 'scale-switch' | 'living-painting' | 'b-roll-cutaway' (photo-based tricks)
 // NEW: Video generation modes that work with AI video clips
@@ -120,9 +163,14 @@ export interface SceneSegmentReferences {
   useSceneFrame?: boolean
   characterRefs?: string[] // Character names to use as references
   startFrameDescription?: string | null
+  endFrameDescription?: string | null
   characterIds: string[]
   sceneRefIds: string[]
   objectRefIds: string[]
+  
+  // Keyframe State Machine - Frame Anchors
+  startFrameAnchor?: FrameAnchor | null
+  endFrameAnchor?: FrameAnchor | null
 }
 
 export interface SceneSegment {
@@ -171,6 +219,28 @@ export interface SceneSegment {
   userInstruction?: string
   // Error message - stored when generation fails for detailed display
   errorMessage?: string
+  
+  // ============================================================================
+  // Keyframe State Machine Fields
+  // ============================================================================
+  
+  // Transition type: CONTINUE (inherit from previous) or CUT (fresh frame)
+  transitionType?: TransitionType
+  
+  // Anchor status: tracks frame generation workflow state
+  anchorStatus?: AnchorStatus
+  
+  // Action type: classified action for inverse proportionality weights
+  actionType?: ActionType
+  
+  // Action prompt: describes what happens during this segment (for AI generation)
+  actionPrompt?: string
+  
+  // Start frame URL (convenience accessor, also in references.startFrameUrl)
+  startFrameUrl?: string | null
+  
+  // End frame URL (convenience accessor, also in references.endFrameUrl)
+  endFrameUrl?: string | null
 }
 
 // Character presence in a segment

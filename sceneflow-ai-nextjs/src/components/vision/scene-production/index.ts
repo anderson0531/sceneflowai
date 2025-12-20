@@ -11,6 +11,10 @@ export type { AudioTracksData, AudioTrackClip } from './SceneTimeline'
 export { VerticalSegmentSelector } from './VerticalSegmentSelector'
 export * from './types'
 
+// Keyframe State Machine Components
+export { SegmentPairCard } from './SegmentPairCard'
+export { SegmentFrameTimeline } from './SegmentFrameTimeline'
+
 // Prompt utilities
 export * from './methodPromptBuilder'
 export * from './promptSyncService'

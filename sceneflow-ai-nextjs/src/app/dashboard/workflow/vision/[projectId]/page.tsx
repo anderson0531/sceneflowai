@@ -1329,6 +1329,152 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [sceneProductionState, applySceneProductionUpdate]
   )
 
+  // Keyframe State Machine: Generate frames for a specific segment
+  // Uses the /api/production/generate-segment-frames endpoint
+  const handleGenerateSegmentFrames = useCallback(
+    async (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both') => {
+      const scene = script?.script?.scenes?.find((s: any) => 
+        (s.id || s.sceneId || `scene-${script?.script?.scenes?.indexOf(s)}`) === sceneId
+      )
+      const productionData = sceneProductionState[sceneId]
+      const segment = productionData?.segments?.find(s => s.segmentId === segmentId)
+      
+      if (!segment) {
+        toast.error('Segment not found')
+        return
+      }
+
+      // Set generation state
+      setGeneratingFrameForSegment(segmentId)
+      setGeneratingFramePhase(frameType === 'both' ? 'start' : frameType)
+
+      try {
+        // Get previous segment's end frame for CONTINUE transitions
+        const segmentIndex = productionData?.segments?.findIndex(s => s.segmentId === segmentId) ?? -1
+        let previousEndFrameUrl: string | undefined
+        if (segmentIndex > 0) {
+          const prevSeg = productionData?.segments?.[segmentIndex - 1]
+          previousEndFrameUrl = prevSeg?.endFrameUrl || prevSeg?.references?.endFrameUrl
+        }
+
+        const response = await fetch('/api/production/generate-segment-frames', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sceneId,
+            segmentId,
+            segmentIndex,
+            actionPrompt: segment.userEditedPrompt || segment.generatedPrompt || segment.action,
+            duration: segment.endTime - segment.startTime,
+            frameType,
+            transitionType: segment.transitionType || (segmentIndex === 0 ? 'CUT' : 'CONTINUE'),
+            previousEndFrameUrl,
+            sceneImageUrl: scene?.imageUrl,
+            startFrameUrl: segment.startFrameUrl || segment.references?.startFrameUrl,
+            characters: characters.map(c => ({
+              name: c.name,
+              appearance: c.appearanceDescription || c.description,
+              referenceUrl: c.referenceImage
+            })),
+            sceneContext: {
+              heading: typeof scene?.heading === 'string' ? scene.heading : scene?.heading?.text,
+              location: typeof scene?.heading === 'string' ? scene.heading : scene?.heading?.text,
+              timeOfDay: typeof scene?.heading === 'string' 
+                ? (scene.heading.includes('NIGHT') ? 'NIGHT' : scene.heading.includes('DAY') ? 'DAY' : undefined)
+                : undefined
+            }
+          })
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to generate frames')
+        }
+
+        const data = await response.json()
+
+        // Update segment with new frame URLs and metadata
+        applySceneProductionUpdate(sceneId, (current) => {
+          if (!current) return current
+          return {
+            ...current,
+            segments: current.segments.map(seg => 
+              seg.segmentId === segmentId 
+                ? {
+                    ...seg,
+                    startFrameUrl: data.startFrameUrl || seg.startFrameUrl,
+                    endFrameUrl: data.endFrameUrl || seg.endFrameUrl,
+                    anchorStatus: data.anchorStatus || seg.anchorStatus,
+                    actionType: data.actionType || seg.actionType,
+                    transitionType: data.transitionType || seg.transitionType,
+                    references: {
+                      ...seg.references,
+                      startFrameUrl: data.startFrameUrl || seg.references?.startFrameUrl,
+                      endFrameUrl: data.endFrameUrl || seg.references?.endFrameUrl
+                    }
+                  }
+                : seg
+            )
+          }
+        })
+
+        toast.success(`Frame${frameType === 'both' ? 's' : ''} generated successfully`)
+      } catch (error) {
+        console.error('[VisionPage] Failed to generate segment frames:', error)
+        toast.error(error instanceof Error ? error.message : 'Failed to generate frames')
+      } finally {
+        setGeneratingFrameForSegment(null)
+        setGeneratingFramePhase(null)
+      }
+    },
+    [script?.script?.scenes, sceneProductionState, characters, applySceneProductionUpdate]
+  )
+
+  // Keyframe State Machine: Batch generate all pending frames for a scene
+  const handleGenerateAllSegmentFrames = useCallback(
+    async (sceneId: string) => {
+      const productionData = sceneProductionState[sceneId]
+      if (!productionData?.segments?.length) {
+        toast.error('No segments to generate frames for')
+        return
+      }
+
+      // Find segments that need frame generation
+      const pendingSegments = productionData.segments.filter(seg => {
+        const hasStart = seg.startFrameUrl || seg.references?.startFrameUrl
+        const hasEnd = seg.endFrameUrl || seg.references?.endFrameUrl
+        return !hasStart || !hasEnd
+      })
+
+      if (pendingSegments.length === 0) {
+        toast.success('All frames are already generated')
+        return
+      }
+
+      toast.info(`Generating frames for ${pendingSegments.length} segments...`)
+
+      // Generate frames sequentially to respect API rate limits
+      for (const segment of pendingSegments) {
+        const hasStart = segment.startFrameUrl || segment.references?.startFrameUrl
+        const hasEnd = segment.endFrameUrl || segment.references?.endFrameUrl
+        
+        const frameType: 'start' | 'end' | 'both' = !hasStart && !hasEnd 
+          ? 'both' 
+          : !hasEnd 
+            ? 'end' 
+            : 'start'
+        
+        await handleGenerateSegmentFrames(sceneId, segment.segmentId, frameType)
+        
+        // Small delay between generations to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+
+      toast.success('All segment frames generated!')
+    },
+    [sceneProductionState, handleGenerateSegmentFrames]
+  )
+
   const handleInitializeSceneProduction = useCallback(
     async (sceneId: string, { targetDuration, generationOptions }: { targetDuration: number; generationOptions?: any }) => {
       if (!project?.id) {
@@ -2487,6 +2633,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Single keyframe generation state (for global screen freeze)
   const [isGeneratingKeyframe, setIsGeneratingKeyframe] = useState(false)
   const [generatingKeyframeSceneNumber, setGeneratingKeyframeSceneNumber] = useState<number | null>(null)
+  
+  // Keyframe State Machine - Frame step generation state
+  const [generatingFrameForSegment, setGeneratingFrameForSegment] = useState<string | null>(null)
+  const [generatingFramePhase, setGeneratingFramePhase] = useState<'start' | 'end' | 'video' | null>(null)
   
   // Handle quality setting change
   const handleQualityChange = async (quality: 'max' | 'auto') => {
@@ -6875,6 +7025,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onEndFrameGenerated={handleEndFrameGenerated}
                 onSelectTake={handleSelectTake}
                 onDeleteTake={handleDeleteTake}
+                onGenerateSegmentFrames={handleGenerateSegmentFrames}
+                onGenerateAllSegmentFrames={handleGenerateAllSegmentFrames}
+                generatingFrameForSegment={generatingFrameForSegment}
+                generatingFramePhase={generatingFramePhase}
                 sceneAudioTracks={{}}
                   bookmarkedScene={sceneBookmark}
                   onBookmarkScene={handleBookmarkScene}

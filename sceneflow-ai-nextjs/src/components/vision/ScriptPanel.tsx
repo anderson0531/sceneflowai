@@ -16,6 +16,7 @@ import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, 
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
+import { SegmentFrameTimeline } from './scene-production/SegmentFrameTimeline'
 import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from './scene-production/types'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -215,6 +216,11 @@ interface ScriptPanelProps {
   // Take management
   onSelectTake?: (sceneId: string, segmentId: string, takeId: string, assetUrl: string) => void
   onDeleteTake?: (sceneId: string, segmentId: string, takeId: string) => void
+  // Keyframe State Machine - Frame step handlers
+  onGenerateSegmentFrames?: (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both') => Promise<void>
+  onGenerateAllSegmentFrames?: (sceneId: string) => Promise<void>
+  generatingFrameForSegment?: string | null
+  generatingFramePhase?: 'start' | 'end' | 'video' | null
 }
 
 // Transform score analysis data to review format
@@ -420,7 +426,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, generatingFrameForSegment = null, generatingFramePhase = null }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -2179,6 +2185,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                           }}
                           onMarkWorkflowComplete={onMarkWorkflowComplete}
                           onDismissStaleWarning={onDismissStaleWarning}
+                          onGenerateSegmentFrames={onGenerateSegmentFrames}
+                          onGenerateAllSegmentFrames={onGenerateAllSegmentFrames}
+                          generatingFrameForSegment={generatingFrameForSegment}
+                          generatingFramePhase={generatingFramePhase}
                 />
                     )
                   })}
@@ -2569,6 +2579,11 @@ interface SceneCardProps {
   // Workflow completion overrides
   onMarkWorkflowComplete?: (sceneIdx: number, stepKey: string, isComplete: boolean) => void
   onDismissStaleWarning?: (sceneIdx: number, stepKey: string) => void
+  // Keyframe State Machine - Frame step handlers
+  onGenerateSegmentFrames?: (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both') => Promise<void>
+  onGenerateAllSegmentFrames?: (sceneId: string) => Promise<void>
+  generatingFrameForSegment?: string | null
+  generatingFramePhase?: 'start' | 'end' | 'video' | null
 }
 
 function SceneCard({
@@ -2659,6 +2674,10 @@ function SceneCard({
   onDismissStaleWarning,
   onSelectTake,
   onDeleteTake,
+  onGenerateSegmentFrames,
+  onGenerateAllSegmentFrames,
+  generatingFrameForSegment,
+  generatingFramePhase,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(null)
@@ -2666,6 +2685,7 @@ function SceneCard({
   const [isImageExpanded, setIsImageExpanded] = useState(false)
   const [directionBuilderOpen, setDirectionBuilderOpen] = useState(false)
   const [isUpdatingAudio, setIsUpdatingAudio] = useState(false)
+  const [selectedSegmentIndex, setSelectedSegmentIndex] = useState<number | null>(null)
   
   // Determine active step for Co-Pilot
   const activeStep: WorkflowStep | null = activeWorkflowTab
@@ -4096,126 +4116,119 @@ function SceneCard({
 
                 {activeWorkflowTab === 'storyboardPreViz' && (
                   <div className="space-y-4">
-                    <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden border border-slate-700 group">
-                      {scene.imageUrl ? (
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <div className="relative w-full h-full cursor-pointer">
-                              <img 
-                                src={scene.imageUrl} 
-                                alt={`Scene ${sceneNumber} Frame`} 
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                              />
-                              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded p-1 text-white">
-                                <Maximize2 className="w-4 h-4" />
+                    {/* Keyframe State Machine - Show SegmentFrameTimeline when segments exist */}
+                    {sceneProductionData?.isSegmented && sceneProductionData.segments?.length > 0 ? (
+                      <SegmentFrameTimeline
+                        segments={sceneProductionData.segments}
+                        sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
+                        sceneNumber={sceneNumber}
+                        sceneImageUrl={scene.imageUrl}
+                        selectedSegmentIndex={selectedSegmentIndex}
+                        onSelectSegment={setSelectedSegmentIndex}
+                        onGenerateFrames={(segmentId, frameType) => 
+                          onGenerateSegmentFrames?.(
+                            scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                            segmentId,
+                            frameType
+                          ) ?? Promise.resolve()
+                        }
+                        onGenerateAllFrames={() => 
+                          onGenerateAllSegmentFrames?.(scene.sceneId || scene.id || `scene-${sceneIdx}`) ?? Promise.resolve()
+                        }
+                        onGenerateVideo={(segmentId) => 
+                          onSegmentGenerate?.(
+                            scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                            segmentId,
+                            'I2V'
+                          )
+                        }
+                        isGenerating={!!generatingFrameForSegment}
+                        generatingSegmentId={generatingFrameForSegment}
+                        generatingPhase={generatingFramePhase}
+                        characters={characters?.map(c => ({
+                          name: c.name,
+                          appearance: c.appearance || c.description,
+                          referenceUrl: (c as any).referenceImage
+                        }))}
+                      />
+                    ) : (
+                      /* Fallback: Simple single-frame viewer when no segments exist */
+                      <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden border border-slate-700 group">
+                        {scene.imageUrl ? (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <div className="relative w-full h-full cursor-pointer">
+                                <img 
+                                  src={scene.imageUrl} 
+                                  alt={`Scene ${sceneNumber} Frame`} 
+                                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                />
+                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded p-1 text-white">
+                                  <Maximize2 className="w-4 h-4" />
+                                </div>
                               </div>
-                            </div>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 border-none bg-black" aria-describedby={undefined}>
-                            <DialogTitle className="sr-only">Scene {sceneNumber} Frame</DialogTitle>
-                            <div className="relative w-full h-full flex items-center justify-center">
-                              <img 
-                                src={scene.imageUrl} 
-                                alt={`Scene ${sceneNumber} Frame Fullscreen`} 
-                                className="max-w-full max-h-[90vh] object-contain"
-                              />
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      ) : (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-900">
-                          <ImageIcon className="w-12 h-12 mb-3 opacity-30" />
-                          <span className="text-sm font-medium">No frame generated</span>
-                          <p className="text-xs opacity-60 mt-1">Generate or upload an image to visualize this scene</p>
-                        </div>
-                      )}
-                      
-                      {/* Overlay Actions */}
-                      <TooltipProvider>
-                        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                           <Tooltip>
-                             <TooltipTrigger asChild>
-                               <Button
-                                  size="sm"
-                                  variant="secondary"
-                                  className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
-                                  onClick={() => onOpenPromptBuilder?.(sceneIdx)}
-                               >
-                                 <Wand2 className="w-4 h-4" />
-                               </Button>
-                             </TooltipTrigger>
-                             <TooltipContent>Generate</TooltipContent>
-                           </Tooltip>
-                           <Tooltip>
-                             <TooltipTrigger asChild>
-                               <Button
-                                  size="sm"
-                                  variant="secondary"
-                                  className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
-                                  onClick={() => {
-                                const input = document.createElement('input');
-                                input.type = 'file';
-                                input.accept = 'image/*';
-                                input.onchange = async (e) => {
-                                  const file = (e.target as HTMLInputElement).files?.[0];
-                                  if (file && onUploadKeyframe) {
-                                    await onUploadKeyframe(sceneIdx, file);
-                                  }
-                                };
-                                input.click();
-                              }}
-                               >
-                                 <Upload className="w-4 h-4" />
-                               </Button>
-                             </TooltipTrigger>
-                             <TooltipContent>Upload</TooltipContent>
-                           </Tooltip>
-                           {scene.imageUrl && (
-                             <>
-                               <Tooltip>
-                                 <TooltipTrigger asChild>
-                                   <Button
-                                     size="sm"
-                                     variant="secondary"
-                                     className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
-                                     onClick={async () => {
-                                       try {
-                                         const response = await fetch(scene.imageUrl);
-                                         const blob = await response.blob();
-                                         const url = window.URL.createObjectURL(blob);
-                                         const a = document.createElement('a');
-                                         a.href = url;
-                                         a.download = `scene-${sceneNumber}-frame.png`;
-                                         document.body.appendChild(a);
-                                         a.click();
-                                         document.body.removeChild(a);
-                                         window.URL.revokeObjectURL(url);
-                                       } catch (error) {
-                                         console.error('Failed to download image:', error);
-                                       }
-                                     }}
-                                   >
-                                     <Download className="w-4 h-4" />
-                                   </Button>
-                                 </TooltipTrigger>
-                                 <TooltipContent>Download</TooltipContent>
-                               </Tooltip>
-                               {onEditImage && (
-                                 <Tooltip>
-                                   <TooltipTrigger asChild>
-                                     <Button
-                                       size="sm"
-                                       variant="secondary"
-                                       className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
-                                       onClick={() => onEditImage(scene.imageUrl, sceneIdx)}
-                                     >
-                                       <Pencil className="w-4 h-4" />
-                                     </Button>
-                                   </TooltipTrigger>
-                                   <TooltipContent>Edit Image</TooltipContent>
-                                 </Tooltip>
-                               )}
-                               {onAddToReferenceLibrary && (
+                            </DialogTrigger>
+                            <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 border-none bg-black" aria-describedby={undefined}>
+                              <DialogTitle className="sr-only">Scene {sceneNumber} Frame</DialogTitle>
+                              <div className="relative w-full h-full flex items-center justify-center">
+                                <img 
+                                  src={scene.imageUrl} 
+                                  alt={`Scene ${sceneNumber} Frame Fullscreen`} 
+                                  className="max-w-full max-h-[90vh] object-contain"
+                                />
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        ) : (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-900">
+                            <ImageIcon className="w-12 h-12 mb-3 opacity-30" />
+                            <span className="text-sm font-medium">No frame generated</span>
+                            <p className="text-xs opacity-60 mt-1">Generate segments in Call Action first, or generate a single frame</p>
+                          </div>
+                        )}
+                        
+                        {/* Overlay Actions */}
+                        <TooltipProvider>
+                          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                             <Tooltip>
+                               <TooltipTrigger asChild>
+                                 <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
+                                    onClick={() => onOpenPromptBuilder?.(sceneIdx)}
+                                 >
+                                   <Wand2 className="w-4 h-4" />
+                                 </Button>
+                               </TooltipTrigger>
+                               <TooltipContent>Generate</TooltipContent>
+                             </Tooltip>
+                             <Tooltip>
+                               <TooltipTrigger asChild>
+                                 <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
+                                    onClick={() => {
+                                  const input = document.createElement('input');
+                                  input.type = 'file';
+                                  input.accept = 'image/*';
+                                  input.onchange = async (e) => {
+                                    const file = (e.target as HTMLInputElement).files?.[0];
+                                    if (file && onUploadKeyframe) {
+                                      await onUploadKeyframe(sceneIdx, file);
+                                    }
+                                  };
+                                  input.click();
+                                }}
+                                 >
+                                   <Upload className="w-4 h-4" />
+                                 </Button>
+                               </TooltipTrigger>
+                               <TooltipContent>Upload</TooltipContent>
+                             </Tooltip>
+                             {scene.imageUrl && (
+                               <>
                                  <Tooltip>
                                    <TooltipTrigger asChild>
                                      <Button
@@ -4223,20 +4236,65 @@ function SceneCard({
                                        variant="secondary"
                                        className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
                                        onClick={async () => {
-                                         await onAddToReferenceLibrary(scene.imageUrl, `Scene ${sceneNumber} Frame`, sceneNumber);
+                                         try {
+                                           const response = await fetch(scene.imageUrl);
+                                           const blob = await response.blob();
+                                           const url = window.URL.createObjectURL(blob);
+                                           const a = document.createElement('a');
+                                           a.href = url;
+                                           a.download = `scene-${sceneNumber}-frame.png`;
+                                           document.body.appendChild(a);
+                                           a.click();
+                                           document.body.removeChild(a);
+                                           window.URL.revokeObjectURL(url);
+                                         } catch (error) {
+                                           console.error('Failed to download image:', error);
+                                         }
                                        }}
                                      >
-                                       <FolderPlus className="w-4 h-4" />
+                                       <Download className="w-4 h-4" />
                                      </Button>
                                    </TooltipTrigger>
-                                   <TooltipContent>Add to Library</TooltipContent>
+                                   <TooltipContent>Download</TooltipContent>
                                  </Tooltip>
-                               )}
-                             </>
-                           )}
-                        </div>
-                      </TooltipProvider>
-                    </div>
+                                 {onEditImage && (
+                                   <Tooltip>
+                                     <TooltipTrigger asChild>
+                                       <Button
+                                         size="sm"
+                                         variant="secondary"
+                                         className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
+                                         onClick={() => onEditImage(scene.imageUrl, sceneIdx)}
+                                       >
+                                         <Pencil className="w-4 h-4" />
+                                       </Button>
+                                     </TooltipTrigger>
+                                     <TooltipContent>Edit Image</TooltipContent>
+                                   </Tooltip>
+                                 )}
+                                 {onAddToReferenceLibrary && (
+                                   <Tooltip>
+                                     <TooltipTrigger asChild>
+                                       <Button
+                                         size="sm"
+                                         variant="secondary"
+                                         className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
+                                         onClick={async () => {
+                                           await onAddToReferenceLibrary(scene.imageUrl, `Scene ${sceneNumber} Frame`, sceneNumber);
+                                         }}
+                                       >
+                                         <FolderPlus className="w-4 h-4" />
+                                       </Button>
+                                     </TooltipTrigger>
+                                     <TooltipContent>Add to Library</TooltipContent>
+                                   </Tooltip>
+                                 )}
+                               </>
+                             )}
+                          </div>
+                        </TooltipProvider>
+                      </div>
+                    )}
                   </div>
                 )}
 
