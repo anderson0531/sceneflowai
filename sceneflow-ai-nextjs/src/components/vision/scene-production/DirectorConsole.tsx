@@ -17,9 +17,10 @@
 
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { 
   Play, 
   CheckCircle,
@@ -34,6 +35,7 @@ import {
   Volume2,
   MessageSquare,
   Music,
+  Upload,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -71,6 +73,7 @@ interface DirectorConsoleProps {
       generationMethod?: VideoGenerationMethod
     }
   ) => Promise<void>
+  onSegmentUpload?: (segmentId: string, file: File) => void
 }
 
 // Method badge colors and labels
@@ -98,6 +101,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   sceneImageUrl,
   scene,
   onGenerate,
+  onSegmentUpload,
 }) => {
   const segments = productionData?.segments || []
   
@@ -167,6 +171,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   }
 
   return (
+    <TooltipProvider>
     <div className="space-y-6">
       {/* Header / Control Bar */}
       <div className="flex justify-between items-start gap-4 flex-wrap">
@@ -344,19 +349,60 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                   </div>
                 </div>
                 
-                {/* Settings Icon */}
-                <div className="flex-shrink-0">
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="text-slate-500 hover:text-slate-300"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setSelectedSegment(segment)
-                    }}
-                  >
-                    <Settings2 className="w-4 h-4" />
-                  </Button>
+                {/* Action Icons */}
+                <div className="flex-shrink-0 flex items-center gap-1">
+                  {/* Upload Video Button */}
+                  {onSegmentUpload && (
+                    <>
+                      <input
+                        type="file"
+                        accept="video/*"
+                        className="hidden"
+                        id={`upload-video-${item.segmentId}`}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) {
+                            onSegmentUpload(item.segmentId, file)
+                          }
+                          e.target.value = '' // Reset for re-upload
+                        }}
+                      />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="text-slate-500 hover:text-slate-300"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              document.getElementById(`upload-video-${item.segmentId}`)?.click()
+                            }}
+                          >
+                            <Upload className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Upload Video</TooltipContent>
+                      </Tooltip>
+                    </>
+                  )}
+                  
+                  {/* Settings Icon */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-slate-500 hover:text-slate-300"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedSegment(segment)
+                        }}
+                      >
+                        <Settings2 className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Configure</TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             </div>
@@ -483,6 +529,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
         onClose={() => setIsScenePlayerOpen(false)}
       />
     </div>
+    </TooltipProvider>
   )
 }
 

@@ -1372,6 +1372,38 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [sceneProductionState, applySceneProductionUpdate]
   )
 
+  // Handler for uploading a frame image from user's device
+  const handleUploadFrame = useCallback(
+    async (sceneId: string, segmentId: string, frameType: 'start' | 'end', file: File) => {
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const response = await fetch('/api/upload/image', {
+          method: 'POST',
+          body: formData
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || 'Upload failed')
+        }
+
+        const data = await response.json()
+        const imageUrl = data.imageUrl
+
+        // Update the segment with the uploaded frame URL
+        await handleEditFrame(sceneId, segmentId, frameType, imageUrl)
+        toast.success(`${frameType === 'start' ? 'Start' : 'End'} frame uploaded`)
+        console.log(`[VisionPage] ${frameType} frame uploaded for segment:`, segmentId)
+      } catch (error: any) {
+        console.error('[VisionPage] Frame upload failed:', error)
+        toast.error(`Failed to upload frame: ${error.message}`)
+      }
+    },
+    [handleEditFrame]
+  )
+
   // Keyframe State Machine: Generate frames for a specific segment
   // Uses the /api/production/generate-segment-frames endpoint
   const handleGenerateSegmentFrames = useCallback(
@@ -7092,6 +7124,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onGenerateSegmentFrames={handleGenerateSegmentFrames}
                 onGenerateAllSegmentFrames={handleGenerateAllSegmentFrames}
                 onEditFrame={handleEditFrame}
+                onUploadFrame={handleUploadFrame}
                 generatingFrameForSegment={generatingFrameForSegment}
                 generatingFramePhase={generatingFramePhase}
                 sceneAudioTracks={{}}

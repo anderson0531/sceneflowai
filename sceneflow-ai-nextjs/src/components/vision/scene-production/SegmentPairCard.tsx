@@ -14,7 +14,9 @@ import {
   Scissors,
   Link2,
   Pencil,
-  RefreshCw
+  RefreshCw,
+  Upload,
+  Download
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
@@ -41,6 +43,8 @@ export interface SegmentPairCardProps {
   onGenerateBothFrames: () => void
   onGenerateVideo: () => void
   onEditFrame?: (frameType: 'start' | 'end', frameUrl: string) => void
+  onUploadFrame?: (frameType: 'start' | 'end', file: File) => void
+  onDownloadFrame?: (frameType: 'start' | 'end', frameUrl: string) => void
   isGenerating: boolean
   generatingPhase?: 'start' | 'end' | 'video'
   previousSegmentEndFrame?: string | null
@@ -109,11 +113,17 @@ export function SegmentPairCard({
   onGenerateBothFrames,
   onGenerateVideo,
   onEditFrame,
+  onUploadFrame,
+  onDownloadFrame,
   isGenerating,
   generatingPhase,
   previousSegmentEndFrame,
   sceneImageUrl
 }: SegmentPairCardProps) {
+  // File input refs for upload
+  const startFrameInputRef = React.useRef<HTMLInputElement>(null)
+  const endFrameInputRef = React.useRef<HTMLInputElement>(null)
+  
   const duration = segment.endTime - segment.startTime
   const anchorStatus = segment.anchorStatus || 'pending'
   const transitionType = segment.transitionType || 'CUT'
@@ -219,21 +229,57 @@ export function SegmentPairCard({
                     alt="Start frame" 
                     className="w-full h-full object-cover"
                   />
-                  {/* Edit button overlay */}
-                  {onEditFrame && !isGenerating && (
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="h-7 text-xs bg-white/90 hover:bg-white text-slate-900"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onEditFrame('start', startFrameUrl)
-                        }}
-                      >
-                        <Pencil className="w-3 h-3 mr-1" />
-                        Edit
-                      </Button>
+                  {/* Action buttons overlay */}
+                  {!isGenerating && (
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                      {onEditFrame && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="h-7 w-7 p-0 bg-white/90 hover:bg-white text-slate-900"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onEditFrame('start', startFrameUrl)
+                              }}
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Edit</TooltipContent>
+                        </Tooltip>
+                      )}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="h-7 w-7 p-0 bg-white/90 hover:bg-white text-slate-900"
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              // Download the frame
+                              try {
+                                const response = await fetch(startFrameUrl)
+                                const blob = await response.blob()
+                                const url = window.URL.createObjectURL(blob)
+                                const a = document.createElement('a')
+                                a.href = url
+                                a.download = `segment-${segmentIndex + 1}-start-frame.png`
+                                document.body.appendChild(a)
+                                a.click()
+                                document.body.removeChild(a)
+                                window.URL.revokeObjectURL(url)
+                              } catch (error) {
+                                console.error('Download failed:', error)
+                              }
+                            }}
+                          >
+                            <Download className="w-3 h-3" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Download</TooltipContent>
+                      </Tooltip>
                     </div>
                   )}
                   {isGenerating && generatingPhase === 'start' && (
@@ -283,21 +329,57 @@ export function SegmentPairCard({
                     alt="End frame" 
                     className="w-full h-full object-cover"
                   />
-                  {/* Edit button overlay */}
-                  {onEditFrame && !isGenerating && (
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="h-7 text-xs bg-white/90 hover:bg-white text-slate-900"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onEditFrame('end', endFrameUrl)
-                        }}
-                      >
-                        <Pencil className="w-3 h-3 mr-1" />
-                        Edit
-                      </Button>
+                  {/* Action buttons overlay */}
+                  {!isGenerating && (
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                      {onEditFrame && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="h-7 w-7 p-0 bg-white/90 hover:bg-white text-slate-900"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onEditFrame('end', endFrameUrl)
+                              }}
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Edit</TooltipContent>
+                        </Tooltip>
+                      )}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="h-7 w-7 p-0 bg-white/90 hover:bg-white text-slate-900"
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              // Download the frame
+                              try {
+                                const response = await fetch(endFrameUrl)
+                                const blob = await response.blob()
+                                const url = window.URL.createObjectURL(blob)
+                                const a = document.createElement('a')
+                                a.href = url
+                                a.download = `segment-${segmentIndex + 1}-end-frame.png`
+                                document.body.appendChild(a)
+                                a.click()
+                                document.body.removeChild(a)
+                                window.URL.revokeObjectURL(url)
+                              } catch (error) {
+                                console.error('Download failed:', error)
+                              }
+                            }}
+                          >
+                            <Download className="w-3 h-3" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Download</TooltipContent>
+                      </Tooltip>
                     </div>
                   )}
                   {isGenerating && generatingPhase === 'end' && (
@@ -332,6 +414,34 @@ export function SegmentPairCard({
       {/* Actions Footer */}
       {isSelected && (
         <div className="p-3 border-t border-slate-700/50 flex items-center justify-between gap-2">
+          {/* Hidden file inputs for upload */}
+          <input
+            ref={startFrameInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file && onUploadFrame) {
+                onUploadFrame('start', file)
+              }
+              e.target.value = '' // Reset for re-upload
+            }}
+          />
+          <input
+            ref={endFrameInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file && onUploadFrame) {
+                onUploadFrame('end', file)
+              }
+              e.target.value = '' // Reset for re-upload
+            }}
+          />
+          
           <div className="flex items-center gap-2 flex-wrap">
             {/* Generation buttons - show when frames don't exist */}
             {canGenerateBoth && (
@@ -397,6 +507,42 @@ export function SegmentPairCard({
                 <RefreshCw className="w-3 h-3 mr-1" />
                 Regen End
               </Button>
+            )}
+            
+            {/* Upload buttons */}
+            {onUploadFrame && (
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={(e) => { e.stopPropagation(); startFrameInputRef.current?.click(); }}
+                      disabled={isGenerating}
+                      className="h-7 text-xs border-slate-500/50 text-slate-400 hover:bg-slate-500/10"
+                    >
+                      <Upload className="w-3 h-3 mr-1" />
+                      Start
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Upload Start Frame</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={(e) => { e.stopPropagation(); endFrameInputRef.current?.click(); }}
+                      disabled={isGenerating}
+                      className="h-7 text-xs border-slate-500/50 text-slate-400 hover:bg-slate-500/10"
+                    >
+                      <Upload className="w-3 h-3 mr-1" />
+                      End
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Upload End Frame</TooltipContent>
+                </Tooltip>
+              </>
             )}
           </div>
           

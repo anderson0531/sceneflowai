@@ -221,6 +221,7 @@ interface ScriptPanelProps {
   onGenerateSegmentFrames?: (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both') => Promise<void>
   onGenerateAllSegmentFrames?: (sceneId: string) => Promise<void>
   onEditFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
+  onUploadFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', file: File) => void
   generatingFrameForSegment?: string | null
   generatingFramePhase?: 'start' | 'end' | 'video' | null
 }
@@ -428,7 +429,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
   )
 }
 
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, onEditFrame, generatingFrameForSegment = null, generatingFramePhase = null }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onAddSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onGenerateAllSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null }: ScriptPanelProps) {
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
   const overlayStore = useOverlayStore()
   
@@ -1521,34 +1522,87 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     }
   }
 
-  const uploadAudio = async (sceneIdx: number, type: 'sfx' | 'music', sfxIdx?: number) => {
+  const uploadAudio = async (sceneIdx: number, type: 'description' | 'narration' | 'dialogue' | 'sfx' | 'music', sfxIdx?: number, dialogueIdx?: number, characterName?: string) => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = 'audio/mp3,audio/wav,audio/ogg,audio/webm'
+    input.accept = 'audio/mp3,audio/wav,audio/ogg,audio/webm,audio/mpeg'
     
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (!file) return
 
+      const toastId = toast.loading('Uploading audio...')
       try {
         const formData = new FormData()
         formData.append('file', file)
 
-        const response = await fetch('/api/audio/upload', {
+        const response = await fetch('/api/upload/audio', {
           method: 'POST',
           body: formData
         })
 
         if (!response.ok) {
           const error = await response.json()
-          throw new Error(error.details || 'Upload failed')
+          throw new Error(error.error || 'Upload failed')
         }
 
         const data = await response.json()
-        await saveSceneAudio(sceneIdx, type, data.audioUrl, sfxIdx)
+        const audioUrl = data.url
+        
+        // Handle different audio types
+        if (type === 'sfx' || type === 'music') {
+          await saveSceneAudio(sceneIdx, type, audioUrl, sfxIdx)
+        } else if (type === 'description') {
+          // Update description audio
+          const updatedScenes = [...scenes]
+          if (!updatedScenes[sceneIdx].descriptionAudio) {
+            updatedScenes[sceneIdx].descriptionAudio = {}
+          }
+          updatedScenes[sceneIdx].descriptionAudio[selectedLanguage] = { url: audioUrl }
+          // Also set legacy field for 'en'
+          if (selectedLanguage === 'en') {
+            updatedScenes[sceneIdx].descriptionAudioUrl = audioUrl
+          }
+          const updatedScript = { ...script, script: { ...script.script, scenes: updatedScenes } }
+          onScriptChange(updatedScript)
+        } else if (type === 'narration') {
+          // Update narration audio
+          const updatedScenes = [...scenes]
+          if (!updatedScenes[sceneIdx].narrationAudio) {
+            updatedScenes[sceneIdx].narrationAudio = {}
+          }
+          updatedScenes[sceneIdx].narrationAudio[selectedLanguage] = { url: audioUrl }
+          // Also set legacy field for 'en'
+          if (selectedLanguage === 'en') {
+            updatedScenes[sceneIdx].narrationAudioUrl = audioUrl
+          }
+          const updatedScript = { ...script, script: { ...script.script, scenes: updatedScenes } }
+          onScriptChange(updatedScript)
+        } else if (type === 'dialogue' && dialogueIdx !== undefined) {
+          // Update dialogue audio
+          const updatedScenes = [...scenes]
+          if (!updatedScenes[sceneIdx].dialogueAudio) {
+            updatedScenes[sceneIdx].dialogueAudio = {}
+          }
+          if (!updatedScenes[sceneIdx].dialogueAudio[selectedLanguage]) {
+            updatedScenes[sceneIdx].dialogueAudio[selectedLanguage] = []
+          }
+          // Find and update the entry for this dialogue index
+          const existingIdx = updatedScenes[sceneIdx].dialogueAudio[selectedLanguage].findIndex((a: any) => a.dialogueIndex === dialogueIdx)
+          const audioEntry = { audioUrl, character: characterName, dialogueIndex: dialogueIdx }
+          if (existingIdx >= 0) {
+            updatedScenes[sceneIdx].dialogueAudio[selectedLanguage][existingIdx] = audioEntry
+          } else {
+            updatedScenes[sceneIdx].dialogueAudio[selectedLanguage].push(audioEntry)
+          }
+          const updatedScript = { ...script, script: { ...script.script, scenes: updatedScenes } }
+          onScriptChange(updatedScript)
+        }
+        
+        toast.success('Audio uploaded!', { id: toastId })
       } catch (error: any) {
         console.error('[Audio Upload] Error:', error)
-        alert(`Failed to upload audio: ${error.message}`)
+        toast.error(`Failed to upload audio: ${error.message}`, { id: toastId })
       }
     }
 
@@ -1879,6 +1933,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     }
   }
 
+  // Handle segment frame upload (for Start/End frames in Frame step)
+  const handleUploadFrame = (sceneId: string, segmentId: string, frameType: 'start' | 'end', file: File) => {
+    if (onUploadFrame) {
+      onUploadFrame(sceneId, segmentId, frameType, file)
+    }
+  }
+
   return (
     <>
     <div className="relative rounded-3xl border border-slate-700/60 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900/60 h-full flex flex-col overflow-hidden shadow-[0_25px_80px_rgba(8,8,20,0.55)]">
@@ -2188,6 +2249,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                             setEditingImageData({ url: frameUrl, sceneIdx, sceneId, segmentId, frameType });
                             setImageEditModalOpen(true);
                           }}
+                          onUploadFrame={handleUploadFrame}
                           isWorkflowOpen={selectedSceneIndex !== null ? true : openSceneIdx === idx}
                           onWorkflowOpenChange={(isOpen: boolean) => {
                             // Single-scene-open behavior: close others when opening this one
@@ -2629,6 +2691,7 @@ interface SceneCardProps {
   onGenerateSegmentFrames?: (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both') => Promise<void>
   onGenerateAllSegmentFrames?: (sceneId: string) => Promise<void>
   onOpenFrameEditModal?: (sceneId: string, sceneIdx: number, segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
+  onUploadFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', file: File) => void
   generatingFrameForSegment?: string | null
   generatingFramePhase?: 'start' | 'end' | 'video' | null
 }
@@ -2724,6 +2787,7 @@ function SceneCard({
   onGenerateSegmentFrames,
   onGenerateAllSegmentFrames,
   onOpenFrameEditModal,
+  onUploadFrame,
   generatingFrameForSegment,
   generatingFramePhase,
 }: SceneCardProps) {
@@ -3573,35 +3637,57 @@ function SceneCard({
                               >
                                 <Download className="w-4 h-4" />
                               </a>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  uploadAudio(sceneIdx, 'description')
+                                }}
+                                className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
+                                title="Upload Scene Description Audio"
+                              >
+                                <Upload className="w-4 h-4" />
+                              </button>
                             </div>
                           ) : (
-                            <button
-                              onClick={async (e) => {
-                                e.stopPropagation()
-                                if (!onGenerateSceneAudio) return
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation()
+                                  if (!onGenerateSceneAudio) return
 
-                                setGeneratingDialogue?.({ sceneIdx, character: '__description__' })
-                                overlayStore?.show(`Generating scene description for Scene ${sceneIdx + 1}...`, 20)
-                                try {
-                                  await onGenerateSceneAudio?.(sceneIdx, 'description', undefined, undefined, selectedLanguage)
-                                  overlayStore?.hide()
-                                  toast.success('Scene description generated!')
-                                } catch (error) {
-                                  console.error('[ScriptPanel] Description generation failed:', error)
-                                  overlayStore?.hide()
-                                  toast.error('Failed to generate scene description audio')
-                                } finally {
-                                  setGeneratingDialogue?.(null)
-                                }
-                              }}
-                              disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__description__'}
-                              className="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
-                            >
-                              {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__description__' ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : null}
-                              Generate Audio
-                            </button>
+                                  setGeneratingDialogue?.({ sceneIdx, character: '__description__' })
+                                  overlayStore?.show(`Generating scene description for Scene ${sceneIdx + 1}...`, 20)
+                                  try {
+                                    await onGenerateSceneAudio?.(sceneIdx, 'description', undefined, undefined, selectedLanguage)
+                                    overlayStore?.hide()
+                                    toast.success('Scene description generated!')
+                                  } catch (error) {
+                                    console.error('[ScriptPanel] Description generation failed:', error)
+                                    overlayStore?.hide()
+                                    toast.error('Failed to generate scene description audio')
+                                  } finally {
+                                    setGeneratingDialogue?.(null)
+                                  }
+                                }}
+                                disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__description__'}
+                                className="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
+                              >
+                                {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__description__' ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : null}
+                                Generate Audio
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  uploadAudio(sceneIdx, 'description')
+                                }}
+                                className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
+                                title="Upload Scene Description Audio"
+                              >
+                                <Upload className="w-4 h-4" />
+                              </button>
+                            </div>
                           )}
                         </div>
                         <div className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
@@ -3679,33 +3765,55 @@ function SceneCard({
                             >
                               <Download className="w-4 h-4" />
                             </a>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                uploadAudio(sceneIdx, 'narration')
+                              }}
+                              className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
+                              title="Upload Narration Audio"
+                            >
+                              <Upload className="w-4 h-4" />
+                            </button>
                           </div>
                         ) : (
-                          <button
-                            onClick={async (e) => {
-                              e.stopPropagation()
-                              setGeneratingDialogue?.({ sceneIdx, character: '__narration__' })
-                              overlayStore?.show(`Generating narration for Scene ${sceneIdx + 1}...`, 20)
-                              try {
-                                await onGenerateSceneAudio?.(sceneIdx, 'narration', undefined, undefined, selectedLanguage)
-                                overlayStore?.hide()
-                                toast.success('Narration generated!')
-                              } catch (error) {
-                                console.error('[ScriptPanel] Narration generation failed:', error)
-                                overlayStore?.hide()
-                                toast.error('Failed to generate narration')
-                              } finally {
-                                setGeneratingDialogue?.(null)
-                              }
-                            }}
-                            disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__'}
-                            className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
-                          >
-                            {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__' ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : null}
-                            Generate Audio
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation()
+                                setGeneratingDialogue?.({ sceneIdx, character: '__narration__' })
+                                overlayStore?.show(`Generating narration for Scene ${sceneIdx + 1}...`, 20)
+                                try {
+                                  await onGenerateSceneAudio?.(sceneIdx, 'narration', undefined, undefined, selectedLanguage)
+                                  overlayStore?.hide()
+                                  toast.success('Narration generated!')
+                                } catch (error) {
+                                  console.error('[ScriptPanel] Narration generation failed:', error)
+                                  overlayStore?.hide()
+                                  toast.error('Failed to generate narration')
+                                } finally {
+                                  setGeneratingDialogue?.(null)
+                                }
+                              }}
+                              disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__'}
+                              className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
+                            >
+                              {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === '__narration__' ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : null}
+                              Generate Audio
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                uploadAudio(sceneIdx, 'narration')
+                              }}
+                              className="p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded"
+                              title="Upload Narration Audio"
+                            >
+                              <Upload className="w-4 h-4" />
+                            </button>
+                          </div>
                         )}
                       </div>
                       <div className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
@@ -3804,43 +3912,65 @@ function SceneCard({
                                 >
                                   <Download className="w-4 h-4" />
                                 </a>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    uploadAudio(sceneIdx, 'dialogue', undefined, i, d.character)
+                                  }}
+                                  className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                                  title="Upload Dialogue Audio"
+                                >
+                                  <Upload className="w-4 h-4" />
+                                </button>
                               </div>
                             ) : (
-                              <button
-                                onClick={async (e) => {
-                                  e.stopPropagation()
-                                  if (!onGenerateSceneAudio) {
-                                    console.error('[ScriptPanel] onGenerateSceneAudio is not defined!')
-                                    return
-                                  }
-                                  
-                                  setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
-                                  overlayStore?.show(`Generating dialogue for ${d.character}...`, 15)
-                                  
-                                  try {
-                                    await onGenerateSceneAudio?.(sceneIdx, 'dialogue', d.character, i, selectedLanguage)
-                                    overlayStore?.hide()
-                                    toast.success(`Dialogue generated for ${d.character}`)
-                                  } catch (error) {
-                                    console.error('[ScriptPanel] Dialogue generation failed:', error)
-                                    overlayStore?.hide()
-                                    toast.error(`Failed to generate dialogue for ${d.character}`)
-                                  } finally {
-                                    setGeneratingDialogue?.(null)
-                                  }
-                                }}
-                                disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character && generatingDialogue?.dialogueIndex === i}
-                                className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50"
-                              >
-                                {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character && generatingDialogue?.dialogueIndex === i ? (
-                                  <div className="flex items-center gap-1">
-                                    <Loader className="w-3 h-3 animate-spin" />
-                                    Generating...
-                                  </div>
-                                ) : (
-                                  'Generate'
-                                )}
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation()
+                                    if (!onGenerateSceneAudio) {
+                                      console.error('[ScriptPanel] onGenerateSceneAudio is not defined!')
+                                      return
+                                    }
+                                    
+                                    setGeneratingDialogue?.({ sceneIdx, character: d.character, dialogueIndex: i })
+                                    overlayStore?.show(`Generating dialogue for ${d.character}...`, 15)
+                                    
+                                    try {
+                                      await onGenerateSceneAudio?.(sceneIdx, 'dialogue', d.character, i, selectedLanguage)
+                                      overlayStore?.hide()
+                                      toast.success(`Dialogue generated for ${d.character}`)
+                                    } catch (error) {
+                                      console.error('[ScriptPanel] Dialogue generation failed:', error)
+                                      overlayStore?.hide()
+                                      toast.error(`Failed to generate dialogue for ${d.character}`)
+                                    } finally {
+                                      setGeneratingDialogue?.(null)
+                                    }
+                                  }}
+                                  disabled={generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character && generatingDialogue?.dialogueIndex === i}
+                                  className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded disabled:opacity-50"
+                                >
+                                  {generatingDialogue?.sceneIdx === sceneIdx && generatingDialogue?.character === d.character && generatingDialogue?.dialogueIndex === i ? (
+                                    <div className="flex items-center gap-1">
+                                      <Loader className="w-3 h-3 animate-spin" />
+                                      Generating...
+                                    </div>
+                                  ) : (
+                                    'Generate'
+                                  )}
                               </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  uploadAudio(sceneIdx, 'dialogue', undefined, i, d.character)
+                                }}
+                                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                                title="Upload Dialogue Audio"
+                              >
+                                <Upload className="w-4 h-4" />
+                              </button>
+                            </div>
                             )}
                           </div>
                         )
@@ -3909,32 +4039,54 @@ function SceneCard({
                             >
                               <Download className="w-4 h-4" />
                             </a>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                uploadAudio(sceneIdx, 'music')
+                              }}
+                              className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
+                              title="Upload Music Audio"
+                            >
+                              <Upload className="w-4 h-4" />
+                            </button>
                           </div>
                         ) : (
-                          <button
-                            onClick={async (e) => {
-                              e.stopPropagation()
-                              setGeneratingMusic?.(sceneIdx)
-                              try {
-                                await generateMusic?.(sceneIdx)
-                              } catch (error) {
-                                console.error('[ScriptPanel] Music generation failed:', error)
-                              } finally {
-                                setGeneratingMusic?.(null)
-                              }
-                            }}
-                            disabled={generatingMusic === sceneIdx}
-                            className="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-50"
-                          >
-                            {generatingMusic === sceneIdx ? (
-                              <div className="flex items-center gap-1">
-                                <Loader className="w-3 h-3 animate-spin" />
-                                Generating...
-                              </div>
-                            ) : (
-                              'Generate'
-                            )}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation()
+                                setGeneratingMusic?.(sceneIdx)
+                                try {
+                                  await generateMusic?.(sceneIdx)
+                                } catch (error) {
+                                  console.error('[ScriptPanel] Music generation failed:', error)
+                                } finally {
+                                  setGeneratingMusic?.(null)
+                                }
+                              }}
+                              disabled={generatingMusic === sceneIdx}
+                              className="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-50"
+                            >
+                              {generatingMusic === sceneIdx ? (
+                                <div className="flex items-center gap-1">
+                                  <Loader className="w-3 h-3 animate-spin" />
+                                  Generating...
+                                </div>
+                              ) : (
+                                'Generate'
+                              )}
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                uploadAudio(sceneIdx, 'music')
+                              }}
+                              className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
+                              title="Upload Music Audio"
+                            >
+                              <Upload className="w-4 h-4" />
+                            </button>
+                          </div>
                         )}
                       </div>
                       <div className="text-sm text-gray-700 dark:text-gray-300 italic">
@@ -4011,32 +4163,54 @@ function SceneCard({
                                   >
                                     <Download className="w-4 h-4" />
                                   </a>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      uploadAudio(sceneIdx, 'sfx', sfxIdx)
+                                    }}
+                                    className="p-1 hover:bg-amber-200 dark:hover:bg-amber-800 rounded"
+                                    title="Upload SFX Audio"
+                                  >
+                                    <Upload className="w-4 h-4" />
+                                  </button>
                                 </div>
                               ) : (
-                                <button
-                                  onClick={async (e) => {
-                                    e.stopPropagation()
-                                    setGeneratingSFX?.({ sceneIdx, sfxIdx })
-                                    try {
-                                      await generateSFX?.(sceneIdx, sfxIdx)
-                                    } catch (error) {
-                                      console.error('[ScriptPanel] SFX generation failed:', error)
-                                    } finally {
-                                      setGeneratingSFX?.(null)
-                                    }
-                                  }}
-                                  disabled={generatingSFX?.sceneIdx === sceneIdx && generatingSFX?.sfxIdx === sfxIdx}
-                                  className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded disabled:opacity-50"
-                                >
-                                  {generatingSFX?.sceneIdx === sceneIdx && generatingSFX?.sfxIdx === sfxIdx ? (
-                                    <div className="flex items-center gap-1">
-                                      <Loader className="w-3 h-3 animate-spin" />
-                                      Generating...
-                                    </div>
-                                  ) : (
-                                    'Generate'
-                                  )}
-                                </button>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={async (e) => {
+                                      e.stopPropagation()
+                                      setGeneratingSFX?.({ sceneIdx, sfxIdx })
+                                      try {
+                                        await generateSFX?.(sceneIdx, sfxIdx)
+                                      } catch (error) {
+                                        console.error('[ScriptPanel] SFX generation failed:', error)
+                                      } finally {
+                                        setGeneratingSFX?.(null)
+                                      }
+                                    }}
+                                    disabled={generatingSFX?.sceneIdx === sceneIdx && generatingSFX?.sfxIdx === sfxIdx}
+                                    className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded disabled:opacity-50"
+                                  >
+                                    {generatingSFX?.sceneIdx === sceneIdx && generatingSFX?.sfxIdx === sfxIdx ? (
+                                      <div className="flex items-center gap-1">
+                                        <Loader className="w-3 h-3 animate-spin" />
+                                        Generating...
+                                      </div>
+                                    ) : (
+                                      'Generate'
+                                    )}
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      uploadAudio(sceneIdx, 'sfx', sfxIdx)
+                                    }}
+                                    className="p-1 hover:bg-amber-200 dark:hover:bg-amber-800 rounded"
+                                    title="Upload SFX Audio"
+                                  >
+                                    <Upload className="w-4 h-4" />
+                                  </button>
+                                </div>
                               )}
                             </div>
                             <div className="text-sm text-gray-700 dark:text-gray-300 italic">
@@ -4199,6 +4373,14 @@ function SceneCard({
                             segmentId,
                             frameType,
                             frameUrl
+                          )
+                        }}
+                        onUploadFrame={(segmentId, frameType, file) => {
+                          onUploadFrame?.(
+                            scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                            segmentId,
+                            frameType,
+                            file
                           )
                         }}
                         isGenerating={!!generatingFrameForSegment}
@@ -4418,6 +4600,7 @@ function SceneCard({
                         sceneImageUrl={scene.imageUrl}
                         scene={scene}
                         onGenerate={onSegmentGenerate || (async () => {})}
+                        onSegmentUpload={onSegmentUpload ? (segmentId, file) => onSegmentUpload(scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId, file) : undefined}
                       />
                     ) : (
                       /* Fallback: SceneProductionManager when no segments yet */
