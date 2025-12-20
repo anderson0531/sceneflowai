@@ -21,6 +21,10 @@ interface GenerateSegmentsRequest {
   projectId?: string
   focusMode?: string
   customInstructions?: string
+  // Reference library integration
+  selectedCharacterIds?: string[]
+  includeReferencesInPrompts?: boolean
+  optimizeForTransitions?: boolean
 }
 
 // Enhanced segment structure for Veo 3.1 intelligent generation
@@ -56,7 +60,15 @@ export async function POST(
   try {
     const { sceneId } = await params
     const body: GenerateSegmentsRequest = await req.json()
-    const { preferredDuration, projectId, focusMode, customInstructions } = body
+    const { 
+      preferredDuration, 
+      projectId, 
+      focusMode, 
+      customInstructions,
+      selectedCharacterIds = [],
+      includeReferencesInPrompts = true,
+      optimizeForTransitions = true 
+    } = body
 
     if (!sceneId || !projectId) {
       return NextResponse.json(
@@ -141,7 +153,11 @@ export async function POST(
     const characters = visionPhase.characters || project.metadata?.characters || []
     
     // Build comprehensive scene data for intelligent segmentation
-    const sceneData = buildComprehensiveSceneData(scene, characters)
+    const sceneData = buildComprehensiveSceneData(scene, characters, {
+      selectedCharacterIds,
+      includeReferencesInPrompts,
+      optimizeForTransitions
+    })
     
     // Generate intelligent segmentation prompt
     const prompt = generateIntelligentSegmentationPrompt(sceneData, preferredDuration)
@@ -299,11 +315,24 @@ interface ComprehensiveSceneData {
     name: string
     description: string
     hasReferenceImage: boolean
+    referenceImageUrl?: string
+    wardrobe?: string
   }>
   estimatedTotalDuration: number
+  // Reference options
+  includeReferencesInPrompts?: boolean
+  optimizeForTransitions?: boolean
 }
 
-function buildComprehensiveSceneData(scene: any, characters: any[]): ComprehensiveSceneData {
+function buildComprehensiveSceneData(
+  scene: any, 
+  characters: any[],
+  options?: {
+    selectedCharacterIds?: string[]
+    includeReferencesInPrompts?: boolean
+    optimizeForTransitions?: boolean
+  }
+): ComprehensiveSceneData {
   // Extract heading
   const heading = typeof scene.heading === 'string' 
     ? scene.heading 
@@ -335,18 +364,27 @@ function buildComprehensiveSceneData(scene: any, characters: any[]): Comprehensi
   // Get scene frame URL
   const sceneFrameUrl = scene.imageUrl || scene.thumbnailUrl || null
 
-  // Extract relevant characters
+  // Extract relevant characters based on selection and scene mentions
   const sceneText = `${heading} ${visualDescription} ${narration || ''} ${dialogue.map((d: any) => `${d.character} ${d.text}`).join(' ')}`.toLowerCase()
   
+  // Filter characters: prefer selected ones, fallback to scene mentions
+  const selectedIds = options?.selectedCharacterIds || []
   const relevantCharacters = characters
     .filter((c: any) => {
+      // If specific characters are selected, use those
+      if (selectedIds.length > 0) {
+        return selectedIds.includes(c.id)
+      }
+      // Otherwise, include characters mentioned in the scene
       const charName = (c.name || '').toLowerCase()
       return sceneText.includes(charName)
     })
     .map((c: any) => ({
       name: c.name || 'Unknown',
       description: c.appearanceDescription || c.description || '',
-      hasReferenceImage: !!(c.referenceImageUrl || c.imageUrl)
+      hasReferenceImage: !!(c.referenceImageUrl || c.imageUrl || c.referenceImage),
+      referenceImageUrl: c.referenceImageUrl || c.imageUrl || c.referenceImage || undefined,
+      wardrobe: c.defaultWardrobe || c.wardrobe || undefined
     }))
 
   // Estimate duration based on dialogue (approx 2.5 words per second) + action
@@ -363,7 +401,9 @@ function buildComprehensiveSceneData(scene: any, characters: any[]): Comprehensi
     sceneDirection,
     sceneFrameUrl,
     characters: relevantCharacters,
-    estimatedTotalDuration
+    estimatedTotalDuration,
+    includeReferencesInPrompts: options?.includeReferencesInPrompts ?? true,
+    optimizeForTransitions: options?.optimizeForTransitions ?? true
   }
 }
 
@@ -371,17 +411,46 @@ function generateIntelligentSegmentationPrompt(
   sceneData: ComprehensiveSceneData,
   preferredDuration: number
 ): string {
+  // Enhanced character list with wardrobe and reference image info
   const characterList = sceneData.characters.length > 0
-    ? sceneData.characters.map(c => `- ${c.name}: ${c.description} ${c.hasReferenceImage ? '(Reference image available)' : ''}`).join('\n')
+    ? sceneData.characters.map(c => {
+        let description = `- ${c.name}: ${c.description}`
+        if (c.wardrobe) description += ` | Wardrobe: ${c.wardrobe}`
+        if (c.hasReferenceImage) description += ' (✓ Reference image available - USE for identity lock)'
+        return description
+      }).join('\n')
     : '- No specific character references available'
 
   const dialogueText = sceneData.dialogue.length > 0
     ? sceneData.dialogue.map((d, idx) => `[${idx}] ${d.character}${d.emotion ? ` (${d.emotion})` : ''}: "${d.text}"`).join('\n')
     : 'No dialogue in this scene.'
 
+  // Build additional instructions based on reference options
+  const referenceInstructions = sceneData.includeReferencesInPrompts
+    ? `
+**CHARACTER REFERENCE INTEGRATION (ENABLED):**
+For EVERY segment featuring a character with a reference image:
+1. Include their FULL appearance description in the prompt (face, hair, body type, ethnicity)
+2. Add "reference_strategy.use_character_refs" with their names
+3. Describe wardrobe specifically if available
+4. Use consistent character descriptions across ALL segments to prevent identity drift
+`
+    : ''
+
+  const transitionInstructions = sceneData.optimizeForTransitions
+    ? `
+**FRAME TRANSITION OPTIMIZATION (ENABLED):**
+1. End frame descriptions MUST be detailed and actionable for the next segment
+2. Describe character positions, expressions, and camera angles precisely
+3. For action sequences, describe the exact motion state at frame boundaries
+4. Include lighting continuity notes (e.g., "warm sunset glow from left")
+5. The start_frame_description should match the previous segment's end_frame_description
+`
+    : ''
+
   return `
 **SYSTEM ROLE:** You are an AI Video Director and Editor optimized for Veo 3.1 generation workflows. Your goal is to translate a linear script and scene description into distinct, generation-ready video segments with RICH CINEMATIC PROMPTS.
-
+${referenceInstructions}${transitionInstructions}
 **OPERATIONAL CONSTRAINTS:**
 1. **Duration:** Target ${preferredDuration} seconds per segment (8 seconds absolute max for Veo 3.1). **MINIMUM 4 seconds per segment** unless absolutely necessary for a dramatic cut.
 2. **Continuity:** You must utilize specific **Methods** to ensure consistency (matching lighting, character appearance, and room tone).

@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { SceneSegment, SceneProductionReferences, SceneSegmentStatus, SegmentKeyframeSettings, KeyframeEasingType, KeyframePanDirection } from './types'
-import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer, MessageSquare, User, Check, Move, ZoomIn, ZoomOut, RotateCcw, Pencil, Layers, Info, Clapperboard, Camera, Sparkles, Users, FileText, Trash2, ImagePlus, AlertCircle, FrameIcon } from 'lucide-react'
+import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer, MessageSquare, User, Check, Move, ZoomIn, ZoomOut, RotateCcw, Pencil, Layers, Info, Clapperboard, Camera, Sparkles, Users, FileText, Trash2, ImagePlus, AlertCircle, FrameIcon, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SegmentPromptBuilder, GeneratePromptData, VideoGenerationMethod } from './SegmentPromptBuilder'
 import { VideoEditingDialog, VideoEditingTab } from './VideoEditingDialog'
@@ -143,6 +143,8 @@ export function SegmentStudio({
   
   // Frame Anchoring State
   const [isGeneratingEndFrame, setIsGeneratingEndFrame] = useState(false)
+  const [isRegeneratingStartFrame, setIsRegeneratingStartFrame] = useState(false)
+  const [isRegeneratingVideo, setIsRegeneratingVideo] = useState(false)
   
   // Backdrop Video Modal State
   const [isBackdropVideoModalOpen, setIsBackdropVideoModalOpen] = useState(false)
@@ -247,6 +249,51 @@ export function SegmentStudio({
       console.error('[SegmentStudio] Failed to generate end frame:', error)
     } finally {
       setIsGeneratingEndFrame(false)
+    }
+  }
+  
+  // === Regenerate Video Handler ===
+  // Regenerate video using the current prompt and available frames
+  const handleRegenerateVideo = async () => {
+    if (!segment || segment.status === 'GENERATING') return
+    
+    setIsRegeneratingVideo(true)
+    try {
+      // Determine best generation method based on available assets
+      const startFrame = segment.references.startFrameUrl || sceneImageUrl || previousSegmentLastFrame
+      const endFrame = segment.references.endFrameUrl
+      const hasExistingVideo = segment.activeAssetUrl && segment.assetType === 'video'
+      
+      // Determine generation method: FTV if both frames, I2V if start frame only, EXT if extending video
+      let genType: GenerationType = 'T2V'
+      let options: any = {
+        prompt: segment.userEditedPrompt || segment.generatedPrompt,
+        duration: segment.endTime - segment.startTime,
+      }
+      
+      if (startFrame && endFrame) {
+        // FTV mode - frame-to-video with both anchors
+        genType = 'I2V'
+        options.startFrameUrl = startFrame
+        options.endFrameUrl = endFrame
+        options.generationMethod = 'FTV'
+      } else if (startFrame) {
+        // I2V mode - image-to-video
+        genType = 'I2V'
+        options.startFrameUrl = startFrame
+        options.generationMethod = 'I2V'
+      } else if (hasExistingVideo) {
+        // EXT mode - extend existing video
+        genType = 'T2V'
+        options.sourceVideoUrl = segment.activeAssetUrl
+        options.generationMethod = 'EXT'
+      }
+      
+      await onGenerate(genType, options)
+    } catch (error) {
+      console.error('[SegmentStudio] Failed to regenerate video:', error)
+    } finally {
+      setIsRegeneratingVideo(false)
     }
   }
   
@@ -639,6 +686,35 @@ export function SegmentStudio({
                 </div>
               </button>
 
+              {/* Regenerate Video - Only show if there's an existing video */}
+              {segment.activeAssetUrl && segment.assetType === 'video' && (
+                <button
+                  onClick={handleRegenerateVideo}
+                  disabled={segment.status === 'GENERATING' || isRegeneratingVideo}
+                  className={cn(
+                    "w-full p-3 rounded-xl border text-left transition-all",
+                    "border-orange-200 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/20 hover:border-orange-400 dark:hover:border-orange-500 hover:bg-orange-100 dark:hover:bg-orange-900/30",
+                    (segment.status === 'GENERATING' || isRegeneratingVideo) && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400">
+                      {isRegeneratingVideo ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-5 h-5" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Regenerate Video</h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        {isRegeneratingVideo ? 'Regenerating...' : 'Create a new take using current prompt'}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              )}
+
               {/* Add Scene Reference */}
               {onOpenReferences && (
                 <button
@@ -708,7 +784,23 @@ export function SegmentStudio({
               <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 rounded-xl border border-green-200 dark:border-green-700">
                 {/* Start Frame */}
                 <div className="flex-1 text-center">
-                  <div className="text-[10px] font-medium text-green-600 dark:text-green-400 mb-1">Start Frame</div>
+                  <div className="text-[10px] font-medium text-green-600 dark:text-green-400 mb-1 flex items-center justify-center gap-1">
+                    Start Frame
+                    {(segment.references.startFrameUrl || sceneImageUrl || previousSegmentLastFrame) && onGenerateEndFrame && (
+                      <button
+                        onClick={() => {
+                          // Regenerate start frame by generating a new scene keyframe
+                          // This would typically call an API to regenerate the start frame
+                          handleGenerateEndFrame() // For now, reuse the end frame generation flow
+                        }}
+                        disabled={segment.status === 'GENERATING' || isRegeneratingStartFrame}
+                        className="p-0.5 rounded hover:bg-green-200 dark:hover:bg-green-700 transition-colors"
+                        title="Regenerate start frame"
+                      >
+                        <RefreshCw className={cn("w-3 h-3", isRegeneratingStartFrame && "animate-spin")} />
+                      </button>
+                    )}
+                  </div>
                   <div className="relative aspect-video bg-green-100 dark:bg-green-800/50 rounded-lg overflow-hidden border border-green-200 dark:border-green-700">
                     {(segment.references.startFrameUrl || sceneImageUrl || previousSegmentLastFrame) ? (
                       <img 
@@ -735,7 +827,19 @@ export function SegmentStudio({
                 
                 {/* End Frame */}
                 <div className="flex-1 text-center">
-                  <div className="text-[10px] font-medium text-teal-600 dark:text-teal-400 mb-1">End Frame</div>
+                  <div className="text-[10px] font-medium text-teal-600 dark:text-teal-400 mb-1 flex items-center justify-center gap-1">
+                    End Frame
+                    {segment.references.endFrameUrl && onGenerateEndFrame && (
+                      <button
+                        onClick={handleGenerateEndFrame}
+                        disabled={segment.status === 'GENERATING' || isGeneratingEndFrame}
+                        className="p-0.5 rounded hover:bg-teal-200 dark:hover:bg-teal-700 transition-colors"
+                        title="Regenerate end frame"
+                      >
+                        <RefreshCw className={cn("w-3 h-3", isGeneratingEndFrame && "animate-spin")} />
+                      </button>
+                    )}
+                  </div>
                   <div className="relative aspect-video bg-teal-100 dark:bg-teal-800/50 rounded-lg overflow-hidden border border-teal-200 dark:border-teal-700">
                     {segment.references.endFrameUrl ? (
                       <>

@@ -13,7 +13,7 @@ import {
   SegmentKeyframeSettings,
   AudioTrackType,
 } from './types'
-import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Film, Clock, Sliders, MessageSquare, Settings2, Volume2 } from 'lucide-react'
+import { Calculator, Sparkles, RefreshCw, Loader2, AlertCircle, Film, Clock, Sliders, MessageSquare, Settings2, Volume2, Users, ImageIcon, Layers } from 'lucide-react'
 import { AudioAssetsDialog, AudioTrackClip } from './AudioAssetsDialog'
 import { toast } from 'sonner'
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
@@ -40,6 +40,10 @@ export interface SegmentGenerationOptions {
   leadInDuration: number
   customInstructions: string
   focusMode: 'balanced' | 'action' | 'dialogue' | 'cinematic'
+  // Reference library integration
+  selectedCharacterIds?: string[]
+  includeReferencesInPrompts?: boolean
+  optimizeForTransitions?: boolean
 }
 
 interface SceneProductionManagerProps {
@@ -245,6 +249,11 @@ export function SceneProductionManager({
   const [customInstructions, setCustomInstructions] = useState('')
   const [focusMode, setFocusMode] = useState<'balanced' | 'action' | 'dialogue' | 'cinematic'>('balanced')
   const [showInitialDialog, setShowInitialDialog] = useState(false)
+  
+  // Reference selection state for enhanced segmentation
+  const [selectedCharacterRefs, setSelectedCharacterRefs] = useState<string[]>([])
+  const [includeReferencesInPrompts, setIncludeReferencesInPrompts] = useState(true)
+  const [optimizeForTransitions, setOptimizeForTransitions] = useState(true)
   
   // Phase 2: Dialogue Coverage - parse scene dialogue into trackable lines
   // NOTE: sceneDialogueLines can be computed early, but dialogue assignment state
@@ -802,7 +811,7 @@ export function SceneProductionManager({
     setIsInitializing(true)
     setGenerationProgress(10)
     
-    // Build generation options
+    // Build generation options with reference library integration
     const generationOptions: SegmentGenerationOptions = {
       targetDuration,
       alignWithNarration,
@@ -810,6 +819,10 @@ export function SceneProductionManager({
       leadInDuration,
       customInstructions,
       focusMode,
+      // Reference library options
+      selectedCharacterIds: selectedCharacterRefs,
+      includeReferencesInPrompts,
+      optimizeForTransitions,
     }
     
     // Simulate progress updates
@@ -972,7 +985,7 @@ export function SceneProductionManager({
       </DialogHeader>
       
       <Tabs defaultValue="timing" className="mt-4">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="timing" className="flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Timing</span>
@@ -980,6 +993,10 @@ export function SceneProductionManager({
           <TabsTrigger value="alignment" className="flex items-center gap-1.5">
             <Sliders className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Alignment</span>
+          </TabsTrigger>
+          <TabsTrigger value="references" className="flex items-center gap-1.5">
+            <Users className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">References</span>
           </TabsTrigger>
           <TabsTrigger value="instructions" className="flex items-center gap-1.5">
             <MessageSquare className="w-3.5 h-3.5" />
@@ -1072,6 +1089,102 @@ export function SceneProductionManager({
                 </div>
               </div>
             )}
+          </div>
+        </TabsContent>
+        
+        {/* References Tab - Character and Scene References for enhanced generation */}
+        <TabsContent value="references" className="space-y-4 mt-4">
+          <div className="space-y-4">
+            {/* Character References */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Character References
+              </Label>
+              <p className="text-xs text-gray-500">
+                Select characters to include reference images in segment prompts for consistent appearance.
+              </p>
+              {characters.length > 0 ? (
+                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                  {characters.map((char) => (
+                    <label
+                      key={char.id}
+                      className={cn(
+                        "flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all",
+                        selectedCharacterRefs.includes(char.id)
+                          ? "border-blue-400 bg-blue-50 dark:border-blue-600 dark:bg-blue-900/30"
+                          : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedCharacterRefs.includes(char.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedCharacterRefs([...selectedCharacterRefs, char.id])
+                          } else {
+                            setSelectedCharacterRefs(selectedCharacterRefs.filter(id => id !== char.id))
+                          }
+                        }}
+                        className="rounded border-gray-300"
+                      />
+                      <span className="text-sm truncate">{char.name}</span>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400 italic">No characters available. Add characters in the Characters panel.</p>
+              )}
+            </div>
+            
+            {/* Generation Options */}
+            <div className="space-y-3">
+              <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+                <div className="flex-1">
+                  <Label className="text-sm font-medium">Include References in Prompts</Label>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Add character appearance descriptions and reference images to each segment prompt.
+                  </p>
+                </div>
+                <Switch 
+                  checked={includeReferencesInPrompts} 
+                  onCheckedChange={setIncludeReferencesInPrompts}
+                />
+              </div>
+              
+              <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+                <div className="flex-1">
+                  <Label className="text-sm font-medium">Optimize for Frame Transitions</Label>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Generate detailed start/end frame descriptions for realistic scene transitions.
+                  </p>
+                </div>
+                <Switch 
+                  checked={optimizeForTransitions} 
+                  onCheckedChange={setOptimizeForTransitions}
+                />
+              </div>
+            </div>
+            
+            {/* Quick Select */}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedCharacterRefs(characters.map(c => c.id))}
+              >
+                Select All
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedCharacterRefs([])}
+              >
+                Clear All
+              </Button>
+            </div>
           </div>
         </TabsContent>
         
@@ -1217,8 +1330,8 @@ export function SceneProductionManager({
                 }}
                 className="shrink-0"
               >
-                <Film className="w-4 h-4 mr-2" />
-                Generate Segments
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Resegment
               </Button>
             )}
           </div>

@@ -1546,6 +1546,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           establishingShot: generationOptions?.establishingShot,
           focusMode: generationOptions?.focusMode,
           customInstructions: generationOptions?.customInstructions,
+          // Reference library integration options
+          selectedCharacterIds: generationOptions?.selectedCharacterIds,
+          includeReferencesInPrompts: generationOptions?.includeReferencesInPrompts,
+          optimizeForTransitions: generationOptions?.optimizeForTransitions,
         }),
       })
 
