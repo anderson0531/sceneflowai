@@ -4154,7 +4154,31 @@ function SceneCard({
                       />
                     ) : (
                       /* Fallback: Simple single-frame viewer when no segments exist */
-                      <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden border border-slate-700 group">
+                      <div className="space-y-4">
+                        {/* Initialize Segments CTA when scene image exists but no segments */}
+                        {scene.imageUrl && onInitializeSceneProduction && (
+                          <div className="flex items-center gap-4 p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-lg">
+                            <div className="flex-1">
+                              <h4 className="text-sm font-medium text-indigo-300">Ready for Frame Anchoring</h4>
+                              <p className="text-xs text-slate-400 mt-1">
+                                Initialize segments to unlock the Keyframe State Machine for Start/End frame generation.
+                              </p>
+                            </div>
+                            <Button
+                              size="sm"
+                              onClick={() => onInitializeSceneProduction(
+                                scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                                { targetDuration: scene.duration || 8 }
+                              )}
+                              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                            >
+                              <Layers className="w-4 h-4 mr-2" />
+                              Initialize Segments
+                            </Button>
+                          </div>
+                        )}
+                        
+                        <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden border border-slate-700 group">
                         {scene.imageUrl ? (
                           <Dialog>
                             <DialogTrigger asChild>
@@ -4184,7 +4208,7 @@ function SceneCard({
                           <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-900">
                             <ImageIcon className="w-12 h-12 mb-3 opacity-30" />
                             <span className="text-sm font-medium">No frame generated</span>
-                            <p className="text-xs opacity-60 mt-1">Generate segments in Call Action first, or generate a single frame</p>
+                            <p className="text-xs opacity-60 mt-1">Generate a scene image using the buttons below, or go to Scene tab</p>
                           </div>
                         )}
                         
@@ -4294,6 +4318,7 @@ function SceneCard({
                              )}
                           </div>
                         </TooltipProvider>
+                      </div>
                       </div>
                     )}
                   </div>
