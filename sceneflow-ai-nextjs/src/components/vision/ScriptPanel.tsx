@@ -2673,10 +2673,68 @@ function SceneCard({
   // Manual workflow completion overrides (user marked as done)
   const workflowCompletions = scene.workflowCompletions || {}
   
+  // Helper: Check if all audio is complete for a specific language
+  // Script step auto-completes only when all required audio is generated for selected language
+  const isSceneAudioCompleteForLanguage = useMemo(() => {
+    return (lang: string): boolean => {
+      // Check if scene has any text that requires audio
+      const hasNarrationText = !!scene.narration?.trim()
+      const hasDescriptionText = !!(scene.visualDescription?.trim() || scene.action?.trim())
+      const dialogueLines = scene.dialogue || []
+      const hasDialogueText = dialogueLines.length > 0
+      
+      // If scene has no text at all, consider it complete
+      if (!hasNarrationText && !hasDescriptionText && !hasDialogueText) {
+        return true
+      }
+      
+      // Check description audio (if scene has description text)
+      let hasDescriptionAudio = true
+      if (hasDescriptionText) {
+        const descUrl = scene.descriptionAudio?.[lang]?.url || (lang === 'en' ? scene.descriptionAudioUrl : undefined)
+        hasDescriptionAudio = !!descUrl
+      }
+      
+      // Check narration audio (if scene has narration text)
+      let hasNarrationAudio = true
+      if (hasNarrationText) {
+        const narrUrl = scene.narrationAudio?.[lang]?.url || (lang === 'en' ? scene.narrationAudioUrl : undefined)
+        hasNarrationAudio = !!narrUrl
+      }
+      
+      // Check all dialogue lines have audio
+      let hasAllDialogueAudio = true
+      if (hasDialogueText) {
+        // Get dialogue audio array for this language
+        let dialogueAudioArray: any[] = []
+        if (Array.isArray(scene.dialogueAudio)) {
+          // Old format: array (treat as 'en')
+          dialogueAudioArray = lang === 'en' ? scene.dialogueAudio : []
+        } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
+          // New format: object keyed by language
+          dialogueAudioArray = scene.dialogueAudio[lang] || []
+        }
+        
+        // Each dialogue line should have a matching audio entry
+        hasAllDialogueAudio = dialogueLines.every((d: any, idx: number) => {
+          const audioEntry = dialogueAudioArray.find((a: any) => 
+            a.dialogueIndex === idx && a.audioUrl
+          )
+          return !!audioEntry
+        })
+      }
+      
+      return hasDescriptionAudio && hasNarrationAudio && hasAllDialogueAudio
+    }
+  }, [scene.narration, scene.visualDescription, scene.action, scene.dialogue, 
+      scene.descriptionAudio, scene.descriptionAudioUrl, 
+      scene.narrationAudio, scene.narrationAudioUrl, scene.dialogueAudio])
+  
   // Completion status detection for workflow steps (combines auto-detection + manual overrides)
   const stepCompletion = useMemo(() => {
     // Auto-detected completions
-    const dialogueActionAuto = !!(scene.narration || (scene.dialogue && scene.dialogue.length > 0))
+    // Script step: Auto-complete only when ALL audio is generated for selected language
+    const dialogueActionAuto = isSceneAudioCompleteForLanguage(selectedLanguage)
     const directorsChairAuto = !!scene.sceneDirection
     const storyboardPreVizAuto = !!scene.imageUrl
     // Check if Call Action is complete: scene must be segmented and all segments must have assets
@@ -2694,7 +2752,7 @@ function SceneCard({
       storyboardPreViz: workflowCompletions.storyboardPreViz ?? storyboardPreVizAuto,
       callAction: workflowCompletions.callAction ?? callActionAuto,
     }
-  }, [scene.narration, scene.dialogue, scene.sceneDirection, scene.imageUrl, sceneProductionData, workflowCompletions])
+  }, [isSceneAudioCompleteForLanguage, selectedLanguage, scene.sceneDirection, scene.imageUrl, sceneProductionData, workflowCompletions])
   
   // Sequential activation logic - steps unlock based on prerequisite completion
   // Call Action also requires scene image for visual consistency (soft requirement - shows warning)
