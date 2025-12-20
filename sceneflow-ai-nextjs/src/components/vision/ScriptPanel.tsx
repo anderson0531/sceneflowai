@@ -586,6 +586,24 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // Single-scene-open state - only one scene workflow can be open at a time
   const [openSceneIdx, setOpenSceneIdx] = useState<number | null>(null)
 
+  // Handler for opening frame edit modal (used by SceneCard/SegmentFrameTimeline)
+  const handleOpenFrameEditModal = useCallback((
+    sceneId: string,
+    sceneIdx: number,
+    segmentId: string,
+    frameType: 'start' | 'end',
+    frameUrl: string
+  ) => {
+    setEditingImageData({
+      url: frameUrl,
+      sceneIdx,
+      sceneId,
+      segmentId,
+      frameType
+    })
+    setImageEditModalOpen(true)
+  }, [])
+
   const scenes = useMemo(() => normalizeScenes(script), [script])
 
   // Filter to only show selected scene when selectedSceneIndex is set
@@ -2166,6 +2184,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                             setEditingImageData({ url, sceneIdx });
                             setImageEditModalOpen(true);
                           }}
+                          onOpenFrameEditModal={(sceneIdx: number, sceneId: string, segmentId: string, frameType: 'start' | 'end', frameUrl: string) => {
+                            setEditingImageData({ url: frameUrl, sceneIdx, sceneId, segmentId, frameType });
+                            setImageEditModalOpen(true);
+                          }}
                           isWorkflowOpen={selectedSceneIndex !== null ? true : openSceneIdx === idx}
                           onWorkflowOpenChange={(isOpen: boolean) => {
                             // Single-scene-open behavior: close others when opening this one
@@ -2606,6 +2628,7 @@ interface SceneCardProps {
   // Keyframe State Machine - Frame step handlers
   onGenerateSegmentFrames?: (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both') => Promise<void>
   onGenerateAllSegmentFrames?: (sceneId: string) => Promise<void>
+  onOpenFrameEditModal?: (sceneId: string, sceneIdx: number, segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
   generatingFrameForSegment?: string | null
   generatingFramePhase?: 'start' | 'end' | 'video' | null
 }
@@ -2700,6 +2723,7 @@ function SceneCard({
   onDeleteTake,
   onGenerateSegmentFrames,
   onGenerateAllSegmentFrames,
+  onOpenFrameEditModal,
   generatingFrameForSegment,
   generatingFramePhase,
 }: SceneCardProps) {
@@ -4167,15 +4191,14 @@ function SceneCard({
                           )
                         }
                         onEditFrame={(segmentId, frameType, frameUrl) => {
-                          // Open the image edit modal with frame context
-                          setEditingImageData({
-                            url: frameUrl,
+                          // Use the callback prop from ScriptPanel where state is accessible
+                          onOpenFrameEditModal?.(
                             sceneIdx,
-                            sceneId: scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                            scene.sceneId || scene.id || `scene-${sceneIdx}`,
                             segmentId,
-                            frameType
-                          })
-                          setImageEditModalOpen(true)
+                            frameType,
+                            frameUrl
+                          )
                         }}
                         isGenerating={!!generatingFrameForSegment}
                         generatingSegmentId={generatingFrameForSegment}
