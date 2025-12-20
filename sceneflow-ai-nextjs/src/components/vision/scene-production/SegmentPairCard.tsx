@@ -144,6 +144,7 @@ export function SegmentPairCard({
   const canRegenerateEnd = !!endFrameUrl && !isGenerating
 
   return (
+    <TooltipProvider>
     <div 
       className={cn(
         "relative rounded-lg border transition-all cursor-pointer",
@@ -568,6 +569,7 @@ export function SegmentPairCard({
         </div>
       )}
     </div>
+    </TooltipProvider>
   )
 }
 
