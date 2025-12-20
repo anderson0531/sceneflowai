@@ -638,129 +638,216 @@ export function SegmentStudio({
         
         {/* Generate Tab */}
         <TabsContent value="generate" className="flex-1 overflow-y-auto p-3 space-y-3 m-0">
-          {/* Generate Actions - List Format */}
-          <div className="space-y-2">
-            <div className="text-[10px] font-semibold uppercase text-gray-500 dark:text-gray-400 tracking-wide">
-              Generate Asset
-            </div>
+          {/* For segments WITH existing video: Show Edit/Regenerate options FIRST */}
+          {segment.activeAssetUrl && segment.assetType === 'video' && (
+            <>
+              {/* Edit & Regenerate Actions - Prominent for existing videos */}
+              <div className="space-y-2">
+                <div className="text-[10px] font-semibold uppercase text-gray-500 dark:text-gray-400 tracking-wide">
+                  Video Actions
+                </div>
+                <div className="space-y-2">
+                  {/* Edit Video - Primary action for existing videos */}
+                  <button
+                    onClick={() => handleOpenVideoEditing()}
+                    disabled={segment.status === 'GENERATING'}
+                    className={cn(
+                      "w-full p-3 rounded-xl border text-left transition-all",
+                      "border-teal-200 dark:border-teal-700 bg-teal-50 dark:bg-teal-900/20 hover:border-teal-400 dark:hover:border-teal-500 hover:bg-teal-100 dark:hover:bg-teal-900/30",
+                      segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-teal-100 dark:bg-teal-900/50 text-teal-600 dark:text-teal-400">
+                        <Film className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Edit Video</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Extend, interpolate, add references & audio</p>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Regenerate Video */}
+                  <button
+                    onClick={handleRegenerateVideo}
+                    disabled={segment.status === 'GENERATING' || isRegeneratingVideo}
+                    className={cn(
+                      "w-full p-3 rounded-xl border text-left transition-all",
+                      "border-orange-200 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/20 hover:border-orange-400 dark:hover:border-orange-500 hover:bg-orange-100 dark:hover:bg-orange-900/30",
+                      (segment.status === 'GENERATING' || isRegeneratingVideo) && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400">
+                        {isRegeneratingVideo ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <RefreshCw className="w-5 h-5" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Regenerate Video</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          {isRegeneratingVideo ? 'Regenerating...' : 'Create a new take using current prompt'}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Generate New - Secondary for existing videos */}
+              <div className="space-y-2">
+                <div className="text-[10px] font-semibold uppercase text-gray-500 dark:text-gray-400 tracking-wide">
+                  Generate New
+                </div>
+                <div className="space-y-2">
+                  {/* Generate Video */}
+                  <button
+                    onClick={handleOpenVideoBuilder}
+                    disabled={segment.status === 'GENERATING'}
+                    className={cn(
+                      "w-full p-3 rounded-xl border text-left transition-all",
+                      "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20",
+                      segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
+                        <Video className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Generate Video</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Create new video using Veo 3.1</p>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Generate Image */}
+                  <button
+                    onClick={handleOpenImageBuilder}
+                    disabled={segment.status === 'GENERATING'}
+                    className={cn(
+                      "w-full p-3 rounded-xl border text-left transition-all",
+                      "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-purple-400 dark:hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20",
+                      segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400">
+                        <ImageIcon className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Generate Image</h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Create image using Imagen 4</p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* For segments WITHOUT video: Show Generate options first (original layout) */}
+          {!(segment.activeAssetUrl && segment.assetType === 'video') && (
             <div className="space-y-2">
-              {/* Generate Video */}
-              <button
-                onClick={handleOpenVideoBuilder}
-                disabled={segment.status === 'GENERATING'}
-                className={cn(
-                  "w-full p-3 rounded-xl border text-left transition-all",
-                  "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20",
-                  segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
-                )}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
-                    <Video className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Generate Video</h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Create video using Veo 3.1</p>
-                  </div>
-                </div>
-              </button>
-
-              {/* Generate Image */}
-              <button
-                onClick={handleOpenImageBuilder}
-                disabled={segment.status === 'GENERATING'}
-                className={cn(
-                  "w-full p-3 rounded-xl border text-left transition-all",
-                  "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-purple-400 dark:hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20",
-                  segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
-                )}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400">
-                    <ImageIcon className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Generate Image</h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Create image using Imagen 4</p>
-                  </div>
-                </div>
-              </button>
-
-              {/* Regenerate Video - Only show if there's an existing video */}
-              {segment.activeAssetUrl && segment.assetType === 'video' && (
+              <div className="text-[10px] font-semibold uppercase text-gray-500 dark:text-gray-400 tracking-wide">
+                Generate Asset
+              </div>
+              <div className="space-y-2">
+                {/* Generate Video */}
                 <button
-                  onClick={handleRegenerateVideo}
-                  disabled={segment.status === 'GENERATING' || isRegeneratingVideo}
-                  className={cn(
-                    "w-full p-3 rounded-xl border text-left transition-all",
-                    "border-orange-200 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/20 hover:border-orange-400 dark:hover:border-orange-500 hover:bg-orange-100 dark:hover:bg-orange-900/30",
-                    (segment.status === 'GENERATING' || isRegeneratingVideo) && "opacity-50 cursor-not-allowed"
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400">
-                      {isRegeneratingVideo ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <RefreshCw className="w-5 h-5" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Regenerate Video</h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        {isRegeneratingVideo ? 'Regenerating...' : 'Create a new take using current prompt'}
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              )}
-
-              {/* Add Scene Reference */}
-              {onOpenReferences && (
-                <button
-                  onClick={() => onOpenReferences?.()}
+                  onClick={handleOpenVideoBuilder}
                   disabled={segment.status === 'GENERATING'}
                   className={cn(
                     "w-full p-3 rounded-xl border text-left transition-all",
-                    "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20",
+                    "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20",
                     segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
                   )}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400">
-                      <ImagePlus className="w-5 h-5" />
+                    <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
+                      <Video className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Add Scene Reference</h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Add reference images for generation</p>
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Generate Video</h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Create video using Veo 3.1</p>
                     </div>
                   </div>
                 </button>
-              )}
 
-              {/* Generate Backdrop Video */}
-              {sceneForBackdrop && onBackdropVideoGenerated && (
+                {/* Generate Image */}
                 <button
-                  onClick={() => setIsBackdropVideoModalOpen(true)}
+                  onClick={handleOpenImageBuilder}
                   disabled={segment.status === 'GENERATING'}
                   className={cn(
                     "w-full p-3 rounded-xl border text-left transition-all",
-                    "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20",
+                    "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-purple-400 dark:hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20",
                     segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
                   )}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400">
-                      <Clapperboard className="w-5 h-5" />
+                    <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400">
+                      <ImageIcon className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Generate Backdrop</h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Inserts before segment #{segmentIndex !== undefined ? segmentIndex + 1 : 1}</p>
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Generate Image</h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Create image using Imagen 4</p>
                     </div>
                   </div>
                 </button>
-              )}
+              </div>
             </div>
+          )}
+
+          {/* Shared buttons for ALL segments - Add Scene Reference & Generate Backdrop */}
+          <div className="space-y-2">
+            {/* Add Scene Reference */}
+            {onOpenReferences && (
+              <button
+                onClick={() => onOpenReferences?.()}
+                disabled={segment.status === 'GENERATING'}
+                className={cn(
+                  "w-full p-3 rounded-xl border text-left transition-all",
+                  "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20",
+                  segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400">
+                    <ImagePlus className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Add Scene Reference</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Add reference images for generation</p>
+                  </div>
+                </div>
+              </button>
+            )}
+
+            {/* Generate Backdrop Video */}
+            {sceneForBackdrop && onBackdropVideoGenerated && (
+              <button
+                onClick={() => setIsBackdropVideoModalOpen(true)}
+                disabled={segment.status === 'GENERATING'}
+                className={cn(
+                  "w-full p-3 rounded-xl border text-left transition-all",
+                  "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20",
+                  segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400">
+                    <Clapperboard className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Generate Backdrop</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Inserts before segment #{segmentIndex !== undefined ? segmentIndex + 1 : 1}</p>
+                  </div>
+                </div>
+              </button>
+            )}
           </div>
 
           {/* Frame Anchoring Section - Generate end frame for better video quality */}
@@ -916,41 +1003,13 @@ export function SegmentStudio({
               )}
             </div>
           )}
-
-          {/* Edit Video Action - Opens VideoEditingDialog */}
-          {segment.activeAssetUrl && segment.assetType === 'video' && (
-            <div className="space-y-2">
-              <div className="text-[10px] font-semibold uppercase text-gray-500 dark:text-gray-400 tracking-wide">
-                Edit Video
-              </div>
-              <button
-                onClick={() => handleOpenVideoEditing()}
-                disabled={segment.status === 'GENERATING'}
-                className={cn(
-                  "w-full p-3 rounded-xl border text-left transition-all",
-                  "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-orange-400 dark:hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20",
-                  segment.status === 'GENERATING' && "opacity-50 cursor-not-allowed"
-                )}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400">
-                    <Film className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">Edit Video</h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Extend, interpolate, add references & audio</p>
-                  </div>
-                </div>
-              </button>
-            </div>
-          )}
         </TabsContent>
         
         {/* Details Tab */}
         <TabsContent value="details" className="flex-1 overflow-y-auto p-3 space-y-3 m-0">
-          {/* Build Marker - v2.17 Smart Video Generation */}
+          {/* Build Marker - v2.25 Edit-First Video Workflow */}
           <div className="text-[9px] text-gray-400 dark:text-gray-500 text-right font-mono">
-            v2.17-svgw
+            v2.25-efvw
           </div>
           
           {/* Current Prompt - Moved from Generate tab */}
