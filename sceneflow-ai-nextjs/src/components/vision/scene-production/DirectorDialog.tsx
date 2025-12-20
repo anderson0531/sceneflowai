@@ -51,6 +51,7 @@ import {
   Film,
   FastForward,
   Type,
+  AlertCircle,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -151,12 +152,23 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   const endFrameUrl = segment.endFrameUrl || segment.references?.endFrameUrl
   const hasExistingVideo = segment.activeAssetUrl && segment.assetType === 'video'
   
-  // Determine which tabs should be enabled
+  // FRAME-FIRST WORKFLOW: Determine which tabs should be enabled
+  // I2V requires a start frame, FTV requires both frames
+  // These prerequisites ensure character consistency via frame anchoring
   const tabStates = {
-    TEXT_TO_VIDEO: true, // Always available
+    TEXT_TO_VIDEO: true, // Always available (but not recommended if frames exist)
     IMAGE_TO_VIDEO: !!startFrameUrl || !!sceneImageUrl,
     FRAME_TO_VIDEO: !!startFrameUrl && !!endFrameUrl,
     EXTEND: !!hasExistingVideo,
+  }
+  
+  // Messaging for disabled tabs
+  const tabDisabledReasons: Record<string, string> = {
+    IMAGE_TO_VIDEO: !tabStates.IMAGE_TO_VIDEO ? 'Generate a Start Frame first (Frame step)' : '',
+    FRAME_TO_VIDEO: !tabStates.FRAME_TO_VIDEO 
+      ? (!startFrameUrl ? 'Generate Start Frame first' : 'Generate End Frame to enable interpolation')
+      : '',
+    EXTEND: !tabStates.EXTEND ? 'Render a video first' : '',
   }
 
   return (
@@ -178,6 +190,27 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
           
           {/* Mode Selection Tabs */}
           <div className="col-span-12">
+            {/* Frame-First Recommendation Banner */}
+            {tabStates.FRAME_TO_VIDEO && mode !== 'FRAME_TO_VIDEO' && (
+              <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-sm">
+                <Film className="w-4 h-4 flex-shrink-0" />
+                <span>
+                  <strong>Recommended:</strong> Frame-to-Video mode uses both keyframes for best character consistency.
+                </span>
+              </div>
+            )}
+            
+            {/* Missing Frame Warning */}
+            {!tabStates.IMAGE_TO_VIDEO && (
+              <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>
+                  <strong>Frame-First Workflow:</strong> Generate keyframes in the Frame step for better character consistency. 
+                  Text-to-Video is available but may result in character drift.
+                </span>
+              </div>
+            )}
+            
             <Tabs value={mode} onValueChange={setMode}>
               <TabsList className="bg-slate-800 w-full grid grid-cols-4">
                 <TabsTrigger 
@@ -190,24 +223,27 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 </TabsTrigger>
                 <TabsTrigger 
                   value="IMAGE_TO_VIDEO" 
-                  className="data-[state=active]:bg-indigo-600"
+                  className="data-[state=active]:bg-indigo-600 disabled:opacity-50"
                   disabled={!tabStates.IMAGE_TO_VIDEO}
+                  title={tabDisabledReasons.IMAGE_TO_VIDEO}
                 >
                   <ImageIcon className="w-4 h-4 mr-2" />
                   Image-to-Video
                 </TabsTrigger>
                 <TabsTrigger 
                   value="FRAME_TO_VIDEO" 
-                  className="data-[state=active]:bg-indigo-600"
+                  className="data-[state=active]:bg-purple-600 disabled:opacity-50"
                   disabled={!tabStates.FRAME_TO_VIDEO}
+                  title={tabDisabledReasons.FRAME_TO_VIDEO}
                 >
                   <Film className="w-4 h-4 mr-2" />
                   Frame-to-Video
                 </TabsTrigger>
                 <TabsTrigger 
                   value="EXTEND" 
-                  className="data-[state=active]:bg-indigo-600"
+                  className="data-[state=active]:bg-indigo-600 disabled:opacity-50"
                   disabled={!tabStates.EXTEND}
+                  title={tabDisabledReasons.EXTEND}
                 >
                   <FastForward className="w-4 h-4 mr-2" />
                   Extend

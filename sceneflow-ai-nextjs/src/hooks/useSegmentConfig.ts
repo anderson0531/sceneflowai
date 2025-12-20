@@ -96,20 +96,27 @@ function generateVisualPrompt(segment: SceneSegment, sceneImageUrl?: string): st
 
 /**
  * Determines the recommended generation method based on available assets
+ * 
+ * FRAME-FIRST WORKFLOW: Prioritizes frame-based methods (FTV > I2V > T2V)
+ * because character consistency is best achieved by "baking" character
+ * references into keyframes via Imagen 3, then using those frames to
+ * anchor Veo video generation.
+ * 
+ * Priority:
+ * 1. FTV (Frame-to-Video): Both start+end frames = best character lock
+ * 2. I2V (Image-to-Video): Start frame only = good character anchor
+ * 3. EXT (Extend): Extend existing video
+ * 4. T2V (Text-to-Video): No frames = risk of character drift
  */
 function detectRecommendedMethod(segment: SceneSegment): VideoGenerationMethod {
   const hasStartFrame = !!(segment.startFrameUrl || segment.references?.startFrameUrl)
   const hasEndFrame = !!(segment.endFrameUrl || segment.references?.endFrameUrl)
   const hasExistingVideo = !!(segment.activeAssetUrl && segment.assetType === 'video')
   
-  // Frame-to-Video: Best quality with both keyframes
+  // Frame-to-Video: Best quality with both keyframes (RECOMMENDED)
+  // Character faces baked into frames provide visual anchors
   if (hasStartFrame && hasEndFrame) {
     return 'FTV'
-  }
-  
-  // Video Extension: If we have existing video and want to extend
-  if (hasExistingVideo) {
-    return 'EXT'
   }
   
   // Image-to-Video: Good quality with just start frame
@@ -117,12 +124,20 @@ function detectRecommendedMethod(segment: SceneSegment): VideoGenerationMethod {
     return 'I2V'
   }
   
-  // Text-to-Video: Fallback when no frames available
+  // Video Extension: If we have existing video and want to extend
+  if (hasExistingVideo) {
+    return 'EXT'
+  }
+  
+  // Text-to-Video: Fallback when no frames available (not recommended)
   return 'T2V'
 }
 
 /**
  * Generates confidence score for the recommended method
+ * 
+ * FRAME-FIRST: FTV/I2V get higher confidence because they use
+ * frame anchors which produce more consistent character appearance.
  */
 function calculateConfidence(segment: SceneSegment, method: VideoGenerationMethod): number {
   const hasStartFrame = !!(segment.startFrameUrl || segment.references?.startFrameUrl)
@@ -134,13 +149,13 @@ function calculateConfidence(segment: SceneSegment, method: VideoGenerationMetho
   
   switch (method) {
     case 'FTV':
-      // Both frames = high confidence
-      confidence = 90
+      // Both frames = highest confidence (best character lock)
+      confidence = 95
       if (hasPrompt) confidence += 5
       break
     case 'I2V':
       // Start frame = good confidence
-      confidence = 75
+      confidence = 80
       if (hasPrompt) confidence += 10
       if (hasCharacterRefs) confidence += 5
       break
@@ -149,9 +164,9 @@ function calculateConfidence(segment: SceneSegment, method: VideoGenerationMetho
       confidence = 70
       break
     case 'T2V':
-      // Text only = lower confidence
-      confidence = 50
-      if (hasPrompt) confidence += 15
+      // Text only = low confidence (character drift risk)
+      confidence = 45
+      if (hasPrompt) confidence += 10
       if (hasCharacterRefs) confidence += 10
       break
   }
@@ -240,12 +255,13 @@ export function useSegmentConfig(
       REF: 'Reference-Based',
     }
     
+    // FRAME-FIRST: Enhanced method reasons with guidance
     const methodReasons: Record<VideoGenerationMethod, string> = {
-      FTV: 'Both start and end frames available',
-      I2V: 'Start frame available',
-      T2V: 'No frames available',
-      EXT: 'Existing video can be extended',
-      REF: 'Character references available',
+      FTV: 'Best quality: Both keyframes anchor character appearance',
+      I2V: 'Good quality: Start frame anchors character appearance',
+      T2V: '⚠️ Lower quality: Generate frames first for better consistency',
+      EXT: 'Extends existing video seamlessly',
+      REF: 'Character references guide generation',
     }
     
     return {

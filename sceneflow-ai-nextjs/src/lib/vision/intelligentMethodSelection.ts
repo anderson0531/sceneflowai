@@ -265,6 +265,11 @@ export function validateMethodForContext(
 
 /**
  * Gets the method with fallback if primary is invalid
+ * 
+ * FRAME-FIRST WORKFLOW: I2V and FTV methods REQUIRE frames.
+ * If frames are missing, we DO NOT silently fall back to T2V.
+ * Instead, we return the method with warnings and let the UI block the action.
+ * This ensures users generate frames before video for character consistency.
  */
 export function getMethodWithFallback(
   requestedMethod: VideoGenerationMethod,
@@ -286,7 +291,23 @@ export function getMethodWithFallback(
     }
   }
   
-  // Method invalid, use suggestion or fall back to AUTO
+  // FRAME-FIRST WORKFLOW: For I2V and FTV, do NOT silently fall back to T2V
+  // Return the method with error - let UI/API handle the prerequisite enforcement
+  if (requestedMethod === 'I2V' || requestedMethod === 'FTV') {
+    return {
+      method: requestedMethod,
+      confidence: 0,
+      reasoning: validation.error || 'Missing prerequisites for frame-based generation',
+      warnings: [
+        validation.error!,
+        'FRAME-FIRST: Generate keyframes in the Frame step before video generation.',
+        'Character faces baked into frames provide better consistency than T2V.',
+      ],
+      fallbackMethod: validation.suggestion,
+    }
+  }
+  
+  // For other methods (REF, EXT), use suggestion or fall back to AUTO
   if (validation.suggestion) {
     const fallbackResult = selectOptimalMethod(context)
     return {
