@@ -1371,11 +1371,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             previousEndFrameUrl,
             sceneImageUrl: scene?.imageUrl,
             startFrameUrl: segment.startFrameUrl || segment.references?.startFrameUrl,
-            characters: characters.map(c => ({
-              name: c.name,
-              appearance: c.appearanceDescription || c.description,
-              referenceUrl: c.referenceImage
-            })),
+            // Enhanced character data with all fields for identity lock
+            // Priority: protagonist > main > supporting (sorted before API handles slicing)
+            characters: [...characters]
+              .filter(c => c.type === 'character' || !c.type) // Exclude narrator/description
+              .sort((a, b) => {
+                const roleOrder: Record<string, number> = { protagonist: 0, main: 1, supporting: 2 }
+                return (roleOrder[a.role || 'supporting'] || 2) - (roleOrder[b.role || 'supporting'] || 2)
+              })
+              .map(c => ({
+                name: c.name,
+                appearance: c.appearanceDescription || c.description,
+                referenceUrl: c.referenceImage,
+                // Additional fields for enhanced identity lock
+                ethnicity: (c as any).ethnicity,
+                age: (c as any).age,
+                wardrobe: (c as any).defaultWardrobe || (c as any).wardrobe,
+              })),
             sceneContext: {
               heading: typeof scene?.heading === 'string' ? scene.heading : scene?.heading?.text,
               location: typeof scene?.heading === 'string' ? scene.heading : scene?.heading?.text,

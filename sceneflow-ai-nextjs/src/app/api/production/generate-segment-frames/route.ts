@@ -220,8 +220,12 @@ export async function POST(req: NextRequest) {
       }
       
       // Add character reference images if available
-      characters
-        .filter(c => c.referenceUrl)
+      // Log character reference status for debugging
+      const startCharsWithRefs = characters.filter(c => c.referenceUrl)
+      console.log(`[Generate Frames] Start frame - Character references: ${startCharsWithRefs.length}/${characters.length}`, 
+        startCharsWithRefs.map(c => c.name).join(', '))
+      
+      startCharsWithRefs
         .slice(0, 3) // Max 4 total references
         .forEach((char, index) => {
           startReferenceImages.push({
@@ -301,19 +305,22 @@ export async function POST(req: NextRequest) {
         }
       ]
       
-      // Add character references for additional consistency (especially for low-action types)
-      if (weights.imageStrength > 0.7) {
-        characters
-          .filter(c => c.referenceUrl)
-          .slice(0, 3)
-          .forEach((char, index) => {
-            endReferenceImages.push({
-              referenceId: index + 2,
-              imageUrl: char.referenceUrl!,
-              subjectDescription: `Character: ${char.name} - IDENTICAL appearance required`
-            })
+      // ALWAYS add character references for consistent identity lock across all action types
+      // High-action scenes especially need character refs to prevent drift during dynamic motion
+      // Log character reference status for debugging
+      const charsWithRefs = characters.filter(c => c.referenceUrl)
+      console.log(`[Generate Frames] Character references available: ${charsWithRefs.length}/${characters.length}`, 
+        charsWithRefs.map(c => c.name).join(', '))
+      
+      charsWithRefs
+        .slice(0, 3) // Max 4 total (1 start frame + 3 characters)
+        .forEach((char, index) => {
+          endReferenceImages.push({
+            referenceId: index + 2,
+            imageUrl: char.referenceUrl!,
+            subjectDescription: `Character: ${char.name} - IDENTICAL appearance required`
           })
-      }
+        })
       
       // Generate end frame
       const endImageDataUrl = await generateImageWithGemini(endFramePrompt, {
