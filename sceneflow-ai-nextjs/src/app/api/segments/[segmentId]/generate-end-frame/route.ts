@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateImageWithGemini } from '@/lib/gemini/imageClient'
+import { callVertexAIImagen } from '@/lib/vertexai/client'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -87,10 +87,16 @@ export async function POST(
 
     console.log('[Generate End Frame] Using', referenceImages.length, 'reference image(s)')
 
-    // Generate the end frame using Imagen 3
-    const imageDataUrl = await generateImageWithGemini(endFramePrompt, {
+    // Generate the end frame using Vertex AI Imagen (higher rate limits than Gemini API)
+    const imageDataUrl = await callVertexAIImagen(endFramePrompt, {
       aspectRatio,
-      referenceImages,
+      referenceImages: referenceImages.map(ref => ({
+        referenceId: ref.referenceId,
+        imageUrl: ref.imageUrl,
+        subjectDescription: ref.subjectDescription,
+        referenceType: 'REFERENCE_TYPE_SUBJECT' as const,
+        subjectType: 'SUBJECT_TYPE_PERSON' as const
+      })),
       numberOfImages: 1
     })
 
