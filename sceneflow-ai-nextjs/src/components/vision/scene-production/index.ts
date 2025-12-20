@@ -15,7 +15,12 @@ export * from './types'
 export { SegmentPairCard } from './SegmentPairCard'
 export { SegmentFrameTimeline } from './SegmentFrameTimeline'
 
+// Director's Console Components
+export { DirectorDialog } from './DirectorDialog'
+export { DirectorConsole } from './DirectorConsole'
+
 // Prompt utilities
 export * from './methodPromptBuilder'
 export * from './promptSyncService'
 export { compileVideoPrompt, formatPayloadForDisplay, extractSettingsFromSegment } from './videoPromptCompiler'
+

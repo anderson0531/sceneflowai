@@ -17,6 +17,7 @@ import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
 import { SegmentFrameTimeline } from './scene-production/SegmentFrameTimeline'
+import { DirectorConsole } from './scene-production/DirectorConsole'
 import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from './scene-production/types'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -4324,37 +4325,50 @@ function SceneCard({
                         </button>
                       </div>
                     )}
-                    <SceneProductionManager
-                      sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
-                      sceneNumber={sceneNumber}
-                      heading={scene.heading}
-                      scene={scene}
-                      projectId={projectId}
-                      productionData={sceneProductionData || null}
-                      references={sceneProductionReferences || {}}
-                      onInitialize={onInitializeSceneProduction || (async () => {})}
-                      onPromptChange={onSegmentPromptChange || (() => {})}
-                      onGenerate={onSegmentGenerate || (async () => {})}
-                      onUpload={onSegmentUpload || (async () => {})}
-                      audioTracks={sceneAudioTracks}
-                      onAddSegment={onAddSegment}
-                      onDeleteSegment={onDeleteSegment}
-                      onSegmentResize={onSegmentResize}
-                      onReorderSegments={onReorderSegments}
-                      onAudioClipChange={onAudioClipChange}
-                      onCleanupStaleAudioUrl={onCleanupStaleAudioUrl}
-                      onKeyframeChange={onSegmentKeyframeChange}
-                      onDialogueAssignmentChange={onSegmentDialogueAssignmentChange}
-                      onEditImage={onEditImage ? (imageUrl: string) => onEditImage(imageUrl, sceneIdx) : undefined}
-                      onAddEstablishingShot={onAddEstablishingShot}
-                      onEstablishingShotStyleChange={onEstablishingShotStyleChange}
-                      onBackdropVideoGenerated={onBackdropVideoGenerated}
-                      onGenerateEndFrame={onGenerateEndFrame}
-                      onEndFrameGenerated={onEndFrameGenerated}
-                      characters={characters}
-                      onSelectTake={onSelectTake ? (takeSceneId: string, segmentId: string, takeId: string, assetUrl: string) => onSelectTake(takeSceneId, segmentId, takeId, assetUrl) : undefined}
-                      onDeleteTake={onDeleteTake ? (takeSceneId: string, segmentId: string, takeId: string) => onDeleteTake(takeSceneId, segmentId, takeId) : undefined}
-                    />
+                    
+                    {/* Director's Console: Show when segments exist for batch rendering workflow */}
+                    {sceneProductionData?.segments && sceneProductionData.segments.length > 0 ? (
+                      <DirectorConsole
+                        sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
+                        sceneNumber={sceneNumber}
+                        productionData={sceneProductionData}
+                        sceneImageUrl={scene.imageUrl}
+                        onGenerate={onSegmentGenerate || (async () => {})}
+                      />
+                    ) : (
+                      /* Fallback: SceneProductionManager when no segments yet */
+                      <SceneProductionManager
+                        sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
+                        sceneNumber={sceneNumber}
+                        heading={scene.heading}
+                        scene={scene}
+                        projectId={projectId}
+                        productionData={sceneProductionData || null}
+                        references={sceneProductionReferences || {}}
+                        onInitialize={onInitializeSceneProduction || (async () => {})}
+                        onPromptChange={onSegmentPromptChange || (() => {})}
+                        onGenerate={onSegmentGenerate || (async () => {})}
+                        onUpload={onSegmentUpload || (async () => {})}
+                        audioTracks={sceneAudioTracks}
+                        onAddSegment={onAddSegment}
+                        onDeleteSegment={onDeleteSegment}
+                        onSegmentResize={onSegmentResize}
+                        onReorderSegments={onReorderSegments}
+                        onAudioClipChange={onAudioClipChange}
+                        onCleanupStaleAudioUrl={onCleanupStaleAudioUrl}
+                        onKeyframeChange={onSegmentKeyframeChange}
+                        onDialogueAssignmentChange={onSegmentDialogueAssignmentChange}
+                        onEditImage={onEditImage ? (imageUrl: string) => onEditImage(imageUrl, sceneIdx) : undefined}
+                        onAddEstablishingShot={onAddEstablishingShot}
+                        onEstablishingShotStyleChange={onEstablishingShotStyleChange}
+                        onBackdropVideoGenerated={onBackdropVideoGenerated}
+                        onGenerateEndFrame={onGenerateEndFrame}
+                        onEndFrameGenerated={onEndFrameGenerated}
+                        characters={characters}
+                        onSelectTake={onSelectTake ? (takeSceneId: string, segmentId: string, takeId: string, assetUrl: string) => onSelectTake(takeSceneId, segmentId, takeId, assetUrl) : undefined}
+                        onDeleteTake={onDeleteTake ? (takeSceneId: string, segmentId: string, takeId: string) => onDeleteTake(takeSceneId, segmentId, takeId) : undefined}
+                      />
+                    )}
                   </div>
                 )}
               </div>

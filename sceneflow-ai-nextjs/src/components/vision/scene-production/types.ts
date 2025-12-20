@@ -88,6 +88,72 @@ export type GenerationType = 'T2V' | 'I2V' | 'T2I' | 'UPLOAD'
 export type VideoGenerationMethod = 'T2V' | 'I2V' | 'EXT' | 'FTV' | 'REF'
 
 // ============================================================================
+// Director's Console Types - Pre-Flight Workflow
+// ============================================================================
+
+/**
+ * Approval status for segment video generation
+ * Tracks user review workflow in Director's Console
+ */
+export type ApprovalStatus = 
+  | 'auto-ready'      // System auto-configured, not yet user-reviewed
+  | 'user-approved'   // User explicitly reviewed and approved settings
+  | 'rendering'       // Currently generating video
+  | 'rendered'        // Video successfully generated
+  | 'error'           // Generation failed
+
+/**
+ * Video generation configuration for a segment
+ * Auto-drafted by useSegmentConfig hook, editable in DirectorDialog
+ */
+export interface VideoGenerationConfig {
+  // Generation mode/method
+  mode: VideoGenerationMethod
+  
+  // Prompts
+  prompt: string              // Active prompt (switches based on mode)
+  motionPrompt: string        // Motion-focused prompt for FTV mode
+  visualPrompt: string        // Visual-focused prompt for I2V/T2V mode
+  negativePrompt: string      // What to avoid in generation
+  
+  // Video parameters
+  aspectRatio: '16:9' | '9:16'
+  resolution: '720p' | '1080p'
+  duration: number            // 4, 6, or 8 seconds
+  
+  // Asset URLs for generation
+  startFrameUrl: string | null
+  endFrameUrl: string | null
+  sourceVideoUrl: string | null  // For EXT mode
+  
+  // Workflow status
+  approvalStatus: ApprovalStatus
+  confidence: number          // 0-100, auto-calculated confidence in settings
+}
+
+/**
+ * Queue item for batch video rendering in Director's Console
+ */
+export interface DirectorQueueItem {
+  segmentId: string
+  sequenceIndex: number
+  config: VideoGenerationConfig
+  thumbnailUrl: string | null
+  status: 'queued' | 'rendering' | 'complete' | 'error'
+  error?: string
+  progress?: number           // 0-100 during rendering
+}
+
+/**
+ * Batch rendering options for Director's Console
+ */
+export interface BatchRenderOptions {
+  mode: 'approved_only' | 'all'
+  priority: 'sequence' | 'approved_first'
+  delayBetween: number        // ms delay between API calls (rate limiting)
+}
+
+// ============================================================================
 // Generation Plan Types - Recommended generation strategy per segment
 // ============================================================================
 
