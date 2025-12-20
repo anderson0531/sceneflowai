@@ -180,17 +180,21 @@ export function useVideoQueue(
     
     // Filter queue based on mode
     let itemsToProcess = queue.filter((item) => {
-      // Skip already complete or rendering
-      if (item.status === 'complete' || item.status === 'rendering') {
+      // Skip actively rendering
+      if (item.status === 'rendering') {
         return false
       }
       
-      // If approved_only, only include user-approved items
+      // For approved_only mode: include user-approved items (even if already complete for re-rendering)
       if (mode === 'approved_only') {
         return item.config.approvalStatus === 'user-approved'
       }
       
-      // 'all' mode includes everything
+      // 'all' mode: skip already complete, include everything else
+      if (item.status === 'complete') {
+        return false
+      }
+      
       return true
     })
     

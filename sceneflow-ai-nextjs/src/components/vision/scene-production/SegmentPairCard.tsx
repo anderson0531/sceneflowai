@@ -13,7 +13,8 @@ import {
   Clock,
   Scissors,
   Link2,
-  Pencil
+  Pencil,
+  RefreshCw
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
@@ -127,6 +128,10 @@ export function SegmentPairCard({
   const canGenerateEnd = startFrameUrl && !endFrameUrl && !isGenerating
   const canGenerateBoth = !startFrameUrl && !endFrameUrl && !isGenerating
   const canGenerateVideo = anchorStatus === 'fully-anchored' && !isGenerating
+  
+  // Determine if we can REGENERATE frames (frames already exist)
+  const canRegenerateStart = !!startFrameUrl && !isGenerating
+  const canRegenerateEnd = !!endFrameUrl && !isGenerating
 
   return (
     <div 
@@ -327,7 +332,8 @@ export function SegmentPairCard({
       {/* Actions Footer */}
       {isSelected && (
         <div className="p-3 border-t border-slate-700/50 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Generation buttons - show when frames don't exist */}
             {canGenerateBoth && (
               <Button 
                 size="sm" 
@@ -362,6 +368,34 @@ export function SegmentPairCard({
               >
                 <Wand2 className="w-3 h-3 mr-1" />
                 Gen End
+              </Button>
+            )}
+            
+            {/* Regeneration buttons - show when frames ALREADY exist */}
+            {canRegenerateStart && (
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={(e) => { e.stopPropagation(); onGenerateStartFrame(); }}
+                disabled={isGenerating}
+                className="h-7 text-xs border-orange-500/50 text-orange-400 hover:bg-orange-500/10"
+                title="Regenerate start frame"
+              >
+                <RefreshCw className="w-3 h-3 mr-1" />
+                Regen Start
+              </Button>
+            )}
+            {canRegenerateEnd && (
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={(e) => { e.stopPropagation(); onGenerateEndFrame(); }}
+                disabled={isGenerating}
+                className="h-7 text-xs border-orange-500/50 text-orange-400 hover:bg-orange-500/10"
+                title="Regenerate end frame"
+              >
+                <RefreshCw className="w-3 h-3 mr-1" />
+                Regen End
               </Button>
             )}
           </div>
