@@ -4,10 +4,20 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 import { useState } from 'react'
 import { DemoVideoModal } from './DemoVideoModal'
-import { Play, ArrowRight, Sparkles, Film, Mic2, Video, Users } from 'lucide-react'
+import { Play, ArrowRight, Sparkles, Film, Mic2, Video, Users, Volume2, VolumeX } from 'lucide-react'
+import { useRef } from 'react'
 
 export function HeroSection() {
   const [isDemoOpen, setIsDemoOpen] = useState(false)
+  const [isMuted, setIsMuted] = useState(true)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted
+      setIsMuted(!isMuted)
+    }
+  }
   return (
     <motion.section 
       className="relative py-24 md:py-32 overflow-hidden"
@@ -65,18 +75,18 @@ export function HeroSection() {
           >
             <Sparkles className="w-4 h-4 text-cyan-400 mr-2" />
             <span className="text-sm font-medium bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent">
-              Powered by Gemini 2.5 Pro, Veo 3.1 & ElevenLabs
+              Powered by Industry-Leading AI Generation
             </span>
           </motion.div>
 
           {/* Main Headline */}
           <motion.h1 
-            className="text-4xl sm:text-5xl md:text-7xl font-bold text-white mb-6 leading-[1.1] tracking-tight"
+            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-8 leading-[1.05] tracking-tight"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
           >
-            From Idea to
+            <span className="block">From Idea to</span>
             <span className="block bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent">
               Cinematic Reality
             </span>
@@ -142,14 +152,20 @@ export function HeroSection() {
           </motion.div>
 
           {/* Microcopy */}
-          <motion.p 
-            className="text-sm text-gray-500 mb-16"
+          <motion.div 
+            className="mb-16"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 1.2 }}
           >
-            No credit card required • 1,000 free credits to start
-          </motion.p>
+            <p className="text-sm text-gray-400">
+              <span className="text-amber-400 font-medium">☕ For the price of a coffee</span>
+              <span className="text-gray-500 mx-2">•</span>
+              <span>Test drive with 1,000 credits</span>
+              <span className="text-gray-500 mx-2">•</span>
+              <span className="text-gray-500">One-time $5</span>
+            </p>
+          </motion.div>
           
           {/* Hero Visual Placeholder */}
           <motion.div 
@@ -175,8 +191,9 @@ export function HeroSection() {
               </div>
               
               {/* Hero Demo Video */}
-              <div className="aspect-[16/9] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+              <div className="aspect-[16/9] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden group">
                 <video
+                  ref={videoRef}
                   autoPlay
                   loop
                   muted
@@ -193,6 +210,19 @@ export function HeroSection() {
                   <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                   <span className="text-xs text-gray-300">Virtual Production Studio</span>
                 </div>
+                
+                {/* Audio toggle button */}
+                <button
+                  onClick={toggleMute}
+                  className="absolute bottom-4 right-4 flex items-center gap-2 px-3 py-2 bg-slate-800/90 backdrop-blur-sm rounded-lg border border-white/10 hover:bg-slate-700/90 transition-all opacity-0 group-hover:opacity-100"
+                >
+                  {isMuted ? (
+                    <VolumeX className="w-4 h-4 text-gray-300" />
+                  ) : (
+                    <Volume2 className="w-4 h-4 text-cyan-400" />
+                  )}
+                  <span className="text-xs text-gray-300">{isMuted ? 'Unmute' : 'Mute'}</span>
+                </button>
               </div>
             </div>
             

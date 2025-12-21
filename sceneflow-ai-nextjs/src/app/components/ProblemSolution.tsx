@@ -1,132 +1,87 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Clock, Zap, Rocket, Wand2, CheckCircle } from 'lucide-react'
+import { Clock, DollarSign, GraduationCap, ArrowRight, Zap, Wand2, Sparkles } from 'lucide-react'
 
 export function ProblemSolution() {
+  const problems = [
+    { icon: Clock, problem: 'Weeks of pre-production', solution: 'Minutes with AI automation', color: 'from-red-500 to-orange-500' },
+    { icon: DollarSign, problem: '$200+/month tool stack', solution: 'One platform, one price', color: 'from-orange-500 to-amber-500' },
+    { icon: GraduationCap, problem: 'Years of training needed', solution: 'Professional results instantly', color: 'from-amber-500 to-yellow-500' },
+  ]
+
   return (
-    <section className="py-24 bg-gray-900">
+    <section className="py-24 bg-gradient-to-b from-slate-900 to-slate-950 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div 
-          className="text-center mb-20"
+          className="text-center mb-16"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-5xl font-bold mb-6">The Problems We Solve</h2>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            Traditional video production is slow, expensive, and requires years of experience. SceneFlow AI solves these challenges with our AI-powered 4-phase workflow.
+          <div className="inline-flex items-center px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-full mb-6">
+            <span className="text-sm font-medium text-red-400">The Old Way Doesn't Work</span>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            Traditional Video Production is
+            <span className="block text-red-400">Broken</span>
+          </h2>
+          <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+            Complex software, expensive tools, endless learning curves. It's time for a better way.
           </p>
         </motion.div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-          {/* For Professionals */}
-          <motion.div 
-            className="relative"
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-8 border border-gray-700 h-full">
-              <div className="flex items-center mb-6">
-                <div className="w-16 h-16 bg-sf-primary/20 rounded-2xl flex items-center justify-center mr-4">
-                  <Rocket className="w-8 h-8 text-sf-primary" />
+        {/* Problem → Solution Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+          {problems.map((item, index) => (
+            <motion.div 
+              key={index}
+              className="relative group"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+            >
+              <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border border-white/5 h-full hover:border-cyan-500/30 transition-all duration-300">
+                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-6 opacity-20 group-hover:opacity-40 transition-opacity`}>
+                  <item.icon className="w-7 h-7 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold">Stop Wasting Days on Pre-Production</h3>
-              </div>
-              
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-lg font-semibold mb-3 text-red-400">Pain Points:</h4>
-                  <ul className="space-y-2">
-                    <li className="flex items-start space-x-2">
-                      <Clock className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-300">Manual storyboarding takes days</span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <Clock className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-300">Tedious shot lists and planning</span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <Clock className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-300">Creative block and revisions</span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <Clock className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-300">Time-consuming logistics</span>
-                    </li>
-                  </ul>
+                
+                <div className="mb-6">
+                  <p className="text-gray-500 text-sm uppercase tracking-wider mb-2">Problem</p>
+                  <p className="text-xl font-semibold text-red-400 line-through decoration-red-500/50">{item.problem}</p>
+                </div>
+                
+                <div className="flex items-center gap-3 mb-4">
+                  <ArrowRight className="w-5 h-5 text-gray-600" />
                 </div>
                 
                 <div>
-                  <h4 className="text-lg font-semibold mb-3 text-sf-accent">Solution:</h4>
-                  <p className="text-gray-300 mb-4">
-                    SceneFlow AI automates the entire pre-production process, turning your ideas into professional film packages in minutes.
-                  </p>
-                  <div className="flex items-center text-sm">
-                    <Zap className="w-5 h-5 text-sf-accent mr-2" />
-                    <span className="text-sf-accent font-medium">10x faster pre-production</span>
-                  </div>
+                  <p className="text-gray-500 text-sm uppercase tracking-wider mb-2">SceneFlow AI</p>
+                  <p className="text-xl font-semibold text-cyan-400">{item.solution}</p>
                 </div>
               </div>
-            </div>
-          </motion.div>
-          
-          {/* For New Creators */}
-          <motion.div 
-            className="relative"
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-8 border border-gray-700 h-full">
-              <div className="flex items-center mb-6">
-                <div className="w-16 h-16 bg-purple-500/20 rounded-2xl flex items-center justify-center mr-4">
-                  <Wand2 className="w-8 h-8 text-purple-400" />
-                </div>
-                <h3 className="text-2xl font-bold">Create Videos That Look Professional, Instantly</h3>
-              </div>
-              
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-lg font-semibold mb-3 text-red-400">Pain Points:</h4>
-                  <ul className="space-y-2">
-                    <li className="flex items-start space-x-2">
-                      <Clock className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-300">Lack of technical knowledge</span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <Clock className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-300">Complex software learning curve</span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <Clock className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-300">Achieving cinematic look</span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <Clock className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-300">Getting started without experience</span>
-                    </li>
-                  </ul>
-                </div>
-                
-                <div>
-                  <h4 className="text-lg font-semibold mb-3 text-sf-accent">Solution:</h4>
-                  <p className="text-gray-300 mb-4">
-                    Our AI-powered tools provide professional-grade results regardless of your experience level, with built-in best practices and industry standards.
-                  </p>
-                  <div className="flex items-center text-sm">
-                    <CheckCircle className="w-5 h-5 text-sf-accent mr-2" />
-                    <span className="text-sf-accent font-medium">Professional results, zero experience required</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          ))}
         </div>
+
+        {/* Transformation Statement */}
+        <motion.div 
+          className="text-center"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          <div className="inline-flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-amber-500/10 border border-cyan-500/20 rounded-2xl">
+            <Sparkles className="w-5 h-5 text-cyan-400" />
+            <span className="text-lg font-medium text-white">
+              AI does the heavy lifting. You focus on your creative vision.
+            </span>
+            <Wand2 className="w-5 h-5 text-purple-400" />
+          </div>
+        </motion.div>
       </div>
     </section>
   )

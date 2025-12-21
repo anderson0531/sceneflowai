@@ -1,154 +1,118 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { CheckCircle, Film, Mic2, Palette, Video, Users } from 'lucide-react'
 
 export function DemocratizationSection() {
+  const features = [
+    { icon: Film, title: 'AI Screenwriting', description: 'Generate professional scripts from a simple idea in seconds' },
+    { icon: Palette, title: 'Visual Development', description: 'Create stunning scene images with consistent characters' },
+    { icon: Video, title: 'Video Generation', description: 'Transform static frames into dynamic video sequences' },
+    { icon: Mic2, title: 'Voice Acting', description: 'Add professional voiceovers with AI-powered voices' },
+    { icon: Users, title: 'Character Consistency', description: 'Maintain visual identity across all scenes' },
+  ]
+
   return (
-    <section className="py-20 bg-gradient-to-b from-gray-900 to-black">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div 
-          className="text-center mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-        >
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Democratizing Professional Video Production
-          </h2>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            Transform your ideas into professional videos without the complexity, time, and costs of traditional methods
-          </p>
-        </motion.div>
-        
-        {/* Before vs After Comparison */}
-        <motion.div 
-          className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          {/* Before: Traditional Method */}
-          <div className="text-center">
-            <div className="mb-6">
-              <div className="inline-flex items-center px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-full mb-4">
-                <span className="text-red-400 text-sm font-medium">❌ Traditional Method</span>
-              </div>
-              <h4 className="text-xl font-semibold text-white mb-2">Complex & Expensive</h4>
+    <section className="py-20 bg-slate-950 relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.08),transparent_70%)]" />
+      
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          {/* Left: Content */}
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="inline-flex items-center px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full mb-6">
+              <span className="text-sm font-medium text-cyan-400">All-in-One Platform</span>
             </div>
             
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
+              Everything You Need.
+              <span className="block text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text">
+                Nothing You Don't.
+              </span>
+            </h2>
+            
+            <p className="text-lg text-gray-400 mb-8">
+              Stop juggling multiple tools and subscriptions. SceneFlow AI combines every step of video production into one seamless workflow.
+            </p>
+            
             <div className="space-y-4">
-              <div className="flex items-center space-x-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <span className="text-red-400 text-lg">💸</span>
-                </div>
-                <div className="text-left">
-                  <p className="text-white font-medium">Multiple tool stack subscriptions</p>
-                  <p className="text-red-300 text-sm">$200+/month across platforms</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
-                <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <span className="text-orange-400 text-lg">⏰</span>
-                </div>
-                <div className="text-left">
-                  <p className="text-white font-medium">Weeks of planning</p>
-                  <p className="text-orange-300 text-sm">Complex production workflows</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <span className="text-yellow-400 text-lg">🎓</span>
-                </div>
-                <div className="text-left">
-                  <p className="text-white font-medium">Years of training required</p>
-                  <p className="text-yellow-300 text-sm">Professional skills needed</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3 p-3 bg-gray-500/10 border border-gray-500/20 rounded-lg">
-                <div className="w-10 h-10 bg-gray-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <span className="text-gray-400 text-lg">🚫</span>
-                </div>
-                <div className="text-left">
-                  <p className="text-white font-medium">Limited to professionals</p>
-                  <p className="text-gray-300 text-sm">High barrier to entry</p>
-                </div>
-              </div>
+              {features.map((feature, index) => (
+                <motion.div
+                  key={index}
+                  className="flex items-start gap-4 p-4 rounded-xl bg-slate-900/50 border border-white/5 hover:border-cyan-500/20 transition-all"
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                >
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
+                    <feature.icon className="w-5 h-5 text-cyan-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white mb-1">{feature.title}</h4>
+                    <p className="text-sm text-gray-500">{feature.description}</p>
+                  </div>
+                </motion.div>
+              ))}
             </div>
-          </div>
+          </motion.div>
           
-          {/* After: SceneFlow AI Solution */}
-          <div className="text-center">
-            <div className="mb-6">
-              <div className="inline-flex items-center px-4 py-2 bg-green-500/20 border border-green-500/30 rounded-full mb-4">
-                <span className="text-green-400 text-sm font-medium">✅ SceneFlow AI Solution</span>
+          {/* Right: Visual */}
+          <motion.div
+            className="relative"
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-slate-800 to-slate-900 p-8">
+              {/* Workflow Visualization */}
+              <div className="space-y-4">
+                {['Idea', 'Script', 'Visuals', 'Video', 'Film'].map((step, index) => (
+                  <div key={index} className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                      index === 4 
+                        ? 'bg-gradient-to-br from-cyan-500 to-purple-500' 
+                        : 'bg-slate-700/50 border border-white/10'
+                    }`}>
+                      {index === 4 ? (
+                        <CheckCircle className="w-6 h-6 text-white" />
+                      ) : (
+                        <span className="text-lg font-bold text-gray-400">{index + 1}</span>
+                      )}
+                    </div>
+                    <div className="flex-1 h-2 bg-slate-700/50 rounded-full overflow-hidden">
+                      <motion.div 
+                        className="h-full bg-gradient-to-r from-cyan-500 to-purple-500"
+                        initial={{ width: 0 }}
+                        whileInView={{ width: '100%' }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.8, delay: 0.3 + index * 0.15 }}
+                      />
+                    </div>
+                    <span className={`text-sm font-medium ${index === 4 ? 'text-cyan-400' : 'text-gray-500'}`}>
+                      {step}
+                    </span>
+                  </div>
+                ))}
               </div>
-              <h4 className="text-xl font-semibold text-white mb-2">Simple & Accessible</h4>
+              
+              <div className="mt-8 pt-6 border-t border-white/10 text-center">
+                <p className="text-2xl font-bold text-white mb-1">~5 minutes</p>
+                <p className="text-sm text-gray-500">From concept to complete film</p>
+              </div>
             </div>
             
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <span className="text-green-400 text-lg">💚</span>
-                </div>
-                <div className="text-left">
-                  <p className="text-white font-medium">One automated platform subscription</p>
-                  <p className="text-green-300 text-sm">$5-399/month all-inclusive</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-400 text-lg">⚡</span>
-                </div>
-                <div className="text-left">
-                  <p className="text-white font-medium">Minutes, not weeks</p>
-                  <p className="text-blue-300 text-sm">AI-powered automation</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
-                <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <span className="text-purple-400 text-lg">🤖</span>
-                </div>
-                <div className="text-left">
-                  <p className="text-white font-medium">No technical skills needed</p>
-                  <p className="text-purple-300 text-sm">AI handles the complexity</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3 p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
-                <div className="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <span className="text-indigo-400 text-lg">🌍</span>
-                </div>
-                <div className="text-left">
-                  <p className="text-white font-medium">Accessible to everyone</p>
-                  <p className="text-indigo-300 text-sm">Democratized video creation</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-        
-        {/* Transformation Message */}
-        <motion.div 
-          className="text-center"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-        >
-          <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-full">
-            <span className="text-blue-400 text-lg mr-2">➡️</span>
-            <span className="text-white font-medium">
-              SceneFlow AI removes all traditional barriers, making professional video production accessible to creators of all skill levels.
-            </span>
-          </div>
-        </motion.div>
+            {/* Glow */}
+            <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-pink-500/10 rounded-3xl blur-2xl -z-10" />
+          </motion.div>
+        </div>
       </div>
     </section>
   )
