@@ -199,13 +199,16 @@ export function FeatureHighlight() {
               </ul>
             </div>
             
-            {/* Screening Room Screenshot with Ken Burns Effect */}
+            {/* Screening Room Video Demo */}
             <div className="relative">
               <div className="aspect-video bg-slate-900 rounded-xl border border-white/10 overflow-hidden">
-                <img 
-                  src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/demo/screening-room-ui.png" 
-                  alt="SceneFlow AI Screening Room - Immersive Film Playback"
-                  className="w-full h-full object-cover animate-ken-burns"
+                <video 
+                  src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/demo/screening-room.mp4" 
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
                 />
               </div>
             </div>

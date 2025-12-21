@@ -137,7 +137,7 @@ export function FinalCTA() {
       <DemoVideoModal 
         open={isDemoOpen} 
         onClose={() => setIsDemoOpen(false)} 
-        src="/demo/sceneflow-demo.mp4" 
+        src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/demo/sceneflow-demo-v2.mp4" 
         poster="/demo/sceneflow-poster.jpg" 
       />
     </section>
