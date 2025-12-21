@@ -213,12 +213,12 @@ export function FeatureHighlight() {
               <div className="aspect-video bg-slate-900 rounded-xl border border-white/10 overflow-hidden relative">
                 <video 
                   ref={screeningVideoRef}
-                  src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/demo/screening-room.mp4" 
+                  src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/demo/screening-room.mp4#t=0.1" 
                   autoPlay
                   loop
                   muted
                   playsInline
-                  preload="metadata"
+                  preload="auto"
                   className="w-full h-full object-cover"
                 />
                 {/* Sound control button */}

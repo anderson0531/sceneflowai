@@ -185,11 +185,11 @@ export function HeroSection() {
                   loop
                   muted
                   playsInline
-                  preload="metadata"
+                  preload="auto"
                   className="w-full h-full object-cover"
                   poster="/demo/hero-poster.jpg"
                 >
-                  <source src="/demo/hero-demo.mp4" type="video/mp4" />
+                  <source src="/demo/hero-demo.mp4#t=0.1" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
                 
