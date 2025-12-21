@@ -188,7 +188,7 @@ export function HeroSection() {
                   className="w-full h-full object-cover"
                   poster="/demo/hero-poster.jpg"
                 >
-                  <source src="/demo/hero-demo.mp4" type="video/mp4" />
+                  <source src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/demo/sceneflow-demo.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
                 
@@ -222,7 +222,7 @@ export function HeroSection() {
       <DemoVideoModal 
         open={isDemoOpen} 
         onClose={() => setIsDemoOpen(false)} 
-        src="/demo/sceneflow-demo.mp4" 
+        src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/demo/sceneflow-demo.mp4" 
         poster="/demo/sceneflow-poster.jpg" 
       />
     </motion.section>
