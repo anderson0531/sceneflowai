@@ -81,14 +81,13 @@ export function HeroSection() {
 
           {/* Main Headline */}
           <motion.h1 
-            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-8 leading-[1.1] tracking-tight"
-            style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
+            className="mb-8 leading-tight tracking-tight"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
           >
-            <span className="block">From Idea to</span>
-            <span className="block bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent drop-shadow-sm" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white">From Idea to</span>
+            <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400">
               Cinematic Reality
             </span>
           </motion.h1>

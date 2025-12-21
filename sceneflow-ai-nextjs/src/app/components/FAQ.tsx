@@ -8,11 +8,51 @@ export function FAQ() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
   const faqs = [
+    // AI-Guided Production FAQs
     {
-      question: 'What is SceneFlow AI?',
+      question: 'How does AI-guided production work for ideas, scripts, and videos?',
       answer:
-        'SceneFlow AI is an AI-powered virtual production studio that transforms your creative ideas into professional films. Write a simple concept, and our AI generates scripts, creates consistent characters, produces stunning visuals, and adds professional voice acting—all in one seamless platform.',
+        'SceneFlow AI guides you through a seamless 4-phase workflow: Ideation → Script → Storyboard → Video. Start by describing your concept in plain language, and our AI generates a professional screenplay with proper formatting, scene breakdowns, and character arcs. From there, it creates visual storyboards for each scene and produces video with AI-generated imagery and voice acting. The AI handles all technical complexity while you focus on creative decisions.',
     },
+    {
+      question: 'Can I customize the AI-generated scripts and storyboards?',
+      answer:
+        'Absolutely! Every AI output is fully editable. Refine dialogue, adjust scene pacing, modify character descriptions, or completely rewrite sections. SceneFlow AI treats your edits as creative direction—the system learns your preferences and adapts future suggestions accordingly. You maintain complete creative control while the AI accelerates your workflow.',
+    },
+    // AI Editing Tools FAQs
+    {
+      question: 'What AI editing tools are available for frames and video?',
+      answer:
+        'SceneFlow AI provides powerful frame-by-frame and video editing tools: regenerate individual frames with refined prompts, adjust timing and pacing, swap voice actors, modify scene transitions, and fine-tune visual consistency. The AI Segment Editor lets you isolate and regenerate specific portions of your video without affecting the rest. All edits preserve your character consistency and visual style.',
+    },
+    {
+      question: "How do I fix a single frame or video segment I don't like?",
+      answer:
+        'Use the Segment Editor to select any frame or video clip you want to change. Describe what you want different—"make the lighting warmer," "change the character\'s expression to surprised," or "add rain to the background." The AI regenerates just that segment while maintaining continuity with surrounding frames. You can iterate as many times as needed until it\'s perfect.',
+    },
+    // Screening Room FAQs
+    {
+      question: 'What is the Screening Room for storyboard and video reviews?',
+      answer:
+        'The Screening Room is your collaborative review hub. Share your storyboards and video drafts with team members, clients, or stakeholders via secure shareable links. Reviewers can leave timestamped comments on specific frames or scenes, suggest edits, and approve final cuts. All feedback is centralized in one place, eliminating scattered email threads and version confusion.',
+    },
+    {
+      question: 'How does collaborative feedback work in the Screening Room?',
+      answer:
+        'Invite reviewers by sharing a unique link—no account required for viewers. They can watch your video, pause at any moment, and leave comments tied to specific timecodes. You\'ll see all feedback in a threaded format, can respond to comments, mark them as resolved, and track which suggestions have been addressed. It\'s like Google Docs collaboration, but for video.',
+    },
+    // Director Scoring FAQs
+    {
+      question: 'How does Director and Audience scoring work?',
+      answer:
+        'SceneFlow AI provides two scoring perspectives: Director Score evaluates technical craft (pacing, visual consistency, audio quality, narrative structure) while Audience Score predicts emotional engagement and entertainment value. Both scores update in real-time as you edit, helping you balance artistic vision with audience appeal. See exactly which scenes need work and why.',
+    },
+    {
+      question: 'How does scoring integrate with AI editing tools?',
+      answer:
+        'Scores aren\'t just numbers—they\'re actionable. Click on any low-scoring scene to see specific AI recommendations: "This scene\'s pacing feels rushed—consider adding 2 seconds to the emotional beat" or "Audio levels drop here—regenerate with clearer voice acting." One-click applies the AI\'s suggested fix, or use it as guidance for your own edits. The system learns what works for your style.',
+    },
+    // General Platform FAQs
     {
       question: 'How does the $5 trial work?',
       answer:
@@ -21,22 +61,7 @@ export function FAQ() {
     {
       question: 'Do I need technical skills or video editing experience?',
       answer:
-        'Absolutely not! SceneFlow AI handles all the technical complexity. If you can describe your idea in words, you can create professional videos. Our AI manages script formatting, visual consistency, voice synthesis, and video assembly automatically.',
-    },
-    {
-      question: 'How does character consistency work?',
-      answer:
-        'Our AI maintains character identity across all scenes in your production. Once you define a character\'s appearance, personality, and voice, SceneFlow ensures they look and sound consistent throughout your entire film—no manual tracking or editing required.',
-    },
-    {
-      question: 'What types of content can I create?',
-      answer:
-        'SceneFlow AI supports a wide range of creative projects: short films, narrative stories, marketing videos, educational content, social media clips, animated explainers, and more. Our platform adapts to your creative vision, whether you\'re making a 30-second ad or a 10-minute documentary.',
-    },
-    {
-      question: 'How long does it take to create a video?',
-      answer:
-        'Most users go from initial idea to finished video in under an hour. Script generation takes seconds, character creation is instant, and video production happens in real-time. What used to require weeks of pre-production now happens in a single creative session.',
+        'Not at all! SceneFlow AI handles all the technical complexity. If you can describe your idea in words, you can create professional videos. Our AI manages script formatting, visual consistency, voice synthesis, and video assembly automatically. The interface is designed for creators, not engineers.',
     },
   ]
 

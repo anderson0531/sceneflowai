@@ -1,7 +1,8 @@
 'use client'
 
-// Use the new global header from app layout; remove legacy header here
+// Landing page with dedicated Header component
 import dynamic from 'next/dynamic'
+import { Header } from './components/Header'
 import { HeroSection } from './components/HeroSection'
 import { TrustSignals } from './components/TrustSignals'
 import { SocialProof } from './components/SocialProof'
@@ -18,7 +19,7 @@ import { Footer } from './components/Footer'
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      {/* GlobalHeader is rendered by root layout; removing duplicate header here */}
+      <Header />
       <HeroSection />
       <TrustSignals />
       <SocialProof />
