@@ -1,13 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Shield, Globe, Film, Mic2, Video, Image, Play, ArrowRight } from 'lucide-react'
+import { Users, Shield, Globe, Film, Mic2, Video, Image, Play, ArrowRight, Volume2, VolumeX } from 'lucide-react'
 import { FeatureDetailModal } from './FeatureDetailModal'
 import { Button } from '@/components/ui/Button'
 
 export function FeatureHighlight() {
   const [selectedFeature, setSelectedFeature] = useState<number | null>(null)
+  const [isScreeningMuted, setIsScreeningMuted] = useState(true)
+  const screeningVideoRef = useRef<HTMLVideoElement>(null)
+  
+  const toggleScreeningMute = () => {
+    if (screeningVideoRef.current) {
+      screeningVideoRef.current.muted = !screeningVideoRef.current.muted
+      setIsScreeningMuted(!isScreeningMuted)
+    }
+  }
 
   const features = [
     {
@@ -201,15 +210,38 @@ export function FeatureHighlight() {
             
             {/* Screening Room Video Demo */}
             <div className="relative">
-              <div className="aspect-video bg-slate-900 rounded-xl border border-white/10 overflow-hidden">
+              <div className="aspect-video bg-slate-900 rounded-xl border border-white/10 overflow-hidden relative">
                 <video 
+                  ref={screeningVideoRef}
                   src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/demo/screening-room.mp4" 
                   autoPlay
                   loop
                   muted
                   playsInline
+                  preload="metadata"
                   className="w-full h-full object-cover"
                 />
+                {/* Sound control button */}
+                <button
+                  onClick={toggleScreeningMute}
+                  className={`absolute bottom-4 right-4 flex items-center gap-2 px-4 py-2.5 backdrop-blur-sm rounded-lg border transition-all ${
+                    isScreeningMuted 
+                      ? 'bg-purple-600/90 border-purple-400/30 hover:bg-purple-500/90' 
+                      : 'bg-slate-800/90 border-cyan-400/30 hover:bg-slate-700/90'
+                  }`}
+                >
+                  {isScreeningMuted ? (
+                    <>
+                      <VolumeX className="w-4 h-4 text-white" />
+                      <span className="text-xs font-medium text-white">🎵 Unmute</span>
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="w-4 h-4 text-cyan-400 animate-pulse" />
+                      <span className="text-xs font-medium text-cyan-300">Sound On</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>
