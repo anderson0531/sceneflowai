@@ -135,10 +135,54 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
           const projectData = json.project
           
           // Hydrate guide store with project data
-          if (projectData.metadata?.filmTreatment) {
+          // Priority: filmTreatmentVariant (approved treatment from Vision) > filmTreatment (text)
+          if (projectData.metadata?.filmTreatmentVariant) {
+            // When navigating back from Vision, restore the approved film treatment variant
+            const approvedVariant = projectData.metadata.filmTreatmentVariant
+            const variantContent = approvedVariant.content || approvedVariant.synopsis || approvedVariant.logline || ''
+            
+            // Update the main treatment text
+            updateTreatment(variantContent)
+            
+            // Build the variant object for the variants list
+            const variantForList = {
+              id: approvedVariant.id || 'approved-treatment',
+              label: approvedVariant.label || 'Approved Treatment',
+              content: variantContent,
+              visual_style: approvedVariant.visual_style || '',
+              tone_description: approvedVariant.tone_description || '',
+              target_audience: approvedVariant.target_audience || '',
+              ...approvedVariant
+            }
+            
+            // Check existing variants and merge
+            const existingVariants = projectData.metadata?.treatmentVariants || []
+            const hasApproved = existingVariants.some((v: any) => v.id === variantForList.id)
+            
+            if (!hasApproved) {
+              // Add approved variant as the first option
+              setTreatmentVariants([variantForList, ...existingVariants])
+            } else {
+              setTreatmentVariants(existingVariants)
+            }
+            
+            // Hydrate beats from the approved variant
+            if (Array.isArray(approvedVariant.beats) && approvedVariant.beats.length > 0) {
+              setBeatsView(approvedVariant.beats)
+            }
+            
+            // Set estimated runtime from variant
+            if (approvedVariant.total_duration_seconds) {
+              setEstimatedRuntime(approvedVariant.total_duration_seconds)
+            }
+            
+            console.log('[StudioPage] Restored approved filmTreatmentVariant from project:', approvedVariant.id || 'approved-treatment')
+          } else if (projectData.metadata?.filmTreatment) {
             updateTreatment(projectData.metadata.filmTreatment)
           }
-          if (projectData.metadata?.treatmentVariants?.length) {
+          
+          // Load treatmentVariants if not already loaded from filmTreatmentVariant
+          if (!projectData.metadata?.filmTreatmentVariant && projectData.metadata?.treatmentVariants?.length) {
             setTreatmentVariants(projectData.metadata.treatmentVariants)
           }
           if (projectData.title) {
@@ -153,12 +197,12 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
             setLastInput(projectData.metadata.blueprintInput)
             setIsInputExpanded(false) // Collapse input if we have saved input
           }
-          // Hydrate beats view
-          if (Array.isArray(projectData.metadata?.beats)) {
+          // Hydrate beats view (fallback if not loaded from filmTreatmentVariant)
+          if (!projectData.metadata?.filmTreatmentVariant && Array.isArray(projectData.metadata?.beats)) {
             setBeatsView(projectData.metadata.beats)
           }
-          // Hydrate estimated runtime
-          if (projectData.metadata?.estimatedRuntime) {
+          // Hydrate estimated runtime (fallback if not loaded from filmTreatmentVariant)
+          if (!projectData.metadata?.filmTreatmentVariant && projectData.metadata?.estimatedRuntime) {
             setEstimatedRuntime(projectData.metadata.estimatedRuntime)
           }
           console.log('[StudioPage] Project data loaded:', projectData.id)
