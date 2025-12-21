@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DemoVideoModal } from './DemoVideoModal'
 import { Play, ArrowRight, Sparkles, Film, Mic2, Video, Users, Volume2, VolumeX } from 'lucide-react'
 import { useRef } from 'react'
@@ -11,12 +11,65 @@ export function HeroSection() {
   const [isDemoOpen, setIsDemoOpen] = useState(false)
   const [isMuted, setIsMuted] = useState(true)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const audioRef = useRef<HTMLAudioElement>(null)
+  
+  // Sync audio with video playback
+  useEffect(() => {
+    const video = videoRef.current
+    const audio = audioRef.current
+    if (!video || !audio) return
+    
+    const syncAudio = () => {
+      if (audio && video) {
+        // Keep audio in sync with video
+        if (Math.abs(audio.currentTime - video.currentTime) > 0.3) {
+          audio.currentTime = video.currentTime
+        }
+      }
+    }
+    
+    const handlePlay = () => {
+      if (audio && !isMuted) {
+        audio.play().catch(() => {})
+      }
+    }
+    
+    const handlePause = () => {
+      if (audio) audio.pause()
+    }
+    
+    const handleSeeked = () => {
+      if (audio) audio.currentTime = video.currentTime
+    }
+    
+    video.addEventListener('play', handlePlay)
+    video.addEventListener('pause', handlePause)
+    video.addEventListener('seeked', handleSeeked)
+    video.addEventListener('timeupdate', syncAudio)
+    
+    return () => {
+      video.removeEventListener('play', handlePlay)
+      video.removeEventListener('pause', handlePause)
+      video.removeEventListener('seeked', handleSeeked)
+      video.removeEventListener('timeupdate', syncAudio)
+    }
+  }, [isMuted])
   
   const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted
-      setIsMuted(!isMuted)
+    const audio = audioRef.current
+    const video = videoRef.current
+    
+    if (audio && video) {
+      if (isMuted) {
+        // Unmuting - start audio playback synced with video
+        audio.currentTime = video.currentTime
+        audio.play().catch(() => {})
+      } else {
+        // Muting - pause audio
+        audio.pause()
+      }
     }
+    setIsMuted(!isMuted)
   }
   return (
     <motion.section 
@@ -191,6 +244,14 @@ export function HeroSection() {
                   <source src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/demo/sceneflow-demo.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
+                
+                {/* Background music audio element */}
+                <audio
+                  ref={audioRef}
+                  loop
+                  preload="auto"
+                  src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/demo/sceneflow-anthem.mp3"
+                />
                 
                 {/* Status badge overlay */}
                 <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-slate-800/80 backdrop-blur-sm rounded-lg border border-white/10">
