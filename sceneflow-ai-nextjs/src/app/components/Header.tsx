@@ -77,34 +77,29 @@ export function Header() {
   return (
     <>
       <motion.header 
-        className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-md border-b border-gray-800/50"
+        className="fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Desktop Header */}
-          <div className="hidden lg:flex justify-between items-center h-24">
+          <div className="hidden lg:flex justify-between items-center h-20">
             {/* Logo - Large and Prominent */}
             <div className="flex items-center space-x-4">
-              {/* Updated Logo with teal-green accent matching dashboard */}
-              <div className="relative">
-                <div className="w-16 h-16 bg-sf-surface-light rounded-lg flex items-center justify-center">
-                  <div className="w-10 h-10 bg-sf-primary rounded-md flex items-center justify-center">
-                    <div className="w-5 h-5 bg-sf-background rounded-sm"></div>
-                  </div>
-                </div>
-                {/* Small connector triangle in teal-green */}
-                <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-2 border-l-sf-primary border-t-2 border-t-transparent border-b-2 border-b-transparent"></div>
+              {/* Gradient Logo Mark */}
+              <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 via-purple-500 to-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
+                <span className="text-xl font-bold text-white">SF</span>
               </div>
               
-              {/* App Name and Tagline */}
-              <div className="flex flex-col space-y-1">
-                <h1 className="app-name-text text-2xl font-bold">
-                  SceneFlow <span className="text-sf-primary">AI</span>
+              {/* App Name - Larger and More Prominent */}
+              <div className="flex flex-col">
+                <h1 className="text-3xl font-bold tracking-tight">
+                  <span className="text-white">SceneFlow</span>
+                  <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent"> AI</span>
                 </h1>
-                <p className="text-sm text-gray-400 font-medium tracking-wide">
-                  Imagine. Generate. Flow.
+                <p className="text-xs text-gray-400 font-medium tracking-wider uppercase">
+                  From Idea to Cinematic Reality
                 </p>
               </div>
             </div>
@@ -175,29 +170,20 @@ export function Header() {
           {/* Mobile Header - Large Logo and App Name */}
           <div className="lg:hidden">
             {/* Top Line - Large Logo and Mobile Menu Button */}
-            <div className="flex justify-between items-center h-20">
+            <div className="flex justify-between items-center h-16">
               {/* Large Mobile Logo */}
               <div className="flex items-center space-x-3">
-                {/* Updated Mobile Logo with teal-green accent matching dashboard */}
-                <div className="relative">
-                  <div className="w-12 h-12 bg-sf-surface-light rounded-lg flex items-center justify-center">
-                    <div className="w-8 h-8 bg-sf-primary rounded-md flex items-center justify-center">
-                      <div className="w-4 h-4 bg-sf-background rounded-sm"></div>
-                    </div>
-                  </div>
-                  {/* Small connector triangle in teal-green */}
-                  <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-2 border-l-sf-primary border-t-2 border-t-transparent border-b-2 border-b-transparent"></div>
+                {/* Gradient Logo Mark */}
+                <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 via-purple-500 to-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
+                  <span className="text-lg font-bold text-white">SF</span>
                 </div>
                 
-                {/* Mobile App Name and Tagline */}
-                <div className="flex flex-col space-y-1">
-                  <h1 className="text-lg font-bold">
-                    <span className="text-white">SceneFlow </span>
-                    <span className="text-sf-primary">AI</span>
+                {/* Mobile App Name */}
+                <div className="flex flex-col">
+                  <h1 className="text-xl font-bold tracking-tight">
+                    <span className="text-white">SceneFlow</span>
+                    <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent"> AI</span>
                   </h1>
-                  <p className="text-xs text-gray-400 font-medium tracking-wide">
-                    Imagine. Generate. Flow.
-                  </p>
                 </div>
               </div>
               
