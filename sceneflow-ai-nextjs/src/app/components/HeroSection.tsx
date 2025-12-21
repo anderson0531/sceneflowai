@@ -174,20 +174,21 @@ export function HeroSection() {
                 </div>
               </div>
               
-              {/* Screenshot/Video Placeholder */}
-              <div className="aspect-[16/9] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center relative">
-                {/* PLACEHOLDER: Replace with actual app screenshot or demo video */}
-                <div className="text-center p-8">
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center mx-auto mb-6 cursor-pointer hover:scale-105 transition-transform"
-                    onClick={() => setIsDemoOpen(true)}
-                  >
-                    <Play className="w-10 h-10 text-white/80 ml-1" />
-                  </div>
-                  <p className="text-gray-400 font-medium mb-2">📸 PLACEHOLDER: App Screenshot</p>
-                  <p className="text-sm text-gray-600">Recommended: Virtual Production UI screenshot (1920×1080)</p>
-                </div>
+              {/* Hero Demo Video */}
+              <div className="aspect-[16/9] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                  poster="/demo/hero-poster.jpg"
+                >
+                  <source src="/demo/hero-demo.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
                 
-                {/* Decorative overlay elements */}
+                {/* Status badge overlay */}
                 <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-slate-800/80 backdrop-blur-sm rounded-lg border border-white/10">
                   <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                   <span className="text-xs text-gray-300">Virtual Production Studio</span>
