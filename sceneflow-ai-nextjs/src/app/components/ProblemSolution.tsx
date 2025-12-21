@@ -44,8 +44,8 @@ export function ProblemSolution() {
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
               <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border border-white/5 h-full hover:border-cyan-500/30 transition-all duration-300">
-                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-6 opacity-20 group-hover:opacity-40 transition-opacity`}>
-                  <item.icon className="w-7 h-7 text-white" />
+                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-6 opacity-80 group-hover:opacity-100 transition-opacity shadow-lg`}>
+                  <item.icon className="w-7 h-7 text-white drop-shadow-sm" />
                 </div>
                 
                 <div className="mb-6">

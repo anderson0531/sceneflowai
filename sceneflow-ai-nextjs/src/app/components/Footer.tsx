@@ -51,12 +51,10 @@ export function Footer() {
           {/* Logo and Description */}
           <div className="col-span-1 lg:col-span-2">
             <div className="flex items-center space-x-3 mb-6">
-              {/* Updated Logo with teal-green accent matching dashboard */}
+              {/* Logo with gradient accent */}
               <div className="relative">
-                <div className="w-10 h-10 bg-sf-surface-light rounded-lg flex items-center justify-center">
-                  <div className="w-6 h-6 bg-sf-primary rounded-md flex items-center justify-center">
-                    <div className="w-3 h-3 bg-sf-background rounded-sm"></div>
-                  </div>
+                <div className="w-11 h-11 bg-gradient-to-br from-cyan-500 via-purple-500 to-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
+                  <span className="text-xl font-bold text-white">SF</span>
                 </div>
                 {/* Small connector triangle in teal-green */}
                 <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-2 border-l-sf-primary border-t-2 border-t-transparent border-b-2 border-b-transparent"></div>
@@ -171,14 +169,23 @@ export function Footer() {
           </div>
         </div>
         
-        {/* Bottom Section */}
-        <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-400 text-sm">
-            © 2025 SceneFlow AI. All rights reserved.
-          </p>
+        {/* Tagline Banner */}
+        <div className="border-t border-gray-800 mt-12 pt-10">
+          <div className="text-center mb-8">
+            <p className="text-2xl md:text-3xl font-semibold bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent">
+              Made with ❤️ for creators
+            </p>
+            <p className="text-gray-500 mt-2">From Idea to Cinematic Reality</p>
+          </div>
           
-          <div className="flex items-center space-x-6 mt-4 md:mt-0">
-            <span className="text-gray-500 text-sm">Made with ❤️ for creators</span>
+          {/* Copyright */}
+          <div className="flex flex-col md:flex-row justify-between items-center pt-6 border-t border-gray-800/50">
+            <p className="text-gray-500 text-sm">
+              © 2025 SceneFlow AI. All rights reserved.
+            </p>
+            <div className="flex items-center gap-4 mt-4 md:mt-0">
+              <span className="text-xs text-gray-600">Powered by Industry-Leading AI</span>
+            </div>
           </div>
         </div>
       </div>

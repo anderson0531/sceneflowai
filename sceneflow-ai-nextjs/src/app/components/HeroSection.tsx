@@ -81,13 +81,14 @@ export function HeroSection() {
 
           {/* Main Headline */}
           <motion.h1 
-            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-8 leading-[1.05] tracking-tight"
+            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-8 leading-[1.1] tracking-tight"
+            style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
           >
             <span className="block">From Idea to</span>
-            <span className="block bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent drop-shadow-sm" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               Cinematic Reality
             </span>
           </motion.h1>
@@ -174,21 +175,8 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1.3 }}
           >
-            {/* Browser Frame */}
-            <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-2xl shadow-purple-500/10">
-              {/* Browser Top Bar */}
-              <div className="bg-slate-800/90 backdrop-blur-sm px-4 py-3 flex items-center gap-2 border-b border-white/5">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-amber-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-green-500/80" />
-                </div>
-                <div className="flex-1 flex justify-center">
-                  <div className="px-4 py-1 bg-slate-900/50 rounded-md text-xs text-gray-400 font-mono">
-                    sceneflow-ai.com/virtual-production
-                  </div>
-                </div>
-              </div>
+            {/* Video Frame */}
+            <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-purple-500/20">
               
               {/* Hero Demo Video */}
               <div className="aspect-[16/9] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden group">
