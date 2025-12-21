@@ -104,7 +104,7 @@ export function DemocratizationSection() {
               </div>
               
               <div className="mt-8 pt-6 border-t border-white/10 text-center">
-                <p className="text-2xl font-bold text-white mb-1">~5 minutes</p>
+                <p className="text-2xl font-bold text-white mb-1">~60 minutes</p>
                 <p className="text-sm text-gray-500">From concept to complete film</p>
               </div>
             </div>

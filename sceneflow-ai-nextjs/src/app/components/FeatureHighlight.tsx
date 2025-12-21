@@ -199,17 +199,14 @@ export function FeatureHighlight() {
               </ul>
             </div>
             
-            {/* Screening Room Placeholder */}
+            {/* Screening Room Screenshot with Ken Burns Effect */}
             <div className="relative">
-              <div className="aspect-video bg-slate-900 rounded-xl border border-white/10 flex items-center justify-center">
-                {/* PLACEHOLDER: Screening Room screenshot */}
-                <div className="text-center p-6">
-                  <div className="w-16 h-16 rounded-full bg-rose-500/20 border border-rose-500/30 flex items-center justify-center mx-auto mb-4">
-                    <Play className="w-8 h-8 text-rose-400 ml-1" />
-                  </div>
-                  <p className="text-gray-500 text-sm">📸 PLACEHOLDER: Screening Room UI</p>
-                  <p className="text-gray-600 text-xs mt-1">Add screenshot of playback interface</p>
-                </div>
+              <div className="aspect-video bg-slate-900 rounded-xl border border-white/10 overflow-hidden">
+                <img 
+                  src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/demo/screening-room-ui.png" 
+                  alt="SceneFlow AI Screening Room - Immersive Film Playback"
+                  className="w-full h-full object-cover animate-ken-burns"
+                />
               </div>
             </div>
           </div>
