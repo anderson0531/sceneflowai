@@ -88,19 +88,19 @@ export function Header() {
           {/* Desktop Header */}
           <div className="hidden lg:flex justify-between items-center h-20">
             {/* Logo - Consistent with App */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-3">
               {/* Logo matching app style */}
-              <div className="w-12 h-12 bg-sf-surface-light rounded-xl flex items-center justify-center">
-                <div className="w-7 h-7 bg-sf-primary rounded-lg flex items-center justify-center">
-                  <div className="w-3.5 h-3.5 bg-sf-background rounded-sm" />
+              <div className="w-11 h-11 bg-sf-surface-light rounded-xl flex items-center justify-center">
+                <div className="w-6 h-6 bg-sf-primary rounded-lg flex items-center justify-center">
+                  <div className="w-3 h-3 bg-sf-background rounded-sm" />
                 </div>
               </div>
               
-              {/* App Name - Matching app style */}
-              <h1 className="text-2xl font-bold tracking-tight">
+              {/* App Name - Larger and properly aligned */}
+              <span className="text-2xl font-bold tracking-tight leading-none">
                 <span className="text-white">SceneFlow</span>
                 <span className="text-sf-primary"> AI</span>
-              </h1>
+              </span>
             </div>
             
             {/* Navigation Links - Center */}
