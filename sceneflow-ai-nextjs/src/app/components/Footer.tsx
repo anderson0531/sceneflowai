@@ -67,8 +67,8 @@ export function Footer() {
               </span>
             </div>
             <p className="text-gray-400 max-w-md mb-6">
-              Transform your ideas into professional videos with AI-powered workflow automation. 
-              The future of video production is here.
+              Transform your ideas into cinematic reality with AI-powered filmmaking. 
+              From script to screening room—the future of video production is here.
             </p>
             
             {/* Social Links */}
@@ -174,7 +174,7 @@ export function Footer() {
         {/* Bottom Section */}
         <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm">
-            © 2024 SceneFlow AI. All rights reserved.
+            © 2025 SceneFlow AI. All rights reserved.
           </p>
           
           <div className="flex items-center space-x-6 mt-4 md:mt-0">

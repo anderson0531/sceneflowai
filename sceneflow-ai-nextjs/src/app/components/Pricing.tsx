@@ -181,18 +181,23 @@ export function Pricing() {
   ]
 
   return (
-    <section id="pricing" className="py-24 bg-gray-900">
+    <section id="pricing" className="py-24 bg-slate-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-20"
+          className="text-center mb-16"
         >
-          <h2 className="text-5xl font-bold mb-6">Choose Your Video Production Journey</h2>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            From aspiring creators to professional studios, we have the perfect plan to democratize professional video production and scale with your creative ambitions through our complete 6-step workflow.
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+            Choose Your{' '}
+            <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent">
+              Production Plan
+            </span>
+          </h2>
+          <p className="text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed">
+            From hobbyists to professional studios—start free and scale as you grow.
           </p>
         </motion.div>
 
@@ -202,15 +207,15 @@ export function Pricing() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="flex justify-center mb-16"
+          className="flex justify-center mb-12"
         >
-          <div className="bg-gray-800 rounded-lg p-1 flex items-center">
+          <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-1 flex items-center border border-white/5">
             <button
               onClick={() => setIsAnnual(false)}
               className={`px-6 py-3 rounded-md font-medium transition-all duration-200 ${
                 !isAnnual
-                  ? 'bg-sf-primary text-sf-background shadow-lg'
-                  : 'text-gray-300 hover:text-white'
+                  ? 'bg-gradient-to-r from-cyan-500 to-purple-500 text-white shadow-lg'
+                  : 'text-gray-400 hover:text-white'
               }`}
             >
               Monthly
@@ -219,12 +224,12 @@ export function Pricing() {
               onClick={() => setIsAnnual(true)}
               className={`px-6 py-3 rounded-md font-medium transition-all duration-200 ${
                 isAnnual
-                  ? 'bg-sf-primary text-sf-background shadow-lg'
-                  : 'text-gray-300 hover:text-white'
+                  ? 'bg-gradient-to-r from-cyan-500 to-purple-500 text-white shadow-lg'
+                  : 'text-gray-400 hover:text-white'
               }`}
             >
               Annual
-              <span className="ml-2 text-sf-accent text-sm">Save 20%</span>
+              <span className="ml-2 text-amber-400 text-sm">Save 20%</span>
             </button>
           </div>
         </motion.div>

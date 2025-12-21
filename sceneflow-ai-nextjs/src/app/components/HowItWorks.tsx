@@ -1,61 +1,126 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { FileText, Clapperboard, Video, Share2 } from 'lucide-react'
-
+import { Lightbulb, Clapperboard, Film, Rocket, ArrowRight } from 'lucide-react'
 
 export function HowItWorks() {
-
   const steps = [
     {
-      icon: <FileText className="w-10 h-10 text-sf-primary" />,
-      title: '1. Scripting',
-      description: 'Start with an idea and our AI will help you craft a professional script.',
+      icon: <Lightbulb className="w-10 h-10" />,
+      title: '1. The Blueprint',
+      subtitle: 'Ideation',
+      description: 'Start with your idea. AI generates a professional film treatment with story structure and character breakdowns.',
+      color: 'from-cyan-500 to-cyan-600',
+      borderColor: 'border-cyan-500/30',
     },
     {
-      icon: <Clapperboard className="w-10 h-10 text-sf-primary" />,
-      title: '2. Storyboarding',
-      description: 'Visualize your script with an AI-generated storyboard.',
+      icon: <Clapperboard className="w-10 h-10" />,
+      title: '2. Virtual Production',
+      subtitle: 'Script & Storyboard',
+      description: 'Transform your treatment into a full script with AI-generated storyboards and consistent character visuals.',
+      color: 'from-purple-500 to-purple-600',
+      borderColor: 'border-purple-500/30',
     },
     {
-      icon: <Video className="w-10 h-10 text-sf-primary" />,
-      title: '3. Video Generation',
-      description: 'Turn your script and storyboard into a video with a single click.',
+      icon: <Film className="w-10 h-10" />,
+      title: '3. Final Cut',
+      subtitle: 'Video & Audio',
+      description: 'Generate videos with Veo 3.1, add voice acting with ElevenLabs, and preview in the Screening Room.',
+      color: 'from-amber-500 to-amber-600',
+      borderColor: 'border-amber-500/30',
     },
     {
-      icon: <Share2 className="w-10 h-10 text-sf-primary" />,
-      title: '4. Share',
-      description: 'Share your video with the world.',
+      icon: <Rocket className="w-10 h-10" />,
+      title: '4. The Premiere',
+      subtitle: 'Export & Share',
+      description: 'Export your finished film in HD/4K and share with the world. Your story, ready for any platform.',
+      color: 'from-green-500 to-green-600',
+      borderColor: 'border-green-500/30',
     },
   ]
+  
   return (
-    <section id="how-it-works" className="py-24 bg-gray-950">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold">How It Works</h2>
-          <p className="text-lg text-gray-400 mt-4">
-            Create professional videos in minutes, not days.
+    <section id="how-it-works" className="py-24 bg-slate-950 relative overflow-hidden">
+      {/* Background accent */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(139,92,246,0.05),transparent_70%)]" />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <motion.div 
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            Four Phases to{' '}
+            <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent">
+              Cinematic Excellence
+            </span>
+          </h2>
+          <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+            Our streamlined workflow takes you from initial concept to finished film in record time.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+        {/* Steps Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
           {steps.map((step, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.1 * index }}
-              className="text-center"
+              transition={{ duration: 0.5, delay: 0.1 * index }}
+              className="relative group"
             >
-              <div className="w-24 h-24 bg-gray-800/50 rounded-full flex items-center justify-center mx-auto mb-6">
-                {step.icon}
+              {/* Card */}
+              <div className={`relative h-full bg-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border ${step.borderColor} hover:border-opacity-60 transition-all duration-300`}>
+                {/* Step Number Badge */}
+                <div className={`absolute -top-3 -right-3 w-8 h-8 rounded-full bg-gradient-to-br ${step.color} flex items-center justify-center text-white text-sm font-bold shadow-lg`}>
+                  {index + 1}
+                </div>
+                
+                {/* Icon */}
+                <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${step.color} flex items-center justify-center mb-4 text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                  {step.icon}
+                </div>
+                
+                {/* Content */}
+                <h3 className="text-xl font-bold text-white mb-1">{step.title}</h3>
+                <p className="text-sm text-gray-500 mb-3">{step.subtitle}</p>
+                <p className="text-gray-400 text-sm leading-relaxed">{step.description}</p>
               </div>
-              <h3 className="text-2xl font-semibold mb-4">{step.title}</h3>
-              <p className="text-gray-400">{step.description}</p>
+              
+              {/* Connector Arrow (hidden on last item and mobile) */}
+              {index < steps.length - 1 && (
+                <div className="hidden lg:flex absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">
+                  <ArrowRight className="w-6 h-6 text-gray-600" />
+                </div>
+              )}
             </motion.div>
           ))}
         </div>
+
+        {/* Bottom CTA */}
+        <motion.div 
+          className="text-center mt-16"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+        >
+          <p className="text-gray-400 mb-4">
+            Ready to bring your story to life?
+          </p>
+          <a 
+            href="/?signup=1"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 via-purple-500 to-amber-500 hover:from-cyan-400 hover:via-purple-400 hover:to-amber-400 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-500/25"
+          >
+            Start Your Production
+            <ArrowRight className="w-5 h-5" />
+          </a>
+        </motion.div>
       </div>
     </section>
   )

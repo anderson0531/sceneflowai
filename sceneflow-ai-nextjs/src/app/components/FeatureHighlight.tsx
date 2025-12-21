@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Zap, Users, Shield, Globe, Film, BookOpen, Clapperboard, ArrowRight } from 'lucide-react'
+import { Users, Shield, Globe, Film, Mic2, Video, Image, Play, ArrowRight } from 'lucide-react'
 import { FeatureDetailModal } from './FeatureDetailModal'
 import { Button } from '@/components/ui/Button'
 
@@ -12,123 +12,132 @@ export function FeatureHighlight() {
   const features = [
     {
       icon: Film,
-      title: 'AI Story Generator',
-      description: 'Generate complete story structures with acts and chapters in seconds. Transform any idea into a professional film outline.',
-      detailedDescription: 'Our AI Story Generator uses Google Gemini 2.5 Pro to create professional film treatments with three-act structures, character arcs, and scene breakdowns. Perfect for short films (3-10 min), medium productions (10-30 min), and feature-length films (30+ min).',
+      title: 'AI Screenplay Generation',
+      description: 'Transform ideas into professional scripts with Gemini 2.5 Pro. Complete with scene breakdowns, dialogue, and direction.',
+      detailedDescription: 'Our AI Script Generator uses Google Gemini 2.5 Pro to create professional screenplays from your film treatment. Generate complete scripts with professional formatting, natural dialogue, scene descriptions, and camera directions.',
       benefits: [
-        'Industry-standard three-act structure',
-        'Character development and arcs',
-        'Scene-by-scene breakdowns',
-        'Genre-specific templates',
+        'Professional screenplay formatting',
+        'Natural character dialogue',
+        'Scene-by-scene descriptions',
+        'Camera and direction notes',
         'Instant revisions and iterations'
       ],
       useCases: [
-        'Short Film: Generate a complete 5-minute film treatment in 30 seconds',
-        'Web Series: Create episode outlines with consistent character development',
-        'Documentary: Structure your narrative with compelling story beats'
+        'Short Film: Generate a complete screenplay in under a minute',
+        'Web Series: Create episode scripts with consistent character voices',
+        'Documentary: Structure narration with compelling story beats'
       ],
       screenshotPlaceholder: {
-        gradient: 'from-blue-500 to-blue-600',
+        gradient: 'from-cyan-500 to-cyan-600',
         icon: Film
       },
-      ctaText: 'Try Story Generator',
+      ctaText: 'Try Script Generator',
       ctaLink: '/?signup=1',
-      color: 'from-blue-500 to-blue-600'
+      color: 'from-cyan-500 to-cyan-600'
     },
     {
-      icon: BookOpen,
-      title: 'Professional Story Structures',
-      description: 'Industry-standard three-act structures, hero journeys, and custom narratives for every film length and genre.',
-      detailedDescription: 'Access professionally crafted story structures optimized for different film formats. Choose from three-act structures for short films, hero journeys for feature-length content, or custom narrative templates tailored to your genre and vision.',
+      icon: Image,
+      title: 'Character Consistency',
+      description: 'Imagen 3 maintains character identity across every frame. Upload references or generate—your characters stay recognizable.',
+      detailedDescription: 'Using Google Imagen 3 with reference images, we ensure your characters look consistent throughout your entire production. Upload your own character references or let AI generate them, then watch as every scene maintains perfect visual continuity.',
       benefits: [
-        'Tried-and-tested story frameworks',
-        'Genre-specific adaptations',
-        'Flexible duration templates',
-        'Industry best practices',
-        'Easy customization'
+        'Reference image support',
+        'Consistent character appearance',
+        'AI-generated character portraits',
+        'Wardrobe & accessory tracking',
+        'Cross-scene visual continuity'
       ],
       useCases: [
-        'Three-Act: Perfect for 5-30 minute productions with clear beginning, middle, and end',
-        'Hero Journey: Ideal for feature films requiring character transformation arcs',
-        'Custom: Build your own structure for unique narrative formats'
-      ],
-      screenshotPlaceholder: {
-        gradient: 'from-emerald-500 to-emerald-600',
-        icon: BookOpen
-      },
-      ctaText: 'Explore Structures',
-      ctaLink: '/?signup=1',
-      color: 'from-emerald-500 to-emerald-600'
-    },
-    {
-      icon: Clapperboard,
-      title: 'Advanced Chapter Management',
-      description: 'Organize complex narratives with professional act and chapter breakdowns. Perfect for feature films and series.',
-      detailedDescription: 'Manage multi-scene projects with our advanced chapter management system. Create acts, define chapter boundaries, track pacing, and maintain narrative consistency across your entire production.',
-      benefits: [
-        'Multi-act organization',
-        'Chapter-based navigation',
-        'Pacing visualization',
-        'Scene dependency mapping',
-        'Progress tracking'
-      ],
-      useCases: [
-        'Feature Film: Organize 90+ minute productions into clear acts and chapters',
-        'Series: Manage multiple episodes with consistent chapter structures',
-        'Documentary: Break long-form content into digestible narrative chunks'
-      ],
-      screenshotPlaceholder: {
-        gradient: 'from-orange-500 to-orange-600',
-        icon: Clapperboard
-      },
-      ctaText: 'Try Chapter Management',
-      ctaLink: '/?signup=1',
-      color: 'from-orange-500 to-orange-600'
-    },
-    {
-      icon: Zap,
-      title: 'Complete 6-Step Workflow',
-      description: 'End-to-end video production from ideation to optimization. Complete projects in minutes, not days.',
-      detailedDescription: 'Experience the full power of AI-driven video production through our comprehensive 6-step workflow: Ideation, Story Generation, Scriptwriting, Storyboarding, Scene Direction, and Video Generation. Each step seamlessly integrates to create professional content in record time.',
-      benefits: [
-        'End-to-end production pipeline',
-        'Seamless workflow integration',
-        'Automated quality checks',
-        'Real-time collaboration',
-        'Professional output'
-      ],
-      useCases: [
-        'Quick Turnaround: Complete a 5-minute video from concept to final output in under 10 minutes',
-        'Professional Projects: Use all 6 phases for comprehensive, high-quality productions',
-        'Iterative Creation: Refine and optimize each step before moving to the next'
+        'Animation: Keep character designs consistent across 100+ shots',
+        'Live Action: Generate consistent storyboard characters',
+        'Series: Maintain character identity across multiple episodes'
       ],
       screenshotPlaceholder: {
         gradient: 'from-purple-500 to-purple-600',
-        icon: Zap
+        icon: Image
       },
-      ctaText: 'Start Your Project',
+      ctaText: 'See Character Library',
       ctaLink: '/?signup=1',
       color: 'from-purple-500 to-purple-600'
+    },
+    {
+      icon: Video,
+      title: 'Video Generation',
+      description: 'Veo 3.1 with 5 generation modes: Text-to-Video, Image-to-Video, Frame-to-Video, Extend, and Reference-based.',
+      detailedDescription: 'Generate stunning video segments with Google Veo 3.1. Choose from multiple generation modes: T2V (text-to-video), I2V (image-to-video), FTV (frame-anchored for consistency), EXT (extend existing clips), or REF (style reference). Our Keyframe State Machine ensures smooth transitions.',
+      benefits: [
+        'Multiple generation modes',
+        'Frame-anchored consistency',
+        'Keyframe State Machine',
+        'Director\'s Console batch rendering',
+        'HD/4K output quality'
+      ],
+      useCases: [
+        'Quick Cuts: Generate individual shots from prompts',
+        'Smooth Scenes: Use frame-anchoring for visual continuity',
+        'Extended Takes: Extend clips beyond initial duration'
+      ],
+      screenshotPlaceholder: {
+        gradient: 'from-amber-500 to-amber-600',
+        icon: Video
+      },
+      ctaText: 'Try Video Generation',
+      ctaLink: '/?signup=1',
+      color: 'from-amber-500 to-amber-600'
+    },
+    {
+      icon: Mic2,
+      title: 'Voice & Audio Studio',
+      description: 'ElevenLabs integration for natural dialogue, narration, music generation, and sound effects—all in one platform.',
+      detailedDescription: 'Complete audio production with ElevenLabs integration. Generate natural voice acting for every character, professional narration, background music, and sound effects. Multi-language support including tonal languages like Thai and Mandarin.',
+      benefits: [
+        'Character voice acting',
+        'Professional narration',
+        'AI music generation',
+        'Sound effects library',
+        'Multi-language support'
+      ],
+      useCases: [
+        'Dialogue: Give each character a unique, consistent voice',
+        'Narration: Add professional voiceover to your story',
+        'Soundtrack: Generate original music and SFX'
+      ],
+      screenshotPlaceholder: {
+        gradient: 'from-green-500 to-green-600',
+        icon: Mic2
+      },
+      ctaText: 'Explore Audio Tools',
+      ctaLink: '/?signup=1',
+      color: 'from-green-500 to-green-600'
     }
   ]
 
   return (
-    <section id="features" className="py-24 bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="features" className="py-24 bg-slate-900 relative overflow-hidden">
+      {/* Background accent */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(6,182,212,0.05),transparent_70%)]" />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         <motion.div 
-          className="text-center mb-20"
+          className="text-center mb-16"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-5xl font-bold mb-6">Built for Professional Video Production</h2>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            SceneFlow AI combines cutting-edge AI technology with industry-standard video production workflows to democratize professional video creation.
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+            Everything You Need to{' '}
+            <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent">
+              Create Films
+            </span>
+          </h2>
+          <p className="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">
+            A complete AI-powered production suite powered by Google&apos;s latest AI models and ElevenLabs voice technology.
           </p>
         </motion.div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+        {/* Feature Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((feature, index) => {
             const Icon = feature.icon
             
@@ -136,21 +145,75 @@ export function FeatureHighlight() {
               <motion.div 
                 key={index}
                 onClick={() => setSelectedFeature(index)}
-                className="text-center group cursor-pointer"
+                className="group cursor-pointer"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
               >
-                <div className={`w-24 h-24 bg-gradient-to-r ${feature.color} rounded-2xl flex items-center justify-center mx-auto mb-8 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
-                  <Icon className="w-12 h-12 text-white" />
+                <div className="h-full bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-white/5 hover:border-white/10 transition-all duration-300 group-hover:bg-slate-800/70">
+                  <div className={`w-14 h-14 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                    <Icon className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold mb-3 text-white group-hover:text-cyan-400 transition-colors">{feature.title}</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
                 </div>
-                <h3 className="text-xl font-bold mb-4 text-white group-hover:text-sf-primary transition-colors">{feature.title}</h3>
-                <p className="text-gray-300 leading-relaxed text-sm">{feature.description}</p>
               </motion.div>
             )
           })}
         </div>
+
+        {/* Screening Room Feature */}
+        <motion.div 
+          className="mt-16 bg-gradient-to-br from-slate-800/80 to-slate-900/80 rounded-2xl p-8 border border-white/5"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl flex items-center justify-center">
+                  <Play className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-white">Screening Room</h3>
+              </div>
+              <p className="text-gray-400 mb-6 leading-relaxed">
+                Preview your entire film before final export. Watch your scenes come to life with Ken Burns 
+                cinematic animation, synchronized audio tracks, and smooth transitions. Make adjustments 
+                in real-time before committing to final render.
+              </p>
+              <ul className="space-y-3">
+                {[
+                  'Ken Burns cinematic pan & zoom',
+                  'Full audio playback (dialogue, music, SFX)',
+                  'Scene-by-scene navigation',
+                  'HD/4K MP4 export via Shotstack'
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-sm text-gray-300">
+                    <div className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            {/* Screening Room Placeholder */}
+            <div className="relative">
+              <div className="aspect-video bg-slate-900 rounded-xl border border-white/10 flex items-center justify-center">
+                {/* PLACEHOLDER: Screening Room screenshot */}
+                <div className="text-center p-6">
+                  <div className="w-16 h-16 rounded-full bg-rose-500/20 border border-rose-500/30 flex items-center justify-center mx-auto mb-4">
+                    <Play className="w-8 h-8 text-rose-400 ml-1" />
+                  </div>
+                  <p className="text-gray-500 text-sm">📸 PLACEHOLDER: Screening Room UI</p>
+                  <p className="text-gray-600 text-xs mt-1">Add screenshot of playback interface</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
         {/* Section CTA */}
         <motion.div 
@@ -163,17 +226,17 @@ export function FeatureHighlight() {
           <Button
             size="lg"
             onClick={() => window.location.href = '/#pricing'}
-            className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-10 py-5 text-xl font-semibold"
+            className="bg-gradient-to-r from-cyan-500 via-purple-500 to-amber-500 hover:from-cyan-400 hover:via-purple-400 hover:to-amber-400 text-white px-10 py-5 text-lg font-semibold shadow-lg shadow-purple-500/25"
           >
-            See All Plans & Pricing
-            <ArrowRight className="w-6 h-6 ml-3" />
+            See Plans & Pricing
+            <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
-          <p className="text-sm text-gray-400 mt-4">
-            Most filmmakers choose Indie Filmmaker ($49/mo) for advanced features
+          <p className="text-sm text-gray-500 mt-4">
+            Start free with 1,000 credits • No credit card required
           </p>
         </motion.div>
 
-        {/* Additional Filmmaking Features */}
+        {/* Additional Features */}
         <motion.div 
           className="mt-20"
           initial={{ opacity: 0, y: 20 }}
@@ -182,35 +245,35 @@ export function FeatureHighlight() {
           transition={{ duration: 0.6, delay: 0.5 }}
         >
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold mb-4">Complete Video Production Ecosystem</h3>
-            <p className="text-lg text-gray-300 max-w-3xl mx-auto">
-              From short films to feature-length productions, SceneFlow AI provides everything you need for professional video production through our comprehensive 6-step workflow.
+            <h3 className="text-2xl font-bold mb-4 text-white">Built for Professional Production</h3>
+            <p className="text-gray-400 max-w-2xl mx-auto">
+              Enterprise-ready features for serious creators and production teams.
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            <div className="text-center">
-              <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <Users className="w-10 h-10 text-white" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center p-6 bg-slate-800/30 rounded-xl border border-white/5">
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Users className="w-7 h-7 text-white" />
               </div>
-              <h4 className="text-lg font-semibold mb-3 text-white">Team Collaboration</h4>
-              <p className="text-gray-300 text-sm">Work seamlessly with your production team. Share projects, get feedback, and iterate together.</p>
+              <h4 className="text-lg font-semibold mb-2 text-white">Team Collaboration</h4>
+              <p className="text-gray-400 text-sm">Work with your team in real-time. Share projects, gather feedback, and iterate together.</p>
             </div>
             
-            <div className="text-center">
-              <div className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <Shield className="w-10 h-10 text-white" />
+            <div className="text-center p-6 bg-slate-800/30 rounded-xl border border-white/5">
+              <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Shield className="w-7 h-7 text-white" />
               </div>
-              <h4 className="text-lg font-semibold mb-3 text-white">Enterprise Security</h4>
-              <p className="text-gray-300 text-sm">Your film content is secure. BYOK model ensures complete data privacy and control.</p>
+              <h4 className="text-lg font-semibold mb-2 text-white">Enterprise Security</h4>
+              <p className="text-gray-400 text-sm">Your content is secure. BYOK (Bring Your Own Keys) ensures complete data privacy.</p>
             </div>
             
-            <div className="text-center">
-              <div className="w-20 h-20 bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <Globe className="w-10 h-10 text-white" />
+            <div className="text-center p-6 bg-slate-800/30 rounded-xl border border-white/5">
+              <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Globe className="w-7 h-7 text-white" />
               </div>
-              <h4 className="text-lg font-semibold mb-3 text-white">Global AI Models</h4>
-              <p className="text-gray-300 text-sm">Powered by Google Gemini and Veo for state-of-the-art AI generation and film production.</p>
+              <h4 className="text-lg font-semibold mb-2 text-white">Global AI Infrastructure</h4>
+              <p className="text-gray-400 text-sm">Powered by Google Vertex AI with worldwide availability and enterprise-grade reliability.</p>
             </div>
           </div>
         </motion.div>

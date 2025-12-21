@@ -16,7 +16,7 @@ export function ProblemSolution() {
         >
           <h2 className="text-5xl font-bold mb-6">The Problems We Solve</h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            Traditional video production is slow, expensive, and requires years of experience. SceneFlow AI solves these challenges with our complete 6-step workflow.
+            Traditional video production is slow, expensive, and requires years of experience. SceneFlow AI solves these challenges with our AI-powered 4-phase workflow.
           </p>
         </motion.div>
         
