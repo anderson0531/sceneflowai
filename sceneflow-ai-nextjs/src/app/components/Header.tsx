@@ -60,19 +60,21 @@ export function Header() {
     setIsMobileMenuOpen(false)
   }
 
-  // Auto-open modal if query contains ?login=1 or ?signup=1
+  // Only open auth modal if explicitly requested via URL query params
   useEffect(() => {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
-    if (params.get('login') === '1') {
+    if (params.get('login') === '1' && !isAuthenticated) {
       setAuthMode('login')
       setIsAuthModalOpen(true)
+      window.history.replaceState({}, '', window.location.pathname)
     }
-    if (params.get('signup') === '1') {
+    if (params.get('signup') === '1' && !isAuthenticated) {
       setAuthMode('signup')
       setIsAuthModalOpen(true)
+      window.history.replaceState({}, '', window.location.pathname)
     }
-  }, [])
+  }, [isAuthenticated])
 
   return (
     <>
@@ -85,23 +87,20 @@ export function Header() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Desktop Header */}
           <div className="hidden lg:flex justify-between items-center h-20">
-            {/* Logo - Large and Prominent */}
+            {/* Logo - Consistent with App */}
             <div className="flex items-center space-x-4">
-              {/* Gradient Logo Mark */}
-              <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 via-purple-500 to-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
-                <span className="text-xl font-bold text-white">SF</span>
+              {/* Logo matching app style */}
+              <div className="w-12 h-12 bg-sf-surface-light rounded-xl flex items-center justify-center">
+                <div className="w-7 h-7 bg-sf-primary rounded-lg flex items-center justify-center">
+                  <div className="w-3.5 h-3.5 bg-sf-background rounded-sm" />
+                </div>
               </div>
               
-              {/* App Name - Larger and More Prominent */}
-              <div className="flex flex-col">
-                <h1 className="text-3xl font-bold tracking-tight">
-                  <span className="text-white">SceneFlow</span>
-                  <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent"> AI</span>
-                </h1>
-                <p className="text-xs text-gray-400 font-medium tracking-wider uppercase">
-                  From Idea to Cinematic Reality
-                </p>
-              </div>
+              {/* App Name - Matching app style */}
+              <h1 className="text-2xl font-bold tracking-tight">
+                <span className="text-white">SceneFlow</span>
+                <span className="text-sf-primary"> AI</span>
+              </h1>
             </div>
             
             {/* Navigation Links - Center */}
@@ -167,24 +166,24 @@ export function Header() {
             </div>
           </div>
 
-          {/* Mobile Header - Large Logo and App Name */}
+          {/* Mobile Header - Consistent with App */}
           <div className="lg:hidden">
-            {/* Top Line - Large Logo and Mobile Menu Button */}
+            {/* Top Line - Logo and Mobile Menu Button */}
             <div className="flex justify-between items-center h-16">
-              {/* Large Mobile Logo */}
+              {/* Mobile Logo - Matching app style */}
               <div className="flex items-center space-x-3">
-                {/* Gradient Logo Mark */}
-                <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 via-purple-500 to-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
-                  <span className="text-lg font-bold text-white">SF</span>
+                {/* Logo matching app style */}
+                <div className="w-10 h-10 bg-sf-surface-light rounded-lg flex items-center justify-center">
+                  <div className="w-6 h-6 bg-sf-primary rounded-md flex items-center justify-center">
+                    <div className="w-3 h-3 bg-sf-background rounded-sm" />
+                  </div>
                 </div>
                 
                 {/* Mobile App Name */}
-                <div className="flex flex-col">
-                  <h1 className="text-xl font-bold tracking-tight">
-                    <span className="text-white">SceneFlow</span>
-                    <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent"> AI</span>
-                  </h1>
-                </div>
+                <h1 className="text-xl font-bold tracking-tight">
+                  <span className="text-white">SceneFlow</span>
+                  <span className="text-sf-primary"> AI</span>
+                </h1>
               </div>
               
               {/* Mobile Menu Button */}
