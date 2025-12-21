@@ -1,21 +1,21 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Loader2 } from 'lucide-react'
 
 interface DemoVideoModalProps {
   open: boolean
   onClose: () => void
-  src: string
+  src?: string // Now optional, defaults to YouTube
   poster?: string
 }
 
-export function DemoVideoModal({ open, onClose, src, poster }: DemoVideoModalProps) {
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const [isBuffering, setIsBuffering] = useState(true)
-  const [bufferedPercent, setBufferedPercent] = useState(0)
-  const [hasStarted, setHasStarted] = useState(false)
+// YouTube video ID
+const YOUTUBE_VIDEO_ID = 'M01EwOKyfcw'
+
+export function DemoVideoModal({ open, onClose }: DemoVideoModalProps) {
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -23,43 +23,26 @@ export function DemoVideoModal({ open, onClose, src, poster }: DemoVideoModalPro
     }
     if (open) {
       document.addEventListener('keydown', onKey)
-      // Reset state when modal opens
-      setIsBuffering(true)
-      setBufferedPercent(0)
-      setHasStarted(false)
+      document.body.style.overflow = 'hidden'
+      setIsLoading(true)
+    } else {
+      document.body.style.overflow = 'unset'
     }
-    return () => document.removeEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = 'unset'
+    }
   }, [open, onClose])
 
-  // Handle buffering progress
-  const handleProgress = () => {
-    if (videoRef.current && videoRef.current.buffered.length > 0) {
-      const buffered = videoRef.current.buffered.end(videoRef.current.buffered.length - 1)
-      const duration = videoRef.current.duration
-      if (duration > 0) {
-        setBufferedPercent(Math.round((buffered / duration) * 100))
-      }
-    }
-  }
-
-  const handleCanPlay = () => {
-    setIsBuffering(false)
-  }
-
-  const handleWaiting = () => {
-    if (hasStarted) {
-      setIsBuffering(true)
-    }
-  }
-
-  const handlePlaying = () => {
-    setIsBuffering(false)
-    setHasStarted(true)
-  }
-
-  const handleLoadStart = () => {
-    setIsBuffering(true)
-  }
+  // YouTube embed URL with privacy-enhanced mode and restricted options
+  // - youtube-nocookie.com: Privacy-enhanced mode (no tracking cookies)
+  // - autoplay=1: Auto-start video
+  // - rel=0: Don't show related videos from other channels
+  // - modestbranding=1: Minimal YouTube branding
+  // - fs=1: Allow fullscreen
+  // - playsinline=1: Play inline on mobile
+  // - iv_load_policy=3: Hide video annotations
+  const youtubeEmbedUrl = `https://www.youtube-nocookie.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&rel=0&modestbranding=1&fs=1&playsinline=1&iv_load_policy=3&enablejsapi=1`
 
   return (
     <AnimatePresence>
@@ -69,62 +52,57 @@ export function DemoVideoModal({ open, onClose, src, poster }: DemoVideoModalPro
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          onClick={onClose}
         >
           <motion.div
             className="relative w-full max-w-5xl mx-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
+            onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={onClose}
-              className="absolute -top-12 right-0 text-gray-300 hover:text-white transition-colors"
+              className="absolute -top-12 right-0 text-gray-300 hover:text-white transition-colors z-20"
               aria-label="Close"
             >
               <X className="w-7 h-7" />
             </button>
+            
             <div className="aspect-video bg-black rounded-xl overflow-hidden border border-gray-700 relative">
-              {/* Buffering indicator overlay */}
-              {isBuffering && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+              {/* Loading indicator */}
+              {isLoading && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-black">
                   <div className="flex flex-col items-center gap-3">
                     <Loader2 className="w-12 h-12 text-purple-500 animate-spin" />
                     <span className="text-white/80 text-sm font-medium">
-                      Loading video... {bufferedPercent > 0 ? `${bufferedPercent}%` : ''}
+                      Loading video...
                     </span>
                   </div>
                 </div>
               )}
               
-              <video
-                ref={videoRef}
-                controls
-                autoPlay
-                playsInline
-                poster={poster}
-                preload="auto"
+              {/* YouTube iframe embed */}
+              <iframe
+                src={youtubeEmbedUrl}
+                title="SceneFlow AI Demo"
                 className="w-full h-full"
-                onProgress={handleProgress}
-                onCanPlay={handleCanPlay}
-                onCanPlayThrough={handleCanPlay}
-                onWaiting={handleWaiting}
-                onPlaying={handlePlaying}
-                onLoadStart={handleLoadStart}
-              >
-                {/* Fragment hint #t=0.1 helps browser start loading from near beginning faster */}
-                <source src={`${src}#t=0.1`} type="video/mp4" />
-              </video>
-            </div>
-            
-            {/* Buffer progress bar below video */}
-            <div className="mt-2 h-1 bg-gray-800 rounded-full overflow-hidden">
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                onLoad={() => setIsLoading(false)}
+                style={{ border: 'none' }}
+              />
+              
+              {/* Overlay to block YouTube logo click (bottom-right corner) */}
               <div 
-                className="h-full bg-gradient-to-r from-purple-500 to-cyan-500 transition-all duration-300"
-                style={{ width: `${bufferedPercent}%` }}
+                className="absolute bottom-0 right-0 w-24 h-12 z-10 cursor-default"
+                onClick={(e) => e.stopPropagation()}
               />
             </div>
-            <p className="text-center text-gray-500 text-xs mt-1">
-              {bufferedPercent < 100 ? `Buffered: ${bufferedPercent}%` : 'Fully loaded'}
+            
+            {/* Subtle branding */}
+            <p className="text-center text-gray-500 text-xs mt-3">
+              SceneFlow AI • AI-Powered Virtual Production Studio
             </p>
           </motion.div>
         </motion.div>
