@@ -87,7 +87,7 @@ export function DemoVideoModal({ open, onClose }: DemoVideoModalProps) {
                 src={youtubeEmbedUrl}
                 title="SceneFlow AI Demo"
                 className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                 allowFullScreen
                 onLoad={() => setIsLoading(false)}
                 style={{ border: 'none' }}

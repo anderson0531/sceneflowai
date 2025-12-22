@@ -102,7 +102,7 @@ sleep 30
 
 # Health check
 echo "🏥 Running health check..."
-curl -f https://sceneflow.app/api/health || curl -f https://sceneflow-ai-nextjs.vercel.app/api/health
+curl -f https://sceneflowai.studio/api/health || curl -f https://sceneflow-ai-nextjs.vercel.app/api/health
 
 if [ $? -ne 0 ]; then
     echo "⚠️  Health check inconclusive - check Vercel dashboard"
@@ -120,7 +120,7 @@ echo "✅ Tests passed"
 echo "✅ Deployed to production"
 echo "✅ Health check passed"
 echo ""
-echo "🌐 Production URL: https://sceneflow.app"
-echo "📊 Dashboard: https://sceneflow.app/dashboard"
+echo "🌐 Production URL: https://sceneflowai.studio"
+echo "📊 Dashboard: https://sceneflowai.studio/dashboard"
 echo ""
 echo "🎬 SceneFlow AI is now live in production!"

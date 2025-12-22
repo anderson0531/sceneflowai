@@ -44,8 +44,8 @@ cd /Users/briananderson/SceneFlowAI/sceneflow-ai-nextjs/sceneflow-ai-nextjs && b
 
 After deployment, monitor at:
 - **Vercel Dashboard**: https://vercel.com/anderson0531-3626s-projects/sceneflow-ai-nextjs
-- **Production URL**: https://sceneflow.app
-- **Admin Dashboard**: https://sceneflow.app/admin/dol
+- **Production URL**: https://sceneflowai.studio
+- **Admin Dashboard**: https://sceneflowai.studio/admin/dol
 
 ## Troubleshooting
 
