@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Shield, Globe, Film, Mic2, Video, Image, Play, ArrowRight, Volume2, VolumeX } from 'lucide-react'
+import { Users, Shield, Globe, Film, Mic2, Video, Image, Play, ArrowRight, Volume2, VolumeX, Brain, Library, Languages } from 'lucide-react'
 import { FeatureDetailModal } from './FeatureDetailModal'
 import { Button } from '@/components/ui/Button'
 
@@ -19,6 +19,81 @@ export function FeatureHighlight() {
   }
 
   const features = [
+    {
+      icon: Brain,
+      title: 'AI Production Assistant',
+      description: 'Director & Audience scoring with smart recommendations. Voice-guided editing and workflow assistance throughout production.',
+      detailedDescription: 'Your AI co-pilot for film production. Get real-time Director scores (technical craft) and Audience scores (emotional engagement) with actionable recommendations. Edit with voice commands, receive workflow guidance, and let AI suggest improvements while maintaining story and character consistency.',
+      benefits: [
+        'Director & Audience perspective scoring',
+        'AI-powered revision recommendations',
+        'Voice instruction editing',
+        'Story & character consistency checks',
+        'Workflow guidance at every step'
+      ],
+      useCases: [
+        'Scoring: Get instant feedback on scene pacing and emotional impact',
+        'Revisions: AI suggests improvements while preserving your vision',
+        'Voice Editing: Speak your changes naturally—AI executes them'
+      ],
+      screenshotPlaceholder: {
+        gradient: 'from-rose-500 to-rose-600',
+        icon: Brain
+      },
+      ctaText: 'Try AI Assistant',
+      ctaLink: '/?signup=1',
+      color: 'from-rose-500 to-rose-600'
+    },
+    {
+      icon: Library,
+      title: 'Consistency Reference Library',
+      description: 'Automated generation of character, wardrobe, voice, scene, and object references. Your production bible, always in sync.',
+      detailedDescription: 'Automatically build and maintain a comprehensive reference library for your entire production. Character appearances, wardrobe choices, voice selections (from library or custom), scene settings, and key objects are tracked and enforced across every frame.',
+      benefits: [
+        'Auto-generated character references',
+        'Wardrobe & accessory tracking',
+        'Voice library with custom options',
+        'Scene continuity tracking',
+        'Object consistency enforcement'
+      ],
+      useCases: [
+        'Characters: Maintain identity across 100+ scenes automatically',
+        'Wardrobe: Track costume changes and continuity errors',
+        'Voices: Select from premium library or upload custom voices'
+      ],
+      screenshotPlaceholder: {
+        gradient: 'from-indigo-500 to-indigo-600',
+        icon: Library
+      },
+      ctaText: 'See Reference Library',
+      ctaLink: '/?signup=1',
+      color: 'from-indigo-500 to-indigo-600'
+    },
+    {
+      icon: Languages,
+      title: 'Global Audience Reach',
+      description: 'Automated multi-language dubbing expands your audience worldwide. Premium voices in 30+ languages including tonal languages.',
+      detailedDescription: 'Reach global audiences with automated multi-language dubbing powered by ElevenLabs. Generate natural voice acting in 30+ languages including complex tonal languages like Thai, Mandarin, and Vietnamese. Lip-sync optimization ensures professional results.',
+      benefits: [
+        'Automated multi-language dubbing',
+        '30+ language support',
+        'Tonal language expertise',
+        'Natural voice synthesis',
+        'One-click language expansion'
+      ],
+      useCases: [
+        'Global Release: Dub your film into 10 languages in minutes',
+        'Regional Markets: Target specific markets with native voices',
+        'Accessibility: Add dubbed audio tracks for wider reach'
+      ],
+      screenshotPlaceholder: {
+        gradient: 'from-teal-500 to-teal-600',
+        icon: Languages
+      },
+      ctaText: 'Explore Languages',
+      ctaLink: '/?signup=1',
+      color: 'from-teal-500 to-teal-600'
+    },
     {
       icon: Film,
       title: 'AI Screenplay Generation',
@@ -43,31 +118,6 @@ export function FeatureHighlight() {
       ctaText: 'Try Script Generator',
       ctaLink: '/?signup=1',
       color: 'from-cyan-500 to-cyan-600'
-    },
-    {
-      icon: Image,
-      title: 'Character Consistency',
-      description: 'Imagen 3 maintains character identity across every frame. Upload references or generate—your characters stay recognizable.',
-      detailedDescription: 'Using Google Imagen 3 with reference images, we ensure your characters look consistent throughout your entire production. Upload your own character references or let AI generate them, then watch as every scene maintains perfect visual continuity.',
-      benefits: [
-        'Reference image support',
-        'Consistent character appearance',
-        'AI-generated character portraits',
-        'Wardrobe & accessory tracking',
-        'Cross-scene visual continuity'
-      ],
-      useCases: [
-        'Animation: Keep character designs consistent across 100+ shots',
-        'Live Action: Generate consistent storyboard characters',
-        'Series: Maintain character identity across multiple episodes'
-      ],
-      screenshotPlaceholder: {
-        gradient: 'from-purple-500 to-purple-600',
-        icon: Image
-      },
-      ctaText: 'See Character Library',
-      ctaLink: '/?signup=1',
-      color: 'from-purple-500 to-purple-600'
     },
     {
       icon: Video,
@@ -97,14 +147,14 @@ export function FeatureHighlight() {
     {
       icon: Mic2,
       title: 'Voice & Audio Studio',
-      description: 'ElevenLabs integration for natural dialogue, narration, music generation, and sound effects—all in one platform.',
-      detailedDescription: 'Complete audio production with ElevenLabs integration. Generate natural voice acting for every character, professional narration, background music, and sound effects. Multi-language support including tonal languages like Thai and Mandarin.',
+      description: 'ElevenLabs integration for character voices, narration, music, and sound effects. Complete audio production in one platform.',
+      detailedDescription: 'Complete audio production with ElevenLabs integration. Generate natural voice acting for every character, professional narration, background music, and sound effects. Premium voice library with custom voice upload support.',
       benefits: [
         'Character voice acting',
         'Professional narration',
         'AI music generation',
         'Sound effects library',
-        'Multi-language support'
+        'Custom voice upload'
       ],
       useCases: [
         'Dialogue: Give each character a unique, consistent voice',
@@ -146,7 +196,7 @@ export function FeatureHighlight() {
         </motion.div>
         
         {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature, index) => {
             const Icon = feature.icon
             
@@ -224,22 +274,13 @@ export function FeatureHighlight() {
                 {/* Sound control button */}
                 <button
                   onClick={toggleScreeningMute}
-                  className={`absolute bottom-4 right-4 flex items-center gap-2 px-4 py-2.5 backdrop-blur-sm rounded-lg border transition-all ${
-                    isScreeningMuted 
-                      ? 'bg-purple-600/90 border-purple-400/30 hover:bg-purple-500/90' 
-                      : 'bg-slate-800/90 border-cyan-400/30 hover:bg-slate-700/90'
-                  }`}
+                  className="absolute bottom-4 right-4 p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm transition-all opacity-60 hover:opacity-100"
+                  title={isScreeningMuted ? 'Unmute' : 'Mute'}
                 >
                   {isScreeningMuted ? (
-                    <>
-                      <VolumeX className="w-4 h-4 text-white" />
-                      <span className="text-xs font-medium text-white">🎵 Unmute</span>
-                    </>
+                    <VolumeX className="w-5 h-5 text-white/80" />
                   ) : (
-                    <>
-                      <Volume2 className="w-4 h-4 text-cyan-400 animate-pulse" />
-                      <span className="text-xs font-medium text-cyan-300">Sound On</span>
-                    </>
+                    <Volume2 className="w-5 h-5 text-white/80" />
                   )}
                 </button>
               </div>

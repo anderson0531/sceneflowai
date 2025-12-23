@@ -10,30 +10,12 @@ export function TrustSignals() {
     { icon: Zap, value: '< 60s', label: 'Video Generation', description: 'Instant AI-powered rendering' },
     { icon: Globe, value: 'Global', label: 'Edge Deployment', description: 'Low-latency worldwide access' }
   ]
-
-  const techStack = [
-    { 
-      name: 'Google AI', 
-      description: 'Script • Image • Video',
-      gradient: 'from-blue-500 to-cyan-500'
-    },
-    { 
-      name: 'ElevenLabs', 
-      description: 'Voice & Audio',
-      gradient: 'from-purple-500 to-pink-500'
-    },
-    { 
-      name: 'Vercel', 
-      description: 'Global Edge',
-      gradient: 'from-gray-500 to-gray-600'
-    },
-  ]
   
   return (
     <section className="py-16 bg-gradient-to-b from-slate-950 to-slate-900 border-y border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Platform Capabilities Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {capabilities.map((item, index) => (
             <motion.div 
               key={index}
@@ -52,37 +34,6 @@ export function TrustSignals() {
             </motion.div>
           ))}
         </div>
-
-        {/* Tech Stack */}
-        <motion.div 
-          className="text-center"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-        >
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-6">Powered by Industry-Leading AI Platforms</p>
-          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
-            {techStack.map((tech, index) => (
-              <motion.div 
-                key={index}
-                className="flex items-center gap-3 px-4 py-2 rounded-xl bg-slate-800/30 border border-white/5"
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: 0.5 + index * 0.1 }}
-              >
-                <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${tech.gradient} flex items-center justify-center shadow-lg`}>
-                  <span className="text-white text-lg font-bold">{tech.name[0]}</span>
-                </div>
-                <div className="text-left">
-                  <div className="text-white font-semibold text-sm">{tech.name}</div>
-                  <div className="text-gray-500 text-xs">{tech.description}</div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
       </div>
     </section>
   )
