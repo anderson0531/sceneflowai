@@ -118,7 +118,7 @@ const ProblemCard = ({
 
 export default function SlotMachineSection() {
   return (
-    <section className="py-24 bg-slate-950 relative overflow-hidden">
+    <section id="problem" className="py-24 bg-slate-950 relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-30">
         <div 

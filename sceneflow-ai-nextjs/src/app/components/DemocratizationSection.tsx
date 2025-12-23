@@ -13,7 +13,7 @@ export function DemocratizationSection() {
   ]
 
   return (
-    <section className="py-20 bg-slate-950 relative overflow-hidden">
+    <section id="platform" className="py-20 bg-slate-950 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.08),transparent_70%)]" />
       

@@ -203,7 +203,7 @@ const GoogleCloudIllustration = () => {
 
 export default function FrameAnchoredSection() {
   return (
-    <section className="py-24 bg-slate-900 relative overflow-hidden">
+    <section id="architecture" className="py-24 bg-slate-900 relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0">
         <div 

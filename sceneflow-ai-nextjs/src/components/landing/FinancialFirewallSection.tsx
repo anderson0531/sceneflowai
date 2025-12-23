@@ -118,7 +118,7 @@ const FeatureCard = ({
 
 export default function FinancialFirewallSection() {
   return (
-    <section className="py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
+    <section id="solution" className="py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0">
         <div 

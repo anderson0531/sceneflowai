@@ -13,9 +13,25 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
+  const [scrollProgress, setScrollProgress] = useState(0)
+  const [isScrolled, setIsScrolled] = useState(false)
   const { data: session } = useSession()
   const isAuthenticated = !!session?.user
   const user = session?.user
+
+  // Scroll progress tracking
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight
+      const progress = totalHeight > 0 ? (window.scrollY / totalHeight) * 100 : 0
+      setScrollProgress(progress)
+      setIsScrolled(window.scrollY > 50)
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll() // Check initial state
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   const [isAdmin, setIsAdmin] = useState(false)
   useEffect(() => {
@@ -79,11 +95,24 @@ export function Header() {
   return (
     <>
       <motion.header 
-        className="fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm"
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled 
+            ? 'bg-slate-900/95 backdrop-blur-md shadow-lg shadow-black/10' 
+            : 'bg-transparent backdrop-blur-sm'
+        }`}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
+        {/* Progress bar */}
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-800/50">
+          <motion.div 
+            className="h-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500"
+            style={{ width: `${scrollProgress}%` }}
+            transition={{ duration: 0.1 }}
+          />
+        </div>
+        
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Desktop Header */}
           <div className="hidden lg:flex justify-between items-center h-20">

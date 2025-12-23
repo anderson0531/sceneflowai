@@ -18,6 +18,7 @@ const FeatureHighlight = dynamic(() => import('./components/FeatureHighlight').t
 const ProsumerEconomySection = dynamic(() => import('@/components/landing/ProsumerEconomySection'), { ssr: false })
 const Pricing = dynamic(() => import('./components/Pricing').then(m => m.Pricing), { ssr: false })
 const FAQ = dynamic(() => import('./components/FAQ').then(m => m.FAQ), { ssr: false })
+const FloatingNav = dynamic(() => import('@/components/landing/FloatingNav'), { ssr: false })
 import { FinalCTA } from './components/FinalCTA'
 import { Footer } from './components/Footer'
 
@@ -25,6 +26,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <Header />
+      <FloatingNav />
       <HeroSection />
       <TrustSignals />
       <SocialProof />
