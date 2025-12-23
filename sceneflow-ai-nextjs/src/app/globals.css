@@ -785,10 +785,28 @@
     font-weight: inherit !important;
   }
 
-  /* Landing page section headings - override global clamp() to allow Tailwind responsive sizing */
+  /* Landing page section headings - explicit responsive sizing to override base clamp */
   .landing-section-heading {
-    font-size: inherit !important;
-    line-height: inherit !important;
+    font-size: 3rem !important; /* text-5xl = 3rem */
+    line-height: 1.1 !important;
+  }
+  
+  @media (min-width: 640px) {
+    .landing-section-heading {
+      font-size: 3.75rem !important; /* text-6xl = 3.75rem */
+    }
+  }
+  
+  @media (min-width: 768px) {
+    .landing-section-heading {
+      font-size: 4.5rem !important; /* text-7xl = 4.5rem */
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .landing-section-heading {
+      font-size: 6rem !important; /* text-8xl = 6rem */
+    }
   }
 
   /* Gradient text spans inside headings - inherit parent heading size */
