@@ -48,35 +48,26 @@ const SlotMachineVideo = () => {
           
           {/* Video controls */}
           <div className="absolute bottom-3 right-3 flex items-center gap-2">
-            {/* Audio toggle button */}
+            {/* Audio toggle button - minimal and transparent */}
             <button
               onClick={toggleMute}
-              className={`flex items-center gap-2 px-3 py-2 backdrop-blur-sm rounded-lg border transition-all ${
-                isMuted 
-                  ? 'bg-amber-600/90 border-amber-400/30 hover:bg-amber-500/90' 
-                  : 'bg-slate-800/90 border-cyan-400/30 hover:bg-slate-700/90'
-              }`}
+              className="p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm transition-all opacity-60 hover:opacity-100"
+              title={isMuted ? 'Unmute' : 'Mute'}
             >
               {isMuted ? (
-                <>
-                  <VolumeX className="w-4 h-4 text-white" />
-                  <span className="text-xs font-medium text-white">🎵 Unmute</span>
-                </>
+                <VolumeX className="w-4 h-4 text-white/80" />
               ) : (
-                <>
-                  <Volume2 className="w-4 h-4 text-cyan-400 animate-pulse" />
-                  <span className="text-xs font-medium text-cyan-300">Sound On</span>
-                </>
+                <Volume2 className="w-4 h-4 text-white/80" />
               )}
             </button>
             
             {/* Expand/Fullscreen button */}
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className={`flex items-center gap-2 px-3 py-2 backdrop-blur-sm rounded-lg border transition-all ${isExpanded ? 'bg-amber-600/90 border-amber-400/30' : 'bg-slate-800/90 border-slate-600/30 hover:bg-slate-700/90'}`}
+              className="p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm transition-all opacity-60 hover:opacity-100"
               title={isExpanded ? 'Shrink' : 'Expand'}
             >
-              <Maximize2 className="w-4 h-4 text-white" />
+              <Maximize2 className="w-4 h-4 text-white/80" />
             </button>
           </div>
         </div>
