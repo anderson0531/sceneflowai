@@ -1,146 +1,71 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Dices, RefreshCw, Flame, AlertTriangle, Ban, DollarSign, Film, Clapperboard } from 'lucide-react';
+import { Dices, RefreshCw, Flame, AlertTriangle, Ban, Volume2, VolumeX } from 'lucide-react';
 
-// Animated Slot Machine Illustration Component
-const SlotMachineIllustration = () => {
+// Video Illustration Component with Audio Toggle
+const SlotMachineVideo = () => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isMuted, setIsMuted] = useState(true);
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted;
+      setIsMuted(!isMuted);
+    }
+  };
+
   return (
     <div className="relative w-full max-w-md mx-auto">
-      {/* Slot Machine Body */}
-      <motion.div 
-        className="relative bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 rounded-3xl p-6 border-4 border-amber-500/40 shadow-2xl"
+      <motion.div
+        className="relative rounded-2xl overflow-hidden border-2 border-amber-500/30 shadow-2xl"
         initial={{ opacity: 0, scale: 0.9 }}
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
       >
-        {/* Top Crown */}
-        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gradient-to-br from-amber-400 to-amber-600 px-8 py-2 rounded-xl border-2 border-amber-300/50 shadow-lg">
-          <span className="text-slate-900 font-bold text-sm tracking-wider">GenAI VIDEO</span>
+        {/* Glow effect */}
+        <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-red-500/20 rounded-2xl blur-xl -z-10" />
+        
+        {/* Video */}
+        <div className="aspect-[4/3] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+          <video
+            ref={videoRef}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            className="w-full h-full object-cover"
+            poster="/demo/slot-machine-poster.jpg"
+          >
+            <source src="/demo/slot-machine-illustration.mp4#t=0.1" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          
+          {/* Audio toggle button */}
+          <button
+            onClick={toggleMute}
+            className={`absolute bottom-3 right-3 flex items-center gap-2 px-3 py-2 backdrop-blur-sm rounded-lg border transition-all ${
+              isMuted 
+                ? 'bg-amber-600/90 border-amber-400/30 hover:bg-amber-500/90' 
+                : 'bg-slate-800/90 border-cyan-400/30 hover:bg-slate-700/90'
+            }`}
+          >
+            {isMuted ? (
+              <>
+                <VolumeX className="w-4 h-4 text-white" />
+                <span className="text-xs font-medium text-white">🎵 Unmute</span>
+              </>
+            ) : (
+              <>
+                <Volume2 className="w-4 h-4 text-cyan-400 animate-pulse" />
+                <span className="text-xs font-medium text-cyan-300">Sound On</span>
+              </>
+            )}
+          </button>
         </div>
-
-        {/* Reels Container */}
-        <div className="bg-slate-950 rounded-2xl p-4 mt-4 border-2 border-slate-600">
-          <div className="flex justify-center gap-3">
-            {/* Reel 1 - Camera */}
-            <motion.div 
-              className="w-20 h-24 bg-gradient-to-b from-slate-800 to-slate-900 rounded-lg border border-slate-600 flex items-center justify-center overflow-hidden"
-              animate={{ y: [0, -5, 0] }}
-              transition={{ duration: 2, repeat: Infinity, delay: 0 }}
-            >
-              <div className="bg-gradient-to-br from-red-500 to-red-600 p-3 rounded-lg">
-                <Film className="w-8 h-8 text-white" />
-              </div>
-            </motion.div>
-
-            {/* Reel 2 - Dollar (spinning) */}
-            <motion.div 
-              className="w-20 h-24 bg-gradient-to-b from-slate-800 to-slate-900 rounded-lg border border-slate-600 flex items-center justify-center overflow-hidden"
-              animate={{ y: [0, -80, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
-            >
-              <div className="bg-gradient-to-br from-green-500 to-green-600 p-3 rounded-lg">
-                <DollarSign className="w-8 h-8 text-white" />
-              </div>
-            </motion.div>
-
-            {/* Reel 3 - Clapperboard */}
-            <motion.div 
-              className="w-20 h-24 bg-gradient-to-b from-slate-800 to-slate-900 rounded-lg border border-slate-600 flex items-center justify-center overflow-hidden"
-              animate={{ y: [0, -5, 0] }}
-              transition={{ duration: 2.5, repeat: Infinity, delay: 0.4 }}
-            >
-              <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-3 rounded-lg">
-                <Clapperboard className="w-8 h-8 text-white" />
-              </div>
-            </motion.div>
-          </div>
-        </div>
-
-        {/* Pull Handle */}
-        <motion.div 
-          className="absolute -right-8 top-1/2 transform -translate-y-1/2"
-          animate={{ rotate: [0, -15, 0] }}
-          transition={{ duration: 3, repeat: Infinity }}
-        >
-          <div className="w-6 h-32 bg-gradient-to-b from-slate-500 to-slate-700 rounded-full border-2 border-slate-400">
-            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-gradient-to-br from-red-500 to-red-700 rounded-full border-4 border-red-400 shadow-lg" />
-          </div>
-        </motion.div>
-
-        {/* RE-ROLL Button */}
-        <motion.div 
-          className="mt-4 flex justify-center"
-          animate={{ scale: [1, 1.05, 1] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <div className="bg-gradient-to-br from-amber-500 to-amber-600 px-8 py-3 rounded-xl border-2 border-amber-400 shadow-lg flex items-center gap-2">
-            <RefreshCw className="w-5 h-5 text-slate-900" />
-            <span className="text-slate-900 font-bold">RE-ROLL</span>
-          </div>
-        </motion.div>
-
-        {/* Burning Budget Visual */}
-        <motion.div 
-          className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 flex items-end gap-1"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.8 }}
-        >
-          {/* Film strip going into fire */}
-          <div className="relative">
-            <motion.div 
-              className="absolute -top-8 left-1/2 transform -translate-x-1/2 w-16 h-20 bg-gradient-to-b from-slate-700 to-transparent rounded-t-lg border-x-2 border-t-2 border-slate-600"
-              style={{
-                backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 6px, rgba(255,255,255,0.1) 6px, rgba(255,255,255,0.1) 8px)'
-              }}
-            />
-            {/* Fire */}
-            <motion.div
-              className="relative"
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 0.5, repeat: Infinity }}
-            >
-              <Flame className="w-12 h-12 text-orange-500" />
-              <Flame className="w-10 h-10 text-yellow-500 absolute top-1 left-1" />
-              <Flame className="w-8 h-8 text-red-600 absolute top-2 left-2" />
-            </motion.div>
-          </div>
-
-          {/* Falling coins */}
-          {[0, 1, 2].map((i) => (
-            <motion.div
-              key={i}
-              className="w-6 h-6 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full border-2 border-amber-300 flex items-center justify-center"
-              animate={{ 
-                y: [0, 60, 0],
-                opacity: [1, 0, 1],
-                rotate: [0, 360]
-              }}
-              transition={{ 
-                duration: 2, 
-                repeat: Infinity,
-                delay: i * 0.3
-              }}
-            >
-              <span className="text-xs font-bold text-slate-900">$</span>
-            </motion.div>
-          ))}
-        </motion.div>
-      </motion.div>
-
-      {/* "budget" label on slot machine */}
-      <motion.div 
-        className="absolute top-24 left-6 bg-slate-800 px-3 py-1 rounded border border-slate-600"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.5 }}
-      >
-        <span className="text-amber-400 text-xs font-mono">budget</span>
       </motion.div>
     </div>
   );
@@ -215,7 +140,7 @@ export default function SlotMachineSection() {
             <AlertTriangle className="w-4 h-4 text-red-400 mr-2" />
             <span className="text-sm font-medium text-red-400">The Industry Problem</span>
           </div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+          <h2 className="landing-section-heading text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
             GenAI Video is a{' '}
             <span className="bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent">
               &apos;Slot Machine&apos;
@@ -229,7 +154,7 @@ export default function SlotMachineSection() {
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          {/* Left: Slot Machine Illustration */}
+          {/* Left: Slot Machine Video Illustration */}
           <motion.div
             className="relative"
             initial={{ opacity: 0, x: -30 }}
@@ -237,9 +162,7 @@ export default function SlotMachineSection() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <SlotMachineIllustration />
-            {/* Extra space for the fire animation */}
-            <div className="h-16" />
+            <SlotMachineVideo />
           </motion.div>
 
           {/* Right: Problem Points */}

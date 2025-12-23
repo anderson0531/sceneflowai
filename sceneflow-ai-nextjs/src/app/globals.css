@@ -783,4 +783,10 @@
     line-height: inherit !important;
     font-weight: inherit !important;
   }
+
+  /* Landing page section headings - override global clamp() to allow Tailwind responsive sizing */
+  .landing-section-heading {
+    font-size: inherit !important;
+    line-height: inherit !important;
+  }
 }

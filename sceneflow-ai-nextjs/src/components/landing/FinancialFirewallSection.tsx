@@ -1,209 +1,70 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Lock, Eye, Sparkles, Check, ArrowRight, Monitor, Film, Mic2, Play } from 'lucide-react';
+import { Shield, Eye, Sparkles, Check, Monitor, Film, Mic2, Play, Volume2, VolumeX } from 'lucide-react';
 
-// Firewall Lock Illustration
-const FirewallIllustration = () => {
+// Video Illustration Component with Audio Toggle
+const FirewallVideo = () => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isMuted, setIsMuted] = useState(true);
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted;
+      setIsMuted(!isMuted);
+    }
+  };
+
   return (
-    <div className="relative w-full max-w-lg mx-auto">
-      {/* Main Container */}
+    <div className="relative w-full max-w-2xl mx-auto">
       <motion.div
-        className="relative"
+        className="relative rounded-2xl overflow-hidden border-2 border-amber-500/30 shadow-2xl"
         initial={{ opacity: 0, scale: 0.9 }}
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
       >
-        {/* Left Side - Screening Room Engine */}
-        <div className="flex items-center gap-4">
-          {/* Input Components */}
-          <div className="flex flex-col gap-3">
-            {/* Gemini 2.5 Pro */}
-            <motion.div
-              className="flex items-center gap-3 bg-slate-800/80 backdrop-blur px-4 py-3 rounded-xl border border-blue-500/30"
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-white font-semibold text-sm">Gemini 2.5 Pro</p>
-                <p className="text-gray-400 text-xs">Script & Logic</p>
-              </div>
-            </motion.div>
-
-            {/* Imagen 3 */}
-            <motion.div
-              className="flex items-center gap-3 bg-slate-800/80 backdrop-blur px-4 py-3 rounded-xl border border-purple-500/30"
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
-                <Film className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-white font-semibold text-sm">Imagen 3</p>
-                <p className="text-gray-400 text-xs">Storyboards</p>
-              </div>
-            </motion.div>
-
-            {/* ElevenLabs */}
-            <motion.div
-              className="flex items-center gap-3 bg-slate-800/80 backdrop-blur px-4 py-3 rounded-xl border border-green-500/30"
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
-                <Mic2 className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-white font-semibold text-sm">ElevenLabs</p>
-                <p className="text-gray-400 text-xs">Voice Preview</p>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Arrow to Firewall */}
-          <motion.div
-            className="flex flex-col items-center gap-2"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.5 }}
+        {/* Glow effect */}
+        <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/20 via-cyan-500/20 to-amber-500/20 rounded-2xl blur-xl -z-10" />
+        
+        {/* Video */}
+        <div className="aspect-video bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+          <video
+            ref={videoRef}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            className="w-full h-full object-cover"
+            poster="/demo/financial-firewall-poster.jpg"
           >
-            <div className="w-16 h-0.5 bg-gradient-to-r from-cyan-500 to-amber-500" />
-            <ArrowRight className="w-5 h-5 text-cyan-400" />
-          </motion.div>
-
-          {/* The Firewall / Lock */}
-          <motion.div
-            className="relative"
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.6 }}
+            <source src="/demo/financial-firewall-illustration.mp4#t=0.1" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          
+          {/* Audio toggle button */}
+          <button
+            onClick={toggleMute}
+            className={`absolute bottom-3 right-3 flex items-center gap-2 px-3 py-2 backdrop-blur-sm rounded-lg border transition-all ${
+              isMuted 
+                ? 'bg-amber-600/90 border-amber-400/30 hover:bg-amber-500/90' 
+                : 'bg-slate-800/90 border-cyan-400/30 hover:bg-slate-700/90'
+            }`}
           >
-            {/* Glowing background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-3xl blur-2xl" />
-            
-            {/* Lock Container */}
-            <div className="relative bg-gradient-to-br from-amber-500/20 to-orange-600/20 backdrop-blur-sm p-6 rounded-2xl border-2 border-amber-500/40">
-              {/* Monitor with Storyboards */}
-              <div className="bg-slate-900 rounded-xl p-3 border border-slate-700 mb-4">
-                <div className="bg-slate-800 rounded-lg p-2 grid grid-cols-3 gap-1">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <motion.div
-                      key={i}
-                      className="aspect-video bg-gradient-to-br from-slate-600 to-slate-700 rounded-sm"
-                      animate={{ opacity: [0.5, 1, 0.5] }}
-                      transition={{ duration: 2, repeat: Infinity, delay: i * 0.2 }}
-                    />
-                  ))}
-                </div>
-                {/* Monitor stand */}
-                <div className="flex justify-center mt-2">
-                  <div className="w-8 h-2 bg-slate-700 rounded-t" />
-                </div>
-              </div>
-
-              {/* Lock Icon */}
-              <motion.div
-                className="absolute -right-4 -bottom-4 w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg border-2 border-amber-400/50"
-                animate={{ 
-                  boxShadow: [
-                    '0 0 20px rgba(245, 158, 11, 0.3)',
-                    '0 0 40px rgba(245, 158, 11, 0.5)',
-                    '0 0 20px rgba(245, 158, 11, 0.3)'
-                  ]
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                <Lock className="w-8 h-8 text-white" />
-              </motion.div>
-
-              {/* Director Chair Icon */}
-              <div className="absolute -left-3 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-slate-800 rounded-lg border border-slate-600 flex items-center justify-center">
-                <Eye className="w-5 h-5 text-cyan-400" />
-              </div>
-            </div>
-
-            {/* Next.js/FFmpeg Label */}
-            <motion.div
-              className="mt-4 flex justify-center"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.8 }}
-            >
-              <div className="bg-slate-800 px-4 py-2 rounded-full border border-slate-600 flex items-center gap-2">
-                <Monitor className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-300 text-sm font-medium">Next.js / FFmpeg</span>
-              </div>
-            </motion.div>
-          </motion.div>
-
-          {/* Arrow to Output */}
-          <motion.div
-            className="flex flex-col items-center gap-2"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.7 }}
-          >
-            <div className="w-16 h-0.5 bg-gradient-to-r from-amber-500 to-cyan-500" />
-            <ArrowRight className="w-5 h-5 text-amber-400" />
-          </motion.div>
-
-          {/* Output - Film Reels */}
-          <motion.div
-            className="flex flex-col items-center gap-2"
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.8 }}
-          >
-            <div className="relative">
-              {/* Stacked film reels */}
-              {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  className="w-16 h-16 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 border-4 border-slate-500 flex items-center justify-center"
-                  style={{
-                    position: i === 0 ? 'relative' : 'absolute',
-                    top: i * -8,
-                    left: i * 8,
-                    zIndex: 3 - i
-                  }}
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 10 + i * 2, repeat: Infinity, ease: 'linear' }}
-                >
-                  <div className="w-8 h-8 rounded-full bg-slate-900 border-2 border-slate-700" />
-                  {/* Film holes */}
-                  {[0, 1, 2, 3].map((j) => (
-                    <div
-                      key={j}
-                      className="absolute w-2 h-2 bg-slate-900 rounded-full"
-                      style={{
-                        top: '50%',
-                        left: '50%',
-                        transform: `translate(-50%, -50%) rotate(${j * 90}deg) translateY(-20px)`
-                      }}
-                    />
-                  ))}
-                </motion.div>
-              ))}
-            </div>
-            <p className="text-gray-400 text-xs mt-6">Final Render</p>
-          </motion.div>
+            {isMuted ? (
+              <>
+                <VolumeX className="w-4 h-4 text-white" />
+                <span className="text-xs font-medium text-white">🎵 Unmute</span>
+              </>
+            ) : (
+              <>
+                <Volume2 className="w-4 h-4 text-cyan-400 animate-pulse" />
+                <span className="text-xs font-medium text-cyan-300">Sound On</span>
+              </>
+            )}
+          </button>
         </div>
       </motion.div>
     </div>
@@ -279,7 +140,7 @@ export default function FinancialFirewallSection() {
             <Shield className="w-4 h-4 text-amber-400 mr-2" />
             <span className="text-sm font-medium text-amber-400">The Solution</span>
           </div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+          <h2 className="landing-section-heading text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
             The{' '}
             <span className="bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 bg-clip-text text-transparent">
               &apos;Financial Firewall&apos;
@@ -292,11 +153,9 @@ export default function FinancialFirewallSection() {
           </p>
         </motion.div>
 
-        {/* Illustration */}
-        <div className="mb-16 overflow-x-auto pb-4">
-          <div className="min-w-[800px]">
-            <FirewallIllustration />
-          </div>
+        {/* Video Illustration */}
+        <div className="mb-16">
+          <FirewallVideo />
         </div>
 
         {/* Screening Room Engine Features */}
