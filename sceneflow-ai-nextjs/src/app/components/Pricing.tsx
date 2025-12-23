@@ -196,7 +196,7 @@ export function Pricing() {
               Production Plan
             </span>
           </h2>
-          <p className="text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
             From hobbyists to professional studios—start free and scale as you grow.
           </p>
         </motion.div>

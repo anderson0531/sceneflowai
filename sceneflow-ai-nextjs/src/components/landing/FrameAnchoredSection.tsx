@@ -35,8 +35,8 @@ const GoogleCloudIllustration = () => {
                   <Cloud className="w-7 h-7 text-blue-500" />
                 </div>
                 <div>
-                  <p className="text-white font-bold text-lg">Google Cloud</p>
-                  <p className="text-blue-300 text-sm">Vertex AI Platform</p>
+                  <p className="text-white font-bold text-base md:text-lg lg:text-xl">Google Cloud</p>
+                  <p className="text-blue-300 text-xs md:text-sm">Vertex AI Platform</p>
                 </div>
               </div>
             </div>
@@ -62,8 +62,8 @@ const GoogleCloudIllustration = () => {
           transition={{ delay: 0.3 }}
         >
           <div className="bg-slate-800 px-4 py-2 rounded-full border border-slate-600 flex items-center gap-2">
-            <Cpu className="w-4 h-4 text-cyan-400" />
-            <span className="text-gray-300 text-sm font-medium">Orchestration</span>
+            <Cpu className="w-4 h-4 md:w-5 md:h-5 text-cyan-400" />
+            <span className="text-gray-300 text-sm md:text-base font-medium">Orchestration</span>
           </div>
         </motion.div>
 
@@ -83,9 +83,9 @@ const GoogleCloudIllustration = () => {
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
               
-              <h4 className="text-white font-bold text-lg mb-1">Gemini 2.5 Pro</h4>
-              <p className="text-blue-300 text-sm mb-3">The Brain</p>
-              <p className="text-gray-400 text-xs">Script & Logic Generation</p>
+              <h4 className="text-white font-bold text-base md:text-lg lg:text-xl mb-1">Gemini 2.5 Pro</h4>
+              <p className="text-blue-300 text-xs md:text-sm mb-3">The Brain</p>
+              <p className="text-gray-400 text-xs md:text-sm">Script & Logic Generation</p>
               
               {/* Connection dots */}
               <motion.div
@@ -117,9 +117,9 @@ const GoogleCloudIllustration = () => {
                 </div>
               </div>
               
-              <h4 className="text-white font-bold text-lg mb-1">Imagen 3</h4>
-              <p className="text-purple-300 text-sm mb-3">The Visualizer</p>
-              <p className="text-gray-400 text-xs">Storyboards & Style Reference</p>
+              <h4 className="text-white font-bold text-base md:text-lg lg:text-xl mb-1">Imagen 3</h4>
+              <p className="text-purple-300 text-xs md:text-sm mb-3">The Visualizer</p>
+              <p className="text-gray-400 text-xs md:text-sm">Storyboards & Style Reference</p>
               
               {/* Connection dots */}
               <motion.div
@@ -158,9 +158,9 @@ const GoogleCloudIllustration = () => {
                 </motion.div>
               </div>
               
-              <h4 className="text-white font-bold text-lg mb-1">Veo 3.1</h4>
-              <p className="text-amber-300 text-sm mb-3">The Engine</p>
-              <p className="text-gray-400 text-xs">Final Render</p>
+              <h4 className="text-white font-bold text-base md:text-lg lg:text-xl mb-1">Veo 3.1</h4>
+              <p className="text-amber-300 text-xs md:text-sm mb-3">The Engine</p>
+              <p className="text-gray-400 text-xs md:text-sm">Final Render</p>
               
               {/* Connection dots */}
               <motion.div
@@ -242,8 +242,8 @@ export default function FrameAnchoredSection() {
           transition={{ duration: 0.6 }}
         >
           <div className="inline-flex items-center px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full mb-6">
-            <Cloud className="w-4 h-4 text-blue-400 mr-2" />
-            <span className="text-sm font-medium text-blue-400">Technical Architecture</span>
+            <Cloud className="w-4 h-4 md:w-5 md:h-5 text-blue-400 mr-2" />
+            <span className="text-sm md:text-base font-medium text-blue-400">Technical Architecture</span>
           </div>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
             Built for{' '}
@@ -253,7 +253,7 @@ export default function FrameAnchoredSection() {
             <br className="hidden sm:block" />
             on Google Cloud
           </h2>
-          <p className="text-lg text-gray-400 max-w-3xl mx-auto">
+          <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-3xl mx-auto">
             A purpose-built architecture that leverages Google&apos;s most advanced AI models 
             to deliver professional-grade video production.
           </p>
@@ -268,35 +268,35 @@ export default function FrameAnchoredSection() {
           transition={{ duration: 0.6, delay: 0.2 }}
         >
           <div className="bg-slate-800/50 backdrop-blur p-6 rounded-xl border border-slate-700">
-            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center mb-4">
-              <Cpu className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 md:w-14 md:h-14 rounded-lg bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center mb-4">
+              <Cpu className="w-6 h-6 md:w-7 md:h-7 text-white" />
             </div>
-            <h4 className="text-white font-semibold mb-2">Orchestration</h4>
-            <p className="text-gray-400 text-sm">Cloud Functions & Vertex AI Agents coordinate the entire pipeline.</p>
+            <h4 className="text-white font-semibold text-base md:text-lg mb-2">Orchestration</h4>
+            <p className="text-gray-400 text-sm md:text-base">Cloud Functions & Vertex AI Agents coordinate the entire pipeline.</p>
           </div>
 
           <div className="bg-slate-800/50 backdrop-blur p-6 rounded-xl border border-slate-700">
-            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-4">
-              <Sparkles className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 md:w-14 md:h-14 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-4">
+              <Sparkles className="w-6 h-6 md:w-7 md:h-7 text-white" />
             </div>
-            <h4 className="text-white font-semibold mb-2">The Brain</h4>
-            <p className="text-gray-400 text-sm">Gemini 2.5 Pro handles all script generation and creative logic.</p>
+            <h4 className="text-white font-semibold text-base md:text-lg mb-2">The Brain</h4>
+            <p className="text-gray-400 text-sm md:text-base">Gemini 2.5 Pro handles all script generation and creative logic.</p>
           </div>
 
           <div className="bg-slate-800/50 backdrop-blur p-6 rounded-xl border border-slate-700">
-            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-4">
-              <Layers className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 md:w-14 md:h-14 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-4">
+              <Layers className="w-6 h-6 md:w-7 md:h-7 text-white" />
             </div>
-            <h4 className="text-white font-semibold mb-2">The Visualizer</h4>
-            <p className="text-gray-400 text-sm">Imagen 3 creates storyboards and style-consistent visual assets.</p>
+            <h4 className="text-white font-semibold text-base md:text-lg mb-2">The Visualizer</h4>
+            <p className="text-gray-400 text-sm md:text-base">Imagen 3 creates storyboards and style-consistent visual assets.</p>
           </div>
 
           <div className="bg-slate-800/50 backdrop-blur p-6 rounded-xl border border-slate-700">
-            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-4">
-              <Anchor className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 md:w-14 md:h-14 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-4">
+              <Anchor className="w-6 h-6 md:w-7 md:h-7 text-white" />
             </div>
-            <h4 className="text-white font-semibold mb-2">The Engine</h4>
-            <p className="text-gray-400 text-sm">Veo 3.1 renders final video with frame-anchored precision.</p>
+            <h4 className="text-white font-semibold text-base md:text-lg mb-2">The Engine</h4>
+            <p className="text-gray-400 text-sm md:text-base">Veo 3.1 renders final video with frame-anchored precision.</p>
           </div>
         </motion.div>
 
@@ -324,24 +324,24 @@ export default function FrameAnchoredSection() {
                   <Zap className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-white mb-3">
+                  <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-3">
                     Why <span className="text-amber-400">Veo 3.1</span>?
                   </h3>
-                  <p className="text-gray-300 text-lg leading-relaxed mb-4">
+                  <p className="text-gray-300 text-base md:text-lg lg:text-xl leading-relaxed mb-4">
                     It is the only model capable of precise <span className="text-amber-400 font-semibold">Frame Anchoring</span>—essential for professional continuity.
                   </p>
                   <div className="flex flex-wrap gap-3">
                     <div className="flex items-center gap-2 bg-slate-700/50 px-3 py-2 rounded-lg">
                       <Check className="w-4 h-4 text-green-400" />
-                      <span className="text-gray-300 text-sm">Scene-to-scene consistency</span>
+                      <span className="text-gray-300 text-xs md:text-sm">Scene-to-scene consistency</span>
                     </div>
                     <div className="flex items-center gap-2 bg-slate-700/50 px-3 py-2 rounded-lg">
                       <Check className="w-4 h-4 text-green-400" />
-                      <span className="text-gray-300 text-sm">Character continuity</span>
+                      <span className="text-gray-300 text-xs md:text-sm">Character continuity</span>
                     </div>
                     <div className="flex items-center gap-2 bg-slate-700/50 px-3 py-2 rounded-lg">
                       <Check className="w-4 h-4 text-green-400" />
-                      <span className="text-gray-300 text-sm">Style persistence</span>
+                      <span className="text-gray-300 text-xs md:text-sm">Style persistence</span>
                     </div>
                   </div>
                 </div>

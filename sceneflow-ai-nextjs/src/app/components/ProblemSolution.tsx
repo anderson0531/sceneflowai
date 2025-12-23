@@ -21,13 +21,13 @@ export function ProblemSolution() {
           transition={{ duration: 0.6 }}
         >
           <div className="inline-flex items-center px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-full mb-6">
-            <span className="text-sm font-medium text-red-400">The Old Way Doesn't Work</span>
+            <span className="text-sm md:text-base font-medium text-red-400">The Old Way Doesn't Work</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Traditional Video Production is
             <span className="block text-red-400">Broken</span>
           </h2>
-          <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+          <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-2xl mx-auto">
             Complex software, expensive tools, endless learning curves. It's time for a better way.
           </p>
         </motion.div>
@@ -49,8 +49,8 @@ export function ProblemSolution() {
                 </div>
                 
                 <div className="mb-6">
-                  <p className="text-gray-500 text-sm uppercase tracking-wider mb-2">Problem</p>
-                  <p className="text-xl font-semibold text-red-400 line-through decoration-red-500/50">{item.problem}</p>
+                  <p className="text-gray-500 text-xs md:text-sm uppercase tracking-wider mb-2">Problem</p>
+                  <p className="text-lg md:text-xl lg:text-2xl font-semibold text-red-400 line-through decoration-red-500/50">{item.problem}</p>
                 </div>
                 
                 <div className="flex items-center gap-3 mb-4">
@@ -58,8 +58,8 @@ export function ProblemSolution() {
                 </div>
                 
                 <div>
-                  <p className="text-gray-500 text-sm uppercase tracking-wider mb-2">SceneFlow AI</p>
-                  <p className="text-xl font-semibold text-cyan-400">{item.solution}</p>
+                  <p className="text-gray-500 text-xs md:text-sm uppercase tracking-wider mb-2">SceneFlow AI</p>
+                  <p className="text-lg md:text-xl lg:text-2xl font-semibold text-cyan-400">{item.solution}</p>
                 </div>
               </div>
             </motion.div>
@@ -75,11 +75,11 @@ export function ProblemSolution() {
           transition={{ duration: 0.6, delay: 0.4 }}
         >
           <div className="inline-flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-amber-500/10 border border-cyan-500/20 rounded-2xl">
-            <Sparkles className="w-5 h-5 text-cyan-400" />
-            <span className="text-lg font-medium text-white">
+            <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-cyan-400" />
+            <span className="text-base md:text-lg lg:text-xl font-medium text-white">
               AI does the heavy lifting. You focus on your creative vision.
             </span>
-            <Wand2 className="w-5 h-5 text-purple-400" />
+            <Wand2 className="w-5 h-5 md:w-6 md:h-6 text-purple-400" />
           </div>
         </motion.div>
       </div>

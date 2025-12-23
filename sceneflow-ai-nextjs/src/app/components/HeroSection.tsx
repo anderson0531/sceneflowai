@@ -73,8 +73,8 @@ export function HeroSection() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <Sparkles className="w-4 h-4 text-cyan-400 mr-2" />
-            <span className="text-sm font-medium bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent">
+            <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-cyan-400 mr-2" />
+            <span className="text-sm md:text-base font-medium bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent">
               Powered by Industry-Leading AI Generation
             </span>
           </motion.div>

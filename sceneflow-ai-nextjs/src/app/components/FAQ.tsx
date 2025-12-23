@@ -76,11 +76,11 @@ export function FAQ() {
           transition={{ duration: 0.6 }}
         >
           <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-amber-500/10 border border-cyan-500/20 rounded-full mb-6">
-            <Sparkles className="w-4 h-4 text-cyan-400 mr-2" />
-            <span className="text-sm font-medium text-gray-300">Got Questions?</span>
+            <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-cyan-400 mr-2" />
+            <span className="text-sm md:text-base font-medium text-gray-300">Got Questions?</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">Frequently Asked Questions</h2>
-          <p className="text-lg text-gray-400">
+          <p className="text-base md:text-lg lg:text-xl text-gray-400">
             Everything you need to know about SceneFlow AI
           </p>
         </motion.div>

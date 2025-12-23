@@ -103,12 +103,12 @@ const FeatureCard = ({
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay }}
     >
-      <div className="w-10 h-10 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center flex-shrink-0">
-        <Icon className="w-5 h-5 text-amber-400" />
+      <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center flex-shrink-0">
+        <Icon className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
       </div>
       <div>
-        <h4 className="text-white font-semibold text-lg mb-1">{title}</h4>
-        <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
+        <h4 className="text-white font-semibold text-lg md:text-xl mb-1">{title}</h4>
+        <p className="text-gray-400 text-sm md:text-base leading-relaxed">{description}</p>
       </div>
     </motion.div>
   );
@@ -140,8 +140,8 @@ export default function FinancialFirewallSection() {
           transition={{ duration: 0.6 }}
         >
           <div className="inline-flex items-center px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-full mb-6">
-            <Shield className="w-4 h-4 text-amber-400 mr-2" />
-            <span className="text-sm font-medium text-amber-400">The Solution</span>
+            <Shield className="w-4 h-4 md:w-5 md:h-5 text-amber-400 mr-2" />
+            <span className="text-sm md:text-base font-medium text-amber-400">The Solution</span>
           </div>
           <h2 className="landing-section-heading text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
             The{' '}
@@ -151,7 +151,7 @@ export default function FinancialFirewallSection() {
             <br className="hidden sm:block" />
             for Video Production
           </h2>
-          <p className="text-lg text-gray-400 max-w-3xl mx-auto">
+          <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-3xl mx-auto">
             Decouple Direction (inexpensive) from Rendering (expensive).
           </p>
         </motion.div>
@@ -191,10 +191,10 @@ export default function FinancialFirewallSection() {
               transition={{ duration: 0.5, delay: 0.8 }}
             >
               <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl p-6">
-                <p className="text-amber-400 font-semibold text-lg mb-2">
+                <p className="text-amber-400 font-semibold text-base md:text-lg lg:text-xl mb-2">
                   💡 What if video rendering only happened once—when you&apos;re 100% ready?
                 </p>
-                <p className="text-gray-400 text-sm">
+                <p className="text-gray-400 text-sm md:text-base">
                   SceneFlow&apos;s Financial Firewall ensures expensive Veo 3.1 generation only triggers on finalized, approved scenes—reducing the prompt-to-video ratio from 20:1 to 3:1.
                 </p>
               </div>

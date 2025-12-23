@@ -103,12 +103,12 @@ const FeatureCard = ({
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay }}
     >
-      <div className="w-10 h-10 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0">
-        <Icon className="w-5 h-5 text-purple-400" />
+      <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0">
+        <Icon className="w-5 h-5 md:w-6 md:h-6 text-purple-400" />
       </div>
       <div>
-        <h4 className="text-white font-semibold text-lg mb-1">{title}</h4>
-        <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
+        <h4 className="text-white font-semibold text-lg md:text-xl mb-1">{title}</h4>
+        <p className="text-gray-400 text-sm md:text-base leading-relaxed">{description}</p>
       </div>
     </motion.div>
   );
@@ -140,8 +140,8 @@ export default function ProsumerEconomySection() {
           transition={{ duration: 0.6 }}
         >
           <div className="inline-flex items-center px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-full mb-6">
-            <Users className="w-4 h-4 text-purple-400 mr-2" />
-            <span className="text-sm font-medium text-purple-400">Target Market</span>
+            <Users className="w-4 h-4 md:w-5 md:h-5 text-purple-400 mr-2" />
+            <span className="text-sm md:text-base font-medium text-purple-400">Target Market</span>
           </div>
           <h2 className="landing-section-heading text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
             Powering the{' '}
@@ -151,7 +151,7 @@ export default function ProsumerEconomySection() {
             <br className="hidden sm:block" />
             Creator Economy
           </h2>
-          <p className="text-lg text-gray-400 max-w-3xl mx-auto">
+          <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-3xl mx-auto">
             Hollywood tools for non-Hollywood budgets.
           </p>
         </motion.div>
@@ -190,11 +190,11 @@ export default function ProsumerEconomySection() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.8 }}
             >
-              <div className="bg-gradient-to-r from-purple-500/10 to-amber-500/10 border border-purple-500/20 rounded-xl p-6">
-                <p className="text-purple-400 font-semibold text-lg mb-2">
+              <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-xl p-6">
+                <p className="text-purple-400 font-semibold text-base md:text-lg lg:text-xl mb-2">
                   💡 What if Hollywood-grade tools were accessible to every creator?
                 </p>
-                <p className="text-gray-400 text-sm">
+                <p className="text-gray-400 text-sm md:text-base">
                   SceneFlow delivers professional control without professional complexity—so the next generation of storytellers can compete on vision, not budget.
                 </p>
               </div>

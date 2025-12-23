@@ -27,7 +27,7 @@ export function DemocratizationSection() {
             transition={{ duration: 0.6 }}
           >
             <div className="inline-flex items-center px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full mb-6">
-              <span className="text-sm font-medium text-cyan-400">All-in-One Platform</span>
+              <span className="text-sm md:text-base font-medium text-cyan-400">All-in-One Platform</span>
             </div>
             
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
@@ -37,7 +37,7 @@ export function DemocratizationSection() {
               </span>
             </h2>
             
-            <p className="text-lg text-gray-400 mb-8">
+            <p className="text-base md:text-lg lg:text-xl text-gray-400 mb-8">
               Stop juggling multiple tools and subscriptions. SceneFlow AI combines every step of video production into one seamless workflow.
             </p>
             
@@ -51,12 +51,12 @@ export function DemocratizationSection() {
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
                 >
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
-                    <feature.icon className="w-5 h-5 text-cyan-400" />
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
+                    <feature.icon className="w-5 h-5 md:w-6 md:h-6 text-cyan-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-white mb-1">{feature.title}</h4>
-                    <p className="text-sm text-gray-500">{feature.description}</p>
+                    <h4 className="font-semibold text-white text-base md:text-lg mb-1">{feature.title}</h4>
+                    <p className="text-sm md:text-base text-gray-500">{feature.description}</p>
                   </div>
                 </motion.div>
               ))}
@@ -96,7 +96,7 @@ export function DemocratizationSection() {
                         transition={{ duration: 0.8, delay: 0.3 + index * 0.15 }}
                       />
                     </div>
-                    <span className={`text-sm font-medium ${index === 4 ? 'text-cyan-400' : 'text-gray-500'}`}>
+                    <span className={`text-sm md:text-base font-medium ${index === 4 ? 'text-cyan-400' : 'text-gray-500'}`}>
                       {step}
                     </span>
                   </div>

@@ -140,7 +140,7 @@ export function FeatureHighlight() {
               Create Films
             </span>
           </h2>
-          <p className="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
             A complete AI-powered production suite powered by Google&apos;s latest AI models and ElevenLabs voice technology.
           </p>
         </motion.div>
@@ -164,8 +164,8 @@ export function FeatureHighlight() {
                   <div className={`w-14 h-14 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
                     <Icon className="w-7 h-7 text-white" />
                   </div>
-                  <h3 className="text-lg font-bold mb-3 text-white group-hover:text-cyan-400 transition-colors">{feature.title}</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
+                  <h3 className="text-base md:text-lg font-bold mb-3 text-white group-hover:text-cyan-400 transition-colors">{feature.title}</h3>
+                  <p className="text-gray-400 text-sm md:text-base leading-relaxed">{feature.description}</p>
                 </div>
               </motion.div>
             )
@@ -183,12 +183,12 @@ export function FeatureHighlight() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl flex items-center justify-center">
-                  <Play className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl flex items-center justify-center">
+                  <Play className="w-6 h-6 md:w-7 md:h-7 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold text-white">Screening Room</h3>
+                <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-white">Screening Room</h3>
               </div>
-              <p className="text-gray-400 mb-6 leading-relaxed">
+              <p className="text-gray-400 text-sm md:text-base lg:text-lg mb-6 leading-relaxed">
                 Preview your entire film before final export. Watch your scenes come to life with Ken Burns 
                 cinematic animation, synchronized audio tracks, and smooth transitions. Make adjustments 
                 in real-time before committing to final render.

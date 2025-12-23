@@ -58,7 +58,7 @@ export function HowItWorks() {
               Cinematic Excellence
             </span>
           </h2>
-          <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+          <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-2xl mx-auto">
             Our streamlined workflow takes you from initial concept to finished film in record time.
           </p>
         </motion.div>
@@ -87,9 +87,9 @@ export function HowItWorks() {
                 </div>
                 
                 {/* Content */}
-                <h3 className="text-xl font-bold text-white mb-1">{step.title}</h3>
-                <p className="text-sm text-gray-500 mb-3">{step.subtitle}</p>
-                <p className="text-gray-400 text-sm leading-relaxed">{step.description}</p>
+                <h3 className="text-lg md:text-xl font-bold text-white mb-1">{step.title}</h3>
+                <p className="text-xs md:text-sm text-gray-500 mb-3">{step.subtitle}</p>
+                <p className="text-gray-400 text-sm md:text-base leading-relaxed">{step.description}</p>
               </div>
               
               {/* Connector Arrow (hidden on last item and mobile) */}
