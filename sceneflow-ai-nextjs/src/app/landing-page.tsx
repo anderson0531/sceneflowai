@@ -17,6 +17,7 @@ const FrameAnchoredSection = dynamic(() => import('@/components/landing/FrameAnc
 const FeatureHighlight = dynamic(() => import('./components/FeatureHighlight').then(m => m.FeatureHighlight), { ssr: false })
 const ProsumerEconomySection = dynamic(() => import('@/components/landing/ProsumerEconomySection'), { ssr: false })
 const AudienceSelector = dynamic(() => import('@/components/landing/AudienceSelector'), { ssr: false })
+const UseCasesSection = dynamic(() => import('@/components/landing/UseCasesSection'), { ssr: false })
 const Pricing = dynamic(() => import('./components/Pricing').then(m => m.Pricing), { ssr: false })
 const FAQ = dynamic(() => import('./components/FAQ').then(m => m.FAQ), { ssr: false })
 const FloatingNav = dynamic(() => import('@/components/landing/FloatingNav'), { ssr: false })
@@ -42,6 +43,7 @@ export default function LandingPage() {
       <FeatureHighlight />
       <ProsumerEconomySection />
       <AudienceSelector />
+      <UseCasesSection />
       <Pricing />
       <FAQ />
       <FinalCTA />
