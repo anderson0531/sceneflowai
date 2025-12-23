@@ -154,7 +154,7 @@ export default function SlotMachineSection() {
             <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 text-red-400 mr-2" />
             <span className="text-sm md:text-base font-medium text-red-400">The Industry Problem</span>
           </div>
-          <h2 className="landing-section-heading text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+          <h2 className="landing-section-heading text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
             GenAI Video is a{' '}
             <span className="bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent">
               &apos;Slot Machine&apos;

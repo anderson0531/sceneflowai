@@ -245,13 +245,13 @@ export default function FrameAnchoredSection() {
             <Cloud className="w-4 h-4 md:w-5 md:h-5 text-blue-400 mr-2" />
             <span className="text-sm md:text-base font-medium text-blue-400">Technical Architecture</span>
           </div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
             Built for{' '}
             <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-amber-500 bg-clip-text text-transparent">
               Frame-Anchored Precision
             </span>
             <br className="hidden sm:block" />
-            on Google Cloud
+            <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl">on Google Cloud</span>
           </h2>
           <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-3xl mx-auto">
             A purpose-built architecture that leverages Google&apos;s most advanced AI models 
