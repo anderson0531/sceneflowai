@@ -10,6 +10,7 @@ const ProblemSolution = dynamic(() => import('./components/ProblemSolution').the
 // Value Proposition Sections
 const SlotMachineSection = dynamic(() => import('@/components/landing/SlotMachineSection'), { ssr: false })
 const FinancialFirewallSection = dynamic(() => import('@/components/landing/FinancialFirewallSection'), { ssr: false })
+const OneTakeSection = dynamic(() => import('@/components/landing/OneTakeSection'), { ssr: false })
 const DemocratizationSection = dynamic(() => import('./components/DemocratizationSection').then(m => m.DemocratizationSection), { ssr: false })
 const HowItWorks = dynamic(() => import('./components/HowItWorks').then(m => m.HowItWorks), { ssr: false })
 const FrameAnchoredSection = dynamic(() => import('@/components/landing/FrameAnchoredSection'), { ssr: false })
@@ -31,6 +32,7 @@ export default function LandingPage() {
       {/* Value Proposition Flow: Problem → Solution → How → Technical → Market */}
       <SlotMachineSection />
       <FinancialFirewallSection />
+      <OneTakeSection />
       <DemocratizationSection />
       <HowItWorks />
       <FrameAnchoredSection />
