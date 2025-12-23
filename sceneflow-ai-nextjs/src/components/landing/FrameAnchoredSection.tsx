@@ -247,7 +247,7 @@ export default function FrameAnchoredSection() {
           </div>
           <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
             Built for{' '}
-            <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-amber-500 bg-clip-text text-transparent">
+            <span className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl bg-gradient-to-r from-blue-400 via-purple-500 to-amber-500 bg-clip-text text-transparent">
               Frame-Anchored Precision
             </span>
             <br className="hidden sm:block" />

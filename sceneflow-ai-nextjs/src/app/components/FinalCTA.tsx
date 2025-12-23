@@ -45,7 +45,7 @@ export function FinalCTA() {
           
           <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
             Your Story Deserves{' '}
-            <span className="bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+            <span className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
               Cinematic Treatment
             </span>
           </h2>
