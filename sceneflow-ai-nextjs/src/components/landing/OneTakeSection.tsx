@@ -8,6 +8,7 @@ import { Target, Image, Brain, Edit3, Volume2, VolumeX, Maximize2 } from 'lucide
 const OneTakeVideo = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isMuted, setIsMuted] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const toggleMute = () => {
     if (videoRef.current) {
@@ -17,13 +18,14 @@ const OneTakeVideo = () => {
   };
 
   return (
-    <div className="relative w-full max-w-md mx-auto">
+    <div className={`relative w-full mx-auto transition-all duration-300 ${isExpanded ? 'max-w-3xl' : 'max-w-md'}`}>
       <motion.div
         className="relative rounded-2xl overflow-hidden border-2 border-cyan-500/30 shadow-2xl"
         initial={{ opacity: 0, scale: 0.9 }}
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
+        layout
       >
         {/* Glow effect */}
         <div className="absolute -inset-2 bg-gradient-to-r from-cyan-500/20 via-blue-500/20 to-cyan-500/20 rounded-2xl blur-xl -z-10" />
@@ -70,9 +72,9 @@ const OneTakeVideo = () => {
             
             {/* Expand/Fullscreen button */}
             <button
-              onClick={() => videoRef.current?.requestFullscreen()}
-              className="flex items-center gap-2 px-3 py-2 backdrop-blur-sm rounded-lg border transition-all bg-slate-800/90 border-slate-600/30 hover:bg-slate-700/90"
-              title="Fullscreen"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className={`flex items-center gap-2 px-3 py-2 backdrop-blur-sm rounded-lg border transition-all ${isExpanded ? 'bg-cyan-600/90 border-cyan-400/30' : 'bg-slate-800/90 border-slate-600/30 hover:bg-slate-700/90'}`}
+              title={isExpanded ? 'Shrink' : 'Expand'}
             >
               <Maximize2 className="w-4 h-4 text-white" />
             </button>
@@ -143,13 +145,13 @@ export default function OneTakeSection() {
             <Target className="w-4 h-4 md:w-5 md:h-5 text-cyan-400 mr-2" />
             <span className="text-sm md:text-base font-medium text-cyan-400">Precision Generation</span>
           </div>
-          <h2 className="landing-section-heading text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+          <h2 className="landing-section-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-6">
             <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
               One Take
             </span>
             {' '}Frame-Anchored
             <br className="hidden sm:block" />
-            Precision Video Generation
+            <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl">Precision Video Generation</span>
           </h2>
           <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-3xl mx-auto">
             High-quality anchor frames eliminate AI hallucinations and character drift.

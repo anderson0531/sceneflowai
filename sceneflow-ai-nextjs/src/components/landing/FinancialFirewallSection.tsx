@@ -8,6 +8,7 @@ import { Shield, Sparkles, Film, Eye, Volume2, VolumeX, Maximize2 } from 'lucide
 const FirewallVideo = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isMuted, setIsMuted] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const toggleMute = () => {
     if (videoRef.current) {
@@ -17,13 +18,14 @@ const FirewallVideo = () => {
   };
 
   return (
-    <div className="relative w-full max-w-md mx-auto">
+    <div className={`relative w-full mx-auto transition-all duration-300 ${isExpanded ? 'max-w-3xl' : 'max-w-md'}`}>
       <motion.div
         className="relative rounded-2xl overflow-hidden border-2 border-amber-500/30 shadow-2xl"
         initial={{ opacity: 0, scale: 0.9 }}
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
+        layout
       >
         {/* Glow effect */}
         <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 rounded-2xl blur-xl -z-10" />
@@ -70,9 +72,9 @@ const FirewallVideo = () => {
             
             {/* Expand/Fullscreen button */}
             <button
-              onClick={() => videoRef.current?.requestFullscreen()}
-              className="flex items-center gap-2 px-3 py-2 backdrop-blur-sm rounded-lg border transition-all bg-slate-800/90 border-slate-600/30 hover:bg-slate-700/90"
-              title="Fullscreen"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className={`flex items-center gap-2 px-3 py-2 backdrop-blur-sm rounded-lg border transition-all ${isExpanded ? 'bg-amber-600/90 border-amber-400/30' : 'bg-slate-800/90 border-slate-600/30 hover:bg-slate-700/90'}`}
+              title={isExpanded ? 'Shrink' : 'Expand'}
             >
               <Maximize2 className="w-4 h-4 text-white" />
             </button>
@@ -143,13 +145,13 @@ export default function FinancialFirewallSection() {
             <Shield className="w-4 h-4 md:w-5 md:h-5 text-amber-400 mr-2" />
             <span className="text-sm md:text-base font-medium text-amber-400">The Solution</span>
           </div>
-          <h2 className="landing-section-heading text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+          <h2 className="landing-section-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-6">
             The{' '}
             <span className="bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 bg-clip-text text-transparent">
               &apos;Financial Firewall&apos;
             </span>
             <br className="hidden sm:block" />
-            for Video Production
+            <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl">for Video Production</span>
           </h2>
           <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-3xl mx-auto">
             Decouple Direction (inexpensive) from Rendering (expensive).

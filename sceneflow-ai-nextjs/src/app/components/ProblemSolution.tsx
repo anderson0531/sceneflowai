@@ -25,7 +25,7 @@ export function ProblemSolution() {
           </div>
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Traditional Video Production is
-            <span className="block text-red-400">Broken</span>
+            <span className="block text-4xl md:text-5xl lg:text-6xl text-red-400">Broken</span>
           </h2>
           <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-2xl mx-auto">
             Complex software, expensive tools, endless learning curves. It's time for a better way.

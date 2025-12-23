@@ -8,6 +8,7 @@ import { Users, TrendingUp, Sparkles, Camera, Volume2, VolumeX, Maximize2 } from
 const ProsumerVideo = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isMuted, setIsMuted] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const toggleMute = () => {
     if (videoRef.current) {
@@ -17,13 +18,14 @@ const ProsumerVideo = () => {
   };
 
   return (
-    <div className="relative w-full max-w-md mx-auto">
+    <div className={`relative w-full mx-auto transition-all duration-300 ${isExpanded ? 'max-w-3xl' : 'max-w-md'}`}>
       <motion.div
         className="relative rounded-2xl overflow-hidden border-2 border-purple-500/30 shadow-2xl"
         initial={{ opacity: 0, scale: 0.9 }}
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
+        layout
       >
         {/* Glow effect */}
         <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/20 via-purple-500/20 to-cyan-500/20 rounded-2xl blur-xl -z-10" />
@@ -70,9 +72,9 @@ const ProsumerVideo = () => {
             
             {/* Expand/Fullscreen button */}
             <button
-              onClick={() => videoRef.current?.requestFullscreen()}
-              className="flex items-center gap-2 px-3 py-2 backdrop-blur-sm rounded-lg border transition-all bg-slate-800/90 border-slate-600/30 hover:bg-slate-700/90"
-              title="Fullscreen"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className={`flex items-center gap-2 px-3 py-2 backdrop-blur-sm rounded-lg border transition-all ${isExpanded ? 'bg-purple-600/90 border-purple-400/30' : 'bg-slate-800/90 border-slate-600/30 hover:bg-slate-700/90'}`}
+              title={isExpanded ? 'Shrink' : 'Expand'}
             >
               <Maximize2 className="w-4 h-4 text-white" />
             </button>
