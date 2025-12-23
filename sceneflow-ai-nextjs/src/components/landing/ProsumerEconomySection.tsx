@@ -42,7 +42,7 @@ const ProsumerVideo = () => {
             className="w-full h-full object-cover"
             poster="/demo/prosumer-economy-poster.jpg"
           >
-            <source src="/demo/prosumer-economy-illustration.mp4#t=0.1" type="video/mp4" />
+            <source src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Create_an_effective_1080p_202512231445.mp4#t=0.1" type="video/mp4" />
             Your browser does not support the video tag.
           </video>
           
