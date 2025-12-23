@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Target, Image, Brain, Edit3, TrendingDown, Volume2, VolumeX } from 'lucide-react';
+import { Target, Image, Brain, Edit3, Volume2, VolumeX } from 'lucide-react';
 
 // Video Illustration Component with Audio Toggle
 const OneTakeVideo = () => {
@@ -17,7 +17,7 @@ const OneTakeVideo = () => {
   };
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto">
+    <div className="relative w-full max-w-md mx-auto">
       <motion.div
         className="relative rounded-2xl overflow-hidden border-2 border-cyan-500/30 shadow-2xl"
         initial={{ opacity: 0, scale: 0.9 }}
@@ -29,7 +29,7 @@ const OneTakeVideo = () => {
         <div className="absolute -inset-2 bg-gradient-to-r from-cyan-500/20 via-blue-500/20 to-cyan-500/20 rounded-2xl blur-xl -z-10" />
         
         {/* Video */}
-        <div className="aspect-video bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+        <div className="aspect-[4/3] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
           <video
             ref={videoRef}
             autoPlay
@@ -71,37 +71,28 @@ const OneTakeVideo = () => {
   );
 };
 
-// Feature Item Component
-const FeatureItem = ({ 
+// Feature Card Component (matches SlotMachineSection pattern)
+const FeatureCard = ({ 
   icon: Icon, 
   title, 
   description, 
-  color,
   delay 
 }: { 
   icon: React.ElementType; 
   title: string; 
   description: string; 
-  color: string;
   delay: number;
 }) => {
-  const colorClasses: Record<string, string> = {
-    blue: 'from-blue-500 to-blue-600 border-blue-500/30',
-    purple: 'from-purple-500 to-purple-600 border-purple-500/30',
-    green: 'from-green-500 to-green-600 border-green-500/30',
-    cyan: 'from-cyan-500 to-cyan-600 border-cyan-500/30',
-  };
-
   return (
     <motion.div
       className="flex items-start gap-4"
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, x: 20 }}
+      whileInView={{ opacity: 1, x: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay }}
     >
-      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${colorClasses[color]} flex items-center justify-center flex-shrink-0`}>
-        <Icon className="w-6 h-6 text-white" />
+      <div className="w-10 h-10 rounded-lg bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center flex-shrink-0">
+        <Icon className="w-5 h-5 text-cyan-400" />
       </div>
       <div>
         <h4 className="text-white font-semibold text-lg mb-1">{title}</h4>
@@ -149,88 +140,55 @@ export default function OneTakeSection() {
             Precision Video Generation
           </h2>
           <p className="text-lg text-gray-400 max-w-3xl mx-auto">
-            <span className="text-white font-semibold">Technical Innovation:</span> High-quality anchor frames eliminate AI hallucinations and character drift.
+            High-quality anchor frames eliminate AI hallucinations and character drift.
           </p>
         </motion.div>
 
-        {/* Video Illustration */}
-        <div className="mb-16">
+        {/* Two Column Layout: Video Left, Features Right */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          {/* Left: Video */}
           <OneTakeVideo />
-        </div>
 
-        {/* Feature Grid */}
-        <motion.div
-          className="mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          <h3 className="text-2xl font-bold text-white text-center mb-8">
-            <span className="text-cyan-400">&apos;Frame-Anchored&apos;</span> Precision
-          </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <FeatureItem
+          {/* Right: Feature Cards + Thought Question */}
+          <div className="space-y-8">
+            <FeatureCard
               icon={Image}
               title="High-Quality Anchor Frames"
-              description="Uses precisely crafted starting and ending frame images to guide video generation."
-              color="cyan"
-              delay={0.1}
-            />
-            <FeatureItem
-              icon={Brain}
-              title="Eliminates Hallucinations"
-              description="Anchor frames prevent model drift, ensuring characters and scenes remain consistent."
-              color="blue"
+              description="Uses precisely crafted starting and ending frame images to guide video generation. The AI knows exactly where to begin and end."
               delay={0.2}
             />
-            <FeatureItem
-              icon={Edit3}
-              title="Edit vs. Regenerate"
-              description="Built-in video editor allows refinements without costly full regeneration cycles."
-              color="purple"
-              delay={0.3}
-            />
-            <FeatureItem
-              icon={TrendingDown}
-              title="Dramatic Cost Savings"
-              description="Reduces wasted generation attempts from 20+ takes down to just 1-3 takes."
-              color="green"
+            <FeatureCard
+              icon={Brain}
+              title="Eliminates Hallucinations & Drift"
+              description="Anchor frames prevent model drift, ensuring characters and scenes remain consistent throughout the entire video segment."
               delay={0.4}
             />
-          </div>
-        </motion.div>
+            <FeatureCard
+              icon={Edit3}
+              title="Edit vs. Regenerate"
+              description="Built-in video editor allows frame-level refinements without costly full regeneration cycles. Fix issues surgically, not destructively."
+              delay={0.6}
+            />
 
-        {/* Key Metric Badge */}
-        <motion.div
-          className="flex justify-center"
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-        >
-          <div className="relative">
-            {/* Glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-2xl blur-xl opacity-30" />
-            
-            {/* Badge */}
-            <div className="relative bg-gradient-to-r from-cyan-500 to-blue-600 px-8 py-6 rounded-2xl border-2 border-cyan-400/50 shadow-2xl">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
-                  <TrendingDown className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <p className="text-white/80 text-sm font-medium mb-1">The Result</p>
-                  <p className="text-white text-2xl font-bold">
-                    Creators reduce takes from <span className="text-slate-900">20</span> to <span className="text-slate-900">1-3</span>
-                    <span className="text-white/90 text-lg font-semibold ml-2">(85% cost reduction)</span>
-                  </p>
-                </div>
+            {/* Thought Question Box */}
+            <motion.div 
+              className="pt-6"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.8 }}
+            >
+              <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-xl p-6">
+                <p className="text-cyan-400 font-semibold text-lg mb-2">
+                  💡 What if you could get it right in one take?
+                </p>
+                <p className="text-gray-400 text-sm">
+                  Frame-anchored generation reduces wasted attempts from 20+ takes down to just 1-3 takes—an 85% cost reduction that transforms video production economics.
+                </p>
               </div>
-            </div>
+            </motion.div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

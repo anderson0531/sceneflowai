@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Eye, Sparkles, Check, Monitor, Film, Mic2, Play, Volume2, VolumeX } from 'lucide-react';
+import { Shield, Sparkles, Film, Eye, Volume2, VolumeX } from 'lucide-react';
 
 // Video Illustration Component with Audio Toggle
 const FirewallVideo = () => {
@@ -17,7 +17,7 @@ const FirewallVideo = () => {
   };
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto">
+    <div className="relative w-full max-w-md mx-auto">
       <motion.div
         className="relative rounded-2xl overflow-hidden border-2 border-amber-500/30 shadow-2xl"
         initial={{ opacity: 0, scale: 0.9 }}
@@ -26,10 +26,10 @@ const FirewallVideo = () => {
         transition={{ duration: 0.6 }}
       >
         {/* Glow effect */}
-        <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/20 via-cyan-500/20 to-amber-500/20 rounded-2xl blur-xl -z-10" />
+        <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 rounded-2xl blur-xl -z-10" />
         
         {/* Video */}
-        <div className="aspect-video bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+        <div className="aspect-[4/3] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
           <video
             ref={videoRef}
             autoPlay
@@ -71,37 +71,28 @@ const FirewallVideo = () => {
   );
 };
 
-// Feature Item Component
-const FeatureItem = ({ 
+// Feature Card Component (matches SlotMachineSection pattern)
+const FeatureCard = ({ 
   icon: Icon, 
   title, 
   description, 
-  color,
   delay 
 }: { 
   icon: React.ElementType; 
   title: string; 
   description: string; 
-  color: string;
   delay: number;
 }) => {
-  const colorClasses: Record<string, string> = {
-    blue: 'from-blue-500 to-blue-600 border-blue-500/30',
-    purple: 'from-purple-500 to-purple-600 border-purple-500/30',
-    green: 'from-green-500 to-green-600 border-green-500/30',
-    cyan: 'from-cyan-500 to-cyan-600 border-cyan-500/30',
-  };
-
   return (
     <motion.div
       className="flex items-start gap-4"
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, x: 20 }}
+      whileInView={{ opacity: 1, x: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay }}
     >
-      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${colorClasses[color]} flex items-center justify-center flex-shrink-0`}>
-        <Icon className="w-6 h-6 text-white" />
+      <div className="w-10 h-10 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center flex-shrink-0">
+        <Icon className="w-5 h-5 text-amber-400" />
       </div>
       <div>
         <h4 className="text-white font-semibold text-lg mb-1">{title}</h4>
@@ -149,87 +140,55 @@ export default function FinancialFirewallSection() {
             for Video Production
           </h2>
           <p className="text-lg text-gray-400 max-w-3xl mx-auto">
-            <span className="text-white font-semibold">Core Concept:</span> Decouple Direction (inexpensive) from Rendering (expensive).
+            Decouple Direction (inexpensive) from Rendering (expensive).
           </p>
         </motion.div>
 
-        {/* Video Illustration */}
-        <div className="mb-16">
+        {/* Two Column Layout: Video Left, Features Right */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          {/* Left: Video */}
           <FirewallVideo />
-        </div>
 
-        {/* Screening Room Engine Features */}
-        <motion.div
-          className="mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          <h3 className="text-2xl font-bold text-white text-center mb-8">
-            <span className="text-amber-400">&apos;Screening Room&apos;</span> Engine
-          </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <FeatureItem
+          {/* Right: Feature Cards + Thought Question */}
+          <div className="space-y-8">
+            <FeatureCard
               icon={Sparkles}
-              title="Logic"
-              description="Gemini 2.5 Pro generates scripts and scene descriptions at minimal cost."
-              color="blue"
-              delay={0.1}
-            />
-            <FeatureItem
-              icon={Film}
-              title="Visuals"
-              description="Imagen 3 generates static storyboards and character-consistent assets."
-              color="purple"
+              title="Logic Layer (Cheap)"
+              description="Gemini 2.5 Pro generates scripts and scene descriptions at minimal cost. Iterate on your story infinitely without touching your video budget."
               delay={0.2}
             />
-            <FeatureItem
-              icon={Eye}
-              title="Preview"
-              description="Client-side animation (Ken Burns) allows directors to 'watch' the film at near-zero cost."
-              color="green"
-              delay={0.3}
-            />
-            <FeatureItem
-              icon={Play}
-              title="Render"
-              description="Only finalized, approved scenes trigger expensive Veo 3.1 video generation."
-              color="cyan"
+            <FeatureCard
+              icon={Film}
+              title="Visual Layer (Cheap)"
+              description="Imagen 3 generates static storyboards and character-consistent assets. Preview your entire film as an animated storyboard."
               delay={0.4}
             />
-          </div>
-        </motion.div>
+            <FeatureCard
+              icon={Eye}
+              title="Preview Layer (Free)"
+              description="Client-side Ken Burns animation lets directors 'watch' the film at near-zero cost. Refine pacing, cuts, and timing before spending a dime."
+              delay={0.6}
+            />
 
-        {/* Key Metric Badge */}
-        <motion.div
-          className="flex justify-center"
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-        >
-          <div className="relative">
-            {/* Glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl blur-xl opacity-30" />
-            
-            {/* Badge */}
-            <div className="relative bg-gradient-to-r from-amber-500 to-orange-600 px-8 py-6 rounded-2xl border-2 border-amber-400/50 shadow-2xl">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
-                  <Check className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <p className="text-white/80 text-sm font-medium mb-1">Key Metric</p>
-                  <p className="text-white text-2xl font-bold">
-                    Reduces the &apos;Prompt-to-Video&apos; ratio from <span className="text-slate-900">20:1</span> to <span className="text-slate-900">3:1</span>
-                  </p>
-                </div>
+            {/* Thought Question Box */}
+            <motion.div 
+              className="pt-6"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.8 }}
+            >
+              <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl p-6">
+                <p className="text-amber-400 font-semibold text-lg mb-2">
+                  💡 What if video rendering only happened once—when you&apos;re 100% ready?
+                </p>
+                <p className="text-gray-400 text-sm">
+                  SceneFlow&apos;s Financial Firewall ensures expensive Veo 3.1 generation only triggers on finalized, approved scenes—reducing the prompt-to-video ratio from 20:1 to 3:1.
+                </p>
               </div>
-            </div>
+            </motion.div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Users, TrendingUp, Briefcase, Camera, Youtube, Building2, GraduationCap, Smartphone, Server, Clapperboard, Sparkles, Volume2, VolumeX } from 'lucide-react';
+import { Users, TrendingUp, Sparkles, Camera, Volume2, VolumeX } from 'lucide-react';
 
 // Video Illustration Component with Audio Toggle
 const ProsumerVideo = () => {
@@ -17,7 +17,7 @@ const ProsumerVideo = () => {
   };
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto mb-12">
+    <div className="relative w-full max-w-md mx-auto">
       <motion.div
         className="relative rounded-2xl overflow-hidden border-2 border-purple-500/30 shadow-2xl"
         initial={{ opacity: 0, scale: 0.9 }}
@@ -29,7 +29,7 @@ const ProsumerVideo = () => {
         <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/20 via-purple-500/20 to-cyan-500/20 rounded-2xl blur-xl -z-10" />
         
         {/* Video */}
-        <div className="aspect-video bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+        <div className="aspect-[4/3] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
           <video
             ref={videoRef}
             autoPlay
@@ -71,59 +71,32 @@ const ProsumerVideo = () => {
   );
 };
 
-// Column Card Component (simplified without illustration)
-const ColumnCard = ({
-  title,
-  badge,
-  badgeColor,
-  points,
-  delay
-}: {
-  title: string;
-  badge: string;
-  badgeColor: string;
-  points: { icon: React.ElementType; text: string }[];
+// Feature Card Component (matches SlotMachineSection pattern)
+const FeatureCard = ({ 
+  icon: Icon, 
+  title, 
+  description, 
+  delay 
+}: { 
+  icon: React.ElementType; 
+  title: string; 
+  description: string; 
   delay: number;
 }) => {
-  const badgeColors: Record<string, string> = {
-    amber: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
-    purple: 'bg-purple-500/10 border-purple-500/20 text-purple-400',
-    cyan: 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400',
-  };
-
   return (
     <motion.div
-      className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-white/5 overflow-hidden hover:border-white/10 transition-all duration-300"
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      className="flex items-start gap-4"
+      initial={{ opacity: 0, x: 20 }}
+      whileInView={{ opacity: 1, x: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.6, delay }}
+      transition={{ duration: 0.5, delay }}
     >
-      {/* Badge */}
-      <div className="p-6 pb-0">
-        <div className={`inline-flex px-3 py-1.5 rounded-full border text-sm font-medium ${badgeColors[badgeColor]}`}>
-          {badge}
-        </div>
+      <div className="w-10 h-10 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0">
+        <Icon className="w-5 h-5 text-purple-400" />
       </div>
-
-      {/* Title */}
-      <div className="px-6 pt-4 pb-4">
-        <h3 className="text-xl font-bold text-white">{title}</h3>
-      </div>
-
-      {/* Divider */}
-      <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-
-      {/* Points */}
-      <div className="p-6 pt-4 space-y-3">
-        {points.map((point, index) => (
-          <div key={index} className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-slate-700/50 flex items-center justify-center flex-shrink-0">
-              <point.icon className="w-4 h-4 text-gray-400" />
-            </div>
-            <p className="text-gray-300 text-sm">{point.text}</p>
-          </div>
-        ))}
+      <div>
+        <h4 className="text-white font-semibold text-lg mb-1">{title}</h4>
+        <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
       </div>
     </motion.div>
   );
@@ -167,81 +140,55 @@ export default function ProsumerEconomySection() {
             Creator Economy
           </h2>
           <p className="text-lg text-gray-400 max-w-3xl mx-auto">
-            Hollywood tools for non-Hollywood budgets. We&apos;re building for the creator
-            who demands professional quality without the professional price tag.
+            Hollywood tools for non-Hollywood budgets.
           </p>
         </motion.div>
 
-        {/* Video Illustration */}
-        <ProsumerVideo />
+        {/* Two Column Layout: Video Left, Features Right */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          {/* Left: Video */}
+          <ProsumerVideo />
 
-        {/* 3-Column Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <ColumnCard
-            badge="Target"
-            badgeColor="amber"
-            title="The 'Mid-Market' Storyteller"
-            points={[
-              { icon: Camera, text: 'Indie Filmmakers' },
-              { icon: Youtube, text: 'YouTubers & Creators' },
-              { icon: Building2, text: 'Agencies & Studios' },
-              { icon: GraduationCap, text: 'Educators & Trainers' },
-            ]}
-            delay={0.1}
-          />
+          {/* Right: Feature Cards + Thought Question */}
+          <div className="space-y-8">
+            <FeatureCard
+              icon={Camera}
+              title="The 'Mid-Market' Storyteller"
+              description="Indie filmmakers, YouTubers, agencies, and educators who demand professional quality without the professional price tag. You're not amateur—you're prosumer."
+              delay={0.2}
+            />
+            <FeatureCard
+              icon={Sparkles}
+              title="Bridging the Gap"
+              description="Simple mobile apps lack control. Maya and Unreal require expertise. SceneFlow bridges the divide—offering Hollywood-grade direction tools without the Hollywood learning curve."
+              delay={0.4}
+            />
+            <FeatureCard
+              icon={TrendingUp}
+              title="Perfect Market Timing"
+              description="YouTube is shifting to long-form. Cinema-quality is expected. Creators need professional tools, not render farms. The prosumer moment is now."
+              delay={0.6}
+            />
 
-          <ColumnCard
-            badge="The Gap"
-            badgeColor="purple"
-            title="Between 'TikTok Toys' and 'Hollywood Pipelines'"
-            points={[
-              { icon: Smartphone, text: 'Simple mobile apps lack control' },
-              { icon: Server, text: 'Maya/Unreal require expertise' },
-              { icon: Sparkles, text: 'SceneFlow bridges the divide' },
-            ]}
-            delay={0.2}
-          />
-
-          <ColumnCard
-            badge="Market Timing"
-            badgeColor="cyan"
-            title="YouTube is Shifting..."
-            points={[
-              { icon: TrendingUp, text: 'Long-form content is rising' },
-              { icon: Clapperboard, text: 'Cinema-quality is expected' },
-              { icon: Briefcase, text: 'Creators need pro tools, not render farms' },
-            ]}
-            delay={0.3}
-          />
-        </div>
-
-        {/* Bottom CTA */}
-        <motion.div
-          className="mt-16 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-        >
-          <p className="text-xl text-gray-300 mb-6">
-            <span className="text-white font-semibold">Creators need tools that offer Hollywood control</span>
-            {' '}without Hollywood render farms.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <div className="flex items-center gap-2 bg-slate-800/50 px-4 py-2 rounded-full border border-slate-700">
-              <span className="text-2xl">🎬</span>
-              <span className="text-gray-300 text-sm">Professional Grade</span>
-            </div>
-            <div className="flex items-center gap-2 bg-slate-800/50 px-4 py-2 rounded-full border border-slate-700">
-              <span className="text-2xl">💰</span>
-              <span className="text-gray-300 text-sm">Creator Budget</span>
-            </div>
-            <div className="flex items-center gap-2 bg-slate-800/50 px-4 py-2 rounded-full border border-slate-700">
-              <span className="text-2xl">⚡</span>
-              <span className="text-gray-300 text-sm">10x Faster</span>
-            </div>
+            {/* Thought Question Box */}
+            <motion.div 
+              className="pt-6"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.8 }}
+            >
+              <div className="bg-gradient-to-r from-purple-500/10 to-amber-500/10 border border-purple-500/20 rounded-xl p-6">
+                <p className="text-purple-400 font-semibold text-lg mb-2">
+                  💡 What if Hollywood-grade tools were accessible to every creator?
+                </p>
+                <p className="text-gray-400 text-sm">
+                  SceneFlow delivers professional control without professional complexity—so the next generation of storytellers can compete on vision, not budget.
+                </p>
+              </div>
+            </motion.div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );
