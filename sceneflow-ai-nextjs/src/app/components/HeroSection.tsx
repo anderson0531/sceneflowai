@@ -153,7 +153,7 @@ export function HeroSection() {
 
           {/* Microcopy */}
           <motion.div 
-            className="mb-16"
+            className="mb-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 1.2 }}
@@ -165,6 +165,23 @@ export function HeroSection() {
               <span className="text-gray-500 mx-2">•</span>
               <span className="text-gray-500">One-time $5</span>
             </p>
+          </motion.div>
+
+          {/* Early Access Social Proof (merged from SocialProof section) */}
+          <motion.div 
+            className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 mb-16 py-4 px-6 rounded-xl bg-gradient-to-r from-cyan-500/5 via-purple-500/5 to-amber-500/5 border border-white/5 max-w-2xl mx-auto"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 1.4 }}
+          >
+            <div className="flex items-center gap-2 text-sm">
+              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+              <span className="text-gray-300 font-medium">Early Access Available</span>
+            </div>
+            <div className="hidden md:block w-px h-4 bg-gray-700" />
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-gray-400">New features shipping weekly</span>
+            </div>
           </motion.div>
           
           {/* Hero Visual Placeholder */}

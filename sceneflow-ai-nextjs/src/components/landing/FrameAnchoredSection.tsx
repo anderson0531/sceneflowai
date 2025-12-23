@@ -1,8 +1,109 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Cloud, Cpu, Layers, Anchor, Sparkles, Film, Clapperboard, Check, Zap } from 'lucide-react';
+import { Cloud, Cpu, Layers, Anchor, Sparkles, Film, Clapperboard, Check, Zap, Image, Brain, Edit3, Volume2, VolumeX, Maximize2, Target } from 'lucide-react';
+
+// Frame-Anchored Precision Video Component
+const FrameAnchoredVideo = () => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  return (
+    <div className={`relative w-full mx-auto transition-all duration-300 ${isExpanded ? 'max-w-3xl' : 'max-w-md'}`}>
+      <motion.div
+        className="relative rounded-2xl overflow-hidden border-2 border-cyan-500/30 shadow-2xl"
+        initial={{ opacity: 0, scale: 0.9 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        layout
+      >
+        {/* Glow effect */}
+        <div className="absolute -inset-2 bg-gradient-to-r from-cyan-500/20 via-blue-500/20 to-cyan-500/20 rounded-2xl blur-xl -z-10" />
+        
+        {/* Video */}
+        <div className="aspect-[4/3] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+          <video
+            ref={videoRef}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            className="w-full h-full object-cover"
+            poster="/demo/one-take-frame-anchored-poster.jpg"
+          >
+            <source src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/demo/one-take-frame-anchored.mp4#t=0.1" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          
+          {/* Video controls */}
+          <div className="absolute bottom-3 right-3 flex items-center gap-2">
+            <button
+              onClick={toggleMute}
+              className="p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm transition-all opacity-60 hover:opacity-100"
+              title={isMuted ? 'Unmute' : 'Mute'}
+            >
+              {isMuted ? (
+                <VolumeX className="w-4 h-4 text-white/80" />
+              ) : (
+                <Volume2 className="w-4 h-4 text-white/80" />
+              )}
+            </button>
+            
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm transition-all opacity-60 hover:opacity-100"
+              title={isExpanded ? 'Shrink' : 'Expand'}
+            >
+              <Maximize2 className="w-4 h-4 text-white/80" />
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// Feature Card Component for precision features
+const FeatureCard = ({ 
+  icon: Icon, 
+  title, 
+  description, 
+  delay 
+}: { 
+  icon: React.ElementType; 
+  title: string; 
+  description: string; 
+  delay: number;
+}) => {
+  return (
+    <motion.div
+      className="flex items-start gap-4"
+      initial={{ opacity: 0, x: 20 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay }}
+    >
+      <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center flex-shrink-0">
+        <Icon className="w-5 h-5 md:w-6 md:h-6 text-cyan-400" />
+      </div>
+      <div>
+        <h4 className="text-white font-semibold text-lg md:text-xl mb-1">{title}</h4>
+        <p className="text-gray-400 text-sm md:text-base leading-relaxed">{description}</p>
+      </div>
+    </motion.div>
+  );
+};
 
 // Google Cloud Architecture Illustration
 const GoogleCloudIllustration = () => {
@@ -345,6 +446,78 @@ export default function FrameAnchoredSection() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Frame-Anchored Precision: Video + Features (merged from OneTakeSection) */}
+        <motion.div
+          className="mt-24"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* Subsection Header */}
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full mb-6">
+              <Target className="w-4 h-4 md:w-5 md:h-5 text-cyan-400 mr-2" />
+              <span className="text-sm md:text-base font-medium text-cyan-400">Precision Generation</span>
+            </div>
+            <h3 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
+              <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
+                One Take
+              </span>
+              {' '}Precision
+            </h3>
+            <p className="text-base md:text-lg text-gray-400 max-w-2xl mx-auto">
+              High-quality anchor frames eliminate AI hallucinations and character drift.
+            </p>
+          </div>
+
+          {/* Two Column Layout: Video Left, Features Right */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Left: Video */}
+            <FrameAnchoredVideo />
+
+            {/* Right: Feature Cards + Thought Question */}
+            <div className="space-y-8">
+              <FeatureCard
+                icon={Image}
+                title="High-Quality Anchor Frames"
+                description="Uses precisely crafted starting and ending frame images to guide video generation. The AI knows exactly where to begin and end."
+                delay={0.2}
+              />
+              <FeatureCard
+                icon={Brain}
+                title="Eliminates Hallucinations & Drift"
+                description="Anchor frames prevent model drift, ensuring characters and scenes remain consistent throughout the entire video segment."
+                delay={0.4}
+              />
+              <FeatureCard
+                icon={Edit3}
+                title="Edit vs. Regenerate"
+                description="Built-in video editor allows frame-level refinements without costly full regeneration cycles. Fix issues surgically, not destructively."
+                delay={0.6}
+              />
+
+              {/* Thought Question Box */}
+              <motion.div 
+                className="pt-6"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.8 }}
+              >
+                <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-xl p-6">
+                  <p className="text-cyan-400 font-semibold text-base md:text-lg lg:text-xl mb-2">
+                    💡 What if you could get it right in one take?
+                  </p>
+                  <p className="text-gray-400 text-sm md:text-base">
+                    Frame-anchored generation reduces wasted attempts from 20+ takes down to just 1-3 takes—an 85% cost reduction that transforms video production economics.
+                  </p>
+                </div>
+              </motion.div>
             </div>
           </div>
         </motion.div>

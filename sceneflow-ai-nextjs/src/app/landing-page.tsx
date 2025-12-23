@@ -1,22 +1,16 @@
 'use client'
 
-// Landing page with dedicated Header component
+// Landing page with dedicated Header component - Optimized structure (12 sections)
 import dynamic from 'next/dynamic'
 import { Header } from './components/Header'
 import { HeroSection } from './components/HeroSection'
 import { TrustSignals } from './components/TrustSignals'
-import { SocialProof } from './components/SocialProof'
-const ProblemSolution = dynamic(() => import('./components/ProblemSolution').then(m => m.ProblemSolution), { ssr: false })
-// Value Proposition Sections
+// Value Proposition Sections - Streamlined for clarity and conversion
 const SlotMachineSection = dynamic(() => import('@/components/landing/SlotMachineSection'), { ssr: false })
-const FinancialFirewallSection = dynamic(() => import('@/components/landing/FinancialFirewallSection'), { ssr: false })
-const OneTakeSection = dynamic(() => import('@/components/landing/OneTakeSection'), { ssr: false })
-const DemocratizationSection = dynamic(() => import('./components/DemocratizationSection').then(m => m.DemocratizationSection), { ssr: false })
 const HowItWorks = dynamic(() => import('./components/HowItWorks').then(m => m.HowItWorks), { ssr: false })
+const FinancialFirewallSection = dynamic(() => import('@/components/landing/FinancialFirewallSection'), { ssr: false })
 const FrameAnchoredSection = dynamic(() => import('@/components/landing/FrameAnchoredSection'), { ssr: false })
 const FeatureHighlight = dynamic(() => import('./components/FeatureHighlight').then(m => m.FeatureHighlight), { ssr: false })
-const ProsumerEconomySection = dynamic(() => import('@/components/landing/ProsumerEconomySection'), { ssr: false })
-const AudienceSelector = dynamic(() => import('@/components/landing/AudienceSelector'), { ssr: false })
 const UseCasesSection = dynamic(() => import('@/components/landing/UseCasesSection'), { ssr: false })
 const Pricing = dynamic(() => import('./components/Pricing').then(m => m.Pricing), { ssr: false })
 const FAQ = dynamic(() => import('./components/FAQ').then(m => m.FAQ), { ssr: false })
@@ -29,24 +23,29 @@ export default function LandingPage() {
     <div className="min-h-screen bg-gray-950 text-white">
       <Header />
       <FloatingNav />
+      {/* 1. Hero: Value prop + Social proof badges */}
       <HeroSection />
+      {/* 2. Trust: Powered by Google Cloud credibility */}
       <TrustSignals />
-      <SocialProof />
-      <ProblemSolution />
-      {/* Value Proposition Flow: Problem → Solution → How → Technical → Market */}
+      {/* 3. Problem: Slot machine metaphor - why current tools fail */}
       <SlotMachineSection />
-      <FinancialFirewallSection />
-      <OneTakeSection />
-      <DemocratizationSection />
+      {/* 4. How: Simple 3-step process - moved earlier per optimization */}
       <HowItWorks />
+      {/* 5. Solution: Financial safety with budget controls */}
+      <FinancialFirewallSection />
+      {/* 6. Technical: Frame-anchored architecture + precision features */}
       <FrameAnchoredSection />
+      {/* 7. Features: All-in-one platform capabilities */}
       <FeatureHighlight />
-      <ProsumerEconomySection />
-      <AudienceSelector />
+      {/* 8. Proof: Real use cases with video demos by persona */}
       <UseCasesSection />
+      {/* 9. Pricing: Clear value tiers */}
       <Pricing />
+      {/* 10. FAQ: Objection handling */}
       <FAQ />
+      {/* 11. Final CTA: Conversion */}
       <FinalCTA />
+      {/* 12. Footer: Navigation */}
       <Footer />
     </div>
   )
