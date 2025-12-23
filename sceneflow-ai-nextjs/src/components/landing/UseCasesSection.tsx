@@ -48,6 +48,7 @@ const useCases: UseCase[] = [
     challenge: 'Limited budgets make it impossible to visualize ambitious stories. Traditional pre-vis tools are prohibitively expensive for independent projects.',
     solution: 'Bring your screenplay to life with AI storyboards, character designs, and animatic videos—all maintaining visual consistency across every scene.',
     outcome: 'Festival-quality proof of concepts on indie budgets. Filmmakers use SceneFlow outputs to secure funding, attract talent, and greenlight productions.',
+    videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Jul_16__0705_24s_202512231846_2egwk.mp4',
   },
 ];
 
