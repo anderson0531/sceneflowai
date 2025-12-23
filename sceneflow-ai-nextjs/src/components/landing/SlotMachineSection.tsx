@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Dices, RefreshCw, Flame, AlertTriangle, Ban, Volume2, VolumeX } from 'lucide-react';
+import { Dices, RefreshCw, Flame, AlertTriangle, Ban, Volume2, VolumeX, Maximize2 } from 'lucide-react';
 
 // Video Illustration Component with Audio Toggle
 const SlotMachineVideo = () => {
@@ -44,27 +44,39 @@ const SlotMachineVideo = () => {
             Your browser does not support the video tag.
           </video>
           
-          {/* Audio toggle button */}
-          <button
-            onClick={toggleMute}
-            className={`absolute bottom-3 right-3 flex items-center gap-2 px-3 py-2 backdrop-blur-sm rounded-lg border transition-all ${
-              isMuted 
-                ? 'bg-amber-600/90 border-amber-400/30 hover:bg-amber-500/90' 
-                : 'bg-slate-800/90 border-cyan-400/30 hover:bg-slate-700/90'
-            }`}
-          >
-            {isMuted ? (
-              <>
-                <VolumeX className="w-4 h-4 text-white" />
-                <span className="text-xs font-medium text-white">🎵 Unmute</span>
-              </>
-            ) : (
-              <>
-                <Volume2 className="w-4 h-4 text-cyan-400 animate-pulse" />
-                <span className="text-xs font-medium text-cyan-300">Sound On</span>
-              </>
-            )}
-          </button>
+          {/* Video controls */}
+          <div className="absolute bottom-3 right-3 flex items-center gap-2">
+            {/* Audio toggle button */}
+            <button
+              onClick={toggleMute}
+              className={`flex items-center gap-2 px-3 py-2 backdrop-blur-sm rounded-lg border transition-all ${
+                isMuted 
+                  ? 'bg-amber-600/90 border-amber-400/30 hover:bg-amber-500/90' 
+                  : 'bg-slate-800/90 border-cyan-400/30 hover:bg-slate-700/90'
+              }`}
+            >
+              {isMuted ? (
+                <>
+                  <VolumeX className="w-4 h-4 text-white" />
+                  <span className="text-xs font-medium text-white">🎵 Unmute</span>
+                </>
+              ) : (
+                <>
+                  <Volume2 className="w-4 h-4 text-cyan-400 animate-pulse" />
+                  <span className="text-xs font-medium text-cyan-300">Sound On</span>
+                </>
+              )}
+            </button>
+            
+            {/* Expand/Fullscreen button */}
+            <button
+              onClick={() => videoRef.current?.requestFullscreen()}
+              className="flex items-center gap-2 px-3 py-2 backdrop-blur-sm rounded-lg border transition-all bg-slate-800/90 border-slate-600/30 hover:bg-slate-700/90"
+              title="Fullscreen"
+            >
+              <Maximize2 className="w-4 h-4 text-white" />
+            </button>
+          </div>
         </div>
       </motion.div>
     </div>
