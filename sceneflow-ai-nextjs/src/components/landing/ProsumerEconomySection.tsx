@@ -141,8 +141,7 @@ export default function ProsumerEconomySection() {
             <span className="bg-gradient-to-r from-purple-400 via-pink-500 to-amber-400 bg-clip-text text-transparent">
               &apos;Prosumer&apos;
             </span>
-            <br className="hidden sm:block" />
-            <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl">Creator Economy</span>
+            <span className="block text-3xl sm:text-4xl md:text-5xl lg:text-6xl">Creator Economy</span>
           </h2>
           <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-3xl mx-auto">
             Hollywood tools for non-Hollywood budgets.

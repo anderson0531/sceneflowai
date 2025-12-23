@@ -141,8 +141,7 @@ export default function FinancialFirewallSection() {
             <span className="bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 bg-clip-text text-transparent">
               &apos;Financial Firewall&apos;
             </span>
-            <br className="hidden sm:block" />
-            <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl">for Video Production</span>
+            <span className="block text-3xl sm:text-4xl md:text-5xl lg:text-6xl">for Video Production</span>
           </h2>
           <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-3xl mx-auto">
             Decouple Direction (inexpensive) from Rendering (expensive).

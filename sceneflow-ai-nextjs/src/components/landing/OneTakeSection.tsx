@@ -141,8 +141,7 @@ export default function OneTakeSection() {
               One Take
             </span>
             {' '}Frame-Anchored
-            <br className="hidden sm:block" />
-            <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl">Precision Video Generation</span>
+            <span className="block text-3xl sm:text-4xl md:text-5xl lg:text-6xl">Precision Video Generation</span>
           </h2>
           <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-3xl mx-auto">
             High-quality anchor frames eliminate AI hallucinations and character drift.
