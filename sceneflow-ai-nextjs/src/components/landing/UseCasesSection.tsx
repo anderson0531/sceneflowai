@@ -37,6 +37,7 @@ const useCases: UseCase[] = [
     challenge: 'Client pitches require expensive sizzle reels and concept videos. Teams spend weeks on pre-visualization that may never get approved.',
     solution: 'Generate pitch-ready concept videos in hours. Iterate on client feedback instantly with AI-powered revisions and consistent brand styling.',
     outcome: 'Win more pitches with lower upfront investment. Agencies report 60% reduction in pre-production costs and 3x faster turnaround on client concepts.',
+    videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Jul_16__0705_24s_202512231746_xzz58.mp4',
   },
   {
     id: 'indie-filmmaker',
