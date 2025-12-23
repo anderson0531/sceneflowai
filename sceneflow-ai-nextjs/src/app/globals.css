@@ -68,14 +68,14 @@
     margin-bottom: 1.5rem;
   }
 
-  h2 {
+  h2:not(.landing-section-heading) {
     font-weight: 600;
     font-size: clamp(1.75rem, 3vw + 0.75rem, 2.75rem); /* 28px → 44px */
     line-height: 1.25;
     margin-bottom: 1.25rem;
   }
 
-  h3 {
+  h3:not(.landing-section-heading) {
     font-weight: 600;
     font-size: clamp(1.5rem, 2vw + 0.5rem, 2.25rem); /* 24px → 36px */
     line-height: 1.3;
