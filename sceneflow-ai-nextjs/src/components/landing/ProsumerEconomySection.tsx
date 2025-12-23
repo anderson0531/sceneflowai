@@ -138,10 +138,10 @@ export default function ProsumerEconomySection() {
           </div>
           <h2 className="landing-section-heading text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-6">
             Powering the{' '}
-            <span className="bg-gradient-to-r from-purple-400 via-pink-500 to-amber-400 bg-clip-text text-transparent">
+            <span className="landing-gradient-text bg-gradient-to-r from-purple-400 via-pink-500 to-amber-400 bg-clip-text text-transparent">
               &apos;Prosumer&apos;
             </span>
-            <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl">Creator Economy</span>
+            <span className="landing-gradient-text block text-4xl sm:text-5xl md:text-6xl lg:text-7xl">Creator Economy</span>
           </h2>
           <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-3xl mx-auto">
             Hollywood tools for non-Hollywood budgets.

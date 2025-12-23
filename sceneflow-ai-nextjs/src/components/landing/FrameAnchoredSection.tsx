@@ -346,12 +346,12 @@ export default function FrameAnchoredSection() {
             <Cloud className="w-4 h-4 md:w-5 md:h-5 text-blue-400 mr-2" />
             <span className="text-sm md:text-base font-medium text-blue-400">Technical Architecture</span>
           </div>
-          <h2 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-6">
+          <h2 className="landing-section-heading text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-6">
             Built for{' '}
-            <span className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl bg-gradient-to-r from-blue-400 via-purple-500 to-amber-500 bg-clip-text text-transparent">
+            <span className="landing-gradient-text bg-gradient-to-r from-blue-400 via-purple-500 to-amber-500 bg-clip-text text-transparent">
               Frame-Anchored Precision
             </span>
-            <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl">on Google Cloud</span>
+            <span className="landing-gradient-text block text-4xl sm:text-5xl md:text-6xl lg:text-7xl">on Google Cloud</span>
           </h2>
           <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-3xl mx-auto">
             A purpose-built architecture that leverages Google&apos;s most advanced AI models 
@@ -465,7 +465,7 @@ export default function FrameAnchoredSection() {
               <span className="text-sm md:text-base font-medium text-cyan-400">Precision Generation</span>
             </div>
             <h3 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
-              <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
+              <span className="landing-gradient-text bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
                 One Take
               </span>
               {' '}Precision

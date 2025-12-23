@@ -147,7 +147,7 @@ export default function SlotMachineSection() {
           </div>
           <h2 className="landing-section-heading text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-6">
             GenAI Video is a{' '}
-            <span className="bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent">
+            <span className="landing-gradient-text bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent">
               &apos;Slot Machine&apos;
             </span>
           </h2>

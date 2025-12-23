@@ -137,11 +137,11 @@ export default function OneTakeSection() {
             <span className="text-sm md:text-base font-medium text-cyan-400">Precision Generation</span>
           </div>
           <h2 className="landing-section-heading text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-6">
-            <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
+            <span className="landing-gradient-text bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
               One Take
             </span>
             {' '}Frame-Anchored
-            <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl">Precision Video Generation</span>
+            <span className="landing-gradient-text block text-4xl sm:text-5xl md:text-6xl lg:text-7xl">Precision Video Generation</span>
           </h2>
           <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-3xl mx-auto">
             High-quality anchor frames eliminate AI hallucinations and character drift.

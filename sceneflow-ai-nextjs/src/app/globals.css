@@ -90,7 +90,8 @@
   }
 
   /* Default text color for body content with optimized readability */
-  p, span, div, li {
+  /* Exclude spans inside headings to allow Tailwind responsive sizing */
+  p, span:not(h1 span, h2 span, h3 span, h4 span), div, li {
     @apply text-gray-100 dark:text-gray-100;
     font-weight: 400;
     line-height: 1.7;
@@ -788,5 +789,12 @@
   .landing-section-heading {
     font-size: inherit !important;
     line-height: inherit !important;
+  }
+
+  /* Gradient text spans inside headings - inherit parent heading size */
+  .landing-gradient-text {
+    font-size: inherit !important;
+    line-height: inherit !important;
+    font-weight: inherit !important;
   }
 }
