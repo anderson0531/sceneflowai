@@ -6,7 +6,6 @@ import { Header } from './components/Header'
 import { HeroSection } from './components/HeroSection'
 import { TrustSignals } from './components/TrustSignals'
 import { SocialProof } from './components/SocialProof'
-import { ContentDepthProvider } from '@/components/landing/ContentDepthToggle'
 const ProblemSolution = dynamic(() => import('./components/ProblemSolution').then(m => m.ProblemSolution), { ssr: false })
 // Value Proposition Sections
 const SlotMachineSection = dynamic(() => import('@/components/landing/SlotMachineSection'), { ssr: false })
@@ -21,36 +20,32 @@ const AudienceSelector = dynamic(() => import('@/components/landing/AudienceSele
 const Pricing = dynamic(() => import('./components/Pricing').then(m => m.Pricing), { ssr: false })
 const FAQ = dynamic(() => import('./components/FAQ').then(m => m.FAQ), { ssr: false })
 const FloatingNav = dynamic(() => import('@/components/landing/FloatingNav'), { ssr: false })
-const ContentDepthToggle = dynamic(() => import('@/components/landing/ContentDepthToggle'), { ssr: false })
 import { FinalCTA } from './components/FinalCTA'
 import { Footer } from './components/Footer'
 
 export default function LandingPage() {
   return (
-    <ContentDepthProvider>
-      <div className="min-h-screen bg-gray-950 text-white">
-        <Header />
-        <FloatingNav />
-        <ContentDepthToggle />
-        <HeroSection />
-        <TrustSignals />
-        <SocialProof />
-        <ProblemSolution />
-        {/* Value Proposition Flow: Problem → Solution → How → Technical → Market */}
-        <SlotMachineSection />
-        <FinancialFirewallSection />
-        <OneTakeSection />
-        <DemocratizationSection />
-        <HowItWorks />
-        <FrameAnchoredSection />
-        <FeatureHighlight />
-        <ProsumerEconomySection />
-        <AudienceSelector />
-        <Pricing />
-        <FAQ />
-        <FinalCTA />
-        <Footer />
-      </div>
-    </ContentDepthProvider>
+    <div className="min-h-screen bg-gray-950 text-white">
+      <Header />
+      <FloatingNav />
+      <HeroSection />
+      <TrustSignals />
+      <SocialProof />
+      <ProblemSolution />
+      {/* Value Proposition Flow: Problem → Solution → How → Technical → Market */}
+      <SlotMachineSection />
+      <FinancialFirewallSection />
+      <OneTakeSection />
+      <DemocratizationSection />
+      <HowItWorks />
+      <FrameAnchoredSection />
+      <FeatureHighlight />
+      <ProsumerEconomySection />
+      <AudienceSelector />
+      <Pricing />
+      <FAQ />
+      <FinalCTA />
+      <Footer />
+    </div>
   )
 }

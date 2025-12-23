@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Cloud, Cpu, Layers, Anchor, Sparkles, Film, Clapperboard, Check, Zap } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Cloud, Cpu, Layers, Anchor, Sparkles, Film, Clapperboard, Check, Zap, ChevronDown, Code, Server, Database, Shield, GitBranch } from 'lucide-react';
 
 // Google Cloud Architecture Illustration
 const GoogleCloudIllustration = () => {
@@ -348,7 +348,129 @@ export default function FrameAnchoredSection() {
             </div>
           </div>
         </motion.div>
+
+        {/* Technical Deep-Dive Accordion */}
+        <TechnicalDeepDive />
       </div>
     </section>
   );
 }
+
+// Technical Deep-Dive Accordion Component
+const TechnicalDeepDive = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const technicalDetails = [
+    {
+      icon: Server,
+      title: 'Frame-Anchoring API',
+      description: 'Start and end frame constraints ensure Veo 3.1 generates video that maintains exact character poses, lighting, and scene composition between cuts.',
+      color: 'from-amber-500 to-orange-600'
+    },
+    {
+      icon: GitBranch,
+      title: 'Pipeline Architecture',
+      description: 'Cloud Functions orchestrate Gemini → Imagen → Veo in a serverless pipeline with automatic retry, quality validation, and cost optimization.',
+      color: 'from-cyan-500 to-blue-600'
+    },
+    {
+      icon: Database,
+      title: 'Asset Management',
+      description: 'Generated frames, storyboards, and videos are stored in Cloud Storage with CDN distribution for instant playback and collaboration.',
+      color: 'from-purple-500 to-pink-600'
+    },
+    {
+      icon: Shield,
+      title: 'Enterprise Security',
+      description: 'All content processed in your own Google Cloud project. BYOK support for API keys. SOC 2 Type II compliant infrastructure.',
+      color: 'from-green-500 to-emerald-600'
+    }
+  ];
+
+  return (
+    <motion.div
+      className="max-w-4xl mx-auto mt-12"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6, delay: 0.5 }}
+    >
+      <div className="border border-slate-700 rounded-xl overflow-hidden bg-slate-800/30 backdrop-blur">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full flex items-center justify-between p-5 hover:bg-slate-800/50 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+              <Code className="w-5 h-5 text-white" />
+            </div>
+            <div className="text-left">
+              <span className="text-white font-semibold text-base md:text-lg">Technical Deep-Dive</span>
+              <p className="text-gray-400 text-sm">API details, architecture, and security</p>
+            </div>
+          </div>
+          <motion.div
+            animate={{ rotate: isOpen ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <ChevronDown className="w-6 h-6 text-gray-400" />
+          </motion.div>
+        </button>
+        
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden"
+            >
+              <div className="p-6 pt-2 border-t border-slate-700">
+                <div className="grid md:grid-cols-2 gap-6">
+                  {technicalDetails.map((detail, index) => (
+                    <motion.div
+                      key={detail.title}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="flex gap-4"
+                    >
+                      <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${detail.color} flex items-center justify-center flex-shrink-0`}>
+                        <detail.icon className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h5 className="text-white font-semibold mb-1">{detail.title}</h5>
+                        <p className="text-gray-400 text-sm leading-relaxed">{detail.description}</p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+                
+                {/* Code snippet preview */}
+                <div className="mt-6 bg-slate-900 rounded-lg p-4 border border-slate-700">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                    <div className="w-3 h-3 rounded-full bg-green-500" />
+                    <span className="text-gray-500 text-xs ml-2">frame-anchored-generation.ts</span>
+                  </div>
+                  <pre className="text-sm text-gray-300 overflow-x-auto">
+                    <code>{`// Frame-anchored video generation
+const video = await veo.generate({
+  startFrame: storyboard.frames[0],
+  endFrame: storyboard.frames[1],
+  duration: scene.duration,
+  style: project.visualStyle,
+  characters: scene.characters
+});`}</code>
+                  </pre>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  );
+};
