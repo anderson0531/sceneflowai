@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { CheckCircle, X, Zap, Film, Clapperboard, Users, ChevronDown, ChevronUp } from 'lucide-react'
+import { CheckCircle, X, Zap, Film, Clapperboard, Users, ChevronDown, ChevronUp, ArrowRight, Clock, DollarSign } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 export function Pricing() {
@@ -183,6 +183,81 @@ export function Pricing() {
   return (
     <section id="pricing" className="py-24 bg-slate-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Cost Comparison Widget */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="bg-gradient-to-br from-slate-800/80 to-slate-800/40 rounded-2xl p-6 sm:p-8 mb-16 max-w-4xl mx-auto border border-slate-700/50"
+        >
+          <h3 className="text-xl sm:text-2xl font-bold text-center mb-2 text-white">
+            Traditional Production vs. SceneFlow AI
+          </h3>
+          <p className="text-gray-400 text-center text-sm mb-6">
+            See why creators are switching to AI-powered filmmaking
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-center">
+            {/* Traditional Route */}
+            <div className="text-center p-5 sm:p-6 bg-red-500/10 rounded-xl border border-red-500/20">
+              <div className="text-red-400 text-xs uppercase tracking-wider mb-2 font-medium">Traditional Route</div>
+              <div className="text-3xl sm:text-4xl font-bold text-red-500 mb-1">$15,000+</div>
+              <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">
+                <Clock className="w-4 h-4" />
+                <span>3-6 months</span>
+              </div>
+              <div className="mt-3 text-xs text-gray-500">
+                Crew, equipment, editing, post-production
+              </div>
+            </div>
+
+            {/* Arrow */}
+            <div className="hidden md:flex items-center justify-center">
+              <div className="flex flex-col items-center">
+                <ArrowRight className="w-10 h-10 text-emerald-500" />
+                <span className="text-emerald-400 text-xs font-medium mt-1">Switch to AI</span>
+              </div>
+            </div>
+            <div className="flex md:hidden items-center justify-center py-2">
+              <div className="rotate-90">
+                <ArrowRight className="w-8 h-8 text-emerald-500" />
+              </div>
+            </div>
+
+            {/* SceneFlow AI */}
+            <div className="text-center p-5 sm:p-6 bg-emerald-500/10 rounded-xl border border-emerald-500/20 relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-500 text-black text-xs font-bold rounded-full">
+                SAVE 99.7%
+              </div>
+              <div className="text-emerald-400 text-xs uppercase tracking-wider mb-2 font-medium">SceneFlow AI</div>
+              <div className="text-3xl sm:text-4xl font-bold text-emerald-500 mb-1">$49</div>
+              <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">
+                <Clock className="w-4 h-4" />
+                <span>48 hours</span>
+              </div>
+              <div className="mt-3 text-xs text-gray-500">
+                Full production, AI actors, voice, music
+              </div>
+            </div>
+          </div>
+
+          {/* Summary Stats */}
+          <div className="mt-6 pt-6 border-t border-slate-700/50 flex flex-wrap justify-center gap-6 text-sm">
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-emerald-500" />
+              <span className="text-gray-300"><strong className="text-emerald-400">99.7%</strong> cost reduction</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-cyan-500" />
+              <span className="text-gray-300"><strong className="text-cyan-400">100x</strong> faster production</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Film className="w-4 h-4 text-amber-500" />
+              <span className="text-gray-300"><strong className="text-amber-400">Same</strong> cinematic quality</span>
+            </div>
+          </div>
+        </motion.div>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

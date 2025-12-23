@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { CheckCircle, Play, Zap, Sparkles, Film, Rocket } from 'lucide-react'
+import { CheckCircle, Play, Zap, Sparkles, Film, Rocket, Shield, Users, Star } from 'lucide-react'
 import { useState } from 'react'
 import { DemoVideoModal } from './DemoVideoModal'
 import { trackCta } from '@/lib/analytics'
@@ -49,11 +49,56 @@ export function FinalCTA() {
               Cinematic Treatment
             </span>
           </h2>
-          <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-10">
+          <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-8">
             Join creators who are transforming their ideas into professional films 
             with AI-powered video production. From screenplay to screening room—
             experience our complete 4-phase workflow.
           </p>
+
+          {/* Social Proof Bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="flex flex-wrap items-center justify-center gap-6 mb-6 text-sm text-gray-400"
+          >
+            <div className="flex items-center gap-2">
+              <div className="flex -space-x-2">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 border-2 border-slate-900" />
+                <div className="w-7 h-7 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 border-2 border-slate-900" />
+                <div className="w-7 h-7 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 border-2 border-slate-900" />
+                <div className="w-7 h-7 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 border-2 border-slate-900" />
+              </div>
+              <span className="text-gray-300"><strong className="text-white">2,400+</strong> creators this month</span>
+            </div>
+            <div className="hidden sm:block w-px h-4 bg-gray-700" />
+            <div className="flex items-center gap-2">
+              <Film className="w-4 h-4 text-amber-500" />
+              <span className="text-gray-300"><strong className="text-white">12,000+</strong> films generated</span>
+            </div>
+            <div className="hidden sm:block w-px h-4 bg-gray-700" />
+            <div className="flex items-center gap-2">
+              <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+              <span className="text-gray-300"><strong className="text-white">4.9/5</strong> creator rating</span>
+            </div>
+          </motion.div>
+
+          {/* Risk Reversal Guarantee */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="bg-gradient-to-r from-emerald-500/10 to-green-500/10 border border-emerald-500/20 rounded-xl p-4 mb-8 max-w-2xl mx-auto"
+          >
+            <div className="flex items-center justify-center gap-3">
+              <Shield className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+              <span className="text-emerald-400 font-medium text-sm sm:text-base">
+                100% Money-Back Guarantee — If you don&apos;t love it in 7 days, we&apos;ll refund every penny.
+              </span>
+            </div>
+          </motion.div>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
