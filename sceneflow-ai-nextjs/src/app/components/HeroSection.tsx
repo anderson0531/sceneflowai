@@ -216,25 +216,16 @@ export function HeroSection() {
                   <span className="text-xs text-gray-300">Virtual Production Studio</span>
                 </div>
                 
-                {/* Audio toggle button - always visible */}
+                {/* Audio toggle button - minimal transparent icon */}
                 <button
                   onClick={toggleMute}
-                  className={`absolute bottom-4 right-4 flex items-center gap-2 px-4 py-2.5 backdrop-blur-sm rounded-lg border transition-all ${
-                    isMuted 
-                      ? 'bg-purple-600/90 border-purple-400/30 hover:bg-purple-500/90' 
-                      : 'bg-slate-800/90 border-cyan-400/30 hover:bg-slate-700/90'
-                  }`}
+                  className="absolute bottom-4 right-4 p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm transition-all opacity-60 hover:opacity-100"
+                  title={isMuted ? 'Unmute' : 'Mute'}
                 >
                   {isMuted ? (
-                    <>
-                      <VolumeX className="w-4 h-4 text-white" />
-                      <span className="text-xs font-medium text-white">🎵 Unmute</span>
-                    </>
+                    <VolumeX className="w-5 h-5 text-white/80" />
                   ) : (
-                    <>
-                      <Volume2 className="w-4 h-4 text-cyan-400 animate-pulse" />
-                      <span className="text-xs font-medium text-cyan-300">Sound On</span>
-                    </>
+                    <Volume2 className="w-5 h-5 text-white/80" />
                   )}
                 </button>
               </div>
