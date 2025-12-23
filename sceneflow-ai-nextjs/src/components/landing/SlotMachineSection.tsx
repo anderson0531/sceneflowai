@@ -40,7 +40,7 @@ const SlotMachineVideo = () => {
             className="w-full h-full object-cover"
             poster="/demo/slot-machine-poster.jpg"
           >
-            <source src="/demo/slot-machine-illustration.mp4#t=0.1" type="video/mp4" />
+            <source src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/demo/slot-machine-illustration.mp4#t=0.1" type="video/mp4" />
             Your browser does not support the video tag.
           </video>
           
