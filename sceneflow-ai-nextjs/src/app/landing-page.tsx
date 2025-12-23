@@ -7,10 +7,14 @@ import { HeroSection } from './components/HeroSection'
 import { TrustSignals } from './components/TrustSignals'
 import { SocialProof } from './components/SocialProof'
 const ProblemSolution = dynamic(() => import('./components/ProblemSolution').then(m => m.ProblemSolution), { ssr: false })
+// Value Proposition Sections
+const SlotMachineSection = dynamic(() => import('@/components/landing/SlotMachineSection'), { ssr: false })
+const FinancialFirewallSection = dynamic(() => import('@/components/landing/FinancialFirewallSection'), { ssr: false })
 const DemocratizationSection = dynamic(() => import('./components/DemocratizationSection').then(m => m.DemocratizationSection), { ssr: false })
 const HowItWorks = dynamic(() => import('./components/HowItWorks').then(m => m.HowItWorks), { ssr: false })
+const FrameAnchoredSection = dynamic(() => import('@/components/landing/FrameAnchoredSection'), { ssr: false })
 const FeatureHighlight = dynamic(() => import('./components/FeatureHighlight').then(m => m.FeatureHighlight), { ssr: false })
-const TargetAudience = dynamic(() => import('./components/TargetAudience').then(m => m.TargetAudience), { ssr: false })
+const ProsumerEconomySection = dynamic(() => import('@/components/landing/ProsumerEconomySection'), { ssr: false })
 const Pricing = dynamic(() => import('./components/Pricing').then(m => m.Pricing), { ssr: false })
 const FAQ = dynamic(() => import('./components/FAQ').then(m => m.FAQ), { ssr: false })
 import { FinalCTA } from './components/FinalCTA'
@@ -24,10 +28,14 @@ export default function LandingPage() {
       <TrustSignals />
       <SocialProof />
       <ProblemSolution />
+      {/* Value Proposition Flow: Problem → Solution → How → Technical → Market */}
+      <SlotMachineSection />
+      <FinancialFirewallSection />
       <DemocratizationSection />
       <HowItWorks />
+      <FrameAnchoredSection />
       <FeatureHighlight />
-      <TargetAudience />
+      <ProsumerEconomySection />
       <Pricing />
       <FAQ />
       <FinalCTA />

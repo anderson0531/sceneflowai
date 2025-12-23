@@ -351,3 +351,481 @@ interface ActiveProjectCardProps {
 | 3.0.0 | Dec 21, 2025 | Complete dashboard redesign with scores & next steps |
 | 2.x | Dec 2025 | Landing page refresh (v2.30-v2.34) |
 | 1.x | Nov 2025 | Initial dashboard implementation |
+
+---
+
+## Architecture Diagram
+
+### System Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              SCENEFLOW AI PLATFORM                              │
+│                           https://sceneflowai.studio                            │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                        │
+                    ┌───────────────────┼───────────────────┐
+                    ▼                   ▼                   ▼
+            ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+            │   Landing   │     │  Dashboard  │     │ Production  │
+            │    Page     │     │    App      │     │   Studio    │
+            │  (Public)   │     │ (Protected) │     │ (Protected) │
+            └─────────────┘     └─────────────┘     └─────────────┘
+```
+
+---
+
+### Application Layer Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              NEXT.JS 15 APP ROUTER                              │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │                           PRESENTATION LAYER                             │   │
+│  ├─────────────────────────────────────────────────────────────────────────┤   │
+│  │                                                                          │   │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │   │
+│  │  │   Landing    │  │  Dashboard   │  │  Production  │  │  Screening   │ │   │
+│  │  │    Page      │  │    Views     │  │    Studio    │  │    Room      │ │   │
+│  │  │              │  │              │  │              │  │              │ │   │
+│  │  │ • Hero       │  │ • Overview   │  │ • Soundstage │  │ • Playback   │ │   │
+│  │  │ • Features   │  │ • Projects   │  │ • Director   │  │ • Ken Burns  │ │   │
+│  │  │ • Demo Video │  │ • Analytics  │  │ • Characters │  │ • Export     │ │   │
+│  │  │ • Pricing    │  │ • Settings   │  │ • Scenes     │  │ • Timeline   │ │   │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘ │   │
+│  │                                                                          │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                        │                                        │
+│  ┌─────────────────────────────────────┴───────────────────────────────────┐   │
+│  │                           COMPONENT LAYER                                │   │
+│  ├─────────────────────────────────────────────────────────────────────────┤   │
+│  │                                                                          │   │
+│  │  Dashboard Components          │  Production Components                  │   │
+│  │  ─────────────────────         │  ──────────────────────                 │   │
+│  │  • CueCommandBar               │  • SceneManager                         │   │
+│  │  • BudgetHealthWidget          │  • CharacterPanel                       │   │
+│  │  • ActiveProjectCard           │  • StoryboardViewer                     │   │
+│  │  • SpendingAnalyticsWidget     │  • VoiceGenerator                       │   │
+│  │  • QuickActionsGrid            │  • VideoPreview                         │   │
+│  │  • BYOKIntegrationStatus       │  • ScriptEditor                         │   │
+│  │                                │                                          │   │
+│  │  Shared Components             │  AI Integration Components              │   │
+│  │  ─────────────────             │  ─────────────────────────              │   │
+│  │  • DemoVideoModal              │  • CueAssistant                         │   │
+│  │  • NavigationHeader            │  • ScoreAnalyzer                        │   │
+│  │  • ProgressIndicator           │  • CreditEstimator                      │   │
+│  │  • ScoreDisplay                │  • ContentGenerator                     │   │
+│  │                                                                          │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                        │                                        │
+│  ┌─────────────────────────────────────┴───────────────────────────────────┐   │
+│  │                             STATE LAYER                                  │   │
+│  ├─────────────────────────────────────────────────────────────────────────┤   │
+│  │                                                                          │   │
+│  │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────────┐  │   │
+│  │  │   Zustand       │  │   React Query   │  │   Local Storage         │  │   │
+│  │  │   Stores        │  │   Cache         │  │   Persistence           │  │   │
+│  │  │                 │  │                 │  │                         │  │   │
+│  │  │ • projectStore  │  │ • API responses │  │ • User preferences      │  │   │
+│  │  │ • userStore     │  │ • AI results    │  │ • Draft content         │  │   │
+│  │  │ • creditStore   │  │ • Asset cache   │  │ • Session state         │  │   │
+│  │  │ • uiStore       │  │                 │  │                         │  │   │
+│  │  └─────────────────┘  └─────────────────┘  └─────────────────────────┘  │   │
+│  │                                                                          │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Backend Services Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              API LAYER (Next.js API Routes)                     │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  /api/                                                                          │
+│  ├── auth/           → Clerk Authentication                                    │
+│  ├── projects/       → Project CRUD operations                                 │
+│  ├── credits/        → Credit balance & transactions                           │
+│  ├── generate/       → AI content generation                                   │
+│  │   ├── script      → Gemini 2.5 Pro                                          │
+│  │   ├── image       → Imagen 3 / FLUX                                         │
+│  │   ├── video       → Veo 3.1                                                 │
+│  │   └── voice       → ElevenLabs                                              │
+│  ├── analyze/        → Content analysis & scoring                              │
+│  └── export/         → Shotstack video rendering                               │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                        │
+                    ┌───────────────────┼───────────────────┐
+                    ▼                   ▼                   ▼
+┌─────────────────────────┐ ┌─────────────────────────┐ ┌─────────────────────────┐
+│      AI SERVICES        │ │     DATA SERVICES       │ │    MEDIA SERVICES       │
+├─────────────────────────┤ ├─────────────────────────┤ ├─────────────────────────┤
+│                         │ │                         │ │                         │
+│  ┌───────────────────┐  │ │  ┌───────────────────┐  │ │  ┌───────────────────┐  │
+│  │ Google Vertex AI  │  │ │  │    Supabase       │  │ │  │   Vercel Blob     │  │
+│  │ ─────────────────  │  │ │  │  (PostgreSQL)    │  │ │  │                   │  │
+│  │ • Gemini 2.5 Pro  │  │ │  │                   │  │ │  │ • Demo videos     │  │
+│  │ • Imagen 3        │  │ │  │ • Users           │  │ │  │ • Generated media │  │
+│  │ • Veo 3.1         │  │ │  │ • Projects        │  │ │  │ • Thumbnails      │  │
+│  └───────────────────┘  │ │  │ • Scenes          │  │ │  │ • Audio files     │  │
+│                         │ │  │ • Characters      │  │ │  └───────────────────┘  │
+│  ┌───────────────────┐  │ │  │ • Credits         │  │ │                         │
+│  │   ElevenLabs      │  │ │  │ • Analytics       │  │ │  ┌───────────────────┐  │
+│  │ ─────────────────  │  │ │  └───────────────────┘  │ │  │    YouTube        │  │
+│  │ • Voice Synthesis │  │ │                         │ │  │ (Demo Streaming)  │  │
+│  │ • Voice Cloning   │  │ │  ┌───────────────────┐  │ │  │                   │  │
+│  └───────────────────┘  │ │  │  Clerk Auth       │  │ │  │ • Adaptive bitrate│  │
+│                         │ │  │                   │  │ │  │ • Global CDN      │  │
+│  ┌───────────────────┐  │ │  │ • User identity   │  │ │  │ • Privacy mode    │  │
+│  │    Shotstack      │  │ │  │ • Session mgmt   │  │ │  └───────────────────┘  │
+│  │ ─────────────────  │  │ │  │ • OAuth          │  │ │                         │
+│  │ • Video Rendering │  │ │  └───────────────────┘  │ │                         │
+│  │ • HD/4K Export    │  │ │                         │ │                         │
+│  └───────────────────┘  │ │  ┌───────────────────┐  │ │                         │
+│                         │ │  │    Stripe         │  │ │                         │
+│                         │ │  │                   │  │ │                         │
+│                         │ │  │ • Subscriptions   │  │ │                         │
+│                         │ │  │ • Credit purchase │  │ │                         │
+│                         │ │  └───────────────────┘  │ │                         │
+└─────────────────────────┘ └─────────────────────────┘ └─────────────────────────┘
+```
+
+---
+
+### Data Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           PRODUCTION WORKFLOW DATA FLOW                         │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+ USER INPUT                    PROCESSING                      OUTPUT
+ ──────────                    ──────────                      ──────
+
+ ┌─────────────┐          ┌─────────────────┐           ┌─────────────────┐
+ │   Concept   │          │   Script Gen    │           │   Screenplay    │
+ │   Prompt    │────────▶ │   (Gemini 2.5)  │─────────▶ │   + Scenes      │
+ └─────────────┘          └─────────────────┘           └────────┬────────┘
+                                   │                              │
+                          Credits: 50-200                         │
+                                                                  ▼
+ ┌─────────────┐          ┌─────────────────┐           ┌─────────────────┐
+ │  Character  │          │   Image Gen     │           │   Character     │
+ │  Prompts    │────────▶ │   (Imagen 3)    │─────────▶ │   Portraits     │
+ └─────────────┘          └─────────────────┘           └────────┬────────┘
+                                   │                              │
+                          Credits: 10-50/image                    │
+                                                                  ▼
+ ┌─────────────┐          ┌─────────────────┐           ┌─────────────────┐
+ │   Scene     │          │   Storyboard    │           │   Visual        │
+ │  Breakdown  │────────▶ │   Generation    │─────────▶ │   Storyboards   │
+ └─────────────┘          └─────────────────┘           └────────┬────────┘
+                                   │                              │
+                          Credits: 20-100/scene                   │
+                                                                  ▼
+ ┌─────────────┐          ┌─────────────────┐           ┌─────────────────┐
+ │  Dialogue   │          │   Voice Gen     │           │   Audio         │
+ │   Lines     │────────▶ │   (ElevenLabs)  │─────────▶ │   Tracks        │
+ └─────────────┘          └─────────────────┘           └────────┬────────┘
+                                   │                              │
+                          Credits: 5-30/line                      │
+                                                                  ▼
+ ┌─────────────┐          ┌─────────────────┐           ┌─────────────────┐
+ │ Storyboards │          │   Video Gen     │           │   Scene         │
+ │ + Audio     │────────▶ │   (Veo 3.1)     │─────────▶ │   Videos        │
+ └─────────────┘          └─────────────────┘           └────────┬────────┘
+                                   │                              │
+                          Credits: 100-500/scene                  │
+                                                                  ▼
+ ┌─────────────┐          ┌─────────────────┐           ┌─────────────────┐
+ │   Review    │          │   Analysis      │           │   Director/     │
+ │  Settings   │────────▶ │   (Gemini)      │─────────▶ │   Audience      │
+ └─────────────┘          └─────────────────┘           │   Scores        │
+                                   │                    └────────┬────────┘
+                          Credits: 10-30                         │
+                                                                  ▼
+ ┌─────────────┐          ┌─────────────────┐           ┌─────────────────┐
+ │   Export    │          │   Rendering     │           │   Final         │
+ │  Settings   │────────▶ │   (Shotstack)   │─────────▶ │   HD/4K Film    │
+ └─────────────┘          └─────────────────┘           └─────────────────┘
+                                   │
+                          Credits: 200-1000
+```
+
+---
+
+### Component Interaction Map
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                          DASHBOARD COMPONENT INTERACTIONS                        │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+                              ┌─────────────────────┐
+                              │   ClientDashboard   │
+                              │   (Layout Manager)  │
+                              └──────────┬──────────┘
+                                         │
+           ┌─────────────────────────────┼─────────────────────────────┐
+           │                             │                             │
+           ▼                             ▼                             ▼
+┌─────────────────────┐       ┌─────────────────────┐       ┌─────────────────────┐
+│   CueCommandBar     │       │  BudgetHealthWidget │       │ ActiveProjects      │
+│                     │       │                     │       │    Container        │
+│ • Welcome message   │       │ • Credit metrics    │       │                     │
+│ • AI chat input     │       │ • Usage progress    │       │ • Project filters   │
+│ • Quick actions     │       │ • AI spending tips  │       │ • Sort controls     │
+│ • New Project CTA   │       │ • Top-up CTA        │       │ • Card list         │
+└──────────┬──────────┘       └──────────┬──────────┘       └──────────┬──────────┘
+           │                             │                             │
+           │                             │                             ▼
+           │                             │                  ┌─────────────────────┐
+           │                             │                  │  ActiveProjectCard  │
+           │                             │                  │                     │
+           │                             │                  │ ┌─────┬─────┬─────┐ │
+           │                             │                  │ │Prog │Score│Next │ │
+           │                             │                  │ │ress │ s   │Step │ │
+           │                             │                  │ └─────┴─────┴─────┘ │
+           │                             │                  │ • Cue tip           │
+           │                             │                  │ • Open project CTA  │
+           │                             │                  └──────────┬──────────┘
+           │                             │                             │
+           └─────────────────────────────┼─────────────────────────────┘
+                                         │
+                                         ▼
+                              ┌─────────────────────┐
+                              │    Zustand Store    │
+                              │                     │
+                              │ • projectStore      │
+                              │ • creditStore       │
+                              │ • userStore         │
+                              └──────────┬──────────┘
+                                         │
+           ┌─────────────────────────────┼─────────────────────────────┐
+           │                             │                             │
+           ▼                             ▼                             ▼
+┌─────────────────────┐       ┌─────────────────────┐       ┌─────────────────────┐
+│  SpendingAnalytics  │       │  QuickActionsGrid   │       │ BYOKIntegration     │
+│      Widget         │       │                     │       │     Status          │
+│                     │       │ • New Project       │       │                     │
+│ • Trend chart       │       │ • Series Bibles     │       │ • API key status    │
+│ • Top consumers     │       │ • Asset Library     │       │ • Provider config   │
+│ • Full analytics    │       │ • BYOK Config       │       │ • Cost savings      │
+└─────────────────────┘       │ • Buy Credits       │       └─────────────────────┘
+                              │ • Settings          │
+                              └─────────────────────┘
+```
+
+---
+
+### Infrastructure Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              DEPLOYMENT INFRASTRUCTURE                          │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+                              ┌─────────────────────┐
+                              │      USERS          │
+                              │  (Web Browsers)     │
+                              └──────────┬──────────┘
+                                         │
+                                         ▼
+                              ┌─────────────────────┐
+                              │   Cloudflare DNS    │
+                              │  sceneflowai.studio │
+                              └──────────┬──────────┘
+                                         │
+                                         ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              VERCEL EDGE NETWORK                                │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  ┌───────────────────────────────────────────────────────────────────────────┐ │
+│  │                          EDGE FUNCTIONS                                    │ │
+│  │                                                                            │ │
+│  │  • Static Asset Caching (Landing page, images, CSS/JS)                    │ │
+│  │  • Dynamic Rendering (Dashboard, Production Studio)                       │ │
+│  │  • API Route Handlers (/api/*)                                            │ │
+│  │  • ISR (Incremental Static Regeneration)                                  │ │
+│  │                                                                            │ │
+│  └───────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                 │
+│  ┌───────────────────────────────────────────────────────────────────────────┐ │
+│  │                         SERVERLESS FUNCTIONS                               │ │
+│  │                                                                            │ │
+│  │  /api/generate/*     → AI Content Generation (Vertex AI, ElevenLabs)      │ │
+│  │  /api/projects/*     → CRUD Operations (Supabase)                         │ │
+│  │  /api/auth/*         → Authentication (Clerk)                             │ │
+│  │  /api/webhooks/*     → Stripe, Clerk webhooks                             │ │
+│  │                                                                            │ │
+│  └───────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                 │
+│  ┌───────────────────────────────────────────────────────────────────────────┐ │
+│  │                          VERCEL BLOB STORAGE                               │ │
+│  │                                                                            │ │
+│  │  xxavfkdhdebrqida.public.blob.vercel-storage.com                          │ │
+│  │                                                                            │ │
+│  │  /demo/                                                                    │ │
+│  │    ├── screening-room.mp4     (58 MB)                                     │ │
+│  │    └── hero-demo.mp4          (local /public)                             │ │
+│  │                                                                            │ │
+│  │  /generated/                                                               │ │
+│  │    ├── images/{projectId}/*                                               │ │
+│  │    ├── videos/{projectId}/*                                               │ │
+│  │    └── audio/{projectId}/*                                                │ │
+│  │                                                                            │ │
+│  └───────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                         │
+           ┌─────────────────────────────┼─────────────────────────────┐
+           │                             │                             │
+           ▼                             ▼                             ▼
+┌─────────────────────┐       ┌─────────────────────┐       ┌─────────────────────┐
+│      Supabase       │       │      Clerk          │       │      Stripe         │
+│    (PostgreSQL)     │       │  (Authentication)   │       │    (Payments)       │
+│                     │       │                     │       │                     │
+│ Region: us-east-1   │       │ • SSO/OAuth         │       │ • Subscriptions     │
+│                     │       │ • MFA               │       │ • Credit packs      │
+│ Tables:             │       │ • Session mgmt      │       │ • Invoicing         │
+│ • users             │       │ • User metadata     │       │ • Webhooks          │
+│ • projects          │       │                     │       │                     │
+│ • scenes            │       └─────────────────────┘       └─────────────────────┘
+│ • characters        │
+│ • credits           │
+│ • transactions      │
+└─────────────────────┘
+```
+
+---
+
+### Security Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              SECURITY LAYERS                                    │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ LAYER 1: EDGE SECURITY                                                          │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ • Cloudflare DDoS Protection                                                    │
+│ • SSL/TLS Termination                                                           │
+│ • Rate Limiting                                                                 │
+│ • Bot Detection                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                         │
+                                         ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ LAYER 2: APPLICATION SECURITY                                                   │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ • Clerk Authentication (JWT tokens)                                             │
+│ • Protected API Routes (middleware.ts)                                          │
+│ • CORS Configuration                                                            │
+│ • CSP Headers                                                                   │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                         │
+                                         ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ LAYER 3: DATA SECURITY                                                          │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ • Supabase Row Level Security (RLS)                                             │
+│ • Encrypted environment variables                                               │
+│ • BYOK (Bring Your Own Keys) for AI services                                    │
+│ • PCI DSS compliance via Stripe                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                         │
+                                         ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ LAYER 4: API KEY MANAGEMENT                                                     │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  Environment Variables (Encrypted):                                             │
+│  ├── CLERK_SECRET_KEY              → Authentication                             │
+│  ├── SUPABASE_SERVICE_ROLE_KEY     → Database admin                            │
+│  ├── GOOGLE_VERTEX_API_KEY         → AI generation                             │
+│  ├── ELEVENLABS_API_KEY            → Voice synthesis                           │
+│  ├── SHOTSTACK_API_KEY             → Video rendering                           │
+│  ├── STRIPE_SECRET_KEY             → Payments                                  │
+│  └── BLOB_READ_WRITE_TOKEN         → Media storage                             │
+│                                                                                 │
+│  User BYOK Keys (Encrypted in Supabase):                                        │
+│  ├── user.google_api_key           → Personal Vertex AI                        │
+│  ├── user.elevenlabs_key           → Personal ElevenLabs                       │
+│  └── user.openai_key               → Personal OpenAI (optional)                │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Performance Optimization Strategy
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           PERFORMANCE ARCHITECTURE                              │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ CACHING STRATEGY                                                                │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  Browser Cache (via Cache-Control headers):                                     │
+│  ├── Static assets (JS/CSS/fonts)    → max-age=31536000, immutable             │
+│  ├── Images                          → max-age=86400, stale-while-revalidate   │
+│  └── API responses                   → no-cache (dynamic)                       │
+│                                                                                 │
+│  Edge Cache (Vercel):                                                           │
+│  ├── Landing page                    → ISR, revalidate=3600                    │
+│  ├── Demo videos                     → CDN cached globally                     │
+│  └── Generated thumbnails            → Blob storage + CDN                      │
+│                                                                                 │
+│  Application Cache (React Query):                                               │
+│  ├── Project list                    → staleTime=60000                         │
+│  ├── Credit balance                  → staleTime=30000                         │
+│  └── AI responses                    → cacheTime=300000                        │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ VIDEO STREAMING OPTIMIZATION                                                    │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  Demo Video (YouTube Embed):                                                    │
+│  ├── Adaptive bitrate streaming (240p → 4K)                                    │
+│  ├── Privacy-enhanced mode (youtube-nocookie.com)                              │
+│  ├── Preload on hover intent                                                   │
+│  └── Autoplay=1, rel=0, modestbranding=1, fs=1                                 │
+│                                                                                 │
+│  In-App Videos (Blob Storage):                                                  │
+│  ├── preload="auto" for hero/demo videos                                       │
+│  ├── #t=0.1 fragment hint for faster first frame                               │
+│  ├── Buffer progress indicator                                                  │
+│  └── Poster images for placeholder                                             │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ BUNDLE OPTIMIZATION                                                             │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  Code Splitting:                                                                │
+│  ├── Dynamic imports for modals (DemoVideoModal)                               │
+│  ├── Route-based splitting (dashboard, production, screening)                  │
+│  └── Component lazy loading (heavy charts, editors)                            │
+│                                                                                 │
+│  Tree Shaking:                                                                  │
+│  ├── Lucide icons (individual imports)                                         │
+│  ├── Framer Motion (motion components only)                                    │
+│  └── Date-fns (specific functions)                                             │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
