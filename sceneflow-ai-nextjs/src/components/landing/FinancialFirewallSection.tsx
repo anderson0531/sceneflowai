@@ -136,12 +136,12 @@ export default function FinancialFirewallSection() {
             <Shield className="w-4 h-4 md:w-5 md:h-5 text-amber-400 mr-2" />
             <span className="text-sm md:text-base font-medium text-amber-400">The Solution</span>
           </div>
-          <h2 className="landing-section-heading text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
+          <h2 className="landing-section-heading text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-6">
             The{' '}
             <span className="bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 bg-clip-text text-transparent">
               &apos;Financial Firewall&apos;
             </span>
-            <span className="block text-3xl sm:text-4xl md:text-5xl lg:text-6xl">for Video Production</span>
+            <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl">for Video Production</span>
           </h2>
           <p className="text-base md:text-lg lg:text-xl text-gray-400 max-w-3xl mx-auto">
             Decouple Direction (inexpensive) from Rendering (expensive).

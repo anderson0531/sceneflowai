@@ -43,9 +43,9 @@ export function FinalCTA() {
             <span className="text-sm font-medium text-blue-300">Start Creating Today</span>
           </motion.div>
           
-          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
+          <h2 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6">
             Your Story Deserves{' '}
-            <span className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+            <span className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
               Cinematic Treatment
             </span>
           </h2>

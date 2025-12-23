@@ -79,7 +79,7 @@ export function FAQ() {
             <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-cyan-400 mr-2" />
             <span className="text-sm md:text-base font-medium text-gray-300">Got Questions?</span>
           </div>
-          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4">Frequently Asked Questions</h2>
+          <h2 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-4">Frequently Asked Questions</h2>
           <p className="text-base md:text-lg lg:text-xl text-gray-400">
             Everything you need to know about SceneFlow AI
           </p>

@@ -30,7 +30,7 @@ export function DemocratizationSection() {
               <span className="text-sm md:text-base font-medium text-cyan-400">All-in-One Platform</span>
             </div>
             
-            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
+            <h2 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-6 leading-tight">
               Everything You Need.
               <span className="block text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text">
                 Nothing You Don't.
