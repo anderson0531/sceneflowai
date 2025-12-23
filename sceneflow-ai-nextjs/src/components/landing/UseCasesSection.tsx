@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Video, Play, Building2, Film, Sparkles } from 'lucide-react';
+import { Video, Play, Building2, Film, Sparkles, Volume2, VolumeX, Maximize2 } from 'lucide-react';
 
 interface UseCase {
   id: string;
@@ -13,7 +13,7 @@ interface UseCase {
   challenge: string;
   solution: string;
   outcome: string;
-  videoPlaceholder?: string; // Future: actual video URL
+  videoUrl?: string; // Actual video URL
 }
 
 const useCases: UseCase[] = [
@@ -26,6 +26,7 @@ const useCases: UseCase[] = [
     challenge: 'Creating professional video content requires expensive equipment, editing software, and hours of post-production—limiting output to 2-3 videos per week.',
     solution: 'SceneFlow AI transforms ideas into polished short films with AI-generated scripts, consistent characters, and professional voiceovers in minutes, not days.',
     outcome: '10x content velocity with studio-quality production. One creator now produces daily narrative content that previously required a full production team.',
+    videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Jul_16__0705_34s_202512231713_zzqmk.mp4',
   },
   {
     id: 'agency-studio',
@@ -49,37 +50,119 @@ const useCases: UseCase[] = [
   },
 ];
 
-// Video Placeholder Component
-const VideoPlaceholder = ({ useCase }: { useCase: UseCase }) => (
-  <div className="relative aspect-video bg-slate-800/50 rounded-2xl border border-white/10 overflow-hidden group">
-    {/* Gradient background */}
-    <div className={`absolute inset-0 bg-gradient-to-br ${useCase.bgGradient} opacity-50`} />
-    
-    {/* Play button */}
-    <div className="absolute inset-0 flex items-center justify-center">
+// Video Player Component with Controls
+const VideoPlayer = ({ useCase }: { useCase: UseCase }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  // If no video URL, show placeholder
+  if (!useCase.videoUrl) {
+    return (
+      <div className="relative aspect-video bg-slate-800/50 rounded-2xl border border-white/10 overflow-hidden group">
+        {/* Gradient background */}
+        <div className={`absolute inset-0 bg-gradient-to-br ${useCase.bgGradient} opacity-50`} />
+        
+        {/* Play button */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <motion.div
+            className={`w-20 h-20 rounded-full bg-gradient-to-br ${useCase.gradient} flex items-center justify-center shadow-2xl cursor-pointer`}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Play className="w-8 h-8 text-white ml-1" fill="white" />
+          </motion.div>
+        </div>
+        
+        {/* Coming Soon label */}
+        <div className="absolute bottom-4 left-4 flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-gray-400" />
+          <span className="text-gray-400 text-sm font-medium">Video Coming Soon</span>
+        </div>
+        
+        {/* Persona label */}
+        <div className="absolute top-4 right-4">
+          <div className={`px-3 py-1.5 rounded-full bg-gradient-to-r ${useCase.gradient} text-white text-xs font-semibold`}>
+            {useCase.persona}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Video player with controls
+  return (
+    <div className={`relative w-full mx-auto transition-all duration-300 ${isExpanded ? 'max-w-4xl' : ''}`}>
       <motion.div
-        className={`w-20 h-20 rounded-full bg-gradient-to-br ${useCase.gradient} flex items-center justify-center shadow-2xl cursor-pointer`}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
+        className={`relative rounded-2xl overflow-hidden border-2 shadow-2xl`}
+        style={{ borderColor: useCase.gradient.includes('amber') ? 'rgba(245, 158, 11, 0.3)' : useCase.gradient.includes('cyan') ? 'rgba(6, 182, 212, 0.3)' : 'rgba(168, 85, 247, 0.3)' }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        layout
       >
-        <Play className="w-8 h-8 text-white ml-1" fill="white" />
+        {/* Glow effect */}
+        <div className={`absolute -inset-2 bg-gradient-to-r ${useCase.bgGradient} rounded-2xl blur-xl -z-10 opacity-50`} />
+        
+        {/* Video */}
+        <div className="aspect-video bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+          <video
+            ref={videoRef}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            className="w-full h-full object-cover"
+          >
+            <source src={`${useCase.videoUrl}#t=0.1`} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          
+          {/* Persona label */}
+          <div className="absolute top-3 right-3">
+            <div className={`px-3 py-1.5 rounded-full bg-gradient-to-r ${useCase.gradient} text-white text-xs font-semibold shadow-lg`}>
+              {useCase.persona}
+            </div>
+          </div>
+          
+          {/* Video controls */}
+          <div className="absolute bottom-3 right-3 flex items-center gap-2">
+            {/* Audio toggle button */}
+            <button
+              onClick={toggleMute}
+              className="p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm transition-all opacity-60 hover:opacity-100"
+              title={isMuted ? 'Unmute' : 'Mute'}
+            >
+              {isMuted ? (
+                <VolumeX className="w-4 h-4 text-white/80" />
+              ) : (
+                <Volume2 className="w-4 h-4 text-white/80" />
+              )}
+            </button>
+            
+            {/* Expand/Fullscreen button */}
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm transition-all opacity-60 hover:opacity-100"
+              title={isExpanded ? 'Shrink' : 'Expand'}
+            >
+              <Maximize2 className="w-4 h-4 text-white/80" />
+            </button>
+          </div>
+        </div>
       </motion.div>
     </div>
-    
-    {/* Coming Soon label */}
-    <div className="absolute bottom-4 left-4 flex items-center gap-2">
-      <Sparkles className="w-4 h-4 text-gray-400" />
-      <span className="text-gray-400 text-sm font-medium">Video Coming Soon</span>
-    </div>
-    
-    {/* Persona label */}
-    <div className="absolute top-4 right-4">
-      <div className={`px-3 py-1.5 rounded-full bg-gradient-to-r ${useCase.gradient} text-white text-xs font-semibold`}>
-        {useCase.persona}
-      </div>
-    </div>
-  </div>
-);
+  );
+};
 
 // Use Case Card Component
 const UseCaseCard = ({ useCase, index }: { useCase: UseCase; index: number }) => {
@@ -137,9 +220,9 @@ const UseCaseCard = ({ useCase, index }: { useCase: UseCase; index: number }) =>
         </div>
       </div>
 
-      {/* Video Placeholder - alternates sides on desktop */}
+      {/* Video Player - alternates sides on desktop */}
       <div className={`${isEven ? 'lg:order-2' : 'lg:order-1'}`}>
-        <VideoPlaceholder useCase={useCase} />
+        <VideoPlayer useCase={useCase} />
       </div>
     </motion.div>
   );
