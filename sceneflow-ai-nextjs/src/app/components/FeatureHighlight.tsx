@@ -338,7 +338,7 @@ export function FeatureHighlight() {
                 <Shield className="w-7 h-7 text-white" />
               </div>
               <h4 className="text-lg font-semibold mb-2 text-white">Enterprise Security</h4>
-              <p className="text-gray-400 text-sm">Your content is secure. BYOK (Bring Your Own Keys) ensures complete data privacy.</p>
+              <p className="text-gray-400 text-sm">Your content is protected by Google Cloud Platform&apos;s enterprise-grade security and data privacy standards.</p>
             </div>
             
             <div className="text-center p-6 bg-slate-800/30 rounded-xl border border-white/5">
