@@ -212,7 +212,7 @@ export default function AutomationSection() {
               href="/?signup=1"
               className="group inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold rounded-xl shadow-lg shadow-cyan-500/25 transition-all duration-300 whitespace-nowrap"
             >
-              Try It Free
+              Start for $5
               <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>

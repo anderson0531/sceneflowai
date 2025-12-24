@@ -1,18 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { RecommendationPriority } from '@/types/story'
+import { DIRECTOR_CRITERIA, AUDIENCE_CRITERIA } from '@/lib/review-criteria'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
+
+interface ReviewRecommendation {
+  text: string
+  priority: RecommendationPriority
+  category?: string
+}
 
 interface Review {
   overallScore: number
   categories: {
     name: string
     score: number
+    weight?: number
   }[]
   analysis: string
   strengths: string[]
   improvements: string[]
-  recommendations: string[]
+  recommendations: ReviewRecommendation[]
   generatedAt: string
 }
 
@@ -115,11 +124,15 @@ IMPORTANT SCORING GUIDANCE:
 
 Provide a comprehensive review with:
 1. Overall Score (1-100) - weighted average of categories
-2. Category scores (1-100 each)
+2. Category scores (1-100 each) with weights
 3. Analysis (2-3 detailed paragraphs about the script's strengths and weaknesses)                                                                               
 4. Strengths (3-5 specific bullet points highlighting what works well)
 5. Areas for Improvement (3-5 specific bullet points about what needs work)
-6. Actionable Recommendations (3-5 specific, practical suggestions for improvement)
+6. Actionable Recommendations with priority levels (3-5 specific, practical suggestions)
+   - CRITICAL: Fundamental issues that must be fixed (rare)
+   - HIGH: Significant issues affecting overall quality
+   - MEDIUM: Noticeable improvements worth making
+   - OPTIONAL: Nice-to-have polish suggestions
 
 CRITICAL: Calculate scores based on YOUR ANALYSIS of THIS SCRIPT. 
 The example below shows structure only - DO NOT copy these placeholder values.
@@ -130,16 +143,20 @@ Format as JSON with this structure:
 {
   "overallScore": <your calculated score 1-100>,
   "categories": [
-    {"name": "Story Structure", "score": <your score 1-100>},
-    {"name": "Character Development", "score": <your score 1-100>},
-    {"name": "Pacing & Flow", "score": <your score 1-100>},
-    {"name": "Visual Storytelling", "score": <your score 1-100>},
-    {"name": "Dialogue Quality", "score": <your score 1-100>}
+    {"name": "Story Structure", "score": <your score 1-100>, "weight": 25},
+    {"name": "Character Development", "score": <your score 1-100>, "weight": 25},
+    {"name": "Pacing & Flow", "score": <your score 1-100>, "weight": 20},
+    {"name": "Visual Storytelling", "score": <your score 1-100>, "weight": 15},
+    {"name": "Dialogue Quality", "score": <your score 1-100>, "weight": 15}
   ],
   "analysis": "<your detailed analysis>",
   "strengths": ["<specific strength 1>", "<specific strength 2>", ...],
   "improvements": ["<specific improvement 1>", "<specific improvement 2>", ...],
-  "recommendations": ["<specific recommendation 1>", "<specific recommendation 2>", ...]
+  "recommendations": [
+    {"text": "<specific recommendation>", "priority": "high", "category": "Story Structure"},
+    {"text": "<specific recommendation>", "priority": "medium", "category": "Character Development"},
+    ...
+  ]
 }`
 
   const response = await fetch(
@@ -204,6 +221,31 @@ Format as JSON with this structure:
     throw new Error('Failed to parse director review JSON')
   }
   
+  // Normalize recommendations to include priority (backward compatibility)
+  if (review.recommendations && Array.isArray(review.recommendations)) {
+    review.recommendations = review.recommendations.map((rec: any) => {
+      if (typeof rec === 'string') {
+        return { text: rec, priority: 'medium' as RecommendationPriority }
+      }
+      return rec
+    })
+  }
+  
+  // Add weights to categories if missing
+  const defaultWeights: Record<string, number> = {
+    'Story Structure': 25,
+    'Character Development': 25,
+    'Pacing & Flow': 20,
+    'Visual Storytelling': 15,
+    'Dialogue Quality': 15
+  }
+  if (review.categories && Array.isArray(review.categories)) {
+    review.categories = review.categories.map((cat: any) => ({
+      ...cat,
+      weight: cat.weight || defaultWeights[cat.name] || 20
+    }))
+  }
+  
   return {
     ...review,
     generatedAt: new Date().toISOString()
@@ -265,11 +307,15 @@ IMPORTANT SCORING GUIDANCE:
 
 Provide a comprehensive review with:
 1. Overall Score (1-100) - weighted average of categories
-2. Category scores (1-100 each)
+2. Category scores (1-100 each) with weights
 3. Analysis (2-3 detailed paragraphs about audience appeal and engagement)
 4. Strengths (3-5 specific bullet points about what audiences will love)
 5. Areas for Improvement (3-5 specific bullet points about audience concerns)
-6. Actionable Recommendations (3-5 specific suggestions to improve audience appeal)
+6. Actionable Recommendations with priority levels (3-5 specific suggestions to improve audience appeal)
+   - CRITICAL: Fundamental engagement issues that must be fixed (rare)
+   - HIGH: Significant issues affecting audience connection
+   - MEDIUM: Noticeable improvements worth making
+   - OPTIONAL: Nice-to-have polish suggestions
 
 CRITICAL: Calculate scores based on YOUR ANALYSIS of THIS SCRIPT.
 The example below shows structure only - DO NOT copy these placeholder values.
@@ -280,16 +326,20 @@ Format as JSON with this structure:
 {
   "overallScore": <your calculated score 1-100>,
   "categories": [
-    {"name": "Entertainment Value", "score": <your score 1-100>},
-    {"name": "Emotional Impact", "score": <your score 1-100>},
-    {"name": "Clarity & Accessibility", "score": <your score 1-100>},
-    {"name": "Character Relatability", "score": <your score 1-100>},
-    {"name": "Satisfying Payoff", "score": <your score 1-100>}
+    {"name": "Entertainment Value", "score": <your score 1-100>, "weight": 25},
+    {"name": "Emotional Impact", "score": <your score 1-100>, "weight": 25},
+    {"name": "Clarity & Accessibility", "score": <your score 1-100>, "weight": 20},
+    {"name": "Character Relatability", "score": <your score 1-100>, "weight": 15},
+    {"name": "Satisfying Payoff", "score": <your score 1-100>, "weight": 15}
   ],
   "analysis": "<your detailed analysis>",
   "strengths": ["<specific strength 1>", "<specific strength 2>", ...],
   "improvements": ["<specific improvement 1>", "<specific improvement 2>", ...],
-  "recommendations": ["<specific recommendation 1>", "<specific recommendation 2>", ...]
+  "recommendations": [
+    {"text": "<specific recommendation>", "priority": "high", "category": "Entertainment Value"},
+    {"text": "<specific recommendation>", "priority": "medium", "category": "Emotional Impact"},
+    ...
+  ]
 }`
 
   const response = await fetch(
@@ -352,6 +402,31 @@ Format as JSON with this structure:
     console.error('[Audience Review] JSON parse error:', parseError)
     console.error('[Audience Review] Failed to parse:', jsonText.substring(0, 500))
     throw new Error('Failed to parse audience review JSON')
+  }
+  
+  // Normalize recommendations to include priority (backward compatibility)
+  if (review.recommendations && Array.isArray(review.recommendations)) {
+    review.recommendations = review.recommendations.map((rec: any) => {
+      if (typeof rec === 'string') {
+        return { text: rec, priority: 'medium' as RecommendationPriority }
+      }
+      return rec
+    })
+  }
+  
+  // Add weights to categories if missing
+  const audienceWeights: Record<string, number> = {
+    'Entertainment Value': 25,
+    'Emotional Impact': 25,
+    'Clarity & Accessibility': 20,
+    'Character Relatability': 15,
+    'Satisfying Payoff': 15
+  }
+  if (review.categories && Array.isArray(review.categories)) {
+    review.categories = review.categories.map((cat: any) => ({
+      ...cat,
+      weight: cat.weight || audienceWeights[cat.name] || 20
+    }))
   }
   
   return {

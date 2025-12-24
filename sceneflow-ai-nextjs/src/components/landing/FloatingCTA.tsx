@@ -52,7 +52,7 @@ export default function FloatingCTA() {
             {/* Glow effect */}
             <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500 via-purple-500 to-amber-500 blur-lg opacity-50 group-hover:opacity-70 transition-opacity -z-10" />
             
-            <span className="mr-2">Start Free Trial</span>
+            <span className="mr-2">Try for $5</span>
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
           

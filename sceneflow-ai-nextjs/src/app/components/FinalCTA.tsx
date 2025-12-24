@@ -70,17 +70,17 @@ export function FinalCTA() {
                 <div className="w-7 h-7 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 border-2 border-slate-900" />
                 <div className="w-7 h-7 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 border-2 border-slate-900" />
               </div>
-              <span className="text-gray-300"><strong className="text-white">2,400+</strong> creators this month</span>
+              <span className="text-gray-300"><strong className="text-white">Built for</strong> indie creators</span>
             </div>
             <div className="hidden sm:block w-px h-4 bg-gray-700" />
             <div className="flex items-center gap-2">
               <Film className="w-4 h-4 text-amber-500" />
-              <span className="text-gray-300"><strong className="text-white">12,000+</strong> films generated</span>
+              <span className="text-gray-300"><strong className="text-white">Unlimited</strong> creative potential</span>
             </div>
             <div className="hidden sm:block w-px h-4 bg-gray-700" />
             <div className="flex items-center gap-2">
               <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-              <span className="text-gray-300"><strong className="text-white">4.9/5</strong> creator rating</span>
+              <span className="text-gray-300"><strong className="text-white">Intuitive</strong> & easy to use</span>
             </div>
           </motion.div>
 
@@ -107,7 +107,7 @@ export function FinalCTA() {
               className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-xl hover:opacity-90 transition-all shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40"
             >
               <Rocket className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
-              Start Your $5 Trial
+              Get 1,000 Credits — $5
             </button>
             <button 
               onClick={() => { 

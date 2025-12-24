@@ -74,6 +74,8 @@ interface SceneAnalysis {
   audienceScore: number
   generatedAt: string
   recommendations: any[]
+  iterationCount?: number  // Track analysis iterations for score stabilization
+  appliedRecommendationIds?: string[]  // Track which recommendations were applied
 }
 
 // Scene interface with score analysis
@@ -91,6 +93,9 @@ interface Scene {
   duration?: number
   scoreAnalysis?: SceneAnalysis
   sceneDirection?: DetailedSceneDirection
+  appliedRecommendations?: string[]  // Legacy field
+  appliedRecommendationIds?: string[]  // New field for score stabilization
+  analysisIterationCount?: number  // Track iterations for score stabilization
   [key: string]: any
 }
 
@@ -6308,11 +6313,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     try {
       const scene = script.script.scenes[sceneIndex]
       
-      // Get previous analysis if it exists
+      // Score stabilization: Get previous analysis with iteration tracking
+      const currentIteration = scene.analysisIterationCount || scene.scoreAnalysis?.iterationCount || 0
+      const appliedRecIds = scene.appliedRecommendationIds || scene.scoreAnalysis?.appliedRecommendationIds || []
+      
       const previousAnalysis = scene.scoreAnalysis ? {
         score: scene.scoreAnalysis.overallScore || scene.scoreAnalysis.directorScore,
-        appliedRecommendations: scene.appliedRecommendations || []
+        directorScore: scene.scoreAnalysis.directorScore,
+        audienceScore: scene.scoreAnalysis.audienceScore,
+        appliedRecommendations: scene.appliedRecommendations || [],
+        appliedRecommendationIds: appliedRecIds,
+        iterationCount: currentIteration
       } : undefined
+      
+      console.log('[Vision] Score stabilization context:', { 
+        sceneIndex, 
+        currentIteration, 
+        appliedRecIds: appliedRecIds.length,
+        previousScore: previousAnalysis?.score 
+      })
       
       const response = await fetch('/api/vision/analyze-scene', {
         method: 'POST',
@@ -6325,7 +6344,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             previousScene: script.script.scenes[sceneIndex - 1],
             nextScene: script.script.scenes[sceneIndex + 1],
             characters,
-            previousAnalysis  // Pass previous analysis context
+            previousAnalysis  // Pass previous analysis context with iteration tracking
           }
         })
       })
@@ -6336,7 +6355,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       const data = await response.json()
       
-      // Update scene with score
+      // Update scene with score and increment iteration count
       const updatedScenes = [...script.script.scenes]
       updatedScenes[sceneIndex] = {
         ...scene,
@@ -6348,8 +6367,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           recommendations: [
             ...data.analysis.directorRecommendations,
             ...data.analysis.audienceRecommendations
-          ]
-        }
+          ],
+          iterationCount: currentIteration + 1,  // Increment iteration for score stabilization
+          appliedRecommendationIds: appliedRecIds  // Preserve applied recommendations
+        },
+        analysisIterationCount: currentIteration + 1  // Also store at scene level
       }
       
       // Save to database

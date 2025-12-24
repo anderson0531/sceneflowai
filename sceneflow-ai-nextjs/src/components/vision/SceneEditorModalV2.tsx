@@ -6,21 +6,48 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import { Loader, Eye, Check, Undo, Redo, Film, Users, Edit, Wand2, AlertCircle, Sparkles, Mic, MicOff, CheckCircle, XCircle, Lightbulb, Target, ChevronDown, ChevronUp } from 'lucide-react'
+import { Loader, Eye, Check, Undo, Redo, Film, Users, Edit, Wand2, AlertCircle, Sparkles, Mic, MicOff, CheckCircle, XCircle, Lightbulb, Target, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react'
 import { InstructionsPanel } from './InstructionsPanel'
 import { PreviewPanel } from './PreviewPanel'
 import { CurrentScenePanel } from './CurrentScenePanel'
 import { SceneComparisonPanel } from './SceneComparisonPanel'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
+import { RecommendationPriority } from '@/types/story'
+
+// Priority badge colors for recommendations
+const PRIORITY_BADGES: Record<RecommendationPriority, { emoji: string; color: string; label: string }> = {
+  critical: { emoji: '🔴', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400', label: 'Critical' },
+  high: { emoji: '🟡', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400', label: 'High' },
+  medium: { emoji: '🔵', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', label: 'Medium' },
+  optional: { emoji: '⚪', color: 'bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400', label: 'Optional' }
+}
 
 interface SceneReview {
   overallScore: number
-  categories: { name: string; score: number }[]
+  categories: { name: string; score: number; weight?: number }[]
   analysis: string
   strengths: string[]
   improvements: string[]
-  recommendations: string[]
+  recommendations: SceneRecommendation[]
   generatedAt: string
+}
+
+// Recommendation with priority (supports both old string format and new object format)
+interface SceneRecommendation {
+  id?: string
+  text?: string
+  priority?: RecommendationPriority
+  category?: string
+  // Fallback for old string format
+  [key: string]: any
+}
+
+// Helper to normalize recommendations (handle both string and object formats)
+function normalizeRecommendation(rec: string | SceneRecommendation): SceneRecommendation {
+  if (typeof rec === 'string') {
+    return { text: rec, priority: 'medium' as RecommendationPriority }
+  }
+  return { ...rec, priority: rec.priority || 'medium' }
 }
 
 interface SceneEditorModalProps {
@@ -77,6 +104,67 @@ export function SceneEditorModal({
   const [reviewError, setReviewError] = useState<string | null>(null)
   const [leftPanelTab, setLeftPanelTab] = useState<'scene' | 'director' | 'audience'>('scene')
   
+  // Score stabilization: Track applied recommendations
+  const [appliedRecommendationIds, setAppliedRecommendationIds] = useState<string[]>(
+    scene?.appliedRecommendationIds || scene?.scoreAnalysis?.appliedRecommendationIds || []
+  )
+  const [appliedRecommendationPriorities, setAppliedRecommendationPriorities] = useState<Record<string, RecommendationPriority>>({})
+  const [isResetting, setIsResetting] = useState(false)
+  
+  // Reset scene review state (for major changes)
+  const handleResetSceneReview = async () => {
+    if (isResetting) return
+    
+    setIsResetting(true)
+    try {
+      // Call API to reset review history for this scene
+      await fetch(`/api/vision/review-history?projectId=${projectId}&sceneIndex=${sceneIndex}`, {
+        method: 'DELETE'
+      })
+      
+      // Clear local state
+      setDirectorReview(null)
+      setAudienceReview(null)
+      setAppliedRecommendationIds([])
+      setAppliedRecommendationPriorities({})
+      setReviewError(null)
+      
+      console.log(`[SceneEditor] Reset review state for scene ${sceneIndex}`)
+    } catch (error) {
+      console.error('[SceneEditor] Failed to reset review:', error)
+      setReviewError('Failed to reset review state')
+    } finally {
+      setIsResetting(false)
+    }
+  }
+  
+  // Reset all scenes review state (for major script changes)
+  const handleResetAllScenesReview = async () => {
+    if (isResetting) return
+    
+    setIsResetting(true)
+    try {
+      // Call API to reset all review history
+      await fetch(`/api/vision/review-history?projectId=${projectId}`, {
+        method: 'DELETE'
+      })
+      
+      // Clear local state
+      setDirectorReview(null)
+      setAudienceReview(null)
+      setAppliedRecommendationIds([])
+      setAppliedRecommendationPriorities({})
+      setReviewError(null)
+      
+      console.log(`[SceneEditor] Reset all scenes review state for project ${projectId}`)
+    } catch (error) {
+      console.error('[SceneEditor] Failed to reset all reviews:', error)
+      setReviewError('Failed to reset all review states')
+    } finally {
+      setIsResetting(false)
+    }
+  }
+  
   // Constants for instruction limits
   const MAX_INSTRUCTIONS = 5
   
@@ -90,9 +178,15 @@ export function SceneEditorModal({
   const instructionCount = countInstructions(customInstruction)
   const canAddMoreInstructions = instructionCount < MAX_INSTRUCTIONS
 
-  // Append instruction with numbered format
-  const appendInstruction = (newText: string) => {
+  // Append instruction with numbered format and track for score stabilization
+  const appendInstruction = (newText: string, recommendationId?: string) => {
     if (!canAddMoreInstructions) return
+    
+    // Track recommendation ID for score stabilization
+    if (recommendationId || newText) {
+      const idToTrack = recommendationId || `rec-${Date.now()}-${newText.substring(0, 20).replace(/\s+/g, '-')}`
+      setAppliedRecommendationIds(prev => [...new Set([...prev, idToTrack])])
+    }
     
     if (customInstruction.trim() === '') {
       setCustomInstruction(`1. ${newText}`)
@@ -250,9 +344,12 @@ export function SceneEditorModal({
 
     const cleanedDescription = sceneDescription?.trim() || ''
 
+    // Include applied recommendation IDs for score stabilization
     const revisedSceneWithMetadata = {
       ...sourceScene,
-      visualDescription: cleanedDescription
+      visualDescription: cleanedDescription,
+      appliedRecommendationIds: appliedRecommendationIds.length > 0 ? appliedRecommendationIds : (sourceScene.appliedRecommendationIds || []),
+      analysisIterationCount: (sourceScene.analysisIterationCount || 0) + (appliedRecommendationIds.length > 0 ? 1 : 0)
     }
 
     const newHistory = [...revisionHistory.slice(0, currentHistoryIndex + 1), revisedSceneWithMetadata]
@@ -357,16 +454,53 @@ export function SceneEditorModal({
       <div className="space-y-4">
         {/* Score Header */}
         <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-          <div>
+          <div className="flex-1">
             <h3 className="font-semibold text-gray-900 dark:text-gray-100">
               {type === 'director' ? 'Director Review' : 'Audience Review'}
             </h3>
             <p className="text-xs text-gray-500">Scene {sceneIndex + 1}</p>
           </div>
-          <div className={`text-3xl font-bold px-4 py-2 rounded-lg ${getScoreColor(review.overallScore)}`}>
-            {review.overallScore}
+          <div className="flex items-center gap-3">
+            <div className={`text-3xl font-bold px-4 py-2 rounded-lg ${getScoreColor(review.overallScore)}`}>
+              {review.overallScore}
+            </div>
+            {/* Reset buttons */}
+            <div className="flex flex-col gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                onClick={handleResetSceneReview}
+                disabled={isResetting}
+                title="Reset this scene's review"
+              >
+                <RotateCcw className="w-3 h-3 mr-1" />
+                Reset Scene
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 text-xs text-red-500 hover:text-red-700 dark:text-red-400"
+                onClick={handleResetAllScenesReview}
+                disabled={isResetting}
+                title="Reset all scenes' reviews (for major script changes)"
+              >
+                <RotateCcw className="w-3 h-3 mr-1" />
+                Reset All
+              </Button>
+            </div>
           </div>
         </div>
+
+        {/* Applied Recommendations Count */}
+        {appliedRecommendationIds.length > 0 && (
+          <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+            <CheckCircle className="w-4 h-4 text-green-600" />
+            <span className="text-sm text-green-800 dark:text-green-400">
+              {appliedRecommendationIds.length} recommendation(s) applied
+            </span>
+          </div>
+        )}
 
         {/* Category Scores */}
         <div className="grid grid-cols-2 gap-2">
@@ -459,29 +593,56 @@ export function SceneEditorModal({
               {expandedSections.recommendations ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             {expandedSections.recommendations && (
-              <ul className="p-3 space-y-2">
-                {review.recommendations.map((rec, idx) => (
-                  <li key={idx} className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2">
-                    <Lightbulb className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
-                    <div className="flex-1">
-                      <span>{rec}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={`ml-2 h-6 text-xs ${
-                          !canAddMoreInstructions ? 'opacity-50 cursor-not-allowed' : ''
-                        }`}
-                        disabled={!canAddMoreInstructions}
-                        onClick={() => {
-                          appendInstruction(rec)
-                          setLeftPanelTab('scene')
-                        }}
-                      >
-                        + Add to instructions
-                      </Button>
-                    </div>
-                  </li>
-                ))}
+              <ul className="p-3 space-y-3">
+                {review.recommendations.map((rawRec, idx) => {
+                  const rec = normalizeRecommendation(rawRec)
+                  const recText = rec.text || String(rawRec)
+                  const recId = rec.id || `rec-${idx}`
+                  const priority = rec.priority || 'medium'
+                  const priorityBadge = PRIORITY_BADGES[priority]
+                  const isApplied = appliedRecommendationIds.includes(recId)
+                  
+                  return (
+                    <li key={idx} className={`text-sm text-gray-700 dark:text-gray-300 p-2 rounded-lg border ${
+                      isApplied ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'border-transparent'
+                    }`}>
+                      <div className="flex items-start gap-2">
+                        {/* Priority Badge */}
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium shrink-0 ${priorityBadge.color}`}>
+                          {priorityBadge.emoji} {priorityBadge.label}
+                        </span>
+                        <div className="flex-1">
+                          <span className={isApplied ? 'line-through opacity-70' : ''}>{recText}</span>
+                          {rec.category && (
+                            <span className="ml-2 text-xs text-gray-400">({rec.category})</span>
+                          )}
+                          {!isApplied && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className={`ml-2 h-6 text-xs ${
+                                !canAddMoreInstructions ? 'opacity-50 cursor-not-allowed' : ''
+                              }`}
+                              disabled={!canAddMoreInstructions}
+                              onClick={() => {
+                                appendInstruction(recText, recId)
+                                setAppliedRecommendationPriorities(prev => ({ ...prev, [recId]: priority }))
+                                setLeftPanelTab('scene')
+                              }}
+                            >
+                              + Add to instructions
+                            </Button>
+                          )}
+                          {isApplied && (
+                            <span className="ml-2 text-xs text-green-600 dark:text-green-400">
+                              ✓ Applied
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>

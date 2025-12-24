@@ -305,7 +305,7 @@ export function Pricing() {
               }`}
             >
               Annual
-              <span className="ml-2 text-amber-400 text-sm">Save 20%</span>
+              <span className="ml-2 text-amber-400 text-sm">Save 17%</span>
             </button>
           </div>
         </motion.div>
@@ -369,9 +369,10 @@ export function Pricing() {
                       )}
                       <p className="text-lg font-semibold text-amber-400 mb-2">{tier.tagline}</p>
                                             <div className="flex items-baseline justify-center mb-3">
-                        <span className="text-3xl font-bold text-amber-400">${tier.monthlyPrice}</span>                                                         
+                        <span className="text-3xl font-bold text-amber-400" title="One-time purchase, no subscription required">${tier.monthlyPrice}</span>                                                         
                         <span className="text-gray-400 ml-2 text-sm">one-time</span>                                                                            
                       </div>
+                      <p className="text-xs text-gray-500 mt-1">One-time purchase, no subscription required</p>
                       <p className="text-gray-300 text-sm mb-1">{tier.description}</p>                                                                          
                       <p className="text-sf-primary font-medium text-sm mb-1">{tier.credits}</p>
                       {tier.value && (

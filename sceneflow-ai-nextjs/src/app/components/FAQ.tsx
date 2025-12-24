@@ -54,7 +54,7 @@ export function FAQ() {
     },
     // General Platform FAQs
     {
-      question: 'How does the $5 trial work?',
+      question: 'How does the Coffee Break starter pack work?',
       answer:
         'For the price of a coffee, you get 1,000 credits to explore the full platform. That\'s enough to generate scripts, create character portraits, produce video clips, and add voice acting. No subscription required—just a one-time payment to see what SceneFlow can do for your creative projects.',
     },

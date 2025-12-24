@@ -8,25 +8,16 @@ export function Footer() {
       { name: 'Features', href: '#features' },
       { name: 'Pricing', href: '#pricing' },
       { name: 'How It Works', href: '#how-it-works' },
-      { name: 'API', href: '#' }
+      { name: 'FAQ', href: '#faq' }
     ],
-    company: [
-      { name: 'About', href: '#' },
-      { name: 'Blog', href: '#' },
-      { name: 'Careers', href: '#' },
-      { name: 'Contact', href: '#' }
-    ],
-    support: [
-      { name: 'Help Center', href: '#' },
-      { name: 'Documentation', href: '#' },
-      { name: 'Community', href: '#' },
-      { name: 'Status', href: '#' }
+    resources: [
+      { name: 'Getting Started', href: '#how-it-works' },
+      { name: 'Pricing', href: '#pricing' },
+      { name: 'FAQ', href: '#faq' }
     ],
     legal: [
-      { name: 'Privacy Policy', href: '#' },
-      { name: 'Terms of Service', href: '#' },
-      { name: 'Cookie Policy', href: '#' },
-      { name: 'GDPR', href: '#' }
+      { name: 'Privacy Policy', href: '/privacy' },
+      { name: 'Terms of Service', href: '/terms' }
     ]
   }
 
@@ -50,18 +41,9 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
           {/* Logo and Description */}
           <div className="col-span-1 lg:col-span-2">
-            <div className="flex items-center space-x-3 mb-6">
-              {/* Logo with gradient accent */}
-              <div className="relative">
-                <div className="w-11 h-11 bg-gradient-to-br from-cyan-500 via-purple-500 to-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
-                  <span className="text-xl font-bold text-white">SF</span>
-                </div>
-                {/* Small connector triangle in teal-green */}
-                <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-2 border-l-sf-primary border-t-2 border-t-transparent border-b-2 border-b-transparent"></div>
-              </div>
+            <div className="flex items-center mb-6">
               <span className="text-2xl font-bold text-white">
-                <span>SceneFlow </span>
-                <span className="text-sf-primary">AI</span>
+                SceneFlow AI
               </span>
             </div>
             <p className="text-gray-400 max-w-md mb-6">
@@ -117,35 +99,27 @@ export function Footer() {
             </ul>
           </div>
           
-          {/* Company Links */}
+          {/* Resources Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Company</h3>
+            <h3 className="text-lg font-semibold mb-4">Resources</h3>
             <ul className="space-y-2">
-              {footerLinks.company.map((link) => (
+              {footerLinks.resources.map((link) => (
                 <li key={link.name}>
-                  <a
-                    href={link.href}
-                    className="text-gray-400 hover:text-white transition-colors text-sm"
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-          
-          {/* Support Links */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Support</h3>
-            <ul className="space-y-2">
-              {footerLinks.support.map((link) => (
-                <li key={link.name}>
-                  <a
-                    href={link.href}
-                    className="text-gray-400 hover:text-white transition-colors text-sm"
-                  >
-                    {link.name}
-                  </a>
+                  {link.href.startsWith('#') ? (
+                    <button
+                      onClick={() => scrollToSection(link.href.slice(1))}
+                      className="text-gray-400 hover:text-white transition-colors text-sm"
+                    >
+                      {link.name}
+                    </button>
+                  ) : (
+                    <a
+                      href={link.href}
+                      className="text-gray-400 hover:text-white transition-colors text-sm"
+                    >
+                      {link.name}
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>

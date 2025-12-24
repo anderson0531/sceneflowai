@@ -135,7 +135,7 @@ export function HeroSection() {
               onClick={() => window.location.href = '/?signup=1'}
               className="bg-gradient-to-r from-cyan-500 via-purple-500 to-amber-500 hover:from-cyan-400 hover:via-purple-400 hover:to-amber-400 text-white px-8 py-4 text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-500/25"
             >
-              Start Creating Free
+              Start for $5
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
             

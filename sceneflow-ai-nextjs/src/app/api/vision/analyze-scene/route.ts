@@ -1,4 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { 
+  RecommendationPriority, 
+  PRIORITY_SCORE_WEIGHTS 
+} from '@/types/story'
+import {
+  generateDirectorCriteriaPrompt,
+  generateAudienceCriteriaPrompt,
+  calculateScoreFloor,
+  getScoreTier
+} from '@/lib/review-criteria'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -19,10 +29,14 @@ interface SceneAnalysisRequest {
     nextScene?: any
     characters: any[]
     scriptReview?: { director: any; audience: any }
-    // Previous analysis context for scoring consistency
+    // Previous analysis context for scoring consistency and stabilization
     previousAnalysis?: {
       score: number
-      appliedRecommendations?: string[]
+      directorScore?: number
+      audienceScore?: number
+      appliedRecommendations?: Array<{ id: string; priority: RecommendationPriority }> // Enhanced with priority
+      appliedRecommendationIds?: string[]
+      iterationCount?: number
     }
   }
 }
@@ -30,7 +44,7 @@ interface SceneAnalysisRequest {
 interface Recommendation {
   id: string
   category: 'pacing' | 'dialogue' | 'visual' | 'character' | 'emotion' | 'clarity'
-  priority: 'high' | 'medium' | 'low'
+  priority: RecommendationPriority // Enhanced: critical | high | medium | optional
   title: string
   description: string
   before: string
@@ -53,6 +67,12 @@ interface SceneAnalysisResponse {
   overallScore: number
   directorScore: number
   audienceScore: number
+  categoryScores?: {
+    director: Array<{ category: string; score: number; weight: number }>
+    audience: Array<{ category: string; score: number; weight: number }>
+  }
+  iteration: number
+  scoreFloor: number
 }
 
 export async function POST(req: NextRequest) {
@@ -122,6 +142,9 @@ export async function POST(req: NextRequest) {
 async function generateDirectorAnalysis(scene: any, context: any): Promise<{
   score: number
   recommendations: Recommendation[]
+  categoryScores?: Array<{ category: string; score: number; weight: number }>
+  scoreFloor: number
+  iteration: number
 }> {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) throw new Error('Google API key not configured')
@@ -134,18 +157,52 @@ async function generateDirectorAnalysis(scene: any, context: any): Promise<{
     `Next: ${context.nextScene.heading || 'Untitled'} - ${context.nextScene.action?.substring(0, 100) || 'No action'}...` : 
     'No next scene'
 
-  // Add context about previous analysis if available
-  const previousScoreContext = context.previousAnalysis ? `
-PREVIOUS ANALYSIS:
-- Previous Score: ${context.previousAnalysis.score}/100
-- Applied Recommendations: ${context.previousAnalysis.appliedRecommendations?.length || 0} recommendations were applied
-${context.previousAnalysis.appliedRecommendations?.length ? `- The user has already implemented your previous suggestions, so acknowledge improvements` : ''}
+  // Enhanced score stabilization with priority-weighted floor calculation
+  const previousScore = context.previousAnalysis?.directorScore || context.previousAnalysis?.score || 0
+  const iterationCount = (context.previousAnalysis?.iterationCount || 0) + 1
+  const appliedRecs = context.previousAnalysis?.appliedRecommendations || []
+  const appliedRecIds = context.previousAnalysis?.appliedRecommendationIds || []
+  
+  // Calculate score floor based on priority weights: Critical +5, High +3, Medium +2, Optional +1
+  let scoreFloorIncrement = 0
+  if (Array.isArray(appliedRecs) && appliedRecs.length > 0) {
+    for (const rec of appliedRecs) {
+      const priority = typeof rec === 'object' ? rec.priority : 'medium'
+      scoreFloorIncrement += PRIORITY_SCORE_WEIGHTS[priority as RecommendationPriority] || 2
+    }
+  } else if (appliedRecIds.length > 0) {
+    // Fallback: assume medium priority for legacy IDs
+    scoreFloorIncrement = appliedRecIds.length * 2
+  }
+  
+  const scoreFloor = scoreFloorIncrement > 0 ? Math.min(92, previousScore + scoreFloorIncrement) : 0
+  const isConverged = iterationCount >= 3 && (appliedRecs.length > 0 || appliedRecIds.length > 0)
+  
+  console.log('[Director Analysis] Score stabilization:', { previousScore, iterationCount, appliedRecs: appliedRecs.length, scoreFloor, isConverged })
 
-SCORING GUIDELINES:
-- If recommendations were applied, score should generally improve or stay similar
-- Only decrease score if NEW critical issues are discovered
-- Acknowledge improvements from applied recommendations in your analysis
+  // Build previous analysis context with enhanced scoring rules
+  const previousScoreContext = context.previousAnalysis ? `
+SCORE STABILIZATION CONTEXT:
+- Previous Director Score: ${previousScore}/100
+- Analysis Iteration: ${iterationCount}
+- Applied Recommendations: ${appliedRecs.length || appliedRecIds.length} recommendation(s) were implemented
+- Score Floor: ${scoreFloor} (score MUST NOT drop below this value)
+- Applied Recommendation IDs to EXCLUDE: ${appliedRecIds.join(', ') || 'none'}
+
+CRITICAL SCORING RULES:
+1. Score MUST be >= ${scoreFloor} since the user applied recommendations
+2. Do NOT re-suggest recommendations with these IDs: ${appliedRecIds.join(', ')}
+3. Only suggest NEW issues not previously identified
+4. ${isConverged ? 'CONVERGENCE MODE: After 3+ iterations, assume quality is acceptable. Score should be 90+ unless there is a CRITICAL NEW issue. Return empty recommendations array if no critical issues remain.' : 'Focus on remaining high-impact issues only.'}
+5. Weight your recommendations by priority:
+   - CRITICAL: Fundamental issues that break the scene (rare)
+   - HIGH: Significant issues affecting quality
+   - MEDIUM: Noticeable improvements worth making
+   - OPTIONAL: Nice-to-have polish suggestions
 ` : ''
+
+  // Use structured criteria from review-criteria.ts
+  const criteriaPrompt = generateDirectorCriteriaPrompt()
 
   const prompt = `You are an expert film director analyzing a scene. Provide specific, actionable recommendations for improvement.
 
@@ -226,7 +283,7 @@ IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maxim
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.7,
+          temperature: 0.3,  // Lower temperature for scoring consistency
           maxOutputTokens: 8192  // Doubled to accommodate longer responses
         }
       })
@@ -317,18 +374,53 @@ IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maxim
 
   try {
     const analysis = JSON.parse(jsonText)
+    const rawScore = analysis.score || 75
+    
+    // Enforce score floor for stabilization
+    const finalScore = Math.max(rawScore, scoreFloor)
+    if (finalScore !== rawScore) {
+      console.log(`[Director Analysis] Score floor enforced: ${rawScore} -> ${finalScore}`)
+    }
+    
+    // Filter out previously-applied recommendations by ID or title match
+    let filteredRecs = (analysis.recommendations || []).filter((rec: Recommendation) => {
+      const recId = rec.id?.toLowerCase() || ''
+      const recTitle = rec.title?.toLowerCase() || ''
+      const isApplied = appliedRecIds.some((appliedId: string) => {
+        const appliedLower = appliedId.toLowerCase()
+        return recId.includes(appliedLower) || 
+               appliedLower.includes(recId) ||
+               recTitle.includes(appliedLower)
+      })
+      if (isApplied) {
+        console.log(`[Director Analysis] Filtered out already-applied recommendation: ${rec.id}`)
+      }
+      return !isApplied
+    })
+    
+    // If score is 90+ or converged, only keep high-priority issues (max 2)
+    if (finalScore >= 90 || isConverged) {
+      filteredRecs = filteredRecs
+        .filter((rec: Recommendation) => rec.priority === 'high')
+        .slice(0, 2)
+      if (isConverged && filteredRecs.length === 0) {
+        console.log('[Director Analysis] Convergence reached - no recommendations needed')
+      }
+    }
+    
     return {
-      score: analysis.score || 75,
-      recommendations: analysis.recommendations || []
+      score: finalScore,
+      recommendations: filteredRecs
     }
   } catch (parseError) {
     console.error('[Director Analysis] JSON parse error:', parseError)
     console.error('[Director Analysis] Failed to parse text:', jsonText)
     
     // Return minimal valid response instead of failing completely
+    // Use score floor if available, otherwise default to 70
     console.warn('[Director Analysis] Returning fallback response due to parse error')
     return {
-      score: 70,
+      score: Math.max(70, scoreFloor),
       recommendations: [
         {
           id: 'fallback-1',
@@ -349,23 +441,57 @@ IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maxim
 async function generateAudienceAnalysis(scene: any, context: any): Promise<{
   score: number
   recommendations: Recommendation[]
+  categoryScores?: Array<{ category: string; score: number; weight: number }>
+  scoreFloor: number
+  iteration: number
 }> {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY
   if (!apiKey) throw new Error('Google API key not configured')
 
   const dialogueText = scene.dialogue?.map((d: any) => `${d.character}: ${d.text}`).join('\n') || 'No dialogue'
 
-  // Add context about previous analysis if available
-  const previousScoreContext = context.previousAnalysis ? `
-PREVIOUS ANALYSIS:
-- Previous Score: ${context.previousAnalysis.score}/100
-- Applied Recommendations: ${context.previousAnalysis.appliedRecommendations?.length || 0} recommendations were applied
-${context.previousAnalysis.appliedRecommendations?.length ? `- The user has already implemented your previous suggestions, so acknowledge improvements` : ''}
+  // Enhanced score stabilization with priority-weighted floor calculation
+  const previousScore = context.previousAnalysis?.audienceScore || context.previousAnalysis?.score || 0
+  const iterationCount = (context.previousAnalysis?.iterationCount || 0) + 1
+  const appliedRecs = context.previousAnalysis?.appliedRecommendations || []
+  const appliedRecIds = context.previousAnalysis?.appliedRecommendationIds || []
+  
+  // Calculate score floor based on priority weights: Critical +5, High +3, Medium +2, Optional +1
+  let scoreFloorIncrement = 0
+  if (Array.isArray(appliedRecs) && appliedRecs.length > 0) {
+    for (const rec of appliedRecs) {
+      const priority = typeof rec === 'object' ? rec.priority : 'medium'
+      scoreFloorIncrement += PRIORITY_SCORE_WEIGHTS[priority as RecommendationPriority] || 2
+    }
+  } else if (appliedRecIds.length > 0) {
+    // Fallback: assume medium priority for legacy IDs
+    scoreFloorIncrement = appliedRecIds.length * 2
+  }
+  
+  const scoreFloor = scoreFloorIncrement > 0 ? Math.min(92, previousScore + scoreFloorIncrement) : 0
+  const isConverged = iterationCount >= 3 && (appliedRecs.length > 0 || appliedRecIds.length > 0)
+  
+  console.log('[Audience Analysis] Score stabilization:', { previousScore, iterationCount, appliedRecs: appliedRecs.length, scoreFloor, isConverged })
 
-SCORING GUIDELINES:
-- If recommendations were applied, score should generally improve or stay similar
-- Only decrease score if NEW critical issues are discovered
-- Acknowledge improvements from applied recommendations in your analysis
+  // Build previous analysis context with enhanced scoring rules
+  const previousScoreContext = context.previousAnalysis ? `
+SCORE STABILIZATION CONTEXT:
+- Previous Audience Score: ${previousScore}/100
+- Analysis Iteration: ${iterationCount}
+- Applied Recommendations: ${appliedRecs.length || appliedRecIds.length} recommendation(s) were implemented
+- Score Floor: ${scoreFloor} (score MUST NOT drop below this value)
+- Applied Recommendation IDs to EXCLUDE: ${appliedRecIds.join(', ') || 'none'}
+
+CRITICAL SCORING RULES:
+1. Score MUST be >= ${scoreFloor} since the user applied recommendations
+2. Do NOT re-suggest recommendations with these IDs: ${appliedRecIds.join(', ')}
+3. Only suggest NEW issues not previously identified
+4. ${isConverged ? 'CONVERGENCE MODE: After 3+ iterations, assume quality is acceptable. Score should be 90+ unless there is a CRITICAL NEW issue. Return empty recommendations array if no critical issues remain.' : 'Focus on remaining high-impact issues only.'}
+5. Weight your recommendations by priority:
+   - CRITICAL: Fundamental issues that break audience engagement (rare)
+   - HIGH: Significant issues affecting audience connection
+   - MEDIUM: Noticeable improvements worth making
+   - OPTIONAL: Nice-to-have polish suggestions
 ` : ''
 
   const prompt = `You are a film critic representing audience perspective. Analyze this scene for entertainment value and emotional impact.
@@ -441,7 +567,7 @@ IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maxim
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.7,
+          temperature: 0.3,  // Lower temperature for scoring consistency
           maxOutputTokens: 8192  // Doubled to accommodate longer responses
         }
       })
@@ -532,18 +658,55 @@ IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maxim
 
   try {
     const analysis = JSON.parse(jsonText)
+    const rawScore = analysis.score || 78
+    
+    // Enforce score floor for stabilization
+    const finalScore = Math.max(rawScore, scoreFloor)
+    if (finalScore !== rawScore) {
+      console.log(`[Audience Analysis] Score floor enforced: ${rawScore} -> ${finalScore}`)
+    }
+    
+    // Filter out previously-applied recommendations by ID or title match
+    let filteredRecs = (analysis.recommendations || []).filter((rec: Recommendation) => {
+      const recId = rec.id?.toLowerCase() || ''
+      const recTitle = rec.title?.toLowerCase() || ''
+      const isApplied = appliedRecIds.some((appliedId: string) => {
+        const appliedLower = appliedId.toLowerCase()
+        return recId.includes(appliedLower) || 
+               appliedLower.includes(recId) ||
+               recTitle.includes(appliedLower)
+      })
+      if (isApplied) {
+        console.log(`[Audience Analysis] Filtered out already-applied recommendation: ${rec.id}`)
+      }
+      return !isApplied
+    })
+    
+    // If score is 90+ or converged, only keep high-priority issues (max 2)
+    if (finalScore >= 90 || isConverged) {
+      filteredRecs = filteredRecs
+        .filter((rec: Recommendation) => rec.priority === 'critical' || rec.priority === 'high')
+        .slice(0, 2)
+      if (isConverged && filteredRecs.length === 0) {
+        console.log('[Audience Analysis] Convergence reached - no recommendations needed')
+      }
+    }
+    
     return {
-      score: analysis.score || 78,
-      recommendations: analysis.recommendations || []
+      score: finalScore,
+      recommendations: filteredRecs,
+      scoreFloor,
+      iteration: iterationCount
     }
   } catch (parseError) {
     console.error('[Audience Analysis] JSON parse error:', parseError)
     console.error('[Audience Analysis] Failed to parse text:', jsonText)
     
     // Return minimal valid response instead of failing completely
+    // Use score floor if available, otherwise default to 70
     console.warn('[Audience Analysis] Returning fallback response due to parse error')
     return {
-      score: 70,
+      score: Math.max(70, scoreFloor),
       recommendations: [
         {
           id: 'fallback-1',
@@ -556,7 +719,9 @@ IMPORTANT: Be concise and focused. Provide 2-3 high-impact recommendations maxim
           rationale: 'Analysis service temporarily unavailable',
           impact: 'N/A'
         }
-      ]
+      ],
+      scoreFloor,
+      iteration: iterationCount
     }
   }
 }
