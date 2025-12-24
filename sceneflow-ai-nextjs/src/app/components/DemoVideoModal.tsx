@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Loader2 } from 'lucide-react'
+import { X, Loader2, Maximize2, Minimize2 } from 'lucide-react'
 
 interface DemoVideoModalProps {
   open: boolean
@@ -16,13 +16,31 @@ const YOUTUBE_VIDEO_ID = 'M01EwOKyfcw'
 
 export function DemoVideoModal({ open, onClose }: DemoVideoModalProps) {
   const [isLoading, setIsLoading] = useState(true)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const videoContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        if (isFullscreen) {
+          exitFullscreen()
+        } else {
+          onClose()
+        }
+      }
+      // Allow 'f' key to toggle fullscreen
+      if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen()
+      }
     }
+    
+    const onFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+    
     if (open) {
       document.addEventListener('keydown', onKey)
+      document.addEventListener('fullscreenchange', onFullscreenChange)
       document.body.style.overflow = 'hidden'
       setIsLoading(true)
     } else {
@@ -30,19 +48,46 @@ export function DemoVideoModal({ open, onClose }: DemoVideoModalProps) {
     }
     return () => {
       document.removeEventListener('keydown', onKey)
+      document.removeEventListener('fullscreenchange', onFullscreenChange)
       document.body.style.overflow = 'unset'
     }
-  }, [open, onClose])
+  }, [open, onClose, isFullscreen])
+
+  const toggleFullscreen = async () => {
+    if (!videoContainerRef.current) return
+    
+    if (!document.fullscreenElement) {
+      try {
+        await videoContainerRef.current.requestFullscreen()
+        setIsFullscreen(true)
+      } catch (err) {
+        console.error('Error entering fullscreen:', err)
+      }
+    } else {
+      exitFullscreen()
+    }
+  }
+  
+  const exitFullscreen = async () => {
+    try {
+      await document.exitFullscreen()
+      setIsFullscreen(false)
+    } catch (err) {
+      console.error('Error exiting fullscreen:', err)
+    }
+  }
 
   // YouTube embed URL with privacy-enhanced mode and restricted options
   // - youtube-nocookie.com: Privacy-enhanced mode (no tracking cookies)
   // - autoplay=1: Auto-start video
   // - rel=0: Don't show related videos from other channels
   // - modestbranding=1: Minimal YouTube branding
-  // - fs=1: Allow fullscreen
+  // - controls=0: Hide YouTube controls (we provide custom fullscreen)
+  // - fs=1: Allow fullscreen via API
   // - playsinline=1: Play inline on mobile
   // - iv_load_policy=3: Hide video annotations
-  const youtubeEmbedUrl = `https://www.youtube-nocookie.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&rel=0&modestbranding=1&fs=1&playsinline=1&iv_load_policy=3&enablejsapi=1`
+  // - disablekb=0: Keep keyboard controls
+  const youtubeEmbedUrl = `https://www.youtube-nocookie.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&rel=0&modestbranding=1&controls=0&fs=1&playsinline=1&iv_load_policy=3&enablejsapi=1&disablekb=0`
 
   return (
     <AnimatePresence>
@@ -69,7 +114,10 @@ export function DemoVideoModal({ open, onClose }: DemoVideoModalProps) {
               <X className="w-7 h-7" />
             </button>
             
-            <div className="aspect-video bg-black rounded-xl overflow-hidden border border-gray-700 relative">
+            <div 
+              ref={videoContainerRef}
+              className="aspect-video bg-black rounded-xl overflow-hidden border border-gray-700 relative"
+            >
               {/* Loading indicator */}
               {isLoading && (
                 <div className="absolute inset-0 z-10 flex items-center justify-center bg-black">
@@ -91,6 +139,26 @@ export function DemoVideoModal({ open, onClose }: DemoVideoModalProps) {
                 allowFullScreen
                 onLoad={() => setIsLoading(false)}
                 style={{ border: 'none' }}
+              />
+              
+              {/* Custom Fullscreen Button */}
+              <button
+                onClick={toggleFullscreen}
+                className="absolute bottom-4 right-4 z-20 p-2 bg-black/70 hover:bg-black/90 rounded-lg text-white/80 hover:text-white transition-all"
+                aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                title={isFullscreen ? "Exit fullscreen (Esc or F)" : "Fullscreen (F)"}
+              >
+                {isFullscreen ? (
+                  <Minimize2 className="w-5 h-5" />
+                ) : (
+                  <Maximize2 className="w-5 h-5" />
+                )}
+              </button>
+              
+              {/* Overlay to block YouTube logo click (top-left corner) */}
+              <div 
+                className="absolute top-0 left-0 w-32 h-16 z-10 cursor-default"
+                onClick={(e) => e.stopPropagation()}
               />
               
               {/* Overlay to block YouTube logo click (bottom-right corner) */}
