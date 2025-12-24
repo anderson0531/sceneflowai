@@ -21,7 +21,7 @@ export function SocialProof() {
           <div className="hidden md:block w-px h-4 bg-gray-700" />
           <div className="flex items-center gap-2 text-sm">
             <Clock className="w-4 h-4 text-purple-400" />
-            <span className="text-gray-300">New features shipping weekly</span>
+            <span className="text-gray-300">New features shipping monthly</span>
           </div>
           <div className="hidden md:block w-px h-4 bg-gray-700" />
           <div className="flex items-center gap-2 text-sm">

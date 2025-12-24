@@ -180,7 +180,7 @@ export function HeroSection() {
             </div>
             <div className="hidden md:block w-px h-4 bg-gray-700" />
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-400">New features shipping weekly</span>
+              <span className="text-gray-300">New features shipping monthly</span>
             </div>
           </motion.div>
           
