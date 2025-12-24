@@ -116,7 +116,11 @@ export function DemoVideoModal({ open, onClose }: DemoVideoModalProps) {
             
             <div 
               ref={videoContainerRef}
-              className="aspect-video bg-black rounded-xl overflow-hidden border border-gray-700 relative"
+              className={`bg-black overflow-hidden relative ${
+                isFullscreen 
+                  ? 'w-screen h-screen rounded-none border-none' 
+                  : 'aspect-video rounded-xl border border-gray-700'
+              }`}
             >
               {/* Loading indicator */}
               {isLoading && (
@@ -134,7 +138,7 @@ export function DemoVideoModal({ open, onClose }: DemoVideoModalProps) {
               <iframe
                 src={youtubeEmbedUrl}
                 title="SceneFlow AI Demo"
-                className="w-full h-full"
+                className="w-full h-full absolute inset-0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                 allowFullScreen
                 onLoad={() => setIsLoading(false)}
