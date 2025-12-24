@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Loader2, Maximize2, Minimize2 } from 'lucide-react'
+import { X, Loader2, Maximize2 } from 'lucide-react'
 
 interface DemoVideoModalProps {
   open: boolean
@@ -17,7 +17,7 @@ const YOUTUBE_VIDEO_ID = 'M01EwOKyfcw'
 export function DemoVideoModal({ open, onClose }: DemoVideoModalProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const videoContainerRef = useRef<HTMLDivElement>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -54,11 +54,11 @@ export function DemoVideoModal({ open, onClose }: DemoVideoModalProps) {
   }, [open, onClose, isFullscreen])
 
   const toggleFullscreen = async () => {
-    if (!videoContainerRef.current) return
+    if (!iframeRef.current) return
     
     if (!document.fullscreenElement) {
       try {
-        await videoContainerRef.current.requestFullscreen()
+        await iframeRef.current.requestFullscreen()
         setIsFullscreen(true)
       } catch (err) {
         console.error('Error entering fullscreen:', err)
@@ -114,14 +114,7 @@ export function DemoVideoModal({ open, onClose }: DemoVideoModalProps) {
               <X className="w-7 h-7" />
             </button>
             
-            <div 
-              ref={videoContainerRef}
-              className={`bg-black overflow-hidden relative ${
-                isFullscreen 
-                  ? 'w-screen h-screen rounded-none border-none' 
-                  : 'aspect-video rounded-xl border border-gray-700'
-              }`}
-            >
+            <div className="bg-black overflow-hidden relative aspect-video rounded-xl border border-gray-700">
               {/* Loading indicator */}
               {isLoading && (
                 <div className="absolute inset-0 z-10 flex items-center justify-center bg-black">
@@ -136,6 +129,7 @@ export function DemoVideoModal({ open, onClose }: DemoVideoModalProps) {
               
               {/* YouTube iframe embed */}
               <iframe
+                ref={iframeRef}
                 src={youtubeEmbedUrl}
                 title="SceneFlow AI Demo"
                 className="w-full h-full absolute inset-0"
@@ -149,14 +143,10 @@ export function DemoVideoModal({ open, onClose }: DemoVideoModalProps) {
               <button
                 onClick={toggleFullscreen}
                 className="absolute bottom-4 right-4 z-20 p-2 bg-black/70 hover:bg-black/90 rounded-lg text-white/80 hover:text-white transition-all"
-                aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-                title={isFullscreen ? "Exit fullscreen (Esc or F)" : "Fullscreen (F)"}
+                aria-label="Enter fullscreen"
+                title="Fullscreen (F)"
               >
-                {isFullscreen ? (
-                  <Minimize2 className="w-5 h-5" />
-                ) : (
-                  <Maximize2 className="w-5 h-5" />
-                )}
+                <Maximize2 className="w-5 h-5" />
               </button>
               
               {/* Overlay to block YouTube logo click (top-left corner) */}
