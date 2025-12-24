@@ -19,7 +19,9 @@ import {
   Download,
   TrendingUp,
   Star,
-  Send
+  Send,
+  Wrench,
+  FileText
 } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -31,6 +33,9 @@ import { WorkshopCard } from '@/components/workflow/ideation/WorkshopCard'
 import { ScoreCard } from '@/components/workflow/ideation/ScoreCard'
 import { CoreConceptCard } from '@/components/workflow/ideation/CoreConceptCard'
 import StoryboardReadinessCard from '@/components/workflow/ideation/StoryboardReadinessCard'
+import { PhaseNavigator } from '@/components/blueprint/PhaseNavigator'
+import { ScoreIndicator as BlueprintScoreIndicator } from '@/components/blueprint/ScoreIndicator'
+import { useBlueprintShortcuts } from '@/hooks/useKeyboardShortcuts'
 import type { AnalysisResponse, CoreConceptAttributes, ConceptAttribute } from '@/types/SceneFlow'
 
 
@@ -95,6 +100,13 @@ export default function IdeationPage() {
   const [isAutoPopulatingMustHaves, setIsAutoPopulatingMustHaves] = useState(false)
   const [selectedRecs, setSelectedRecs] = useState<string[]>([])
   const [isApplyingRecs, setIsApplyingRecs] = useState(false)
+
+  // Keyboard shortcuts for save and navigation
+  useBlueprintShortcuts({
+    onSave: handleSave,
+    onClose: () => phase !== 'spark' && setPhase('spark'),
+    enabled: true
+  })
 
   const fallbackIdeas = (title: string, summary: string) => {
     const base = title || (summary.split('.').slice(0,1).join(' ') || 'Concept')
@@ -589,6 +601,20 @@ export default function IdeationPage() {
             <span className="text-sm text-sf-text-secondary">Step 1 of 4</span>
           </div>
         </div>
+
+        {/* Phase Navigator */}
+        <PhaseNavigator
+          phases={[
+            { id: 'spark', label: 'The Spark', icon: Lightbulb },
+            { id: 'workshop', label: 'Workshop', icon: Wrench },
+            { id: 'blueprint', label: 'Blueprint', icon: FileText }
+          ]}
+          currentPhase={phase}
+          onPhaseChange={(newPhase) => setPhase(newPhase as Phase)}
+          completedPhases={phase === 'blueprint' ? ['spark', 'workshop'] : phase === 'workshop' ? ['spark'] : []}
+          className="mb-4"
+        />
+
         <p className="text-sf-text-secondary mb-4">Develop your video concept and creative direction</p>
         
         {/* Progress Bar */}
@@ -598,8 +624,25 @@ export default function IdeationPage() {
             style={{ width: `${stepProgress?.ideation || 0}%` }}
           ></div>
         </div>
-        <div className="mt-2 text-base text-sf-text-secondary">
-          {stepProgress?.ideation || 0}% Complete
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-base text-sf-text-secondary">
+            {stepProgress?.ideation || 0}% Complete
+          </span>
+          {/* Score indicators */}
+          {scoreCard && (
+            <div className="flex items-center gap-4">
+              <BlueprintScoreIndicator 
+                label="Audience" 
+                score={scoreCard.audience} 
+                size="sm"
+              />
+              <BlueprintScoreIndicator 
+                label="Director" 
+                score={scoreCard.director} 
+                size="sm"
+              />
+            </div>
+          )}
         </div>
 
         {isGeneratingIdeas && (
