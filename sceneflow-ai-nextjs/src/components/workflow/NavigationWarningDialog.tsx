@@ -61,7 +61,7 @@ export function NavigationWarningDialog({
               <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
               <div>
                 <h4 className="font-medium text-emerald-900 dark:text-emerald-100 mb-1">
-                  Your Soundstage work is saved
+                  Your Virtual Production work is saved
                 </h4>
                 <p className="text-sm text-emerald-700 dark:text-emerald-300">
                   You can navigate freely between workflow steps. Your script, scenes, images, 
@@ -81,7 +81,7 @@ export function NavigationWarningDialog({
                 </h4>
                 <p className="text-sm text-red-700 dark:text-red-300">
                   If you generate a <strong>new Film Treatment and Script</strong> from The Blueprint, 
-                  it will replace your current Soundstage content (script, scenes, and generated assets).
+                  it will replace your current Virtual Production content (script, scenes, and generated assets).
                 </p>
               </div>
             </div>
@@ -103,7 +103,7 @@ export function NavigationWarningDialog({
             disabled={isNavigating}
             className="flex-1 sm:flex-none"
           >
-            Stay in The Soundstage
+            Stay in Virtual Production
           </Button>
           <Button
             onClick={handleConfirm}

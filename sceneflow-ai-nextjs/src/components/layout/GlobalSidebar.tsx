@@ -138,8 +138,8 @@ export function GlobalSidebar({ children }: { children?: React.ReactNode }) {
   }
 
   return (
-    <div className="flex">
-      <aside className="w-64 shrink-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/90">
+    <div className="flex pt-16">
+      <aside className="w-64 shrink-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/90 h-[calc(100vh-4rem)] overflow-y-auto sticky top-16">
         <div className="p-4 space-y-6">
           <section>
             <div className="space-y-1">

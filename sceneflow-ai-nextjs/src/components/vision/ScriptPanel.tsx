@@ -1949,7 +1949,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         {/* Title and Action Buttons - Same Line */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold text-white">The Soundstage</h2>
+            <h2 className="text-2xl font-bold text-white">Virtual Production</h2>
             {isGenerating && (
               <span className="text-xs text-cyan-300 flex items-center gap-1.5">
                 <Loader className="w-3.5 h-3.5 animate-spin" />

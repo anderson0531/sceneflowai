@@ -20,7 +20,6 @@ import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels'
 import { upload } from '@vercel/blob/client'
 import { cleanupStaleAudio, clearAllSceneAudio } from '@/lib/audio/cleanupAudio'
 import { toast } from 'sonner'
-import { ContextBar } from '@/components/layout/ContextBar'
 import { ScriptPanel } from '@/components/vision/ScriptPanel'
 import { SceneSelector } from '@/components/vision/SceneSelector'
 import { SceneGallery } from '@/components/vision/SceneGallery'
@@ -6509,101 +6508,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 dark:bg-sf-background overflow-x-hidden max-w-full">
-      <ContextBar
-        title="Virtual Production"
-        titleIcon={
-          <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-gradient-to-br from-sf-primary/20 via-cyan-400/15 to-fuchsia-500/15 border-2 border-sf-primary/60 shadow-xl flex items-center justify-center">
-            <DirectorChairIcon className="w-6 h-6 md:w-8 md:h-8 text-sf-primary flex-shrink-0" />
-          </div>
-        }
-        titleVariant="page"
-        emphasis
-        primaryActions={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowNavigationWarning(true)}
-              className="flex items-center gap-2"
-              aria-label="Return to The Blueprint phase"
-            >
-              <ArrowLeft className="w-4 h-4 text-blue-400" />
-              <span>The Blueprint</span>
-            </Button>
-            <Link
-              href={
-                project?.id
-                  ? `/dashboard/workflow/generation/${project.id}`
-                  : typeof projectId === 'string'
-                    ? `/dashboard/workflow/generation/${projectId}`
-                    : '/dashboard/workflow/generation'
-              }
-              prefetch={false}
-              className={cn(buttonVariants({ variant: 'primary' }), 'flex items-center gap-2')}
-              aria-label="Continue to Final Cut phase"
-            >
-              <span>Final Cut</span>
-              <ArrowRight className="w-4 h-4 text-white" />
-            </Link>
-          </div>
-        }
-        secondaryActions={
-          <>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    onClick={handleShare}
-                    disabled={isSharing}
-                    className={isSharing ? 'opacity-50' : ''}
-                  >
-              <Share2 className="w-4 h-4 text-purple-400" />
-            </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Share Project</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    onClick={handleSaveProject}
-                    disabled={isSaving}
-                    className={isSaving ? 'opacity-50' : ''}
-                  >
-                    <Save className={`w-4 h-4 ${isSaving ? 'animate-pulse' : ''} text-green-400`} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{isSaving ? 'Saving...' : 'Save Project'}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    onClick={() => setShowBYOKSettings(true)}
-                  >
-                    <Settings className="w-4 h-4 text-slate-400" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>BYOK Settings</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </>
-        }
-      />
+    <div className="h-screen flex flex-col bg-gray-50 dark:bg-sf-background overflow-x-hidden max-w-full pt-16">
       
       <div className="flex-1 overflow-hidden overflow-x-hidden px-4 py-3 max-w-full min-w-0">
         <PanelGroup direction="horizontal" className="h-full max-w-full min-w-0 overflow-x-hidden">
