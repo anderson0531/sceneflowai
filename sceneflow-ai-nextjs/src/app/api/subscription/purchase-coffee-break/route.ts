@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { SubscriptionService } from '../../../../services/SubscriptionService'
 
+// Paddle Checkout API
+// Reference: https://developer.paddle.com/api-reference/transactions/create-transaction
+
 export async function POST(req: NextRequest) {
   try {
     // 1. Authenticate user
@@ -12,6 +15,7 @@ export async function POST(req: NextRequest) {
     }
     
     const userId = session.user.id
+    const userEmail = session.user.email
     
     // 2. Check if user already purchased Coffee Break
     const canPurchase = await SubscriptionService.canPurchaseOneTimeTier(userId, 'coffee_break')
@@ -22,9 +26,13 @@ export async function POST(req: NextRequest) {
       }, { status: 400 })
     }
     
-    // 3. Process $5 payment via Paddle
-    // TODO: Paddle integration - placeholder until base app is completed
-    if (!process.env.PADDLE_VENDOR_ID || !process.env.PADDLE_API_KEY) {
+    // 3. Get Paddle configuration
+    const sellerId = process.env.PADDLE_SELLER_ID
+    const apiKey = process.env.PADDLE_API_KEY
+    const priceId = process.env.PADDLE_COFFEE_BREAK_PRICE_ID
+    const environment = process.env.PADDLE_ENVIRONMENT || 'production'
+    
+    if (!sellerId || !apiKey || !priceId) {
       // In development/demo mode, grant credits directly
       if (process.env.NODE_ENV === 'development' || process.env.DEMO_MODE === 'true') {
         await SubscriptionService.grantOneTimeTier(userId, 'coffee_break')
@@ -41,33 +49,32 @@ export async function POST(req: NextRequest) {
       }, { status: 500 })
     }
     
-    // Production: Create Paddle checkout session
-    // TODO: Implement Paddle Checkout API
-    // Reference: https://developer.paddle.com/api-reference/checkout-api/overview
-    /*
-    const paddleCheckout = await createPaddleCheckout({
-      vendor_id: process.env.PADDLE_VENDOR_ID,
-      product_id: process.env.PADDLE_COFFEE_BREAK_PRODUCT_ID,
-      customer_email: session.user.email,
-      passthrough: JSON.stringify({
-        userId,
-        tierName: 'coffee_break'
-      }),
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?coffee_break=success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`
-    })
+    // Production: Return Paddle checkout configuration for client-side Paddle.js
+    // The frontend will use Paddle.Checkout.open() with these details
+    const paddleConfig = {
+      priceId,
+      customData: {
+        user_id: userId,
+        tier_name: 'coffee_break'
+      },
+      customer: {
+        email: userEmail
+      },
+      successUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?coffee_break=success`,
+      // Paddle.js will handle the checkout overlay
+      settings: {
+        displayMode: 'overlay',
+        theme: 'dark',
+        locale: 'en'
+      }
+    }
     
     return NextResponse.json({ 
       success: true,
-      checkoutUrl: paddleCheckout.url
+      paddleConfig,
+      // Also provide direct checkout URL for fallback
+      checkoutUrl: `https://${environment === 'sandbox' ? 'sandbox-' : ''}buy.paddle.com/product/${priceId}?custom_data=${encodeURIComponent(JSON.stringify({ user_id: userId, tier_name: 'coffee_break' }))}&customer_email=${encodeURIComponent(userEmail || '')}`
     })
-    */
-    
-    // Temporary placeholder response
-    return NextResponse.json({ 
-      error: 'Payment integration pending',
-      message: 'Paddle integration is being finalized. Please try again soon.'
-    }, { status: 503 })
   } catch (error: any) {
     console.error('[Coffee Break Purchase] Error:', error)
     return NextResponse.json({ 

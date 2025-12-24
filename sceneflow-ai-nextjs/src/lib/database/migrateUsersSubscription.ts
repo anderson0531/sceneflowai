@@ -120,26 +120,26 @@ export async function migrateUsersSubscriptionColumns() {
       console.log('storage_used_gb column note:', error.message)
     }
     
-    // Step 10: Add stripe_customer_id (STRING, nullable)
+    // Step 10: Add paddle_customer_id (STRING, nullable)
     try {
       await sequelize.query(`
         ALTER TABLE users 
-        ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255);
+        ADD COLUMN IF NOT EXISTS paddle_customer_id VARCHAR(255);
       `)
-      console.log('✓ Added stripe_customer_id column')
+      console.log('✓ Added paddle_customer_id column')
     } catch (error: any) {
-      console.log('stripe_customer_id column note:', error.message)
+      console.log('paddle_customer_id column note:', error.message)
     }
     
-    // Step 11: Add stripe_subscription_id (STRING, nullable)
+    // Step 11: Add paddle_subscription_id (STRING, nullable)
     try {
       await sequelize.query(`
         ALTER TABLE users 
-        ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR(255);
+        ADD COLUMN IF NOT EXISTS paddle_subscription_id VARCHAR(255);
       `)
-      console.log('✓ Added stripe_subscription_id column')
+      console.log('✓ Added paddle_subscription_id column')
     } catch (error: any) {
-      console.log('stripe_subscription_id column note:', error.message)
+      console.log('paddle_subscription_id column note:', error.message)
     }
     
     // Step 12: Add one_time_tiers_purchased (TEXT[], default empty array)

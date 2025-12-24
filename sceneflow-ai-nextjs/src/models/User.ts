@@ -21,8 +21,8 @@ export interface UserAttributes {
   subscription_credits_expires_at?: Date | null // Monthly expiry
   addon_credits: number // Purchased top-up credits (never expire)
   storage_used_gb: number
-  stripe_customer_id?: string | null
-  stripe_subscription_id?: string | null
+  paddle_customer_id?: string | null
+  paddle_subscription_id?: string | null
   one_time_tiers_purchased: string[]
   last_login?: Date
   created_at: Date
@@ -50,8 +50,8 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
   public subscription_credits_expires_at?: Date | null
   public addon_credits!: number
   public storage_used_gb!: number
-  public stripe_customer_id?: string | null
-  public stripe_subscription_id?: string | null
+  public paddle_customer_id?: string | null
+  public paddle_subscription_id?: string | null
   public one_time_tiers_purchased!: string[]
   public last_login?: Date
   public created_at!: Date
@@ -166,11 +166,11 @@ User.init(
       allowNull: false,
       defaultValue: 0,
     },
-    stripe_customer_id: {
+    paddle_customer_id: {
       type: DataTypes.STRING(255),
       allowNull: true,
     },
-    stripe_subscription_id: {
+    paddle_subscription_id: {
       type: DataTypes.STRING(255),
       allowNull: true,
     },

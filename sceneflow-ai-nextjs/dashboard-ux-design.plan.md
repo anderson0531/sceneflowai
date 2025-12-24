@@ -489,8 +489,8 @@ interface ActiveProjectCardProps {
 │  │ • Video Rendering │  │ │  └───────────────────┘  │ │                         │
 │  │ • HD/4K Export    │  │ │                         │ │                         │
 │  └───────────────────┘  │ │  ┌───────────────────┐  │ │                         │
-│                         │ │  │    Stripe         │  │ │                         │
-│                         │ │  │                   │  │ │                         │
+│                         │ │  │    Paddle         │  │ │                         │
+│                         │ │  │ (Merchant of Rec) │  │ │                         │
 │                         │ │  │ • Subscriptions   │  │ │                         │
 │                         │ │  │ • Credit purchase │  │ │                         │
 │                         │ │  └───────────────────┘  │ │                         │
@@ -664,7 +664,7 @@ interface ActiveProjectCardProps {
 │  │  /api/generate/*     → AI Content Generation (Vertex AI, ElevenLabs)      │ │
 │  │  /api/projects/*     → CRUD Operations (Supabase)                         │ │
 │  │  /api/auth/*         → Authentication (Clerk)                             │ │
-│  │  /api/webhooks/*     → Stripe, Clerk webhooks                             │ │
+│  │  /api/webhooks/*     → Paddle, Clerk webhooks                              │ │
 │  │                                                                            │ │
 │  └───────────────────────────────────────────────────────────────────────────┘ │
 │                                                                                 │
@@ -690,14 +690,14 @@ interface ActiveProjectCardProps {
            │                             │                             │
            ▼                             ▼                             ▼
 ┌─────────────────────┐       ┌─────────────────────┐       ┌─────────────────────┐
-│      Supabase       │       │      Clerk          │       │      Stripe         │
-│    (PostgreSQL)     │       │  (Authentication)   │       │    (Payments)       │
+│      Supabase       │       │      Clerk          │       │       Paddle        │
+│    (PostgreSQL)     │       │  (Authentication)   │       │ (Merchant of Record)│
 │                     │       │                     │       │                     │
 │ Region: us-east-1   │       │ • SSO/OAuth         │       │ • Subscriptions     │
-│                     │       │ • MFA               │       │ • Credit packs      │
-│ Tables:             │       │ • Session mgmt      │       │ • Invoicing         │
-│ • users             │       │ • User metadata     │       │ • Webhooks          │
-│ • projects          │       │                     │       │                     │
+│                     │       │ • MFA               │       │ • One-time packs    │
+│ Tables:             │       │ • Session mgmt      │       │ • Global tax calc   │
+│ • users             │       │ • User metadata     │       │ • Customer portal   │
+│ • projects          │       │                     │       │ • Webhooks          │
 │ • scenes            │       └─────────────────────┘       └─────────────────────┘
 │ • characters        │
 │ • credits           │
@@ -740,7 +740,7 @@ interface ActiveProjectCardProps {
 │ • Supabase Row Level Security (RLS)                                             │
 │ • Encrypted environment variables                                               │
 │ • BYOK (Bring Your Own Keys) for AI services                                    │
-│ • PCI DSS compliance via Stripe                                                 │
+│ • PCI DSS compliance via Paddle (Merchant of Record)                            │
 └─────────────────────────────────────────────────────────────────────────────────┘
                                          │
                                          ▼
@@ -754,13 +754,154 @@ interface ActiveProjectCardProps {
 │  ├── GOOGLE_VERTEX_API_KEY         → AI generation                             │
 │  ├── ELEVENLABS_API_KEY            → Voice synthesis                           │
 │  ├── SHOTSTACK_API_KEY             → Video rendering                           │
-│  ├── STRIPE_SECRET_KEY             → Payments                                  │
+│  ├── PADDLE_API_KEY                → Payments (Paddle)                         │
+│  ├── PADDLE_SELLER_ID              → Paddle Seller ID                          │
+│  ├── PADDLE_WEBHOOK_SECRET         → Webhook signature verification            │
 │  └── BLOB_READ_WRITE_TOKEN         → Media storage                             │
 │                                                                                 │
 │  User BYOK Keys (Encrypted in Supabase):                                        │
 │  ├── user.google_api_key           → Personal Vertex AI                        │
 │  ├── user.elevenlabs_key           → Personal ElevenLabs                       │
 │  └── user.openai_key               → Personal OpenAI (optional)                │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Paddle Payment Integration
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           PADDLE CONFIGURATION                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ SELLER ACCOUNT & PRODUCTS                                                       │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  Seller: SceneFlow AI                                                           │
+│  Sandbox URL: sandbox-vendors.paddle.com                                        │
+│  Production URL: vendors.paddle.com                                             │
+│                                                                                 │
+│  Products:                                                                      │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │ Coffee Break     │ One-time  │ $5      │ 1,000 credits  │ Never expire │   │
+│  │ Starter          │ Monthly   │ $29     │ 3,000/mo       │ Rollover 30d │   │
+│  │ Starter (Annual) │ Yearly    │ $288    │ 3,000/mo       │ Rollover 30d │   │
+│  │ Pro              │ Monthly   │ $99     │ 12,000/mo      │ Rollover 30d │   │
+│  │ Pro (Annual)     │ Yearly    │ $984    │ 12,000/mo      │ Rollover 30d │   │
+│  │ Studio           │ Monthly   │ $299    │ 40,000/mo      │ Rollover 30d │   │
+│  │ Studio (Annual)  │ Yearly    │ $2,988  │ 40,000/mo      │ Rollover 30d │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                 │
+│  Credit Packs (Add-ons):                                                        │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │ Basic Pack       │ $20       │ 2,000 credits    │ Never expire         │   │
+│  │ Value Pack       │ $50       │ 5,250 credits    │ 5% bonus             │   │
+│  │ Pro Pack         │ $100      │ 11,000 credits   │ 10% bonus            │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ WEBHOOK EVENTS                                                                  │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  Endpoint: /api/webhooks/paddle                                                 │
+│                                                                                 │
+│  Events to handle:                                                              │
+│  ├── transaction.completed                                                      │
+│  │   └── Grant one-time credits (Coffee Break, Credit Packs)                   │
+│  │                                                                              │
+│  ├── subscription.created                                                       │
+│  │   └── Initialize subscription, grant initial monthly credits                │
+│  │                                                                              │
+│  ├── subscription.updated                                                       │
+│  │   └── Handle plan upgrades/downgrades, adjust credits                       │
+│  │                                                                              │
+│  ├── subscription.canceled                                                      │
+│  │   └── Mark subscription as cancelled, set end date                          │
+│  │                                                                              │
+│  ├── subscription.activated                                                     │
+│  │   └── Renew monthly credits, extend subscription                            │
+│  │                                                                              │
+│  └── transaction.payment_failed                                                 │
+│      └── Send notification, mark at-risk                                        │
+│                                                                                 │
+│  Signature Verification:                                                        │
+│  └── Paddle Webhook Signature using PADDLE_WEBHOOK_SECRET                       │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ CHECKOUT FLOW (Paddle.js Overlay)                                               │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  1. User clicks "Subscribe" or "Buy Credits"                                    │
+│     │                                                                           │
+│  2. Frontend initializes Paddle.js with client-side token                       │
+│     ├── Paddle.Initialize({ token: PADDLE_CLIENT_TOKEN })                       │
+│     └── Pass product/price IDs and customer email                               │
+│     │                                                                           │
+│  3. Open Paddle Checkout overlay (inline or popup)                              │
+│     ├── Paddle.Checkout.open({ items: [...] })                                  │
+│     ├── Custom data: { userId, tierName } via passthrough                       │
+│     └── Success/Cancel callbacks configured                                     │
+│     │                                                                           │
+│  4. On success, webhook fires → credits provisioned                             │
+│     │                                                                           │
+│  5. User shown success state in-app (no redirect needed)                        │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ CUSTOMER PORTAL                                                                 │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  Paddle provides hosted Customer Portal (Paddle Retain) for:                    │
+│  ├── View/update payment methods                                                │
+│  ├── View billing history & download invoices                                   │
+│  ├── Manage subscription (upgrade/downgrade/cancel)                             │
+│  └── Pause subscription (configurable)                                          │
+│                                                                                 │
+│  Integration:                                                                   │
+│  └── Paddle.js updatePaymentMethod() or updateSubscription()                   │
+│  └── GET /api/subscription/portal → Returns Paddle Portal URL                  │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ MERCHANT OF RECORD BENEFITS                                                     │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  Paddle as MoR handles:                                                         │
+│  ├── Global tax calculation & remittance (VAT, GST, Sales Tax)                 │
+│  ├── Invoice generation with proper tax IDs                                    │
+│  ├── Payment disputes & chargebacks                                            │
+│  ├── Compliance with EU/UK/global regulations                                  │
+│  ├── 30+ payment methods (cards, PayPal, Apple Pay, wire transfer)             │
+│  └── Paddle Retain for churn prevention & dunning                              │
+│                                                                                 │
+│  Pricing: 5% + $0.50 per transaction (volume discounts available)               │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ PADDLE SDK INTEGRATION                                                          │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  NPM Package: @paddle/paddle-js                                                 │
+│                                                                                 │
+│  Frontend Setup:                                                                │
+│  ├── import { initializePaddle, Paddle } from '@paddle/paddle-js'              │
+│  ├── initializePaddle({ environment: 'production', token: 'xxx' })             │
+│  └── Use Paddle.Checkout.open() for purchases                                  │
+│                                                                                 │
+│  Backend Setup:                                                                 │
+│  ├── npm install @paddle/paddle-node-sdk                                       │
+│  ├── Verify webhook signatures with Paddle SDK                                 │
+│  └── Use Paddle API for subscription management                                │
 │                                                                                 │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
