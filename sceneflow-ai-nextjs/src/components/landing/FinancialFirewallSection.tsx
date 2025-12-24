@@ -157,8 +157,8 @@ export default function FinancialFirewallSection() {
           <div className="space-y-8">
             <FeatureCard
               icon={Sparkles}
-              title="Logic Layer (Cheap)"
-              description="Gemini 3.0 Pro generates scripts and scene descriptions at minimal cost. Iterate on your story infinitely without touching your video budget."
+              title="Script Review & Analysis (Cheap)"
+              description="Get Director & Audience scoring with detailed breakdowns. AI analyzes strengths, areas for improvement, and generates revision recommendations—iterate until perfect before spending on generation."
               delay={0.2}
             />
             <FeatureCard

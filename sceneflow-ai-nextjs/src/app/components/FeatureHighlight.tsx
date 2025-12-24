@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Shield, Globe, Film, Mic2, Video, Image, Play, ArrowRight, Volume2, VolumeX, Brain, Library, Languages } from 'lucide-react'
+import { Users, Shield, Globe, Film, Mic2, Video, Image, Play, ArrowRight, Volume2, VolumeX, Brain, Library, Languages, ClipboardCheck } from 'lucide-react'
 import { FeatureDetailModal } from './FeatureDetailModal'
 import { Button } from '@/components/ui/Button'
 
@@ -20,27 +20,52 @@ export function FeatureHighlight() {
 
   const features = [
     {
-      icon: Brain,
-      title: 'AI Production Assistant',
-      description: 'Director & Audience scoring with smart recommendations. Voice-guided editing and workflow assistance throughout production.',
-      detailedDescription: 'Your AI co-pilot for film production. Get real-time Director scores (technical craft) and Audience scores (emotional engagement) with actionable recommendations. Edit with voice commands, receive workflow guidance, and let AI suggest improvements while maintaining story and character consistency.',
+      icon: ClipboardCheck,
+      title: 'Script Review & Analysis',
+      description: 'Perfect your screenplay before generation. Dual Director & Audience scoring with category breakdowns, AI analysis, and one-click revision recommendations.',
+      detailedDescription: 'The most cost-effective step in your production workflow. Get comprehensive dual-perspective scoring: Director (craft & execution) and Audience (entertainment & emotional impact). Detailed category breakdowns cover Entertainment Value, Emotional Impact, Clarity, Character Relatability, and Satisfying Payoff. AI analysis with audio playback highlights strengths and improvement areas with actionable recommendations you can apply with one click.',
       benefits: [
-        'Director & Audience perspective scoring',
-        'AI-powered revision recommendations',
-        'Voice instruction editing',
-        'Story & character consistency checks',
-        'Workflow guidance at every step'
+        'Director & Audience dual scoring (0-100)',
+        'Category breakdown with visual bars',
+        'AI analysis with audio playback',
+        'Strengths & Areas for Improvement',
+        'One-click revision recommendations'
       ],
       useCases: [
-        'Scoring: Get instant feedback on scene pacing and emotional impact',
-        'Revisions: AI suggests improvements while preserving your vision',
-        'Voice Editing: Speak your changes naturally—AI executes them'
+        'Review: Get instant feedback on pacing, emotion, and clarity',
+        'Analyze: Understand what works and what needs polish',
+        'Revise: Apply AI recommendations with preview before commit'
+      ],
+      screenshotPlaceholder: {
+        gradient: 'from-emerald-500 to-emerald-600',
+        icon: ClipboardCheck
+      },
+      ctaText: 'Try Script Review',
+      ctaLink: '/?signup=1',
+      color: 'from-emerald-500 to-emerald-600'
+    },
+    {
+      icon: Brain,
+      title: 'AI-Powered Script Editor',
+      description: 'Edit scripts with voice or text. Common optimizations, custom instructions, and Review Insights from Director & Audience analysis.',
+      detailedDescription: 'Flow Assist transforms script editing with AI-powered optimization. Choose from common improvements (pacing, narrative arc, dialogue polish, visual cohesion) or enter custom instructions via text or voice. The Review Insights tab surfaces high-priority recommendations from Director and Audience reviews—select the ones you want and preview changes before applying.',
+      benefits: [
+        'Common optimization presets',
+        'Custom text & voice instructions',
+        'Review-Powered Insights integration',
+        'High/Medium priority recommendations',
+        'Preview changes before applying'
+      ],
+      useCases: [
+        'Quick Polish: Apply common optimizations in one click',
+        'Voice Editing: Speak your changes naturally—AI executes them',
+        'Smart Revisions: Apply Director/Audience recommendations selectively'
       ],
       screenshotPlaceholder: {
         gradient: 'from-rose-500 to-rose-600',
         icon: Brain
       },
-      ctaText: 'Try AI Assistant',
+      ctaText: 'Try AI Editor',
       ctaLink: '/?signup=1',
       color: 'from-rose-500 to-rose-600'
     },
