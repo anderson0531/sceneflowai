@@ -12,13 +12,13 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-interface Phase {
+export interface Phase {
   id: string
   label: string
   icon: React.ComponentType<{ className?: string }>
 }
 
-const phases: Phase[] = [
+const defaultPhases: Phase[] = [
   { id: 'concept', label: 'Concept', icon: Lightbulb },
   { id: 'outline', label: 'Outline', icon: List },
   { id: 'characters', label: 'Characters', icon: Users },
@@ -26,26 +26,39 @@ const phases: Phase[] = [
   { id: 'export', label: 'Export', icon: Download },
 ]
 
-interface PhaseNavigatorProps {
-  activePhase: string
-  completedPhases: string[]
+export interface PhaseNavigatorProps {
+  /** Custom phases to display (overrides default phases) */
+  phases?: Phase[]
+  /** Current active phase ID (alias for activePhase) */
+  currentPhase?: string
+  /** Current active phase ID */
+  activePhase?: string
+  /** Array of completed phase IDs */
+  completedPhases?: string[]
+  /** Callback when phase changes */
   onPhaseChange: (phaseId: string) => void
+  /** Additional CSS classes */
   className?: string
 }
 
-export default function PhaseNavigator({
+export function PhaseNavigator({
+  phases = defaultPhases,
+  currentPhase,
   activePhase,
-  completedPhases,
+  completedPhases = [],
   onPhaseChange,
   className,
 }: PhaseNavigatorProps) {
+  // Support both currentPhase and activePhase props
+  const active = currentPhase ?? activePhase ?? phases[0]?.id ?? ''
+  
   return (
     <div className={cn(
       "flex items-center gap-1 px-4 py-2 border-b border-white/10 bg-slate-900/50 overflow-x-auto scrollbar-hide",
       className
     )}>
       {phases.map((phase, index) => {
-        const isActive = activePhase === phase.id
+        const isActive = active === phase.id
         const isComplete = completedPhases.includes(phase.id)
         const Icon = phase.icon
 
@@ -79,5 +92,7 @@ export default function PhaseNavigator({
 }
 
 // Export phases for external use
-export { phases }
-export type { Phase, PhaseNavigatorProps }
+export { defaultPhases as phases }
+
+// Default export for backwards compatibility
+export default PhaseNavigator
