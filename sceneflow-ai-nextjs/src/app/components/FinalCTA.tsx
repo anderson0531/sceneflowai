@@ -174,7 +174,7 @@ export function FinalCTA() {
             className="mt-12 p-6 bg-gradient-to-r from-gray-800/50 to-gray-800/30 rounded-xl border border-gray-700/50 max-w-3xl mx-auto"
           >
             <p className="text-gray-300 text-sm leading-relaxed">
-              <strong className="text-white">Why $5?</strong> SceneFlow uses cutting-edge AI models like Gemini 2.5 Pro, Veo 3.1, and ElevenLabs which require significant computational resources. This small investment ensures you get reliable, high-speed access to the same professional tools our subscribers use—at the cost of a coffee.
+              <strong className="text-white">Why $5?</strong> SceneFlow uses cutting-edge AI models like Gemini 3.0 Pro, Veo 3.1, and ElevenLabs which require significant computational resources. This small investment ensures you get reliable, high-speed access to the same professional tools our subscribers use—at the cost of a coffee.
             </p>
           </motion.div>
         </motion.div>

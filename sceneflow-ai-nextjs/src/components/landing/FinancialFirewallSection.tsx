@@ -158,7 +158,7 @@ export default function FinancialFirewallSection() {
             <FeatureCard
               icon={Sparkles}
               title="Logic Layer (Cheap)"
-              description="Gemini 2.5 Pro generates scripts and scene descriptions at minimal cost. Iterate on your story infinitely without touching your video budget."
+              description="Gemini 3.0 Pro generates scripts and scene descriptions at minimal cost. Iterate on your story infinitely without touching your video budget."
               delay={0.2}
             />
             <FeatureCard

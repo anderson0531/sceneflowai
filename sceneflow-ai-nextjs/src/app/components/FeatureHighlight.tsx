@@ -97,8 +97,8 @@ export function FeatureHighlight() {
     {
       icon: Film,
       title: 'AI Screenplay Generation',
-      description: 'Transform ideas into professional scripts with Gemini 2.5 Pro. Complete with scene breakdowns, dialogue, and direction.',
-      detailedDescription: 'Our AI Script Generator uses Google Gemini 2.5 Pro to create professional screenplays from your film treatment. Generate complete scripts with professional formatting, natural dialogue, scene descriptions, and camera directions.',
+      description: 'Transform ideas into professional scripts with Gemini 3.0 Pro. Complete with scene breakdowns, dialogue, and direction.',
+      detailedDescription: 'Our AI Script Generator uses Google Gemini 3.0 Pro to create professional screenplays from your film treatment. Generate complete scripts with professional formatting, natural dialogue, scene descriptions, and camera directions.',
       benefits: [
         'Professional screenplay formatting',
         'Natural character dialogue',

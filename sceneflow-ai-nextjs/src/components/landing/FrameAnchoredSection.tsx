@@ -169,8 +169,8 @@ const GoogleCloudIllustration = () => {
         </motion.div>
 
         {/* Main Architecture Components */}
-        <div className="grid grid-cols-3 gap-6">
-          {/* The Brain - Gemini 2.5 Pro */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* The Brain - Gemini 3.0 Pro */}
           <motion.div
             className="relative"
             initial={{ opacity: 0, y: 20 }}
@@ -184,7 +184,7 @@ const GoogleCloudIllustration = () => {
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
               
-              <h4 className="text-white font-bold text-base md:text-lg lg:text-xl mb-1">Gemini 2.5 Pro</h4>
+              <h4 className="text-white font-bold text-base md:text-lg lg:text-xl mb-1">Gemini 3.0 Pro</h4>
               <p className="text-blue-300 text-xs md:text-sm mb-3">The Brain</p>
               <p className="text-gray-400 text-xs md:text-sm">Script & Logic Generation</p>
               
@@ -380,7 +380,7 @@ export default function FrameAnchoredSection() {
               <Sparkles className="w-6 h-6 md:w-7 md:h-7 text-white" />
             </div>
             <h4 className="text-white font-semibold text-base md:text-lg mb-2">The Brain</h4>
-            <p className="text-gray-400 text-sm md:text-base">Gemini 2.5 Pro handles all script generation and creative logic.</p>
+            <p className="text-gray-400 text-sm md:text-base">Gemini 3.0 Pro handles all script generation and creative logic.</p>
           </div>
 
           <div className="bg-slate-800/50 backdrop-blur p-6 rounded-xl border border-slate-700">
