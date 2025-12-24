@@ -5,25 +5,24 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   AlertTriangle, 
   Shield, 
-  Target, 
-  Layers, 
+  Sparkles, 
+  Cpu, 
+  Zap,
   Film, 
+  Quote,
   DollarSign, 
-  HelpCircle,
-  Cpu,
-  Users,
-  Sparkles
+  HelpCircle
 } from 'lucide-react'
 
+// Updated to match actual section IDs in landing-page.tsx
 const sections = [
   { id: 'problem', label: 'Problem', icon: AlertTriangle },
+  { id: 'how-it-works', label: 'How It Works', icon: Sparkles },
   { id: 'solution', label: 'Solution', icon: Shield },
-  { id: 'precision', label: 'Precision', icon: Target },
-  { id: 'platform', label: 'Platform', icon: Layers },
-  { id: 'how-it-works', label: 'Workflow', icon: Sparkles },
   { id: 'architecture', label: 'Tech', icon: Cpu },
+  { id: 'automation', label: 'Automation', icon: Zap },
   { id: 'features', label: 'Features', icon: Film },
-  { id: 'creators', label: 'Creators', icon: Users },
+  { id: 'testimonials', label: 'Stories', icon: Quote },
   { id: 'pricing', label: 'Pricing', icon: DollarSign },
   { id: 'faq', label: 'FAQ', icon: HelpCircle },
 ]

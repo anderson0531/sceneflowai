@@ -1,6 +1,6 @@
 'use client'
 
-// Landing page with dedicated Header component - Optimized structure (12 sections)
+// Landing page with dedicated Header component - Optimized structure (13 sections)
 import dynamic from 'next/dynamic'
 import { Header } from './components/Header'
 import { HeroSection } from './components/HeroSection'
@@ -12,6 +12,7 @@ const FinancialFirewallSection = dynamic(() => import('@/components/landing/Fina
 const FrameAnchoredSection = dynamic(() => import('@/components/landing/FrameAnchoredSection'), { ssr: false })
 const AutomationSection = dynamic(() => import('@/components/landing/AutomationSection'), { ssr: false })
 const FeatureHighlight = dynamic(() => import('./components/FeatureHighlight').then(m => m.FeatureHighlight), { ssr: false })
+const TestimonialsSection = dynamic(() => import('@/components/landing/TestimonialsSection'), { ssr: false })
 const UseCasesSection = dynamic(() => import('@/components/landing/UseCasesSection'), { ssr: false })
 const Pricing = dynamic(() => import('./components/Pricing').then(m => m.Pricing), { ssr: false })
 const FAQ = dynamic(() => import('./components/FAQ').then(m => m.FAQ), { ssr: false })
@@ -42,15 +43,17 @@ export default function LandingPage() {
       <AutomationSection />
       {/* 8. Features: All-in-one platform capabilities */}
       <FeatureHighlight />
-      {/* 9. Proof: Real use cases with video demos by persona */}
+      {/* 9. Testimonials: Creator stories and social proof */}
+      <TestimonialsSection />
+      {/* 10. Proof: Real use cases with video demos by persona */}
       <UseCasesSection />
-      {/* 10. Pricing: Clear value tiers */}
+      {/* 11. Pricing: Clear value tiers */}
       <Pricing />
-      {/* 11. FAQ: Objection handling */}
+      {/* 12. FAQ: Objection handling */}
       <FAQ />
-      {/* 12. Final CTA: Conversion */}
+      {/* 13. Final CTA: Conversion */}
       <FinalCTA />
-      {/* 13. Footer: Navigation */}
+      {/* 14. Footer: Navigation */}
       <Footer />
     </div>
   )
