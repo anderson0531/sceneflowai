@@ -99,9 +99,8 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.7 }}
           >
-            The AI-powered virtual production studio that transforms your creative vision into 
-            professional films. Generate scripts, create consistent characters, produce stunning 
-            videos with voice acting—all in one platform.
+            Go from napkin idea to <span className="text-white font-semibold">festival-ready film in 48 hours</span>—without 
+            the $15,000 production budget. One platform. Zero tool-juggling. Complete creative control.
           </motion.p>
 
           {/* Key Capabilities Pills */}

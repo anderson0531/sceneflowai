@@ -203,9 +203,16 @@ export default function SlotMachineSection() {
                 <p className="text-amber-400 font-semibold text-base md:text-lg lg:text-xl mb-2">
                   💡 What if you could iterate infinitely before spending on video?
                 </p>
-                <p className="text-gray-400 text-sm md:text-base">
+                <p className="text-gray-400 text-sm md:text-base mb-4">
                   SceneFlow AI decouples creative direction from expensive rendering—so you perfect your vision first.
                 </p>
+                <a 
+                  href="#how-it-works"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-semibold rounded-lg shadow-lg shadow-amber-500/25 transition-all duration-300"
+                >
+                  See How It Works
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </a>
               </div>
             </motion.div>
           </div>

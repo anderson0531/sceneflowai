@@ -125,6 +125,7 @@ export function Pricing() {
         'Dedicated support'
       ],
       popular: true,
+      popularBadge: 'Most Popular',
       color: 'from-blue-500 to-purple-600'
     },
     {

@@ -16,6 +16,7 @@ const UseCasesSection = dynamic(() => import('@/components/landing/UseCasesSecti
 const Pricing = dynamic(() => import('./components/Pricing').then(m => m.Pricing), { ssr: false })
 const FAQ = dynamic(() => import('./components/FAQ').then(m => m.FAQ), { ssr: false })
 const FloatingNav = dynamic(() => import('@/components/landing/FloatingNav'), { ssr: false })
+const FloatingCTA = dynamic(() => import('@/components/landing/FloatingCTA'), { ssr: false })
 import { FinalCTA } from './components/FinalCTA'
 import { Footer } from './components/Footer'
 
@@ -24,6 +25,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-gray-950 text-white">
       <Header />
       <FloatingNav />
+      <FloatingCTA />
       {/* 1. Hero: Value prop + Social proof badges */}
       <HeroSection />
       {/* 2. Trust: Powered by Google Cloud credibility */}
