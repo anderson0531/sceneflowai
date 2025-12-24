@@ -63,6 +63,27 @@ export function FAQ() {
       answer:
         'Not at all! SceneFlow AI handles all the technical complexity. If you can describe your idea in words, you can create professional videos. Our AI manages script formatting, visual consistency, voice synthesis, and video assembly automatically. The interface is designed for creators, not engineers.',
     },
+    // Billing & Credits FAQs
+    {
+      question: 'What is your refund policy?',
+      answer:
+        'We offer a 14-day money-back guarantee on all subscription plans. If you\'re not satisfied with SceneFlow AI, contact our support team within 14 days of your purchase for a full refund. Credit packs are non-refundable once credits have been used, but unused credit packs can be refunded within 7 days of purchase.',
+    },
+    {
+      question: 'Can I cancel my subscription anytime?',
+      answer:
+        'Absolutely! You can cancel your subscription at any time from your account settings. When you cancel, you\'ll retain access to all features until the end of your current billing period. Your projects and generated content remain accessible even after cancellation.',
+    },
+    {
+      question: 'Do unused credits roll over to the next month?',
+      answer:
+        'Yes! All unused credits from your monthly allocation roll over for up to 3 months. This gives you flexibility to save credits for larger projects. Bonus credits from promotions typically expire after 30 days, but your core subscription credits are protected.',
+    },
+    {
+      question: 'What happens if I run out of credits?',
+      answer:
+        'No worries—your projects are never at risk. If you run out of credits mid-project, you can purchase additional credit packs instantly or upgrade your plan. We\'ll notify you when you\'re running low (at 20% remaining) so you can plan ahead. Your work-in-progress is always saved.',
+    },
   ]
 
   return (

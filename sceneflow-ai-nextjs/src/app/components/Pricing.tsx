@@ -234,7 +234,7 @@ export function Pricing() {
               <div className="text-3xl sm:text-4xl font-bold text-emerald-500 mb-1">$99 <span className="text-lg font-normal">(Pro Plan)</span></div>
               <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">
                 <Clock className="w-4 h-4" />
-                <span>48 hours</span>
+                <span>4 hours</span>
               </div>
               <div className="mt-3 text-xs text-gray-500">
                 Full production, AI actors, voice, music

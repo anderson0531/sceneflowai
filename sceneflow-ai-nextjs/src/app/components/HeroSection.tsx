@@ -99,7 +99,7 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.7 }}
           >
-            Go from napkin idea to <span className="text-white font-semibold">festival-ready film in 48 hours</span>—without 
+            Go from napkin idea to <span className="text-white font-semibold">festival-ready film in 4 hours</span>—without 
             the $15,000 production budget. One platform. Zero tool-juggling. Complete creative control.
           </motion.p>
 
