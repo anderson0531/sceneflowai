@@ -10,6 +10,7 @@ const SlotMachineSection = dynamic(() => import('@/components/landing/SlotMachin
 const HowItWorks = dynamic(() => import('./components/HowItWorks').then(m => m.HowItWorks), { ssr: false })
 const FinancialFirewallSection = dynamic(() => import('@/components/landing/FinancialFirewallSection'), { ssr: false })
 const FrameAnchoredSection = dynamic(() => import('@/components/landing/FrameAnchoredSection'), { ssr: false })
+const AutomationSection = dynamic(() => import('@/components/landing/AutomationSection'), { ssr: false })
 const FeatureHighlight = dynamic(() => import('./components/FeatureHighlight').then(m => m.FeatureHighlight), { ssr: false })
 const UseCasesSection = dynamic(() => import('@/components/landing/UseCasesSection'), { ssr: false })
 const Pricing = dynamic(() => import('./components/Pricing').then(m => m.Pricing), { ssr: false })
@@ -35,17 +36,19 @@ export default function LandingPage() {
       <FinancialFirewallSection />
       {/* 6. Technical: Frame-anchored architecture + precision features */}
       <FrameAnchoredSection />
-      {/* 7. Features: All-in-one platform capabilities */}
+      {/* 7. Automation: One-click generation for complete production workflow */}
+      <AutomationSection />
+      {/* 8. Features: All-in-one platform capabilities */}
       <FeatureHighlight />
-      {/* 8. Proof: Real use cases with video demos by persona */}
+      {/* 9. Proof: Real use cases with video demos by persona */}
       <UseCasesSection />
-      {/* 9. Pricing: Clear value tiers */}
+      {/* 10. Pricing: Clear value tiers */}
       <Pricing />
-      {/* 10. FAQ: Objection handling */}
+      {/* 11. FAQ: Objection handling */}
       <FAQ />
-      {/* 11. Final CTA: Conversion */}
+      {/* 12. Final CTA: Conversion */}
       <FinalCTA />
-      {/* 12. Footer: Navigation */}
+      {/* 13. Footer: Navigation */}
       <Footer />
     </div>
   )
