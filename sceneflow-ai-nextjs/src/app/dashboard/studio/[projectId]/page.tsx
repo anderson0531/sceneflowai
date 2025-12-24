@@ -18,7 +18,6 @@ import { cn } from "@/lib/utils";
 import { BlueprintComposer } from '@/components/blueprint/BlueprintComposer'
 import { TreatmentCard } from '@/components/blueprint/TreatmentCard'
 // Bottom ActionBar removed (duplicate of composer actions)
-import { ContextBar } from '@/components/layout/ContextBar'
 import TopProgressBar from '@/components/ui/TopProgressBar'
 import GeneratingOverlay from '@/components/ui/GeneratingOverlay'
 
@@ -407,11 +406,10 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
       <div className="flex-1 flex flex-col min-w-0">
         <main className={cn("flex-1 overflow-hidden", "mr-0") }>
           <TopProgressBar visible={isGen} progress={genProgress} />
-          <ContextBar
-            title="The Blueprint"
-            titleVariant="page"
-            emphasis
-            secondaryActions={
+          <div className="flex-1 overflow-auto p-3 sm:p-6">
+            {/* Page Header - inline like Virtual Production */}
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-2xl font-bold text-white">The Blueprint</h1>
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -421,9 +419,7 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
                 <Save className="w-4 h-4" />
                 <span className="hidden sm:inline">Save</span>
               </Button>
-            }
-          />
-          <div className="flex-1 overflow-auto p-3 sm:p-6 pt-20 md:pt-24" style={{ scrollMarginTop: 'calc(var(--app-bar-h) + var(--context-bar-h))' }}>
+            </div>
             {/* Collapsible Input Section */}
             <div className="space-y-4">
               {/* Compact header when collapsed */}

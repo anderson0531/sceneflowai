@@ -124,6 +124,9 @@ export function GlobalSidebar({ children }: { children?: React.ReactNode }) {
   // Hide sidebar on Production (vision) page - it has its own integrated navigation
   const isProductionPage = pathname?.includes('/dashboard/workflow/vision/')
   
+  // Check if on Blueprint page (either ideation or studio path)
+  const isBlueprintPage = pathname?.includes('/dashboard/workflow/ideation') || pathname?.includes('/dashboard/studio/')
+  
   type WorkflowDisplayItem = { key: string; label: string; status: StepStatus }
   type NavigableItem = { key: string; label: string; href: string; requires?: number[]; byok?: boolean }
 
@@ -202,7 +205,7 @@ export function GlobalSidebar({ children }: { children?: React.ReactNode }) {
           )}
 
           {/* Progress Section - Blueprint specific */}
-          {pathname?.includes('/dashboard/workflow/ideation') && (
+          {isBlueprintPage && (
             <section className="border-t border-gray-200 dark:border-gray-700 pt-4">
               <button 
                 onClick={() => toggleSection('progress')}
@@ -247,7 +250,7 @@ export function GlobalSidebar({ children }: { children?: React.ReactNode }) {
           )}
 
           {/* Quick Actions Section - Blueprint specific */}
-          {pathname?.includes('/dashboard/workflow/ideation') && (
+          {isBlueprintPage && (
             <section className="border-t border-gray-200 dark:border-gray-700 pt-4">
               <button 
                 onClick={() => toggleSection('quickActions')}
