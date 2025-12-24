@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { GlobalSidebar } from '@/components/layout/GlobalSidebar';
+import { isPublicRoute } from '@/constants/publicRoutes';
 
 interface ConditionalLayoutProps {
   children: React.ReactNode;
@@ -10,12 +11,8 @@ interface ConditionalLayoutProps {
 export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
   
-  // Check if this is a collaboration page (legacy and new) or landing page
-  const isCollaborationPage = pathname.startsWith('/collaborate/') || pathname.startsWith('/c/');
-  const isLandingPage = pathname === '/';
-  
-  if (isCollaborationPage || isLandingPage) {
-    // For collaboration pages and landing page, render without sidebar
+  // Render without sidebar for public routes (landing, legal, collaboration pages)
+  if (isPublicRoute(pathname)) {
     return <>{children}</>;
   }
   

@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/Button'
 import { AuthModal } from '../../components/auth/AuthModal'
 import { Breadcrumbs } from '../../components/layout/Breadcrumbs'
 import { ThemeToggle } from './ThemeToggle'
+import { isPublicRoute } from '@/constants/publicRoutes'
 
 declare global {
   namespace JSX {
@@ -27,8 +28,8 @@ export function GlobalHeader() {
 
   useEffect(() => {}, [status])
 
-  // Hide global header on landing page and public collaboration pages for a distraction-free UX
-  if (pathname === '/' || pathname?.startsWith('/c/')) {
+  // Hide global header on public routes (landing, legal, collaboration pages)
+  if (isPublicRoute(pathname)) {
     return null
   }
 
