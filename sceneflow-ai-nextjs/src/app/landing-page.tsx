@@ -18,15 +18,17 @@ const Pricing = dynamic(() => import('./components/Pricing').then(m => m.Pricing
 const FAQ = dynamic(() => import('./components/FAQ').then(m => m.FAQ), { ssr: false })
 const FloatingNav = dynamic(() => import('@/components/landing/FloatingNav'), { ssr: false })
 const FloatingCTA = dynamic(() => import('@/components/landing/FloatingCTA'), { ssr: false })
+const ExitIntentPopup = dynamic(() => import('@/components/landing/ExitIntentPopup'), { ssr: false })
 import { FinalCTA } from './components/FinalCTA'
 import { Footer } from './components/Footer'
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div id="main-content" className="min-h-screen bg-gray-950 text-white">
       <Header />
       <FloatingNav />
       <FloatingCTA />
+      <ExitIntentPopup />
       {/* 1. Hero: Value prop + Social proof badges */}
       <HeroSection />
       {/* 2. Trust: Powered by Google Cloud credibility */}

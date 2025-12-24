@@ -483,6 +483,128 @@ export function Pricing() {
                         ))}
           </div>
 
+        {/* Feature Comparison Table */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+          className="mt-20"
+        >
+          <div className="bg-gradient-to-br from-slate-800/80 to-slate-800/40 rounded-2xl p-6 sm:p-8 border border-slate-700/50">
+            <div className="text-center mb-8">
+              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-2">Compare Plans at a Glance</h3>
+              <p className="text-gray-400 text-sm">All the features you need to bring your vision to life</p>
+            </div>
+            
+            {/* Desktop Table */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-700">
+                    <th className="text-left py-4 px-4 text-gray-400 font-medium">Feature</th>
+                    <th className="text-center py-4 px-4 text-amber-400 font-medium">Coffee Break</th>
+                    <th className="text-center py-4 px-4 text-gray-300 font-medium">Starter</th>
+                    <th className="text-center py-4 px-4 text-blue-400 font-medium">Pro <span className="text-xs bg-blue-500/20 px-2 py-0.5 rounded-full">Popular</span></th>
+                    <th className="text-center py-4 px-4 text-purple-400 font-medium">Studio</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-700/50">
+                  <tr className="hover:bg-slate-700/20 transition-colors">
+                    <td className="py-4 px-4 text-gray-300">Credits</td>
+                    <td className="py-4 px-4 text-center text-white">1,000 (one-time)</td>
+                    <td className="py-4 px-4 text-center text-white">3,000/mo</td>
+                    <td className="py-4 px-4 text-center text-white font-medium">12,000/mo</td>
+                    <td className="py-4 px-4 text-center text-white">40,000/mo</td>
+                  </tr>
+                  <tr className="hover:bg-slate-700/20 transition-colors">
+                    <td className="py-4 px-4 text-gray-300">Storage</td>
+                    <td className="py-4 px-4 text-center text-white">10 GB</td>
+                    <td className="py-4 px-4 text-center text-white">100 GB</td>
+                    <td className="py-4 px-4 text-center text-white font-medium">500 GB</td>
+                    <td className="py-4 px-4 text-center text-white">2 TB</td>
+                  </tr>
+                  <tr className="hover:bg-slate-700/20 transition-colors">
+                    <td className="py-4 px-4 text-gray-300">Max Resolution</td>
+                    <td className="py-4 px-4 text-center text-white">720p</td>
+                    <td className="py-4 px-4 text-center text-white">1080p</td>
+                    <td className="py-4 px-4 text-center text-white font-medium">4K</td>
+                    <td className="py-4 px-4 text-center text-white">4K+</td>
+                  </tr>
+                  <tr className="hover:bg-slate-700/20 transition-colors">
+                    <td className="py-4 px-4 text-gray-300">AI Models</td>
+                    <td className="py-4 px-4 text-center text-white">Standard</td>
+                    <td className="py-4 px-4 text-center text-white">Standard</td>
+                    <td className="py-4 px-4 text-center text-white font-medium">Premium</td>
+                    <td className="py-4 px-4 text-center text-white">Premium + Beta</td>
+                  </tr>
+                  <tr className="hover:bg-slate-700/20 transition-colors">
+                    <td className="py-4 px-4 text-gray-300">BYOK Access</td>
+                    <td className="py-4 px-4 text-center"><X className="w-5 h-5 text-gray-500 mx-auto" /></td>
+                    <td className="py-4 px-4 text-center"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="py-4 px-4 text-center"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="py-4 px-4 text-center"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                  </tr>
+                  <tr className="hover:bg-slate-700/20 transition-colors">
+                    <td className="py-4 px-4 text-gray-300">Collaboration Seats</td>
+                    <td className="py-4 px-4 text-center text-white">—</td>
+                    <td className="py-4 px-4 text-center text-white">1</td>
+                    <td className="py-4 px-4 text-center text-white font-medium">3</td>
+                    <td className="py-4 px-4 text-center text-white">10</td>
+                  </tr>
+                  <tr className="hover:bg-slate-700/20 transition-colors">
+                    <td className="py-4 px-4 text-gray-300">Processing Priority</td>
+                    <td className="py-4 px-4 text-center text-white">Standard</td>
+                    <td className="py-4 px-4 text-center text-white">Standard</td>
+                    <td className="py-4 px-4 text-center text-white font-medium">Priority</td>
+                    <td className="py-4 px-4 text-center text-white">High Priority</td>
+                  </tr>
+                  <tr className="hover:bg-slate-700/20 transition-colors">
+                    <td className="py-4 px-4 text-gray-300">Support</td>
+                    <td className="py-4 px-4 text-center text-white">Email</td>
+                    <td className="py-4 px-4 text-center text-white">Email</td>
+                    <td className="py-4 px-4 text-center text-white font-medium">Priority</td>
+                    <td className="py-4 px-4 text-center text-white">Dedicated Manager</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Mobile Cards */}
+            <div className="lg:hidden space-y-4">
+              {[
+                { feature: 'Credits', values: ['1,000 (one-time)', '3,000/mo', '12,000/mo', '40,000/mo'] },
+                { feature: 'Storage', values: ['10 GB', '100 GB', '500 GB', '2 TB'] },
+                { feature: 'Max Resolution', values: ['720p', '1080p', '4K', '4K+'] },
+                { feature: 'AI Models', values: ['Standard', 'Standard', 'Premium', 'Premium + Beta'] },
+                { feature: 'Collaboration', values: ['—', '1 seat', '3 seats', '10 seats'] },
+              ].map((row, idx) => (
+                <div key={idx} className="bg-slate-800/50 rounded-lg p-4">
+                  <h4 className="text-white font-medium mb-3">{row.feature}</h4>
+                  <div className="grid grid-cols-4 gap-2 text-xs text-center">
+                    <div>
+                      <div className="text-amber-400 mb-1">Coffee</div>
+                      <div className="text-white">{row.values[0]}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-400 mb-1">Starter</div>
+                      <div className="text-white">{row.values[1]}</div>
+                    </div>
+                    <div>
+                      <div className="text-blue-400 mb-1">Pro</div>
+                      <div className="text-white font-medium">{row.values[2]}</div>
+                    </div>
+                    <div>
+                      <div className="text-purple-400 mb-1">Studio</div>
+                      <div className="text-white">{row.values[3]}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+
         {/* Credit Usage Examples */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

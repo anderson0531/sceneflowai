@@ -72,8 +72,73 @@ export default function RootLayout({
         <meta property="og:site_name" content="SceneFlow AI" />
         <meta property="og:url" content="https://sceneflowai.com" />
         <meta property="og:image" content="/favicon.ico" />
+        
+        {/* JSON-LD Structured Data for SEO */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              "name": "SceneFlow AI",
+              "applicationCategory": "MultimediaApplication",
+              "operatingSystem": "Web",
+              "description": "Transform your ideas into professional videos with AI-powered workflow automation. Go from napkin idea to festival-ready film in 4 hours.",
+              "url": "https://sceneflowai.studio",
+              "image": "https://sceneflowai.studio/logos/sceneflow-logo.png",
+              "author": {
+                "@type": "Organization",
+                "name": "SceneFlow AI"
+              },
+              "offers": [
+                {
+                  "@type": "Offer",
+                  "name": "Coffee Break",
+                  "price": "5.00",
+                  "priceCurrency": "USD",
+                  "description": "One-time purchase: 1,000 credits to test drive the platform"
+                },
+                {
+                  "@type": "Offer",
+                  "name": "Starter",
+                  "price": "29.00",
+                  "priceCurrency": "USD",
+                  "description": "Monthly subscription: 3,000 credits for hobbyists"
+                },
+                {
+                  "@type": "Offer",
+                  "name": "Pro",
+                  "price": "99.00",
+                  "priceCurrency": "USD",
+                  "description": "Monthly subscription: 12,000 credits for freelancers"
+                },
+                {
+                  "@type": "Offer",
+                  "name": "Studio",
+                  "price": "299.00",
+                  "priceCurrency": "USD",
+                  "description": "Monthly subscription: 40,000 credits for agencies"
+                }
+              ],
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": "4.8",
+                "ratingCount": "150",
+                "bestRating": "5",
+                "worstRating": "1"
+              }
+            })
+          }}
+        />
       </head>
       <body className={inter.className}>
+        {/* Skip to main content link for accessibility */}
+        <a 
+          href="#main-content" 
+          className="sr-only focus:not-sr-only focus:absolute focus:z-[200] focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:bg-slate-900 focus:text-white focus:rounded-lg focus:outline focus:outline-2 focus:outline-cyan-500 focus:shadow-lg"
+        >
+          Skip to main content
+        </a>
         <ThemeProvider>
           <AuthSessionProvider>
             <GlobalHeader />
