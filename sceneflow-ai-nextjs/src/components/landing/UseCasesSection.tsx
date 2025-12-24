@@ -232,7 +232,7 @@ const UseCaseCard = ({ useCase, index }: { useCase: UseCase; index: number }) =>
 
 export default function UseCasesSection() {
   return (
-    <section className="py-24 bg-slate-950 relative overflow-hidden">
+    <section id="use-cases" className="py-24 bg-slate-950 relative overflow-hidden">
       {/* Background accent */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.08),transparent_60%)]" />
       

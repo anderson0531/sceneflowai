@@ -20,6 +20,7 @@ export function HeroSection() {
   }
   return (
     <motion.section 
+      id="hero"
       className="relative py-24 md:py-32 overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}

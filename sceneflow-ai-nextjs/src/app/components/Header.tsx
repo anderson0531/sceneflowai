@@ -134,8 +134,10 @@ export function Header() {
             
             {/* Navigation Links - Center */}
             <nav className="flex items-center space-x-8">
+              <button onClick={() => scrollToSection('hero')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-lg">Watch Demo</button>
               <button onClick={() => scrollToSection('how-it-works')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-lg">How it Works</button>
               <button onClick={() => scrollToSection('features')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-lg">Features</button>
+              <button onClick={() => scrollToSection('use-cases')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-lg">Use Cases</button>
               <button onClick={() => scrollToSection('pricing')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-lg">Pricing</button>
               <button onClick={() => scrollToSection('faq')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-lg">FAQ</button>
             </nav>
@@ -228,8 +230,11 @@ export function Header() {
             {isMobileMenuOpen && (
               <div className="lg:hidden pb-4 border-t border-gray-800/50">
                 <nav className="flex flex-col space-y-3 pt-4">
+                  <button onClick={() => scrollToSection('hero')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">Watch Demo</button>
                   <button onClick={() => scrollToSection('how-it-works')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">How it Works</button>
                   <button onClick={() => scrollToSection('features')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">Features</button>
+                  <button onClick={() => scrollToSection('use-cases')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">Use Cases</button>
+                  <button onClick={() => scrollToSection('testimonials')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">Testimonials</button>
                   <button onClick={() => scrollToSection('pricing')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">Pricing</button>
                   <button onClick={() => scrollToSection('faq')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">FAQ</button>
                   {isAuthenticated && isAdmin && (
