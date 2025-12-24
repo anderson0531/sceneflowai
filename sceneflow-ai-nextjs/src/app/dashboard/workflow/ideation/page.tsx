@@ -35,6 +35,8 @@ import { CoreConceptCard } from '@/components/workflow/ideation/CoreConceptCard'
 import StoryboardReadinessCard from '@/components/workflow/ideation/StoryboardReadinessCard'
 import { PhaseNavigator } from '@/components/blueprint/PhaseNavigator'
 import { ScoreIndicator as BlueprintScoreIndicator } from '@/components/blueprint/ScoreIndicator'
+import { BlueprintCard } from '@/components/blueprint/BlueprintCard'
+import { EmptyState } from '@/components/blueprint/EmptyState'
 import { useBlueprintShortcuts } from '@/hooks/useKeyboardShortcuts'
 import type { AnalysisResponse, CoreConceptAttributes, ConceptAttribute } from '@/types/SceneFlow'
 
@@ -737,16 +739,39 @@ export default function IdeationPage() {
             </div>
           </div>
           <p className="text-sm text-sf-text-secondary mb-6">Select your preferred direction. Click a card to view outline and style notes.</p>
+          {generatedIdeas.length === 0 ? (
+            <EmptyState
+              icon={<Lightbulb className="w-8 h-8" />}
+              title="No concepts yet"
+              description="Complete the workshop phase to generate creative concepts for your video."
+              action={{
+                label: 'Back to Workshop',
+                onClick: backToWorkshop
+              }}
+            />
+          ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {generatedIdeas.map((idea:any, idx:number)=> (
-              <div key={idea.id || idx} className={`rounded-lg border p-4 cursor-pointer transition-colors ${selectedIdea?.id===idea.id ? 'border-sf-primary bg-sf-surface-light' : 'border-sf-border bg-sf-surface-light hover:border-sf-primary/50'}`} onClick={()=>setSelectedIdea(idea)}>
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-semibold text-sf-text-primary">{idea.hookTitle || idea.title}</h4>
+              <BlueprintCard
+                key={idea.id || idx}
+                variant="elevated"
+                size="md"
+                interactive
+                selected={selectedIdea?.id === idea.id}
+                onClick={() => setSelectedIdea(idea)}
+                title={idea.hookTitle || idea.title}
+                badge={
                   <div className="flex items-center gap-1 text-sm text-sf-text-secondary">
                     <Star className="w-4 h-4 text-yellow-400 fill-current"/>
                     {(idea.strength_rating?.toFixed?.(1)) || '4.0'}/5
                   </div>
-                </div>
+                }
+                footer={
+                  <div className="flex items-center justify-end">
+                    <Button size="sm" className="bg-sf-primary" onClick={(e) => { e.stopPropagation(); handleSelectAndIterate(idea); }}>Select & Iterate</Button>
+                  </div>
+                }
+              >
                 <div className="text-sm text-sf-text-secondary mb-2">{idea.logline || idea.synopsis}</div>
                 <div className="text-sm text-sf-text-secondary">{idea.detailedSynopsis?.slice?.(0,120) || ''}</div>
                 {selectedIdea?.id===idea.id && (
@@ -770,12 +795,10 @@ export default function IdeationPage() {
                     ) : null}
                   </div>
                 )}
-                <div className="mt-4 flex items-center justify-end">
-                  <Button size="sm" className="bg-sf-primary" onClick={()=>handleSelectAndIterate(idea)}>Select & Iterate</Button>
-                </div>
-              </div>
+              </BlueprintCard>
             ))}
           </div>
+          )}
         </div>
         )}
 
