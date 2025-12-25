@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/Input";
-import { DownloadIcon, Edit, ChevronUp, Save, Settings, FileText, BarChart3, ChevronRight, Check, HelpCircle } from "lucide-react";
+import { DownloadIcon, Edit, ChevronUp, Save, Settings, FileText, BarChart3, ChevronRight, Check, HelpCircle, Sparkles } from "lucide-react";
 import { useGuideStore } from "@/store/useGuideStore";
 import { useStore } from '@/store/useStore'
 import { useCue } from "@/store/useCueStore";
@@ -442,12 +442,12 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
               {/* Full input area when expanded */}
               {isInputExpanded && (
                 <>
-                  {/* Blueprint Input - Vision page style */}
+                  {/* Blueprint Input - "What's Your Vision?" */}
                   <div className="relative rounded-2xl border border-slate-700/60 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-800/80 p-6 shadow-lg overflow-hidden">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-purple-500 via-fuchsia-400 to-pink-400 opacity-80" />
-                    <div className="flex items-center gap-3 mb-4">
-                      <FileText className="w-5 h-5 text-purple-400" />
-                      <h3 className="text-base font-semibold text-white">Project Description</h3>
+                    <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-amber-500 via-yellow-400 to-orange-400 opacity-80" />
+                    <div className="flex items-center gap-2 mb-4">
+                      <Sparkles className="w-5 h-5 text-amber-400" />
+                      <h3 className="text-xl font-semibold text-white">What&apos;s Your Vision?</h3>
                     </div>
                     
                     <BlueprintComposer onGenerate={onGenerate} rigor={rigor} />
