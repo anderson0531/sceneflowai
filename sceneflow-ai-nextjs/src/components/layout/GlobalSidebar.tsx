@@ -5,7 +5,7 @@ import { usePathname, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { episodeNav } from '../../config/nav/episodeNav'
 import { seriesNav } from '../../config/nav/seriesNav'
-import { mainNav, settingsNav } from '../../config/nav/globalNav'
+import { mainNav } from '../../config/nav/globalNav'
 import { useStore } from '../../store/useStore'
 import {
   WORKFLOW_STEP_LABELS,
@@ -154,7 +154,7 @@ export function GlobalSidebar({ children }: { children?: React.ReactNode }) {
 
           {flowItems.length > 0 && (
             <section>
-              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Workflow</h3>
+              <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Workflow</h3>
               <div className="space-y-1">
                 {flowItems.map(i => {
                   if ('status' in i) {
@@ -329,7 +329,7 @@ export function GlobalSidebar({ children }: { children?: React.ReactNode }) {
 
           {/* Credits Section */}
           <section className="border-t border-gray-200 dark:border-gray-700 pt-4">
-            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Credits</h3>
+            <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Credits</h3>
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-gray-600 dark:text-gray-400">Available</span>
@@ -345,15 +345,6 @@ export function GlobalSidebar({ children }: { children?: React.ReactNode }) {
                 <CreditCard className="w-3 h-3" />
                 <span>Buy Credits</span>
               </Link>
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Settings</h3>
-            <div className="space-y-1">
-              {settingsNav.map(i => (
-                <Link key={i.key} href={i.href} className={`block px-3 py-2 rounded text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 ${pathname===i.href?'bg-sf-primary/15 text-gray-900 dark:text-white':'text-gray-700 dark:text-gray-300'}`}>{i.label}</Link>
-              ))}
             </div>
           </section>
         </div>
