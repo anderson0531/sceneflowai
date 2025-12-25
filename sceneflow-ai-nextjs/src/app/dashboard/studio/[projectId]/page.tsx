@@ -426,26 +426,15 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
               {!isInputExpanded && lastInput && (
                 <div className="relative rounded-2xl border border-slate-700/60 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-800/80 p-4 shadow-lg overflow-hidden">
                   <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-sf-primary via-fuchsia-500 to-cyan-400 opacity-80" />
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <FileText className="w-5 h-5 text-slate-400 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium text-slate-400 mb-1">Your Input</div>
-                        <p className="text-sm text-slate-200 truncate">
-                          {lastInput?.slice(0, 120) || 'No input'}
-                          {lastInput && lastInput.length > 120 ? '...' : ''}
-                        </p>
-                      </div>
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <FileText className="w-5 h-5 text-slate-400 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-medium text-slate-400 mb-1">Your Input</div>
+                      <p className="text-sm text-slate-200 truncate">
+                        {lastInput?.slice(0, 120) || 'No input'}
+                        {lastInput && lastInput.length > 120 ? '...' : ''}
+                      </p>
                     </div>
-                    <Button 
-                      onClick={() => setIsInputExpanded(true)}
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-2"
-                    >
-                      <Edit className="h-4 w-4" />
-                      <span>Edit</span>
-                    </Button>
                   </div>
                 </div>
               )}
@@ -453,83 +442,6 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
               {/* Full input area when expanded */}
               {isInputExpanded && (
                 <>
-                  {/* Configuration Section - Vision page style */}
-                  <div className="relative rounded-2xl border border-slate-700/60 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-800/80 p-6 shadow-lg overflow-hidden">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-blue-500 via-cyan-400 to-teal-400 opacity-80" />
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <Settings className="w-5 h-5 text-blue-400" />
-                        <h3 className="text-base font-semibold text-white">Film Structure</h3>
-                      </div>
-                      <button
-                        onClick={() => setShowStructureHelp(true)}
-                        className="p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors"
-                        title="Learn about Film Structure options"
-                      >
-                        <HelpCircle className="w-5 h-5 text-slate-400" />
-                      </button>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* Format */}
-                      <div>
-                        <label className="text-sm font-medium text-slate-300 mb-2 block">
-                          Format
-                        </label>
-                        <Select value={format} onValueChange={(v)=>setFormat(v as any)}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select format" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="youtube">YouTube</SelectItem>
-                            <SelectItem value="short_film">Short Film</SelectItem>
-                            <SelectItem value="documentary">Documentary</SelectItem>
-                            <SelectItem value="education">Education</SelectItem>
-                            <SelectItem value="training">Training</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      {/* Beat Structure */}
-                      <div>
-                        <label className="text-sm font-medium text-slate-300 mb-2 block">
-                          Beat Structure
-                        </label>
-                        <Select value={beatStructure} onValueChange={(v)=>setBeatStructure(v as any)}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select structure" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="three_act">Three-Act</SelectItem>
-                            <SelectItem value="save_the_cat">Save the Cat</SelectItem>
-                            <SelectItem value="heros_journey">Hero's Journey</SelectItem>
-                            <SelectItem value="mini_doc">Mini-Doc</SelectItem>
-                            <SelectItem value="instructional">Instructional</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      {/* Film Type */}
-                      <div>
-                        <label className="text-sm font-medium text-slate-300 mb-2 block">
-                          Film Type
-                        </label>
-                        <Select value={filmType} onValueChange={(v)=>setFilmType(v as any)}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select film type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="micro_short">Micro Short (1-5 min)</SelectItem>
-                            <SelectItem value="short_film">Short Film (5-15 min)</SelectItem>
-                            <SelectItem value="featurette">Featurette (15-40 min)</SelectItem>
-                            <SelectItem value="feature_length">Feature Length (40-90 min)</SelectItem>
-                            <SelectItem value="epic">Epic (90+ min)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                  
                   {/* Blueprint Input - Vision page style */}
                   <div className="relative rounded-2xl border border-slate-700/60 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-800/80 p-6 shadow-lg overflow-hidden">
                     <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-purple-500 via-fuchsia-400 to-pink-400 opacity-80" />
