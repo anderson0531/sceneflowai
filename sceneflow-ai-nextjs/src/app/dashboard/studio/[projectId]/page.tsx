@@ -409,7 +409,7 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
           <div className="flex-1 overflow-auto p-3 sm:p-6">
             {/* Page Header - inline like Virtual Production */}
             <div className="flex items-center justify-between mb-6">
-              <h1 className="text-3xl font-bold text-white">The Blueprint</h1>
+              <h2 className="text-2xl font-bold text-white">The Blueprint</h2>
               <Button 
                 variant="outline" 
                 size="sm" 
