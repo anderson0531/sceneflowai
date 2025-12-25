@@ -43,6 +43,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { ReviewScoresPanel, type ReviewScores } from './ReviewScoresPanel'
 import { ProjectStatsPanel, type ProjectStats } from './ProjectStatsPanel'
+import { ProTipsChecklist } from '../pro-tips/ProTipsChecklist'
 
 // Icon map for dynamic rendering
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -87,6 +88,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
   // Section toggle state - initialize from config defaults
   const [sectionsOpen, setSectionsOpen] = useState<Record<keyof SectionVisibility, boolean>>({
     workflow: config.sectionDefaults.workflow,
+    proTips: config.sectionDefaults.proTips,
     progress: config.sectionDefaults.progress,
     quickActions: config.sectionDefaults.quickActions,
     reviewScores: config.sectionDefaults.reviewScores,
@@ -254,6 +256,15 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
                 </div>
               )}
             </div>
+          )}
+
+          {/* Pro Tips Section */}
+          {config.sectionVisibility.proTips && (
+            <ProTipsChecklist
+              phase={config.phase}
+              isOpen={sectionsOpen.proTips}
+              onToggle={() => toggleSection('proTips')}
+            />
           )}
 
           {/* Progress Section */}
