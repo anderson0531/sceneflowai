@@ -409,7 +409,7 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
           <div className="flex-1 overflow-auto p-3 sm:p-6">
             {/* Page Header - inline like Virtual Production */}
             <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-bold text-white">The Blueprint</h1>
+              <h1 className="text-3xl font-bold text-white">The Blueprint</h1>
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -424,13 +424,14 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
             <div className="space-y-4">
               {/* Compact header when collapsed */}
               {!isInputExpanded && lastInput && (
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                <div className="relative rounded-2xl border border-slate-700/60 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-800/80 p-4 shadow-lg overflow-hidden">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-sf-primary via-fuchsia-500 to-cyan-400 opacity-80" />
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <FileText className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                      <FileText className="w-5 h-5 text-slate-400 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Your Input</div>
-                        <p className="text-sm text-gray-700 dark:text-gray-300 truncate">
+                        <div className="text-xs font-medium text-slate-400 mb-1">Your Input</div>
+                        <p className="text-sm text-slate-200 truncate">
                           {lastInput?.slice(0, 120) || 'No input'}
                           {lastInput && lastInput.length > 120 ? '...' : ''}
                         </p>
@@ -453,25 +454,26 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
               {isInputExpanded && (
                 <>
                   {/* Configuration Section - Vision page style */}
-                  <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="relative rounded-2xl border border-slate-700/60 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-800/80 p-6 shadow-lg overflow-hidden">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-blue-500 via-cyan-400 to-teal-400 opacity-80" />
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <Settings className="w-5 h-5 text-blue-500" />
-                        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Film Structure</h3>
+                        <Settings className="w-5 h-5 text-blue-400" />
+                        <h3 className="text-base font-semibold text-white">Film Structure</h3>
                       </div>
                       <button
                         onClick={() => setShowStructureHelp(true)}
-                        className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors"
                         title="Learn about Film Structure options"
                       >
-                        <HelpCircle className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                        <HelpCircle className="w-5 h-5 text-slate-400" />
                       </button>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {/* Format */}
                       <div>
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                        <label className="text-sm font-medium text-slate-300 mb-2 block">
                           Format
                         </label>
                         <Select value={format} onValueChange={(v)=>setFormat(v as any)}>
@@ -490,7 +492,7 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
                       
                       {/* Beat Structure */}
                       <div>
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                        <label className="text-sm font-medium text-slate-300 mb-2 block">
                           Beat Structure
                         </label>
                         <Select value={beatStructure} onValueChange={(v)=>setBeatStructure(v as any)}>
@@ -509,7 +511,7 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
                       
                       {/* Film Type */}
                       <div>
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                        <label className="text-sm font-medium text-slate-300 mb-2 block">
                           Film Type
                         </label>
                         <Select value={filmType} onValueChange={(v)=>setFilmType(v as any)}>
@@ -529,10 +531,11 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
                   </div>
                   
                   {/* Blueprint Input - Vision page style */}
-                  <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="relative rounded-2xl border border-slate-700/60 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-800/80 p-6 shadow-lg overflow-hidden">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-purple-500 via-fuchsia-400 to-pink-400 opacity-80" />
                     <div className="flex items-center gap-3 mb-4">
-                      <FileText className="w-5 h-5 text-purple-500" />
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Project Description</h3>
+                      <FileText className="w-5 h-5 text-purple-400" />
+                      <h3 className="text-base font-semibold text-white">Project Description</h3>
                     </div>
                     
                     <BlueprintComposer onGenerate={onGenerate} rigor={rigor} />
@@ -560,15 +563,16 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
             
             {/* Continue to Vision CTA - Only show after treatment is generated */}
             {(guide as any).treatmentVariants && Array.isArray((guide as any).treatmentVariants) && (guide as any).treatmentVariants.length > 0 && (
-              <div className="mt-8 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6">
+              <div className="mt-8 relative rounded-2xl border border-slate-700/60 bg-gradient-to-br from-slate-900 via-slate-800/90 to-emerald-900/30 p-6 shadow-lg overflow-hidden">
+                <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-emerald-400 via-green-500 to-teal-400 opacity-80" />
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-green-500/10 border border-green-500/30 flex items-center justify-center">
                       <Check className="w-5 h-5 text-green-400" />
                     </div>
                     <div>
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Treatment Ready</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                      <h3 className="text-base font-semibold text-white">Treatment Ready</h3>
+                      <p className="text-sm text-slate-400 mt-0.5">
                         Approve this treatment and generate your production script
                       </p>
                     </div>

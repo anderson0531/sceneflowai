@@ -154,7 +154,7 @@ export function GlobalSidebar({ children }: { children?: React.ReactNode }) {
 
           {flowItems.length > 0 && (
             <section>
-              <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Workflow</h3>
+              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Workflow</h3>
               <div className="space-y-1">
                 {flowItems.map(i => {
                   if ('status' in i) {
@@ -329,7 +329,7 @@ export function GlobalSidebar({ children }: { children?: React.ReactNode }) {
 
           {/* Credits Section */}
           <section className="border-t border-gray-200 dark:border-gray-700 pt-4">
-            <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Credits</h3>
+            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Credits</h3>
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-gray-600 dark:text-gray-400">Available</span>
