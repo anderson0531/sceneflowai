@@ -1,0 +1,433 @@
+'use client'
+
+import React, { useMemo, useState, useCallback } from 'react'
+import { usePathname, useParams } from 'next/navigation'
+import Link from 'next/link'
+import { mainNav } from '../../config/nav/globalNav'
+import { 
+  getSidebarConfigForPath, 
+  getProjectIdFromPath,
+  type WorkflowSidebarConfig,
+  type WorkflowStepStatus,
+  type SectionVisibility,
+} from '../../config/nav/sidebarConfig'
+import { useStore } from '../../store/useStore'
+import { cn } from '@/lib/utils'
+import { 
+  ChevronUp, 
+  ChevronDown, 
+  CheckCircle2, 
+  Circle,
+  Home,
+  FolderOpen,
+  Sparkles,
+  CreditCard,
+  Coins,
+  // Icons for progress items
+  Wrench,
+  Lightbulb,
+  FileText,
+  ImageIcon,
+  Music,
+  Video,
+  Film,
+  // Icons for quick actions
+  Bookmark,
+  Play,
+  BarChart3,
+  Settings,
+  Save,
+  Download,
+  Share2,
+} from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { ReviewScoresPanel, type ReviewScores } from './ReviewScoresPanel'
+import { ProjectStatsPanel, type ProjectStats } from './ProjectStatsPanel'
+
+// Icon map for dynamic rendering
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  CheckCircle2,
+  Circle,
+  Wrench,
+  Lightbulb,
+  FileText,
+  ImageIcon,
+  Music,
+  Video,
+  Film,
+  Bookmark,
+  Play,
+  BarChart3,
+  Settings,
+  Save,
+  Download,
+  Share2,
+  Sparkles,
+  Home,
+  FolderOpen,
+}
+
+interface GlobalSidebarProps {
+  children?: React.ReactNode
+}
+
+export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
+  const pathname = usePathname()
+  const params = useParams() as Record<string, string>
+  const currentProject = useStore(s => s.currentProject)
+  
+  // Read sidebar data from store (populated by workflow pages)
+  const sidebarData = useStore(s => s.sidebarData)
+  const { reviewScores, projectStats, progressData, quickActionHandlers } = sidebarData
+  
+  // Get sidebar config based on current path
+  const config = useMemo(() => getSidebarConfigForPath(pathname), [pathname])
+  const projectId = useMemo(() => getProjectIdFromPath(pathname) || params?.projectId, [pathname, params?.projectId])
+  
+  // Section toggle state - initialize from config defaults
+  const [sectionsOpen, setSectionsOpen] = useState<Record<keyof SectionVisibility, boolean>>({
+    workflow: config.sectionDefaults.workflow,
+    progress: config.sectionDefaults.progress,
+    quickActions: config.sectionDefaults.quickActions,
+    reviewScores: config.sectionDefaults.reviewScores,
+    projectStats: config.sectionDefaults.projectStats,
+    credits: config.sectionDefaults.credits,
+  })
+  
+  const toggleSection = useCallback((section: keyof SectionVisibility) => {
+    setSectionsOpen(prev => ({ ...prev, [section]: !prev[section] }))
+  }, [])
+
+  // Handle quick action clicks
+  const handleQuickAction = useCallback((actionId: string, action: 'navigate' | 'event' | 'callback', eventName?: string, href?: string) => {
+    if (action === 'navigate' && href) {
+      // Navigation is handled by Link component
+      return
+    }
+    if (action === 'event' && eventName) {
+      const event = new CustomEvent(eventName)
+      window.dispatchEvent(event)
+    }
+    // Call registered handler from store if available
+    if (quickActionHandlers[actionId]) {
+      quickActionHandlers[actionId]()
+    }
+  }, [quickActionHandlers])
+
+  // Get status classes for workflow step
+  const getWorkflowStepClasses = (status: WorkflowStepStatus) => {
+    switch (status) {
+      case 'completed':
+        return {
+          container: 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800',
+          dot: 'bg-green-500',
+          dotIcon: 'text-white',
+        }
+      case 'current':
+        return {
+          container: 'bg-sf-primary/10 text-sf-primary font-medium',
+          dot: 'bg-sf-primary animate-pulse',
+          dotIcon: null,
+        }
+      case 'upcoming':
+        return {
+          container: 'text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800',
+          dot: 'bg-gray-300 dark:bg-gray-600',
+          dotIcon: 'text-gray-400 dark:text-gray-500',
+        }
+      case 'locked':
+        return {
+          container: 'text-gray-400 dark:text-gray-500 opacity-60 cursor-not-allowed',
+          dot: 'bg-gray-300 dark:bg-gray-600',
+          dotIcon: 'text-gray-400 dark:text-gray-500',
+        }
+    }
+  }
+
+  // Build progress items with computed completion status for Blueprint
+  const progressItems = useMemo(() => {
+    if (config.phase === 'blueprint') {
+      return [
+        { id: 'concept-analysis', label: 'Concept Analysis', icon: 'CheckCircle2', isComplete: !!currentProject?.metadata?.coreConcept },
+        { id: 'workshop', label: 'Workshop Refinement', icon: 'Wrench', isComplete: !!currentProject?.metadata?.workshopComplete },
+        { id: 'ideas', label: 'Ideas Generated', icon: 'Lightbulb', isComplete: !!currentProject?.metadata?.ideasGenerated },
+        { id: 'core-concept', label: 'Core Concept Ready', icon: 'FileText', isComplete: !!currentProject?.metadata?.coreConceptReady },
+      ]
+    }
+    if (config.phase === 'production' && progressData) {
+      return [
+        { id: 'film-treatment', label: 'Film Treatment', icon: 'CheckCircle2', isComplete: progressData.hasFilmTreatment },
+        { id: 'screenplay', label: 'Screenplay', icon: 'CheckCircle2', isComplete: progressData.hasScreenplay, value: progressData.sceneCount ? `${progressData.sceneCount} scenes` : undefined },
+        { id: 'references', label: 'References', icon: 'ImageIcon', isComplete: (progressData.refLibraryCount || 0) > 0, value: progressData.refLibraryCount },
+        { id: 'scene-images', label: 'Scene Images', icon: 'ImageIcon', isComplete: progressData.imageProgress === 100, progress: progressData.imageProgress },
+        { id: 'audio', label: 'Audio', icon: 'Music', isComplete: progressData.audioProgress === 100, progress: progressData.audioProgress },
+        { id: 'video-export', label: 'Video Export', icon: 'Video', isComplete: false, badge: 'Soon' },
+      ]
+    }
+    return config.progressItems || []
+  }, [config.phase, config.progressItems, currentProject?.metadata, progressData])
+
+  return (
+    <div className="flex pt-16">
+      <aside className="w-64 shrink-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/90 h-[calc(100vh-4rem)] overflow-y-auto sticky top-16">
+        <div className="flex flex-col h-full">
+          {/* Main Navigation */}
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <nav className="space-y-1">
+              {mainNav.map(item => (
+                <Link
+                  key={item.key}
+                  href={item.href}
+                  className={cn(
+                    'flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors',
+                    pathname === item.href
+                      ? 'bg-sf-primary/15 text-gray-900 dark:text-white'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  )}
+                >
+                  {item.key === 'dashboard' && <Home className="w-4 h-4" />}
+                  {item.key === 'projects' && <FolderOpen className="w-4 h-4" />}
+                  {item.key === 'start' && <Sparkles className="w-4 h-4" />}
+                  <span>{item.label}</span>
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          {/* Workflow Steps - Vertical Stepper */}
+          {config.showWorkflowStepper && config.sectionVisibility.workflow && config.workflowSteps && (
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => toggleSection('workflow')}
+                className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              >
+                <span>Workflow</span>
+                {sectionsOpen.workflow ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              </button>
+              {sectionsOpen.workflow && (
+                <div className="relative">
+                  {/* Vertical connector line */}
+                  <div className="absolute left-[11px] top-4 bottom-4 w-0.5 bg-gradient-to-b from-gray-300 via-sf-primary to-gray-300 dark:from-gray-600 dark:via-sf-primary dark:to-gray-600" />
+                  <nav className="space-y-0 relative">
+                    {config.workflowSteps.map(step => {
+                      const status = typeof step.status === 'function' ? step.status(projectId || '') : step.status
+                      const href = typeof step.href === 'function' ? step.href(projectId || '') : step.href
+                      const classes = getWorkflowStepClasses(status)
+                      
+                      const stepContent = (
+                        <>
+                          <div className={cn('w-[14px] h-[14px] rounded-full border-2 border-white dark:border-gray-900 shadow-sm flex items-center justify-center z-10', classes.dot)}>
+                            {status === 'completed' && <CheckCircle2 className="w-2.5 h-2.5 text-white" />}
+                            {status === 'upcoming' && <Circle className={cn('w-2.5 h-2.5', classes.dotIcon)} />}
+                            {status === 'locked' && <Circle className={cn('w-2.5 h-2.5', classes.dotIcon)} />}
+                          </div>
+                          <span className="group-hover:text-gray-700 dark:group-hover:text-gray-200">{step.label}</span>
+                          {step.badge && (
+                            <span className="ml-auto text-[10px] bg-sf-primary/20 px-1.5 py-0.5 rounded">{step.badge}</span>
+                          )}
+                        </>
+                      )
+                      
+                      if (status === 'locked') {
+                        return (
+                          <div
+                            key={step.id}
+                            className={cn('flex items-center gap-3 px-3 py-2 text-sm rounded-lg', classes.container)}
+                          >
+                            {stepContent}
+                          </div>
+                        )
+                      }
+                      
+                      return (
+                        <Link
+                          key={step.id}
+                          href={href}
+                          prefetch={false}
+                          className={cn('flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors group', classes.container)}
+                        >
+                          {stepContent}
+                        </Link>
+                      )
+                    })}
+                  </nav>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Progress Section */}
+          {config.sectionVisibility.progress && progressItems.length > 0 && (
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => toggleSection('progress')}
+                className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              >
+                <span>Progress</span>
+                {sectionsOpen.progress ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              </button>
+              {sectionsOpen.progress && (
+                <div className="space-y-2">
+                  {progressItems.map(item => {
+                    const isComplete = typeof item.isComplete === 'function' ? item.isComplete() : item.isComplete
+                    const IconComponent = iconMap[item.icon || 'Circle'] || Circle
+                    const hasProgress = 'progress' in item && item.progress !== undefined
+                    
+                    return (
+                      <div key={item.id} className="flex items-center gap-2 text-xs">
+                        <div className={cn(
+                          'w-5 h-5 rounded flex items-center justify-center',
+                          isComplete 
+                            ? 'bg-green-500/20 text-green-500'
+                            : hasProgress && (item.progress || 0) > 0
+                              ? 'bg-amber-500/20 text-amber-500'
+                              : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
+                        )}>
+                          {isComplete ? <CheckCircle2 className="w-3 h-3" /> : <IconComponent className="w-3 h-3" />}
+                        </div>
+                        <span className={isComplete || (hasProgress && (item.progress || 0) > 0) ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400'}>
+                          {item.label}
+                        </span>
+                        {'value' in item && item.value && (
+                          <span className="ml-auto text-gray-400">{item.value}</span>
+                        )}
+                        {hasProgress && (
+                          <span className="ml-auto text-gray-400">{item.progress}%</span>
+                        )}
+                        {'badge' in item && item.badge && (
+                          <span className="ml-auto text-[10px] bg-gray-200 dark:bg-gray-700 text-gray-500 px-1.5 py-0.5 rounded">{item.badge}</span>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Quick Actions Section */}
+          {config.sectionVisibility.quickActions && config.quickActions && config.quickActions.length > 0 && (
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => toggleSection('quickActions')}
+                className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              >
+                <span>Quick Actions</span>
+                {sectionsOpen.quickActions ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              </button>
+              {sectionsOpen.quickActions && (
+                <div className="space-y-2">
+                  {config.quickActions.map(action => {
+                    const IconComponent = iconMap[action.icon] || Sparkles
+                    const isDisabled = typeof action.disabled === 'function' ? action.disabled() : action.disabled
+                    
+                    if (action.action === 'navigate' && action.href) {
+                      return (
+                        <Link
+                          key={action.id}
+                          href={action.href}
+                          className={cn(
+                            'flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors',
+                            isDisabled && 'opacity-50 cursor-not-allowed pointer-events-none'
+                          )}
+                        >
+                          <IconComponent className={cn('w-3 h-3', action.iconColor || 'text-gray-400')} />
+                          <span>{action.label}</span>
+                          {action.badge && (
+                            <span className={cn(
+                              'ml-auto text-[10px] px-1.5 py-0.5 rounded',
+                              action.badgeVariant === 'warning' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' :
+                              action.badgeVariant === 'success' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
+                              'bg-gray-200 dark:bg-gray-700 text-gray-500'
+                            )}>{action.badge}</span>
+                          )}
+                        </Link>
+                      )
+                    }
+                    
+                    return (
+                      <Button
+                        key={action.id}
+                        variant={action.variant || 'outline'}
+                        size="sm"
+                        className="w-full justify-start text-xs"
+                        onClick={() => handleQuickAction(action.id, action.action, action.eventName, action.href)}
+                        disabled={isDisabled}
+                      >
+                        <IconComponent className={cn('w-3 h-3 mr-2', action.iconColor || 'text-gray-400')} />
+                        {action.label}
+                        {action.badge && (
+                          <span className={cn(
+                            'ml-auto text-[10px] px-1.5 py-0.5 rounded',
+                            action.badgeVariant === 'warning' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' :
+                            action.badgeVariant === 'success' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
+                            'bg-gray-200 dark:bg-gray-700 text-gray-500'
+                          )}>{action.badge}</span>
+                        )}
+                      </Button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Review Scores Section */}
+          {config.sectionVisibility.reviewScores && reviewScores && (
+            <ReviewScoresPanel
+              scores={reviewScores}
+              isOpen={sectionsOpen.reviewScores}
+              onToggle={() => toggleSection('reviewScores')}
+            />
+          )}
+
+          {/* Project Stats Section */}
+          {config.sectionVisibility.projectStats && projectStats && (
+            <ProjectStatsPanel
+              stats={projectStats}
+              isOpen={sectionsOpen.projectStats}
+              onToggle={() => toggleSection('projectStats')}
+            />
+          )}
+
+          {/* Credits Section - Always at bottom, pushed by flex-grow spacer */}
+          <div className="flex-grow" />
+          {config.sectionVisibility.credits && (
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
+              <button
+                onClick={() => toggleSection('credits')}
+                className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              >
+                <span>Credits</span>
+                {sectionsOpen.credits ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              </button>
+              {sectionsOpen.credits && (
+                <div className="space-y-3">
+                  <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 dark:from-emerald-500/20 dark:to-emerald-600/10 rounded-lg p-3 border border-emerald-200/50 dark:border-emerald-500/20">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Coins className="w-4 h-4 text-emerald-500" />
+                        <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Balance</span>
+                      </div>
+                      <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">5,400</span>
+                    </div>
+                  </div>
+                  <Link
+                    href="/dashboard/settings/billing"
+                    className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors w-full justify-center"
+                  >
+                    <CreditCard className="w-3 h-3" />
+                    <span>Buy Credits</span>
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </aside>
+      <main className="flex-1 min-h-screen">{children}</main>
+    </div>
+  )
+}
+
+export default GlobalSidebarUnified

@@ -204,6 +204,29 @@ interface AppState {
   theme: 'light' | 'dark' | 'system';
   cueAssistantOpen: boolean;
   
+  // Sidebar data for unified GlobalSidebar
+  sidebarData: {
+    reviewScores: { director: number | null; audience: number | null } | null;
+    projectStats: { sceneCount: number; castCount: number; durationMinutes: number; estimatedCredits: number } | null;
+    progressData: {
+      hasFilmTreatment?: boolean;
+      hasScreenplay?: boolean;
+      sceneCount?: number;
+      refLibraryCount?: number;
+      imageProgress?: number;
+      audioProgress?: number;
+    } | null;
+    quickActionHandlers: Record<string, () => void>;
+  };
+  
+  // Sidebar actions
+  setSidebarReviewScores: (scores: { director: number | null; audience: number | null } | null) => void;
+  setSidebarProjectStats: (stats: { sceneCount: number; castCount: number; durationMinutes: number; estimatedCredits: number } | null) => void;
+  setSidebarProgressData: (data: { hasFilmTreatment?: boolean; hasScreenplay?: boolean; sceneCount?: number; refLibraryCount?: number; imageProgress?: number; audioProgress?: number } | null) => void;
+  registerQuickActionHandler: (actionId: string, handler: () => void) => void;
+  unregisterQuickActionHandler: (actionId: string) => void;
+  clearSidebarData: () => void;
+  
   // Cue Assistant state
   cueConversation: {
     messages: Array<{
@@ -289,6 +312,12 @@ export const useStore = create<AppState>((set, get) => ({
   sidebarOpen: true,
   theme: 'system',
   cueAssistantOpen: true,
+  sidebarData: {
+    reviewScores: null,
+    projectStats: null,
+    progressData: null,
+    quickActionHandlers: {},
+  },
   cueConversation: {
     messages: [],
     hasUnreadNotifications: false,
@@ -417,6 +446,37 @@ export const useStore = create<AppState>((set, get) => ({
   },
   spendCredits: (amount) => set((state) => ({
     user: state.user ? { ...state.user, credits: Math.max(0, state.user.credits - amount) } : null
+  })),
+  
+  // Sidebar data actions
+  setSidebarReviewScores: (scores) => set((state) => ({
+    sidebarData: { ...state.sidebarData, reviewScores: scores }
+  })),
+  setSidebarProjectStats: (stats) => set((state) => ({
+    sidebarData: { ...state.sidebarData, projectStats: stats }
+  })),
+  setSidebarProgressData: (data) => set((state) => ({
+    sidebarData: { ...state.sidebarData, progressData: data }
+  })),
+  registerQuickActionHandler: (actionId, handler) => set((state) => ({
+    sidebarData: {
+      ...state.sidebarData,
+      quickActionHandlers: { ...state.sidebarData.quickActionHandlers, [actionId]: handler }
+    }
+  })),
+  unregisterQuickActionHandler: (actionId) => set((state) => {
+    const { [actionId]: _, ...rest } = state.sidebarData.quickActionHandlers
+    return {
+      sidebarData: { ...state.sidebarData, quickActionHandlers: rest }
+    }
+  }),
+  clearSidebarData: () => set((state) => ({
+    sidebarData: {
+      reviewScores: null,
+      projectStats: null,
+      progressData: null,
+      quickActionHandlers: {},
+    }
   })),
   
   setSidebarOpen: (open) => set({ sidebarOpen: open }),

@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { GlobalSidebar } from '@/components/layout/GlobalSidebar';
+import { GlobalSidebarUnified } from '@/components/layout/GlobalSidebarUnified';
 import { isPublicRoute } from '@/constants/publicRoutes';
 
 interface ConditionalLayoutProps {
@@ -16,10 +16,11 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
     return <>{children}</>;
   }
   
-  // For all other pages, render with sidebar
+  // For all other pages, render with unified sidebar
+  // The sidebar automatically configures itself based on the current route
   return (
-    <GlobalSidebar>
+    <GlobalSidebarUnified>
       {children}
-    </GlobalSidebar>
+    </GlobalSidebarUnified>
   );
 }
