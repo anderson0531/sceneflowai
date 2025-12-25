@@ -21,7 +21,9 @@ import {
   Star,
   Send,
   Wrench,
-  FileText
+  FileText,
+  Wand2,
+  X
 } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -38,8 +40,19 @@ import { ScoreIndicator as BlueprintScoreIndicator } from '@/components/blueprin
 import { BlueprintCard } from '@/components/blueprint/BlueprintCard'
 import { EmptyState } from '@/components/blueprint/EmptyState'
 import { useBlueprintShortcuts } from '@/hooks/useKeyboardShortcuts'
+import { analyzeIdeaClarity, getVagueIdeaMessage } from '@/utils/ideaAnalysis'
 import type { AnalysisResponse, CoreConceptAttributes, ConceptAttribute } from '@/types/SceneFlow'
 
+// Type for structured concept suggestions from inspiration API
+interface ConceptSuggestion {
+  id: string
+  title: string
+  logline: string
+  genre: string
+  tone: string
+  format: string
+  estimatedDuration: string
+}
 
 export default function IdeationPage() {
   const router = useRouter()
@@ -83,6 +96,11 @@ export default function IdeationPage() {
   // Three-phase journey state
   type Phase = 'spark' | 'workshop' | 'blueprint'
   const [phase, setPhase] = useState<Phase>('spark')
+  // Inspiration suggestions for vague ideas
+  const [showInspirationSuggestions, setShowInspirationSuggestions] = useState(false)
+  const [inspirationSuggestions, setInspirationSuggestions] = useState<ConceptSuggestion[]>([])
+  const [isLoadingInspiration, setIsLoadingInspiration] = useState(false)
+  const [vagueIdeaMessage, setVagueIdeaMessage] = useState<string>('')
   // Attributes and rationale for the Workshop phase
   const [attributes, setAttributes] = useState<CoreConceptAttributes | null>(null)
   const [workshopRationale, setWorkshopRationale] = useState<string>('')
@@ -130,8 +148,43 @@ export default function IdeationPage() {
 
   const generateFromCurrentConcept = async () => {
     try {
-      // start progress loop
+      // Check if idea is vague and needs inspiration first
+      const analysis = analyzeIdeaClarity(concept || '')
+      
+      if (analysis.isVague) {
+        // Idea is vague - fetch inspiration suggestions instead of analyzing
+        setVagueIdeaMessage(getVagueIdeaMessage(analysis))
+        setIsLoadingInspiration(true)
+        setShowInspirationSuggestions(true)
+        
+        try {
+          const inspoRes = await fetch('/api/inspiration/variants', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              keyword: concept || 'creative video concept',
+              count: 5,
+              mode: 'structured'
+            })
+          })
+          
+          if (inspoRes.ok) {
+            const inspoData = await inspoRes.json()
+            if (inspoData.success && Array.isArray(inspoData.concepts)) {
+              setInspirationSuggestions(inspoData.concepts)
+            }
+          }
+        } catch (err) {
+          console.error('Inspiration fetch failed:', err)
+        } finally {
+          setIsLoadingInspiration(false)
+        }
+        return // Exit early - user will select an inspiration or refine their idea
+      }
+      
+      // Idea is clear enough - proceed with analysis
       setIsAnalyzing(true)
+      setShowInspirationSuggestions(false)
  
       // 1) Analyze & refine core concept via LLM
       const analyzeRes = await fetch('/api/concept/analyze', {
@@ -188,6 +241,29 @@ export default function IdeationPage() {
     } finally {
       setIsAnalyzing(false)
     }
+  }
+
+  // Handle user selecting an inspiration suggestion
+  const handleSelectInspiration = (suggestion: ConceptSuggestion) => {
+    // Build a rich concept from the suggestion
+    const enrichedConcept = `${suggestion.title}: ${suggestion.logline}\n\nGenre: ${suggestion.genre}\nTone: ${suggestion.tone}\nFormat: ${suggestion.format}\nDuration: ${suggestion.estimatedDuration}`
+    
+    setConcept(enrichedConcept)
+    setShowInspirationSuggestions(false)
+    setInspirationSuggestions([])
+    setVagueIdeaMessage('')
+    
+    // Now analyze the enriched concept
+    setTimeout(() => {
+      generateFromCurrentConcept()
+    }, 100)
+  }
+
+  // Dismiss inspiration suggestions and let user refine manually
+  const handleDismissInspiration = () => {
+    setShowInspirationSuggestions(false)
+    setInspirationSuggestions([])
+    setVagueIdeaMessage('')
   }
 
   // Explicit idea generation from current attributes
@@ -612,7 +688,13 @@ export default function IdeationPage() {
             { id: 'blueprint', label: 'Blueprint', icon: FileText }
           ]}
           currentPhase={phase}
-          onPhaseChange={(newPhase) => setPhase(newPhase as Phase)}
+          onPhaseChange={(newPhase) => {
+            // Prevent going back to Spark after concept is analyzed (Workshop/Blueprint phases)
+            if (newPhase === 'spark' && (phase === 'workshop' || phase === 'blueprint')) {
+              return // Disable navigating back to Spark
+            }
+            setPhase(newPhase as Phase)
+          }}
           completedPhases={phase === 'blueprint' ? ['spark', 'workshop'] : phase === 'workshop' ? ['spark'] : []}
           className="mb-4"
         />
@@ -669,10 +751,98 @@ export default function IdeationPage() {
             className="w-full p-4 border border-sf-border rounded-lg bg-sf-surface-light text-sf-text-primary placeholder-sf-text-secondary focus:ring-2 focus:ring-sf-primary focus:border-sf-primary text-lg"
           />
           <div className="mt-4 flex items-center justify-end">
-            <Button className="bg-sf-primary hover:shadow-sf-glow" onClick={generateFromCurrentConcept} disabled={isAnalyzing}>
-              {isAnalyzing ? 'Analyzing…' : 'Analyze & Refine'}
+            <Button className="bg-sf-primary hover:shadow-sf-glow" onClick={generateFromCurrentConcept} disabled={isAnalyzing || isLoadingInspiration}>
+              {isAnalyzing ? 'Analyzing…' : isLoadingInspiration ? 'Getting inspiration…' : 'Analyze & Refine'}
             </Button>
           </div>
+          
+          {/* Inspiration Suggestions Panel - shown when idea is vague */}
+          <AnimatePresence>
+            {showInspirationSuggestions && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mt-6 p-6 bg-gradient-to-br from-purple-500/10 to-cyan-500/10 dark:from-purple-500/20 dark:to-cyan-500/20 rounded-xl border border-purple-200/50 dark:border-purple-500/30"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
+                      <Wand2 className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-sf-text-primary">Let&apos;s spark some inspiration!</h4>
+                      <p className="text-sm text-sf-text-secondary">{vagueIdeaMessage || 'Select a concept below or add more detail to your idea.'}</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={handleDismissInspiration}
+                    className="p-1.5 rounded-full hover:bg-sf-surface-light text-sf-text-secondary hover:text-sf-text-primary transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                
+                {isLoadingInspiration ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="flex items-center gap-3 text-sf-text-secondary">
+                      <Sparkles className="w-5 h-5 animate-pulse" />
+                      <span>Generating creative directions...</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid gap-3">
+                    {inspirationSuggestions.map((suggestion, idx) => (
+                      <motion.button
+                        key={suggestion.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                        onClick={() => handleSelectInspiration(suggestion)}
+                        className="w-full text-left p-4 rounded-lg bg-sf-surface border border-sf-border hover:border-sf-primary hover:shadow-md transition-all group"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <h5 className="font-medium text-sf-text-primary group-hover:text-sf-primary transition-colors">
+                              {suggestion.title}
+                            </h5>
+                            <p className="text-sm text-sf-text-secondary mt-1 line-clamp-2">
+                              {suggestion.logline}
+                            </p>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              <span className="px-2 py-0.5 text-xs rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+                                {suggestion.genre}
+                              </span>
+                              <span className="px-2 py-0.5 text-xs rounded-full bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300">
+                                {suggestion.tone}
+                              </span>
+                              <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                                {suggestion.estimatedDuration}
+                              </span>
+                            </div>
+                          </div>
+                          <ArrowRight className="w-5 h-5 text-sf-text-secondary group-hover:text-sf-primary transition-colors flex-shrink-0 mt-1" />
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                )}
+                
+                <div className="mt-4 pt-4 border-t border-sf-border/50 flex items-center justify-between">
+                  <p className="text-xs text-sf-text-secondary">
+                    Or add more detail to your idea above and try again
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleDismissInspiration}
+                  >
+                    I&apos;ll refine my idea
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
 

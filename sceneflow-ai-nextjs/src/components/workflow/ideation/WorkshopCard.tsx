@@ -21,9 +21,10 @@ interface WorkshopCardProps {
 export function WorkshopCard(props: WorkshopCardProps) {
   const { uiMode, attributes, setAttributes, isRefreshingConcept, refreshConceptFromAttributes, isAutoPopulatingMustHaves, setHasUnscoredChanges, showWorkshop, setShowWorkshop } = props
   const [showReadiness, setShowReadiness] = useState(true)
+  // Note: Act Structure (sr_actStructure) is now auto-detected during Film Treatment generation
+  // and is no longer editable by users in the Workshop phase
   const readinessFields = [
     { label: 'Key Beats (3–5)', key: 'sr_beats', multiline: true, rows: 3, placeholder: '1) Hook...\n2) Problem...\n3) Demonstration...'},
-    { label: 'Act Structure', key: 'sr_actStructure', multiline: false, placeholder: 'three-act / hero-journey / custom' },
     { label: 'Target Runtime (sec)', key: 'sr_runtime', multiline: false, placeholder: 'e.g., 60' },
     { label: 'Scene Count Target', key: 'sr_sceneCount', multiline: false, placeholder: 'e.g., 8' },
     { label: 'Characters (roles, goals, voice)', key: 'sr_characters', multiline: true, rows: 3, placeholder: 'Name — role/goal/voice' },
@@ -53,7 +54,6 @@ export function WorkshopCard(props: WorkshopCardProps) {
   // Default examples for pre-population
   const defaultReadiness: Record<string, string> = {
     sr_beats: '1) Hook: Bold on-screen line promises key benefit to target audience\n2) Problem: Show the pain the product solves\n3) Demonstration: Product in action with 3 clear steps\n4) Social Proof: Before/after or testimonial snippet\n5) CTA: Strong on-screen CTA and VO',
-    sr_actStructure: 'three-act',
     sr_runtime: '60',
     sr_sceneCount: '8',
     sr_characters: 'Alex — host/narrator, friendly/curious\nJamie — user, skeptical but open',

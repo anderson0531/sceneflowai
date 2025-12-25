@@ -107,6 +107,69 @@ function getFilmTypeMinutes(filmType?: string): number {
   }
 }
 
+/**
+ * Auto-detect the optimal film structure based on content analysis
+ * Uses keyword matching, format hints, and duration to select the best beat structure
+ */
+function autoDetectFilmStructure(
+  input: string,
+  coreConcept: CoreConceptData | null,
+  format: string,
+  targetMinutes: number
+): { structure: BeatStructureKey; confidence: number; reason: string } {
+  const content = `${input} ${coreConcept?.input_synopsis || ''} ${coreConcept?.core_themes?.join(' ') || ''}`.toLowerCase()
+  
+  // Check for instructional/educational content
+  const instructionalPatterns = /\b(tutorial|how-to|guide|lesson|learn|teach|step-by-step|instructions|training|course|module|explain|explainer|walkthrough|demonstration)\b/i
+  if (instructionalPatterns.test(content) || format === 'education' || format === 'training') {
+    return {
+      structure: 'instructional',
+      confidence: 0.9,
+      reason: 'Content has educational/instructional focus'
+    }
+  }
+  
+  // Check for documentary/mini-doc style
+  const documentaryPatterns = /\b(documentary|real|authentic|behind-the-scenes|journey|explore|discover|reveal|interview|profile|portrait|day-in-the-life|story of|true story)\b/i
+  if (documentaryPatterns.test(content) || format === 'documentary') {
+    return {
+      structure: 'mini_doc',
+      confidence: 0.85,
+      reason: 'Content suits documentary/mini-doc format'
+    }
+  }
+  
+  // Check for hero's journey patterns
+  const herosJourneyPatterns = /\b(hero|journey|quest|adventure|transform|overcome|destiny|calling|mentor|ordeal|return|triumph|dragon|villain|chosen one|reluctant|crossing threshold)\b/i
+  if (herosJourneyPatterns.test(content)) {
+    return {
+      structure: 'heros_journey',
+      confidence: 0.8,
+      reason: 'Content contains hero\'s journey narrative elements'
+    }
+  }
+  
+  // Check for Save the Cat patterns (commercial/Hollywood style)
+  const saveTheCatPatterns = /\b(commercial|blockbuster|mainstream|hook|catalyst|fun and games|midpoint|twist|all is lost|finale|crowd-pleaser|high-concept|entertainment)\b/i
+  if (saveTheCatPatterns.test(content) || targetMinutes >= 30) {
+    // Save the Cat works well for longer, more structured narratives
+    if (targetMinutes >= 20) {
+      return {
+        structure: 'save_the_cat',
+        confidence: 0.75,
+        reason: 'Content suits structured commercial narrative'
+      }
+    }
+  }
+  
+  // Default to three-act structure - the most versatile
+  return {
+    structure: 'three_act',
+    confidence: 0.7,
+    reason: 'Using versatile three-act structure as default'
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body: FilmTreatmentRequest = await request.json()
@@ -142,6 +205,16 @@ export async function POST(request: NextRequest) {
       coreConcept = await analyzeCoreConcept(input, { targetAudience, keyMessage, tone, genre, duration }, apiKey)
     }
 
+    // Auto-detect film structure if not explicitly provided
+    let effectiveBeatStructure = body.beatStructure
+    let autoDetectedStructure: { structure: BeatStructureKey; confidence: number; reason: string } | null = null
+    
+    if (!effectiveBeatStructure) {
+      autoDetectedStructure = autoDetectFilmStructure(input, coreConcept, format, cappedTargetMinutes)
+      effectiveBeatStructure = autoDetectedStructure.structure
+      console.log(`[Film Treatment] Auto-detected structure: ${effectiveBeatStructure} (confidence: ${autoDetectedStructure.confidence}, reason: ${autoDetectedStructure.reason})`)
+    }
+
     // Prepare diversified variant styles
     const variantConfigs: Array<{ id: string; label: string; styleHint: string }> = [
       { id: 'A', label: 'A', styleHint: 'Contemporary, minimal, crisp pacing, clean visual language' },
@@ -149,7 +222,18 @@ export async function POST(request: NextRequest) {
       { id: 'C', label: 'C', styleHint: 'Energetic, bold, high-contrast visuals, rhythmic editing' },
     ].slice(0, variantsCount)
 
-    const context = { targetAudience, keyMessage, tone, genre, duration, platform, format, targetMinutes: cappedTargetMinutes, beatStructure: body.beatStructure, userName }
+    const context = { 
+      targetAudience, 
+      keyMessage, 
+      tone, 
+      genre, 
+      duration, 
+      platform, 
+      format, 
+      targetMinutes: cappedTargetMinutes, 
+      beatStructure: effectiveBeatStructure, 
+      userName 
+    }
 
     // Generate variants serially (keeps logs clearer); can parallelize later if needed
     const variants: Array<{ id: string; label: string } & FilmTreatmentItem> = []
@@ -171,9 +255,17 @@ export async function POST(request: NextRequest) {
       success: true,
       data: variants[0],
       variants,
-      message: 'Film treatment variants generated successfully'
+      message: 'Film treatment variants generated successfully',
+      // Include auto-detected structure info if applicable
+      ...(autoDetectedStructure && {
+        autoDetectedStructure: {
+          structure: autoDetectedStructure.structure,
+          label: BEAT_STRUCTURES[autoDetectedStructure.structure]?.label,
+          confidence: autoDetectedStructure.confidence,
+          reason: autoDetectedStructure.reason
+        }
+      })
     }
-
 
     return NextResponse.json(responseData)
 
