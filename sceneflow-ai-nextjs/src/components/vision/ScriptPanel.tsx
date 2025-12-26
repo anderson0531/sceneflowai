@@ -3242,7 +3242,7 @@ function SceneCard({
                       className="flex items-center gap-1 px-2 py-1 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded transition-colors"
                     >
                       <Edit className="w-4 h-4" />
-                      <span className="text-xs">Scene</span>
+                      <span className="text-xs">Edit</span>
                     </button>
                   </TooltipTrigger>
                   <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">Edit scene</TooltipContent>

@@ -6365,6 +6365,126 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     )
   }
 
+  // Delete specific audio from a scene
+  const handleDeleteSceneAudio = async (
+    sceneIndex: number, 
+    audioType: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx',
+    dialogueIndex?: number,
+    sfxIndex?: number
+  ) => {
+    if (!script?.script?.scenes?.[sceneIndex]) {
+      console.error('[Delete Scene Audio] Scene not found')
+      return
+    }
+
+    const currentScene = script.script.scenes[sceneIndex]
+    const selectedLang = 'en' // Default language for now
+    
+    // Collect URLs to delete from blob storage
+    const urlsToDelete: string[] = []
+    
+    // Create updated scene based on audio type
+    const updatedScene = { ...currentScene }
+    
+    if (audioType === 'description') {
+      if (updatedScene.descriptionAudioUrl) {
+        urlsToDelete.push(updatedScene.descriptionAudioUrl)
+        delete updatedScene.descriptionAudioUrl
+      }
+      if (updatedScene.descriptionAudio?.[selectedLang]?.url) {
+        urlsToDelete.push(updatedScene.descriptionAudio[selectedLang].url)
+        delete updatedScene.descriptionAudio
+      }
+    } else if (audioType === 'narration') {
+      if (updatedScene.narrationAudioUrl) {
+        urlsToDelete.push(updatedScene.narrationAudioUrl)
+        delete updatedScene.narrationAudioUrl
+      }
+      if (updatedScene.narrationAudio?.[selectedLang]?.url) {
+        urlsToDelete.push(updatedScene.narrationAudio[selectedLang].url)
+        delete updatedScene.narrationAudio
+      }
+    } else if (audioType === 'dialogue' && dialogueIndex !== undefined) {
+      // Get dialogue audio array
+      let dialogueAudioArray: any[] = []
+      if (Array.isArray(updatedScene.dialogueAudio)) {
+        dialogueAudioArray = [...updatedScene.dialogueAudio]
+      } else if (updatedScene.dialogueAudio && typeof updatedScene.dialogueAudio === 'object') {
+        dialogueAudioArray = [...(updatedScene.dialogueAudio[selectedLang] || [])]
+      }
+      
+      // Find and remove the matching dialogue audio
+      const audioIdx = dialogueAudioArray.findIndex((a: any) => 
+        a.dialogueIndex === dialogueIndex
+      )
+      if (audioIdx !== -1 && dialogueAudioArray[audioIdx]?.audioUrl) {
+        urlsToDelete.push(dialogueAudioArray[audioIdx].audioUrl)
+        dialogueAudioArray.splice(audioIdx, 1)
+      }
+      
+      // Update the scene
+      if (Array.isArray(updatedScene.dialogueAudio)) {
+        updatedScene.dialogueAudio = dialogueAudioArray
+      } else {
+        updatedScene.dialogueAudio = { ...updatedScene.dialogueAudio, [selectedLang]: dialogueAudioArray }
+      }
+    } else if (audioType === 'music') {
+      if (updatedScene.musicAudio?.url) {
+        urlsToDelete.push(updatedScene.musicAudio.url)
+      }
+      delete updatedScene.musicAudio
+    } else if (audioType === 'sfx' && sfxIndex !== undefined) {
+      if (updatedScene.sfxAudio?.[sfxIndex]) {
+        urlsToDelete.push(updatedScene.sfxAudio[sfxIndex])
+        const newSfxAudio = [...(updatedScene.sfxAudio || [])]
+        newSfxAudio[sfxIndex] = null
+        updatedScene.sfxAudio = newSfxAudio
+      }
+      // Also clear from sfx object if it has audioUrl
+      if (updatedScene.sfx?.[sfxIndex]?.audioUrl) {
+        const newSfx = [...(updatedScene.sfx || [])]
+        newSfx[sfxIndex] = { ...newSfx[sfxIndex], audioUrl: undefined }
+        updatedScene.sfx = newSfx
+      }
+    }
+    
+    // Update state
+    const updatedScenes = [...script.script.scenes]
+    updatedScenes[sceneIndex] = updatedScene
+    
+    setScript({
+      ...script,
+      script: {
+        ...script.script,
+        scenes: updatedScenes
+      }
+    })
+    
+    // Force cache clear in ScreeningRoom
+    setScriptEditedAt(Date.now())
+    
+    // Save to database
+    try {
+      await saveScenesToDatabase(updatedScenes)
+      console.log(`[Delete Scene Audio] Deleted ${audioType} audio from Scene ${sceneIndex + 1}`)
+      toast.success(`${audioType.charAt(0).toUpperCase() + audioType.slice(1)} audio deleted`)
+    } catch (error) {
+      console.error('[Delete Scene Audio] Failed to save:', error)
+      toast.error('Failed to delete audio')
+    }
+    
+    // Delete blobs in background
+    if (urlsToDelete.length > 0) {
+      fetch('/api/blobs/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ urls: urlsToDelete })
+      }).catch(err => {
+        console.warn('[Delete Scene Audio] Error deleting blobs:', err)
+      })
+    }
+  }
+
   // Scene score generation handler
   const handleGenerateSceneScore = async (sceneIndex: number) => {
     if (!script || !script.script?.scenes) return
@@ -6687,6 +6807,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onReorderScenes={handleReorderScenes}
                 onEditScene={handleEditScene}
                 onUpdateSceneAudio={handleUpdateSceneAudio}
+                onDeleteSceneAudio={handleDeleteSceneAudio}
                 onGenerateSceneScore={handleGenerateSceneScore}
                 generatingScoreFor={generatingScoreFor}
                 getScoreColorClass={getScoreColorClass}

@@ -454,7 +454,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
         <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wide py-2">Reference Library</h3>
         
         {/* Tab Navigation - matching ScriptPanel folder tab style */}
-        <div className="flex items-center border-b border-gray-700/50 mb-3">
+        <div className="flex items-center border-b border-gray-700/50 mb-3 overflow-x-auto">
+          <div className="flex items-center flex-shrink-0">
           {referenceTabs.map((tab) => {
             const isActive = activeReferenceTab === tab.key
             return (
@@ -462,7 +463,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                 key={tab.key}
                 onClick={() => setActiveReferenceTab(tab.key)}
                 className={`
-                  relative px-3 py-1.5 text-xs font-medium rounded-t-lg transition-all mr-0.5
+                  relative px-3 py-1.5 text-xs font-medium rounded-t-lg transition-all mr-0.5 flex-shrink-0
                   ${isActive 
                     ? 'bg-slate-800/80 text-white border-t border-x border-gray-600/50 -mb-px' 
                     : 'bg-slate-900/40 text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 border-transparent'
@@ -479,14 +480,15 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               </button>
             )
           })}
+          </div>
           {/* Pro Tips Toggle - Cast tab only */}
           {activeReferenceTab === 'cast' && (
             <button
               onClick={() => setShowProTips((prev) => !prev)}
-              className="ml-auto p-1.5 rounded-full hover:bg-blue-500/10 text-blue-400 hover:text-blue-300 transition-colors"
+              className="ml-auto p-1 rounded-full hover:bg-blue-500/10 text-blue-400 hover:text-blue-300 transition-colors flex-shrink-0"
               title={showProTips ? "Hide Pro Tips" : "Show Pro Tips"}
             >
-              <Info className="w-3.5 h-3.5" />
+              <Info className="w-3 h-3" />
             </button>
           )}
         </div>

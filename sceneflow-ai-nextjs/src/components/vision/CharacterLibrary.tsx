@@ -705,7 +705,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                     }
                   }}
                   onClick={(e) => e.stopPropagation()}
-                  className="flex-1 px-2 py-1 text-sm font-semibold border border-blue-500 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-2 py-1 text-base font-semibold border border-blue-500 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
                   autoFocus
                 />
                 <button
@@ -731,7 +731,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
             ) : (
               <>
                 <h3 
-                  className="text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 flex-1"
+                  className="text-base font-semibold text-gray-900 dark:text-gray-100 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 flex-1"
                   onClick={(e) => {
                     e.stopPropagation()
                     if (onUpdateCharacterName) {
