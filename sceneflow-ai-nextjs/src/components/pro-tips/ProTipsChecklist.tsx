@@ -169,7 +169,7 @@ export function ProTipsChecklist({
       {/* Header */}
       <button
         onClick={onToggle}
-        className="flex items-center justify-between w-full text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+        className="flex items-center justify-between w-full text-sm font-semibold text-gray-500 dark:text-gray-400 tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
       >
         <div className="flex items-center gap-2">
           <ClipboardList className="w-4 h-4 text-amber-500" />
