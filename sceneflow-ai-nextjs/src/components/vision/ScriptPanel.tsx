@@ -2607,6 +2607,8 @@ interface SceneCardProps {
   onDeleteScene?: (sceneIndex: number) => void
   onEditScene?: (sceneIndex: number) => void
   onUpdateSceneAudio?: (sceneIndex: number) => Promise<void>
+  // NEW: Delete specific audio from scene
+  onDeleteSceneAudio?: (sceneIndex: number, audioType: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx', dialogueIndex?: number, sfxIndex?: number) => void
   // NEW: Scene score generation props
   onGenerateSceneScore?: (sceneIndex: number) => void
   generatingScoreFor?: number | null
@@ -2733,6 +2735,7 @@ function SceneCard({
   onDeleteScene,
   onEditScene,
   onUpdateSceneAudio,
+  onDeleteSceneAudio,
   onGenerateSceneScore,
   generatingScoreFor,
   getScoreColorClass,
@@ -3247,6 +3250,78 @@ function SceneCard({
               </TooltipProvider>
             )}
 
+            {/* Scene Review Button with Scores */}
+            {!isOutline && onGenerateSceneScore && (
+              <div className="flex items-center gap-1">
+                {/* Score badges if available */}
+                {scene.scoreAnalysis && (
+                  <div className="flex items-center gap-1 mr-1">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                            (scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore) >= 85 ? 'bg-green-500/20 text-green-400' :
+                            (scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore) >= 75 ? 'bg-yellow-500/20 text-yellow-400' :
+                            'bg-red-500/20 text-red-400'
+                          }`}>
+                            🎬 {scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-900 text-white border border-gray-700">
+                          <p className="text-xs">Director Score: {scene.scoreAnalysis.directorScore || scene.scoreAnalysis.overallScore}/100</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                            (scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore) >= 85 ? 'bg-green-500/20 text-green-400' :
+                            (scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore) >= 75 ? 'bg-yellow-500/20 text-yellow-400' :
+                            'bg-red-500/20 text-red-400'
+                          }`}>
+                            👥 {scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-900 text-white border border-gray-700">
+                          <p className="text-xs">Audience Score: {scene.scoreAnalysis.audienceScore || scene.scoreAnalysis.overallScore}/100</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                )}
+                {/* Review button */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onGenerateSceneScore(sceneIdx)
+                        }}
+                        disabled={generatingScoreFor === sceneIdx}
+                        className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${
+                          scene.scoreAnalysis 
+                            ? 'text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20' 
+                            : 'text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20'
+                        } disabled:opacity-50`}
+                      >
+                        {generatingScoreFor === sceneIdx ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Star className="w-4 h-4" />
+                        )}
+                        <span className="text-xs">{scene.scoreAnalysis ? 'Review' : 'Get Review'}</span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
+                      {scene.scoreAnalysis ? 'View or regenerate scene review' : 'Generate Director & Audience review'}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            )}
+
             {/* Bookmark toggle button */}
             {onBookmarkToggle && (
               <TooltipProvider>
@@ -3671,10 +3746,10 @@ function SceneCard({
                           <span className="text-xs font-medium text-gray-400">Audio Timeline</span>
                           <span className="text-xs text-gray-500">{readyElements}/{totalElements} ready</span>
                         </div>
-                        <div className="flex items-center gap-1 h-6 bg-gray-900/50 rounded overflow-hidden">
+                        <div className="flex items-center gap-1 h-8 bg-gray-900/50 rounded overflow-hidden">
                           {sceneDescription && (
                             <div 
-                              className={`flex-1 h-full flex items-center justify-center text-[9px] font-medium transition-colors ${
+                              className={`flex-1 h-full flex items-center justify-center text-[11px] font-medium transition-colors ${
                                 descriptionUrl ? 'bg-purple-600/60 text-white' : 'bg-purple-900/30 text-purple-400/70'
                               }`}
                               title={descriptionUrl ? 'Description: Ready' : 'Description: Not generated'}
@@ -3684,7 +3759,7 @@ function SceneCard({
                           )}
                           {scene.narration && (
                             <div 
-                              className={`flex-1 h-full flex items-center justify-center text-[9px] font-medium transition-colors ${
+                              className={`flex-1 h-full flex items-center justify-center text-[11px] font-medium transition-colors ${
                                 narrationUrl ? 'bg-blue-600/60 text-white' : 'bg-blue-900/30 text-blue-400/70'
                               }`}
                               title={narrationUrl ? 'Narration: Ready' : 'Narration: Not generated'}
@@ -3694,7 +3769,7 @@ function SceneCard({
                           )}
                           {dialogueCount > 0 && (
                             <div 
-                              className={`flex-[2] h-full flex items-center justify-center text-[9px] font-medium transition-colors ${
+                              className={`flex-[2] h-full flex items-center justify-center text-[11px] font-medium transition-colors ${
                                 dialogueWithAudio === dialogueCount ? 'bg-green-600/60 text-white' : 
                                 dialogueWithAudio > 0 ? 'bg-green-600/40 text-white/80' : 'bg-green-900/30 text-green-400/70'
                               }`}
@@ -3705,7 +3780,7 @@ function SceneCard({
                           )}
                           {sfxCount > 0 && (
                             <div 
-                              className={`flex-1 h-full flex items-center justify-center text-[9px] font-medium transition-colors ${
+                              className={`flex-1 h-full flex items-center justify-center text-[11px] font-medium transition-colors ${
                                 sfxWithAudio === sfxCount ? 'bg-amber-600/60 text-white' : 
                                 sfxWithAudio > 0 ? 'bg-amber-600/40 text-white/80' : 'bg-amber-900/30 text-amber-400/70'
                               }`}
@@ -3716,7 +3791,7 @@ function SceneCard({
                           )}
                           {scene.music && (
                             <div 
-                              className={`flex-1 h-full flex items-center justify-center text-[9px] font-medium transition-colors ${
+                              className={`flex-1 h-full flex items-center justify-center text-[11px] font-medium transition-colors ${
                                 hasMusic ? 'bg-purple-500/60 text-white' : 'bg-purple-900/30 text-purple-400/70'
                               }`}
                               title={hasMusic ? 'Music: Ready' : 'Music: Not generated'}
@@ -3809,6 +3884,20 @@ function SceneCard({
                               >
                                 <Download className="w-4 h-4" />
                               </a>
+                              {onDeleteSceneAudio && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (confirm('Delete description audio? You can regenerate it later.')) {
+                                      onDeleteSceneAudio(sceneIdx, 'description')
+                                    }
+                                  }}
+                                  className="p-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
+                                  title="Delete Scene Description Audio"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation()
@@ -3946,6 +4035,20 @@ function SceneCard({
                             >
                               <Download className="w-4 h-4" />
                             </a>
+                            {onDeleteSceneAudio && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  if (confirm('Delete narration audio? You can regenerate it later.')) {
+                                    onDeleteSceneAudio(sceneIdx, 'narration')
+                                  }
+                                }}
+                                className="p-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
+                                title="Delete Narration Audio"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
@@ -4158,6 +4261,20 @@ function SceneCard({
                                 >
                                   <Download className="w-4 h-4" />
                                 </a>
+                                {onDeleteSceneAudio && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      if (confirm(`Delete ${d.character}'s dialogue audio? You can regenerate it later.`)) {
+                                        onDeleteSceneAudio(sceneIdx, 'dialogue', i)
+                                      }
+                                    }}
+                                    className="p-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
+                                    title="Delete Dialogue Audio"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                )}
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
@@ -4294,6 +4411,20 @@ function SceneCard({
                             >
                               <Download className="w-4 h-4" />
                             </a>
+                            {onDeleteSceneAudio && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  if (confirm('Delete background music? You can regenerate it later.')) {
+                                    onDeleteSceneAudio(sceneIdx, 'music')
+                                  }
+                                }}
+                                className="p-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
+                                title="Delete Music Audio"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
@@ -4429,6 +4560,20 @@ function SceneCard({
                                   >
                                     <Download className="w-4 h-4" />
                                   </a>
+                                  {onDeleteSceneAudio && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        if (confirm('Delete this sound effect? You can regenerate it later.')) {
+                                          onDeleteSceneAudio(sceneIdx, 'sfx', undefined, sfxIdx)
+                                        }
+                                      }}
+                                      className="p-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
+                                      title="Delete SFX Audio"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  )}
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation()

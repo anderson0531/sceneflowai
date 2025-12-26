@@ -33,9 +33,12 @@ export const guidanceContent: Record<WorkflowStep, {
       'Use the AI assistant to professionally revise dialogue, improve pacing, or adjust tone'
     ],
     toolsAndTips: [
-      'AI Review (Score): Click \'Score\' to get feedback on pacing, structure, and engagement',
+      'Edit Scene: Click "Scene" to edit narration, dialogue, and action in a rich editor',
+      'Get Review: Click "Get Review" to score your scene from Director & Audience perspectives',
+      'AI Review (Score): Analyzes pacing, structure, emotional impact, and engagement',
       'AI Assistant: Use to revise dialogue and improve script quality',
-      'Audio Generation: Generate voice narration and character dialogue'
+      'Audio Generation: Generate voice narration and character dialogue',
+      'Delete Audio: When you change voices, delete old audio first to force fresh generation'
     ],
     bestPractice: 'Do not proceed until the script is locked and you have achieved a satisfactory AI Score.',
     tip: 'Finalizing the script early prevents costly rework later in the workflow.'
