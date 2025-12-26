@@ -30,6 +30,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const [isNewProject, setIsNewProject] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [showStructureHelp, setShowStructureHelp] = useState(false);
+  const loadedProjectRef = useRef<string | null>(null);
 
   const isProjectCreated = !!(guide.filmTreatment && guide.filmTreatment.trim() !== '' && guide.title && guide.title !== 'Untitled Project');
 
@@ -102,13 +103,15 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   // Load project data
   useEffect(() => {
     if (!projectId || projectId.startsWith('new-project')) return
-    if (currentProject?.id === projectId) return
+    // Prevent re-loading the same project
+    if (loadedProjectRef.current === projectId) return
     
     const load = async () => {
       try {
         const res = await fetch(`/api/projects/${projectId}`)
         if (res.ok) {
           const projectData = await res.json()
+          loadedProjectRef.current = projectId
           setCurrentProject(projectData)
           
           if (projectData?.metadata?.filmTreatmentVariant) {
@@ -147,7 +150,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       }
     }
     load()
-  }, [projectId, currentProject, setCurrentProject, setBeats, updateTreatment, setTreatmentVariants, updateTitle])
+  }, [projectId, setCurrentProject, setBeats, updateTreatment, setTreatmentVariants, updateTitle])
 
   useEffect(() => { console.debug('[StudioPage] outline autogen disabled; relying on OutlineV2') }, [guide?.filmTreatment, currentProject?.id])
 
