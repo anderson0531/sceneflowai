@@ -2799,6 +2799,13 @@ function SceneCard({
   const [isUpdatingAudio, setIsUpdatingAudio] = useState(false)
   const [selectedSegmentIndex, setSelectedSegmentIndex] = useState<number | null>(null)
   
+  // Collapsible section states
+  const [descriptionCollapsed, setDescriptionCollapsed] = useState(false)
+  const [narrationCollapsed, setNarrationCollapsed] = useState(false)
+  const [dialogueCollapsed, setDialogueCollapsed] = useState(false)
+  const [musicCollapsed, setMusicCollapsed] = useState(false)
+  const [sfxCollapsed, setSfxCollapsed] = useState(false)
+  
   // Determine active step for Co-Pilot
   const activeStep: WorkflowStep | null = activeWorkflowTab
   
@@ -3564,6 +3571,189 @@ function SceneCard({
                 
                 {activeWorkflowTab === 'dialogueAction' && (
                   <div className="space-y-4">
+                  {/* Quick Actions Bar */}
+                  <div className="sticky top-0 z-10 p-2 -mx-4 -mt-4 mb-4 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-gray-400 ml-2">Quick Actions</span>
+                    </div>
+                    <div className="flex items-center gap-2 mr-2">
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          // Generate all missing audio for this scene
+                          const sceneDescription = scene.visualDescription || scene.action || scene.summary || scene.heading
+                          const descriptionUrl = scene.descriptionAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.descriptionAudioUrl : undefined)
+                          const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
+                          
+                          overlayStore?.show(`Generating all audio for Scene ${sceneIdx + 1}...`, 30)
+                          try {
+                            // Generate description if missing
+                            if (sceneDescription && !descriptionUrl && onGenerateSceneAudio) {
+                              await onGenerateSceneAudio(sceneIdx, 'description', undefined, undefined, selectedLanguage)
+                            }
+                            // Generate narration if missing
+                            if (scene.narration && !narrationUrl && onGenerateSceneAudio) {
+                              await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined, selectedLanguage)
+                            }
+                            // Generate missing dialogues
+                            if (scene.dialogue && onGenerateSceneAudio) {
+                              for (let i = 0; i < scene.dialogue.length; i++) {
+                                const d = scene.dialogue[i]
+                                const audioEntry = scene.dialogueAudioMap?.[`${d.character}_${i}`]
+                                if (!audioEntry?.audioUrl) {
+                                  await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i, selectedLanguage)
+                                }
+                              }
+                            }
+                            overlayStore?.hide()
+                            toast.success('All audio generated!')
+                          } catch (error) {
+                            console.error('[ScriptPanel] Generate all failed:', error)
+                            overlayStore?.hide()
+                            toast.error('Failed to generate some audio')
+                          }
+                        }}
+                        className="px-3 py-1.5 text-xs font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-md flex items-center gap-1.5 transition-all"
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        Generate All Missing
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setDescriptionCollapsed(!descriptionCollapsed || !narrationCollapsed || !dialogueCollapsed || !musicCollapsed || !sfxCollapsed)
+                          setNarrationCollapsed(!descriptionCollapsed || !narrationCollapsed || !dialogueCollapsed || !musicCollapsed || !sfxCollapsed)
+                          setDialogueCollapsed(!descriptionCollapsed || !narrationCollapsed || !dialogueCollapsed || !musicCollapsed || !sfxCollapsed)
+                          setMusicCollapsed(!descriptionCollapsed || !narrationCollapsed || !dialogueCollapsed || !musicCollapsed || !sfxCollapsed)
+                          setSfxCollapsed(!descriptionCollapsed || !narrationCollapsed || !dialogueCollapsed || !musicCollapsed || !sfxCollapsed)
+                        }}
+                        className="px-2 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-md flex items-center gap-1 transition-all"
+                      >
+                        <ChevronDown className={`w-3 h-3 transition-transform ${descriptionCollapsed && narrationCollapsed && dialogueCollapsed ? 'rotate-180' : ''}`} />
+                        {descriptionCollapsed && narrationCollapsed && dialogueCollapsed ? 'Expand All' : 'Collapse All'}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Scene Emotional Context Header */}
+                  {(scene.sceneDirection?.mood || scene.mood || scene.sceneDirection?.tone || scene.tone || scene.sceneDirection?.pacing || scene.pacing) && (
+                    <div className="p-3 bg-gradient-to-r from-indigo-900/30 via-purple-900/20 to-fuchsia-900/20 rounded-lg border border-indigo-500/30">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Sparkles className="w-4 h-4 text-indigo-400" />
+                        <span className="text-xs font-semibold text-indigo-200">Scene Context</span>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {(scene.sceneDirection?.mood || scene.mood) && (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[10px] uppercase tracking-wider text-indigo-400/70">Mood</span>
+                            <span className="text-sm text-white/90 font-medium">{scene.sceneDirection?.mood || scene.mood}</span>
+                          </div>
+                        )}
+                        {(scene.sceneDirection?.intent || scene.objective) && (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[10px] uppercase tracking-wider text-purple-400/70">Intent</span>
+                            <span className="text-sm text-white/90 font-medium truncate">{scene.sceneDirection?.intent || scene.objective}</span>
+                          </div>
+                        )}
+                        {(scene.sceneDirection?.pacing || scene.pacing) && (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[10px] uppercase tracking-wider text-fuchsia-400/70">Pacing</span>
+                            <span className="text-sm text-white/90 font-medium capitalize">{scene.sceneDirection?.pacing || scene.pacing}</span>
+                          </div>
+                        )}
+                        {(scene.sceneDirection?.tone || scene.tone) && (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[10px] uppercase tracking-wider text-amber-400/70">Tone</span>
+                            <span className="text-sm text-white/90 font-medium">{scene.sceneDirection?.tone || scene.tone}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Audio Timeline Preview Strip */}
+                  {(() => {
+                    const sceneDescription = scene.visualDescription || scene.action || scene.summary || scene.heading
+                    const descriptionUrl = scene.descriptionAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.descriptionAudioUrl : undefined)
+                    const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
+                    const dialogueCount = scene.dialogue?.length || 0
+                    const dialogueWithAudio = scene.dialogue?.filter((d: any, i: number) => {
+                      const audioEntry = scene.dialogueAudioMap?.[`${d.character}_${i}`]
+                      return audioEntry?.audioUrl
+                    }).length || 0
+                    const sfxCount = scene.sfx?.length || 0
+                    const sfxWithAudio = scene.sfxAudio?.filter(Boolean).length || 0
+                    const hasMusic = !!scene.musicAudio
+                    
+                    const totalElements = (sceneDescription ? 1 : 0) + (scene.narration ? 1 : 0) + dialogueCount + sfxCount + (scene.music ? 1 : 0)
+                    const readyElements = (descriptionUrl ? 1 : 0) + (narrationUrl ? 1 : 0) + dialogueWithAudio + sfxWithAudio + (hasMusic ? 1 : 0)
+                    
+                    if (totalElements === 0) return null
+                    
+                    return (
+                      <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-medium text-gray-400">Audio Timeline</span>
+                          <span className="text-xs text-gray-500">{readyElements}/{totalElements} ready</span>
+                        </div>
+                        <div className="flex items-center gap-1 h-6 bg-gray-900/50 rounded overflow-hidden">
+                          {sceneDescription && (
+                            <div 
+                              className={`flex-1 h-full flex items-center justify-center text-[9px] font-medium transition-colors ${
+                                descriptionUrl ? 'bg-purple-600/60 text-white' : 'bg-purple-900/30 text-purple-400/70'
+                              }`}
+                              title={descriptionUrl ? 'Description: Ready' : 'Description: Not generated'}
+                            >
+                              Desc
+                            </div>
+                          )}
+                          {scene.narration && (
+                            <div 
+                              className={`flex-1 h-full flex items-center justify-center text-[9px] font-medium transition-colors ${
+                                narrationUrl ? 'bg-blue-600/60 text-white' : 'bg-blue-900/30 text-blue-400/70'
+                              }`}
+                              title={narrationUrl ? 'Narration: Ready' : 'Narration: Not generated'}
+                            >
+                              Narr
+                            </div>
+                          )}
+                          {dialogueCount > 0 && (
+                            <div 
+                              className={`flex-[2] h-full flex items-center justify-center text-[9px] font-medium transition-colors ${
+                                dialogueWithAudio === dialogueCount ? 'bg-green-600/60 text-white' : 
+                                dialogueWithAudio > 0 ? 'bg-green-600/40 text-white/80' : 'bg-green-900/30 text-green-400/70'
+                              }`}
+                              title={`Dialogue: ${dialogueWithAudio}/${dialogueCount} ready`}
+                            >
+                              Dialog ({dialogueWithAudio}/{dialogueCount})
+                            </div>
+                          )}
+                          {sfxCount > 0 && (
+                            <div 
+                              className={`flex-1 h-full flex items-center justify-center text-[9px] font-medium transition-colors ${
+                                sfxWithAudio === sfxCount ? 'bg-amber-600/60 text-white' : 
+                                sfxWithAudio > 0 ? 'bg-amber-600/40 text-white/80' : 'bg-amber-900/30 text-amber-400/70'
+                              }`}
+                              title={`SFX: ${sfxWithAudio}/${sfxCount} ready`}
+                            >
+                              SFX
+                            </div>
+                          )}
+                          {scene.music && (
+                            <div 
+                              className={`flex-1 h-full flex items-center justify-center text-[9px] font-medium transition-colors ${
+                                hasMusic ? 'bg-purple-500/60 text-white' : 'bg-purple-900/30 text-purple-400/70'
+                              }`}
+                              title={hasMusic ? 'Music: Ready' : 'Music: Not generated'}
+                            >
+                              Music
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })()}
+                  
                   {/* Scene Description (plays before narration) */}
                   {(() => {
                     const sceneDescription = scene.visualDescription || scene.action || scene.summary || scene.heading
@@ -3574,7 +3764,14 @@ function SceneCard({
                     return (
                       <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
                         <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setDescriptionCollapsed(!descriptionCollapsed)
+                            }}
+                            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                          >
+                            <ChevronDown className={`w-4 h-4 text-purple-600 dark:text-purple-300 transition-transform ${descriptionCollapsed ? '-rotate-90' : ''}`} />
                             <Volume2 className="w-4 h-4 text-purple-600 dark:text-purple-300" />
                             <span className="text-xs font-semibold text-purple-700 dark:text-purple-200">Scene Description</span>
                             {descriptionUrl && (
@@ -3583,7 +3780,7 @@ function SceneCard({
                                 Audio Ready
                               </span>
                             )}
-                          </div>
+                          </button>
                           {descriptionUrl ? (
                             <div className="flex items-center gap-2">
                               <button
@@ -3690,9 +3887,11 @@ function SceneCard({
                             </div>
                           )}
                         </div>
-                        <div className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
-                          "{sceneDescription}"
-                        </div>
+                        {!descriptionCollapsed && (
+                          <div className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
+                            "{sceneDescription}"
+                          </div>
+                        )}
                       </div>
                     )
                   })()}
@@ -3704,7 +3903,14 @@ function SceneCard({
                     return (
                     <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                       <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setNarrationCollapsed(!narrationCollapsed)
+                          }}
+                          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                        >
+                          <ChevronDown className={`w-4 h-4 text-blue-600 dark:text-blue-400 transition-transform ${narrationCollapsed ? '-rotate-90' : ''}`} />
                           <Volume2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                           <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Scene Narration</span>
                           {narrationUrl && (
@@ -3713,7 +3919,7 @@ function SceneCard({
                               Audio Ready
                             </span>
                           )}
-                        </div>
+                        </button>
                         {narrationUrl ? (
                           <div className="flex items-center gap-2">
                             <button
@@ -3816,9 +4022,11 @@ function SceneCard({
                           </div>
                         )}
                       </div>
-                      <div className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
-                        "{scene.narration}"
-                      </div>
+                      {!narrationCollapsed && (
+                        <div className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
+                          "{scene.narration}"
+                        </div>
+                      )}
                     </div>
                   )
                   })()}
@@ -3826,11 +4034,59 @@ function SceneCard({
                   {/* Scene Dialog */}
                   {scene.dialogue && scene.dialogue.length > 0 && (
                     <div className="bg-green-950 border-l-4 border-green-500 p-4 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Users className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Scene Dialog</span>
+                      <div className="flex items-center justify-between mb-3">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setDialogueCollapsed(!dialogueCollapsed)
+                          }}
+                          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                        >
+                          <ChevronDown className={`w-4 h-4 text-green-400 transition-transform ${dialogueCollapsed ? '-rotate-90' : ''}`} />
+                          <Users className="w-4 h-4 text-green-400" />
+                          <span className="text-sm font-semibold text-gray-200">Scene Dialog</span>
+                          <span className="text-xs text-gray-500">({scene.dialogue.length} {scene.dialogue.length === 1 ? 'line' : 'lines'})</span>
+                        </button>
+                        {/* Voice Casting Quick View */}
+                        <div className="flex items-center gap-1">
+                          {Array.from(new Set(scene.dialogue.map((d: any) => d.character))).slice(0, 4).map((character: any) => {
+                            const charDialogues = scene.dialogue.filter((d: any) => d.character === character)
+                            const charAudioReady = charDialogues.filter((d: any, idx: number) => {
+                              const dialogueIndex = scene.dialogue.findIndex((dd: any, i: number) => dd === d && i <= idx)
+                              const audioEntry = scene.dialogueAudioMap?.[`${character}_${dialogueIndex}`]
+                              return audioEntry?.audioUrl
+                            }).length
+                            const allReady = charAudioReady === charDialogues.length
+                            
+                            return (
+                            <TooltipProvider key={character}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full border flex items-center gap-0.5 ${
+                                    allReady 
+                                      ? 'bg-green-600/50 text-green-200 border-green-500/50' 
+                                      : charAudioReady > 0
+                                      ? 'bg-yellow-800/50 text-yellow-300 border-yellow-600/30'
+                                      : 'bg-green-800/50 text-green-300 border-green-600/30'
+                                  }`}>
+                                    {character?.slice(0, 2)?.toUpperCase() || '??'}
+                                    <span className="text-[8px] opacity-70">({charDialogues.length})</span>
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent className="bg-gray-900 text-white border border-gray-700">
+                                  <p className="text-xs font-medium">{character}</p>
+                                  <p className="text-[10px] text-gray-400">{charDialogues.length} {charDialogues.length === 1 ? 'line' : 'lines'} • {charAudioReady} audio ready</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )})}
+                          {Array.from(new Set(scene.dialogue.map((d: any) => d.character))).length > 4 && (
+                            <span className="text-[10px] text-gray-500">+{Array.from(new Set(scene.dialogue.map((d: any) => d.character))).length - 4}</span>
+                          )}
+                        </div>
                       </div>
-                      <div className="space-y-2">
+                      {!dialogueCollapsed && (
+                      <div className="space-y-3">
                       {scene.dialogue.map((d: any, i: number) => {
                         // Match audio by both character and dialogueIndex
                         // Handle both old array format and new object format (keyed by language)
@@ -3845,20 +4101,35 @@ function SceneCard({
                         const audioEntry = dialogueAudioArray.find((a: any) => 
                           a.character === d.character && a.dialogueIndex === i
                         )
+                        // Extract parenthetical voice direction from line (e.g., "(angrily) I'm fine")
+                        const parentheticalMatch = d.line?.match(/^\(([^)]+)\)\s*/)
+                        const parenthetical = parentheticalMatch?.[1]
+                        const lineWithoutParenthetical = parenthetical ? d.line.replace(/^\([^)]+\)\s*/, '') : d.line
+                        
                         return (
-                          <div key={i} className="flex items-start gap-2">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{d.character}</div>
-                                {audioEntry?.audioUrl && (
-                                  <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
-                                    <Volume2 className="w-3 h-3" />
-                                    Audio Ready
-                                  </span>
+                          <div key={i} className="p-3 bg-green-900/30 rounded-lg border border-green-700/30 hover:border-green-600/50 transition-colors">
+                            <div className="flex items-start gap-3">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1.5">
+                                  <div className="text-sm font-semibold text-green-200">{d.character}</div>
+                                  {/* Voice direction / parenthetical */}
+                                  {(parenthetical || d.voiceDirection || d.emotion) && (
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 italic">
+                                      {parenthetical || d.voiceDirection || d.emotion}
+                                    </span>
+                                  )}
+                                  {audioEntry?.audioUrl && (
+                                    <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
+                                      <Volume2 className="w-3 h-3" />
+                                      Ready
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-sm text-gray-200 leading-relaxed">"{lineWithoutParenthetical}"</div>
+                                {audioEntry?.duration && (
+                                  <div className="mt-1 text-[10px] text-gray-500">Duration: {audioEntry.duration.toFixed(1)}s</div>
                                 )}
                               </div>
-                              <div className="text-sm text-gray-700 dark:text-gray-300 italic">"{d.line}"</div>
-                            </div>
                             {audioEntry?.audioUrl ? (
                               <div className="flex items-center gap-2">
                                 <button
@@ -3972,10 +4243,12 @@ function SceneCard({
                               </button>
                             </div>
                             )}
+                            </div>
                           </div>
                         )
                       })}
                       </div>
+                      )}
                     </div>
                   )}
                   
@@ -3983,7 +4256,14 @@ function SceneCard({
                   {scene.music && (
                     <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
                       <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setMusicCollapsed(!musicCollapsed)
+                          }}
+                          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                        >
+                          <ChevronDown className={`w-4 h-4 text-purple-600 dark:text-purple-400 transition-transform ${musicCollapsed ? '-rotate-90' : ''}`} />
                           <Music className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                           <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">Background Music</span>
                           {scene.musicAudio && (
@@ -3992,7 +4272,7 @@ function SceneCard({
                               Audio Ready
                             </span>
                           )}
-                        </div>
+                        </button>
                         {scene.musicAudio ? (
                           <div className="flex items-center gap-2">
                             <button
@@ -4089,20 +4369,29 @@ function SceneCard({
                           </div>
                         )}
                       </div>
-                      <div className="text-sm text-gray-700 dark:text-gray-300 italic">
-                        {typeof scene.music === 'string' ? scene.music : scene.music.description}
-                      </div>
+                      {!musicCollapsed && (
+                        <div className="text-sm text-gray-700 dark:text-gray-300 italic">
+                          {typeof scene.music === 'string' ? scene.music : scene.music.description}
+                        </div>
+                      )}
                     </div>
                   )}
                   
                   {/* SFX */}
                   {scene.sfx && Array.isArray(scene.sfx) && scene.sfx.length > 0 && (
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 mb-2">
-                        <VolumeIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Sound Effects ({scene.sfx.length})</span>
-                      </div>
-                      {scene.sfx.map((sfx: any, sfxIdx: number) => {
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSfxCollapsed(!sfxCollapsed)
+                        }}
+                        className="flex items-center gap-2 mb-2 hover:opacity-80 transition-opacity"
+                      >
+                        <ChevronDown className={`w-4 h-4 text-amber-600 dark:text-amber-400 transition-transform ${sfxCollapsed ? '-rotate-90' : ''}`} />
+                        <VolumeIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                        <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">Sound Effects ({scene.sfx.length})</span>
+                      </button>
+                      {!sfxCollapsed && scene.sfx.map((sfx: any, sfxIdx: number) => {
                         const sfxAudio = scene.sfxAudio?.[sfxIdx]
                         return (
                           <div key={sfxIdx} className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
