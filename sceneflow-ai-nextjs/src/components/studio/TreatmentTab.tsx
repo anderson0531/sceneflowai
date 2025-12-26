@@ -1097,59 +1097,25 @@ export function TreatmentTab() {
       // If JSON parsing fails, try to render as HTML (fallback)
       console.log('🎬 TreatmentTab: Content is not JSON, treating as HTML:', error);
       
-      // Create a temporary div to parse HTML
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = content;
-      
-      // Convert to React elements
-      const convertNode = (node: Node): React.ReactNode => {
-        if (node.nodeType === Node.TEXT_NODE) {
-          return node.textContent;
-        }
-        
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          const element = node as Element;
-          const tagName = element.tagName.toLowerCase();
-          const children = Array.from(element.childNodes).map(convertNode);
-          
-          switch (tagName) {
-            case 'h1':
-              return <h1 className="text-3xl font-bold text-white mb-6">{children}</h1>;
-            case 'h2':
-              return <h2 className="text-2xl font-semibold text-white mb-4 mt-8">{children}</h2>;
-            case 'h3':
-              return <h3 className="text-xl font-semibold text-white mb-3 mt-6">{children}</h3>;
-            case 'p':
-              return <p className="text-gray-300 mb-4 leading-relaxed text-base">{children}</p>;
-            case 'strong':
-              return <strong className="font-semibold text-white">{children}</strong>;
-            case 'em':
-              return <em className="italic text-gray-200">{children}</em>;
-            case 'ul':
-              return <ul className="list-disc list-inside text-gray-300 mb-4 space-y-2 ml-4">{children}</ul>;
-            case 'ol':
-              return <ol className="list-decimal list-inside text-gray-300 mb-4 space-y-2 ml-4">{children}</ol>;
-            case 'li':
-              return <li className="ml-2">{children}</li>;
-            case 'blockquote':
-              return <blockquote className="border-l-4 border-blue-500 pl-6 italic text-gray-200 mb-4 bg-gray-700/30 py-3 rounded-r-lg">{children}</blockquote>;
-            default:
-              return <span>{children}</span>;
-          }
-        }
-        
-        return null;
-      };
-      
-      // Billboard image removed for HTML content too
+      // Use dangerouslySetInnerHTML for SSR-safe HTML rendering
+      // This avoids using document.createElement which isn't available on server
       return (
         <div className="space-y-6">
-          {/* Billboard image removed */}
-          
-          {/* HTML Content */}
-          <div className="space-y-4">
-            {Array.from(tempDiv.childNodes).map(convertNode)}
-          </div>
+          {/* HTML Content - rendered safely with dangerouslySetInnerHTML */}
+          <div 
+            className="prose prose-invert max-w-none space-y-4 
+              [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:text-white [&_h1]:mb-6
+              [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:text-white [&_h2]:mb-4 [&_h2]:mt-8
+              [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:text-white [&_h3]:mb-3 [&_h3]:mt-6
+              [&_p]:text-gray-300 [&_p]:mb-4 [&_p]:leading-relaxed [&_p]:text-base
+              [&_strong]:font-semibold [&_strong]:text-white
+              [&_em]:italic [&_em]:text-gray-200
+              [&_ul]:list-disc [&_ul]:list-inside [&_ul]:text-gray-300 [&_ul]:mb-4 [&_ul]:space-y-2 [&_ul]:ml-4
+              [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:text-gray-300 [&_ol]:mb-4 [&_ol]:space-y-2 [&_ol]:ml-4
+              [&_li]:ml-2
+              [&_blockquote]:border-l-4 [&_blockquote]:border-blue-500 [&_blockquote]:pl-6 [&_blockquote]:italic [&_blockquote]:text-gray-200 [&_blockquote]:mb-4 [&_blockquote]:bg-gray-700/30 [&_blockquote]:py-3 [&_blockquote]:rounded-r-lg"
+            dangerouslySetInnerHTML={{ __html: content }}
+          />
         </div>
       );
     }
