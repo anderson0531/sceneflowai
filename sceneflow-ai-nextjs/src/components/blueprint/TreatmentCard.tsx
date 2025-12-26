@@ -58,6 +58,9 @@ export function TreatmentCard() {
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [showReasoning, setShowReasoning] = useState(false)
   const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
+  // Client-side only state for flash highlight (avoids hydration mismatch from Date.now())
+  const [isClient, setIsClient] = useState(false)
+  useEffect(() => { setIsClient(true) }, [])
   // zoomedImage removed - now in Vision phase
   function mapVariantToInputText(v: any): string {
     const title = v?.title ? `${v.title}\n\n` : ''
@@ -200,8 +203,9 @@ export function TreatmentCard() {
   // If variants exist, render treatment; else show single treatment
   if (Array.isArray(variants) && variants.length > 0 && active) {
     const activeVariant = variants.find(v => v.id === active) || variants[0]
-    const withinWindow = Date.now() - (appliedAt || 0) < 2000
-    const wasJustAppliedActive = justAppliedVariantId === activeVariant.id && withinWindow
+    // Flash highlight logic - only run on client to avoid hydration mismatch from Date.now()
+    const withinWindow = isClient ? Date.now() - (appliedAt || 0) < 2000 : false
+    const wasJustAppliedActive = isClient && justAppliedVariantId === activeVariant.id && withinWindow
     const changedKeys = (() => {
       if (!wasJustAppliedActive || !lastEdit || lastEdit.variantId !== activeVariant.id) return new Set<string>()
       const before = lastEdit.before || {}
