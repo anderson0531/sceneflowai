@@ -41,6 +41,66 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   // Store last input
   const [lastInput, setLastInput] = useState('')
 
+  // Generate film treatment handler
+  const handleGenerateBlueprint = async (text: string, opts?: { persona?: 'Narrator'|'Director'; model?: string; rigor?: 'fast'|'balanced'|'thorough' }) => {
+    setLastInput(text)
+    setIsGen(true)
+    startProgress()
+    
+    try {
+      const response = await fetch('/api/ideation/film-treatment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          input: text,
+          format: 'short_film',
+          filmType: 'short_film',
+          rigor: opts?.rigor || 'thorough',
+          variants: 3
+        })
+      })
+      
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}))
+        throw new Error(errData.error || 'Failed to generate film treatment')
+      }
+      
+      const data = await response.json()
+      
+      if (data.success && Array.isArray(data.treatments)) {
+        // Map API treatments to variants format expected by TreatmentCard
+        const variants = data.treatments.map((t: any, idx: number) => ({
+          id: `treatment-${Date.now()}-${idx}`,
+          label: t.title || `Variant ${idx + 1}`,
+          content: t.synopsis || t.film_treatment || '',
+          ...t
+        }))
+        
+        setTreatmentVariants(variants)
+        
+        if (variants[0]) {
+          updateTitle(variants[0].title || 'Untitled Project')
+          updateTreatment(variants[0].synopsis || variants[0].content || '')
+        }
+        
+        if (data.beats) {
+          setBeatsView(data.beats)
+          setBeats(data.beats)
+        }
+        
+        if (data.estimatedRuntime) {
+          setEstimatedRuntime(data.estimatedRuntime)
+        }
+      }
+    } catch (error: any) {
+      console.error('[StudioPage] Blueprint generation failed:', error)
+      throw error // Re-throw so BlueprintComposer can show error
+    } finally {
+      setIsGen(false)
+      stopProgress()
+    }
+  }
+
   const handleExport = () => {
     console.log("Exporting PDF...");
   };
@@ -202,14 +262,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700/50">
         <div className="text-sm text-slate-400 mb-2">Your Input</div>
         <BlueprintComposer
-          onStart={() => { setIsGen(true); startProgress() }}
-          onComplete={(data) => { 
-            setIsGen(false); 
-            stopProgress(); 
-            if (data?.beats) { setBeatsView(data.beats); beatsDataRef.current = data.beats }
-            if (data?.estimatedRuntime) setEstimatedRuntime(data.estimatedRuntime)
-          }}
-          onInputChange={(val) => { lastInputRef.current = val; setLastInput(val) }}
+          onGenerate={handleGenerateBlueprint}
         />
       </div>
 
