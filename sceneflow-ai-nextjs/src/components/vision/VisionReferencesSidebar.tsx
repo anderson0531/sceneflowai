@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { DndContext } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
@@ -438,87 +438,159 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
 
   const [castOpen, setCastOpen] = useState(false)
   const [showProTips, setShowProTips] = useState(false)
+  const [activeReferenceTab, setActiveReferenceTab] = useState<'cast' | 'scene' | 'object'>('cast')
+
+  // Reference tabs matching ScriptPanel folder tab style
+  const referenceTabs = [
+    { key: 'cast' as const, label: 'Cast', icon: <Users className="w-3.5 h-3.5" />, count: characters.length },
+    { key: 'scene' as const, label: 'Scene', icon: <Images className="w-3.5 h-3.5" />, count: sceneReferences.length },
+    { key: 'object' as const, label: 'Object', icon: <Package className="w-3.5 h-3.5" />, count: objectReferences.length },
+  ]
 
   return (
     <DndContext>
-      <div className="space-y-6">
-        <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide sticky top-0 bg-gray-50 dark:bg-gray-950 py-3 -mt-3 z-10">Reference Library</h3>
-          
-          {/* Cast Section */}
-          <div className="border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900">
+      <div className="flex flex-col h-full">
+        {/* Title - smaller and Title Case */}
+        <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wide py-2">Reference Library</h3>
+        
+        {/* Tab Navigation - matching ScriptPanel folder tab style */}
+        <div className="flex items-center border-b border-gray-700/50 mb-3">
+          {referenceTabs.map((tab) => {
+            const isActive = activeReferenceTab === tab.key
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveReferenceTab(tab.key)}
+                className={`
+                  relative px-3 py-1.5 text-xs font-medium rounded-t-lg transition-all mr-0.5
+                  ${isActive 
+                    ? 'bg-slate-800/80 text-white border-t border-x border-gray-600/50 -mb-px' 
+                    : 'bg-slate-900/40 text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 border-transparent'
+                  }
+                `}
+              >
+                <div className="flex items-center gap-1.5">
+                  {React.cloneElement(tab.icon as React.ReactElement, { className: `w-3 h-3 ${isActive ? 'text-sf-primary' : ''}` })}
+                  <span>{tab.label}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${isActive ? 'bg-sf-primary/20 text-sf-primary' : 'bg-gray-700/50 text-gray-500'}`}>
+                    {tab.count}
+                  </span>
+                </div>
+              </button>
+            )
+          })}
+          {/* Pro Tips Toggle - Cast tab only */}
+          {activeReferenceTab === 'cast' && (
             <button
-              onClick={() => setCastOpen((prev) => !prev)}
-              className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-100"
+              onClick={() => setShowProTips((prev) => !prev)}
+              className="ml-auto p-1.5 rounded-full hover:bg-blue-500/10 text-blue-400 hover:text-blue-300 transition-colors"
+              title={showProTips ? "Hide Pro Tips" : "Show Pro Tips"}
             >
-              <span className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-sf-primary" />
-                Cast
-                <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
-                  {characters.length}
-                </span>
-                {/* Pro Tips Toggle Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setShowProTips((prev) => !prev)
-                  }}
-                  className="p-1.5 rounded-full hover:bg-blue-500/10 text-blue-400 hover:text-blue-300 transition-colors"
-                  title={showProTips ? "Hide Pro Tips" : "Show Pro Tips"}
-                >
-                  <Info className="w-4 h-4" />
-                </button>
-              </span>
-              {castOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              <Info className="w-3.5 h-3.5" />
             </button>
-            {castOpen && (
-              <div className="px-4 pb-4">
-                <CharacterLibrary
-                  characters={characters}
-                  onRegenerateCharacter={onRegenerateCharacter}
-                  onGenerateCharacter={onGenerateCharacter}
-                  onUploadCharacter={onUploadCharacter}
-                  onApproveCharacter={onApproveCharacter}
-                  onUpdateCharacterAttributes={onUpdateCharacterAttributes}
-                  onUpdateCharacterVoice={onUpdateCharacterVoice}
-                  onUpdateCharacterAppearance={onUpdateCharacterAppearance}
-                  onUpdateCharacterName={onUpdateCharacterName}
-                  onUpdateCharacterRole={onUpdateCharacterRole}
-                  onUpdateCharacterWardrobe={onUpdateCharacterWardrobe}
-                  onAddCharacter={onAddCharacter}
-                  onRemoveCharacter={onRemoveCharacter}
-                  ttsProvider={ttsProvider}
-                  uploadingRef={uploadingRef}
-                  setUploadingRef={setUploadingRef}
-                  enableDrag={enableDrag}
-                  compact
-                  showProTips={showProTips}
-                  screenplayContext={screenplayContext}
-                />
+          )}
+        </div>
+        
+        {/* Tab Content - independent vertical scroll */}
+        <div className="flex-1 overflow-y-auto min-h-0 space-y-3">
+          {/* Cast Tab Content */}
+          {activeReferenceTab === 'cast' && (
+            <CharacterLibrary
+              characters={characters}
+              onRegenerateCharacter={onRegenerateCharacter}
+              onGenerateCharacter={onGenerateCharacter}
+              onUploadCharacter={onUploadCharacter}
+              onApproveCharacter={onApproveCharacter}
+              onUpdateCharacterAttributes={onUpdateCharacterAttributes}
+              onUpdateCharacterVoice={onUpdateCharacterVoice}
+              onUpdateCharacterAppearance={onUpdateCharacterAppearance}
+              onUpdateCharacterName={onUpdateCharacterName}
+              onUpdateCharacterRole={onUpdateCharacterRole}
+              onUpdateCharacterWardrobe={onUpdateCharacterWardrobe}
+              onAddCharacter={onAddCharacter}
+              onRemoveCharacter={onRemoveCharacter}
+              ttsProvider={ttsProvider}
+              uploadingRef={uploadingRef}
+              setUploadingRef={setUploadingRef}
+              enableDrag={enableDrag}
+              compact
+              showProTips={showProTips}
+              screenplayContext={screenplayContext}
+            />
+          )}
+          
+          {/* Scene Tab Content */}
+          {activeReferenceTab === 'scene' && (
+            <div className="space-y-3">
+              {/* Action buttons for Scene tab */}
+              <div className="flex items-center gap-2">
+                {scenes.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setGeneratorModalOpen(true)}
+                    className="text-sf-primary border-sf-primary/30 hover:bg-sf-primary/10 flex-1"
+                  >
+                    <Sparkles className="w-4 h-4 mr-1" />
+                    Generate Scene
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleOpenDialog('scene')}
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add
+                </Button>
               </div>
-            )}
-          </div>
-
-          <ReferenceSection
-            title="Scene Backdrops"
-            type="scene"
-            references={sceneReferences}
-            icon={<Images className="w-4 h-4 text-sf-primary" />}
-            onAdd={handleOpenDialog}
-            onRemove={onRemoveReference}
-            showGenerateButton={scenes.length > 0}
-            onGenerate={() => setGeneratorModalOpen(true)}
-            scenes={scenes}
-            onInsertBackdropSegment={onInsertBackdropSegment}
-          />
-          <ReferenceSection
-            title="Objects"
-            type="object"
-            references={objectReferences}
-            icon={<Package className="w-4 h-4 text-sf-primary" />}
-            onAdd={handleOpenDialog}
-            onRemove={onRemoveReference}
-          />
+              {sceneReferences.length === 0 ? (
+                <div className="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg py-6 text-center">
+                  No scene backdrops yet. Generate or add scene imagery.
+                </div>
+              ) : (
+                sceneReferences.map((reference) => (
+                  <DraggableReferenceCard
+                    key={reference.id}
+                    reference={reference}
+                    onRemove={() => onRemoveReference('scene', reference.id)}
+                    scenes={scenes}
+                    onInsertBackdropSegment={onInsertBackdropSegment}
+                  />
+                ))
+              )}
+            </div>
+          )}
+          
+          {/* Object Tab Content */}
+          {activeReferenceTab === 'object' && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleOpenDialog('object')}
+                  className="flex-1"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Object
+                </Button>
+              </div>
+              {objectReferences.length === 0 ? (
+                <div className="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg py-6 text-center">
+                  No object references yet. Add props or set pieces.
+                </div>
+              ) : (
+                objectReferences.map((reference) => (
+                  <DraggableReferenceCard
+                    key={reference.id}
+                    reference={reference}
+                    onRemove={() => onRemoveReference('object', reference.id)}
+                  />
+                ))
+              )}
+            </div>
+          )}
         </div>
       </div>
       <AddReferenceDialog

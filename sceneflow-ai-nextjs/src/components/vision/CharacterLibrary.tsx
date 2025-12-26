@@ -705,7 +705,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                     }
                   }}
                   onClick={(e) => e.stopPropagation()}
-                  className="flex-1 px-2 py-1 text-lg font-semibold border border-blue-500 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-2 py-1 text-sm font-semibold border border-blue-500 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
                   autoFocus
                 />
                 <button
@@ -731,7 +731,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
             ) : (
               <>
                 <h3 
-                  className="text-lg font-semibold text-gray-900 dark:text-gray-100 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 flex-1"
+                  className="text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 flex-1"
                   onClick={(e) => {
                     e.stopPropagation()
                     if (onUpdateCharacterName) {
@@ -1112,12 +1112,12 @@ function NarratorCharacterCard({ character, onUpdateCharacterVoice, ttsProvider 
         {/* Header with badge */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Volume2 className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <Volume2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
               {character.name}
             </h3>
           </div>
-          <span className="px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs font-medium rounded-full">
+          <span className="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[10px] font-medium rounded-full">
             Narration
           </span>
         </div>
@@ -1189,13 +1189,13 @@ function DescriptionVoiceCard({ character, onUpdateCharacterVoice, ttsProvider }
       <div className="p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Volume2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <Volume2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
               {character.name}
             </h3>
           </div>
-          <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full">
-            Scene Description
+          <span className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-medium rounded-full">
+            Desc
           </span>
         </div>
 
