@@ -79,34 +79,53 @@ export function TreatmentTab() {
   const [isGeneratingVisuals, setIsGeneratingVisuals] = useState(false);
 
   // Parse treatment data for ModernTreatmentView
+  // Works with existing Blueprint data - handles JSON, HTML, and treatmentDetails
   const parsedTreatment = useMemo((): FilmTreatmentData | null => {
-    if (!guide.filmTreatment && !guide.treatmentDetails) return null;
+    // Build base treatment object from treatmentDetails (always available for existing projects)
+    const details = guide.treatmentDetails || {};
     
-    try {
-      // Try parsing as JSON first
-      if (guide.filmTreatment && typeof guide.filmTreatment === 'string') {
-        const parsed = JSON.parse(guide.filmTreatment);
-        // Merge with characters from guide if available
-        if (guide.characters && guide.characters.length > 0) {
-          parsed.character_descriptions = guide.characters.map(char => ({
-            name: char.name,
-            role: char.role || 'Supporting',
-            description: char.description || char.backstory || '',
-            image_prompt: char.imagePrompt || ''
-          }));
+    // Extract synopsis - try filmTreatment first, then details.synopsis
+    let synopsis = '';
+    if (guide.filmTreatment && typeof guide.filmTreatment === 'string') {
+      // Check if it's HTML content - extract text content for synopsis
+      if (guide.filmTreatment.includes('<') && guide.filmTreatment.includes('>')) {
+        // It's HTML - use treatmentDetails.synopsis if available, otherwise extract from HTML
+        synopsis = details.synopsis || guide.filmTreatment.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500);
+      } else {
+        // Try parsing as JSON
+        try {
+          const parsed = JSON.parse(guide.filmTreatment);
+          // It's JSON - merge with details and return
+          const mergedData = {
+            ...parsed,
+            title: parsed.title || details.title || guide.title || '',
+            logline: parsed.logline || details.logline || '',
+            synopsis: parsed.synopsis || details.synopsis || '',
+          };
+          // Merge with characters from guide if available
+          if (guide.characters && guide.characters.length > 0) {
+            mergedData.character_descriptions = guide.characters.map(char => ({
+              name: char.name,
+              role: char.role || 'Supporting',
+              description: char.description || char.backstory || '',
+              image_prompt: char.imagePrompt || ''
+            }));
+          }
+          return mergedData as FilmTreatmentData;
+        } catch {
+          // Not JSON - use as synopsis directly
+          synopsis = guide.filmTreatment;
         }
-        return parsed as FilmTreatmentData;
       }
-    } catch {
-      // Not JSON, create from treatmentDetails
+    } else {
+      synopsis = details.synopsis || '';
     }
     
-    // Fallback to treatmentDetails
-    const details = guide.treatmentDetails || {};
-    return {
-      title: details.title || guide.title || '',
+    // Build from treatmentDetails (for existing Blueprint projects)
+    const baseTreatment: FilmTreatmentData = {
+      title: details.title || guide.title || 'Untitled Project',
       logline: details.logline || '',
-      synopsis: details.synopsis || guide.filmTreatment || '',
+      synopsis: synopsis,
       genre: details.genre || '',
       author_writer: details.author || '',
       setting: details.setting || '',
@@ -126,7 +145,14 @@ export function TreatmentTab() {
         description: char.description || char.backstory || '',
         image_prompt: char.imagePrompt || ''
       })) || []
-    } as FilmTreatmentData;
+    };
+    
+    // Only return null if we have absolutely nothing to show
+    if (!baseTreatment.title && !baseTreatment.logline && !baseTreatment.synopsis) {
+      return null;
+    }
+    
+    return baseTreatment;
   }, [guide.filmTreatment, guide.treatmentDetails, guide.characters, guide.title]);
 
   // Handler for generating all treatment visuals
