@@ -446,8 +446,8 @@ export default function SparkStudioPage({ params }: { params: { projectId: strin
                   <div className="relative rounded-2xl border border-slate-700/60 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-800/80 p-6 shadow-lg overflow-hidden">
                     <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-amber-500 via-yellow-400 to-orange-400 opacity-80" />
                     <div className="flex items-center gap-2 mb-4">
-                      <Sparkles className="w-5 h-5 text-amber-400" />
-                      <h3 className="text-xl font-semibold text-white">What&apos;s Your Vision?</h3>
+                      <Sparkles className="w-4 h-4 text-amber-400" />
+                      <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">What&apos;s Your Vision?</h3>
                     </div>
                     
                     <BlueprintComposer onGenerate={onGenerate} rigor={rigor} />
