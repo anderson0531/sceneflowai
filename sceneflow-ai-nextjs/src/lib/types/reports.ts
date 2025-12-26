@@ -19,6 +19,7 @@ export interface FilmTreatmentData {
     name: string
     description?: string
     role?: string
+    image_prompt?: string
   }>
   beats?: Array<{
     title: string
@@ -32,6 +33,11 @@ export interface FilmTreatmentData {
   setting?: string
   protagonist?: string
   antagonist?: string
+  act_breakdown?: {
+    act1?: string
+    act2?: string
+    act3?: string
+  }
 }
 
 // Align with existing script structure

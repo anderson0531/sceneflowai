@@ -29,41 +29,7 @@ import {
   calculateTreatmentCredits,
   TONE_PALETTE_COLORS
 } from '@/types/treatment-visuals'
-
-/**
- * Film Treatment data structure from the API
- */
-interface FilmTreatmentData {
-  title?: string
-  logline?: string
-  synopsis?: string
-  genre?: string
-  author_writer?: string
-  date?: string
-  setting?: string
-  protagonist?: string
-  antagonist?: string
-  tone?: string
-  visual_style?: string
-  themes?: string | string[]
-  act_breakdown?: {
-    act1?: string
-    act2?: string
-    act3?: string
-  }
-  character_descriptions?: Array<{
-    name: string
-    role?: string
-    description?: string
-    image_prompt?: string
-  }>
-  beats?: Array<{
-    title: string
-    intent?: string
-    synopsis?: string
-    minutes: number
-  }>
-}
+import type { FilmTreatmentData } from '@/lib/types/reports'
 
 interface ModernTreatmentViewProps {
   /** Film treatment data from the store/API */

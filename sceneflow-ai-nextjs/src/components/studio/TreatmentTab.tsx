@@ -5,8 +5,11 @@ import { useCue } from '@/store/useCueStore';
 import { Button } from '@/components/ui/Button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { SparklesIcon, Eye, RefreshCw, Clapperboard, Lightbulb, Users, Award, ChevronDown } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { SparklesIcon, Eye, RefreshCw, Clapperboard, Lightbulb, Users, Award, ChevronDown, LayoutGrid, Type, ImageIcon } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { ModernTreatmentView } from '@/components/treatment';
+import type { TreatmentVisuals, TreatmentMood } from '@/types/treatment-visuals';
+import type { FilmTreatmentData } from '@/lib/types/reports';
 import { OutlineEditor } from '@/components/studio/OutlineEditor';
 import ScriptViewer from '@/components/studio/ScriptViewer';
 
@@ -69,6 +72,128 @@ export function TreatmentTab() {
   const [parsedAssessment, setParsedAssessment] = useState<ParsedAssessment | null>(null);
   const [refineInstruction, setRefineInstruction] = useState('');
   const [isRefining, setIsRefining] = useState(false);
+  
+  // Modern Treatment View state
+  const [treatmentViewMode, setTreatmentViewMode] = useState<'classic' | 'modern'>('classic');
+  const [treatmentVisuals, setTreatmentVisuals] = useState<TreatmentVisuals | null>(null);
+  const [isGeneratingVisuals, setIsGeneratingVisuals] = useState(false);
+
+  // Parse treatment data for ModernTreatmentView
+  const parsedTreatment = useMemo((): FilmTreatmentData | null => {
+    if (!guide.filmTreatment && !guide.treatmentDetails) return null;
+    
+    try {
+      // Try parsing as JSON first
+      if (guide.filmTreatment && typeof guide.filmTreatment === 'string') {
+        const parsed = JSON.parse(guide.filmTreatment);
+        // Merge with characters from guide if available
+        if (guide.characters && guide.characters.length > 0) {
+          parsed.character_descriptions = guide.characters.map(char => ({
+            name: char.name,
+            role: char.role || 'Supporting',
+            description: char.description || char.backstory || '',
+            image_prompt: char.imagePrompt || ''
+          }));
+        }
+        return parsed as FilmTreatmentData;
+      }
+    } catch {
+      // Not JSON, create from treatmentDetails
+    }
+    
+    // Fallback to treatmentDetails
+    const details = guide.treatmentDetails || {};
+    return {
+      title: details.title || guide.title || '',
+      logline: details.logline || '',
+      synopsis: details.synopsis || guide.filmTreatment || '',
+      genre: details.genre || '',
+      author_writer: details.author || '',
+      setting: details.setting || '',
+      protagonist: details.protagonist || '',
+      antagonist: details.antagonist || '',
+      tone: details.tone || '',
+      visual_style: details.visualStyle || '',
+      themes: details.themes || [],
+      act_breakdown: details.structure ? {
+        act1: details.structure.act1 || '',
+        act2: details.structure.act2 || '',
+        act3: details.structure.act3 || ''
+      } : undefined,
+      character_descriptions: guide.characters?.map(char => ({
+        name: char.name,
+        role: char.role || 'Supporting',
+        description: char.description || char.backstory || '',
+        image_prompt: char.imagePrompt || ''
+      })) || []
+    } as FilmTreatmentData;
+  }, [guide.filmTreatment, guide.treatmentDetails, guide.characters, guide.title]);
+
+  // Handler for generating all treatment visuals
+  const handleGenerateVisuals = useCallback(async () => {
+    if (!parsedTreatment) return;
+    
+    setIsGeneratingVisuals(true);
+    try {
+      const response = await fetch('/api/treatment/generate-visual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: guide.projectId,
+          treatment: parsedTreatment,
+          generateAll: true,
+          mood: treatmentVisuals?.mood || 'balanced'
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setTreatmentVisuals(data.visuals);
+      }
+    } catch (error) {
+      console.error('Failed to generate treatment visuals:', error);
+    } finally {
+      setIsGeneratingVisuals(false);
+    }
+  }, [parsedTreatment, guide.projectId, treatmentVisuals?.mood]);
+
+  // Handler for regenerating a single visual
+  const handleRegenerateVisual = useCallback(async (
+    type: 'hero' | 'character' | 'act' | 'keyProp',
+    id?: string | number
+  ) => {
+    if (!parsedTreatment) return;
+    
+    setIsGeneratingVisuals(true);
+    try {
+      const response = await fetch('/api/treatment/generate-visual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: guide.projectId,
+          treatment: parsedTreatment,
+          visualType: type,
+          visualId: id,
+          mood: treatmentVisuals?.mood || 'balanced'
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Update specific visual in state
+        setTreatmentVisuals(prev => prev ? { ...prev, ...data.visuals } : data.visuals);
+      }
+    } catch (error) {
+      console.error('Failed to regenerate visual:', error);
+    } finally {
+      setIsGeneratingVisuals(false);
+    }
+  }, [parsedTreatment, guide.projectId, treatmentVisuals?.mood]);
+
+  // Handler for mood change
+  const handleMoodChange = useCallback((mood: TreatmentMood) => {
+    setTreatmentVisuals(prev => prev ? { ...prev, mood } : null);
+  }, []);
 
   const parseAssessment = (text: string): ParsedAssessment => {
     const getBlockAfter = (label: string): string => {
@@ -1048,6 +1173,32 @@ export function TreatmentTab() {
               <Clapperboard className="w-4 h-4 mr-2" />
               Ask Flow
             </Button>
+            
+            {/* View Toggle */}
+            <div className="flex gap-1 bg-gray-900/60 rounded-lg p-1 border border-gray-700/50">
+              <button
+                onClick={() => setTreatmentViewMode('classic')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  treatmentViewMode === 'classic'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                }`}
+              >
+                <Type className="w-4 h-4" />
+                Text
+              </button>
+              <button
+                onClick={() => setTreatmentViewMode('modern')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  treatmentViewMode === 'modern'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                }`}
+              >
+                <ImageIcon className="w-4 h-4" />
+                Visual
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1153,7 +1304,19 @@ export function TreatmentTab() {
       </Dialog>
         {/* Refinement Options removed */}
         
-        {/* Content Display with Selection Support */}
+        {/* View Mode: Modern Treatment View */}
+        {treatmentViewMode === 'modern' && parsedTreatment ? (
+          <ModernTreatmentView
+            treatment={parsedTreatment}
+            visuals={treatmentVisuals}
+            onGenerateVisuals={handleGenerateVisuals}
+            onRegenerateVisual={handleRegenerateVisual}
+            onMoodChange={handleMoodChange}
+            isGenerating={isGeneratingVisuals}
+            showControls={true}
+          />
+        ) : (
+        /* View Mode: Classic Text View */
         <div 
           ref={contentRef}
           className="prose prose-invert max-w-none relative select-text bg-gray-900/30 rounded-xl p-8 border border-gray-700/50"
@@ -1312,6 +1475,7 @@ export function TreatmentTab() {
             </div>
           )}
         </div>
+        )}
 
         {/* Scene Outline moved to dedicated tab at studio level */}
 
