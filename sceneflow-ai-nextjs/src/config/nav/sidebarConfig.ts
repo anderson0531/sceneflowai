@@ -146,8 +146,8 @@ export const blueprintSidebarConfig: WorkflowSidebarConfig = {
   },
   sectionDefaults: {
     workflow: true,
-    proTips: true,
-    progress: true,
+    proTips: false,
+    progress: false,
     quickActions: true,
     reviewScores: false,
     projectStats: false,
@@ -216,8 +216,8 @@ export const productionSidebarConfig: WorkflowSidebarConfig = {
   },
   sectionDefaults: {
     workflow: true,
-    proTips: true,
-    progress: true,
+    proTips: false,
+    progress: false,
     quickActions: true,
     reviewScores: true,
     projectStats: false,
@@ -279,8 +279,8 @@ export const finalCutSidebarConfig: WorkflowSidebarConfig = {
   },
   sectionDefaults: {
     workflow: true,
-    proTips: true,
-    progress: true,
+    proTips: false,
+    progress: false,
     quickActions: true,
     reviewScores: true,
     projectStats: false,
@@ -337,7 +337,7 @@ export const premiereSidebarConfig: WorkflowSidebarConfig = {
   },
   sectionDefaults: {
     workflow: true,
-    proTips: true,
+    proTips: false,
     progress: false,
     quickActions: true,
     reviewScores: true,

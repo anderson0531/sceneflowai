@@ -23,6 +23,10 @@ import {
   Sparkles,
   CreditCard,
   Coins,
+  // Icons for sections
+  GitBranch,
+  TrendingUp,
+  Zap,
   // Icons for progress items
   Wrench,
   Lightbulb,
@@ -187,9 +191,9 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
                       : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                   )}
                 >
-                  {item.key === 'dashboard' && <Home className="w-4 h-4" />}
-                  {item.key === 'projects' && <FolderOpen className="w-4 h-4" />}
-                  {item.key === 'start' && <Sparkles className="w-4 h-4" />}
+                  {item.key === 'dashboard' && <Home className="w-4 h-4 text-blue-500" />}
+                  {item.key === 'projects' && <FolderOpen className="w-4 h-4 text-amber-500" />}
+                  {item.key === 'start' && <Sparkles className="w-4 h-4 text-purple-500" />}
                   <span>{item.label}</span>
                 </Link>
               ))}
@@ -201,10 +205,13 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => toggleSection('workflow')}
-                className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                className="flex items-center justify-between w-full text-sm font-medium text-gray-600 dark:text-gray-400 mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
               >
-                <span>Workflow</span>
-                {sectionsOpen.workflow ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                <div className="flex items-center gap-2">
+                  <GitBranch className="w-4 h-4 text-cyan-500" />
+                  <span>Workflow</span>
+                </div>
+                {sectionsOpen.workflow ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
               {sectionsOpen.workflow && (
                 <div className="relative">
@@ -272,10 +279,13 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => toggleSection('progress')}
-                className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                className="flex items-center justify-between w-full text-sm font-medium text-gray-600 dark:text-gray-400 mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
               >
-                <span>Progress</span>
-                {sectionsOpen.progress ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-green-500" />
+                  <span>Progress</span>
+                </div>
+                {sectionsOpen.progress ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
               {sectionsOpen.progress && (
                 <div className="space-y-2">
@@ -321,10 +331,13 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => toggleSection('quickActions')}
-                className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                className="flex items-center justify-between w-full text-sm font-medium text-gray-600 dark:text-gray-400 mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
               >
-                <span>Quick Actions</span>
-                {sectionsOpen.quickActions ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-amber-500" />
+                  <span>Quick Actions</span>
+                </div>
+                {sectionsOpen.quickActions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
               {sectionsOpen.quickActions && (
                 <div className="space-y-2">
@@ -407,10 +420,13 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
             <div className="p-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
               <button
                 onClick={() => toggleSection('credits')}
-                className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                className="flex items-center justify-between w-full text-sm font-medium text-gray-600 dark:text-gray-400 mb-3 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
               >
-                <span>Credits</span>
-                {sectionsOpen.credits ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                <div className="flex items-center gap-2">
+                  <Coins className="w-4 h-4 text-emerald-500" />
+                  <span>Credits</span>
+                </div>
+                {sectionsOpen.credits ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
               {sectionsOpen.credits && (
                 <div className="space-y-3">
