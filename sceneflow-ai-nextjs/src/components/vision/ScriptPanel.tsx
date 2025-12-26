@@ -3311,7 +3311,7 @@ function SceneCard({
                         ) : (
                           <Star className="w-4 h-4" />
                         )}
-                        <span className="text-xs">{scene.scoreAnalysis ? 'Review' : 'Get Review'}</span>
+                        <span className="text-xs">{scene.scoreAnalysis ? 'Review' : 'Review Scene'}</span>
                       </button>
                     </TooltipTrigger>
                     <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
@@ -3647,9 +3647,18 @@ function SceneCard({
                             }
                             // Generate missing dialogues
                             if (scene.dialogue && onGenerateSceneAudio) {
+                              // Get dialogue audio array for current language
+                              let genDialogueAudioArray: any[] = []
+                              if (Array.isArray(scene.dialogueAudio)) {
+                                genDialogueAudioArray = scene.dialogueAudio
+                              } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
+                                genDialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
+                              }
                               for (let i = 0; i < scene.dialogue.length; i++) {
                                 const d = scene.dialogue[i]
-                                const audioEntry = scene.dialogueAudioMap?.[`${d.character}_${i}`]
+                                const audioEntry = genDialogueAudioArray.find((a: any) => 
+                                  a.character === d.character && a.dialogueIndex === i
+                                )
                                 if (!audioEntry?.audioUrl) {
                                   await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i, selectedLanguage)
                                 }
@@ -3727,8 +3736,17 @@ function SceneCard({
                     const descriptionUrl = scene.descriptionAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.descriptionAudioUrl : undefined)
                     const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
                     const dialogueCount = scene.dialogue?.length || 0
+                    // Get dialogue audio array for current language
+                    let timelineDialogueAudioArray: any[] = []
+                    if (Array.isArray(scene.dialogueAudio)) {
+                      timelineDialogueAudioArray = scene.dialogueAudio
+                    } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
+                      timelineDialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
+                    }
                     const dialogueWithAudio = scene.dialogue?.reduce((count: number, d: any, idx: number) => {
-                      const audioEntry = scene.dialogueAudioMap?.[`${d.character}_${idx}`]
+                      const audioEntry = timelineDialogueAudioArray.find((a: any) => 
+                        a.character === d.character && a.dialogueIndex === idx
+                      )
                       return count + (audioEntry?.audioUrl ? 1 : 0)
                     }, 0) || 0
                     const sfxCount = scene.sfx?.length || 0
@@ -4127,11 +4145,21 @@ function SceneCard({
                         </button>
                         {/* Voice Casting Quick View */}
                         <div className="flex items-center gap-1">
-                          {Array.from(new Set(scene.dialogue.map((d: any) => d.character))).slice(0, 4).map((character: any) => {
+                          {(() => {
+                            // Get dialogue audio array for current language
+                            let castingDialogueAudioArray: any[] = []
+                            if (Array.isArray(scene.dialogueAudio)) {
+                              castingDialogueAudioArray = scene.dialogueAudio
+                            } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
+                              castingDialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
+                            }
+                            return Array.from(new Set(scene.dialogue.map((d: any) => d.character))).slice(0, 4).map((character: any) => {
                             const charDialogues = scene.dialogue.filter((d: any) => d.character === character)
                             const charAudioReady = charDialogues.filter((d: any, idx: number) => {
                               const dialogueIndex = scene.dialogue.findIndex((dd: any, i: number) => dd === d && i <= idx)
-                              const audioEntry = scene.dialogueAudioMap?.[`${character}_${dialogueIndex}`]
+                              const audioEntry = castingDialogueAudioArray.find((a: any) => 
+                                a.character === character && a.dialogueIndex === dialogueIndex
+                              )
                               return audioEntry?.audioUrl
                             }).length
                             const allReady = charAudioReady === charDialogues.length
@@ -4157,7 +4185,8 @@ function SceneCard({
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
-                          )})}
+                          )})
+                          })()}
                           {Array.from(new Set(scene.dialogue.map((d: any) => d.character))).length > 4 && (
                             <span className="text-[10px] text-gray-500">+{Array.from(new Set(scene.dialogue.map((d: any) => d.character))).length - 4}</span>
                           )}
