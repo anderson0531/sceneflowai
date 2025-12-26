@@ -3363,31 +3363,6 @@ function SceneCard({
                 </>
               )}
               
-              {/* AI Co-Pilot Help Button */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setCopilotPanelOpen(!copilotPanelOpen)
-                      }}
-                      className={`p-1.5 rounded-lg transition ${
-                        copilotPanelOpen
-                          ? 'bg-sf-primary/20 text-sf-primary border border-sf-primary/40'
-                          : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700'
-                      }`}
-                      aria-label="Get help"
-                    >
-                      <Lightbulb className="w-4 h-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700">
-                    Get help with {activeStep === 'dialogueAction' ? 'Script' : activeStep === 'directorsChair' ? 'Direction' : activeStep === 'storyboardPreViz' ? 'Frame' : 'Call Action'} workflow
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
               {/* Mark as Done / Unmark button */}
               {onMarkWorkflowComplete && (
                 <TooltipProvider>
@@ -3677,10 +3652,10 @@ function SceneCard({
                     const descriptionUrl = scene.descriptionAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.descriptionAudioUrl : undefined)
                     const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
                     const dialogueCount = scene.dialogue?.length || 0
-                    const dialogueWithAudio = scene.dialogue?.filter((d: any, i: number) => {
-                      const audioEntry = scene.dialogueAudioMap?.[`${d.character}_${i}`]
-                      return audioEntry?.audioUrl
-                    }).length || 0
+                    const dialogueWithAudio = scene.dialogue?.reduce((count: number, d: any, idx: number) => {
+                      const audioEntry = scene.dialogueAudioMap?.[`${d.character}_${idx}`]
+                      return count + (audioEntry?.audioUrl ? 1 : 0)
+                    }, 0) || 0
                     const sfxCount = scene.sfx?.length || 0
                     const sfxWithAudio = scene.sfxAudio?.filter(Boolean).length || 0
                     const hasMusic = !!scene.musicAudio
@@ -4379,22 +4354,24 @@ function SceneCard({
                   
                   {/* SFX */}
                   {scene.sfx && Array.isArray(scene.sfx) && scene.sfx.length > 0 && (
-                    <div className="space-y-2">
+                    <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
                           setSfxCollapsed(!sfxCollapsed)
                         }}
-                        className="flex items-center gap-2 mb-2 hover:opacity-80 transition-opacity"
+                        className="flex items-center gap-2 mb-3 hover:opacity-80 transition-opacity"
                       >
                         <ChevronDown className={`w-4 h-4 text-amber-600 dark:text-amber-400 transition-transform ${sfxCollapsed ? '-rotate-90' : ''}`} />
                         <VolumeIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                         <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">Sound Effects ({scene.sfx.length})</span>
                       </button>
-                      {!sfxCollapsed && scene.sfx.map((sfx: any, sfxIdx: number) => {
+                      {!sfxCollapsed && (
+                        <div className="space-y-2">
+                        {scene.sfx.map((sfx: any, sfxIdx: number) => {
                         const sfxAudio = scene.sfxAudio?.[sfxIdx]
                         return (
-                          <div key={sfxIdx} className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                          <div key={sfxIdx} className="p-3 bg-amber-100/50 dark:bg-amber-950/30 rounded-lg border border-amber-300/50 dark:border-amber-700/50">
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-2">
                                 <VolumeIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
@@ -4508,6 +4485,8 @@ function SceneCard({
                           </div>
                         )
                       })}
+                      </div>
+                      )}
                     </div>
                   )}
                   </div>
