@@ -37,50 +37,55 @@ function ProTipItem({ tip, status, onAction, onToggleComplete }: ProTipItemProps
             : 'bg-slate-800/30 border-slate-700/50 hover:border-slate-600/50'
       )}
     >
-      <div className="flex items-start gap-3 p-3">
-        {/* Checkbox */}
-        <button
-          onClick={() => onToggleComplete(tip.id)}
-          className={cn(
-            'mt-0.5 w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-colors',
-            isComplete 
-              ? 'bg-green-500 text-white' 
-              : 'bg-slate-700 hover:bg-slate-600 text-slate-400'
-          )}
-        >
-          {isComplete ? (
-            <CheckCircle2 className="w-3.5 h-3.5" />
-          ) : (
-            <Circle className="w-3 h-3" />
-          )}
-        </button>
-        
-        {/* Content */}
-        <div className="flex-1 min-w-0">
+      <div className="p-3">
+        {/* Header row with checkbox and title */}
+        <div className="flex items-start gap-3">
+          {/* Checkbox */}
+          <button
+            onClick={() => onToggleComplete(tip.id)}
+            className={cn(
+              'mt-0.5 w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-colors',
+              isComplete 
+                ? 'bg-green-500 text-white' 
+                : 'bg-slate-700 hover:bg-slate-600 text-slate-400'
+            )}
+          >
+            {isComplete ? (
+              <CheckCircle2 className="w-3.5 h-3.5" />
+            ) : (
+              <Circle className="w-3 h-3" />
+            )}
+          </button>
+          
+          {/* Title */}
           <div className={cn(
             'text-sm font-medium transition-colors leading-snug',
             isComplete ? 'text-green-400 line-through opacity-70' : 'text-slate-200'
           )}>
             {tip.title}
           </div>
-          {tip.description && !isComplete && (
-            <div className="text-xs text-slate-400 mt-1 leading-relaxed">
-              {tip.description}
-            </div>
-          )}
         </div>
         
-        {/* Action button */}
+        {/* Description - full width below title */}
+        {tip.description && !isComplete && (
+          <div className="text-xs text-slate-400 mt-2 leading-relaxed pl-8">
+            {tip.description}
+          </div>
+        )}
+        
+        {/* Action link - full width below description */}
         {tip.actionLabel && !isComplete && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onAction(tip)}
-            className="h-6 px-2 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            {tip.actionLabel}
-            <ChevronRight className="w-3 h-3 ml-0.5" />
-          </Button>
+          <div className="mt-2 pl-8">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onAction(tip)}
+              className="h-6 px-0 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-transparent transition-colors"
+            >
+              {tip.actionLabel}
+              <ChevronRight className="w-3 h-3 ml-0.5" />
+            </Button>
+          </div>
         )}
       </div>
     </div>
