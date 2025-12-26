@@ -16,7 +16,8 @@ import { cn } from "@/lib/utils";
 // Topbar credit chip removed to reduce redundancy
 // import { BlueprintTopbar } from '@/components/blueprint/BlueprintTopbar'
 import { BlueprintComposer } from '@/components/blueprint/BlueprintComposer'
-import { TreatmentCard } from '@/components/blueprint/TreatmentCard'
+// TreatmentCard loaded dynamically to avoid hydration issues with Date.now()
+const TreatmentCard = dynamic(() => import('@/components/blueprint/TreatmentCard').then(mod => mod.TreatmentCard), { ssr: false })
 // Bottom ActionBar removed (duplicate of composer actions)
 import TopProgressBar from '@/components/ui/TopProgressBar'
 import GeneratingOverlay from '@/components/ui/GeneratingOverlay'
