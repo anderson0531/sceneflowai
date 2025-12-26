@@ -3883,20 +3883,18 @@ function SceneCard({
                               >
                                 <Download className="w-4 h-4" />
                               </a>
-                              {onDeleteSceneAudio && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    if (confirm('Delete description audio? You can regenerate it later.')) {
-                                      onDeleteSceneAudio(sceneIdx, 'description')
-                                    }
-                                  }}
-                                  className="p-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
-                                  title="Delete Scene Description Audio"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              )}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  if (confirm('Delete description audio? You can regenerate it later.')) {
+                                    onDeleteSceneAudio?.(sceneIdx, 'description')
+                                  }
+                                }}
+                                className="p-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
+                                title="Delete Scene Description Audio"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation()
@@ -4034,20 +4032,18 @@ function SceneCard({
                             >
                               <Download className="w-4 h-4" />
                             </a>
-                            {onDeleteSceneAudio && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  if (confirm('Delete narration audio? You can regenerate it later.')) {
-                                    onDeleteSceneAudio(sceneIdx, 'narration')
-                                  }
-                                }}
-                                className="p-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
-                                title="Delete Narration Audio"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (confirm('Delete narration audio? You can regenerate it later.')) {
+                                  onDeleteSceneAudio?.(sceneIdx, 'narration')
+                                }
+                              }}
+                              className="p-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
+                              title="Delete Narration Audio"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
@@ -4271,20 +4267,18 @@ function SceneCard({
                                 >
                                   <Download className="w-4 h-4" />
                                 </a>
-                                {onDeleteSceneAudio && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      if (confirm(`Delete ${d.character}'s dialogue audio? You can regenerate it later.`)) {
-                                        onDeleteSceneAudio(sceneIdx, 'dialogue', i)
-                                      }
-                                    }}
-                                    className="p-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
-                                    title="Delete Dialogue Audio"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                )}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (confirm(`Delete ${d.character}'s dialogue audio? You can regenerate it later.`)) {
+                                      onDeleteSceneAudio?.(sceneIdx, 'dialogue', i)
+                                    }
+                                  }}
+                                  className="p-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
+                                  title="Delete Dialogue Audio"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
@@ -4421,20 +4415,18 @@ function SceneCard({
                             >
                               <Download className="w-4 h-4" />
                             </a>
-                            {onDeleteSceneAudio && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  if (confirm('Delete background music? You can regenerate it later.')) {
-                                    onDeleteSceneAudio(sceneIdx, 'music')
-                                  }
-                                }}
-                                className="p-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
-                                title="Delete Music Audio"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (confirm('Delete background music? You can regenerate it later.')) {
+                                  onDeleteSceneAudio?.(sceneIdx, 'music')
+                                }
+                              }}
+                              className="p-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
+                              title="Delete Music Audio"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
@@ -4570,20 +4562,18 @@ function SceneCard({
                                   >
                                     <Download className="w-4 h-4" />
                                   </a>
-                                  {onDeleteSceneAudio && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        if (confirm('Delete this sound effect? You can regenerate it later.')) {
-                                          onDeleteSceneAudio(sceneIdx, 'sfx', undefined, sfxIdx)
-                                        }
-                                      }}
-                                      className="p-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
-                                      title="Delete SFX Audio"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  )}
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      if (confirm('Delete this sound effect? You can regenerate it later.')) {
+                                        onDeleteSceneAudio?.(sceneIdx, 'sfx', undefined, sfxIdx)
+                                      }
+                                    }}
+                                    className="p-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
+                                    title="Delete SFX Audio"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation()

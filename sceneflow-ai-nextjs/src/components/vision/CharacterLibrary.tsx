@@ -730,8 +730,9 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
               </div>
             ) : (
               <>
-                <h3 
-                  className="text-base font-semibold text-gray-900 dark:text-gray-100 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 flex-1"
+                <span 
+                  style={{ fontSize: '13px', fontWeight: 600 }}
+                  className="text-gray-900 dark:text-gray-100 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 flex-1"
                   onClick={(e) => {
                     e.stopPropagation()
                     if (onUpdateCharacterName) {
@@ -742,7 +743,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
                   title={onUpdateCharacterName ? "Click to edit name" : ""}
                 >
                   {character.name || 'Unnamed'}
-                </h3>
+                </span>
                 {onRemove && (
                   <button
                     onClick={(e) => {
@@ -1108,16 +1109,16 @@ function NarratorCharacterCard({ character, onUpdateCharacterVoice, ttsProvider 
   
   return (
     <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800 overflow-hidden">
-      <div className="p-4">
+      <div className="p-3">
         {/* Header with badge */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Volume2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-1.5">
+            <Volume2 className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
+            <span style={{ fontSize: '12px', fontWeight: 600 }} className="text-gray-900 dark:text-gray-100">
               {character.name}
-            </h3>
+            </span>
           </div>
-          <span className="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[10px] font-medium rounded-full">
+          <span className="px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[9px] font-medium rounded-full">
             Narration
           </span>
         </div>
@@ -1186,15 +1187,15 @@ function DescriptionVoiceCard({ character, onUpdateCharacterVoice, ttsProvider }
 
   return (
     <div className="bg-gradient-to-br from-emerald-50 to-cyan-50 dark:from-emerald-900/20 dark:to-cyan-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800 overflow-hidden">
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Volume2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+      <div className="p-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-1.5">
+            <Volume2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+            <span style={{ fontSize: '12px', fontWeight: 600 }} className="text-gray-900 dark:text-gray-100">
               {character.name}
-            </h3>
+            </span>
           </div>
-          <span className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-medium rounded-full">
+          <span className="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-[9px] font-medium rounded-full">
             Desc
           </span>
         </div>
