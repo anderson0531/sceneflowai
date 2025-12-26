@@ -174,8 +174,14 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           loadedProjectRef.current = projectId
           setCurrentProject(projectData)
           
-          if (projectData?.metadata?.filmTreatmentVariant) {
-            const approvedVariant = projectData.metadata.filmTreatmentVariant
+          // Check multiple places where treatment data might be stored
+          const metadata = projectData?.metadata || {}
+          const hasFilmTreatmentVariant = metadata.filmTreatmentVariant
+          const hasTreatmentVariants = Array.isArray(metadata.treatmentVariants) && metadata.treatmentVariants.length > 0
+          const hasFilmTreatment = metadata.filmTreatment
+          
+          if (hasFilmTreatmentVariant) {
+            const approvedVariant = metadata.filmTreatmentVariant
             if (approvedVariant.content || approvedVariant.synopsis) {
               updateTreatment(approvedVariant.content || approvedVariant.synopsis || '')
             }
@@ -184,23 +190,41 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               ...approvedVariant
             }])
             console.log('[StudioPage] Restored approved filmTreatmentVariant from project:', approvedVariant.id || 'approved-treatment')
+          } else if (hasTreatmentVariants) {
+            // Restore from treatmentVariants array
+            setTreatmentVariants(metadata.treatmentVariants)
+            if (metadata.treatmentVariants[0]) {
+              const first = metadata.treatmentVariants[0]
+              updateTreatment(first.content || first.synopsis || '')
+            }
+            console.log('[StudioPage] Restored treatmentVariants from project:', metadata.treatmentVariants.length)
+          } else if (hasFilmTreatment) {
+            // Restore from plain filmTreatment string
+            updateTreatment(metadata.filmTreatment)
+            setTreatmentVariants([{
+              id: 'legacy-treatment',
+              label: projectData.title || 'Film Treatment',
+              content: metadata.filmTreatment,
+              synopsis: metadata.filmTreatment
+            }])
+            console.log('[StudioPage] Restored legacy filmTreatment from project')
           }
           
           if (projectData.title) {
             updateTitle(projectData.title)
           }
           
-          if (projectData.metadata?.beats) {
-            setBeats(projectData.metadata.beats)
-            setBeatsView(projectData.metadata.beats)
+          if (metadata.beats) {
+            setBeats(metadata.beats)
+            setBeatsView(metadata.beats)
           }
           
-          if (!projectData.metadata?.filmTreatmentVariant && Array.isArray(projectData.metadata?.beats)) {
-            setBeatsView(projectData.metadata.beats)
+          if (!hasFilmTreatmentVariant && !hasTreatmentVariants && Array.isArray(metadata.beats)) {
+            setBeatsView(metadata.beats)
           }
           
-          if (!projectData.metadata?.filmTreatmentVariant && projectData.metadata?.estimatedRuntime) {
-            setEstimatedRuntime(projectData.metadata.estimatedRuntime)
+          if (!hasFilmTreatmentVariant && !hasTreatmentVariants && metadata.estimatedRuntime) {
+            setEstimatedRuntime(metadata.estimatedRuntime)
           }
           
           console.log('[StudioPage] Project data loaded:', projectData.id)
