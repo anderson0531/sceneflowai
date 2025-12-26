@@ -87,6 +87,7 @@ export default function SharedScreeningRoomPage({ params }: { params: Promise<{ 
       <ScreeningRoom
         script={projectData.script}
         characters={projectData.characters || []}
+        sceneProductionState={projectData.sceneProductionState}
         onClose={() => {
           // Show message that this is a shared view
           alert('This is a shared Screening Room. Close this browser tab to exit.')

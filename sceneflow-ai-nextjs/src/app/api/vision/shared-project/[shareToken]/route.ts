@@ -45,6 +45,7 @@ export async function GET(
       title: project.title,
       script: project.metadata?.visionPhase?.script,
       characters: project.metadata?.visionPhase?.characters,
+      sceneProductionState: project.metadata?.visionPhase?.production?.scenes,
       allowedFeatures: shareLink.allowedFeatures
     }
 

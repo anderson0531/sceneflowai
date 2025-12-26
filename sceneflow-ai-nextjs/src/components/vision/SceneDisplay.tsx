@@ -1,9 +1,17 @@
 'use client'
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import { Loader } from 'lucide-react'
-import { getKenBurnsConfig, generateKenBurnsKeyframes } from '@/lib/animation/kenBurns'
+import { getKenBurnsConfig, generateKenBurnsKeyframes, getKenBurnsConfigFromKeyframes } from '@/lib/animation/kenBurns'
 import type { KenBurnsIntensity } from '@/lib/animation/kenBurns'
+import type { SceneSegment, SceneProductionData } from '@/components/vision/scene-production/types'
+
+interface KeyframeImage {
+  url: string
+  duration: number // seconds for this keyframe
+  segmentIndex: number
+  isStartFrame: boolean // true = startFrame, false = endFrame
+}
 
 interface SceneDisplayProps {
   scene: any
@@ -15,6 +23,75 @@ interface SceneDisplayProps {
   translatedNarration?: string
   translatedDialogue?: string[]
   kenBurnsIntensity?: KenBurnsIntensity
+  // New: Production data for keyframe images
+  productionData?: SceneProductionData
+  // New: Scene audio duration for timing sync
+  sceneDuration?: number
+}
+
+/**
+ * Build an array of keyframe images from segments with timing
+ * Falls back to scene.imageUrl if no segment keyframes exist
+ */
+function buildKeyframeSequence(
+  scene: any,
+  productionData?: SceneProductionData,
+  fallbackDuration: number = 4
+): KeyframeImage[] {
+  const keyframes: KeyframeImage[] = []
+  
+  if (!productionData?.isSegmented || !productionData?.segments?.length) {
+    // No segments - use scene image as single keyframe
+    if (scene.imageUrl) {
+      return [{
+        url: scene.imageUrl,
+        duration: fallbackDuration,
+        segmentIndex: 0,
+        isStartFrame: true
+      }]
+    }
+    return []
+  }
+  
+  // Build keyframes from segments
+  productionData.segments.forEach((segment, idx) => {
+    const segmentDuration = (segment.endTime || 0) - (segment.startTime || 0)
+    const frameDuration = Math.max(segmentDuration / 2, 2) // Split segment duration between start/end, min 2s
+    
+    // Get frame URLs from multiple possible locations
+    const startUrl = segment.startFrameUrl || segment.references?.startFrameUrl
+    const endUrl = segment.endFrameUrl || segment.references?.endFrameUrl
+    
+    if (startUrl) {
+      keyframes.push({
+        url: startUrl,
+        duration: frameDuration,
+        segmentIndex: idx,
+        isStartFrame: true
+      })
+    }
+    
+    if (endUrl && endUrl !== startUrl) {
+      keyframes.push({
+        url: endUrl,
+        duration: frameDuration,
+        segmentIndex: idx,
+        isStartFrame: false
+      })
+    }
+  })
+  
+  // Fallback to scene image if no keyframes found
+  if (keyframes.length === 0 && scene.imageUrl) {
+    return [{
+      url: scene.imageUrl,
+      duration: fallbackDuration,
+      segmentIndex: 0,
+      isStartFrame: true
+    }]
+  }
+  
+  return keyframes
 }
 
 export function SceneDisplay({ 
@@ -26,8 +103,82 @@ export function SceneDisplay({
   showCaptions, 
   translatedNarration, 
   translatedDialogue, 
-  kenBurnsIntensity = 'medium' 
-}: SceneDisplayProps) {        
+  kenBurnsIntensity = 'medium',
+  productionData,
+  sceneDuration
+}: SceneDisplayProps) {
+  // Build keyframe sequence
+  const keyframes = useMemo(() => 
+    buildKeyframeSequence(scene, productionData, sceneDuration || 4),
+    [scene, productionData, sceneDuration]
+  )
+  
+  // Current keyframe index for cycling
+  const [currentKeyframeIndex, setCurrentKeyframeIndex] = useState(0)
+  const [prevKeyframeIndex, setPrevKeyframeIndex] = useState(-1)
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Reset keyframe index when scene changes
+  useEffect(() => {
+    setCurrentKeyframeIndex(0)
+    setPrevKeyframeIndex(-1)
+    setIsTransitioning(false)
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+    }
+  }, [sceneIndex, keyframes.length])
+  
+  // Cycle through keyframes with timing
+  useEffect(() => {
+    if (keyframes.length <= 1) return
+    
+    const currentKeyframe = keyframes[currentKeyframeIndex]
+    if (!currentKeyframe) return
+    
+    // Schedule next keyframe transition
+    timerRef.current = setTimeout(() => {
+      setPrevKeyframeIndex(currentKeyframeIndex)
+      setIsTransitioning(true)
+      
+      // After crossfade starts, update index
+      setTimeout(() => {
+        setCurrentKeyframeIndex((prev) => (prev + 1) % keyframes.length)
+        // Clear transition after fade completes
+        setTimeout(() => {
+          setIsTransitioning(false)
+        }, 1000) // 1s crossfade
+      }, 50)
+    }, currentKeyframe.duration * 1000)
+    
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+      }
+    }
+  }, [currentKeyframeIndex, keyframes])
+  
+  // Get current segment's keyframe settings for Ken Burns
+  const currentKeyframe = keyframes[currentKeyframeIndex]
+  const currentSegment = productionData?.segments?.[currentKeyframe?.segmentIndex || 0]
+  
+  // Get Ken Burns config - use segment settings if available, else scene-level
+  const kenBurnsConfig = useMemo(() => {
+    if (currentSegment?.keyframeSettings && !currentSegment.keyframeSettings.useAutoDetect) {
+      const segmentDuration = currentKeyframe?.duration || 4
+      return getKenBurnsConfigFromKeyframes(currentSegment.keyframeSettings as any, segmentDuration)
+    }
+    return getKenBurnsConfig(scene, sceneIndex, kenBurnsIntensity)
+  }, [scene, sceneIndex, kenBurnsIntensity, currentSegment, currentKeyframe])
+  
+  // Generate unique animation name per keyframe
+  const animationName = `kenBurns-${sceneIndex}-${currentKeyframeIndex}`
+  
+  // Generate keyframes CSS
+  const keyframesCSS = useMemo(() => {
+    return generateKenBurnsKeyframes(animationName, kenBurnsConfig)
+  }, [animationName, kenBurnsConfig])
+        
   if (!scene) {
     return (
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">                                              
@@ -38,19 +189,8 @@ export function SceneDisplay({
     )
   }
 
-  // Get scene-aware Ken Burns configuration
-  // Memoize to prevent recalculation on every render
-  const kenBurnsConfig = useMemo(() => {
-    return getKenBurnsConfig(scene, sceneIndex, kenBurnsIntensity)
-  }, [scene, sceneIndex, kenBurnsIntensity])
-  
-  // Generate unique animation name per scene to allow different directions
-  const animationName = `kenBurns-${sceneIndex}`
-  
-  // Generate keyframes CSS for this scene
-  const keyframesCSS = useMemo(() => {
-    return generateKenBurnsKeyframes(animationName, kenBurnsConfig)
-  }, [animationName, kenBurnsConfig])
+  const currentImageUrl = currentKeyframe?.url || scene.imageUrl
+  const prevImageUrl = prevKeyframeIndex >= 0 ? keyframes[prevKeyframeIndex]?.url : null
 
   return (
     <>
@@ -63,21 +203,60 @@ export function SceneDisplay({
           transform-origin: center center;
           will-change: transform;
         }
+        
+        .keyframe-crossfade-enter {
+          opacity: 0;
+          animation: fadeIn 1s ease-in-out forwards;
+        }
+        
+        .keyframe-crossfade-exit {
+          opacity: 1;
+          animation: fadeOut 1s ease-in-out forwards;
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
       `}</style>
 
       <div className="absolute inset-0 w-full h-full">
-        {/* Full-Screen Background Image with Scene-Aware Ken Burns Effect */}
-        {scene.imageUrl ? (
+        {/* Previous keyframe image (fading out during transition) */}
+        {isTransitioning && prevImageUrl && (
           <div 
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat ken-burns-animated"
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat keyframe-crossfade-exit"
             style={{ 
-              backgroundImage: `url(${scene.imageUrl})`,
-              // Ensure image is larger than container to allow pan effect
-              backgroundSize: '115%'
+              backgroundImage: `url(${prevImageUrl})`,
+              backgroundSize: '115%',
+              zIndex: 1
+            }}
+          />
+        )}
+        
+        {/* Current keyframe image with Ken Burns Effect */}
+        {currentImageUrl ? (
+          <div 
+            className={`absolute inset-0 bg-cover bg-center bg-no-repeat ken-burns-animated ${isTransitioning ? 'keyframe-crossfade-enter' : ''}`}
+            style={{ 
+              backgroundImage: `url(${currentImageUrl})`,
+              backgroundSize: '115%',
+              zIndex: isTransitioning ? 2 : 1
             }}
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black" />                                                                           
+        )}
+
+        {/* Keyframe indicator (debug - can be removed in production) */}
+        {keyframes.length > 1 && (
+          <div className="absolute top-4 right-4 z-50 bg-black/50 px-2 py-1 rounded text-xs text-white/70">
+            Frame {currentKeyframeIndex + 1}/{keyframes.length}
+          </div>
         )}
 
         {/* Caption Overlay - Responsive positioning */}

@@ -29,6 +29,8 @@ import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAvailableLanguages, getAudioUrl, getAudioDuration as getStoredAudioDuration } from '@/lib/audio/languageDetection'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { toast } from 'sonner'
+import type { SceneProductionData } from '@/components/vision/scene-production/types'
+
 interface ScreeningRoomProps {
   script: any
   characters: Array<{ name: string; description?: string }>
@@ -36,6 +38,8 @@ interface ScreeningRoomProps {
   initialScene?: number
   /** Timestamp updated whenever script is edited - forces full cache clear */
   scriptEditedAt?: number
+  /** Production data with keyframe segments for each scene (Record<sceneId, SceneProductionData>) */
+  sceneProductionState?: Record<string, SceneProductionData>
 }
 
 interface PlayerState {
@@ -110,7 +114,7 @@ async function resolveAudioDuration(url: string, stored?: unknown): Promise<numb
   return fallback
 }
 
-export function ScreeningRoom({ script, characters, onClose, initialScene = 0, scriptEditedAt }: ScreeningRoomProps) {
+export function ScreeningRoom({ script, characters, onClose, initialScene = 0, scriptEditedAt, sceneProductionState }: ScreeningRoomProps) {
   // Audio mixer ref - defined early so it can be used in script change effect
   const audioMixerRef = useRef<WebAudioMixer | null>(null)
   
@@ -1114,17 +1118,29 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
         <div className={`flex-1 flex items-center justify-center transition-all duration-300 ${
           playerState.showVoicePanel ? 'lg:mr-80' : ''
         }`}>
-          <SceneDisplay
-            scene={currentScene}
-            sceneNumber={playerState.currentSceneIndex + 1}
-            sceneIndex={playerState.currentSceneIndex}
-            totalScenes={scenes.length}
-            isLoading={isLoadingAudio}
-            showCaptions={showCaptions}
-            translatedNarration={translatedNarration || undefined}
-            translatedDialogue={translatedDialogue || undefined}
-            kenBurnsIntensity={playerState.kenBurnsIntensity}
-          />
+          {(() => {
+            // Get scene ID for production data lookup
+            const sceneId = currentScene?.id || currentScene?.sceneId || `scene-${playerState.currentSceneIndex}`
+            const productionData = sceneProductionState?.[sceneId]
+            // Use scene duration if available, else default to 4 seconds per keyframe
+            const sceneDuration = currentScene?.duration || 8
+            
+            return (
+              <SceneDisplay
+                scene={currentScene}
+                sceneNumber={playerState.currentSceneIndex + 1}
+                sceneIndex={playerState.currentSceneIndex}
+                totalScenes={scenes.length}
+                isLoading={isLoadingAudio}
+                showCaptions={showCaptions}
+                translatedNarration={translatedNarration || undefined}
+                translatedDialogue={translatedDialogue || undefined}
+                kenBurnsIntensity={playerState.kenBurnsIntensity}
+                productionData={productionData}
+                sceneDuration={sceneDuration}
+              />
+            )
+          })()}
         </div>
 
         {/* Voice Assignment Panel - Mobile: Bottom Sheet */}
