@@ -731,8 +731,7 @@ const CharacterCard = ({ character, characterId, isSelected, onClick, onRegenera
             ) : (
               <>
                 <span 
-                  style={{ fontSize: '13px', fontWeight: 600 }}
-                  className="text-gray-900 dark:text-gray-100 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 flex-1"
+                  className="font-bold text-base tracking-tight text-gray-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 flex-1"
                   onClick={(e) => {
                     e.stopPropagation()
                     if (onUpdateCharacterName) {
@@ -1113,8 +1112,8 @@ function NarratorCharacterCard({ character, onUpdateCharacterVoice, ttsProvider 
         {/* Header with badge */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-1.5">
-            <Volume2 className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
-            <span style={{ fontSize: '12px', fontWeight: 600 }} className="text-gray-900 dark:text-gray-100">
+            <Volume2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+            <span className="font-bold text-base tracking-tight text-gray-900 dark:text-white">
               {character.name}
             </span>
           </div>
@@ -1190,8 +1189,8 @@ function DescriptionVoiceCard({ character, onUpdateCharacterVoice, ttsProvider }
       <div className="p-3">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-1.5">
-            <Volume2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-            <span style={{ fontSize: '12px', fontWeight: 600 }} className="text-gray-900 dark:text-gray-100">
+            <Volume2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span className="font-bold text-base tracking-tight text-gray-900 dark:text-white">
               {character.name}
             </span>
           </div>
