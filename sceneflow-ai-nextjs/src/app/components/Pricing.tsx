@@ -48,7 +48,7 @@ export function Pricing() {
 
     const pricingTiers = [
     {
-      name: 'Trial Plan',
+      name: 'Trial',
       monthlyPrice: 15,
       annualPrice: 15, // Same as monthly (one-time)
       isOneTime: true,
@@ -459,7 +459,7 @@ export function Pricing() {
 
                                 <button 
                   onClick={() => {
-                    if (tier.isOneTime && tier.name === 'Trial Plan') {
+                    if (tier.isOneTime && tier.name === 'Trial') {
                       handleTrialPurchase()
                     } else if (tier.special === 'Trial') {
                       window.location.href = '/?signup=1&plan=trial'
@@ -467,9 +467,9 @@ export function Pricing() {
                       window.location.href = `/?signup=1&plan=${tier.name.toLowerCase().replace(/\s/g, '-')}`                                                   
                     }
                   }}
-                  disabled={purchasing && tier.name === 'Trial Plan'}
+                  disabled={purchasing && tier.name === 'Trial'}
                   className={`w-full py-3 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-auto ${
-                    tier.isOneTime && tier.name === 'Trial Plan'
+                    tier.isOneTime && tier.name === 'Trial'
                       ? 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white'
                       : tier.popular
                       ? 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white'
@@ -478,9 +478,9 @@ export function Pricing() {
                       : 'bg-gray-700 hover:bg-gray-600 text-white'
                   }`}
                 >
-                  {purchasing && tier.name === 'Trial Plan' 
+                  {purchasing && tier.name === 'Trial' 
                     ? 'Processing...' 
-                    : tier.isOneTime && tier.name === 'Trial Plan'
+                    : tier.isOneTime && tier.name === 'Trial'
                     ? 'Start Testing'
                     : tier.special === 'Trial' 
                     ? tier.cta 
@@ -510,7 +510,7 @@ export function Pricing() {
                 <thead>
                   <tr className="border-b border-slate-700">
                     <th className="text-left py-4 px-4 text-gray-400 font-medium">Feature</th>
-                    <th className="text-center py-4 px-4 text-amber-400 font-medium">Trial Plan</th>
+                    <th className="text-center py-4 px-4 text-amber-400 font-medium">Trial</th>
                     <th className="text-center py-4 px-4 text-gray-300 font-medium">Starter</th>
                     <th className="text-center py-4 px-4 text-blue-400 font-medium">Pro <span className="text-xs bg-blue-500/20 px-2 py-0.5 rounded-full">Popular</span></th>
                     <th className="text-center py-4 px-4 text-purple-400 font-medium">Studio</th>

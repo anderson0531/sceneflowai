@@ -94,7 +94,7 @@ export default function RootLayout({
               "offers": [
                 {
                   "@type": "Offer",
-                  "name": "Trial Plan",
+                  "name": "Trial",
                   "price": "15.00",
                   "priceCurrency": "USD",
                   "description": "One-time purchase: 1,200 credits to test drive the platform"

@@ -156,7 +156,7 @@ export function getDefaultVideoQuality(plan: PlanTier): VideoQuality {
 
 export const SUBSCRIPTION_PLANS = {
   coffee_break: {
-    name: 'Trial Plan',
+    name: 'Trial',
     price: 15,
     credits: 1200,
     isOneTime: true,
