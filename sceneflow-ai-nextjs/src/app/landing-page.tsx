@@ -8,6 +8,10 @@ import { TrustSignals } from './components/TrustSignals'
 // Value Proposition Sections - Streamlined for clarity and conversion
 const SlotMachineSection = dynamic(() => import('@/components/landing/SlotMachineSection'), { ssr: false })
 const HowItWorks = dynamic(() => import('./components/HowItWorks').then(m => m.HowItWorks), { ssr: false })
+// Storyteller Mode - Audio-first creator targeting
+const CreatorFastTrackHero = dynamic(() => import('@/components/landing/CreatorFastTrackHero').then(m => m.CreatorFastTrackHero), { ssr: false })
+const StorytellerFeatureSection = dynamic(() => import('@/components/landing/StorytellerFeatureSection').then(m => m.StorytellerFeatureSection), { ssr: false })
+const StorytellerPricingSection = dynamic(() => import('@/components/landing/StorytellerPricingSection').then(m => m.StorytellerPricingSection), { ssr: false })
 const FinancialFirewallSection = dynamic(() => import('@/components/landing/FinancialFirewallSection'), { ssr: false })
 const FrameAnchoredSection = dynamic(() => import('@/components/landing/FrameAnchoredSection'), { ssr: false })
 const AutomationSection = dynamic(() => import('@/components/landing/AutomationSection'), { ssr: false })
@@ -37,7 +41,10 @@ export default function LandingPage() {
       <SlotMachineSection />
       {/* 4. How: Simple 3-step process - moved earlier per optimization */}
       <HowItWorks />
-      {/* 5. Solution: Financial safety with budget controls */}
+      {/* 5. Storyteller Mode: Audio-first creator targeting - Faceless channels & podcasters */}
+      <CreatorFastTrackHero />
+      <StorytellerFeatureSection />
+      {/* 6. Solution: Financial safety with budget controls */}
       <FinancialFirewallSection />
       {/* 6. Technical: Frame-anchored architecture + precision features */}
       <FrameAnchoredSection />
@@ -49,9 +56,11 @@ export default function LandingPage() {
       <TestimonialsSection />
       {/* 10. Proof: Real use cases with video demos by persona */}
       <UseCasesSection />
-      {/* 11. Pricing: Clear value tiers */}
+      {/* 11. Storyteller Pricing: Audio-first creator tiers with credit system */}
+      <StorytellerPricingSection />
+      {/* 12. Pricing: Full production value tiers */}
       <Pricing />
-      {/* 12. FAQ: Objection handling */}
+      {/* 13. FAQ: Objection handling */}
       <FAQ />
       {/* 13. Final CTA: Conversion */}
       <FinalCTA />
