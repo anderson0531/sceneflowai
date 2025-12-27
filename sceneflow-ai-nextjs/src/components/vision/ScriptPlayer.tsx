@@ -19,11 +19,12 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { X, Subtitles, Menu, RefreshCw } from 'lucide-react'
+import { X, Subtitles, Menu, RefreshCw, Download } from 'lucide-react'
 import { SceneDisplay } from './SceneDisplay'
 import { PlaybackControls } from './PlaybackControls'
 import { VoiceAssignmentPanel } from './VoiceAssignmentPanel'
 import { MobileMenuSheet } from './MobileMenuSheet'
+import { ExportVideoModal } from '@/components/export/ExportVideoModal'
 import { WebAudioMixer, SceneAudioConfig, type AudioSource } from '@/lib/audio/webAudioMixer'
 import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAvailableLanguages, getAudioUrl, getAudioDuration as getStoredAudioDuration } from '@/lib/audio/languageDetection'
@@ -241,6 +242,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
   const [showControls, setShowControls] = useState(true)
   const [showCaptions, setShowCaptions] = useState(false) // Default to off
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [showExportModal, setShowExportModal] = useState(false) // Export video modal
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Language state - use pre-generated audio files
@@ -1045,6 +1047,14 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
               </option>
             ))}
           </select>
+          <button
+            onClick={() => setShowExportModal(true)}
+            className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center gap-2 px-3"
+            title="Export as MP4"
+          >
+            <Download className="w-5 h-5" />
+            <span className="text-sm hidden xl:inline">Export MP4</span>
+          </button>
         </div>
 
         {/* Tablet controls - show captions toggle */}
@@ -1225,6 +1235,15 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
           isLoading={isLoadingAudio}
         />
       </div>
+
+      {/* Export Video Modal */}
+      <ExportVideoModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        projectId={script?.id || ''}
+        projectTitle={script?.title || 'Untitled Project'}
+        availableLanguages={availableLanguages}
+      />
     </div>
   )
 }
