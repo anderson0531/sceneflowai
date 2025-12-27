@@ -1,286 +1,264 @@
-/**
- * Screening Room Export API Route
- * 
- * POST /api/export/screening-room
- * 
- * Generates an MP4 video from Screening Room scenes using Shotstack API.
- * This route is designed for the simpler scene format used in the Screening Room,
- * where each scene has a single image and audio tracks, rather than the
- * production segment format with video keyframes.
- * 
- * Scene data structure:
- * - imageUrl: The generated scene image
- * - narrationAudioUrl: Scene narration audio
- * - narration_audio: Alternative field for narration audio (multi-language object)
- * - dialogueAudio: Object with language codes as keys { en: [{ audioUrl, text }] }
- * - musicAudio: Background music URL
- * - duration: Scene duration in seconds
- */
+import { NextRequest, NextResponse } from 'next/server';
+import { RenderStorage } from '@/lib/gcs/renderStorage';
+import { CloudRunJobsService } from '@/lib/video/CloudRunJobsService';
+import { RenderJobSpec, RenderSegment, AudioTrack } from '@/lib/video/renderTypes';
+import RenderJob from '@/models/RenderJob';
+import { v4 as uuidv4 } from 'uuid';
 
-import { NextRequest, NextResponse } from 'next/server'
-import {
-  buildShotstackEdit,
-  submitRender,
-  ExportOptions,
-  SceneSegmentForExport,
-  AudioClipForExport,
-} from '@/lib/video/ShotstackService'
-
-export const maxDuration = 60
-export const runtime = 'nodejs'
-
-interface DialogueAudioEntry {
-  audioUrl?: string
-  audio_url?: string
-  text?: string
-  character?: string
-  duration?: number
+export interface ScreeningRoomScene {
+  id: string;
+  title: string;
+  duration: number; // in seconds
+  imageUrl?: string;
+  thumbnailUrl?: string;
+  audioTrack?: string;
+  audioTrackEs?: string;
+  audioTrackFr?: string;
+  audioTrackDe?: string;
+  audioTrackIt?: string;
+  audioTrackPt?: string;
+  audioTrackPtBr?: string;
+  audioTrackJa?: string;
+  audioTrackKo?: string;
+  audioTrackZh?: string;
+  audioTrackHi?: string;
+  audioTrackAr?: string;
+  audioTrackRu?: string;
 }
 
-interface ScreeningRoomScene {
-  id?: string
-  sceneId?: string
-  heading?: string | { text: string }
-  imageUrl?: string
-  image_url?: string
-  narrationAudioUrl?: string
-  narration_audio?: Record<string, string> // Multi-language: { en: 'url', es: 'url' }
-  dialogueAudio?: Record<string, DialogueAudioEntry[]> // { en: [{ audioUrl, text }] }
-  dialogue_audio?: Record<string, DialogueAudioEntry[]>
-  musicAudio?: string
-  music_audio?: string
-  sfxAudio?: string[]
-  sfx_audio?: string[]
-  duration?: number
-  narration?: string
-  dialogue?: Array<{ character?: string; text?: string }>
+export interface ExportRequest {
+  projectId: string;
+  scenes: ScreeningRoomScene[];
+  language: string;
+  resolution: 'sd' | 'hd' | 'fhd';
+  title?: string;
 }
 
-interface ExportScreeningRoomRequest {
-  projectId: string
-  projectTitle?: string
-  language: string // e.g., 'en', 'es', 'fr'
-  resolution: '720p' | '1080p' | '4K'
-  includeSubtitles: boolean
-  scenes: ScreeningRoomScene[]
+// Map resolution string to dimensions
+function getResolutionDimensions(resolution: string): { width: number; height: number } {
+  switch (resolution) {
+    case 'sd':
+      return { width: 854, height: 480 };
+    case 'hd':
+      return { width: 1280, height: 720 };
+    case 'fhd':
+    default:
+      return { width: 1920, height: 1080 };
+  }
 }
 
-// Map resolution to Shotstack format
-const RESOLUTION_MAP: Record<string, 'hd' | '1080' | '4k'> = {
-  '720p': 'hd',
-  '1080p': '1080',
-  '4K': '4k',
+// Get the audio URL for the specified language
+function getAudioUrlForLanguage(scene: ScreeningRoomScene, language: string): string | undefined {
+  const languageToField: Record<string, keyof ScreeningRoomScene> = {
+    en: 'audioTrack',
+    es: 'audioTrackEs',
+    fr: 'audioTrackFr',
+    de: 'audioTrackDe',
+    it: 'audioTrackIt',
+    pt: 'audioTrackPt',
+    'pt-br': 'audioTrackPtBr',
+    ja: 'audioTrackJa',
+    ko: 'audioTrackKo',
+    zh: 'audioTrackZh',
+    hi: 'audioTrackHi',
+    ar: 'audioTrackAr',
+    ru: 'audioTrackRu',
+  };
+
+  const field = languageToField[language.toLowerCase()] || 'audioTrack';
+  return scene[field] as string | undefined;
 }
 
-// Default scene duration if not specified (in seconds)
-const DEFAULT_SCENE_DURATION = 5
+// Check if Cloud Run rendering is configured
+function isCloudRunConfigured(): boolean {
+  return !!(
+    process.env.GCS_RENDER_BUCKET &&
+    process.env.CLOUD_RUN_JOB_NAME &&
+    process.env.CLOUD_RUN_REGION
+  );
+}
 
-export async function POST(req: NextRequest) {
+// Build job spec for Cloud Run FFmpeg rendering
+function buildRenderJobSpec(
+  jobId: string,
+  projectId: string,
+  scenes: ScreeningRoomScene[],
+  language: string,
+  resolution: 'sd' | 'hd' | 'fhd',
+  title?: string
+): RenderJobSpec {
+  const { width, height } = getResolutionDimensions(resolution);
+  
+  let currentTime = 0;
+  const segments: RenderSegment[] = [];
+  const audioTracks: AudioTrack[] = [];
+
+  for (let i = 0; i < scenes.length; i++) {
+    const scene = scenes[i];
+    const imageUrl = scene.imageUrl || scene.thumbnailUrl;
+    
+    if (!imageUrl) {
+      console.warn(`Scene ${i} has no image URL, skipping`);
+      continue;
+    }
+
+    // Add segment for this scene
+    segments.push({
+      imageUrl,
+      duration: scene.duration,
+      startTime: currentTime,
+      kenBurnsEffect: {
+        startZoom: 1.0,
+        endZoom: 1.15,
+        startX: 0.5,
+        startY: 0.5,
+        endX: 0.5,
+        endY: 0.5,
+      },
+    });
+
+    // Add audio track for this scene if available
+    const audioUrl = getAudioUrlForLanguage(scene, language);
+    if (audioUrl) {
+      audioTracks.push({
+        audioUrl,
+        startTime: currentTime,
+        duration: scene.duration,
+        volume: 1.0,
+      });
+    }
+
+    currentTime += scene.duration;
+  }
+
+  if (segments.length === 0) {
+    throw new Error('No valid segments found. Each scene must have an imageUrl or thumbnailUrl.');
+  }
+
+  return {
+    jobId,
+    projectId,
+    segments,
+    audioTracks,
+    output: {
+      format: 'mp4',
+      resolution,
+      fps: 24,
+      width,
+      height,
+    },
+    metadata: {
+      title: title || `Export-${projectId}`,
+      language,
+      createdAt: new Date().toISOString(),
+    },
+  };
+}
+
+export async function POST(request: NextRequest) {
   try {
-    const body: ExportScreeningRoomRequest = await req.json()
-    const { projectId, projectTitle, language, resolution, includeSubtitles, scenes } = body
+    const body = await request.json() as ExportRequest;
+    const { projectId, scenes, language, resolution, title } = body;
 
+    // Validate required fields
     if (!projectId) {
       return NextResponse.json(
         { error: 'Missing required field: projectId' },
         { status: 400 }
-      )
+      );
     }
 
-    if (!language) {
+    if (!scenes || !Array.isArray(scenes) || scenes.length === 0) {
       return NextResponse.json(
-        { error: 'Missing required field: language' },
+        { error: 'Missing required field: scenes (must be a non-empty array)' },
         { status: 400 }
-      )
+      );
     }
 
-    if (!scenes || scenes.length === 0) {
+    const validLanguage = language || 'en';
+    const validResolution = resolution || 'hd';
+
+    console.log(`[Export] Starting export for project ${projectId} with ${scenes.length} scenes`);
+    console.log(`[Export] Language: ${validLanguage}, Resolution: ${validResolution}`);
+
+    // Validate Cloud Run is configured
+    if (!isCloudRunConfigured()) {
+      console.error('[Export] Cloud Run FFmpeg rendering is not configured');
       return NextResponse.json(
-        { error: 'No scenes provided for export' },
-        { status: 400 }
-      )
-    }
-
-    console.log(`[Screening Room Export] Starting export for project ${projectId}`, {
-      projectTitle,
-      language,
-      resolution,
-      includeSubtitles,
-      sceneCount: scenes.length,
-    })
-
-    // Collect segments and audio from scenes
-    const segments: SceneSegmentForExport[] = []
-    const audioClips: AudioClipForExport[] = []
-    let currentTime = 0
-
-    for (let i = 0; i < scenes.length; i++) {
-      const scene = scenes[i]
-      
-      // Get image URL (try multiple possible field names)
-      const imageUrl = scene.imageUrl || scene.image_url
-      
-      if (!imageUrl) {
-        console.log(`[Screening Room Export] Scene ${i + 1} has no image, skipping`)
-        continue
-      }
-
-      // Calculate scene duration
-      // Priority: explicit duration > narration audio duration estimate > default
-      let sceneDuration = scene.duration || DEFAULT_SCENE_DURATION
-      
-      // If duration is very short, use default
-      if (sceneDuration < 1) {
-        sceneDuration = DEFAULT_SCENE_DURATION
-      }
-
-      // Track audio timing within this scene
-      const sceneStartTime = currentTime
-      let audioOffsetInScene = 0
-
-      // Get narration audio URL for selected language
-      let narrationUrl: string | null = null
-      
-      // Check multi-language narration audio object
-      if (scene.narration_audio && typeof scene.narration_audio === 'object') {
-        narrationUrl = scene.narration_audio[language] || scene.narration_audio['en'] || null
-      }
-      
-      // Fallback to single narrationAudioUrl (typically English)
-      if (!narrationUrl && scene.narrationAudioUrl) {
-        narrationUrl = scene.narrationAudioUrl
-      }
-
-      // Add narration audio clip with scene timing
-      if (narrationUrl) {
-        // Estimate narration duration - use scene duration or default
-        // In production, we'd want actual audio duration metadata
-        const narrationDuration = sceneDuration * 0.6 // Assume narration is ~60% of scene
-        audioClips.push({
-          url: narrationUrl,
-          startTime: sceneStartTime + audioOffsetInScene,
-          duration: narrationDuration,
-          type: 'narration',
-        })
-        audioOffsetInScene += narrationDuration + 0.3 // Small gap after narration
-      }
-
-      // Get dialogue audio for selected language
-      const dialogueAudio = scene.dialogueAudio || scene.dialogue_audio
-      const dialogueEntries = dialogueAudio?.[language] || dialogueAudio?.['en'] || []
-      
-      // Add dialogue audio clips sequentially after narration
-      for (const entry of dialogueEntries) {
-        const dialogueUrl = entry.audioUrl || entry.audio_url
-        if (dialogueUrl) {
-          // Use stored duration or estimate
-          const dialogueDuration = entry.duration || 3 // Default 3 seconds per dialogue line
-          audioClips.push({
-            url: dialogueUrl,
-            startTime: sceneStartTime + audioOffsetInScene,
-            duration: dialogueDuration,
-            type: 'dialogue',
-          })
-          audioOffsetInScene += dialogueDuration + 0.2 // Small gap between dialogue
-        }
-      }
-
-      // Create segment for this scene
-      segments.push({
-        segmentId: scene.id || scene.sceneId || `scene-${i + 1}`,
-        startTime: currentTime,
-        endTime: currentTime + sceneDuration,
-        activeAssetUrl: imageUrl,
-        assetType: 'image',
-        keyframeSettings: {
-          // Ken Burns effect settings for static images
-          scale: { start: 1.0, end: 1.1 },
-          position: { 
-            start: { x: 0, y: 0 }, 
-            end: { x: 0.05, y: 0.05 } 
-          },
+        { 
+          error: 'Video export is not configured',
+          details: 'Cloud Run FFmpeg rendering requires the following environment variables: GCS_RENDER_BUCKET, CLOUD_RUN_JOB_NAME, CLOUD_RUN_REGION, GCP_PROJECT_ID. Please contact support or check the deployment documentation.',
+          missingConfig: {
+            GCS_RENDER_BUCKET: !process.env.GCS_RENDER_BUCKET,
+            CLOUD_RUN_JOB_NAME: !process.env.CLOUD_RUN_JOB_NAME,
+            CLOUD_RUN_REGION: !process.env.CLOUD_RUN_REGION,
+            GCP_PROJECT_ID: !process.env.GCP_PROJECT_ID,
+          }
         },
-      })
-
-      currentTime += sceneDuration
+        { status: 503 }
+      );
     }
 
-    if (segments.length === 0) {
-      return NextResponse.json(
-        { error: 'No scenes with images found. Generate visuals for your scenes first.' },
-        { status: 400 }
-      )
-    }
+    console.log('[Export] Using Cloud Run FFmpeg rendering');
+    
+    // Generate unique job ID
+    const jobId = uuidv4();
+    
+    // Build the render job spec
+    const jobSpec = buildRenderJobSpec(
+      jobId,
+      projectId,
+      scenes,
+      validLanguage,
+      validResolution as 'sd' | 'hd' | 'fhd',
+      title
+    );
 
-    console.log(`[Screening Room Export] Collected segments and audio`, {
-      segmentCount: segments.length,
-      audioClipCount: audioClips.length,
-      totalDuration: currentTime,
-    })
+    // Upload job spec to GCS
+    const renderStorage = new RenderStorage();
+    await renderStorage.uploadJobSpec(jobId, jobSpec);
+    console.log(`[Export] Job spec uploaded to GCS for job ${jobId}`);
 
-    // Build export options with timed audio clips
-    const exportOptions: ExportOptions = {
-      resolution: RESOLUTION_MAP[resolution] || '1080',
-      fps: 24,
-      includeAudio: audioClips.length > 0,
-      audioClips, // Pass all timed audio clips for proper scene-by-scene audio
-    }
+    // Map resolution format for database
+    const dbResolution = validResolution === 'sd' ? '720p' : validResolution === 'hd' ? '1080p' : '4K';
 
-    // Build Shotstack edit JSON
-    const edit = buildShotstackEdit(segments, exportOptions)
+    // Create database record for tracking
+    // Note: Using jobId as the primary key (id field)
+    await RenderJob.create({
+      id: jobId,
+      project_id: projectId,
+      user_id: projectId, // Use projectId as user_id for now (can be updated with actual user ID)
+      status: 'QUEUED',
+      progress: 0,
+      language: validLanguage,
+      resolution: dbResolution as '720p' | '1080p' | '4K',
+      include_subtitles: false,
+      estimated_duration: scenes.reduce((sum, s) => sum + s.duration, 0),
+    });
+    console.log(`[Export] Database record created for job ${jobId}`);
 
-    console.log('[Screening Room Export] Built Shotstack edit:', {
-      tracks: edit.timeline.tracks.length,
-      visualClips: edit.timeline.tracks[0]?.clips.length || 0,
-      resolution: edit.output.resolution,
-      fps: edit.output.fps,
-    })
-
-    // Check if Shotstack API key is configured
-    if (!process.env.SHOTSTACK_API_KEY) {
-      console.log('[Screening Room Export] Preview mode - SHOTSTACK_API_KEY not configured')
-      return NextResponse.json({
-        success: true,
-        preview: true,
-        message: 'Shotstack API key not configured. Export preview generated.',
-        edit,
-        stats: {
-          segmentCount: segments.length,
-          totalDuration: currentTime,
-          language,
-          resolution,
-        },
-      })
-    }
-
-    // Submit render job to Shotstack
-    const renderResponse = await submitRender(edit)
-
-    console.log('[Screening Room Export] Render job submitted:', {
-      renderId: renderResponse.response.id,
-      message: renderResponse.message,
-    })
+    // Trigger Cloud Run Job
+    const cloudRunService = new CloudRunJobsService();
+    await cloudRunService.triggerRenderJob(jobId);
+    console.log(`[Export] Cloud Run Job triggered for job ${jobId}`);
 
     return NextResponse.json({
       success: true,
-      renderId: renderResponse.response.id,
+      jobId,
       message: 'Render job submitted successfully',
-      estimatedDuration: currentTime,
-      stats: {
-        segmentCount: segments.length,
-        totalDuration: currentTime,
-        language,
-        resolution,
-      },
-    })
-  } catch (error: any) {
-    console.error('[Screening Room Export] Error:', error)
+      provider: 'cloud-run',
+    });
+  } catch (error) {
+    console.error('[Export] Error processing export request:', error);
+    
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    
     return NextResponse.json(
-      {
-        error: error.message || 'Failed to export video',
-        details: error instanceof Error ? error.stack : undefined,
+      { 
+        error: 'Failed to start video export',
+        details: errorMessage 
       },
       { status: 500 }
-    )
+    );
   }
 }

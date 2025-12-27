@@ -178,7 +178,9 @@ export function ExportVideoModal({
         throw new Error(data.error || 'Failed to start video export')
       }
 
-      setRenderId(data.renderId)
+      // Support both Cloud Run (jobId) and Shotstack (renderId)
+      const jobOrRenderId = data.jobId || data.renderId
+      setRenderId(jobOrRenderId)
       setExportStatus('processing')
       setProgress(10)
     } catch (err) {

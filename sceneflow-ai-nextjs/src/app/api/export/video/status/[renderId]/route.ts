@@ -3,26 +3,71 @@
  * 
  * GET /api/export/video/status/[renderId]
  * 
- * Polls Shotstack render status and returns progress/download URL when complete.
+ * Polls render status for Cloud Run Jobs.
+ * The jobId (UUID format) is used to query the RenderJob database table.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getRenderStatus } from '@/lib/video/ShotstackService'
+import RenderJob from '@/models/RenderJob'
 
 export const maxDuration = 30
 export const runtime = 'nodejs'
 
-// Map Shotstack status to progress percentage
-function estimateProgress(status: string): number {
-  const progressMap: Record<string, number> = {
-    queued: 10,
-    fetching: 25,
-    rendering: 50,
-    saving: 90,
-    done: 100,
-    failed: 0,
+// Check if this is a valid UUID format (Cloud Run job ID)
+function isValidJobId(id: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  return uuidRegex.test(id)
+}
+
+// Get status from Cloud Run job (via database)
+async function getJobStatus(jobId: string) {
+  const job = await RenderJob.findByPk(jobId)
+  
+  if (!job) {
+    return null
   }
-  return progressMap[status] || 0
+
+  const status = job.status.toLowerCase()
+  let mappedStatus: string
+  let progress: number
+
+  switch (status) {
+    case 'queued':
+      mappedStatus = 'queued'
+      progress = 10
+      break
+    case 'processing':
+      mappedStatus = 'rendering'
+      progress = job.progress || 50
+      break
+    case 'completed':
+      mappedStatus = 'done'
+      progress = 100
+      break
+    case 'failed':
+      mappedStatus = 'failed'
+      progress = 0
+      break
+    case 'cancelled':
+      mappedStatus = 'cancelled'
+      progress = 0
+      break
+    default:
+      mappedStatus = status
+      progress = 0
+  }
+
+  return {
+    status: mappedStatus,
+    progress,
+    url: job.download_url || null,
+    error: job.error || null,
+    estimatedDuration: job.estimated_duration,
+    resolution: job.resolution,
+    language: job.language,
+    createdAt: job.created_at,
+    completedAt: job.completed_at,
+  }
 }
 
 export async function GET(
@@ -39,41 +84,55 @@ export async function GET(
       )
     }
 
-    // Check if Shotstack API key is configured
-    if (!process.env.SHOTSTACK_API_KEY) {
+    console.log(`[Export Video Status] Checking render status: ${renderId}`)
+
+    // Validate job ID format
+    if (!isValidJobId(renderId)) {
       return NextResponse.json(
-        { error: 'Shotstack API key not configured' },
-        { status: 503 }
+        { 
+          error: 'Invalid job ID format',
+          details: 'Job ID must be a valid UUID. Legacy Shotstack render IDs are no longer supported.'
+        },
+        { status: 400 }
       )
     }
 
-    console.log(`[Export Video Status] Checking render status: ${renderId}`)
+    const jobStatus = await getJobStatus(renderId)
+    
+    if (!jobStatus) {
+      return NextResponse.json(
+        { error: 'Job not found' },
+        { status: 404 }
+      )
+    }
 
-    const statusResponse = await getRenderStatus(renderId)
-    const status = statusResponse.response.status
-    const progress = estimateProgress(status)
-
-    console.log(`[Export Video Status] Render ${renderId}:`, {
-      status,
-      progress,
-      hasUrl: !!statusResponse.response.url,
+    console.log(`[Export Video Status] Job ${renderId}:`, {
+      status: jobStatus.status,
+      progress: jobStatus.progress,
+      hasUrl: !!jobStatus.url,
     })
 
     return NextResponse.json({
       success: true,
-      renderId,
-      status,
-      progress,
-      url: statusResponse.response.url || null,
-      poster: statusResponse.response.poster || null,
-      thumbnail: statusResponse.response.thumbnail || null,
-      error: statusResponse.response.error || null,
+      jobId: renderId,
+      provider: 'cloud-run',
+      status: jobStatus.status,
+      progress: jobStatus.progress,
+      url: jobStatus.url,
+      error: jobStatus.error,
+      metadata: {
+        estimatedDuration: jobStatus.estimatedDuration,
+        resolution: jobStatus.resolution,
+        language: jobStatus.language,
+        createdAt: jobStatus.createdAt,
+        completedAt: jobStatus.completedAt,
+      },
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Export Video Status] Error:', error)
     return NextResponse.json(
       {
-        error: error.message || 'Failed to get render status',
+        error: error instanceof Error ? error.message : 'Failed to get render status',
         details: error instanceof Error ? error.stack : undefined,
       },
       { status: 500 }

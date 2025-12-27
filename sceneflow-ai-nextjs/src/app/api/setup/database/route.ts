@@ -20,6 +20,7 @@ import CollabRecommendation from '@/models/CollabRecommendation'
 import CollabChatMessage from '@/models/CollabChatMessage'
 import RateCard from '@/models/RateCard'
 import SubscriptionTier from '@/models/SubscriptionTier'
+import RenderJob from '@/models/RenderJob'
 import { migrateUsersSubscriptionColumns } from '@/lib/database/migrateUsersSubscription'
 import { migrateCreditLedger } from '@/lib/database/migrateCreditLedger'
 import { migrateRateCard } from '@/lib/database/migrateRateCard'
@@ -143,6 +144,10 @@ export async function POST(request: NextRequest) {
     logs.push('19. Creating CollabChatMessage table...')
     await CollabChatMessage.sync({ force: false })
     logs.push('✅ CollabChatMessage table created')
+    
+    logs.push('20. Creating RenderJob table...')
+    await RenderJob.sync({ force: false })
+    logs.push('✅ RenderJob table created')
     
     logs.push('🎉 Database setup complete! All tables created.')
     

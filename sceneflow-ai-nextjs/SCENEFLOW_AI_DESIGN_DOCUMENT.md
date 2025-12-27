@@ -100,6 +100,7 @@ The user-facing terminology differs from internal code names for branding purpos
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2025-12-27 | Cloud Run FFmpeg Video Export (v2.30) | **Replaced Shotstack with GCP Cloud Run Jobs + FFmpeg for 100x cost reduction ($0.25/min → $0.002/min)**. Problem: Shotstack API was expensive for video rendering at $0.25 per minute of rendered video. For feature-length animatics (90+ minutes), costs were prohibitive. **Solution - Self-Hosted FFmpeg on Cloud Run Jobs**: 1) **Docker Container** (`/docker/ffmpeg-renderer/`) - Alpine Linux with FFmpeg 6.0, Python 3.11, gcloud CLI. `render.py` downloads job spec from GCS, downloads assets (images/audio), executes FFmpeg with Ken Burns effects (zoompan filter), uploads rendered MP4 to GCS, updates database status via callback, 2) **GCS Storage** (`/lib/gcs/renderStorage.ts`) - Job specs stored as JSON, rendered outputs stored with 7-day lifecycle policy for auto-cleanup, 3) **Cloud Run Jobs Service** (`/lib/video/CloudRunJobsService.ts`) - Triggers async Cloud Run Jobs via gcloud CLI or REST API, 24-hour timeout supports long renders, 4) **RenderJob Model** (`/models/RenderJob.ts`) - Sequelize model tracks job status (QUEUED/PROCESSING/COMPLETED/FAILED), progress, output URLs, errors, 5) **API Routes** - `/api/export/screening-room` builds job spec and triggers Cloud Run Job, `/api/export/video/status/[renderId]` polls RenderJob table, `/api/export/render-callback` receives status updates from Cloud Run container, 6) **Deployment Script** (`/scripts/deploy-ffmpeg-renderer.sh`) - Creates GCS bucket, Artifact Registry, builds/pushes Docker image, creates Cloud Run Job with IAM permissions. **Ken Burns Implementation**: FFmpeg zoompan filter with configurable start/end zoom (1.0→1.15 default), center-focused pan, 24fps output. **Cost Breakdown**: Cloud Run ~$0.00002/second CPU + $0.000002/second memory = ~$0.002/minute vs Shotstack $0.25/minute = **125x savings**. **No Shotstack Fallback**: Shotstack integration completely removed - returns clear error message if Cloud Run not configured. Files: `/docker/ffmpeg-renderer/*`, `/lib/gcs/renderStorage.ts`, `/lib/video/CloudRunJobsService.ts`, `/lib/video/renderTypes.ts`, `/models/RenderJob.ts`, `/api/export/screening-room/route.ts`, `/api/export/video/status/[renderId]/route.ts`, `/api/export/render-callback/route.ts`, `/scripts/deploy-ffmpeg-renderer.sh`. | ✅ Implemented |
 | 2025-12-21 | Backward Navigation Film Treatment Restoration (v2.29) | **When navigating from Virtual Production back to The Blueprint, the approved Film Treatment is now restored from the project database.** Problem: Users navigating backward from Vision page to Blueprint/Studio page would see empty or stale treatment data because the `filmTreatmentVariant` (the approved treatment that was used to create the project) was not being loaded back into the UI state. **Solution**: Updated `src/app/dashboard/studio/[projectId]/page.tsx` data loading logic to: 1) **Priority load filmTreatmentVariant** - When project has `metadata.filmTreatmentVariant` (set when user approves treatment and proceeds to Vision), it takes priority over `filmTreatment` text, 2) **Hydrate guide store** - Calls `updateTreatment()` with variant content (content/synopsis/logline), 3) **Merge with existing variants** - Adds approved variant to `treatmentVariants` array if not already present, ensuring it appears in variant selector, 4) **Restore beats and runtime** - Hydrates `beatsView` and `estimatedRuntime` from the approved variant's `beats` and `total_duration_seconds` fields, 5) **Collapse input** - Sets `isInputExpanded: false` since project already has treatment. **Files Changed**: `page.tsx` (studio). **Workflow**: User creates treatment in Blueprint → Approves and proceeds to Vision (creates project with filmTreatmentVariant) → Works in Vision → Navigates back to Blueprint → Treatment is now visible and editable. | ✅ Implemented |
 | 2025-12-21 | Upload/Download Media Integration (v2.28) | **Added comprehensive upload and download capabilities for frames, videos, and audio files.** Users can now integrate external visual and audio content into their projects. **Key Features**: 1) **Frame Upload/Download** - SegmentPairCard now has Upload/Download buttons on frame images (overlay on hover) and footer buttons. Users can upload custom keyframe images or download generated ones. 2) **Video Upload** - DirectorConsole now has upload button on each segment card, allowing users to upload pre-rendered video segments. 3) **Audio Upload** - ScriptPanel now has upload buttons for all 5 audio types: Description narration, Narration, Dialogue (per-line), Music, and SFX (per-item). Each audio type shows upload button both when audio exists (alongside Download) and when empty (alongside Generate). **New API**: `/api/upload/image/route.ts` - Mirrors audio upload pattern, accepts image/*, 10MB limit, stores to Vercel Blob. **UI Pattern**: Hidden file input with programmatic click, Tooltip-wrapped icon buttons, consistent styling per section (blue for description, green for narration, yellow for dialogue, purple for music, amber for SFX). **Handler**: `handleUploadFrame` in page.tsx uploads to image API and updates segment via `applySceneProductionUpdate`. | ✅ Implemented |
 | 2025-12-21 | Frame Generation Vertex AI Migration (v2.27) | **Migrated frame generation APIs from consumer Gemini API to GCP Vertex AI for higher rate limits**. Problem: Users encountering 429 RESOURCE_EXHAUSTED errors during frame generation because the code was using the consumer Gemini API (`generativelanguage.googleapis.com`) with strict rate limits (~2 RPM) instead of GCP Vertex AI (`aiplatform.googleapis.com`) which has much higher quotas. **Solution**: Updated frame generation routes to use the existing `callVertexAIImagen` function from `/lib/vertexai/client.ts`. **Key Changes**: 1) `generate-segment-frames/route.ts` - Replaced `generateImageWithGemini` import with `callVertexAIImagen`, adapted reference image format to include `referenceType: 'REFERENCE_TYPE_SUBJECT'` and `subjectType: 'SUBJECT_TYPE_PERSON'`, 2) `generate-end-frame/route.ts` - Same migration pattern. **Technical Notes**: Vertex AI uses `imagen-3.0-capability-001` (with reference images) or `imagen-3.0-generate-001` (without references) vs Gemini's `gemini-3-pro-image-preview`. Auth switches from `GEMINI_API_KEY` to service account via `GOOGLE_APPLICATION_CREDENTIALS_JSON`. | ✅ Implemented |
@@ -161,7 +162,7 @@ The user-facing terminology differs from internal code names for branding purpos
 | 2025-12-13 | Scene Editor Modal V2 | Complete redesign: removed legacy Ask Flow (ineffective), added tabbed left panel (Current Scene/Director Review/Audience Review), added voice input via useSpeechRecognition hook, created new /api/vision/review-scene API for scene-specific reviews with full script context, caches reviews per scene (clears on scene change), responsive layout stacks tabs on mobile | ✅ Implemented |
 | 2025-12-11 | Workflow Sync Tracking | Detects stale assets after script edits. Leverages EXISTING workflow status icons (Script/Direction/Frame/Call Action) - turns amber when stale. Direction stores `basedOnContentHash`, Image stores `basedOnDirectionHash`. Staleness banner appears inside tab content with "Regenerate" CTA. See "Workflow Sync Tracking" section in Critical Architecture Patterns. | ✅ Implemented |
 | 2025-12-11 | Fix State vs DB persistence bug | Script changes & reference library additions only updated React state, not database. On page refresh, old data loaded from DB. Fixed: handleScriptChange, handleCreateReference, handleRemoveReference, onAddToReferenceLibrary, onAddToSceneLibrary now all save to DB via PUT /api/projects. Added critical pattern to design doc. | ✅ Fixed |
-| 2025-12-11 | Enhanced sidebar menu UX | Added collapsible sections with chevron controls, breadcrumb-style workflow with progress indicators, Project Progress section with completion metrics, Credits balance display with "Get More Credits" link, moved Review Scores above Project Stats, Settings link moved to Quick Actions, deprecated BYOK settings link removed | ✅ Implemented |
+| 2025-12-11 | Enhanced sidebar menu UX | Added collapsible sections with chevron controls, breadcrumb-style workflow with progress indicators, Project Progress section with completion metrics, Credits balance display with "Get More Credits" link, moved Review Scores above Project Stats, Settings link moved to Quick Actions | ✅ Implemented |
 | 2025-12-11 | Fix ghost audio fingerprint & playback | Root cause: fingerprint used `sfxAudioUrl` (singular) but SFX stored as `sfxAudio[]` (array) - SFX changes weren't detected. Also `isPlaying: false` reset on fingerprint change broke new audio playback. Fixed: 1) Fingerprint now reads SFX array + includes entry counts (D3/S2), 2) Only clear caches on CHANGE (skip initial mount), 3) Don't reset isPlaying, 4) Added clearCacheForUrls() for targeted invalidation | ✅ Fixed |
 | 2025-12-11 | Comprehensive ghost audio fix | Multiple audio sources causing ghost playback: 1) audioDuration.ts now cancels preload with src='', 2) ScriptPanel tracks orphan Audio objects with cleanup on unmount, 3) URL.revokeObjectURL frees blob memory, 4) ScriptPlayer resets isPlaying state on fingerprint change. Centralized audio cleanup prevents orphan HTMLAudioElements | ✅ Fixed |
 | 2025-12-11 | UI Style Guide created | Vision page is canonical UI reference. Created `UI_STYLE_GUIDE.md` documenting colors, buttons, cards, panels, typography, spacing, and interactive states to ensure consistency across app | ✅ Implemented |
@@ -198,7 +199,7 @@ The user-facing terminology differs from internal code names for branding purpos
 | 2024-12-09 | Deprecate AnimaticsStudio component | Redundant with Screening Room (Preview Script); consolidate features | ✅ Removed |
 | 2024-12-09 | Single source of truth for scenes | Use `script.script.scenes` everywhere, not separate `scenes` state | ✅ Fixed |
 | 2024-12-09 | Narration toggle in Screening Room | Support both screenplay review (with narration) and animatic (without) use cases | ✅ Implemented |
-| 2024-12-09 | Shotstack for video export | Planned integration for MP4 export from animatics | 🔜 Planned |
+| 2024-12-09 | Cloud Run FFmpeg for video export | Self-hosted FFmpeg on GCP Cloud Run Jobs for MP4 export (replaced Shotstack for 100x cost reduction) | ✅ Implemented |
 | 2024-10-29 | Vision replaces Storyboard phase | Unified script and visual development in single workflow | ✅ Implemented |
 | 2024-10-15 | Gemini as primary LLM | Cost-effective, quality output, consistent with Google stack | ✅ Implemented |
 | 2024-10-01 | Imagen 4 with GCS references | Character consistency via reference images | ✅ Implemented |
@@ -393,7 +394,7 @@ SceneFlow AI is an AI-powered video creation platform that helps users transform
 - Google Veo 2 (Video Generation via Vertex AI)
 - ElevenLabs (Voice Synthesis & Sound Effects)
 
-> **V1 Architecture Decision**: SceneFlow uses a consolidated AI stack with Google (Gemini, Imagen, Veo) for all generation capabilities and ElevenLabs for audio. This simplifies operations, ensures consistent quality, and enables accurate credit tracking. No BYOK (Bring Your Own Key) - all users share the platform's API allocation.
+> **V1 Architecture Decision**: SceneFlow uses a consolidated AI stack with Google (Gemini, Imagen 4, Veo 3.1) for all generation capabilities and ElevenLabs for audio. This simplifies operations, ensures consistent quality, and enables accurate credit tracking. All AI usage is metered via a credit-based billing system - users purchase credits and are charged based on actual usage.
 
 **Storage & Infrastructure:**
 - Vercel (Hosting & Deployment)
@@ -464,7 +465,7 @@ The application follows a 6-step workflow:
    - Technical specifications
 
 4. **Creation Hub (Video Generation)** — `/dashboard/workflow/video-generation`
-   - AI video generation (BYOK required)
+   - AI video generation (Veo 3.1)
    - Voiceover generation
    - Music and sound effects
    - Video editing capabilities
@@ -516,7 +517,7 @@ The application follows a 6-step workflow:
 - Narration toggle (on/off)
 - Scene-by-scene navigation
 - Fullscreen mode
-- Export capabilities (MP4 via Shotstack - planned)
+- Export capabilities (MP4 via GCP Cloud Run FFmpeg)
 
 #### Scene Prompt Builder
 
@@ -653,7 +654,7 @@ This ensures users see and edit a clean still-image prompt, not conflicting vide
 - **AIPricing** — Pricing configurations for AI services
 - **CreditLedger** — Credit transaction tracking
 - **AIUsage** — AI service usage logging
-- **UserProviderConfig** — BYOK provider configurations
+- **CreditPackage** — Available credit top-up packages
 - **APIUsageLog** — API call logging
 - **PlatformModel** — AI platform model registry (DOL)
 - **PromptTemplate** — AI prompt templates (DOL)
@@ -859,11 +860,10 @@ interface EnhancedAppState {
     // ...
   }
   
-  // BYOK settings
-  byokSettings: {
-    llmProvider: { name, apiKey, isConfigured }
-    imageGenerationProvider: { name, apiKey, isConfigured }
-    videoGenerationProvider: { name, apiKey, isConfigured }
+  // Credit settings
+  creditSettings: {
+    balance: number
+    qualityMode: 'fast' | 'standard'  // Fast = lower cost, Standard = full quality
   }
   
   // UI state
@@ -979,14 +979,54 @@ type WorkflowStep =
 - `/api/auth/profile`
 - `/api/auth/verify`
 
-### 9.2 BYOK (Bring Your Own Key)
+### 9.2 Credit-Based Billing System
 
-Users can configure their own API keys for:
-- LLM Provider (Gemini, OpenAI, Anthropic)
-- Image Generation (Gemini, OpenAI, Anthropic)
-- Video Generation (Google Veo, Runway, Stability AI)
+SceneFlow uses a credit-based system for all AI generation:
 
-Encrypted storage in `UserProviderConfig` model.
+**Subscription Plans:**
+
+| Feature | Starter | Pro | Studio |
+|---------|---------|-----|--------|
+| **Monthly Credits** | 500 | 2,000 | 10,000 |
+| **Storage** | 5 GB | 25 GB | 100 GB |
+| **AI Models** | Gemini + Veo 3.1 | Gemini + Veo 3.1 | Gemini + Veo 3.1 |
+| **Quality Mode** | Fast | Fast + Standard | Fast + Standard |
+| **Collaboration** | — | ✓ | ✓ |
+| **Support** | Community | Email | Priority |
+
+**Credit Usage by Project Type:**
+
+| Project Type | Credits | What You Get |
+|--------------|---------|---------------|
+| Short Film Animatic (5-10 min) | ~150 | Full script, 10-15 scenes, images, TTS audio |
+| Feature Treatment (90+ min) | ~800 | Full treatment, 40+ scenes, images, TTS audio |
+| Music Video Concept (3-5 min) | ~75 | Script, 5-8 scenes, stylized images |
+| Commercial Storyboard (30-60 sec) | ~40 | Script, 4-6 scenes, images |
+
+**Credit Costs by Operation:**
+
+| Operation | Fast Mode | Standard Mode |
+|-----------|-----------|---------------|
+| Script Generation (per scene) | 2 | 5 |
+| Image Generation (Imagen 4) | 3 | 5 |
+| Video Generation (Veo 3.1, per 8s) | 15 | 25 |
+| TTS Audio (per minute) | 1 | 2 |
+| MP4 Export (per minute) | 1 | 1 |
+
+**Add-On Credit Packages (Top Up):**
+
+| Package | Credits | Price | Best For |
+|---------|---------|-------|----------|
+| Boost | 200 | $9 | Quick top-up |
+| Creator | 500 | $19 | Single project |
+| Producer | 1,500 | $49 | Multiple projects |
+| Studio | 5,000 | $149 | Heavy production |
+
+**Quality Modes:**
+- **Fast Mode**: Lower credit cost, uses optimized model settings for quick iteration
+- **Standard Mode**: Full quality, uses maximum model capabilities for final output
+
+> **Note**: Resolution is user-selectable for video/image generation. Higher resolutions cost more credits.
 
 ---
 
@@ -1029,8 +1069,9 @@ BLOB_STORAGE_CONTAINER=...
 NEXTAUTH_SECRET=...
 NEXTAUTH_URL=...
 
-# BYOK Encryption
-ENCRYPTION_KEY=...
+# Stripe (Payments)
+STRIPE_SECRET_KEY=...
+STRIPE_WEBHOOK_SECRET=...
 ```
 
 ---
@@ -1052,7 +1093,7 @@ ENCRYPTION_KEY=...
 ✅ Screening Room (Video Playback)  
 ✅ DOL (Dynamic Optimization Layer)  
 ✅ Collaboration Features  
-✅ BYOK Support  
+✅ Credit-Based Billing  
 ✅ Admin Dashboard
 
 ### 11.2 Key Technical Achievements
@@ -1075,7 +1116,7 @@ ENCRYPTION_KEY=...
 - ✅ Scene Direction
 
 ### Phase 2: Video Generation (In Progress)
-- Video generation with BYOK
+- Video generation (Veo 3.1)
 - Advanced editing capabilities
 - Music generation
 - Sound effects library
@@ -1100,51 +1141,69 @@ ENCRYPTION_KEY=...
 
 ---
 
-## 12.1 Planned Feature: Shotstack MP4 Export
+## 12.1 Cloud Run FFmpeg Video Export
 
-**Status**: Planned for Final Cut workflow
+**Status**: ✅ Implemented (December 2025)
 
-**Purpose**: Export Screening Room animatics as MP4 video files.
+**Purpose**: Export Screening Room animatics as MP4 video files using self-hosted FFmpeg on GCP Cloud Run Jobs.
 
-**Integration Approach**:
+**Cost Advantage**: ~$0.002/minute vs Shotstack $0.25/minute = **125x savings**
+
+**Architecture**:
 ```
-SceneFlow Data → Shotstack Edit JSON → Shotstack Render API → MP4 Download
+SceneFlow Data → Job Spec JSON → GCS → Cloud Run Job → FFmpeg → GCS → MP4 Download
 ```
+
+**Components**:
+| Component | Location | Purpose |
+|-----------|----------|----------|
+| Docker Container | `/docker/ffmpeg-renderer/` | FFmpeg 6.0 + Python render script |
+| GCS Storage | `RenderStorage` class | Job specs and rendered outputs |
+| Cloud Run Jobs | `CloudRunJobsService` | Async job execution (24h timeout) |
+| RenderJob Model | `/models/RenderJob.ts` | Database tracking of job status |
+| Callback Route | `/api/export/render-callback` | Status updates from container |
 
 **Data Mapping**:
-| SceneFlow | Shotstack |
-|-----------|-----------|
-| `scene.imageUrl` | `clip.asset.src` |
-| `scene.duration` | `clip.length` |
-| `scene.startTime` | `clip.start` |
-| Ken Burns direction | `clip.effect` (zoomIn, panLeft, etc.) |
-| Audio URLs | Audio track clips |
+| SceneFlow | FFmpeg |
+|-----------|----------|
+| `scene.imageUrl` | Input image for segment |
+| `scene.duration` | Segment duration in seconds |
+| Ken Burns settings | `zoompan` filter with start/end zoom |
+| Audio URLs | Mixed audio track via `amix` filter |
 
-**Ken Burns → Shotstack Effect Mapping**:
-| SceneFlow Direction | Shotstack Effect |
-|---------------------|------------------|
-| `in` | `zoomIn` |
-| `out` | `zoomOut` |
-| `left` | `panLeft` |
-| `right` | `panRight` |
-| `up-left` | `panLeft` + `zoomIn` |
-| `up-right` | `panRight` + `zoomIn` |
+**Ken Burns → FFmpeg Filter**:
+```
+zoompan=z='1.0+(1.15-1.0)*on/24*{duration}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=24*{duration}:s={width}x{height}:fps=24
+```
 
-**API Routes (Planned)**:
-- `/api/export/animatic` — Generate Shotstack edit and submit render
-- `/api/export/animatic/[renderId]` — Poll render status, return download URL
+**API Routes**:
+- `POST /api/export/screening-room` — Build job spec, upload to GCS, trigger Cloud Run Job
+- `GET /api/export/video/status/[renderId]` — Poll RenderJob table for status
+- `POST /api/export/render-callback` — Receive status updates from Cloud Run container
 
 **User Flow**:
 1. User clicks "Export MP4" in Screening Room
-2. System builds Shotstack Edit JSON from scene data
-3. Submit to Shotstack API
-4. Poll for completion
-5. Return download URL
+2. System builds RenderJobSpec from scene data
+3. Job spec uploaded to GCS bucket
+4. Cloud Run Job triggered with job ID
+5. Container downloads assets, runs FFmpeg, uploads output
+6. Container calls callback API to update database
+7. Frontend polls status until complete
+8. User downloads MP4 from signed GCS URL
 
 **Options**:
-- Include/exclude narration audio
-- Resolution (HD, 4K)
-- Frame rate (24, 30 fps)
+- Language selection (13 languages supported)
+- Resolution: SD (480p), HD (720p), FHD (1080p)
+- Frame rate: 24 fps (cinematic standard)
+
+**Environment Variables Required**:
+```
+GCS_RENDER_BUCKET=sceneflow-render-jobs
+CLOUD_RUN_JOB_NAME=ffmpeg-render-job
+CLOUD_RUN_REGION=us-central1
+GCP_PROJECT_ID=your-project-id
+RENDER_CALLBACK_API_KEY=your-secret-key  # Optional
+```
 
 ---
 
@@ -1303,9 +1362,9 @@ POST /api/image/edit
    - Features extracted from `appearanceDescription`
    - May miss features not explicitly stated
 
-3. **BYOK Required for Video**
-   - Video generation requires user API keys
-   - No platform-hosted video generation option
+3. **Credit-Based Video Generation**
+   - Video generation uses platform-hosted Veo 3.1
+   - Credits charged based on duration and quality mode
 
 4. **Legacy Route Compatibility**
    - `/dashboard/workflow/storyboard` route may exist for legacy support
