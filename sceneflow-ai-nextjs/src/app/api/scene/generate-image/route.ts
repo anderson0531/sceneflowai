@@ -5,6 +5,10 @@ import { optimizePromptForImagen, generateLinkingDescription } from '@/lib/image
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
 import { waitForGCSURIs, checkGCSURIAccessibility } from '@/lib/storage/gcsAccessibility'
 import { generateDirectionHash, generateImageSourceHash } from '@/lib/utils/contentHash'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { CreditService } from '@/services/CreditService'
+import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 
@@ -178,7 +182,36 @@ function stripClothingDescriptors(description: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  let userId: string | null = null
+  let creditsCharged = 0
+  const CREDIT_COST = IMAGE_CREDITS.IMAGEN_3 // 5 credits per image
+
   try {
+    // 1. Authenticate user
+    const session = await getServerSession(authOptions)
+    userId = session?.user?.id || session?.user?.email || null
+    
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required', code: 'AUTH_REQUIRED' },
+        { status: 401 }
+      )
+    }
+
+    // 2. Pre-check credit balance
+    const hasEnoughCredits = await CreditService.ensureCredits(userId, CREDIT_COST)
+    if (!hasEnoughCredits) {
+      const breakdown = await CreditService.getCreditBreakdown(userId)
+      return NextResponse.json({
+        success: false,
+        error: 'Insufficient credits',
+        code: 'INSUFFICIENT_CREDITS',
+        required: CREDIT_COST,
+        balance: breakdown.total_credits,
+        suggestedTopUp: { pack: 'quick_fix', name: 'Quick Fix', price: 25, credits: 2000 }
+      }, { status: 402 })
+    }
+
     const body = await req.json()
     const {
       projectId,
@@ -720,6 +753,31 @@ export async function POST(req: NextRequest) {
     const basedOnDirectionHash = sceneData ? generateDirectionHash(sceneData) : undefined
     const basedOnReferencesHash = sceneData ? generateImageSourceHash(sceneData) : undefined
 
+    // 3. Charge credits after successful generation
+    try {
+      await CreditService.charge(
+        userId!,
+        CREDIT_COST,
+        'ai_usage',
+        projectId || null,
+        { operation: 'imagen_generate', sceneIndex, model: 'gemini-3-pro-image-preview' }
+      )
+      creditsCharged = CREDIT_COST
+      console.log(`[Scene Image] Charged ${CREDIT_COST} credits to user ${userId}`)
+    } catch (chargeError: any) {
+      console.error('[Scene Image] Failed to charge credits:', chargeError)
+      // Don't fail the request if credit charge fails - image was already generated
+    }
+
+    // Get updated balance for response
+    let newBalance: number | undefined
+    try {
+      const breakdown = await CreditService.getCreditBreakdown(userId!)
+      newBalance = breakdown.total_credits
+    } catch (e) {
+      // Ignore balance lookup errors
+    }
+
     // Prepare response based on validation results
     const response: any = {
       success: true,
@@ -730,7 +788,10 @@ export async function POST(req: NextRequest) {
       storage: 'vercel-blob',
       // Include hashes for workflow sync tracking
       basedOnDirectionHash,
-      basedOnReferencesHash
+      basedOnReferencesHash,
+      // Credit info
+      creditsCharged: CREDIT_COST,
+      creditsBalance: newBalance
     }
 
     // Add validation info (informational only for storyboards)

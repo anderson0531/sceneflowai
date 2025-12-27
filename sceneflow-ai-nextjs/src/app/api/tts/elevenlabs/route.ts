@@ -1,8 +1,21 @@
 import { NextRequest } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { CREDIT_COSTS, getCreditCost } from '@/lib/credits/creditCosts'
+import { CreditService } from '@/services/CreditService'
 
 export const dynamic = 'force-dynamic'
 
 const DEFAULT_VOICE_ID = '21m00Tcm4TlvDq8ikWAM' // Rachel (female)
+
+// Calculate credit cost based on character count (30 credits per 1k chars)
+function calculateTTSCreditCost(text: string): number {
+  const charCount = text.length
+  const baseRate = getCreditCost('ELEVENLABS')  // 30 credits per 1k chars
+  // Round up to nearest 1k chars, minimum 30 credits
+  const thousands = Math.max(1, Math.ceil(charCount / 1000))
+  return thousands * baseRate
+}
 
 // Split text into paragraphs for parallel processing
 function splitIntoParagraphs(text: string): string[] {
@@ -59,10 +72,31 @@ function concatenateAudioBuffers(buffers: ArrayBuffer[]): ArrayBuffer {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+    }
+    const userId = session.user.id
+
     const { text, voiceId, parallel = true } = await request.json()
 
     if (!text || typeof text !== 'string') {
       return new Response(JSON.stringify({ error: 'Missing text' }), { status: 400 })
+    }
+
+    // Calculate credit cost based on text length
+    const CREDIT_COST = calculateTTSCreditCost(text)
+    
+    // Credit pre-check
+    const hasCredits = await CreditService.ensureCredits(userId, CREDIT_COST)
+    if (!hasCredits) {
+      const breakdown = await CreditService.getCreditBreakdown(userId)
+      return new Response(JSON.stringify({ 
+        error: 'INSUFFICIENT_CREDITS',
+        message: `This operation requires ${CREDIT_COST} credits (${text.length} chars). You have ${breakdown.total_credits}.`,
+        required: CREDIT_COST,
+        available: breakdown.total_credits
+      }), { status: 402 })
     }
 
     const apiKey = process.env.ELEVENLABS_API_KEY
@@ -81,6 +115,21 @@ export async function POST(request: NextRequest) {
     if (paragraphs.length <= 1 || !parallel) {
       console.log('🎤 TTS: Single chunk processing')
       const audioBuffer = await generateChunk(text, id, apiKey)
+      
+      // Charge credits after successful generation
+      try {
+        await CreditService.charge(
+          userId,
+          CREDIT_COST,
+          'ai_usage',
+          null,
+          { operation: 'elevenlabs_tts', charCount: text.length, voiceId: id }
+        )
+        console.log(`🎤 TTS: Charged ${CREDIT_COST} credits to user ${userId}`)
+      } catch (chargeError: any) {
+        console.error('🎤 TTS: Failed to charge credits:', chargeError)
+      }
+      
       return new Response(audioBuffer, {
         status: 200,
         headers: {
@@ -108,6 +157,20 @@ export async function POST(request: NextRequest) {
     // Concatenate all audio chunks
     const combinedAudio = concatenateAudioBuffers(audioBuffers)
     console.log(`✅ TTS: Combined ${paragraphs.length} chunks, total size: ${combinedAudio.byteLength}`)
+    
+    // Charge credits after successful generation
+    try {
+      await CreditService.charge(
+        userId,
+        CREDIT_COST,
+        'ai_usage',
+        null,
+        { operation: 'elevenlabs_tts', charCount: text.length, voiceId: id, chunks: paragraphs.length }
+      )
+      console.log(`🎤 TTS: Charged ${CREDIT_COST} credits to user ${userId}`)
+    } catch (chargeError: any) {
+      console.error('🎤 TTS: Failed to charge credits:', chargeError)
+    }
     
     return new Response(combinedAudio, {
       status: 200,

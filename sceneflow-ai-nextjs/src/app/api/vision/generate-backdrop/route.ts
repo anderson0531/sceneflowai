@@ -8,6 +8,8 @@ import {
   getPersonGenerationForMode, 
   getNegativePromptForMode 
 } from '@/lib/vision/backdropGenerator'
+import { CREDIT_COSTS, getCreditCost } from '@/lib/credits/creditCosts'
+import { CreditService } from '@/services/CreditService'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -30,6 +32,23 @@ export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const userId = session.user.id
+
+    // Credit pre-check
+    const CREDIT_COST = getCreditCost('IMAGE_GENERATION')
+    const hasCredits = await CreditService.ensureCredits(userId, CREDIT_COST)
+    if (!hasCredits) {
+      const breakdown = await CreditService.getCreditBreakdown(userId)
+      return NextResponse.json(
+        { 
+          error: 'INSUFFICIENT_CREDITS',
+          message: `This operation requires ${CREDIT_COST} credits. You have ${breakdown.total_credits}.`,
+          required: CREDIT_COST,
+          available: breakdown.total_credits
+        },
+        { status: 402 }
+      )
     }
 
     const body: GenerateBackdropRequest = await req.json()
@@ -74,12 +93,31 @@ export async function POST(req: NextRequest) {
 
     console.log('[Backdrop Generation] Upload complete:', imageUrl)
 
+    // Charge credits after successful generation
+    let newBalance: number | undefined
+    try {
+      await CreditService.charge(
+        userId,
+        CREDIT_COST,
+        'ai_usage',
+        null,
+        { operation: 'backdrop_generation', mode, sceneNumber: sourceSceneNumber }
+      )
+      console.log(`[Backdrop Generation] Charged ${CREDIT_COST} credits to user ${userId}`)
+      const breakdown = await CreditService.getCreditBreakdown(userId)
+      newBalance = breakdown.total_credits
+    } catch (chargeError: any) {
+      console.error('[Backdrop Generation] Failed to charge credits:', chargeError)
+    }
+
     return NextResponse.json({
       success: true,
       imageUrl,
       mode,
       sourceSceneNumber,
       characterId,
+      creditsCharged: CREDIT_COST,
+      creditsBalance: newBalance,
     })
 
   } catch (error: any) {

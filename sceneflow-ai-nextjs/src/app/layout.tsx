@@ -11,6 +11,7 @@ import { GlobalHeader } from '@/components/layout/GlobalHeader'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { Toaster } from 'sonner'
 import ProcessingOverlay from '../components/ProcessingOverlay'
+import { CreditsProvider } from '@/contexts/CreditsContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -93,31 +94,31 @@ export default function RootLayout({
               "offers": [
                 {
                   "@type": "Offer",
-                  "name": "Coffee Break",
-                  "price": "5.00",
+                  "name": "Trial Plan",
+                  "price": "15.00",
                   "priceCurrency": "USD",
-                  "description": "One-time purchase: 1,000 credits to test drive the platform"
+                  "description": "One-time purchase: 1,200 credits to test drive the platform"
                 },
                 {
                   "@type": "Offer",
                   "name": "Starter",
-                  "price": "29.00",
+                  "price": "49.00",
                   "priceCurrency": "USD",
-                  "description": "Monthly subscription: 3,000 credits for hobbyists"
+                  "description": "Monthly subscription: 4,500 credits for hobbyists"
                 },
                 {
                   "@type": "Offer",
                   "name": "Pro",
-                  "price": "99.00",
+                  "price": "149.00",
                   "priceCurrency": "USD",
-                  "description": "Monthly subscription: 12,000 credits for freelancers"
+                  "description": "Monthly subscription: 15,000 credits for freelancers"
                 },
                 {
                   "@type": "Offer",
                   "name": "Studio",
-                  "price": "299.00",
+                  "price": "599.00",
                   "priceCurrency": "USD",
-                  "description": "Monthly subscription: 40,000 credits for agencies"
+                  "description": "Monthly subscription: 75,000 credits for agencies"
                 }
               ],
               "aggregateRating": {
@@ -141,25 +142,27 @@ export default function RootLayout({
         </a>
         <ThemeProvider>
           <AuthSessionProvider>
-            <GlobalHeader />
-            <ConditionalLayout>{children}</ConditionalLayout>
-            <InstallPrompt />
-            <Toaster 
-              position="top-right" 
-              richColors 
-              theme="dark"
-              closeButton
-              toastOptions={{
-                style: {
-                  background: '#1f2937', // gray-800
-                  color: '#f3f4f6', // gray-100
-                  border: '1px solid #374151', // gray-700
-                  opacity: 1,
-                },
-                className: 'bg-gray-800 text-gray-100 border-gray-700 shadow-lg !opacity-100 whitespace-pre-wrap',
-              }}
-            />
-            <ProcessingOverlay />
+            <CreditsProvider>
+              <GlobalHeader />
+              <ConditionalLayout>{children}</ConditionalLayout>
+              <InstallPrompt />
+              <Toaster 
+                position="top-right" 
+                richColors 
+                theme="dark"
+                closeButton
+                toastOptions={{
+                  style: {
+                    background: '#1f2937', // gray-800
+                    color: '#f3f4f6', // gray-100
+                    border: '1px solid #374151', // gray-700
+                    opacity: 1,
+                  },
+                  className: 'bg-gray-800 text-gray-100 border-gray-700 shadow-lg !opacity-100 whitespace-pre-wrap',
+                }}
+              />
+              <ProcessingOverlay />
+            </CreditsProvider>
           </AuthSessionProvider>
         </ThemeProvider>
       </body>

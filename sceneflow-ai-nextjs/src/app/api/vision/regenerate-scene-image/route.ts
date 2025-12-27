@@ -4,12 +4,39 @@ import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { CREDIT_COSTS, getCreditCost } from '@/lib/credits/creditCosts'
+import { CreditService } from '@/services/CreditService'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120  // Increased for new AI image models
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    }
+    const userId = session.user.id
+
+    // Credit pre-check
+    const CREDIT_COST = getCreditCost('IMAGE_GENERATION')
+    const hasCredits = await CreditService.ensureCredits(userId, CREDIT_COST)
+    if (!hasCredits) {
+      const breakdown = await CreditService.getCreditBreakdown(userId)
+      return NextResponse.json(
+        { 
+          success: false,
+          error: 'INSUFFICIENT_CREDITS',
+          message: `This operation requires ${CREDIT_COST} credits. You have ${breakdown.total_credits}.`,
+          required: CREDIT_COST,
+          available: breakdown.total_credits
+        },
+        { status: 402 }
+      )
+    }
+
     const { projectId, sceneNumber, customPrompt, scene, visualStyle, characters } = await request.json()
 
     if (!projectId || !sceneNumber || !customPrompt) {
@@ -85,13 +112,32 @@ export async function POST(request: NextRequest) {
 
     console.log(`[Regenerate Scene] Scene ${sceneNumber} image updated successfully`)
 
+    // Charge credits after successful generation
+    let newBalance: number | undefined
+    try {
+      await CreditService.charge(
+        userId,
+        CREDIT_COST,
+        'ai_usage',
+        projectId,
+        { operation: 'scene_image_regenerate', sceneNumber, model: 'imagen-3' }
+      )
+      console.log(`[Regenerate Scene] Charged ${CREDIT_COST} credits to user ${userId}`)
+      const breakdown = await CreditService.getCreditBreakdown(userId)
+      newBalance = breakdown.total_credits
+    } catch (chargeError: any) {
+      console.error('[Regenerate Scene] Failed to charge credits:', chargeError)
+    }
+
     return NextResponse.json({
       success: true,
       imageUrl: blobUrl,
       promptUsed: customPrompt,
       model: 'imagen-3.0-generate-001',
       provider: 'vertex-ai-imagen-3',
-      storageType: 'vercel-blob'
+      storageType: 'vercel-blob',
+      creditsCharged: CREDIT_COST,
+      creditsBalance: newBalance
     })
   } catch (error: any) {
     console.error('[Regenerate Scene] Error:', error)

@@ -18,7 +18,7 @@ export function Pricing() {
     }))
   }
 
-  const handleCoffeeBreakPurchase = async () => {
+  const handleTrialPurchase = async () => {
     setPurchasing(true)
     try {
       const res = await fetch('/api/subscription/purchase-coffee-break', {
@@ -48,21 +48,21 @@ export function Pricing() {
 
     const pricingTiers = [
     {
-      name: 'Coffee Break',
-      monthlyPrice: 5,
-      annualPrice: 5, // Same as monthly (one-time)
+      name: 'Trial Plan',
+      monthlyPrice: 15,
+      annualPrice: 15, // Same as monthly (one-time)
       isOneTime: true,
       description: 'Test Drive SceneFlow AI',
-      tagline: 'For the price of a coffee ☕',
-      credits: '1,000 Credits (one-time)',
-      value: '$10 value for $5',
+      tagline: 'Create your first animatic',
+      credits: '1,200 Credits (one-time)',
+      value: 'Full animatic + 2 draft scenes',
       storage: '10 GB',
       features: [
-        '1,000 credits (never expire)',
-        '50% discount ($10 value)',
+        '1,200 credits (never expire)',
+        '~150 images + 3 Fast video scenes',
         '10 GB storage',
         'Gemini 2.5 Flash + Imagen 4',
-        'Unlimited Ken Burns animatics',
+        'Veo 3.1 Fast video drafts',
         'AI voiceover generation',
         'MP4 export',
         '3 active projects',
@@ -70,8 +70,8 @@ export function Pricing() {
       ],
       excluded: [
         'One-time purchase only',
-        'No collaboration features',
-        'Veo 3.1 available (extra credits)'
+        'Veo Max (Production Quality)',
+        'No collaboration features'
       ],
       popular: false,
       color: 'from-amber-500 to-orange-600',
@@ -79,27 +79,27 @@ export function Pricing() {
     },
     {
       name: 'Starter',
-      monthlyPrice: 29,
-      annualPrice: 24, // ~17% discount (2 months free)
+      monthlyPrice: 49,
+      annualPrice: 41, // ~17% discount
       description: 'For Animatic Creators & Short-Form',
-      credits: '3,000 Credits/mo ($30 value)',
-      storage: '100 GB',
+      credits: '4,500 Credits/mo',
+      storage: '25 GB',
       features: [
-        '3,000 monthly credits',
-        '100 GB active storage',
+        '4,500 monthly credits',
+        '~300 images + 20 Fast video scenes',
+        '25 GB active storage',
         'Unlimited Ken Burns animatics',
-        'Unlimited AI voiceover',
         'MP4 export (any resolution)',
         'Multi-language voiceover',
         'Background music library',
         'Gemini 2.5 Flash + Imagen 4',
-        'Veo 3.1 available (extra credits)',
+        'Veo 3.1 Fast video drafts',
         'Email support'
       ],
       excluded: [
+        'Veo Max (Production Quality)',
         'Team collaboration',
-        'Character consistency engine',
-        'Custom voice cloning'
+        'Character consistency engine'
       ],
       popular: false,
       color: 'from-gray-500 to-gray-600',
@@ -107,28 +107,27 @@ export function Pricing() {
     },
     {
       name: 'Pro',
-      monthlyPrice: 99,
-      annualPrice: 82, // ~17% discount
+      monthlyPrice: 149,
+      annualPrice: 124, // ~17% discount
       description: 'For Freelancers & YouTubers',
-      credits: '12,000 Credits/mo ($120 value)',
+      credits: '15,000 Credits/mo',
       storage: '500 GB',
       features: [
-        '12,000 monthly credits',
+        '15,000 monthly credits',
+        '~1,000 images + 50 Fast + 3 Max scenes',
         '500 GB active storage',
-        'Unlimited Ken Burns animatics',
-        'Unlimited AI voiceover',
-        'MP4 export (any resolution)',
+        'Veo 3.1 Max (Production Quality) ✨',
         'Character consistency engine',
         'Custom voice cloning',
         'Gemini 2.5 Pro + Imagen 4',
-        'Veo 3.1 included',
+        'MP4 export (any resolution)',
         '3 collaboration seats',
         'Priority support'
       ],
       excluded: [
         'Beta AI models',
-        'Dedicated support',
-        'API access'
+        'API access',
+        'Dedicated manager'
       ],
       popular: true,
       popularBadge: 'Most Popular',
@@ -136,20 +135,19 @@ export function Pricing() {
     },
     {
       name: 'Studio',
-      monthlyPrice: 299,
-      annualPrice: 249, // ~17% discount
+      monthlyPrice: 599,
+      annualPrice: 499, // ~17% discount
       description: 'For Agencies & Production Teams',
-      credits: '40,000 Credits/mo ($400 value)',
+      credits: '75,000 Credits/mo',
       storage: '2 TB',
       features: [
-        '40,000 monthly credits',
+        '75,000 monthly credits',
+        'Full 150-scene movie capacity',
         '2 TB active storage',
-        'Unlimited Ken Burns animatics',
-        'Unlimited AI voiceover',
-        'MP4 export (any resolution)',
+        'Veo 3.1 Max unlimited ✨',
         'White-label exports',
-        'Gemini 2.5 Pro + Imagen 4',
-        'Veo 3.1 included + Beta models',
+        'Gemini 2.5 Pro + Beta models',
+        'Imagen 4 unlimited',
         '10 collaboration seats',
         'Dedicated account manager',
         'API access',
@@ -162,32 +160,31 @@ export function Pricing() {
   ]
 
   const creditPacks = [
-    { credits: 2000, price: 20, bonus: 0, label: 'Basic Top Up' },
-    { credits: 5250, price: 50, bonus: 5, label: 'Value Top Up' },
-    { credits: 11000, price: 100, bonus: 10, label: 'Pro Top Up' },
-    { credits: 25000, price: 200, bonus: 15, label: 'Studio Top Up' }
+    { credits: 2000, price: 25, bonus: 0, label: 'Quick Fix', description: '1-2 Veo Max finals or ~12 Fast drafts' },
+    { credits: 6000, price: 60, bonus: 0, label: 'Scene Pack', description: '~40 Veo Fast scenes + revisions' },
+    { credits: 20000, price: 180, bonus: 0, label: 'Feature Boost', description: 'Complete a major movie sequence' }
   ]
 
   const creditExamples = [
     {
-      projectType: 'Short Film (3-10 min)',
-      credits: '50-100 credits',
-      examples: '~20-40 short films with Starter plan'
+      projectType: 'Animatic (Ken Burns)',
+      credits: '~150 credits',
+      examples: '~30 animatics with Starter plan'
     },
     {
-      projectType: 'Medium Film (10-30 min)',
-      credits: '150-300 credits', 
-      examples: '~10-20 medium films with Starter plan'
+      projectType: 'Short Film (Fast Quality)',
+      credits: '~500 credits', 
+      examples: '~9 short films with Starter plan'
     },
     {
-      projectType: 'Feature Film (30+ min)',
-      credits: '400-800 credits',
-      examples: '~4-7 features with Starter plan'
+      projectType: 'Short Film (Max Quality)',
+      credits: '~2,500 credits',
+      examples: '~6 short films with Pro plan'
     },
     {
-      projectType: 'AI Story + Treatment',
-      credits: '25 credits per story',
-      examples: '~120 complete stories with Starter plan'
+      projectType: 'Feature Film (150 scenes)',
+      credits: '~70,000 credits',
+      examples: '1 full movie with Studio plan'
     }
   ]
 
@@ -368,7 +365,7 @@ export function Pricing() {
                       <p className="text-sf-primary font-medium text-sm">{tier.credits}</p>                                                                     
                     </div>
                   ) : tier.isOneTime ? (
-                    // Coffee Break - One-time purchase
+                    // Trial Plan - One-time purchase
                     <div className="mb-4">
                       {tier.badge && (
                         <div className="inline-block mb-2">
@@ -462,17 +459,17 @@ export function Pricing() {
 
                                 <button 
                   onClick={() => {
-                    if (tier.isOneTime && tier.name === 'Coffee Break') {
-                      handleCoffeeBreakPurchase()
+                    if (tier.isOneTime && tier.name === 'Trial Plan') {
+                      handleTrialPurchase()
                     } else if (tier.special === 'Trial') {
                       window.location.href = '/?signup=1&plan=trial'
                     } else {
                       window.location.href = `/?signup=1&plan=${tier.name.toLowerCase().replace(/\s/g, '-')}`                                                   
                     }
                   }}
-                  disabled={purchasing && tier.name === 'Coffee Break'}
+                  disabled={purchasing && tier.name === 'Trial Plan'}
                   className={`w-full py-3 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-auto ${
-                    tier.isOneTime && tier.name === 'Coffee Break'
+                    tier.isOneTime && tier.name === 'Trial Plan'
                       ? 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white'
                       : tier.popular
                       ? 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white'
@@ -481,9 +478,9 @@ export function Pricing() {
                       : 'bg-gray-700 hover:bg-gray-600 text-white'
                   }`}
                 >
-                  {purchasing && tier.name === 'Coffee Break' 
+                  {purchasing && tier.name === 'Trial Plan' 
                     ? 'Processing...' 
-                    : tier.isOneTime && tier.name === 'Coffee Break'
+                    : tier.isOneTime && tier.name === 'Trial Plan'
                     ? 'Start Testing'
                     : tier.special === 'Trial' 
                     ? tier.cta 
@@ -513,7 +510,7 @@ export function Pricing() {
                 <thead>
                   <tr className="border-b border-slate-700">
                     <th className="text-left py-4 px-4 text-gray-400 font-medium">Feature</th>
-                    <th className="text-center py-4 px-4 text-amber-400 font-medium">Coffee Break</th>
+                    <th className="text-center py-4 px-4 text-amber-400 font-medium">Trial Plan</th>
                     <th className="text-center py-4 px-4 text-gray-300 font-medium">Starter</th>
                     <th className="text-center py-4 px-4 text-blue-400 font-medium">Pro <span className="text-xs bg-blue-500/20 px-2 py-0.5 rounded-full">Popular</span></th>
                     <th className="text-center py-4 px-4 text-purple-400 font-medium">Studio</th>
@@ -522,15 +519,15 @@ export function Pricing() {
                 <tbody className="divide-y divide-slate-700/50">
                   <tr className="hover:bg-slate-700/20 transition-colors">
                     <td className="py-4 px-4 text-gray-300">Credits</td>
-                    <td className="py-4 px-4 text-center text-white">1,000 (one-time)</td>
-                    <td className="py-4 px-4 text-center text-white">3,000/mo</td>
-                    <td className="py-4 px-4 text-center text-white font-medium">12,000/mo</td>
-                    <td className="py-4 px-4 text-center text-white">40,000/mo</td>
+                    <td className="py-4 px-4 text-center text-white">1,200 (one-time)</td>
+                    <td className="py-4 px-4 text-center text-white">4,500/mo</td>
+                    <td className="py-4 px-4 text-center text-white font-medium">15,000/mo</td>
+                    <td className="py-4 px-4 text-center text-white">75,000/mo</td>
                   </tr>
                   <tr className="hover:bg-slate-700/20 transition-colors">
                     <td className="py-4 px-4 text-gray-300">Storage</td>
                     <td className="py-4 px-4 text-center text-white">10 GB</td>
-                    <td className="py-4 px-4 text-center text-white">100 GB</td>
+                    <td className="py-4 px-4 text-center text-white">25 GB</td>
                     <td className="py-4 px-4 text-center text-white font-medium">500 GB</td>
                     <td className="py-4 px-4 text-center text-white">2 TB</td>
                   </tr>
@@ -549,11 +546,11 @@ export function Pricing() {
                     <td className="py-4 px-4 text-center text-white">Imagen 4</td>
                   </tr>
                   <tr className="hover:bg-slate-700/20 transition-colors">
-                    <td className="py-4 px-4 text-gray-300">Video Generation</td>
-                    <td className="py-4 px-4 text-center text-white">Extra credits</td>
-                    <td className="py-4 px-4 text-center text-white">Extra credits</td>
-                    <td className="py-4 px-4 text-center text-white font-medium">Veo 3.1 included</td>
-                    <td className="py-4 px-4 text-center text-white">Veo 3.1 included</td>
+                    <td className="py-4 px-4 text-gray-300">Video Quality</td>
+                    <td className="py-4 px-4 text-center text-white">Fast Only</td>
+                    <td className="py-4 px-4 text-center text-white">Fast Only</td>
+                    <td className="py-4 px-4 text-center text-white font-medium">Fast + Max ✨</td>
+                    <td className="py-4 px-4 text-center text-white">Fast + Max ✨</td>
                   </tr>
                   <tr className="hover:bg-slate-700/20 transition-colors">
                     <td className="py-4 px-4 text-gray-300">Collaboration Seats</td>
@@ -576,17 +573,17 @@ export function Pricing() {
             {/* Mobile Cards */}
             <div className="lg:hidden space-y-4">
               {[
-                { feature: 'Credits', values: ['1,000 (one-time)', '3,000/mo', '12,000/mo', '40,000/mo'] },
-                { feature: 'Storage', values: ['10 GB', '100 GB', '500 GB', '2 TB'] },
+                { feature: 'Credits', values: ['1,200 (one-time)', '4,500/mo', '15,000/mo', '75,000/mo'] },
+                { feature: 'Storage', values: ['10 GB', '25 GB', '500 GB', '2 TB'] },
                 { feature: 'AI Models', values: ['Gemini Flash', 'Gemini Flash', 'Gemini Pro', 'Gemini Pro + Beta'] },
-                { feature: 'Video Gen', values: ['Extra credits', 'Extra credits', 'Veo 3.1', 'Veo 3.1'] },
+                { feature: 'Video Quality', values: ['Fast Only', 'Fast Only', 'Fast + Max', 'Fast + Max'] },
                 { feature: 'Collaboration', values: ['—', '—', '3 seats', '10 seats'] },
               ].map((row, idx) => (
                 <div key={idx} className="bg-slate-800/50 rounded-lg p-4">
                   <h4 className="text-white font-medium mb-3">{row.feature}</h4>
                   <div className="grid grid-cols-4 gap-2 text-xs text-center">
                     <div>
-                      <div className="text-amber-400 mb-1">Coffee</div>
+                      <div className="text-amber-400 mb-1">Trial</div>
                       <div className="text-white">{row.values[0]}</div>
                     </div>
                     <div>
