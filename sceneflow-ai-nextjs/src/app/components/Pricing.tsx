@@ -62,9 +62,10 @@ export function Pricing() {
         '50% discount ($10 value)',
         '10 GB storage',
         '720p max resolution',
-        'Standard AI models',
+        'Unlimited Ken Burns animatics',
+        'AI voiceover generation',
+        'MP4 export (720p)',
         '3 active projects',
-        '20 scenes per project',
         'Email support'
       ],
       excluded: [
@@ -80,17 +81,19 @@ export function Pricing() {
       name: 'Starter',
       monthlyPrice: 29,
       annualPrice: 24, // ~17% discount (2 months free)
-      description: 'For Hobbyists & Short-Form Creators',
+      description: 'For Animatic Creators & Short-Form',
       credits: '3,000 Credits/mo ($30 value)',
       storage: '100 GB',
       features: [
         '3,000 monthly credits',
         '100 GB active storage',
-        '1080p max resolution',
-        'Standard AI models',
+        'Unlimited Ken Burns animatics',
+        'Unlimited AI voiceover',
+        '1080p MP4 export',
+        'Multi-language voiceover',
+        'Background music library',
+        'Screening Room collaboration',
         'BYOK access',
-        '1 collaboration seat',
-        'Standard processing',
         'Email support'
       ],
       excluded: [
@@ -100,7 +103,8 @@ export function Pricing() {
         'Team collaboration'
       ],
       popular: false,
-      color: 'from-gray-500 to-gray-600'
+      color: 'from-gray-500 to-gray-600',
+      badge: 'Best for Animatics'
     },
     {
       name: 'Pro',
@@ -112,7 +116,11 @@ export function Pricing() {
       features: [
         '12,000 monthly credits',
         '500 GB active storage',
-        '4K video generation',
+        'Unlimited Ken Burns animatics',
+        'Unlimited AI voiceover',
+        '4K MP4 export',
+        'Character consistency engine',
+        'Custom voice cloning',
         'Premium AI models',
         'BYOK access',
         '3 collaboration seats',
@@ -138,13 +146,17 @@ export function Pricing() {
       features: [
         '40,000 monthly credits',
         '2 TB active storage',
-        '4K+ video generation',
+        'Unlimited Ken Burns animatics',
+        'Unlimited AI voiceover',
+        '4K+ MP4 export',
+        'White-label exports',
         'Premium + Beta AI models',
         'BYOK with priority config',
         '10 collaboration seats',
         'High priority processing',
         'Dedicated account manager',
-        'API access'
+        'API access',
+        'SLA guarantee'
       ],
       excluded: [],
       popular: false,

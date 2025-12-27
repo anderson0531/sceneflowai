@@ -1,6 +1,6 @@
 'use client'
 
-// Landing page with dedicated Header component - Optimized structure (13 sections)
+// Landing page with dedicated Header component - Optimized structure (12 sections)
 import dynamic from 'next/dynamic'
 import { Header } from './components/Header'
 import { HeroSection } from './components/HeroSection'
@@ -11,7 +11,6 @@ const HowItWorks = dynamic(() => import('./components/HowItWorks').then(m => m.H
 // Storyteller Mode - Audio-first creator targeting
 const CreatorFastTrackHero = dynamic(() => import('@/components/landing/CreatorFastTrackHero').then(m => m.CreatorFastTrackHero), { ssr: false })
 const StorytellerFeatureSection = dynamic(() => import('@/components/landing/StorytellerFeatureSection').then(m => m.StorytellerFeatureSection), { ssr: false })
-const StorytellerPricingSection = dynamic(() => import('@/components/landing/StorytellerPricingSection').then(m => m.StorytellerPricingSection), { ssr: false })
 const FinancialFirewallSection = dynamic(() => import('@/components/landing/FinancialFirewallSection'), { ssr: false })
 const FrameAnchoredSection = dynamic(() => import('@/components/landing/FrameAnchoredSection'), { ssr: false })
 const AutomationSection = dynamic(() => import('@/components/landing/AutomationSection'), { ssr: false })
@@ -46,25 +45,23 @@ export default function LandingPage() {
       <StorytellerFeatureSection />
       {/* 6. Solution: Financial safety with budget controls */}
       <FinancialFirewallSection />
-      {/* 6. Technical: Frame-anchored architecture + precision features */}
+      {/* 7. Technical: Frame-anchored architecture + precision features */}
       <FrameAnchoredSection />
-      {/* 7. Automation: One-click generation for complete production workflow */}
+      {/* 8. Automation: One-click generation for complete production workflow */}
       <AutomationSection />
-      {/* 8. Features: All-in-one platform capabilities */}
+      {/* 9. Features: All-in-one platform capabilities */}
       <FeatureHighlight />
-      {/* 9. Testimonials: Creator stories and social proof */}
+      {/* 10. Testimonials: Creator stories and social proof */}
       <TestimonialsSection />
-      {/* 10. Proof: Real use cases with video demos by persona */}
+      {/* 11. Proof: Real use cases with video demos by persona */}
       <UseCasesSection />
-      {/* 11. Storyteller Pricing: Audio-first creator tiers with credit system */}
-      <StorytellerPricingSection />
-      {/* 12. Pricing: Full production value tiers */}
+      {/* 12. Pricing: Full production value tiers with animatic features */}
       <Pricing />
       {/* 13. FAQ: Objection handling */}
       <FAQ />
-      {/* 13. Final CTA: Conversion */}
+      {/* 14. Final CTA: Conversion */}
       <FinalCTA />
-      {/* 14. Footer: Navigation */}
+      {/* 15. Footer: Navigation */}
       <Footer />
     </div>
   )
