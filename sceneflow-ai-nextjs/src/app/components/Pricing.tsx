@@ -75,7 +75,7 @@ export function Pricing() {
       ],
       popular: false,
       color: 'from-amber-500 to-orange-600',
-      badge: 'Best for Testing'
+      badge: 'Best for Evaluation'
     },
     {
       name: 'Starter',
