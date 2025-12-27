@@ -103,6 +103,14 @@ export interface SceneSegmentForExport {
   assetType?: 'video' | 'image' | null
 }
 
+// Audio clip with timing information for Shotstack
+export interface AudioClipForExport {
+  url: string
+  startTime: number
+  duration: number
+  type?: 'narration' | 'dialogue' | 'music' | 'sfx'
+}
+
 export interface ExportOptions {
   resolution: 'hd' | '1080' | '4k'
   fps: number
@@ -112,6 +120,8 @@ export interface ExportOptions {
     music?: string
     dialogue?: string[]
   }
+  // Individual audio clips with proper timing per scene
+  audioClips?: AudioClipForExport[]
 }
 
 /**
@@ -215,6 +225,17 @@ export function buildShotstackEdit(
         })
       })
     }
+  }
+
+  // NEW: Handle individual audio clips with proper timing (for Screening Room export)
+  if (options.audioClips?.length) {
+    // Group all audio clips into a single audio track
+    const audioClips: ShotstackClip[] = options.audioClips.map(clip => ({
+      asset: { type: 'audio' as const, src: clip.url },
+      start: clip.startTime,
+      length: clip.duration,
+    }))
+    tracks.push({ clips: audioClips })
   }
 
   return {

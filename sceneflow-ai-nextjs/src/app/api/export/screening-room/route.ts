@@ -23,6 +23,7 @@ import {
   submitRender,
   ExportOptions,
   SceneSegmentForExport,
+  AudioClipForExport,
 } from '@/lib/video/ShotstackService'
 
 export const maxDuration = 60
@@ -110,7 +111,7 @@ export async function POST(req: NextRequest) {
 
     // Collect segments and audio from scenes
     const segments: SceneSegmentForExport[] = []
-    const audioTracks: string[] = []
+    const audioClips: AudioClipForExport[] = []
     let currentTime = 0
 
     for (let i = 0; i < scenes.length; i++) {
@@ -133,6 +134,10 @@ export async function POST(req: NextRequest) {
         sceneDuration = DEFAULT_SCENE_DURATION
       }
 
+      // Track audio timing within this scene
+      const sceneStartTime = currentTime
+      let audioOffsetInScene = 0
+
       // Get narration audio URL for selected language
       let narrationUrl: string | null = null
       
@@ -146,19 +151,37 @@ export async function POST(req: NextRequest) {
         narrationUrl = scene.narrationAudioUrl
       }
 
+      // Add narration audio clip with scene timing
+      if (narrationUrl) {
+        // Estimate narration duration - use scene duration or default
+        // In production, we'd want actual audio duration metadata
+        const narrationDuration = sceneDuration * 0.6 // Assume narration is ~60% of scene
+        audioClips.push({
+          url: narrationUrl,
+          startTime: sceneStartTime + audioOffsetInScene,
+          duration: narrationDuration,
+          type: 'narration',
+        })
+        audioOffsetInScene += narrationDuration + 0.3 // Small gap after narration
+      }
+
       // Get dialogue audio for selected language
       const dialogueAudio = scene.dialogueAudio || scene.dialogue_audio
       const dialogueEntries = dialogueAudio?.[language] || dialogueAudio?.['en'] || []
       
-      // Collect all audio URLs for this scene
-      if (narrationUrl) {
-        audioTracks.push(narrationUrl)
-      }
-      
+      // Add dialogue audio clips sequentially after narration
       for (const entry of dialogueEntries) {
         const dialogueUrl = entry.audioUrl || entry.audio_url
         if (dialogueUrl) {
-          audioTracks.push(dialogueUrl)
+          // Use stored duration or estimate
+          const dialogueDuration = entry.duration || 3 // Default 3 seconds per dialogue line
+          audioClips.push({
+            url: dialogueUrl,
+            startTime: sceneStartTime + audioOffsetInScene,
+            duration: dialogueDuration,
+            type: 'dialogue',
+          })
+          audioOffsetInScene += dialogueDuration + 0.2 // Small gap between dialogue
         }
       }
 
@@ -191,18 +214,16 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Screening Room Export] Collected segments and audio`, {
       segmentCount: segments.length,
-      audioTrackCount: audioTracks.length,
+      audioClipCount: audioClips.length,
       totalDuration: currentTime,
     })
 
-    // Build export options
+    // Build export options with timed audio clips
     const exportOptions: ExportOptions = {
       resolution: RESOLUTION_MAP[resolution] || '1080',
       fps: 24,
-      includeAudio: true,
-      audioTracks: {
-        narration: audioTracks[0], // Primary audio track
-      },
+      includeAudio: audioClips.length > 0,
+      audioClips, // Pass all timed audio clips for proper scene-by-scene audio
     }
 
     // Build Shotstack edit JSON
