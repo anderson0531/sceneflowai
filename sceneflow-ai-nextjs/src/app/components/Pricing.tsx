@@ -61,17 +61,17 @@ export function Pricing() {
         '1,000 credits (never expire)',
         '50% discount ($10 value)',
         '10 GB storage',
-        '720p max resolution',
+        'Gemini 2.5 Flash + Imagen 4',
         'Unlimited Ken Burns animatics',
         'AI voiceover generation',
-        'MP4 export (720p)',
+        'MP4 export',
         '3 active projects',
         'Email support'
       ],
       excluded: [
         'One-time purchase only',
-        'No BYOK access',
-        'Standard processing queue'
+        'No collaboration features',
+        'Veo 3.1 available (extra credits)'
       ],
       popular: false,
       color: 'from-amber-500 to-orange-600',
@@ -89,18 +89,17 @@ export function Pricing() {
         '100 GB active storage',
         'Unlimited Ken Burns animatics',
         'Unlimited AI voiceover',
-        '1080p MP4 export',
+        'MP4 export (any resolution)',
         'Multi-language voiceover',
         'Background music library',
-        'Screening Room collaboration',
-        'BYOK access',
+        'Gemini 2.5 Flash + Imagen 4',
+        'Veo 3.1 available (extra credits)',
         'Email support'
       ],
       excluded: [
-        '4K video generation',
-        'Premium AI models',
-        'Priority processing',
-        'Team collaboration'
+        'Team collaboration',
+        'Character consistency engine',
+        'Custom voice cloning'
       ],
       popular: false,
       color: 'from-gray-500 to-gray-600',
@@ -118,19 +117,18 @@ export function Pricing() {
         '500 GB active storage',
         'Unlimited Ken Burns animatics',
         'Unlimited AI voiceover',
-        '4K MP4 export',
+        'MP4 export (any resolution)',
         'Character consistency engine',
         'Custom voice cloning',
-        'Premium AI models',
-        'BYOK access',
+        'Gemini 2.5 Pro + Imagen 4',
+        'Veo 3.1 included',
         '3 collaboration seats',
-        'Priority queue processing',
         'Priority support'
       ],
       excluded: [
         'Beta AI models',
-        'High priority processing',
-        'Dedicated support'
+        'Dedicated support',
+        'API access'
       ],
       popular: true,
       popularBadge: 'Most Popular',
@@ -148,12 +146,11 @@ export function Pricing() {
         '2 TB active storage',
         'Unlimited Ken Burns animatics',
         'Unlimited AI voiceover',
-        '4K+ MP4 export',
+        'MP4 export (any resolution)',
         'White-label exports',
-        'Premium + Beta AI models',
-        'BYOK with priority config',
+        'Gemini 2.5 Pro + Imagen 4',
+        'Veo 3.1 included + Beta models',
         '10 collaboration seats',
-        'High priority processing',
         'Dedicated account manager',
         'API access',
         'SLA guarantee'
@@ -165,31 +162,32 @@ export function Pricing() {
   ]
 
   const creditPacks = [
-    { credits: 2000, price: 20, bonus: 0, label: 'Basic Pack' },
-    { credits: 5250, price: 50, bonus: 5, label: 'Value Pack' },
-    { credits: 11000, price: 100, bonus: 10, label: 'Pro Pack' }
+    { credits: 2000, price: 20, bonus: 0, label: 'Basic Top Up' },
+    { credits: 5250, price: 50, bonus: 5, label: 'Value Top Up' },
+    { credits: 11000, price: 100, bonus: 10, label: 'Pro Top Up' },
+    { credits: 25000, price: 200, bonus: 15, label: 'Studio Top Up' }
   ]
 
   const creditExamples = [
     {
       projectType: 'Short Film (3-10 min)',
       credits: '50-100 credits',
-      examples: 'Social media content, music videos, short documentaries'
+      examples: '~20-40 short films with Starter plan'
     },
     {
       projectType: 'Medium Film (10-30 min)',
       credits: '150-300 credits', 
-      examples: 'Web series episodes, educational content, brand films'
+      examples: '~10-20 medium films with Starter plan'
     },
     {
-      projectType: 'Long Film (30+ min)',
+      projectType: 'Feature Film (30+ min)',
       credits: '400-800 credits',
-      examples: 'Feature films, documentaries, TV episodes'
+      examples: '~4-7 features with Starter plan'
     },
     {
-      projectType: 'AI Story Generation',
+      projectType: 'AI Story + Treatment',
       credits: '25 credits per story',
-      examples: 'Complete story structure with acts and chapters'
+      examples: '~120 complete stories with Starter plan'
     }
   ]
 
@@ -537,39 +535,32 @@ export function Pricing() {
                     <td className="py-4 px-4 text-center text-white">2 TB</td>
                   </tr>
                   <tr className="hover:bg-slate-700/20 transition-colors">
-                    <td className="py-4 px-4 text-gray-300">Max Resolution</td>
-                    <td className="py-4 px-4 text-center text-white">720p</td>
-                    <td className="py-4 px-4 text-center text-white">1080p</td>
-                    <td className="py-4 px-4 text-center text-white font-medium">4K</td>
-                    <td className="py-4 px-4 text-center text-white">4K+</td>
-                  </tr>
-                  <tr className="hover:bg-slate-700/20 transition-colors">
                     <td className="py-4 px-4 text-gray-300">AI Models</td>
-                    <td className="py-4 px-4 text-center text-white">Standard</td>
-                    <td className="py-4 px-4 text-center text-white">Standard</td>
-                    <td className="py-4 px-4 text-center text-white font-medium">Premium</td>
-                    <td className="py-4 px-4 text-center text-white">Premium + Beta</td>
+                    <td className="py-4 px-4 text-center text-white">Gemini 2.5 Flash</td>
+                    <td className="py-4 px-4 text-center text-white">Gemini 2.5 Flash</td>
+                    <td className="py-4 px-4 text-center text-white font-medium">Gemini 2.5 Pro</td>
+                    <td className="py-4 px-4 text-center text-white">Gemini 2.5 Pro + Beta</td>
                   </tr>
                   <tr className="hover:bg-slate-700/20 transition-colors">
-                    <td className="py-4 px-4 text-gray-300">BYOK Access</td>
-                    <td className="py-4 px-4 text-center"><X className="w-5 h-5 text-gray-500 mx-auto" /></td>
-                    <td className="py-4 px-4 text-center"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
-                    <td className="py-4 px-4 text-center"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
-                    <td className="py-4 px-4 text-center"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="py-4 px-4 text-gray-300">Image Generation</td>
+                    <td className="py-4 px-4 text-center text-white">Imagen 4</td>
+                    <td className="py-4 px-4 text-center text-white">Imagen 4</td>
+                    <td className="py-4 px-4 text-center text-white font-medium">Imagen 4</td>
+                    <td className="py-4 px-4 text-center text-white">Imagen 4</td>
+                  </tr>
+                  <tr className="hover:bg-slate-700/20 transition-colors">
+                    <td className="py-4 px-4 text-gray-300">Video Generation</td>
+                    <td className="py-4 px-4 text-center text-white">Extra credits</td>
+                    <td className="py-4 px-4 text-center text-white">Extra credits</td>
+                    <td className="py-4 px-4 text-center text-white font-medium">Veo 3.1 included</td>
+                    <td className="py-4 px-4 text-center text-white">Veo 3.1 included</td>
                   </tr>
                   <tr className="hover:bg-slate-700/20 transition-colors">
                     <td className="py-4 px-4 text-gray-300">Collaboration Seats</td>
-                    <td className="py-4 px-4 text-center text-white">—</td>
-                    <td className="py-4 px-4 text-center text-white">1</td>
+                    <td className="py-4 px-4 text-center"><X className="w-5 h-5 text-gray-500 mx-auto" /></td>
+                    <td className="py-4 px-4 text-center"><X className="w-5 h-5 text-gray-500 mx-auto" /></td>
                     <td className="py-4 px-4 text-center text-white font-medium">3</td>
                     <td className="py-4 px-4 text-center text-white">10</td>
-                  </tr>
-                  <tr className="hover:bg-slate-700/20 transition-colors">
-                    <td className="py-4 px-4 text-gray-300">Processing Priority</td>
-                    <td className="py-4 px-4 text-center text-white">Standard</td>
-                    <td className="py-4 px-4 text-center text-white">Standard</td>
-                    <td className="py-4 px-4 text-center text-white font-medium">Priority</td>
-                    <td className="py-4 px-4 text-center text-white">High Priority</td>
                   </tr>
                   <tr className="hover:bg-slate-700/20 transition-colors">
                     <td className="py-4 px-4 text-gray-300">Support</td>
@@ -587,9 +578,9 @@ export function Pricing() {
               {[
                 { feature: 'Credits', values: ['1,000 (one-time)', '3,000/mo', '12,000/mo', '40,000/mo'] },
                 { feature: 'Storage', values: ['10 GB', '100 GB', '500 GB', '2 TB'] },
-                { feature: 'Max Resolution', values: ['720p', '1080p', '4K', '4K+'] },
-                { feature: 'AI Models', values: ['Standard', 'Standard', 'Premium', 'Premium + Beta'] },
-                { feature: 'Collaboration', values: ['—', '1 seat', '3 seats', '10 seats'] },
+                { feature: 'AI Models', values: ['Gemini Flash', 'Gemini Flash', 'Gemini Pro', 'Gemini Pro + Beta'] },
+                { feature: 'Video Gen', values: ['Extra credits', 'Extra credits', 'Veo 3.1', 'Veo 3.1'] },
+                { feature: 'Collaboration', values: ['—', '—', '3 seats', '10 seats'] },
               ].map((row, idx) => (
                 <div key={idx} className="bg-slate-800/50 rounded-lg p-4">
                   <h4 className="text-white font-medium mb-3">{row.feature}</h4>
@@ -679,7 +670,7 @@ export function Pricing() {
           className="text-center mt-8"
         >
           <p className="text-sm text-gray-400 max-w-2xl mx-auto">
-            Need more credits? Purchase additional credit packs (e.g., $10 for 100 credits).
+            Need more credits? Purchase Top Up credit packs anytime from your dashboard.
           </p>
         </motion.div>
 
@@ -691,8 +682,8 @@ export function Pricing() {
           className="text-center mt-8"
         >
           <p className="text-sm text-gray-400 max-w-2xl mx-auto">
-            Image and Video generation requires a Google Gemini API Key (BYOK). Generation costs are billed directly by Google.
-            SceneFlow AI subscription covers platform access, AI workflow tools, and professional filmmaking features.
+            All AI generation (Gemini, Imagen 4, Veo 3.1, ElevenLabs) is included in your credits.
+            Higher resolution outputs and video generation use more credits. Select &quot;Fast&quot; mode in settings for lower credit usage.
           </p>
         </motion.div>
       </div>
