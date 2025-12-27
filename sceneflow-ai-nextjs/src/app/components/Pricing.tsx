@@ -172,19 +172,19 @@ export function Pricing() {
       examples: '~45 animatics with Starter plan'
     },
     {
-      projectType: 'Short Film (5 scenes, Fast)',
-      credits: '~900 credits', 
-      examples: '~5 short films with Starter plan'
+      projectType: 'Short Film (10 scenes, Fast)',
+      credits: '~30,000 credits', 
+      examples: '15 min film with ~200 video clips'
     },
     {
-      projectType: 'Short Film (5 scenes, Max)',
-      credits: '~4,000 credits',
-      examples: '~3 short films with Pro plan'
+      projectType: 'Short Film (10 scenes, Max)',
+      credits: '~150,000 credits',
+      examples: 'Production-quality 15 min film'
     },
     {
-      projectType: 'Feature Film (150 scenes)',
-      credits: '~27,000 credits',
-      examples: '2-3 feature films with Studio plan'
+      projectType: 'Feature Film (60 scenes)',
+      credits: '~180,000 credits',
+      examples: '~1,200 video clips at Fast quality'
     }
   ]
 
