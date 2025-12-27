@@ -302,3 +302,38 @@ export function calculateMargin(operation: keyof typeof PROVIDER_COSTS_USD, cred
   const revenueAtStudioRate = creditsCharged * CREDIT_VALUE_USD;
   return (revenueAtStudioRate - providerCost) / revenueAtStudioRate;
 }
+
+// =============================================================================
+// CONSOLIDATED CREDIT COSTS (for easy access)
+// =============================================================================
+
+export const CREDIT_COSTS = {
+  IMAGE_GENERATION: IMAGE_CREDITS.IMAGEN_3,
+  VEO_FAST: VIDEO_CREDITS.VEO_FAST,
+  VEO_MAX: VIDEO_CREDITS.VEO_MAX,
+  ELEVENLABS: AUDIO_CREDITS.ELEVENLABS_PER_1K_CHARS,
+  RENDER: RENDER_CREDITS.MP4_EXPORT,
+} as const;
+
+export type CreditOperation = keyof typeof CREDIT_COSTS;
+
+/**
+ * Get credit cost for an operation
+ */
+export function getCreditCost(operation: CreditOperation): number {
+  return CREDIT_COSTS[operation];
+}
+
+/**
+ * Get Veo credit cost based on quality
+ */
+export function getVeoCost(quality: VideoQuality): number {
+  return quality === 'max' ? CREDIT_COSTS.VEO_MAX : CREDIT_COSTS.VEO_FAST;
+}
+
+/**
+ * Check if a plan allows Veo Max
+ */
+export function isVeoMaxAllowed(plan: PlanTier): boolean {
+  return canUseVeoMax(plan);
+}
