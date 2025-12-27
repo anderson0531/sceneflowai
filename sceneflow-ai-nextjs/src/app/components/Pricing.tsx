@@ -168,23 +168,23 @@ export function Pricing() {
   const creditExamples = [
     {
       projectType: 'Animatic (Ken Burns)',
-      credits: '~150 credits',
-      examples: '~30 animatics with Starter plan'
+      credits: '~100 credits',
+      examples: '~45 animatics with Starter plan'
     },
     {
-      projectType: 'Short Film (Fast Quality)',
-      credits: '~500 credits', 
-      examples: '~9 short films with Starter plan'
+      projectType: 'Short Film (5 scenes, Fast)',
+      credits: '~900 credits', 
+      examples: '~5 short films with Starter plan'
     },
     {
-      projectType: 'Short Film (Max Quality)',
-      credits: '~2,500 credits',
-      examples: '~6 short films with Pro plan'
+      projectType: 'Short Film (5 scenes, Max)',
+      credits: '~4,000 credits',
+      examples: '~3 short films with Pro plan'
     },
     {
       projectType: 'Feature Film (150 scenes)',
-      credits: '~70,000 credits',
-      examples: '1 full movie with Studio plan'
+      credits: '~27,000 credits',
+      examples: '2-3 feature films with Studio plan'
     }
   ]
 
@@ -532,20 +532,6 @@ export function Pricing() {
                     <td className="py-4 px-4 text-center text-white">2 TB</td>
                   </tr>
                   <tr className="hover:bg-slate-700/20 transition-colors">
-                    <td className="py-4 px-4 text-gray-300">AI Models</td>
-                    <td className="py-4 px-4 text-center text-white">Gemini 2.5 Flash</td>
-                    <td className="py-4 px-4 text-center text-white">Gemini 2.5 Flash</td>
-                    <td className="py-4 px-4 text-center text-white font-medium">Gemini 2.5 Pro</td>
-                    <td className="py-4 px-4 text-center text-white">Gemini 2.5 Pro + Beta</td>
-                  </tr>
-                  <tr className="hover:bg-slate-700/20 transition-colors">
-                    <td className="py-4 px-4 text-gray-300">Image Generation</td>
-                    <td className="py-4 px-4 text-center text-white">Imagen 4</td>
-                    <td className="py-4 px-4 text-center text-white">Imagen 4</td>
-                    <td className="py-4 px-4 text-center text-white font-medium">Imagen 4</td>
-                    <td className="py-4 px-4 text-center text-white">Imagen 4</td>
-                  </tr>
-                  <tr className="hover:bg-slate-700/20 transition-colors">
                     <td className="py-4 px-4 text-gray-300">Video Quality</td>
                     <td className="py-4 px-4 text-center text-white">Fast Only</td>
                     <td className="py-4 px-4 text-center text-white">Fast Only</td>
@@ -575,7 +561,6 @@ export function Pricing() {
               {[
                 { feature: 'Credits', values: ['1,200 (one-time)', '4,500/mo', '15,000/mo', '75,000/mo'] },
                 { feature: 'Storage', values: ['10 GB', '25 GB', '500 GB', '2 TB'] },
-                { feature: 'AI Models', values: ['Gemini Flash', 'Gemini Flash', 'Gemini Pro', 'Gemini Pro + Beta'] },
                 { feature: 'Video Quality', values: ['Fast Only', 'Fast Only', 'Fast + Max', 'Fast + Max'] },
                 { feature: 'Collaboration', values: ['—', '—', '3 seats', '10 seats'] },
               ].map((row, idx) => (
