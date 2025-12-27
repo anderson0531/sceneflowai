@@ -158,7 +158,8 @@ export function ExportVideoModal({
     setError(null)
 
     try {
-      const response = await fetch('/api/export/video', {
+      // Use screening-room endpoint for Screening Room scene format
+      const response = await fetch('/api/export/screening-room', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
