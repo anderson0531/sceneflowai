@@ -5,10 +5,12 @@
  * 
  * Generates a complete MP4 video from all project scenes using Shotstack API.
  * Supports multi-language audio track selection and optional subtitles.
+ * 
+ * NOTE: Project/scene data is passed from the client since we use client-side
+ * state management rather than server-side database queries.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import {
   buildShotstackEdit,
   submitRender,
@@ -21,28 +23,33 @@ export const runtime = 'nodejs'
 
 interface ExportVideoRequest {
   projectId: string
+  projectTitle?: string
   language: string // e.g., 'en', 'es', 'fr'
   resolution: '720p' | '1080p' | '4K'
   includeSubtitles: boolean
-}
-
-interface SceneData {
-  id: string
-  title: string
-  scene_number: number
-  order_index: number
-  segments?: Array<{
+  // Scene data passed from client
+  scenes: Array<{
     id: string
-    start_time: number
-    end_time: number
-    image_url?: string
-    video_url?: string
-    keyframe_settings?: any
-    text_content?: string
-  }>
-  audio_tracks?: Record<string, {
-    url: string
-    duration: number
+    title?: string
+    segments?: Array<{
+      id?: string
+      segmentId?: string
+      startTime?: number
+      endTime?: number
+      start_time?: number
+      end_time?: number
+      activeAssetUrl?: string
+      image_url?: string
+      video_url?: string
+      keyframeSettings?: any
+      keyframe_settings?: any
+      assetType?: 'video' | 'image'
+      text_content?: string
+    }>
+    audioTracks?: Record<string, {
+      url: string
+      duration?: number
+    }>
   }>
 }
 
@@ -56,7 +63,7 @@ const RESOLUTION_MAP: Record<string, 'hd' | '1080' | '4k'> = {
 export async function POST(req: NextRequest) {
   try {
     const body: ExportVideoRequest = await req.json()
-    const { projectId, language, resolution, includeSubtitles } = body
+    const { projectId, projectTitle, language, resolution, includeSubtitles, scenes } = body
 
     if (!projectId) {
       return NextResponse.json(
@@ -72,61 +79,20 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    console.log(`[Export Video] Starting export for project ${projectId}`, {
-      language,
-      resolution,
-      includeSubtitles,
-    })
-
-    // Get project data from Supabase
-    const supabase = await createClient()
-    
-    // Fetch project with scenes
-    const { data: project, error: projectError } = await supabase
-      .from('projects')
-      .select(`
-        id,
-        title,
-        metadata
-      `)
-      .eq('id', projectId)
-      .single()
-
-    if (projectError || !project) {
-      console.error('[Export Video] Project not found:', projectError)
-      return NextResponse.json(
-        { error: 'Project not found' },
-        { status: 404 }
-      )
-    }
-
-    // Fetch scenes for the project
-    const { data: scenes, error: scenesError } = await supabase
-      .from('scenes')
-      .select(`
-        id,
-        title,
-        scene_number,
-        order_index,
-        metadata
-      `)
-      .eq('project_id', projectId)
-      .order('order_index', { ascending: true })
-
-    if (scenesError) {
-      console.error('[Export Video] Failed to fetch scenes:', scenesError)
-      return NextResponse.json(
-        { error: 'Failed to fetch project scenes' },
-        { status: 500 }
-      )
-    }
-
     if (!scenes || scenes.length === 0) {
       return NextResponse.json(
-        { error: 'No scenes found for this project' },
+        { error: 'No scenes provided for export' },
         { status: 400 }
       )
     }
+
+    console.log(`[Export Video] Starting export for project ${projectId}`, {
+      projectTitle,
+      language,
+      resolution,
+      includeSubtitles,
+      sceneCount: scenes.length,
+    })
 
     // Collect all segments from scenes
     const allSegments: SceneSegmentForExport[] = []
@@ -134,9 +100,8 @@ export async function POST(req: NextRequest) {
     let currentTime = 0
 
     for (const scene of scenes) {
-      const metadata = scene.metadata as any || {}
-      const sceneSegments = metadata.segments || []
-      const sceneAudioTracks = metadata.audioTracks || {}
+      const sceneSegments = scene.segments || []
+      const sceneAudioTracks = scene.audioTracks || {}
 
       // Get audio track for selected language
       if (sceneAudioTracks[language]?.url) {

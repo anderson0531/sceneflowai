@@ -22,12 +22,34 @@ import { Download, Film, Globe, Monitor, Subtitles, Loader2, CheckCircle, XCircl
 import { cn } from '@/lib/utils'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 
+interface SceneForExport {
+  id: string
+  title?: string
+  segments?: Array<{
+    id?: string
+    segmentId?: string
+    startTime?: number
+    endTime?: number
+    activeAssetUrl?: string
+    keyframeSettings?: any
+    assetType?: 'video' | 'image'
+  }>
+  audioTracks?: Record<string, {
+    url: string
+    duration?: number
+  }>
+  // Legacy format fields
+  narrationAudioUrl?: string
+  dialogueAudio?: any
+}
+
 interface ExportVideoModalProps {
   isOpen: boolean
   onClose: () => void
   projectId: string
   projectTitle?: string
   availableLanguages: string[] // Language codes that have generated audio
+  scenes?: SceneForExport[] // Scene data to export
 }
 
 type Resolution = '720p' | '1080p' | '4K'
@@ -45,6 +67,7 @@ export function ExportVideoModal({
   projectId,
   projectTitle = 'Untitled Project',
   availableLanguages,
+  scenes = [],
 }: ExportVideoModalProps) {
   // Form state
   const [language, setLanguage] = useState<string>(availableLanguages[0] || 'en')
@@ -140,9 +163,11 @@ export function ExportVideoModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId,
+          projectTitle,
           language,
           resolution,
           includeSubtitles,
+          scenes,
         }),
       })
 

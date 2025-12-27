@@ -1243,6 +1243,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
         projectId={script?.id || ''}
         projectTitle={script?.title || 'Untitled Project'}
         availableLanguages={availableLanguages}
+        scenes={scenes}
       />
     </div>
   )
