@@ -7106,6 +7106,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           onClose={() => setIsPlayerOpen(false)}
           scriptEditedAt={scriptEditedAt}
           sceneProductionState={sceneProductionState}
+          projectId={projectId}
         />
       )}
 

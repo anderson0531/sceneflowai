@@ -41,6 +41,8 @@ interface ScreeningRoomProps {
   scriptEditedAt?: number
   /** Production data with keyframe segments for each scene (Record<sceneId, SceneProductionData>) */
   sceneProductionState?: Record<string, SceneProductionData>
+  /** Project ID for export and other operations */
+  projectId?: string
 }
 
 interface PlayerState {
@@ -115,7 +117,7 @@ async function resolveAudioDuration(url: string, stored?: unknown): Promise<numb
   return fallback
 }
 
-export function ScreeningRoom({ script, characters, onClose, initialScene = 0, scriptEditedAt, sceneProductionState }: ScreeningRoomProps) {
+export function ScreeningRoom({ script, characters, onClose, initialScene = 0, scriptEditedAt, sceneProductionState, projectId }: ScreeningRoomProps) {
   // Audio mixer ref - defined early so it can be used in script change effect
   const audioMixerRef = useRef<WebAudioMixer | null>(null)
   
@@ -1240,7 +1242,7 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
       <ExportVideoModal
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}
-        projectId={script?.id || ''}
+        projectId={projectId || ''}
         projectTitle={script?.title || 'Untitled Project'}
         availableLanguages={availableLanguages}
         scenes={scenes}
