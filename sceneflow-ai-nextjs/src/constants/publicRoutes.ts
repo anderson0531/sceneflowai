@@ -4,7 +4,7 @@
  */
 
 // Exact match routes (no navigation)
-export const PUBLIC_ROUTES = ['/', '/terms', '/privacy', '/refunds'] as const;
+export const PUBLIC_ROUTES = ['/', '/terms', '/privacy', '/refunds', '/trust-safety'] as const;
 
 // Prefix match routes (no navigation for any path starting with these)
 export const PUBLIC_ROUTE_PREFIXES = ['/c/', '/collaborate/'] as const;
