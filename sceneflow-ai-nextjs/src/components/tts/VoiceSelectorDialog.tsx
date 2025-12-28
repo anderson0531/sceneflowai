@@ -484,14 +484,20 @@ export function VoiceSelectorDialog({
           {/* Create Tab */}
           <TabsContent value="create" className="flex-1 overflow-y-auto mt-4">
             <Tabs value={createTab} onValueChange={(v) => setCreateTab(v as 'design' | 'clone')} className="h-full">
-              <TabsList className="mb-3 h-8">
-                <TabsTrigger value="design" className="text-[12px] px-2.5 py-1 whitespace-nowrap">
-                  <Wand2 className="w-3.5 h-3.5 mr-1" />
-                  AI Voice Design
+              <TabsList className="mb-3 h-8 bg-transparent border-b border-gray-700 rounded-none p-0 gap-6">
+                <TabsTrigger 
+                  value="design" 
+                  className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-purple-500 bg-transparent rounded-none px-0 pb-2"
+                  style={{ fontSize: '13px', textTransform: 'none', letterSpacing: 'normal', minWidth: '120px' }}
+                >
+                  <span className="inline-flex items-center gap-1.5"><Wand2 className="w-3 h-3 shrink-0" />AI Voice Design</span>
                 </TabsTrigger>
-                <TabsTrigger value="clone" className="text-[12px] px-2.5 py-1 whitespace-nowrap">
-                  <Mic className="w-3.5 h-3.5 mr-1" />
-                  Clone Voice
+                <TabsTrigger 
+                  value="clone" 
+                  className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-purple-500 bg-transparent rounded-none px-0 pb-2"
+                  style={{ fontSize: '13px', textTransform: 'none', letterSpacing: 'normal', minWidth: '100px' }}
+                >
+                  <span className="inline-flex items-center gap-1.5"><Mic className="w-3 h-3 shrink-0" />Clone Voice</span>
                 </TabsTrigger>
               </TabsList>
 
