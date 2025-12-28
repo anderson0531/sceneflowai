@@ -70,7 +70,7 @@ export function ProjectCostCalculator({
   const breakdown = useMemo((): CostBreakdown => {
     const images = sceneCount * imagesPerScene * IMAGE_CREDITS.IMAGEN_3
     
-    const videoCredits = videoQuality === 'max' ? VIDEO_CREDITS.VEO_MAX : VIDEO_CREDITS.VEO_FAST
+    const videoCredits = videoQuality === 'max' ? VIDEO_CREDITS.VEO_QUALITY_4K : VIDEO_CREDITS.VEO_FAST
     const videoFast = videoQuality === 'fast' ? sceneCount * videoCredits : 0
     const videoMax = videoQuality === 'max' ? sceneCount * videoCredits : 0
     

@@ -46,11 +46,14 @@ export const VIDEO_CREDITS = {
   /** Veo 3.1 Fast - $1.20/8s video → 150 credits */
   VEO_FAST: 150,
   
-  /** Veo 3.1 Max (Production Quality) - $6.00/8s video → 750 credits */
-  VEO_MAX: 750,
+  /** Veo 3.1 Quality (4K) - $6.00/8s video → 750 credits */
+  VEO_QUALITY_4K: 750,
   
   /** Fast revision of existing scene (cheaper) */
   VEO_REVISION: 100,
+  
+  /** AI Upscale to 4K - ~$0.10/clip via Replicate → 15 credits */
+  UPSCALE_4K: 15,
 } as const;
 
 // =============================================================================
@@ -102,6 +105,9 @@ export const RENDER_CREDITS = {
   
   /** Per minute of final render */
   PER_MINUTE: 5,
+  
+  /** AI Upscale to 4K - ~$0.10/clip via Replicate (Video-2x/Real-ESRGAN) */
+  UPSCALE_4K: 15,
 } as const;
 
 // =============================================================================
@@ -120,7 +126,7 @@ export const STORAGE_CREDITS = {
 export type VideoQuality = 'fast' | 'max';
 
 export function getVideoCredits(quality: VideoQuality): number {
-  return quality === 'max' ? VIDEO_CREDITS.VEO_MAX : VIDEO_CREDITS.VEO_FAST;
+  return quality === 'max' ? VIDEO_CREDITS.VEO_QUALITY_4K : VIDEO_CREDITS.VEO_FAST;
 }
 
 // =============================================================================
@@ -130,15 +136,23 @@ export function getVideoCredits(quality: VideoQuality): number {
 export type PlanTier = 'coffee_break' | 'starter' | 'pro' | 'studio';
 
 /**
- * Plans that allow Veo 3.1 Max quality
+ * Plans that allow Veo 3.1 Quality (4K)
  */
-export const VEO_MAX_ALLOWED_PLANS: PlanTier[] = ['pro', 'studio'];
+export const VEO_QUALITY_4K_ALLOWED_PLANS: PlanTier[] = ['pro', 'studio'];
 
 /**
- * Check if a plan allows Veo Max quality
+ * Check if a plan allows Veo Quality (4K)
+ * @deprecated Use canUseVeoQuality4K instead
  */
 export function canUseVeoMax(plan: PlanTier): boolean {
-  return VEO_MAX_ALLOWED_PLANS.includes(plan);
+  return VEO_QUALITY_4K_ALLOWED_PLANS.includes(plan);
+}
+
+/**
+ * Check if a plan allows Veo Quality (4K)
+ */
+export function canUseVeoQuality4K(plan: PlanTier): boolean {
+  return VEO_QUALITY_4K_ALLOWED_PLANS.includes(plan);
 }
 
 /**
@@ -310,7 +324,8 @@ export function calculateMargin(operation: keyof typeof PROVIDER_COSTS_USD, cred
 export const CREDIT_COSTS = {
   IMAGE_GENERATION: IMAGE_CREDITS.IMAGEN_3,
   VEO_FAST: VIDEO_CREDITS.VEO_FAST,
-  VEO_MAX: VIDEO_CREDITS.VEO_MAX,
+  VEO_QUALITY_4K: VIDEO_CREDITS.VEO_QUALITY_4K,
+  UPSCALE_4K: VIDEO_CREDITS.UPSCALE_4K,
   ELEVENLABS: AUDIO_CREDITS.ELEVENLABS_PER_1K_CHARS,
   RENDER: RENDER_CREDITS.MP4_EXPORT,
 } as const;
@@ -328,12 +343,12 @@ export function getCreditCost(operation: CreditOperation): number {
  * Get Veo credit cost based on quality
  */
 export function getVeoCost(quality: VideoQuality): number {
-  return quality === 'max' ? CREDIT_COSTS.VEO_MAX : CREDIT_COSTS.VEO_FAST;
+  return quality === 'max' ? CREDIT_COSTS.VEO_QUALITY_4K : CREDIT_COSTS.VEO_FAST;
 }
 
 /**
- * Check if a plan allows Veo Max
+ * Check if a plan allows Veo Quality (4K)
  */
-export function isVeoMaxAllowed(plan: PlanTier): boolean {
-  return canUseVeoMax(plan);
+export function isVeoQuality4KAllowed(plan: PlanTier): boolean {
+  return canUseVeoQuality4K(plan);
 }

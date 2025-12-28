@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     // Determine credit cost based on quality
     const quality = body.generationSettings?.quality || 'fast';
     const isVeoMax = quality === 'max' || quality === 'highest' || quality === 'veo_max';
-    const CREDIT_COST = isVeoMax ? getCreditCost('VEO_MAX') : getCreditCost('VEO_FAST');
+    const CREDIT_COST = isVeoMax ? getCreditCost('VEO_QUALITY_4K') : getCreditCost('VEO_FAST');
 
     // Veo Max tier restriction: block for coffee_break and starter plans
     if (isVeoMax) {

@@ -70,7 +70,7 @@ export function Pricing() {
       ],
       excluded: [
         'One-time purchase only',
-        'Veo Max (Production Quality)',
+        'Veo Quality (4K)',
         'No collaboration features'
       ],
       popular: false,
@@ -97,7 +97,7 @@ export function Pricing() {
         'Email support'
       ],
       excluded: [
-        'Veo Max (Production Quality)',
+        'Veo Quality (4K)',
         'Team collaboration',
         'Character consistency engine'
       ],
@@ -114,9 +114,9 @@ export function Pricing() {
       storage: '500 GB',
       features: [
         '15,000 monthly credits',
-        '~1,000 images + 50 Fast + 3 Max scenes',
+        '~1,000 images + 50 Fast + 3 Quality (4K) scenes',
         '500 GB active storage',
-        'Veo 3.1 Max (Production Quality) ✨',
+        'Veo 3.1 Quality (4K) ✨',
         'Character consistency engine',
         'Custom voice cloning',
         'Gemini 2.5 Pro + Imagen 4',
@@ -144,7 +144,7 @@ export function Pricing() {
         '75,000 monthly credits',
         'Full 150-scene movie capacity',
         '2 TB active storage',
-        'Veo 3.1 Max unlimited ✨',
+        'Veo 3.1 Quality (4K) unlimited ✨',
         'White-label exports',
         'Gemini 2.5 Pro + Beta models',
         'Imagen 4 unlimited',
@@ -160,7 +160,7 @@ export function Pricing() {
   ]
 
   const creditPacks = [
-    { credits: 2000, price: 25, bonus: 0, label: 'Quick Fix', description: '1-2 Veo Max finals or ~12 Fast drafts' },
+    { credits: 2000, price: 25, bonus: 0, label: 'Quick Fix', description: '1-2 Quality (4K) finals or ~12 Fast drafts' },
     { credits: 6000, price: 60, bonus: 0, label: 'Scene Pack', description: '~40 Veo Fast scenes + revisions' },
     { credits: 20000, price: 180, bonus: 0, label: 'Feature Boost', description: 'Complete a major movie sequence' }
   ]
@@ -172,19 +172,19 @@ export function Pricing() {
       examples: '~45 animatics with Starter plan'
     },
     {
-      projectType: 'Short Film (10 scenes, Fast)',
+      projectType: 'Short Film (Fast)',
       credits: '~30,000 credits', 
-      examples: '15 min film with ~200 video clips'
+      examples: '10 scenes, ~200 video clips'
     },
     {
-      projectType: 'Short Film (10 scenes, Max)',
-      credits: '~150,000 credits',
-      examples: 'Production-quality 15 min film'
+      projectType: 'Short Film + 4K Upscale',
+      credits: '~33,000 credits',
+      examples: 'Fast + AI upscale (recommended)'
     },
     {
-      projectType: 'Feature Film (60 scenes)',
+      projectType: 'Feature Film (Fast)',
       credits: '~180,000 credits',
-      examples: '~1,200 video clips at Fast quality'
+      examples: '60 scenes, ~1,200 video clips'
     }
   ]
 
@@ -535,8 +535,8 @@ export function Pricing() {
                     <td className="py-4 px-4 text-gray-300">Video Quality</td>
                     <td className="py-4 px-4 text-center text-white">Fast Only</td>
                     <td className="py-4 px-4 text-center text-white">Fast Only</td>
-                    <td className="py-4 px-4 text-center text-white font-medium">Fast + Max ✨</td>
-                    <td className="py-4 px-4 text-center text-white">Fast + Max ✨</td>
+                    <td className="py-4 px-4 text-center text-white font-medium">Fast + Quality (4K) ✨</td>
+                    <td className="py-4 px-4 text-center text-white">Fast + Quality (4K) ✨</td>
                   </tr>
                   <tr className="hover:bg-slate-700/20 transition-colors">
                     <td className="py-4 px-4 text-gray-300">Collaboration Seats</td>
@@ -561,7 +561,7 @@ export function Pricing() {
               {[
                 { feature: 'Credits', values: ['1,200 (one-time)', '4,500/mo', '15,000/mo', '75,000/mo'] },
                 { feature: 'Storage', values: ['10 GB', '25 GB', '500 GB', '2 TB'] },
-                { feature: 'Video Quality', values: ['Fast Only', 'Fast Only', 'Fast + Max', 'Fast + Max'] },
+                { feature: 'Video Quality', values: ['Fast Only', 'Fast Only', 'Fast + 4K', 'Fast + 4K'] },
                 { feature: 'Collaboration', values: ['—', '—', '3 seats', '10 seats'] },
               ].map((row, idx) => (
                 <div key={idx} className="bg-slate-800/50 rounded-lg p-4">
@@ -667,6 +667,24 @@ export function Pricing() {
             All AI generation (Gemini, Imagen 4, Veo 3.1, ElevenLabs) is included in your credits.
             Higher resolution outputs and video generation use more credits. Select &quot;Fast&quot; mode in settings for lower credit usage.
           </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 1.0 }}
+          className="text-center mt-6"
+        >
+          <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-xl p-4 max-w-3xl mx-auto">
+            <p className="text-sm text-emerald-400 font-medium mb-1">
+              💡 Pro Tip: Generate with Veo 3.1 Fast + AI Upscale to 4K
+            </p>
+            <p className="text-xs text-gray-400">
+              Save up to 80% by using Fast quality and adding optional 4K upscaling (15 credits/clip).
+              Perfect for social media and streaming platforms.
+            </p>
+          </div>
         </motion.div>
       </div>
     </section>

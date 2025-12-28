@@ -33,6 +33,7 @@ export {
   // Helper functions
   getVideoCredits,
   canUseVeoMax,
+  canUseVeoQuality4K,
   getDefaultVideoQuality,
   estimateProjectCredits,
   calculateMargin,

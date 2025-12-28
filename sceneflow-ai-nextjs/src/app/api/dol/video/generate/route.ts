@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     // 2. Determine video quality and credit cost
     const quality: VideoQuality = body.quality === 'max' ? 'max' : 'fast';
-    const creditCost = quality === 'max' ? VIDEO_CREDITS.VEO_MAX : VIDEO_CREDITS.VEO_FAST;
+    const creditCost = quality === 'max' ? VIDEO_CREDITS.VEO_QUALITY_4K : VIDEO_CREDITS.VEO_FAST;
 
     // 3. Check plan restrictions for Veo Max
     if (quality === 'max') {
