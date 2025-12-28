@@ -38,12 +38,38 @@ export default function PrivacyPolicyPage() {
               <li><strong>BYOK API Keys:</strong> Encrypted and stored securely if you choose to use your own keys</li>
             </ul>
             
-            <h3 className="text-xl font-medium text-white mb-3">2.2 Automatically Collected Information</h3>
-            <ul className="list-disc pl-6 text-gray-300 space-y-2">
+            <h3 className="text-xl font-medium text-white mb-3">2.2 Voice Cloning & Biometric Data</h3>
+            <p className="text-gray-300 leading-relaxed mb-4">
+              If you use our Voice Cloning feature, we collect:
+            </p>
+            <ul className="list-disc pl-6 text-gray-300 space-y-2 mb-4">
+              <li><strong>Voice Samples:</strong> Audio recordings uploaded for voice cloning</li>
+              <li><strong>Voice Captcha Recordings:</strong> Live consent verification recordings where you speak a randomized phrase</li>
+              <li><strong>Voice Biometric Data:</strong> Voice fingerprints used to verify identity and consent matching</li>
+            </ul>
+            <p className="text-gray-300 leading-relaxed mb-4">
+              <strong>Important:</strong> Voice biometric data is classified as sensitive personal information in certain jurisdictions. By using Voice Cloning, you explicitly consent to the collection and processing of this biometric data for identity verification and consent matching purposes. You may withdraw consent by discontinuing use of Voice Cloning features.
+            </p>
+            
+            <h3 className="text-xl font-medium text-white mb-3">2.3 Automatically Collected Information</h3>
+            <ul className="list-disc pl-6 text-gray-300 space-y-2 mb-4">
               <li><strong>Usage Data:</strong> Features used, credits consumed, generation history</li>
               <li><strong>Device Information:</strong> Browser type, operating system, device identifiers</li>
               <li><strong>Log Data:</strong> IP address, access times, pages viewed, referring URLs</li>
               <li><strong>Cookies:</strong> Session cookies for authentication, preference cookies</li>
+            </ul>
+            
+            <h3 className="text-xl font-medium text-white mb-3">2.4 Generation Audit Logs</h3>
+            <p className="text-gray-300 leading-relaxed mb-4">
+              For trust, safety, and legal compliance purposes, we maintain detailed logs of all AI-generated content:
+            </p>
+            <ul className="list-disc pl-6 text-gray-300 space-y-2">
+              <li><strong>User ID:</strong> Account identifier associated with each generation</li>
+              <li><strong>Prompts/Scripts:</strong> Text input submitted for audio/video generation</li>
+              <li><strong>Audio Fingerprints:</strong> Unique identifiers for generated audio content</li>
+              <li><strong>Timestamps:</strong> Exact date and time of each generation</li>
+              <li><strong>Voice Identifiers:</strong> Record of which voice (stock or cloned) was used</li>
+              <li><strong>Watermark Data:</strong> Forensic watermark identifiers embedded in generated content</li>
             </ul>
           </section>
 
@@ -74,6 +100,11 @@ export default function PrivacyPolicyPage() {
             <p className="text-gray-300 leading-relaxed mt-4">
               We do NOT sell your personal information to third parties.
             </p>
+            
+            <h3 className="text-xl font-medium text-white mb-3 mt-6">4.1 Law Enforcement & Content Attribution</h3>
+            <p className="text-gray-300 leading-relaxed">
+              We may disclose generation audit logs (User ID, prompts, audio fingerprints, timestamps) to law enforcement agencies upon valid legal request. All generated audio and video content includes forensic watermarks that enable content attribution. This watermarking allows us to trace generated content back to specific user accounts if the content is used for malicious purposes or reported for abuse.
+            </p>
           </section>
 
           <section>
@@ -83,6 +114,9 @@ export default function PrivacyPolicyPage() {
               <li><strong>Project Content:</strong> Retained until you delete it or close your account</li>
               <li><strong>Transaction Records:</strong> Retained for 7 years for legal/tax compliance</li>
               <li><strong>Usage Logs:</strong> Retained for 90 days, then anonymized</li>
+              <li><strong>Voice Biometric Data:</strong> Retained while cloned voices are active; deleted upon voice deletion or account closure</li>
+              <li><strong>Generation Audit Logs:</strong> Retained for 3 years for legal compliance and abuse investigation purposes</li>
+              <li><strong>Voice Captcha Recordings:</strong> Retained for 1 year as consent verification records</li>
             </ul>
           </section>
 
@@ -162,7 +196,7 @@ export default function PrivacyPolicyPage() {
 
         <div className="mt-12 pt-8 border-t border-gray-800">
           <p className="text-gray-400 text-sm">
-            See also: <Link href="/terms" className="text-purple-400 hover:text-purple-300">Terms of Service</Link> | <Link href="/refunds" className="text-purple-400 hover:text-purple-300">Refund Policy</Link>
+            See also: <Link href="/terms" className="text-purple-400 hover:text-purple-300">Terms of Service</Link> | <Link href="/trust-safety" className="text-purple-400 hover:text-purple-300">Trust & Safety</Link> | <Link href="/refunds" className="text-purple-400 hover:text-purple-300">Refund Policy</Link>
           </p>
         </div>
       </div>
