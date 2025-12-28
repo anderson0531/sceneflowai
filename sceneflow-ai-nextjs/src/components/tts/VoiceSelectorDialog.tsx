@@ -196,11 +196,11 @@ export function VoiceSelectorDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader className="pb-2">
-          <DialogTitle className="flex items-center gap-2 text-[17px] font-semibold">
-            <Volume2 className="w-4 h-4 text-blue-400" />
+          <DialogTitle className="flex items-center gap-1.5 text-[15px] font-medium text-gray-200">
+            <Volume2 className="w-3.5 h-3.5 text-blue-400" />
             {characterContext ? `Select Voice for ${characterContext.name}` : 'Select Voice'}
           </DialogTitle>
-          <DialogDescription className="text-[13px] text-gray-400">
+          <DialogDescription className="text-[12px] text-gray-400">
             {characterContext 
               ? 'Choose a voice that matches your character, or create a custom one.'
               : 'Browse and select a voice, or create a custom voice.'
@@ -209,10 +209,18 @@ export function VoiceSelectorDialog({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'browse' | 'create')} className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="shrink-0 h-9">
-            <TabsTrigger value="browse" className="text-[12px] px-3 py-1.5 whitespace-nowrap">Browse Voices</TabsTrigger>
-            <TabsTrigger value="create" className="text-[12px] px-3 py-1.5 whitespace-nowrap">
-              <Sparkles className="w-3.5 h-3.5 mr-1" />
+          <TabsList className="shrink-0 h-8 bg-transparent border-b border-gray-700 rounded-none p-0 gap-4">
+            <TabsTrigger 
+              value="browse" 
+              className="text-[13px] font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 bg-transparent rounded-none px-0 pb-2 whitespace-nowrap"
+            >
+              Browse Voices
+            </TabsTrigger>
+            <TabsTrigger 
+              value="create" 
+              className="text-[13px] font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 bg-transparent rounded-none px-0 pb-2 whitespace-nowrap flex items-center gap-1"
+            >
+              <Sparkles className="w-3 h-3" />
               Create Custom
             </TabsTrigger>
           </TabsList>
