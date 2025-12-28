@@ -105,14 +105,14 @@ export function VoiceClonePanel({ onVoiceCreated, characterName }: VoiceClonePan
   return (
     <div className="space-y-4">
       {/* Info Banner */}
-      <div className="flex items-start gap-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-        <Mic className="w-5 h-5 text-blue-400 mt-0.5 shrink-0" />
-        <div className="text-sm text-blue-300">
-          <p className="font-medium mb-1">Clone a Voice</p>
-          <p className="text-blue-400/80">
+      <div className="flex items-start gap-2.5 p-2.5 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+        <Mic className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+        <div className="text-[13px] text-blue-300">
+          <p className="font-medium mb-0.5">Clone a Voice</p>
+          <p className="text-[12px] text-blue-400/80">
             Upload audio recordings of the voice you want to clone. For best results:
           </p>
-          <ul className="text-xs text-blue-400/70 mt-1 space-y-0.5 list-disc list-inside">
+          <ul className="text-[11px] text-blue-400/70 mt-1 space-y-0.5 list-disc list-inside">
             <li>Use high-quality recordings with minimal background noise</li>
             <li>Include 30 seconds to 2 minutes of clear speech</li>
             <li>Multiple samples improve accuracy</li>
@@ -121,20 +121,20 @@ export function VoiceClonePanel({ onVoiceCreated, characterName }: VoiceClonePan
       </div>
 
       {/* Voice Name */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-300">Voice Name</label>
+      <div className="space-y-1.5">
+        <label className="text-[13px] font-medium text-gray-300">Voice Name</label>
         <input
           type="text"
           value={voiceName}
           onChange={(e) => setVoiceName(e.target.value)}
           placeholder="Enter a name for this voice..."
-          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500"
+          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 text-[13px] placeholder-gray-500 focus:outline-none focus:border-blue-500"
         />
       </div>
 
       {/* Description (Optional) */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-300">
+      <div className="space-y-1.5">
+        <label className="text-[13px] font-medium text-gray-300">
           Description <span className="text-gray-500 font-normal">(optional)</span>
         </label>
         <textarea
@@ -147,8 +147,8 @@ export function VoiceClonePanel({ onVoiceCreated, characterName }: VoiceClonePan
       </div>
 
       {/* Drop Zone */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-300">Audio Samples</label>
+      <div className="space-y-1.5">
+        <label className="text-[13px] font-medium text-gray-300">Audio Samples</label>
         <div
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -163,11 +163,11 @@ export function VoiceClonePanel({ onVoiceCreated, characterName }: VoiceClonePan
             }
           `}
         >
-          <Upload className={`w-8 h-8 mb-2 ${dragActive ? 'text-blue-400' : 'text-gray-500'}`} />
-          <p className="text-sm text-gray-400 text-center">
+          <Upload className={`w-6 h-6 mb-2 ${dragActive ? 'text-blue-400' : 'text-gray-500'}`} />
+          <p className="text-[13px] text-gray-400 text-center">
             <span className="text-blue-400 font-medium">Click to upload</span> or drag and drop
           </p>
-          <p className="text-xs text-gray-500 mt-1">MP3, WAV, WebM, OGG (max 25 files)</p>
+          <p className="text-[11px] text-gray-500 mt-1">MP3, WAV, WebM, OGG (max 25 files)</p>
           
           <input
             ref={fileInputRef}

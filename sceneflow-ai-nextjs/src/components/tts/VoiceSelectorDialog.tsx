@@ -195,12 +195,12 @@ export function VoiceSelectorDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Volume2 className="w-5 h-5 text-blue-400" />
+        <DialogHeader className="pb-2">
+          <DialogTitle className="flex items-center gap-2 text-[17px] font-semibold">
+            <Volume2 className="w-4 h-4 text-blue-400" />
             {characterContext ? `Select Voice for ${characterContext.name}` : 'Select Voice'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-[13px] text-gray-400">
             {characterContext 
               ? 'Choose a voice that matches your character, or create a custom one.'
               : 'Browse and select a voice, or create a custom voice.'
@@ -209,10 +209,10 @@ export function VoiceSelectorDialog({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'browse' | 'create')} className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="shrink-0">
-            <TabsTrigger value="browse">Browse Voices</TabsTrigger>
-            <TabsTrigger value="create">
-              <Sparkles className="w-4 h-4 mr-1" />
+          <TabsList className="shrink-0 h-9">
+            <TabsTrigger value="browse" className="text-[12px] px-3 py-1.5 whitespace-nowrap">Browse Voices</TabsTrigger>
+            <TabsTrigger value="create" className="text-[12px] px-3 py-1.5 whitespace-nowrap">
+              <Sparkles className="w-3.5 h-3.5 mr-1" />
               Create Custom
             </TabsTrigger>
           </TabsList>
@@ -223,13 +223,13 @@ export function VoiceSelectorDialog({
             {recommendations.length > 0 && !debouncedQuery && (
               <div className="mb-4 shrink-0">
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                    <Star className="w-4 h-4 text-yellow-500" />
+                  <h4 className="text-[13px] font-medium text-gray-300 flex items-center gap-1.5">
+                    <Star className="w-3.5 h-3.5 text-yellow-500" />
                     Recommended for {characterContext?.name}
                   </h4>
                   <button
                     onClick={() => setShowRecommendedOnly(!showRecommendedOnly)}
-                    className={`text-xs px-2 py-1 rounded transition-colors ${
+                    className={`text-[11px] px-2 py-1 rounded transition-colors ${
                       showRecommendedOnly 
                         ? 'bg-yellow-500/20 text-yellow-300' 
                         : 'text-gray-400 hover:text-gray-300'
@@ -469,13 +469,13 @@ export function VoiceSelectorDialog({
           {/* Create Tab */}
           <TabsContent value="create" className="flex-1 overflow-y-auto mt-4">
             <Tabs value={createTab} onValueChange={(v) => setCreateTab(v as 'design' | 'clone')} className="h-full">
-              <TabsList className="mb-4">
-                <TabsTrigger value="design">
-                  <Wand2 className="w-4 h-4 mr-1" />
+              <TabsList className="mb-3 h-8">
+                <TabsTrigger value="design" className="text-[12px] px-2.5 py-1 whitespace-nowrap">
+                  <Wand2 className="w-3.5 h-3.5 mr-1" />
                   AI Voice Design
                 </TabsTrigger>
-                <TabsTrigger value="clone">
-                  <Mic className="w-4 h-4 mr-1" />
+                <TabsTrigger value="clone" className="text-[12px] px-2.5 py-1 whitespace-nowrap">
+                  <Mic className="w-3.5 h-3.5 mr-1" />
                   Clone Voice
                 </TabsTrigger>
               </TabsList>

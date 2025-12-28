@@ -168,39 +168,39 @@ export function VoiceDesignPanel({
   return (
     <div className="space-y-4">
       {/* Info Banner */}
-      <div className="flex items-start gap-3 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
-        <Sparkles className="w-5 h-5 text-purple-400 mt-0.5 shrink-0" />
-        <div className="text-sm text-purple-300">
-          <p className="font-medium mb-1">Design a Voice with AI</p>
-          <p className="text-purple-400/80">
+      <div className="flex items-start gap-2.5 p-2.5 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+        <Sparkles className="w-4 h-4 text-purple-400 mt-0.5 shrink-0" />
+        <div className="text-[13px] text-purple-300">
+          <p className="font-medium mb-0.5">Design a Voice with AI</p>
+          <p className="text-[12px] text-purple-400/80">
             Describe the voice you want to create and our AI will generate unique voice options for you to choose from.
           </p>
         </div>
       </div>
 
       {/* Voice Name */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-300">Voice Name</label>
+      <div className="space-y-1.5">
+        <label className="text-[13px] font-medium text-gray-300">Voice Name</label>
         <input
           type="text"
           value={voiceName}
           onChange={(e) => setVoiceName(e.target.value)}
           placeholder="Enter a name for this voice..."
-          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500"
+          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 text-[13px] placeholder-gray-500 focus:outline-none focus:border-purple-500"
         />
       </div>
 
       {/* Voice Description */}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-gray-300">Voice Description</label>
+          <label className="text-[13px] font-medium text-gray-300">Voice Description</label>
           {characterContext && (
             <button
               onClick={() => {
                 const autoDesc = generateVoiceDesignPrompt(characterContext, screenplayContext)
                 setVoiceDescription(autoDesc)
               }}
-              className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1"
+              className="text-[11px] text-purple-400 hover:text-purple-300 flex items-center gap-1"
             >
               <Wand2 className="w-3 h-3" />
               Auto-generate from character
@@ -211,18 +211,18 @@ export function VoiceDesignPanel({
           value={voiceDescription}
           onChange={(e) => setVoiceDescription(e.target.value)}
           placeholder="Describe the voice: gender, age, tone, accent, personality...&#10;e.g., 'A warm, mature female voice with a slight British accent, calm and reassuring'"
-          rows={4}
-          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500 resize-none"
+          rows={3}
+          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 text-[13px] placeholder-gray-500 focus:outline-none focus:border-purple-500 resize-none"
         />
-        <div className="flex justify-between text-xs text-gray-500">
+        <div className="flex justify-between text-[11px] text-gray-500">
           <span>{voiceDescription.length}/1000 characters</span>
           <span>Minimum 20 characters</span>
         </div>
       </div>
 
       {/* Preview Text (Optional) */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-300">
+      <div className="space-y-1.5">
+        <label className="text-[13px] font-medium text-gray-300">
           Preview Text <span className="text-gray-500 font-normal">(optional)</span>
         </label>
         <input
@@ -230,7 +230,7 @@ export function VoiceDesignPanel({
           value={previewText}
           onChange={(e) => setPreviewText(e.target.value)}
           placeholder="Text to speak in the preview..."
-          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500"
+          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 text-[13px] placeholder-gray-500 focus:outline-none focus:border-purple-500"
         />
       </div>
 

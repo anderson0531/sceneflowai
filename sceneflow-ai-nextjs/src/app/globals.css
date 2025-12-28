@@ -251,6 +251,31 @@
     line-height: 1.6;
   }
 
+  /* Dialog-scoped text reset - override clamp() for balanced UI in modals */
+  [role="dialog"] .text-xs,
+  .dialog-text-reset .text-xs {
+    font-size: 0.75rem !important; /* 12px */
+    line-height: 1.4;
+  }
+
+  [role="dialog"] .text-sm,
+  .dialog-text-reset .text-sm {
+    font-size: 0.8125rem !important; /* 13px */
+    line-height: 1.5;
+  }
+
+  [role="dialog"] .text-base,
+  .dialog-text-reset .text-base {
+    font-size: 0.875rem !important; /* 14px */
+    line-height: 1.5;
+  }
+
+  [role="dialog"] .text-lg,
+  .dialog-text-reset .text-lg {
+    font-size: 1.0625rem !important; /* 17px */
+    line-height: 1.4;
+  }
+
   /* Strong text with enhanced weight */
   strong, b {
     font-weight: 600;
