@@ -326,7 +326,108 @@ export function searchVoicesIntelligently(
 }
 
 /**
+ * Infer gender from a character description using keyword analysis
+ */
+function inferGenderFromDescription(description: string): 'male' | 'female' | null {
+  const text = description.toLowerCase()
+  
+  // Female indicators (check first since character names like Ka'ali might be female)
+  const femaleIndicators = [
+    // Pronouns
+    'she', 'her', 'hers', 'herself',
+    // Titles/roles
+    'woman', 'women', 'female', 'girl', 'lady', 'queen', 'princess', 'empress',
+    'mother', 'mom', 'daughter', 'sister', 'aunt', 'grandmother', 'wife',
+    'actress', 'waitress', 'priestess', 'goddess', 'witch', 'sorceress',
+    // Descriptors
+    'feminine', 'maternal', 'sisterly',
+  ]
+  
+  // Male indicators
+  const maleIndicators = [
+    // Pronouns
+    'he', 'him', 'his', 'himself',
+    // Titles/roles
+    'man', 'men', 'male', 'boy', 'guy', 'gentleman', 'king', 'prince', 'emperor',
+    'father', 'dad', 'son', 'brother', 'uncle', 'grandfather', 'husband',
+    'actor', 'waiter', 'priest', 'god', 'wizard', 'sorcerer',
+    // Descriptors
+    'masculine', 'paternal', 'brotherly',
+  ]
+  
+  // Use word boundaries for more accurate matching
+  let femaleScore = 0
+  let maleScore = 0
+  
+  for (const indicator of femaleIndicators) {
+    const regex = new RegExp(`\\b${indicator}\\b`, 'gi')
+    const matches = text.match(regex)
+    if (matches) {
+      femaleScore += matches.length
+    }
+  }
+  
+  for (const indicator of maleIndicators) {
+    const regex = new RegExp(`\\b${indicator}\\b`, 'gi')
+    const matches = text.match(regex)
+    if (matches) {
+      maleScore += matches.length
+    }
+  }
+  
+  if (femaleScore > maleScore) return 'female'
+  if (maleScore > femaleScore) return 'male'
+  return null
+}
+
+/**
+ * Extract voice trait hints from character description
+ */
+function extractVoiceTraits(description: string): string[] {
+  const text = description.toLowerCase()
+  const traits: string[] = []
+  
+  // Voice quality hints
+  if (text.includes('deep') || text.includes('bass') || text.includes('rumbling')) {
+    traits.push('deep resonant voice')
+  }
+  if (text.includes('soft') || text.includes('gentle') || text.includes('quiet')) {
+    traits.push('soft and gentle tone')
+  }
+  if (text.includes('loud') || text.includes('booming') || text.includes('powerful')) {
+    traits.push('powerful commanding voice')
+  }
+  if (text.includes('warm') || text.includes('friendly') || text.includes('kind')) {
+    traits.push('warm friendly delivery')
+  }
+  if (text.includes('cold') || text.includes('calculating') || text.includes('sinister')) {
+    traits.push('cool measured tone')
+  }
+  if (text.includes('wise') || text.includes('ancient') || text.includes('elder')) {
+    traits.push('wise and seasoned voice')
+  }
+  if (text.includes('young') || text.includes('youthful') || text.includes('energetic')) {
+    traits.push('youthful energetic delivery')
+  }
+  if (text.includes('mysterious') || text.includes('enigmatic') || text.includes('cryptic')) {
+    traits.push('mysterious and intriguing tone')
+  }
+  if (text.includes('warrior') || text.includes('fighter') || text.includes('soldier')) {
+    traits.push('strong confident voice')
+  }
+  if (text.includes('leader') || text.includes('chief') || text.includes('commander')) {
+    traits.push('authoritative commanding presence')
+  }
+  if (text.includes('healer') || text.includes('nurturing') || text.includes('caring')) {
+    traits.push('nurturing compassionate tone')
+  }
+  
+  return traits
+}
+
+/**
  * Generate a description for AI voice design based on character
+ * Uses intelligent inference from character description to determine gender and traits
  */
 export function generateVoiceDesignPrompt(
   character: CharacterContext,
@@ -334,12 +435,29 @@ export function generateVoiceDesignPrompt(
 ): string {
   const parts: string[] = []
   
-  // Gender and age
-  if (character.gender) {
-    parts.push(character.gender)
+  // Intelligently infer gender from description if not explicitly provided
+  let gender = character.gender?.toLowerCase()
+  if (!gender && character.description) {
+    const inferredGender = inferGenderFromDescription(character.description)
+    if (inferredGender) {
+      gender = inferredGender
+    }
   }
+  
+  // Add gender
+  if (gender) {
+    parts.push(gender)
+  }
+  
+  // Add age
   if (character.age) {
     parts.push(character.age)
+  }
+  
+  // Extract voice traits from description
+  if (character.description) {
+    const traits = extractVoiceTraits(character.description)
+    parts.push(...traits)
   }
   
   // Role-based description
@@ -367,13 +485,24 @@ export function generateVoiceDesignPrompt(
       parts.push('with subtle intensity')
     } else if (genre.includes('action')) {
       parts.push('with confident and dynamic presence')
+    } else if (genre.includes('fantasy') || genre.includes('sci-fi') || genre.includes('epic')) {
+      parts.push('with cinematic presence')
     }
   }
   
-  // Add character name reference
-  const description = parts.length > 0 
-    ? `Voice for ${character.name}: ${parts.join(', ')}`
-    : `Voice for character named ${character.name}`
+  // Build the final description - ensure it's descriptive enough for ElevenLabs (20+ chars)
+  let description: string
+  if (parts.length > 0) {
+    description = `Voice for ${character.name}: ${parts.join(', ')}`
+  } else {
+    // Fallback with more detail to meet minimum length requirements
+    description = `A distinctive voice for the character ${character.name}, suitable for film and storytelling`
+  }
+  
+  // Ensure minimum length for ElevenLabs API (20 characters)
+  if (description.length < 25) {
+    description = `${description}, with natural expressive qualities suitable for film narration`
+  }
   
   return description
 }

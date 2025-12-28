@@ -58,6 +58,22 @@ export async function POST(request: NextRequest) {
 
     console.log('[Voice Design Preview] Generating previews for:', voiceDescription.substring(0, 50) + '...')
 
+    // Determine if we should auto-generate text or use provided/default text
+    // ElevenLabs requires text to be 100-1000 characters
+    const useAutoGenerate = !previewText || previewText.length < 100
+    
+    const requestBody: Record<string, any> = {
+      voice_description: voiceDescription,
+    }
+    
+    if (useAutoGenerate) {
+      // Let ElevenLabs generate appropriate text for the voice
+      requestBody.auto_generate_text = true
+    } else {
+      // Use provided text (must be 100-1000 chars)
+      requestBody.text = previewText.length > 1000 ? previewText.substring(0, 1000) : previewText
+    }
+
     // Call ElevenLabs Voice Design API
     const response = await fetch(`${ELEVENLABS_API_BASE}/text-to-voice/create-previews`, {
       method: 'POST',
@@ -65,10 +81,7 @@ export async function POST(request: NextRequest) {
         'xi-api-key': apiKey,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        voice_description: voiceDescription,
-        text: previewText || "Hello, this is a preview of my voice. I'm excited to be part of your project!",
-      }),
+      body: JSON.stringify(requestBody),
     })
 
     if (!response.ok) {
@@ -83,8 +96,20 @@ export async function POST(request: NextRequest) {
       }
       
       if (response.status === 422) {
+        // Parse the error for more helpful message
+        let errorMessage = 'Invalid request. Please provide a more detailed voice description.'
+        try {
+          const errorData = JSON.parse(errorText)
+          if (errorData.detail) {
+            const details = Array.isArray(errorData.detail) ? errorData.detail : [errorData.detail]
+            const messages = details.map((d: any) => d.msg || d.message || JSON.stringify(d))
+            errorMessage = messages.join('. ')
+          }
+        } catch (e) {
+          // Use default error message
+        }
         return NextResponse.json(
-          { error: 'Invalid voice description. Please provide a more detailed description.' },
+          { error: errorMessage },
           { status: 422 }
         )
       }
