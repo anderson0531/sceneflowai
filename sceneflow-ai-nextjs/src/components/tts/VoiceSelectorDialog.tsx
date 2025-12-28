@@ -215,20 +215,20 @@ export function VoiceSelectorDialog({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'browse' | 'create')} className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="shrink-0 h-8 bg-transparent border-b border-gray-700 rounded-none p-0 gap-4">
+          <TabsList className="shrink-0 h-8 bg-transparent border-b border-gray-700 rounded-none p-0 gap-6">
             <TabsTrigger 
               value="browse" 
-              className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 bg-transparent rounded-none px-0 pb-2 whitespace-nowrap inline-flex items-center gap-1"
-              style={{ fontSize: '13px' }}
+              className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 bg-transparent rounded-none px-0 pb-2"
+              style={{ fontSize: '13px', textTransform: 'none', letterSpacing: 'normal', minWidth: '120px' }}
             >
-              <Search className="w-3 h-3" />Browse Voices
+              <span className="inline-flex items-center gap-1.5"><Search className="w-3 h-3 shrink-0" />Browse Voices</span>
             </TabsTrigger>
             <TabsTrigger 
               value="create" 
-              className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 bg-transparent rounded-none px-0 pb-2 whitespace-nowrap inline-flex items-center gap-1"
-              style={{ fontSize: '13px' }}
+              className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 bg-transparent rounded-none px-0 pb-2"
+              style={{ fontSize: '13px', textTransform: 'none', letterSpacing: 'normal', minWidth: '120px' }}
             >
-              <Sparkles className="w-3 h-3" />Create Custom
+              <span className="inline-flex items-center gap-1.5"><Sparkles className="w-3 h-3 shrink-0" />Create Custom</span>
             </TabsTrigger>
           </TabsList>
 
