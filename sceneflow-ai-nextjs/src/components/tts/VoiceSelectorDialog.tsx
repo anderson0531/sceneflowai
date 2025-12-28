@@ -218,18 +218,17 @@ export function VoiceSelectorDialog({
           <TabsList className="shrink-0 h-8 bg-transparent border-b border-gray-700 rounded-none p-0 gap-4">
             <TabsTrigger 
               value="browse" 
-              className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 bg-transparent rounded-none px-0 pb-2 whitespace-nowrap"
+              className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 bg-transparent rounded-none px-0 pb-2 whitespace-nowrap inline-flex items-center gap-1"
               style={{ fontSize: '13px' }}
             >
-              Browse Voices
+              <Search className="w-3 h-3" />Browse Voices
             </TabsTrigger>
             <TabsTrigger 
               value="create" 
-              className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 bg-transparent rounded-none px-0 pb-2 whitespace-nowrap flex items-center gap-1"
+              className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 bg-transparent rounded-none px-0 pb-2 whitespace-nowrap inline-flex items-center gap-1"
               style={{ fontSize: '13px' }}
             >
-              <Sparkles className="w-3 h-3" />
-              Create Custom
+              <Sparkles className="w-3 h-3" />Create Custom
             </TabsTrigger>
           </TabsList>
 
