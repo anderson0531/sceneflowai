@@ -196,11 +196,17 @@ export function VoiceSelectorDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader className="pb-2">
-          <DialogTitle className="flex items-center gap-1.5 text-[15px] font-medium text-gray-200">
+          <DialogTitle 
+            className="flex items-center gap-1.5 font-medium text-gray-200"
+            style={{ fontSize: '15px', lineHeight: '1.3' }}
+          >
             <Volume2 className="w-3.5 h-3.5 text-blue-400" />
             {characterContext ? `Select Voice for ${characterContext.name}` : 'Select Voice'}
           </DialogTitle>
-          <DialogDescription className="text-[12px] text-gray-400">
+          <DialogDescription 
+            className="text-gray-400"
+            style={{ fontSize: '12px', lineHeight: '1.4' }}
+          >
             {characterContext 
               ? 'Choose a voice that matches your character, or create a custom one.'
               : 'Browse and select a voice, or create a custom voice.'
@@ -212,13 +218,15 @@ export function VoiceSelectorDialog({
           <TabsList className="shrink-0 h-8 bg-transparent border-b border-gray-700 rounded-none p-0 gap-4">
             <TabsTrigger 
               value="browse" 
-              className="text-[13px] font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 bg-transparent rounded-none px-0 pb-2 whitespace-nowrap"
+              className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 bg-transparent rounded-none px-0 pb-2 whitespace-nowrap"
+              style={{ fontSize: '13px' }}
             >
               Browse Voices
             </TabsTrigger>
             <TabsTrigger 
               value="create" 
-              className="text-[13px] font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 bg-transparent rounded-none px-0 pb-2 whitespace-nowrap flex items-center gap-1"
+              className="font-medium text-gray-300 data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 bg-transparent rounded-none px-0 pb-2 whitespace-nowrap flex items-center gap-1"
+              style={{ fontSize: '13px' }}
             >
               <Sparkles className="w-3 h-3" />
               Create Custom
