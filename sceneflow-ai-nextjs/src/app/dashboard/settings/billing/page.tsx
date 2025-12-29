@@ -224,6 +224,7 @@ export default function BillingPage() {
       {/* Test Plan Switcher (Development/Testing) */}
       {testMode?.testModeEnabled && testMode.availableTiers && (
         <motion.div
+          id="test-plan-switcher"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.05 }}
@@ -358,12 +359,13 @@ export default function BillingPage() {
                   <h4 className="text-white font-semibold">Upgrade Plan</h4>
                   <p className="text-gray-400 text-sm">Get more credits and features</p>
                 </div>
-                <Link href="/pricing">
-                  <Button className="bg-sf-primary hover:bg-sf-accent text-white flex items-center gap-2">
-                    View Plans
-                    <ExternalLink className="w-4 h-4" />
-                  </Button>
-                </Link>
+                <Button 
+                  className="bg-sf-primary hover:bg-sf-accent text-white flex items-center gap-2"
+                  onClick={() => document.getElementById('test-plan-switcher')?.scrollIntoView({ behavior: 'smooth' })}
+                >
+                  View Plans
+                  <ExternalLink className="w-4 h-4" />
+                </Button>
               </div>
 
               <div className="flex items-center justify-between p-4 bg-dark-bg rounded-lg border border-dark-border">
@@ -371,12 +373,9 @@ export default function BillingPage() {
                   <h4 className="text-white font-semibold">Purchase Add-on Credits</h4>
                   <p className="text-gray-400 text-sm">Buy additional credits that never expire</p>
                 </div>
-                <Link href="/pricing#addons">
-                  <Button variant="outline" className="border-dark-border text-dark-text hover:bg-dark-bg flex items-center gap-2">
-                    Buy Credits
-                    <ExternalLink className="w-4 h-4" />
-                  </Button>
-                </Link>
+                <Button variant="outline" className="border-dark-border text-dark-text hover:bg-dark-bg flex items-center gap-2" disabled>
+                  Coming Soon
+                </Button>
               </div>
 
               {subscription?.subscription?.status === 'active' && (
