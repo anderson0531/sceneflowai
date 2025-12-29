@@ -5,7 +5,7 @@ import { BudgetHealthWidget } from './components/BudgetHealthWidget'
 import { ActiveProjectsContainer } from './components/ActiveProjectsContainer'
 import { SpendingAnalyticsWidget } from './components/SpendingAnalyticsWidget'
 import { QuickActionsGrid } from './components/QuickActionsGrid'
-import { BYOKIntegrationStatus } from './components/BYOKIntegrationStatus'
+import { StorageWidget } from './components/StorageWidget'
 import { useDashboardData } from '@/hooks/useDashboardData'
 import { Loader2 } from 'lucide-react'
 
@@ -70,14 +70,17 @@ export default function ClientDashboard() {
         {/* Row 3: Active Projects - Live Data */}
         <ActiveProjectsContainer projects={projects} />
         
-        {/* Row 4: Analytics + Quick Actions Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Row 4: Analytics + Quick Actions + Storage */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <SpendingAnalyticsWidget usedCredits={usedCredits} />
           <QuickActionsGrid />
+          <StorageWidget 
+            storageUsedGb={0} 
+            storageLimitGb={subscription?.tier?.name === 'enterprise' ? 500 : 
+                           subscription?.tier?.name === 'studio' ? 100 : 
+                           subscription?.tier?.name === 'pro' ? 50 : 10}
+          />
         </div>
-        
-        {/* Row 5: BYOK Status */}
-        <BYOKIntegrationStatus />
       </div>
     </div>
   )

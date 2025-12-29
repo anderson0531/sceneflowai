@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Plus, BookOpen, Cloud, Key, CreditCard, Settings } from 'lucide-react'
+import { Plus, BookOpen, Layers, Library, CreditCard, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 
@@ -14,21 +14,22 @@ const quickActions = [
   },
   { 
     label: 'My Projects', 
-    icon: <BookOpen className="w-5 h-5" />, 
+    icon: <Layers className="w-5 h-5" />, 
     href: '/dashboard/projects',
     color: 'bg-purple-600/20 text-purple-400 hover:bg-purple-600/30'
   },
   { 
-    label: 'Studio', 
-    icon: <Cloud className="w-5 h-5" />, 
-    href: '/dashboard/studio',
-    color: 'bg-green-600/20 text-green-400 hover:bg-green-600/30'
+    label: 'Series Bibles', 
+    icon: <Library className="w-5 h-5" />, 
+    href: '/dashboard/series-bibles',
+    color: 'bg-amber-600/20 text-amber-400 hover:bg-amber-600/30',
+    prefetch: false
   },
   { 
-    label: 'BYOK Config', 
-    icon: <Key className="w-5 h-5" />, 
-    href: '/dashboard/settings/byok',
-    color: 'bg-yellow-600/20 text-yellow-400 hover:bg-yellow-600/30'
+    label: 'Studio', 
+    icon: <BookOpen className="w-5 h-5" />, 
+    href: '/dashboard/studio',
+    color: 'bg-green-600/20 text-green-400 hover:bg-green-600/30'
   },
   { 
     label: 'Buy Credits', 
@@ -58,7 +59,7 @@ export function QuickActionsGrid() {
 
       <div className="grid grid-cols-2 gap-3">
         {quickActions.map((action, index) => (
-          <Link key={index} href={action.href}>
+          <Link key={index} href={action.href} prefetch={action.prefetch !== false}>
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
