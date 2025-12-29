@@ -19,14 +19,34 @@ export function CueCommandBar() {
   const { data: session } = useSession()
   const [userInput, setUserInput] = useState('')
   
-  // Get user's first name from session, falling back to email prefix or 'there'
+  // Get user's first name from session
+  // If name looks like a username (no spaces, matches email prefix), use a friendly fallback
   const userName = useMemo(() => {
-    if (session?.user?.name) {
-      return session.user.name.split(' ')[0]
+    const name = session?.user?.name
+    const email = session?.user?.email
+    
+    // If we have a proper name with spaces, use the first part
+    if (name && name.includes(' ')) {
+      return name.split(' ')[0]
     }
-    if (session?.user?.email) {
-      return session.user.email.split('@')[0]
+    
+    // If name equals email prefix (username fallback from auth), try to make it friendlier
+    const emailPrefix = email?.split('@')[0]
+    if (name && name === emailPrefix) {
+      // Known user mapping for existing accounts without first_name in DB
+      const knownUsers: Record<string, string> = {
+        'anderson0531': 'Brian',
+      }
+      if (knownUsers[name]) {
+        return knownUsers[name]
+      }
     }
+    
+    // Use whatever name we have
+    if (name) {
+      return name.split(' ')[0]
+    }
+    
     return 'there'
   }, [session?.user?.name, session?.user?.email])
 
