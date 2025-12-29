@@ -13,15 +13,15 @@ const quickActions = [
     color: 'bg-blue-600/20 text-blue-400 hover:bg-blue-600/30'
   },
   { 
-    label: 'Series Bibles', 
+    label: 'My Projects', 
     icon: <BookOpen className="w-5 h-5" />, 
-    href: '/dashboard/series-bibles',
+    href: '/dashboard/projects',
     color: 'bg-purple-600/20 text-purple-400 hover:bg-purple-600/30'
   },
   { 
-    label: 'Asset Library', 
+    label: 'Studio', 
     icon: <Cloud className="w-5 h-5" />, 
-    href: '/dashboard/asset-library',
+    href: '/dashboard/studio',
     color: 'bg-green-600/20 text-green-400 hover:bg-green-600/30'
   },
   { 

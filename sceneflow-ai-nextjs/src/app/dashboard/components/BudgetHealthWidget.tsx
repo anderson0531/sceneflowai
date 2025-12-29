@@ -108,7 +108,7 @@ export function BudgetHealthWidget({
               Manage Plan
             </Button>
           </Link>
-          <Link href="/dashboard/analytics/spending" className="flex-1">
+          <Link href="/dashboard/settings/billing" className="flex-1" prefetch={false}>
             <Button variant="outline" className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-gray-500">
               <TrendingUp className="w-4 h-4 mr-2" />
               Spending History
@@ -138,7 +138,7 @@ export function BudgetHealthWidget({
           <p className="text-xs text-indigo-200 flex-1">
             You have {projectsNearLimit} projects nearing budget limit. Consider optimizing workflows or purchasing a top-up.
           </p>
-          <Link href="/dashboard/analytics/spending" className="mt-3">
+          <Link href="/dashboard/settings/billing" className="mt-3" prefetch={false}>
             <Button size="sm" variant="outline" className="w-full text-xs border-indigo-600 text-indigo-300 hover:text-white">
               Details
             </Button>

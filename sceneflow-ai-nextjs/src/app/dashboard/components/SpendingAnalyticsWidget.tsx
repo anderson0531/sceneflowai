@@ -88,7 +88,7 @@ export function SpendingAnalyticsWidget({ usedCredits = 0 }: SpendingAnalyticsWi
         </div>
       </div>
 
-      <Link href="/dashboard/analytics" className="block">
+      <Link href="/dashboard/settings/billing" className="block" prefetch={false}>
         <Button variant="outline" size="sm" className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-gray-500">
           Full Analytics
         </Button>
