@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
           delta_credits: creditsGranted,
           prev_balance: prevCredits,
           new_balance: Number(user.credits),
-          reason: 'subscription_grant',
+          reason: 'subscription_allocation',
           credit_type: 'subscription',
           ref: `test_plan_switch_${tierName}`,
           meta: { 
