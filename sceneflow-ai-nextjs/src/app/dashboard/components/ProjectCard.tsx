@@ -22,6 +22,7 @@ import {
   Layers,
   Calendar,
   Star,
+  ChevronDown,
 } from 'lucide-react'
 import { useEnhancedStore } from '@/store/enhancedStore'
 import { useCueStore } from '@/store/useCueStore'
@@ -133,12 +134,13 @@ interface ProjectCardProps {
   className?: string
   isSelected?: boolean
   onSelectAsCurrent?: (projectId: string) => void
+  onStatusChange?: (projectId: string, status: string) => void
   onDuplicate?: (projectId: string) => void
   onArchive?: (projectId: string) => void
   onDelete?: (projectId: string, projectTitle: string) => void
 }
 
-export function ProjectCard({ project, className = '', isSelected = false, onSelectAsCurrent, onDuplicate, onArchive, onDelete }: ProjectCardProps) {
+export function ProjectCard({ project, className = '', isSelected = false, onSelectAsCurrent, onStatusChange, onDuplicate, onArchive, onDelete }: ProjectCardProps) {
   const { user, byokSettings } = useEnhancedStore()
   const { invokeCue } = useCueStore()
   const [isHovered, setIsHovered] = useState(false)
@@ -611,6 +613,41 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
             </div>
           </div>
         </div>
+
+        {/* Project Status Selector */}
+        {onStatusChange && (
+          <div className="mb-4">
+            <label className="text-xs uppercase tracking-wider text-gray-500 mb-2 block">Project Status</label>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="w-full flex items-center justify-between px-3 py-2 bg-gray-800/40 hover:bg-gray-800/60 rounded-lg border border-gray-700/40 hover:border-gray-600/50 transition-colors text-sm">
+                  <span className="flex items-center gap-2">
+                    <span className="text-white font-medium capitalize">{project.status === 'in-progress' ? 'Active' : project.status}</span>
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[200px]">
+                <DropdownMenuItem onClick={() => onStatusChange(project.id, 'draft')}>
+                  <span className="w-2 h-2 rounded-full bg-gray-400 mr-2" />
+                  Draft
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onStatusChange(project.id, 'active')}>
+                  <span className="w-2 h-2 rounded-full bg-blue-400 mr-2" />
+                  Active
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onStatusChange(project.id, 'completed')}>
+                  <span className="w-2 h-2 rounded-full bg-green-400 mr-2" />
+                  Completed
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onStatusChange(project.id, 'archived')}>
+                  <span className="w-2 h-2 rounded-full bg-gray-600 mr-2" />
+                  Archived
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
 
         {/* Project Stats - Compact */}
         <div className="mb-5 p-3 bg-gray-800/40 rounded-lg border border-gray-700/40">

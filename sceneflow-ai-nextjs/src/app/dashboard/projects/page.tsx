@@ -216,6 +216,35 @@ export default function ProjectsPage() {
     } catch {}
   }
 
+  // Handle changing project status
+  const handleStatusChange = async (projectId: string, status: string) => {
+    try {
+      const res = await fetch(`/api/projects`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: projectId,
+          userId: getUserId(),
+          status: status === 'active' ? 'in-progress' : status // Map 'active' to 'in-progress' for DB
+        })
+      })
+      
+      if (res.ok) {
+        loadProjects()
+        try { 
+          const { toast } = require('sonner')
+          toast.success(`Project status updated to ${status}`)
+        } catch {}
+      }
+    } catch (error) {
+      console.error('Failed to update status:', error)
+      try { 
+        const { toast } = require('sonner')
+        toast.error('Failed to update project status')
+      } catch {}
+    }
+  }
+
   const handleDuplicate = async (projectId: string) => {
     const project = projects.find(p => p.id === projectId)
     if (!project) return
@@ -359,7 +388,7 @@ export default function ProjectsPage() {
           <Link href="/dashboard/studio/new-project">
             <Button className="bg-sf-primary text-white hover:bg-sf-accent flex items-center gap-2">
               <Plus className="w-4 h-4" />
-              New Project
+              Start Project
             </Button>
           </Link>
         }
@@ -454,6 +483,7 @@ export default function ProjectsPage() {
                 project={project}
                 isSelected={project.id === selectedProjectId}
                 onSelectAsCurrent={handleSelectAsCurrent}
+                onStatusChange={handleStatusChange}
                 onDuplicate={handleDuplicate}
                 onArchive={handleArchive}
                 onDelete={handleDelete}
