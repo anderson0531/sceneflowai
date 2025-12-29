@@ -129,9 +129,19 @@ export async function GET(request: NextRequest) {
     
     // Add debug info
     if (debug) {
+      // Get all tables in the database
+      const [tables] = await sequelize.query(`
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public'
+        ORDER BY table_name
+      `).catch(() => [[]]);
+      
       response.debug = {
         usersColumns: Object.keys(usersDesc || {}),
         tiersColumns: Object.keys(tiersDesc || {}),
+        tiersDescRaw: tiersDesc,
+        allTables: (tables as any[]).map((t: any) => t.table_name),
       };
     }
     
