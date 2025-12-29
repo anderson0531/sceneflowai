@@ -7,7 +7,6 @@ import { Menu, X, Settings, User, HelpCircle, LogOut } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { AuthModal } from '../../components/auth/AuthModal'
 import { Breadcrumbs } from '../../components/layout/Breadcrumbs'
-import { ThemeToggle } from './ThemeToggle'
 import { isPublicRoute } from '@/constants/publicRoutes'
 
 declare global {
@@ -83,8 +82,6 @@ export function GlobalHeader() {
 
           {/* Right: Controls */}
           <div className="flex items-center gap-3 ml-auto">
-            {/* Theme Toggle */}
-            <ThemeToggle />
             {/* Profile */}
             <button
               className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/60"
