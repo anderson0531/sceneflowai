@@ -165,7 +165,7 @@ export function ActiveProjectCard({
       {/* Cinematic Header with Thumbnail */}
       <div className="relative">
         {/* Thumbnail Image */}
-        <div className="relative h-48 w-full overflow-hidden">
+        <div className="relative h-96 w-full overflow-hidden">
           {thumbnailUrl && thumbnailUrl.startsWith('http') ? (
             <Image
               src={thumbnailUrl}
