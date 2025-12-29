@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Send, Mic, Plus, Zap, TrendingUp, Lightbulb, Play } from 'lucide-react'
 import Link from 'next/link'
+import { useSession } from 'next-auth/react'
 
 interface QuickAction {
   label: string
@@ -15,8 +16,19 @@ interface QuickAction {
 }
 
 export function CueCommandBar() {
-  const [userName, setUserName] = useState<string>('Friend')
+  const { data: session } = useSession()
   const [userInput, setUserInput] = useState('')
+  
+  // Get user's first name from session, falling back to email prefix or 'there'
+  const userName = useMemo(() => {
+    if (session?.user?.name) {
+      return session.user.name.split(' ')[0]
+    }
+    if (session?.user?.email) {
+      return session.user.email.split('@')[0]
+    }
+    return 'there'
+  }, [session?.user?.name, session?.user?.email])
 
   const quickActions: QuickAction[] = [
     { label: 'Save Credits', icon: <Zap className="w-3 h-3" />, action: 'save-credits', description: 'Optimize for cost' },
@@ -42,13 +54,6 @@ export function CueCommandBar() {
     console.log('Quick action:', action)
     // TODO: Integrate with Cue chat system
   }
-
-  useEffect(() => {
-    try {
-      const stored = typeof window !== 'undefined' ? localStorage.getItem('authUserName') : null
-      if (stored && stored.trim()) setUserName(stored.split(' ')[0])
-    } catch {}
-  }, [])
 
   return (
     <motion.div

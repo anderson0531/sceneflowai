@@ -28,8 +28,9 @@ const quickActions = [
   { 
     label: 'Studio', 
     icon: <BookOpen className="w-5 h-5" />, 
-    href: '/dashboard/studio',
-    color: 'bg-green-600/20 text-green-400 hover:bg-green-600/30'
+    href: '/dashboard/projects',
+    color: 'bg-green-600/20 text-green-400 hover:bg-green-600/30',
+    description: 'Select a project to open Studio'
   },
   { 
     label: 'Buy Credits', 

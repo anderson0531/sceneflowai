@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ContextBar } from '@/components/layout/ContextBar'
 import { ProjectCard } from '../components/ProjectCard'
 import { Input } from '@/components/ui/Input'
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { Plus, Search, Grid3x3, List, FolderOpen } from 'lucide-react'
 import Link from 'next/link'
 import { DeleteConfirmationDialog } from '@/components/ui/DeleteConfirmationDialog'
+import { useSession } from 'next-auth/react'
 
 export const dynamic = 'force-dynamic'
 
@@ -67,8 +68,17 @@ export default function ProjectsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [projectToDelete, setProjectToDelete] = useState<{ id: string; title: string } | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [ownershipSynced, setOwnershipSynced] = useState(false)
+  
+  const { data: session, status: authStatus } = useSession()
 
-  const getUserId = () => {
+  // Get user ID from session, with fallback sync for localStorage projects
+  const getUserId = useCallback(() => {
+    // Prefer session user ID (email-based, resolved by API)
+    if (session?.user?.id) {
+      return session.user.id
+    }
+    // Fallback to localStorage for unauthenticated users
     if (typeof window !== 'undefined') {
       let userId = localStorage.getItem('authUserId')
       if (!userId) {
@@ -78,12 +88,60 @@ export default function ProjectsPage() {
       return userId
     }
     return 'anonymous'
-  }
+  }, [session?.user?.id])
 
-  // Fetch projects
+  // Sync project ownership from localStorage UUID to session user ID
+  const syncProjectOwnership = useCallback(async () => {
+    if (!session?.user?.id || ownershipSynced) return
+    
+    const localStorageUserId = typeof window !== 'undefined' 
+      ? localStorage.getItem('authUserId') 
+      : null
+    
+    // Only sync if we have a localStorage UUID that differs from session
+    if (!localStorageUserId || localStorageUserId === session.user.id) {
+      setOwnershipSynced(true)
+      return
+    }
+    
+    console.log('[Projects] Syncing ownership from localStorage UUID to session user...')
+    try {
+      const res = await fetch('/api/projects/sync-ownership', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          oldUserId: localStorageUserId,
+          newUserId: session.user.id
+        })
+      })
+      
+      if (res.ok) {
+        const data = await res.json()
+        console.log('[Projects] Ownership synced:', data.migratedCount, 'projects migrated')
+        // Clear localStorage UUID after successful sync
+        localStorage.removeItem('authUserId')
+      }
+    } catch (error) {
+      console.error('[Projects] Failed to sync ownership:', error)
+    }
+    setOwnershipSynced(true)
+  }, [session?.user?.id, ownershipSynced])
+
+  // Sync ownership and fetch projects when auth is ready
   useEffect(() => {
-    loadProjects()
-  }, [])
+    const initProjects = async () => {
+      if (authStatus === 'loading') return
+      
+      // Sync ownership first if authenticated
+      if (authStatus === 'authenticated' && session?.user?.id) {
+        await syncProjectOwnership()
+      }
+      
+      loadProjects()
+    }
+    
+    initProjects()
+  }, [authStatus, session?.user?.id, syncProjectOwnership])
 
   // Listen for project updates (e.g., thumbnail generation)
   useEffect(() => {
