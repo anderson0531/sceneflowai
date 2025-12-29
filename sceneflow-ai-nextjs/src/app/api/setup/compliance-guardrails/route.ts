@@ -24,13 +24,18 @@ export async function POST(request: NextRequest) {
     const setupSecret = process.env.CRON_SECRET || process.env.SETUP_SECRET;
     const hasSecretAuth = setupSecret && authHeader === `Bearer ${setupSecret}`;
     
+    // Also check query param for one-time setup
+    const { searchParams } = new URL(request.url);
+    const querySecret = searchParams.get('secret');
+    const hasQueryAuth = setupSecret && querySecret === setupSecret;
+    
     // Or check for admin session
     const session = await getServerSession(authOptions);
     const isAdmin = session?.user?.email?.endsWith('@sceneflow.ai') || 
                    session?.user?.email === 'brian@sceneflow.ai' ||
                    process.env.NODE_ENV === 'development';
     
-    if (!isAdmin && !hasSecretAuth) {
+    if (!isAdmin && !hasSecretAuth && !hasQueryAuth) {
       return NextResponse.json(
         { error: 'Unauthorized - admin access required' },
         { status: 403 }
