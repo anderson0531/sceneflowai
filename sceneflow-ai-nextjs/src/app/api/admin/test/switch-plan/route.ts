@@ -75,8 +75,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log(`[Test Plan Switch] Starting - session user: ${sessionUserId}, tier: ${tierName}`);
+
     // Resolve user (handles email-as-ID from session)
-    const resolvedUser = await resolveUser(sessionUserId);
+    let resolvedUser;
+    try {
+      resolvedUser = await resolveUser(sessionUserId);
+      console.log(`[Test Plan Switch] Resolved user: ${resolvedUser.id}`);
+    } catch (resolveError) {
+      console.error('[Test Plan Switch] Failed to resolve user:', resolveError);
+      return NextResponse.json(
+        { error: 'Failed to resolve user', details: resolveError instanceof Error ? resolveError.message : 'Unknown' },
+        { status: 500 }
+      );
+    }
     const userId = resolvedUser.id;
 
     console.log(`[Test Plan Switch] User ${userId} switching to ${tierName}`);

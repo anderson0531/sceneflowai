@@ -108,6 +108,7 @@ export default function BillingPage() {
     
     setSwitchingPlan(tierName)
     try {
+      console.log('[Billing] Switching to plan:', tierName)
       const response = await fetch('/api/admin/test/switch-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -115,15 +116,18 @@ export default function BillingPage() {
       })
       
       const data = await response.json()
+      console.log('[Billing] Switch plan response:', response.status, data)
       
       if (response.ok && data.success) {
         toast.success(`Switched to ${data.newTier.display_name} plan!`)
         // Refresh subscription data
         await fetchSubscriptionData()
       } else {
-        toast.error(data.error || 'Failed to switch plan')
+        console.error('[Billing] Switch plan failed:', data)
+        toast.error(data.details || data.error || 'Failed to switch plan')
       }
     } catch (error) {
+      console.error('[Billing] Switch plan error:', error)
       toast.error('Failed to switch plan')
     } finally {
       setSwitchingPlan(null)
