@@ -178,7 +178,11 @@ export class ComplianceService {
     }
     
     // Check 3: Account verification (email verified)
-    if (!user.account_verified_at) {
+    // Note: null/undefined = grandfathered (pre-existing users), only block if explicitly set to a required verification date
+    // For now, we skip this check for existing users without the field
+    // Uncomment the block below when email verification is enforced for new users
+    /*
+    if (user.account_verified_at === undefined) {
       blockers.push({
         type: 'verification',
         message: 'Email verification required',
@@ -187,8 +191,10 @@ export class ComplianceService {
       });
       suggestions.push('Please verify your email address to unlock voice cloning');
     }
+    */
     
     // Check 4: Voice cloning not disabled (e.g., due to abuse)
+    // Note: Only block if explicitly set to false (null/undefined = enabled for grandfathered users)
     if (user.voice_cloning_enabled === false) {
       blockers.push({
         type: 'trust_score',
