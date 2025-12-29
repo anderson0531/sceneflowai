@@ -158,6 +158,9 @@ export interface EnhancedAppState {
   // Cue assistant state
   cueAssistantOpen: boolean;
   
+  // Selected project for dashboard (persisted)
+  selectedProjectId: string | null;
+  
   // Cue conversation state
   cueConversation: {
     messages: any[];
@@ -192,6 +195,7 @@ export interface EnhancedAppState {
   setCueConversation: (conversation: Partial<EnhancedAppState['cueConversation']>) => void;
   setSidebarOpen: (open: boolean) => void;
   setCueAssistantOpen: (open: boolean) => void;
+  setSelectedProjectId: (id: string | null) => void;
 }
 
 const initialAIConfiguration: AIConfiguration = {
@@ -270,6 +274,9 @@ export const useEnhancedStore = create<EnhancedAppState>()(
       // Sidebar and Cue assistant state
       sidebarOpen: true,
       cueAssistantOpen: false,
+      
+      // Selected project for dashboard
+      selectedProjectId: null,
       
       cueConversation: {
         messages: [],
@@ -500,7 +507,8 @@ export const useEnhancedStore = create<EnhancedAppState>()(
         cueConversation: { ...state.cueConversation, ...conversation }
       })),
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
-      setCueAssistantOpen: (open) => set({ cueAssistantOpen: open })
+      setCueAssistantOpen: (open) => set({ cueAssistantOpen: open }),
+      setSelectedProjectId: (id) => set({ selectedProjectId: id })
     }),
     {
       name: 'sceneflow-ai-enhanced-store',
@@ -519,7 +527,8 @@ export const useEnhancedStore = create<EnhancedAppState>()(
           cueAssistantOpen: state.cueAssistantOpen,
           cueConversation: state.cueConversation,
           aiConfiguration: state.aiConfiguration,
-          promptInstructions: state.promptInstructions
+          promptInstructions: state.promptInstructions,
+          selectedProjectId: state.selectedProjectId
         }),
     }
   )

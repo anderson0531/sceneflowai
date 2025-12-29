@@ -7,10 +7,29 @@ import { SpendingAnalyticsWidget } from './components/SpendingAnalyticsWidget'
 import { QuickActionsGrid } from './components/QuickActionsGrid'
 import { StorageWidget } from './components/StorageWidget'
 import { useDashboardData } from '@/hooks/useDashboardData'
+import { useEnhancedStore } from '@/store/enhancedStore'
 import { Loader2 } from 'lucide-react'
+import { useEffect } from 'react'
 
 export default function ClientDashboard() {
   const { credits, subscription, projects, isLoading } = useDashboardData()
+  const { selectedProjectId, setSelectedProjectId } = useEnhancedStore()
+  
+  // Auto-select most recently updated project if none selected
+  useEffect(() => {
+    if (projects.length > 0 && !selectedProjectId) {
+      const sorted = [...projects].sort((a, b) => 
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      )
+      setSelectedProjectId(sorted[0].id)
+    }
+  }, [projects, selectedProjectId, setSelectedProjectId])
+  
+  // Filter to show only the selected project
+  const selectedProject = selectedProjectId 
+    ? projects.find(p => p.id === selectedProjectId) 
+    : projects[0]
+  const displayProjects = selectedProject ? [selectedProject] : []
 
   // Calculate budget metrics from live data
   const monthlyCredits = subscription?.monthlyCredits || 
@@ -67,8 +86,8 @@ export default function ClientDashboard() {
           addonCredits={addonCredits}
         />
         
-        {/* Row 3: Active Projects - Live Data */}
-        <ActiveProjectsContainer projects={projects} />
+        {/* Row 3: Current Project - Shows only the selected project */}
+        <ActiveProjectsContainer projects={displayProjects} />
         
         {/* Row 4: Analytics + Quick Actions + Storage */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

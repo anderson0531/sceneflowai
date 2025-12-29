@@ -6,10 +6,11 @@ import { ProjectCard } from '../components/ProjectCard'
 import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/Button'
-import { Plus, Search, Grid3x3, List, FolderOpen } from 'lucide-react'
+import { Plus, Search, Grid3x3, List, FolderOpen, Star } from 'lucide-react'
 import Link from 'next/link'
 import { DeleteConfirmationDialog } from '@/components/ui/DeleteConfirmationDialog'
 import { useSession } from 'next-auth/react'
+import { useEnhancedStore } from '@/store/enhancedStore'
 
 export const dynamic = 'force-dynamic'
 
@@ -71,6 +72,9 @@ export default function ProjectsPage() {
   const [ownershipSynced, setOwnershipSynced] = useState(false)
   
   const { data: session, status: authStatus } = useSession()
+  
+  // Selected project for dashboard display
+  const { selectedProjectId, setSelectedProjectId } = useEnhancedStore()
 
   // Get user ID from session, with fallback sync for localStorage projects
   const getUserId = useCallback(() => {
@@ -174,8 +178,22 @@ export default function ProjectsPage() {
       if (data.success) {
         const projectCount = data.projects?.length || 0
         const total = data.total || 0
-        setProjects(data.projects || [])
+        const projectsList = data.projects || []
+        setProjects(projectsList)
         setTotalCount(total)
+        
+        // Auto-select most recently updated project if none selected or selected project not found
+        if (projectsList.length > 0) {
+          const selectedExists = projectsList.some((p: any) => p.id === selectedProjectId)
+          if (!selectedProjectId || !selectedExists) {
+            // Sort by updatedAt and select the most recent
+            const sorted = [...projectsList].sort((a, b) => 
+              new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+            )
+            setSelectedProjectId(sorted[0].id)
+          }
+        }
+        
         console.log(`[${timestamp}] [loadProjects] State updated with ${projectCount} projects on page, ${total} total projects`)
       } else {
         console.log(`[${timestamp}] [loadProjects] Response not successful:`, data.error)
@@ -186,6 +204,16 @@ export default function ProjectsPage() {
       setLoading(false)
       console.log(`[${timestamp}] [loadProjects] Completed`)
     }
+  }
+
+  // Handle selecting a project as the current project for dashboard
+  const handleSelectAsCurrent = (projectId: string) => {
+    setSelectedProjectId(projectId)
+    try { 
+      const { toast } = require('sonner')
+      const project = projects.find(p => p.id === projectId)
+      toast.success(`"${project?.title || 'Project'}" set as current project`)
+    } catch {}
   }
 
   const handleDuplicate = async (projectId: string) => {
@@ -424,11 +452,24 @@ export default function ProjectsPage() {
               <ProjectCard 
                 key={project.id} 
                 project={project}
+                isSelected={project.id === selectedProjectId}
+                onSelectAsCurrent={handleSelectAsCurrent}
                 onDuplicate={handleDuplicate}
                 onArchive={handleArchive}
                 onDelete={handleDelete}
               />
             ))}
+          </div>
+        )}
+
+        {/* Current Project Indicator */}
+        {selectedProjectId && projects.length > 0 && (
+          <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg flex items-center gap-2">
+            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+            <span className="text-sm text-yellow-300">
+              Current project: <strong>{projects.find(p => p.id === selectedProjectId)?.title || 'Unknown'}</strong>
+              <span className="text-yellow-400/70 ml-2">(shown on dashboard)</span>
+            </span>
           </div>
         )}
 

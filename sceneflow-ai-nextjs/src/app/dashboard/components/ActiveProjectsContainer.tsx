@@ -82,7 +82,7 @@ function transformProject(project: DashboardProject, index: number) {
       name: config.name,
       description: config.description,
       estimatedCredits: scenes.length * 10 || 35,
-      actionLabel: project.progress >= 100 ? 'View Project' : 'Start Step',
+      actionLabel: project.progress >= 100 ? 'View Project' : 'Continue',
       actionUrl: config.url,
       isComplete: project.progress >= 100
     }
@@ -130,7 +130,7 @@ export function ActiveProjectsContainer({ projects = [] }: ActiveProjectsContain
       <div className="p-6 border-b border-gray-700/50 bg-gradient-to-r from-gray-800/60 to-gray-700/40">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-white">Active Projects</h2>
+            <h2 className="text-2xl font-bold text-white">Current Project</h2>
             <p className="text-gray-400 mt-1">Track progress, scores, and next steps</p>
           </div>
           <div className="flex items-center gap-3">

@@ -21,6 +21,7 @@ import {
   Trash,
   Layers,
   Calendar,
+  Star,
 } from 'lucide-react'
 import { useEnhancedStore } from '@/store/enhancedStore'
 import { useCueStore } from '@/store/useCueStore'
@@ -124,16 +125,20 @@ interface ProjectCardProps {
       tone?: string
       thumbnail?: string
       visionPhase?: any
+      directorScore?: number
+      audienceScore?: number
       [key: string]: any // Allow additional properties
     }
   }
   className?: string
+  isSelected?: boolean
+  onSelectAsCurrent?: (projectId: string) => void
   onDuplicate?: (projectId: string) => void
   onArchive?: (projectId: string) => void
   onDelete?: (projectId: string, projectTitle: string) => void
 }
 
-export function ProjectCard({ project, className = '', onDuplicate, onArchive, onDelete }: ProjectCardProps) {
+export function ProjectCard({ project, className = '', isSelected = false, onSelectAsCurrent, onDuplicate, onArchive, onDelete }: ProjectCardProps) {
   const { user, byokSettings } = useEnhancedStore()
   const { invokeCue } = useCueStore()
   const [isHovered, setIsHovered] = useState(false)
@@ -242,10 +247,31 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
     }
   }
 
+  // Calculate review scores from scene data or metadata
+  const getReviewScores = () => {
+    const scenes = getScenes()
+    const sceneScores = scenes
+      .map((s: any) => s.score || s.reviewScore || 0)
+      .filter((s: number) => s > 0)
+    const avgScene = sceneScores.length > 0 
+      ? Math.round(sceneScores.reduce((a: number, b: number) => a + b, 0) / sceneScores.length)
+      : 75
+
+    const directorScore = project.metadata?.directorScore || avgScene + 5
+    const audienceScore = project.metadata?.audienceScore || avgScene - 3
+
+    return {
+      director: Math.min(100, Math.max(0, directorScore)),
+      audience: Math.min(100, Math.max(0, audienceScore)),
+      avgScene: Math.min(100, Math.max(0, avgScene))
+    }
+  }
+
   const costs = getProjectCosts()
   const sceneCount = getSceneCount()
   const duration = getProjectDuration()
   const progressPercent = getProgressPercentage()
+  const reviewScores = getReviewScores()
 
   // Get contextual button label based on stage
   const getActionLabel = () => {
@@ -396,7 +422,7 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
       whileHover={{ y: -2 }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
-      className={`bg-gray-900/95 backdrop-blur-sm rounded-xl border border-gray-700/50 shadow-2xl overflow-hidden ${className}`}
+      className={`bg-gray-900/95 backdrop-blur-sm rounded-xl border ${isSelected ? 'border-yellow-500 ring-2 ring-yellow-500/30' : 'border-gray-700/50'} shadow-2xl overflow-hidden ${className}`}
     >
       {/* Project Thumbnail */}
       <div className="relative h-40 bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center overflow-hidden">
@@ -413,6 +439,25 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
             </div>
             <p className="text-gray-400 text-sm">{project.metadata?.genre || 'Project'}</p>
           </div>
+        )}
+        
+        {/* Current Project Star Toggle */}
+        {onSelectAsCurrent && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              e.preventDefault()
+              onSelectAsCurrent(project.id)
+            }}
+            className={`absolute top-3 right-14 p-2 rounded-lg backdrop-blur-sm transition-all ${
+              isSelected 
+                ? 'bg-yellow-500/30 text-yellow-400 hover:bg-yellow-500/40' 
+                : 'bg-gray-800/80 text-gray-400 hover:bg-gray-700 hover:text-yellow-400'
+            }`}
+            title={isSelected ? 'Current project (shown on dashboard)' : 'Set as current project'}
+          >
+            <Star className={`w-4 h-4 ${isSelected ? 'fill-yellow-400' : ''}`} />
+          </button>
         )}
         
         {/* Actions Menu */}
@@ -545,6 +590,25 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
             <span className={`text-xs font-semibold ${workflowStatus.color}`}>
               {workflowStatus.text}
             </span>
+          </div>
+        </div>
+
+        {/* Review Scores */}
+        <div className="mb-4 p-3 bg-gray-800/40 rounded-lg border border-gray-700/40">
+          <div className="text-xs uppercase tracking-wider text-gray-500 mb-2">Review Scores</div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm">🎬</span>
+              <span className="text-xs text-gray-400">Director</span>
+              <span className="text-sm font-bold text-white ml-auto">{reviewScores.director}</span>
+              <span className="text-xs">{reviewScores.director >= 85 ? '🟢' : reviewScores.director >= 75 ? '🟡' : '🔴'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm">👥</span>
+              <span className="text-xs text-gray-400">Audience</span>
+              <span className="text-sm font-bold text-white ml-auto">{reviewScores.audience}</span>
+              <span className="text-xs">{reviewScores.audience >= 85 ? '🟢' : reviewScores.audience >= 75 ? '🟡' : '🔴'}</span>
+            </div>
           </div>
         </div>
 
