@@ -451,9 +451,9 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
               e.preventDefault()
               onSelectAsCurrent(project.id)
             }}
-            className={`absolute top-3 right-14 p-2 rounded-lg backdrop-blur-sm transition-all ${
+            className={`absolute top-3 left-14 p-2 rounded-lg backdrop-blur-sm transition-all z-10 ${
               isSelected 
-                ? 'bg-yellow-500/30 text-yellow-400 hover:bg-yellow-500/40' 
+                ? 'bg-yellow-500/30 text-yellow-400 hover:bg-yellow-500/40 shadow-lg shadow-yellow-500/20' 
                 : 'bg-gray-800/80 text-gray-400 hover:bg-gray-700 hover:text-yellow-400'
             }`}
             title={isSelected ? 'Current project (shown on dashboard)' : 'Set as current project'}
@@ -622,25 +622,43 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
               <DropdownMenuTrigger asChild>
                 <button className="w-full flex items-center justify-between px-3 py-2 bg-gray-800/40 hover:bg-gray-800/60 rounded-lg border border-gray-700/40 hover:border-gray-600/50 transition-colors text-sm">
                   <span className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${
+                      project.status === 'completed' ? 'bg-green-400' : 
+                      project.status === 'in-progress' ? 'bg-blue-400' : 
+                      project.status === 'archived' ? 'bg-gray-600' : 
+                      'bg-gray-400'
+                    }`} />
                     <span className="text-white font-medium capitalize">{project.status === 'in-progress' ? 'Active' : project.status}</span>
                   </span>
                   <ChevronDown className="w-4 h-4 text-gray-400" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-[200px]">
-                <DropdownMenuItem onClick={() => onStatusChange(project.id, 'draft')}>
+                <DropdownMenuItem 
+                  onClick={() => onStatusChange(project.id, 'draft')}
+                  className={project.status === 'draft' ? 'bg-gray-800/50' : ''}
+                >
                   <span className="w-2 h-2 rounded-full bg-gray-400 mr-2" />
                   Draft
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onStatusChange(project.id, 'active')}>
+                <DropdownMenuItem 
+                  onClick={() => onStatusChange(project.id, 'in-progress')}
+                  className={project.status === 'in-progress' ? 'bg-gray-800/50' : ''}
+                >
                   <span className="w-2 h-2 rounded-full bg-blue-400 mr-2" />
                   Active
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onStatusChange(project.id, 'completed')}>
+                <DropdownMenuItem 
+                  onClick={() => onStatusChange(project.id, 'completed')}
+                  className={project.status === 'completed' ? 'bg-gray-800/50' : ''}
+                >
                   <span className="w-2 h-2 rounded-full bg-green-400 mr-2" />
                   Completed
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onStatusChange(project.id, 'archived')}>
+                <DropdownMenuItem 
+                  onClick={() => onStatusChange(project.id, 'archived')}
+                  className={project.status === 'archived' ? 'bg-gray-800/50' : ''}
+                >
                   <span className="w-2 h-2 rounded-full bg-gray-600 mr-2" />
                   Archived
                 </DropdownMenuItem>

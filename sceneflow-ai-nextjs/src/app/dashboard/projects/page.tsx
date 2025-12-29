@@ -225,7 +225,7 @@ export default function ProjectsPage() {
         body: JSON.stringify({
           id: projectId,
           userId: getUserId(),
-          status: status === 'active' ? 'in-progress' : status // Map 'active' to 'in-progress' for DB
+          status: status
         })
       })
       
