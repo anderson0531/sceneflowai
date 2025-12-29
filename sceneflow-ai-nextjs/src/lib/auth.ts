@@ -51,10 +51,13 @@ export const authOptions: NextAuthOptions = {
           if (res && res.ok) {
             const data = await res.json().catch(() => null)
             const user = data?.user || data || { id: data?.id || credentials.email, email: credentials.email }
+            // Construct display name from first_name/last_name (API response) or fallback to name/username
+            const displayName = [user.first_name, user.last_name].filter(Boolean).join(' ') 
+              || user.name || user.fullName || user.username || ''
             return {
               id: user.id?.toString?.() || credentials.email,
               email: user.email || credentials.email,
-              name: user.name || user.fullName || user.username || '',
+              name: displayName,
             }
           }
           // If API responded with an auth error and demo is allowed, fallback
