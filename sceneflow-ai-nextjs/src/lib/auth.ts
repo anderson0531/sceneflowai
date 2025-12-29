@@ -39,6 +39,8 @@ export const authOptions: NextAuthOptions = {
             (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
           )
 
+          console.log('[Auth] Attempting login for:', credentials.email, 'using base:', base)
+
           let res: Response | null = null
           if (base) {
             res = await fetch(`${base}/api/auth/login`, {
@@ -46,14 +48,25 @@ export const authOptions: NextAuthOptions = {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ email: credentials.email, password: credentials.password })
             })
+            console.log('[Auth] Login API response status:', res?.status)
+          } else {
+            console.log('[Auth] No base URL configured, cannot call login API')
           }
 
           if (res && res.ok) {
             const data = await res.json().catch(() => null)
             const user = data?.user || data || { id: data?.id || credentials.email, email: credentials.email }
+            console.log('[Auth] Login success, user data:', { 
+              id: user.id, 
+              email: user.email, 
+              first_name: user.first_name, 
+              last_name: user.last_name,
+              username: user.username 
+            })
             // Construct display name from first_name/last_name (API response) or fallback to name/username
             const displayName = [user.first_name, user.last_name].filter(Boolean).join(' ') 
               || user.name || user.fullName || user.username || ''
+            console.log('[Auth] Constructed displayName:', displayName)
             return {
               id: user.id?.toString?.() || credentials.email,
               email: user.email || credentials.email,
@@ -61,7 +74,9 @@ export const authOptions: NextAuthOptions = {
             }
           }
           // If API responded with an auth error and demo is allowed, fallback
+          console.log('[Auth] Login failed or fallback triggered. Status:', res?.status, 'isDemoMode:', isDemoMode(), 'allowDemoFallback:', allowDemoFallback())
           if (res && res.status === 401 && (isDemoMode() || allowDemoFallback())) {
+            console.log('[Auth] Using demo fallback due to 401')
             return { id: credentials.email, email: credentials.email, name: credentials.email.split('@')[0] }
           }
           // If API not reachable or server error and demo is allowed, fallback
