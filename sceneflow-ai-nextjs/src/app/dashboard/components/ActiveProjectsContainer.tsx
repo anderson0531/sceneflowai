@@ -35,6 +35,15 @@ function transformProject(project: DashboardProject, index: number) {
   const visionPhase = project.metadata?.visionPhase
   const scenes = visionPhase?.script?.script?.scenes || visionPhase?.scenes || []
   
+  // Get thumbnail from first scene image or project thumbnail
+  const thumbnailUrl = 
+    project.metadata?.thumbnailUrl || 
+    project.metadata?.thumbnail ||
+    scenes[0]?.imageUrl ||
+    scenes[0]?.generatedImage?.url ||
+    visionPhase?.thumbnailUrl ||
+    null
+  
   // Calculate average scene score
   const sceneScores = scenes
     .map((s: any) => s.score || s.reviewScore || 0)
@@ -99,6 +108,7 @@ function transformProject(project: DashboardProject, index: number) {
     id: project.id,
     title: project.title,
     description: project.description,
+    thumbnailUrl,
     currentStep,
     totalSteps,
     phaseName,
@@ -124,52 +134,24 @@ export function ActiveProjectsContainer({ projects = [] }: ActiveProjectsContain
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.3 }}
-      className="bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-gray-700/50 shadow-2xl overflow-hidden"
+      className="space-y-4"
     >
-      {/* Header */}
-      <div className="p-6 border-b border-gray-700/50 bg-gradient-to-r from-gray-800/60 to-gray-700/40">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-white">Current Project</h2>
-            <p className="text-gray-400 mt-1">Track progress, scores, and next steps</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" className="border-gray-600 text-gray-300 hover:text-white">
-              <Filter className="w-4 h-4 mr-2" />
-              Filter
-            </Button>
-            <Button variant="outline" size="sm" className="border-gray-600 text-gray-300 hover:text-white">
-              <ArrowUpDown className="w-4 h-4 mr-2" />
-              Sort by Score
-            </Button>
-            <Link href="/dashboard/studio/new-project">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                <Plus className="w-4 h-4 mr-2" />
-                New Project
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Project Cards */}
-      <div className="p-6 space-y-4">
-        {displayProjects.map((project, index) => (
-          <ActiveProjectCard
-            key={project.id}
-            {...transformProject(project, index)}
-          />
-        ))}
-      </div>
+      {/* Project Cards - No header needed for single project view */}
+      {displayProjects.map((project, index) => (
+        <ActiveProjectCard
+          key={project.id}
+          {...transformProject(project, index)}
+        />
+      ))}
 
       {/* Empty State */}
       {displayProjects.length === 0 && (
-        <div className="p-12 text-center">
+        <div className="bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-gray-700/50 shadow-2xl p-12 text-center">
           <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
             <Plus className="w-8 h-8 text-gray-600" />
           </div>
-          <h3 className="text-lg font-semibold text-white mb-2">No Active Projects</h3>
-          <p className="text-gray-400 mb-6">Start your first project to see it here</p>
+          <h3 className="text-lg font-semibold text-white mb-2">No Project Selected</h3>
+          <p className="text-gray-400 mb-6">Select a project from the Projects page or create a new one</p>
           <Link href="/dashboard/studio/new-project">
             <Button className="bg-blue-600 hover:bg-blue-700 text-white">
               Create New Project

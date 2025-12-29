@@ -204,7 +204,19 @@ const path = require('path')
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['source.unsplash.com', 'localhost'],
+    domains: ['source.unsplash.com', 'localhost', 'storage.googleapis.com', 'storage.cloud.google.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'storage.googleapis.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.googleusercontent.com',
+        pathname: '/**',
+      },
+    ],
   },
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,

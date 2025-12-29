@@ -1,10 +1,11 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { FolderOpen, Play, ChevronRight, CheckCircle, AlertTriangle, Lightbulb, X } from 'lucide-react'
+import { FolderOpen, Play, ChevronRight, CheckCircle, AlertTriangle, Lightbulb, X, Film } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 import { useState } from 'react'
+import Image from 'next/image'
 
 interface ReviewScores {
   director: number
@@ -35,6 +36,7 @@ interface ActiveProjectCardProps {
   id: string | number
   title: string
   description?: string
+  thumbnailUrl?: string
   currentStep: number
   totalSteps: number
   phaseName: string
@@ -123,6 +125,8 @@ function NextStepPanel({ nextStep }: { nextStep: NextStep }) {
 export function ActiveProjectCard({
   id,
   title,
+  description,
+  thumbnailUrl,
   currentStep,
   totalSteps,
   phaseName,
@@ -156,21 +160,48 @@ export function ActiveProjectCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.1 + index * 0.1 }}
-      className="bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-700/50 overflow-hidden hover:border-gray-600/50 transition-all duration-200"
+      className="bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-gray-700/50 shadow-2xl overflow-hidden hover:border-gray-600/50 transition-all duration-200"
     >
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-700/50 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center">
-            <FolderOpen className="w-5 h-5 text-blue-400" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-white">{title}</h3>
-          </div>
+      {/* Cinematic Header with Thumbnail */}
+      <div className="relative">
+        {/* Thumbnail Image */}
+        <div className="relative h-48 w-full overflow-hidden">
+          {thumbnailUrl ? (
+            <Image
+              src={thumbnailUrl}
+              alt={title}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 800px"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black flex items-center justify-center">
+              <Film className="w-16 h-16 text-gray-700" />
+            </div>
+          )}
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/50 to-transparent" />
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-400">Budget:</span>
-          <span className={budgetBadge.className}>{budgetBadge.label}</span>
+        
+        {/* Title overlay on thumbnail */}
+        <div className="absolute bottom-0 left-0 right-0 px-6 py-4">
+          <div className="flex items-end justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-blue-600/30 backdrop-blur-sm rounded-xl flex items-center justify-center border border-blue-500/30">
+                <FolderOpen className="w-6 h-6 text-blue-400" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white drop-shadow-lg">{title}</h3>
+                {description && (
+                  <p className="text-sm text-gray-300 line-clamp-1 drop-shadow">{description}</p>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 bg-gray-900/80 backdrop-blur-sm px-3 py-1.5 rounded-full">
+              <span className="text-sm text-gray-400">Budget:</span>
+              <span className={budgetBadge.className}>{budgetBadge.label}</span>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -74,7 +74,10 @@ export default function ClientDashboard() {
         {/* Row 1: Cue Command Bar */}
         <CueCommandBar />
         
-        {/* Row 2: Budget Health Widget - Live Data */}
+        {/* Row 2: Current Project - Shows only the selected project */}
+        <ActiveProjectsContainer projects={displayProjects} />
+        
+        {/* Row 3: Budget Health Widget - Live Data */}
         <BudgetHealthWidget 
           availableCredits={availableCredits}
           usedCredits={usedCredits}
@@ -85,9 +88,6 @@ export default function ClientDashboard() {
           subscriptionTier={subscription?.tier?.display_name}
           addonCredits={addonCredits}
         />
-        
-        {/* Row 3: Current Project - Shows only the selected project */}
-        <ActiveProjectsContainer projects={displayProjects} />
         
         {/* Row 4: Analytics + Quick Actions + Storage */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
