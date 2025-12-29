@@ -166,13 +166,14 @@ export function ActiveProjectCard({
       <div className="relative">
         {/* Thumbnail Image */}
         <div className="relative h-48 w-full overflow-hidden">
-          {thumbnailUrl ? (
+          {thumbnailUrl && thumbnailUrl.startsWith('http') ? (
             <Image
               src={thumbnailUrl}
               alt={title}
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 800px"
+              unoptimized
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black flex items-center justify-center">
