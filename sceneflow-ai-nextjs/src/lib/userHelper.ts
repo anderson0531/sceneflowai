@@ -57,13 +57,21 @@ export async function resolveUser(userIdOrEmail: string): Promise<User> {
           .replace(/[^a-zA-Z0-9_-]/g, '_')
           .slice(0, 48) // Limit to 48 chars (username max is 50, leave some buffer)
         const username = sanitizedUsername || `user_${Date.now()}`
+        
+        // Generate a friendly display name from the email prefix
+        // Convert underscores/hyphens to spaces and capitalize first letter of each word
+        const displayName = emailPrefix
+          .replace(/[._-]/g, ' ')
+          .replace(/\b\w/g, (c) => c.toUpperCase())
+          .trim() || username
 
         console.log(`[userHelper] Auto-creating user for email: ${userIdOrEmail}`)
         
-        // Create new user
+        // Create new user with full_name for welcome message
         user = await User.create({
           email: userIdOrEmail,
           username: username,
+          full_name: displayName,
           password_hash: 'session-user', // Placeholder for session-based users
           is_active: true,
           email_verified: false,
@@ -74,7 +82,7 @@ export async function resolveUser(userIdOrEmail: string): Promise<User> {
           one_time_tiers_purchased: [],
         } as any)
 
-        console.log(`[userHelper] Successfully created user: ${user.id} (${user.email})`)
+        console.log(`[userHelper] Successfully created user: ${user.id} (${user.email}) - Name: ${displayName}`)
       } catch (error: any) {
         // Handle unique constraint violation (user created between check and create)
         if (error.name === 'SequelizeUniqueConstraintError' || error.message?.includes('unique')) {
