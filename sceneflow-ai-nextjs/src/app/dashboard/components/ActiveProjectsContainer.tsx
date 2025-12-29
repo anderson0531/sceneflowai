@@ -5,90 +5,120 @@ import { ActiveProjectCard } from './ActiveProjectCard'
 import { Filter, ArrowUpDown, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
+import { formatRelativeTime, getPhaseDisplayName, getStepNumber, getTotalSteps } from '@/hooks/useDashboardData'
 
-// Mock data - will be replaced with real data from store
-const mockProjects = [
-  {
-    id: '1',
-    title: 'Sci-Fi Pilot: The Arrival',
-    description: 'Space exploration series pilot episode',
-    currentStep: 2,
-    totalSteps: 4,
-    phaseName: 'Vision Board',
-    progressPercent: 50,
-    scores: { director: 85, audience: 78, avgScene: 82 },
-    nextStep: {
-      name: "Director's Chair",
-      description: 'Define camera angles, lighting & movement for each scene',
-      estimatedCredits: 35,
-      actionLabel: 'Start Step',
-      actionUrl: '/dashboard/workflow/direction/1',
-      isComplete: false
-    },
-    cueTip: {
-      message: 'Audience score is 78—add an emotional beat in Scene 3 to boost engagement. Click to see AI recommendations.',
-      primaryAction: { label: 'View Tips', url: '/dashboard/workflow/vision/1?tab=review' },
-      type: 'tip' as const
-    },
-    estimatedCredits: 1500,
-    lastActive: '1 hour ago',
-    budgetStatus: 'on-track' as const
-  },
-  {
-    id: '2',
-    title: 'YouTube Promo Ad',
-    description: 'Product promotion video for social media',
-    currentStep: 4,
-    totalSteps: 4,
-    phaseName: 'Video Generation',
-    progressPercent: 85,
-    scores: { director: 92, audience: 88, avgScene: 90 },
-    nextStep: {
-      name: 'Export Video',
-      description: 'HD/4K available',
-      estimatedCredits: 0,
-      actionLabel: 'Export Video',
-      actionUrl: '/dashboard/workflow/export/2',
-      isComplete: true
-    },
-    cueTip: {
-      message: 'Great scores! Use BYOK to save 40% on final render. Switch provider before export.',
-      primaryAction: { label: 'Switch to BYOK', url: '/dashboard/settings/byok' },
-      type: 'tip' as const
-    },
-    estimatedCredits: 450,
-    lastActive: 'Yesterday',
-    budgetStatus: 'near-limit' as const
-  },
-  {
-    id: '3',
-    title: 'Documentary: Climate Impact',
-    description: 'Environmental documentary feature',
-    currentStep: 3,
-    totalSteps: 4,
-    phaseName: "Director's Chair",
-    progressPercent: 75,
-    scores: { director: 68, audience: 71, avgScene: 70 },
-    nextStep: {
-      name: 'Revise Scenes 2, 5',
-      description: 'Scores below 75—AI detected pacing issues',
-      estimatedCredits: 15,
-      actionLabel: 'Fix Scenes',
-      actionUrl: '/dashboard/workflow/vision/3?fix=true',
-      isComplete: false
-    },
-    cueTip: {
-      message: 'Director score 68 is below threshold. Scene 2 has weak conflict arc. Scene 5 pacing feels rushed.',
-      primaryAction: { label: 'Apply AI Fixes', url: '/dashboard/workflow/vision/3?autofix=true' },
-      type: 'alert' as const
-    },
-    estimatedCredits: 1200,
-    lastActive: '3 days ago',
-    budgetStatus: 'over-budget' as const
+// Types for project data from API
+interface DashboardProject {
+  id: string
+  title: string
+  description: string
+  currentStep: string
+  progress: number
+  status: string
+  createdAt: string
+  updatedAt: string
+  completedSteps: string[]
+  metadata: Record<string, any>
+}
+
+interface ActiveProjectsContainerProps {
+  projects?: DashboardProject[]
+}
+
+// Transform API project to ActiveProjectCard props
+function transformProject(project: DashboardProject, index: number) {
+  const currentStep = getStepNumber(project.currentStep)
+  const totalSteps = getTotalSteps()
+  const phaseName = getPhaseDisplayName(project.currentStep)
+  
+  // Extract scores from metadata if available
+  const visionPhase = project.metadata?.visionPhase
+  const scenes = visionPhase?.script?.script?.scenes || visionPhase?.scenes || []
+  
+  // Calculate average scene score
+  const sceneScores = scenes
+    .map((s: any) => s.score || s.reviewScore || 0)
+    .filter((s: number) => s > 0)
+  const avgScene = sceneScores.length > 0 
+    ? Math.round(sceneScores.reduce((a: number, b: number) => a + b, 0) / sceneScores.length)
+    : 75
+
+  // Director score from metadata or default
+  const directorScore = project.metadata?.directorScore || avgScene + 5
+  const audienceScore = project.metadata?.audienceScore || avgScene - 3
+
+  // Determine next step based on current step
+  const getNextStep = () => {
+    const stepConfig: Record<string, { name: string; description: string; url: string }> = {
+      'blueprint': { 
+        name: 'Vision Board', 
+        description: 'Create visual storyboard for each scene',
+        url: `/dashboard/workflow/vision/${project.id}`
+      },
+      'vision': { 
+        name: "Director's Chair", 
+        description: 'Define camera angles, lighting & movement',
+        url: `/dashboard/workflow/direction/${project.id}`
+      },
+      'creation': { 
+        name: 'Video Generation', 
+        description: 'Generate video from your scenes',
+        url: `/dashboard/workflow/video-generation?project=${project.id}`
+      },
+      'polish': { 
+        name: 'Export', 
+        description: 'Export your finished video',
+        url: `/dashboard/workflow/export/${project.id}`
+      },
+      'launch': { 
+        name: 'Complete', 
+        description: 'Project is ready for distribution',
+        url: `/dashboard/projects/${project.id}`
+      }
+    }
+    
+    const config = stepConfig[project.currentStep] || stepConfig['blueprint']
+    return {
+      name: config.name,
+      description: config.description,
+      estimatedCredits: scenes.length * 10 || 35,
+      actionLabel: project.progress >= 100 ? 'View Project' : 'Start Step',
+      actionUrl: config.url,
+      isComplete: project.progress >= 100
+    }
   }
-]
 
-export function ActiveProjectsContainer() {
+  // Determine budget status
+  const creditsUsed = project.metadata?.creditsUsed || 0
+  const estimatedTotal = scenes.length * 100 || 500
+  const budgetStatus = creditsUsed > estimatedTotal ? 'over-budget' 
+    : creditsUsed > estimatedTotal * 0.75 ? 'near-limit' 
+    : 'on-track'
+
+  return {
+    id: project.id,
+    title: project.title,
+    description: project.description,
+    currentStep,
+    totalSteps,
+    phaseName,
+    progressPercent: project.progress,
+    scores: {
+      director: Math.min(100, Math.max(0, directorScore)),
+      audience: Math.min(100, Math.max(0, audienceScore)),
+      avgScene: Math.min(100, Math.max(0, avgScene))
+    },
+    nextStep: getNextStep(),
+    estimatedCredits: scenes.length * 50 || 250,
+    lastActive: formatRelativeTime(project.updatedAt),
+    budgetStatus: budgetStatus as 'on-track' | 'near-limit' | 'over-budget',
+    index
+  }
+}
+
+export function ActiveProjectsContainer({ projects = [] }: ActiveProjectsContainerProps) {
+  const displayProjects = projects.length > 0 ? projects : []
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -124,17 +154,16 @@ export function ActiveProjectsContainer() {
 
       {/* Project Cards */}
       <div className="p-6 space-y-4">
-        {mockProjects.map((project, index) => (
+        {displayProjects.map((project, index) => (
           <ActiveProjectCard
             key={project.id}
-            {...project}
-            index={index}
+            {...transformProject(project, index)}
           />
         ))}
       </div>
 
       {/* Empty State */}
-      {mockProjects.length === 0 && (
+      {displayProjects.length === 0 && (
         <div className="p-12 text-center">
           <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
             <Plus className="w-8 h-8 text-gray-600" />

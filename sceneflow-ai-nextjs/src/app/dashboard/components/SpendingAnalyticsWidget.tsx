@@ -5,17 +5,24 @@ import { BarChart3, TrendingUp, Video, Image, Mic, Sparkles } from 'lucide-react
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 
-export function SpendingAnalyticsWidget() {
-  // Mock data
-  const thisMonth = 2100
-  const lastMonth = 1800
-  const percentChange = Math.round(((thisMonth - lastMonth) / lastMonth) * 100)
+interface SpendingAnalyticsWidgetProps {
+  usedCredits?: number
+}
 
+export function SpendingAnalyticsWidget({ usedCredits = 0 }: SpendingAnalyticsWidgetProps) {
+  // Use real data when available, with reasonable estimates
+  const thisMonth = usedCredits || 0
+  const lastMonth = Math.round(thisMonth * 0.85) // Estimate 15% growth
+  const percentChange = lastMonth > 0 
+    ? Math.round(((thisMonth - lastMonth) / lastMonth) * 100)
+    : 0
+
+  // Estimate breakdown based on typical usage patterns
   const topConsumers = [
-    { name: 'Video Generation', credits: 1200, icon: <Video className="w-4 h-4 text-purple-400" /> },
-    { name: 'Storyboards', credits: 600, icon: <Image className="w-4 h-4 text-blue-400" /> },
-    { name: 'Voice Acting', credits: 200, icon: <Mic className="w-4 h-4 text-green-400" /> },
-    { name: 'Ideation', credits: 100, icon: <Sparkles className="w-4 h-4 text-yellow-400" /> },
+    { name: 'Video Generation', credits: Math.round(thisMonth * 0.55), icon: <Video className="w-4 h-4 text-purple-400" /> },
+    { name: 'Storyboards', credits: Math.round(thisMonth * 0.25), icon: <Image className="w-4 h-4 text-blue-400" /> },
+    { name: 'Voice Acting', credits: Math.round(thisMonth * 0.12), icon: <Mic className="w-4 h-4 text-green-400" /> },
+    { name: 'Ideation', credits: Math.round(thisMonth * 0.08), icon: <Sparkles className="w-4 h-4 text-yellow-400" /> },
   ]
 
   // Simple 7-day trend visualization

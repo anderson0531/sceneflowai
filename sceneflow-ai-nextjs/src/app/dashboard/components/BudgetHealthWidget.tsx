@@ -13,15 +13,19 @@ interface BudgetHealthWidgetProps {
   projectedRequired: number
   estimatedCostUSD?: number
   projectsNearLimit?: number
+  subscriptionTier?: string
+  addonCredits?: number
 }
 
 export function BudgetHealthWidget({
-  availableCredits = 5400,
-  usedCredits = 2100,
-  monthlyCredits = 7500,
-  projectedRequired = 3200,
-  estimatedCostUSD = 32,
-  projectsNearLimit = 3
+  availableCredits = 0,
+  usedCredits = 0,
+  monthlyCredits = 1000,
+  projectedRequired = 0,
+  estimatedCostUSD = 0,
+  projectsNearLimit = 0,
+  subscriptionTier,
+  addonCredits = 0
 }: BudgetHealthWidgetProps) {
   const [tipDismissed, setTipDismissed] = useState(false)
   
