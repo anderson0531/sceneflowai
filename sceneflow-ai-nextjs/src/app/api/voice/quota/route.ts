@@ -16,6 +16,20 @@ import { authOptions } from '../../../../lib/auth';
 import { AuthService } from '../../../../services/AuthService';
 import { ComplianceService } from '../../../../services/ComplianceService';
 import { SubscriptionService } from '../../../../services/SubscriptionService';
+import { migrateComplianceGuardrails } from '../../../../lib/database/migrateComplianceGuardrails';
+
+// Run migration on first request
+let migrationChecked = false;
+async function ensureMigration() {
+  if (!migrationChecked) {
+    try {
+      await migrateComplianceGuardrails();
+      migrationChecked = true;
+    } catch (e) {
+      console.error('[Voice Quota] Migration check failed:', e);
+    }
+  }
+}
 
 /**
  * Get authenticated user ID from session or token
@@ -46,6 +60,9 @@ async function getAuthenticatedUserId(req: NextRequest): Promise<string | null> 
 
 export async function GET(request: NextRequest) {
   try {
+    // Ensure database tables exist
+    await ensureMigration();
+    
     const userId = await getAuthenticatedUserId(request);
 
     if (!userId) {
