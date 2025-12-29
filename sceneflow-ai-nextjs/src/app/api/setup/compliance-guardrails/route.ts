@@ -19,13 +19,18 @@ import { migrateComplianceGuardrails } from '@/lib/database/migrateComplianceGua
 
 export async function POST(request: NextRequest) {
   try {
-    // Only allow admins or in development
+    // Check for secret key in header (for automated deployments)
+    const authHeader = request.headers.get('Authorization');
+    const setupSecret = process.env.CRON_SECRET || process.env.SETUP_SECRET;
+    const hasSecretAuth = setupSecret && authHeader === `Bearer ${setupSecret}`;
+    
+    // Or check for admin session
     const session = await getServerSession(authOptions);
     const isAdmin = session?.user?.email?.endsWith('@sceneflow.ai') || 
                    session?.user?.email === 'brian@sceneflow.ai' ||
                    process.env.NODE_ENV === 'development';
     
-    if (!isAdmin) {
+    if (!isAdmin && !hasSecretAuth) {
       return NextResponse.json(
         { error: 'Unauthorized - admin access required' },
         { status: 403 }
@@ -61,7 +66,7 @@ export async function POST(request: NextRequest) {
 // GET endpoint to check migration status
 export async function GET() {
   try {
-    const { default: sequelize } = await import('@/lib/database/sequelize');
+    const { sequelize } = await import('@/models');
     const qi = sequelize.getQueryInterface();
     
     const status = {
