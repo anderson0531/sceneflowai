@@ -70,52 +70,39 @@ export async function migrateComplianceGuardrails(): Promise<void> {
     // Step 2: Add columns to SubscriptionTiers table
     // ========================================================================
     
-    const tiersTableDesc = await qi.describeTable('subscription_tiers').catch(() => null);
-    
-    if (tiersTableDesc) {
-      // voice_clone_slots column
-      if (!tiersTableDesc.voice_clone_slots) {
-        await qi.addColumn('subscription_tiers', 'voice_clone_slots', {
-          type: DataTypes.INTEGER,
-          allowNull: false,
-          defaultValue: 0,
-        });
-        console.log('[Compliance Migration] Added voice_clone_slots to subscription_tiers');
-        
-        // Set default values for existing tiers
-        await sequelize.query(`
-          UPDATE subscription_tiers 
-          SET voice_clone_slots = CASE 
-            WHEN name ILIKE '%pro%' THEN 3
-            WHEN name ILIKE '%studio%' THEN 10
-            WHEN name ILIKE '%enterprise%' THEN 100
-            ELSE 0
-          END
-        `);
-        console.log('[Compliance Migration] Updated voice_clone_slots for existing tiers');
-      }
+    // Try to add columns with raw SQL - more reliable across different setups
+    try {
+      await sequelize.query(`
+        ALTER TABLE subscription_tiers 
+        ADD COLUMN IF NOT EXISTS voice_clone_slots INTEGER NOT NULL DEFAULT 0
+      `).catch(() => console.log('[Compliance Migration] voice_clone_slots may already exist'));
       
-      // has_voice_cloning column
-      if (!tiersTableDesc.has_voice_cloning) {
-        await qi.addColumn('subscription_tiers', 'has_voice_cloning', {
-          type: DataTypes.BOOLEAN,
-          allowNull: false,
-          defaultValue: false,
-        });
-        console.log('[Compliance Migration] Added has_voice_cloning to subscription_tiers');
-        
-        // Set default values for existing tiers
-        await sequelize.query(`
-          UPDATE subscription_tiers 
-          SET has_voice_cloning = CASE 
-            WHEN name ILIKE '%pro%' THEN true
-            WHEN name ILIKE '%studio%' THEN true
-            WHEN name ILIKE '%enterprise%' THEN true
-            ELSE false
-          END
-        `);
-        console.log('[Compliance Migration] Updated has_voice_cloning for existing tiers');
-      }
+      await sequelize.query(`
+        ALTER TABLE subscription_tiers 
+        ADD COLUMN IF NOT EXISTS has_voice_cloning BOOLEAN NOT NULL DEFAULT false
+      `).catch(() => console.log('[Compliance Migration] has_voice_cloning may already exist'));
+      
+      // Update existing tier values
+      await sequelize.query(`
+        UPDATE subscription_tiers 
+        SET voice_clone_slots = CASE 
+          WHEN name ILIKE '%pro%' THEN 3
+          WHEN name ILIKE '%studio%' THEN 10
+          WHEN name ILIKE '%enterprise%' THEN 100
+          ELSE 0
+        END,
+        has_voice_cloning = CASE 
+          WHEN name ILIKE '%pro%' THEN true
+          WHEN name ILIKE '%studio%' THEN true
+          WHEN name ILIKE '%enterprise%' THEN true
+          ELSE false
+        END
+        WHERE voice_clone_slots = 0 OR has_voice_cloning = false
+      `).catch((e) => console.log('[Compliance Migration] Tier update may have failed:', e));
+      
+      console.log('[Compliance Migration] Updated subscription_tiers columns');
+    } catch (e) {
+      console.error('[Compliance Migration] subscription_tiers update failed:', e);
     }
 
     // ========================================================================
