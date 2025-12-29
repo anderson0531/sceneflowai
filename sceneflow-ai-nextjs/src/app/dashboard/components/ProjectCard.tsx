@@ -167,27 +167,56 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
     return then.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
-  // Get scene count from vision phase data
-  const getSceneCount = () => {
-    const scenes = project.metadata?.visionPhase?.script?.script?.scenes ||
-                   project.metadata?.visionPhase?.scenes ||
-                   project.metadata?.scenes
-    return scenes?.length || 0
+  // Get scenes array from vision phase data
+  const getScenes = () => {
+    return project.metadata?.visionPhase?.script?.script?.scenes ||
+           project.metadata?.visionPhase?.scenes ||
+           project.metadata?.scenes ||
+           []
   }
 
-  // Get calculated duration from scenes or metadata
-  const getProjectDuration = () => {
-    // First check if we have explicit duration
-    if (project.metadata?.duration) {
+  // Get scene count from vision phase data
+  const getSceneCount = () => {
+    return getScenes().length
+  }
+
+  // Get calculated duration from actual scene durations or metadata
+  const getProjectDuration = (): number | null => {
+    // First check if we have explicit duration in metadata (in minutes)
+    if (project.metadata?.duration && project.metadata.duration > 0) {
       return project.metadata.duration
     }
-    // Calculate from scenes (average 10 seconds per scene)
-    const sceneCount = getSceneCount()
-    if (sceneCount > 0) {
-      const totalSeconds = sceneCount * 10 // Default 10s per scene
-      return Math.ceil(totalSeconds / 60) // Return in minutes
+    
+    // Calculate total duration from scene durations (scenes store duration in seconds)
+    const scenes = getScenes()
+    if (scenes.length > 0) {
+      // Check if any scenes have duration data
+      const scenesWithDuration = scenes.filter((scene: any) => 
+        scene.duration !== undefined && scene.duration !== null && Number(scene.duration) > 0
+      )
+      
+      if (scenesWithDuration.length === 0) {
+        return null // No duration data available
+      }
+      
+      const totalSeconds = scenes.reduce((sum: number, scene: any) => {
+        return sum + (Number(scene.duration) || 0)
+      }, 0)
+      
+      if (totalSeconds > 0) {
+        // Convert to minutes, round to 1 decimal
+        return Math.round((totalSeconds / 60) * 10) / 10
+      }
     }
+    
     return null
+  }
+
+  // Format duration display
+  const formatDuration = (minutes: number | null): string => {
+    if (minutes === null) return 'TBD'
+    if (minutes < 1) return `${Math.round(minutes * 60)}s`
+    return `${minutes} min`
   }
 
   // Calculate project progress percentage
@@ -221,15 +250,8 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
   // Get contextual button label based on stage
   const getActionLabel = () => {
     if (isPhase1Complete) return hasValidBYOK ? 'Generate Video' : 'Setup & Generate'
-    
-    const labels: Record<string, string> = {
-      blueprint: 'Continue Blueprint',
-      vision: 'Continue Vision',
-      creation: 'Continue Creation',
-      polish: 'Continue Polish',
-      launch: 'Continue Launch',
-    }
-    return labels[normalizedCurrentStep] || 'Resume Project'
+    // Stage is already displayed separately, so just use "Continue"
+    return 'Continue'
   }
 
   // Handle Generate Video button click with JIT BYOK onboarding
@@ -489,7 +511,7 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
             {/* Duration */}
             <span className="flex items-center gap-1" title="Estimated duration">
               <Clock className="w-3.5 h-3.5" />
-              {duration ? `${duration} min` : 'TBD'}
+              {formatDuration(duration)}
             </span>
             
             {/* Scene count */}
