@@ -71,19 +71,29 @@ export default function BillingPage() {
       
       // Fetch subscription status
       const subResponse = await fetch('/api/subscription/status')
+      console.log('[Billing] Subscription response status:', subResponse.status)
       if (subResponse.ok) {
         const subData = await subResponse.json()
+        console.log('[Billing] Subscription data:', subData)
         setSubscription(subData)
+      } else {
+        console.warn('[Billing] Subscription fetch failed:', subResponse.status)
       }
 
       // Fetch test mode info (available tiers)
       try {
         const testResponse = await fetch('/api/admin/test/switch-plan')
+        console.log('[Billing] Test mode response status:', testResponse.status)
         if (testResponse.ok) {
           const testData = await testResponse.json()
+          console.log('[Billing] Test mode data:', testData)
           setTestMode(testData)
+        } else {
+          const errorText = await testResponse.text()
+          console.warn('[Billing] Test mode fetch failed:', testResponse.status, errorText)
         }
       } catch (e) {
+        console.error('[Billing] Test mode fetch error:', e)
         // Test mode not available
       }
     } catch (error) {
