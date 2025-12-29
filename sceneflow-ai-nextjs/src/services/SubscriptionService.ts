@@ -443,4 +443,173 @@ export class SubscriptionService {
       maxScenes: tier.max_scenes_per_project
     }
   }
+
+  // ============================================================================
+  // Voice Cloning Quota Methods
+  // ============================================================================
+
+  /**
+   * Voice quota result type
+   */
+  static VoiceQuotaResult = {} as {
+    used: number
+    max: number
+    available: number
+    canCreate: boolean
+    lockedSlots: number
+    tierName: string | null
+  }
+
+  /**
+   * Get user's voice clone quota based on subscription tier
+   * Pro: 3 slots, Studio: 10 slots, Enterprise: 999 (unlimited)
+   */
+  static async getVoiceQuota(userId: string): Promise<{
+    used: number
+    max: number
+    available: number
+    canCreate: boolean
+    lockedSlots: number
+    tierName: string | null
+  }> {
+    const { UserVoiceClone } = await import('@/models/UserVoiceClone')
+    const resolvedUser = await resolveUser(userId)
+    const subscription = await this.getUserSubscription(resolvedUser.id)
+    const tier = subscription.tier
+    
+    // Tier voice slot limits
+    const VOICE_SLOT_LIMITS: Record<string, number> = {
+      'free': 0,
+      'pro': 3,
+      'studio': 10,
+      'enterprise': 999, // Effectively unlimited
+    }
+    
+    const tierName = tier?.name?.toLowerCase() || null
+    const maxSlots = tier ? (VOICE_SLOT_LIMITS[tierName || ''] ?? 0) : 0
+    
+    // Count active (non-archived) voice clones
+    const activeClones = await UserVoiceClone.count({
+      where: {
+        user_id: resolvedUser.id,
+        archived_at: null,
+      },
+    })
+    
+    // Count locked slots (archived but not yet cleaned up, still counting against quota)
+    const lockedClones = await UserVoiceClone.count({
+      where: {
+        user_id: resolvedUser.id,
+        is_locked: true,
+      },
+    })
+    
+    const used = activeClones
+    const available = Math.max(0, maxSlots - used)
+    
+    return {
+      used,
+      max: maxSlots,
+      available,
+      canCreate: available > 0,
+      lockedSlots: lockedClones,
+      tierName,
+    }
+  }
+
+  /**
+   * Check if user has access to voice cloning feature
+   * Requires Pro or Studio subscription
+   */
+  static async canAccessVoiceCloning(userId: string): Promise<{
+    allowed: boolean
+    reason?: string
+    tierRequired?: string
+  }> {
+    const resolvedUser = await resolveUser(userId)
+    const subscription = await this.getUserSubscription(resolvedUser.id)
+    const tier = subscription.tier
+    
+    // Must have active subscription
+    if (subscription.status !== 'active') {
+      return {
+        allowed: false,
+        reason: 'Active subscription required',
+        tierRequired: 'pro',
+      }
+    }
+    
+    // Check tier allows voice cloning
+    const tierName = tier?.name?.toLowerCase() || ''
+    const voiceCloningTiers = ['pro', 'studio', 'enterprise']
+    
+    if (!voiceCloningTiers.includes(tierName)) {
+      return {
+        allowed: false,
+        reason: 'Voice cloning requires Pro or Studio subscription',
+        tierRequired: 'pro',
+      }
+    }
+    
+    // Also check if feature is explicitly in the tier's features array
+    const hasFeature = tier?.features?.includes('voice_cloning') ?? 
+                       tier?.features?.includes('voice-cloning') ??
+                       voiceCloningTiers.includes(tierName)
+    
+    if (!hasFeature) {
+      return {
+        allowed: false,
+        reason: 'Voice cloning not available on your plan',
+        tierRequired: 'pro',
+      }
+    }
+    
+    return { allowed: true }
+  }
+
+  /**
+   * Check if user can create a new voice clone (has quota available)
+   */
+  static async canCreateVoiceClone(userId: string): Promise<{
+    allowed: boolean
+    reason?: string
+    quota?: {
+      used: number
+      max: number
+      available: number
+    }
+  }> {
+    // First check feature access
+    const accessCheck = await this.canAccessVoiceCloning(userId)
+    if (!accessCheck.allowed) {
+      return {
+        allowed: false,
+        reason: accessCheck.reason,
+      }
+    }
+    
+    // Then check quota
+    const quota = await this.getVoiceQuota(userId)
+    
+    if (!quota.canCreate) {
+      return {
+        allowed: false,
+        reason: `Voice clone limit reached (${quota.used}/${quota.max}). Delete an existing clone or upgrade your plan.`,
+        quota: {
+          used: quota.used,
+          max: quota.max,
+          available: quota.available,
+        },
+      }
+    }
+    
+    return {
+      allowed: true,
+      quota: {
+        used: quota.used,
+        max: quota.max,
+        available: quota.available,
+      },
+    }
+  }
 }

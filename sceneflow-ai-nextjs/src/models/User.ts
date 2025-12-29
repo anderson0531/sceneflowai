@@ -24,12 +24,16 @@ export interface UserAttributes {
   paddle_customer_id?: string | null
   paddle_subscription_id?: string | null
   one_time_tiers_purchased: string[]
+  // Compliance/Trust fields
+  trust_score: number                    // 0-100, increases with positive behavior
+  voice_cloning_enabled: boolean         // Whether user has access to voice cloning
+  account_verified_at?: Date | null      // When identity was verified
   last_login?: Date
   created_at: Date
   updated_at: Date
 }
 
-export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'created_at' | 'updated_at' | 'is_active' | 'email_verified' | 'subscription_status' | 'subscription_credits_monthly' | 'addon_credits' | 'storage_used_gb' | 'one_time_tiers_purchased'> {}
+export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'created_at' | 'updated_at' | 'is_active' | 'email_verified' | 'subscription_status' | 'subscription_credits_monthly' | 'addon_credits' | 'storage_used_gb' | 'one_time_tiers_purchased' | 'trust_score' | 'voice_cloning_enabled' | 'account_verified_at'> {}
 
 export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {                                                             
   public id!: string
@@ -53,6 +57,10 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
   public paddle_customer_id?: string | null
   public paddle_subscription_id?: string | null
   public one_time_tiers_purchased!: string[]
+  // Compliance/Trust fields
+  public trust_score!: number
+  public voice_cloning_enabled!: boolean
+  public account_verified_at?: Date | null
   public last_login?: Date
   public created_at!: Date
   public updated_at!: Date
@@ -178,6 +186,25 @@ User.init(
       type: DataTypes.ARRAY(DataTypes.STRING),
       allowNull: false,
       defaultValue: [],
+    },
+    // Compliance/Trust fields
+    trust_score: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      validate: {
+        min: 0,
+        max: 100,
+      },
+    },
+    voice_cloning_enabled: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    account_verified_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
     last_login: {
       type: DataTypes.DATE,

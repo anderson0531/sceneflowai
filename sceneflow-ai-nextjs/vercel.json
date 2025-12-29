@@ -11,7 +11,16 @@
     "src/app/api/projects/[id]/route.ts": {
       "maxDuration": 60,
       "memory": 1024
+    },
+    "src/app/api/cron/voice-cleanup/route.ts": {
+      "maxDuration": 60
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/voice-cleanup",
+      "schedule": "0 3 * * *"
+    }
+  ]
 }
 

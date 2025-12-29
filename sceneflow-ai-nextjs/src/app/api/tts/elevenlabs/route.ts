@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { CREDIT_COSTS, getCreditCost } from '@/lib/credits/creditCosts'
 import { CreditService } from '@/services/CreditService'
+import { AudioWatermarkService } from '@/services/AudioWatermarkService'
 
 export const dynamic = 'force-dynamic'
 
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
     }
     const userId = session.user.id
 
-    const { text, voiceId, parallel = true } = await request.json()
+    const { text, voiceId, parallel = true, projectId, sceneId, voiceName, isClonedVoice = false } = await request.json()
 
     if (!text || typeof text !== 'string') {
       return new Response(JSON.stringify({ error: 'Missing text' }), { status: 400 })
@@ -116,6 +117,23 @@ export async function POST(request: NextRequest) {
       console.log('🎤 TTS: Single chunk processing')
       const audioBuffer = await generateChunk(text, id, apiKey)
       
+      // Create provenance and watermark the audio
+      const provenance = AudioWatermarkService.createProvenance({
+        audioData: Buffer.from(audioBuffer),
+        voiceType: isClonedVoice ? 'cloned' : 'stock',
+        voiceId: id,
+        voiceName,
+        userId,
+        projectId,
+        sceneId,
+        inputText: text
+      })
+      
+      const watermarkedAudio = AudioWatermarkService.embedWatermarkMP3(
+        Buffer.from(audioBuffer),
+        provenance
+      )
+      
       // Charge credits after successful generation
       try {
         await CreditService.charge(
@@ -130,11 +148,12 @@ export async function POST(request: NextRequest) {
         console.error('🎤 TTS: Failed to charge credits:', chargeError)
       }
       
-      return new Response(audioBuffer, {
+      return new Response(watermarkedAudio, {
         status: 200,
         headers: {
           'Content-Type': 'audio/mpeg',
           'Cache-Control': 'no-store',
+          'X-SceneFlow-Provenance': provenance.contentHash.substring(0, 16),
         },
       })
     }
@@ -158,6 +177,23 @@ export async function POST(request: NextRequest) {
     const combinedAudio = concatenateAudioBuffers(audioBuffers)
     console.log(`✅ TTS: Combined ${paragraphs.length} chunks, total size: ${combinedAudio.byteLength}`)
     
+    // Create provenance and watermark the combined audio
+    const provenance = AudioWatermarkService.createProvenance({
+      audioData: Buffer.from(combinedAudio),
+      voiceType: isClonedVoice ? 'cloned' : 'stock',
+      voiceId: id,
+      voiceName,
+      userId,
+      projectId,
+      sceneId,
+      inputText: text
+    })
+    
+    const watermarkedAudio = AudioWatermarkService.embedWatermarkMP3(
+      Buffer.from(combinedAudio),
+      provenance
+    )
+    
     // Charge credits after successful generation
     try {
       await CreditService.charge(
@@ -172,11 +208,12 @@ export async function POST(request: NextRequest) {
       console.error('🎤 TTS: Failed to charge credits:', chargeError)
     }
     
-    return new Response(combinedAudio, {
+    return new Response(watermarkedAudio, {
       status: 200,
       headers: {
         'Content-Type': 'audio/mpeg',
         'Cache-Control': 'no-store',
+        'X-SceneFlow-Provenance': provenance.contentHash.substring(0, 16),
       },
     })
   } catch (e: any) {

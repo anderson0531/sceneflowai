@@ -48,6 +48,29 @@ export class SubscriptionTier extends Model<SubscriptionTierAttributes, Subscrip
 
   public readonly createdAt!: Date
   public readonly updatedAt!: Date
+
+  // Helper methods
+  public hasFeature(feature: string): boolean {
+    return this.features?.includes(feature) ?? false
+  }
+
+  public hasVoiceCloning(): boolean {
+    return this.hasFeature('voice_cloning')
+  }
+
+  /**
+   * Get the maximum number of voice clone slots for this tier
+   */
+  public getVoiceCloneSlots(): number {
+    const slotsByTier: Record<string, number> = {
+      coffee_break: 0,
+      starter: 0,
+      pro: 3,
+      studio: 10,
+      enterprise: 999,
+    }
+    return slotsByTier[this.name] ?? 0
+  }
 }
 
 SubscriptionTier.init(

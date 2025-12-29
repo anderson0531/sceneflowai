@@ -17,6 +17,10 @@ import CollabRecommendation from './CollabRecommendation'
 import CollabChatMessage from './CollabChatMessage'
 import SubscriptionTier from './SubscriptionTier'
 import RateCard from './RateCard'
+// Compliance Layer models
+import VoiceConsent from './VoiceConsent'
+import UserVoiceClone from './UserVoiceClone'
+import ModerationEvent from './ModerationEvent'
 
 // Define model associations
 User.hasMany(Project, {
@@ -50,6 +54,50 @@ User.belongsTo(SubscriptionTier, {
 SubscriptionTier.hasMany(User, {
   foreignKey: 'subscription_tier_id',
   as: 'users',
+})
+
+// Compliance Layer model associations
+User.hasMany(VoiceConsent, {
+  foreignKey: 'user_id',
+  as: 'voiceConsents',
+  onDelete: 'CASCADE',
+})
+
+VoiceConsent.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user',
+})
+
+User.hasMany(UserVoiceClone, {
+  foreignKey: 'user_id',
+  as: 'voiceClones',
+  onDelete: 'CASCADE',
+})
+
+UserVoiceClone.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user',
+})
+
+UserVoiceClone.belongsTo(VoiceConsent, {
+  foreignKey: 'consent_id',
+  as: 'consent',
+})
+
+VoiceConsent.hasOne(UserVoiceClone, {
+  foreignKey: 'consent_id',
+  as: 'voiceClone',
+})
+
+User.hasMany(ModerationEvent, {
+  foreignKey: 'user_id',
+  as: 'moderationEvents',
+  onDelete: 'CASCADE',
+})
+
+ModerationEvent.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user',
 })
 
 // DOL model associations
@@ -98,6 +146,10 @@ export {
   CollabChatMessage,
   SubscriptionTier,
   RateCard,
+  // Compliance Layer models
+  VoiceConsent,
+  UserVoiceClone,
+  ModerationEvent,
 }
 
 // Export default for convenience
@@ -121,4 +173,8 @@ export default {
   CollabChatMessage,
   SubscriptionTier,
   RateCard,
+  // Compliance Layer models
+  VoiceConsent,
+  UserVoiceClone,
+  ModerationEvent,
 }

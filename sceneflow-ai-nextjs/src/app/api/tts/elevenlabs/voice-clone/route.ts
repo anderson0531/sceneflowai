@@ -5,11 +5,48 @@
  * 
  * Clones a voice from audio samples using ElevenLabs Instant Voice Cloning (IVC) API.
  * Accepts audio files and returns a new voice ID.
+ * 
+ * COMPLIANCE INTEGRATION:
+ * - Requires a verified consent ID (from /api/voice/consent/complete)
+ * - Validates user has voice cloning access (subscription + trust gate)
+ * - Updates UserVoiceClone record with ElevenLabs voice ID
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '../../../../../lib/auth'
+import { AuthService } from '../../../../../services/AuthService'
+import { VoiceConsent } from '../../../../../models/VoiceConsent'
+import { UserVoiceClone } from '../../../../../models/UserVoiceClone'
 
 const ELEVENLABS_API_BASE = 'https://api.elevenlabs.io/v1'
+
+/**
+ * Get authenticated user ID from session or token
+ */
+async function getAuthenticatedUserId(req: NextRequest): Promise<string | null> {
+  let userId: string | null = null
+
+  try {
+    const session: any = await getServerSession(authOptions as any)
+    if (session?.user) {
+      userId = session.user.id || null
+    }
+  } catch {}
+
+  if (!userId) {
+    const auth = req.headers.get('authorization') || ''
+    const token = auth.startsWith('Bearer ') ? auth.slice(7) : ''
+    if (token) {
+      const vr = await AuthService.verifyToken(token)
+      if (vr.success && vr.user) {
+        userId = vr.user.id
+      }
+    }
+  }
+
+  return userId
+}
 
 export async function POST(request: NextRequest) {
   const apiKey = process.env.ELEVENLABS_API_KEY
@@ -22,11 +59,95 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // Authenticate user
+    const userId = await getAuthenticatedUserId(request)
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized', code: 'UNAUTHORIZED' },
+        { status: 401 }
+      )
+    }
+
     // Parse multipart form data
     const formData = await request.formData()
     const voiceName = formData.get('name') as string
     const description = formData.get('description') as string
     const files = formData.getAll('files') as File[]
+    const consentId = formData.get('consentId') as string  // Required for compliance
+    const voiceCloneId = formData.get('voiceCloneId') as string  // From consent completion
+
+    // ========================================================================
+    // COMPLIANCE CHECK: Validate consent and voice clone record
+    // ========================================================================
+    
+    if (!consentId && !voiceCloneId) {
+      return NextResponse.json(
+        { 
+          error: 'Voice cloning requires consent verification. Please complete the consent process first.',
+          code: 'CONSENT_REQUIRED',
+          helpUrl: '/api/voice/consent/initiate'
+        },
+        { status: 403 }
+      )
+    }
+
+    // Look up the voice clone record
+    let voiceClone: UserVoiceClone | null = null
+    
+    if (voiceCloneId) {
+      voiceClone = await UserVoiceClone.findOne({
+        where: { id: voiceCloneId, user_id: userId }
+      })
+    } else if (consentId) {
+      // Find voice clone by consent ID
+      voiceClone = await UserVoiceClone.findOne({
+        where: { consent_id: consentId, user_id: userId }
+      })
+    }
+
+    if (!voiceClone) {
+      return NextResponse.json(
+        { 
+          error: 'Voice clone record not found. Please complete the consent verification process first.',
+          code: 'VOICE_CLONE_NOT_FOUND'
+        },
+        { status: 404 }
+      )
+    }
+
+    // Verify the consent is verified
+    if (voiceClone.consent_id) {
+      const consent = await VoiceConsent.findByPk(voiceClone.consent_id)
+      if (!consent || consent.consent_status !== 'verified') {
+        return NextResponse.json(
+          { 
+            error: 'Voice consent has not been verified. Please complete the consent process.',
+            code: 'CONSENT_NOT_VERIFIED'
+          },
+          { status: 403 }
+        )
+      }
+    }
+
+    // Check if already cloned (has ElevenLabs ID)
+    if (voiceClone.elevenlabs_voice_id) {
+      return NextResponse.json({
+        success: true,
+        voice: {
+          id: voiceClone.elevenlabs_voice_id,
+          name: voiceClone.voice_name,
+          description: description || '',
+          category: 'cloned',
+          alreadyCloned: true
+        },
+        message: 'Voice has already been cloned'
+      })
+    }
+
+    // ========================================================================
+    // END COMPLIANCE CHECK
+    // ========================================================================
 
     if (!voiceName) {
       return NextResponse.json(
@@ -135,6 +256,18 @@ export async function POST(request: NextRequest) {
     
     console.log('[Voice Clone] Voice created:', data.voice_id)
 
+    // ========================================================================
+    // Update UserVoiceClone record with ElevenLabs voice ID
+    // ========================================================================
+    
+    await voiceClone.update({
+      elevenlabs_voice_id: data.voice_id,
+      voice_name: voiceName,  // Update name if changed
+      is_active: true,
+    })
+    
+    console.log(`[Voice Clone] Updated voice clone record ${voiceClone.id} with ElevenLabs ID: ${data.voice_id}`)
+
     return NextResponse.json({
       success: true,
       voice: {
@@ -142,7 +275,9 @@ export async function POST(request: NextRequest) {
         name: voiceName,
         description: description || '',
         category: 'cloned',
-        requiresVerification: data.requires_verification || false
+        requiresVerification: data.requires_verification || false,
+        voiceCloneId: voiceClone.id,
+        consentId: voiceClone.consent_id,
       }
     })
   } catch (error) {
@@ -150,6 +285,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         error: 'Failed to clone voice',
+        code: 'CLONE_FAILED',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }

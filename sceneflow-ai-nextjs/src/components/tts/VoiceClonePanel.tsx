@@ -1,10 +1,13 @@
 'use client'
 
-import React, { useState, useRef, useCallback } from 'react'
-import { Upload, X, Play, Pause, Loader, Mic, MicOff, AlertCircle, CheckCircle, RotateCcw, Square, FileAudio } from 'lucide-react'
+import React, { useState, useRef, useCallback, useEffect } from 'react'
+import { Upload, X, Play, Pause, Loader, Mic, MicOff, AlertCircle, CheckCircle, RotateCcw, Square, FileAudio, Shield, Lock, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { toast } from 'sonner'
 import { useAudioRecorder, audioBlob2File, formatRecordingTime } from '@/hooks/useAudioRecorder'
+import { useVoiceConsent } from '@/hooks/useVoiceConsent'
+import { VoiceConsentWizard } from './VoiceConsentWizard'
+import { TierGateModal } from '@/components/ui/TierGateModal'
 
 // Training scripts for voice cloning - phonetically diverse text
 const TRAINING_SCRIPTS = [
@@ -48,6 +51,29 @@ export function VoiceClonePanel({ onVoiceCreated, characterName }: VoiceClonePan
   const [selectedScript, setSelectedScript] = useState(TRAINING_SCRIPTS[0])
   const audioPlayerRef = useRef<HTMLAudioElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
+  
+  // Consent flow state
+  const [showConsentWizard, setShowConsentWizard] = useState(false)
+  const [showTierGate, setShowTierGate] = useState(false)
+  const [pendingConsentId, setPendingConsentId] = useState<string | null>(null)
+  const [pendingCloneId, setPendingCloneId] = useState<string | null>(null)
+  
+  // Voice consent hook
+  const {
+    isLoading: isLoadingQuota,
+    quota,
+    voiceClones,
+    canAccess,
+    blockers,
+    suggestions,
+    refreshQuota,
+    deleteVoiceClone,
+  } = useVoiceConsent()
+  
+  // Load quota on mount
+  useEffect(() => {
+    refreshQuota()
+  }, [refreshQuota])
   
   // Audio recorder hook
   const {
@@ -121,7 +147,8 @@ export function VoiceClonePanel({ onVoiceCreated, characterName }: VoiceClonePan
     setFiles(prev => prev.filter((_, i) => i !== index))
   }
 
-  const handleCloneVoice = async () => {
+  // Handle initiating clone - check consent first
+  const handleInitiateClone = () => {
     if (!voiceName.trim()) {
       toast.error('Please enter a name for your voice')
       return
@@ -132,11 +159,67 @@ export function VoiceClonePanel({ onVoiceCreated, characterName }: VoiceClonePan
       return
     }
 
+    // Check if user has access
+    if (!canAccess) {
+      const hasSubscriptionBlocker = blockers.some(b => b.type === 'subscription')
+      if (hasSubscriptionBlocker) {
+        setShowTierGate(true)
+        return
+      }
+      toast.error(blockers[0]?.message || 'Voice cloning is not available')
+      return
+    }
+
+    // Check quota
+    if (quota && !quota.canCreate) {
+      toast.error(`Voice clone limit reached (${quota.used}/${quota.max}). Delete an existing clone or upgrade your plan.`)
+      return
+    }
+
+    // Show consent wizard
+    setShowConsentWizard(true)
+  }
+
+  // Handle consent completion - proceed with voice cloning
+  const handleConsentComplete = async (voiceCloneId: string, consentId: string) => {
+    setShowConsentWizard(false)
+    setPendingConsentId(consentId)
+    setPendingCloneId(voiceCloneId)
+    
+    // Now proceed with ElevenLabs cloning
+    await handleCloneVoice(consentId, voiceCloneId)
+  }
+
+  const handleCloneVoice = async (consentId?: string, voiceCloneId?: string) => {
+    if (!voiceName.trim()) {
+      toast.error('Please enter a name for your voice')
+      return
+    }
+
+    if (files.length === 0) {
+      toast.error('Please upload at least one audio sample')
+      return
+    }
+
+    // Require consent for compliance
+    const useConsentId = consentId || pendingConsentId
+    const useCloneId = voiceCloneId || pendingCloneId
+    
+    if (!useConsentId && !useCloneId) {
+      // Need to go through consent flow first
+      handleInitiateClone()
+      return
+    }
+
     setIsUploading(true)
     try {
       const formData = new FormData()
       formData.append('name', voiceName.trim())
       formData.append('description', description.trim())
+      
+      // Include consent/clone IDs for compliance
+      if (useConsentId) formData.append('consentId', useConsentId)
+      if (useCloneId) formData.append('voiceCloneId', useCloneId)
       
       for (const file of files) {
         formData.append('files', file)
@@ -154,6 +237,14 @@ export function VoiceClonePanel({ onVoiceCreated, characterName }: VoiceClonePan
       }
 
       toast.success(`Voice "${voiceName}" created successfully!`)
+      
+      // Refresh quota after successful clone
+      refreshQuota()
+      
+      // Reset pending IDs
+      setPendingConsentId(null)
+      setPendingCloneId(null)
+      
       onVoiceCreated(data.voice.id, data.voice.name)
     } catch (error) {
       console.error('[Voice Clone] Error:', error)
@@ -171,6 +262,84 @@ export function VoiceClonePanel({ onVoiceCreated, characterName }: VoiceClonePan
 
   return (
     <div className="space-y-4">
+      {/* Consent Wizard Modal */}
+      <VoiceConsentWizard
+        isOpen={showConsentWizard}
+        characterName={voiceName || characterName}
+        onComplete={handleConsentComplete}
+        onCancel={() => setShowConsentWizard(false)}
+      />
+      
+      {/* Tier Gate Modal */}
+      <TierGateModal
+        isOpen={showTierGate}
+        onClose={() => setShowTierGate(false)}
+        feature="Voice Cloning"
+        featureDescription="Clone custom voices for your characters with advanced AI technology."
+        blockers={blockers}
+        suggestions={suggestions}
+        requiredTier="pro"
+      />
+
+      {/* Voice Clone Quota Display */}
+      {quota && (
+        <div className="flex items-center justify-between p-2.5 bg-gray-800/50 border border-gray-700 rounded-lg">
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-blue-400" />
+            <span className="text-[13px] text-gray-300">Voice Clone Slots</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`text-[13px] font-medium ${quota.canCreate ? 'text-green-400' : 'text-red-400'}`}>
+              {quota.used} / {quota.max}
+            </span>
+            {!quota.canCreate && (
+              <span className="text-[11px] text-red-400/70">(Limit reached)</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Existing Voice Clones */}
+      {voiceClones.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[12px] text-gray-400">Your Voice Clones</span>
+          </div>
+          <div className="max-h-32 overflow-y-auto space-y-1">
+            {voiceClones.map((clone) => (
+              <div
+                key={clone.id}
+                className="flex items-center justify-between px-3 py-2 bg-gray-800/50 rounded border border-gray-700"
+              >
+                <div className="flex items-center gap-2">
+                  <Mic className="w-3.5 h-3.5 text-purple-400" />
+                  <span className="text-[12px] text-gray-300">{clone.name}</span>
+                  <span className="text-[10px] text-gray-500">
+                    ({clone.useCount} uses)
+                  </span>
+                </div>
+                <button
+                  onClick={async () => {
+                    if (confirm(`Delete voice clone "${clone.name}"? This cannot be undone.`)) {
+                      const success = await deleteVoiceClone(clone.id)
+                      if (success) {
+                        toast.success('Voice clone deleted')
+                      } else {
+                        toast.error('Failed to delete voice clone')
+                      }
+                    }
+                  }}
+                  className="p-1 text-gray-500 hover:text-red-400 transition-colors"
+                  title="Delete voice clone"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Info Banner */}
       <div className="flex items-start gap-2.5 p-2.5 bg-blue-500/10 border border-blue-500/30 rounded-lg">
         <Mic className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
@@ -474,14 +643,24 @@ export function VoiceClonePanel({ onVoiceCreated, characterName }: VoiceClonePan
 
       {/* Clone Button */}
       <Button
-        onClick={handleCloneVoice}
-        disabled={isUploading || !voiceName.trim() || files.length === 0}
+        onClick={handleInitiateClone}
+        disabled={isUploading || !voiceName.trim() || files.length === 0 || (quota && !quota.canCreate)}
         className="w-full bg-blue-600 hover:bg-blue-700 text-white"
       >
         {isUploading ? (
           <>
             <Loader className="w-4 h-4 mr-2 animate-spin" />
             Cloning Voice...
+          </>
+        ) : !canAccess ? (
+          <>
+            <Lock className="w-4 h-4 mr-2" />
+            Upgrade to Clone Voices
+          </>
+        ) : quota && !quota.canCreate ? (
+          <>
+            <AlertCircle className="w-4 h-4 mr-2" />
+            Slot Limit Reached
           </>
         ) : (
           <>
