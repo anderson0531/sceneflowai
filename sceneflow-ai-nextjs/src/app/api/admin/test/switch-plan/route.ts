@@ -17,6 +17,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { User, SubscriptionTier, CreditLedger, sequelize } from '@/models';
+import { resolveUser } from '@/lib/userHelper';
 
 // Valid tier names
 const VALID_TIERS = ['coffee_break', 'starter', 'pro', 'studio', 'enterprise'] as const;
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userId = session.user.id;
+    const sessionUserId = session.user.id;
     const body = await request.json() as SwitchPlanRequest;
     const { tierName, grantCredits = true } = body;
 
@@ -73,6 +74,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Resolve user (handles email-as-ID from session)
+    const resolvedUser = await resolveUser(sessionUserId);
+    const userId = resolvedUser.id;
 
     console.log(`[Test Plan Switch] User ${userId} switching to ${tierName}`);
 
@@ -216,7 +221,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const userId = session.user.id;
+    const sessionUserId = session.user.id;
+
+    // Resolve user (handles email-as-ID from session)
+    const resolvedUser = await resolveUser(sessionUserId);
+    const userId = resolvedUser.id;
 
     // Get available tiers
     const tiers = await SubscriptionTier.findAll({
@@ -224,7 +233,7 @@ export async function GET(request: NextRequest) {
       order: [['monthly_price_usd', 'ASC']],
     });
 
-    // Get user's current subscription
+    // Get user's current subscription with tier included
     const user = await User.findByPk(userId, {
       include: [{
         model: SubscriptionTier,
