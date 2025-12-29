@@ -150,13 +150,14 @@ export async function POST(request: NextRequest) {
           delta_credits: creditsGranted,
           prev_balance: prevCredits,
           new_balance: Number(user.credits),
-          reason: 'subscription_allocation',
+          reason: 'adjustment',
           credit_type: 'subscription',
           ref: `test_plan_switch_${tierName}`,
           meta: { 
             tier: tierName, 
             test_mode: true,
             previous_tier_id: prevTierId,
+            type: 'subscription_allocation',
           } as any,
         }, { transaction: tx });
       }
