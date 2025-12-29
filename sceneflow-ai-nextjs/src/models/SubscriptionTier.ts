@@ -55,7 +55,10 @@ export class SubscriptionTier extends Model<SubscriptionTierAttributes, Subscrip
   }
 
   public hasVoiceCloning(): boolean {
-    return this.hasFeature('voice_cloning')
+    // Check features array first
+    if (this.hasFeature('voice_cloning')) return true
+    // Fallback: Pro, Studio, Enterprise tiers always have voice cloning
+    return ['pro', 'studio', 'enterprise'].includes(this.name)
   }
 
   /**
