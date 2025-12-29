@@ -70,39 +70,64 @@ export async function migrateComplianceGuardrails(): Promise<void> {
     // Step 2: Add columns to SubscriptionTiers table
     // ========================================================================
     
-    // Try to add columns with raw SQL - more reliable across different setups
-    try {
-      await sequelize.query(`
-        ALTER TABLE subscription_tiers 
-        ADD COLUMN IF NOT EXISTS voice_clone_slots INTEGER NOT NULL DEFAULT 0
-      `).catch(() => console.log('[Compliance Migration] voice_clone_slots may already exist'));
+    // First check if subscription_tiers table exists and what columns it has
+    const tiersTableDesc = await qi.describeTable('subscription_tiers').catch(() => null);
+    
+    if (tiersTableDesc) {
+      console.log('[Compliance Migration] subscription_tiers columns:', Object.keys(tiersTableDesc));
       
-      await sequelize.query(`
-        ALTER TABLE subscription_tiers 
-        ADD COLUMN IF NOT EXISTS has_voice_cloning BOOLEAN NOT NULL DEFAULT false
-      `).catch(() => console.log('[Compliance Migration] has_voice_cloning may already exist'));
+      // Add voice_clone_slots if it doesn't exist
+      if (!tiersTableDesc.voice_clone_slots) {
+        try {
+          await qi.addColumn('subscription_tiers', 'voice_clone_slots', {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
+          });
+          console.log('[Compliance Migration] Added voice_clone_slots to subscription_tiers');
+        } catch (e) {
+          console.log('[Compliance Migration] voice_clone_slots column add failed (may already exist):', e);
+        }
+      }
       
-      // Update existing tier values
-      await sequelize.query(`
-        UPDATE subscription_tiers 
-        SET voice_clone_slots = CASE 
-          WHEN name ILIKE '%pro%' THEN 3
-          WHEN name ILIKE '%studio%' THEN 10
-          WHEN name ILIKE '%enterprise%' THEN 100
-          ELSE 0
-        END,
-        has_voice_cloning = CASE 
-          WHEN name ILIKE '%pro%' THEN true
-          WHEN name ILIKE '%studio%' THEN true
-          WHEN name ILIKE '%enterprise%' THEN true
-          ELSE false
-        END
-        WHERE voice_clone_slots = 0 OR has_voice_cloning = false
-      `).catch((e) => console.log('[Compliance Migration] Tier update may have failed:', e));
+      // Add has_voice_cloning if it doesn't exist
+      if (!tiersTableDesc.has_voice_cloning) {
+        try {
+          await qi.addColumn('subscription_tiers', 'has_voice_cloning', {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+          });
+          console.log('[Compliance Migration] Added has_voice_cloning to subscription_tiers');
+        } catch (e) {
+          console.log('[Compliance Migration] has_voice_cloning column add failed (may already exist):', e);
+        }
+      }
       
-      console.log('[Compliance Migration] Updated subscription_tiers columns');
-    } catch (e) {
-      console.error('[Compliance Migration] subscription_tiers update failed:', e);
+      // Update existing tier values based on tier name
+      try {
+        await sequelize.query(`
+          UPDATE subscription_tiers 
+          SET 
+            voice_clone_slots = CASE 
+              WHEN LOWER(name) LIKE '%pro%' THEN 3
+              WHEN LOWER(name) LIKE '%studio%' THEN 10
+              WHEN LOWER(name) LIKE '%enterprise%' THEN 100
+              ELSE 0
+            END,
+            has_voice_cloning = CASE 
+              WHEN LOWER(name) LIKE '%pro%' THEN true
+              WHEN LOWER(name) LIKE '%studio%' THEN true
+              WHEN LOWER(name) LIKE '%enterprise%' THEN true
+              ELSE false
+            END
+        `);
+        console.log('[Compliance Migration] Updated subscription_tiers tier values');
+      } catch (e) {
+        console.log('[Compliance Migration] Tier values update failed:', e);
+      }
+    } else {
+      console.log('[Compliance Migration] subscription_tiers table not found - skipping columns');
     }
 
     // ========================================================================
