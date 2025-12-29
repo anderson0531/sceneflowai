@@ -4,12 +4,13 @@ import Project from '@/models/Project'
 import User from '@/models/User'
 import { sequelize } from '@/config/database'
 import { SubscriptionService } from '../../../services/SubscriptionService'
+import { resolveUser } from '@/lib/userHelper'
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-// GET /api/projects?userId=<uuid>
+// GET /api/projects?userId=<uuid or email>
 export async function GET(request: NextRequest) {
   const timestamp = new Date().toISOString()
   
@@ -25,9 +26,9 @@ export async function GET(request: NextRequest) {
     
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
-    const userId = searchParams.get('userId') || request.headers.get('x-user-id') || undefined
+    let userIdParam = searchParams.get('userId') || request.headers.get('x-user-id') || undefined
     
-    console.log(`[${timestamp}] [GET /api/projects] Query params:`, { id, userId })
+    console.log(`[${timestamp}] [GET /api/projects] Query params:`, { id, userId: userIdParam })
     
     if (id) {
       console.log(`[${timestamp}] [GET /api/projects] Fetching single project by id:`, id)
@@ -54,14 +55,25 @@ export async function GET(request: NextRequest) {
       return response
     }
 
-    if (!userId) {
+    if (!userIdParam) {
       console.log(`[${timestamp}] [GET /api/projects] Missing userId`)
       return NextResponse.json({ success: false, error: 'Missing userId' }, { status: 401 })
     }
 
-    console.log(`[${timestamp}] [GET /api/projects] Fetching projects for userId:`, userId)
+    // Resolve email to UUID if needed
+    let resolvedUserId = userIdParam
+    try {
+      const resolvedUser = await resolveUser(userIdParam)
+      resolvedUserId = resolvedUser.id
+      console.log(`[${timestamp}] [GET /api/projects] Resolved userId: ${userIdParam} -> ${resolvedUserId}`)
+    } catch (err) {
+      console.error(`[${timestamp}] [GET /api/projects] Failed to resolve user:`, err)
+      return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
+    }
+
+    console.log(`[${timestamp}] [GET /api/projects] Fetching projects for userId:`, resolvedUserId)
     
-    const where: any = { user_id: userId }
+    const where: any = { user_id: resolvedUserId }
     const page = Math.max(1, Number(searchParams.get('page') || '1'))
     const pageSize = Math.min(50, Math.max(1, Number(searchParams.get('pageSize') || '20')))
     const offset = (page - 1) * pageSize
