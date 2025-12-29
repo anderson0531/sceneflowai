@@ -19,6 +19,8 @@ import {
   Copy,
   Archive,
   Trash,
+  Layers,
+  Calendar,
 } from 'lucide-react'
 import { useEnhancedStore } from '@/store/enhancedStore'
 import { useCueStore } from '@/store/useCueStore'
@@ -148,20 +150,87 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
   const isPhase2Available = isPhase1Complete
   const hasValidBYOK = Boolean(byokSettings?.videoGenerationProvider?.isConfigured)
 
-  // Calculate estimated costs based on project complexity and duration
-  const getEstimatedCosts = () => {
-    const baseAnalysisCost = 150 // credits per step
-    const analysisCreditsUsed = normalizedCompletedSteps.length * baseAnalysisCost
-    const estimatedBYOKCost = project.metadata?.duration ? 
-      Math.max(5, project.metadata.duration * 0.5) : 15 // $0.50 per minute, minimum $5
+  // Format relative time (e.g., "2 days ago", "just now")
+  const formatRelativeTime = (date: Date | string) => {
+    const now = new Date()
+    const then = new Date(date)
+    const diffMs = now.getTime() - then.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMins / 60)
+    const diffDays = Math.floor(diffHours / 24)
+    
+    if (diffMins < 1) return 'Just now'
+    if (diffMins < 60) return `${diffMins}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    if (diffDays < 7) return `${diffDays}d ago`
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`
+    return then.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
+
+  // Get scene count from vision phase data
+  const getSceneCount = () => {
+    const scenes = project.metadata?.visionPhase?.script?.script?.scenes ||
+                   project.metadata?.visionPhase?.scenes ||
+                   project.metadata?.scenes
+    return scenes?.length || 0
+  }
+
+  // Get calculated duration from scenes or metadata
+  const getProjectDuration = () => {
+    // First check if we have explicit duration
+    if (project.metadata?.duration) {
+      return project.metadata.duration
+    }
+    // Calculate from scenes (average 10 seconds per scene)
+    const sceneCount = getSceneCount()
+    if (sceneCount > 0) {
+      const totalSeconds = sceneCount * 10 // Default 10s per scene
+      return Math.ceil(totalSeconds / 60) // Return in minutes
+    }
+    return null
+  }
+
+  // Calculate project progress percentage
+  const getProgressPercentage = () => {
+    const completedCount = normalizedCompletedSteps.length
+    return Math.round((completedCount / totalSteps) * 100)
+  }
+
+  // Calculate actual costs - show real data when available
+  const getProjectCosts = () => {
+    // Real credits used from project metadata if tracked
+    const creditsUsed = project.metadata?.creditsUsed || 0
+    
+    // Estimate based on remaining work if generating
+    const sceneCount = getSceneCount()
+    const estimatedBYOKCost = sceneCount > 0 
+      ? Math.max(3, sceneCount * 1.5) // ~$1.50 per scene for video generation
+      : 15 // Default estimate
     
     return {
-      analysisCredits: analysisCreditsUsed,
-      estimatedBYOK: estimatedBYOKCost
+      creditsUsed,
+      estimatedBYOK: Math.round(estimatedBYOKCost)
     }
   }
 
-  const costs = getEstimatedCosts()
+  const costs = getProjectCosts()
+  const sceneCount = getSceneCount()
+  const duration = getProjectDuration()
+  const progressPercent = getProgressPercentage()
+
+  // Get contextual button label based on stage
+  const getActionLabel = () => {
+    if (isPhase1Complete) return hasValidBYOK ? 'Generate Video' : 'Setup & Generate'
+    
+    const labels: Record<string, string> = {
+      blueprint: 'Continue Blueprint',
+      vision: 'Continue Vision',
+      creation: 'Continue Creation',
+      polish: 'Continue Polish',
+      launch: 'Continue Launch',
+    }
+    return labels[normalizedCurrentStep] || 'Resume Project'
+  }
 
   // Handle Generate Video button click with JIT BYOK onboarding
   const handleGenerateVideo = () => {
@@ -415,46 +484,61 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
       <div className="p-6">
         {/* Project Header */}
         <div className="mb-4">
-          <h3 className="text-xl font-bold text-white mb-2">{project.title}</h3>
-          <div className="flex items-center gap-3 text-sm text-gray-400">
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {project.metadata?.duration ? `${project.metadata.duration} min` : 'Duration TBD'}
+          <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">{project.title}</h3>
+          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400">
+            {/* Duration */}
+            <span className="flex items-center gap-1" title="Estimated duration">
+              <Clock className="w-3.5 h-3.5" />
+              {duration ? `${duration} min` : 'TBD'}
             </span>
-            {project.metadata?.genre && (
-              <span className="flex items-center gap-1">
-                <Sparkles className="w-3 h-3" />
-                {project.metadata.genre}
+            
+            {/* Scene count */}
+            {sceneCount > 0 && (
+              <span className="flex items-center gap-1" title="Number of scenes">
+                <Layers className="w-3.5 h-3.5" />
+                {sceneCount} scenes
               </span>
             )}
+            
+            {/* Last updated */}
+            <span className="flex items-center gap-1" title={`Last updated: ${new Date(project.updatedAt).toLocaleString()}`}>
+              <Calendar className="w-3.5 h-3.5" />
+              {formatRelativeTime(project.updatedAt)}
+            </span>
           </div>
         </div>
 
-        {/* Workflow Status */}
-        <div className="mb-4">
-          <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg ${workflowStatus.bgColor} ${workflowStatus.borderColor} border`}>
-            <span className={`text-sm font-semibold ${workflowStatus.color}`}>
+        {/* Progress Bar + Workflow Status */}
+        <div className="mb-4 space-y-2">
+          {/* Progress bar */}
+          <div className="h-1.5 bg-gray-700/50 rounded-full overflow-hidden">
+            <div 
+              className={`h-full ${currentStepInfo.bgColor.replace('/20', '')} transition-all duration-500`}
+              style={{ width: `${Math.max(5, progressPercent)}%` }}
+            />
+          </div>
+          
+          {/* Status badge */}
+          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg ${workflowStatus.bgColor} ${workflowStatus.borderColor} border`}>
+            <span className={`text-xs font-semibold ${workflowStatus.color}`}>
               {workflowStatus.text}
             </span>
           </div>
         </div>
 
-        {/* Costs & Budgeting */}
-        <div className="mb-6 p-4 bg-gray-800/50 rounded-lg border border-gray-700/50">
-          <h4 className="text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wide">
-            Costs & Budgeting
-          </h4>
-          
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-400">Analysis Credits Used:</span>
-              <span className="text-sm font-semibold text-white">{costs.analysisCredits}</span>
+        {/* Project Stats - Compact */}
+        <div className="mb-5 p-3 bg-gray-800/40 rounded-lg border border-gray-700/40">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500">Credits:</span>
+              <span className="font-medium text-white">{costs.creditsUsed}</span>
             </div>
-            
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-400">Est. BYOK (if generating):</span>
-              <span className="text-sm font-semibold text-white">~${costs.estimatedBYOK}</span>
-            </div>
+            {isPhase2Available && (
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">Est. cost:</span>
+                <span className="font-medium text-amber-400">~${costs.estimatedBYOK}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -466,51 +550,41 @@ export function ProjectCard({ project, className = '', onDuplicate, onArchive, o
               {/* Primary: Generate Video */}
               <Button
                 onClick={handleGenerateVideo}
-                className={`w-full h-12 text-base font-semibold transition-all duration-200 ${
+                className={`w-full h-11 text-sm font-semibold transition-all duration-200 ${
                   hasValidBYOK 
                     ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg shadow-orange-500/25' 
                     : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-lg shadow-blue-500/25'
                 }`}
               >
-                <Video className="w-5 h-5 mr-2" />
-                {hasValidBYOK ? 'Generate Video' : 'Setup BYOK & Generate'}
+                <Video className="w-4 h-4 mr-2" />
+                {getActionLabel()}
               </Button>
 
 
             </>
           ) : (
-            // Phase 1: Continue current step
-            <Link href={getResumeRoute()}>
+            // Phase 1: Continue current step with contextual label
+            <Link href={getResumeRoute()} className="block">
               <Button
-                className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-base font-semibold shadow-lg shadow-blue-500/25"
+                className="w-full h-11 bg-gradient-to-r from-sf-primary to-purple-500 hover:from-sf-accent hover:to-purple-600 text-white text-sm font-semibold shadow-lg shadow-sf-primary/25"
                 title={`Continue to ${currentStepInfo.name}`}
               >
-                <Play className="w-5 h-5 mr-2" />
-                Resume Project
+                <Play className="w-4 h-4 mr-2" />
+                {getActionLabel()}
               </Button>
             </Link>
           )}
         </div>
 
-        {/* BYOK Status Indicator */}
-        {isPhase2Available && (
-          <div className="mt-4 p-3 rounded-lg border border-gray-700/50 bg-gray-800/30">
+        {/* BYOK Status Indicator - Only show when relevant */}
+        {isPhase2Available && !hasValidBYOK && (
+          <div className="mt-3 p-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10">
             <div className="flex items-center gap-2">
-              <Key className={`w-4 h-4 ${hasValidBYOK ? 'text-green-400' : 'text-yellow-400'}`} />
-              <span className="text-sm text-gray-300">
-                {hasValidBYOK 
-                  ? 'BYOK Configured - Ready for AI Generation' 
-                  : 'BYOK Required for AI Video Generation'
-                }
+              <Key className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-xs text-amber-300">
+                API key required for video generation
               </span>
             </div>
-            
-            {!hasValidBYOK && (
-              <div className="mt-2 flex items-center gap-2 text-xs text-yellow-400">
-                <AlertTriangle className="w-3 h-3" />
-                <span>Click "Generate Video" to setup your API keys</span>
-              </div>
-            )}
           </div>
         )}
       </div>
