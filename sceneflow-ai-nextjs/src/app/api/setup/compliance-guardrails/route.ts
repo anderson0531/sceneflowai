@@ -54,9 +54,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('[Compliance Setup] Running migration...');
+    // Check for force parameter
+    const forceParam = searchParams.get('force') === 'true';
+
+    console.log('[Compliance Setup] Running migration...', { force: forceParam });
     
-    await migrateComplianceGuardrails();
+    await migrateComplianceGuardrails(forceParam);
     
     return NextResponse.json({
       success: true,
@@ -81,10 +84,14 @@ export async function POST(request: NextRequest) {
 }
 
 // GET endpoint to check migration status
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const { sequelize } = await import('@/models');
     const qi = sequelize.getQueryInterface();
+    
+    // Check for debug mode
+    const { searchParams } = new URL(request.url);
+    const debug = searchParams.get('debug') === 'true';
     
     const status = {
       voice_consents: false,
@@ -112,13 +119,23 @@ export async function GET() {
     
     const allComplete = Object.values(status).every(v => v === true);
     
-    return NextResponse.json({
+    const response: any = {
       migrated: allComplete,
       status,
       message: allComplete 
         ? 'All compliance guardrails migrations are complete'
         : 'Some migrations are pending - POST to this endpoint to run them',
-    });
+    };
+    
+    // Add debug info
+    if (debug) {
+      response.debug = {
+        usersColumns: Object.keys(usersDesc || {}),
+        tiersColumns: Object.keys(tiersDesc || {}),
+      };
+    }
+    
+    return NextResponse.json(response);
   } catch (error) {
     return NextResponse.json(
       { 

@@ -17,9 +17,10 @@ let migrationRun = false;
 /**
  * Run the compliance guardrails migration
  * Safe to call multiple times - uses IF NOT EXISTS checks
+ * @param force - Force migration even if already run in this process
  */
-export async function migrateComplianceGuardrails(): Promise<void> {
-  if (migrationRun) {
+export async function migrateComplianceGuardrails(force = false): Promise<void> {
+  if (migrationRun && !force) {
     console.log('[Compliance Migration] Already run in this process');
     return;
   }
