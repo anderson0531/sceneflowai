@@ -729,3 +729,40 @@ export function getRecommendedStrategy(
   // Default recommendation: Fast + Upscale for best value
   return 'fast_plus_upscale';
 }
+
+// =============================================================================
+// MISSING EXPORTS (STUBS FOR v2.32 COMPATIBILITY)
+// =============================================================================
+
+export const UPSCALE_CREDITS = {
+  PER_MINUTE: 20, // Topaz AI upscale cost per minute
+} as const;
+
+export const SUBSCRIPTION_TIERS = {
+  TRIAL: { credits: 1500, price: 4.99 },
+  STARTER: { credits: 4500, price: 49 },
+  PRO: { credits: 15000, price: 149 },
+  STUDIO: { credits: 75000, price: 599 },
+} as const;
+
+export const TOPUP_PACKS = [
+  { credits: 1000, price: 10 },
+  { credits: 5000, price: 45 },
+  { credits: 15000, price: 120 },
+] as const;
+
+export const GUARDRAILS = {
+  DOWNLOAD_FREE_LIMIT: 3,
+  STORAGE_DECAY_DAYS: 30,
+  CONTEXT_TOKEN_LIMIT: 10000,
+} as const;
+
+export function calculateProjectCost(params: any): number {
+  // Stub - returns 0 for now
+  return 0;
+}
+
+export function estimateStorageSize(params: any): number {
+  // Stub - returns 0 for now
+  return 0;
+}
