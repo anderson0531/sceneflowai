@@ -230,6 +230,8 @@ export interface StrategyComparison {
  * Calculate detailed cost breakdown for a project
  */
 export function calculateDetailedProjectCost(params: FullProjectParameters): DetailedCostBreakdown {
+  console.log('[calculateDetailedProjectCost] Raw input params:', JSON.stringify(params, null, 2));
+  
   // Ensure all params have valid numeric values to prevent NaN
   const safeParams = {
     scenes: {
@@ -266,6 +268,8 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
       useInstant: Boolean(params.upscale?.useInstant),
     },
   };
+
+  console.log('[calculateDetailedProjectCost] Safe params:', JSON.stringify(safeParams, null, 2));
 
   // Video costs
   const videoCreditsPerSegment = safeParams.video.model === 'veo_fast' 
