@@ -15,10 +15,10 @@
  */
 
 import { createHash } from 'crypto';
-import { ModerationEvent } from '../../models/ModerationEvent';
-import type { ContentType, ModerationAction } from '../../models/ModerationEvent';
-import { ModerationService, type ModerationResult, type ModerationOptions } from '../../services/ModerationService';
-import { MODERATION_FALLBACK, ADMIN_REVIEW } from './moderationSampling';
+import { ModerationEvent } from '@/models/ModerationEvent';
+import type { ContentType, ModerationAction } from '@/models/ModerationEvent';
+import { ModerationService, type ModerationResult, type ModerationOptions } from '@/services/ModerationService';
+import { MODERATION_FALLBACK, ADMIN_REVIEW } from '@/lib/moderation/moderationSampling';
 
 // =============================================================================
 // HIVE AI CONFIGURATION
