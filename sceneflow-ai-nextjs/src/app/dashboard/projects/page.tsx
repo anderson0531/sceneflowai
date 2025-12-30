@@ -108,7 +108,6 @@ export default function ProjectsPage() {
       return
     }
     
-    console.log('[Projects] Syncing ownership from localStorage UUID to session user...')
     try {
       const res = await fetch('/api/projects/sync-ownership', {
         method: 'POST',
@@ -121,12 +120,11 @@ export default function ProjectsPage() {
       
       if (res.ok) {
         const data = await res.json()
-        console.log('[Projects] Ownership synced:', data.migratedCount, 'projects migrated')
         // Clear localStorage UUID after successful sync
         localStorage.removeItem('authUserId')
       }
     } catch (error) {
-      console.error('[Projects] Failed to sync ownership:', error)
+      // Silently fail - not critical
     }
     setOwnershipSynced(true)
   }, [session?.user?.id, ownershipSynced])
@@ -150,10 +148,8 @@ export default function ProjectsPage() {
   // Listen for project updates (e.g., thumbnail generation)
   useEffect(() => {
     const handleProjectUpdate = async () => {
-      console.log('[Projects Page] Project updated, reloading projects...')
       // Get userId fresh to avoid stale closure
       const userId = session?.user?.email || localStorage.getItem('authUserId') || 'anonymous'
-      console.log('[Projects Page] Reloading with userId:', userId)
       
       try {
         const res = await fetch(`/api/projects?userId=${userId}`)
@@ -163,7 +159,7 @@ export default function ProjectsPage() {
           setTotalCount(data.total || 0)
         }
       } catch (error) {
-        console.error('[Projects Page] Failed to reload projects:', error)
+        // Silently fail - not critical
       }
     }
 
@@ -172,28 +168,16 @@ export default function ProjectsPage() {
   }, [session?.user?.email])
 
   const loadProjects = async () => {
-    const timestamp = new Date().toISOString()
-    console.log(`[${timestamp}] [loadProjects] Starting...`)
-    
     try {
       const userId = getUserId()
-      console.log(`[${timestamp}] [loadProjects] Using userId:`, userId)
-      
       const apiUrl = `/api/projects?userId=${userId}`
-      console.log(`[${timestamp}] [loadProjects] Fetching from:`, apiUrl)
-      
       const res = await fetch(apiUrl)
-      console.log(`[${timestamp}] [loadProjects] Response status:`, res.status, res.statusText)
-      
       const data = await res.json()
-      console.log(`[${timestamp}] [loadProjects] Response data:`, data)
       
       if (data.success) {
-        const projectCount = data.projects?.length || 0
-        const total = data.total || 0
         const projectsList = data.projects || []
         setProjects(projectsList)
-        setTotalCount(total)
+        setTotalCount(data.total || 0)
         
         // Auto-select most recently updated project if none selected or selected project not found
         if (projectsList.length > 0) {
@@ -206,16 +190,11 @@ export default function ProjectsPage() {
             setSelectedProjectId(sorted[0].id)
           }
         }
-        
-        console.log(`[${timestamp}] [loadProjects] State updated with ${projectCount} projects on page, ${total} total projects`)
-      } else {
-        console.log(`[${timestamp}] [loadProjects] Response not successful:`, data.error)
       }
     } catch (error) {
-      console.error(`[${timestamp}] [loadProjects] Failed to load projects:`, error)
+      console.error('Failed to load projects:', error)
     } finally {
       setLoading(false)
-      console.log(`[${timestamp}] [loadProjects] Completed`)
     }
   }
 

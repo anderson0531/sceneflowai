@@ -202,20 +202,7 @@ export function ProjectCostCalculator({
 
   // Calculate costs and strategies
   const comparison = useMemo(() => {
-    console.log('[ProjectCostCalculator] Input params:', JSON.stringify(params, null, 2));
-    const result = compareStrategies(params);
-    console.log('[ProjectCostCalculator] Calculation result:', {
-      totalCredits: result.projectCost.total.credits,
-      totalUsd: result.projectCost.total.usdCost,
-      videoCredits: result.projectCost.video?.credits,
-      imageCredits: result.projectCost.images?.credits,
-      audioCredits: result.projectCost.audio?.credits,
-      voiceCredits: result.projectCost.voiceClones?.credits,
-      storageCredits: result.projectCost.storage?.credits,
-      upscaleCredits: result.projectCost.upscale?.credits,
-      isNaN: isNaN(result.projectCost.total.credits)
-    });
-    return result;
+    return compareStrategies(params);
   }, [params])
   const breakdown = comparison.projectCost
 
