@@ -12,6 +12,7 @@ const HowItWorks = dynamic(() => import('./components/HowItWorks').then(m => m.H
 const CreatorFastTrackHero = dynamic(() => import('@/components/landing/CreatorFastTrackHero').then(m => m.CreatorFastTrackHero), { ssr: false })
 const StorytellerFeatureSection = dynamic(() => import('@/components/landing/StorytellerFeatureSection').then(m => m.StorytellerFeatureSection), { ssr: false })
 const FinancialFirewallSection = dynamic(() => import('@/components/landing/FinancialFirewallSection'), { ssr: false })
+const ProductivityValueSection = dynamic(() => import('./components/ProductivityValueSection'), { ssr: false })
 const FrameAnchoredSection = dynamic(() => import('@/components/landing/FrameAnchoredSection'), { ssr: false })
 const AutomationSection = dynamic(() => import('@/components/landing/AutomationSection'), { ssr: false })
 const FeatureHighlight = dynamic(() => import('./components/FeatureHighlight').then(m => m.FeatureHighlight), { ssr: false })
@@ -45,6 +46,8 @@ export default function LandingPage() {
       <StorytellerFeatureSection />
       {/* 6. Solution: Financial safety with budget controls */}
       <FinancialFirewallSection />
+      {/* 6.5. Value Calculator: Cost, Time, and Expertise savings */}
+      <ProductivityValueSection />
       {/* 7. Technical: Frame-anchored architecture + precision features */}
       <FrameAnchoredSection />
       {/* 8. Automation: One-click generation for complete production workflow */}

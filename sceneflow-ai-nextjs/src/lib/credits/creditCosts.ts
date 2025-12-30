@@ -788,3 +788,333 @@ export function estimateStorageSize(params: any): number {
   // Stub - returns 0 for now
   return 0;
 }
+
+// =============================================================================
+// COMPETITOR TOOL PRICING (for value comparison calculator)
+// =============================================================================
+
+/**
+ * Individual tool costs for comparison with SceneFlow AI
+ * Updated: December 2025
+ */
+export const COMPETITOR_TOOLS = {
+  // Video Generation
+  GOOGLE_VEO: {
+    name: 'Google Veo 2 (AI Studio)',
+    category: 'Video Generation',
+    monthlyCost: 0,
+    perUnitCost: 0.35, // per 8-second clip
+    unit: '8s clip',
+    learningCurve: 40, // hours to master prompt engineering
+  },
+  
+  // Image Generation
+  IMAGEN_STANDALONE: {
+    name: 'Imagen 4 (Vertex AI)',
+    category: 'Image Generation',
+    monthlyCost: 0,
+    perUnitCost: 0.04, // per image
+    unit: 'image',
+    learningCurve: 20,
+  },
+  MIDJOURNEY: {
+    name: 'Midjourney Pro',
+    category: 'Image Generation',
+    monthlyCost: 30,
+    perUnitCost: 0, // unlimited within plan
+    unit: 'subscription',
+    learningCurve: 30,
+  },
+  
+  // Voice & Audio
+  ELEVENLABS: {
+    name: 'ElevenLabs Pro',
+    category: 'Voice & Audio',
+    monthlyCost: 99,
+    includedUnits: 500000, // 500k characters
+    perUnitCost: 0.0003, // per character overage
+    unit: 'character',
+    learningCurve: 15,
+  },
+  SUNO: {
+    name: 'Suno Pro',
+    category: 'Music Generation',
+    monthlyCost: 24,
+    includedUnits: 500,
+    unit: 'credits',
+    learningCurve: 10,
+  },
+  
+  // Video Upscaling
+  TOPAZ: {
+    name: 'Topaz Video AI',
+    category: 'Upscaling',
+    monthlyCost: 19.99,
+    unit: 'subscription',
+    learningCurve: 8,
+  },
+  
+  // Editing & Transcription
+  DESCRIPT: {
+    name: 'Descript Pro',
+    category: 'Editing & Transcription',
+    monthlyCost: 24,
+    unit: 'subscription',
+    learningCurve: 20,
+  },
+  
+  // Professional Editing
+  ADOBE_CC: {
+    name: 'Adobe Creative Cloud',
+    category: 'Professional Editing',
+    monthlyCost: 59.99,
+    unit: 'subscription',
+    learningCurve: 100, // Premiere Pro, After Effects
+  },
+  
+  // Storage
+  AWS_S3: {
+    name: 'AWS S3 Storage',
+    category: 'Cloud Storage',
+    monthlyCost: 0,
+    perUnitCost: 0.023, // per GB
+    unit: 'GB',
+    learningCurve: 15,
+  },
+  
+  // Translation
+  DEEPL: {
+    name: 'DeepL Pro',
+    category: 'Translation',
+    monthlyCost: 24.99,
+    unit: 'subscription',
+    learningCurve: 2,
+  },
+} as const;
+
+/**
+ * Total learning curve hours for individual tool stack
+ */
+export const TOTAL_TOOL_LEARNING_HOURS = Object.values(COMPETITOR_TOOLS).reduce(
+  (sum, tool) => sum + (tool.learningCurve || 0), 0
+);
+
+// =============================================================================
+// SCENEFLOW AI ONE-CLICK AUTOMATION FEATURES
+// =============================================================================
+
+/**
+ * SceneFlow AI automation features with time savings
+ * Each feature replaces manual workflow with one-click automation
+ */
+export const AUTOMATION_FEATURES = {
+  SCREENPLAY_GENERATION: {
+    name: 'One-Click Screenplay',
+    description: 'AI generates complete screenplay from film treatment with optimized scene structure',
+    manualTime: 240, // 4 hours manual writing
+    automatedTime: 0.5, // 30 seconds
+    expertiseRequired: 'Screenwriting craft, story structure, dialogue writing',
+    icon: 'FileText',
+  },
+  DIRECTOR_REVIEW: {
+    name: 'Director Perspective Review',
+    description: 'AI analyzes script from professional director viewpoint with scoring and recommendations',
+    manualTime: 120, // 2 hours (or $500+ consultant)
+    automatedTime: 0.5,
+    expertiseRequired: 'Film direction experience, cinematography knowledge',
+    icon: 'Film',
+  },
+  AUDIENCE_REVIEW: {
+    name: 'Audience Perspective Review',
+    description: 'AI predicts audience engagement, emotional impact, and market appeal',
+    manualTime: 60, // focus group or consultant
+    automatedTime: 0.5,
+    expertiseRequired: 'Market research, audience psychology',
+    icon: 'Users',
+  },
+  SCRIPT_REVISION: {
+    name: 'Professional Script Revisions',
+    description: 'AI applies review recommendations with one click, maintaining voice consistency',
+    manualTime: 180, // 3 hours rewriting
+    automatedTime: 1,
+    expertiseRequired: 'Script editing, dialogue polish',
+    icon: 'Edit3',
+  },
+  AUDIO_GENERATION: {
+    name: 'Full Audio Generation',
+    description: 'Generate all narration, dialogue, music, and SFX for entire screenplay',
+    manualTime: 480, // 8 hours casting + recording + editing
+    automatedTime: 5,
+    expertiseRequired: 'Voice casting, audio engineering, music selection',
+    icon: 'Volume2',
+  },
+  MULTILANGUAGE: {
+    name: '26-Language Generation',
+    description: 'Translate and regenerate audio in 26 languages with matched voices',
+    manualTime: 2400, // 40 hours per language × 26 would be months
+    automatedTime: 30, // 30 min for all languages
+    expertiseRequired: 'Translation, voice matching, localization',
+    icon: 'Globe',
+  },
+  SCENE_FRAMES: {
+    name: 'Scene Frame Generation',
+    description: 'Generate key frames with optimized prompts including character/scene references',
+    manualTime: 120, // 2 hours per scene in Midjourney
+    automatedTime: 2,
+    expertiseRequired: 'Prompt engineering, visual composition, continuity',
+    icon: 'Image',
+  },
+  SCENE_DIRECTION: {
+    name: 'AI Director\'s Chair',
+    description: 'Generate professional camera, lighting, and blocking directions',
+    manualTime: 60, // per scene
+    automatedTime: 0.5,
+    expertiseRequired: 'Cinematography, lighting design, blocking',
+    icon: 'Video',
+  },
+  SCREENING_ROOM: {
+    name: 'Screening Room Preview',
+    description: 'Instant animatic with Ken Burns effects, synced audio, and timing',
+    manualTime: 240, // 4 hours in Premiere to assemble
+    automatedTime: 1,
+    expertiseRequired: 'Video editing, timing, assembly',
+    icon: 'Play',
+  },
+  SHARE_LINK: {
+    name: 'One-Click Sharing',
+    description: 'Generate shareable link for collaborator feedback',
+    manualTime: 30, // export, upload, share
+    automatedTime: 0.1,
+    expertiseRequired: 'File management, cloud hosting',
+    icon: 'Share2',
+  },
+  MP4_RENDER: {
+    name: 'MP4 Export',
+    description: 'Professional video export with proper encoding settings',
+    manualTime: 60, // encoding time + settings
+    automatedTime: 5,
+    expertiseRequired: 'Video codecs, export settings',
+    icon: 'Download',
+  },
+  MODERATION_NIL: {
+    name: 'Automated Moderation',
+    description: 'NIL checks and content moderation before generation',
+    manualTime: 30, // manual review
+    automatedTime: 0,
+    expertiseRequired: 'Legal compliance, content policy',
+    icon: 'Shield',
+  },
+  VIDEO_GENERATION: {
+    name: 'Frame-to-Frame Video',
+    description: 'Generate video segments anchored to start/end frames for consistency',
+    manualTime: 180, // complex prompting, iterations
+    automatedTime: 5,
+    expertiseRequired: 'Video AI prompting, keyframe control',
+    icon: 'Film',
+  },
+  DIALOG_GUIDED_EDIT: {
+    name: 'Dialog-Guided Editing',
+    description: 'Videos auto-cut to dialogue timing with proper pacing',
+    manualTime: 120, // manual alignment
+    automatedTime: 2,
+    expertiseRequired: 'Video editing, audio sync',
+    icon: 'Scissors',
+  },
+  BATCH_RENDER: {
+    name: 'Batch Video Rendering',
+    description: 'Render all scenes in background while you take a break',
+    manualTime: 480, // 8 hours babysitting renders
+    automatedTime: 30, // hands-free
+    expertiseRequired: 'Render queue management',
+    icon: 'Layers',
+  },
+  YOUTUBE_PUBLISH: {
+    name: 'YouTube Publishing',
+    description: 'Direct publish to YouTube with metadata',
+    manualTime: 30,
+    automatedTime: 1,
+    expertiseRequired: 'YouTube workflow, SEO',
+    icon: 'Upload',
+  },
+} as const;
+
+/**
+ * Calculate total time savings for all automation features (per project)
+ */
+export function calculateTimeSavings(scenesCount: number = 12): {
+  manualHours: number;
+  automatedMinutes: number;
+  hoursSaved: number;
+  percentSaved: number;
+} {
+  // Base features (one-time per project)
+  const baseManualMinutes = 
+    AUTOMATION_FEATURES.SCREENPLAY_GENERATION.manualTime +
+    AUTOMATION_FEATURES.DIRECTOR_REVIEW.manualTime +
+    AUTOMATION_FEATURES.AUDIENCE_REVIEW.manualTime +
+    AUTOMATION_FEATURES.SCRIPT_REVISION.manualTime +
+    AUTOMATION_FEATURES.AUDIO_GENERATION.manualTime +
+    AUTOMATION_FEATURES.SCREENING_ROOM.manualTime +
+    AUTOMATION_FEATURES.SHARE_LINK.manualTime +
+    AUTOMATION_FEATURES.MP4_RENDER.manualTime +
+    AUTOMATION_FEATURES.MODERATION_NIL.manualTime +
+    AUTOMATION_FEATURES.BATCH_RENDER.manualTime +
+    AUTOMATION_FEATURES.YOUTUBE_PUBLISH.manualTime;
+  
+  const baseAutomatedMinutes =
+    AUTOMATION_FEATURES.SCREENPLAY_GENERATION.automatedTime +
+    AUTOMATION_FEATURES.DIRECTOR_REVIEW.automatedTime +
+    AUTOMATION_FEATURES.AUDIENCE_REVIEW.automatedTime +
+    AUTOMATION_FEATURES.SCRIPT_REVISION.automatedTime +
+    AUTOMATION_FEATURES.AUDIO_GENERATION.automatedTime +
+    AUTOMATION_FEATURES.SCREENING_ROOM.automatedTime +
+    AUTOMATION_FEATURES.SHARE_LINK.automatedTime +
+    AUTOMATION_FEATURES.MP4_RENDER.automatedTime +
+    AUTOMATION_FEATURES.MODERATION_NIL.automatedTime +
+    AUTOMATION_FEATURES.BATCH_RENDER.automatedTime +
+    AUTOMATION_FEATURES.YOUTUBE_PUBLISH.automatedTime;
+  
+  // Per-scene features
+  const perSceneManualMinutes =
+    AUTOMATION_FEATURES.SCENE_FRAMES.manualTime +
+    AUTOMATION_FEATURES.SCENE_DIRECTION.manualTime +
+    AUTOMATION_FEATURES.VIDEO_GENERATION.manualTime +
+    AUTOMATION_FEATURES.DIALOG_GUIDED_EDIT.manualTime;
+  
+  const perSceneAutomatedMinutes =
+    AUTOMATION_FEATURES.SCENE_FRAMES.automatedTime +
+    AUTOMATION_FEATURES.SCENE_DIRECTION.automatedTime +
+    AUTOMATION_FEATURES.VIDEO_GENERATION.automatedTime +
+    AUTOMATION_FEATURES.DIALOG_GUIDED_EDIT.automatedTime;
+  
+  const totalManualMinutes = baseManualMinutes + (perSceneManualMinutes * scenesCount);
+  const totalAutomatedMinutes = baseAutomatedMinutes + (perSceneAutomatedMinutes * scenesCount);
+  
+  const manualHours = totalManualMinutes / 60;
+  const hoursSaved = (totalManualMinutes - totalAutomatedMinutes) / 60;
+  const percentSaved = ((totalManualMinutes - totalAutomatedMinutes) / totalManualMinutes) * 100;
+  
+  return {
+    manualHours: Math.round(manualHours * 10) / 10,
+    automatedMinutes: Math.round(totalAutomatedMinutes),
+    hoursSaved: Math.round(hoursSaved * 10) / 10,
+    percentSaved: Math.round(percentSaved),
+  };
+}
+
+/**
+ * Calculate expertise value - the cost of acquiring equivalent skills
+ */
+export function calculateExpertiseValue(): {
+  learningHours: number;
+  learningCostAt100PerHour: number;
+  toolsReplaced: number;
+  ongoingFrustrationSaved: string;
+} {
+  return {
+    learningHours: TOTAL_TOOL_LEARNING_HOURS,
+    learningCostAt100PerHour: TOTAL_TOOL_LEARNING_HOURS * 100,
+    toolsReplaced: Object.keys(COMPETITOR_TOOLS).length,
+    ongoingFrustrationSaved: 'Priceless',
+  };
+}

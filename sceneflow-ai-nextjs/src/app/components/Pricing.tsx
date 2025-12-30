@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { CheckCircle, X, Zap, Film, Clapperboard, Users, ChevronDown, ChevronUp, ArrowRight, Clock, DollarSign } from 'lucide-react'
+import { CheckCircle, X, Zap, Film, Clapperboard, Users, ChevronDown, ChevronUp, ArrowRight, Clock, DollarSign, Calculator } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 export function Pricing() {
@@ -263,6 +263,22 @@ export function Pricing() {
               <Film className="w-4 h-4 text-amber-500" />
               <span className="text-gray-300"><strong className="text-amber-400">Same</strong> cinematic quality</span>
             </div>
+          </div>
+          
+          {/* CTA to Value Calculator */}
+          <div className="mt-6 text-center">
+            <a 
+              href="#value-calculator" 
+              className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 text-sm font-medium transition-colors"
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById('value-calculator')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
+              <Calculator className="w-4 h-4" />
+              Calculate your total savings (cost + time + expertise)
+              <ArrowRight className="w-4 h-4" />
+            </a>
           </div>
         </motion.div>
 
