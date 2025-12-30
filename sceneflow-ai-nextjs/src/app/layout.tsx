@@ -12,6 +12,7 @@ import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { Toaster } from 'sonner'
 import ProcessingOverlay from '../components/ProcessingOverlay'
 import { CreditsProvider } from '@/contexts/CreditsContext'
+import { CookieConsent } from '@/components/ui/CookieConsent'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -162,6 +163,7 @@ export default function RootLayout({
                 }}
               />
               <ProcessingOverlay />
+              <CookieConsent />
             </CreditsProvider>
           </AuthSessionProvider>
         </ThemeProvider>

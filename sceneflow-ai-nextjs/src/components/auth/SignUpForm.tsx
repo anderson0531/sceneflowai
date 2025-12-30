@@ -208,12 +208,12 @@ export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
               className="mt-1 w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
             />
             <label htmlFor="terms" className="text-sm text-gray-400">
-              I agree to the{' '}
-              <a href="#" className="text-blue-400 hover:text-blue-300 underline">
+              I am 18 years or older and agree to the{' '}
+              <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">
                 Terms of Service
               </a>{' '}
               and{' '}
-              <a href="#" className="text-blue-400 hover:text-blue-300 underline">
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">
                 Privacy Policy
               </a>
             </label>

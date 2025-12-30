@@ -19,11 +19,18 @@ export default function RefundPolicyPage() {
         <p className="text-gray-400 mb-8">Last updated: December 25, 2025</p>
         
         <div className="prose prose-invert prose-purple max-w-none space-y-8">
+          {/* TODO: Replace "authorized Merchant of Record payment partner" with 
+              "Paddle.com Market Limited" after Paddle approval - Expected Q1 2026 */}
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">1. Overview</h2>
             <p className="text-gray-300 leading-relaxed">
-              SceneFlow AI wants you to be completely satisfied with your purchase. This Refund Policy outlines when and how you can request a refund. Payments are processed by Paddle.com Market Limited as our Merchant of Record.
+              SceneFlow AI wants you to be completely satisfied with your purchase. This Refund Policy outlines when and how you can request a refund.
             </p>
+            <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 mt-4">
+              <p className="text-gray-300 text-sm">
+                <strong className="text-purple-400">Payment Processing:</strong> All payments and refunds are processed by our authorized Merchant of Record payment partner, who handles payment processing, tax calculation, and compliance on our behalf. Sales tax, VAT, or GST collected at the time of purchase will be refunded proportionally with any approved refund.
+              </p>
+            </div>
           </section>
 
           <section>

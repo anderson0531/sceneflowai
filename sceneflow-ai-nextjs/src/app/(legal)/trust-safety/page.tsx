@@ -85,7 +85,13 @@ export default function TrustSafetyPage() {
               <div className="space-y-4 text-gray-300">
                 <div>
                   <h4 className="text-sm font-semibold text-cyan-300 uppercase tracking-wide mb-1">Mechanism</h4>
-                  <p>All text content is processed through our moderation layer before being sent to voice synthesis providers. This includes integration with content moderation APIs and keyword filtering systems.</p>
+                  <p>All text and media content is processed through our multi-layer moderation system before being sent to AI providers. This includes:</p>
+                  <ul className="list-disc pl-6 mt-2 space-y-1">
+                    <li><strong>OpenAI Moderation API</strong> for text content screening</li>
+                    <li><strong>Custom keyword filtering</strong> for fraud and scam detection</li>
+                    <li><strong>AI-powered visual moderation</strong> for generated images and video (via Hive AI)</li>
+                    <li><strong>Audio content analysis</strong> for voice-generated outputs</li>
+                  </ul>
                 </div>
                 
                 <div>
