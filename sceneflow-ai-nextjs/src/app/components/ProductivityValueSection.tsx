@@ -258,7 +258,7 @@ const CostTab = ({ scenario }: { scenario: Scenario }) => {
           ].map((tool, i) => (
             <div key={i} className="flex justify-between text-sm">
               <span className="text-gray-400">{tool.name}</span>
-              <span className="text-red-400">${tool.cost.toFixed(2)}</span>
+              <span className="text-red-400">${tool.cost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
           ))}
         </div>
@@ -267,7 +267,7 @@ const CostTab = ({ scenario }: { scenario: Scenario }) => {
           <div className="flex justify-between items-center">
             <span className="text-gray-300 font-medium">Monthly Total</span>
             <span className="text-2xl font-bold text-red-500">
-              ${calculations.totalIndividualCost.toFixed(0)}
+              ${Math.round(calculations.totalIndividualCost).toLocaleString()}
             </span>
           </div>
           <p className="text-xs text-gray-500 mt-2">9 platforms to manage</p>
@@ -309,7 +309,7 @@ const CostTab = ({ scenario }: { scenario: Scenario }) => {
           <div className="flex justify-between items-center">
             <span className="text-gray-300 font-medium">You Save</span>
             <span className="text-2xl font-bold text-emerald-400">
-              ${calculations.savings.toFixed(0)}/mo
+              ${Math.round(calculations.savings).toLocaleString()}/mo
             </span>
           </div>
           <p className="text-xs text-gray-500 mt-2">One platform, one login</p>
