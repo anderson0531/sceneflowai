@@ -136,6 +136,28 @@ export const AUDIO_CREDITS = {
    * Covers processing and storage of voice model
    */
   VOICE_CLONE_SETUP: 500,
+
+  /** 
+   * Dialogue per line (~80 chars average per line)
+   * Estimated at 80 chars * 80 credits/1k chars = ~6.4, rounded to 5 credits
+   */
+  DIALOGUE_PER_LINE: 5,
+
+  /**
+   * Sound effect generation (same as ELEVENLABS_SFX)
+   */
+  SOUND_EFFECT: 15,
+
+  /**
+   * Music track generation (same as ELEVENLABS_MUSIC)
+   */
+  MUSIC_TRACK: 25,
+
+  /**
+   * TTS per minute (~4000 chars per minute at 80 credits/1k)
+   * 4 * 80 = 320 credits per minute
+   */
+  TTS_PER_MINUTE: 320,
 } as const;
 
 // =============================================================================

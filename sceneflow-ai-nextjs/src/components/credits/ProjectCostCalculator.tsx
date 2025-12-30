@@ -55,6 +55,7 @@ interface ProjectCostCalculatorProps {
   compact?: boolean
   projectId?: string
   onSetBudget?: (credits: number) => void | Promise<void>
+  initialParams?: Partial<FullProjectParameters>
 }
 
 // =============================================================================
@@ -106,9 +107,23 @@ export function ProjectCostCalculator({
   compact = false,
   projectId,
   onSetBudget,
+  initialParams,
 }: ProjectCostCalculatorProps) {
-  // Project parameters state
-  const [params, setParams] = useState<FullProjectParameters>(DEFAULT_PROJECT_PARAMS)
+  // Project parameters state - merge initialParams with defaults
+  const [params, setParams] = useState<FullProjectParameters>(() => {
+    if (!initialParams) return DEFAULT_PROJECT_PARAMS;
+    
+    // Deep merge initialParams with defaults
+    return {
+      scenes: { ...DEFAULT_PROJECT_PARAMS.scenes, ...initialParams.scenes },
+      video: { ...DEFAULT_PROJECT_PARAMS.video, ...initialParams.video },
+      images: { ...DEFAULT_PROJECT_PARAMS.images, ...initialParams.images },
+      audio: { ...DEFAULT_PROJECT_PARAMS.audio, ...initialParams.audio },
+      voice: { ...DEFAULT_PROJECT_PARAMS.voice, ...initialParams.voice },
+      storage: { ...DEFAULT_PROJECT_PARAMS.storage, ...initialParams.storage },
+      upscale: { ...DEFAULT_PROJECT_PARAMS.upscale, ...initialParams.upscale },
+    };
+  })
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [activePreset, setActivePreset] = useState<string | null>(null)
 
@@ -546,7 +561,7 @@ export function ProjectCostCalculator({
           {/* Total Credits Card */}
           <div className="p-6 bg-gradient-to-br from-slate-800 to-slate-800/50 rounded-xl border border-slate-700/50">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-gray-400">Your Project Needs:</span>
+              <span className="text-gray-400">Project Budget Calculation</span>
               <div className="flex items-center gap-2 text-gray-400 text-sm">
                 <Clock className="w-4 h-4" />
                 <span>~{params.video.totalMinutes} min video</span>
@@ -582,7 +597,7 @@ export function ProjectCostCalculator({
 
           {/* Cost Breakdown */}
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-gray-400">Cost Breakdown</h3>
+            <h3 className="text-sm font-medium text-gray-400">Cost Breakdown by Service</h3>
             
             {[
               { key: 'video', label: 'Video Generation', icon: Video, cost: breakdown.video },
@@ -592,7 +607,9 @@ export function ProjectCostCalculator({
               { key: 'upscale', label: 'Upscaling', icon: TrendingUp, cost: breakdown.upscale },
             ].filter(item => item.cost.credits > 0).map(item => {
               const Icon = item.icon
-              const percentage = (item.cost.credits / breakdown.total.credits) * 100
+              const percentage = breakdown.total.credits > 0 
+                ? (item.cost.credits / breakdown.total.credits) * 100 
+                : 0
               return (
                 <div
                   key={item.key}

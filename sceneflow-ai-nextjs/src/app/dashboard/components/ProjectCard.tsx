@@ -37,6 +37,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import ThumbnailPromptDrawer from '@/components/project/ThumbnailPromptDrawer'
 import { ProjectCostCalculator } from '@/components/credits/ProjectCostCalculator'
+import { useProjectCosts } from '@/hooks/useProjectCosts'
 import {
   WORKFLOW_STEPS,
   WORKFLOW_STEP_LABELS,
@@ -162,6 +163,9 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false)
   const [promptDrawerOpen, setPromptDrawerOpen] = useState(false)
   const [costCalculatorOpen, setCostCalculatorOpen] = useState(false)
+  
+  // Get project cost parameters from actual project data
+  const projectCosts = useProjectCosts(project.id)
 
   const normalizedCurrentStep = normalizeWorkflowStep(project.currentStep)
   const normalizedCompletedSteps = normalizeCompletedWorkflowSteps(project.completedSteps)
@@ -854,6 +858,7 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
               currentBalance={userCredits?.total_credits ?? 0}
               compact={false}
               projectId={project.id}
+              initialParams={projectCosts || undefined}
               onSetBudget={async (budget) => {
                 // Save budget to project metadata
                 try {
