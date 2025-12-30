@@ -735,33 +735,42 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
           
           {/* Cost Grid */}
           <div className="grid grid-cols-3 gap-2 text-xs">
-            {/* Actual */}
+            {/* Used */}
             <div className="text-center p-2 bg-gray-700/30 rounded">
-              <div className="text-gray-400 mb-1">Actual</div>
-              <div className="font-bold text-white">${costs.actualCostUsd.toFixed(2)}</div>
+              <div className="text-gray-400 mb-1 flex items-center justify-center gap-1">
+                <Coins className="w-3 h-3" />
+                Used
+              </div>
+              <div className="font-bold text-white">{costs.creditsUsed.toLocaleString()}</div>
             </div>
             
             {/* Budget */}
             <div className="text-center p-2 bg-gray-700/30 rounded">
-              <div className="text-gray-400 mb-1">Budget</div>
-              <div className={`font-bold ${costs.budgetCostUsd > 0 ? 'text-white' : 'text-gray-500'}`}>
-                {costs.budgetCostUsd > 0 ? `$${costs.budgetCostUsd.toFixed(2)}` : '—'}
+              <div className="text-gray-400 mb-1 flex items-center justify-center gap-1">
+                <Coins className="w-3 h-3" />
+                Budget
+              </div>
+              <div className={`font-bold ${costs.creditsBudget > 0 ? 'text-white' : 'text-gray-500'}`}>
+                {costs.creditsBudget > 0 ? costs.creditsBudget.toLocaleString() : '—'}
               </div>
             </div>
             
             {/* Est. to Complete */}
             <div className="text-center p-2 bg-gray-700/30 rounded">
-              <div className="text-gray-400 mb-1">Est. Left</div>
-              <div className="font-bold text-amber-400">${costs.estimatedCompletionCostUsd.toFixed(2)}</div>
+              <div className="text-gray-400 mb-1 flex items-center justify-center gap-1">
+                <Coins className="w-3 h-3" />
+                Est. Left
+              </div>
+              <div className="font-bold text-amber-400">{costs.estimatedCreditsToComplete.toLocaleString()}</div>
             </div>
           </div>
           
           {/* Budget Variance Indicator */}
-          {costs.budgetCostUsd > 0 && (
+          {costs.creditsBudget > 0 && (
             <div className={`mt-2 flex items-center justify-center gap-1 text-xs ${costs.isOverBudget ? 'text-red-400' : 'text-green-400'}`}>
               <TrendingUp className={`w-3 h-3 ${costs.isOverBudget ? 'rotate-0' : 'rotate-180'}`} />
               <span>
-                {costs.isOverBudget ? 'Over' : 'Under'} budget by ${Math.abs(costs.variance).toFixed(2)} ({Math.abs(costs.variancePercent)}%)
+                {costs.isOverBudget ? 'Over' : 'Under'} budget by {Math.abs(costs.variance).toLocaleString()} credits ({Math.abs(costs.variancePercent)}%)
               </span>
             </div>
           )}
