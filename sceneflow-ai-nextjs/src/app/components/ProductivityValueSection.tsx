@@ -184,20 +184,22 @@ const CostTab = ({ scenario }: { scenario: Scenario }) => {
     const totalIndividualCost = veoCost + imagenCost + geminiCost + elevenLabsCost + sunoCost + 
                                 topazCost + descriptCost + adobeCost + storageCost;
     
-    // SceneFlow cost
+    // SceneFlow cost - based on scenario type
     const creditsNeeded = totalScenes * 3000; // ~3000 credits per scene
-    let sceneflowTier = SUBSCRIPTION_TIERS.STARTER;
-    let tierName = 'Starter';
+    let sceneflowTier = SUBSCRIPTION_TIERS.PRO;
+    let tierName = 'Pro';
     
-    if (creditsNeeded > 75000) {
+    // Fixed tier mapping for consistent comparison
+    if (scenario.id === 'studio') {
       sceneflowTier = SUBSCRIPTION_TIERS.STUDIO;
       tierName = 'Studio';
-    } else if (creditsNeeded > 15000) {
+    } else if (scenario.id === 'agency') {
       sceneflowTier = SUBSCRIPTION_TIERS.PRO;
       tierName = 'Pro';
-    } else if (creditsNeeded > 4500) {
-      sceneflowTier = SUBSCRIPTION_TIERS.STARTER;
-      tierName = 'Starter';
+    } else {
+      // Solo Creator uses Pro plan for meaningful content production
+      sceneflowTier = SUBSCRIPTION_TIERS.PRO;
+      tierName = 'Pro';
     }
     
     const sceneflowCost = sceneflowTier.price;
@@ -220,6 +222,7 @@ const CostTab = ({ scenario }: { scenario: Scenario }) => {
       totalIndividualCost,
       sceneflowCost,
       tierName,
+      tierCredits: sceneflowTier.credits,
       creditsNeeded,
       savings,
       savingsPercent,
@@ -293,7 +296,7 @@ const CostTab = ({ scenario }: { scenario: Scenario }) => {
           <div className="text-sm text-gray-400">
             <div className="flex items-center gap-2 mb-1">
               <Zap className="w-3 h-3 text-cyan-400" />
-              <span>{calculations.creditsNeeded.toLocaleString()} credits/mo</span>
+              <span>{calculations.tierCredits.toLocaleString()} credits/mo</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-3 h-3 text-emerald-400" />
@@ -569,6 +572,63 @@ export default function ProductivityValueSection() {
 
         {/* Scenario Selector */}
         <ScenarioSelector selected={selectedScenario} onChange={setSelectedScenario} />
+
+        {/* At-a-Glance Value Summary */}
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          {/* Cost Savings Card */}
+          <div 
+            className="relative bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 rounded-2xl p-6 border border-emerald-500/30 cursor-pointer hover:border-emerald-400/50 transition-all"
+            onClick={() => setActiveTab('cost')}
+          >
+            <div className="absolute -top-3 -right-3 w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30">
+              <DollarSign className="w-6 h-6 text-white" />
+            </div>
+            <div className="text-emerald-300 text-sm font-medium mb-1">Save Up To</div>
+            <div className="text-4xl font-bold text-white mb-1">
+              {selectedScenario === 'studio' ? '$3,600+' : selectedScenario === 'agency' ? '$1,800+' : '$850+'}
+              <span className="text-lg text-emerald-400">/mo</span>
+            </div>
+            <div className="text-gray-400 text-sm">vs individual tool stack</div>
+          </div>
+
+          {/* Time Savings Card */}
+          <div 
+            className="relative bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 rounded-2xl p-6 border border-cyan-500/30 cursor-pointer hover:border-cyan-400/50 transition-all"
+            onClick={() => setActiveTab('time')}
+          >
+            <div className="absolute -top-3 -right-3 w-12 h-12 bg-cyan-500 rounded-full flex items-center justify-center shadow-lg shadow-cyan-500/30">
+              <Clock className="w-6 h-6 text-white" />
+            </div>
+            <div className="text-cyan-300 text-sm font-medium mb-1">Reclaim</div>
+            <div className="text-4xl font-bold text-white mb-1">
+              {selectedScenario === 'studio' ? '40+' : selectedScenario === 'agency' ? '20+' : '10+'}
+              <span className="text-lg text-cyan-400"> hrs/mo</span>
+            </div>
+            <div className="text-gray-400 text-sm">with one-click automation</div>
+          </div>
+
+          {/* Expertise Value Card */}
+          <div 
+            className="relative bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-2xl p-6 border border-purple-500/30 cursor-pointer hover:border-purple-400/50 transition-all"
+            onClick={() => setActiveTab('expertise')}
+          >
+            <div className="absolute -top-3 -right-3 w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center shadow-lg shadow-purple-500/30">
+              <GraduationCap className="w-6 h-6 text-white" />
+            </div>
+            <div className="text-purple-300 text-sm font-medium mb-1">Skip</div>
+            <div className="text-4xl font-bold text-white mb-1">
+              290+
+              <span className="text-lg text-purple-400"> hours</span>
+            </div>
+            <div className="text-gray-400 text-sm">of tool learning curve</div>
+          </div>
+        </motion.div>
 
         {/* Tab Navigation */}
         <div className="flex justify-center gap-2 sm:gap-4 mb-8">
