@@ -113,15 +113,37 @@ export function ProjectCostCalculator({
   const [params, setParams] = useState<FullProjectParameters>(() => {
     if (!initialParams) return DEFAULT_PROJECT_PARAMS;
     
-    // Deep merge initialParams with defaults
+    // Deep merge with defaults first to ensure all properties exist
+    // Use || {} to handle undefined/null categories from initialParams
     return {
-      scenes: { ...DEFAULT_PROJECT_PARAMS.scenes, ...initialParams.scenes },
-      video: { ...DEFAULT_PROJECT_PARAMS.video, ...initialParams.video },
-      images: { ...DEFAULT_PROJECT_PARAMS.images, ...initialParams.images },
-      audio: { ...DEFAULT_PROJECT_PARAMS.audio, ...initialParams.audio },
-      voice: { ...DEFAULT_PROJECT_PARAMS.voice, ...initialParams.voice },
-      storage: { ...DEFAULT_PROJECT_PARAMS.storage, ...initialParams.storage },
-      upscale: { ...DEFAULT_PROJECT_PARAMS.upscale, ...initialParams.upscale },
+      scenes: { 
+        ...DEFAULT_PROJECT_PARAMS.scenes, 
+        ...(initialParams.scenes || {}) 
+      },
+      video: { 
+        ...DEFAULT_PROJECT_PARAMS.video, 
+        ...(initialParams.video || {}) 
+      },
+      images: { 
+        ...DEFAULT_PROJECT_PARAMS.images, 
+        ...(initialParams.images || {}) 
+      },
+      audio: { 
+        ...DEFAULT_PROJECT_PARAMS.audio, 
+        ...(initialParams.audio || {}) 
+      },
+      voice: { 
+        ...DEFAULT_PROJECT_PARAMS.voice, 
+        ...(initialParams.voice || {}) 
+      },
+      storage: { 
+        ...DEFAULT_PROJECT_PARAMS.storage, 
+        ...(initialParams.storage || {}) 
+      },
+      upscale: { 
+        ...DEFAULT_PROJECT_PARAMS.upscale, 
+        ...(initialParams.upscale || {}) 
+      },
     };
   })
   const [showAdvanced, setShowAdvanced] = useState(false)
