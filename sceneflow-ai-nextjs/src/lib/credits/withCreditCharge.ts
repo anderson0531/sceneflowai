@@ -143,9 +143,9 @@ async function getUserPlan(userId: string): Promise<PlanTier> {
     if (total >= 50000) return 'studio'
     if (total >= 10000) return 'pro'
     if (total >= 3000) return 'starter'
-    return 'coffee_break'
+    return 'trial'
   } catch {
-    return 'coffee_break'
+    return 'trial'
   }
 }
 

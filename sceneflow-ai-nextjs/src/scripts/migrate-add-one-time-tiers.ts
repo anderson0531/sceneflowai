@@ -13,11 +13,11 @@ export async function migrateOneTimeTiers() {
       ADD COLUMN IF NOT EXISTS max_scenes_per_project INTEGER DEFAULT NULL;
     `)
     
-    // Update ENUM for name to include coffee_break (if needed)
+    // Update ENUM for name to include trial (if needed)
     // Note: This may require a more complex migration depending on PostgreSQL version
     try {
       await sequelize.query(`
-        ALTER TYPE subscription_tiers_name_enum ADD VALUE IF NOT EXISTS 'coffee_break';
+        ALTER TYPE subscription_tiers_name_enum ADD VALUE IF NOT EXISTS 'trial';
       `)
     } catch (error: any) {
       // If enum already exists or error occurs, it's likely fine

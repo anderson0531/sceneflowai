@@ -3,7 +3,7 @@ import { sequelize } from '../config/database'
 
 export interface SubscriptionTierAttributes {
   id: string
-  name: 'coffee_break' | 'starter' | 'pro' | 'studio' | 'enterprise'
+  name: 'trial' | 'starter' | 'pro' | 'studio' | 'enterprise'
   display_name: string
   monthly_price_usd: number
   annual_price_usd: number
@@ -27,7 +27,7 @@ export interface SubscriptionTierCreationAttributes extends Optional<Subscriptio
 
 export class SubscriptionTier extends Model<SubscriptionTierAttributes, SubscriptionTierCreationAttributes> implements SubscriptionTierAttributes {             
   public id!: string
-  public name!: 'coffee_break' | 'starter' | 'pro' | 'studio' | 'enterprise'
+  public name!: 'trial' | 'starter' | 'pro' | 'studio' | 'enterprise'
   public display_name!: string
   public monthly_price_usd!: number
   public annual_price_usd!: number
@@ -66,7 +66,7 @@ export class SubscriptionTier extends Model<SubscriptionTierAttributes, Subscrip
    */
   public getVoiceCloneSlots(): number {
     const slotsByTier: Record<string, number> = {
-      coffee_break: 0,
+      trial: 0,
       starter: 0,
       pro: 3,
       studio: 10,
@@ -84,7 +84,7 @@ SubscriptionTier.init(
       primaryKey: true,
     },
     name: {
-      type: DataTypes.ENUM('coffee_break', 'starter', 'pro', 'studio', 'enterprise'),
+      type: DataTypes.ENUM('trial', 'starter', 'pro', 'studio', 'enterprise'),
       allowNull: false,
       unique: true,
     },

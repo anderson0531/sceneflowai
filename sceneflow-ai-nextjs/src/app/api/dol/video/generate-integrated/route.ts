@@ -21,11 +21,11 @@ export async function POST(request: NextRequest) {
     const isVeoMax = quality === 'max' || quality === 'highest' || quality === 'veo_max';
     const CREDIT_COST = isVeoMax ? getCreditCost('VEO_QUALITY_4K') : getCreditCost('VEO_FAST');
 
-    // Veo Max tier restriction: block for coffee_break and starter plans
+    // Veo Max tier restriction: block for trial and starter plans
     if (isVeoMax) {
       const user = await User.findByPk(userId);
       const userPlan = user?.subscription_plan || 'free';
-      const blockedPlans = ['free', 'coffee_break', 'starter'];
+      const blockedPlans = ['free', 'trial', 'starter'];
       
       if (blockedPlans.includes(userPlan)) {
         return NextResponse.json(

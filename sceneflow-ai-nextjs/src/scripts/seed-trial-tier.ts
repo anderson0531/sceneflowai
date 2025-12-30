@@ -1,20 +1,20 @@
 import { SubscriptionTier, sequelize } from '../models'
 
-export async function seedCoffeeBreakTier() {
+export async function seedTrialTier() {
   try {
     await sequelize.authenticate()
     console.log('Database connection established.')
     
-    // Check if Coffee Break tier already exists
-    const existing = await SubscriptionTier.findOne({ where: { name: 'coffee_break' } })
+    // Check if Trial tier already exists
+    const existing = await SubscriptionTier.findOne({ where: { name: 'trial' } })
     if (existing) {
-      console.log('Coffee Break tier already exists. Skipping seed.')
+      console.log('Trial tier already exists. Skipping seed.')
       return
     }
     
-    const coffeeBreakTier = {
-      name: 'coffee_break' as const,
-      display_name: 'Coffee Break',
+    const trialTier = {
+      name: 'trial' as const,
+      display_name: 'Trial',
       monthly_price_usd: 5.00,
       annual_price_usd: 5.00, // Same as monthly (one-time)
       included_credits_monthly: 0, // No monthly credits
@@ -41,18 +41,18 @@ export async function seedCoffeeBreakTier() {
       ]
     }
     
-    await SubscriptionTier.create(coffeeBreakTier as any)
+    await SubscriptionTier.create(trialTier as any)
     
-    console.log('Successfully seeded Coffee Break tier.')
+    console.log('Successfully seeded Trial tier.')
   } catch (error) {
-    console.error('Error seeding Coffee Break tier:', error)
+    console.error('Error seeding Trial tier:', error)
     throw error
   }
 }
 
 // Run if called directly
 if (require.main === module) {
-  seedCoffeeBreakTier()
+  seedTrialTier()
     .then(() => {
       console.log('Seed completed successfully.')
       process.exit(0)

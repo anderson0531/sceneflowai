@@ -56,7 +56,7 @@ const UPGRADE_TRIGGER_TOP_UPS = 2 // Suggest upgrade after 2 Feature Boosts in a
  */
 export function getRecommendedTopUp(plan: PlanTier): TopUpRecommendation {
   switch (plan) {
-    case 'coffee_break':
+    case 'trial':
       return {
         pack: 'quick_fix',
         name: TOP_UP_PACKS.quick_fix.name,
@@ -101,9 +101,9 @@ export function getRecommendedTopUp(plan: PlanTier): TopUpRecommendation {
  */
 export function getRecommendedUpgrade(currentPlan: PlanTier): UpgradeRecommendation | null {
   switch (currentPlan) {
-    case 'coffee_break':
+    case 'trial':
       return {
-        fromPlan: 'coffee_break',
+        fromPlan: 'trial',
         toPlan: 'starter',
         name: SUBSCRIPTION_PLANS.starter.name,
         price: SUBSCRIPTION_PLANS.starter.price,

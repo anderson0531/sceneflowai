@@ -21,7 +21,7 @@ export function Pricing() {
   const handleTrialPurchase = async () => {
     setPurchasing(true)
     try {
-      const res = await fetch('/api/subscription/purchase-coffee-break', {
+      const res = await fetch('/api/subscription/purchase-trial', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       })
@@ -49,23 +49,23 @@ export function Pricing() {
     const pricingTiers = [
     {
       name: 'Trial',
-      monthlyPrice: 15,
-      annualPrice: 15, // Same as monthly (one-time)
+      monthlyPrice: 4.99,
+      annualPrice: 4.99, // Same as monthly (one-time)
       isOneTime: true,
       description: 'Test Drive SceneFlow AI',
       tagline: 'Create your first animatic',
-      credits: '1,200 Credits (one-time)',
+      credits: '1,500 Credits (one-time)',
       value: 'Full animatic + 2 draft scenes',
-      storage: '10 GB',
+      storage: '1 GB',
       features: [
-        '1,200 credits (never expire)',
+        '1,500 credits (never expire)',
         '~150 images + 3 Fast video scenes',
-        '10 GB storage',
+        '1 GB storage',
         'Gemini 2.5 Flash + Imagen 4',
         'Veo 3.1 Fast video drafts',
         'AI voiceover generation',
         'MP4 export',
-        '3 active projects',
+        '1 active project',
         'Email support'
       ],
       excluded: [
@@ -160,9 +160,9 @@ export function Pricing() {
   ]
 
   const creditPacks = [
-    { credits: 2000, price: 25, bonus: 0, label: 'Quick Fix', description: '1-2 Quality (4K) finals or ~12 Fast drafts' },
-    { credits: 6000, price: 60, bonus: 0, label: 'Scene Pack', description: '~40 Veo Fast scenes + revisions' },
-    { credits: 20000, price: 180, bonus: 0, label: 'Feature Boost', description: 'Complete a major movie sequence' }
+    { credits: 2500, price: 25, bonus: 0, label: 'Quick Fix', description: '1-2 Quality (4K) finals or ~12 Fast drafts' },
+    { credits: 7500, price: 60, bonus: 0, label: 'Scene Pack', description: '~40 Veo Fast scenes + revisions' },
+    { credits: 25000, price: 180, bonus: 0, label: 'Feature Boost', description: 'Complete a major movie sequence' }
   ]
 
   const creditExamples = [

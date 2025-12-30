@@ -159,14 +159,14 @@ async function handleTransactionCompleted(
     return
   }
   
-  // Check if this is a Coffee Break purchase
-  if (tierName === 'coffee_break') {
-    console.log(`[Paddle Webhook] Processing Coffee Break purchase for user: ${userId}`)
+  // Check if this is a Trial purchase
+  if (tierName === 'trial') {
+    console.log(`[Paddle Webhook] Processing Trial purchase for user: ${userId}`)
     try {
-      await SubscriptionService.grantOneTimeTier(userId, 'coffee_break')
-      console.log('[Paddle Webhook] Coffee Break credits granted successfully')
+      await SubscriptionService.grantOneTimeTier(userId, 'trial')
+      console.log('[Paddle Webhook] Trial credits granted successfully')
     } catch (error: any) {
-      console.error('[Paddle Webhook] Failed to grant Coffee Break credits:', error)
+      console.error('[Paddle Webhook] Failed to grant Trial credits:', error)
       throw error
     }
     return
@@ -208,9 +208,11 @@ async function handleSubscriptionCreated(
   
   // Grant initial monthly credits based on tier
   const creditAmounts: Record<string, number> = {
-    starter: 3000,
-    pro: 12000,
-    studio: 40000
+    trial: 1500,
+    starter: 4500,
+    pro: 15000,
+    studio: 75000,
+    enterprise: 200000
   }
   
   const credits = creditAmounts[tierName] || 0
@@ -269,9 +271,11 @@ async function handleSubscriptionActivated(
   
   // Grant monthly credits renewal
   const creditAmounts: Record<string, number> = {
-    starter: 3000,
-    pro: 12000,
-    studio: 40000
+    trial: 1500,
+    starter: 4500,
+    pro: 15000,
+    studio: 75000,
+    enterprise: 200000
   }
   
   const credits = creditAmounts[tierName] || 0

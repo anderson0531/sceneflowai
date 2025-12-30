@@ -17,29 +17,29 @@ export async function POST(req: NextRequest) {
     const userId = session.user.id
     const userEmail = session.user.email
     
-    // 2. Check if user already purchased Coffee Break
-    const canPurchase = await SubscriptionService.canPurchaseOneTimeTier(userId, 'coffee_break')
+    // 2. Check if user already purchased Trial
+    const canPurchase = await SubscriptionService.canPurchaseOneTimeTier(userId, 'trial')
     if (!canPurchase) {
       return NextResponse.json({ 
         error: 'Already purchased',
-        message: 'Coffee Break can only be purchased once per account'
+        message: 'Trial can only be purchased once per account'
       }, { status: 400 })
     }
     
     // 3. Get Paddle configuration
     const sellerId = process.env.PADDLE_SELLER_ID
     const apiKey = process.env.PADDLE_API_KEY
-    const priceId = process.env.PADDLE_COFFEE_BREAK_PRICE_ID
+    const priceId = process.env.PADDLE_TRIAL_PRICE_ID
     const environment = process.env.PADDLE_ENVIRONMENT || 'production'
     
     if (!sellerId || !apiKey || !priceId) {
       // In development/demo mode, grant credits directly
       if (process.env.NODE_ENV === 'development' || process.env.DEMO_MODE === 'true') {
-        await SubscriptionService.grantOneTimeTier(userId, 'coffee_break')
+        await SubscriptionService.grantOneTimeTier(userId, 'trial')
         return NextResponse.json({ 
           success: true,
-          message: 'Coffee Break credits granted (demo mode)',
-          redirectUrl: '/dashboard?coffee_break=success'
+          message: 'Trial credits granted (demo mode)',
+          redirectUrl: '/dashboard?trial=success'
         })
       }
       
@@ -55,12 +55,12 @@ export async function POST(req: NextRequest) {
       priceId,
       customData: {
         user_id: userId,
-        tier_name: 'coffee_break'
+        tier_name: 'trial'
       },
       customer: {
         email: userEmail
       },
-      successUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?coffee_break=success`,
+      successUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?trial=success`,
       // Paddle.js will handle the checkout overlay
       settings: {
         displayMode: 'overlay',
@@ -73,10 +73,10 @@ export async function POST(req: NextRequest) {
       success: true,
       paddleConfig,
       // Also provide direct checkout URL for fallback
-      checkoutUrl: `https://${environment === 'sandbox' ? 'sandbox-' : ''}buy.paddle.com/product/${priceId}?custom_data=${encodeURIComponent(JSON.stringify({ user_id: userId, tier_name: 'coffee_break' }))}&customer_email=${encodeURIComponent(userEmail || '')}`
+      checkoutUrl: `https://${environment === 'sandbox' ? 'sandbox-' : ''}buy.paddle.com/product/${priceId}?custom_data=${encodeURIComponent(JSON.stringify({ user_id: userId, tier_name: 'trial' }))}&customer_email=${encodeURIComponent(userEmail || '')}`
     })
   } catch (error: any) {
-    console.error('[Coffee Break Purchase] Error:', error)
+    console.error('[Trial Purchase] Error:', error)
     return NextResponse.json({ 
       error: 'Purchase failed',
       message: error.message || 'An unexpected error occurred'

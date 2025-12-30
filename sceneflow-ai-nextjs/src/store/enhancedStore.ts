@@ -33,7 +33,7 @@ export interface EnhancedUser {
   userType: 'filmmaker' | 'content-creator' | 'business' | 'educator';
   credits: number;
   monthlyCredits: number;
-  subscriptionTier: 'trial' | 'creator' | 'pro' | 'studio';
+  subscriptionTier: 'trial' | 'starter' | 'pro' | 'studio' | 'enterprise';
   hasBYOK: boolean;
   preferences: UserPreference[];
   createdAt: Date;

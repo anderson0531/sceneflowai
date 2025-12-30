@@ -370,7 +370,7 @@ export class SubscriptionService {
         new_balance: Number(user.credits),
         reason: 'addon_purchase',
         credit_type: 'addon',
-        ref: `coffee_break_purchase`,
+        ref: `trial_purchase`,
         meta: { tier: tierName, amount_paid: 5.00 }
       } as any, { transaction: tx })
     })

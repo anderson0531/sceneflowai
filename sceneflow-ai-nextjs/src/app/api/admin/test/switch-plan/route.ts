@@ -8,7 +8,7 @@
  * 
  * Request body:
  * {
- *   "tierName": "pro" | "studio" | "starter" | "coffee_break" | "enterprise",
+ *   "tierName": "pro" | "studio" | "starter" | "trial" | "enterprise",
  *   "grantCredits": true  // optional, whether to grant tier's monthly credits
  * }
  */
@@ -20,15 +20,15 @@ import { User, SubscriptionTier, CreditLedger, sequelize } from '@/models';
 import { resolveUser } from '@/lib/userHelper';
 
 // Valid tier names
-const VALID_TIERS = ['coffee_break', 'starter', 'pro', 'studio', 'enterprise'] as const;
+const VALID_TIERS = ['trial', 'starter', 'pro', 'studio', 'enterprise'] as const;
 type TierName = typeof VALID_TIERS[number];
 
 // Credit amounts per tier
 const TIER_CREDITS: Record<TierName, number> = {
-  coffee_break: 1200,
+  trial: 1500,
   starter: 4500,
   pro: 15000,
-  studio: 50000,
+  studio: 75000,
   enterprise: 200000,
 };
 

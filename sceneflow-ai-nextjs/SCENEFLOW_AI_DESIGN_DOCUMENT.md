@@ -1,7 +1,7 @@
 # SceneFlow AI - Application Design Document
 
-**Version**: 2.31  
-**Last Updated**: December 28, 2025  
+**Version**: 2.32  
+**Last Updated**: December 30, 2025  
 **Status**: Production
 
 ---
@@ -101,6 +101,7 @@ The user-facing terminology differs from internal code names for branding purpos
 
 | Date | Decision | Rationale | Status |
 |------|----------|-----------|--------|
+| 2025-12-30 | SceneCredit Currency & Profit Guardrails (v2.32) | **Comprehensive pricing model refactor with profit guardrails and production cost calculator**. Problem: Pricing model lacked documented guardrails, credit values were inconsistent across files, and users had no visibility into production costs. **Solution - 6 Key Components**: 1) **SceneCredit Currency** - Established $1 = 100 credits exchange rate for intuitive pricing. 1 credit = $0.01, 2) **Profit Guardrails** - Video floor (120 credits/8s minimum), download bandwidth tax (5 credits after 3 downloads), storage decay (30-day auto-archive to GCS Coldline, 50 credits to restore), context window cap (10k tokens, 50 credit overage), upscale queue premium (2x for instant), 3) **Subscription Plan Alignment** - Trial: $4.99/1,500 credits (one-time), Starter: $49/4,500, Pro: $149/15,000, Studio: $599/75,000, Enterprise: custom. Breakage targets: 15-30% unused credits, 4) **Storage Add-ons** - Separate Paddle subscriptions: $5/25GB, $15/100GB, $50/500GB. GCS Coldline for archived files, manual un-archive on plan upgrade, 5) **Project Cost Calculator** - Full parameter controls: scenes, segments/scene, takes/segment, video model (Fast/Quality), frames/scene, retakes, voiceover, voice clones, upscale minutes, storage months. Strategy comparison (Fast vs Fast+Topaz vs 4K native). Plan recommendation engine, 6) **Production Recommendations** - Default strategy: Veo Fast + Topaz upscale for ~40% cost savings vs native 4K. Frame-first workflow with ~2 takes per segment average. **Reference Case**: 10-min video = ~23,400 credits (~$234). **Key Files**: `creditCosts.ts`, `guardrails.ts` (new), `projectCalculator.ts` (new), `ProjectCostCalculator.tsx`, `StorageManagementService.ts` (new), `Pricing.tsx`. | ✅ In Progress |
 | 2025-12-28 | Voice Clone Recording Feature (v2.31) | **Added in-browser voice recording for voice cloning alongside file upload**. Problem: Users had to record audio externally and upload MP3 files to clone their voice. This added friction and required external tools. **Solution - Browser-Based Voice Recording**: 1) **useAudioRecorder Hook** (`/hooks/useAudioRecorder.ts` ~280 lines) - Custom hook using MediaRecorder API for audio-only capture. Handles `navigator.mediaDevices.getUserMedia({ audio: true })` with echo cancellation, noise suppression, and auto-gain. Tracks recording state (idle/preparing/recording/paused/stopped), elapsed time, and outputs Blob with object URL. Includes permission state detection, error handling for denied/not-found scenarios, and cleanup on unmount. Exports `audioBlob2File()` utility to convert Blob to File for FormData upload and `formatRecordingTime()` for MM:SS display, 2) **Training Scripts** - Three phonetically diverse scripts for voice training (~40-50 seconds each): Standard Script (rainbow passage), Dramatic Monologue (emotional range), Conversational (natural speech). Each script shows estimated duration and scrollable text in a styled card, 3) **VoiceClonePanel Recording Mode** - Added Upload/Record mode toggle with visual tab switching. Record mode shows: script selector, script display area, recording controls (Start Recording → animated recording indicator with timer → Stop Recording), permission error banners, 4) **Playback Review** - After recording stops, shows audio player with native controls, recording duration, "Re-record" and "Use Recording" buttons. User can listen to recording before committing, 5) **File Integration** - "Use Recording" converts blob to File and adds to files array (max 25). Users can mix uploaded files with recorded samples. All samples sent to existing `/api/tts/elevenlabs/voice-clone` endpoint which already supports WebM format. **Browser Compatibility**: MediaRecorder with `audio/webm;codecs=opus` supported in Chrome/Edge/Firefox. Falls back to `audio/ogg` or `audio/mp4` if needed. Safari has limited support. **Key Files**: `useAudioRecorder.ts` (new), `VoiceClonePanel.tsx` (enhanced). | ✅ Implemented |
 | 2025-12-27 | Cloud Run FFmpeg Video Export (v2.30) | **Replaced Shotstack with GCP Cloud Run Jobs + FFmpeg for 100x cost reduction ($0.25/min → $0.002/min)**. Problem: Shotstack API was expensive for video rendering at $0.25 per minute of rendered video. For feature-length animatics (90+ minutes), costs were prohibitive. **Solution - Self-Hosted FFmpeg on Cloud Run Jobs**: 1) **Docker Container** (`/docker/ffmpeg-renderer/`) - Alpine Linux with FFmpeg 6.0, Python 3.11, gcloud CLI. `render.py` downloads job spec from GCS, downloads assets (images/audio), executes FFmpeg with Ken Burns effects (zoompan filter), uploads rendered MP4 to GCS, updates database status via callback, 2) **GCS Storage** (`/lib/gcs/renderStorage.ts`) - Job specs stored as JSON, rendered outputs stored with 7-day lifecycle policy for auto-cleanup, 3) **Cloud Run Jobs Service** (`/lib/video/CloudRunJobsService.ts`) - Triggers async Cloud Run Jobs via gcloud CLI or REST API, 24-hour timeout supports long renders, 4) **RenderJob Model** (`/models/RenderJob.ts`) - Sequelize model tracks job status (QUEUED/PROCESSING/COMPLETED/FAILED), progress, output URLs, errors, 5) **API Routes** - `/api/export/screening-room` builds job spec and triggers Cloud Run Job, `/api/export/video/status/[renderId]` polls RenderJob table, `/api/export/render-callback` receives status updates from Cloud Run container, 6) **Deployment Script** (`/scripts/deploy-ffmpeg-renderer.sh`) - Creates GCS bucket, Artifact Registry, builds/pushes Docker image, creates Cloud Run Job with IAM permissions. **Ken Burns Implementation**: FFmpeg zoompan filter with configurable start/end zoom (1.0→1.15 default), center-focused pan, 24fps output. **Cost Breakdown**: Cloud Run ~$0.00002/second CPU + $0.000002/second memory = ~$0.002/minute vs Shotstack $0.25/minute = **125x savings**. **No Shotstack Fallback**: Shotstack integration completely removed - returns clear error message if Cloud Run not configured. Files: `/docker/ffmpeg-renderer/*`, `/lib/gcs/renderStorage.ts`, `/lib/video/CloudRunJobsService.ts`, `/lib/video/renderTypes.ts`, `/models/RenderJob.ts`, `/api/export/screening-room/route.ts`, `/api/export/video/status/[renderId]/route.ts`, `/api/export/render-callback/route.ts`, `/scripts/deploy-ffmpeg-renderer.sh`. | ✅ Implemented |
 | 2025-12-21 | Backward Navigation Film Treatment Restoration (v2.29) | **When navigating from Virtual Production back to The Blueprint, the approved Film Treatment is now restored from the project database.** Problem: Users navigating backward from Vision page to Blueprint/Studio page would see empty or stale treatment data because the `filmTreatmentVariant` (the approved treatment that was used to create the project) was not being loaded back into the UI state. **Solution**: Updated `src/app/dashboard/studio/[projectId]/page.tsx` data loading logic to: 1) **Priority load filmTreatmentVariant** - When project has `metadata.filmTreatmentVariant` (set when user approves treatment and proceeds to Vision), it takes priority over `filmTreatment` text, 2) **Hydrate guide store** - Calls `updateTreatment()` with variant content (content/synopsis/logline), 3) **Merge with existing variants** - Adds approved variant to `treatmentVariants` array if not already present, ensuring it appears in variant selector, 4) **Restore beats and runtime** - Hydrates `beatsView` and `estimatedRuntime` from the approved variant's `beats` and `total_duration_seconds` fields, 5) **Collapse input** - Sets `isInputExpanded: false` since project already has treatment. **Files Changed**: `page.tsx` (studio). **Workflow**: User creates treatment in Blueprint → Approves and proceeds to Vision (creates project with filmTreatmentVariant) → Works in Vision → Navigates back to Blueprint → Treatment is now visible and editable. | ✅ Implemented |
@@ -397,6 +398,145 @@ SceneFlow AI is an AI-powered video creation platform that helps users transform
 - ElevenLabs (Voice Synthesis & Sound Effects)
 
 > **V1 Architecture Decision**: SceneFlow uses a consolidated AI stack with Google (Gemini, Imagen 4, Veo 3.1) for all generation capabilities and ElevenLabs for audio. This simplifies operations, ensures consistent quality, and enables accurate credit tracking. All AI usage is metered via a credit-based billing system - users purchase credits and are charged based on actual usage.
+
+---
+
+## 2.2 SceneCredit Currency & Pricing Model
+
+### The "SceneCredit" Currency
+
+| Property | Value |
+|----------|-------|
+| **Exchange Rate** | $1.00 USD = 100 Credits |
+| **Credit Value** | 1 Credit = $0.01 (1 cent) |
+| **Purpose** | Granular pricing without fractional dollars |
+
+### Usage Pricing (Credits per Operation)
+
+All pricing targets **40-60% profit margin** based on provider costs.
+
+#### Video Generation (Vertex AI Veo 3.1)
+
+| Operation | Credits/Unit | User Price | Provider Cost | Margin | Notes |
+|-----------|--------------|------------|---------------|--------|-------|
+| **Veo Fast (1080p)** | 150 credits/8s | $1.50 | ~$0.75 | ~50% | Default for all plans |
+| **Veo Quality (4K)** | 250 credits/8s | $2.50 | ~$1.30 | ~48% | Pro/Studio only |
+| **Topaz Upscale** | 50 credits/min | $0.50 | ~$0.20 | ~60% | Alternative to 4K native |
+
+> **🛡️ Video Guardrail**: Never discount video generation below **120 credits/8s** (~$1.20). This is the profit floor.
+
+#### Image Generation (Imagen 4)
+
+| Operation | Credits | User Price | Provider Cost | Margin |
+|-----------|---------|------------|---------------|--------|
+| **Standard Image** | 10 credits | $0.10 | $0.04 | 60% |
+| **Scene Reference** | 10 credits | $0.10 | $0.04 | 60% |
+| **Frame Generation** | 10 credits | $0.10 | $0.04 | 60% |
+
+#### Intelligence/Scripting (Gemini)
+
+| Operation | Credits | User Price | Notes |
+|-----------|---------|------------|-------|
+| **Smart Request** | 5 credits | $0.05 | Gemini Flash |
+| **Script Analysis** | 10 credits | $0.10 | Gemini Pro |
+| **Story Generation** | 25 credits | $0.25 | Full treatment |
+
+#### Voice Synthesis (ElevenLabs)
+
+| Operation | Credits | User Price | Provider Cost | Margin |
+|-----------|---------|------------|---------------|--------|
+| **Voice Gen** | 80 credits/1k chars | $0.80 | ~$0.35 | ~56% |
+| **Voice Preview** | 5 credits | $0.05 | Minimal | High |
+| **Voice Clone Setup** | 500 credits | $5.00 | One-time | Varies |
+
+### Subscription Plans
+
+Plans include monthly credits with **expected breakage** (unused credits = 100% profit).
+
+| Plan | Price | Credits | Cost/Credit | Breakage Target | Key Features |
+|------|-------|---------|-------------|-----------------|--------------|
+| **Trial** | $4.99 (one-time) | 1,500 | $0.0033 | 30% | One-time, credits never expire, 10 GB storage |
+| **Starter** | $49/mo | 4,500 | $0.0108 | 25% | 25 GB storage, Veo Fast only |
+| **Pro** | $149/mo | 15,000 | $0.0099 | 20% | 500 GB storage, Veo Quality (4K), 3 voice clones |
+| **Studio** | $599/mo | 75,000 | $0.0079 | 15% | 2 TB storage, 10 voice clones, white-label |
+| **Enterprise** | Custom | 200,000+ | Negotiated | 10% | Dedicated support, API access, SLA |
+
+### Credit Top-Up Packs
+
+| Pack | Price | Credits | Cost/Credit | Daily Limit |
+|------|-------|---------|-------------|-------------|
+| **Quick Fix** | $25 | 2,000 | $0.0125 | 3/day |
+| **Scene Pack** | $60 | 6,000 | $0.01 | 5/day |
+| **Feature Boost** | $180 | 20,000 | $0.009 | 10/day |
+
+### Storage Add-ons (Separate Paddle Subscription)
+
+| Add-on | Price/Month | Storage |
+|--------|-------------|---------|
+| **Extra 25 GB** | $5 | +25 GB |
+| **Extra 100 GB** | $15 | +100 GB |
+| **Extra 500 GB** | $50 | +500 GB |
+
+### Profit Guardrails
+
+#### 1. Video Generation Floor
+- **Guardrail**: Never discount video generation below 120 credits/8s
+- **Rationale**: Provider cost is ~$0.75/8s, 120 credits = $1.20 (60% margin floor)
+
+#### 2. Download Bandwidth Tax
+- **Guardrail**: 3 free downloads per video file. Charge **5 credits** per download after
+- **Rationale**: Vercel bandwidth costs ~$0.15/GB. Prevents abuse from repeat downloads
+
+#### 3. Storage Decay
+- **Guardrail**: 30 days free retention. After 30 days, files auto-archive to GCS Coldline
+- **Restore Cost**: 50 credits per file to restore from cold storage
+- **Rationale**: Long-term storage is expensive. Encourages cleanup or storage add-on purchase
+
+#### 4. Context Window Limits
+- **Guardrail**: Intelligence requests capped at 10,000 tokens (~7,500 words)
+- **Overage**: 50 credits "Pro Analysis" charge for requests exceeding limit
+- **Rationale**: Large Gemini Pro requests are expensive
+
+#### 5. Upscale Queue Premium
+- **Guardrail**: Standard upscale is queued. Instant upscale costs **2x credits**
+- **Rationale**: Instant processing requires spinning up expensive GPU spot instances
+
+### Production Cost Estimation
+
+**Reference Case: 10-minute video, 10 scenes, ~150 video generations**
+
+| Component | Calculation | Credits |
+|-----------|-------------|---------|
+| Video (75 clips × 2 takes) | 150 × 150 | 22,500 |
+| Images (10 scenes × 4 frames) | 40 × 10 | 400 |
+| Voiceover (~5,000 chars) | 5 × 80 | 400 |
+| Render/Export | 10 min × 10 | 100 |
+| **Total** | | **~23,400 credits** |
+| **Recommended Plan** | Pro ($149/mo = 15,000) + Scene Pack ($60 = 6,000) | **$209** |
+
+### Production Strategy Recommendations
+
+| Strategy | Cost | Quality | When to Use |
+|----------|------|---------|-------------|
+| **Fast Only** | Lowest | 1080p | Drafts, previews, animatics |
+| **Fast + Topaz Upscale** | Medium | 4K (upscaled) | **Recommended** - best value for final output |
+| **Quality (4K) Native** | Highest | 4K native | Premium productions, close-ups |
+
+> **💡 Recommendation**: Generate with Veo Fast, then upscale with Topaz for 4K output. ~40% cheaper than native 4K with comparable quality for most shots.
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/lib/credits/creditCosts.ts` | Credit costs, plans, top-ups, margins |
+| `src/lib/credits/guardrails.ts` | Profit guardrails configuration |
+| `src/lib/credits/projectCalculator.ts` | Project cost estimation logic |
+| `src/components/credits/ProjectCostCalculator.tsx` | Interactive cost calculator UI |
+| `src/services/StorageManagementService.ts` | Storage quota and archive operations |
+| `src/app/api/subscription/purchase-trial/route.ts` | Trial purchase flow |
+| `src/app/api/webhooks/paddle/route.ts` | Payment webhook handling |
+
+---
 
 **Storage & Infrastructure:**
 - Vercel (Hosting & Deployment)

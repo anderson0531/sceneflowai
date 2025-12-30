@@ -52,7 +52,7 @@ export interface User {
   userType: 'filmmaker' | 'content-creator' | 'business' | 'educator';
   credits: number;
   monthlyCredits: number;
-  subscriptionTier: 'trial' | 'creator' | 'pro' | 'studio';
+  subscriptionTier: 'trial' | 'starter' | 'pro' | 'studio' | 'enterprise';
   hasBYOK: boolean;
   projects: Project[];
   ideas: Idea[];
