@@ -293,23 +293,25 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
     }
   }
 
-  // Calculate review scores from scene data or metadata
-  const getReviewScores = () => {
-    const scenes = getScenes()
-    const sceneScores = scenes
-      .map((s: any) => s.score || s.reviewScore || 0)
-      .filter((s: number) => s > 0)
-    const avgScene = sceneScores.length > 0 
-      ? Math.round(sceneScores.reduce((a: number, b: number) => a + b, 0) / sceneScores.length)
-      : 75
-
-    const directorScore = project.metadata?.directorScore || avgScene + 5
-    const audienceScore = project.metadata?.audienceScore || avgScene - 3
-
+  // Get review scores from visionPhase.reviews (actual AI-generated review data)
+  const getReviewScores = (): { director: number | null; audience: number | null; hasReviews: boolean } => {
+    // Priority 1: Get from visionPhase.reviews (the actual review objects)
+    const visionPhase = project.metadata?.visionPhase
+    const directorReview = visionPhase?.reviews?.director
+    const audienceReview = visionPhase?.reviews?.audience
+    
+    // Extract overallScore from review objects
+    const directorScore = directorReview?.overallScore ?? null
+    const audienceScore = audienceReview?.overallScore ?? null
+    
+    // Priority 2: Fallback to legacy metadata fields (if set directly)
+    const finalDirector = directorScore ?? project.metadata?.directorScore ?? null
+    const finalAudience = audienceScore ?? project.metadata?.audienceScore ?? null
+    
     return {
-      director: Math.min(100, Math.max(0, directorScore)),
-      audience: Math.min(100, Math.max(0, audienceScore)),
-      avgScene: Math.min(100, Math.max(0, avgScene))
+      director: finalDirector !== null ? Math.min(100, Math.max(0, finalDirector)) : null,
+      audience: finalAudience !== null ? Math.min(100, Math.max(0, finalAudience)) : null,
+      hasReviews: finalDirector !== null || finalAudience !== null
     }
   }
 
@@ -699,14 +701,22 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
             <div className="flex items-center gap-2">
               <span className="text-sm">🎬</span>
               <span className="text-xs text-gray-400">Director</span>
-              <span className="text-sm font-bold text-white ml-auto">{reviewScores.director}</span>
-              <span className="text-xs">{reviewScores.director >= 85 ? '🟢' : reviewScores.director >= 75 ? '🟡' : '🔴'}</span>
+              <span className={`text-sm font-bold ml-auto ${reviewScores.director !== null ? 'text-white' : 'text-gray-500'}`}>
+                {reviewScores.director !== null ? reviewScores.director : '—'}
+              </span>
+              {reviewScores.director !== null && (
+                <span className="text-xs">{reviewScores.director >= 85 ? '🟢' : reviewScores.director >= 75 ? '🟡' : '🔴'}</span>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm">👥</span>
               <span className="text-xs text-gray-400">Audience</span>
-              <span className="text-sm font-bold text-white ml-auto">{reviewScores.audience}</span>
-              <span className="text-xs">{reviewScores.audience >= 85 ? '🟢' : reviewScores.audience >= 75 ? '🟡' : '🔴'}</span>
+              <span className={`text-sm font-bold ml-auto ${reviewScores.audience !== null ? 'text-white' : 'text-gray-500'}`}>
+                {reviewScores.audience !== null ? reviewScores.audience : '—'}
+              </span>
+              {reviewScores.audience !== null && (
+                <span className="text-xs">{reviewScores.audience >= 85 ? '🟢' : reviewScores.audience >= 75 ? '🟡' : '🔴'}</span>
+              )}
             </div>
           </div>
         </div>
