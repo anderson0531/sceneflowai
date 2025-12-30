@@ -33,7 +33,7 @@ export default function PrivacyPolicyPage() {
             <ul className="list-disc pl-6 text-gray-300 space-y-2 mb-4">
               <li><strong>Account Information:</strong> Name, email address, password (hashed)</li>
               <li><strong>Profile Data:</strong> Avatar, display name, preferences</li>
-              <li><strong>Payment Information:</strong> Processed securely by Paddle; we do not store credit card numbers</li>
+              <li><strong>Payment Information:</strong> Processed securely by our payment partner; we do not store credit card numbers</li>
               <li><strong>Content:</strong> Scripts, prompts, uploaded images, and project data you create</li>
               <li><strong>BYOK API Keys:</strong> Encrypted and stored securely if you choose to use your own keys</li>
             </ul>
@@ -92,7 +92,7 @@ export default function PrivacyPolicyPage() {
             <p className="text-gray-300 leading-relaxed mb-4">We share your data with:</p>
             <ul className="list-disc pl-6 text-gray-300 space-y-2">
               <li><strong>AI Service Providers:</strong> Google (Vertex AI), ElevenLabs, Shotstack — to generate content (prompts and outputs only)</li>
-              <li><strong>Payment Processor:</strong> Paddle.com Market Limited — to process payments as our Merchant of Record</li>
+              <li><strong>Payment Processor:</strong> Our authorized Merchant of Record — to process payments securely</li>
               <li><strong>Authentication Provider:</strong> Clerk — for secure user authentication</li>
               <li><strong>Infrastructure Providers:</strong> Vercel, Supabase — for hosting and database services</li>
               <li><strong>Legal Requirements:</strong> When required by law or to protect our rights</li>

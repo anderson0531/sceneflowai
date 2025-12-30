@@ -19,8 +19,6 @@ export default function RefundPolicyPage() {
         <p className="text-gray-400 mb-8">Last updated: December 25, 2025</p>
         
         <div className="prose prose-invert prose-purple max-w-none space-y-8">
-          {/* TODO: Replace "authorized Merchant of Record payment partner" with 
-              "Paddle.com Market Limited" after Paddle approval - Expected Q1 2026 */}
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">1. Overview</h2>
             <p className="text-gray-300 leading-relaxed">
@@ -88,7 +86,7 @@ export default function RefundPolicyPage() {
               <li>We will respond within 2 business days</li>
             </ol>
             <p className="text-gray-300 leading-relaxed mt-4">
-              Alternatively, you can request a refund directly through Paddle&apos;s customer portal if you received an invoice link.
+              Alternatively, you can request a refund directly through the payment processor&apos;s customer portal if you received an invoice link.
             </p>
           </section>
 
@@ -118,7 +116,7 @@ export default function RefundPolicyPage() {
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">8. Exceptions and Disputes</h2>
             <p className="text-gray-300 leading-relaxed">
-              If you believe you are entitled to a refund outside of these guidelines due to technical issues or service outages, please contact us with details. We review each case individually. For payment disputes, Paddle handles chargebacks per their policies.
+              If you believe you are entitled to a refund outside of these guidelines due to technical issues or service outages, please contact us with details. We review each case individually. For payment disputes, our payment processor handles chargebacks per their policies.
             </p>
           </section>
 
