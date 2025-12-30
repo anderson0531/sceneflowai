@@ -78,9 +78,9 @@ export default function ProjectsPage() {
 
   // Get user ID from session, with fallback sync for localStorage projects
   const getUserId = useCallback(() => {
-    // Prefer session user ID (email-based, resolved by API)
-    if (session?.user?.id) {
-      return session.user.id
+    // Prefer session user email (resolved by API to find user)
+    if (session?.user?.email) {
+      return session.user.email
     }
     // Fallback to localStorage for unauthenticated users
     if (typeof window !== 'undefined') {
@@ -92,7 +92,7 @@ export default function ProjectsPage() {
       return userId
     }
     return 'anonymous'
-  }, [session?.user?.id])
+  }, [session?.user?.email])
 
   // Sync project ownership from localStorage UUID to session user ID
   const syncProjectOwnership = useCallback(async () => {
