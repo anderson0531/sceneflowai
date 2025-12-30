@@ -800,10 +800,10 @@ export function estimateStorageSize(params: any): number {
 export const COMPETITOR_TOOLS = {
   // Video Generation
   GOOGLE_VEO: {
-    name: 'Google Veo 2 (AI Studio)',
+    name: 'Veo 3.1 Quality (4K)',
     category: 'Video Generation',
     monthlyCost: 0,
-    perUnitCost: 0.35, // per 8-second clip
+    perUnitCost: 1.30, // per 8-second clip at 4K quality
     unit: '8s clip',
     learningCurve: 40, // hours to master prompt engineering
   },
@@ -817,6 +817,17 @@ export const COMPETITOR_TOOLS = {
     unit: 'image',
     learningCurve: 20,
   },
+  
+  // AI Script Generation
+  GEMINI_PRO: {
+    name: 'Gemini 2.5 Pro',
+    category: 'Script Generation',
+    monthlyCost: 0,
+    perUnitCost: 0.50, // per script/project
+    unit: 'project',
+    learningCurve: 25,
+  },
+  
   MIDJOURNEY: {
     name: 'Midjourney Pro',
     category: 'Image Generation',
@@ -850,7 +861,8 @@ export const COMPETITOR_TOOLS = {
     name: 'Topaz Video AI',
     category: 'Upscaling',
     monthlyCost: 19.99,
-    unit: 'subscription',
+    perUnitCost: 0.20, // per minute of video upscaled
+    unit: 'minute',
     learningCurve: 8,
   },
   

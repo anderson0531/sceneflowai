@@ -170,16 +170,18 @@ const CostTab = ({ scenario }: { scenario: Scenario }) => {
     
     // Individual tools costs
     const veoClips = totalScenes * 7; // ~7 segments per scene
-    const veoCost = veoClips * 0.35;
+    const veoCost = veoClips * 1.30; // Veo 3.1 Quality (4K) at ~$1.30 per 8s clip
     const imagenCost = totalScenes * 8 * 0.04; // 8 frames per scene
+    const geminiCost = totalVideos * 0.50; // Gemini 2.5 Pro for script generation per project
     const elevenLabsCost = 99; // subscription
     const sunoCost = 24;
-    const topazCost = 19.99;
+    const topazMinutes = Math.max(60, totalMinutes); // At least 60 minutes of upscaling
+    const topazCost = 19.99 + (topazMinutes * 0.20); // Subscription + usage at ~$0.20/min
     const descriptCost = 24;
     const adobeCost = 59.99;
     const storageCost = (totalMinutes * 0.5) * 0.023; // 0.5GB per minute
     
-    const totalIndividualCost = veoCost + imagenCost + elevenLabsCost + sunoCost + 
+    const totalIndividualCost = veoCost + imagenCost + geminiCost + elevenLabsCost + sunoCost + 
                                 topazCost + descriptCost + adobeCost + storageCost;
     
     // SceneFlow cost
@@ -207,9 +209,11 @@ const CostTab = ({ scenario }: { scenario: Scenario }) => {
       totalScenes,
       veoCost,
       imagenCost,
+      geminiCost,
       elevenLabsCost,
       sunoCost,
       topazCost,
+      topazMinutes,
       descriptCost,
       adobeCost,
       storageCost,
@@ -239,11 +243,12 @@ const CostTab = ({ scenario }: { scenario: Scenario }) => {
         
         <div className="space-y-2 mb-4">
           {[
-            { name: 'Google Veo 2', cost: calculations.veoCost },
+            { name: 'Veo 3.1 Quality (4K)', cost: calculations.veoCost },
             { name: 'Imagen 4', cost: calculations.imagenCost },
+            { name: 'Gemini 2.5 Pro', cost: calculations.geminiCost },
             { name: 'ElevenLabs Pro', cost: calculations.elevenLabsCost },
             { name: 'Suno Pro', cost: calculations.sunoCost },
-            { name: 'Topaz Video AI', cost: calculations.topazCost },
+            { name: `Topaz AI (${calculations.topazMinutes}min)`, cost: calculations.topazCost },
             { name: 'Descript Pro', cost: calculations.descriptCost },
             { name: 'Adobe CC', cost: calculations.adobeCost },
             { name: 'Cloud Storage', cost: calculations.storageCost },
@@ -262,7 +267,7 @@ const CostTab = ({ scenario }: { scenario: Scenario }) => {
               ${calculations.totalIndividualCost.toFixed(0)}
             </span>
           </div>
-          <p className="text-xs text-gray-500 mt-2">8 platforms to manage</p>
+          <p className="text-xs text-gray-500 mt-2">9 platforms to manage</p>
         </div>
       </div>
 
