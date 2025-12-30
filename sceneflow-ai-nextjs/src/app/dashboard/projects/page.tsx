@@ -149,14 +149,27 @@ export default function ProjectsPage() {
 
   // Listen for project updates (e.g., thumbnail generation)
   useEffect(() => {
-    const handleProjectUpdate = () => {
+    const handleProjectUpdate = async () => {
       console.log('[Projects Page] Project updated, reloading projects...')
-      loadProjects()
+      // Get userId fresh to avoid stale closure
+      const userId = session?.user?.email || localStorage.getItem('authUserId') || 'anonymous'
+      console.log('[Projects Page] Reloading with userId:', userId)
+      
+      try {
+        const res = await fetch(`/api/projects?userId=${userId}`)
+        const data = await res.json()
+        if (data.success) {
+          setProjects(data.projects || [])
+          setTotalCount(data.total || 0)
+        }
+      } catch (error) {
+        console.error('[Projects Page] Failed to reload projects:', error)
+      }
     }
 
     window.addEventListener('project-updated', handleProjectUpdate)
     return () => window.removeEventListener('project-updated', handleProjectUpdate)
-  }, [])
+  }, [session?.user?.email])
 
   const loadProjects = async () => {
     const timestamp = new Date().toISOString()
