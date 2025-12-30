@@ -398,7 +398,7 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
   };
 
   // Upscale costs
-  const upscaleCreditsPerMinute = UPSCALE_CREDITS.TOPAZ_PER_MINUTE;
+  const upscaleCreditsPerMinute = UPSCALE_CREDITS.PER_MINUTE;
   const upscaleMultiplier = safeParams.upscale.useInstant ? 1.5 : 1;
   const upscaleCredits = Math.ceil(safeParams.upscale.upscaleMinutes * upscaleCreditsPerMinute * upscaleMultiplier);
   
