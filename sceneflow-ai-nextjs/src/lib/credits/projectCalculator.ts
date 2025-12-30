@@ -230,13 +230,50 @@ export interface StrategyComparison {
  * Calculate detailed cost breakdown for a project
  */
 export function calculateDetailedProjectCost(params: FullProjectParameters): DetailedCostBreakdown {
+  // Ensure all params have valid numeric values to prevent NaN
+  const safeParams = {
+    scenes: {
+      count: Math.max(1, Number(params.scenes?.count) || 10),
+      segmentsPerScene: Math.max(1, Number(params.scenes?.segmentsPerScene) || 3),
+      takesPerSegment: Math.max(1, Number(params.scenes?.takesPerSegment) || 2),
+    },
+    video: {
+      model: params.video?.model || 'veo_fast',
+      segmentDuration: Number(params.video?.segmentDuration) || 8,
+      totalMinutes: Math.max(1, Number(params.video?.totalMinutes) || 4),
+    },
+    images: {
+      keyFrames: Math.max(1, Number(params.images?.keyFrames) || 30),
+      retakesPerFrame: Number(params.images?.retakesPerFrame) || 1,
+      model: params.images?.model || 'imagen4',
+    },
+    audio: {
+      totalMinutes: Math.max(1, Number(params.audio?.totalMinutes) || 4),
+      dialogueLines: Number(params.audio?.dialogueLines) || 0,
+      soundEffects: Number(params.audio?.soundEffects) || 0,
+      musicTracks: Number(params.audio?.musicTracks) || 0,
+    },
+    voice: {
+      voiceClones: Number(params.voice?.voiceClones) || 0,
+      voiceMinutes: Math.max(0, Number(params.voice?.voiceMinutes) || 0),
+    },
+    storage: {
+      expectedStorageGB: Number(params.storage?.expectedStorageGB) || 20,
+      activeMonths: Math.max(1, Number(params.storage?.activeMonths) || 1),
+    },
+    upscale: {
+      upscaleMinutes: Math.max(0, Number(params.upscale?.upscaleMinutes) || 0),
+      useInstant: Boolean(params.upscale?.useInstant),
+    },
+  };
+
   // Video costs
-  const videoCreditsPerSegment = params.video.model === 'veo_fast' 
+  const videoCreditsPerSegment = safeParams.video.model === 'veo_fast' 
     ? VIDEO_CREDITS.VEO_FAST_8S 
     : VIDEO_CREDITS.VEO_QUALITY_4K_8S;
   
-  const totalSegments = params.scenes.count * params.scenes.segmentsPerScene;
-  const totalTakes = totalSegments * params.scenes.takesPerSegment;
+  const totalSegments = safeParams.scenes.count * safeParams.scenes.segmentsPerScene;
+  const totalTakes = totalSegments * safeParams.scenes.takesPerSegment;
   const videoCredits = totalTakes * videoCreditsPerSegment;
   
   const video: CategoryCost = {
@@ -244,7 +281,7 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
     usdCost: videoCredits / CREDIT_EXCHANGE_RATE,
     items: [
       {
-        name: `${params.video.model === 'veo_fast' ? 'Veo Fast' : 'Veo 4K'} 8s clips`,
+        name: `${safeParams.video.model === 'veo_fast' ? 'Veo Fast' : 'Veo 4K'} 8s clips`,
         quantity: totalTakes,
         creditsEach: videoCreditsPerSegment,
         totalCredits: videoCredits,
@@ -253,11 +290,11 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
   };
 
   // Image costs
-  const imageCreditsPerFrame = params.images.model === 'imagen4' 
+  const imageCreditsPerFrame = safeParams.images.model === 'imagen4' 
     ? IMAGE_CREDITS.IMAGEN4 
     : IMAGE_CREDITS.IMAGEN4_ULTRA;
   
-  const totalImages = params.images.keyFrames * (1 + params.images.retakesPerFrame);
+  const totalImages = safeParams.images.keyFrames * (1 + safeParams.images.retakesPerFrame);
   const imageCredits = totalImages * imageCreditsPerFrame;
   
   const images: CategoryCost = {
@@ -265,7 +302,7 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
     usdCost: imageCredits / CREDIT_EXCHANGE_RATE,
     items: [
       {
-        name: `${params.images.model === 'imagen4' ? 'Imagen 4' : 'Imagen 4 Ultra'} frames`,
+        name: `${safeParams.images.model === 'imagen4' ? 'Imagen 4' : 'Imagen 4 Ultra'} frames`,
         quantity: totalImages,
         creditsEach: imageCreditsPerFrame,
         totalCredits: imageCredits,
@@ -274,10 +311,10 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
   };
 
   // Audio costs
-  const dialogueCredits = params.audio.dialogueLines * AUDIO_CREDITS.DIALOGUE_PER_LINE;
-  const sfxCredits = params.audio.soundEffects * AUDIO_CREDITS.SOUND_EFFECT;
-  const musicCredits = params.audio.musicTracks * AUDIO_CREDITS.MUSIC_TRACK;
-  const ttsMinutes = Math.ceil(params.audio.totalMinutes);
+  const dialogueCredits = safeParams.audio.dialogueLines * AUDIO_CREDITS.DIALOGUE_PER_LINE;
+  const sfxCredits = safeParams.audio.soundEffects * AUDIO_CREDITS.SOUND_EFFECT;
+  const musicCredits = safeParams.audio.musicTracks * AUDIO_CREDITS.MUSIC_TRACK;
+  const ttsMinutes = Math.ceil(safeParams.audio.totalMinutes);
   const ttsCredits = ttsMinutes * AUDIO_CREDITS.TTS_PER_MINUTE;
   const audioCredits = dialogueCredits + sfxCredits + musicCredits + ttsCredits;
   
@@ -287,19 +324,19 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
     items: [
       {
         name: 'Dialogue lines',
-        quantity: params.audio.dialogueLines,
+        quantity: safeParams.audio.dialogueLines,
         creditsEach: AUDIO_CREDITS.DIALOGUE_PER_LINE,
         totalCredits: dialogueCredits,
       },
       {
         name: 'Sound effects',
-        quantity: params.audio.soundEffects,
+        quantity: safeParams.audio.soundEffects,
         creditsEach: AUDIO_CREDITS.SOUND_EFFECT,
         totalCredits: sfxCredits,
       },
       {
         name: 'Music tracks',
-        quantity: params.audio.musicTracks,
+        quantity: safeParams.audio.musicTracks,
         creditsEach: AUDIO_CREDITS.MUSIC_TRACK,
         totalCredits: musicCredits,
       },
@@ -313,8 +350,8 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
   };
 
   // Voice clone costs
-  const voiceCloneCredits = params.voice.voiceClones * VOICE_LIMITS.CLONE_CREATION_CREDITS;
-  const voiceAudioCredits = Math.ceil(params.voice.voiceMinutes) * AUDIO_CREDITS.TTS_PER_MINUTE;
+  const voiceCloneCredits = safeParams.voice.voiceClones * VOICE_LIMITS.CLONE_CREATION_CREDITS;
+  const voiceAudioCredits = Math.ceil(safeParams.voice.voiceMinutes) * AUDIO_CREDITS.TTS_PER_MINUTE;
   const voiceTotalCredits = voiceCloneCredits + voiceAudioCredits;
   
   const voiceClones: CategoryCost = {
@@ -323,13 +360,13 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
     items: [
       {
         name: 'Voice clone creation',
-        quantity: params.voice.voiceClones,
+        quantity: safeParams.voice.voiceClones,
         creditsEach: VOICE_LIMITS.CLONE_CREATION_CREDITS,
         totalCredits: voiceCloneCredits,
       },
       {
         name: 'Voice audio minutes',
-        quantity: Math.ceil(params.voice.voiceMinutes),
+        quantity: Math.ceil(safeParams.voice.voiceMinutes),
         creditsEach: AUDIO_CREDITS.TTS_PER_MINUTE,
         totalCredits: voiceAudioCredits,
       },
@@ -337,8 +374,8 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
   };
 
   // Storage costs (addon-based, recurring)
-  const storageCostPerMonth = calculateStorageAddonCost(params.storage.expectedStorageGB);
-  const totalStorageCost = storageCostPerMonth * params.storage.activeMonths;
+  const storageCostPerMonth = calculateStorageAddonCost(safeParams.storage.expectedStorageGB);
+  const totalStorageCost = storageCostPerMonth * safeParams.storage.activeMonths;
   // Convert storage cost to "equivalent credits" for comparison
   const storageEquivalentCredits = totalStorageCost * CREDIT_EXCHANGE_RATE;
   
@@ -347,8 +384,8 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
     usdCost: totalStorageCost,
     items: [
       {
-        name: `${params.storage.expectedStorageGB}GB storage (${params.storage.activeMonths} months)`,
-        quantity: params.storage.activeMonths,
+        name: `${safeParams.storage.expectedStorageGB}GB storage (${safeParams.storage.activeMonths} months)`,
+        quantity: safeParams.storage.activeMonths,
         creditsEach: storageCostPerMonth * CREDIT_EXCHANGE_RATE,
         totalCredits: storageEquivalentCredits,
       },
@@ -357,16 +394,16 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
 
   // Upscale costs
   const upscaleCreditsPerMinute = UPSCALE_CREDITS.TOPAZ_PER_MINUTE;
-  const upscaleMultiplier = params.upscale.useInstant ? 1.5 : 1;
-  const upscaleCredits = Math.ceil(params.upscale.upscaleMinutes * upscaleCreditsPerMinute * upscaleMultiplier);
+  const upscaleMultiplier = safeParams.upscale.useInstant ? 1.5 : 1;
+  const upscaleCredits = Math.ceil(safeParams.upscale.upscaleMinutes * upscaleCreditsPerMinute * upscaleMultiplier);
   
   const upscale: CategoryCost = {
     credits: upscaleCredits,
     usdCost: upscaleCredits / CREDIT_EXCHANGE_RATE,
     items: [
       {
-        name: `Topaz upscale${params.upscale.useInstant ? ' (instant)' : ''}`,
-        quantity: Math.ceil(params.upscale.upscaleMinutes),
+        name: `Topaz upscale${safeParams.upscale.useInstant ? ' (instant)' : ''}`,
+        quantity: Math.ceil(safeParams.upscale.upscaleMinutes),
         creditsEach: Math.ceil(upscaleCreditsPerMinute * upscaleMultiplier),
         totalCredits: upscaleCredits,
       },
@@ -381,18 +418,18 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
   const estimatedStorageBytes = estimateStorageSize(
     totalTakes * 8, // 8 seconds per segment
     totalImages,
-    Math.ceil(params.audio.totalMinutes + params.voice.voiceMinutes)
+    Math.ceil(safeParams.audio.totalMinutes + safeParams.voice.voiceMinutes)
   );
 
   // Calculate platform overhead costs (moderation, payment, etc.)
   const moderationCost = calculateModerationCost({
-    scenes: params.scenes.count,
-    segmentsPerScene: params.scenes.segmentsPerScene,
-    takesPerSegment: params.scenes.takesPerSegment,
-    framesPerScene: Math.ceil(params.images.keyFrames / params.scenes.count),
-    voiceoverMinutes: params.voice.voiceMinutes,
+    scenes: safeParams.scenes.count,
+    segmentsPerScene: safeParams.scenes.segmentsPerScene,
+    takesPerSegment: safeParams.scenes.takesPerSegment,
+    framesPerScene: Math.ceil(safeParams.images.keyFrames / safeParams.scenes.count),
+    voiceoverMinutes: safeParams.voice.voiceMinutes,
     uploadedImages: 0, // Estimate; actual uploads tracked separately
-    exportMinutes: params.video.totalMinutes,
+    exportMinutes: safeParams.video.totalMinutes,
   });
 
   // Calculate payment processing fees (Paddle: 5% + $0.50)
@@ -415,8 +452,8 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
   const providerCosts = 
     (totalTakes * 0.75) + // Veo Fast at ~$0.75/8s (approximate)
     (totalImages * 0.04) + // Imagen 4 at $0.04/image
-    (Math.ceil(params.audio.totalMinutes + params.voice.voiceMinutes) * 0.35) + // ElevenLabs ~$0.35/min
-    (params.upscale.upscaleMinutes * 0.20); // Topaz ~$0.20/min
+    (Math.ceil(safeParams.audio.totalMinutes + safeParams.voice.voiceMinutes) * 0.35) + // ElevenLabs ~$0.35/min
+    (safeParams.upscale.upscaleMinutes * 0.20); // Topaz ~$0.20/min
 
   const marginAnalysis = {
     grossRevenue: totalUsdCost,

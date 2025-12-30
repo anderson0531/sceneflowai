@@ -164,8 +164,8 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
   const [promptDrawerOpen, setPromptDrawerOpen] = useState(false)
   const [costCalculatorOpen, setCostCalculatorOpen] = useState(false)
   
-  // Get project cost parameters from actual project data
-  const projectCosts = useProjectCosts(project.id)
+  // Get project cost parameters from actual project data stored in metadata
+  const projectCosts = useProjectCosts(project.metadata?.visionPhase)
 
   const normalizedCurrentStep = normalizeWorkflowStep(project.currentStep)
   const normalizedCompletedSteps = normalizeCompletedWorkflowSteps(project.completedSteps)
