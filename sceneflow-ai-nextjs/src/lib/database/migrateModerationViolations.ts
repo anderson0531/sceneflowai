@@ -32,6 +32,17 @@ export async function migrateModerationViolations() {
       console.log('moderation_violations_count column note:', error.message)
     }
     
+    // Step 1.5: Add moderation_violations_recent (INTEGER, default 0) - violations in last 24 hours
+    try {
+      await sequelize.query(`
+        ALTER TABLE users 
+        ADD COLUMN IF NOT EXISTS moderation_violations_recent INTEGER NOT NULL DEFAULT 0;
+      `)
+      console.log('✓ Added moderation_violations_recent column')
+    } catch (error: any) {
+      console.log('moderation_violations_recent column note:', error.message)
+    }
+    
     // Step 2: Add last_violation_at (TIMESTAMP, nullable)
     try {
       await sequelize.query(`
