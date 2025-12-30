@@ -863,7 +863,7 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
                 // Save budget to project metadata
                 try {
                   await fetch(`/api/projects/${project.id}`, {
-                    method: 'PATCH',
+                    method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ metadata: { ...project.metadata, creditsBudget: budget } })
                   })
