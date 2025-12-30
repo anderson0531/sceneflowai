@@ -34,7 +34,7 @@ import { useCueStore } from '@/store/useCueStore'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import ThumbnailPromptDrawer from '@/components/project/ThumbnailPromptDrawer'
 import { ProjectCostCalculator } from '@/components/credits/ProjectCostCalculator'
 import {
@@ -844,6 +844,9 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
               <Calculator className="w-5 h-5 text-sf-primary" />
               Project Cost Calculator - {project.title}
             </DialogTitle>
+            <DialogDescription className="text-gray-400 text-sm">
+              Estimate credits needed for your project and set a budget.
+            </DialogDescription>
           </DialogHeader>
           <div className="mt-4">
             <ProjectCostCalculator 
