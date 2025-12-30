@@ -421,22 +421,6 @@ const ExpertiseTab = () => {
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.4 }}
     >
-      {/* The Problem */}
-      <div className="bg-amber-500/5 rounded-2xl p-6 border border-amber-500/20 mb-6">
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="w-6 h-6 text-amber-400 flex-shrink-0 mt-1" />
-          <div>
-            <h4 className="text-lg font-bold text-white mb-2">The Expertise Gap Problem</h4>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              "I have a 140 IQ and I find the tool stack challenging and unsustainable. 
-              Each platform requires mastering unique prompting techniques, file formats, 
-              and workflows. The cognitive load is exhausting."
-            </p>
-            <p className="text-amber-400 text-xs mt-2 font-medium">— SceneFlow AI User</p>
-          </div>
-        </div>
-      </div>
-
       {/* Comparison */}
       <div className="grid md:grid-cols-2 gap-6">
         {/* Manual Stack Learning */}
