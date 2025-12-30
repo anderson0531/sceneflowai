@@ -28,12 +28,17 @@ export interface UserAttributes {
   trust_score: number                    // 0-100, increases with positive behavior
   voice_cloning_enabled: boolean         // Whether user has access to voice cloning
   account_verified_at?: Date | null      // When identity was verified
+  // Content moderation violation tracking
+  moderation_violations_count: number    // Total violation count (all time)
+  moderation_violations_recent: number   // Violations in last 24 hours
+  last_violation_at?: Date | null        // When last violation occurred
+  moderation_suspended_until?: Date | null // Account suspended until this time
   last_login?: Date
   created_at: Date
   updated_at: Date
 }
 
-export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'created_at' | 'updated_at' | 'is_active' | 'email_verified' | 'subscription_status' | 'subscription_credits_monthly' | 'addon_credits' | 'storage_used_gb' | 'one_time_tiers_purchased' | 'trust_score' | 'voice_cloning_enabled' | 'account_verified_at'> {}
+export interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'created_at' | 'updated_at' | 'is_active' | 'email_verified' | 'subscription_status' | 'subscription_credits_monthly' | 'addon_credits' | 'storage_used_gb' | 'one_time_tiers_purchased' | 'trust_score' | 'voice_cloning_enabled' | 'account_verified_at' | 'moderation_violations_count' | 'moderation_violations_recent' | 'last_violation_at' | 'moderation_suspended_until'> {}
 
 export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {                                                             
   public id!: string
@@ -61,6 +66,11 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
   public trust_score!: number
   public voice_cloning_enabled!: boolean
   public account_verified_at?: Date | null
+  // Content moderation violation tracking
+  public moderation_violations_count!: number
+  public moderation_violations_recent!: number
+  public last_violation_at?: Date | null
+  public moderation_suspended_until?: Date | null
   public last_login?: Date
   public created_at!: Date
   public updated_at!: Date
@@ -203,6 +213,25 @@ User.init(
       defaultValue: false,
     },
     account_verified_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    // Content moderation violation tracking
+    moderation_violations_count: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    moderation_violations_recent: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    last_violation_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    moderation_suspended_until: {
       type: DataTypes.DATE,
       allowNull: true,
     },

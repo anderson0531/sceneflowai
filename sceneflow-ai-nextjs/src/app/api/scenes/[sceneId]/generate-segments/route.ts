@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { moderatePrompt, getUserModerationContext, createBlockedResponse } from '@/lib/moderation'
 
 export const maxDuration = 120
 export const runtime = 'nodejs'
@@ -176,6 +177,23 @@ export async function POST(
     
     // Generate intelligent segmentation prompt
     const prompt = generateIntelligentSegmentationPrompt(sceneData, preferredDuration)
+
+    // Pre-screen prompt content before generation to prevent unfunded credits
+    // This runs at 100% coverage - text moderation is ~$0.0005/1K chars
+    const moderationContext = await getUserModerationContext('anonymous', projectId)
+    const promptModeration = await moderatePrompt(prompt, moderationContext)
+    
+    if (!promptModeration.allowed) {
+      console.warn(`[Scene Segmentation] Prompt blocked by moderation for scene ${sceneId}`)
+      return NextResponse.json(
+        {
+          error: 'Content policy violation',
+          message: 'The scene description contains content that violates our content policy. Please modify the scene and try again.',
+          flaggedCategories: promptModeration.result?.flaggedCategories || [],
+        },
+        { status: 403 }
+      )
+    }
 
     // Call Gemini for intelligent segmentation
     const segments = await callGeminiForIntelligentSegmentation(prompt)

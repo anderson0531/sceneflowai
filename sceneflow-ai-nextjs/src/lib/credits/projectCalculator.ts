@@ -18,6 +18,8 @@ import {
   TOPUP_PACKS,
   calculateProjectCost as baseCostCalculation,
   estimateStorageSize,
+  PLATFORM_OVERHEAD_COSTS,
+  calculateModerationCost,
 } from './creditCosts';
 
 import {
@@ -126,6 +128,48 @@ export interface DetailedCostBreakdown {
     usdCost: number;
   };
   estimatedStorageBytes: number;
+  
+  /**
+   * Platform overhead costs (not charged to users, tracked for margin analysis)
+   * These costs are absorbed into our margin
+   */
+  platformCosts?: {
+    /** Hive AI content moderation costs */
+    moderation: {
+      promptCost: number;
+      imageCost: number;
+      videoCost: number;
+      audioCost: number;
+      exportCost: number;
+      totalCost: number;
+    };
+    /** Payment processor fees (Paddle) */
+    payment: {
+      percentFee: number;
+      fixedFee: number;
+      totalFee: number;
+    };
+    /** Total platform overhead */
+    totalOverhead: number;
+  };
+  
+  /**
+   * Margin analysis (revenue - all costs)
+   */
+  marginAnalysis?: {
+    /** What user pays (credits converted to USD) */
+    grossRevenue: number;
+    /** AI provider costs (Veo, Imagen, ElevenLabs, etc.) */
+    providerCosts: number;
+    /** Platform overhead (moderation, payment, infra) */
+    platformOverhead: number;
+    /** Total costs */
+    totalCosts: number;
+    /** Gross profit */
+    grossProfit: number;
+    /** Margin percentage */
+    marginPercent: number;
+  };
 }
 
 // =============================================================================
@@ -340,6 +384,51 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
     Math.ceil(params.audio.totalMinutes + params.voice.voiceMinutes)
   );
 
+  // Calculate platform overhead costs (moderation, payment, etc.)
+  const moderationCost = calculateModerationCost({
+    scenes: params.scenes.count,
+    segmentsPerScene: params.scenes.segmentsPerScene,
+    takesPerSegment: params.scenes.takesPerSegment,
+    framesPerScene: Math.ceil(params.images.keyFrames / params.scenes.count),
+    voiceoverMinutes: params.voice.voiceMinutes,
+    uploadedImages: 0, // Estimate; actual uploads tracked separately
+    exportMinutes: params.video.totalMinutes,
+  });
+
+  // Calculate payment processing fees (Paddle: 5% + $0.50)
+  const paymentPercentFee = totalUsdCost * PLATFORM_OVERHEAD_COSTS.payment.PADDLE_FEE_PERCENT;
+  const paymentFixedFee = PLATFORM_OVERHEAD_COSTS.payment.PADDLE_FIXED_FEE;
+  const paymentTotalFee = paymentPercentFee + paymentFixedFee;
+
+  const platformCosts = {
+    moderation: moderationCost,
+    payment: {
+      percentFee: paymentPercentFee,
+      fixedFee: paymentFixedFee,
+      totalFee: paymentTotalFee,
+    },
+    totalOverhead: moderationCost.totalCost + paymentTotalFee,
+  };
+
+  // Calculate margin analysis
+  // Provider costs are approximated based on our known rates
+  const providerCosts = 
+    (totalTakes * 0.75) + // Veo Fast at ~$0.75/8s (approximate)
+    (totalImages * 0.04) + // Imagen 4 at $0.04/image
+    (Math.ceil(params.audio.totalMinutes + params.voice.voiceMinutes) * 0.35) + // ElevenLabs ~$0.35/min
+    (params.upscale.upscaleMinutes * 0.20); // Topaz ~$0.20/min
+
+  const marginAnalysis = {
+    grossRevenue: totalUsdCost,
+    providerCosts,
+    platformOverhead: platformCosts.totalOverhead,
+    totalCosts: providerCosts + platformCosts.totalOverhead,
+    grossProfit: totalUsdCost - (providerCosts + platformCosts.totalOverhead),
+    marginPercent: totalUsdCost > 0 
+      ? ((totalUsdCost - (providerCosts + platformCosts.totalOverhead)) / totalUsdCost) * 100 
+      : 0,
+  };
+
   return {
     video,
     images,
@@ -352,6 +441,8 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
       usdCost: totalUsdCost,
     },
     estimatedStorageBytes,
+    platformCosts,
+    marginAnalysis,
   };
 }
 

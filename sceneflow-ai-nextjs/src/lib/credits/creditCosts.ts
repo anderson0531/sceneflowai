@@ -484,6 +484,153 @@ export const PROVIDER_COSTS_USD = {
   ffmpeg_render: 0.05,
 } as const;
 
+// =============================================================================
+// PLATFORM OVERHEAD COSTS (not charged to users, tracked for margin analysis)
+// =============================================================================
+
+/**
+ * Hive AI Moderation Costs (Platform Overhead)
+ * 
+ * These costs are absorbed into our margin, not charged separately to users.
+ * Rationale: Moderation is a trust/safety requirement, not a feature users "buy"
+ * 
+ * Hybrid Smart Sampling Strategy reduces costs while maintaining 95%+ coverage:
+ * - 100% prompt pre-screening (text is nearly free)
+ * - 100% user uploads (external content is highest risk)
+ * - 100% first generation per scene (catches intent early)
+ * - 100% export/download (final safety gate)
+ * - 25% random sampling for subsequent generations (tier-based)
+ * 
+ * @see src/lib/moderation/moderationSampling.ts
+ */
+export const PLATFORM_OVERHEAD_COSTS = {
+  moderation: {
+    /** Text moderation per 1K characters (prompts) - $0.0005 */
+    HIVE_TEXT_PER_1K_CHARS: 0.0005,
+    
+    /** Image moderation per image - $0.001 */
+    HIVE_IMAGE_PER_UNIT: 0.001,
+    
+    /** Video moderation per minute - $0.03 */
+    HIVE_VIDEO_PER_MINUTE: 0.03,
+    
+    /** Audio moderation per minute - $0.02 */
+    HIVE_AUDIO_PER_MINUTE: 0.02,
+  },
+  
+  /** Payment processor fees (Paddle MoR) */
+  payment: {
+    /** Paddle fee percentage */
+    PADDLE_FEE_PERCENT: 0.05, // 5% of transaction
+    /** Paddle fixed fee per transaction */
+    PADDLE_FIXED_FEE: 0.50,
+  },
+  
+  /** Infrastructure overhead */
+  infrastructure: {
+    /** Vercel hosting per request (estimate) */
+    VERCEL_PER_REQUEST: 0.0001,
+    /** GCS storage per GB-month */
+    GCS_STORAGE_PER_GB_MONTH: 0.02,
+    /** Vercel Blob storage per GB-month */
+    VERCEL_BLOB_PER_GB_MONTH: 0.03,
+  },
+} as const;
+
+/**
+ * Moderation sampling rates by content type
+ * Used for cost estimation
+ */
+export const MODERATION_SAMPLING_RATES = {
+  prompts: 1.0,           // 100% - always check
+  userUploads: 1.0,       // 100% - always check
+  firstPerScene: 1.0,     // 100% - always check first
+  randomVideo: 0.25,      // 25% of non-first videos
+  randomImage: 0.25,      // 25% of non-first images
+  voiceover: 0.30,        // 30% of voiceovers
+  exports: 1.0,           // 100% - always check
+} as const;
+
+/**
+ * Calculate moderation cost for a project (platform overhead)
+ * Used for internal cost tracking and margin analysis
+ */
+export function calculateModerationCost(params: {
+  scenes: number;
+  segmentsPerScene: number;
+  takesPerSegment: number;
+  framesPerScene: number;
+  voiceoverMinutes: number;
+  uploadedImages: number;
+  exportMinutes: number;
+}): {
+  promptCost: number;
+  imageCost: number;
+  videoCost: number;
+  audioCost: number;
+  exportCost: number;
+  totalCost: number;
+} {
+  const {
+    scenes,
+    segmentsPerScene,
+    takesPerSegment,
+    framesPerScene,
+    voiceoverMinutes,
+    uploadedImages,
+    exportMinutes,
+  } = params;
+  
+  const totalSegments = scenes * segmentsPerScene * takesPerSegment;
+  const totalFrames = scenes * framesPerScene;
+  const firstPerScene = scenes * segmentsPerScene; // First take per segment per scene
+  
+  const costs = PLATFORM_OVERHEAD_COSTS.moderation;
+  const rates = MODERATION_SAMPLING_RATES;
+  
+  // Prompts (100% checked, ~100 chars each)
+  const promptCost = (totalSegments * 100 / 1000) * costs.HIVE_TEXT_PER_1K_CHARS;
+  
+  // Video - first per scene (100%) + random sample (25% of remaining)
+  const firstVideoCost = (firstPerScene * 8 / 60) * costs.HIVE_VIDEO_PER_MINUTE;
+  const remainingSegments = totalSegments - firstPerScene;
+  const sampledVideoCost = (remainingSegments * rates.randomVideo * 8 / 60) * costs.HIVE_VIDEO_PER_MINUTE;
+  const videoCost = firstVideoCost + sampledVideoCost;
+  
+  // Images - first per scene (100%) + random sample (25% of remaining) + uploads (100%)
+  const firstImageCost = scenes * costs.HIVE_IMAGE_PER_UNIT;
+  const remainingFrames = totalFrames - scenes;
+  const sampledImageCost = remainingFrames * rates.randomImage * costs.HIVE_IMAGE_PER_UNIT;
+  const uploadCost = uploadedImages * costs.HIVE_IMAGE_PER_UNIT;
+  const imageCost = firstImageCost + sampledImageCost + uploadCost;
+  
+  // Audio - voiceover sampling (30%)
+  const audioCost = voiceoverMinutes * rates.voiceover * costs.HIVE_AUDIO_PER_MINUTE;
+  
+  // Export (100% - video + audio)
+  const exportVideoCost = exportMinutes * costs.HIVE_VIDEO_PER_MINUTE;
+  const exportAudioCost = exportMinutes * costs.HIVE_AUDIO_PER_MINUTE;
+  const exportCost = exportVideoCost + exportAudioCost;
+  
+  return {
+    promptCost,
+    imageCost,
+    videoCost,
+    audioCost,
+    exportCost,
+    totalCost: promptCost + imageCost + videoCost + audioCost + exportCost,
+  };
+}
+
+/**
+ * Annual moderation budget by year (for monitoring)
+ */
+export const MODERATION_ANNUAL_BUDGET = {
+  year1: 4000,   // $4K buffer over $3.4K estimate
+  year2: 15000,  // Scales with 3.5x volume
+  year3: 40000,  // Scales with 10x volume
+} as const;
+
 /**
  * Calculate actual margin for a credit charge
  */

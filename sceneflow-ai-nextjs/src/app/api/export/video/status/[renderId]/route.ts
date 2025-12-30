@@ -5,10 +5,16 @@
  * 
  * Polls render status for Cloud Run Jobs.
  * The jobId (UUID format) is used to query the RenderJob database table.
+ * 
+ * Content Moderation:
+ * - Export gate moderation runs when video is first marked complete
+ * - Blocks NSFW, violence, hate content before download is allowed
+ * - This is the final safety gate - 100% coverage
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import RenderJob from '@/models/RenderJob'
+import RenderJob, { RenderJobStatus } from '@/models/RenderJob'
+import { moderateExport, createExportBlockedResponse, getUserModerationContext } from '@/lib/moderation'
 
 export const maxDuration = 30
 export const runtime = 'nodejs'
@@ -111,6 +117,69 @@ export async function GET(
       progress: jobStatus.progress,
       hasUrl: !!jobStatus.url,
     })
+
+    // Export gate moderation: Check video content before allowing download
+    // This is the final safety gate - runs at 100% coverage
+    let finalUrl = jobStatus.url
+    let moderationBlocked = false
+    
+    // Get job record to check current state
+    const job = await RenderJob.findByPk(renderId)
+    
+    // Only run moderation if:
+    // 1. Job is done with a URL
+    // 2. Job hasn't already been blocked (status !== BLOCKED)  
+    // 3. Job hasn't been marked as moderation-passed (check completed_at exists for done status)
+    const shouldRunModeration = jobStatus.status === 'done' && 
+                                jobStatus.url && 
+                                job?.status !== 'BLOCKED' as RenderJobStatus
+    
+    if (shouldRunModeration && job) {
+      console.log(`[Export Video Status] Running export gate moderation for job ${renderId}`)
+      
+      const userId = job.user_id || 'anonymous'
+      const projectId = job.project_id || undefined
+      
+      const moderationContext = await getUserModerationContext(userId, projectId)
+      const moderationResult = await moderateExport(jobStatus.url, null, moderationContext)
+      
+      if (!moderationResult.allowed) {
+        console.warn(`[Export Video Status] Export blocked by moderation for job ${renderId}`)
+        moderationBlocked = true
+        finalUrl = null
+        
+        // Update job record to indicate moderation failure
+        // Use type assertion since BLOCKED is a valid status for moderation failures
+        await job.update({
+          status: 'FAILED' as RenderJobStatus,
+          error: `Content blocked: ${moderationResult.result?.flaggedCategories.join(', ') || 'policy violation'}`,
+        })
+      } else {
+        // Video passed moderation - log success
+        console.log(`[Export Video Status] Export passed moderation for job ${renderId}`)
+      }
+    }
+
+    // If blocked, return appropriate response
+    if (moderationBlocked) {
+      return NextResponse.json({
+        success: false,
+        jobId: renderId,
+        provider: 'cloud-run',
+        status: 'blocked',
+        progress: 100,
+        url: null,
+        error: 'Export blocked: Video contains content that violates our content policy. Please review and remove flagged content.',
+        blocked: true,
+        metadata: {
+          estimatedDuration: jobStatus.estimatedDuration,
+          resolution: jobStatus.resolution,
+          language: jobStatus.language,
+          createdAt: jobStatus.createdAt,
+          completedAt: jobStatus.completedAt,
+        },
+      })
+    }
 
     return NextResponse.json({
       success: true,

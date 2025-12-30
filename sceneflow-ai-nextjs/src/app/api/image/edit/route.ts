@@ -6,6 +6,11 @@
  * - Mask-based inpainting (Imagen 3) - Precise pixel control
  * - Outpainting (Imagen 3) - Expand to cinematic aspect ratios
  * 
+ * Content Moderation:
+ * - All prompts are pre-screened via Hive AI
+ * - Blocks NSFW, violence, hate content before generation
+ * - Saves credits by catching violations before expensive image operations
+ * 
  * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
  */
 
@@ -18,6 +23,7 @@ import {
   AspectRatioPreset
 } from '@/lib/imagen/editClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
+import { moderatePrompt, createBlockedResponse, getUserModerationContext } from '@/lib/moderation'
 
 interface EditRequestBody {
   /** Edit mode: 'instruction' | 'inpaint' | 'outpaint' */
@@ -43,6 +49,10 @@ interface EditRequestBody {
   saveToBlob?: boolean
   /** Filename prefix for blob storage */
   blobPrefix?: string
+  /** User ID for moderation tracking */
+  userId?: string
+  /** Project ID for moderation context */
+  projectId?: string
 }
 
 export async function POST(request: NextRequest) {
@@ -59,7 +69,9 @@ export async function POST(request: NextRequest) {
       negativePrompt,
       subjectReference,
       saveToBlob = true,
-      blobPrefix = 'edited'
+      blobPrefix = 'edited',
+      userId = 'anonymous',
+      projectId
     } = body
     
     // Validate required fields
@@ -78,6 +90,22 @@ export async function POST(request: NextRequest) {
     }
     
     console.log(`[Image Edit API] Processing ${mode} edit request...`)
+    
+    // Content moderation: Pre-screen prompts before generation
+    // This catches violations BEFORE we spend credits on expensive image operations
+    const textToModerate = instruction || prompt || ''
+    if (textToModerate) {
+      const moderationContext = await getUserModerationContext(userId, projectId)
+      const moderationResult = await moderatePrompt(textToModerate, moderationContext)
+      
+      if (!moderationResult.allowed) {
+        console.log(`[Image Edit API] Prompt blocked by moderation: ${moderationResult.reason}`)
+        return createBlockedResponse(
+          moderationResult.result!,
+          'Your edit request contains content that violates our content policy. Please revise and try again.'
+        )
+      }
+    }
     
     let result
     
