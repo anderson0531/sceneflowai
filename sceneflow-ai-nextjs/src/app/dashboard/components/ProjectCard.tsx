@@ -23,13 +23,18 @@ import {
   Calendar,
   Star,
   ChevronDown,
+  Calculator,
+  DollarSign,
+  TrendingUp,
 } from 'lucide-react'
 import { useEnhancedStore } from '@/store/enhancedStore'
 import { useCueStore } from '@/store/useCueStore'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import ThumbnailPromptDrawer from '@/components/project/ThumbnailPromptDrawer'
+import { ProjectCostCalculator } from '@/components/credits/ProjectCostCalculator'
 import {
   WORKFLOW_STEPS,
   WORKFLOW_STEP_LABELS,
@@ -128,6 +133,13 @@ interface ProjectCardProps {
       visionPhase?: any
       directorScore?: number
       audienceScore?: number
+      // Cost tracking fields
+      creditsUsed?: number
+      creditsBudget?: number
+      estimatedTotalCredits?: number
+      actualCostUsd?: number
+      budgetCostUsd?: number
+      estimatedCompletionCostUsd?: number
       [key: string]: any // Allow additional properties
     }
   }
@@ -146,6 +158,7 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
   const [isHovered, setIsHovered] = useState(false)
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false)
   const [promptDrawerOpen, setPromptDrawerOpen] = useState(false)
+  const [costCalculatorOpen, setCostCalculatorOpen] = useState(false)
 
   const normalizedCurrentStep = normalizeWorkflowStep(project.currentStep)
   const normalizedCompletedSteps = normalizeCompletedWorkflowSteps(project.completedSteps)
@@ -226,26 +239,57 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
     return `${minutes} min`
   }
 
-  // Calculate project progress percentage
+  // Calculate project progress percentage based on current step position
+  // Each of 5 phases represents 20% progress. Current phase adds partial progress.
   const getProgressPercentage = () => {
-    const completedCount = normalizedCompletedSteps.length
-    return Math.round((completedCount / totalSteps) * 100)
+    const currentIndex = getWorkflowStepIndex(normalizedCurrentStep)
+    const completedPhases = Math.max(0, currentIndex)
+    const phaseProgress = 20 // Each phase = 20% of total (5 phases)
+    
+    // Add 10% for being "in progress" on current phase (halfway through phase)
+    const inProgressBonus = 10
+    
+    // Total: completed phases * 20% + 10% for current phase in progress
+    return Math.min(100, (completedPhases * phaseProgress) + inProgressBonus)
   }
 
-  // Calculate actual costs - show real data when available
+  // Calculate project costs - actual, budget, and estimated to complete
   const getProjectCosts = () => {
-    // Real credits used from project metadata if tracked
     const creditsUsed = project.metadata?.creditsUsed || 0
-    
-    // Estimate based on remaining work if generating
+    const creditsBudget = project.metadata?.creditsBudget || 0
     const sceneCount = getSceneCount()
-    const estimatedBYOKCost = sceneCount > 0 
-      ? Math.max(3, sceneCount * 1.5) // ~$1.50 per scene for video generation
-      : 15 // Default estimate
+    
+    // Calculate actual USD cost (1 credit = $0.01)
+    const actualCostUsd = project.metadata?.actualCostUsd || (creditsUsed / 100)
+    
+    // Budget in USD
+    const budgetCostUsd = project.metadata?.budgetCostUsd || (creditsBudget / 100)
+    
+    // Estimate remaining cost based on scenes and current progress
+    const progressPercent = getProgressPercentage()
+    const remainingProgress = 100 - progressPercent
+    
+    // Base estimate: ~$1.50 per scene for video generation + $0.50 for images/audio
+    const perSceneCost = 2.00
+    const baseEstimate = sceneCount > 0 ? sceneCount * perSceneCost : 15
+    
+    // Scale estimate by remaining progress
+    const estimatedCompletionCostUsd = project.metadata?.estimatedCompletionCostUsd || 
+      Math.round((baseEstimate * (remainingProgress / 100)) * 100) / 100
+    
+    // Calculate variance from budget
+    const variance = budgetCostUsd > 0 ? actualCostUsd - budgetCostUsd : 0
+    const variancePercent = budgetCostUsd > 0 ? Math.round((variance / budgetCostUsd) * 100) : 0
     
     return {
       creditsUsed,
-      estimatedBYOK: Math.round(estimatedBYOKCost)
+      creditsBudget,
+      actualCostUsd: Math.round(actualCostUsd * 100) / 100,
+      budgetCostUsd: Math.round(budgetCostUsd * 100) / 100,
+      estimatedCompletionCostUsd: Math.round(estimatedCompletionCostUsd * 100) / 100,
+      variance: Math.round(variance * 100) / 100,
+      variancePercent,
+      isOverBudget: variance > 0
     }
   }
 
@@ -552,8 +596,61 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
       {/* Project Content */}
       <div className="p-6">
         {/* Project Header */}
-        <div className="mb-4">
+        <div className="mb-3">
           <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">{project.title}</h3>
+          
+          {/* Project Status Selector - Now directly below title */}
+          {onStatusChange && (
+            <div className="mb-3">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="inline-flex items-center gap-2 px-2.5 py-1 bg-gray-800/40 hover:bg-gray-800/60 rounded-lg border border-gray-700/40 hover:border-gray-600/50 transition-colors text-xs">
+                    <span className={`w-2 h-2 rounded-full ${
+                      project.status === 'completed' ? 'bg-green-400' : 
+                      project.status === 'in-progress' || project.status === 'in_progress' ? 'bg-blue-400' : 
+                      project.status === 'archived' ? 'bg-gray-600' : 
+                      'bg-gray-400'
+                    }`} />
+                    <span className="text-white font-medium capitalize">
+                      {project.status === 'in-progress' || project.status === 'in_progress' ? 'Active' : project.status}
+                    </span>
+                    <ChevronDown className="w-3 h-3 text-gray-400" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-[160px]">
+                  <DropdownMenuItem 
+                    onClick={() => onStatusChange(project.id, 'draft')}
+                    className={project.status === 'draft' ? 'bg-gray-800/50' : ''}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-gray-400 mr-2" />
+                    Draft
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => onStatusChange(project.id, 'in-progress')}
+                    className={project.status === 'in-progress' || project.status === 'in_progress' ? 'bg-gray-800/50' : ''}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-blue-400 mr-2" />
+                    Active
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => onStatusChange(project.id, 'completed')}
+                    className={project.status === 'completed' ? 'bg-gray-800/50' : ''}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-green-400 mr-2" />
+                    Completed
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => onStatusChange(project.id, 'archived')}
+                    className={project.status === 'archived' ? 'bg-gray-800/50' : ''}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-gray-600 mr-2" />
+                    Archived
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
+          
           <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400">
             {/* Duration */}
             <span className="flex items-center gap-1" title="Estimated duration">
@@ -614,73 +711,55 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
           </div>
         </div>
 
-        {/* Project Status Selector */}
-        {onStatusChange && (
-          <div className="mb-4">
-            <label className="text-xs uppercase tracking-wider text-gray-500 mb-2 block">Project Status</label>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="w-full flex items-center justify-between px-3 py-2 bg-gray-800/40 hover:bg-gray-800/60 rounded-lg border border-gray-700/40 hover:border-gray-600/50 transition-colors text-sm">
-                  <span className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${
-                      project.status === 'completed' ? 'bg-green-400' : 
-                      project.status === 'in-progress' ? 'bg-blue-400' : 
-                      project.status === 'archived' ? 'bg-gray-600' : 
-                      'bg-gray-400'
-                    }`} />
-                    <span className="text-white font-medium capitalize">{project.status === 'in-progress' ? 'Active' : project.status}</span>
-                  </span>
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-[200px]">
-                <DropdownMenuItem 
-                  onClick={() => onStatusChange(project.id, 'draft')}
-                  className={project.status === 'draft' ? 'bg-gray-800/50' : ''}
-                >
-                  <span className="w-2 h-2 rounded-full bg-gray-400 mr-2" />
-                  Draft
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => onStatusChange(project.id, 'in-progress')}
-                  className={project.status === 'in-progress' ? 'bg-gray-800/50' : ''}
-                >
-                  <span className="w-2 h-2 rounded-full bg-blue-400 mr-2" />
-                  Active
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => onStatusChange(project.id, 'completed')}
-                  className={project.status === 'completed' ? 'bg-gray-800/50' : ''}
-                >
-                  <span className="w-2 h-2 rounded-full bg-green-400 mr-2" />
-                  Completed
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => onStatusChange(project.id, 'archived')}
-                  className={project.status === 'archived' ? 'bg-gray-800/50' : ''}
-                >
-                  <span className="w-2 h-2 rounded-full bg-gray-600 mr-2" />
-                  Archived
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
-
-        {/* Project Stats - Compact */}
+        {/* Project Cost Section */}
         <div className="mb-5 p-3 bg-gray-800/40 rounded-lg border border-gray-700/40">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
-              <span className="text-gray-500">Credits:</span>
-              <span className="font-medium text-white">{costs.creditsUsed}</span>
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs uppercase tracking-wider text-gray-500 flex items-center gap-1">
+              <DollarSign className="w-3 h-3" />
+              Cost Tracking
             </div>
-            {isPhase2Available && (
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500">Est. cost:</span>
-                <span className="font-medium text-amber-400">~${costs.estimatedBYOK}</span>
-              </div>
-            )}
+            <button 
+              onClick={() => setCostCalculatorOpen(true)}
+              className="text-xs text-sf-primary hover:text-sf-accent flex items-center gap-1 transition-colors"
+              title="Open cost calculator to set budget"
+            >
+              <Calculator className="w-3 h-3" />
+              Calculator
+            </button>
           </div>
+          
+          {/* Cost Grid */}
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            {/* Actual */}
+            <div className="text-center p-2 bg-gray-700/30 rounded">
+              <div className="text-gray-400 mb-1">Actual</div>
+              <div className="font-bold text-white">${costs.actualCostUsd.toFixed(2)}</div>
+            </div>
+            
+            {/* Budget */}
+            <div className="text-center p-2 bg-gray-700/30 rounded">
+              <div className="text-gray-400 mb-1">Budget</div>
+              <div className={`font-bold ${costs.budgetCostUsd > 0 ? 'text-white' : 'text-gray-500'}`}>
+                {costs.budgetCostUsd > 0 ? `$${costs.budgetCostUsd.toFixed(2)}` : '—'}
+              </div>
+            </div>
+            
+            {/* Est. to Complete */}
+            <div className="text-center p-2 bg-gray-700/30 rounded">
+              <div className="text-gray-400 mb-1">Est. Left</div>
+              <div className="font-bold text-amber-400">${costs.estimatedCompletionCostUsd.toFixed(2)}</div>
+            </div>
+          </div>
+          
+          {/* Budget Variance Indicator */}
+          {costs.budgetCostUsd > 0 && (
+            <div className={`mt-2 flex items-center justify-center gap-1 text-xs ${costs.isOverBudget ? 'text-red-400' : 'text-green-400'}`}>
+              <TrendingUp className={`w-3 h-3 ${costs.isOverBudget ? 'rotate-0' : 'rotate-180'}`} />
+              <span>
+                {costs.isOverBudget ? 'Over' : 'Under'} budget by ${Math.abs(costs.variance).toFixed(2)} ({Math.abs(costs.variancePercent)}%)
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -742,6 +821,25 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
           window.dispatchEvent(new CustomEvent('project-updated'))
         }}
       />
+
+      {/* Cost Calculator Modal */}
+      <Dialog open={costCalculatorOpen} onOpenChange={setCostCalculatorOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-900 border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Calculator className="w-5 h-5 text-sf-primary" />
+              Project Cost Calculator - {project.title}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <ProjectCostCalculator 
+              currentTier="starter"
+              currentBalance={5000}
+              compact={false}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   )
 }

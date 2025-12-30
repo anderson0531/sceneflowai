@@ -374,8 +374,8 @@ export default function ProjectsPage() {
   // Stats
   const stats = {
     total: projects.length,
-    active: projects.filter(p => p.status === 'active' || p.status === 'draft').length,
-    completed: projects.filter(p => p.completedSteps?.length === 6).length
+    active: projects.filter(p => p.status === 'in-progress' || p.status === 'in_progress' || p.status === 'draft').length,
+    completed: projects.filter(p => p.completedSteps?.length >= 5 || p.status === 'completed').length
   }
 
   return (
@@ -437,7 +437,7 @@ export default function ProjectsPage() {
             <SelectContent>
               <SelectItem value="all">All Projects</SelectItem>
               <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="in-progress">Active</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>
               <SelectItem value="archived">Archived</SelectItem>
             </SelectContent>

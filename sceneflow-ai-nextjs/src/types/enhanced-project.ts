@@ -343,6 +343,25 @@ export interface EnhancedProjectMetadata {
   marketResearch: MarketResearch;
   competitiveAnalysis: CompetitiveAnalysis;
   successMetrics: SuccessMetrics;
+  
+  // Cost tracking fields
+  creditsUsed?: number;
+  creditsBudget?: number;
+  estimatedTotalCredits?: number;
+  actualCostUsd?: number;
+  budgetCostUsd?: number;
+  estimatedCompletionCostUsd?: number;
+  costCalculatorParams?: {
+    scenes: number;
+    segmentsPerScene: number;
+    takesPerSegment: number;
+    videoModel: 'veo-fast' | 'veo-quality';
+    imagesPerScene: number;
+    audioEnabled: boolean;
+    voiceClonesCount: number;
+    storageGb: number;
+    upscaleMinutes: number;
+  };
 }
 
 export interface MarketResearch {
@@ -499,7 +518,10 @@ export interface AIAssistanceSettings {
   collaboration: boolean;
 }
 
-export type WorkflowStep = 'ideation' | 'storyboard' | 'scene-direction' | 'video-generation' | 'review' | 'optimization';
+// Unified workflow steps - legacy values are normalized by workflowSteps.ts
+export type WorkflowStep = 'blueprint' | 'vision' | 'creation' | 'polish' | 'launch' | 
+  // Legacy values for backwards compatibility (normalized in code)
+  'ideation' | 'storyboard' | 'scene-direction' | 'video-generation' | 'review' | 'optimization';
 
 // Project Bible System for Consistency Across Projects
 export interface ProjectBible {
