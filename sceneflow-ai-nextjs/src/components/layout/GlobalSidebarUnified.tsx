@@ -3,6 +3,7 @@
 import React, { useMemo, useState, useCallback } from 'react'
 import { usePathname, useParams } from 'next/navigation'
 import Link from 'next/link'
+import { useCredits } from '@/contexts/CreditsContext'
 import { mainNav } from '../../config/nav/globalNav'
 import { 
   getSidebarConfigForPath, 
@@ -80,6 +81,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
   const pathname = usePathname()
   const params = useParams() as Record<string, string>
   const currentProject = useStore(s => s.currentProject)
+  const { credits: creditsData } = useCredits()
   
   // Read sidebar data from store (populated by workflow pages)
   const sidebarData = useStore(s => s.sidebarData)
@@ -436,7 +438,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
                         <Coins className="w-4 h-4 text-emerald-500" />
                         <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Balance</span>
                       </div>
-                      <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">5,400</span>
+                      <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{creditsData?.total_credits?.toLocaleString() ?? '—'}</span>
                     </div>
                   </div>
                   <Link

@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react'
 import { usePathname, useParams } from 'next/navigation'
 import Link from 'next/link'
+import { useCredits } from '@/contexts/CreditsContext'
 import { episodeNav } from '../../config/nav/episodeNav'
 import { seriesNav } from '../../config/nav/seriesNav'
 import { mainNav } from '../../config/nav/globalNav'
@@ -110,6 +111,7 @@ export function GlobalSidebar({ children }: { children?: React.ReactNode }) {
   const byokReady = useBYOKReady()
   const phaseLocks = usePhaseLocks(seriesId, episodeId)
   const currentProject = useStore(s => s.currentProject)
+  const { credits: creditsData } = useCredits()
   
   // Section toggle state
   const [sectionsOpen, setSectionsOpen] = useState({
@@ -333,10 +335,7 @@ export function GlobalSidebar({ children }: { children?: React.ReactNode }) {
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-gray-600 dark:text-gray-400">Available</span>
-                <span className="font-semibold text-gray-900 dark:text-white">5,400</span>
-              </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                <div className="bg-sf-primary h-1.5 rounded-full" style={{ width: '72%' }} />
+                <span className="font-semibold text-gray-900 dark:text-white">{creditsData?.total_credits?.toLocaleString() ?? '—'}</span>
               </div>
               <Link
                 href="/dashboard/settings/billing"

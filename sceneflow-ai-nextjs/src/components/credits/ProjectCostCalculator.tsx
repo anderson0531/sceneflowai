@@ -53,6 +53,8 @@ interface ProjectCostCalculatorProps {
   onUpgrade?: (tier: SubscriptionTierName) => void
   onTopUp?: (pack: keyof typeof TOPUP_PACKS) => void
   compact?: boolean
+  projectId?: string
+  onSetBudget?: (credits: number) => void | Promise<void>
 }
 
 // =============================================================================
@@ -102,6 +104,8 @@ export function ProjectCostCalculator({
   onUpgrade,
   onTopUp,
   compact = false,
+  projectId,
+  onSetBudget,
 }: ProjectCostCalculatorProps) {
   // Project parameters state
   const [params, setParams] = useState<FullProjectParameters>(DEFAULT_PROJECT_PARAMS)
@@ -563,6 +567,17 @@ export function ProjectCostCalculator({
                 <span>~{formatBytes(breakdown.estimatedStorageBytes)}</span>
               </div>
             </div>
+            
+            {/* Set Budget Button */}
+            {onSetBudget && (
+              <button
+                onClick={() => onSetBudget(breakdown.total.credits)}
+                className="mt-4 w-full px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 rounded-lg text-white text-sm font-medium transition-all flex items-center justify-center gap-2"
+              >
+                <Check className="w-4 h-4" />
+                Set as Project Budget ({formatCredits(breakdown.total.credits)} credits)
+              </button>
+            )}
           </div>
 
           {/* Cost Breakdown */}

@@ -26,7 +26,9 @@ import {
   Calculator,
   DollarSign,
   TrendingUp,
+  Coins,
 } from 'lucide-react'
+import { useCredits } from '@/contexts/CreditsContext'
 import { useEnhancedStore } from '@/store/enhancedStore'
 import { useCueStore } from '@/store/useCueStore'
 import Link from 'next/link'
@@ -155,6 +157,7 @@ interface ProjectCardProps {
 export function ProjectCard({ project, className = '', isSelected = false, onSelectAsCurrent, onStatusChange, onDuplicate, onArchive, onDelete }: ProjectCardProps) {
   const { user, byokSettings } = useEnhancedStore()
   const { invokeCue } = useCueStore()
+  const { credits: userCredits } = useCredits()
   const [isHovered, setIsHovered] = useState(false)
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false)
   const [promptDrawerOpen, setPromptDrawerOpen] = useState(false)
@@ -253,41 +256,33 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
     return Math.min(100, (completedPhases * phaseProgress) + inProgressBonus)
   }
 
-  // Calculate project costs - actual, budget, and estimated to complete
+  // Calculate project costs in CREDITS - actual, budget, and estimated to complete
   const getProjectCosts = () => {
     const creditsUsed = project.metadata?.creditsUsed || 0
     const creditsBudget = project.metadata?.creditsBudget || 0
     const sceneCount = getSceneCount()
     
-    // Calculate actual USD cost (1 credit = $0.01)
-    const actualCostUsd = project.metadata?.actualCostUsd || (creditsUsed / 100)
-    
-    // Budget in USD
-    const budgetCostUsd = project.metadata?.budgetCostUsd || (creditsBudget / 100)
-    
     // Estimate remaining cost based on scenes and current progress
     const progressPercent = getProgressPercentage()
     const remainingProgress = 100 - progressPercent
     
-    // Base estimate: ~$1.50 per scene for video generation + $0.50 for images/audio
-    const perSceneCost = 2.00
-    const baseEstimate = sceneCount > 0 ? sceneCount * perSceneCost : 15
+    // Base estimate: ~200 credits per scene for video generation + audio/images
+    const perSceneCost = 200
+    const baseEstimate = sceneCount > 0 ? sceneCount * perSceneCost : 1500
     
     // Scale estimate by remaining progress
-    const estimatedCompletionCostUsd = project.metadata?.estimatedCompletionCostUsd || 
-      Math.round((baseEstimate * (remainingProgress / 100)) * 100) / 100
+    const estimatedCreditsToComplete = project.metadata?.estimatedCreditsToComplete || 
+      Math.round(baseEstimate * (remainingProgress / 100))
     
-    // Calculate variance from budget
-    const variance = budgetCostUsd > 0 ? actualCostUsd - budgetCostUsd : 0
-    const variancePercent = budgetCostUsd > 0 ? Math.round((variance / budgetCostUsd) * 100) : 0
+    // Calculate variance from budget (in credits)
+    const variance = creditsBudget > 0 ? creditsUsed - creditsBudget : 0
+    const variancePercent = creditsBudget > 0 ? Math.round((variance / creditsBudget) * 100) : 0
     
     return {
       creditsUsed,
       creditsBudget,
-      actualCostUsd: Math.round(actualCostUsd * 100) / 100,
-      budgetCostUsd: Math.round(budgetCostUsd * 100) / 100,
-      estimatedCompletionCostUsd: Math.round(estimatedCompletionCostUsd * 100) / 100,
-      variance: Math.round(variance * 100) / 100,
+      estimatedCreditsToComplete,
+      variance,
       variancePercent,
       isOverBudget: variance > 0
     }
@@ -844,8 +839,23 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
           <div className="mt-4">
             <ProjectCostCalculator 
               currentTier="starter"
-              currentBalance={5000}
+              currentBalance={userCredits?.total_credits ?? 0}
               compact={false}
+              projectId={project.id}
+              onSetBudget={async (budget) => {
+                // Save budget to project metadata
+                try {
+                  await fetch(`/api/projects/${project.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ metadata: { ...project.metadata, creditsBudget: budget } })
+                  })
+                  setCostCalculatorOpen(false)
+                  window.dispatchEvent(new CustomEvent('project-updated'))
+                } catch (error) {
+                  console.error('Failed to set budget:', error)
+                }
+              }}
             />
           </div>
         </DialogContent>
