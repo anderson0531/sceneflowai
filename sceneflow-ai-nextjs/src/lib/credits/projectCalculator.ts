@@ -273,8 +273,8 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
 
   // Video costs
   const videoCreditsPerSegment = safeParams.video.model === 'veo_fast' 
-    ? VIDEO_CREDITS.VEO_FAST_8S 
-    : VIDEO_CREDITS.VEO_QUALITY_4K_8S;
+    ? VIDEO_CREDITS.VEO_FAST 
+    : VIDEO_CREDITS.VEO_QUALITY_4K;
   
   const totalSegments = safeParams.scenes.count * safeParams.scenes.segmentsPerScene;
   const totalTakes = totalSegments * safeParams.scenes.takesPerSegment;
@@ -294,9 +294,10 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
   };
 
   // Image costs
+  // Note: Using IMAGEN_4 for both models as IMAGEN_4_ULTRA pricing not yet defined
   const imageCreditsPerFrame = safeParams.images.model === 'imagen4' 
-    ? IMAGE_CREDITS.IMAGEN4 
-    : IMAGE_CREDITS.IMAGEN4_ULTRA;
+    ? IMAGE_CREDITS.IMAGEN_4 
+    : IMAGE_CREDITS.IMAGEN_4;
   
   const totalImages = safeParams.images.keyFrames * (1 + safeParams.images.retakesPerFrame);
   const imageCredits = totalImages * imageCreditsPerFrame;
