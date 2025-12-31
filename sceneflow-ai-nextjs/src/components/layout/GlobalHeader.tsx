@@ -86,7 +86,7 @@ export function GlobalHeader() {
             <button
               className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/60"
               aria-label="Profile"
-              onClick={() => (isSignedIn ? (window.location.href = '/dashboard/profile') : signIn())}
+              onClick={() => (isSignedIn ? (window.location.href = '/dashboard/settings/profile') : signIn())}
             >
               <User size={20} />
             </button>

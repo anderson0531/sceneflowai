@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { isAdminEmail } from '@/lib/adminUtils'
 import { CreditGrantCard } from '@/components/admin/CreditGrantCard'
+import { CreditRecalculateCard } from '@/components/admin/CreditRecalculateCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,6 +28,7 @@ export default async function AdminPage() {
       {/* Admin Function Cards */}
       <div className="grid grid-cols-1 gap-6">
         <CreditGrantCard />
+        <CreditRecalculateCard />
         
         {/* Future admin cards can be added here */}
         {/* Example:
