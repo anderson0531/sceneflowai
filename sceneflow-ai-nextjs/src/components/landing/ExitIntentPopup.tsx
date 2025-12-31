@@ -17,7 +17,7 @@ interface ExitIntentPopupProps {
 
 export default function ExitIntentPopup({ 
   ctaUrl = '/dashboard',
-  ctaText = 'Start Free for $5'
+  ctaText = 'Start Exploring — $9'
 }: ExitIntentPopupProps) {
   const [isVisible, setIsVisible] = useState(false)
   const [email, setEmail] = useState('')
@@ -270,7 +270,7 @@ export default function ExitIntentPopup({
                         onClick={handleCTAClick}
                         className="block mt-2 text-cyan-400 hover:text-cyan-300 text-sm font-medium transition-colors"
                       >
-                        Start creating now for just $5 →
+                        Start creating now for just $9 →
                       </a>
                     </div>
 

@@ -200,51 +200,35 @@ export function Pricing() {
           className="bg-gradient-to-br from-slate-800/80 to-slate-800/40 rounded-2xl p-6 sm:p-8 mb-16 max-w-4xl mx-auto border border-slate-700/50"
         >
           <h3 className="text-xl sm:text-2xl font-bold text-center mb-2 text-white">
-            Traditional Production vs. SceneFlow AI
+            Why Creators Choose SceneFlow AI
           </h3>
           <p className="text-gray-400 text-center text-sm mb-6">
-            See why creators are switching to AI-powered filmmaking
+            Replace complexity with one streamlined platform
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-center">
-            {/* Traditional Route */}
-            <div className="text-center p-5 sm:p-6 bg-red-500/10 rounded-xl border border-red-500/20">
-              <div className="text-red-400 text-xs uppercase tracking-wider mb-2 font-medium">Traditional Route</div>
-              <div className="text-3xl sm:text-4xl font-bold text-red-500 mb-1">$15,000+</div>
-              <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">
-                <Clock className="w-4 h-4" />
-                <span>3-6 months</span>
-              </div>
-              <div className="mt-3 text-xs text-gray-500">
-                Crew, equipment, editing, post-production
+          
+          {/* Feature Comparison Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            <div className="text-center p-5 sm:p-6 bg-cyan-500/10 rounded-xl border border-cyan-500/20">
+              <Clock className="w-8 h-8 text-cyan-400 mx-auto mb-3" />
+              <div className="text-lg font-bold text-white mb-1">Hours, Not Months</div>
+              <div className="text-sm text-gray-400">
+                Go from script to published video in a single session
               </div>
             </div>
-
-            {/* Arrow */}
-            <div className="hidden md:flex items-center justify-center">
-              <div className="flex flex-col items-center">
-                <ArrowRight className="w-10 h-10 text-emerald-500" />
-                <span className="text-emerald-400 text-xs font-medium mt-1">Switch to AI</span>
+            
+            <div className="text-center p-5 sm:p-6 bg-purple-500/10 rounded-xl border border-purple-500/20">
+              <Layers className="w-8 h-8 text-purple-400 mx-auto mb-3" />
+              <div className="text-lg font-bold text-white mb-1">One Platform</div>
+              <div className="text-sm text-gray-400">
+                No tool-juggling—script, visuals, voice, music all integrated
               </div>
             </div>
-            <div className="flex md:hidden items-center justify-center py-2">
-              <div className="rotate-90">
-                <ArrowRight className="w-8 h-8 text-emerald-500" />
-              </div>
-            </div>
-
-            {/* SceneFlow AI */}
-            <div className="text-center p-5 sm:p-6 bg-emerald-500/10 rounded-xl border border-emerald-500/20 relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-500 text-black text-xs font-bold rounded-full">
-                SIGNIFICANT SAVINGS
-              </div>
-              <div className="text-emerald-400 text-xs uppercase tracking-wider mb-2 font-medium">SceneFlow AI</div>
-              <div className="text-3xl sm:text-4xl font-bold text-emerald-500 mb-1">$99 <span className="text-lg font-normal">(Pro Plan)</span></div>
-              <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">
-                <Clock className="w-4 h-4" />
-                <span>Hours, not weeks</span>
-              </div>
-              <div className="mt-3 text-xs text-gray-500">
-                Full production, AI actors, voice, music
+            
+            <div className="text-center p-5 sm:p-6 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
+              <Zap className="w-8 h-8 text-emerald-400 mx-auto mb-3" />
+              <div className="text-lg font-bold text-white mb-1">AI-Powered Quality</div>
+              <div className="text-sm text-gray-400">
+                Professional results without professional equipment
               </div>
             </div>
           </div>
@@ -252,16 +236,16 @@ export function Pricing() {
           {/* Summary Stats */}
           <div className="mt-6 pt-6 border-t border-slate-700/50 flex flex-wrap justify-center gap-6 text-sm">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-emerald-500" />
-              <span className="text-gray-300"><strong className="text-emerald-400">Significant</strong> cost savings</span>
+              <Film className="w-4 h-4 text-cyan-500" />
+              <span className="text-gray-300"><strong className="text-cyan-400">Full</strong> video production</span>
             </div>
             <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-cyan-500" />
-              <span className="text-gray-300"><strong className="text-cyan-400">Much faster</strong> production</span>
+              <Users className="w-4 h-4 text-purple-500" />
+              <span className="text-gray-300"><strong className="text-purple-400">Consistent</strong> AI characters</span>
             </div>
             <div className="flex items-center gap-2">
-              <Film className="w-4 h-4 text-amber-500" />
-              <span className="text-gray-300"><strong className="text-amber-400">AI-powered</strong> video quality</span>
+              <Volume2 className="w-4 h-4 text-amber-500" />
+              <span className="text-gray-300"><strong className="text-amber-400">Professional</strong> voiceover</span>
             </div>
           </div>
           

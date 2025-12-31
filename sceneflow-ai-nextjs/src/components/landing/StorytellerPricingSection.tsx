@@ -31,7 +31,7 @@ const pricingTiers: PricingTier[] = [
   {
     id: 'storyteller',
     name: 'Storyteller',
-    tagline: 'For faceless channels & podcasters',
+    tagline: 'For digital storytellers & podcasters',
     price: '$29',
     period: '/month',
     highlight: true,

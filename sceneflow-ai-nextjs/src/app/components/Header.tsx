@@ -190,7 +190,7 @@ export function Header() {
                     onClick={() => { /*trackCta({ event: 'click', label: 'start-trial', location: 'header' });*/ openAuthModal('signup') }}
                     className="bg-sf-primary hover:bg-sf-accent text-sf-background shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 px-4 py-2 text-sm font-medium"
                   >
-                    Get Started — $5
+                    Get Started — $9
                   </Button>
                 </>
               )}
@@ -295,7 +295,7 @@ export function Header() {
                           onClick={() => { /*trackCta({ event: 'click', label: 'start-trial', location: 'mobile-menu' });*/ openAuthModal('signup') }} 
                           className="w-full px-4 bg-sf-primary hover:bg-sf-accent text-sf-background py-3 text-base font-medium"
                         >
-                          Get Started — $5
+                          Get Started — $9
                         </Button>
                       </>
                     )}

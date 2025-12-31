@@ -60,7 +60,7 @@ export default function FloatingCTA() {
                 href="/?signup=1"
                 className="flex-1 flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 text-white font-semibold rounded-xl shadow-lg transition-all"
               >
-                <span className="text-sm">Try $5</span>
+                <span className="text-sm">Try $9</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -82,7 +82,7 @@ export default function FloatingCTA() {
             {/* Glow effect */}
             <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-cyan-500 via-purple-500 to-amber-500 blur-lg opacity-50 group-hover:opacity-70 transition-opacity -z-10" />
             
-            <span className="mr-2">Try for $5</span>
+            <span className="mr-2">Try for $9</span>
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
           

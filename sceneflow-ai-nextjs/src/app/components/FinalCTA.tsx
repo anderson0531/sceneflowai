@@ -107,7 +107,7 @@ export function FinalCTA() {
               className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-xl hover:opacity-90 transition-all shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40"
             >
               <Rocket className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
-              Get 1,000 Credits — $5
+              Start Exploring — $9
             </button>
             <button 
               onClick={() => { 

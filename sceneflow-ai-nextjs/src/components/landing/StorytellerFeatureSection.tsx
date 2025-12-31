@@ -21,11 +21,9 @@ import { Button } from '@/components/ui/Button'
 
 // Content categories this mode serves
 const contentCategories = [
-  { icon: Skull, name: 'True Crime', desc: 'Mystery & investigation stories' },
   { icon: BookOpen, name: 'History', desc: 'Historical documentaries' },
   { icon: Brain, name: 'Philosophy', desc: 'Stoicism & life lessons' },
   { icon: ScrollText, name: 'Book Reviews', desc: 'Summaries & analysis' },
-  { icon: Newspaper, name: 'News Explainers', desc: 'Current events breakdown' },
   { icon: Lightbulb, name: 'Educational', desc: 'How-to & tutorials' },
 ]
 

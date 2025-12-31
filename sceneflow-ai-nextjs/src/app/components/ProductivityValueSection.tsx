@@ -280,7 +280,7 @@ const CostTab = ({ scenario }: { scenario: Scenario }) => {
       {/* SceneFlow AI */}
       <div className="bg-emerald-500/5 rounded-2xl p-6 border border-emerald-500/20 relative">
         <div className="absolute -top-3 right-4 px-3 py-1 bg-emerald-500 text-black text-xs font-bold rounded-full">
-          SAVE {calculations.savingsPercent.toFixed(0)}%
+          ALL-IN-ONE
         </div>
         
         <div className="flex items-center gap-2 mb-4">
@@ -669,7 +669,7 @@ export default function ProductivityValueSection() {
             <ArrowRight className="w-5 h-5" />
           </Link>
           <p className="text-sm text-gray-500 mt-3">
-            Start with $5 trial • No credit card required
+            Start with Explorer • $9
           </p>
         </motion.div>
       </div>

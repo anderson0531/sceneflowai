@@ -50,7 +50,7 @@ export function Footer() {
               </span>
             </div>
             <p className="text-gray-400 max-w-md mb-6">
-              Transform your ideas into cinematic reality with AI-powered filmmaking. 
+              Transform your ideas into published video with AI-powered filmmaking. 
               From script to screening room—the future of video production is here.
             </p>
             
@@ -152,7 +152,7 @@ export function Footer() {
             <p className="text-2xl md:text-3xl font-semibold bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent">
               Made with ❤️ for creators
             </p>
-            <p className="text-gray-500 mt-2">From Idea to Cinematic Reality</p>
+            <p className="text-gray-500 mt-2">From Idea to Published Video</p>
           </div>
           
           {/* Payment & Compliance Notice */}
@@ -170,9 +170,15 @@ export function Footer() {
 
           {/* Copyright */}
           <div className="flex flex-col md:flex-row justify-between items-center pt-6 border-t border-gray-800/50">
-            <p className="text-gray-500 text-sm">
-              © 2025 SceneFlow AI. All rights reserved.
-            </p>
+            <div className="text-center md:text-left">
+              <p className="text-gray-500 text-sm">
+                © 2025 SceneFlow AI. All rights reserved.
+              </p>
+              {/* Business Address - Required for payment processor compliance */}
+              <p className="text-gray-600 text-xs mt-1">
+                SceneFlow AI • [Virtual Office Address - Coming Soon] • Contact: support@sceneflowai.studio
+              </p>
+            </div>
             <div className="flex items-center gap-4 mt-4 md:mt-0">
               <span className="text-xs text-gray-600">Powered by Industry-Leading AI</span>
             </div>

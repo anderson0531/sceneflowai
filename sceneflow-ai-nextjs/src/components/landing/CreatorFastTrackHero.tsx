@@ -29,7 +29,7 @@ const modeConfigs: Record<CreatorMode, ModeConfig> = {
   fasttrack: {
     badge: {
       icon: Youtube,
-      text: 'Built for Faceless Channels & Narrators',
+      text: 'Built for Digital Storytellers & Video Essayists',
       colors: 'bg-amber-500/10 border-amber-500/30 text-amber-300'
     },
     headline: {
@@ -37,17 +37,17 @@ const modeConfigs: Record<CreatorMode, ModeConfig> = {
       line2: 'Under 30 Minutes',
       gradient: 'from-amber-400 via-orange-500 to-red-500'
     },
-    subtitle: 'Replace expensive video editors with AI-generated Ken Burns visuals. Perfect for True Crime, History, Stoicism, and educational content.',
+    subtitle: 'Replace expensive video editors with AI-generated Ken Burns visuals. Perfect for History, Philosophy, Stoicism, and educational content.',
     features: [
-      { icon: Clock, text: 'Full video in 30 min' },
+      { icon: Clock, text: 'Accelerate production' },
       { icon: Mic, text: 'Audio-first workflow' },
-      { icon: TrendingUp, text: 'Publish daily' }
+      { icon: TrendingUp, text: 'Accelerate releases' }
     ],
     cta: {
       text: 'Try Storyteller Mode Free',
       gradient: 'from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-orange-500/25'
     },
-    social: 'Built for faceless channel creators'
+    social: 'Built for digital storytellers'
   },
   cinematic: {
     badge: {

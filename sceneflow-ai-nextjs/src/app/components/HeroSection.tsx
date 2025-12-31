@@ -89,7 +89,7 @@ export function HeroSection() {
           >
             <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white">From Idea to</span>
             <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400">
-              Cinematic Reality
+              Published Video
             </span>
           </motion.h1>
 
@@ -136,7 +136,7 @@ export function HeroSection() {
               onClick={() => window.location.href = '/?signup=1'}
               className="bg-gradient-to-r from-cyan-500 via-purple-500 to-amber-500 hover:from-cyan-400 hover:via-purple-400 hover:to-amber-400 text-white px-8 py-4 text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-500/25"
             >
-              Start for $5
+              Start for $9
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
             
@@ -159,11 +159,11 @@ export function HeroSection() {
             transition={{ duration: 0.6, delay: 1.2 }}
           >
             <p className="text-sm text-gray-400">
-              <span className="text-amber-400 font-medium">☕ For the price of a coffee</span>
+              <span className="text-amber-400 font-medium">☕ Less than two coffees</span>
               <span className="text-gray-500 mx-2">•</span>
               <span>Test drive with 1,000 credits</span>
               <span className="text-gray-500 mx-2">•</span>
-              <span className="text-gray-500">One-time $5</span>
+              <span className="text-gray-500">Explorer • $9</span>
             </p>
           </motion.div>
 

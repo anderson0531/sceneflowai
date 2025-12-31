@@ -107,7 +107,7 @@ const automationFeatures: Omit<AutomationCardProps, 'delay'>[] = [
   {
     icon: Play,
     title: 'Batch Video Rendering',
-    description: 'Generate all video scenes in batch mode. Take a 30-minute break and return to review your complete film in the Screening Room.',
+    description: 'Generate all video scenes in batch mode. Take a 30-minute break and return to review your complete project in the Screening Room.',
     highlight: 'Hands-free production',
     gradient: 'from-rose-500 to-rose-600'
   }
@@ -200,7 +200,7 @@ export default function AutomationSection() {
                   The "Coffee Break" Workflow
                 </h3>
                 <p className="text-gray-400 text-sm md:text-base">
-                  Click <span className="text-cyan-300 font-medium">Generate All</span>, take a break, return to your complete film.
+                  Click <span className="text-cyan-300 font-medium">Generate All</span>, take a break, return to your complete project.
                   <br className="hidden md:block" />
                   <span className="text-gray-500">Perfect for agency pitches, studio contracts, and indie filmmaker funding decks.</span>
                 </p>
@@ -212,7 +212,7 @@ export default function AutomationSection() {
               href="/?signup=1"
               className="group inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold rounded-xl shadow-lg shadow-cyan-500/25 transition-all duration-300 whitespace-nowrap"
             >
-              Start for $15
+              Start for $9
               <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
