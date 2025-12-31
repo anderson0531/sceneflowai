@@ -95,7 +95,7 @@ export function FinalCTA() {
             <div className="flex items-center justify-center gap-3">
               <Shield className="w-5 h-5 text-emerald-500 flex-shrink-0" />
               <span className="text-emerald-400 font-medium text-sm sm:text-base">
-                100% Money-Back Guarantee — If you don&apos;t love it in 7 days, we&apos;ll refund every penny.
+                7-Day Money-Back Guarantee — Not satisfied? Request a refund within 7 days.
               </span>
             </div>
           </motion.div>
@@ -146,7 +146,7 @@ export function FinalCTA() {
               <div className="w-14 h-14 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-7 h-7 text-emerald-400" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Risk-Free Trial</h3>
+              <h3 className="text-lg font-semibold mb-2">7-Day Guarantee</h3>
               <p className="text-gray-400 text-sm">Cancel anytime, no questions asked</p>
             </motion.div>
 
@@ -160,8 +160,8 @@ export function FinalCTA() {
               <div className="w-14 h-14 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <Zap className="w-7 h-7 text-amber-400" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Instant Results</h3>
-              <p className="text-gray-400 text-sm">Create your first film in minutes</p>
+              <h3 className="text-lg font-semibold mb-2">Fast Turnaround</h3>
+              <p className="text-gray-400 text-sm">Start creating videos right away</p>
             </motion.div>
           </div>
 

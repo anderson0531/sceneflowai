@@ -94,7 +94,7 @@ const automationFeatures: Omit<AutomationCardProps, 'delay'>[] = [
     icon: Volume2,
     title: 'Audio Generation',
     description: 'Generate professional audio with ElevenLabs voices for a single scene or your entire screenplay. Character-matched voices.',
-    highlight: 'Full cast in minutes',
+    highlight: 'Full cast, fast',
     gradient: 'from-emerald-500 to-emerald-600'
   },
   {

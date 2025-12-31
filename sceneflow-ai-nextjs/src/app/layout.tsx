@@ -90,7 +90,7 @@ export default function RootLayout({
               "name": "SceneFlow AI",
               "applicationCategory": "MultimediaApplication",
               "operatingSystem": "Web",
-              "description": "Transform your ideas into professional videos with AI-powered workflow automation. Go from napkin idea to festival-ready film in 4 hours.",
+              "description": "Transform your ideas into professional videos with AI-powered workflow automation. Create scripts, characters, and videos in one integrated platform.",
               "url": "https://sceneflowai.studio",
               "image": "https://sceneflowai.studio/logos/sceneflow-logo.png",
               "author": {

@@ -107,7 +107,7 @@ export function FeatureHighlight() {
         'One-click language expansion'
       ],
       useCases: [
-        'Global Release: Dub your film into 10 languages in minutes',
+        'Global Release: Quickly dub your film into multiple languages',
         'Regional Markets: Target specific markets with native voices',
         'Accessibility: Add dubbed audio tracks for wider reach'
       ],

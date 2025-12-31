@@ -126,7 +126,7 @@ export function TestimonialsSection() {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="text-center text-gray-500 text-sm mt-12"
         >
-          Join thousands of creators who are already producing professional content faster
+          Join creators who are producing professional content faster with AI
         </motion.p>
       </div>
     </section>

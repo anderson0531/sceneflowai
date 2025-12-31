@@ -5,10 +5,10 @@ import { Cloud, Shield, Zap, Globe } from 'lucide-react'
 
 export function TrustSignals() {
   const capabilities = [
-    { icon: Cloud, value: 'Cloud-Native', label: 'Scalable Infrastructure', description: 'Built to handle millions of creators' },
-    { icon: Shield, value: 'Enterprise', label: 'Security Standards', description: 'SOC 2 compliant architecture' },
-    { icon: Zap, value: '< 60s', label: 'Video Generation', description: 'Instant AI-powered rendering' },
-    { icon: Globe, value: 'Global', label: 'Edge Deployment', description: 'Low-latency worldwide access' }
+    { icon: Cloud, value: 'Cloud-Native', label: 'Scalable Infrastructure', description: 'Built for reliable performance' },
+    { icon: Shield, value: 'Secure', label: 'Security Standards', description: 'Industry-standard security practices' },
+    { icon: Zap, value: 'Fast', label: 'Video Generation', description: 'AI-powered video rendering' },
+    { icon: Globe, value: 'Global', label: 'Edge Deployment', description: 'Reliable worldwide access' }
   ]
   
   return (

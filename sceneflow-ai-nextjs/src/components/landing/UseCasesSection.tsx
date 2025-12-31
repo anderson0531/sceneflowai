@@ -24,8 +24,8 @@ const useCases: UseCase[] = [
     gradient: 'from-amber-500 to-orange-600',
     bgGradient: 'from-amber-500/10 to-orange-600/10',
     challenge: 'Creating professional video content requires expensive equipment, editing software, and hours of post-production—limiting output to 2-3 videos per week.',
-    solution: 'SceneFlow AI transforms ideas into polished short films with AI-generated scripts, consistent characters, and professional voiceovers in minutes, not days.',
-    outcome: '10x content velocity with studio-quality production. One creator now produces daily narrative content that previously required a full production team.',
+    solution: 'SceneFlow AI transforms ideas into polished short films with AI-generated scripts, consistent characters, and professional voiceovers—dramatically faster than traditional production.',
+    outcome: 'Increased content output with AI-powered production. Creators can produce more narrative content without needing a full production team.',
     videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Jul_16__0705_34s_202512231713_zzqmk.mp4',
   },
   {
@@ -36,7 +36,7 @@ const useCases: UseCase[] = [
     bgGradient: 'from-cyan-500/10 to-blue-600/10',
     challenge: 'Client pitches require expensive sizzle reels and concept videos. Teams spend weeks on pre-visualization that may never get approved.',
     solution: 'Generate pitch-ready concept videos in hours. Iterate on client feedback instantly with AI-powered revisions and consistent brand styling.',
-    outcome: 'Win more pitches with lower upfront investment. Agencies report 60% reduction in pre-production costs and 3x faster turnaround on client concepts.',
+    outcome: 'Win more pitches with lower upfront investment. Reduce pre-production costs and speed up turnaround on client concepts.',
     videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Jul_16__0705_24s_202512231746_xzz58.mp4',
   },
   {
@@ -47,7 +47,7 @@ const useCases: UseCase[] = [
     bgGradient: 'from-purple-500/10 to-pink-600/10',
     challenge: 'Limited budgets make it impossible to visualize ambitious stories. Traditional pre-vis tools are prohibitively expensive for independent projects.',
     solution: 'Bring your screenplay to life with AI storyboards, character designs, and animatic videos—all maintaining visual consistency across every scene.',
-    outcome: 'Festival-quality proof of concepts on indie budgets. Filmmakers use SceneFlow outputs to secure funding, attract talent, and greenlight productions.',
+    outcome: 'Professional proof of concepts on indie budgets. Filmmakers use SceneFlow outputs to secure funding, attract talent, and greenlight productions.',
     videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Jul_16__0705_24s_202512231846_2egwk.mp4',
   },
 ];

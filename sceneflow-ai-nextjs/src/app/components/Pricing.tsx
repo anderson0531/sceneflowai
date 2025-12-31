@@ -235,7 +235,7 @@ export function Pricing() {
             {/* SceneFlow AI */}
             <div className="text-center p-5 sm:p-6 bg-emerald-500/10 rounded-xl border border-emerald-500/20 relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-500 text-black text-xs font-bold rounded-full">
-                SAVE 99.7%
+                SIGNIFICANT SAVINGS
               </div>
               <div className="text-emerald-400 text-xs uppercase tracking-wider mb-2 font-medium">SceneFlow AI</div>
               <div className="text-3xl sm:text-4xl font-bold text-emerald-500 mb-1">$99 <span className="text-lg font-normal">(Pro Plan)</span></div>
@@ -253,15 +253,15 @@ export function Pricing() {
           <div className="mt-6 pt-6 border-t border-slate-700/50 flex flex-wrap justify-center gap-6 text-sm">
             <div className="flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-emerald-500" />
-              <span className="text-gray-300"><strong className="text-emerald-400">99.7%</strong> cost reduction</span>
+              <span className="text-gray-300"><strong className="text-emerald-400">Significant</strong> cost savings</span>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-cyan-500" />
-              <span className="text-gray-300"><strong className="text-cyan-400">100x</strong> faster production</span>
+              <span className="text-gray-300"><strong className="text-cyan-400">Much faster</strong> production</span>
             </div>
             <div className="flex items-center gap-2">
               <Film className="w-4 h-4 text-amber-500" />
-              <span className="text-gray-300"><strong className="text-amber-400">Same</strong> cinematic quality</span>
+              <span className="text-gray-300"><strong className="text-amber-400">AI-powered</strong> video quality</span>
             </div>
           </div>
           
