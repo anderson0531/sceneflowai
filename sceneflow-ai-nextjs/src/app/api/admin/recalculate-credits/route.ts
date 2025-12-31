@@ -112,20 +112,33 @@ function countSceneAssets(metadata: Record<string, any>): {
   const scenes = metadata.scenes || metadata.guide?.scenes || []
   
   for (const scene of scenes) {
-    // Scene image
-    if (scene.imageUrl || scene.generatedImage || scene.referenceImageUrl) {
+    // Scene image - check all possible URL fields
+    if (
+      scene.imageUrl || 
+      scene.generatedImage || 
+      scene.generatedImageUrl ||
+      scene.referenceImageUrl ||
+      scene.sceneImageUrl
+    ) {
       sceneImages++
     }
     
     // Segments
     const segments = scene.segments || []
     for (const segment of segments) {
-      // Start/end frames
-      if (segment.startFrameUrl) frameImages++
-      if (segment.endFrameUrl) frameImages++
+      // Start/end frames - check both convenience accessor AND nested references object
+      const hasStartFrame = segment.startFrameUrl || segment.references?.startFrameUrl
+      const hasEndFrame = segment.endFrameUrl || segment.references?.endFrameUrl
+      if (hasStartFrame) frameImages++
+      if (hasEndFrame) frameImages++
       
-      // Video asset
-      if (segment.activeAssetUrl || segment.videoUrl) {
+      // Video asset - check activeAssetUrl with assetType or fallback fields
+      const hasVideo = (
+        (segment.activeAssetUrl && segment.assetType === 'video') ||
+        segment.videoUrl ||
+        segment.references?.videoUrl
+      )
+      if (hasVideo) {
         videos++
       }
     }
@@ -172,10 +185,16 @@ function countAudioAssets(metadata: Record<string, any>): {
       audioMinutes += 0.5
     }
     
-    // Segment-level audio
+    // Segment-level audio - check both direct fields and references
     const segments = scene.segments || []
     for (const segment of segments) {
-      if (segment.audioUrl || segment.voiceoverUrl) {
+      const hasAudio = (
+        segment.audioUrl || 
+        segment.voiceoverUrl ||
+        segment.references?.audioUrl ||
+        segment.references?.voiceoverUrl
+      )
+      if (hasAudio) {
         // Each segment is ~8 seconds
         audioMinutes += 8 / 60
       }
@@ -224,6 +243,12 @@ function calculateProjectCredits(project: Project): {
   
   // Voice clones are tracked at user level, not project - set to 0
   const voiceClones = 0
+  
+  // Debug logging for asset discovery
+  const totalAssets = treatment.count + sceneAssets.sceneImages + sceneAssets.frameImages + sceneAssets.videos + audio.audioMinutes
+  if (totalAssets > 0) {
+    console.log(`[Credit Recalc] Project ${project.id}: treatment=${treatment.count}, scenes=${sceneAssets.sceneImages}, frames=${sceneAssets.frameImages}, videos=${sceneAssets.videos}, audio=${audio.audioMinutes}min`)
+  }
   
   const assetCounts: AssetCount = {
     treatmentImages: treatment.count,

@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { Button } from '../ui/Button'
 import { toast } from 'sonner'
-import { Calculator, RefreshCw, AlertCircle, CheckCircle2, Copy } from 'lucide-react'
+import { Calculator, RefreshCw, AlertCircle, CheckCircle2, Copy, Search, Filter, ChevronLeft, ChevronRight, AlertTriangle, Download } from 'lucide-react'
 
 // Matches API response for single project (POST)
 interface SingleProjectResult {
@@ -37,6 +37,32 @@ interface SingleProjectResult {
   timestamp: string
 }
 
+// Project data from the all-projects response
+interface ProjectData {
+  projectId: string
+  title: string
+  previousCreditsUsed: number
+  newCreditsUsed: number
+  assetCounts: {
+    treatmentImages: number
+    sceneImages: number
+    frameImages: number
+    videos: number
+    audioMinutes: number
+    voiceClones: number
+  }
+  breakdown: {
+    treatmentVisuals: number
+    sceneImages: number
+    frameImages: number
+    videos: number
+    audio: number
+    voiceClones: number
+    total: number
+  }
+  updated: boolean
+}
+
 // Matches API response for all projects (GET)
 interface AllProjectsResult {
   success: boolean
@@ -48,40 +74,36 @@ interface AllProjectsResult {
     totalNewCredits: number
     creditDifference: number
   }
-  projects: Array<{
-    projectId: string
-    title: string
-    previousCreditsUsed: number
-    newCreditsUsed: number
-    assetCounts: {
-      treatmentImages: number
-      sceneImages: number
-      frameImages: number
-      videos: number
-      audioMinutes: number
-      voiceClones: number
-    }
-    breakdown: {
-      treatmentVisuals: number
-      sceneImages: number
-      frameImages: number
-      videos: number
-      audio: number
-      voiceClones: number
-      total: number
-    }
-    updated: boolean
-  }>
+  projects: ProjectData[]
   timestamp: string
 }
 
 type RecalculateResult = SingleProjectResult | AllProjectsResult
+
+// Filter options for auditing
+type FilterOption = 'all' | 'discrepancy' | 'anomaly' | 'updated' | 'zero-credits' | 'has-assets'
+
+const FILTER_OPTIONS: { value: FilterOption; label: string; description: string }[] = [
+  { value: 'all', label: 'All Projects', description: 'Show all projects' },
+  { value: 'discrepancy', label: 'With Discrepancies', description: 'Credits changed' },
+  { value: 'anomaly', label: 'Anomalies', description: 'Has assets but 0 credits' },
+  { value: 'updated', label: 'Updated Only', description: 'Database was updated' },
+  { value: 'zero-credits', label: 'Zero Credits', description: 'No credits calculated' },
+  { value: 'has-assets', label: 'Has Assets', description: 'Projects with any assets' },
+]
+
+const ITEMS_PER_PAGE = 25
 
 export function CreditRecalculateCard() {
   const [loading, setLoading] = useState(false)
   const [dryRun, setDryRun] = useState(true)
   const [projectId, setProjectId] = useState('')
   const [results, setResults] = useState<RecalculateResult | null>(null)
+  
+  // Filtering and pagination state
+  const [filter, setFilter] = useState<FilterOption>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -98,6 +120,7 @@ export function CreditRecalculateCard() {
 
     setLoading(true)
     setResults(null)
+    setCurrentPage(1) // Reset pagination
 
     try {
       const response = await fetch(`/api/admin/recalculate-credits?dryRun=${dryRun}`)
@@ -169,6 +192,99 @@ export function CreditRecalculateCard() {
 
   const isAllResult = (result: any): result is AllProjectsResult => {
     return result && 'summary' in result && 'projects' in result
+  }
+
+  // Filter and search projects
+  const filteredProjects = useMemo(() => {
+    if (!results || !isAllResult(results)) return []
+    
+    let projects = results.projects
+    
+    // Apply filter
+    switch (filter) {
+      case 'discrepancy':
+        projects = projects.filter(p => p.newCreditsUsed !== p.previousCreditsUsed)
+        break
+      case 'anomaly':
+        projects = projects.filter(p => {
+          const totalAssets = p.assetCounts.treatmentImages + p.assetCounts.sceneImages + 
+            p.assetCounts.frameImages + p.assetCounts.videos + p.assetCounts.audioMinutes
+          return totalAssets > 0 && p.newCreditsUsed === 0
+        })
+        break
+      case 'updated':
+        projects = projects.filter(p => p.updated)
+        break
+      case 'zero-credits':
+        projects = projects.filter(p => p.newCreditsUsed === 0)
+        break
+      case 'has-assets':
+        projects = projects.filter(p => {
+          const totalAssets = p.assetCounts.treatmentImages + p.assetCounts.sceneImages + 
+            p.assetCounts.frameImages + p.assetCounts.videos + p.assetCounts.audioMinutes
+          return totalAssets > 0
+        })
+        break
+    }
+    
+    // Apply search
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      projects = projects.filter(p => 
+        p.title?.toLowerCase().includes(query) ||
+        p.projectId.toLowerCase().includes(query)
+      )
+    }
+    
+    return projects
+  }, [results, filter, searchQuery])
+
+  // Pagination
+  const totalPages = Math.ceil(filteredProjects.length / ITEMS_PER_PAGE)
+  const paginatedProjects = filteredProjects.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  )
+
+  // Reset to page 1 when filter or search changes
+  const handleFilterChange = (newFilter: FilterOption) => {
+    setFilter(newFilter)
+    setCurrentPage(1)
+  }
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query)
+    setCurrentPage(1)
+  }
+
+  // Export to CSV
+  const handleExportCSV = () => {
+    if (!filteredProjects.length) return
+    
+    const headers = ['Project ID', 'Title', 'Previous Credits', 'New Credits', 'Difference', 'Treatment', 'Scenes', 'Frames', 'Videos', 'Audio (min)', 'Updated']
+    const rows = filteredProjects.map(p => [
+      p.projectId,
+      `"${(p.title || 'Untitled').replace(/"/g, '""')}"`,
+      p.previousCreditsUsed,
+      p.newCreditsUsed,
+      p.newCreditsUsed - p.previousCreditsUsed,
+      p.assetCounts.treatmentImages,
+      p.assetCounts.sceneImages,
+      p.assetCounts.frameImages,
+      p.assetCounts.videos,
+      p.assetCounts.audioMinutes,
+      p.updated ? 'Yes' : 'No'
+    ])
+    
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `credit-recalculation-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success('Exported to CSV')
   }
 
   return (
@@ -418,19 +534,94 @@ export function CreditRecalculateCard() {
               </div>
 
               {results.projects.length > 0 && (
-                <div className="border-t border-gray-700 pt-3">
-                  <div className="text-xs text-gray-400 mb-2">
-                    Project Details (showing {Math.min(10, results.projects.length)} of {results.projects.length})
+                <div className="border-t border-gray-700 pt-3 space-y-3">
+                  {/* Filter and Search Controls */}
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    {/* Filter Dropdown */}
+                    <div className="flex items-center gap-2">
+                      <Filter className="w-4 h-4 text-gray-400" />
+                      <select
+                        value={filter}
+                        onChange={(e) => handleFilterChange(e.target.value as FilterOption)}
+                        className="px-2 py-1.5 bg-gray-800 border border-gray-700 rounded text-xs text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      >
+                        {FILTER_OPTIONS.map(opt => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Search Input */}
+                    <div className="flex-1 relative">
+                      <Search className="w-4 h-4 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => handleSearchChange(e.target.value)}
+                        placeholder="Search by project name or ID..."
+                        className="w-full pl-8 pr-3 py-1.5 bg-gray-800 border border-gray-700 rounded text-xs text-white placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      />
+                    </div>
+
+                    {/* Export Button */}
+                    <button
+                      onClick={handleExportCSV}
+                      disabled={!filteredProjects.length}
+                      className="flex items-center gap-1 px-2 py-1.5 bg-gray-800 border border-gray-700 rounded text-xs text-gray-300 hover:text-white hover:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title="Export to CSV"
+                    >
+                      <Download className="w-3 h-3" />
+                      <span className="hidden sm:inline">Export</span>
+                    </button>
                   </div>
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {results.projects.slice(0, 10).map((proj, idx) => {
+
+                  {/* Filter Summary */}
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="text-gray-400">
+                      Showing {filteredProjects.length} of {results.projects.length} projects
+                      {filter !== 'all' && (
+                        <span className="ml-1 text-purple-400">
+                          ({FILTER_OPTIONS.find(o => o.value === filter)?.description})
+                        </span>
+                      )}
+                    </div>
+                    {filteredProjects.some(p => {
+                      const totalAssets = p.assetCounts.treatmentImages + p.assetCounts.sceneImages + 
+                        p.assetCounts.frameImages + p.assetCounts.videos + p.assetCounts.audioMinutes
+                      return totalAssets > 0 && p.newCreditsUsed === 0
+                    }) && filter !== 'anomaly' && (
+                      <div className="flex items-center gap-1 text-amber-400">
+                        <AlertTriangle className="w-3 h-3" />
+                        <span>Anomalies detected</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Project List */}
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {paginatedProjects.map((proj, idx) => {
                       const diff = proj.newCreditsUsed - proj.previousCreditsUsed
                       const totalImages = proj.assetCounts.treatmentImages + proj.assetCounts.sceneImages + proj.assetCounts.frameImages
+                      const totalAssets = totalImages + proj.assetCounts.videos + proj.assetCounts.audioMinutes
+                      const isAnomaly = totalAssets > 0 && proj.newCreditsUsed === 0
+                      
                       return (
-                        <div key={idx} className="p-2 bg-gray-900/50 rounded border border-gray-700/50">
+                        <div 
+                          key={proj.projectId} 
+                          className={`p-2 rounded border ${
+                            isAnomaly 
+                              ? 'bg-amber-900/20 border-amber-500/30' 
+                              : 'bg-gray-900/50 border-gray-700/50'
+                          }`}
+                        >
                           <div className="flex items-center justify-between mb-1">
                             <div className="flex items-center gap-2 min-w-0 flex-1">
-                              <div className="text-xs text-white truncate max-w-[200px]" title={proj.title}>
+                              {isAnomaly && (
+                                <AlertTriangle className="w-3 h-3 text-amber-400 flex-shrink-0" title="Anomaly: Has assets but 0 credits" />
+                              )}
+                              <div className="text-xs text-white truncate max-w-[180px]" title={proj.title}>
                                 {proj.title || 'Untitled'}
                               </div>
                               <button
@@ -454,7 +645,40 @@ export function CreditRecalculateCard() {
                         </div>
                       )
                     })}
+                    
+                    {filteredProjects.length === 0 && (
+                      <div className="text-center py-4 text-gray-500 text-xs">
+                        No projects match your filter criteria
+                      </div>
+                    )}
                   </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-700/50">
+                      <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="flex items-center gap-1 px-2 py-1 text-xs text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <ChevronLeft className="w-3 h-3" />
+                        Previous
+                      </button>
+                      
+                      <div className="text-xs text-gray-400">
+                        Page {currentPage} of {totalPages}
+                      </div>
+                      
+                      <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="flex items-center gap-1 px-2 py-1 text-xs text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Next
+                        <ChevronRight className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
