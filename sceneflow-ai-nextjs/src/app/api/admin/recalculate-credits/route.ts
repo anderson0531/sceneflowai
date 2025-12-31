@@ -54,6 +54,7 @@ interface DebugInfo {
   firstSceneKeys: string[]
   hasCreationHub: boolean
   creationHubSceneCount: number
+  creationHubCreditsUsed: number
   sampleSegmentKeys: string[]
 }
 
@@ -298,6 +299,7 @@ function calculateProjectCredits(project: Project): {
   const creationHubSceneCount = metadata.creationHub?.scenes 
     ? Object.keys(metadata.creationHub.scenes).length 
     : 0
+  const creationHubCreditsUsed = metadata.creationHub?.metrics?.creditsUsed || 0
   
   // Get sample segment keys for debugging
   let sampleSegmentKeys: string[] = []
@@ -321,6 +323,12 @@ function calculateProjectCredits(project: Project): {
   // Voice clones are tracked at user level, not project - set to 0
   const voiceClones = 0
   
+  // Use actual tracked video credits from creationHub if available (more accurate)
+  // Fall back to estimation only if no tracked credits exist
+  const actualVideoCredits = creationHubCreditsUsed > 0 
+    ? creationHubCreditsUsed 
+    : sceneAssets.videoCredits
+  
   const assetCounts: AssetCount = {
     treatmentImages: treatment.count,
     sceneImages: sceneAssets.sceneImages,
@@ -334,7 +342,7 @@ function calculateProjectCredits(project: Project): {
     treatmentVisuals: treatment.credits,
     sceneImages: sceneAssets.sceneImageCredits,
     frameImages: sceneAssets.frameCredits,
-    videos: sceneAssets.videoCredits,
+    videos: actualVideoCredits,
     audio: audio.audioCredits,
     voiceClones: 0,
     total: 0,
@@ -359,6 +367,7 @@ function calculateProjectCredits(project: Project): {
       firstSceneKeys,
       hasCreationHub,
       creationHubSceneCount,
+      creationHubCreditsUsed,
       sampleSegmentKeys,
     }
   }

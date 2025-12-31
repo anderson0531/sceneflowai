@@ -46,6 +46,7 @@ interface DebugInfo {
   firstSceneKeys: string[]
   hasCreationHub: boolean
   creationHubSceneCount: number
+  creationHubCreditsUsed: number
   sampleSegmentKeys: string[]
 }
 
@@ -696,6 +697,12 @@ export function CreditRecalculateCard() {
                                   <span className="text-gray-600">no</span>
                                 )}
                               </div>
+                              {proj.debug.creationHubCreditsUsed > 0 && (
+                                <div>
+                                  <span className="text-gray-600">tracked:</span>{' '}
+                                  <span className="text-yellow-400 font-medium">{proj.debug.creationHubCreditsUsed.toLocaleString()} credits</span>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
