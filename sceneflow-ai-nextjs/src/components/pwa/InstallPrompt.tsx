@@ -28,7 +28,24 @@ export default function InstallPrompt() {
     return () => window.removeEventListener('beforeinstallprompt', handler as any)
   }, [])
 
-  if (isStandalone || (!deferredPrompt && !isIOS)) return null
+  // Don't show if app is already installed
+  if (isStandalone) return null
+  
+  // Don't show if user dismissed or no prompt available
+  if (!showBanner) return null
+  
+  // Don't show on non-iOS if no deferred prompt
+  if (!isIOS && !deferredPrompt) return null
+
+  const handleDismiss = () => {
+    setShowBanner(false)
+    // Store dismissal in localStorage to prevent showing again this session
+    try {
+      localStorage.setItem('pwa-install-dismissed', Date.now().toString())
+    } catch (e) {
+      // Ignore localStorage errors
+    }
+  }
 
   const install = async () => {
     try {
@@ -55,15 +72,27 @@ export default function InstallPrompt() {
               <div className="text-sf-text-secondary">Get a faster, app-like experience.</div>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => setShowBanner(false)} className="px-3 py-1.5 rounded-md border border-sf-border text-sm">Not now</button>
-              <button onClick={install} className="px-3 py-1.5 rounded-md bg-sf-gradient text-sf-background text-sm">Install</button>
+              <button onClick={handleDismiss} className="px-3 py-1.5 rounded-md border border-sf-border text-sm hover:bg-gray-800/50 transition-colors">
+                Not now
+              </button>
+              <button onClick={install} className="px-3 py-1.5 rounded-md bg-sf-gradient text-sf-background text-sm hover:opacity-90 transition-opacity">
+                Install
+              </button>
             </div>
           </div>
         )}
         {isIOS && (
-          <div className="text-sm">
-            <div className="font-semibold mb-1">Add SceneFlow AI to Home Screen</div>
-            <div className="text-sf-text-secondary">Open the Share menu and tap “Add to Home Screen”.</div>
+          <div>
+            <div className="text-sm">
+              <div className="font-semibold mb-1">Add SceneFlow AI to Home Screen</div>
+              <div className="text-sf-text-secondary">Open the Share menu and tap "Add to Home Screen".</div>
+            </div>
+            <button 
+              onClick={handleDismiss} 
+              className="mt-3 px-3 py-1.5 rounded-md border border-sf-border text-sm hover:bg-gray-800/50 transition-colors"
+            >
+              Not now
+            </button>
           </div>
         )}
       </div>
