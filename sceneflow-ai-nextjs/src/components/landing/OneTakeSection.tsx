@@ -30,7 +30,29 @@ const OneTakeVideo = () => {
         {/* Glow effect */}
         <div className="absolute -inset-2 bg-gradient-to-r from-cyan-500/20 via-blue-500/20 to-cyan-500/20 rounded-2xl blur-xl -z-10" />
         
-        {/* Video */}
+        {/* Placeholder - Video temporarily hidden for compliance */}
+        <div className="aspect-[4/3] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden flex items-center justify-center">
+          <div className="text-center p-8">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 flex items-center justify-center">
+              <Target className="w-8 h-8 text-cyan-400" />
+            </div>
+            <h4 className="text-xl font-bold text-white mb-2">One-Take Precision</h4>
+            <p className="text-gray-400 text-sm max-w-xs mx-auto">
+              AI-powered frame anchoring maintains visual consistency across your entire production
+            </p>
+            <div className="mt-4 flex items-center justify-center gap-4 text-xs text-gray-500">
+              <span className="flex items-center gap-1">
+                <Image className="w-3 h-3" />
+                Frame Lock
+              </span>
+              <span className="flex items-center gap-1">
+                <Brain className="w-3 h-3" />
+                AI Consistency
+              </span>
+            </div>
+          </div>
+        </div>
+        {/* Original video hidden for payment processor compliance
         <div className="aspect-[4/3] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
           <video
             ref={videoRef}
@@ -45,9 +67,7 @@ const OneTakeVideo = () => {
             Your browser does not support the video tag.
           </video>
           
-          {/* Video controls */}
           <div className="absolute bottom-3 right-3 flex items-center gap-2">
-            {/* Audio toggle button - minimal and transparent */}
             <button
               onClick={toggleMute}
               className="p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm transition-all opacity-60 hover:opacity-100"
@@ -60,7 +80,6 @@ const OneTakeVideo = () => {
               )}
             </button>
             
-            {/* Expand/Fullscreen button */}
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className="p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm transition-all opacity-60 hover:opacity-100"
@@ -70,6 +89,7 @@ const OneTakeVideo = () => {
             </button>
           </div>
         </div>
+        */}
       </motion.div>
     </div>
   );
