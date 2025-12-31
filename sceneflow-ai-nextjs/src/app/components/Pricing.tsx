@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { CheckCircle, X, Zap, Film, Clapperboard, Users, ChevronDown, ChevronUp, ArrowRight, Clock, DollarSign, Calculator } from 'lucide-react'
+import { CheckCircle, X, Zap, Film, Clapperboard, Users, ChevronDown, ChevronUp, ArrowRight, Clock, DollarSign, Calculator, Layers, Volume2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 export function Pricing() {
