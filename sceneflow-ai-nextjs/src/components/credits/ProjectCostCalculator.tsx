@@ -1001,91 +1001,70 @@ export function ProjectCostCalculator({
             </div>
           </details>
 
-          {/* Subscription Strategy - Collapsible */}
+          {/* Recommended Top-Up Packs - Collapsible */}
           <details className="group">
             <summary className="text-sm font-medium text-gray-400 cursor-pointer flex items-center gap-2 hover:text-gray-300 transition-colors">
               <ChevronDown className="w-4 h-4 group-open:rotate-180 transition-transform" />
-              Subscription Plans
-              <span className="text-xs text-gray-500">(monthly)</span>
+              <ShoppingCart className="w-4 h-4" />
+              Recommended Top-Up Packs
+              <span className="text-xs text-gray-500">(one-time purchases)</span>
             </summary>
-            <div className="mt-3 space-y-3">
-            {comparison.subscriptions
-              .filter(s => s.recommended)
-              .slice(0, 1)
-              .map(strategy => (
-                <div
-                  key={strategy.tier}
-                  className="p-4 rounded-xl border bg-cyan-500/10 border-cyan-500/50"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 bg-cyan-500 text-white text-xs font-medium rounded">
-                        BEST VALUE
-                      </span>
-                      <span className="font-medium text-white">{strategy.tierName}</span>
-                    </div>
-                    <span className="text-lg font-bold text-white">
-                      {formatCredits(strategy.includedCredits)} <span className="text-sm text-gray-400">credits</span>
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center gap-4 text-sm text-gray-400 mb-2">
-                    <span>${strategy.totalMonthlyCost}/month</span>
-                    {strategy.additionalCreditsNeeded > 0 && (
-                      <span className="text-amber-400">
-                        +{formatCredits(strategy.additionalCreditsNeeded)} via top-ups
-                      </span>
-                    )}
-                  </div>
-                  
-                  {strategy.warnings.length > 0 && (
-                    <div className="mt-2 flex items-start gap-2 text-sm text-amber-400">
-                      <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                      <span>{strategy.warnings[0]}</span>
-                    </div>
-                  )}
-                  
-                  {onUpgrade && strategy.tier !== currentTier && (
-                    <button
-                      onClick={() => onUpgrade(strategy.tier)}
-                      className="mt-3 w-full py-2 bg-cyan-500 hover:bg-cyan-600 rounded-lg text-white font-medium transition-colors flex items-center justify-center gap-2"
-                    >
-                      Upgrade to {strategy.tierName}
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              ))}
-            
-            {/* Other Plans Expandable */}
-            <details className="group">
-              <summary className="text-sm text-cyan-400 hover:text-cyan-300 cursor-pointer flex items-center gap-2">
-                <ChevronDown className="w-4 h-4 group-open:rotate-180 transition-transform" />
-                View all plans
-              </summary>
-              <div className="mt-3 space-y-2">
-                {comparison.subscriptions
-                  .filter(s => !s.recommended && !s.tier.includes('trial'))
-                  .map(strategy => (
-                    <div
-                      key={strategy.tier}
-                      className="p-3 rounded-lg bg-slate-800/30 border border-slate-700/30"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-white">{strategy.tierName}</span>
-                        <div className="text-right">
-                          <span className="text-sm font-medium text-white">
-                            {formatCredits(strategy.includedCredits)}
+            <div className="mt-3 space-y-2">
+              {Object.entries(TOPUP_PACKS).map(([key, pack]) => {
+                const coversProject = pack.credits >= breakdown.total.credits;
+                const packsNeeded = Math.ceil(breakdown.total.credits / pack.credits);
+                
+                return (
+                  <button
+                    key={key}
+                    onClick={() => onTopUp && onTopUp(key as keyof typeof TOPUP_PACKS)}
+                    disabled={!onTopUp}
+                    className={`w-full p-4 rounded-xl border transition-all text-left ${
+                      coversProject
+                        ? 'bg-emerald-500/10 border-emerald-500/50 hover:bg-emerald-500/20'
+                        : 'bg-slate-800/50 border-slate-700/50 hover:border-slate-600'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium text-white">
+                            {pack.name}
                           </span>
-                          <span className="text-xs text-gray-400 ml-1">
-                            @ ${strategy.totalMonthlyCost}/mo
+                          {coversProject && (
+                            <span className="px-2 py-0.5 bg-emerald-500 text-white text-xs font-medium rounded">
+                              COVERS PROJECT
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-400 mb-2">
+                          {pack.description}
+                        </div>
+                        <div className="flex items-center gap-3 text-sm">
+                          <span className="text-white font-medium">
+                            {formatCredits(pack.credits)} credits
+                          </span>
+                          <span className="text-gray-400">•</span>
+                          <span className="text-white font-medium">
+                            ${pack.price}
+                          </span>
+                          <span className="text-gray-500 text-xs">
+                            (${(pack.price / pack.credits * 100).toFixed(2)}¢/credit)
                           </span>
                         </div>
                       </div>
+                      <div className="flex items-center gap-2">
+                        {!coversProject && (
+                          <span className="text-xs text-gray-500">
+                            Need {packsNeeded}x
+                          </span>
+                        )}
+                        <Plus className="w-5 h-5 text-cyan-400" />
+                      </div>
                     </div>
-                  ))}
-              </div>
-            </details>
+                  </button>
+                );
+              })}
             </div>
           </details>
         </div>

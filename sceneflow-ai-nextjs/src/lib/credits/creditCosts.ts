@@ -829,9 +829,28 @@ export function calculateProjectCost(params: any): number {
   return 0;
 }
 
-export function estimateStorageSize(params: any): number {
-  // Stub - returns 0 for now
-  return 0;
+/**
+ * Estimate storage size in bytes for a project
+ * @param videoSeconds - Total seconds of video content
+ * @param imageCount - Number of images generated
+ * @param audioMinutes - Total minutes of audio content
+ * @returns Estimated storage in bytes
+ */
+export function estimateStorageSize(
+  videoSeconds: number,
+  imageCount: number,
+  audioMinutes: number
+): number {
+  // Video: ~50MB per 8s clip (high quality MP4)
+  const videoCost = Math.ceil(videoSeconds / 8) * 50 * 1024 * 1024;
+  
+  // Images: ~2MB per high-res PNG/JPEG
+  const imageCost = imageCount * 2 * 1024 * 1024;
+  
+  // Audio: ~1MB per minute (high quality)
+  const audioCost = audioMinutes * 1024 * 1024;
+  
+  return videoCost + imageCost + audioCost;
 }
 
 // =============================================================================
