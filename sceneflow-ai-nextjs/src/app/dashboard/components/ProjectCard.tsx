@@ -729,11 +729,11 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
             </div>
             <button 
               onClick={() => setCostCalculatorOpen(true)}
-              className="text-xs text-sf-primary hover:text-sf-accent flex items-center gap-1 transition-colors"
+              className="px-3 py-1.5 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white text-xs font-medium rounded-lg flex items-center gap-1.5 transition-all shadow-sm shadow-cyan-500/20"
               title="Open cost calculator to set budget"
             >
-              <Calculator className="w-3 h-3" />
-              Calculator
+              <Calculator className="w-3.5 h-3.5" />
+              Budget Calculator
             </button>
           </div>
           

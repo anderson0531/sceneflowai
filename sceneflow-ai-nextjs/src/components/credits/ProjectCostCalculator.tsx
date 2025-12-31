@@ -842,10 +842,13 @@ export function ProjectCostCalculator({
             )}
           </div>
 
-          {/* Cost Breakdown */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium text-gray-400">Cost Breakdown</h3>
-            
+          {/* Cost Breakdown - Collapsible */}
+          <details className="group">
+            <summary className="text-sm font-medium text-gray-400 cursor-pointer flex items-center gap-2 hover:text-gray-300 transition-colors">
+              <ChevronDown className="w-4 h-4 group-open:rotate-180 transition-transform" />
+              Cost Breakdown
+            </summary>
+            <div className="mt-3 space-y-2">
             {[
               { key: 'video', label: productionType === 'animatic' ? 'MP4 Rendering' : 'Video Generation', icon: productionType === 'animatic' ? MonitorPlay : Video, cost: breakdown.video },
               { key: 'images', label: 'Image Generation', icon: ImageIcon, cost: breakdown.images },
@@ -885,14 +888,17 @@ export function ProjectCostCalculator({
                 </div>
               )
             })}
-          </div>
+            </div>
+          </details>
 
-          {/* Quick Top-Up Options */}
+          {/* Top-Up Packs - Collapsible */}
           {hasDeficit && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2">
+            <details className="group">
+              <summary className="text-sm font-medium text-gray-400 cursor-pointer flex items-center gap-2 hover:text-gray-300 transition-colors">
+                <ChevronDown className="w-4 h-4 group-open:rotate-180 transition-transform" />
                 <ShoppingCart className="w-4 h-4" /> Quick Top-Up Packs
-              </h3>
+                <span className="text-xs text-emerald-400">{formatCredits(creditsNeeded)} credits needed</span>
+              </summary>
               
               <div className="grid gap-2">
                 {TOPUP_PACKS.map((pack, index) => {
@@ -949,17 +955,20 @@ export function ProjectCostCalculator({
                     </button>
                   );
                 })}
-              </div>
             </div>
+          </details>
           )}
 
-          {/* Storage Tracking */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2">
-              <HardDrive className="w-4 h-4" /> Storage Estimate
-            </h3>
+          {/* Storage Tracking - Collapsible */}
+          <details className="group">
+            <summary className="text-sm font-medium text-gray-400 cursor-pointer flex items-center gap-2 hover:text-gray-300 transition-colors">
+              <ChevronDown className="w-4 h-4 group-open:rotate-180 transition-transform" />
+              <HardDrive className="w-4 h-4" /> 
+              Storage Estimate
+              <span className="text-xs text-gray-500">~{formatBytes(breakdown.estimatedStorageBytes)}</span>
+            </summary>
             
-            <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+            <div className="mt-3 p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-white font-medium">
                   ~{formatBytes(breakdown.estimatedStorageBytes)}
@@ -990,12 +999,16 @@ export function ProjectCostCalculator({
                 </div>
               )}
             </div>
-          </div>
+          </details>
 
-          {/* Subscription Strategy */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium text-gray-400">Recommended Plan</h3>
-            
+          {/* Subscription Strategy - Collapsible */}
+          <details className="group">
+            <summary className="text-sm font-medium text-gray-400 cursor-pointer flex items-center gap-2 hover:text-gray-300 transition-colors">
+              <ChevronDown className="w-4 h-4 group-open:rotate-180 transition-transform" />
+              Subscription Plans
+              <span className="text-xs text-gray-500">(monthly)</span>
+            </summary>
+            <div className="mt-3 space-y-3">
             {comparison.subscriptions
               .filter(s => s.recommended)
               .slice(0, 1)
@@ -1073,7 +1086,8 @@ export function ProjectCostCalculator({
                   ))}
               </div>
             </details>
-          </div>
+            </div>
+          </details>
         </div>
       </div>
     </motion.div>
