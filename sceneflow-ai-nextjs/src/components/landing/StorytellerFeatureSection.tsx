@@ -200,31 +200,60 @@ export function StorytellerFeatureSection() {
           </h3>
           
           <div className="rounded-2xl overflow-hidden border border-gray-700 bg-gray-800/50">
-            {/* Table Header */}
-            <div className="grid grid-cols-4 gap-4 p-4 bg-gray-800 border-b border-gray-700 text-sm font-medium">
-              <div className="text-gray-400">Metric</div>
-              <div className="text-gray-400">Traditional Editor</div>
-              <div className="text-amber-400">With SceneFlow</div>
-              <div className="text-green-400">Your Benefit</div>
-            </div>
-            
-            {/* Table Body */}
-            {costAnalysis.map((row, idx) => (
-              <div 
-                key={row.metric}
-                className={`grid grid-cols-4 gap-4 p-4 items-center ${
-                  idx !== costAnalysis.length - 1 ? 'border-b border-gray-700/50' : ''
-                }`}
-              >
-                <div className="text-white font-medium text-sm">{row.metric}</div>
-                <div className="text-gray-500 text-sm">{row.traditional}</div>
-                <div className="text-white font-semibold text-sm">{row.withSceneflow}</div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0" />
-                  <span className="text-green-400 text-sm font-medium">{row.savings}</span>
+            {/* Mobile: Stacked Cards */}
+            <div className="md:hidden space-y-0">
+              {costAnalysis.map((row, idx) => (
+                <div 
+                  key={row.metric}
+                  className={`p-4 ${idx !== costAnalysis.length - 1 ? 'border-b border-gray-700/50' : ''}`}
+                >
+                  <div className="font-medium text-white mb-3">{row.metric}</div>
+                  <div className="grid grid-cols-2 gap-3 text-sm mb-3">
+                    <div>
+                      <span className="text-gray-500 text-xs block mb-1">Traditional</span>
+                      <div className="text-gray-400">{row.traditional}</div>
+                    </div>
+                    <div>
+                      <span className="text-amber-400 text-xs block mb-1">SceneFlow</span>
+                      <div className="text-white font-semibold">{row.withSceneflow}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-green-400 font-medium text-sm bg-green-500/10 rounded-lg px-3 py-2">
+                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                    {row.savings}
+                  </div>
                 </div>
+              ))}
+            </div>
+
+            {/* Desktop: Original Table */}
+            <div className="hidden md:block">
+              {/* Table Header */}
+              <div className="grid grid-cols-4 gap-4 p-4 bg-gray-800 border-b border-gray-700 text-sm font-medium">
+                <div className="text-gray-400">Metric</div>
+                <div className="text-gray-400">Traditional Editor</div>
+                <div className="text-amber-400">With SceneFlow</div>
+                <div className="text-green-400">Your Benefit</div>
               </div>
-            ))}
+              
+              {/* Table Body */}
+              {costAnalysis.map((row, idx) => (
+                <div 
+                  key={row.metric}
+                  className={`grid grid-cols-4 gap-4 p-4 items-center ${
+                    idx !== costAnalysis.length - 1 ? 'border-b border-gray-700/50' : ''
+                  }`}
+                >
+                  <div className="text-white font-medium text-sm">{row.metric}</div>
+                  <div className="text-gray-500 text-sm">{row.traditional}</div>
+                  <div className="text-white font-semibold text-sm">{row.withSceneflow}</div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0" />
+                    <span className="text-green-400 text-sm font-medium">{row.savings}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
           
           <p className="text-center text-gray-500 text-xs mt-4">

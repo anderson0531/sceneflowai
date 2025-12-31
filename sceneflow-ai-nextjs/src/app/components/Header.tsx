@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { trackCta } from '@/lib/analytics'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
-import { Menu, X, User, LogOut, Shield } from 'lucide-react'
+import { Menu, X, User, LogOut, Shield, Calculator, Sparkles } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { AuthModal } from '@/components/auth/AuthModal'
@@ -233,6 +233,16 @@ export function Header() {
                   <button onClick={() => scrollToSection('hero')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">Watch Demo</button>
                   <button onClick={() => scrollToSection('how-it-works')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">How it Works</button>
                   <button onClick={() => scrollToSection('features')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">Features</button>
+                  <button onClick={() => scrollToSection('automation')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">Automation</button>
+                  {/* Featured: Value Calculator */}
+                  <button 
+                    onClick={() => { scrollToSection('value-calculator'); setIsMobileMenuOpen(false); }} 
+                    className="flex items-center gap-2 text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer font-semibold text-base text-left py-2 px-3 -mx-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20"
+                  >
+                    <Calculator className="w-4 h-4" />
+                    Calculate Your Savings
+                    <Sparkles className="w-3 h-3" />
+                  </button>
                   <button onClick={() => scrollToSection('use-cases')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">Use Cases</button>
                   <button onClick={() => scrollToSection('testimonials')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">Testimonials</button>
                   <button onClick={() => scrollToSection('pricing')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">Pricing</button>

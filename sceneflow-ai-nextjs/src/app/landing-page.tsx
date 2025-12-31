@@ -28,7 +28,7 @@ import { Footer } from './components/Footer'
 
 export default function LandingPage() {
   return (
-    <div id="main-content" className="min-h-screen bg-gray-950 text-white">
+    <div id="main-content" className="min-h-screen bg-gray-950 text-white overflow-x-hidden">
       <Header />
       <FloatingNav />
       <FloatingCTA />

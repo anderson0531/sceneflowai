@@ -109,23 +109,26 @@ const TabButton = ({
   onClick, 
   icon: Icon, 
   label,
+  shortLabel,
   color 
 }: { 
   active: boolean; 
   onClick: () => void; 
   icon: React.ElementType; 
   label: string;
+  shortLabel: string;
   color: string;
 }) => (
   <button
     onClick={onClick}
-    className={`flex items-center gap-2 px-4 sm:px-6 py-3 rounded-lg font-medium transition-all duration-300 ${
+    className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium transition-all duration-300 ${
       active
         ? `bg-gradient-to-r ${color} text-white shadow-lg`
         : 'bg-slate-800/50 text-gray-400 hover:text-white hover:bg-slate-700/50'
     }`}
   >
     <Icon className="w-4 h-4" />
+    <span className="sm:hidden text-xs">{shortLabel}</span>
     <span className="hidden sm:inline">{label}</span>
   </button>
 );
@@ -567,11 +570,11 @@ export default function ProductivityValueSection() {
         >
           {/* Cost Savings Card */}
           <div 
-            className="relative bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 rounded-2xl p-6 border border-emerald-500/30 cursor-pointer hover:border-emerald-400/50 transition-all"
+            className="relative bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 rounded-2xl p-6 pt-8 border border-emerald-500/30 cursor-pointer hover:border-emerald-400/50 transition-all"
             onClick={() => setActiveTab('cost')}
           >
-            <div className="absolute -top-3 -right-3 w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30">
-              <DollarSign className="w-6 h-6 text-white" />
+            <div className="absolute -top-3 right-4 w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30">
+              <DollarSign className="w-5 h-5 text-white" />
             </div>
             <div className="text-emerald-300 text-sm font-medium mb-1">Save Up To</div>
             <div className="text-4xl font-bold text-white mb-1">
@@ -583,11 +586,11 @@ export default function ProductivityValueSection() {
 
           {/* Time Savings Card */}
           <div 
-            className="relative bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 rounded-2xl p-6 border border-cyan-500/30 cursor-pointer hover:border-cyan-400/50 transition-all"
+            className="relative bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 rounded-2xl p-6 pt-8 border border-cyan-500/30 cursor-pointer hover:border-cyan-400/50 transition-all"
             onClick={() => setActiveTab('time')}
           >
-            <div className="absolute -top-3 -right-3 w-12 h-12 bg-cyan-500 rounded-full flex items-center justify-center shadow-lg shadow-cyan-500/30">
-              <Clock className="w-6 h-6 text-white" />
+            <div className="absolute -top-3 right-4 w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center shadow-lg shadow-cyan-500/30">
+              <Clock className="w-5 h-5 text-white" />
             </div>
             <div className="text-cyan-300 text-sm font-medium mb-1">Reclaim</div>
             <div className="text-4xl font-bold text-white mb-1">
@@ -599,11 +602,11 @@ export default function ProductivityValueSection() {
 
           {/* Expertise Value Card */}
           <div 
-            className="relative bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-2xl p-6 border border-purple-500/30 cursor-pointer hover:border-purple-400/50 transition-all"
+            className="relative bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-2xl p-6 pt-8 border border-purple-500/30 cursor-pointer hover:border-purple-400/50 transition-all"
             onClick={() => setActiveTab('expertise')}
           >
-            <div className="absolute -top-3 -right-3 w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center shadow-lg shadow-purple-500/30">
-              <GraduationCap className="w-6 h-6 text-white" />
+            <div className="absolute -top-3 right-4 w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center shadow-lg shadow-purple-500/30">
+              <GraduationCap className="w-5 h-5 text-white" />
             </div>
             <div className="text-purple-300 text-sm font-medium mb-1">Skip</div>
             <div className="text-4xl font-bold text-white mb-1">
@@ -615,12 +618,13 @@ export default function ProductivityValueSection() {
         </motion.div>
 
         {/* Tab Navigation */}
-        <div className="flex justify-center gap-2 sm:gap-4 mb-8">
+        <div className="flex justify-center gap-1.5 sm:gap-4 mb-8">
           <TabButton
             active={activeTab === 'cost'}
             onClick={() => setActiveTab('cost')}
             icon={DollarSign}
             label="Cost Savings"
+            shortLabel="Cost"
             color="from-emerald-500 to-emerald-600"
           />
           <TabButton
@@ -628,6 +632,7 @@ export default function ProductivityValueSection() {
             onClick={() => setActiveTab('time')}
             icon={Clock}
             label="Time Savings"
+            shortLabel="Time"
             color="from-cyan-500 to-cyan-600"
           />
           <TabButton
@@ -635,6 +640,7 @@ export default function ProductivityValueSection() {
             onClick={() => setActiveTab('expertise')}
             icon={GraduationCap}
             label="Expertise Value"
+            shortLabel="Skills"
             color="from-purple-500 to-purple-600"
           />
         </div>
