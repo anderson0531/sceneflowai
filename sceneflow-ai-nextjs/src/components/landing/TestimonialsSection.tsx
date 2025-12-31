@@ -23,7 +23,7 @@ const testimonials = [
     rating: 5
   },
   {
-    quote: "We prototyped our entire ad campaign in 4 hours instead of 3 weeks. The cost savings alone justified the switch.",
+    quote: "We prototyped our entire ad campaign in a fraction of the usual time. The cost savings alone justified the switch.",
     author: "Marcus Johnson",
     role: "Marketing Lead",
     avatar: "MJ",

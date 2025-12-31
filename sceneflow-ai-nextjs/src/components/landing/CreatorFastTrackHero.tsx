@@ -47,7 +47,7 @@ const modeConfigs: Record<CreatorMode, ModeConfig> = {
       text: 'Try Storyteller Mode Free',
       gradient: 'from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-orange-500/25'
     },
-    social: 'Join 2,500+ faceless channel creators'
+    social: 'Built for faceless channel creators'
   },
   cinematic: {
     badge: {

@@ -316,6 +316,7 @@ const CostTab = ({ scenario }: { scenario: Scenario }) => {
             </span>
           </div>
           <p className="text-xs text-gray-500 mt-2">One platform, one login</p>
+          <p className="text-xs text-gray-600 mt-1 italic">*Estimates based on published pricing</p>
         </div>
       </div>
     </motion.div>

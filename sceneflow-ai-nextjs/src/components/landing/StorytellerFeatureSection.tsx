@@ -72,13 +72,13 @@ const costAnalysis = [
     metric: 'Time investment', 
     traditional: '10 - 24 hours', 
     withSceneflow: '< 30 min',
-    savings: '95% faster'
+    savings: 'Much faster'
   },
   { 
     metric: 'Videos per month', 
     traditional: '2 - 4 max', 
     withSceneflow: '30+ possible',
-    savings: '10x output'
+    savings: 'More output'
   },
   { 
     metric: 'Style consistency', 
