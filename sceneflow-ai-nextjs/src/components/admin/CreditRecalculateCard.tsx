@@ -37,6 +37,17 @@ interface SingleProjectResult {
   timestamp: string
 }
 
+// Debug info from API
+interface DebugInfo {
+  metadataKeys: string[]
+  scenesLocation: string | null
+  sceneCount: number
+  firstSceneKeys: string[]
+  hasCreationHub: boolean
+  creationHubSceneCount: number
+  sampleSegmentKeys: string[]
+}
+
 // Project data from the all-projects response
 interface ProjectData {
   projectId: string
@@ -61,6 +72,7 @@ interface ProjectData {
     total: number
   }
   updated: boolean
+  debug?: DebugInfo
 }
 
 // Matches API response for all projects (GET)
@@ -642,6 +654,42 @@ export function CreditRecalculateCard() {
                             <span>{proj.assetCounts.audioMinutes}m audio</span>
                             <span className="text-cyan-400 ml-auto">{proj.newCreditsUsed.toLocaleString()} credits</span>
                           </div>
+                          {/* Debug Info */}
+                          {proj.debug && (
+                            <div className="mt-1.5 pt-1.5 border-t border-gray-700/30 text-[10px] font-mono text-gray-500 space-y-0.5">
+                              <div>
+                                <span className="text-gray-600">keys:</span> {proj.debug.metadataKeys.slice(0, 6).join(', ')}
+                                {proj.debug.metadataKeys.length > 6 && '...'}
+                              </div>
+                              <div>
+                                <span className="text-gray-600">scenes:</span>{' '}
+                                <span className={proj.debug.scenesLocation ? 'text-green-500' : 'text-red-500'}>
+                                  {proj.debug.scenesLocation || 'NOT FOUND'}
+                                </span>
+                                {' '}({proj.debug.sceneCount})
+                              </div>
+                              {proj.debug.firstSceneKeys.length > 0 && (
+                                <div>
+                                  <span className="text-gray-600">scene[0]:</span> {proj.debug.firstSceneKeys.slice(0, 8).join(', ')}
+                                  {proj.debug.firstSceneKeys.length > 8 && '...'}
+                                </div>
+                              )}
+                              {proj.debug.sampleSegmentKeys.length > 0 && (
+                                <div>
+                                  <span className="text-gray-600">segment[0]:</span> {proj.debug.sampleSegmentKeys.slice(0, 8).join(', ')}
+                                  {proj.debug.sampleSegmentKeys.length > 8 && '...'}
+                                </div>
+                              )}
+                              <div>
+                                <span className="text-gray-600">creationHub:</span>{' '}
+                                {proj.debug.hasCreationHub ? (
+                                  <span className="text-green-500">yes ({proj.debug.creationHubSceneCount} scenes)</span>
+                                ) : (
+                                  <span className="text-gray-600">no</span>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )
                     })}
