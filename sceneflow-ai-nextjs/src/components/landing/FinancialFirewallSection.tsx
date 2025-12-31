@@ -40,7 +40,6 @@ const FirewallVideo = () => {
             playsInline
             preload="auto"
             className="w-full h-full object-cover"
-            poster="/demo/financial-firewall-poster.jpg"
           >
             <source src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/demo/financial-firewall-illustration.mp4#t=0.1" type="video/mp4" />
             Your browser does not support the video tag.
