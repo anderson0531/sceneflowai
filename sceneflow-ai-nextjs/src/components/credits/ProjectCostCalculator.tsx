@@ -911,9 +911,9 @@ export function ProjectCostCalculator({
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 mb-1">
                             <span className="font-medium text-white">
-                              {formatCredits(pack.credits)} credits
+                              {pack.name}
                             </span>
                             {coversDeficit && (
                               <span className="px-2 py-0.5 bg-emerald-500 text-white text-xs font-medium rounded">
@@ -921,8 +921,20 @@ export function ProjectCostCalculator({
                               </span>
                             )}
                           </div>
-                          <div className="text-sm text-gray-400 mt-1">
-                            ${pack.price} • ${(pack.price / pack.credits * 100).toFixed(1)}¢ per credit
+                          <div className="text-xs text-gray-400 mb-2">
+                            {pack.description}
+                          </div>
+                          <div className="flex items-center gap-3 text-sm">
+                            <span className="text-white font-medium">
+                              {formatCredits(pack.credits)} credits
+                            </span>
+                            <span className="text-gray-400">•</span>
+                            <span className="text-white font-medium">
+                              ${pack.price}
+                            </span>
+                            <span className="text-gray-500 text-xs">
+                              (${(pack.price / pack.credits * 100).toFixed(2)}¢/credit)
+                            </span>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">

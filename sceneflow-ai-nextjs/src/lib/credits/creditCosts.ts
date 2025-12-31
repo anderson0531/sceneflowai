@@ -793,10 +793,29 @@ export const SUBSCRIPTION_TIERS = {
   STUDIO: { credits: 75000, price: 599 },
 } as const;
 
+/**
+ * Top-Up Credit Packs (One-Time Purchases)
+ * Premium pricing for flexible credit purchases without subscription commitment
+ */
 export const TOPUP_PACKS = [
-  { credits: 1000, price: 10 },
-  { credits: 5000, price: 45 },
-  { credits: 15000, price: 120 },
+  { 
+    name: 'Quick Fix',
+    credits: 10000, 
+    price: 15,
+    description: 'Perfect for quick scene revisions',
+  },
+  { 
+    name: 'Scene Pack',
+    credits: 50000, 
+    price: 65,
+    description: 'Complete a few additional scenes',
+  },
+  { 
+    name: 'Feature Boost',
+    credits: 200000, 
+    price: 220,
+    description: 'Major project expansion',
+  },
 ] as const;
 
 export const GUARDRAILS = {
