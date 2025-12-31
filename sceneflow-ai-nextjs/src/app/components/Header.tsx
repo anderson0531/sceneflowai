@@ -4,10 +4,17 @@ import { Button } from '@/components/ui/Button'
 import { trackCta } from '@/lib/analytics'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
-import { Menu, X, User, LogOut, Shield, Calculator, Sparkles } from 'lucide-react'
+import { Menu, X, User, LogOut, Shield, Calculator, Sparkles, ChevronDown, LayoutDashboard, Settings } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { AuthModal } from '@/components/auth/AuthModal'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -132,49 +139,83 @@ export function Header() {
               </span>
             </div>
             
-            {/* Navigation Links - Center */}
-            <nav className="flex items-center space-x-8">
-              <button onClick={() => scrollToSection('hero')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-lg">Watch Demo</button>
-              <button onClick={() => scrollToSection('how-it-works')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-lg">How it Works</button>
-              <button onClick={() => scrollToSection('features')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-lg">Features</button>
-              <button onClick={() => scrollToSection('use-cases')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-lg">Use Cases</button>
-              <button onClick={() => scrollToSection('pricing')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-lg">Pricing</button>
-              <button onClick={() => scrollToSection('faq')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-lg">FAQ</button>
+            {/* Navigation Links - Center (Condensed) */}
+            <nav className="flex items-center space-x-6">
+              <button onClick={() => scrollToSection('how-it-works')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium">How it Works</button>
+              <button onClick={() => scrollToSection('features')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium">Features</button>
+              <button onClick={() => scrollToSection('pricing')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium">Pricing</button>
+              
+              {/* More Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium">
+                    More
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => scrollToSection('use-cases')}>
+                    Use Cases
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => scrollToSection('value-calculator')}>
+                    <Calculator className="w-4 h-4 mr-2 text-emerald-400" />
+                    Value Calculator
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => scrollToSection('testimonials')}>
+                    Testimonials
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => scrollToSection('faq')}>
+                    FAQ
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </nav>
             
             {/* CTA Buttons - Right */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               {isAuthenticated ? (
                 <>
-                  {isAdmin && (
-                    <Button 
-                      onClick={() => { window.location.href = '/admin' }}
-                      variant="outline"
-                      className="border-sf-primary text-sf-primary hover:bg-sf-primary hover:text-sf-background transition-all duration-200"
-                    >
-                      <Shield className="w-4 h-4 mr-2" />
-                      Admin
-                    </Button>
-                  )}
-                  <div className="flex items-center space-x-3 text-white">
-                    <div className="w-8 h-8 bg-sf-primary rounded-full flex items-center justify-center">
-                      <User className="w-4 h-4" />
-                    </div>
-                    <span className="text-sm font-medium">{user?.name}</span>
-                  </div>
+                  {/* User Dropdown - Consolidates all auth controls */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-800/50 transition-colors">
+                        <div className="w-8 h-8 bg-sf-primary rounded-full flex items-center justify-center">
+                          <User className="w-4 h-4 text-sf-background" />
+                        </div>
+                        <span className="text-sm font-medium text-white max-w-[100px] truncate">{user?.name || 'User'}</span>
+                        <ChevronDown className="w-4 h-4 text-gray-400" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <div className="px-2 py-1.5 text-sm text-gray-400">
+                        {user?.email}
+                      </div>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => window.location.href = '/dashboard/'}>
+                        <LayoutDashboard className="w-4 h-4 mr-2" />
+                        Dashboard
+                      </DropdownMenuItem>
+                      {isAdmin && (
+                        <DropdownMenuItem onClick={() => window.location.href = '/admin'}>
+                          <Shield className="w-4 h-4 mr-2 text-amber-400" />
+                          Admin Panel
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleLogout} className="text-red-400 focus:text-red-400">
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Sign Out
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  
+                  {/* Primary CTA */}
                   <Button 
                     onClick={() => window.location.href = '/dashboard/'}
-                    className="bg-sf-primary hover:bg-sf-accent text-sf-background shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 px-4 py-2 text-sm font-medium"
+                    className="bg-sf-primary hover:bg-sf-accent text-sf-background shadow-lg hover:shadow-xl transition-all duration-200 px-4 py-2 text-sm font-medium"
                   >
                     Go to Dashboard
-                  </Button>
-                  <Button 
-                    onClick={handleLogout}
-                    variant="outline"
-                    className="border-sf-primary text-sf-primary hover:bg-sf-primary hover:text-sf-background transition-all duration-200"
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Logout
                   </Button>
                 </>
               ) : (
@@ -187,8 +228,8 @@ export function Header() {
                     Sign In
                   </Button>
                   <Button 
-                    onClick={() => { /*trackCta({ event: 'click', label: 'start-trial', location: 'header' });*/ openAuthModal('signup') }}
-                    className="bg-sf-primary hover:bg-sf-accent text-sf-background shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 px-4 py-2 text-sm font-medium"
+                    onClick={() => { openAuthModal('signup') }}
+                    className="bg-sf-primary hover:bg-sf-accent text-sf-background shadow-lg hover:shadow-xl transition-all duration-200 px-4 py-2 text-sm font-medium"
                   >
                     Get Started — $9
                   </Button>
@@ -229,70 +270,82 @@ export function Header() {
             {/* Mobile Menu Dropdown */}
             {isMobileMenuOpen && (
               <div className="lg:hidden pb-4 border-t border-gray-800/50">
-                <nav className="flex flex-col space-y-3 pt-4">
-                  <button onClick={() => scrollToSection('hero')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">Watch Demo</button>
-                  <button onClick={() => scrollToSection('how-it-works')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">How it Works</button>
-                  <button onClick={() => scrollToSection('features')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">Features</button>
-                  <button onClick={() => scrollToSection('automation')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">Automation</button>
+                <nav className="flex flex-col space-y-1 pt-4">
+                  {/* Primary Navigation */}
+                  <button onClick={() => scrollToSection('how-it-works')} className="text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">How it Works</button>
+                  <button onClick={() => scrollToSection('features')} className="text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">Features</button>
+                  <button onClick={() => scrollToSection('pricing')} className="text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">Pricing</button>
+                  <button onClick={() => scrollToSection('use-cases')} className="text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">Use Cases</button>
+                  
                   {/* Featured: Value Calculator */}
                   <button 
                     onClick={() => { scrollToSection('value-calculator'); setIsMobileMenuOpen(false); }} 
-                    className="flex items-center gap-2 text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer font-semibold text-base text-left py-2 px-3 -mx-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20"
+                    className="flex items-center gap-2 text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer font-semibold text-base text-left py-3 px-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20"
                   >
                     <Calculator className="w-4 h-4" />
                     Calculate Your Savings
                     <Sparkles className="w-3 h-3" />
                   </button>
-                  <button onClick={() => scrollToSection('use-cases')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">Use Cases</button>
-                  <button onClick={() => scrollToSection('testimonials')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">Testimonials</button>
-                  <button onClick={() => scrollToSection('pricing')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">Pricing</button>
-                  <button onClick={() => scrollToSection('faq')} className="text-gray-300 hover:text-white transition-colors cursor-pointer font-medium text-base text-left py-2">FAQ</button>
-                  {isAuthenticated && isAdmin && (
-                    <Button 
-                      onClick={() => { window.location.href = '/admin' }}
-                      variant="outline"
-                      className="w-full bg-gray-800/50 hover:bg-gray-700/50 border-sf-primary text-sf-primary hover:bg-sf-primary hover:text-sf-background py-3 text-base font-medium"
-                    >
-                      <Shield className="w-4 h-4 mr-2" />
-                      Admin
-                    </Button>
-                  )}
                   
-                  <div className="flex flex-col space-y-3 pt-4">
+                  <button onClick={() => scrollToSection('faq')} className="text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">FAQ</button>
+                  
+                  {/* Divider */}
+                  <div className="border-t border-gray-800/50 my-2" />
+                  
+                  {/* Auth Section */}
+                  <div className="flex flex-col space-y-2 pt-2">
                     {isAuthenticated ? (
                       <>
-                        <div className="flex items-center space-x-3 text-white py-2">
-                          <div className="w-8 h-8 bg-sf-primary rounded-full flex items-center justify-center">
-                            <User className="w-4 h-4" />
+                        {/* User Info */}
+                        <div className="flex items-center space-x-3 text-white py-2 px-3">
+                          <div className="w-10 h-10 bg-sf-primary rounded-full flex items-center justify-center">
+                            <User className="w-5 h-5 text-sf-background" />
                           </div>
-                          <span className="text-sm font-medium">{user?.name}</span>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">{user?.name}</span>
+                            <span className="text-xs text-gray-400">{user?.email}</span>
+                          </div>
                         </div>
+                        
                         <Button 
                           onClick={() => window.location.href = '/dashboard/'}
                           className="w-full bg-sf-primary hover:bg-sf-accent text-sf-background py-3 text-base font-medium"
                         >
+                          <LayoutDashboard className="w-4 h-4 mr-2" />
                           Go to Dashboard
                         </Button>
+                        
+                        {isAdmin && (
+                          <Button 
+                            onClick={() => { window.location.href = '/admin' }}
+                            variant="outline"
+                            className="w-full border-amber-500/50 text-amber-400 hover:bg-amber-500/10 py-3 text-base font-medium"
+                          >
+                            <Shield className="w-4 h-4 mr-2" />
+                            Admin Panel
+                          </Button>
+                        )}
+                        
                         <Button 
                           variant="outline" 
                           onClick={handleLogout}
-                          className="w-full bg-gray-800/50 hover:bg-gray-700/50 border-sf-primary text-sf-primary hover:bg-sf-primary hover:text-sf-background py-3 text-base font-medium"
+                          className="w-full border-gray-700 text-gray-400 hover:text-red-400 hover:border-red-500/50 py-3 text-base font-medium"
                         >
                           <LogOut className="w-4 h-4 mr-2" />
-                          Logout
+                          Sign Out
                         </Button>
                       </>
                     ) : (
                       <>
                         <Button 
                           variant="outline" 
-                          onClick={() => { /*trackCta({ event: 'click', label: 'sign-in', location: 'mobile-menu' });*/ openAuthModal('login') }}
-                          className="w-full px-4 bg-gray-800/50 hover:bg-gray-700/50 border-sf-primary text-sf-primary hover:bg-sf-primary hover:text-sf-background py-3 text-base font-medium"
+                          onClick={() => { openAuthModal('login') }}
+                          className="w-full px-4 border-sf-primary text-sf-primary hover:bg-sf-primary hover:text-sf-background py-3 text-base font-medium"
                         >
                           Sign In
                         </Button>
                         <Button 
-                          onClick={() => { /*trackCta({ event: 'click', label: 'start-trial', location: 'mobile-menu' });*/ openAuthModal('signup') }} 
+                          onClick={() => { openAuthModal('signup') }} 
                           className="w-full px-4 bg-sf-primary hover:bg-sf-accent text-sf-background py-3 text-base font-medium"
                         >
                           Get Started — $9
