@@ -24,12 +24,19 @@ import {
   DollarSign,
   TrendingUp,
   AlertTriangle,
-  Info
+  Info,
+  Globe,
+  MonitorPlay,
+  ShoppingCart,
+  Plus
 } from 'lucide-react'
 import {
   CREDIT_EXCHANGE_RATE,
   SUBSCRIPTION_TIERS,
   TOPUP_PACKS,
+  ANIMATIC_CREDITS,
+  STORAGE_ADDONS,
+  type ProductionType,
 } from '@/lib/credits/creditCosts'
 import {
   FullProjectParameters,
@@ -148,6 +155,12 @@ export function ProjectCostCalculator({
   })
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [activePreset, setActivePreset] = useState<string | null>(null)
+  
+  // Production type: full_video (with AI video) or animatic (frames + audio only)
+  const [productionType, setProductionType] = useState<ProductionType>('full_video')
+  
+  // Language versions for multi-language releases
+  const [languageVersions, setLanguageVersions] = useState(1)
 
   // Update a specific parameter
   const updateParam = useCallback(<K extends keyof FullProjectParameters>(
@@ -200,11 +213,77 @@ export function ProjectCostCalculator({
     setActivePreset(preset.name)
   }, [])
 
-  // Calculate costs and strategies
+  // Calculate costs and strategies with adjustments for production type & languages
   const comparison = useMemo(() => {
-    return compareStrategies(params);
-  }, [params])
+    // For animatic mode, zero out video costs
+    const adjustedParams = productionType === 'animatic'
+      ? {
+          ...params,
+          video: { ...params.video, model: 'veo_fast' as const }, // Keep model but we'll zero it
+        }
+      : params;
+    
+    const baseComparison = compareStrategies(adjustedParams);
+    
+    // If animatic mode, zero out video and add MP4 render costs
+    if (productionType === 'animatic') {
+      const videoCost = baseComparison.projectCost.video.credits;
+      const mp4RenderCredits = Math.ceil(params.video.totalMinutes) * ANIMATIC_CREDITS.MP4_RENDER_PER_MINUTE;
+      
+      // Adjust breakdown
+      baseComparison.projectCost.video = {
+        credits: mp4RenderCredits,
+        usdCost: mp4RenderCredits / CREDIT_EXCHANGE_RATE,
+        items: [{
+          name: 'MP4 Render (Animatic)',
+          quantity: Math.ceil(params.video.totalMinutes),
+          creditsEach: ANIMATIC_CREDITS.MP4_RENDER_PER_MINUTE,
+          totalCredits: mp4RenderCredits,
+        }],
+      };
+      
+      // Recalculate total
+      const newTotal = 
+        baseComparison.projectCost.video.credits +
+        baseComparison.projectCost.images.credits +
+        baseComparison.projectCost.audio.credits +
+        baseComparison.projectCost.voiceClones.credits +
+        baseComparison.projectCost.upscale.credits;
+      
+      baseComparison.projectCost.total.credits = newTotal;
+      baseComparison.projectCost.total.usdCost = newTotal / CREDIT_EXCHANGE_RATE;
+    }
+    
+    // Add language version costs
+    if (languageVersions > 1) {
+      const extraLanguages = languageVersions - 1;
+      const baseVoiceCredits = baseComparison.projectCost.audio.credits;
+      const translationChars = params.audio.dialogueLines * 80 * extraLanguages; // ~80 chars per line
+      
+      const languageCredits = 
+        (extraLanguages * ANIMATIC_CREDITS.LANGUAGE_VERSION_BASE) + // Base cost per language
+        (Math.ceil(translationChars / 1000) * ANIMATIC_CREDITS.TRANSLATION_PER_1K_CHARS) + // Translation
+        (baseVoiceCredits * extraLanguages * 0.8); // Re-voicing (80% of original audio cost)
+      
+      baseComparison.projectCost.total.credits += languageCredits;
+      baseComparison.projectCost.total.usdCost = baseComparison.projectCost.total.credits / CREDIT_EXCHANGE_RATE;
+    }
+    
+    return baseComparison;
+  }, [params, productionType, languageVersions])
   const breakdown = comparison.projectCost
+
+  // Calculate additional language credits separately for display
+  const languageCreditsCost = useMemo(() => {
+    if (languageVersions <= 1) return 0;
+    const extraLanguages = languageVersions - 1;
+    const baseVoiceCredits = comparison.projectCost.audio.credits;
+    const translationChars = params.audio.dialogueLines * 80 * extraLanguages;
+    
+    return (extraLanguages * ANIMATIC_CREDITS.LANGUAGE_VERSION_BASE) +
+      (Math.ceil(translationChars / 1000) * ANIMATIC_CREDITS.TRANSLATION_PER_1K_CHARS) +
+      (baseVoiceCredits * extraLanguages * 0.8);
+  }, [languageVersions, comparison.projectCost.audio.credits, params.audio.dialogueLines])
 
   // Find recommended strategy
   const recommended = comparison.subscriptions.find(s => s.recommended)
@@ -318,6 +397,84 @@ export function ProjectCostCalculator({
       <div className="grid lg:grid-cols-2 gap-6 p-6">
         {/* Left Column - Inputs */}
         <div className="space-y-6">
+          {/* Production Type Toggle */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2">
+              <MonitorPlay className="w-4 h-4" /> Production Type
+            </h3>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setProductionType('full_video')}
+                className={`p-4 rounded-xl border transition-all ${
+                  productionType === 'full_video'
+                    ? 'bg-cyan-500/20 border-cyan-500 text-white'
+                    : 'bg-slate-800 border-slate-700 text-gray-300 hover:border-slate-600'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Video className="w-4 h-4" />
+                  <span className="font-medium">Full Video</span>
+                </div>
+                <div className="text-xs text-gray-400">AI video generation</div>
+              </button>
+              
+              <button
+                onClick={() => setProductionType('animatic')}
+                className={`p-4 rounded-xl border transition-all ${
+                  productionType === 'animatic'
+                    ? 'bg-emerald-500/20 border-emerald-500 text-white'
+                    : 'bg-slate-800 border-slate-700 text-gray-300 hover:border-slate-600'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Layers className="w-4 h-4" />
+                  <span className="font-medium">Animatic</span>
+                </div>
+                <div className="text-xs text-gray-400">Frames + audio (preview)</div>
+              </button>
+            </div>
+            
+            {productionType === 'animatic' && (
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-sm text-emerald-300">
+                <strong>Animatic Mode:</strong> Uses still frames with audio. Perfect for storyboarding, client previews, or podcast videos. Significantly lower credit cost.
+              </div>
+            )}
+          </div>
+
+          {/* Language Versions */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2">
+              <Globe className="w-4 h-4" /> Language Versions
+            </h3>
+            
+            <div>
+              <div className="flex justify-between mb-2">
+                <label className="text-sm text-gray-300">Number of Languages</label>
+                <span className="text-sm font-medium text-white">{languageVersions}</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="10"
+                value={languageVersions}
+                onChange={(e) => setLanguageVersions(Number(e.target.value))}
+                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+              />
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>1 (Original)</span>
+                <span>10 Languages</span>
+              </div>
+            </div>
+            
+            {languageVersions > 1 && (
+              <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg text-sm text-blue-300">
+                <strong>{languageVersions} languages:</strong> Original + {languageVersions - 1} translated version{languageVersions > 2 ? 's' : ''}. 
+                Adds ~{formatCredits(Math.round(languageCreditsCost))} credits for translation & re-voicing.
+              </div>
+            )}
+          </div>
+
           {/* Scene Configuration */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2">
@@ -582,13 +739,77 @@ export function ProjectCostCalculator({
 
         {/* Right Column - Results */}
         <div className="space-y-6">
+          {/* Budget Status Header */}
+          <div className={`p-4 rounded-xl border ${
+            hasDeficit 
+              ? creditsNeeded > breakdown.total.credits * 0.5 
+                ? 'bg-red-500/10 border-red-500/30' 
+                : 'bg-amber-500/10 border-amber-500/30'
+              : 'bg-emerald-500/10 border-emerald-500/30'
+          }`}>
+            <div className="flex items-center justify-between mb-3">
+              <span className={`text-sm font-medium ${
+                hasDeficit 
+                  ? creditsNeeded > breakdown.total.credits * 0.5 
+                    ? 'text-red-400' 
+                    : 'text-amber-400'
+                  : 'text-emerald-400'
+              }`}>
+                {hasDeficit 
+                  ? creditsNeeded > breakdown.total.credits * 0.5 
+                    ? '🔴 Credits Needed' 
+                    : '🟡 Low Balance'
+                  : '🟢 Budget Covered'}
+              </span>
+              <span className="text-xs text-gray-400">
+                {productionType === 'animatic' && '📊 Animatic'}
+                {languageVersions > 1 && ` • 🌐 ${languageVersions} langs`}
+              </span>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="h-2 bg-slate-700 rounded-full overflow-hidden mb-2">
+              <div 
+                className={`h-full rounded-full transition-all ${
+                  hasDeficit 
+                    ? creditsNeeded > breakdown.total.credits * 0.5 
+                      ? 'bg-red-500' 
+                      : 'bg-amber-500'
+                    : 'bg-emerald-500'
+                }`}
+                style={{ 
+                  width: `${Math.min(100, (currentBalance / breakdown.total.credits) * 100)}%` 
+                }}
+              />
+            </div>
+            
+            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+              <div>
+                <div className="text-gray-400">Required</div>
+                <div className="font-medium text-white">{formatCredits(breakdown.total.credits)}</div>
+              </div>
+              <div>
+                <div className="text-gray-400">Available</div>
+                <div className="font-medium text-cyan-400">{formatCredits(currentBalance)}</div>
+              </div>
+              <div>
+                <div className="text-gray-400">To Purchase</div>
+                <div className={`font-medium ${hasDeficit ? 'text-amber-400' : 'text-emerald-400'}`}>
+                  {hasDeficit ? formatCredits(creditsNeeded) : '0'}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Total Credits Card */}
           <div className="p-6 bg-gradient-to-br from-slate-800 to-slate-800/50 rounded-xl border border-slate-700/50">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-gray-400">Project Budget Calculation</span>
+              <span className="text-gray-400">
+                {productionType === 'animatic' ? 'Animatic' : 'Video'} Production
+              </span>
               <div className="flex items-center gap-2 text-gray-400 text-sm">
                 <Clock className="w-4 h-4" />
-                <span>~{params.video.totalMinutes} min video</span>
+                <span>~{params.video.totalMinutes} min</span>
               </div>
             </div>
             
@@ -598,13 +819,15 @@ export function ProjectCostCalculator({
             
             <div className="flex items-center gap-4 text-sm text-gray-400">
               <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4" />
-                <span>≈ {formatCurrency(breakdown.total.usdCost)}</span>
-              </div>
-              <div className="flex items-center gap-2">
                 <HardDrive className="w-4 h-4" />
                 <span>~{formatBytes(breakdown.estimatedStorageBytes)}</span>
               </div>
+              {languageVersions > 1 && (
+                <div className="flex items-center gap-2 text-blue-400">
+                  <Globe className="w-4 h-4" />
+                  <span>{languageVersions} languages</span>
+                </div>
+              )}
             </div>
             
             {/* Set Budget Button */}
@@ -621,14 +844,20 @@ export function ProjectCostCalculator({
 
           {/* Cost Breakdown */}
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-gray-400">Cost Breakdown by Service</h3>
+            <h3 className="text-sm font-medium text-gray-400">Cost Breakdown</h3>
             
             {[
-              { key: 'video', label: 'Video Generation', icon: Video, cost: breakdown.video },
+              { key: 'video', label: productionType === 'animatic' ? 'MP4 Rendering' : 'Video Generation', icon: productionType === 'animatic' ? MonitorPlay : Video, cost: breakdown.video },
               { key: 'images', label: 'Image Generation', icon: ImageIcon, cost: breakdown.images },
               { key: 'audio', label: 'Audio & Music', icon: Music, cost: breakdown.audio },
               { key: 'voiceClones', label: 'Voice Clones', icon: Mic, cost: breakdown.voiceClones },
               { key: 'upscale', label: 'Upscaling', icon: TrendingUp, cost: breakdown.upscale },
+              ...(languageVersions > 1 ? [{
+                key: 'languages',
+                label: `Translation (${languageVersions - 1} extra)`,
+                icon: Globe,
+                cost: { credits: Math.round(languageCreditsCost), usdCost: languageCreditsCost / CREDIT_EXCHANGE_RATE, items: [] }
+              }] : []),
             ].filter(item => item.cost.credits > 0).map(item => {
               const Icon = item.icon
               const percentage = breakdown.total.credits > 0 
@@ -658,50 +887,131 @@ export function ProjectCostCalculator({
             })}
           </div>
 
-          {/* Strategy Comparison */}
+          {/* Quick Top-Up Options */}
+          {hasDeficit && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                <ShoppingCart className="w-4 h-4" /> Quick Top-Up Packs
+              </h3>
+              
+              <div className="grid gap-2">
+                {TOPUP_PACKS.map((pack, index) => {
+                  const coversDeficit = pack.credits >= creditsNeeded;
+                  const packsNeeded = Math.ceil(creditsNeeded / pack.credits);
+                  
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => onTopUp && onTopUp(index as keyof typeof TOPUP_PACKS)}
+                      className={`p-4 rounded-xl border transition-all text-left ${
+                        coversDeficit
+                          ? 'bg-emerald-500/10 border-emerald-500/50 hover:bg-emerald-500/20'
+                          : 'bg-slate-800/50 border-slate-700/50 hover:border-slate-600'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-white">
+                              {formatCredits(pack.credits)} credits
+                            </span>
+                            {coversDeficit && (
+                              <span className="px-2 py-0.5 bg-emerald-500 text-white text-xs font-medium rounded">
+                                COVERS PROJECT
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm text-gray-400 mt-1">
+                            ${pack.price} • ${(pack.price / pack.credits * 100).toFixed(1)}¢ per credit
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {!coversDeficit && (
+                            <span className="text-xs text-gray-500">
+                              Need {packsNeeded}x
+                            </span>
+                          )}
+                          <Plus className="w-5 h-5 text-cyan-400" />
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Storage Tracking */}
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-gray-400">Best Value Options</h3>
+            <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2">
+              <HardDrive className="w-4 h-4" /> Storage Estimate
+            </h3>
+            
+            <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-white font-medium">
+                  ~{formatBytes(breakdown.estimatedStorageBytes)}
+                </span>
+                <span className="text-sm text-gray-400">
+                  {params.storage.activeMonths} month{params.storage.activeMonths > 1 ? 's' : ''} retention
+                </span>
+              </div>
+              
+              <div className="text-xs text-gray-400 mb-3">
+                Based on {params.scenes.count} scenes × {params.scenes.segmentsPerScene} segments
+              </div>
+              
+              {breakdown.estimatedStorageBytes > 5 * 1024 * 1024 * 1024 && (
+                <div className="border-t border-slate-700 pt-3 mt-3">
+                  <div className="text-xs text-gray-400 mb-2">Need more storage?</div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {Object.entries(STORAGE_ADDONS).map(([key, addon]) => (
+                      <div 
+                        key={key}
+                        className="p-2 bg-slate-700/50 rounded-lg text-center"
+                      >
+                        <div className="text-sm font-medium text-white">{addon.gb}GB</div>
+                        <div className="text-xs text-gray-400">${addon.priceMonthly}/mo</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Subscription Strategy */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-gray-400">Recommended Plan</h3>
             
             {comparison.subscriptions
-              .filter(s => !s.tier.includes('trial') || s.recommended)
-              .slice(0, 3)
+              .filter(s => s.recommended)
+              .slice(0, 1)
               .map(strategy => (
                 <div
                   key={strategy.tier}
-                  className={`p-4 rounded-xl border transition-all ${
-                    strategy.recommended
-                      ? 'bg-cyan-500/10 border-cyan-500/50'
-                      : 'bg-slate-800/50 border-slate-700/50 hover:border-slate-600'
-                  }`}
+                  className="p-4 rounded-xl border bg-cyan-500/10 border-cyan-500/50"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      {strategy.recommended && (
-                        <span className="px-2 py-0.5 bg-cyan-500 text-white text-xs font-medium rounded">
-                          BEST VALUE
-                        </span>
-                      )}
+                      <span className="px-2 py-0.5 bg-cyan-500 text-white text-xs font-medium rounded">
+                        BEST VALUE
+                      </span>
                       <span className="font-medium text-white">{strategy.tierName}</span>
                     </div>
                     <span className="text-lg font-bold text-white">
-                      {formatCurrency(strategy.totalMonthlyCost)}<span className="text-sm text-gray-400">/mo</span>
+                      {formatCredits(strategy.includedCredits)} <span className="text-sm text-gray-400">credits</span>
                     </span>
                   </div>
                   
-                  <div className="flex items-center gap-4 text-sm text-gray-400">
-                    <span>{formatCredits(strategy.includedCredits)} credits included</span>
+                  <div className="flex items-center gap-4 text-sm text-gray-400 mb-2">
+                    <span>${strategy.totalMonthlyCost}/month</span>
                     {strategy.additionalCreditsNeeded > 0 && (
                       <span className="text-amber-400">
                         +{formatCredits(strategy.additionalCreditsNeeded)} via top-ups
                       </span>
                     )}
                   </div>
-                  
-                  {strategy.savings > 0 && (
-                    <div className="mt-2 text-sm text-green-400">
-                      Save {formatCurrency(strategy.savings)} vs pay-as-you-go
-                    </div>
-                  )}
                   
                   {strategy.warnings.length > 0 && (
                     <div className="mt-2 flex items-start gap-2 text-sm text-amber-400">
@@ -721,46 +1031,37 @@ export function ProjectCostCalculator({
                   )}
                 </div>
               ))}
-          </div>
-
-          {/* Pay-as-you-go Option */}
-          <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/30">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-400">Or pay-as-you-go:</span>
-              <span className="text-lg font-bold text-white">
-                {formatCurrency(comparison.payAsYouGo.totalCost)}
-              </span>
-            </div>
-            <div className="text-sm text-gray-500">
-              {comparison.payAsYouGo.packs.map(p => `${p.quantity}x ${p.name}`).join(' + ')}
-            </div>
-          </div>
-
-          {/* Current Balance Info */}
-          {hasDeficit && (
-            <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
-              <div className="flex items-start gap-3">
-                <Info className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <div className="text-white font-medium">
-                    You need {formatCredits(creditsNeeded)} more credits
-                  </div>
-                  <p className="text-sm text-gray-400 mt-1">
-                    Your current balance of {formatCredits(currentBalance)} credits won&apos;t cover this project.
-                    Consider upgrading or purchasing a top-up pack.
-                  </p>
-                  {onTopUp && (
-                    <button
-                      onClick={() => onTopUp('scene_pack')}
-                      className="mt-3 px-4 py-2 bg-amber-500 hover:bg-amber-600 rounded-lg text-white text-sm font-medium transition-colors"
+            
+            {/* Other Plans Expandable */}
+            <details className="group">
+              <summary className="text-sm text-cyan-400 hover:text-cyan-300 cursor-pointer flex items-center gap-2">
+                <ChevronDown className="w-4 h-4 group-open:rotate-180 transition-transform" />
+                View all plans
+              </summary>
+              <div className="mt-3 space-y-2">
+                {comparison.subscriptions
+                  .filter(s => !s.recommended && !s.tier.includes('trial'))
+                  .map(strategy => (
+                    <div
+                      key={strategy.tier}
+                      className="p-3 rounded-lg bg-slate-800/30 border border-slate-700/30"
                     >
-                      Get Scene Pack ({formatCredits(TOPUP_PACKS.scene_pack.credits)} credits)
-                    </button>
-                  )}
-                </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-white">{strategy.tierName}</span>
+                        <div className="text-right">
+                          <span className="text-sm font-medium text-white">
+                            {formatCredits(strategy.includedCredits)}
+                          </span>
+                          <span className="text-xs text-gray-400 ml-1">
+                            @ ${strategy.totalMonthlyCost}/mo
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
               </div>
-            </div>
-          )}
+            </details>
+          </div>
         </div>
       </div>
     </motion.div>

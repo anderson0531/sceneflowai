@@ -161,6 +161,32 @@ export const AUDIO_CREDITS = {
 } as const;
 
 // =============================================================================
+// ANIMATIC PRODUCTION (No Video, Frames + Audio + MP4 Render)
+// =============================================================================
+
+export const ANIMATIC_CREDITS = {
+  /**
+   * MP4 render cost per minute (FFMPEG/GCP processing)
+   * Much cheaper than video generation - just compositing frames + audio
+   */
+  MP4_RENDER_PER_MINUTE: 5,
+  
+  /**
+   * Additional language version (re-voicing + render)
+   * Base cost for duplicating audio track to new language
+   * Actual voice generation is additional
+   */
+  LANGUAGE_VERSION_BASE: 50,
+  
+  /**
+   * Translation cost per 1000 characters (AI translation)
+   */
+  TRANSLATION_PER_1K_CHARS: 10,
+} as const;
+
+export type ProductionType = 'full_video' | 'animatic';
+
+// =============================================================================
 // TEXT GENERATION / INTELLIGENCE
 // =============================================================================
 
