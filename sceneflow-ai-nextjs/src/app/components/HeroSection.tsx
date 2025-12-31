@@ -140,6 +140,7 @@ export function HeroSection() {
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
             
+            {/* TEMPORARILY HIDDEN FOR PAYMENT PROCESSOR COMPLIANCE - Re-enable after replacing Avatar-like images
             <Button
               variant="outline"
               size="lg"
@@ -149,6 +150,7 @@ export function HeroSection() {
               <Play className="w-5 h-5 mr-2 fill-current" />
               Watch Demo
             </Button>
+            */}
           </motion.div>
 
           {/* Microcopy */}
@@ -184,17 +186,14 @@ export function HeroSection() {
             </div>
           </motion.div>
           
-          {/* Hero Visual Placeholder */}
+          {/* TEMPORARILY HIDDEN FOR PAYMENT PROCESSOR COMPLIANCE - Re-enable after replacing Avatar-like images
           <motion.div 
             className="relative max-w-5xl mx-auto"
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1.3 }}
           >
-            {/* Video Frame */}
             <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-purple-500/20">
-              
-              {/* Hero Demo Video */}
               <div className="aspect-[16/9] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden group">
                 <video
                   ref={videoRef}
@@ -209,14 +208,10 @@ export function HeroSection() {
                   <source src="/demo/hero-demo.mp4#t=0.1" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
-                
-                {/* Status badge overlay */}
                 <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-slate-800/80 backdrop-blur-sm rounded-lg border border-white/10">
                   <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                   <span className="text-xs text-gray-300">Virtual Production Studio</span>
                 </div>
-                
-                {/* Audio toggle button - minimal transparent icon */}
                 <button
                   onClick={toggleMute}
                   className="absolute bottom-4 right-4 p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm transition-all opacity-60 hover:opacity-100"
@@ -230,8 +225,42 @@ export function HeroSection() {
                 </button>
               </div>
             </div>
-            
-            {/* Glow effect behind */}
+            <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-amber-500/20 rounded-2xl blur-2xl -z-10" />
+          </motion.div>
+          */}
+          
+          {/* Temporary placeholder while video assets are being updated */}
+          <motion.div 
+            className="relative max-w-4xl mx-auto"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.3 }}
+          >
+            <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-purple-500/20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+              <div className="aspect-[16/9] flex items-center justify-center">
+                <div className="text-center p-8">
+                  <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-r from-cyan-500 via-purple-500 to-amber-500 flex items-center justify-center">
+                    <Film className="w-10 h-10 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-2">AI-Powered Video Production</h3>
+                  <p className="text-gray-400 max-w-md mx-auto">Script generation, character consistency, voice acting, and video rendering—all in one platform.</p>
+                  <div className="flex items-center justify-center gap-6 mt-6">
+                    <div className="flex items-center gap-2 text-sm text-gray-300">
+                      <Sparkles className="w-4 h-4 text-cyan-400" />
+                      <span>AI Characters</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-300">
+                      <Mic2 className="w-4 h-4 text-purple-400" />
+                      <span>Voice Synthesis</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-300">
+                      <Video className="w-4 h-4 text-amber-400" />
+                      <span>Video Export</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
             <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-amber-500/20 rounded-2xl blur-2xl -z-10" />
           </motion.div>
         </motion.div>
