@@ -48,18 +48,18 @@ export function Pricing() {
 
     const pricingTiers = [
     {
-      name: 'Trial',
-      monthlyPrice: 4.99,
-      annualPrice: 4.99, // Same as monthly (one-time)
+      name: 'Explorer',
+      monthlyPrice: 9.99,
+      annualPrice: 9.99, // Same as monthly (one-time)
       isOneTime: true,
       description: 'Test Drive SceneFlow AI',
       tagline: 'Create your first animatic',
-      credits: '1,500 Credits (one-time)',
-      value: 'Full animatic + 2 draft scenes',
+      credits: '3,000 Credits (one-time)',
+      value: 'Full animatic + 4 draft scenes',
       storage: '1 GB',
       features: [
-        '1,500 credits (never expire)',
-        '~150 images + 3 Fast video scenes',
+        '3,000 credits (never expire)',
+        '~300 images + 6 Fast video scenes',
         '1 GB storage',
         'Gemini 2.5 Flash + Imagen 4',
         'Veo 3.1 Fast video drafts',
@@ -478,11 +478,11 @@ export function Pricing() {
                       : 'bg-gray-700 hover:bg-gray-600 text-white'
                   }`}
                 >
-                  {purchasing && tier.name === 'Trial' 
+                  {purchasing && tier.name === 'Explorer' 
                     ? 'Processing...' 
-                    : tier.isOneTime && tier.name === 'Trial'
-                    ? 'Start Testing'
-                    : tier.special === 'Trial' 
+                    : tier.isOneTime && tier.name === 'Explorer'
+                    ? 'Start Exploring'
+                    : tier.special === 'Explorer' 
                     ? tier.cta 
                     : `Start ${tier.name} Plan`}
                 </button>

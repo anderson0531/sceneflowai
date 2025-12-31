@@ -54,9 +54,9 @@ export function FAQ() {
     },
     // General Platform FAQs
     {
-      question: 'How does the Trial Plan work?',
+      question: 'How does the Explorer Plan work?',
       answer:
-        'For just $15, you get 1,200 credits to explore the full platform. That\'s enough to generate scripts, create character portraits, produce video clips, and add voice acting. No subscription required—just a one-time payment to see what SceneFlow can do for your creative projects.',
+        'For just $9.99, you get 3,000 credits to explore the full platform. That\'s enough to generate scripts, create character portraits, produce video clips, and add voice acting. No subscription required—just a one-time payment to see what SceneFlow can do for your creative projects.',
     },
     {
       question: 'Do I need technical skills or video editing experience?',

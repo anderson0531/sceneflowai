@@ -100,10 +100,10 @@ export default function RootLayout({
               "offers": [
                 {
                   "@type": "Offer",
-                  "name": "Trial",
-                  "price": "15.00",
+                  "name": "Explorer",
+                  "price": "9.99",
                   "priceCurrency": "USD",
-                  "description": "One-time purchase: 1,200 credits to test drive the platform"
+                  "description": "One-time purchase: 3,000 credits to test drive the platform"
                 },
                 {
                   "@type": "Offer",

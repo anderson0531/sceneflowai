@@ -53,9 +53,9 @@ export default function RefundPolicyPage() {
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">3. One-Time Purchases</h2>
             
-            <h3 className="text-xl font-medium text-white mb-3">3.1 Trial ($15 Starter Pack)</h3>
+            <h3 className="text-xl font-medium text-white mb-3">3.1 Explorer ($9.99 Starter Pack)</h3>
             <p className="text-gray-300 leading-relaxed mb-4">
-              The Trial one-time purchase is refundable within 7 days if no credits have been used. Once credits are consumed, refunds are not available.
+              The Explorer one-time purchase is refundable within 7 days if no credits have been used. Once credits are consumed, refunds are not available.
             </p>
             
             <h3 className="text-xl font-medium text-white mb-3">3.2 Credit Packs</h3>

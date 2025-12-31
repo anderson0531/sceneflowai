@@ -50,7 +50,7 @@ export default function TermsOfServicePage() {
             <p className="text-gray-300 leading-relaxed mb-4">The Service operates on a credit-based system:</p>
             <ul className="list-disc pl-6 text-gray-300 space-y-2">
               <li><strong>Subscription Credits:</strong> Monthly credits expire 30 days after issuance if unused</li>
-              <li><strong>One-time Purchase Credits:</strong> Credits from packs (Trial, Basic Pack, Value Pack, Pro Pack) never expire</li>
+              <li><strong>One-time Purchase Credits:</strong> Credits from packs (Explorer, Basic Pack, Value Pack, Pro Pack) never expire</li>
               <li><strong>Payment Processing:</strong> Payments are processed securely by our authorized Merchant of Record payment partner</li>
               <li><strong>Pricing:</strong> All prices are in USD and include applicable taxes calculated at checkout</li>
               <li><strong>Automatic Renewal:</strong> Subscriptions renew automatically unless cancelled before the renewal date</li>

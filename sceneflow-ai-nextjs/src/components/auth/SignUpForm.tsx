@@ -243,7 +243,7 @@ export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
         <div className="mt-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
           <div className="flex items-center space-x-2 text-green-400 text-sm">
             <CheckCircle className="w-5 h-5" />
-            <span><strong>Free Trial:</strong> Get 1500 credits to start creating videos immediately</span>
+            <span><strong>Explorer Plan:</strong> Get 3,000 credits for just $9.99 to start creating videos</span>
           </div>
         </div>
       </div>
