@@ -48,6 +48,7 @@ interface CreditBreakdown {
 
 interface DebugInfo {
   metadataKeys: string[]
+  visionPhaseKeys: string[]
   scenesLocation: string | null
   sceneCount: number
   firstSceneKeys: string[]
@@ -246,12 +247,36 @@ function calculateProjectCredits(project: Project): {
   
   // Debug: Collect metadata structure info
   const metadataKeys = Object.keys(metadata)
+  const visionPhaseKeys = metadata.visionPhase ? Object.keys(metadata.visionPhase) : []
   
   // Find scenes from multiple possible locations
+  // Priority order based on actual usage in the codebase
   let scenesLocation: string | null = null
   let scenes: any[] = []
   
-  if (metadata.scenes && Array.isArray(metadata.scenes) && metadata.scenes.length > 0) {
+  // PRIMARY LOCATION: visionPhase.script.script.scenes (most common)
+  if (metadata.visionPhase?.script?.script?.scenes && 
+      Array.isArray(metadata.visionPhase.script.script.scenes) && 
+      metadata.visionPhase.script.script.scenes.length > 0) {
+    scenesLocation = 'visionPhase.script.script.scenes'
+    scenes = metadata.visionPhase.script.script.scenes
+  }
+  // SECONDARY: visionPhase.script.scenes
+  else if (metadata.visionPhase?.script?.scenes && 
+           Array.isArray(metadata.visionPhase.script.scenes) && 
+           metadata.visionPhase.script.scenes.length > 0) {
+    scenesLocation = 'visionPhase.script.scenes'
+    scenes = metadata.visionPhase.script.scenes
+  }
+  // TERTIARY: visionPhase.scenes
+  else if (metadata.visionPhase?.scenes && 
+           Array.isArray(metadata.visionPhase.scenes) && 
+           metadata.visionPhase.scenes.length > 0) {
+    scenesLocation = 'visionPhase.scenes'
+    scenes = metadata.visionPhase.scenes
+  }
+  // Legacy locations below
+  else if (metadata.scenes && Array.isArray(metadata.scenes) && metadata.scenes.length > 0) {
     scenesLocation = 'metadata.scenes'
     scenes = metadata.scenes
   } else if (metadata.guide?.scenes && Array.isArray(metadata.guide.scenes) && metadata.guide.scenes.length > 0) {
@@ -328,6 +353,7 @@ function calculateProjectCredits(project: Project): {
     totalCredits: breakdown.total,
     debug: {
       metadataKeys,
+      visionPhaseKeys,
       scenesLocation,
       sceneCount: scenes.length,
       firstSceneKeys,

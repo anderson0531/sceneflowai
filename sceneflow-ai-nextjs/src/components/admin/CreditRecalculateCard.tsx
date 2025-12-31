@@ -40,6 +40,7 @@ interface SingleProjectResult {
 // Debug info from API
 interface DebugInfo {
   metadataKeys: string[]
+  visionPhaseKeys: string[]
   scenesLocation: string | null
   sceneCount: number
   firstSceneKeys: string[]
@@ -658,9 +659,16 @@ export function CreditRecalculateCard() {
                           {proj.debug && (
                             <div className="mt-1.5 pt-1.5 border-t border-gray-700/30 text-[10px] font-mono text-gray-500 space-y-0.5">
                               <div>
-                                <span className="text-gray-600">keys:</span> {proj.debug.metadataKeys.slice(0, 6).join(', ')}
+                                <span className="text-gray-600">meta:</span> {proj.debug.metadataKeys.slice(0, 6).join(', ')}
                                 {proj.debug.metadataKeys.length > 6 && '...'}
                               </div>
+                              {proj.debug.visionPhaseKeys && proj.debug.visionPhaseKeys.length > 0 && (
+                                <div>
+                                  <span className="text-gray-600">visionPhase:</span>{' '}
+                                  <span className="text-blue-400">{proj.debug.visionPhaseKeys.slice(0, 6).join(', ')}</span>
+                                  {proj.debug.visionPhaseKeys.length > 6 && '...'}
+                                </div>
+                              )}
                               <div>
                                 <span className="text-gray-600">scenes:</span>{' '}
                                 <span className={proj.debug.scenesLocation ? 'text-green-500' : 'text-red-500'}>
