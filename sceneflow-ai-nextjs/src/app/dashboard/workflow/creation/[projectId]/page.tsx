@@ -680,6 +680,7 @@ export default function CreationHubPage({ params }: { params: Promise<{ projectI
         title="Creation Hub"
         titleVariant="page"
         emphasis
+        projectId={project.id}
         meta={creationHub?.lastUpdated ? `Updated ${new Date(creationHub.lastUpdated).toLocaleString()}` : undefined}
         primaryActions={
           <Button className="bg-sf-primary text-white hover:bg-sf-accent flex items-center gap-2" onClick={handleContinueToPolish}>

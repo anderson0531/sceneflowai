@@ -3,32 +3,90 @@
 import React, { useState } from 'react'
 import { Button } from '../ui/Button'
 import { toast } from 'sonner'
-import { Calculator, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Calculator, RefreshCw, AlertCircle, CheckCircle2, Copy } from 'lucide-react'
 
-interface RecalculateResult {
-  projectId?: string
-  projectName?: string
-  previousCreditsUsed: number
-  newCreditsUsed: number
-  difference: number
-  assetCounts: {
-    images: number
-    videos: number
-    audioMinutes: number
+// Matches API response for single project (POST)
+interface SingleProjectResult {
+  success: boolean
+  dryRun: boolean
+  project: {
+    projectId: string
+    title: string
+    previousCreditsUsed: number
+    newCreditsUsed: number
+    creditDifference: number
+    assetCounts: {
+      treatmentImages: number
+      sceneImages: number
+      frameImages: number
+      videos: number
+      audioMinutes: number
+      voiceClones: number
+    }
+    breakdown: {
+      treatmentVisuals: number
+      sceneImages: number
+      frameImages: number
+      videos: number
+      audio: number
+      voiceClones: number
+      total: number
+    }
+    updated: boolean
   }
+  timestamp: string
 }
 
-interface RecalculateAllResult {
-  totalProjectsProcessed: number
-  totalCreditsRecalculated: number
-  results: RecalculateResult[]
+// Matches API response for all projects (GET)
+interface AllProjectsResult {
+  success: boolean
+  dryRun: boolean
+  summary: {
+    projectsProcessed: number
+    projectsUpdated: number
+    totalPreviousCredits: number
+    totalNewCredits: number
+    creditDifference: number
+  }
+  projects: Array<{
+    projectId: string
+    title: string
+    previousCreditsUsed: number
+    newCreditsUsed: number
+    assetCounts: {
+      treatmentImages: number
+      sceneImages: number
+      frameImages: number
+      videos: number
+      audioMinutes: number
+      voiceClones: number
+    }
+    breakdown: {
+      treatmentVisuals: number
+      sceneImages: number
+      frameImages: number
+      videos: number
+      audio: number
+      voiceClones: number
+      total: number
+    }
+    updated: boolean
+  }>
+  timestamp: string
 }
+
+type RecalculateResult = SingleProjectResult | AllProjectsResult
 
 export function CreditRecalculateCard() {
   const [loading, setLoading] = useState(false)
   const [dryRun, setDryRun] = useState(true)
   const [projectId, setProjectId] = useState('')
-  const [results, setResults] = useState<RecalculateResult | RecalculateAllResult | null>(null)
+  const [results, setResults] = useState<RecalculateResult | null>(null)
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    toast.success('Copied to clipboard')
+  }
 
   const handleRecalculateAll = async () => {
     if (!dryRun) {
@@ -52,8 +110,8 @@ export function CreditRecalculateCard() {
       setResults(data)
       toast.success(
         dryRun
-          ? `Preview: ${data.totalProjectsProcessed} projects analyzed`
-          : `Successfully recalculated credits for ${data.totalProjectsProcessed} projects`
+          ? `Preview: ${data.summary?.projectsProcessed || 0} projects analyzed`
+          : `Successfully recalculated credits for ${data.summary?.projectsUpdated || 0} projects`
       )
     } catch (error: any) {
       toast.error(error.message || 'Failed to recalculate credits')
@@ -94,8 +152,8 @@ export function CreditRecalculateCard() {
       setResults(data)
       toast.success(
         dryRun
-          ? `Preview: Credits would change by ${data.difference > 0 ? '+' : ''}${data.difference}`
-          : `Successfully recalculated credits for project`
+          ? `Preview: Credits would change by ${data.project?.creditDifference > 0 ? '+' : ''}${data.project?.creditDifference || 0}`
+          : `Successfully recalculated credits for project "${data.project?.title || projectId}"`
       )
     } catch (error: any) {
       toast.error(error.message || 'Failed to recalculate credits')
@@ -105,12 +163,12 @@ export function CreditRecalculateCard() {
     }
   }
 
-  const isSingleResult = (result: any): result is RecalculateResult => {
-    return result && 'projectId' in result
+  const isSingleResult = (result: any): result is SingleProjectResult => {
+    return result && 'project' in result && result.project?.projectId
   }
 
-  const isAllResult = (result: any): result is RecalculateAllResult => {
-    return result && 'totalProjectsProcessed' in result
+  const isAllResult = (result: any): result is AllProjectsResult => {
+    return result && 'summary' in result && 'projects' in result
   }
 
   return (
@@ -223,12 +281,21 @@ export function CreditRecalculateCard() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <div className="text-xs text-gray-400 mb-1">Project ID</div>
-                  <div className="text-white font-mono text-xs">{results.projectId}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-white font-mono text-xs truncate max-w-[180px]">{results.project.projectId}</div>
+                    <button
+                      onClick={() => copyToClipboard(results.project.projectId)}
+                      className="p-1 hover:bg-gray-700 rounded transition-colors"
+                      title="Copy ID"
+                    >
+                      <Copy className="w-3 h-3 text-gray-400" />
+                    </button>
+                  </div>
                 </div>
-                {results.projectName && (
+                {results.project.title && (
                   <div>
                     <div className="text-xs text-gray-400 mb-1">Project Name</div>
-                    <div className="text-white text-xs">{results.projectName}</div>
+                    <div className="text-white text-xs">{results.project.title}</div>
                   </div>
                 )}
               </div>
@@ -236,16 +303,16 @@ export function CreditRecalculateCard() {
               <div className="border-t border-gray-700 pt-2 grid grid-cols-3 gap-3">
                 <div>
                   <div className="text-xs text-gray-400 mb-1">Previous Credits</div>
-                  <div className="text-white font-medium">{results.previousCreditsUsed.toLocaleString()}</div>
+                  <div className="text-white font-medium">{results.project.previousCreditsUsed.toLocaleString()}</div>
                 </div>
                 <div>
                   <div className="text-xs text-gray-400 mb-1">New Credits</div>
-                  <div className="text-white font-medium">{results.newCreditsUsed.toLocaleString()}</div>
+                  <div className="text-white font-medium">{results.project.newCreditsUsed.toLocaleString()}</div>
                 </div>
                 <div>
                   <div className="text-xs text-gray-400 mb-1">Difference</div>
-                  <div className={`font-medium ${results.difference > 0 ? 'text-red-400' : results.difference < 0 ? 'text-green-400' : 'text-gray-400'}`}>
-                    {results.difference > 0 ? '+' : ''}{results.difference.toLocaleString()}
+                  <div className={`font-medium ${results.project.creditDifference > 0 ? 'text-red-400' : results.project.creditDifference < 0 ? 'text-green-400' : 'text-gray-400'}`}>
+                    {results.project.creditDifference > 0 ? '+' : ''}{results.project.creditDifference.toLocaleString()}
                   </div>
                 </div>
               </div>
@@ -254,56 +321,139 @@ export function CreditRecalculateCard() {
                 <div className="text-xs text-gray-400 mb-2">Asset Breakdown</div>
                 <div className="grid grid-cols-3 gap-3 text-xs">
                   <div>
-                    <span className="text-gray-400">Images:</span>
-                    <span className="text-white ml-1 font-medium">{results.assetCounts.images}</span>
+                    <span className="text-gray-400">Treatment:</span>
+                    <span className="text-white ml-1 font-medium">{results.project.assetCounts.treatmentImages}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Scenes:</span>
+                    <span className="text-white ml-1 font-medium">{results.project.assetCounts.sceneImages}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Frames:</span>
+                    <span className="text-white ml-1 font-medium">{results.project.assetCounts.frameImages}</span>
                   </div>
                   <div>
                     <span className="text-gray-400">Videos:</span>
-                    <span className="text-white ml-1 font-medium">{results.assetCounts.videos}</span>
+                    <span className="text-white ml-1 font-medium">{results.project.assetCounts.videos}</span>
                   </div>
                   <div>
                     <span className="text-gray-400">Audio:</span>
-                    <span className="text-white ml-1 font-medium">{results.assetCounts.audioMinutes.toFixed(1)}m</span>
+                    <span className="text-white ml-1 font-medium">{results.project.assetCounts.audioMinutes}m</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Voice Clones:</span>
+                    <span className="text-white ml-1 font-medium">{results.project.assetCounts.voiceClones}</span>
                   </div>
                 </div>
               </div>
+
+              <div className="border-t border-gray-700 pt-2">
+                <div className="text-xs text-gray-400 mb-2">Credit Breakdown</div>
+                <div className="grid grid-cols-3 gap-3 text-xs">
+                  <div>
+                    <span className="text-gray-400">Treatment:</span>
+                    <span className="text-cyan-400 ml-1 font-medium">{results.project.breakdown.treatmentVisuals.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Scenes:</span>
+                    <span className="text-cyan-400 ml-1 font-medium">{results.project.breakdown.sceneImages.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Frames:</span>
+                    <span className="text-cyan-400 ml-1 font-medium">{results.project.breakdown.frameImages.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Videos:</span>
+                    <span className="text-cyan-400 ml-1 font-medium">{results.project.breakdown.videos.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Audio:</span>
+                    <span className="text-cyan-400 ml-1 font-medium">{results.project.breakdown.audio.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Total:</span>
+                    <span className="text-emerald-400 ml-1 font-bold">{results.project.breakdown.total.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              {!dryRun && (
+                <div className="border-t border-gray-700 pt-2">
+                  <div className={`text-xs font-medium ${results.project.updated ? 'text-green-400' : 'text-gray-400'}`}>
+                    {results.project.updated ? '✓ Database updated' : 'No changes needed'}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {isAllResult(results) && (
             <div className="space-y-3 text-sm">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div>
                   <div className="text-xs text-gray-400 mb-1">Projects Processed</div>
-                  <div className="text-white font-medium text-lg">{results.totalProjectsProcessed}</div>
+                  <div className="text-white font-medium text-lg">{results.summary.projectsProcessed}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-400 mb-1">Total Credits Adjusted</div>
-                  <div className="text-white font-medium text-lg">{results.totalCreditsRecalculated.toLocaleString()}</div>
+                  <div className="text-xs text-gray-400 mb-1">Projects Updated</div>
+                  <div className="text-white font-medium text-lg">{results.summary.projectsUpdated}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-400 mb-1">Previous Total</div>
+                  <div className="text-white font-medium">{results.summary.totalPreviousCredits.toLocaleString()}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-400 mb-1">New Total</div>
+                  <div className="text-white font-medium">{results.summary.totalNewCredits.toLocaleString()}</div>
                 </div>
               </div>
 
-              {results.results.length > 0 && (
+              <div className="p-2 bg-gray-900/50 rounded border border-gray-700/50">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-400">Net Credit Difference</span>
+                  <span className={`text-sm font-bold ${results.summary.creditDifference > 0 ? 'text-red-400' : results.summary.creditDifference < 0 ? 'text-green-400' : 'text-gray-400'}`}>
+                    {results.summary.creditDifference > 0 ? '+' : ''}{results.summary.creditDifference.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              {results.projects.length > 0 && (
                 <div className="border-t border-gray-700 pt-3">
                   <div className="text-xs text-gray-400 mb-2">
-                    Recent Results (showing {Math.min(5, results.results.length)} of {results.results.length})
+                    Project Details (showing {Math.min(10, results.projects.length)} of {results.projects.length})
                   </div>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {results.results.slice(0, 5).map((result, idx) => (
-                      <div key={idx} className="p-2 bg-gray-900/50 rounded border border-gray-700/50">
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="text-xs font-mono text-gray-300">{result.projectId}</div>
-                          <div className={`text-xs font-medium ${result.difference > 0 ? 'text-red-400' : result.difference < 0 ? 'text-green-400' : 'text-gray-400'}`}>
-                            {result.difference > 0 ? '+' : ''}{result.difference.toLocaleString()}
+                    {results.projects.slice(0, 10).map((proj, idx) => {
+                      const diff = proj.newCreditsUsed - proj.previousCreditsUsed
+                      const totalImages = proj.assetCounts.treatmentImages + proj.assetCounts.sceneImages + proj.assetCounts.frameImages
+                      return (
+                        <div key={idx} className="p-2 bg-gray-900/50 rounded border border-gray-700/50">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <div className="text-xs text-white truncate max-w-[200px]" title={proj.title}>
+                                {proj.title || 'Untitled'}
+                              </div>
+                              <button
+                                onClick={() => copyToClipboard(proj.projectId)}
+                                className="p-1 hover:bg-gray-700 rounded transition-colors flex-shrink-0"
+                                title={`Copy ID: ${proj.projectId}`}
+                              >
+                                <Copy className="w-3 h-3 text-gray-400" />
+                              </button>
+                            </div>
+                            <div className={`text-xs font-medium ${diff > 0 ? 'text-red-400' : diff < 0 ? 'text-green-400' : 'text-gray-400'}`}>
+                              {diff > 0 ? '+' : ''}{diff.toLocaleString()}
+                            </div>
+                          </div>
+                          <div className="flex gap-3 text-xs text-gray-400">
+                            <span>{totalImages} img</span>
+                            <span>{proj.assetCounts.videos} vid</span>
+                            <span>{proj.assetCounts.audioMinutes}m audio</span>
+                            <span className="text-cyan-400 ml-auto">{proj.newCreditsUsed.toLocaleString()} credits</span>
                           </div>
                         </div>
-                        <div className="flex gap-3 text-xs text-gray-400">
-                          <span>{result.assetCounts.images} img</span>
-                          <span>{result.assetCounts.videos} vid</span>
-                          <span>{result.assetCounts.audioMinutes.toFixed(1)}m audio</span>
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               )}

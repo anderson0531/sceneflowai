@@ -31,6 +31,7 @@ import {
 import { useCredits } from '@/contexts/CreditsContext'
 import { useEnhancedStore } from '@/store/enhancedStore'
 import { useCueStore } from '@/store/useCueStore'
+import { toast } from 'sonner'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -672,6 +673,23 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
               <Calendar className="w-3.5 h-3.5" />
               {formatRelativeTime(project.updatedAt)}
             </span>
+            
+            {/* Project ID with copy */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                e.preventDefault()
+                navigator.clipboard.writeText(project.id)
+                toast.success('Project ID copied')
+              }}
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-800/50 hover:bg-gray-700/50 transition-colors cursor-pointer group"
+              title={`Copy Project ID: ${project.id}`}
+            >
+              <span className="text-xs text-gray-500 font-mono truncate max-w-[80px]">
+                {project.id.slice(0, 8)}...
+              </span>
+              <Copy className="w-3 h-3 text-gray-500 group-hover:text-gray-300" />
+            </button>
           </div>
         </div>
 

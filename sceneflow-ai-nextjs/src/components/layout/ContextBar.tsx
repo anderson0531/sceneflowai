@@ -1,6 +1,8 @@
 'use client'
 
 import React from 'react'
+import { Copy } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '../../lib/utils'
 
 export interface ContextBarTab {
@@ -18,6 +20,7 @@ interface ContextBarProps {
   secondaryActions?: React.ReactNode
   breadcrumb?: string[]
   meta?: React.ReactNode
+  projectId?: string  // Optional project ID to display with copy button
   stickyTop?: number
   className?: string
   emphasis?: boolean
@@ -33,11 +36,20 @@ export function ContextBar({
   primaryActions,
   secondaryActions,
   meta,
+  projectId,
   stickyTop = 56, // match GlobalHeader h-14 (56px)
   className,
   emphasis = false,
   titleVariant = 'default',
 }: ContextBarProps) {
+
+  const handleCopyProjectId = () => {
+    if (projectId) {
+      navigator.clipboard.writeText(projectId)
+      toast.success('Project ID copied')
+    }
+  }
+
   return (
     <div
       className={cn(
@@ -73,6 +85,16 @@ export function ContextBar({
               <div className="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-800 text-gray-300 text-[11px] leading-tight border border-gray-700">
                 {meta}
               </div>
+            ) : null}
+            {projectId ? (
+              <button
+                onClick={handleCopyProjectId}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-800/60 hover:bg-gray-700/60 text-gray-400 hover:text-gray-200 text-[11px] leading-tight border border-gray-700/50 transition-colors cursor-pointer group"
+                title={`Copy Project ID: ${projectId}`}
+              >
+                <span className="font-mono">{projectId.slice(0, 8)}...</span>
+                <Copy className="w-3 h-3 opacity-60 group-hover:opacity-100" />
+              </button>
             ) : null}
           </div>
           <div className="flex items-center gap-2 overflow-x-auto">
