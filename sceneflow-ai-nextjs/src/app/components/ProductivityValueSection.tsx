@@ -577,10 +577,10 @@ export default function ProductivityValueSection() {
             <div className="absolute -top-3 right-4 w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30">
               <DollarSign className="w-5 h-5 text-white" />
             </div>
-            <div className="text-emerald-300 text-sm font-medium mb-1">Save Up To</div>
+            <div className="text-emerald-300 text-sm font-medium mb-1">Potential Savings</div>
             <div className="text-4xl font-bold text-white mb-1">
-              {selectedScenario === 'studio' ? '$3,600+' : selectedScenario === 'agency' ? '$1,800+' : '$850+'}
-              <span className="text-lg text-emerald-400">/mo</span>
+              Significant
+              <span className="text-lg text-emerald-400">*</span>
             </div>
             <div className="text-gray-400 text-sm">vs individual tool stack</div>
           </div>
@@ -595,8 +595,8 @@ export default function ProductivityValueSection() {
             </div>
             <div className="text-cyan-300 text-sm font-medium mb-1">Reclaim</div>
             <div className="text-4xl font-bold text-white mb-1">
-              {selectedScenario === 'studio' ? '40+' : selectedScenario === 'agency' ? '20+' : '10+'}
-              <span className="text-lg text-cyan-400"> hrs/mo</span>
+              Hours
+              <span className="text-lg text-cyan-400">*</span>
             </div>
             <div className="text-gray-400 text-sm">with one-click automation</div>
           </div>
@@ -611,10 +611,10 @@ export default function ProductivityValueSection() {
             </div>
             <div className="text-purple-300 text-sm font-medium mb-1">Skip</div>
             <div className="text-4xl font-bold text-white mb-1">
-              290+
-              <span className="text-lg text-purple-400"> hours</span>
+              The
+              <span className="text-lg text-purple-400"> learning curve</span>
             </div>
-            <div className="text-gray-400 text-sm">of tool learning curve</div>
+            <div className="text-gray-400 text-sm">with integrated AI tools</div>
           </div>
         </motion.div>
 
