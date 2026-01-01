@@ -6485,6 +6485,93 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  // Update audio start time offset for playback timing
+  const handleUpdateAudioStartTime = async (
+    sceneIndex: number,
+    audioType: 'description' | 'narration' | 'dialogue',
+    startTime: number,
+    dialogueIndex?: number
+  ) => {
+    if (!script?.script?.scenes?.[sceneIndex]) {
+      console.error('[Update Audio Start Time] Scene not found')
+      return
+    }
+
+    const currentScene = script.script.scenes[sceneIndex]
+    const selectedLang = 'en' // Default language for now
+    
+    // Create updated scene based on audio type
+    const updatedScene = { ...currentScene }
+    
+    if (audioType === 'description') {
+      if (updatedScene.descriptionAudio?.[selectedLang]) {
+        updatedScene.descriptionAudio = {
+          ...updatedScene.descriptionAudio,
+          [selectedLang]: {
+            ...updatedScene.descriptionAudio[selectedLang],
+            startTime
+          }
+        }
+      }
+    } else if (audioType === 'narration') {
+      if (updatedScene.narrationAudio?.[selectedLang]) {
+        updatedScene.narrationAudio = {
+          ...updatedScene.narrationAudio,
+          [selectedLang]: {
+            ...updatedScene.narrationAudio[selectedLang],
+            startTime
+          }
+        }
+      }
+    } else if (audioType === 'dialogue' && dialogueIndex !== undefined) {
+      // Get dialogue audio array
+      let dialogueAudioArray: any[] = []
+      if (Array.isArray(updatedScene.dialogueAudio)) {
+        dialogueAudioArray = [...updatedScene.dialogueAudio]
+      } else if (updatedScene.dialogueAudio && typeof updatedScene.dialogueAudio === 'object') {
+        dialogueAudioArray = [...(updatedScene.dialogueAudio[selectedLang] || [])]
+      }
+      
+      // Find and update the matching dialogue audio
+      const audioIdx = dialogueAudioArray.findIndex((a: any) => 
+        a.dialogueIndex === dialogueIndex
+      )
+      if (audioIdx !== -1) {
+        dialogueAudioArray[audioIdx] = {
+          ...dialogueAudioArray[audioIdx],
+          startTime
+        }
+      }
+      
+      // Update the scene
+      if (Array.isArray(updatedScene.dialogueAudio)) {
+        updatedScene.dialogueAudio = dialogueAudioArray
+      } else {
+        updatedScene.dialogueAudio = { ...updatedScene.dialogueAudio, [selectedLang]: dialogueAudioArray }
+      }
+    }
+    
+    // Update state
+    const updatedScenes = [...script.script.scenes]
+    updatedScenes[sceneIndex] = updatedScene
+    
+    setScript({
+      ...script,
+      script: {
+        ...script.script,
+        scenes: updatedScenes
+      }
+    })
+    
+    // Save to database (debounced - no toast for subtle updates)
+    try {
+      await saveScenesToDatabase(updatedScenes)
+      console.log(`[Update Audio Start Time] Updated ${audioType} start time to ${startTime}s for Scene ${sceneIndex + 1}`)
+    } catch (error) {
+      console.error('[Update Audio Start Time] Failed to save:', error)
+    }
+  }
+
   // Scene score generation handler
   const handleGenerateSceneScore = async (sceneIndex: number) => {
     if (!script || !script.script?.scenes) return
@@ -6808,6 +6895,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onEditScene={handleEditScene}
                 onUpdateSceneAudio={handleUpdateSceneAudio}
                 onDeleteSceneAudio={handleDeleteSceneAudio}
+                onUpdateAudioStartTime={handleUpdateAudioStartTime}
                 onGenerateSceneScore={handleGenerateSceneScore}
                 generatingScoreFor={generatingScoreFor}
                 getScoreColorClass={getScoreColorClass}

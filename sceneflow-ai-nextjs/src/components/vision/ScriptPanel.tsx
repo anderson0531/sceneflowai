@@ -2590,6 +2590,8 @@ interface SceneCardProps {
   onUpdateSceneAudio?: (sceneIndex: number) => Promise<void>
   // NEW: Delete specific audio from scene
   onDeleteSceneAudio?: (sceneIndex: number, audioType: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx', dialogueIndex?: number, sfxIndex?: number) => void
+  // NEW: Audio start time offset controls
+  onUpdateAudioStartTime?: (sceneIndex: number, audioType: 'description' | 'narration' | 'dialogue', startTime: number, dialogueIndex?: number) => void
   // NEW: Scene score generation props
   onGenerateSceneScore?: (sceneIndex: number) => void
   generatingScoreFor?: number | null
@@ -2717,6 +2719,7 @@ function SceneCard({
   onEditScene,
   onUpdateSceneAudio,
   onDeleteSceneAudio,
+  onUpdateAudioStartTime,
   onGenerateSceneScore,
   generatingScoreFor,
   getScoreColorClass,
@@ -3863,6 +3866,28 @@ function SceneCard({
                             "{sceneDescription}"
                           </div>
                         )}
+                        {/* Start Time Control - shown when audio exists */}
+                        {descriptionUrl && !descriptionCollapsed && (
+                          <div className="mt-2 pt-2 border-t border-purple-200 dark:border-purple-700/50 flex items-center gap-2">
+                            <Clock className="w-3 h-3 text-purple-400" />
+                            <span className="text-[10px] text-purple-400">Start at:</span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.1"
+                              value={scene.descriptionAudio?.[selectedLanguage]?.startTime ?? 0}
+                              onChange={(e) => {
+                                e.stopPropagation()
+                                const startTime = parseFloat(e.target.value) || 0
+                                onUpdateAudioStartTime?.(sceneIdx, 'description', startTime)
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-16 px-1.5 py-0.5 text-[10px] bg-purple-100 dark:bg-purple-900/50 border border-purple-300 dark:border-purple-600 rounded text-purple-700 dark:text-purple-200 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                              title="Start time offset in seconds"
+                            />
+                            <span className="text-[10px] text-purple-400">seconds</span>
+                          </div>
+                        )}
                       </div>
                     )
                   })()}
@@ -4012,6 +4037,28 @@ function SceneCard({
                           "{scene.narration}"
                         </div>
                       )}
+                      {/* Start Time Control - shown when audio exists */}
+                      {narrationUrl && !narrationCollapsed && (
+                        <div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-700/50 flex items-center gap-2">
+                          <Clock className="w-3 h-3 text-blue-400" />
+                          <span className="text-[10px] text-blue-400">Start at:</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            value={scene.narrationAudio?.[selectedLanguage]?.startTime ?? 0}
+                            onChange={(e) => {
+                              e.stopPropagation()
+                              const startTime = parseFloat(e.target.value) || 0
+                              onUpdateAudioStartTime?.(sceneIdx, 'narration', startTime)
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-16 px-1.5 py-0.5 text-[10px] bg-blue-100 dark:bg-blue-900/50 border border-blue-300 dark:border-blue-600 rounded text-blue-700 dark:text-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            title="Start time offset in seconds"
+                          />
+                          <span className="text-[10px] text-blue-400">seconds</span>
+                        </div>
+                      )}
                     </div>
                   )
                   })()}
@@ -4123,7 +4170,29 @@ function SceneCard({
                                 </div>
                                 <div className="text-sm text-gray-200 leading-relaxed">"{lineWithoutParenthetical}"</div>
                                 {audioEntry?.duration && (
-                                  <div className="mt-1 text-[10px] text-gray-500">Duration: {audioEntry.duration.toFixed(1)}s</div>
+                                  <div className="mt-1 flex items-center gap-3 flex-wrap">
+                                    <span className="text-[10px] text-gray-500">Duration: {audioEntry.duration.toFixed(1)}s</span>
+                                    {/* Start Time Control for Dialogue */}
+                                    <div className="flex items-center gap-1">
+                                      <Clock className="w-3 h-3 text-green-500/70" />
+                                      <span className="text-[10px] text-green-500/70">Start:</span>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        step="0.1"
+                                        value={audioEntry.startTime ?? 0}
+                                        onChange={(e) => {
+                                          e.stopPropagation()
+                                          const startTime = parseFloat(e.target.value) || 0
+                                          onUpdateAudioStartTime?.(sceneIdx, 'dialogue', startTime, i)
+                                        }}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="w-14 px-1 py-0.5 text-[10px] bg-green-900/30 border border-green-700/50 rounded text-green-300 focus:outline-none focus:ring-1 focus:ring-green-500"
+                                        title="Start time offset in seconds"
+                                      />
+                                      <span className="text-[10px] text-green-500/70">s</span>
+                                    </div>
+                                  </div>
                                 )}
                               </div>
                             {audioEntry?.audioUrl ? (
