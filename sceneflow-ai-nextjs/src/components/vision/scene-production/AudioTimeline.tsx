@@ -62,6 +62,10 @@ export function AudioTimeline({
     return new Set()
   })
   
+  // Local editing state for timing fields (prevents cursor jumping)
+  const [editingStartTime, setEditingStartTime] = useState<string | null>(null)
+  const [editingDuration, setEditingDuration] = useState<string | null>(null)
+  
   // Ref to capture mutedClips for animation frames
   const mutedClipsRef = useRef<Set<string>>(new Set())
   useEffect(() => {
@@ -626,39 +630,87 @@ export function AudioTimeline({
             </div>
             
             <div className="grid grid-cols-3 gap-3 text-xs">
-              {/* Start Time */}
+              {/* Start Time - EDITABLE */}
               <div>
                 <label className="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Start</label>
                 <div className="flex items-center gap-1">
-                  <span className="px-1.5 py-0.5 bg-gray-800 border border-gray-700 rounded text-gray-300 font-mono">
-                    {clipData.startTime.toFixed(1)}s
-                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={sceneDuration}
+                    step={0.1}
+                    value={editingStartTime ?? clipData.startTime.toFixed(1)}
+                    onFocus={() => setEditingStartTime(clipData.startTime.toFixed(1))}
+                    onChange={(e) => setEditingStartTime(e.target.value)}
+                    onBlur={() => {
+                      if (editingStartTime !== null) {
+                        const newStart = Math.max(0, Math.min(sceneDuration, parseFloat(editingStartTime) || 0))
+                        onAudioClipChange?.(selectedClipTrackType!, selectedClipId!, { startTime: newStart })
+                      }
+                      setEditingStartTime(null)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        (e.target as HTMLInputElement).blur()
+                      } else if (e.key === 'Escape') {
+                        setEditingStartTime(null)
+                        ;(e.target as HTMLInputElement).blur()
+                      }
+                    }}
+                    className="w-14 px-1.5 py-0.5 bg-gray-800 border border-gray-600 hover:border-cyan-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded text-white font-mono text-[11px] outline-none"
+                  />
+                  <span className="text-gray-500">s</span>
                 </div>
               </div>
               
-              {/* Duration */}
+              {/* Duration - EDITABLE */}
               <div>
                 <label className="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">Duration</label>
                 <div className="flex items-center gap-1">
-                  <span className="px-1.5 py-0.5 bg-gray-900 border border-gray-800 rounded text-gray-400 font-mono">
-                    {clipData.duration.toFixed(1)}s
-                  </span>
+                  <input
+                    type="number"
+                    min={0.1}
+                    max={sceneDuration}
+                    step={0.1}
+                    value={editingDuration ?? clipData.duration.toFixed(1)}
+                    onFocus={() => setEditingDuration(clipData.duration.toFixed(1))}
+                    onChange={(e) => setEditingDuration(e.target.value)}
+                    onBlur={() => {
+                      if (editingDuration !== null) {
+                        const newDuration = Math.max(0.1, parseFloat(editingDuration) || 0.1)
+                        onAudioClipChange?.(selectedClipTrackType!, selectedClipId!, { duration: newDuration })
+                      }
+                      setEditingDuration(null)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        (e.target as HTMLInputElement).blur()
+                      } else if (e.key === 'Escape') {
+                        setEditingDuration(null)
+                        ;(e.target as HTMLInputElement).blur()
+                      }
+                    }}
+                    className="w-14 px-1.5 py-0.5 bg-gray-800 border border-gray-600 hover:border-cyan-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded text-white font-mono text-[11px] outline-none"
+                  />
+                  <span className="text-gray-500">s</span>
                 </div>
               </div>
               
-              {/* End Time */}
+              {/* End Time - Calculated (read-only) */}
               <div>
                 <label className="block text-[9px] font-medium text-gray-500 uppercase mb-0.5">End</label>
                 <div className="flex items-center gap-1">
-                  <span className="px-1.5 py-0.5 bg-gray-900 border border-gray-800 rounded text-gray-400 font-mono">
-                    {(clipData.startTime + clipData.duration).toFixed(1)}s
+                  <span className="px-1.5 py-0.5 bg-gray-900 border border-gray-800 rounded text-gray-400 font-mono text-[11px]">
+                    {(clipData.startTime + clipData.duration).toFixed(1)}
                   </span>
+                  <span className="text-gray-500">s</span>
                 </div>
               </div>
             </div>
             
-            <div className="mt-2 pt-2 border-t border-gray-800 flex items-center gap-3 text-[9px] text-gray-500">
+            <div className="mt-2 pt-2 border-t border-gray-800 flex flex-wrap items-center gap-2 text-[9px] text-gray-500">
               <span><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">M</kbd> Mute</span>
+              <span><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">←</kbd><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">→</kbd> ±0.1s</span>
               <span><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">Esc</kbd> Deselect</span>
             </div>
           </div>

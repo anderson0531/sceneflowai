@@ -3853,6 +3853,9 @@ function SceneCard({
                         <AudioTimeline
                           sceneDuration={sceneDuration}
                           audioTracks={audioTracks}
+                          onAudioClipChange={(trackType, clipId, changes) => {
+                            onAudioClipChange?.(scene.id, trackType, clipId, changes)
+                          }}
                         />
                       </div>
                     )
