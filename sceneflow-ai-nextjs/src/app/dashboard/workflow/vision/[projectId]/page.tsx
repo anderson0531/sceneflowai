@@ -2485,6 +2485,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }, 500) // Debounce by 500ms
         }
         
+        // Also update script state to keep ScriptPanel in sync
+        setScript((prevScript: any) => ({
+          ...prevScript,
+          script: {
+            ...prevScript?.script,
+            scenes: updatedScenes,
+          },
+        }))
+        
         return updatedScenes
       })
       
