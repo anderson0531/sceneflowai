@@ -1193,17 +1193,30 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     }
     
     // Scene description plays before narration when available
+    // Check for custom description startTime
+    const customDescriptionStartTime = scene.descriptionAudio?.[selectedLanguage]?.startTime
     if (descriptionUrl) {
       config.description = descriptionUrl
+      // Use custom startTime if provided, defaults to 0 (start immediately)
+      config.descriptionOffsetSeconds = customDescriptionStartTime ?? 0
+      if (customDescriptionStartTime !== undefined) {
+        console.log(`[ScriptPanel] Using CUSTOM description startTime: ${customDescriptionStartTime}s for scene ${scene.id}`)
+      }
       const storedDescriptionDuration = scene.descriptionAudio?.[selectedLanguage]?.duration
       const descriptionDuration = await resolveAudioDuration(descriptionUrl, storedDescriptionDuration)
-      descriptionEndTime = descriptionDuration
+      descriptionEndTime = (customDescriptionStartTime ?? 0) + descriptionDuration
       totalDuration = Math.max(totalDuration, descriptionEndTime)
     }
 
-    const narrationOffset = descriptionUrl
-      ? descriptionEndTime + 0.35
-      : 2
+    // Check for custom narration startTime, fallback to calculated offset
+    const customNarrationStartTime = scene.narrationAudio?.[selectedLanguage]?.startTime
+    const narrationOffset = customNarrationStartTime !== undefined
+      ? customNarrationStartTime
+      : (descriptionUrl ? descriptionEndTime + 0.35 : 2)
+    
+    if (customNarrationStartTime !== undefined) {
+      console.log(`[ScriptPanel] Using CUSTOM narration startTime: ${customNarrationStartTime}s for scene ${scene.id}`)
+    }
 
     // Narration starts after the configured offset (or after description)
     if (narrationUrl) {
@@ -1246,16 +1259,27 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       for (const dialogue of sortedDialogue) {
         const audioUrl = dialogue.audioUrl || dialogue.url
         if (audioUrl) {
+          // Check for custom startTime on this dialogue entry
+          const customDialogueStartTime = dialogue.startTime
+          const dialogueStart = customDialogueStartTime !== undefined
+            ? customDialogueStartTime
+            : currentTime
+          
+          if (customDialogueStartTime !== undefined) {
+            console.log(`[ScriptPanel] Using CUSTOM dialogue startTime: ${customDialogueStartTime}s for "${dialogue.character || 'unknown'}"`)
+          }
+          
           config.dialogue.push({
             url: audioUrl,
-            startTime: currentTime
+            startTime: dialogueStart
           })
           
           const dialogueDuration = await resolveAudioDuration(audioUrl, dialogue.duration)
-          totalDuration = Math.max(totalDuration, currentTime + dialogueDuration)
+          totalDuration = Math.max(totalDuration, dialogueStart + dialogueDuration)
           
           // Add 300ms pause between dialogue lines for natural pacing
-          currentTime += dialogueDuration + 0.3
+          // Update cursor even with custom start time for subsequent sequential dialogues
+          currentTime = Math.max(currentTime, dialogueStart) + dialogueDuration + 0.3
         }
       }
     }

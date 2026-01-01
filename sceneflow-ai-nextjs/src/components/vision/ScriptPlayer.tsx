@@ -512,10 +512,14 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
     // removed per user request. The description audio is still generated and stored
     // for potential future use, but not played during screening room playback.
 
-    // Narration starts after configured delay (no longer waits for description)
+    // Narration starts after configured delay or custom startTime offset from Phase 2
+    // Custom startTime from audio panel takes precedence over default delay
     if (narrationUrl) {
       config.narration = narrationUrl
-      const narrationOffset = NARRATION_DELAY_SECONDS
+      const customNarrationStartTime = scene.narrationAudio?.[selectedLanguage]?.startTime
+      const narrationOffset = typeof customNarrationStartTime === 'number' 
+        ? customNarrationStartTime 
+        : NARRATION_DELAY_SECONDS
       config.narrationOffsetSeconds = narrationOffset
       const storedDuration = getStoredAudioDuration(scene, selectedLanguage, 'narration')
       const narrationDuration = await resolveAudioDuration(narrationUrl, storedDuration)
@@ -608,21 +612,29 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
         character: d.character,
         storedDialogueIndex: d.dialogueIndex,
         timestamp: getUrlTimestamp(d.audioUrl),
+        customStartTime: d.startTime,
         url: d.audioUrl?.slice(-40)
       })))
       
       for (let i = 0; i < orderedAudio.length; i++) {
         const dialogue = orderedAudio[i]
         if (dialogue.audioUrl) {
-          const startTime = Math.max(dialogueCursor, voiceAnchorTime)
+          // Phase 3: Use custom startTime if set, otherwise use sequential timing
+          // Custom startTime allows users to offset individual dialogue lines
+          const customDialogueStartTime = typeof dialogue.startTime === 'number' ? dialogue.startTime : null
+          const startTime = customDialogueStartTime !== null 
+            ? Math.max(customDialogueStartTime, voiceAnchorTime) // Custom: use offset but not before voice anchor
+            : Math.max(dialogueCursor, voiceAnchorTime) // Default: sequential after previous dialogue
+          
           resolvedDialogue.push({
             url: dialogue.audioUrl,
             startTime
           })
 
           const dialogueDuration = await resolveAudioDuration(dialogue.audioUrl, dialogue.duration)
-          dialogueCursor = startTime + dialogueDuration + DIALOGUE_GAP_SECONDS
-          totalDuration = Math.max(totalDuration, dialogueCursor)
+          // Update cursor for next dialogue (even if current used custom time)
+          dialogueCursor = Math.max(dialogueCursor, startTime) + dialogueDuration + DIALOGUE_GAP_SECONDS
+          totalDuration = Math.max(totalDuration, startTime + dialogueDuration)
         }
       }
     }
