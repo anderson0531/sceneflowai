@@ -18,6 +18,7 @@ import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
 import { SegmentFrameTimeline } from './scene-production/SegmentFrameTimeline'
 import { DirectorConsole } from './scene-production/DirectorConsole'
+import { AudioTimeline, type AudioTracksData, type AudioTrackClip } from './scene-production/AudioTimeline'
 import { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from './scene-production/types'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -3738,6 +3739,110 @@ function SceneCard({
                     </div>
                   )}
                   
+                  {/* Audio Timeline Visualization - Always visible strip showing audio alignment */}
+                  {(() => {
+                    // Build audio tracks data from scene
+                    const descriptionUrl = scene.descriptionAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.descriptionAudioUrl : undefined)
+                    const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
+                    
+                    // Get dialogue audio array
+                    let dialogueAudioArray: any[] = []
+                    if (Array.isArray(scene.dialogueAudio)) {
+                      dialogueAudioArray = scene.dialogueAudio
+                    } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
+                      dialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
+                    }
+                    
+                    // Check if we have any audio to display
+                    const hasAnyAudio = descriptionUrl || narrationUrl || dialogueAudioArray.some((d: any) => d?.audioUrl)
+                    if (!hasAnyAudio) return null
+                    
+                    // Calculate scene duration from audio
+                    const descDuration = scene.descriptionAudio?.[selectedLanguage]?.duration || 0
+                    const descStartTime = scene.descriptionAudio?.[selectedLanguage]?.startTime || 0
+                    const narrDuration = scene.narrationAudio?.[selectedLanguage]?.duration || 0
+                    const narrStartTime = scene.narrationAudio?.[selectedLanguage]?.startTime ?? (descDuration > 0 ? descDuration + 0.35 : 2)
+                    
+                    // Calculate dialogue end times
+                    let maxDialogueEnd = 0
+                    const dialogueClips: AudioTrackClip[] = dialogueAudioArray
+                      .filter((d: any) => d?.audioUrl)
+                      .map((d: any, idx: number) => {
+                        const startTime = d.startTime ?? (narrStartTime + narrDuration + 0.5 + (idx * 3)) // Estimate if not set
+                        const duration = d.duration || 3
+                        maxDialogueEnd = Math.max(maxDialogueEnd, startTime + duration)
+                        return {
+                          id: `dialogue-${idx}`,
+                          url: d.audioUrl,
+                          startTime,
+                          duration,
+                          label: d.character || `Line ${idx + 1}`
+                        }
+                      })
+                    
+                    // Build audio tracks
+                    const audioTracks: AudioTracksData = {}
+                    
+                    if (descriptionUrl) {
+                      audioTracks.voiceover = {
+                        id: 'description',
+                        url: descriptionUrl,
+                        startTime: descStartTime,
+                        duration: descDuration || 5,
+                        label: 'Description'
+                      }
+                    }
+                    
+                    // For narration, use as voiceover if no description, else combine
+                    if (narrationUrl) {
+                      if (!audioTracks.voiceover) {
+                        audioTracks.voiceover = {
+                          id: 'narration',
+                          url: narrationUrl,
+                          startTime: narrStartTime,
+                          duration: narrDuration || 5,
+                          label: 'Narration'
+                        }
+                      } else {
+                        // Add narration as a second track (music slot for visualization)
+                        audioTracks.music = {
+                          id: 'narration',
+                          url: narrationUrl,
+                          startTime: narrStartTime,
+                          duration: narrDuration || 5,
+                          label: 'Narration'
+                        }
+                      }
+                    }
+                    
+                    if (dialogueClips.length > 0) {
+                      audioTracks.dialogue = dialogueClips
+                    }
+                    
+                    // Calculate total scene duration for timeline
+                    const sceneDuration = Math.max(
+                      10,
+                      descStartTime + descDuration,
+                      narrStartTime + narrDuration,
+                      maxDialogueEnd,
+                      scene.duration || 0
+                    ) + 2 // Add 2s buffer
+                    
+                    return (
+                      <div className="bg-slate-900/80 rounded-lg border border-cyan-500/30 overflow-hidden">
+                        <div className="px-3 py-2 bg-cyan-900/20 border-b border-cyan-500/20 flex items-center gap-2">
+                          <Layers className="w-4 h-4 text-cyan-400" />
+                          <span className="text-xs font-medium text-cyan-300">Audio Timeline</span>
+                          <span className="text-[10px] text-gray-500 ml-auto">{sceneDuration.toFixed(1)}s total</span>
+                        </div>
+                        <AudioTimeline
+                          sceneDuration={sceneDuration}
+                          audioTracks={audioTracks}
+                        />
+                      </div>
+                    )
+                  })()}
+                  
                   {/* Scene Description (plays before narration) */}
                   {(() => {
                     const sceneDescription = scene.visualDescription || scene.action || scene.summary || scene.heading
@@ -3906,7 +4011,7 @@ function SceneCard({
                                 onUpdateAudioStartTime?.(sceneIdx, 'description', startTime)
                               }}
                               onClick={(e) => e.stopPropagation()}
-                              className="w-16 px-1.5 py-0.5 text-[10px] bg-purple-100 dark:bg-purple-900/50 border border-purple-300 dark:border-purple-600 rounded text-purple-700 dark:text-purple-200 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                              className="w-20 px-2 py-0.5 text-xs bg-purple-100 dark:bg-purple-900/50 border border-purple-300 dark:border-purple-600 rounded text-purple-700 dark:text-purple-200 focus:outline-none focus:ring-1 focus:ring-purple-500"
                               title="Start time offset in seconds"
                             />
                             <span className="text-[10px] text-purple-400">seconds</span>
@@ -4077,7 +4182,7 @@ function SceneCard({
                               onUpdateAudioStartTime?.(sceneIdx, 'narration', startTime)
                             }}
                             onClick={(e) => e.stopPropagation()}
-                            className="w-16 px-1.5 py-0.5 text-[10px] bg-blue-100 dark:bg-blue-900/50 border border-blue-300 dark:border-blue-600 rounded text-blue-700 dark:text-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="w-20 px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900/50 border border-blue-300 dark:border-blue-600 rounded text-blue-700 dark:text-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
                             title="Start time offset in seconds"
                           />
                           <span className="text-[10px] text-blue-400">seconds</span>
@@ -4211,7 +4316,7 @@ function SceneCard({
                                           onUpdateAudioStartTime?.(sceneIdx, 'dialogue', startTime, i)
                                         }}
                                         onClick={(e) => e.stopPropagation()}
-                                        className="w-14 px-1 py-0.5 text-[10px] bg-green-900/30 border border-green-700/50 rounded text-green-300 focus:outline-none focus:ring-1 focus:ring-green-500"
+                                        className="w-20 px-2 py-0.5 text-xs bg-green-900/30 border border-green-700/50 rounded text-green-300 focus:outline-none focus:ring-1 focus:ring-green-500"
                                         title="Start time offset in seconds"
                                       />
                                       <span className="text-[10px] text-green-500/70">s</span>
