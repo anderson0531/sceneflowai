@@ -177,7 +177,7 @@ export function SceneTimeline({
   const [hoveredClip, setHoveredClip] = useState<{ id: string; trackType: string; label?: string; startTime: number; duration: number; prompt?: string } | null>(null)
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null)
   
-  const [mutedTracks, setMutedTracks] = useState<Set<string>>(() => {
+  const [audioMuteState, setAudioMuteState] = useState<Set<string>>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('sceneflow-muted-tracks')
       if (saved) return new Set(JSON.parse(saved))
@@ -185,12 +185,12 @@ export function SceneTimeline({
     return new Set()
   })
   
-  // Ref to capture mutedTracks for use in animation frames (avoids minification closure issues)
+  // Ref to capture audioMuteState for use in animation frames (avoids minification closure issues)
   // Initialize with empty Set - will be synced in useEffect below
-  const mutedTracksRef = useRef<Set<string>>(new Set())
+  const audioMuteStateRef = useRef<Set<string>>(new Set())
   useEffect(() => {
-    mutedTracksRef.current = mutedTracks
-  }, [mutedTracks])
+    audioMuteStateRef.current = audioMuteState
+  }, [audioMuteState])
   
   // Track volume and enabled state - persist to localStorage
   const [trackVolumes, setTrackVolumes] = useState<Record<string, number>>(() => {
@@ -211,9 +211,9 @@ export function SceneTimeline({
   // Persist track settings to localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('sceneflow-muted-tracks', JSON.stringify([...mutedTracks]))
+      localStorage.setItem('sceneflow-muted-tracks', JSON.stringify([...audioMuteState]))
     }
-  }, [mutedTracks])
+  }, [audioMuteState])
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -476,8 +476,8 @@ export function SceneTimeline({
         }
         
         // Sync audio tracks - respect enabled state, mute, and volume
-        // Use ref to avoid minification closure issues with mutedTracks
-        const currentMutedTracks = mutedTracksRef.current
+        // Use ref to avoid minification closure issues with audioMuteState
+        const currentMutedTracks = audioMuteStateRef.current
         allAudioClips.forEach(({ type, clip }) => {
           const audio = audioRefs.current.get(clip.id)
           const isEnabled = trackEnabled[type] ?? true
@@ -539,7 +539,7 @@ export function SceneTimeline({
       videoRef.current.currentTime = newTime - currentClip.startTime + currentClip.trimStart
     }
     
-    const currentMutedTracks = mutedTracksRef.current
+    const currentMutedTracks = audioMuteStateRef.current
     allAudioClips.forEach(({ type, clip }) => {
       const audio = audioRefs.current.get(clip.id)
       const isEnabled = trackEnabled[type] ?? true
@@ -636,7 +636,7 @@ export function SceneTimeline({
   }, [dragState, pixelsPerSecond, onVisualClipChange, onAudioClipChange])
 
   const toggleMute = useCallback((trackType: string) => {
-    setMutedTracks(prev => {
+    setAudioMuteState(prev => {
       const next = new Set(prev)
       if (next.has(trackType)) {
         next.delete(trackType)
@@ -882,7 +882,7 @@ export function SceneTimeline({
     color: string
   ) => {
     // Use ref for muted state to avoid minification TDZ issues
-    const currentMutedTracks = mutedTracksRef.current
+    const currentMutedTracks = audioMuteStateRef.current
     const isMuted = currentMutedTracks?.has(trackType) ?? false
     const isEnabled = trackEnabled[trackType] ?? true
     const volume = trackVolumes[trackType] ?? 1

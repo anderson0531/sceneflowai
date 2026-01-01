@@ -46,14 +46,17 @@ export function AudioTimeline({
 }: AudioTimelineProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
-  const [mutedTracks, setMutedTracks] = useState<Set<string>>(new Set())
   
-  // Ref to capture mutedTracks for use in animation frames (avoids minification closure issues)
+  // WORKAROUND: Use explicit variable name to avoid minification issues
+  // The minifier was incorrectly handling 'audioMuteState' variable name
+  const [audioMuteState, setAudioMuteState] = useState<Set<string>>(new Set())
+  
+  // Ref to capture audioMuteState for use in animation frames (avoids minification closure issues)
   // Initialize with empty Set - will be synced in useEffect below
-  const mutedTracksRef = useRef<Set<string>>(new Set())
+  const audioMuteStateRef = useRef<Set<string>>(new Set())
   useEffect(() => {
-    mutedTracksRef.current = mutedTracks
-  }, [mutedTracks])
+    audioMuteStateRef.current = audioMuteState
+  }, [audioMuteState])
   
   const timelineRef = useRef<HTMLDivElement>(null)
   const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map())
@@ -100,7 +103,7 @@ export function AudioTimeline({
       setIsPlaying(true)
       
       // Start/sync all audio elements - use ref to avoid minification closure issues
-      const currentMutedTracks = mutedTracksRef.current
+      const currentMutedTracks = audioMuteStateRef.current
       allClips.forEach(({ type, clip }) => {
         const audio = audioRefs.current.get(clip.id)
         if (audio && !currentMutedTracks.has(type)) {
@@ -132,7 +135,7 @@ export function AudioTimeline({
         onPlayheadChange?.(elapsed)
         
         // Check audio timing - use ref to avoid minification closure issues
-        const animMutedTracks = mutedTracksRef.current
+        const animMutedTracks = audioMuteStateRef.current
         allClips.forEach(({ type, clip }) => {
           const audio = audioRefs.current.get(clip.id)
           if (audio && !animMutedTracks.has(type)) {
@@ -165,7 +168,7 @@ export function AudioTimeline({
     startTimeRef.current = performance.now() - newTime * 1000
     
     // Sync audio to new time - use ref to avoid minification closure issues
-    const seekMutedTracks = mutedTracksRef.current
+    const seekMutedTracks = audioMuteStateRef.current
     allClips.forEach(({ type, clip }) => {
       const audio = audioRefs.current.get(clip.id)
       if (audio) {
@@ -185,7 +188,7 @@ export function AudioTimeline({
   }
 
   const toggleMute = (trackType: string) => {
-    setMutedTracks(prev => {
+    setAudioMuteState(prev => {
       const next = new Set(prev)
       if (next.has(trackType)) {
         next.delete(trackType)
@@ -223,7 +226,7 @@ export function AudioTimeline({
     color: string
   ) => {
     // Use ref for muted state to avoid minification TDZ issues
-    const currentMutedTracks = mutedTracksRef.current
+    const currentMutedTracks = audioMuteStateRef.current
     const isMuted = currentMutedTracks?.has(trackType) ?? false
     
     return (
