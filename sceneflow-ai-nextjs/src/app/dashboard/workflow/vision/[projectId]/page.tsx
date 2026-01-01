@@ -2366,13 +2366,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Handle audio clip changes (start time, duration) with persistence
   const handleAudioClipChange = useCallback(
-    (sceneId: string, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => {
+    (sceneIndex: number, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => {
       // Update the scene's audio track data and persist
       setScenes((prevScenes) => {
+        // Validate scene index
+        if (typeof sceneIndex !== 'number' || sceneIndex < 0 || sceneIndex >= prevScenes.length) {
+          console.error('[Audio Clip Change] Invalid scene index:', sceneIndex)
+          return prevScenes
+        }
+        
         const updatedScenes = prevScenes.map((scene, idx) => {
-          // Match by sceneId
-          const sceneKey = (scene as any).sceneId || (scene as any).id || `scene-${idx}`
-          if (sceneKey !== sceneId) return scene
+          // Match by index directly
+          if (idx !== sceneIndex) return scene
           
           const updatedScene = { ...scene } as any
           
@@ -2478,7 +2483,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 body: JSON.stringify({ metadata: nextMetadata }),
               })
               
-              console.log('[Audio Clip Change] Persisted to database', { sceneId, trackType, clipId, changes })
+              console.log('[Audio Clip Change] Persisted to database', { sceneIndex, trackType, clipId, changes })
             } catch (error) {
               console.error('[Audio Clip Change] Failed to persist', error)
             }
@@ -2497,7 +2502,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return updatedScenes
       })
       
-      console.log('[Audio Clip Change]', { sceneId, trackType, clipId, changes })
+      console.log('[Audio Clip Change]', { sceneIndex, trackType, clipId, changes })
     },
     [project?.id, project?.metadata]
   )

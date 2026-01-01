@@ -160,7 +160,7 @@ interface ScriptPanelProps {
   onDeleteSegment?: (sceneId: string, segmentId: string) => void
   onSegmentResize?: (sceneId: string, segmentId: string, changes: { startTime?: number; duration?: number }) => void
   onReorderSegments?: (sceneId: string, oldIndex: number, newIndex: number) => void
-  onAudioClipChange?: (sceneId: string, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
+  onAudioClipChange?: (sceneIndex: number, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
   onCleanupStaleAudioUrl?: (sceneId: string, staleUrl: string) => void
   onAddEstablishingShot?: (sceneId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
@@ -2659,7 +2659,7 @@ interface SceneCardProps {
   onDeleteSegment?: (sceneId: string, segmentId: string) => void
   onSegmentResize?: (sceneId: string, segmentId: string, changes: { startTime?: number; duration?: number }) => void
   onReorderSegments?: (sceneId: string, oldIndex: number, newIndex: number) => void
-  onAudioClipChange?: (sceneId: string, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
+  onAudioClipChange?: (sceneIndex: number, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
   onCleanupStaleAudioUrl?: (sceneId: string, staleUrl: string) => void
   onAddEstablishingShot?: (sceneId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
@@ -3857,7 +3857,7 @@ function SceneCard({
                           sceneDuration={sceneDuration}
                           audioTracks={audioTracks}
                           onAudioClipChange={(trackType, clipId, changes) => {
-                            onAudioClipChange?.(scene.id, trackType, clipId, changes)
+                            onAudioClipChange?.(sceneIdx, trackType, clipId, changes)
                           }}
                         />
                       </div>
