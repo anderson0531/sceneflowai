@@ -880,7 +880,9 @@ export function SceneTimeline({
     clips: AudioTrackClip[],
     color: string
   ) => {
-    const isMuted = mutedTracks.has(trackType)
+    // Use ref for muted state to avoid minification TDZ issues
+    const currentMutedTracks = mutedTracksRef.current
+    const isMuted = currentMutedTracks?.has(trackType) ?? false
     const isEnabled = trackEnabled[trackType] ?? true
     const volume = trackVolumes[trackType] ?? 1
     

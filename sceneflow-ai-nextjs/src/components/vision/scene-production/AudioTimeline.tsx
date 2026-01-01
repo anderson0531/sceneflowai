@@ -221,7 +221,9 @@ export function AudioTimeline({
     clips: AudioTrackClip[],
     color: string
   ) => {
-    const isMuted = mutedTracks.has(trackType)
+    // Use ref for muted state to avoid minification TDZ issues
+    const currentMutedTracks = mutedTracksRef.current
+    const isMuted = currentMutedTracks?.has(trackType) ?? false
     
     return (
       <div className="flex items-stretch h-8 group">
