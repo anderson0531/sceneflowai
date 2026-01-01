@@ -473,7 +473,14 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const individualAudioRef = useRef<HTMLAudioElement | null>(null)
   
   // Muted audio tracks state - track which audio types are muted per scene
-  const [mutedTracks, setMutedTracks] = useState<Record<number, { description?: boolean; narration?: boolean; dialogue?: boolean; music?: boolean; sfx?: boolean }>>({})
+  // RENAMED: Using 'sceneMuteState' to avoid minification variable name collision that was causing
+  // "sceneMuteState is not defined" error in production builds
+  const [sceneMuteState, setSceneMuteState] = useState<Record<number, { description?: boolean; narration?: boolean; dialogue?: boolean; music?: boolean; sfx?: boolean }>>({})
+  
+  // DEBUG: Log when component renders to verify state is defined
+  if (typeof window !== 'undefined') {
+    console.log('[ScriptPanel] Component render - sceneMuteState type:', typeof sceneMuteState, 'value:', sceneMuteState)
+  }
   
   // Track orphan audio objects for cleanup (prevents ghost audio)
   const orphanAudioRefs = useRef<Set<HTMLAudioElement>>(new Set())
@@ -1849,7 +1856,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
   // Toggle mute state for a specific audio track type in a scene
   const toggleTrackMute = (sceneIdx: number, trackType: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx') => {
-    setMutedTracks(prev => ({
+    setSceneMuteState(prev => ({
       ...prev,
       [sceneIdx]: {
         ...prev[sceneIdx],
@@ -3901,10 +3908,10 @@ function SceneCard({
                                   e.stopPropagation()
                                   toggleTrackMute(sceneIdx, 'description')
                                 }}
-                                className={`p-1 rounded transition-colors ${mutedTracks[sceneIdx]?.description ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-blue-200 dark:hover:bg-blue-800'}`}
-                                title={mutedTracks[sceneIdx]?.description ? 'Unmute Description' : 'Mute Description'}
+                                className={`p-1 rounded transition-colors ${sceneMuteState[sceneIdx]?.description ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-blue-200 dark:hover:bg-blue-800'}`}
+                                title={sceneMuteState[sceneIdx]?.description ? 'Unmute Description' : 'Mute Description'}
                               >
-                                {mutedTracks[sceneIdx]?.description ? (
+                                {sceneMuteState[sceneIdx]?.description ? (
                                   <VolumeX className="w-4 h-4 text-red-400" />
                                 ) : (
                                   <Volume2 className="w-4 h-4" />
@@ -4069,10 +4076,10 @@ function SceneCard({
                                 e.stopPropagation()
                                 toggleTrackMute(sceneIdx, 'narration')
                               }}
-                              className={`p-1 rounded transition-colors ${mutedTracks[sceneIdx]?.narration ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-purple-200 dark:hover:bg-purple-800'}`}
-                              title={mutedTracks[sceneIdx]?.narration ? 'Unmute Narration' : 'Mute Narration'}
+                              className={`p-1 rounded transition-colors ${sceneMuteState[sceneIdx]?.narration ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-purple-200 dark:hover:bg-purple-800'}`}
+                              title={sceneMuteState[sceneIdx]?.narration ? 'Unmute Narration' : 'Mute Narration'}
                             >
-                              {mutedTracks[sceneIdx]?.narration ? (
+                              {sceneMuteState[sceneIdx]?.narration ? (
                                 <VolumeX className="w-4 h-4 text-red-400" />
                               ) : (
                                 <Volume2 className="w-4 h-4" />
@@ -4268,10 +4275,10 @@ function SceneCard({
                               e.stopPropagation()
                               toggleTrackMute(sceneIdx, 'dialogue')
                             }}
-                            className={`p-1 ml-2 rounded transition-colors ${mutedTracks[sceneIdx]?.dialogue ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-emerald-800'}`}
-                            title={mutedTracks[sceneIdx]?.dialogue ? 'Unmute All Dialogue' : 'Mute All Dialogue'}
+                            className={`p-1 ml-2 rounded transition-colors ${sceneMuteState[sceneIdx]?.dialogue ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-emerald-800'}`}
+                            title={sceneMuteState[sceneIdx]?.dialogue ? 'Unmute All Dialogue' : 'Mute All Dialogue'}
                           >
-                            {mutedTracks[sceneIdx]?.dialogue ? (
+                            {sceneMuteState[sceneIdx]?.dialogue ? (
                               <VolumeX className="w-4 h-4 text-red-400" />
                             ) : (
                               <Volume2 className="w-4 h-4 text-emerald-400" />
@@ -4487,10 +4494,10 @@ function SceneCard({
                                 e.stopPropagation()
                                 toggleTrackMute(sceneIdx, 'music')
                               }}
-                              className={`p-1 rounded transition-colors ${mutedTracks[sceneIdx]?.music ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-purple-200 dark:hover:bg-purple-800'}`}
-                              title={mutedTracks[sceneIdx]?.music ? 'Unmute Music' : 'Mute Music'}
+                              className={`p-1 rounded transition-colors ${sceneMuteState[sceneIdx]?.music ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-purple-200 dark:hover:bg-purple-800'}`}
+                              title={sceneMuteState[sceneIdx]?.music ? 'Unmute Music' : 'Mute Music'}
                             >
-                              {mutedTracks[sceneIdx]?.music ? (
+                              {sceneMuteState[sceneIdx]?.music ? (
                                 <VolumeX className="w-4 h-4 text-red-400" />
                               ) : (
                                 <Volume2 className="w-4 h-4" />
@@ -4631,10 +4638,10 @@ function SceneCard({
                             e.stopPropagation()
                             toggleTrackMute(sceneIdx, 'sfx')
                           }}
-                          className={`p-1 rounded transition-colors ${mutedTracks[sceneIdx]?.sfx ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-amber-200 dark:hover:bg-amber-800'}`}
-                          title={mutedTracks[sceneIdx]?.sfx ? 'Unmute All SFX' : 'Mute All SFX'}
+                          className={`p-1 rounded transition-colors ${sceneMuteState[sceneIdx]?.sfx ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-amber-200 dark:hover:bg-amber-800'}`}
+                          title={sceneMuteState[sceneIdx]?.sfx ? 'Unmute All SFX' : 'Mute All SFX'}
                         >
-                          {mutedTracks[sceneIdx]?.sfx ? (
+                          {sceneMuteState[sceneIdx]?.sfx ? (
                             <VolumeX className="w-4 h-4 text-red-400" />
                           ) : (
                             <Volume2 className="w-4 h-4 text-amber-600 dark:text-amber-400" />
