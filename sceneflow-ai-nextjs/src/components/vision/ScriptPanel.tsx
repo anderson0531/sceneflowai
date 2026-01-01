@@ -12,7 +12,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Bot, PenTool, FolderPlus, Pencil, Layers } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Bot, PenTool, FolderPlus, Pencil, Layers } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
@@ -471,6 +471,9 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // Individual audio playback state
   const [playingAudio, setPlayingAudio] = useState<string | null>(null)
   const individualAudioRef = useRef<HTMLAudioElement | null>(null)
+  
+  // Muted audio tracks state - track which audio types are muted per scene
+  const [mutedTracks, setMutedTracks] = useState<Record<number, { description?: boolean; narration?: boolean; dialogue?: boolean; music?: boolean; sfx?: boolean }>>({})
   
   // Track orphan audio objects for cleanup (prevents ghost audio)
   const orphanAudioRefs = useRef<Set<HTMLAudioElement>>(new Set())
@@ -1842,6 +1845,17 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         setPlayingAudio(audioUrl)
       }
     }
+  }
+
+  // Toggle mute state for a specific audio track type in a scene
+  const toggleTrackMute = (sceneIdx: number, trackType: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx') => {
+    setMutedTracks(prev => ({
+      ...prev,
+      [sceneIdx]: {
+        ...prev[sceneIdx],
+        [trackType]: !prev[sceneIdx]?.[trackType]
+      }
+    }))
   }
 
 
@@ -3723,7 +3737,8 @@ function SceneCard({
                     
                     // Check if we have any audio to display
                     const hasSfxAudio = scene.sfxAudio && scene.sfxAudio.length > 0 && scene.sfxAudio.some((url: string) => url)
-                    const hasAnyAudio = descriptionUrl || narrationUrl || dialogueAudioArray.some((d: any) => d?.audioUrl) || hasSfxAudio
+                    const hasMusicAudio = !!(scene.musicAudio || scene.music?.url)
+                    const hasAnyAudio = descriptionUrl || narrationUrl || dialogueAudioArray.some((d: any) => d?.audioUrl) || hasSfxAudio || hasMusicAudio
                     if (!hasAnyAudio) return null
                     
                     // Calculate scene duration from audio
@@ -3749,39 +3764,34 @@ function SceneCard({
                         }
                       })
                     
-                    // Build audio tracks
-                    const audioTracks: AudioTracksData = {}
+                    // Build audio tracks - voiceover is now an array for Description + Narration
+                    const audioTracks: AudioTracksData = {
+                      voiceover: [],
+                      dialogue: [],
+                      music: [],
+                      sfx: []
+                    }
                     
+                    // Add Description to voiceover track (blue)
                     if (descriptionUrl) {
-                      audioTracks.voiceover = {
+                      audioTracks.voiceover!.push({
                         id: 'description',
                         url: descriptionUrl,
                         startTime: descStartTime,
                         duration: descDuration || 5,
                         label: 'Description'
-                      }
+                      })
                     }
                     
-                    // For narration, use as voiceover if no description, else combine
+                    // Add Narration to voiceover track (blue) - as second clip
                     if (narrationUrl) {
-                      if (!audioTracks.voiceover) {
-                        audioTracks.voiceover = {
-                          id: 'narration',
-                          url: narrationUrl,
-                          startTime: narrStartTime,
-                          duration: narrDuration || 5,
-                          label: 'Narration'
-                        }
-                      } else {
-                        // Add narration as a second track (music slot for visualization)
-                        audioTracks.music = {
-                          id: 'narration',
-                          url: narrationUrl,
-                          startTime: narrStartTime,
-                          duration: narrDuration || 5,
-                          label: 'Narration'
-                        }
-                      }
+                      audioTracks.voiceover!.push({
+                        id: 'narration',
+                        url: narrationUrl,
+                        startTime: narrStartTime,
+                        duration: narrDuration || 5,
+                        label: 'Narration'
+                      })
                     }
                     
                     if (dialogueClips.length > 0) {
@@ -3813,6 +3823,21 @@ function SceneCard({
                       }
                     }
                     
+                    // Add Music to music track (purple) - actual background music
+                    const musicUrl = scene.musicAudio || scene.music?.url
+                    let maxMusicEnd = 0
+                    if (musicUrl) {
+                      const musicDuration = scene.musicDuration || scene.music?.duration || 30
+                      maxMusicEnd = musicDuration
+                      audioTracks.music!.push({
+                        id: 'music',
+                        url: musicUrl,
+                        startTime: 0, // Music typically starts at scene start
+                        duration: musicDuration,
+                        label: 'Background Music'
+                      })
+                    }
+                    
                     // Calculate total scene duration for timeline
                     const sceneDuration = Math.max(
                       10,
@@ -3820,6 +3845,7 @@ function SceneCard({
                       narrStartTime + narrDuration,
                       maxDialogueEnd,
                       maxSfxEnd,
+                      maxMusicEnd,
                       scene.duration || 0
                     ) + 2 // Add 2s buffer
                     
@@ -3869,6 +3895,21 @@ function SceneCard({
                           </button>
                           {descriptionUrl ? (
                             <div className="flex items-center gap-2">
+                              {/* Mute toggle button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  toggleTrackMute(sceneIdx, 'description')
+                                }}
+                                className={`p-1 rounded transition-colors ${mutedTracks[sceneIdx]?.description ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-blue-200 dark:hover:bg-blue-800'}`}
+                                title={mutedTracks[sceneIdx]?.description ? 'Unmute Description' : 'Mute Description'}
+                              >
+                                {mutedTracks[sceneIdx]?.description ? (
+                                  <VolumeX className="w-4 h-4 text-red-400" />
+                                ) : (
+                                  <Volume2 className="w-4 h-4" />
+                                )}
+                              </button>
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation()
@@ -3990,28 +4031,6 @@ function SceneCard({
                             "{sceneDescription}"
                           </div>
                         )}
-                        {/* Start Time Control - shown when audio exists */}
-                        {descriptionUrl && !descriptionCollapsed && (
-                          <div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-700/50 flex items-center gap-2">
-                            <Clock className="w-3 h-3 text-blue-400" />
-                            <span className="text-xs text-blue-400">Start at:</span>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.1"
-                              value={scene.descriptionAudio?.[selectedLanguage]?.startTime ?? 0}
-                              onChange={(e) => {
-                                e.stopPropagation()
-                                const startTime = parseFloat(e.target.value) || 0
-                                onUpdateAudioStartTime?.(sceneIdx, 'description', startTime)
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                              className="w-20 px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900/50 border border-blue-300 dark:border-blue-600 rounded text-blue-700 dark:text-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                              title="Start time offset in seconds"
-                            />
-                            <span className="text-xs text-blue-400">seconds</span>
-                          </div>
-                        )}
                       </div>
                     )
                   })()}
@@ -4044,6 +4063,21 @@ function SceneCard({
                         </button>
                         {narrationUrl ? (
                           <div className="flex items-center gap-2">
+                            {/* Mute toggle button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                toggleTrackMute(sceneIdx, 'narration')
+                              }}
+                              className={`p-1 rounded transition-colors ${mutedTracks[sceneIdx]?.narration ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-purple-200 dark:hover:bg-purple-800'}`}
+                              title={mutedTracks[sceneIdx]?.narration ? 'Unmute Narration' : 'Mute Narration'}
+                            >
+                              {mutedTracks[sceneIdx]?.narration ? (
+                                <VolumeX className="w-4 h-4 text-red-400" />
+                              ) : (
+                                <Volume2 className="w-4 h-4" />
+                              )}
+                            </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
@@ -4161,28 +4195,6 @@ function SceneCard({
                           "{scene.narration}"
                         </div>
                       )}
-                      {/* Start Time Control - shown when audio exists */}
-                      {narrationUrl && !narrationCollapsed && (
-                        <div className="mt-2 pt-2 border-t border-purple-200 dark:border-purple-700/50 flex items-center gap-2">
-                          <Clock className="w-3 h-3 text-purple-400" />
-                          <span className="text-xs text-purple-400">Start at:</span>
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.1"
-                            value={scene.narrationAudio?.[selectedLanguage]?.startTime ?? 0}
-                            onChange={(e) => {
-                              e.stopPropagation()
-                              const startTime = parseFloat(e.target.value) || 0
-                              onUpdateAudioStartTime?.(sceneIdx, 'narration', startTime)
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-20 px-2 py-0.5 text-xs bg-purple-100 dark:bg-purple-900/50 border border-purple-300 dark:border-purple-600 rounded text-purple-700 dark:text-purple-200 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                            title="Start time offset in seconds"
-                          />
-                          <span className="text-xs text-purple-400">seconds</span>
-                        </div>
-                      )}
                     </div>
                   )
                   })()}
@@ -4250,6 +4262,21 @@ function SceneCard({
                           {Array.from(new Set(scene.dialogue.map((d: any) => d.character))).length > 4 && (
                             <span className="text-[10px] text-gray-500">+{Array.from(new Set(scene.dialogue.map((d: any) => d.character))).length - 4}</span>
                           )}
+                          {/* Mute toggle button for all dialogue */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleTrackMute(sceneIdx, 'dialogue')
+                            }}
+                            className={`p-1 ml-2 rounded transition-colors ${mutedTracks[sceneIdx]?.dialogue ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-emerald-800'}`}
+                            title={mutedTracks[sceneIdx]?.dialogue ? 'Unmute All Dialogue' : 'Mute All Dialogue'}
+                          >
+                            {mutedTracks[sceneIdx]?.dialogue ? (
+                              <VolumeX className="w-4 h-4 text-red-400" />
+                            ) : (
+                              <Volume2 className="w-4 h-4 text-emerald-400" />
+                            )}
+                          </button>
                         </div>
                       </div>
                       {!dialogueCollapsed && (
@@ -4294,29 +4321,7 @@ function SceneCard({
                                 </div>
                                 <div className="text-sm text-gray-200 leading-relaxed">"{lineWithoutParenthetical}"</div>
                                 {audioEntry?.duration && (
-                                  <div className="mt-1 flex items-center gap-3 flex-wrap">
-                                    <span className="text-[10px] text-gray-500">Duration: {audioEntry.duration.toFixed(1)}s</span>
-                                    {/* Start Time Control for Dialogue */}
-                                    <div className="flex items-center gap-1">
-                                      <Clock className="w-3 h-3 text-green-500/70" />
-                                      <span className="text-[10px] text-green-500/70">Start:</span>
-                                      <input
-                                        type="number"
-                                        min="0"
-                                        step="0.1"
-                                        value={audioEntry.startTime ?? 0}
-                                        onChange={(e) => {
-                                          e.stopPropagation()
-                                          const startTime = parseFloat(e.target.value) || 0
-                                          onUpdateAudioStartTime?.(sceneIdx, 'dialogue', startTime, i)
-                                        }}
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="w-20 px-2 py-0.5 text-xs bg-green-900/30 border border-green-700/50 rounded text-green-300 focus:outline-none focus:ring-1 focus:ring-green-500"
-                                        title="Start time offset in seconds"
-                                      />
-                                      <span className="text-[10px] text-green-500/70">s</span>
-                                    </div>
-                                  </div>
+                                  <span className="text-[10px] text-gray-500 mt-1">Duration: {audioEntry.duration.toFixed(1)}s</span>
                                 )}
                               </div>
                             {audioEntry?.audioUrl ? (
@@ -4476,6 +4481,21 @@ function SceneCard({
                         </button>
                         {scene.musicAudio ? (
                           <div className="flex items-center gap-2">
+                            {/* Mute toggle button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                toggleTrackMute(sceneIdx, 'music')
+                              }}
+                              className={`p-1 rounded transition-colors ${mutedTracks[sceneIdx]?.music ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-purple-200 dark:hover:bg-purple-800'}`}
+                              title={mutedTracks[sceneIdx]?.music ? 'Unmute Music' : 'Mute Music'}
+                            >
+                              {mutedTracks[sceneIdx]?.music ? (
+                                <VolumeX className="w-4 h-4 text-red-400" />
+                              ) : (
+                                <Volume2 className="w-4 h-4" />
+                              )}
+                            </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
@@ -4593,17 +4613,34 @@ function SceneCard({
                   {/* SFX */}
                   {scene.sfx && Array.isArray(scene.sfx) && scene.sfx.length > 0 && (
                     <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setSfxCollapsed(!sfxCollapsed)
-                        }}
-                        className="flex items-center gap-2 mb-3 hover:opacity-80 transition-opacity"
-                      >
-                        <ChevronDown className={`w-4 h-4 text-amber-600 dark:text-amber-400 transition-transform ${sfxCollapsed ? '-rotate-90' : ''}`} />
-                        <VolumeIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                        <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">Sound Effects ({scene.sfx.length})</span>
-                      </button>
+                      <div className="flex items-center justify-between mb-3">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSfxCollapsed(!sfxCollapsed)
+                          }}
+                          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                        >
+                          <ChevronDown className={`w-4 h-4 text-amber-600 dark:text-amber-400 transition-transform ${sfxCollapsed ? '-rotate-90' : ''}`} />
+                          <VolumeIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                          <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">Sound Effects ({scene.sfx.length})</span>
+                        </button>
+                        {/* Mute toggle button for all SFX */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleTrackMute(sceneIdx, 'sfx')
+                          }}
+                          className={`p-1 rounded transition-colors ${mutedTracks[sceneIdx]?.sfx ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-amber-200 dark:hover:bg-amber-800'}`}
+                          title={mutedTracks[sceneIdx]?.sfx ? 'Unmute All SFX' : 'Mute All SFX'}
+                        >
+                          {mutedTracks[sceneIdx]?.sfx ? (
+                            <VolumeX className="w-4 h-4 text-red-400" />
+                          ) : (
+                            <Volume2 className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                          )}
+                        </button>
+                      </div>
                       {!sfxCollapsed && (
                         <div className="space-y-2">
                         {scene.sfx.map((sfx: any, sfxIdx: number) => {

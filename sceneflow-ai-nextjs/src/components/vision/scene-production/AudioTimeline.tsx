@@ -16,9 +16,9 @@ export interface AudioTrackClip {
 }
 
 export interface AudioTracksData {
-  voiceover?: AudioTrackClip
+  voiceover?: AudioTrackClip[]  // Array to support Description + Narration
   dialogue?: AudioTrackClip[]
-  music?: AudioTrackClip
+  music?: AudioTrackClip[]      // Array to support multiple music clips
   sfx?: AudioTrackClip[]
 }
 
@@ -71,13 +71,11 @@ export function AudioTimeline({
   // Collect all audio clips
   const allClips = useMemo(() => {
     const clips: Array<{ type: string; clip: AudioTrackClip }> = []
-    if (audioTracks?.voiceover?.url) {
-      clips.push({ type: 'voiceover', clip: audioTracks.voiceover })
-    }
+    // Voiceover is now an array (Description + Narration)
+    audioTracks?.voiceover?.forEach(v => v.url && clips.push({ type: 'voiceover', clip: v }))
     audioTracks?.dialogue?.forEach(d => d.url && clips.push({ type: 'dialogue', clip: d }))
-    if (audioTracks?.music?.url) {
-      clips.push({ type: 'music', clip: audioTracks.music })
-    }
+    // Music is now an array
+    audioTracks?.music?.forEach(m => m.url && clips.push({ type: 'music', clip: m }))
     audioTracks?.sfx?.forEach(s => s.url && clips.push({ type: 'sfx', clip: s }))
     return clips
   }, [audioTracks])
@@ -354,12 +352,12 @@ export function AudioTimeline({
         className="relative cursor-pointer"
         onClick={handleTimelineClick}
       >
-        {/* Voiceover Track */}
+        {/* Voiceover Track (Description + Narration) */}
         {renderTrack(
           'V.O.',
           <Mic className="w-3 h-3" />,
           'voiceover',
-          audioTracks?.voiceover ? [audioTracks.voiceover] : [],
+          audioTracks?.voiceover || [],
           'bg-blue-500'
         )}
         
@@ -377,7 +375,7 @@ export function AudioTimeline({
           'Music',
           <Music className="w-3 h-3" />,
           'music',
-          audioTracks?.music ? [audioTracks.music] : [],
+          audioTracks?.music || [],
           'bg-purple-500'
         )}
         
