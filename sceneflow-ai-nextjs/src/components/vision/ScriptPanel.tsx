@@ -1850,13 +1850,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     }
   }
 
-  // Toggle mute state for a specific audio track type in a scene
-  // TEMPORARILY DISABLED due to minification TDZ bug
-  const toggleTrackMute = (_sceneIdx: number, _trackType: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx') => {
-    // Mute functionality temporarily disabled
-    // TODO: Refactor ScriptPanel into smaller components to fix minification issues
-  }
-
+  // NOTE: Mute functionality removed due to minification TDZ bug
+  // TODO: Re-add after refactoring ScriptPanel into smaller sub-components
 
   const handleOpenSceneBuilder = (sceneIdx: number) => {
     setSceneBuilderIdx(sceneIdx)
@@ -3894,21 +3889,6 @@ function SceneCard({
                           </button>
                           {descriptionUrl ? (
                             <div className="flex items-center gap-2">
-                              {/* Mute toggle button */}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  toggleTrackMute(sceneIdx, 'description')
-                                }}
-                                className={`p-1 rounded transition-colors ${false ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-blue-200 dark:hover:bg-blue-800'}`}
-                                title={false ? 'Unmute Description' : 'Mute Description'}
-                              >
-                                {false ? (
-                                  <VolumeX className="w-4 h-4 text-red-400" />
-                                ) : (
-                                  <Volume2 className="w-4 h-4" />
-                                )}
-                              </button>
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation()
@@ -4062,21 +4042,6 @@ function SceneCard({
                         </button>
                         {narrationUrl ? (
                           <div className="flex items-center gap-2">
-                            {/* Mute toggle button */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                toggleTrackMute(sceneIdx, 'narration')
-                              }}
-                              className={`p-1 rounded transition-colors ${false ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-purple-200 dark:hover:bg-purple-800'}`}
-                              title={false ? 'Unmute Narration' : 'Mute Narration'}
-                            >
-                              {false ? (
-                                <VolumeX className="w-4 h-4 text-red-400" />
-                              ) : (
-                                <Volume2 className="w-4 h-4" />
-                              )}
-                            </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
@@ -4261,21 +4226,6 @@ function SceneCard({
                           {Array.from(new Set(scene.dialogue.map((d: any) => d.character))).length > 4 && (
                             <span className="text-[10px] text-gray-500">+{Array.from(new Set(scene.dialogue.map((d: any) => d.character))).length - 4}</span>
                           )}
-                          {/* Mute toggle button for all dialogue */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              toggleTrackMute(sceneIdx, 'dialogue')
-                            }}
-                            className={`p-1 ml-2 rounded transition-colors ${false ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-emerald-800'}`}
-                            title={false ? 'Unmute All Dialogue' : 'Mute All Dialogue'}
-                          >
-                            {false ? (
-                              <VolumeX className="w-4 h-4 text-red-400" />
-                            ) : (
-                              <Volume2 className="w-4 h-4 text-emerald-400" />
-                            )}
-                          </button>
                         </div>
                       </div>
                       {!dialogueCollapsed && (
@@ -4480,21 +4430,6 @@ function SceneCard({
                         </button>
                         {scene.musicAudio ? (
                           <div className="flex items-center gap-2">
-                            {/* Mute toggle button */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                toggleTrackMute(sceneIdx, 'music')
-                              }}
-                              className={`p-1 rounded transition-colors ${false ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-purple-200 dark:hover:bg-purple-800'}`}
-                              title={false ? 'Unmute Music' : 'Mute Music'}
-                            >
-                              {false ? (
-                                <VolumeX className="w-4 h-4 text-red-400" />
-                              ) : (
-                                <Volume2 className="w-4 h-4" />
-                              )}
-                            </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
@@ -4623,21 +4558,6 @@ function SceneCard({
                           <ChevronDown className={`w-4 h-4 text-amber-600 dark:text-amber-400 transition-transform ${sfxCollapsed ? '-rotate-90' : ''}`} />
                           <VolumeIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                           <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">Sound Effects ({scene.sfx.length})</span>
-                        </button>
-                        {/* Mute toggle button for all SFX */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            toggleTrackMute(sceneIdx, 'sfx')
-                          }}
-                          className={`p-1 rounded transition-colors ${false ? 'bg-red-500/20 hover:bg-red-500/30' : 'hover:bg-amber-200 dark:hover:bg-amber-800'}`}
-                          title={false ? 'Unmute All SFX' : 'Mute All SFX'}
-                        >
-                          {false ? (
-                            <VolumeX className="w-4 h-4 text-red-400" />
-                          ) : (
-                            <Volume2 className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                          )}
                         </button>
                       </div>
                       {!sfxCollapsed && (
