@@ -177,6 +177,111 @@ export function SceneTimeline({
   const [hoveredClip, setHoveredClip] = useState<{ id: string; trackType: string; label?: string; startTime: number; duration: number; prompt?: string } | null>(null)
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null)
   
+  // Per-clip selection and mute state (persisted to localStorage)
+  const [selectedClipId, setSelectedClipId] = useState<string | null>(null)
+  const [selectedClipTrackType, setSelectedClipTrackType] = useState<'visual' | 'voiceover' | 'dialogue' | 'music' | 'sfx' | null>(null)
+  
+  // Per-clip mute state - stores clip IDs that are muted
+  const [mutedClips, setMutedClips] = useState<Set<string>>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sceneflow-muted-clips')
+      if (saved) return new Set(JSON.parse(saved))
+    }
+    return new Set()
+  })
+  
+  // Ref to capture mutedClips for use in animation frames
+  const mutedClipsRef = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    mutedClipsRef.current = mutedClips
+  }, [mutedClips])
+  
+  // Persist mutedClips to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sceneflow-muted-clips', JSON.stringify([...mutedClips]))
+    }
+  }, [mutedClips])
+  
+  // Toggle mute for a specific clip
+  const toggleClipMute = useCallback((clipId: string) => {
+    setMutedClips(prev => {
+      const next = new Set(prev)
+      if (next.has(clipId)) {
+        next.delete(clipId)
+      } else {
+        next.add(clipId)
+        // Pause the audio if muting
+        audioRefs.current.get(clipId)?.pause()
+      }
+      return next
+    })
+  }, [])
+  
+  // Get the selected clip's data
+  const getSelectedClipData = useCallback(() => {
+    if (!selectedClipId || !selectedClipTrackType) return null
+    
+    if (selectedClipTrackType === 'visual') {
+      return visualClips.find(c => c.id === selectedClipId) || null
+    }
+    if (selectedClipTrackType === 'voiceover') {
+      return audioTracks?.voiceover?.id === selectedClipId ? audioTracks.voiceover : null
+    }
+    if (selectedClipTrackType === 'dialogue') {
+      return audioTracks?.dialogue?.find(d => d.id === selectedClipId) || null
+    }
+    if (selectedClipTrackType === 'music') {
+      return audioTracks?.music?.id === selectedClipId ? audioTracks.music : null
+    }
+    if (selectedClipTrackType === 'sfx') {
+      return audioTracks?.sfx?.find(s => s.id === selectedClipId) || null
+    }
+    return null
+  }, [selectedClipId, selectedClipTrackType, visualClips, audioTracks])
+  
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Escape to deselect
+      if (e.key === 'Escape') {
+        setSelectedClipId(null)
+        setSelectedClipTrackType(null)
+        return
+      }
+      
+      // M to toggle mute on selected clip
+      if (e.key === 'm' || e.key === 'M') {
+        if (selectedClipId && selectedClipTrackType !== 'visual') {
+          e.preventDefault()
+          toggleClipMute(selectedClipId)
+        }
+        return
+      }
+      
+      // Arrow keys to adjust timing (only for audio clips)
+      if (selectedClipId && selectedClipTrackType && selectedClipTrackType !== 'visual') {
+        const clipData = getSelectedClipData()
+        if (!clipData) return
+        
+        const step = e.shiftKey ? 0.5 : 0.1
+        
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault()
+          const newStart = Math.max(0, clipData.startTime - step)
+          onAudioClipChange?.(selectedClipTrackType, selectedClipId, { startTime: newStart })
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault()
+          const newStart = clipData.startTime + step
+          onAudioClipChange?.(selectedClipTrackType, selectedClipId, { startTime: newStart })
+        }
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedClipId, selectedClipTrackType, toggleClipMute, getSelectedClipData, onAudioClipChange])
+  
   const [audioMuteState, setAudioMuteState] = useState<Set<string>>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('sceneflow-muted-tracks')
@@ -476,20 +581,22 @@ export function SceneTimeline({
         }
         
         // Sync audio tracks - respect enabled state, mute, and volume
-        // Use ref to avoid minification closure issues with audioMuteState
+        // Use ref to avoid minification closure issues with audioMuteState and mutedClips
         const currentMutedTracks = audioMuteStateRef.current
+        const currentMutedClips = mutedClipsRef.current
         allAudioClips.forEach(({ type, clip }) => {
           const audio = audioRefs.current.get(clip.id)
           const isEnabled = trackEnabled[type] ?? true
-          const isMuted = currentMutedTracks.has(type)
+          const isTrackMuted = currentMutedTracks.has(type)
+          const isClipMuted = currentMutedClips.has(clip.id)
           const volume = trackVolumes[type] ?? 1
           
           if (audio) {
-            // Set volume
-            audio.volume = isMuted ? 0 : volume
+            // Set volume - mute if track or clip is muted
+            audio.volume = (isTrackMuted || isClipMuted) ? 0 : volume
             
-            // Only play if track is enabled and not muted
-            if (!isEnabled || isMuted) {
+            // Only play if track is enabled and neither track nor clip is muted
+            if (!isEnabled || isTrackMuted || isClipMuted) {
               if (!audio.paused) audio.pause()
               return
             }
@@ -540,19 +647,21 @@ export function SceneTimeline({
     }
     
     const currentMutedTracks = audioMuteStateRef.current
+    const currentMutedClips = mutedClipsRef.current
     allAudioClips.forEach(({ type, clip }) => {
       const audio = audioRefs.current.get(clip.id)
       const isEnabled = trackEnabled[type] ?? true
-      const isMuted = currentMutedTracks.has(type)
+      const isTrackMuted = currentMutedTracks.has(type)
+      const isClipMuted = currentMutedClips.has(clip.id)
       const volume = trackVolumes[type] ?? 1
       
       if (audio) {
-        audio.volume = isMuted ? 0 : volume
+        audio.volume = (isTrackMuted || isClipMuted) ? 0 : volume
         const clipStart = clip.startTime
         const clipEnd = clip.startTime + clip.duration
         if (newTime >= clipStart && newTime < clipEnd) {
           audio.currentTime = newTime - clipStart + (clip.trimStart || 0)
-          if (isPlaying && isEnabled && !isMuted) {
+          if (isPlaying && isEnabled && !isTrackMuted && !isClipMuted) {
             audio.play().catch(() => {})
           }
         } else {
@@ -683,10 +792,14 @@ export function SceneTimeline({
   ) => {
     const left = clip.startTime * pixelsPerSecond
     const width = Math.max(clip.duration * pixelsPerSecond, 20)
-    const isSelected = trackType === 'visual' && clip.id === selectedSegmentId
+    const isVisualSelected = trackType === 'visual' && clip.id === selectedSegmentId
+    const isClipSelected = clip.id === selectedClipId && trackType === selectedClipTrackType
+    const isSelected = isVisualSelected || isClipSelected
     const isDragging = dragState?.clipId === clip.id
     const canDelete = trackType === 'visual' && visualClips.length > 1
     const isHovered = hoveredClip?.id === clip.id
+    const isClipMuted = mutedClips.has(clip.id)
+    const isAudioTrack = trackType !== 'visual'
     
     return (
       <div
@@ -694,12 +807,16 @@ export function SceneTimeline({
         className={cn(
           "absolute rounded-sm overflow-hidden transition-shadow",
           "group cursor-move select-none",
-          isSelected && "ring-2 ring-sf-primary ring-offset-1 ring-offset-gray-900 z-10",
+          isSelected && "ring-2 ring-cyan-400 ring-offset-1 ring-offset-gray-900 z-10",
           isDragging && "opacity-70 shadow-lg z-20",
-          !isDragging && "hover:shadow-md"
+          !isDragging && "hover:shadow-md",
+          isClipMuted && isAudioTrack && "opacity-40"
         )}
         style={{ left, width, top: '2px', bottom: '2px' }}
         onMouseDown={(e) => {
+          // Select the clip
+          setSelectedClipId(clip.id)
+          setSelectedClipTrackType(trackType)
           if (trackType === 'visual') onSegmentSelect(clip.id)
           handleClipMouseDown(e, trackType, clip.id, 'move', clip.startTime, clip.duration)
         }}
@@ -727,7 +844,35 @@ export function SceneTimeline({
               style={{ backgroundImage: `url(${clip.thumbnailUrl})` }}
             />
           )}
+          {/* Muted strikethrough pattern for audio clips */}
+          {isClipMuted && isAudioTrack && (
+            <div 
+              className="absolute inset-0 pointer-events-none"
+              style={{ 
+                background: 'repeating-linear-gradient(135deg, transparent, transparent 3px, rgba(239,68,68,0.3) 3px, rgba(239,68,68,0.3) 6px)'
+              }}
+            />
+          )}
         </div>
+        
+        {/* Mute toggle button for audio clips - shown on hover */}
+        {isAudioTrack && (
+          <button
+            className={cn(
+              "absolute top-0.5 right-0.5 w-4 h-4 rounded-full text-white transition-opacity z-30 flex items-center justify-center",
+              isClipMuted 
+                ? "bg-red-500 opacity-100" 
+                : "bg-gray-700/80 hover:bg-gray-600 opacity-0 group-hover:opacity-100"
+            )}
+            onClick={(e) => {
+              e.stopPropagation()
+              toggleClipMute(clip.id)
+            }}
+            title={isClipMuted ? 'Unmute clip' : 'Mute clip'}
+          >
+            {isClipMuted ? <VolumeX className="w-2.5 h-2.5" /> : <Volume2 className="w-2.5 h-2.5" />}
+          </button>
+        )}
         
         {/* Delete button for visual clips */}
         {trackType === 'visual' && canDelete && deleteSegmentCallback && (
@@ -1088,6 +1233,138 @@ export function SceneTimeline({
         </div>
       </div>
       </div>
+
+      {/* Selected Clip Panel - shows when an audio clip is selected */}
+      {selectedClipId && selectedClipTrackType && selectedClipTrackType !== 'visual' && (() => {
+        const clipData = getSelectedClipData()
+        if (!clipData) return null
+        
+        const trackColors: Record<string, string> = {
+          voiceover: 'border-blue-500 bg-blue-500/10',
+          dialogue: 'border-emerald-500 bg-emerald-500/10',
+          music: 'border-purple-500 bg-purple-500/10',
+          sfx: 'border-amber-500 bg-amber-500/10',
+        }
+        const trackLabels: Record<string, string> = {
+          voiceover: 'Narration',
+          dialogue: 'Dialogue',
+          music: 'Music',
+          sfx: 'SFX',
+        }
+        const isClipMuted = mutedClips.has(selectedClipId)
+        
+        return (
+          <div className={cn(
+            "rounded-lg border-2 p-4 transition-all",
+            trackColors[selectedClipTrackType] || 'border-gray-500 bg-gray-500/10'
+          )}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-bold uppercase text-gray-400">{trackLabels[selectedClipTrackType] || 'Clip'}</span>
+                <span className="text-sm font-medium text-white truncate max-w-[200px]">
+                  {clipData.label || `Clip ${selectedClipId.slice(0, 8)}`}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => toggleClipMute(selectedClipId)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                    isClipMuted 
+                      ? "bg-red-500/20 text-red-400 hover:bg-red-500/30" 
+                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  )}
+                >
+                  {isClipMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                  {isClipMuted ? 'Unmute' : 'Mute'}
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedClipId(null)
+                    setSelectedClipTrackType(null)
+                  }}
+                  className="p-1.5 rounded-md bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white transition-colors"
+                  title="Close (Esc)"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Start Time */}
+              <div>
+                <label className="block text-[10px] font-medium text-gray-500 uppercase mb-1">Start Time</label>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    min={0}
+                    max={sceneDuration}
+                    step={0.1}
+                    value={clipData.startTime.toFixed(1)}
+                    onChange={(e) => {
+                      const newStart = Math.max(0, parseFloat(e.target.value) || 0)
+                      onAudioClipChange?.(selectedClipTrackType, selectedClipId, { startTime: newStart })
+                    }}
+                    className="w-20 px-2 py-1 text-sm bg-gray-800 border border-gray-700 rounded text-white"
+                  />
+                  <span className="text-xs text-gray-500">s</span>
+                </div>
+              </div>
+              
+              {/* Duration (read-only) */}
+              <div>
+                <label className="block text-[10px] font-medium text-gray-500 uppercase mb-1">Duration</label>
+                <div className="flex items-center gap-1">
+                  <span className="px-2 py-1 text-sm bg-gray-900 border border-gray-800 rounded text-gray-400">
+                    {clipData.duration.toFixed(1)}
+                  </span>
+                  <span className="text-xs text-gray-500">s</span>
+                </div>
+              </div>
+              
+              {/* End Time (calculated) */}
+              <div>
+                <label className="block text-[10px] font-medium text-gray-500 uppercase mb-1">End Time</label>
+                <div className="flex items-center gap-1">
+                  <span className="px-2 py-1 text-sm bg-gray-900 border border-gray-800 rounded text-gray-400">
+                    {(clipData.startTime + clipData.duration).toFixed(1)}
+                  </span>
+                  <span className="text-xs text-gray-500">s</span>
+                </div>
+              </div>
+              
+              {/* Volume */}
+              <div>
+                <label className="block text-[10px] font-medium text-gray-500 uppercase mb-1">Track Volume</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={trackVolumes[selectedClipTrackType] ?? 1}
+                    onChange={(e) => {
+                      const newVolume = parseFloat(e.target.value)
+                      setTrackVolumes(prev => ({ ...prev, [selectedClipTrackType]: newVolume }))
+                    }}
+                    className="flex-1 h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+                  />
+                  <span className="text-xs text-gray-400 w-8">
+                    {Math.round((trackVolumes[selectedClipTrackType] ?? 1) * 100)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-3 pt-3 border-t border-gray-800 flex items-center gap-4 text-xs text-gray-500">
+              <span><kbd className="px-1.5 py-0.5 bg-gray-800 rounded text-gray-400">M</kbd> Toggle mute</span>
+              <span><kbd className="px-1.5 py-0.5 bg-gray-800 rounded text-gray-400">←</kbd> <kbd className="px-1.5 py-0.5 bg-gray-800 rounded text-gray-400">→</kbd> Adjust timing</span>
+              <span><kbd className="px-1.5 py-0.5 bg-gray-800 rounded text-gray-400">Esc</kbd> Deselect</span>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Clip Hover Tooltip - rendered via portal to escape Dialog transform context */}
       {isMounted && hoveredClip && tooltipPosition && createPortal(
