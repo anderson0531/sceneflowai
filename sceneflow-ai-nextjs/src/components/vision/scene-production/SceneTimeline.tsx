@@ -185,6 +185,12 @@ export function SceneTimeline({
     return new Set()
   })
   
+  // Ref to capture mutedTracks for use in animation frames (avoids minification closure issues)
+  const mutedTracksRef = useRef<Set<string>>(mutedTracks)
+  useEffect(() => {
+    mutedTracksRef.current = mutedTracks
+  }, [mutedTracks])
+  
   // Track volume and enabled state - persist to localStorage
   const [trackVolumes, setTrackVolumes] = useState<Record<string, number>>(() => {
     if (typeof window !== 'undefined') {
@@ -469,10 +475,12 @@ export function SceneTimeline({
         }
         
         // Sync audio tracks - respect enabled state, mute, and volume
+        // Use ref to avoid minification closure issues with mutedTracks
+        const currentMutedTracks = mutedTracksRef.current
         allAudioClips.forEach(({ type, clip }) => {
           const audio = audioRefs.current.get(clip.id)
           const isEnabled = trackEnabled[type] ?? true
-          const isMuted = mutedTracks.has(type)
+          const isMuted = currentMutedTracks.has(type)
           const volume = trackVolumes[type] ?? 1
           
           if (audio) {
@@ -510,7 +518,7 @@ export function SceneTimeline({
       }
       animationRef.current = requestAnimationFrame(animate)
     }
-  }, [isPlaying, currentTime, sceneDuration, getCurrentVisualClip, allAudioClips, mutedTracks, trackEnabled, trackVolumes, onPlayheadChange])
+  }, [isPlaying, currentTime, sceneDuration, getCurrentVisualClip, allAudioClips, trackEnabled, trackVolumes, onPlayheadChange])
 
   // Seek control
   const handleTimelineClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -530,10 +538,11 @@ export function SceneTimeline({
       videoRef.current.currentTime = newTime - currentClip.startTime + currentClip.trimStart
     }
     
+    const currentMutedTracks = mutedTracksRef.current
     allAudioClips.forEach(({ type, clip }) => {
       const audio = audioRefs.current.get(clip.id)
       const isEnabled = trackEnabled[type] ?? true
-      const isMuted = mutedTracks.has(type)
+      const isMuted = currentMutedTracks.has(type)
       const volume = trackVolumes[type] ?? 1
       
       if (audio) {
@@ -553,7 +562,7 @@ export function SceneTimeline({
     })
     
     onPlayheadChange?.(newTime, currentClip?.segmentId)
-  }, [dragState, sceneDuration, pixelsPerSecond, getCurrentVisualClip, allAudioClips, isPlaying, mutedTracks, trackEnabled, trackVolumes, onPlayheadChange])
+  }, [dragState, sceneDuration, pixelsPerSecond, getCurrentVisualClip, allAudioClips, isPlaying, trackEnabled, trackVolumes, onPlayheadChange])
 
   // Drag handlers for clip editing
   const handleClipMouseDown = useCallback((
