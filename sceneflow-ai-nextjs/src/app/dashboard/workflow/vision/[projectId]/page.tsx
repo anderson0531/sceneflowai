@@ -2367,140 +2367,124 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Handle audio clip changes (start time, duration) with persistence
   const handleAudioClipChange = useCallback(
     (sceneIndex: number, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => {
-      // Update the scene's audio track data and persist
-      setScenes((prevScenes) => {
-        // Validate scene index
-        if (typeof sceneIndex !== 'number' || sceneIndex < 0 || sceneIndex >= prevScenes.length) {
-          console.error('[Audio Clip Change] Invalid scene index:', sceneIndex)
-          return prevScenes
-        }
+      // Validate scene index upfront
+      if (typeof sceneIndex !== 'number' || sceneIndex < 0) {
+        console.error('[Audio Clip Change] Invalid scene index:', sceneIndex)
+        return
+      }
+      
+      // Helper to update a scene with the changes
+      const updateScene = (scene: any): any => {
+        const updatedScene = { ...scene }
         
-        const updatedScenes = prevScenes.map((scene, idx) => {
-          // Match by index directly
-          if (idx !== sceneIndex) return scene
-          
-          const updatedScene = { ...scene } as any
-          
-          // Update the appropriate audio track based on trackType
-          if (trackType === 'voiceover') {
-            // Distinguish between description and narration clips
-            if (clipId === 'description') {
-              // Update description start time and duration
-              if (changes.startTime !== undefined) {
-                updatedScene.descriptionStartTime = changes.startTime
+        if (trackType === 'voiceover') {
+          if (clipId === 'description') {
+            if (changes.startTime !== undefined) updatedScene.descriptionStartTime = changes.startTime
+            if (changes.duration !== undefined) updatedScene.descriptionDuration = changes.duration
+          } else if (clipId === 'narration') {
+            if (changes.startTime !== undefined) updatedScene.narrationStartTime = changes.startTime
+            if (changes.duration !== undefined) updatedScene.narrationDuration = changes.duration
+          }
+        } else if (trackType === 'dialogue') {
+          if (updatedScene.dialogueAudio?.en) {
+            const dialogueIdx = parseInt(clipId.replace('dialogue-', ''))
+            if (!isNaN(dialogueIdx) && updatedScene.dialogueAudio.en[dialogueIdx]) {
+              updatedScene.dialogueAudio = {
+                ...updatedScene.dialogueAudio,
+                en: updatedScene.dialogueAudio.en.map((d: any, i: number) => 
+                  i === dialogueIdx 
+                    ? { ...d, startTime: changes.startTime ?? d.startTime, duration: changes.duration ?? d.duration }
+                    : d
+                )
               }
-              if (changes.duration !== undefined) {
-                updatedScene.descriptionDuration = changes.duration
-              }
-            } else if (clipId === 'narration') {
-              // Update narration start time and duration
-              if (changes.startTime !== undefined) {
-                updatedScene.narrationStartTime = changes.startTime
-              }
-              if (changes.duration !== undefined) {
-                updatedScene.narrationDuration = changes.duration
-              }
-            }
-          } else if (trackType === 'dialogue') {
-            // Update dialogue start times and durations
-            if (updatedScene.dialogueAudio?.en) {
-              const dialogueIdx = parseInt(clipId.replace('dialogue-', ''))
-              if (!isNaN(dialogueIdx) && updatedScene.dialogueAudio.en[dialogueIdx]) {
-                updatedScene.dialogueAudio = {
-                  ...updatedScene.dialogueAudio,
-                  en: updatedScene.dialogueAudio.en.map((d: any, i: number) => 
-                    i === dialogueIdx 
-                      ? { 
-                          ...d, 
-                          startTime: changes.startTime ?? d.startTime,
-                          duration: changes.duration ?? d.duration
-                        }
-                      : d
-                  )
-                }
-              }
-            }
-          } else if (trackType === 'sfx') {
-            // Update SFX start times and durations
-            const sfxIdx = parseInt(clipId.replace('sfx-', ''))
-            if (!isNaN(sfxIdx) && updatedScene.sfx?.[sfxIdx]) {
-              updatedScene.sfx = updatedScene.sfx.map((s: any, i: number) =>
-                i === sfxIdx
-                  ? { 
-                      ...s, 
-                      startTime: changes.startTime ?? s.startTime,
-                      duration: changes.duration ?? s.duration
-                    }
-                  : s
-              )
-            }
-          } else if (trackType === 'music') {
-            // Store music track offsets
-            if (changes.startTime !== undefined) {
-              updatedScene.musicStartTime = changes.startTime
-            }
-            if (changes.duration !== undefined) {
-              updatedScene.musicDuration = changes.duration
             }
           }
-          
-          return updatedScene
-        })
-        
-        // Debounce persistence to avoid too many API calls during drag operations
-        if (audioClipPersistDebounceRef.current) {
-          clearTimeout(audioClipPersistDebounceRef.current)
+        } else if (trackType === 'sfx') {
+          const sfxIdx = parseInt(clipId.replace('sfx-', ''))
+          if (!isNaN(sfxIdx) && updatedScene.sfx?.[sfxIdx]) {
+            updatedScene.sfx = updatedScene.sfx.map((s: any, i: number) =>
+              i === sfxIdx
+                ? { ...s, startTime: changes.startTime ?? s.startTime, duration: changes.duration ?? s.duration }
+                : s
+            )
+          }
+        } else if (trackType === 'music') {
+          if (changes.startTime !== undefined) updatedScene.musicStartTime = changes.startTime
+          if (changes.duration !== undefined) updatedScene.musicDuration = changes.duration
         }
         
-        if (project?.id) {
-          audioClipPersistDebounceRef.current = setTimeout(async () => {
-            try {
-              const currentMetadata = project.metadata ?? {}
-              const currentVisionPhase = currentMetadata.visionPhase ?? {}
-              
-              const nextVisionPhase = {
-                ...currentVisionPhase,
-                scenes: updatedScenes,
-                script: currentVisionPhase.script
-                  ? {
-                      ...currentVisionPhase.script,
-                      script: {
-                        ...currentVisionPhase.script.script,
-                        scenes: updatedScenes,
-                      },
-                    }
-                  : currentVisionPhase.script,
-              }
-              
-              const nextMetadata = {
-                ...currentMetadata,
-                visionPhase: nextVisionPhase,
-              }
-              
-              await fetch(`/api/projects/${project.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ metadata: nextMetadata }),
-              })
-              
-              console.log('[Audio Clip Change] Persisted to database', { sceneIndex, trackType, clipId, changes })
-            } catch (error) {
-              console.error('[Audio Clip Change] Failed to persist', error)
-            }
-          }, 500) // Debounce by 500ms
-        }
-        
-        // Also update script state to keep ScriptPanel in sync
-        setScript((prevScript: any) => ({
+        return updatedScene
+      }
+      
+      // Update scenes state
+      setScenes((prevScenes) => {
+        if (sceneIndex >= prevScenes.length) return prevScenes
+        return prevScenes.map((scene, idx) => idx === sceneIndex ? updateScene(scene) : scene)
+      })
+      
+      // Update script state separately to trigger ScriptPanel re-render
+      setScript((prevScript: any) => {
+        if (!prevScript?.script?.scenes) return prevScript
+        const updatedScenes = prevScript.script.scenes.map((scene: any, idx: number) => 
+          idx === sceneIndex ? updateScene(scene) : scene
+        )
+        return {
           ...prevScript,
           script: {
-            ...prevScript?.script,
+            ...prevScript.script,
             scenes: updatedScenes,
           },
-        }))
-        
-        return updatedScenes
+        }
       })
+      
+      // Debounce persistence to database
+      if (audioClipPersistDebounceRef.current) {
+        clearTimeout(audioClipPersistDebounceRef.current)
+      }
+      
+      if (project?.id) {
+        audioClipPersistDebounceRef.current = setTimeout(async () => {
+          try {
+            // Get current scenes from state for persistence
+            const currentScenes = (document as any).__sceneflowScenes || []
+            const updatedScenes = currentScenes.map((scene: any, idx: number) => 
+              idx === sceneIndex ? updateScene(scene) : scene
+            )
+            
+            const currentMetadata = project.metadata ?? {}
+            const currentVisionPhase = currentMetadata.visionPhase ?? {}
+            
+            const nextVisionPhase = {
+              ...currentVisionPhase,
+              scenes: updatedScenes,
+              script: currentVisionPhase.script
+                ? {
+                    ...currentVisionPhase.script,
+                    script: {
+                      ...currentVisionPhase.script.script,
+                      scenes: updatedScenes,
+                    },
+                  }
+                : currentVisionPhase.script,
+            }
+            
+            const nextMetadata = {
+              ...currentMetadata,
+              visionPhase: nextVisionPhase,
+            }
+            
+            await fetch(`/api/projects/${project.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ metadata: nextMetadata }),
+            })
+            
+            console.log('[Audio Clip Change] Persisted to database', { sceneIndex, trackType, clipId, changes })
+          } catch (error) {
+            console.error('[Audio Clip Change] Failed to persist', error)
+          }
+        }, 500)
+      }
       
       console.log('[Audio Clip Change]', { sceneIndex, trackType, clipId, changes })
     },
