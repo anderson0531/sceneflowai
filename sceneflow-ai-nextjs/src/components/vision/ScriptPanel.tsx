@@ -3736,10 +3736,12 @@ function SceneCard({
                     if (!hasAnyAudio) return null
                     
                     // Calculate scene duration from audio
-                    const descDuration = scene.descriptionAudio?.[selectedLanguage]?.duration || 0
-                    const descStartTime = scene.descriptionAudio?.[selectedLanguage]?.startTime || 0
-                    const narrDuration = scene.narrationAudio?.[selectedLanguage]?.duration || 0
-                    const narrStartTime = scene.narrationAudio?.[selectedLanguage]?.startTime ?? (descDuration > 0 ? descDuration + 0.35 : 2)
+                    // Read from saved override fields first, then fall back to audio metadata
+                    const descDuration = scene.descriptionDuration ?? scene.descriptionAudio?.[selectedLanguage]?.duration ?? 0
+                    const descStartTime = scene.descriptionStartTime ?? scene.descriptionAudio?.[selectedLanguage]?.startTime ?? 0
+                    const narrDurationFromAudio = scene.narrationAudio?.[selectedLanguage]?.duration || 0
+                    const narrDuration = scene.narrationDuration ?? narrDurationFromAudio
+                    const narrStartTime = scene.narrationStartTime ?? scene.narrationAudio?.[selectedLanguage]?.startTime ?? (descDuration > 0 ? descStartTime + descDuration + 0.35 : 2)
                     
                     // Calculate dialogue end times
                     let maxDialogueEnd = 0
@@ -3821,12 +3823,13 @@ function SceneCard({
                     const musicUrl = scene.musicAudio || scene.music?.url
                     let maxMusicEnd = 0
                     if (musicUrl) {
-                      const musicDuration = scene.musicDuration || scene.music?.duration || 30
-                      maxMusicEnd = musicDuration
+                      const musicStartTime = scene.musicStartTime ?? 0
+                      const musicDuration = scene.musicDuration ?? scene.music?.duration ?? 30
+                      maxMusicEnd = musicStartTime + musicDuration
                       audioTracks.music!.push({
                         id: 'music',
                         url: musicUrl,
-                        startTime: 0, // Music typically starts at scene start
+                        startTime: musicStartTime,
                         duration: musicDuration,
                         label: 'Background Music'
                       })

@@ -2378,12 +2378,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           
           // Update the appropriate audio track based on trackType
           if (trackType === 'voiceover') {
-            // Store the start time and duration offset for narration
-            if (changes.startTime !== undefined) {
-              updatedScene.narrationStartTime = changes.startTime
-            }
-            if (changes.duration !== undefined) {
-              updatedScene.narrationDuration = changes.duration
+            // Distinguish between description and narration clips
+            if (clipId === 'description') {
+              // Update description start time and duration
+              if (changes.startTime !== undefined) {
+                updatedScene.descriptionStartTime = changes.startTime
+              }
+              if (changes.duration !== undefined) {
+                updatedScene.descriptionDuration = changes.duration
+              }
+            } else if (clipId === 'narration') {
+              // Update narration start time and duration
+              if (changes.startTime !== undefined) {
+                updatedScene.narrationStartTime = changes.startTime
+              }
+              if (changes.duration !== undefined) {
+                updatedScene.narrationDuration = changes.duration
+              }
             }
           } else if (trackType === 'dialogue') {
             // Update dialogue start times and durations
